@@ -1,0 +1,22 @@
+SPHINCS_ID/*.bin
+SPHINCS_ID/*.log
+SPHINCS_ID/lorene-bns-*.dat
+SPHINCS_ID/*constraints.dat
+SPHINCS_ID/negative*.dat
+SPHINCS_ID/*analysis.dat
+SPHINCS_ID/bssn*.dat
+SPHINCS_ID/*.gp
+SPHINCS_ID/cauchy*.dat
+SPHINCS_ID/rho*.dat
+SPHINCS_ID/l*-*.*
+SPHINCS_ID/*.nfs*
+SPHINCS_ID/*.ipynb
+SPHINCS_ID/*.mod
+SPHINCS_ID/*.smod
+SPHINCS_ID/src/ *.o
+SPHINCS_ID/src/ *.optrpt
+SPHINCS_ID/*.x
+SPHINCS_ID/id-plots/
+SPHINCS_ID/archive/
+SPHINCS_ID/lorene-id-files/
+SPHINCS_ID/fort*
