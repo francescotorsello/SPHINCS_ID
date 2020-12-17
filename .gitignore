@@ -13,10 +13,17 @@ SPHINCS_ID/*.nfs*
 SPHINCS_ID/*.ipynb
 SPHINCS_ID/*.mod
 SPHINCS_ID/*.smod
-SPHINCS_ID/src/ *.o
-SPHINCS_ID/src/ *.optrpt
+SPHINCS_ID/src/*.o
+SPHINCS_ID/src/*.optrpt
 SPHINCS_ID/*.x
 SPHINCS_ID/id-plots/
 SPHINCS_ID/archive/
 SPHINCS_ID/lorene-id-files/
 SPHINCS_ID/fort*
+SPHINCS_BSSN/*.x
+SPHINCS_BSSN/*.dat
+SPHINCS_BSSN/*.00*
+SPHINCS_BSSN/*.mod
+SPHINCS_BSSN/*.o
+SPHINCS_BSSN/*.optrpt
+SPHINCS_BSSN/*.asc
