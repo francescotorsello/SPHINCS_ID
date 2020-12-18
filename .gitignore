@@ -29,3 +29,6 @@ SPHINCS_BSSN/*.o
 SPHINCS_BSSN/*.optrpt
 SPHINCS_BSSN/*.asc
 SPHINCS_BSSN/'*'
+SPHINCS_BSSN/*.dblite
+SPHINCS_fix_metric/*.o
+SPHINCS_fix_metric/*.optrpt
