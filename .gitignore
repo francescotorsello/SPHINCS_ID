@@ -20,6 +20,7 @@ SPHINCS_ID/id-plots/
 SPHINCS_ID/archive/
 SPHINCS_ID/lorene-id-files/
 SPHINCS_ID/fort*
+SPHINCS_ID/'*'
 SPHINCS_BSSN/*.x
 SPHINCS_BSSN/*.dat
 SPHINCS_BSSN/*.00*
@@ -27,3 +28,4 @@ SPHINCS_BSSN/*.mod
 SPHINCS_BSSN/*.o
 SPHINCS_BSSN/*.optrpt
 SPHINCS_BSSN/*.asc
+SPHINCS_BSSN/'*'
