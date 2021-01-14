@@ -6,6 +6,9 @@ SPHINCS_ID/negative*.dat
 SPHINCS_ID/*analysis.dat
 SPHINCS_ID/bssn*.dat
 SPHINCS_ID/*.gp
+SPHINCS_ID/*.asc
+SPHINCS_ID/*.pdf
+SPHINCS_ID/plot*
 SPHINCS_ID/cauchy*.dat
 SPHINCS_ID/rho*.dat
 SPHINCS_ID/l*-*.*
