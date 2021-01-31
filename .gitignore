@@ -7,8 +7,14 @@ SPHINCS_ID/*analysis.dat
 SPHINCS_ID/bssn*.dat
 SPHINCS_ID/*.gp
 SPHINCS_ID/*.asc
+SPHINCS_ID/*.d.asc
+SPHINCS_ID/*.x.asc
+SPHINCS_ID/*.y.asc
+SPHINCS_ID/*.z.asc
 SPHINCS_ID/*.pdf
 SPHINCS_ID/plot*
+SPHINCS_ID/scons-clean.d
+SPHINCS_ID/all-scons-clean.d
 SPHINCS_ID/show*
 SPHINCS_ID/cauchy*.dat
 SPHINCS_ID/rho*.dat
@@ -33,6 +39,6 @@ SPHINCS_BSSN/*.o
 SPHINCS_BSSN/*.optrpt
 SPHINCS_BSSN/*.asc
 SPHINCS_BSSN/'*'
-SPHINCS_BSSN/*.dblite
+SPHINCS_BSSN/*.sconsign.dblite
 SPHINCS_fix_metric/*.o
 SPHINCS_fix_metric/*.optrpt
