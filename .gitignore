@@ -31,6 +31,7 @@ SPHINCS_ID/archive/
 SPHINCS_ID/lorene-id-files/
 SPHINCS_ID/fort*
 SPHINCS_ID/'*'
+SPHINCS_ID/*~
 SPHINCS_BSSN/*.x
 SPHINCS_BSSN/*.dat
 SPHINCS_BSSN/*.00*
@@ -42,3 +43,4 @@ SPHINCS_BSSN/'*'
 SPHINCS_BSSN/*.sconsign.dblite
 SPHINCS_fix_metric/*.o
 SPHINCS_fix_metric/*.optrpt
+*~
