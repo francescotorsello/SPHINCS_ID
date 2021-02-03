@@ -1,5 +1,5 @@
 SPHINCS_LORENE/*.bin
-SPHINCS_LORENE//*.log
+SPHINCS_LORENE/*.log
 SPHINCS_LORENE/lorene-bns-*.dat
 SPHINCS_LORENE/*constraints.dat
 SPHINCS_LORENE/negative*.dat
