@@ -1,0 +1,2222 @@
+! File:         submodule_bns_methods.f90
+! Authors:      Francesco Torsello (FT)
+! Copyright:    GNU General Public License (GPLv3)
+
+SUBMODULE (bns_id) bns_methods
+
+  !*****************************************************
+  !                                                    *
+  ! Implementation of the methods of TYPE bns          *
+  !                                                    *
+  ! FT 23.10.2020                                      *
+  !                                                    *
+  !*****************************************************
+
+
+  IMPLICIT NONE
+
+
+  CONTAINS
+
+
+  MODULE PROCEDURE import_id_int
+
+    !*****************************************************
+    !                                                    *
+    ! Store the ID in the bns arrays                     *
+    !                                                    *
+    ! FT 5.10.2020                                       *
+    !                                                    *
+    !*****************************************************
+
+    USE constants, ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+
+      IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
+            .OR. SIZE( y ) /= SIZE( z ) )THEN
+        PRINT *, "** ERROR: The sizes of the arrays of positions" &
+                 // "passed to import_lorene_id are not the same."
+        PRINT *
+        STOP
+      ENDIF
+
+      IF( ALLOCATED( THIS% lapse )   .AND. &
+          ALLOCATED( THIS% shift_x ) .AND. &
+          ALLOCATED( THIS% shift_y ) .AND. &
+          ALLOCATED( THIS% shift_z ) .AND. &
+          ALLOCATED( THIS% g_xx ) .AND. ALLOCATED( THIS% g_xy ) .AND. &
+          ALLOCATED( THIS% g_xz ) .AND. ALLOCATED( THIS% g_yy ) .AND. &
+          ALLOCATED( THIS% g_yz ) .AND. ALLOCATED( THIS% g_zz ) .AND. &
+          ALLOCATED( THIS% k_xx ) .AND. ALLOCATED( THIS% k_xy ) .AND. &
+          ALLOCATED( THIS% k_xz ) .AND. ALLOCATED( THIS% k_yy ) .AND. &
+          ALLOCATED( THIS% k_yz ) .AND. ALLOCATED( THIS% k_zz ) .AND. &
+          ALLOCATED( THIS% baryon_density )  .AND. &
+          ALLOCATED( THIS% energy_density )  .AND. &
+          ALLOCATED( THIS% specific_energy ) .AND. &
+          ALLOCATED( THIS% v_euler_x )       .AND. &
+          ALLOCATED( THIS% v_euler_y )       .AND. &
+          ALLOCATED( THIS% v_euler_z ) &
+      )THEN
+
+        import_id_loop: DO itr= 1, n, 1
+
+          ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+          ! to LORENE units (km). See MODULE constants for the definition of
+          ! Msun_geo
+          CALL get_lorene_id( THIS% bns_ptr, &
+                              x( itr )*Msun_geo, &
+                              y( itr )*Msun_geo, &
+                              z( itr )*Msun_geo, &
+                              THIS% lapse( itr ), &
+                              THIS% shift_x( itr ), &
+                              THIS% shift_y( itr ), &
+                              THIS% shift_z( itr ), &
+                              THIS% g_xx( itr ), &
+                              THIS% k_xx( itr ), &
+                              THIS% k_xy( itr ), &
+                              THIS% k_xz( itr ), &
+                              THIS% k_yy( itr ), &
+                              THIS% k_yz( itr ), &
+                              THIS% k_zz( itr ), &
+                              THIS% baryon_density( itr ), &
+                              THIS% energy_density( itr ), &
+                              THIS% specific_energy( itr ), &
+                              THIS% v_euler_x( itr ), &
+                              THIS% v_euler_y( itr ), &
+                              THIS% v_euler_z( itr ) )
+
+          !
+          !-- The following follows from the assumption of conformal
+          !-- flatness in LORENE
+          !
+          THIS% g_yy( itr )= THIS% g_xx( itr )
+          THIS% g_zz( itr )= THIS% g_xx( itr )
+          THIS% g_xy( itr )= 0.0D0
+          THIS% g_xz( itr )= 0.0D0
+          THIS% g_yz( itr )= 0.0D0
+
+          !THIS% shift_x( itr )= -1.0D0*THIS% shift_x( itr )
+          !THIS% shift_y( itr )= -1.0D0*THIS% shift_y( itr )
+          !THIS% shift_z( itr )= -1.0D0*THIS% shift_z( itr )
+
+          !
+          !-- Convert the extrinsic curvature from LORENE units to
+          !-- SPHINCS units
+          !
+          THIS% k_xx( itr )= THIS% k_xx( itr )*Msun_geo
+          THIS% k_xy( itr )= THIS% k_xy( itr )*Msun_geo
+          THIS% k_xz( itr )= THIS% k_xz( itr )*Msun_geo
+          THIS% k_yy( itr )= THIS% k_yy( itr )*Msun_geo
+          THIS% k_yz( itr )= THIS% k_yz( itr )*Msun_geo
+          THIS% k_zz( itr )= THIS% k_zz( itr )*Msun_geo
+
+          ! Print progress on screen
+          perc= 100*itr/n
+          IF( MOD( perc, 10 ) == 0 )THEN
+            WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                    creturn//" ", perc, "%"
+          ENDIF
+
+        ENDDO import_id_loop
+        WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+
+      ELSE
+
+        PRINT *, "** ERROR: Memory was not allocated before calling " &
+                 // "import_id in import_lorene_id (TYPE particles)."
+        PRINT *
+        STOP
+
+      ENDIF
+
+      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *
+
+    ENDIF
+
+  END PROCEDURE import_id_int
+
+  MODULE PROCEDURE import_id_ext
+
+    !*****************************************************
+    !                                                    *
+    ! Store the ID in non-member arrays with             *
+    ! the same shape as the bns arrays                   *
+    !                                                    *
+    ! FT 5.10.2020                                       *
+    !                                                    *
+    !*****************************************************
+
+    USE constants, ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+
+      IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
+            .OR. SIZE( y ) /= SIZE( z ) )THEN
+        PRINT *, "** ERROR: The sizes of the arrays of positions" &
+                 // "passed to import_lorene_id are not the same."
+        PRINT *
+        STOP
+      ENDIF
+
+      import_id_loop: DO itr= 1, n, 1
+
+        ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+        ! to LORENE units (km). See MODULE constants for the definition of
+        ! Msun_geo
+        CALL get_lorene_id( THIS% bns_ptr, &
+                            x( itr )*Msun_geo, &
+                            y( itr )*Msun_geo, &
+                            z( itr )*Msun_geo, &
+                            lapse( itr ), &
+                            shift_x( itr ), &
+                            shift_y( itr ), &
+                            shift_z( itr ), &
+                            g_xx( itr ), &
+                            k_xx( itr ), &
+                            k_xy( itr ), &
+                            k_xz( itr ), &
+                            k_yy( itr ), &
+                            k_yz( itr ), &
+                            k_zz( itr ), &
+                            baryon_density( itr ), &
+                            energy_density( itr ), &
+                            specific_energy( itr ), &
+                            u_euler_x( itr ), &
+                            u_euler_y( itr ), &
+                            u_euler_z( itr ) )
+
+        !
+        !-- The following follows from the assumption of conformal
+        !-- flatness in LORENE
+        !
+        g_yy( itr )= g_xx( itr )
+        g_zz( itr )= g_xx( itr )
+        g_xy( itr )= 0.0D0
+        g_xz( itr )= 0.0D0
+        g_yz( itr )= 0.0D0
+
+        !shift_x( itr )= -1.0D0*shift_x( itr )
+        !shift_y( itr )= -1.0D0*shift_y( itr )
+        !shift_z( itr )= -1.0D0*shift_z( itr )
+
+        !
+        !-- Convert the extrinsic curvature from LORENE units to
+        !-- SPHINCS units
+        !
+        k_xx( itr )= k_xx( itr )*Msun_geo
+        k_xy( itr )= k_xy( itr )*Msun_geo
+        k_xz( itr )= k_xz( itr )*Msun_geo
+        k_yy( itr )= k_yy( itr )*Msun_geo
+        k_yz( itr )= k_yz( itr )*Msun_geo
+        k_zz( itr )= k_zz( itr )*Msun_geo
+
+        ! Print progress on screen
+        perc= 100*itr/n
+        IF( MOD( perc, 10 ) == 0 )THEN
+          WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                  creturn//" ", perc, "%"
+        ENDIF
+
+      ENDDO import_id_loop
+      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+
+      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *
+
+    ENDIF
+
+  END PROCEDURE import_id_ext
+
+  MODULE PROCEDURE import_id_multid_array
+
+    !*****************************************************
+    !                                                    *
+    ! Store the spacetime ID in multi-dimensional arrays *
+    ! needed for the spacetime part of SPHINCS           *
+    !                                                    *
+    ! FT 22.11.2020                                      *
+    !                                                    *
+    !*****************************************************
+
+    USE constants, ONLY: Msun_geo
+
+    USE tensor,    ONLY: itt, itx, ity, itz, ixx, ixy, &
+                         ixz, iyy, iyz, izz, jxx, jxy, jxz, &
+                         jyy, jyz, jzz, jx, jy, jz, n_sym4x4
+
+    IMPLICIT NONE
+
+    INTEGER:: ix, iy, iz
+
+    DOUBLE PRECISION:: detg
+    DOUBLE PRECISION:: detg4
+    DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: g4
+
+    ! g4 is allocatable to allocate it on the heap
+    ! Allocating it on the stack might exceed stack memory,
+    ! causing a segmentation fault
+    ALLOCATE( g4( nx, ny, nz, n_sym4x4 ) )
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+
+      IF( .FALSE. &!SHAPE( pos(:,:,:,1) ) /= SHAPE( lapse ) .OR. &
+          !SHAPE( pos(:,:,:,1) ) /= SHAPE( shift(:,:,:,jx) ) & ! .OR. &
+        ! SHAPE( pos(:,:,:,1) ) /= SHAPE( g(:,:,:,1) ) .OR. &
+        ! SHAPE( pos(:,:,:,1) ) /= SHAPE( k(:,:,:,1) ) &
+        )THEN
+        PRINT *, "** ERROR: Mismatch in array dimensions" &
+                 // "in import_id_multid_array."
+        PRINT *
+        STOP
+      ENDIF
+
+      coords_z: DO iz= 1, nz, 1
+        coords_y: DO iy= 1, ny, 1
+          coords_x: DO ix= 1, nx, 1
+
+            ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+            ! to LORENE units (km). See MODULE constants for the definition of
+            ! Msun_geo
+            CALL get_lorene_id_spacetime( THIS% bns_ptr, &
+                                pos( 1, ix, iy, iz )*Msun_geo, &
+                                pos( 2, ix, iy, iz )*Msun_geo, &
+                                pos( 3, ix, iy, iz )*Msun_geo, &
+                                lapse( ix, iy, iz ), &
+                                shift( ix, iy, iz, jx ), &
+                                shift( ix, iy, iz, jy ), &
+                                shift( ix, iy, iz, jz ), &
+                                g( ix, iy, iz, jxx ), &
+                                k( ix, iy, iz, jxx ), &
+                                k( ix, iy, iz, jxy ), &
+                                k( ix, iy, iz, jxz ), &
+                                k( ix, iy, iz, jyy ), &
+                                k( ix, iy, iz, jyz ), &
+                                k( ix, iy, iz, jzz ) )
+
+            !
+            !-- The following follows from the assumption of
+            !-- conformal flatness in LORENE
+            !
+            g( ix, iy, iz, jyy )= g( ix, iy, iz, jxx )
+            g( ix, iy, iz, jzz )= g( ix, iy, iz, jxx )
+            g( ix, iy, iz, jxy )= 0.0D0
+            g( ix, iy, iz, jxz )= 0.0D0
+            g( ix, iy, iz, jyz )= 0.0D0
+
+            !shift( ix, iy, iz, jx )= -1.0D0*shift( ix, iy, iz, jx )
+            !shift( ix, iy, iz, jy )= -1.0D0*shift( ix, iy, iz, jy )
+            !shift( ix, iy, iz, jz )= -1.0D0*shift( ix, iy, iz, jz )
+
+            !
+            !-- Convert the extrinsic curvature from LORENE units to
+            !-- SPHINCS units
+            !
+            k( ix, iy, iz, jxx )= k( ix, iy, iz, jxx )*Msun_geo
+            k( ix, iy, iz, jxy )= k( ix, iy, iz, jxy )*Msun_geo
+            k( ix, iy, iz, jxz )= k( ix, iy, iz, jxz )*Msun_geo
+            k( ix, iy, iz, jyy )= k( ix, iy, iz, jyy )*Msun_geo
+            k( ix, iy, iz, jyz )= k( ix, iy, iz, jyz )*Msun_geo
+            k( ix, iy, iz, jzz )= k( ix, iy, iz, jzz )*Msun_geo
+
+!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
+!                PRINT *, "5"
+!              ENDIF
+
+            !IF( ix == 1 .AND. iy == 1 .AND. iz == 54 )THEN
+            !  PRINT *, "g_xx=", g(1,1,54,jxx)
+            !  PRINT *, "g_xy=", g(1,1,54,jxy)
+            !  PRINT *, "g_xz=", g(1,1,54,jxz)
+            !  PRINT *, "g_yy=", g(1,1,54,jyy)
+            !  PRINT *, "g_yz=", g(1,1,54,jyz)
+            !  PRINT *, "g_zz=", g(1,1,54,jzz)
+            !  PRINT *
+            !ENDIF
+            !IF( ix == 1 .AND. iy == 1 .AND. iz == 55 )THEN
+            !  PRINT *, "g_xx=", g(1,1,55,jxx)
+            !  PRINT *, "g_xy=", g(1,1,55,jxy)
+            !  PRINT *, "g_xz=", g(1,1,55,jxz)
+            !  PRINT *, "g_yy=", g(1,1,55,jyy)
+            !  PRINT *, "g_yz=", g(1,1,55,jyz)
+            !  PRINT *, "g_zz=", g(1,1,55,jzz)
+            !  PRINT *
+            !ENDIF
+
+            detg= 2.0D0*g(ix,iy,iz,jxy)*g(ix,iy,iz,jxz)*g(ix,iy,iz,jyz) &
+                  - g(ix,iy,iz,jzz)*g(ix,iy,iz,jxy)**2 + g(ix,iy,iz,jyy) &
+                   *( g(ix,iy,iz,jxx)*g(ix,iy,iz,jzz) - g(ix,iy,iz,jxz)**2 ) &
+                  - g(ix,iy,iz,jxx)*g(ix,iy,iz,jyz)**2
+
+!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
+!                PRINT *, "6"
+!              ENDIF
+
+            IF( ABS( detg ) < 1D-10 )THEN
+              PRINT *, "The determinant of the spatial metric " &
+                       // "is effectively 0 at the grid point " &
+                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, ")."
+              PRINT *, "detg=", detg
+              PRINT *
+              STOP
+            ELSEIF( detg < 0 )THEN
+              PRINT *, "The determinant of the spatial metric " &
+                       // "is negative at the grid point " &
+                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, ")."
+              PRINT *, "detg=", detg
+              PRINT *
+              STOP
+            ENDIF
+
+!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
+!  PRINT *, "7"
+!ENDIF
+
+            CALL compute_g4( ix, iy, iz, lapse, shift, g, g4 )
+
+!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
+!  PRINT *, "8"
+!ENDIF
+
+            CALL determinant_sym4x4_grid( ix, iy, iz, g4, detg4 )
+
+!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
+!  PRINT *, "9"
+!ENDIF
+
+            IF( ABS( detg4 ) < 1D-10 )THEN
+              PRINT *, "The determinant of the spacetime metric "&
+                       // "is effectively 0 at the grid point " &
+                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, ")."
+              PRINT *, "detg4=", detg4
+              PRINT *
+              STOP
+            ELSEIF( detg4 > 0 )THEN
+              PRINT *, "The determinant of the spacetime metric "&
+                       // "is positive at the grid point " &
+                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, ")."
+              PRINT *, "detg4=", detg4
+              PRINT *
+              STOP
+            ENDIF
+
+!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
+!  PRINT *, "10"
+!ENDIF
+!IF( ix < 20 .AND. iy == 1 .AND. iz == 1 )THEN
+!  PRINT *, "ix=", ix, ", iy=", iy, ", iz=", iz
+!ENDIF
+
+            ! Print progress on screen
+            perc= 100*( nx*ny*(iz - 1) + nx*(iy - 1) + ix )/( nx*ny*nz )
+            !perc2= 100.0*DBLE(nx*ny*(iz - 1) + nx*(iy - 1) + ix)/DBLE( nx*ny*nz )
+            !perc= 100*cnt/( nx*ny*nz )
+            IF( MOD( perc, 10 ) == 0 )THEN
+              WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                      creturn//" ", perc, "%"
+              !WRITE( *, "(A2,F5.2,A1)", ADVANCE= "NO" ) &
+              !        creturn//" ", perc2, "%"
+            ENDIF
+
+          ENDDO coords_x
+        ENDDO coords_y
+      ENDDO coords_z
+      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+
+      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *
+
+    ENDIF
+
+  END PROCEDURE import_id_multid_array
+
+  MODULE PROCEDURE import_id_hydro
+
+    !*****************************************************
+    !                                                    *
+    ! Store the hydro ID in the arrays needed            *
+    ! for the spacetime part of SPHINCS                  *
+    !                                                    *
+    ! FT 25.11.2020                                      *
+    !                                                    *
+    !*****************************************************
+
+    USE constants, ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    INTEGER:: ix, iy, iz
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+
+      coords_z: DO iz= 1, nz, 1
+        coords_y: DO iy= 1, ny, 1
+          coords_x: DO ix= 1, nx, 1
+
+            ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+            ! to LORENE units (km). See MODULE constants for the definition of
+            ! Msun_geo
+            CALL get_lorene_id_hydro( THIS% bns_ptr, &
+                              pos( 1, ix, iy, iz )*Msun_geo, &
+                              pos( 2, ix, iy, iz )*Msun_geo, &
+                              pos( 3, ix, iy, iz )*Msun_geo, &
+                              baryon_density( ix, iy, iz ), &
+                              energy_density( ix, iy, iz ), &
+                              specific_energy( ix, iy, iz ), &
+                              pressure( ix, iy, iz ), &
+                              u_euler( ix, iy, iz, 1 ), &
+                              u_euler( ix, iy, iz, 2 ), &
+                              u_euler( ix, iy, iz, 3 ) )
+
+            ! Print progress on screen
+            perc= 100*(nx*ny*(iz - 1) &
+                  + nx*(iy - 1) + ix)/( nx*ny*nz )
+            IF( MOD( perc, 10 ) == 0 )THEN
+              WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                      creturn//" ", perc, "%"
+            ENDIF
+
+          ENDDO coords_x
+        ENDDO coords_y
+      ENDDO coords_z
+      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+
+      PRINT *, "** Subroutine import_lorene_id_hydro executed."
+      PRINT *
+
+    ENDIF
+
+  END PROCEDURE import_id_hydro
+
+  MODULE PROCEDURE import_id_particles
+
+    !*****************************************************
+    !                                                    *
+    ! Import the LORENE ID on the particles, ignoring    *
+    ! the extrinsic curvature which is not needed.       *
+    !                                                    *
+    ! FT 19.11.2020                                      *
+    !                                                    *
+    !*****************************************************
+
+    USE constants, ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION:: detg
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+
+      IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
+              .OR. SIZE( y ) /= SIZE( z ) )THEN
+        PRINT *, "** ERROR: The sizes of the arrays of positions" &
+                 // "passed to import_lorene_id are not the same."
+        PRINT *
+        STOP
+      ENDIF
+
+      import_id_loop: DO itr= 1, n, 1
+
+        ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+        ! to LORENE units (km). See MODULE constants for the definition of
+        ! Msun_geo
+        CALL get_lorene_id_particles( THIS% bns_ptr, &
+                                      x( itr )*Msun_geo, &
+                                      y( itr )*Msun_geo, &
+                                      z( itr )*Msun_geo, &
+                                      lapse( itr ), &
+                                      shift_x( itr ), &
+                                      shift_y( itr ), &
+                                      shift_z( itr ), &
+                                      g_xx( itr ), &
+                                      baryon_density( itr ), &
+                                      energy_density( itr ), &
+                                      specific_energy( itr ), &
+                                      pressure( itr ), &
+                                      u_euler_x( itr ), &
+                                      u_euler_y( itr ), &
+                                      u_euler_z( itr ) )
+
+        !
+        !-- The following follows from the assumption of conformal
+        !-- flatness in LORENE
+        !
+        g_yy( itr )= g_xx( itr )
+        g_zz( itr )= g_xx( itr )
+        g_xy( itr )= 0.0D0
+        g_xz( itr )= 0.0D0
+        g_yz( itr )= 0.0D0
+
+        !shift_x( itr )= - 1.0D0*shift_x( itr )
+        !shift_y( itr )= - 1.0D0*shift_y( itr )
+        !shift_z( itr )= - 1.0D0*shift_z( itr )
+
+        detg= 2*g_xy(itr)*g_xz(itr)*g_yz(itr) &
+              - g_zz(itr)*g_xy(itr)**2 &
+              + g_yy(itr)*( g_xx(itr)*g_zz(itr) - g_xz(itr)**2 ) &
+              - g_xx(itr)*g_yz(itr)**2
+
+        IF( ABS( detg ) < 1D-10 )THEN
+          PRINT *, "The determinant of the spatial metric is " &
+                   // "effectively 0 at the particle ", itr
+          PRINT *, "detg=", detg
+          PRINT *
+          STOP
+        ELSEIF( detg < 0 )THEN
+          PRINT *, "The determinant of the spatial metric is " &
+                   // "negative at the particle ", itr
+          PRINT *, "detg=", detg
+          PRINT *
+          STOP
+        ENDIF
+
+        ! Print progress on screen
+        perc= 100*itr/n
+        IF( MOD( perc, 10 ) == 0 )THEN
+          WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                  creturn//" ", perc, "%"
+        ENDIF
+
+      ENDDO import_id_loop
+      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+
+      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *
+
+    ENDIF
+
+  END PROCEDURE import_id_particles
+
+  MODULE PROCEDURE import_id_k
+
+    !*****************************************************
+    !                                                    *
+    ! Store the extrinsic curvature in the               *
+    ! arrays needed for the SPH part of                  *
+    ! SPHINCS                                            *
+    !                                                    *
+    ! FT 25.11.2020                                      *
+    !                                                    *
+    !*****************************************************
+
+    USE constants, ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION:: detg
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+
+      IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
+              .OR. SIZE( y ) /= SIZE( z ) )THEN
+        PRINT *, "** ERROR: The sizes of the arrays of positions" &
+                 // "passed to import_lorene_id are not the same."
+        PRINT *
+        STOP
+      ENDIF
+
+      import_id_loop: DO itr= 1, n, 1
+
+        ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+        ! to LORENE units (km). See MODULE constants for the definition of
+        ! Msun_geo
+        CALL get_lorene_id_k( THIS% bns_ptr, &
+                              x( itr )*Msun_geo, &
+                              y( itr )*Msun_geo, &
+                              z( itr )*Msun_geo, &
+                              k_xx( itr ), &
+                              k_xy( itr ), &
+                              k_xz( itr ), &
+                              k_yy( itr ), &
+                              k_yz( itr ), &
+                              k_zz( itr ) )
+
+        !
+        !-- Convert the extrinsic curvature from LORENE units to
+        !-- SPHINCS units
+        !
+        k_xx( itr )= k_xx( itr )*Msun_geo
+        k_xy( itr )= k_xy( itr )*Msun_geo
+        k_xz( itr )= k_xz( itr )*Msun_geo
+        k_yy( itr )= k_yy( itr )*Msun_geo
+        k_yz( itr )= k_yz( itr )*Msun_geo
+        k_zz( itr )= k_zz( itr )*Msun_geo
+
+        ! Print progress on screen
+        perc= 100*itr/n
+        IF( MOD( perc, 10 ) == 0 )THEN
+          WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                  creturn//" ", perc, "%"
+        ENDIF
+
+      ENDDO import_id_loop
+      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+
+      PRINT *, "** Subroutine import_lorene_id_k executed."
+      PRINT *
+
+    ENDIF
+
+  END PROCEDURE import_id_k
+
+  MODULE PROCEDURE print_id_params
+
+    !*****************************************************
+    !                                                    *
+    ! Print the parameters of the binary neutron         *
+    ! stars' initial data computed by LORENE             *
+    !                                                    *
+    ! FT 8.10.2020                                       *
+    !                                                    *
+    !*****************************************************
+
+    IMPLICIT NONE
+
+    IF( THIS% angular_momentum == 0.0D0 )THEN
+
+      PRINT *
+      PRINT *, " ** The parameters have not ben read yet. ", &
+          "Call the SUBROUTINE import_lorene_id_params to read them."
+      PRINT *
+
+    ELSE
+
+      PRINT *
+      PRINT *, " ** The parameters of the binary system are:"
+      PRINT *
+      PRINT *, " Distance between the points of highest density = ",&
+               THIS% distance, " km"
+      PRINT *, " Distance between the centers of mass = ", &
+               THIS% distance_com, " km"
+      PRINT *
+      PRINT *, " Mass of star 1 = ", THIS% mass1, " M_sol"
+      PRINT *, " Mass of star 2 = ", THIS% mass2, " M_sol"
+      PRINT *, " ADM mass = ", THIS% adm_mass, " M_sol"
+      PRINT *
+      PRINT *, " Angular velocity = ", THIS% angular_vel, " rad/s"
+      PRINT *, " Angular momentum of the system = ", &
+               THIS% angular_momentum, " G M_sol^2 /c"
+      PRINT *
+      PRINT *, " Radii of star 1: "
+      PRINT *, "  x direction, towards companion = ", &
+               THIS% radius1_x_comp, " km"
+      PRINT *, "  x direction, opposite to companion = ", &
+               THIS% radius1_x_opp, " km"
+      PRINT *, "  y direction = ", THIS% radius1_y, " km"
+      PRINT *, "  z direction = ", THIS% radius1_z, " km"
+      PRINT *, " Radii of star 2 :"
+      PRINT *, "  x direction, towards companion = ", &
+               THIS% radius2_x_comp, " km"
+      PRINT *, "  x direction, opposite to companion = ", &
+               THIS% radius2_x_opp, " km"
+      PRINT *, "  y direction = ", THIS% radius2_y, " km"
+      PRINT *, "  z direction = ", THIS% radius2_z, " km"
+      PRINT *
+      PRINT *, " Equations of state for star 1 (EOS1) = ", THIS% eos1
+      PRINT *, " Equations of state for star 2 (EOS2) = ", THIS% eos2
+      PRINT *
+      PRINT *, " Parameters for EOS1: "
+      PRINT *, "  Number of polytropic indexes = ", THIS% npeos_1
+      PRINT *, "  Polytopic index gamma_0 = ", THIS% gamma0_1
+      PRINT *, "  Polytopic index gamma_1 = ", THIS% gamma1_1
+      PRINT *, "  Polytopic index gamma_2 = ", THIS% gamma2_1
+      PRINT *, "  Polytopic index gamma_3 = ", THIS% gamma3_1
+      PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
+               THIS% kappa0_1, "rho_nuc c^2 / n_nuc^gamma_0"
+      PRINT *, "  Pressure coefficient for the first polytrope = ",&
+               THIS% kappa1_1, "rho_nuc c^2 / n_nuc^gamma_1"
+      PRINT *, "  Pressure coefficient for the second polytrope = ",&
+               THIS% kappa2_1, "rho_nuc c^2 / n_nuc^gamma_2"
+      PRINT *, "  Pressure coefficient for the third polytrope = ",&
+               THIS% kappa3_1, "rho_nuc c^2 / n_nuc^gamma_3"
+      PRINT *, "  Exponent of the pressure at the next rho (dyne/cm^2)" &
+               // "= ", THIS% logP1_1
+      PRINT *, "  Exponent of first fiducial density (g/cm^3) = ", &
+               THIS% logRho0_1
+      PRINT *, "  Exponent of second fiducial density (g/cm^3) = ", &
+               THIS% logRho1_1
+      PRINT *, "  Exponent of third fiducial density (g/cm^3) = ", &
+               THIS% logRho2_1
+      PRINT *
+      PRINT *, " Parameters for EOS2: "
+      PRINT *, "  Number of polytropic indexes = ", THIS% npeos_2
+      PRINT *, "  Polytopic index gamma_0 = ", THIS% gamma0_2
+      PRINT *, "  Polytopic index gamma_1 = ", THIS% gamma1_2
+      PRINT *, "  Polytopic index gamma_2 = ", THIS% gamma2_2
+      PRINT *, "  Polytopic index gamma_3 = ", THIS% gamma3_2
+      PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
+               THIS% kappa0_2, "rho_nuc c^2 / n_nuc^gamma_0"
+      PRINT *, "  Pressure coefficient for the first polytrope = ",&
+               THIS% kappa1_2, "rho_nuc c^2 / n_nuc^gamma_1"
+      PRINT *, "  Pressure coefficient for the second polytrope = ",&
+               THIS% kappa2_2, "rho_nuc c^2 / n_nuc^gamma_2"
+      PRINT *, "  Pressure coefficient for the third polytrope = ",&
+               THIS% kappa3_2, "rho_nuc c^2 / n_nuc^gamma_3"
+      PRINT *, "  Exponent of the pressure at the next rho (dyne/cm^2)" &
+               // "= ", THIS% logP1_2
+      PRINT *, "  Exponent of first fiducial density (g/cm^3) = ", &
+               THIS% logRho0_2
+      PRINT *, "  Exponent of second fiducial density (g/cm^3) = ", &
+               THIS% logRho1_2
+      PRINT *, "  Exponent of third fiducial density (g/cm^3) = ", &
+               THIS% logRho2_2
+      PRINT *
+
+    ENDIF
+
+  END PROCEDURE print_id_params
+
+  MODULE PROCEDURE destruct_binary
+
+    !************************************************
+    !                                               *
+    ! Destruct the LORENE Bin_NS object and free    *
+    ! the pointeri pointing to it                   *
+    !                                               *
+    ! FT                                            *
+    !                                               *
+    !************************************************
+
+    IMPLICIT NONE
+
+    !PRINT *, "** Executing the destruct_binary subroutine."
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+
+      CALL destruct_bin_ns( THIS% bns_ptr )
+      THIS% bns_ptr = C_NULL_PTR
+
+    ENDIF
+
+    !PRINT *, "** Subroutine destruct_binary executed."
+    !PRINT *
+
+  END PROCEDURE destruct_binary
+
+  MODULE PROCEDURE allocate_lorene_id_memory
+
+    !************************************************
+    !                                               *
+    ! Allocate the memory to store the LORENE ID    *
+    ! in the member arrays                          *
+    !                                               *
+    ! FT 17.09.2020                                 *
+    !                                               *
+    !************************************************
+
+    IMPLICIT NONE
+
+    PRINT *, "** Executing the allocate_lorene_id_memory subroutine..."
+
+    IF(.NOT.ALLOCATED( THIS% lapse ))THEN
+      ALLOCATE( THIS% lapse( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array lapse" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% shift_x ))THEN
+      ALLOCATE( THIS% shift_x( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array shift_x" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% shift_y ))THEN
+      ALLOCATE( THIS% shift_y( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array shift_y" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% shift_z ))THEN
+      ALLOCATE( THIS% shift_z( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array shift_z" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% g_xx ))THEN
+      ALLOCATE( THIS% g_xx( d ), STAT= ios, &
+          ERRMSG = err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array g_xx" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% g_xy ))THEN
+      ALLOCATE( THIS% g_xy( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array g_xy" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% g_xz ))THEN
+      ALLOCATE( THIS% g_xz( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array g_xz" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% g_yy ))THEN
+      ALLOCATE( THIS% g_yy( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array g_yy" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% g_yz ))THEN
+      ALLOCATE( THIS% g_yz( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array g_yz" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% g_zz ))THEN
+      ALLOCATE( THIS% g_zz( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array g_zz" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% k_xx ))THEN
+      ALLOCATE( THIS% k_xx( d ), STAT= ios, &
+
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array k_xx" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% k_xy ))THEN
+      ALLOCATE( THIS% k_xy( d ), STAT= ios, &
+
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array k_xy" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% k_xz ))THEN
+      ALLOCATE( THIS% k_xz( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array k_xz" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% k_yy ))THEN
+      ALLOCATE( THIS%  k_yy( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array k_yy" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% k_yz ))THEN
+      ALLOCATE( THIS% k_yz( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array k_yz" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% k_zz ))THEN
+      ALLOCATE( THIS% k_zz( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array k_zz" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% baryon_density ))THEN
+      ALLOCATE( THIS% baryon_density( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array baryon_density" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% energy_density ))THEN
+      ALLOCATE( THIS% energy_density( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array energy_density" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% specific_energy ))THEN
+      ALLOCATE( THIS% specific_energy( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array specific_energy" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% v_euler_x ))THEN
+      ALLOCATE( THIS% v_euler_x( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array v_euler_x" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% v_euler_y ))THEN
+      ALLOCATE( THIS% v_euler_y( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array v_euler_y" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% v_euler_z ))THEN
+      ALLOCATE( THIS% v_euler_z( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                  "...allocation error for array v_euler_z" )
+    ENDIF
+
+    IF( SIZE( THIS% lapse ) /= d )THEN
+        PRINT *, "** ERROR in memory allocation in ", &
+                 "allocate_lorene_id_memory"
+    ENDIF
+
+    PRINT *, "** Subroutine allocate_lorene_id_memory executed."
+    PRINT *
+
+  END PROCEDURE allocate_lorene_id_memory
+
+  MODULE PROCEDURE deallocate_lorene_id_memory
+
+    !************************************************
+    !                                               *
+    ! Deallocate the memory for the member arrays   *
+    !                                               *
+    ! FT 17.09.2020                                 *
+    !                                               *
+    !************************************************
+
+    IMPLICIT NONE
+
+    PRINT *, "** Executing the deallocate_lorene_id_memory subroutine..."
+
+    IF(ALLOCATED( THIS% lapse ))THEN
+      DEALLOCATE( THIS% lapse, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                        "...deallocation error for array lapse" )
+    ENDIF
+    IF(ALLOCATED( THIS% shift_x ))THEN
+      DEALLOCATE( THIS% shift_x, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array shift_x" )
+    ENDIF
+    IF(ALLOCATED( THIS% shift_y ))THEN
+      DEALLOCATE( THIS% shift_y, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array shift_y" )
+    ENDIF
+    IF(ALLOCATED( THIS% shift_z ))THEN
+      DEALLOCATE( THIS% shift_z, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array shift_z" )
+    ENDIF
+    IF(ALLOCATED( THIS% g_xx ))THEN
+      DEALLOCATE( THIS% g_xx, STAT= ios, ERRMSG = err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array g_xx" )
+    ENDIF
+    IF(ALLOCATED( THIS% g_xy ))THEN
+      DEALLOCATE( THIS% g_xy, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                     "...deallocation error for array g_xy" )
+    ENDIF
+    IF(ALLOCATED( THIS% g_xz ))THEN
+      DEALLOCATE( THIS% g_xz, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array g_xz" )
+    ENDIF
+    IF(ALLOCATED( THIS% g_yy ))THEN
+      DEALLOCATE( THIS% g_yy, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array g_yy" )
+    ENDIF
+    IF(ALLOCATED( THIS% g_yz ))THEN
+      DEALLOCATE( THIS% g_yz, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array g_yz" )
+    ENDIF
+    IF(ALLOCATED( THIS% g_zz ))THEN
+      DEALLOCATE( THIS% g_zz, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array g_zz" )
+    ENDIF
+    IF(ALLOCATED( THIS% k_xx ))THEN
+      DEALLOCATE( THIS% k_xx, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array k_xx" )
+    ENDIF
+    IF(ALLOCATED( THIS% k_xy ))THEN
+      DEALLOCATE( THIS% k_xy, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array k_xy" )
+    ENDIF
+    IF(ALLOCATED( THIS% k_xz ))THEN
+      DEALLOCATE( THIS% k_xz, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array k_xz" )
+    ENDIF
+    IF(ALLOCATED( THIS% k_yy ))THEN
+      DEALLOCATE( THIS% k_yy, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array k_yy" )
+    ENDIF
+    IF(ALLOCATED( THIS% k_yz ))THEN
+      DEALLOCATE( THIS% k_yz, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array k_yz" )
+    ENDIF
+    IF(ALLOCATED( THIS% k_zz ))THEN
+      DEALLOCATE( THIS% k_zz, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array k_zz" )
+    ENDIF
+    IF(ALLOCATED( THIS% baryon_density ))THEN
+      DEALLOCATE( THIS% baryon_density, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array baryon_density" )
+    ENDIF
+    IF(ALLOCATED( THIS% energy_density ))THEN
+      DEALLOCATE( THIS% energy_density, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array energy_density" )
+    ENDIF
+    IF(ALLOCATED( THIS% specific_energy ))THEN
+      DEALLOCATE( THIS% specific_energy, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+      "...deallocation error for array specific_energy" )
+    ENDIF
+    IF(ALLOCATED( THIS% v_euler_x ))THEN
+      DEALLOCATE( THIS% v_euler_x, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array v_euler_x" )
+    ENDIF
+    IF(ALLOCATED( THIS% v_euler_y ))THEN
+      DEALLOCATE( THIS% v_euler_y, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array v_euler_y" )
+    ENDIF
+    IF(ALLOCATED( THIS% v_euler_z ))THEN
+      DEALLOCATE( THIS% v_euler_z, STAT= ios, &
+              ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array v_euler_z" )
+    ENDIF
+
+    PRINT *, "** Subroutine deallocate_lorene_id_memory executed."
+    PRINT *
+
+  END PROCEDURE deallocate_lorene_id_memory
+
+  !
+  !-- FUNCTIONS
+  !
+  MODULE PROCEDURE import_mass_density
+
+    !************************************************
+    !                                               *
+    ! Returns the LORENE mass density at the point  *
+    ! given as argument.                            *
+    !                                               *
+    ! FT                                            *
+    !                                               *
+    !************************************************
+
+    USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
+    USE constants,                   ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
+
+      ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+      ! to LORENE units (km). See MODULE constants for the definition of
+      ! Msun_geo
+      res= get_lorene_mass_density( THIS% bns_ptr, x*Msun_geo, &
+                                                   y*Msun_geo, &
+                                                   z*Msun_geo )
+
+    ENDIF
+
+  END PROCEDURE import_mass_density
+
+  MODULE PROCEDURE get_field_array
+
+    !************************************************
+    !                                               *
+    ! Returns one of the member arrays, selected    *
+    ! with the string input.                        *
+    !                                               *
+    ! FT                                            *
+    !                                               *
+    !************************************************
+
+    IMPLICIT NONE
+
+    select_field: SELECT CASE( field )
+
+    CASE( "lapse" )
+
+      field_array= THIS% lapse
+
+    CASE( "shift_x" )
+
+      field_array= THIS% shift_x
+
+    CASE( "shift_y" )
+
+      field_array= THIS% shift_y
+
+    CASE( "shift_z" )
+
+      field_array= THIS% shift_z
+
+    CASE( "g_xx" )
+
+      field_array= THIS% g_xx
+
+    CASE( "g_xy" )
+
+      field_array= THIS% g_xy
+
+    CASE( "g_xz" )
+
+      field_array= THIS% g_xz
+
+    CASE( "g_yy" )
+
+      field_array= THIS% g_yy
+
+    CASE( "g_yz" )
+
+      field_array= THIS% g_yz
+
+    CASE( "g_zz" )
+
+      field_array= THIS% g_zz
+
+    CASE( "k_xx" )
+
+      field_array= THIS% k_xx
+
+    CASE( "k_xy" )
+
+      field_array= THIS% k_xy
+
+    CASE( "k_xz" )
+
+      field_array= THIS% k_xz
+
+    CASE( "k_yy" )
+
+      field_array= THIS% k_yy
+
+    CASE( "k_yz" )
+
+      field_array= THIS% k_yz
+
+    CASE( "k_zz" )
+
+      field_array= THIS% k_zz
+
+    CASE( "baryon_density" )
+
+      field_array= THIS% baryon_density
+
+    CASE( "energy_density" )
+
+      field_array= THIS% energy_density
+
+    CASE( "specific_energy" )
+
+      field_array= THIS% specific_energy
+
+    CASE( "v_euler_x" )
+
+      field_array= THIS% v_euler_x
+
+    CASE( "v_euler_y" )
+
+      field_array= THIS% v_euler_y
+
+    CASE( "v_euler_z" )
+
+      field_array= THIS% v_euler_z
+
+    CASE DEFAULT
+
+      PRINT *, "** There is no field named ", field, "in TYPE bns."
+      STOP
+
+    END SELECT select_field
+
+  END PROCEDURE get_field_array
+
+  MODULE PROCEDURE get_field_value
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of one of the member arrays, *
+    ! selected with the string input, at the point   *
+    ! given as argument.                             *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    select_field: SELECT CASE( field )
+
+    CASE( "lapse" )
+
+      field_value= THIS% lapse( n )
+
+    CASE( "shift_x" )
+
+      field_value= THIS% shift_x( n )
+
+    CASE( "shift_y" )
+
+      field_value= THIS% shift_y( n )
+
+    CASE( "shift_z" )
+
+      field_value= THIS% shift_z( n )
+
+    CASE( "g_xx" )
+
+      field_value= THIS% g_xx( n )
+
+    CASE( "g_xy" )
+
+      field_value= THIS% g_xy( n )
+
+    CASE( "g_xz" )
+
+      field_value= THIS% g_xz( n )
+
+    CASE( "g_yy" )
+
+      field_value= THIS% g_yy( n )
+
+    CASE( "g_yz" )
+
+      field_value= THIS% g_yz( n )
+
+    CASE( "g_zz" )
+
+      field_value= THIS% g_zz( n )
+
+    CASE( "k_xx" )
+
+      field_value= THIS% k_xx( n )
+
+    CASE( "k_xy" )
+
+      field_value= THIS% k_xy( n )
+
+    CASE( "k_xz" )
+
+      field_value= THIS% k_xz( n )
+
+    CASE( "k_yy" )
+
+      field_value= THIS% k_yy( n )
+
+    CASE( "k_yz" )
+
+      field_value= THIS% k_yz( n )
+
+    CASE( "k_zz" )
+
+      field_value= THIS% k_zz( n )
+
+    CASE( "baryon_density" )
+
+      field_value= THIS% baryon_density( n )
+
+    CASE( "energy_density" )
+
+      field_value= THIS% energy_density( n )
+
+    CASE( "specific_energy" )
+
+      field_value= THIS% specific_energy( n )
+
+    CASE( "v_euler_x" )
+
+      field_value= THIS% v_euler_x( n )
+
+    CASE( "v_euler_y" )
+
+      field_value= THIS% v_euler_y( n )
+
+    CASE( "v_euler_z" )
+
+      field_value= THIS% v_euler_z( n )
+
+    CASE DEFAULT
+
+      PRINT *, "** There is no field named ", field, "in TYPE bns."
+      STOP
+
+    END SELECT select_field
+
+  END PROCEDURE get_field_value
+
+  MODULE PROCEDURE get_bns_identifier
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of bns_identifier, the       *
+    ! integer identifier of the bns object           *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_bns_identifier= THIS% bns_identifier
+
+  END PROCEDURE get_bns_identifier
+
+  !MODULE PROCEDURE get_bns_ptr
+  !
+  !  !*************************************************
+  !  !                                                *
+  !  ! Returns the value of bns_ptr, the C pointer    *
+  !  ! to the LORENE's Bin_NS object                  *
+  !  ! N.B. This variable is global. The pointer      *
+  !  !      to the second LORENE Bin_NS object will   *
+  !  !      overwrite the first one, and so on.       *
+  !  !      This variable stores the pointer to       *
+  !  !      the last defined LORENE Bin_NS object.    *
+  !  !      That's why it is not freed in the         *
+  !  !      destructor of a bns object. Presently, it *
+  !  !      has to be freed by the user at the end of *
+  !  !      the PROGRAM. See the last part of the     *
+  !  !      PROGRAM in setup_lorene_id.f90, for       *
+  !  !      example.                                  *
+  !  !                                                *
+  !  ! FT                                             *
+  !  !                                                *
+  !  !*************************************************
+  !
+  !  IMPLICIT NONE
+  !
+  !  get_bns_ptr= THIS% bns_ptr
+  !
+  !END PROCEDURE get_bns_ptr
+
+  MODULE PROCEDURE get_gamma_star1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma_star1, the          *
+    ! polytropic index for NS 1 with polytropic EOS, *
+    ! not piecewise polytropic EOS                   *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma_star1= THIS% gamma_star1
+
+  END PROCEDURE get_gamma_star1
+
+  MODULE PROCEDURE get_gamma_star2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma_star2, the          *
+    ! polytropic index for NS 2 with polytropic EOS, *
+    ! not piecewise polytropic EOS                   *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma_star2= THIS% gamma_star2
+
+  END PROCEDURE get_gamma_star2
+
+  MODULE PROCEDURE get_kappa_star1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa_star1, the          *
+    ! polytropic constant for NS 1 with polytropic   *
+    ! EOS, not piecewise polytropic EOS              *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa_star1= THIS% kappa_star1
+
+  END PROCEDURE get_kappa_star1
+
+  MODULE PROCEDURE get_kappa_star2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa_star2, the          *
+    ! polytropic constant for NS 2 with polytropic   *
+    ! EOS, not piecewise polytropic EOS              *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa_star2= THIS% kappa_star2
+
+  END PROCEDURE get_kappa_star2
+
+  MODULE PROCEDURE get_angular_vel
+
+    !*************************************************
+    !                                                *
+    ! Returns the angular velocity of the system     *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_angular_vel= THIS% angular_vel
+
+  END PROCEDURE get_angular_vel
+
+  MODULE PROCEDURE get_distance
+
+    !*************************************************
+    !                                                *
+    ! Returns the distance between the NSs           *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_distance= THIS% distance
+
+  END PROCEDURE get_distance
+
+  MODULE PROCEDURE get_distance_com
+
+    !*************************************************
+    !                                                *
+    ! Returns the distance between the centers of    *
+    ! mass of the NSs                                *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_distance_com= THIS% distance_com
+
+  END PROCEDURE get_distance_com
+
+  MODULE PROCEDURE get_mass1
+
+    !*************************************************
+    !                                                *
+    ! Returns the mass of NS 1                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_mass1= THIS% mass1
+
+  END PROCEDURE get_mass1
+
+  MODULE PROCEDURE get_mass2
+
+    !*************************************************
+    !                                                *
+    ! Returns the mass of NS 2                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_mass2= THIS% mass2
+
+  END PROCEDURE get_mass2
+
+  MODULE PROCEDURE get_adm_mass
+
+    !*************************************************
+    !                                                *
+    ! Returns the ADM mass of the system             *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_adm_mass= THIS% adm_mass
+
+  END PROCEDURE get_adm_mass
+
+  MODULE PROCEDURE get_angular_momentum
+
+    !*************************************************
+    !                                                *
+    ! Returns the angular momentum of the system     *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_angular_momentum= THIS% angular_momentum
+
+  END PROCEDURE get_angular_momentum
+
+  MODULE PROCEDURE get_radius1_x_comp
+
+    !*************************************************
+    !                                                *
+    ! Returns the radius of NS 1 along the x axis    *
+    ! on the side of the companion                   *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_radius1_x_comp= THIS% radius1_x_comp
+
+  END PROCEDURE get_radius1_x_comp
+
+  MODULE PROCEDURE get_radius1_y
+
+    !*************************************************
+    !                                                *
+    ! Returns the radius of NS 1 along the y axis    *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_radius1_y= THIS% radius1_y
+
+  END PROCEDURE get_radius1_y
+
+  MODULE PROCEDURE get_radius1_z
+
+    !*************************************************
+    !                                                *
+    ! Returns the radius of NS 1 along the z axis    *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_radius1_z= THIS% radius1_z
+
+  END PROCEDURE get_radius1_z
+
+  MODULE PROCEDURE get_radius1_x_opp
+
+    !*************************************************
+    !                                                *
+    ! Returns the radius of NS 1 along the x axis    *
+    ! on the side opposite to the companion          *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_radius1_x_opp= THIS% radius1_x_opp
+
+  END PROCEDURE get_radius1_x_opp
+
+  MODULE PROCEDURE get_radius2_x_comp
+
+    !*************************************************
+    !                                                *
+    ! Returns the radius of NS 2 along the x axis    *
+    ! on the side of the companion                   *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_radius2_x_comp= THIS% radius2_x_comp
+
+  END PROCEDURE get_radius2_x_comp
+
+  MODULE PROCEDURE get_radius2_y
+
+    !*************************************************
+    !                                                *
+    ! Returns the radius of NS 2 along the y axis    *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_radius2_y= THIS% radius2_y
+
+  END PROCEDURE get_radius2_y
+
+  MODULE PROCEDURE get_radius2_z
+
+    !*************************************************
+    !                                                *
+    ! Returns the radius of NS 2 along the z axis    *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_radius2_z= THIS% radius2_z
+
+  END PROCEDURE get_radius2_z
+
+  MODULE PROCEDURE get_radius2_x_opp
+
+    !*************************************************
+    !                                                *
+    ! Returns the radius of NS 2 along the x axis    *
+    ! on the side opposite to the companion          *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_radius2_x_opp= THIS% radius2_x_opp
+
+  END PROCEDURE get_radius2_x_opp
+
+  MODULE PROCEDURE get_eos1
+
+    !*************************************************
+    !                                                *
+    ! Returns the name of the EOS for NS 1           *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_eos1= THIS% eos1
+
+  END PROCEDURE get_eos1
+
+  MODULE PROCEDURE get_eos2
+
+    !*************************************************
+    !                                                *
+    ! Returns the name of the EOS for NS 2           *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_eos2= THIS% eos2
+
+  END PROCEDURE get_eos2
+
+  MODULE PROCEDURE get_npeos_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the identifier of the EOS for NS 1     *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_npeos_1= THIS% npeos_1
+
+  END PROCEDURE get_npeos_1
+
+  MODULE PROCEDURE get_npeos_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the identifier of the EOS for NS 2     *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_npeos_2= THIS% npeos_2
+
+  END PROCEDURE get_npeos_2
+
+  MODULE PROCEDURE get_gamma0_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma0_1, the crust's     *
+    ! polytropic index for NS 1 with piecewise       *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma0_1= THIS% gamma0_1
+
+  END PROCEDURE get_gamma0_1
+
+  MODULE PROCEDURE get_gamma0_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma0_2, the crust's     *
+    ! polytropic index for NS 2 with piecewise       *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma0_2= THIS% gamma0_2
+
+  END PROCEDURE get_gamma0_2
+
+  MODULE PROCEDURE get_gamma1_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma1_1, the first       *
+    ! polytropic index for NS 1 with piecewise       *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma1_1= THIS% gamma1_1
+
+  END PROCEDURE get_gamma1_1
+
+  MODULE PROCEDURE get_gamma1_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma1_2, the first       *
+    ! polytropic index for NS 2 with piecewise       *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma1_2= THIS% gamma1_2
+
+  END PROCEDURE get_gamma1_2
+
+  MODULE PROCEDURE get_gamma2_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma2_1, the second      *
+    ! polytropic index for NS 2 with piecewise       *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma2_1= THIS% gamma2_1
+
+  END PROCEDURE get_gamma2_1
+
+  MODULE PROCEDURE get_gamma2_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma2_2, the second      *
+    ! polytropic index for NS 2 with piecewise       *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma2_2= THIS% gamma2_2
+
+  END PROCEDURE get_gamma2_2
+
+  MODULE PROCEDURE get_gamma3_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma3_1, the third       *
+    ! polytropic index for NS 1 with piecewise       *
+    ! polytropic EOS (innermost index)               *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma3_1= THIS% gamma3_1
+
+  END PROCEDURE get_gamma3_1
+
+  MODULE PROCEDURE get_gamma3_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of gamma3_2, the third       *
+    ! polytropic index for NS 2 with piecewise       *
+    ! polytropic EOS (innermost index)               *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_gamma3_2= THIS% gamma3_2
+
+  END PROCEDURE get_gamma3_2
+
+  MODULE PROCEDURE get_kappa0_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa0_1, the crust's     *
+    ! polytropic constant for NS 1 with piecewise    *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa0_1= THIS% kappa0_1
+
+  END PROCEDURE get_kappa0_1
+
+  MODULE PROCEDURE get_kappa1_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa1_1, the first       *
+    ! polytropic constant for NS 1 with piecewise    *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa1_1= THIS% kappa1_1
+
+  END PROCEDURE get_kappa1_1
+
+  MODULE PROCEDURE get_kappa2_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa2_1, the second      *
+    ! polytropic constant for NS 1 with piecewise    *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa2_1= THIS% kappa2_1
+
+  END PROCEDURE get_kappa2_1
+
+  MODULE PROCEDURE get_kappa3_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa3_1, the third       *
+    ! polytropic constant for NS 1 with piecewise    *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa3_1= THIS% kappa3_1
+
+  END PROCEDURE get_kappa3_1
+
+  MODULE PROCEDURE get_kappa0_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa0_2, the crust's     *
+    ! polytropic constant for NS 2 with piecewise    *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa0_2= THIS% kappa0_2
+
+  END PROCEDURE get_kappa0_2
+
+  MODULE PROCEDURE get_kappa1_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa1_2, the first       *
+    ! polytropic constant for NS 2 with piecewise    *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa1_2= THIS% kappa1_2
+
+  END PROCEDURE get_kappa1_2
+
+  MODULE PROCEDURE get_kappa2_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa2_2, the second      *
+    ! polytropic constant for NS 2 with piecewise    *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa2_2= THIS% kappa2_2
+
+  END PROCEDURE get_kappa2_2
+
+  MODULE PROCEDURE get_kappa3_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of kappa3_2, the third       *
+    ! polytropic constant for NS 2 with piecewise    *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_kappa3_2= THIS% kappa3_2
+
+  END PROCEDURE get_kappa3_2
+
+  MODULE PROCEDURE get_logp1_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of logp1_1, the base 10      *
+    ! logarithm of the pressure where the gamma1_1   *
+    ! polytrope starts, for NS 1 with piecewise      *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_logp1_1= THIS% logp1_1
+
+  END PROCEDURE get_logp1_1
+
+  MODULE PROCEDURE get_logp1_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of logp1_2, the base 10      *
+    ! logarithm of the pressure where the gamma1_2   *
+    ! polytrope starts, for NS 2 with piecewise      *
+    ! polytropic EOS                                 *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_logp1_2= THIS% logp1_2
+
+  END PROCEDURE get_logp1_2
+
+  MODULE PROCEDURE get_logRho0_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of logRho0_1, the base 10    *
+    ! logarithm of the mass density where the        *
+    ! gamma1_1 polytrope starts, for NS 1 with       *
+    ! piecewise polytropic EOS                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_logRho0_1= THIS% logRho0_1
+
+  END PROCEDURE get_logRho0_1
+
+  MODULE PROCEDURE get_logRho0_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of logRho0_2, the base 10    *
+    ! logarithm of the mass density where the        *
+    ! gamma1_2 polytrope starts, for NS 2 with       *
+    ! piecewise polytropic EOS                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_logRho0_2= THIS% logRho0_2
+
+  END PROCEDURE get_logRho0_2
+
+  MODULE PROCEDURE get_logRho1_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of logRho1_1, the base 10    *
+    ! logarithm of the mass density where the        *
+    ! gamma2_1 polytrope starts, for NS 1 with       *
+    ! piecewise polytropic EOS                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_logRho1_1= THIS% logRho1_1
+
+  END PROCEDURE get_logRho1_1
+
+  MODULE PROCEDURE get_logRho1_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of logRho1_2, the base 10    *
+    ! logarithm of the mass density where the        *
+    ! gamma2_2 polytrope starts, for NS 2 with       *
+    ! piecewise polytropic EOS                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_logRho1_2= THIS% logRho1_2
+
+  END PROCEDURE get_logRho1_2
+
+  MODULE PROCEDURE get_logRho2_1
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of logRho2_1, the base 10    *
+    ! logarithm of the mass density where the        *
+    ! gamma3_1 polytrope starts, for NS 1 with       *
+    ! piecewise polytropic EOS                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_logRho2_1= THIS% logRho2_1
+
+  END PROCEDURE get_logRho2_1
+
+  MODULE PROCEDURE get_logRho2_2
+
+    !*************************************************
+    !                                                *
+    ! Returns the value of logRho2_2, the base 10    *
+    ! logarithm of the mass density where the        *
+    ! gamma3_2 polytrope starts, for NS 2 with       *
+    ! piecewise polytropic EOS                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_logRho2_2= THIS% logRho2_2
+
+  END PROCEDURE get_logRho2_2
+
+END SUBMODULE bns_methods
