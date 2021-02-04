@@ -1350,17 +1350,17 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     IMPLICIT NONE
 
     IF( ix > THIS% ngrid_x )THEN
-        PRINT *, "** ERROR! ix=", ix, "> ngrid_x=", THIS% ngrid_x
+        PRINT *, "** ERROR in get_MC: ix=", ix, "> ngrid_x=", THIS% ngrid_x
         PRINT *
         STOP
     ENDIF
     IF( iy > THIS% ngrid_y )THEN
-        PRINT *, "** ERROR! iy=", iy, "> ngrid_y=", THIS% ngrid_y
+        PRINT *, "** ERRORin get_MC: iy=", iy, "> ngrid_y=", THIS% ngrid_y
         PRINT *
         STOP
     ENDIF
     IF( iz > THIS% ngrid_z )THEN
-        PRINT *, "** ERROR! iz=", iz, "> ngrid_z=", THIS% ngrid_z
+        PRINT *, "** ERRORin get_MC: iz=", iz, "> ngrid_z=", THIS% ngrid_z
         PRINT *
         STOP
     ENDIF
@@ -1370,6 +1370,82 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     MC_value(3)= THIS% MC(ix,iy,iz,3)
 
   END PROCEDURE get_MC
+
+  MODULE PROCEDURE get_HC_parts
+
+    !**************************************************
+    !                                                 *
+    ! Returns the value of the Hamiltonian constraint *
+    ! computed with particle data, at the specified   *
+    ! grid point                                      *
+    !                                                 *
+    ! FT                                              *
+    !                                                 *
+    !**************************************************
+
+    IMPLICIT NONE
+
+    IF( ix > THIS% ngrid_x )THEN
+        PRINT *, "** ERROR in get_HC_parts: ix=", ix, "> ngrid_x=", &
+                 THIS% ngrid_x
+        PRINT *
+        STOP
+    ENDIF
+    IF( iy > THIS% ngrid_y )THEN
+        PRINT *, "** ERROR in get_HC_parts: iy=", iy, "> ngrid_y=", &
+                 THIS% ngrid_y
+        PRINT *
+        STOP
+    ENDIF
+    IF( iz > THIS% ngrid_z )THEN
+        PRINT *, "** ERROR in get_HC_parts: iz=", iz, "> ngrid_z=", &
+                 THIS% ngrid_z
+        PRINT *
+        STOP
+    ENDIF
+
+    HC_value= THIS% HC_parts(ix,iy,iz)
+
+  END PROCEDURE get_HC_parts
+
+  MODULE PROCEDURE get_MC_parts
+
+    !**************************************************
+    !                                                 *
+    ! Returns the value of the momentum constraint    *
+    ! computed with particle data, at the specified   *
+    ! grid point                                      *
+    !                                                 *
+    ! FT                                              *
+    !                                                 *
+    !**************************************************
+
+    IMPLICIT NONE
+
+    IF( ix > THIS% ngrid_x )THEN
+        PRINT *, "** ERROR in get_MC_parts: ix=", ix, "> ngrid_x=", &
+                 THIS% ngrid_x
+        PRINT *
+        STOP
+    ENDIF
+    IF( iy > THIS% ngrid_y )THEN
+        PRINT *, "** ERROR in get_MC_parts: iy=", iy, "> ngrid_y=", &
+                 THIS% ngrid_y
+        PRINT *
+        STOP
+    ENDIF
+    IF( iz > THIS% ngrid_z )THEN
+        PRINT *, "** ERROR in get_MC_parts: iz=", iz, "> ngrid_z=", &
+                 THIS% ngrid_z
+        PRINT *
+        STOP
+    ENDIF
+
+    MC_value(1)= THIS% MC_parts(ix,iy,iz,1)
+    MC_value(2)= THIS% MC_parts(ix,iy,iz,2)
+    MC_value(3)= THIS% MC_parts(ix,iy,iz,3)
+
+  END PROCEDURE get_MC_parts
 
   MODULE PROCEDURE destruct_formul_3p1
 

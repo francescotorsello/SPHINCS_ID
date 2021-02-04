@@ -189,12 +189,12 @@ PROGRAM convergence_test
 
       ENDIF
       bssn_forms( itr3 )= BSSN_id( binary, &
-                                    original_dx/( ratio_dx*( itr3 - 1 ) ), &
-                                    original_dx/( ratio_dx*( itr3 - 1 ) ), &
-                                    original_dx/( ratio_dx*( itr3 - 1 ) ) )
+                                    original_dx/( ratio_dx**( itr3 - 1 ) ), &
+                                    original_dx/( ratio_dx**( itr3 - 1 ) ), &
+                                    original_dx/( ratio_dx**( itr3 - 1 ) ) )
 
       IF( bssn_forms( itr3 )% get_x_spacing() /= &
-          original_dx/( ratio_dx*( itr3 - 1 ) ) )THEN
+          original_dx/( ratio_dx**( itr3 - 1 ) ) )THEN
         PRINT *, " ** ERROR! The grid spacing #", itr3, ",", &
                  bssn_forms( itr3 )% get_x_spacing(), &
                  " is not equal to dx/4, with dx=", &
@@ -315,7 +315,17 @@ PROGRAM convergence_test
     STOP
   ENDIF
 
-  CALL cauchy_convergence_test( bssn_forms(1), bssn_forms(2), bssn_forms(3) )
+  !
+  !-- Perform the convergence test with the appropriate constraints
+  !
+  IF( compute_constraints )THEN
+    CALL cauchy_convergence_test( bssn_forms(1), bssn_forms(2), bssn_forms(3), &
+                                  1 )
+  ENDIF
+  IF( compute_parts_constraints )THEN
+    CALL cauchy_convergence_test( bssn_forms(1), bssn_forms(2), bssn_forms(3), &
+                                  2 )
+  ENDIF
 
   CALL execution_timer% stop_timer()
 
@@ -360,13 +370,15 @@ PROGRAM convergence_test
   CONTAINS
 
 
-  SUBROUTINE cauchy_convergence_test( formul_dx, formul_dx2, formul_dx4 )
+  SUBROUTINE cauchy_convergence_test( formul_dx, formul_dx2, formul_dx4, &
+                                      use_constraints )
 
     USE constants,  ONLY: ln2
 
     IMPLICIT NONE
 
     CLASS(formul_3p1), INTENT( IN OUT ):: formul_dx, formul_dx2, formul_dx4
+    INTEGER:: use_constraints
 
     INTEGER:: ix, iy, iz, nx, ny, nz, unit_cauchy_ct
 
@@ -418,16 +430,42 @@ PROGRAM convergence_test
 
           ENDIF
 
-          convergence_factor( 1 + ix, 1 + iy, 1 + iz )= &
-           LOG( &
-           ABS( &
-           ( ABS(formul_dx%  get_HC( 1 + ix,   1 + iy,   1 + iz )) &
-           - ABS(formul_dx2% get_HC( 1 + 2*ix, 1 + 2*iy, 1 + 2*iz )))&
-          /( ABS(formul_dx2% get_HC( 1 + 2*ix, 1 + 2*iy, 1 + 2*iz )) &
-           - ABS(formul_dx4% get_HC( 1 + 4*ix, 1 + 4*iy, 1 + 4*iz ) )&
-           + 0*tiny_real ) &
-           ) &
-           )/ln2!/LOG(2.0)
+          choose_constraints: SELECT CASE( use_constraints )
+
+          CASE(1)
+
+            convergence_factor( 1 + ix, 1 + iy, 1 + iz )= &
+             LOG( &
+             ABS( &
+             ( ABS(formul_dx%  get_HC( 1 + ix,   1 + iy,   1 + iz )) &
+             - ABS(formul_dx2% get_HC( 1 + 2*ix, 1 + 2*iy, 1 + 2*iz )))&
+            /( ABS(formul_dx2% get_HC( 1 + 2*ix, 1 + 2*iy, 1 + 2*iz )) &
+             - ABS(formul_dx4% get_HC( 1 + 4*ix, 1 + 4*iy, 1 + 4*iz ) )&
+             + 0*tiny_real ) &
+             ) &
+             )/ln2!/LOG(2.0)
+
+          CASE(2)
+
+            convergence_factor( 1 + ix, 1 + iy, 1 + iz )= &
+             LOG( &
+             ABS( &
+             ( ABS(formul_dx%  get_HC_parts( 1 + ix,   1 + iy,   1 + iz )) &
+             - ABS(formul_dx2% get_HC_parts( 1 + 2*ix, 1 + 2*iy, 1 + 2*iz )))&
+            /( ABS(formul_dx2% get_HC_parts( 1 + 2*ix, 1 + 2*iy, 1 + 2*iz )) &
+             - ABS(formul_dx4% get_HC_parts( 1 + 4*ix, 1 + 4*iy, 1 + 4*iz ) )&
+             + 0*tiny_real ) &
+             ) &
+             )/ln2!/LOG(2.0)
+
+          CASE DEFAULT
+
+            PRINT *, "** There is no well defined algorithm " &
+                     // "corresponding to the number", use_constraints
+            PRINT *, " * Please set use_constraints to 1 or 2."
+            STOP
+
+          END SELECT choose_constraints
 
         ENDDO
       ENDDO

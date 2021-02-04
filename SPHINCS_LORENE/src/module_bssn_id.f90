@@ -61,8 +61,8 @@ MODULE formul_bssn_id
     !
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC
     DOUBLE PRECISION, DIMENSION(3):: GC_l2
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC_from_parts
-    DOUBLE PRECISION, DIMENSION(3):: GC_from_parts_l2
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC_parts
+    DOUBLE PRECISION, DIMENSION(3):: GC_parts_l2
 
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x

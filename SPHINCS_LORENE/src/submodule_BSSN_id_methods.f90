@@ -1488,11 +1488,11 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     dy_1= THIS% dy_1
     dz_1= THIS% dz_1
 
-    ALLOCATE( THIS% HC_from_parts( THIS% ngrid_x, THIS% ngrid_y, &
+    ALLOCATE( THIS% HC_parts( THIS% ngrid_x, THIS% ngrid_y, &
                                    THIS% ngrid_z ) )
-    ALLOCATE( THIS% MC_from_parts( THIS% ngrid_x, THIS% ngrid_y, &
+    ALLOCATE( THIS% MC_parts( THIS% ngrid_x, THIS% ngrid_y, &
                                    THIS% ngrid_z, 3 ) )
-    ALLOCATE( THIS% GC_from_parts( THIS% ngrid_x, THIS% ngrid_y, &
+    ALLOCATE( THIS% GC_parts( THIS% ngrid_x, THIS% ngrid_y, &
                                    THIS% ngrid_z, 3 ) )
 
     PRINT *, "Mapping hydro fields from particles to grid..."
@@ -1737,9 +1737,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     imax(2) = THIS% ngrid_y - ghost_size - 1
     imax(3) = THIS% ngrid_z - ghost_size - 1
 
-    THIS% HC_from_parts= 0.0
-    THIS% MC_from_parts= 0.0
-    THIS% GC_from_parts= 0.0
+    THIS% HC_parts= 0.0
+    THIS% MC_parts= 0.0
+    THIS% GC_parts= 0.0
 
     PRINT *, " * Computing contraints using particle data..."
     CALL BSSN_CONSTRAINTS_INTERIOR( &
@@ -1774,14 +1774,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       !-- Output
       !
       ! Connection constraints
-      THIS% GC_from_parts(:,:,:,jx), &
-      THIS% GC_from_parts(:,:,:,jy), &
-      THIS% GC_from_parts(:,:,:,jz), &
+      THIS% GC_parts(:,:,:,jx), &
+      THIS% GC_parts(:,:,:,jy), &
+      THIS% GC_parts(:,:,:,jz), &
       ! Hamiltonian and momentum constraints
-      THIS% HC_from_parts(:,:,:), &
-      THIS% MC_from_parts(:,:,:,jx), &
-      THIS% MC_from_parts(:,:,:,jy), &
-      THIS% MC_from_parts(:,:,:,jz) &
+      THIS% HC_parts(:,:,:), &
+      THIS% MC_parts(:,:,:,jx), &
+      THIS% MC_parts(:,:,:,jy), &
+      THIS% MC_parts(:,:,:,jz) &
     )
     PRINT *, " * Constraints computed."
     PRINT *
@@ -1824,49 +1824,49 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     name_constraint= "the Hamiltonian constraint"
     CALL THIS% analyze_constraint( &
          THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% HC_from_parts(:,:,:), name_constraint, unit_logfile, &
+         THIS% HC_parts(:,:,:), name_constraint, unit_logfile, &
          name_analysis )
 
     name_analysis= "bssn-mc1-parts-analysis.dat"
     name_constraint= "the first component of the momentum constraint"
     CALL THIS% analyze_constraint( &
          THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% MC_from_parts(:,:,:,1), name_constraint, unit_logfile, &
+         THIS% MC_parts(:,:,:,1), name_constraint, unit_logfile, &
          name_analysis )
 
     name_analysis= "bssn-mc2-parts-analysis.dat"
     name_constraint= "the second component of the momentum constraint"
     CALL THIS% analyze_constraint( &
          THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% MC_from_parts(:,:,:,2), name_constraint, unit_logfile, &
+         THIS% MC_parts(:,:,:,2), name_constraint, unit_logfile, &
          name_analysis )
 
     name_analysis= "bssn-mc3-parts-analysis.dat"
     name_constraint= "the third component of the momentum constraint"
     CALL THIS% analyze_constraint( &
          THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% MC_from_parts(:,:,:,3), name_constraint, unit_logfile, &
+         THIS% MC_parts(:,:,:,3), name_constraint, unit_logfile, &
          name_analysis )
 
     name_analysis= "bssn-gc1-parts-analysis.dat"
     name_constraint= "the first component of the connection constraint"
     CALL THIS% analyze_constraint( &
          THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% GC_from_parts(:,:,:,1), name_constraint, unit_logfile, &
+         THIS% GC_parts(:,:,:,1), name_constraint, unit_logfile, &
          name_analysis )
 
     name_analysis= "bssn-gc2-parts-analysis.dat"
     name_constraint= "the second component of the connection constraint"
     CALL THIS% analyze_constraint( &
          THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% GC_from_parts(:,:,:,2), name_constraint, unit_logfile, &
+         THIS% GC_parts(:,:,:,2), name_constraint, unit_logfile, &
          name_analysis )
 
     name_analysis= "bssn-gc3-parts-analysis.dat"
     name_constraint= "the third component of the connection constraint"
     CALL THIS% analyze_constraint( &
          THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% GC_from_parts(:,:,:,3), name_constraint, unit_logfile, &
+         THIS% GC_parts(:,:,:,3), name_constraint, unit_logfile, &
          name_analysis )
 
     IF( debug ) PRINT *, "4"
@@ -2022,13 +2022,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
               Tmunu_ll( ix, iy, iz, iyy ), &
               Tmunu_ll( ix, iy, iz, iyz ), &
               Tmunu_ll( ix, iy, iz, izz ), &
-              THIS% HC_from_parts( ix, iy, iz ), &
-              THIS% MC_from_parts( ix, iy, iz, jx ), &
-              THIS% MC_from_parts( ix, iy, iz, jy ), &
-              THIS% MC_from_parts( ix, iy, iz, jz ), &
-              THIS% GC_from_parts( ix, iy, iz, jx ), &
-              THIS% GC_from_parts( ix, iy, iz, jy ), &
-              THIS% GC_from_parts( ix, iy, iz, jz ), &
+              THIS% HC_parts( ix, iy, iz ), &
+              THIS% MC_parts( ix, iy, iz, jx ), &
+              THIS% MC_parts( ix, iy, iz, jy ), &
+              THIS% MC_parts( ix, iy, iz, jz ), &
+              THIS% GC_parts( ix, iy, iz, jx ), &
+              THIS% GC_parts( ix, iy, iz, jy ), &
+              THIS% GC_parts( ix, iy, iz, jz ), &
               THIS% lapse( ix, iy, iz ), &
               THIS% shift_u( ix, iy, iz, jx ), &
               THIS% shift_u( ix, iy, iz, jy ), &
@@ -2071,13 +2071,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
               Tmunu_ll( ix, iy, iz, iyy ), &
               Tmunu_ll( ix, iy, iz, iyz ), &
               Tmunu_ll( ix, iy, iz, izz ), &
-              THIS% HC_from_parts( ix, iy, iz ), &
-              THIS% MC_from_parts( ix, iy, iz, jx ), &
-              THIS% MC_from_parts( ix, iy, iz, jy ), &
-              THIS% MC_from_parts( ix, iy, iz, jz ), &
-              THIS% GC_from_parts( ix, iy, iz, jx ), &
-              THIS% GC_from_parts( ix, iy, iz, jy ), &
-              THIS% GC_from_parts( ix, iy, iz, jz )
+              THIS% HC_parts( ix, iy, iz ), &
+              THIS% MC_parts( ix, iy, iz, jx ), &
+              THIS% MC_parts( ix, iy, iz, jy ), &
+              THIS% MC_parts( ix, iy, iz, jz ), &
+              THIS% GC_parts( ix, iy, iz, jx ), &
+              THIS% GC_parts( ix, iy, iz, jy ), &
+              THIS% GC_parts( ix, iy, iz, jz )
           ENDIF
 
           CALL test_status( ios, err_msg, &
