@@ -1,12 +1,12 @@
 &gravity_grid
-ngrid_x=55  ! Number of grid points in the x-direction.
-ngrid_y=55	! Number of grid points in the y-direction.
-ngrid_z=55	! Number of grid points in the z-direction.
-xL=-45.0	! Lower x coordinate.
-xR= 45.0	! Upper x coordinate.
-yL=-45.0	! Lower y coordinate.
-yR= 45.0	! Upper y coordinate.
-zL=-45.0   	! Lower z coordinate.
-zR= 45.0	! Upper z coordinate.
+ngrid_x=40  ! Number of grid points in the x-direction.
+ngrid_y=40	! Number of grid points in the y-direction.
+ngrid_z=40	! Number of grid points in the z-direction.
+xL=-50.0	! Lower x coordinate.
+xR= 50.0	! Upper x coordinate.
+yL=-50.0	! Lower y coordinate.
+yR= 50.0	! Upper y coordinate.
+zL=-50.0   	! Lower z coordinate.
+zR= 50.0	! Upper z coordinate.
 
 /

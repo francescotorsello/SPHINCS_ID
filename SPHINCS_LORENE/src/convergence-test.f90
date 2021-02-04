@@ -553,53 +553,53 @@ PROGRAM convergence_test
       "#      x [km]       y [km]       z [km]       " &
       //"convergence factor [pure number]"
 
-      !DO iz= 1, nx, 1
-      !  DO iy= 1, ny, 1
-      !    DO ix= 1, nz, 1
-      !      abs_grid( 1, ix, iy, iz )= ABS( grid_dx( 1, ix, iy, iz ) )
-      !      abs_grid( 2, ix, iy, iz )= ABS( grid_dx( 2, ix, iy, iz ) )
-      !      abs_grid( 3, ix, iy, iz )= ABS( grid_dx( 3, ix, iy, iz ) )
-      !    ENDDO
-      !  ENDDO
-      !ENDDO
-      !
-      !min_abs_y= 1D+20
-      !min_abs_z= 1D+20
-      !DO iz= 1, nx, 1
-      !  DO iy= 1, ny, 1
-      !    DO ix= 1, nz, 1
-      !      IF( ABS( grid_dx( 2, ix, iy, iz ) ) < min_abs_y )THEN
-      !        min_abs_y= ABS( grid_dx( 2, ix, iy, iz ) )
-      !        min_ix_y= ix
-      !        min_iy_y= iy
-      !        min_iz_y= iz
-      !      ENDIF
-      !      IF( ABS( grid_dx( 3, ix, iy, iz ) ) < min_abs_z )THEN
-      !        min_abs_z= ABS( grid_dx( 3, ix, iy, iz ) )
-      !        min_ix_z= ix
-      !        min_iy_z= iy
-      !        min_iz_z= iz
-      !      ENDIF
-      !    ENDDO
-      !  ENDDO
-      !ENDDO
+      DO iz= 1, nx, 1
+        DO iy= 1, ny, 1
+          DO ix= 1, nz, 1
+            abs_grid( 1, ix, iy, iz )= ABS( grid_dx( 1, ix, iy, iz ) )
+            abs_grid( 2, ix, iy, iz )= ABS( grid_dx( 2, ix, iy, iz ) )
+            abs_grid( 3, ix, iy, iz )= ABS( grid_dx( 3, ix, iy, iz ) )
+          ENDDO
+        ENDDO
+      ENDDO
+
+      min_abs_y= 1D+20
+      min_abs_z= 1D+20
+      DO iz= 1, nx, 1
+        DO iy= 1, ny, 1
+          DO ix= 1, nz, 1
+            IF( ABS( grid_dx( 2, ix, iy, iz ) ) < min_abs_y )THEN
+              min_abs_y= ABS( grid_dx( 2, ix, iy, iz ) )
+              min_ix_y= ix
+              min_iy_y= iy
+              min_iz_y= iz
+            ENDIF
+            IF( ABS( grid_dx( 3, ix, iy, iz ) ) < min_abs_z )THEN
+              min_abs_z= ABS( grid_dx( 3, ix, iy, iz ) )
+              min_ix_z= ix
+              min_iy_z= iy
+              min_iz_z= iz
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
 
       DO iz= 1, nz, 1
         DO iy= 1, ny, 1
           DO ix= 1, nx, 1
-            !IF( .FALSE. .AND. export_constraints_xy .AND. &
-            !    grid_dx( 3, ix, iy, iz ) /= &
-            !    grid_dx( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
-            !  CYCLE
-            !ENDIF
-            !IF( .FALSE. .AND. export_constraints_x .AND. &
-            !    ( grid_dx( 3, ix, iy, iz ) /= &
-            !      grid_dx( 3, min_ix_z, min_iy_z, min_iz_z ) &
-            !      .OR. &
-            !      grid_dx( 2, ix, iy, iz ) /= &
-            !      grid_dx( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
-            !  CYCLE
-            !ENDIF
+            IF( .FALSE. .AND. export_constraints_xy .AND. &
+                grid_dx( 3, ix, iy, iz ) /= &
+                grid_dx( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
+              CYCLE
+            ENDIF
+            IF( .FALSE. .AND. export_constraints_x .AND. &
+                ( grid_dx( 3, ix, iy, iz ) /= &
+                  grid_dx( 3, min_ix_z, min_iy_z, min_iz_z ) &
+                  .OR. &
+                  grid_dx( 2, ix, iy, iz ) /= &
+                  grid_dx( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
+              CYCLE
+            ENDIF
             WRITE( UNIT = unit_cauchy_ct, IOSTAT = ios, &
                    IOMSG = err_msg, FMT = * )&
                 grid_dx( 1, ix, iy, iz ), &
@@ -746,53 +746,53 @@ PROGRAM convergence_test
       "#      x [km]       y [km]       z [km]       " &
       //"convergence factor [pure number]"
 
-      !DO iz= 1, nx, 1
-      !  DO iy= 1, ny, 1
-      !    DO ix= 1, nz, 1
-      !      abs_grid( 1, ix, iy, iz )= ABS( grid_dx( 1, ix, iy, iz ) )
-      !      abs_grid( 2, ix, iy, iz )= ABS( grid_dx( 2, ix, iy, iz ) )
-      !      abs_grid( 3, ix, iy, iz )= ABS( grid_dx( 3, ix, iy, iz ) )
-      !    ENDDO
-      !  ENDDO
-      !ENDDO
-      !
-      !min_abs_y= 1D+20
-      !min_abs_z= 1D+20
-      !DO iz= 1, nx, 1
-      !  DO iy= 1, ny, 1
-      !    DO ix= 1, nz, 1
-      !      IF( ABS( grid_dx( 2, ix, iy, iz ) ) < min_abs_y )THEN
-      !        min_abs_y= ABS( grid_dx( 2, ix, iy, iz ) )
-      !        min_ix_y= ix
-      !        min_iy_y= iy
-      !        min_iz_y= iz
-      !      ENDIF
-      !      IF( ABS( grid_dx( 3, ix, iy, iz ) ) < min_abs_z )THEN
-      !        min_abs_z= ABS( grid_dx( 3, ix, iy, iz ) )
-      !        min_ix_z= ix
-      !        min_iy_z= iy
-      !        min_iz_z= iz
-      !      ENDIF
-      !    ENDDO
-      !  ENDDO
-      !ENDDO
+      DO iz= 1, nx, 1
+        DO iy= 1, ny, 1
+          DO ix= 1, nz, 1
+            abs_grid( 1, ix, iy, iz )= ABS( grid_dx( 1, ix, iy, iz ) )
+            abs_grid( 2, ix, iy, iz )= ABS( grid_dx( 2, ix, iy, iz ) )
+            abs_grid( 3, ix, iy, iz )= ABS( grid_dx( 3, ix, iy, iz ) )
+          ENDDO
+        ENDDO
+      ENDDO
+
+      min_abs_y= 1D+20
+      min_abs_z= 1D+20
+      DO iz= 1, nx, 1
+        DO iy= 1, ny, 1
+          DO ix= 1, nz, 1
+            IF( ABS( grid_dx( 2, ix, iy, iz ) ) < min_abs_y )THEN
+              min_abs_y= ABS( grid_dx( 2, ix, iy, iz ) )
+              min_ix_y= ix
+              min_iy_y= iy
+              min_iz_y= iz
+            ENDIF
+            IF( ABS( grid_dx( 3, ix, iy, iz ) ) < min_abs_z )THEN
+              min_abs_z= ABS( grid_dx( 3, ix, iy, iz ) )
+              min_ix_z= ix
+              min_iy_z= iy
+              min_iz_z= iz
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
 
       DO iz= 1, nz, 1
         DO iy= 1, ny, 1
           DO ix= 1, nx, 1
-            !IF( .FALSE. .AND. export_constraints_xy .AND. &
-            !    grid_dx( 3, ix, iy, iz ) /= &
-            !    grid_dx( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
-            !  CYCLE
-            !ENDIF
-            !IF( .FALSE. .AND. export_constraints_x .AND. &
-            !    ( grid_dx( 3, ix, iy, iz ) /= &
-            !      grid_dx( 3, min_ix_z, min_iy_z, min_iz_z ) &
-            !      .OR. &
-            !      grid_dx( 2, ix, iy, iz ) /= &
-            !      grid_dx( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
-            !  CYCLE
-            !ENDIF
+            IF( .FALSE. .AND. export_constraints_xy .AND. &
+                grid_dx( 3, ix, iy, iz ) /= &
+                grid_dx( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
+              CYCLE
+            ENDIF
+            IF( .FALSE. .AND. export_constraints_x .AND. &
+                ( grid_dx( 3, ix, iy, iz ) /= &
+                  grid_dx( 3, min_ix_z, min_iy_z, min_iz_z ) &
+                  .OR. &
+                  grid_dx( 2, ix, iy, iz ) /= &
+                  grid_dx( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
+              CYCLE
+            ENDIF
             WRITE( UNIT = unit_cauchy_parts_ct, IOSTAT = ios, &
                    IOMSG = err_msg, FMT = * )&
                 grid_dx( 1, ix, iy, iz ), &
