@@ -1445,7 +1445,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     USE Tmunu,                ONLY: Tmunu_ll, allocate_Tmunu, deallocate_Tmunu
     USE GravityAcceleration,  ONLY: allocate_GravityAcceleration, &
                                     deallocate_GravityAcceleration
-    USE recovery,             ONLY: is_id
+    USE alive_flag,           ONLY: alive
 
     IMPLICIT NONE
 
@@ -1472,8 +1472,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
-
-    is_id= .TRUE.
 
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
@@ -1644,6 +1642,11 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     PRINT *, " * Allocating needed memory..."
     PRINT *
+
+    ! flag that particles are 'alive'
+    ALLOCATE( alive( npart ) )
+    alive( 1:npart )= 1
+
     CALL allocate_gradient( npart )
 
     IF( debug ) PRINT *, "2"
@@ -1716,6 +1719,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_all_lists
     CALL deallocate_metric_on_particles
     CALL deallocate_gradient
+    DEALLOCATE( alive )
     !DEALLOCATE(W_no_norm)
     !DEALLOCATE(dWdv_no_norm)
     !DEALLOCATE(fmass)
