@@ -36,6 +36,13 @@ PROGRAM setup_lorene_id
   INTEGER, PARAMETER:: test_int= - 112
   INTEGER, DIMENSION( max_n_bns, max_n_parts ):: placer= test_int
 
+  ! Rational ratio between the large grid spacing and the medium one,
+  ! equal to the ratio between the medium grid spacing nd the small one
+  ! Not used in this PROGRAM, but needed since the PROGRAM reads the same
+  ! parameter ile as the convergence_test PROGRAM
+  DOUBLE PRECISION:: numerator_ratio_dx
+  DOUBLE PRECISION:: denominator_ratio_dx
+
   ! Strings storing different names for output files
   CHARACTER( LEN= 500 ):: namefile_parts
   CHARACTER( LEN= 500 ):: namefile_bssn, name_logfile
@@ -74,7 +81,8 @@ PROGRAM setup_lorene_id
                             export_form_x, export_constraints_xy, &
                             export_constraints_x, compute_constraints, &
                             export_constraints, export_constraints_details, &
-                            constraints_step, compute_parts_constraints
+                            constraints_step, compute_parts_constraints, &
+                            numerator_ratio_dx, denominator_ratio_dx
 
   !---------------------------!
   !--  End of declarations  --!
