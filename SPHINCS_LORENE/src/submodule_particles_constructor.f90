@@ -305,7 +305,7 @@ SUBMODULE (particles_id) particles_constructor
 
         ! Print progress on screen
         perc= 100*( itr/parts_obj% npart )
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF
@@ -454,7 +454,7 @@ SUBMODULE (particles_id) particles_constructor
           ! Print progress on screen, every 10%
           perc= 50*( THIS% nx*THIS% ny*iz + THIS% nx*iy + ix )/ &
                   ( THIS% nx*THIS% ny*THIS% nz/2 )
-          IF( MOD( perc, 10 ) == 0 )THEN
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                    creturn//" ", perc, "%"
           ENDIF
@@ -492,7 +492,7 @@ SUBMODULE (particles_id) particles_constructor
 
       ! Print progress on screen, every 10%
       perc= 50 + 50*iz/( npart_half )
-      IF( MOD( perc, 10 ) == 0 )THEN
+      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
          WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                  creturn//" ", perc, "%"
       ENDIF
@@ -711,7 +711,7 @@ SUBMODULE (particles_id) particles_constructor
           ! Print progress on screen, every 10%
           perc= 50*( THIS% nx*THIS% ny*iz + THIS% nx*iy + ix )/ &
                   ( THIS% nx*THIS% ny*THIS% nz/2 )
-          IF( MOD( perc, 10 ) == 0 )THEN
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                    creturn//" ", perc, "%"
            ENDIF
@@ -748,7 +748,7 @@ SUBMODULE (particles_id) particles_constructor
       !ENDIF
 
       perc= 50 + 50*iz/( npart_half )
-      IF( MOD( perc, 10 ) == 0 )THEN
+      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
         WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                creturn//" ", perc, "%"
       ENDIF
@@ -832,7 +832,7 @@ SUBMODULE (particles_id) particles_constructor
           ! Print progress on screen, every 10%
           perc= 50*( nx2*ny2*( iz - 1 ) + nx2*( iy - 1 ) + ix )&
                 /( nx2*ny2*nz2/2 )
-          IF( MOD( perc, 10 ) == 0 )THEN
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                    creturn//" ", perc, "%"
           ENDIF
@@ -866,7 +866,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Print progress on screen, every 10%
       perc= 50 + 50*( iz - 2*npart_half + 1 ) &
                     /( npart_half2 - 2*npart_half )
-      IF( MOD( perc, 10 ) == 0 )THEN
+      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
         WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                 creturn//" ", perc, "%"
       ENDIF
