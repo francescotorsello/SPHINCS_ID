@@ -672,7 +672,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(iz - 1) &
               + THIS% ngrid_x*(iy - 1) + ix) &
               /( THIS% ngrid_x* THIS% ngrid_y*THIS% ngrid_z )
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF
@@ -815,7 +815,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(iz - 1) &
               + THIS% ngrid_x*(iy - 1) + ix) &
               /( THIS% ngrid_x*THIS% ngrid_y*THIS% ngrid_z )
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) creturn//" ", perc, "%"
         ENDIF
 
@@ -907,7 +907,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(iz - 1) &
               + THIS% ngrid_x*(iy - 1) + ix) &
               /( THIS% ngrid_x* THIS% ngrid_y*THIS% ngrid_z )
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF

@@ -11,7 +11,8 @@ MODULE formul_3p1_id
   !**********************************************************************
 
 
-  USE utility,      ONLY: ios, err_msg, perc, creturn, run_id, test_status
+  USE utility,      ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
+                          show_progress
   USE bns_id,       ONLY: bns
   USE particles_id, ONLY: particles
   USE timing,       ONLY: timer

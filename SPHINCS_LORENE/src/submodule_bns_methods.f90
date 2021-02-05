@@ -115,7 +115,7 @@ SUBMODULE (bns_id) bns_methods
 
           ! Print progress on screen
           perc= 100*itr/n
-          IF( MOD( perc, 10 ) == 0 )THEN
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                     creturn//" ", perc, "%"
           ENDIF
@@ -218,7 +218,7 @@ SUBMODULE (bns_id) bns_methods
 
         ! Print progress on screen
         perc= 100*itr/n
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF
@@ -415,7 +415,7 @@ SUBMODULE (bns_id) bns_methods
             perc= 100*( nx*ny*(iz - 1) + nx*(iy - 1) + ix )/( nx*ny*nz )
             !perc2= 100.0*DBLE(nx*ny*(iz - 1) + nx*(iy - 1) + ix)/DBLE( nx*ny*nz )
             !perc= 100*cnt/( nx*ny*nz )
-            IF( MOD( perc, 10 ) == 0 )THEN
+            IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
               WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                       creturn//" ", perc, "%"
               !WRITE( *, "(A2,F5.2,A1)", ADVANCE= "NO" ) &
@@ -475,7 +475,7 @@ SUBMODULE (bns_id) bns_methods
             ! Print progress on screen
             perc= 100*(nx*ny*(iz - 1) &
                   + nx*(iy - 1) + ix)/( nx*ny*nz )
-            IF( MOD( perc, 10 ) == 0 )THEN
+            IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
               WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                       creturn//" ", perc, "%"
             ENDIF
@@ -576,7 +576,7 @@ SUBMODULE (bns_id) bns_methods
 
         ! Print progress on screen
         perc= 100*itr/n
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF
@@ -648,7 +648,7 @@ SUBMODULE (bns_id) bns_methods
 
         ! Print progress on screen
         perc= 100*itr/n
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF

@@ -82,7 +82,8 @@ PROGRAM convergence_test
                             export_constraints_x, compute_constraints, &
                             export_constraints, export_constraints_details, &
                             constraints_step, compute_parts_constraints, &
-                            numerator_ratio_dx, denominator_ratio_dx
+                            numerator_ratio_dx, denominator_ratio_dx, &
+                            show_progress
 
   !---------------------------!
   !--  End of declarations  --!

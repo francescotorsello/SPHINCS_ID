@@ -26,7 +26,7 @@ MODULE utility
   DOUBLE PRECISION:: perc2
   CHARACTER, PARAMETER:: creturn= ACHAR(13)   ! Carriage return
 
-  LOGICAL:: file_exists
+  LOGICAL:: file_exists, show_progress
 
   ! String storing error messages
   CHARACTER( LEN= : ), ALLOCATABLE:: err_msg

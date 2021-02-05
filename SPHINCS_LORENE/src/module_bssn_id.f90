@@ -12,7 +12,7 @@ MODULE formul_bssn_id
 
 
   USE utility,       ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
-                           compute_g4, determinant_sym4x4_grid
+                           compute_g4, determinant_sym4x4_grid, show_progress
   USE bns_id,        ONLY: bns
   USE formul_3p1_id, ONLY: formul_3p1
   USE particles_id,  ONLY: particles

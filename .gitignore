@@ -1,5 +1,6 @@
 SPHINCS_LORENE/*.bin
 SPHINCS_LORENE/*.log
+SPHINCS_LORENE/*.out
 SPHINCS_LORENE/.ipynb_checkpoints
 SPHINCS_LORENE/lorene-bns-*.dat
 SPHINCS_LORENE/*constraints.dat
