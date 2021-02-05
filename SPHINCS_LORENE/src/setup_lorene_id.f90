@@ -72,7 +72,7 @@ PROGRAM setup_lorene_id
   TYPE( particles ), DIMENSION(:,:), ALLOCATABLE:: particles_dist
   ! Declaration of the allocatable array storing the bssn_id objects,
   ! containing the BSSN variables on the gravity grid ofr each bns object
-  TYPE( BSSN_id ),   DIMENSION(:),   ALLOCATABLE:: bssn_forms
+  TYPE( bssn_id ),   DIMENSION(:),   ALLOCATABLE:: bssn_forms
 
   ! Namelist containing parameters read from lorene_bns_id_parameters.par
   ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM
