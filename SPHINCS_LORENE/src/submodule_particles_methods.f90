@@ -805,6 +805,12 @@ SUBMODULE (particles_id) particles_methods
                       "...deallocation error for array Theta in " &
                       // "SUBROUTINE destruct_particles." )
     ENDIF
+    IF( ALLOCATED( THIS% h ))THEN
+      DEALLOCATE( THIS% h, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array h in " &
+                      // "SUBROUTINE destruct_particles." )
+    ENDIF
     IF( ALLOCATED( THIS% v ))THEN
       DEALLOCATE( THIS% v, STAT= ios, ERRMSG= err_msg )
       CALL test_status( ios, err_msg, &
