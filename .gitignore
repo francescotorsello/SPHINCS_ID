@@ -34,6 +34,7 @@ SPHINCS_LORENE/gnuplot-scripts/
 SPHINCS_LORENE/archive/
 SPHINCS_LORENE/lorene-id-files/
 SPHINCS_LORENE/fort*
+SPHINCS_LORENE/.sconsign.dblite
 SPHINCS_LORENE/'*'
 SPHINCS_LORENE/*~
 SPHINCS_BSSN/*.x
