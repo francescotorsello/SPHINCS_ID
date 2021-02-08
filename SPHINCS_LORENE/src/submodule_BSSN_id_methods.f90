@@ -186,14 +186,20 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       Gamma_u(:,:,:,jz) &
     )
     CALL THIS% bssn_computer_timer% stop_timer()
+    lapse= THIS% lapse
+    shift_u= THIS% shift_u
+    !lapse= 1.0D0
+    !shift_u= 0.0D0
+    !THIS% lapse= 1.0D0
+    !THIS% shift_u= 0.0D0
 
     !
     !-- Check the BSSN variables for NaNs
     !
-    !CALL Check_Grid_Function_for_NAN( lapse, "lapse" )
-    !CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jx), "shift_u_x" )
-    !CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jy), "shift_u_y" )
-    !CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jz), "shift_u_z" )
+    CALL Check_Grid_Function_for_NAN( lapse, "lapse" )
+    CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jx), "shift_u_x" )
+    CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jy), "shift_u_y" )
+    CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jz), "shift_u_z" )
     CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jxx), &
                                                         "g_BSSN3_ll_jxx" )
     CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jxy), &
@@ -227,8 +233,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !
     !-- Setting the local variables equal to the MODULE variables
     !
-    !THIS% lapse_grid= lapse
-    !THIS% shift_grid= shift_u
     THIS% g_BSSN3_ll= g_BSSN3_ll
     THIS% A_BSSN3_ll= A_BSSN3_ll
     THIS% phi       = phi
@@ -320,7 +324,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
-    PRINT *
 
     ngrid_x= THIS% ngrid_x
     ngrid_y= THIS% ngrid_y
@@ -341,7 +344,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! Allocate memory for the derivatives of the ADM variables
     !CALL allocate_GravityAcceleration()
 
-    CALL read_BSSN_dump( ngrid_x, ngrid_y, ngrid_z, 00000 )
+    CALL read_BSSN_dump( ngrid_x, ngrid_y, ngrid_z, 00000, namefile_bin )
 
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
@@ -502,9 +505,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     PRINT *, " * LORENE BSSN ID on the gravity grid saved to formatted " &
              // "file ", TRIM(namefile)
-    PRINT *
 
-    PRINT *, "** Subroutine print_formatted_lorene_id_BSSN_variables " &
+    PRINT *, "** Subroutine read_bssn_dump_print_formatted " &
              // "executed."
     PRINT *
 
@@ -544,7 +546,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     PRINT *, "** Executing the print_formatted_lorene_id_BSSN_variables " &
              // "subroutine..."
-    PRINT *
 
     IF( THIS% call_flag == 0 )THEN
       PRINT *, "** The SUBROUTINE print_formatted_lorene_id_bssn_variables ", &
@@ -690,8 +691,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CLOSE( UNIT= 20 )
 
     PRINT *, " * LORENE BSSN ID on the gravity grid saved to formatted " &
-             // " file ", TRIM(namefile)
-    PRINT *
+             // "file ", TRIM(namefile)
 
     PRINT *, "** Subroutine print_formatted_lorene_id_BSSN_variables " &
              // "executed."

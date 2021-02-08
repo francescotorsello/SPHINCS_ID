@@ -171,9 +171,11 @@ MODULE formul_bssn_id
 
     END SUBROUTINE compute_and_export_bssn_variables
 
-    MODULE SUBROUTINE read_bssn_dump_print_formatted( THIS, namefile )
+    MODULE SUBROUTINE read_bssn_dump_print_formatted( THIS, namefile_bin, &
+                                                            namefile )
 
       CLASS(bssn_id),      INTENT( IN OUT )           :: THIS
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE read_bssn_dump_print_formatted

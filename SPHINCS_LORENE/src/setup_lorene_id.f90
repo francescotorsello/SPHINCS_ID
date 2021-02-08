@@ -45,7 +45,7 @@ PROGRAM setup_lorene_id
 
   ! Strings storing different names for output files
   CHARACTER( LEN= 500 ):: namefile_parts
-  CHARACTER( LEN= 500 ):: namefile_bssn, name_logfile
+  CHARACTER( LEN= 500 ):: namefile_bssn, namefile_bssn_bin, name_logfile
   ! Array of strings storing the names of the LORENE BNS ID binary files
   CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
   ! String storing the local path to the directory where the
@@ -201,15 +201,16 @@ PROGRAM setup_lorene_id
     PRINT *, "===================================================" &
              // "==============="
     PRINT *
-    WRITE( namefile_bssn, "(A6,I1,A4)" ) "BSSN_l", itr3, ".bin"
+    WRITE( namefile_bssn_bin, "(A6,I1,A4)" ) "BSSN_l", itr3, ".bin"
     bssn_forms( itr3 )% export_bin= export_bin
     CALL bssn_forms( itr3 )% &
-                        compute_and_export_3p1_variables( namefile_bssn )
+                        compute_and_export_3p1_variables( namefile_bssn_bin )
     IF( bssn_forms( itr3 )% export_bin )THEN
       WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
       bssn_forms( itr3 )% export_form_xy= export_form_xy
       bssn_forms( itr3 )% export_form_x = export_form_x
-      CALL bssn_forms( itr3 )% read_bssn_dump_print_formatted( namefile_bssn )
+      CALL bssn_forms( itr3 )% &
+            read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
     ENDIF
   ENDDO compute_export_bssn_loop
 
