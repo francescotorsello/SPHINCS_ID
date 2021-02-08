@@ -85,6 +85,8 @@ MODULE formul_bssn_id
     PROCEDURE :: compute_and_export_3p1_variables &
                     => compute_and_export_bssn_variables
 
+    PROCEDURE :: read_bssn_dump_print_formatted
+
     PROCEDURE :: print_formatted_lorene_id_3p1_variables &
                     => print_formatted_lorene_id_bssn_variables
 
@@ -164,10 +166,17 @@ MODULE formul_bssn_id
 
     MODULE SUBROUTINE compute_and_export_bssn_variables( THIS, namefile )
 
-      CLASS(bssn_id), INTENT( IN OUT )                :: THIS
+      CLASS(bssn_id),      INTENT( IN OUT )           :: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_export_bssn_variables
+
+    MODULE SUBROUTINE read_bssn_dump_print_formatted( THIS, namefile )
+
+      CLASS(bssn_id),      INTENT( IN OUT )           :: THIS
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+
+    END SUBROUTINE read_bssn_dump_print_formatted
 
     MODULE SUBROUTINE print_formatted_lorene_id_bssn_variables( THIS, &
                                                                 namefile )

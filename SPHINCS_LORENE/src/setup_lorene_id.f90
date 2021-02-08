@@ -205,6 +205,12 @@ PROGRAM setup_lorene_id
     bssn_forms( itr3 )% export_bin= export_bin
     CALL bssn_forms( itr3 )% &
                         compute_and_export_3p1_variables( namefile_bssn )
+    IF( bssn_forms( itr3 )% export_bin )THEN
+      WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
+      bssn_forms( itr3 )% export_form_xy= export_form_xy
+      bssn_forms( itr3 )% export_form_x = export_form_x
+      CALL bssn_forms( itr3 )% read_bssn_dump_print_formatted( namefile_bssn )
+    ENDIF
   ENDDO compute_export_bssn_loop
 
   !
@@ -214,8 +220,6 @@ PROGRAM setup_lorene_id
     export_bssn_loop: DO itr3 = 1, n_bns, 1
       WRITE( namefile_bssn, "(A24,I1,A4)" ) &
                             "lorene-bns-id-bssn-form_", itr3, ".dat"
-      bssn_forms( itr3 )% export_form_xy= export_form_xy
-      bssn_forms( itr3 )% export_form_x = export_form_x
       CALL bssn_forms( itr3 )% &
                   print_formatted_lorene_id_3p1_variables( namefile_bssn )
     ENDDO export_bssn_loop
