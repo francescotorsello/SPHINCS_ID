@@ -1649,6 +1649,39 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_radius1_x_opp
 
+  MODULE PROCEDURE get_center1_x
+
+    !*************************************************
+    !                                                *
+    ! Returns the stellar center of NS 1, i.e., the  *
+    ! origin of the LORENE chart centered on NS 1    *
+    !                                                *
+    ! FT 09.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_center1_x= THIS% center1_x
+
+  END PROCEDURE get_center1_x
+
+  MODULE PROCEDURE get_barycenter1_x
+
+    !*************************************************
+    !                                                *
+    ! Returns the barycenter of NS 1                 *
+    !                                                *
+    ! FT 09.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_barycenter1_x= THIS% barycenter1_x
+
+  END PROCEDURE get_barycenter1_x
+
   MODULE PROCEDURE get_radius2_x_comp
 
     !*************************************************
@@ -1714,6 +1747,39 @@ SUBMODULE (bns_id) bns_methods
     get_radius2_x_opp= THIS% radius2_x_opp
 
   END PROCEDURE get_radius2_x_opp
+
+  MODULE PROCEDURE get_center2_x
+
+    !*************************************************
+    !                                                *
+    ! Returns the stellar center of NS 2, i.e., the  *
+    ! origin of the LORENE chart centered on NS 2    *
+    !                                                *
+    ! FT 09.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_center2_x= THIS% center2_x
+
+  END PROCEDURE get_center2_x
+
+  MODULE PROCEDURE get_barycenter2_x
+
+    !*************************************************
+    !                                                *
+    ! Returns the barycenter of NS 2                 *
+    !                                                *
+    ! FT 09.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_barycenter2_x= THIS% barycenter2_x
+
+  END PROCEDURE get_barycenter2_x
 
   MODULE PROCEDURE get_eos1
 

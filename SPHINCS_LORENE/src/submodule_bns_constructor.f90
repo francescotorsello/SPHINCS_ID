@@ -146,10 +146,14 @@ SUBMODULE (bns_id) bns_constructor
                                THIS% radius1_y, &
                                THIS% radius1_z, &
                                THIS% radius1_x_opp, &
+                               THIS% center1_x, &
+                               THIS% barycenter1_x, &
                                THIS% radius2_x_comp, &
                                THIS% radius2_y, &
                                THIS% radius2_z, &
                                THIS% radius2_x_opp, &
+                               THIS% center2_x, &
+                               THIS% barycenter2_x, &
                                THIS% eos1, &
                                THIS% eos2, &
                                THIS% npeos_1, &
@@ -187,10 +191,14 @@ SUBMODULE (bns_id) bns_constructor
     THIS% radius1_y     = THIS% radius1_y/Msun_geo
     THIS% radius1_z     = THIS% radius1_z/Msun_geo
     THIS% radius1_x_opp = THIS% radius1_x_opp/Msun_geo
+    THIS% center1_x     = THIS% center1_x/Msun_geo
+    THIS% barycenter1_x = THIS% barycenter1_x/Msun_geo
     THIS% radius2_x_comp= THIS% radius2_x_comp/Msun_geo
     THIS% radius2_y     = THIS% radius2_y/Msun_geo
     THIS% radius2_z     = THIS% radius2_z/Msun_geo
     THIS% radius2_x_opp = THIS% radius2_x_opp/Msun_geo
+    THIS% center2_x     = THIS% center2_x/Msun_geo
+    THIS% barycenter2_x = THIS% barycenter2_x/Msun_geo
 
     CALL print_id_params( THIS )
 

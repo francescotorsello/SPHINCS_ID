@@ -140,10 +140,10 @@ SUBMODULE (particles_id) particles_constructor
       !
       !-- Determine boundaries of the single lattice around the stars (Msun_geo)
       !
-      xmin= - bns_obj% get_distance()/2.0D0 - &
+      xmin=   bns_obj% get_center1_x() - &
                                 stretch*MAX( bns_obj% get_radius1_x_comp(), &
                                              bns_obj% get_radius1_x_opp() )
-      xmax=   bns_obj% get_distance()/2.0D0 + &
+      xmax=   bns_obj% get_center2_x() + &
                                 stretch*MAX( bns_obj% get_radius2_x_comp(), &
                                              bns_obj% get_radius2_x_opp() )
       ymin= - stretch*bns_obj% get_radius1_y()
@@ -171,10 +171,10 @@ SUBMODULE (particles_id) particles_constructor
       !
       !-- Determine boundaries of the two lattices around the stars (Msun_geo)
       !
-      xmin1= - bns_obj% get_distance()/2.0D0 - &
+      xmin1=   bns_obj% get_center1_x() - &
                                 stretch*MAX( bns_obj% get_radius1_x_comp(), &
                                              bns_obj% get_radius1_x_opp() )
-      xmax1= - bns_obj% get_distance()/2.0D0 + &
+      xmax1=   bns_obj% get_center1_x() + &
                                 stretch*MAX( bns_obj% get_radius1_x_comp(), &
                                              bns_obj% get_radius1_x_opp() )
       ymin1= - stretch*bns_obj% get_radius1_y()
@@ -182,10 +182,10 @@ SUBMODULE (particles_id) particles_constructor
       zmin1= - stretch*bns_obj% get_radius1_z()
       zmax1=   stretch*bns_obj% get_radius1_z()
 
-      xmin2=   bns_obj% get_distance()/2.0D0 - &
+      xmin2=   bns_obj% get_center2_x() - &
                                 stretch*MAX( bns_obj% get_radius2_x_comp(), &
                                              bns_obj% get_radius2_x_opp() )
-      xmax2=   bns_obj% get_distance()/2.0D0 + &
+      xmax2=   bns_obj% get_center2_x() + &
                                 stretch*MAX( bns_obj% get_radius2_x_comp(), &
                                              bns_obj% get_radius2_x_opp() )
       ymin2= - stretch*bns_obj% get_radius2_y()

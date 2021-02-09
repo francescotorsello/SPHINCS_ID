@@ -176,8 +176,7 @@ MODULE particles_id
   !
   INTERFACE
 
-    MODULE FUNCTION construct_particles( bns_obj, dist ) &
-                        RESULT ( parts_obj )
+    MODULE FUNCTION construct_particles( bns_obj, dist ) RESULT ( parts_obj )
         CLASS(bns), INTENT( IN OUT ):: bns_obj
         INTEGER,    INTENT( IN )    :: dist
         TYPE(particles)             :: parts_obj

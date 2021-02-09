@@ -186,15 +186,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       Gamma_u(:,:,:,jz) &
     )
     CALL THIS% bssn_computer_timer% stop_timer()
+
+    ! Set the MODULE variables equal to the TYPE variables
     lapse= THIS% lapse
     shift_u= THIS% shift_u
-    !lapse= 1.0D0
-    !shift_u= 0.0D0
-    !THIS% lapse= 1.0D0
-    !THIS% shift_u= 0.0D0
 
     !
-    !-- Check the BSSN variables for NaNs
+    !-- Check the BSSN MODULE variables for NaNs
     !
     CALL Check_Grid_Function_for_NAN( lapse, "lapse" )
     CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jx), "shift_u_x" )

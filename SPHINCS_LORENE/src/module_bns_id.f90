@@ -67,18 +67,30 @@ MODULE bns_id
     DOUBLE PRECISION:: mass2                        ! [M_sol]
     DOUBLE PRECISION:: adm_mass                     ! [M_sol]
     DOUBLE PRECISION:: angular_momentum= 0.0D0      ! [G Msun^2 /c]
-    ! Radius of star, in the x direction, towards the companion
+    ! Radius of star 1, in the x direction, towards the companion
     DOUBLE PRECISION:: radius1_x_comp               ! [Msun_geo]
+    ! Radius of star 1, in the y direction
     DOUBLE PRECISION:: radius1_y                    ! [Msun_geo]
+    ! Radius of star 1, in the z direction
     DOUBLE PRECISION:: radius1_z                    ! [Msun_geo]
-    ! Radius of star, in the x direction, opposite to the companion
+    ! Radius of star 1, in the x direction, opposite to the companion
     DOUBLE PRECISION:: radius1_x_opp                ! [Msun_geo]
-    ! Radius of star, in the x direction, towards the companion
+    ! Stellar center of star 1 (origin of the LORENE chart centered on star 1)
+    DOUBLE PRECISION:: center1_x                    ! [Msun_geo]
+    ! Barycenter of star 1
+    DOUBLE PRECISION:: barycenter1_x                ! [Msun_geo]
+    ! Radius of star 2, in the x direction, towards the companion
     DOUBLE PRECISION:: radius2_x_comp               ! [Msun_geo]
+    ! Radius of star 2, in the y direction
     DOUBLE PRECISION:: radius2_y                    ! [Msun_geo]
+    ! Radius of star 2, in the z direction
     DOUBLE PRECISION:: radius2_z                    ! [Msun_geo]
     ! Radius of star, in the x direction, opposite to the companion
     DOUBLE PRECISION:: radius2_x_opp                ! [Msun_geo]
+    ! Stellar center of star 2 (origin of the LORENE chart centered on star 2)
+    DOUBLE PRECISION:: center2_x                    ! [Msun_geo]
+    ! Barycenter of star 2
+    DOUBLE PRECISION:: barycenter2_x                ! [Msun_geo]
     ! Names of the equations of state (EoS) of the two neutron stars
     CHARACTER(KIND= C_CHAR, LEN= 100):: eos1
     CHARACTER(KIND= C_CHAR, LEN= 100):: eos2
@@ -249,10 +261,14 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: get_radius1_y
     PROCEDURE, PUBLIC:: get_radius1_z
     PROCEDURE, PUBLIC:: get_radius1_x_opp
+    PROCEDURE, PUBLIC:: get_center1_x
+    PROCEDURE, PUBLIC:: get_barycenter1_x
     PROCEDURE, PUBLIC:: get_radius2_x_comp
     PROCEDURE, PUBLIC:: get_radius2_y
     PROCEDURE, PUBLIC:: get_radius2_z
     PROCEDURE, PUBLIC:: get_radius2_x_opp
+    PROCEDURE, PUBLIC:: get_center2_x
+    PROCEDURE, PUBLIC:: get_barycenter2_x
     PROCEDURE, PUBLIC:: get_eos1
     PROCEDURE, PUBLIC:: get_eos2
 
@@ -733,6 +749,24 @@ MODULE bns_id
 
     END FUNCTION get_radius1_x_opp
 
+    MODULE FUNCTION get_center1_x( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_center1_x
+
+    END FUNCTION get_center1_x
+
+    MODULE FUNCTION get_barycenter1_x( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_barycenter1_x
+
+    END FUNCTION get_barycenter1_x
+
     MODULE FUNCTION get_radius2_x_comp( THIS )
 
       ! Argument
@@ -768,6 +802,24 @@ MODULE bns_id
       DOUBLE PRECISION:: get_radius2_x_opp
 
     END FUNCTION get_radius2_x_opp
+
+    MODULE FUNCTION get_center2_x( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_center2_x
+
+    END FUNCTION get_center2_x
+
+    MODULE FUNCTION get_barycenter2_x( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_barycenter2_x
+
+    END FUNCTION get_barycenter2_x
 
     MODULE FUNCTION get_eos1( THIS )
 
@@ -1322,10 +1374,14 @@ MODULE bns_id
                                      radius1_y, &
                                      radius1_z, &
                                      radius1_x_opp, &
+                                     center1_x, &
+                                     barycenter1_x, &
                                      radius2_x_comp, &
                                      radius2_y, &
                                      radius2_z, &
                                      radius2_x_opp, &
+                                     center2_x, &
+                                     barycenter2_x, &
                                      eos1, &
                                      eos2, &
                                      npeos_1, &
@@ -1382,10 +1438,14 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_y
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_z
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_x_opp
+      REAL(C_DOUBLE), INTENT(OUT)       :: center1_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: barycenter1_x
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_x_comp
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_y
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_z
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_x_opp
+      REAL(C_DOUBLE), INTENT(OUT)       :: center2_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: barycenter2_x
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos1
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos2
       INTEGER(C_INT)                    :: npeos_1
