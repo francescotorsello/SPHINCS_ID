@@ -191,7 +191,7 @@ PROGRAM setup_lorene_id
     PRINT *, "===================================================" &
              // "==============="
     PRINT *
-    bssn_forms( itr3 )= BSSN_id( binaries( itr3 ) )
+    bssn_forms( itr3 )= bssn_id( binaries( itr3 ) )
   ENDDO place_spacetime_id_loop
 
   compute_export_bssn_loop: DO itr3 = 1, n_bns, 1
@@ -202,13 +202,13 @@ PROGRAM setup_lorene_id
              // "==============="
     PRINT *
     WRITE( namefile_bssn_bin, "(A6,I1,A4)" ) "BSSN_l", itr3, ".bin"
+    bssn_forms( itr3 )% export_form_xy= export_form_xy
+    bssn_forms( itr3 )% export_form_x = export_form_x
     bssn_forms( itr3 )% export_bin= export_bin
     CALL bssn_forms( itr3 )% &
                         compute_and_export_3p1_variables( namefile_bssn_bin )
     IF( bssn_forms( itr3 )% export_bin )THEN
       WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
-      bssn_forms( itr3 )% export_form_xy= export_form_xy
-      bssn_forms( itr3 )% export_form_x = export_form_x
       CALL bssn_forms( itr3 )% &
             read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
     ENDIF

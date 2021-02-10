@@ -222,8 +222,7 @@ SUBMODULE (particles_id) particles_methods
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= THIS% baryon_density_parts(itr)/(amu*g2kg)&
-                 *((Msun_geo*km2m)**3)
+      nlrf(itr)= THIS% baryon_density_parts(itr)/(amu*g2kg)*((Msun_geo*km2m)**3)
       THIS% nlrf(itr)= nlrf(itr)
 
       ! Internal energy per baryon (specific internal energy)
