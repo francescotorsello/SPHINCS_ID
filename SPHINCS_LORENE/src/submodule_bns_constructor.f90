@@ -128,7 +128,7 @@ SUBMODULE (bns_id) bns_constructor
     !                                                    *
     !*****************************************************
 
-    USE constants, ONLY: Msun_geo
+    USE constants, ONLY: Msun_geo, k_lorene2hydrobase
 
     IMPLICIT NONE
 
@@ -156,6 +156,10 @@ SUBMODULE (bns_id) bns_constructor
                                THIS% barycenter2_x, &
                                THIS% eos1, &
                                THIS% eos2, &
+                               THIS% gamma_1, &
+                               THIS% kappa_1, &
+                               THIS% gamma_2, &
+                               THIS% kappa_2, &
                                THIS% npeos_1, &
                                THIS% gamma0_1, &
                                THIS% gamma1_1, &
@@ -199,6 +203,31 @@ SUBMODULE (bns_id) bns_constructor
     THIS% radius2_x_opp = THIS% radius2_x_opp/Msun_geo
     THIS% center2_x     = THIS% center2_x/Msun_geo
     THIS% barycenter2_x = THIS% barycenter2_x/Msun_geo
+
+    ! Convert polytropic constants from LORENE units to SPHINCS units
+    IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
+
+      THIS% kappa_1= THIS% kappa_1*k_lorene2hydrobase( THIS% gamma_1 )
+      THIS% kappa_2= THIS% kappa_2*k_lorene2hydrobase( THIS% gamma_2 )
+
+    ELSEIF( THIS% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
+
+      THIS% kappa0_1= THIS% kappa0_1*k_lorene2hydrobase( THIS% gamma0_1 )
+      THIS% kappa1_1= THIS% kappa1_2*k_lorene2hydrobase( THIS% gamma1_1 )
+      THIS% kappa2_1= THIS% kappa2_1*k_lorene2hydrobase( THIS% gamma2_1 )
+      THIS% kappa3_1= THIS% kappa3_2*k_lorene2hydrobase( THIS% gamma3_1 )
+      THIS% kappa0_2= THIS% kappa0_1*k_lorene2hydrobase( THIS% gamma0_2 )
+      THIS% kappa1_2= THIS% kappa1_2*k_lorene2hydrobase( THIS% gamma1_2 )
+      THIS% kappa2_2= THIS% kappa2_1*k_lorene2hydrobase( THIS% gamma2_2 )
+      THIS% kappa3_2= THIS% kappa3_2*k_lorene2hydrobase( THIS% gamma3_2 )
+
+    ELSE
+
+      PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+               " The equation of state is unknown!"
+      STOP
+
+    ENDIF
 
     CALL print_id_params( THIS )
 

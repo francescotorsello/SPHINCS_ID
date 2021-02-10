@@ -53,11 +53,6 @@ MODULE bns_id
     !
     !-- Parameters of the binary system
     !
-
-    DOUBLE PRECISION:: gamma_star1
-    DOUBLE PRECISION:: gamma_star2
-    DOUBLE PRECISION:: kappa_star1
-    DOUBLE PRECISION:: kappa_star2
     DOUBLE PRECISION:: angular_vel                  ! [rad/s]
     ! Distance between the points of maximum baryon density
     DOUBLE PRECISION:: distance                     ! [km]
@@ -94,6 +89,13 @@ MODULE bns_id
     ! Names of the equations of state (EoS) of the two neutron stars
     CHARACTER(KIND= C_CHAR, LEN= 100):: eos1
     CHARACTER(KIND= C_CHAR, LEN= 100):: eos2
+    !
+    !-- Parameters of polytropic equations of state for the two NSs
+    !
+    DOUBLE PRECISION:: gamma_1
+    DOUBLE PRECISION:: gamma_2
+    DOUBLE PRECISION:: kappa_1
+    DOUBLE PRECISION:: kappa_2
     !
     !-- Parameters of the piecewise polytropic equation of state for NS 1
     !
@@ -273,10 +275,10 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: get_eos2
 
     ! PROCEDURES to be used for single polytropic EOS
-    PROCEDURE, PUBLIC:: get_gamma_star1
-    PROCEDURE, PUBLIC:: get_gamma_star2
-    PROCEDURE, PUBLIC:: get_kappa_star1
-    PROCEDURE, PUBLIC:: get_kappa_star2
+    PROCEDURE, PUBLIC:: get_gamma_1
+    PROCEDURE, PUBLIC:: get_gamma_2
+    PROCEDURE, PUBLIC:: get_kappa_1
+    PROCEDURE, PUBLIC:: get_kappa_2
 
     ! PROCEDURES to be used for piecewise polytropic EOS
     PROCEDURE, PUBLIC:: get_npeos_1
@@ -614,41 +616,41 @@ MODULE bns_id
     !
     !END FUNCTION get_bns_ptr
 
-    MODULE FUNCTION get_gamma_star1( THIS )
+    MODULE FUNCTION get_gamma_1( THIS )
 
       ! Argument
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_gamma_star1
+      DOUBLE PRECISION:: get_gamma_1
 
-    END FUNCTION get_gamma_star1
+    END FUNCTION get_gamma_1
 
-    MODULE FUNCTION get_gamma_star2( THIS )
-
-      ! Argument
-      CLASS(bns), INTENT( IN ):: THIS
-      ! Result
-      DOUBLE PRECISION:: get_gamma_star2
-
-    END FUNCTION get_gamma_star2
-
-    MODULE FUNCTION get_kappa_star1( THIS )
+    MODULE FUNCTION get_gamma_2( THIS )
 
       ! Argument
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_kappa_star1
+      DOUBLE PRECISION:: get_gamma_2
 
-    END FUNCTION get_kappa_star1
+    END FUNCTION get_gamma_2
 
-    MODULE FUNCTION get_kappa_star2( THIS )
+    MODULE FUNCTION get_kappa_1( THIS )
 
       ! Argument
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_kappa_star2
+      DOUBLE PRECISION:: get_kappa_1
 
-    END FUNCTION get_kappa_star2
+    END FUNCTION get_kappa_1
+
+    MODULE FUNCTION get_kappa_2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_kappa_2
+
+    END FUNCTION get_kappa_2
 
     MODULE FUNCTION get_angular_vel( THIS )
 
@@ -1384,6 +1386,10 @@ MODULE bns_id
                                      barycenter2_x, &
                                      eos1, &
                                      eos2, &
+                                     gamma_1, &
+                                     kappa_1, &
+                                     gamma_2, &
+                                     kappa_2, &
                                      npeos_1, &
                                      gamma0_1, &
                                      gamma1_1, &
@@ -1448,6 +1454,10 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: barycenter2_x
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos1
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos2
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma_1
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa_1
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma_2
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa_2
       INTEGER(C_INT)                    :: npeos_1
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma0_1
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma1_1
