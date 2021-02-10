@@ -380,10 +380,10 @@ SUBMODULE (particles_id) particles_constructor
     !-- Compute the mass density almost at the center of the stars
     !
     max_baryon_density= MAX( &
-                bns_obj%import_mass_density( - bns_obj% get_distance()/2.0D0, &
-                                               DBLE(0), DBLE(0) ), &
-                bns_obj%import_mass_density(   bns_obj% get_distance()/2.0D0, &
-                                               DBLE(0), DBLE(0) ) )
+                bns_obj% import_mass_density( bns_obj% get_center1_x(), &
+                                              DBLE(0), DBLE(0) ), &
+                bns_obj% import_mass_density( bns_obj% get_center2_x(), &
+                                              DBLE(0), DBLE(0) ) )
 
     !
     !-- Set the threshold above which a lattice point is
@@ -413,6 +413,8 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *
 
     THIS% npart= 0
+    THIS% npart1= 0
+    THIS% npart2= 0
     !
     !-- Choose the larger value for the boundary in z
     !
@@ -445,6 +447,11 @@ SUBMODULE (particles_id) particles_constructor
                                   > thres_baryon_density )THEN
 
             THIS% npart= THIS% npart + 1
+            IF( xtemp < 0 )THEN
+              THIS% npart1= THIS% npart1 + 1
+            ELSEIF( xtemp > 0 )THEN
+              THIS% npart2= THIS% npart2 + 1
+            ENDIF
             THIS% pos( 1, THIS% npart )= xtemp
             THIS% pos( 2, THIS% npart )= ytemp
             THIS% pos( 3, THIS% npart )= ztemp
@@ -520,9 +527,21 @@ SUBMODULE (particles_id) particles_constructor
       ENDIF
     ENDDO
 
+    IF( THIS% npart1 + THIS% npart2 /= THIS% npart )THEN
+      PRINT *, "** ERROR: npart1 + npart2 /= npart"
+      PRINT *, " * npart1=", THIS% npart1
+      PRINT *, " * npart2=", THIS% npart2
+      PRINT *, " * npart1 + npart2=", THIS% npart1 + THIS% npart2
+      PRINT *, " * npart=", THIS% npart
+      STOP
+    ENDIF
+
     PRINT *, " * Particles placed. Number of particles=", &
              THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
              " of the points in lattice."
+    PRINT *
+    PRINT *, " * Number of particles on NS 1=", THIS% npart1
+    PRINT *, " * Number of particles on NS 2=", THIS% npart2
     PRINT *
 
     !
@@ -941,9 +960,21 @@ SUBMODULE (particles_id) particles_constructor
       ENDIF
     ENDDO
 
+    IF( THIS% npart1 + THIS% npart2 /= THIS% npart )THEN
+      PRINT *, "** ERROR: npart1 + npart2 /= npart"
+      PRINT *, " * npart1=", THIS% npart1
+      PRINT *, " * npart2=", THIS% npart2
+      PRINT *, " * npart1 + npart2=", THIS% npart1 + THIS% npart2
+      PRINT *, " * npart=", THIS% npart
+      STOP
+    ENDIF
+
     PRINT *, " * Particles placed. Number of particles=", &
              THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
              " of the points in lattices."
+    PRINT *
+    PRINT *, " * Number of particles on NS 1=", THIS% npart1
+    PRINT *, " * Number of particles on NS 2=", THIS% npart2
     PRINT *
 
     !
