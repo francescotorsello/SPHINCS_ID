@@ -128,7 +128,7 @@ SUBMODULE (bns_id) bns_constructor
     !                                                    *
     !*****************************************************
 
-    USE constants, ONLY: Msun_geo, k_lorene2hydrobase
+    USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase
 
     IMPLICIT NONE
 
@@ -154,6 +154,18 @@ SUBMODULE (bns_id) bns_constructor
                                THIS% radius2_x_opp, &
                                THIS% center2_x, &
                                THIS% barycenter2_x, &
+                               THIS% ent_center1, &
+                               THIS% nbar_center1, &
+                               THIS% rho_center1, &
+                               THIS% energy_density_center1, &
+                               THIS% specific_energy_center1, &
+                               THIS% pressure_center1, &
+                               THIS% ent_center2, &
+                               THIS% nbar_center2, &
+                               THIS% rho_center2, &
+                               THIS% energy_density_center2, &
+                               THIS% specific_energy_center2, &
+                               THIS% pressure_center2, &
                                THIS% eos1, &
                                THIS% eos2, &
                                THIS% gamma_1, &
@@ -203,6 +215,17 @@ SUBMODULE (bns_id) bns_constructor
     THIS% radius2_x_opp = THIS% radius2_x_opp/Msun_geo
     THIS% center2_x     = THIS% center2_x/Msun_geo
     THIS% barycenter2_x = THIS% barycenter2_x/Msun_geo
+
+    ! Convert hydro quantities from LORENE units to SPHINCS units
+    THIS% nbar_center1           = THIS% nbar_center1*(MSun_geo*km2m)**3
+    THIS% rho_center1            = THIS% rho_center1*lorene2hydrobase
+    THIS% energy_density_center1 = THIS% energy_density_center1*lorene2hydrobase
+    THIS% pressure_center1       = THIS% pressure_center1*lorene2hydrobase
+    THIS% nbar_center2           = THIS% nbar_center2*(MSun_geo*km2m)**3
+    THIS% rho_center2            = THIS% rho_center2*lorene2hydrobase
+    THIS% energy_density_center2 = THIS% energy_density_center2*lorene2hydrobase
+    THIS% pressure_center2       = THIS% pressure_center2*lorene2hydrobase
+
 
     ! Convert polytropic constants from LORENE units to SPHINCS units
     IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic

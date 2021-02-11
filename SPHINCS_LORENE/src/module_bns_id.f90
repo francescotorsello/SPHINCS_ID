@@ -86,6 +86,30 @@ MODULE bns_id
     DOUBLE PRECISION:: center2_x                    ! [Msun_geo]
     ! Barycenter of star 2
     DOUBLE PRECISION:: barycenter2_x                ! [Msun_geo]
+    ! Central enthalpy for star 1 [c^2]
+    DOUBLE PRECISION:: ent_center1 ;
+    ! Central baryon number density for star 1 [Msun_geo^-3]
+    DOUBLE PRECISION:: nbar_center1 ;
+    ! Central baryon mass density for star 1 [Msun Msun_geo^-3]
+    DOUBLE PRECISION:: rho_center1 ;
+    ! Central energy density for star 1 [Msun c^2 Msun_geo^-3]
+    DOUBLE PRECISION:: energy_density_center1 ;
+    ! Central specific energy for star 1 [c^2]
+    DOUBLE PRECISION:: specific_energy_center1 ;
+    ! Central pressure for star 1 [Msun c^2 Msun_geo^-3]
+    DOUBLE PRECISION:: pressure_center1 ;
+    ! Central enthalpy for star 2 [c^2]
+    DOUBLE PRECISION:: ent_center2 ;
+    ! Central baryon number density for star 2 [Msun_geo^-3]
+    DOUBLE PRECISION:: nbar_center2 ;
+    ! Central baryon mass density for star 2 [Msun Msun_geo^-3]
+    DOUBLE PRECISION:: rho_center2 ;
+    ! Central energy density for star 2 [Msun c^2 Msun_geo^-3]
+    DOUBLE PRECISION:: energy_density_center2 ;
+    ! Central specific energy for star 2 [c^2]
+    DOUBLE PRECISION:: specific_energy_center2 ;
+    ! Central pressure for star 2 [Msun c^2 Msun_geo^-3]
+    DOUBLE PRECISION:: pressure_center2 ;
     ! Names of the equations of state (EoS) of the two neutron stars
     CHARACTER(KIND= C_CHAR, LEN= 100):: eos1
     CHARACTER(KIND= C_CHAR, LEN= 100):: eos2
@@ -1384,6 +1408,18 @@ MODULE bns_id
                                      radius2_x_opp, &
                                      center2_x, &
                                      barycenter2_x, &
+                                     ent_center1, &
+                                     nbar_center1, &
+                                     rho_center1, &
+                                     energy_density_center1, &
+                                     specific_energy_center1, &
+                                     pressure_center1, &
+                                     ent_center2, &
+                                     nbar_center2, &
+                                     rho_center2, &
+                                     energy_density_center2, &
+                                     specific_energy_center2, &
+                                     pressure_center2, &
                                      eos1, &
                                      eos2, &
                                      gamma_1, &
@@ -1452,6 +1488,18 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_x_opp
       REAL(C_DOUBLE), INTENT(OUT)       :: center2_x
       REAL(C_DOUBLE), INTENT(OUT)       :: barycenter2_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: ent_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: nbar_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: rho_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: ent_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: nbar_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: rho_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure_center2
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos1
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos2
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma_1

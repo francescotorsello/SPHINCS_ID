@@ -674,7 +674,8 @@ SUBMODULE (bns_id) bns_methods
     !                                                    *
     !*****************************************************
 
-    USE constants, ONLY: k_lorene2hydrobase
+    USE constants, ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
+                         lorene2hydrobase
 
     IMPLICIT NONE
 
@@ -721,6 +722,43 @@ SUBMODULE (bns_id) bns_methods
                THIS% radius2_x_opp, " M_sun^geo"
       PRINT *, "  y direction = ", THIS% radius2_y, " M_sun^geo"
       PRINT *, "  z direction = ", THIS% radius2_z, " M_sun^geo"
+      PRINT *
+      PRINT *, " Hydro quantities at the center of star 1: "
+      PRINT *, "  Central enthalpy = ", THIS% ent_center1, " c^2"
+      PRINT *, "  Central baryon number density = ", THIS% nbar_center1, &
+               " (M_sun^geo)^{-3} =", &
+               THIS% nbar_center1/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
+      PRINT *, "  Central baryon mass density = ", THIS% rho_center1, &
+               " M_sun^geo (M_sun^geo)^{-3} =", &
+               THIS% rho_center1/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+      PRINT *, "  Central energy density = ", THIS% energy_density_center1, &
+               " M_sun^geo c^2 (M_sun^geo)^{-3}", &
+               THIS% energy_density_center1/lorene2hydrobase*kg2g/(m2cm**3), &
+               "g c^2 cm^{-3}"
+      PRINT *, "  Central specific energy = ", THIS% specific_energy_center1, &
+               " c^2"
+      PRINT *, "  Central pressure = ", THIS% pressure_center1, &
+               " M_sun^geo c^2 (M_sun^geo)^{-3}", &
+               THIS% pressure_center1/lorene2hydrobase*kg2g/(m2cm**3), &
+               "g c^2 cm^{-3}"
+      PRINT *, " Hydro quantities at the center of star 2: "
+      PRINT *, "  Central enthalpy = ", THIS% ent_center2, " c^2"
+      PRINT *, "  Central baryon number density = ", THIS% nbar_center2, &
+               " (M_sun^geo)^{-3} =", &
+               THIS% nbar_center2/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
+      PRINT *, "  Central baryon mass density = ", THIS% rho_center2, &
+               " M_sun^geo (M_sun^geo)^{-3} =", &
+               THIS% rho_center2/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+      PRINT *, "  Central energy density = ", THIS% energy_density_center2, &
+               " M_sun^geo c^2 (M_sun^geo)^{-3}", &
+               THIS% energy_density_center2/lorene2hydrobase*kg2g/(m2cm**3), &
+               "g c^2 cm^{-3}"
+      PRINT *, "  Central specific energy = ", THIS% specific_energy_center2, &
+               " c^2"
+      PRINT *, "  Central pressure = ", THIS% pressure_center2, &
+               " M_sun^geo c^2 (M_sun^geo)^{-3}", &
+               THIS% pressure_center2/lorene2hydrobase*kg2g/(m2cm**3), &
+               "g c^2 cm^{-3}"
       PRINT *
       PRINT *, " Equations of state for star 1 (EOS1) = ", THIS% eos1
       PRINT *, " Equations of state for star 2 (EOS2) = ", THIS% eos2
