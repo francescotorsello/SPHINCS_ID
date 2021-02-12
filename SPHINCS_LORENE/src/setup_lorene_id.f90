@@ -44,7 +44,7 @@ PROGRAM setup_lorene_id
   DOUBLE PRECISION:: denominator_ratio_dx
 
   ! Strings storing different names for output files
-  CHARACTER( LEN= 500 ):: namefile_parts
+  CHARACTER( LEN= 500 ):: namefile_parts, namefile_parts_bin
   CHARACTER( LEN= 500 ):: namefile_bssn, namefile_bssn_bin, name_logfile
   ! Array of strings storing the names of the LORENE BNS ID binary files
   CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
@@ -152,12 +152,21 @@ PROGRAM setup_lorene_id
         PRINT *, "===================================================" &
                  // "====================="
         PRINT *
-        WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
+        WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
                                     "l", &
                                     itr3, "-", itr4, "."
         particles_dist( itr3, itr4 )% export_bin= export_bin
+        particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
+        particles_dist( itr3, itr4 )% export_form_x = export_form_x
         CALL particles_dist( itr3, itr4 )% &
-             compute_and_export_SPH_variables( namefile_parts )
+             compute_and_export_SPH_variables( namefile_parts_bin )
+        IF( particles_dist( itr3, itr4 )% export_bin )THEN
+          WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
+                          "sph_vars-", itr3, "-", itr4, ".dat"
+          CALL particles_dist( itr3, itr4 )% &
+                          read_sphincs_dump_print_formatted( &
+                                        namefile_parts_bin, namefile_parts )
+        ENDIF
 
       ENDIF
     ENDDO part_distribution_loop2
@@ -177,8 +186,6 @@ PROGRAM setup_lorene_id
           WRITE( namefile_parts, "(A29,I1,A1,I1,A4)" ) &
                                  "lorene-bns-id-particles-form_", &
                                  itr3, "-", itr4, ".dat"
-          particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
-          particles_dist( itr3, itr4 )% export_form_x = export_form_x
           CALL particles_dist( itr3, itr4 )% &
                print_formatted_lorene_id_particles( namefile_parts )
         ENDIF

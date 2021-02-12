@@ -85,7 +85,7 @@ MODULE formul_bssn_id
     PROCEDURE :: compute_and_export_3p1_variables &
                     => compute_and_export_bssn_variables
 
-    PROCEDURE :: read_bssn_dump_print_formatted
+    PROCEDURE, PUBLIC :: read_bssn_dump_print_formatted
 
     PROCEDURE :: print_formatted_lorene_id_3p1_variables &
                     => print_formatted_lorene_id_bssn_variables

@@ -132,6 +132,8 @@ MODULE particles_id
 
     PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
 
+    PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
+
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
 
     PROCEDURE, PUBLIC:: is_empty
@@ -249,6 +251,15 @@ MODULE particles_id
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_export_SPH_variables
+
+    MODULE SUBROUTINE read_sphincs_dump_print_formatted( THIS, namefile_bin, &
+                                                               namefile )
+
+      CLASS(particles),    INTENT( IN OUT )           :: THIS
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+
+    END SUBROUTINE read_sphincs_dump_print_formatted
 
     MODULE SUBROUTINE print_formatted_lorene_id_particles( THIS, namefile )
 
