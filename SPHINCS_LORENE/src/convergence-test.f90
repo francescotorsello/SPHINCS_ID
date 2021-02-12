@@ -61,7 +61,8 @@ PROGRAM convergence_test
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
             compute_constraints, export_constraints_xy, &
             export_constraints_x, export_constraints, &
-            export_constraints_details, compute_parts_constraints
+            export_constraints_details, compute_parts_constraints, &
+            one_lapse, zero_shift
 
   TYPE( timer ):: execution_timer
 
@@ -83,7 +84,7 @@ PROGRAM convergence_test
                             export_constraints, export_constraints_details, &
                             constraints_step, compute_parts_constraints, &
                             numerator_ratio_dx, denominator_ratio_dx, &
-                            show_progress
+                            one_lapse, zero_shift, show_progress
 
   !---------------------------!
   !--  End of declarations  --!
@@ -126,6 +127,10 @@ PROGRAM convergence_test
   !-- Construct the bns object from the LORENE binary file
   !
   binary= bns( TRIM(common_path)//"/"//TRIM(filenames( 1 )) )
+  ! Set the variables to decide on using the geodesic gauge or not
+  ! (lapse=1, shift=0)
+  binary% one_lapse = one_lapse
+  binary% zero_shift= zero_shift
 
   !
   !-- Construct the particles object from the bns object

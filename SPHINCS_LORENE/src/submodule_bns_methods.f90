@@ -98,9 +98,17 @@ SUBMODULE (bns_id) bns_methods
           THIS% g_xz( itr )= 0.0D0
           THIS% g_yz( itr )= 0.0D0
 
-          !THIS% shift_x( itr )= -1.0D0*THIS% shift_x( itr )
-          !THIS% shift_y( itr )= -1.0D0*THIS% shift_y( itr )
-          !THIS% shift_z( itr )= -1.0D0*THIS% shift_z( itr )
+          !
+          !- Set/unset the geodesic gauge
+          !
+          IF( THIS% one_lapse )THEN
+            THIS% lapse( itr )= 1.0D0
+          ENDIF
+          IF( THIS% zero_shift )THEN
+            THIS% shift_x( itr )= 0.0D0
+            THIS% shift_y( itr )= 0.0D0
+            THIS% shift_z( itr )= 0.0D0
+          ENDIF
 
           !
           !-- Convert the extrinsic curvature from LORENE units to
@@ -201,9 +209,17 @@ SUBMODULE (bns_id) bns_methods
         g_xz( itr )= 0.0D0
         g_yz( itr )= 0.0D0
 
-        !shift_x( itr )= -1.0D0*shift_x( itr )
-        !shift_y( itr )= -1.0D0*shift_y( itr )
-        !shift_z( itr )= -1.0D0*shift_z( itr )
+        !
+        !- Set/unset the geodesic gauge
+        !
+        IF( THIS% one_lapse )THEN
+          lapse( itr )= 1.0D0
+        ENDIF
+        IF( THIS% zero_shift )THEN
+          shift_x( itr )= 0.0D0
+          shift_y( itr )= 0.0D0
+          shift_z( itr )= 0.0D0
+        ENDIF
 
         !
         !-- Convert the extrinsic curvature from LORENE units to
@@ -309,9 +325,17 @@ SUBMODULE (bns_id) bns_methods
             g( ix, iy, iz, jxz )= 0.0D0
             g( ix, iy, iz, jyz )= 0.0D0
 
-            !shift( ix, iy, iz, jx )= -1.0D0*shift( ix, iy, iz, jx )
-            !shift( ix, iy, iz, jy )= -1.0D0*shift( ix, iy, iz, jy )
-            !shift( ix, iy, iz, jz )= -1.0D0*shift( ix, iy, iz, jz )
+            !
+            !- Set/unset the geodesic gauge
+            !
+            IF( THIS% one_lapse )THEN
+              lapse( ix, iy, iz )= 1.0D0
+            ENDIF
+            IF( THIS% zero_shift )THEN
+              shift( ix, iy, iz, jx )= 0.0D0
+              shift( ix, iy, iz, jy )= 0.0D0
+              shift( ix, iy, iz, jz )= 0.0D0
+            ENDIF
 
             !
             !-- Convert the extrinsic curvature from LORENE units to
@@ -551,9 +575,17 @@ SUBMODULE (bns_id) bns_methods
         g_xz( itr )= 0.0D0
         g_yz( itr )= 0.0D0
 
-        !shift_x( itr )= - 1.0D0*shift_x( itr )
-        !shift_y( itr )= - 1.0D0*shift_y( itr )
-        !shift_z( itr )= - 1.0D0*shift_z( itr )
+        !
+        !- Set/unset the geodesic gauge
+        !
+        IF( THIS% one_lapse )THEN
+          lapse( itr )= 1.0D0
+        ENDIF
+        IF( THIS% zero_shift )THEN
+          shift_x( itr )= 0.0D0
+          shift_y( itr )= 0.0D0
+          shift_z( itr )= 0.0D0
+        ENDIF
 
         detg= 2*g_xy(itr)*g_xz(itr)*g_yz(itr) &
               - g_zz(itr)*g_xy(itr)**2 &
@@ -1867,6 +1899,202 @@ SUBMODULE (bns_id) bns_methods
     get_barycenter2_x= THIS% barycenter2_x
 
   END PROCEDURE get_barycenter2_x
+
+  MODULE PROCEDURE get_ent_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central enthalpy of NS 1           *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_ent_center1= THIS% ent_center1
+
+  END PROCEDURE get_ent_center1
+
+  MODULE PROCEDURE get_nbar_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central baryon number density      *
+    ! of NS 1                                        *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_nbar_center1= THIS% nbar_center1
+
+  END PROCEDURE get_nbar_center1
+
+  MODULE PROCEDURE get_rho_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central baryon mass density        *
+    ! of NS 1                                        *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_rho_center1= THIS% rho_center1
+
+  END PROCEDURE get_rho_center1
+
+  MODULE PROCEDURE get_energy_density_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central energy density of NS 1     *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_energy_density_center1= THIS% energy_density_center1
+
+  END PROCEDURE get_energy_density_center1
+
+  MODULE PROCEDURE get_specific_energy_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central specific energy of NS 1    *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_specific_energy_center1= THIS% specific_energy_center1
+
+  END PROCEDURE get_specific_energy_center1
+
+  MODULE PROCEDURE get_pressure_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central pressure of NS 1           *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_pressure_center1= THIS% pressure_center1
+
+  END PROCEDURE get_pressure_center1
+
+  MODULE PROCEDURE get_ent_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central enthalpy of NS 2           *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_ent_center2= THIS% ent_center2
+
+  END PROCEDURE get_ent_center2
+
+  MODULE PROCEDURE get_nbar_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central baryon number density      *
+    ! of NS 2                                        *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_nbar_center2= THIS% nbar_center2
+
+  END PROCEDURE get_nbar_center2
+
+  MODULE PROCEDURE get_rho_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central baryon mass density        *
+    ! of NS 2                                        *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_rho_center2= THIS% rho_center2
+
+  END PROCEDURE get_rho_center2
+
+  MODULE PROCEDURE get_energy_density_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central energy density of NS 2     *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_energy_density_center2= THIS% energy_density_center2
+
+  END PROCEDURE get_energy_density_center2
+
+  MODULE PROCEDURE get_specific_energy_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central specific energy of NS 2    *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_specific_energy_center2= THIS% specific_energy_center2
+
+  END PROCEDURE get_specific_energy_center2
+
+  MODULE PROCEDURE get_pressure_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central pressure of NS 2           *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_pressure_center2= THIS% pressure_center2
+
+  END PROCEDURE get_pressure_center2
 
   MODULE PROCEDURE get_eos1
 

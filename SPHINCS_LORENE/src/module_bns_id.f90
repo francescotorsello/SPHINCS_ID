@@ -205,6 +205,9 @@ MODULE bns_id
     !      See the last part of the PROGRAM in setup_lorene_id.f90, for example.
     TYPE(C_PTR):: bns_ptr
 
+    ! Variables to set the geodesic gauge (lapse=1, shift=0)
+    LOGICAL, PUBLIC:: one_lapse, zero_shift
+
 
     CONTAINS
 
@@ -295,6 +298,18 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: get_radius2_x_opp
     PROCEDURE, PUBLIC:: get_center2_x
     PROCEDURE, PUBLIC:: get_barycenter2_x
+    PROCEDURE, PUBLIC:: get_ent_center1
+    PROCEDURE, PUBLIC:: get_nbar_center1
+    PROCEDURE, PUBLIC:: get_rho_center1
+    PROCEDURE, PUBLIC:: get_energy_density_center1
+    PROCEDURE, PUBLIC:: get_specific_energy_center1
+    PROCEDURE, PUBLIC:: get_pressure_center1
+    PROCEDURE, PUBLIC:: get_ent_center2
+    PROCEDURE, PUBLIC:: get_nbar_center2
+    PROCEDURE, PUBLIC:: get_rho_center2
+    PROCEDURE, PUBLIC:: get_energy_density_center2
+    PROCEDURE, PUBLIC:: get_specific_energy_center2
+    PROCEDURE, PUBLIC:: get_pressure_center2
     PROCEDURE, PUBLIC:: get_eos1
     PROCEDURE, PUBLIC:: get_eos2
 
@@ -846,6 +861,114 @@ MODULE bns_id
       DOUBLE PRECISION:: get_barycenter2_x
 
     END FUNCTION get_barycenter2_x
+
+    MODULE FUNCTION get_ent_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_ent_center1
+
+    END FUNCTION get_ent_center1
+
+    MODULE FUNCTION get_nbar_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_nbar_center1
+
+    END FUNCTION get_nbar_center1
+
+    MODULE FUNCTION get_rho_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_rho_center1
+
+    END FUNCTION get_rho_center1
+
+    MODULE FUNCTION get_energy_density_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_energy_density_center1
+
+    END FUNCTION get_energy_density_center1
+
+    MODULE FUNCTION get_specific_energy_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_specific_energy_center1
+
+    END FUNCTION get_specific_energy_center1
+
+    MODULE FUNCTION get_pressure_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_pressure_center1
+
+    END FUNCTION get_pressure_center1
+
+    MODULE FUNCTION get_ent_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_ent_center2
+
+    END FUNCTION get_ent_center2
+
+    MODULE FUNCTION get_nbar_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_nbar_center2
+
+    END FUNCTION get_nbar_center2
+
+    MODULE FUNCTION get_rho_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_rho_center2
+
+    END FUNCTION get_rho_center2
+
+    MODULE FUNCTION get_energy_density_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_energy_density_center2
+
+    END FUNCTION get_energy_density_center2
+
+    MODULE FUNCTION get_specific_energy_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_specific_energy_center2
+
+    END FUNCTION get_specific_energy_center2
+
+    MODULE FUNCTION get_pressure_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_pressure_center2
+
+    END FUNCTION get_pressure_center2
 
     MODULE FUNCTION get_eos1( THIS )
 

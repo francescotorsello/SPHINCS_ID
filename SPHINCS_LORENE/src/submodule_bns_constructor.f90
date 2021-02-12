@@ -45,6 +45,10 @@ SUBMODULE (bns_id) bns_constructor
     bns_obj% bns_identifier= bns_counter
     bns_counter= bns_counter + 1
 
+    ! Do not use the geodesic gauge by default
+    bns_obj% one_lapse = .FALSE.
+    bns_obj% zero_shift= .FALSE.
+
     !PRINT *, "End of bns constructor."
     !PRINT *
 

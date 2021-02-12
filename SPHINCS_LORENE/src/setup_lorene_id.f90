@@ -58,7 +58,8 @@ PROGRAM setup_lorene_id
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
             compute_constraints, export_constraints_xy, &
             export_constraints_x, export_constraints, &
-            export_constraints_details, compute_parts_constraints
+            export_constraints_details, compute_parts_constraints, &
+            one_lapse, zero_shift
 
   TYPE( timer ):: execution_timer
 
@@ -83,7 +84,7 @@ PROGRAM setup_lorene_id
                             export_constraints, export_constraints_details, &
                             constraints_step, compute_parts_constraints, &
                             numerator_ratio_dx, denominator_ratio_dx, &
-                            show_progress
+                            one_lapse, zero_shift, show_progress
 
   !---------------------------!
   !--  End of declarations  --!
@@ -107,6 +108,10 @@ PROGRAM setup_lorene_id
   !
   build_bns_loop: DO itr= 1, n_bns, 1
     binaries( itr )= bns( TRIM(common_path)//"/"//TRIM(filenames( itr )) )
+    ! Set the variables to decide on using the geodesic gauge or not
+    ! (lapse=1, shift=0)
+    binaries( itr )% one_lapse = one_lapse
+    binaries( itr )% zero_shift= zero_shift
   ENDDO build_bns_loop
 
   !
