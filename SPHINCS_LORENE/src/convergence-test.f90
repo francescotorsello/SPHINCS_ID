@@ -46,7 +46,7 @@ PROGRAM convergence_test
   DOUBLE PRECISION:: ratio_dx
 
   ! Strings storing different names for output files
-  CHARACTER( LEN= 500 ):: namefile_parts
+  CHARACTER( LEN= 500 ):: namefile_parts, namefile_sph
   CHARACTER( LEN= 500 ):: namefile_bssn, name_logfile
   ! Array of strings storing the names of the LORENE BNS ID binary files
   CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
@@ -254,13 +254,6 @@ PROGRAM convergence_test
   !
   compute_export_bssn_constraints_loop: DO itr3 = min_bssn, max_bssn, 1
 
-    PRINT *, "===================================================" &
-             // "==============="
-    PRINT *, " Computing BSSN constraints for BSSN formulation", itr3
-    PRINT *, "===================================================" &
-             // "==============="
-    PRINT *
-
     bssn_forms( itr3 )% cons_step= constraints_step
     bssn_forms( itr3 )% export_constraints= export_constraints
     bssn_forms( itr3 )% export_constraints_details= &
@@ -269,6 +262,13 @@ PROGRAM convergence_test
     bssn_forms( itr3 )% export_constraints_x = export_constraints_x
 
     IF( compute_constraints )THEN
+
+      PRINT *, "===================================================" &
+               // "==============="
+      PRINT *, " Computing BSSN constraints for BSSN formulation", itr3
+      PRINT *, "===================================================" &
+               // "==============="
+      PRINT *
 
       WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, ".dat"
       WRITE( name_logfile, "(A28,I1,A4)" ) &
@@ -282,14 +282,24 @@ PROGRAM convergence_test
     ENDIF
     IF( compute_parts_constraints )THEN
 
+      PRINT *, "===================================================" &
+               // "==============="
+      PRINT *, " Computing BSSN constraints with particle data for BSSN", &
+               " formulation", itr3
+      PRINT *, "===================================================" &
+               // "==============="
+      PRINT *
+
       WRITE( namefile_bssn, "(A23,I1,A4)" ) "bssn-constraints-parts-", &
                                            itr3, ".dat"
+      WRITE( namefile_sph, "(A12,I1,A4)" ) "sph-density-", itr3, ".dat"
       WRITE( name_logfile, "(A34,I1,A4)" ) &
                            "bssn-constraints-parts-statistics-", itr3, ".log"
 
       CALL bssn_forms( itr3 )% &
                   compute_and_export_3p1_constraints( particles_dist, &
                                                       namefile_bssn, &
+                                                      namefile_sph, &
                                                       name_logfile )
 
     ENDIF

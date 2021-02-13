@@ -1698,11 +1698,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
+    INTEGER:: itr, min_y_index
+    INTEGER, SAVE:: counter= 1
+
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
     DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
-
-    INTEGER, SAVE:: counter= 1
+    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_loc
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_loc
@@ -1711,6 +1713,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_loc
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel_loc
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: theta_loc
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: sph_density
 
     CHARACTER( LEN= : ), ALLOCATABLE:: name_constraint
     CHARACTER( LEN= : ), ALLOCATABLE:: name_analysis
@@ -1838,6 +1841,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
        PRINT *, '...allocation error for vel_loc'
        STOP
     ENDIF
+    IF( .NOT. ALLOCATED( sph_density ) )THEN
+        ALLOCATE( sph_density( npart ), STAT= allocation_status )
+    ENDIF
+    IF( allocation_status > 0 )THEN
+       PRINT *, '...allocation error for sph_density'
+       STOP
+    ENDIF
+    ALLOCATE( abs_pos( 3, npart ) )
 
     !IF( .NOT. ALLOCATED( tmp ) )THEN
     !    ALLOCATE( tmp( npart ), STAT= allocation_status )
@@ -1916,20 +1927,20 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- the stress-energy tensor from the particles to the grid
     !
 
-   ! PRINT *, " * Computing neighbours..."
-   ! PRINT *
-   ! CALL exact_nei_tree_update( ndes,    &
-   !                             npart,   &
-   !                             pos_loc, &
-   !                             nu_loc )
-   !
-   ! IF( debug ) PRINT *, "5"
-   !
-   ! PRINT *, " * Computing SPH density..."
-   ! PRINT *
-   ! CALL density( npart,   &
-   !               pos_loc, &
-   !               Nstar )
+    PRINT *, " * Computing neighbours..."
+    PRINT *
+    CALL exact_nei_tree_update( ndes,    &
+                                npart,   &
+                                pos_loc, &
+                                nu_loc )
+
+    IF( debug ) PRINT *, "5"
+
+    PRINT *, " * Computing SPH density..."
+    PRINT *
+    CALL density( npart,   &
+                  pos_loc, &
+                  sph_density )
 
     IF( debug ) PRINT *, "6"
 
@@ -2120,52 +2131,52 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     IF( THIS% export_constraints )THEN
 
-        PRINT *, " * Printing constraints to file ", TRIM(namefile), "..."
+      PRINT *, " * Printing constraints to file ", TRIM(namefile), "..."
 
-        !
-        !-- Export the constraints to a formatted file
-        !
+      !
+      !-- Export the constraints to a formatted file
+      !
 
-        INQUIRE( FILE= TRIM(namefile), EXIST= exist )
+      INQUIRE( FILE= TRIM(namefile), EXIST= exist )
 
-        IF( debug ) PRINT *, "1"
+      IF( debug ) PRINT *, "1"
 
-        IF( exist )THEN
-            OPEN( UNIT= 21, FILE= TRIM(namefile), STATUS= "REPLACE", &
-                  FORM= "FORMATTED", &
-                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                  IOMSG= err_msg )
-        ELSE
-            OPEN( UNIT= 21, FILE= TRIM(namefile), STATUS= "NEW", &
-            FORM= "FORMATTED", &
-                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-        ENDIF
-        CALL test_status( ios, err_msg, "...error when opening " &
-                 // TRIM(namefile) )
+      IF( exist )THEN
+          OPEN( UNIT= 21, FILE= TRIM(namefile), STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
+      ELSE
+          OPEN( UNIT= 21, FILE= TRIM(namefile), STATUS= "NEW", &
+          FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      CALL test_status( ios, err_msg, "...error when opening " &
+               // TRIM(namefile) )
 
-        IF( debug ) PRINT *, "2"
+      IF( debug ) PRINT *, "2"
 
-        WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
-        WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        "# Values of the BSSN constraints for the LORENE ID "&
-        // "on selected grid points"
-        CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-                 // TRIM(namefile) )
-        WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        "# column:      1        2       3       4       5", &
-        "       6       7       8       9       10", &
-        "       11       12       13       14       15", &
-        "       16       17       18       19       20"
-        CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-                // TRIM(namefile) )
-        WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        "#      x   y   z   Stress-energy (10 components)   " &
-        // "Hamiltonian constraint       " &
-        // "Momentum constraint (three components)       " &
-        // "Connection constraint (three components)"
-        CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-                // TRIM(namefile) )
+      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Values of the BSSN constraints for the LORENE ID "&
+      // "on selected grid points"
+      CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+               // TRIM(namefile) )
+      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# column:      1        2       3       4       5", &
+      "       6       7       8       9       10", &
+      "       11       12       13       14       15", &
+      "       16       17       18       19       20"
+      CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+              // TRIM(namefile) )
+      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "#      x   y   z   Stress-energy (10 components)   " &
+      // "Hamiltonian constraint       " &
+      // "Momentum constraint (three components)       " &
+      // "Connection constraint (three components)"
+      CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+              // TRIM(namefile) )
 
       IF( debug ) PRINT *, "3"
 
@@ -2301,43 +2312,123 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
               THIS% Gamma_u(ix,iy,iz,1), &
               THIS% Gamma_u(ix,iy,iz,2), &
               THIS% Gamma_u(ix,iy,iz,3)
-          ELSE
-            WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), &
-              Tmunu_ll( ix, iy, iz, itt ), &
-              Tmunu_ll( ix, iy, iz, itx ), &
-              Tmunu_ll( ix, iy, iz, ity ), &
-              Tmunu_ll( ix, iy, iz, itz ), &
-              Tmunu_ll( ix, iy, iz, ixx ), &
-              Tmunu_ll( ix, iy, iz, ixy ), &
-              Tmunu_ll( ix, iy, iz, ixz ), &
-              Tmunu_ll( ix, iy, iz, iyy ), &
-              Tmunu_ll( ix, iy, iz, iyz ), &
-              Tmunu_ll( ix, iy, iz, izz ), &
-              THIS% HC_parts( ix, iy, iz ), &
-              THIS% MC_parts( ix, iy, iz, jx ), &
-              THIS% MC_parts( ix, iy, iz, jy ), &
-              THIS% MC_parts( ix, iy, iz, jz ), &
-              THIS% GC_parts( ix, iy, iz, jx ), &
-              THIS% GC_parts( ix, iy, iz, jy ), &
-              THIS% GC_parts( ix, iy, iz, jz )
-          ENDIF
+            ELSE
+              WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
+                THIS% grid( 1, ix, iy, iz ), &
+                THIS% grid( 2, ix, iy, iz ), &
+                THIS% grid( 3, ix, iy, iz ), &
+                Tmunu_ll( ix, iy, iz, itt ), &
+                Tmunu_ll( ix, iy, iz, itx ), &
+                Tmunu_ll( ix, iy, iz, ity ), &
+                Tmunu_ll( ix, iy, iz, itz ), &
+                Tmunu_ll( ix, iy, iz, ixx ), &
+                Tmunu_ll( ix, iy, iz, ixy ), &
+                Tmunu_ll( ix, iy, iz, ixz ), &
+                Tmunu_ll( ix, iy, iz, iyy ), &
+                Tmunu_ll( ix, iy, iz, iyz ), &
+                Tmunu_ll( ix, iy, iz, izz ), &
+                THIS% HC_parts( ix, iy, iz ), &
+                THIS% MC_parts( ix, iy, iz, jx ), &
+                THIS% MC_parts( ix, iy, iz, jy ), &
+                THIS% MC_parts( ix, iy, iz, jz ), &
+                THIS% GC_parts( ix, iy, iz, jx ), &
+                THIS% GC_parts( ix, iy, iz, jy ), &
+                THIS% GC_parts( ix, iy, iz, jz )
+            ENDIF
 
-          CALL test_status( ios, err_msg, &
-                        "...error in writing " &
-                        // "the arrays in " // TRIM(namefile) )
+            CALL test_status( ios, err_msg, &
+                          "...error in writing " &
+                          // "the arrays in " // TRIM(namefile) )
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
 
-    IF( debug ) PRINT *, "4"
+      IF( debug ) PRINT *, "4"
 
-    CLOSE( UNIT= 21 )
+      CLOSE( UNIT= 21 )
 
-    PRINT *, " * Printed."
-    PRINT *
+      PRINT *, " * Printed."
+      PRINT *
+
+      PRINT *, " * Printing sph density to file ", TRIM(namefile_sph), "..."
+
+      INQUIRE( FILE= TRIM(namefile_sph), EXIST= exist )
+
+      IF( exist )THEN
+          OPEN( UNIT= 2, FILE= TRIM(namefile_sph), STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
+      ELSE
+          OPEN( UNIT= 2, FILE= TRIM(namefile_sph), STATUS= "NEW", &
+                FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      CALL test_status( ios, err_msg, "...error when opening " &
+                        // TRIM(namefile_sph) )
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Values of the SPH density"
+      CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+              // TRIM(namefile_sph) )
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# column:      1        2       3       4"
+
+      CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+              // TRIM(namefile_sph) )
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "#      grid point      x [km]       y [km]       z [km]       ", &
+      "SPH density"
+
+      CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+              // TRIM(namefile_sph) )
+
+      DO itr = 1, npart, 1
+        abs_pos( 1, itr )= ABS( pos_loc( 1, itr ) )
+        abs_pos( 2, itr )= ABS( pos_loc( 2, itr ) )
+        abs_pos( 3, itr )= ABS( pos_loc( 3, itr ) )
+      ENDDO
+
+      min_y_index= 0
+      min_abs_y= 1D+20
+      DO itr = 1, npart, 1
+        IF( ABS( pos_loc( 2, itr ) ) < min_abs_y )THEN
+          min_abs_y= ABS( pos_loc( 2, itr ) )
+          min_y_index= itr
+        ENDIF
+      ENDDO
+
+      min_abs_z= MINVAL( abs_pos( 3, : ) )
+
+      write_data_loop: DO itr = 1, npart, 1
+
+        IF( THIS% export_form_xy .AND. pos_loc( 3, itr ) /= min_abs_z )THEN
+          CYCLE
+        ENDIF
+        IF( THIS% export_form_x .AND. ( pos_loc( 3, itr ) /= min_abs_z &
+            .OR. pos_loc( 2, itr ) /= pos_loc( 2, min_y_index ) ) )THEN
+          CYCLE
+        ENDIF
+        WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+          itr, &
+          pos_loc( 1, itr ), &
+          pos_loc( 2, itr ), &
+          pos_loc( 3, itr ), &
+          sph_density( itr )
+
+      CALL test_status( ios, err_msg, "...error when writing " &
+               // "the arrays in " // TRIM(namefile_sph) )
+      ENDDO write_data_loop
+
+      CLOSE( UNIT= 2 )
+
+      PRINT *, " * Printed."
+      PRINT *
 
     ENDIF
 

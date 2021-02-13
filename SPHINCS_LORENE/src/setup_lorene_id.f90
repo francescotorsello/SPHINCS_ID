@@ -44,7 +44,7 @@ PROGRAM setup_lorene_id
   DOUBLE PRECISION:: denominator_ratio_dx
 
   ! Strings storing different names for output files
-  CHARACTER( LEN= 500 ):: namefile_parts, namefile_parts_bin
+  CHARACTER( LEN= 500 ):: namefile_parts, namefile_parts_bin, namefile_sph
   CHARACTER( LEN= 500 ):: namefile_bssn, namefile_bssn_bin, name_logfile
   ! Array of strings storing the names of the LORENE BNS ID binary files
   CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
@@ -241,30 +241,75 @@ PROGRAM setup_lorene_id
   !
   !-- Compute the BSSN constraints
   !
-  IF( compute_constraints )THEN
-    compute_export_bssn_constraints_loop: DO itr3 = 1, n_bns, 1
-      PRINT *, "===================================================" &
-               // "==============="
-      PRINT *, " Computing BSSN constraints for BNS", itr3
-      PRINT *, "===================================================" &
-               // "==============="
-      PRINT *
-      WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", &
-                                           itr3, ".dat"
-      WRITE( name_logfile, "(A28,I1,A4)" ) &
-                          "bssn-constraints-statistics-", itr3, ".log"
+  compute_export_bssn_constraints_loop: DO itr3 = 1, n_bns, 1
+
       bssn_forms( itr3 )% cons_step= constraints_step
       bssn_forms( itr3 )% export_constraints= export_constraints
       bssn_forms( itr3 )% export_constraints_details= &
                           export_constraints_details
       bssn_forms( itr3 )% export_constraints_xy= export_constraints_xy
       bssn_forms( itr3 )% export_constraints_x = export_constraints_x
-      CALL bssn_forms( itr3 )% &
-                  compute_and_export_3p1_constraints( binaries( itr3 ), &
-                                                      namefile_bssn, &
-                                                      name_logfile )
-    ENDDO compute_export_bssn_constraints_loop
-  ENDIF
+
+      IF( compute_constraints )THEN
+
+        PRINT *, "===================================================" &
+                 // "==============="
+        PRINT *, " Computing BSSN constraints for BSSN formulation", itr3
+        PRINT *, "===================================================" &
+                 // "==============="
+        PRINT *
+
+        WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, &
+                                              ".dat"
+        WRITE( name_logfile, "(A28,I1,A4)" ) &
+                            "bssn-constraints-statistics-", itr3, ".log"
+
+        CALL bssn_forms( itr3 )% &
+                    compute_and_export_3p1_constraints( binaries( itr3 ), &
+                                                        namefile_bssn, &
+                                                        name_logfile )
+
+      ENDIF
+
+      part_distribution_loop3: DO itr4= 1, max_n_parts, 1
+
+        IF( placer( itr3, itr4 ) == test_int )THEN
+          EXIT
+          ! Experimental: empty particles object
+          !particles_dist( itr, itr2 )= particles()
+        ELSE
+
+        IF( compute_parts_constraints )THEN
+
+          PRINT *, "===================================================" &
+                   // "================================================"
+          PRINT *, " Computing BSSN constraints for BSSN", &
+                   " formulation", itr3, "with particle distribution", itr4
+          PRINT *, "===================================================" &
+                   // "================================================"
+          PRINT *
+
+          WRITE( namefile_bssn, "(A23,I1,A1,I1,A4)" ) &
+                                                "bssn-constraints-parts-", &
+                                                itr3, "-", itr4, ".dat"
+          WRITE( namefile_sph, "(A12,I1,A1,I1,A4)" ) "sph-density-", itr3, &
+                                                "-", itr4, ".dat"
+          WRITE( name_logfile, "(A34,I1,A1,I1,A4)" ) &
+                               "bssn-constraints-parts-statistics-", itr3, &
+                               "-", itr4, ".log"
+
+          CALL bssn_forms( itr3 )% &
+                      compute_and_export_3p1_constraints( &
+                                                particles_dist( itr3, itr4 ), &
+                                                namefile_bssn, &
+                                                namefile_sph, &
+                                                name_logfile )
+
+        ENDIF
+      ENDIF
+
+    ENDDO part_distribution_loop3
+  ENDDO compute_export_bssn_constraints_loop
 
   CALL execution_timer% stop_timer()
 
