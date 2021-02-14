@@ -33,6 +33,7 @@ SUBMODULE (particles_id) particles_methods
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
                                    third
+    USE units,               ONLY: set_units, umass
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
                                    pos_u, &  ! particle positions
@@ -58,7 +59,7 @@ SUBMODULE (particles_id) particles_methods
                                    deallocate_metric_on_particles, &
                                    sq_det_g4
     USE options,             ONLY: basename
-    USE input_output,        ONLY: set_units, dcount, write_SPHINCS_dump
+    USE input_output,        ONLY: dcount, write_SPHINCS_dump
 
     IMPLICIT NONE
 
@@ -70,7 +71,7 @@ SUBMODULE (particles_id) particles_methods
     INTEGER:: nus, mus
 
     DOUBLE PRECISION:: g4(0:3,0:3)
-    DOUBLE PRECISION:: det,sq_g, Theta_a
+    DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -221,7 +222,7 @@ SUBMODULE (particles_id) particles_methods
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= THIS% baryon_density_parts(itr)/(amu*g2kg)*((Msun_geo*km2m)**3)
+      nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% nlrf(itr)= nlrf(itr)
 
       ! Internal energy per baryon (specific internal energy)
@@ -237,12 +238,27 @@ SUBMODULE (particles_id) particles_methods
       ! Pressure [amu*c**2/(Msun_geo**3)]
       !          dimensions: [(M/L**3)*L**2/T**2]= [M/(L*T**2)], same as
       !                      energy density
-      Pr(itr)= THIS% pressure_parts(itr)/(amu*g2kg)*((Msun_geo*km2m)**3)
+      Pr(itr)= THIS% pressure_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% pressure_parts_cu(itr)= Pr(itr)
 
       ! Baryon per particle
-      nu(itr)= Theta_a*sq_g*nlrf(itr)*(THIS% vol_a/(Msun_geo**3))
+      nu(itr)= nlrf(itr)*THIS% vol_a*Theta_a*sq_g
       THIS% nu(itr)= nu(itr)
+      THIS% nbar_tot= THIS% nbar_tot + THIS% nu(itr)
+
+      ! THIS% mass1*umass converts mass1 in g; umass is Msun in g
+      ! amu is the atomic mass unit in g
+      !temp1= THIS% mass1*umass/amu/THIS% npart1
+      !temp2= THIS% mass2*umass/amu/THIS% npart2
+      !IF( nu(itr) /= temp1 )THEN
+      !  PRINT *, "The two formulas to compute the baryons per particle ", &
+      !           "do not give consistent results at particle ", itr, "."
+      !  PRINT *, "nu(itr)*THIS% vol_a=", nu(itr)
+      !  PRINT *, "THIS% mass1*umass/THIS% npart1/amu=", temp1
+      !  PRINT *, "THIS% mass2*umass/THIS% npart2/amu=", temp2
+      !  PRINT *
+      !  STOP
+      !ENDIF
 
       IF( debug )THEN
         IF( itr >= THIS% npart/10 - 200 .AND. itr <= THIS% npart/10 )THEN
@@ -283,9 +299,9 @@ SUBMODULE (particles_id) particles_methods
     CALL THIS% sph_computer_timer% stop_timer()
 
     PRINT *, " * Maximum nlrf=", MAXVAL( THIS% nlrf, DIM= 1 ), &
-             "baryon (R_schw/2)^{-3}"
+             "baryon Msun_geo^{-3}"
     PRINT *, " * Minimum nlrf=", MINVAL( THIS% nlrf, DIM= 1 ), &
-             "baryon (R_schw/2)^{-3}"
+             "baryon Msun_geo^{-3}"
     PRINT *, " * Ratio between the two=", &
                       MAXVAL( THIS% nlrf, DIM= 1 )/MINVAL( THIS% nlrf, DIM= 1 )
     PRINT *
@@ -296,6 +312,7 @@ SUBMODULE (particles_id) particles_methods
               MINVAL( THIS% nu, DIM= 1 )
     PRINT *, " * Ratio between the two=", &
                       MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
+    PRINT *, " * Total number of baryons=", THIS% nbar_tot
     PRINT *
 
     !

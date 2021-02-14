@@ -1642,7 +1642,7 @@ SUBMODULE (bns_id) bns_methods
 
     !*************************************************
     !                                                *
-    ! Returns the mass of NS 1                       *
+    ! Returns the mass of NS 1 [Msun]                *
     !                                                *
     ! FT                                             *
     !                                                *
@@ -1658,7 +1658,7 @@ SUBMODULE (bns_id) bns_methods
 
     !*************************************************
     !                                                *
-    ! Returns the mass of NS 2                       *
+    ! Returns the mass of NS 2 [Msun]                *
     !                                                *
     ! FT                                             *
     !                                                *

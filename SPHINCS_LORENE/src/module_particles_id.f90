@@ -99,10 +99,14 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Theta
     ! 1-D array storing the smoothing length
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
+    ! Baryonic masses of the neutron stars [Msun]
+    DOUBLE PRECISION:: mass1, mass2
     ! Total grid volume
     DOUBLE PRECISION:: vol, vol1, vol2
     ! Volume per particle
     DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
+    ! Total baryon number
+    DOUBLE PRECISION:: nbar_tot
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
 

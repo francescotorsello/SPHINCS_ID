@@ -87,6 +87,10 @@ SUBMODULE (particles_id) particles_constructor
     ! Declare this object as non-empty (experimental)
     parts_obj% empty_object= .FALSE.
 
+    parts_obj% mass1= bns_obj% get_mass1()
+    parts_obj% mass2= bns_obj% get_mass2()
+    parts_obj% nbar_tot= 0.0D0
+
     !
     !-- Read the parameters of the particle distributions
     !
@@ -550,7 +554,7 @@ SUBMODULE (particles_id) particles_constructor
     THIS% vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
     THIS% vol_a= THIS% vol/THIS% npart_temp
 
-    ! Consistency check for the volume
+    ! Consistency check for the particle volume
     IF( ABS( THIS% vol_a - dx*dy*dz ) > 1D-9 )THEN
       PRINT *, " * The particle volume vol_a=", THIS% vol_a, "Msun_geo^3"
       PRINT *, " is not equal to dx*dy*dz=", dx*dy*dz, "Msun_geo^3."
@@ -986,7 +990,7 @@ SUBMODULE (particles_id) particles_constructor
     THIS% vol  = THIS% vol1 + THIS% vol2
     vol_a_alt  = THIS% vol/THIS% npart_temp
 
-    ! Consistency check
+    ! Consistency check for the particle volume
     IF( ABS( THIS% vol_a - vol_a_alt ) > 1D-15 )THEN
       PRINT *, " * The particle volume vol_a_alt=", vol_a_alt, "Msun_geo^3"
       PRINT *, " is not equal to dx*dy*dz=", THIS% vol_a, "Msun_geo^3."

@@ -1670,8 +1670,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                                     temp,  &  ! Temperature
                                     av,    &  ! Dissipation
                                     Ye,    &  ! Electron fraction
-                                    divv,  &  !Divergence of velocity vel_u
-                                    Nstar, &
+                                    divv,  &  ! Divergence of velocity vel_u
+                                    Nstar, &  ! Comput.frame baryon number
+                                              ! density
                                     allocate_SPH_memory, &
                                     deallocate_SPH_memory
     USE RCB_tree_3D,          ONLY: allocate_RCB_tree_memory_3D,&
@@ -1865,6 +1866,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !   STOP
     !ENDIF
 
+    ! Set the SPH density to 0 by default
+    sph_density= 0.0D0
+
     CALL set_units('NSM')
     CALL read_options
 
@@ -1938,6 +1942,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     PRINT *, " * Computing SPH density..."
     PRINT *
+    nu = nu_loc
+    pos_u = pos_loc
+    vel_u = vel_loc
+    u = u_loc
+    nlrf = nlrf_loc
+    Theta = theta_loc
+    Pr = pressure_loc
     CALL density( npart,   &
                   pos_loc, &
                   sph_density )
