@@ -98,9 +98,17 @@ SUBMODULE (bns_id) bns_methods
           THIS% g_xz( itr )= 0.0D0
           THIS% g_yz( itr )= 0.0D0
 
-          !THIS% shift_x( itr )= -1.0D0*THIS% shift_x( itr )
-          !THIS% shift_y( itr )= -1.0D0*THIS% shift_y( itr )
-          !THIS% shift_z( itr )= -1.0D0*THIS% shift_z( itr )
+          !
+          !- Set/unset the geodesic gauge
+          !
+          IF( THIS% one_lapse )THEN
+            THIS% lapse( itr )= 1.0D0
+          ENDIF
+          IF( THIS% zero_shift )THEN
+            THIS% shift_x( itr )= 0.0D0
+            THIS% shift_y( itr )= 0.0D0
+            THIS% shift_z( itr )= 0.0D0
+          ENDIF
 
           !
           !-- Convert the extrinsic curvature from LORENE units to
@@ -115,7 +123,7 @@ SUBMODULE (bns_id) bns_methods
 
           ! Print progress on screen
           perc= 100*itr/n
-          IF( MOD( perc, 10 ) == 0 )THEN
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                     creturn//" ", perc, "%"
           ENDIF
@@ -201,9 +209,17 @@ SUBMODULE (bns_id) bns_methods
         g_xz( itr )= 0.0D0
         g_yz( itr )= 0.0D0
 
-        !shift_x( itr )= -1.0D0*shift_x( itr )
-        !shift_y( itr )= -1.0D0*shift_y( itr )
-        !shift_z( itr )= -1.0D0*shift_z( itr )
+        !
+        !- Set/unset the geodesic gauge
+        !
+        IF( THIS% one_lapse )THEN
+          lapse( itr )= 1.0D0
+        ENDIF
+        IF( THIS% zero_shift )THEN
+          shift_x( itr )= 0.0D0
+          shift_y( itr )= 0.0D0
+          shift_z( itr )= 0.0D0
+        ENDIF
 
         !
         !-- Convert the extrinsic curvature from LORENE units to
@@ -218,7 +234,7 @@ SUBMODULE (bns_id) bns_methods
 
         ! Print progress on screen
         perc= 100*itr/n
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF
@@ -309,9 +325,17 @@ SUBMODULE (bns_id) bns_methods
             g( ix, iy, iz, jxz )= 0.0D0
             g( ix, iy, iz, jyz )= 0.0D0
 
-            !shift( ix, iy, iz, jx )= -1.0D0*shift( ix, iy, iz, jx )
-            !shift( ix, iy, iz, jy )= -1.0D0*shift( ix, iy, iz, jy )
-            !shift( ix, iy, iz, jz )= -1.0D0*shift( ix, iy, iz, jz )
+            !
+            !- Set/unset the geodesic gauge
+            !
+            IF( THIS% one_lapse )THEN
+              lapse( ix, iy, iz )= 1.0D0
+            ENDIF
+            IF( THIS% zero_shift )THEN
+              shift( ix, iy, iz, jx )= 0.0D0
+              shift( ix, iy, iz, jy )= 0.0D0
+              shift( ix, iy, iz, jz )= 0.0D0
+            ENDIF
 
             !
             !-- Convert the extrinsic curvature from LORENE units to
@@ -415,7 +439,7 @@ SUBMODULE (bns_id) bns_methods
             perc= 100*( nx*ny*(iz - 1) + nx*(iy - 1) + ix )/( nx*ny*nz )
             !perc2= 100.0*DBLE(nx*ny*(iz - 1) + nx*(iy - 1) + ix)/DBLE( nx*ny*nz )
             !perc= 100*cnt/( nx*ny*nz )
-            IF( MOD( perc, 10 ) == 0 )THEN
+            IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
               WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                       creturn//" ", perc, "%"
               !WRITE( *, "(A2,F5.2,A1)", ADVANCE= "NO" ) &
@@ -475,7 +499,7 @@ SUBMODULE (bns_id) bns_methods
             ! Print progress on screen
             perc= 100*(nx*ny*(iz - 1) &
                   + nx*(iy - 1) + ix)/( nx*ny*nz )
-            IF( MOD( perc, 10 ) == 0 )THEN
+            IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
               WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                       creturn//" ", perc, "%"
             ENDIF
@@ -551,9 +575,17 @@ SUBMODULE (bns_id) bns_methods
         g_xz( itr )= 0.0D0
         g_yz( itr )= 0.0D0
 
-        !shift_x( itr )= - 1.0D0*shift_x( itr )
-        !shift_y( itr )= - 1.0D0*shift_y( itr )
-        !shift_z( itr )= - 1.0D0*shift_z( itr )
+        !
+        !- Set/unset the geodesic gauge
+        !
+        IF( THIS% one_lapse )THEN
+          lapse( itr )= 1.0D0
+        ENDIF
+        IF( THIS% zero_shift )THEN
+          shift_x( itr )= 0.0D0
+          shift_y( itr )= 0.0D0
+          shift_z( itr )= 0.0D0
+        ENDIF
 
         detg= 2*g_xy(itr)*g_xz(itr)*g_yz(itr) &
               - g_zz(itr)*g_xy(itr)**2 &
@@ -576,7 +608,7 @@ SUBMODULE (bns_id) bns_methods
 
         ! Print progress on screen
         perc= 100*itr/n
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF
@@ -648,7 +680,7 @@ SUBMODULE (bns_id) bns_methods
 
         ! Print progress on screen
         perc= 100*itr/n
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF
@@ -674,6 +706,9 @@ SUBMODULE (bns_id) bns_methods
     !                                                    *
     !*****************************************************
 
+    USE constants, ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
+                         lorene2hydrobase
+
     IMPLICIT NONE
 
     IF( THIS% angular_momentum == 0.0D0 )THEN
@@ -689,82 +724,166 @@ SUBMODULE (bns_id) bns_methods
       PRINT *, " ** The parameters of the binary system are:"
       PRINT *
       PRINT *, " Distance between the points of highest density = ",&
-               THIS% distance, " km"
-      PRINT *, " Distance between the centers of mass = ", &
-               THIS% distance_com, " km"
+               THIS% distance, " M_sun^geo"
+      PRINT *, " Distance between the barycenters = ", &
+               THIS% distance_com, " M_sun^geo"
       PRINT *
-      PRINT *, " Mass of star 1 = ", THIS% mass1, " M_sol"
-      PRINT *, " Mass of star 2 = ", THIS% mass2, " M_sol"
-      PRINT *, " ADM mass = ", THIS% adm_mass, " M_sol"
+      PRINT *, " Mass of NS 1 = ", THIS% mass1, " M_sun"
+      PRINT *, " Mass of NS 2 = ", THIS% mass2, " M_sun"
+      PRINT *, " ADM mass = ", THIS% adm_mass, " M_sun"
       PRINT *
+      PRINT *, " Stellar center of NS 1 = ", THIS% center1_x, " M_sun^geo"
+      PRINT *, " Stellar center of NS 2 = ", THIS% center2_x, " M_sun^geo"
+      PRINT *, " Barycenter of NS 1 = ", THIS% barycenter1_x, " M_sun^geo"
+      PRINT *, " Barycenter of NS 2 = ", THIS% barycenter2_x, " M_sun^geo"
       PRINT *, " Angular velocity = ", THIS% angular_vel, " rad/s"
       PRINT *, " Angular momentum of the system = ", &
-               THIS% angular_momentum, " G M_sol^2 /c"
+               THIS% angular_momentum, " G M_sun^2 /c"
       PRINT *
       PRINT *, " Radii of star 1: "
       PRINT *, "  x direction, towards companion = ", &
-               THIS% radius1_x_comp, " km"
+               THIS% radius1_x_comp, " M_sun^geo"
       PRINT *, "  x direction, opposite to companion = ", &
-               THIS% radius1_x_opp, " km"
-      PRINT *, "  y direction = ", THIS% radius1_y, " km"
-      PRINT *, "  z direction = ", THIS% radius1_z, " km"
+               THIS% radius1_x_opp, " M_sun^geo"
+      PRINT *, "  y direction = ", THIS% radius1_y, " M_sun^geo"
+      PRINT *, "  z direction = ", THIS% radius1_z, " M_sun^geo"
       PRINT *, " Radii of star 2 :"
       PRINT *, "  x direction, towards companion = ", &
-               THIS% radius2_x_comp, " km"
+               THIS% radius2_x_comp, " M_sun^geo"
       PRINT *, "  x direction, opposite to companion = ", &
-               THIS% radius2_x_opp, " km"
-      PRINT *, "  y direction = ", THIS% radius2_y, " km"
-      PRINT *, "  z direction = ", THIS% radius2_z, " km"
+               THIS% radius2_x_opp, " M_sun^geo"
+      PRINT *, "  y direction = ", THIS% radius2_y, " M_sun^geo"
+      PRINT *, "  z direction = ", THIS% radius2_z, " M_sun^geo"
+      PRINT *
+      PRINT *, " Hydro quantities at the center of star 1: "
+      PRINT *, "  Central enthalpy = ", THIS% ent_center1, " c^2"
+      PRINT *, "  Central baryon number density = ", THIS% nbar_center1, &
+               " (M_sun^geo)^{-3} =", &
+               THIS% nbar_center1/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
+      PRINT *, "  Central baryon mass density = ", THIS% rho_center1, &
+               " M_sun^geo (M_sun^geo)^{-3} =", &
+               THIS% rho_center1/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+      PRINT *, "  Central energy density = ", THIS% energy_density_center1, &
+               " M_sun^geo c^2 (M_sun^geo)^{-3}", &
+               THIS% energy_density_center1/lorene2hydrobase*kg2g/(m2cm**3), &
+               "g c^2 cm^{-3}"
+      PRINT *, "  Central specific energy = ", THIS% specific_energy_center1, &
+               " c^2"
+      PRINT *, "  Central pressure = ", THIS% pressure_center1, &
+               " M_sun^geo c^2 (M_sun^geo)^{-3}", &
+               THIS% pressure_center1/lorene2hydrobase*kg2g/(m2cm**3), &
+               "g c^2 cm^{-3}"
+      PRINT *, " Hydro quantities at the center of star 2: "
+      PRINT *, "  Central enthalpy = ", THIS% ent_center2, " c^2"
+      PRINT *, "  Central baryon number density = ", THIS% nbar_center2, &
+               " (M_sun^geo)^{-3} =", &
+               THIS% nbar_center2/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
+      PRINT *, "  Central baryon mass density = ", THIS% rho_center2, &
+               " M_sun^geo (M_sun^geo)^{-3} =", &
+               THIS% rho_center2/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+      PRINT *, "  Central energy density = ", THIS% energy_density_center2, &
+               " M_sun^geo c^2 (M_sun^geo)^{-3}", &
+               THIS% energy_density_center2/lorene2hydrobase*kg2g/(m2cm**3), &
+               "g c^2 cm^{-3}"
+      PRINT *, "  Central specific energy = ", THIS% specific_energy_center2, &
+               " c^2"
+      PRINT *, "  Central pressure = ", THIS% pressure_center2, &
+               " M_sun^geo c^2 (M_sun^geo)^{-3}", &
+               THIS% pressure_center2/lorene2hydrobase*kg2g/(m2cm**3), &
+               "g c^2 cm^{-3}"
       PRINT *
       PRINT *, " Equations of state for star 1 (EOS1) = ", THIS% eos1
       PRINT *, " Equations of state for star 2 (EOS2) = ", THIS% eos2
       PRINT *
-      PRINT *, " Parameters for EOS1: "
-      PRINT *, "  Number of polytropic indexes = ", THIS% npeos_1
-      PRINT *, "  Polytopic index gamma_0 = ", THIS% gamma0_1
-      PRINT *, "  Polytopic index gamma_1 = ", THIS% gamma1_1
-      PRINT *, "  Polytopic index gamma_2 = ", THIS% gamma2_1
-      PRINT *, "  Polytopic index gamma_3 = ", THIS% gamma3_1
-      PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
-               THIS% kappa0_1, "rho_nuc c^2 / n_nuc^gamma_0"
-      PRINT *, "  Pressure coefficient for the first polytrope = ",&
-               THIS% kappa1_1, "rho_nuc c^2 / n_nuc^gamma_1"
-      PRINT *, "  Pressure coefficient for the second polytrope = ",&
-               THIS% kappa2_1, "rho_nuc c^2 / n_nuc^gamma_2"
-      PRINT *, "  Pressure coefficient for the third polytrope = ",&
-               THIS% kappa3_1, "rho_nuc c^2 / n_nuc^gamma_3"
-      PRINT *, "  Exponent of the pressure at the next rho (dyne/cm^2)" &
-               // "= ", THIS% logP1_1
-      PRINT *, "  Exponent of first fiducial density (g/cm^3) = ", &
-               THIS% logRho0_1
-      PRINT *, "  Exponent of second fiducial density (g/cm^3) = ", &
-               THIS% logRho1_1
-      PRINT *, "  Exponent of third fiducial density (g/cm^3) = ", &
-               THIS% logRho2_1
-      PRINT *
-      PRINT *, " Parameters for EOS2: "
-      PRINT *, "  Number of polytropic indexes = ", THIS% npeos_2
-      PRINT *, "  Polytopic index gamma_0 = ", THIS% gamma0_2
-      PRINT *, "  Polytopic index gamma_1 = ", THIS% gamma1_2
-      PRINT *, "  Polytopic index gamma_2 = ", THIS% gamma2_2
-      PRINT *, "  Polytopic index gamma_3 = ", THIS% gamma3_2
-      PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
-               THIS% kappa0_2, "rho_nuc c^2 / n_nuc^gamma_0"
-      PRINT *, "  Pressure coefficient for the first polytrope = ",&
-               THIS% kappa1_2, "rho_nuc c^2 / n_nuc^gamma_1"
-      PRINT *, "  Pressure coefficient for the second polytrope = ",&
-               THIS% kappa2_2, "rho_nuc c^2 / n_nuc^gamma_2"
-      PRINT *, "  Pressure coefficient for the third polytrope = ",&
-               THIS% kappa3_2, "rho_nuc c^2 / n_nuc^gamma_3"
-      PRINT *, "  Exponent of the pressure at the next rho (dyne/cm^2)" &
-               // "= ", THIS% logP1_2
-      PRINT *, "  Exponent of first fiducial density (g/cm^3) = ", &
-               THIS% logRho0_2
-      PRINT *, "  Exponent of second fiducial density (g/cm^3) = ", &
-               THIS% logRho1_2
-      PRINT *, "  Exponent of third fiducial density (g/cm^3) = ", &
-               THIS% logRho2_2
-      PRINT *
+
+      IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
+
+        PRINT *, " Parameters for EOS1: "
+        PRINT *, "  Polytopic index gamma_1 = ", THIS% gamma_1
+        PRINT *, "  Pressure coefficient = ",&
+                 THIS% kappa_1/k_lorene2hydrobase( THIS% gamma_1 ), &
+                 "rho_nuc c^2 / n_nuc^gamma_1 = ", THIS% kappa_1, &
+                 "[pure number]"
+        PRINT *, " Parameters for EOS2: "
+        PRINT *, "  Polytopic index gamma_2 = ", THIS% gamma_2
+        PRINT *, "  Pressure coefficient = ",&
+                 THIS% kappa_2/k_lorene2hydrobase( THIS% gamma_2 ), &
+                 "rho_nuc c^2 / n_nuc^gamma_2 = ", THIS% kappa_2, &
+                 "[pure number]"
+        PRINT *
+
+      ELSEIF( THIS% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
+
+        PRINT *, " Parameters for EOS1: "
+        PRINT *, "  Number of polytropic indexes = ", THIS% npeos_1
+        PRINT *, "  Polytopic index gamma0_1 = ", THIS% gamma0_1
+        PRINT *, "  Polytopic index gamma1_1 = ", THIS% gamma1_1
+        PRINT *, "  Polytopic index gamma2_1 = ", THIS% gamma2_1
+        PRINT *, "  Polytopic index gamma3_1 = ", THIS% gamma3_1
+        PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
+                 THIS% kappa0_1/k_lorene2hydrobase( THIS% gamma0_1 ), &
+                 "rho_nuc c^2 / n_nuc^gamma0_1 = ", THIS% kappa0_1, &
+                 "[pure number]"
+        PRINT *, "  Pressure coefficient for the first polytrope = ",&
+                 THIS% kappa1_1/k_lorene2hydrobase( THIS% gamma1_1 ), &
+                 "rho_nuc c^2 / n_nuc^gamma1_1", THIS% kappa1_1, &
+                 "[pure number]"
+        PRINT *, "  Pressure coefficient for the second polytrope = ",&
+                 THIS% kappa2_1/k_lorene2hydrobase( THIS% gamma2_1 ), &
+                 "rho_nuc c^2 / n_nuc^gamma2_1", THIS% kappa2_1, &
+                 "[pure number]"
+        PRINT *, "  Pressure coefficient for the third polytrope = ",&
+                 THIS% kappa3_1/k_lorene2hydrobase( THIS% gamma3_1 ), &
+                 "rho_nuc c^2 / n_nuc^gamma3_1", THIS% kappa3_1, &
+                 "[pure number]"
+        PRINT *, "  Base 10 exponent of the pressure at the first fiducial " &
+                 // "density (dyne/cm^2)= ", THIS% logP1_1
+        PRINT *, "  Base 10 exponent of first fiducial density (g/cm^3) = ", &
+                 THIS% logRho0_1
+        PRINT *, "  Base 10 exponent of second fiducial density (g/cm^3) = ",&
+                 THIS% logRho1_1
+        PRINT *, "  Base 10 exponent of third fiducial density (g/cm^3) = ", &
+                 THIS% logRho2_1
+        PRINT *
+        PRINT *, " Parameters for EOS2: "
+        PRINT *, "  Number of polytropic indexes = ", THIS% npeos_2
+        PRINT *, "  Polytopic index gamma0_2 = ", THIS% gamma0_2
+        PRINT *, "  Polytopic index gamma1_2 = ", THIS% gamma1_2
+        PRINT *, "  Polytopic index gamma2_2 = ", THIS% gamma2_2
+        PRINT *, "  Polytopic index gamma3_2 = ", THIS% gamma3_2
+        PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
+                 THIS% kappa0_2/k_lorene2hydrobase( THIS% gamma0_2 ), &
+                 "rho_nuc c^2 / n_nuc^gamma0_2 = ", THIS% kappa0_2, &
+                 "[pure number]"
+        PRINT *, "  Pressure coefficient for the first polytrope = ",&
+                 THIS% kappa1_2/k_lorene2hydrobase( THIS% gamma1_2 ), &
+                 "rho_nuc c^2 / n_nuc^gamma1_2", THIS% kappa1_2, &
+                 "[pure number]"
+        PRINT *, "  Pressure coefficient for the second polytrope = ",&
+                 THIS% kappa2_2/k_lorene2hydrobase( THIS% gamma2_2 ), &
+                 "rho_nuc c^2 / n_nuc^gamma2_2", THIS% kappa2_2, &
+                 "[pure number]"
+        PRINT *, "  Pressure coefficient for the third polytrope = ",&
+                 THIS% kappa3_2/k_lorene2hydrobase( THIS% gamma3_2 ), &
+                 "rho_nuc c^2 / n_nuc^gamma3_2", THIS% kappa3_2, &
+                 "[pure number]"
+        PRINT *, "  Base 10 exponent of the pressure at the first fiducial " &
+                 // "density (dyne/cm^2)= ", THIS% logP1_2
+        PRINT *, "  Base 10 exponent of first fiducial density (g/cm^3) = ", &
+                 THIS% logRho0_2
+        PRINT *, "  Base 10 exponent of second fiducial density (g/cm^3) = ",&
+                 THIS% logRho1_2
+        PRINT *, "  Base 10 exponent of third fiducial density (g/cm^3) = ", &
+                 THIS% logRho2_2
+        PRINT *
+
+      ELSE
+
+        PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+                 " The equation of state is unknown!"
+        STOP
+
+      ENDIF
 
     ENDIF
 
@@ -1398,11 +1517,11 @@ SUBMODULE (bns_id) bns_methods
   !
   !END PROCEDURE get_bns_ptr
 
-  MODULE PROCEDURE get_gamma_star1
+  MODULE PROCEDURE get_gamma_1
 
     !*************************************************
     !                                                *
-    ! Returns the value of gamma_star1, the          *
+    ! Returns the value of gamma_1, the              *
     ! polytropic index for NS 1 with polytropic EOS, *
     ! not piecewise polytropic EOS                   *
     !                                                *
@@ -1412,15 +1531,15 @@ SUBMODULE (bns_id) bns_methods
 
     IMPLICIT NONE
 
-    get_gamma_star1= THIS% gamma_star1
+    get_gamma_1= THIS% gamma_1
 
-  END PROCEDURE get_gamma_star1
+  END PROCEDURE get_gamma_1
 
-  MODULE PROCEDURE get_gamma_star2
+  MODULE PROCEDURE get_gamma_2
 
     !*************************************************
     !                                                *
-    ! Returns the value of gamma_star2, the          *
+    ! Returns the value of gamma_2, the              *
     ! polytropic index for NS 2 with polytropic EOS, *
     ! not piecewise polytropic EOS                   *
     !                                                *
@@ -1430,15 +1549,15 @@ SUBMODULE (bns_id) bns_methods
 
     IMPLICIT NONE
 
-    get_gamma_star2= THIS% gamma_star2
+    get_gamma_2= THIS% gamma_2
 
-  END PROCEDURE get_gamma_star2
+  END PROCEDURE get_gamma_2
 
-  MODULE PROCEDURE get_kappa_star1
+  MODULE PROCEDURE get_kappa_1
 
     !*************************************************
     !                                                *
-    ! Returns the value of kappa_star1, the          *
+    ! Returns the value of kappa_1, the              *
     ! polytropic constant for NS 1 with polytropic   *
     ! EOS, not piecewise polytropic EOS              *
     !                                                *
@@ -1448,15 +1567,15 @@ SUBMODULE (bns_id) bns_methods
 
     IMPLICIT NONE
 
-    get_kappa_star1= THIS% kappa_star1
+    get_kappa_1= THIS% kappa_1
 
-  END PROCEDURE get_kappa_star1
+  END PROCEDURE get_kappa_1
 
-  MODULE PROCEDURE get_kappa_star2
+  MODULE PROCEDURE get_kappa_2
 
     !*************************************************
     !                                                *
-    ! Returns the value of kappa_star2, the          *
+    ! Returns the value of kappa_2, the              *
     ! polytropic constant for NS 2 with polytropic   *
     ! EOS, not piecewise polytropic EOS              *
     !                                                *
@@ -1466,9 +1585,9 @@ SUBMODULE (bns_id) bns_methods
 
     IMPLICIT NONE
 
-    get_kappa_star2= THIS% kappa_star2
+    get_kappa_2= THIS% kappa_2
 
-  END PROCEDURE get_kappa_star2
+  END PROCEDURE get_kappa_2
 
   MODULE PROCEDURE get_angular_vel
 
@@ -1523,7 +1642,7 @@ SUBMODULE (bns_id) bns_methods
 
     !*************************************************
     !                                                *
-    ! Returns the mass of NS 1                       *
+    ! Returns the mass of NS 1 [Msun]                *
     !                                                *
     ! FT                                             *
     !                                                *
@@ -1539,7 +1658,7 @@ SUBMODULE (bns_id) bns_methods
 
     !*************************************************
     !                                                *
-    ! Returns the mass of NS 2                       *
+    ! Returns the mass of NS 2 [Msun]                *
     !                                                *
     ! FT                                             *
     !                                                *
@@ -1649,6 +1768,39 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_radius1_x_opp
 
+  MODULE PROCEDURE get_center1_x
+
+    !*************************************************
+    !                                                *
+    ! Returns the stellar center of NS 1, i.e., the  *
+    ! origin of the LORENE chart centered on NS 1    *
+    !                                                *
+    ! FT 09.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_center1_x= THIS% center1_x
+
+  END PROCEDURE get_center1_x
+
+  MODULE PROCEDURE get_barycenter1_x
+
+    !*************************************************
+    !                                                *
+    ! Returns the barycenter of NS 1                 *
+    !                                                *
+    ! FT 09.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_barycenter1_x= THIS% barycenter1_x
+
+  END PROCEDURE get_barycenter1_x
+
   MODULE PROCEDURE get_radius2_x_comp
 
     !*************************************************
@@ -1714,6 +1866,235 @@ SUBMODULE (bns_id) bns_methods
     get_radius2_x_opp= THIS% radius2_x_opp
 
   END PROCEDURE get_radius2_x_opp
+
+  MODULE PROCEDURE get_center2_x
+
+    !*************************************************
+    !                                                *
+    ! Returns the stellar center of NS 2, i.e., the  *
+    ! origin of the LORENE chart centered on NS 2    *
+    !                                                *
+    ! FT 09.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_center2_x= THIS% center2_x
+
+  END PROCEDURE get_center2_x
+
+  MODULE PROCEDURE get_barycenter2_x
+
+    !*************************************************
+    !                                                *
+    ! Returns the barycenter of NS 2                 *
+    !                                                *
+    ! FT 09.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_barycenter2_x= THIS% barycenter2_x
+
+  END PROCEDURE get_barycenter2_x
+
+  MODULE PROCEDURE get_ent_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central enthalpy of NS 1           *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_ent_center1= THIS% ent_center1
+
+  END PROCEDURE get_ent_center1
+
+  MODULE PROCEDURE get_nbar_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central baryon number density      *
+    ! of NS 1                                        *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_nbar_center1= THIS% nbar_center1
+
+  END PROCEDURE get_nbar_center1
+
+  MODULE PROCEDURE get_rho_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central baryon mass density        *
+    ! of NS 1                                        *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_rho_center1= THIS% rho_center1
+
+  END PROCEDURE get_rho_center1
+
+  MODULE PROCEDURE get_energy_density_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central energy density of NS 1     *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_energy_density_center1= THIS% energy_density_center1
+
+  END PROCEDURE get_energy_density_center1
+
+  MODULE PROCEDURE get_specific_energy_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central specific energy of NS 1    *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_specific_energy_center1= THIS% specific_energy_center1
+
+  END PROCEDURE get_specific_energy_center1
+
+  MODULE PROCEDURE get_pressure_center1
+
+    !*************************************************
+    !                                                *
+    ! Returns the central pressure of NS 1           *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_pressure_center1= THIS% pressure_center1
+
+  END PROCEDURE get_pressure_center1
+
+  MODULE PROCEDURE get_ent_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central enthalpy of NS 2           *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_ent_center2= THIS% ent_center2
+
+  END PROCEDURE get_ent_center2
+
+  MODULE PROCEDURE get_nbar_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central baryon number density      *
+    ! of NS 2                                        *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_nbar_center2= THIS% nbar_center2
+
+  END PROCEDURE get_nbar_center2
+
+  MODULE PROCEDURE get_rho_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central baryon mass density        *
+    ! of NS 2                                        *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_rho_center2= THIS% rho_center2
+
+  END PROCEDURE get_rho_center2
+
+  MODULE PROCEDURE get_energy_density_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central energy density of NS 2     *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_energy_density_center2= THIS% energy_density_center2
+
+  END PROCEDURE get_energy_density_center2
+
+  MODULE PROCEDURE get_specific_energy_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central specific energy of NS 2    *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_specific_energy_center2= THIS% specific_energy_center2
+
+  END PROCEDURE get_specific_energy_center2
+
+  MODULE PROCEDURE get_pressure_center2
+
+    !*************************************************
+    !                                                *
+    ! Returns the central pressure of NS 2           *
+    !                                                *
+    ! FT 12.02.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_pressure_center2= THIS% pressure_center2
+
+  END PROCEDURE get_pressure_center2
 
   MODULE PROCEDURE get_eos1
 

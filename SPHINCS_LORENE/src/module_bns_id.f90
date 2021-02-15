@@ -27,7 +27,7 @@ MODULE bns_id
                                          C_PTR, C_NULL_PTR, C_ASSOCIATED
   USE utility,                     ONLY: itr, ios, err_msg, test_status, &
                                          perc, creturn, compute_g4, &
-                                         determinant_sym4x4_grid
+                                         determinant_sym4x4_grid, show_progress
 
 
   IMPLICIT NONE
@@ -53,11 +53,6 @@ MODULE bns_id
     !
     !-- Parameters of the binary system
     !
-
-    DOUBLE PRECISION:: gamma_star1
-    DOUBLE PRECISION:: gamma_star2
-    DOUBLE PRECISION:: kappa_star1
-    DOUBLE PRECISION:: kappa_star2
     DOUBLE PRECISION:: angular_vel                  ! [rad/s]
     ! Distance between the points of maximum baryon density
     DOUBLE PRECISION:: distance                     ! [km]
@@ -67,21 +62,64 @@ MODULE bns_id
     DOUBLE PRECISION:: mass2                        ! [M_sol]
     DOUBLE PRECISION:: adm_mass                     ! [M_sol]
     DOUBLE PRECISION:: angular_momentum= 0.0D0      ! [G Msun^2 /c]
-    ! Radius of star, in the x direction, towards the companion
+    ! Radius of star 1, in the x direction, towards the companion
     DOUBLE PRECISION:: radius1_x_comp               ! [Msun_geo]
+    ! Radius of star 1, in the y direction
     DOUBLE PRECISION:: radius1_y                    ! [Msun_geo]
+    ! Radius of star 1, in the z direction
     DOUBLE PRECISION:: radius1_z                    ! [Msun_geo]
-    ! Radius of star, in the x direction, opposite to the companion
+    ! Radius of star 1, in the x direction, opposite to the companion
     DOUBLE PRECISION:: radius1_x_opp                ! [Msun_geo]
-    ! Radius of star, in the x direction, towards the companion
+    ! Stellar center of star 1 (origin of the LORENE chart centered on star 1)
+    DOUBLE PRECISION:: center1_x                    ! [Msun_geo]
+    ! Barycenter of star 1
+    DOUBLE PRECISION:: barycenter1_x                ! [Msun_geo]
+    ! Radius of star 2, in the x direction, towards the companion
     DOUBLE PRECISION:: radius2_x_comp               ! [Msun_geo]
+    ! Radius of star 2, in the y direction
     DOUBLE PRECISION:: radius2_y                    ! [Msun_geo]
+    ! Radius of star 2, in the z direction
     DOUBLE PRECISION:: radius2_z                    ! [Msun_geo]
     ! Radius of star, in the x direction, opposite to the companion
     DOUBLE PRECISION:: radius2_x_opp                ! [Msun_geo]
+    ! Stellar center of star 2 (origin of the LORENE chart centered on star 2)
+    DOUBLE PRECISION:: center2_x                    ! [Msun_geo]
+    ! Barycenter of star 2
+    DOUBLE PRECISION:: barycenter2_x                ! [Msun_geo]
+    ! Central enthalpy for star 1 [c^2]
+    DOUBLE PRECISION:: ent_center1 ;
+    ! Central baryon number density for star 1 [Msun_geo^-3]
+    DOUBLE PRECISION:: nbar_center1 ;
+    ! Central baryon mass density for star 1 [Msun Msun_geo^-3]
+    DOUBLE PRECISION:: rho_center1 ;
+    ! Central energy density for star 1 [Msun c^2 Msun_geo^-3]
+    DOUBLE PRECISION:: energy_density_center1 ;
+    ! Central specific energy for star 1 [c^2]
+    DOUBLE PRECISION:: specific_energy_center1 ;
+    ! Central pressure for star 1 [Msun c^2 Msun_geo^-3]
+    DOUBLE PRECISION:: pressure_center1 ;
+    ! Central enthalpy for star 2 [c^2]
+    DOUBLE PRECISION:: ent_center2 ;
+    ! Central baryon number density for star 2 [Msun_geo^-3]
+    DOUBLE PRECISION:: nbar_center2 ;
+    ! Central baryon mass density for star 2 [Msun Msun_geo^-3]
+    DOUBLE PRECISION:: rho_center2 ;
+    ! Central energy density for star 2 [Msun c^2 Msun_geo^-3]
+    DOUBLE PRECISION:: energy_density_center2 ;
+    ! Central specific energy for star 2 [c^2]
+    DOUBLE PRECISION:: specific_energy_center2 ;
+    ! Central pressure for star 2 [Msun c^2 Msun_geo^-3]
+    DOUBLE PRECISION:: pressure_center2 ;
     ! Names of the equations of state (EoS) of the two neutron stars
     CHARACTER(KIND= C_CHAR, LEN= 100):: eos1
     CHARACTER(KIND= C_CHAR, LEN= 100):: eos2
+    !
+    !-- Parameters of polytropic equations of state for the two NSs
+    !
+    DOUBLE PRECISION:: gamma_1
+    DOUBLE PRECISION:: gamma_2
+    DOUBLE PRECISION:: kappa_1
+    DOUBLE PRECISION:: kappa_2
     !
     !-- Parameters of the piecewise polytropic equation of state for NS 1
     !
@@ -167,6 +205,9 @@ MODULE bns_id
     !      See the last part of the PROGRAM in setup_lorene_id.f90, for example.
     TYPE(C_PTR):: bns_ptr
 
+    ! Variables to set the geodesic gauge (lapse=1, shift=0)
+    LOGICAL, PUBLIC:: one_lapse, zero_shift
+
 
     CONTAINS
 
@@ -249,18 +290,34 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: get_radius1_y
     PROCEDURE, PUBLIC:: get_radius1_z
     PROCEDURE, PUBLIC:: get_radius1_x_opp
+    PROCEDURE, PUBLIC:: get_center1_x
+    PROCEDURE, PUBLIC:: get_barycenter1_x
     PROCEDURE, PUBLIC:: get_radius2_x_comp
     PROCEDURE, PUBLIC:: get_radius2_y
     PROCEDURE, PUBLIC:: get_radius2_z
     PROCEDURE, PUBLIC:: get_radius2_x_opp
+    PROCEDURE, PUBLIC:: get_center2_x
+    PROCEDURE, PUBLIC:: get_barycenter2_x
+    PROCEDURE, PUBLIC:: get_ent_center1
+    PROCEDURE, PUBLIC:: get_nbar_center1
+    PROCEDURE, PUBLIC:: get_rho_center1
+    PROCEDURE, PUBLIC:: get_energy_density_center1
+    PROCEDURE, PUBLIC:: get_specific_energy_center1
+    PROCEDURE, PUBLIC:: get_pressure_center1
+    PROCEDURE, PUBLIC:: get_ent_center2
+    PROCEDURE, PUBLIC:: get_nbar_center2
+    PROCEDURE, PUBLIC:: get_rho_center2
+    PROCEDURE, PUBLIC:: get_energy_density_center2
+    PROCEDURE, PUBLIC:: get_specific_energy_center2
+    PROCEDURE, PUBLIC:: get_pressure_center2
     PROCEDURE, PUBLIC:: get_eos1
     PROCEDURE, PUBLIC:: get_eos2
 
     ! PROCEDURES to be used for single polytropic EOS
-    PROCEDURE, PUBLIC:: get_gamma_star1
-    PROCEDURE, PUBLIC:: get_gamma_star2
-    PROCEDURE, PUBLIC:: get_kappa_star1
-    PROCEDURE, PUBLIC:: get_kappa_star2
+    PROCEDURE, PUBLIC:: get_gamma_1
+    PROCEDURE, PUBLIC:: get_gamma_2
+    PROCEDURE, PUBLIC:: get_kappa_1
+    PROCEDURE, PUBLIC:: get_kappa_2
 
     ! PROCEDURES to be used for piecewise polytropic EOS
     PROCEDURE, PUBLIC:: get_npeos_1
@@ -598,41 +655,41 @@ MODULE bns_id
     !
     !END FUNCTION get_bns_ptr
 
-    MODULE FUNCTION get_gamma_star1( THIS )
+    MODULE FUNCTION get_gamma_1( THIS )
 
       ! Argument
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_gamma_star1
+      DOUBLE PRECISION:: get_gamma_1
 
-    END FUNCTION get_gamma_star1
+    END FUNCTION get_gamma_1
 
-    MODULE FUNCTION get_gamma_star2( THIS )
-
-      ! Argument
-      CLASS(bns), INTENT( IN ):: THIS
-      ! Result
-      DOUBLE PRECISION:: get_gamma_star2
-
-    END FUNCTION get_gamma_star2
-
-    MODULE FUNCTION get_kappa_star1( THIS )
+    MODULE FUNCTION get_gamma_2( THIS )
 
       ! Argument
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_kappa_star1
+      DOUBLE PRECISION:: get_gamma_2
 
-    END FUNCTION get_kappa_star1
+    END FUNCTION get_gamma_2
 
-    MODULE FUNCTION get_kappa_star2( THIS )
+    MODULE FUNCTION get_kappa_1( THIS )
 
       ! Argument
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_kappa_star2
+      DOUBLE PRECISION:: get_kappa_1
 
-    END FUNCTION get_kappa_star2
+    END FUNCTION get_kappa_1
+
+    MODULE FUNCTION get_kappa_2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_kappa_2
+
+    END FUNCTION get_kappa_2
 
     MODULE FUNCTION get_angular_vel( THIS )
 
@@ -733,6 +790,24 @@ MODULE bns_id
 
     END FUNCTION get_radius1_x_opp
 
+    MODULE FUNCTION get_center1_x( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_center1_x
+
+    END FUNCTION get_center1_x
+
+    MODULE FUNCTION get_barycenter1_x( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_barycenter1_x
+
+    END FUNCTION get_barycenter1_x
+
     MODULE FUNCTION get_radius2_x_comp( THIS )
 
       ! Argument
@@ -768,6 +843,132 @@ MODULE bns_id
       DOUBLE PRECISION:: get_radius2_x_opp
 
     END FUNCTION get_radius2_x_opp
+
+    MODULE FUNCTION get_center2_x( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_center2_x
+
+    END FUNCTION get_center2_x
+
+    MODULE FUNCTION get_barycenter2_x( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_barycenter2_x
+
+    END FUNCTION get_barycenter2_x
+
+    MODULE FUNCTION get_ent_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_ent_center1
+
+    END FUNCTION get_ent_center1
+
+    MODULE FUNCTION get_nbar_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_nbar_center1
+
+    END FUNCTION get_nbar_center1
+
+    MODULE FUNCTION get_rho_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_rho_center1
+
+    END FUNCTION get_rho_center1
+
+    MODULE FUNCTION get_energy_density_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_energy_density_center1
+
+    END FUNCTION get_energy_density_center1
+
+    MODULE FUNCTION get_specific_energy_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_specific_energy_center1
+
+    END FUNCTION get_specific_energy_center1
+
+    MODULE FUNCTION get_pressure_center1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_pressure_center1
+
+    END FUNCTION get_pressure_center1
+
+    MODULE FUNCTION get_ent_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_ent_center2
+
+    END FUNCTION get_ent_center2
+
+    MODULE FUNCTION get_nbar_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_nbar_center2
+
+    END FUNCTION get_nbar_center2
+
+    MODULE FUNCTION get_rho_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_rho_center2
+
+    END FUNCTION get_rho_center2
+
+    MODULE FUNCTION get_energy_density_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_energy_density_center2
+
+    END FUNCTION get_energy_density_center2
+
+    MODULE FUNCTION get_specific_energy_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_specific_energy_center2
+
+    END FUNCTION get_specific_energy_center2
+
+    MODULE FUNCTION get_pressure_center2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_pressure_center2
+
+    END FUNCTION get_pressure_center2
 
     MODULE FUNCTION get_eos1( THIS )
 
@@ -1322,12 +1523,32 @@ MODULE bns_id
                                      radius1_y, &
                                      radius1_z, &
                                      radius1_x_opp, &
+                                     center1_x, &
+                                     barycenter1_x, &
                                      radius2_x_comp, &
                                      radius2_y, &
                                      radius2_z, &
                                      radius2_x_opp, &
+                                     center2_x, &
+                                     barycenter2_x, &
+                                     ent_center1, &
+                                     nbar_center1, &
+                                     rho_center1, &
+                                     energy_density_center1, &
+                                     specific_energy_center1, &
+                                     pressure_center1, &
+                                     ent_center2, &
+                                     nbar_center2, &
+                                     rho_center2, &
+                                     energy_density_center2, &
+                                     specific_energy_center2, &
+                                     pressure_center2, &
                                      eos1, &
                                      eos2, &
+                                     gamma_1, &
+                                     kappa_1, &
+                                     gamma_2, &
+                                     kappa_2, &
                                      npeos_1, &
                                      gamma0_1, &
                                      gamma1_1, &
@@ -1382,12 +1603,32 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_y
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_z
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_x_opp
+      REAL(C_DOUBLE), INTENT(OUT)       :: center1_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: barycenter1_x
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_x_comp
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_y
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_z
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_x_opp
+      REAL(C_DOUBLE), INTENT(OUT)       :: center2_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: barycenter2_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: ent_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: nbar_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: rho_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure_center1
+      REAL(C_DOUBLE), INTENT(OUT)       :: ent_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: nbar_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: rho_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy_center2
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure_center2
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos1
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos2
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma_1
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa_1
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma_2
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa_2
       INTEGER(C_INT)                    :: npeos_1
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma0_1
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma1_1

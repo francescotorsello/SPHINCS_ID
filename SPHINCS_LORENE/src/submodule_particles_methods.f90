@@ -33,8 +33,11 @@ SUBMODULE (particles_id) particles_methods
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
                                    third
+    USE units,               ONLY: set_units, umass
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
+                                   n1,    &  ! particle number for star 1
+                                   n2,    &  ! particle number for star 2
                                    pos_u, &  ! particle positions
                                    vel_u, &  ! particle velocities in
                                              ! coordinate frame
@@ -58,7 +61,7 @@ SUBMODULE (particles_id) particles_methods
                                    deallocate_metric_on_particles, &
                                    sq_det_g4
     USE options,             ONLY: basename
-    USE input_output,        ONLY: set_units, dcount, write_SPHINCS_dump
+    USE input_output,        ONLY: dcount, write_SPHINCS_dump
 
     IMPLICIT NONE
 
@@ -70,7 +73,7 @@ SUBMODULE (particles_id) particles_methods
     INTEGER:: nus, mus
 
     DOUBLE PRECISION:: g4(0:3,0:3)
-    DOUBLE PRECISION:: det,sq_g, Theta_a
+    DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -80,11 +83,12 @@ SUBMODULE (particles_id) particles_methods
     PRINT *
 
     !
-    !-- Set up the (global) variables in the MODULE sph_variables
+    !-- Set up the MODULE variables in MODULE sph_variables
     !-- (used by write_SPHINCS_dump)
     !
-
     npart= THIS% npart
+    n1= THIS% npart1
+    n2= THIS% npart2
 
     CALL set_units('NSM')
 
@@ -124,16 +128,16 @@ SUBMODULE (particles_id) particles_methods
       pos_u(3,itr)= THIS% pos(3,itr)
 
       ! Coordinate velocity of the fluid [c]
-      THIS%v(0,itr)= 1.0D0
-      THIS%v(1,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_x(itr) &
-                   - THIS% shift_parts_x(itr)
-      THIS%v(2,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_y(itr) &
-                   - THIS% shift_parts_y(itr)
-      THIS%v(3,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_z(itr) &
-                   - THIS% shift_parts_z(itr)
-      vel_u(1,itr)= THIS% v(1,itr)
-      vel_u(2,itr)= THIS% v(2,itr)
-      vel_u(3,itr)= THIS% v(3,itr)
+      THIS% v(0,itr)= 1.0D0
+      THIS% v(1,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_x(itr) &
+                    - THIS% shift_parts_x(itr)
+      THIS% v(2,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_y(itr) &
+                    - THIS% shift_parts_y(itr)
+      THIS% v(3,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_z(itr) &
+                    - THIS% shift_parts_z(itr)
+      vel_u(1,itr)  = THIS% v(1,itr)
+      vel_u(2,itr)  = THIS% v(2,itr)
+      vel_u(3,itr)  = THIS% v(3,itr)
 
       !
       !-- Metric as matrix for easy manipulation
@@ -218,11 +222,11 @@ SUBMODULE (particles_id) particles_methods
       !      exact_tree_nei_update. Here it is set to 3 times the size of a
       !      particle
       THIS% h(itr)= 3.0*(THIS% vol_a/(Msun_geo**3))**third
+      h(itr)= THIS% h(itr)
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= THIS% baryon_density_parts(itr)/(amu*g2kg)&
-                 *((Msun_geo*km2m)**3)
+      nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% nlrf(itr)= nlrf(itr)
 
       ! Internal energy per baryon (specific internal energy)
@@ -238,12 +242,27 @@ SUBMODULE (particles_id) particles_methods
       ! Pressure [amu*c**2/(Msun_geo**3)]
       !          dimensions: [(M/L**3)*L**2/T**2]= [M/(L*T**2)], same as
       !                      energy density
-      Pr(itr)= THIS% pressure_parts(itr)/(amu*g2kg)*((Msun_geo*km2m)**3)
+      Pr(itr)= THIS% pressure_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% pressure_parts_cu(itr)= Pr(itr)
 
       ! Baryon per particle
-      nu(itr)= Theta_a*sq_g*nlrf(itr)*(THIS% vol_a/(Msun_geo**3))
+      nu(itr)= nlrf(itr)*THIS% vol_a*Theta_a*sq_g
       THIS% nu(itr)= nu(itr)
+      THIS% nbar_tot= THIS% nbar_tot + THIS% nu(itr)
+
+      ! THIS% mass1*umass converts mass1 in g; umass is Msun in g
+      ! amu is the atomic mass unit in g
+      !temp1= THIS% mass1*umass/amu/THIS% npart1
+      !temp2= THIS% mass2*umass/amu/THIS% npart2
+      !IF( nu(itr) /= temp1 )THEN
+      !  PRINT *, "The two formulas to compute the baryons per particle ", &
+      !           "do not give consistent results at particle ", itr, "."
+      !  PRINT *, "nu(itr)*THIS% vol_a=", nu(itr)
+      !  PRINT *, "THIS% mass1*umass/THIS% npart1/amu=", temp1
+      !  PRINT *, "THIS% mass2*umass/THIS% npart2/amu=", temp2
+      !  PRINT *
+      !  STOP
+      !ENDIF
 
       IF( debug )THEN
         IF( itr >= THIS% npart/10 - 200 .AND. itr <= THIS% npart/10 )THEN
@@ -284,9 +303,9 @@ SUBMODULE (particles_id) particles_methods
     CALL THIS% sph_computer_timer% stop_timer()
 
     PRINT *, " * Maximum nlrf=", MAXVAL( THIS% nlrf, DIM= 1 ), &
-             "baryon (R_schw/2)^{-3}"
+             "baryon Msun_geo^{-3}"
     PRINT *, " * Minimum nlrf=", MINVAL( THIS% nlrf, DIM= 1 ), &
-             "baryon (R_schw/2)^{-3}"
+             "baryon Msun_geo^{-3}"
     PRINT *, " * Ratio between the two=", &
                       MAXVAL( THIS% nlrf, DIM= 1 )/MINVAL( THIS% nlrf, DIM= 1 )
     PRINT *
@@ -297,6 +316,7 @@ SUBMODULE (particles_id) particles_methods
               MINVAL( THIS% nu, DIM= 1 )
     PRINT *, " * Ratio between the two=", &
                       MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
+    PRINT *, " * Total number of baryons=", THIS% nbar_tot
     PRINT *
 
     !
@@ -306,7 +326,7 @@ SUBMODULE (particles_id) particles_methods
       IF( PRESENT(namefile) )THEN
         basename= namefile
       ELSE
-        basename= "lbns."
+        basename= "NSNS."
       ENDIF
       dcount= -1 ! since it is increased before writing
       CALL write_SPHINCS_dump()
@@ -322,6 +342,206 @@ SUBMODULE (particles_id) particles_methods
     PRINT *
 
   END PROCEDURE compute_and_export_SPH_variables
+
+  MODULE PROCEDURE read_sphincs_dump_print_formatted
+
+    !************************************************
+    !                                               *
+    ! Read the SPH ID from the binary file output   *
+    ! by write_SPHINCS_dump, and print it to a      *
+    ! formatted file                                *
+    !                                               *
+    ! FT 12.02.2021                                 *
+    !                                               *
+    !************************************************
+
+    USE sph_variables,       ONLY: npart, &  ! particle number
+                                   pos_u, &  ! particle positions
+                                   vel_u, &  ! particle velocities in
+                                             ! coordinate frame
+                                   nlrf,  &  ! baryon number density in
+                                             ! local rest frame
+                                   ehat,  &  ! canonical energy per baryon
+                                   nu,    &  ! canonical baryon number per
+                                             ! particle
+                                   Theta, &  ! Generalized Lorentz factor
+                                   h,     &  ! Smoothing length
+                                   Pr,    &  ! Pressure
+                                   u,     &  ! Internal energy in local rest
+                                             ! frame (no kinetic energy)
+                                   temp,  &  ! Temperature
+                                   av,    &  ! Dissipation
+                                   ye,    &  ! Electron fraction
+                                   divv,  &  ! Divergence of velocity vel_u
+                                   allocate_SPH_memory, &
+                                   deallocate_SPH_memory
+    USE metric_on_particles, ONLY: allocate_metric_on_particles, &
+                                   deallocate_metric_on_particles, &
+                                   sq_det_g4
+    USE options,             ONLY: basename
+    USE input_output,        ONLY: set_units, dcount, read_SPHINCS_dump
+
+    IMPLICIT NONE
+
+    INTEGER:: itr, min_y_index
+
+    DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
+
+    LOGICAL:: exist
+
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+
+    PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
+
+    !
+    !-- Set up the MODULE variables in MODULE sph_variables
+    !-- (used by write_SPHINCS_dump)
+    !
+    npart= THIS% npart
+
+    CALL set_units('NSM')
+
+    CALL allocate_SPH_memory
+    CALL allocate_metric_on_particles( THIS% npart )
+
+    finalnamefile= TRIM(namefile_bin)//"00000"
+    CALL read_SPHINCS_dump( finalnamefile )
+
+    ! Being abs_grid a local array, it is good practice to allocate it on the
+    ! heap, otherwise it will be stored on the stack which has a very limited
+    ! size. This results in a segmentation fault.
+    ALLOCATE( abs_pos( 3, THIS% npart ) )
+
+    IF( THIS% call_flag == 0 )THEN
+      PRINT *, "** The SUBROUTINE print_formatted_lorene_id_particles must", &
+               " be called after compute_and_export_SPH_variables, otherwise", &
+               " there are no SPH fields to export to the formatted file."
+      PRINT *, "   Aborting."
+      PRINT *
+      STOP
+    ENDIF
+
+    IF( PRESENT(namefile) )THEN
+      finalnamefile= namefile
+    ELSE
+      finalnamefile= "sph_vars.dat"
+    ENDIF
+
+    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    CALL test_status( ios, err_msg, "...error when opening " &
+                      // TRIM(finalnamefile) )
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Values of the fields (including coordinates) exported by LORENE "&
+    // "on each grid point"
+    CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+            // TRIM(finalnamefile) )
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# column:      1        2       3       4       5", &
+    "       6       7       8", &
+    "       9       10      11", &
+    "       12      13      14", &
+    "       15      16      17"
+
+    CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+            // TRIM(finalnamefile) )
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "#      grid point      x [km]       y [km]       z [km]       lapse", &
+    "       shift_x [c]    shift_y [c]    shift_z [c]", &
+    "       baryon density in the local rest frame [kg m^{-3}$]", &
+    "       energy density [c^2]", &
+    "       specific energy [c^2]", &
+    "       pressure [Pa]", &
+    "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
+    "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
+    "       baryon number per particle nu", &
+    "       baryon density in the local rest frame nlrf [baryon/cm^3]", &
+    "       generalized Lorentz factor Theta"
+    CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+            // TRIM(finalnamefile) )
+
+    DO itr = 1, THIS% npart, 1
+      abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
+      abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
+      abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
+    ENDDO
+
+    min_y_index= 0
+    min_abs_y= 1D+20
+    DO itr = 1, THIS% npart, 1
+      IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
+        min_abs_y= ABS( THIS% pos( 2, itr ) )
+        min_y_index= itr
+      ENDIF
+    ENDDO
+
+    min_abs_z= MINVAL( abs_pos( 3, : ) )
+
+    write_data_loop: DO itr = 1, THIS% npart, 1
+
+      IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
+        CYCLE
+      ENDIF
+      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
+          .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
+        CYCLE
+      ENDIF
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        itr, &
+        pos_u( 1, itr ), &
+        pos_u( 2, itr ), &
+        pos_u( 3, itr ), &
+        vel_u( 1, itr ), &
+        vel_u( 2, itr ), &
+        vel_u( 3, itr ), &
+        h( itr ), &
+        u( itr ), &
+        nu( itr ), &
+        nlrf( itr ), &
+        temp( itr ), &
+        av( itr ), &
+        ye( itr ), &
+        divv( itr ), &
+        Theta( itr ), &
+        Pr( itr )
+
+    CALL test_status( ios, err_msg, "...error when writing " &
+             // "the arrays in " // TRIM(finalnamefile) )
+    ENDDO write_data_loop
+
+    CLOSE( UNIT= 2 )
+
+    !
+    !-- Deallocate MODULE variables
+    !
+    CALL deallocate_metric_on_particles
+    CALL deallocate_SPH_memory
+
+    PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
+             // "file ", TRIM(namefile)
+
+    PRINT *, "** Subroutine read_sphincs_dump_print_formatted " &
+             // "executed."
+    PRINT *
+
+  END PROCEDURE read_sphincs_dump_print_formatted
 
   MODULE PROCEDURE print_formatted_lorene_id_particles
 
@@ -802,6 +1022,12 @@ SUBMODULE (particles_id) particles_methods
       DEALLOCATE( THIS% Theta, STAT= ios, ERRMSG= err_msg )
       CALL test_status( ios, err_msg, &
                       "...deallocation error for array Theta in " &
+                      // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% h ))THEN
+      DEALLOCATE( THIS% h, STAT= ios, ERRMSG= err_msg )
+      CALL test_status( ios, err_msg, &
+                      "...deallocation error for array h in " &
                       // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% v ))THEN

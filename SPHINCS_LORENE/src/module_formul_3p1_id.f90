@@ -11,7 +11,8 @@ MODULE formul_3p1_id
   !**********************************************************************
 
 
-  USE utility,      ONLY: ios, err_msg, perc, creturn, run_id, test_status
+  USE utility,      ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
+                          show_progress
   USE bns_id,       ONLY: bns
   USE particles_id, ONLY: particles
   USE timing,       ONLY: timer
@@ -55,12 +56,12 @@ MODULE formul_3p1_id
     ! Constraints and their l2 norm
     DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC
-    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC_from_parts
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC_from_parts
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC_parts
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC_parts
     DOUBLE PRECISION:: HC_l2
     DOUBLE PRECISION, DIMENSION(3):: MC_l2
-    DOUBLE PRECISION:: HC_from_parts_l2
-    DOUBLE PRECISION, DIMENSION(3):: MC_from_parts_l2
+    DOUBLE PRECISION:: HC_parts_l2
+    DOUBLE PRECISION, DIMENSION(3):: MC_parts_l2
 
     ! Variables to decide if and how to export the constraints
     LOGICAL, PUBLIC:: export_constraints
@@ -129,6 +130,10 @@ MODULE formul_3p1_id
     PROCEDURE, PUBLIC:: get_HC
 
     PROCEDURE, PUBLIC:: get_MC
+
+    PROCEDURE, PUBLIC:: get_HC_parts
+
+    PROCEDURE, PUBLIC:: get_MC_parts
 
   END TYPE formul_3p1
 
@@ -251,6 +256,26 @@ MODULE formul_3p1_id
 
     END FUNCTION get_MC
 
+    MODULE FUNCTION get_HC_parts( THIS, ix, iy, iz ) RESULT( HC_value )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: ix, iy, iz
+      ! Result
+      DOUBLE PRECISION                   :: HC_value
+
+    END FUNCTION get_HC_parts
+
+    MODULE FUNCTION get_MC_parts( THIS, ix, iy, iz ) RESULT( MC_value )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: ix, iy, iz
+      ! Result
+      DOUBLE PRECISION, DIMENSION(3)     :: MC_value
+
+    END FUNCTION get_MC_parts
+
   END INTERFACE
 
   !
@@ -301,6 +326,7 @@ MODULE formul_3p1_id
     SUBROUTINE compute_and_export_3p1_constraints_particles_interface( THIS, &
                                                              parts_obj, &
                                                              namefile, &
+                                                             namefile_sph, &
                                                              name_logfile )
 
       IMPORT:: formul_3p1
@@ -308,6 +334,7 @@ MODULE formul_3p1_id
       CLASS(formul_3p1),   INTENT( IN OUT ):: THIS
       CLASS(particles),    INTENT( IN OUT ):: parts_obj
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
+      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile_sph
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
     END SUBROUTINE compute_and_export_3p1_constraints_particles_interface

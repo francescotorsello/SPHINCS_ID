@@ -13,7 +13,7 @@ MODULE particles_id
 
 
   USE utility, ONLY: itr, ios, err_msg, test_status, &
-                     perc, creturn, run_id
+                     perc, creturn, run_id, show_progress
   USE bns_id,  ONLY: bns
   USE timing,  ONLY: timer
 
@@ -99,10 +99,14 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Theta
     ! 1-D array storing the smoothing length
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
+    ! Baryonic masses of the neutron stars [Msun]
+    DOUBLE PRECISION:: mass1, mass2
     ! Total grid volume
     DOUBLE PRECISION:: vol, vol1, vol2
     ! Volume per particle
     DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
+    ! Total baryon number
+    DOUBLE PRECISION:: nbar_tot
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
 
@@ -131,6 +135,8 @@ MODULE particles_id
     PROCEDURE, PUBLIC:: analyze_hydro
 
     PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
+
+    PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
 
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
 
@@ -176,8 +182,7 @@ MODULE particles_id
   !
   INTERFACE
 
-    MODULE FUNCTION construct_particles( bns_obj, dist ) &
-                        RESULT ( parts_obj )
+    MODULE FUNCTION construct_particles( bns_obj, dist ) RESULT ( parts_obj )
         CLASS(bns), INTENT( IN OUT ):: bns_obj
         INTEGER,    INTENT( IN )    :: dist
         TYPE(particles)             :: parts_obj
@@ -250,6 +255,15 @@ MODULE particles_id
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_export_SPH_variables
+
+    MODULE SUBROUTINE read_sphincs_dump_print_formatted( THIS, namefile_bin, &
+                                                               namefile )
+
+      CLASS(particles),    INTENT( IN OUT )           :: THIS
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+
+    END SUBROUTINE read_sphincs_dump_print_formatted
 
     MODULE SUBROUTINE print_formatted_lorene_id_particles( THIS, namefile )
 

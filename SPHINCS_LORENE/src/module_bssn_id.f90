@@ -12,7 +12,7 @@ MODULE formul_bssn_id
 
 
   USE utility,       ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
-                           compute_g4, determinant_sym4x4_grid
+                           compute_g4, determinant_sym4x4_grid, show_progress
   USE bns_id,        ONLY: bns
   USE formul_3p1_id, ONLY: formul_3p1
   USE particles_id,  ONLY: particles
@@ -61,8 +61,8 @@ MODULE formul_bssn_id
     !
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC
     DOUBLE PRECISION, DIMENSION(3):: GC_l2
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC_from_parts
-    DOUBLE PRECISION, DIMENSION(3):: GC_from_parts_l2
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC_parts
+    DOUBLE PRECISION, DIMENSION(3):: GC_parts_l2
 
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x
@@ -84,6 +84,8 @@ MODULE formul_bssn_id
 
     PROCEDURE :: compute_and_export_3p1_variables &
                     => compute_and_export_bssn_variables
+
+    PROCEDURE, PUBLIC :: read_bssn_dump_print_formatted
 
     PROCEDURE :: print_formatted_lorene_id_3p1_variables &
                     => print_formatted_lorene_id_bssn_variables
@@ -164,10 +166,19 @@ MODULE formul_bssn_id
 
     MODULE SUBROUTINE compute_and_export_bssn_variables( THIS, namefile )
 
-      CLASS(bssn_id), INTENT( IN OUT )                :: THIS
+      CLASS(bssn_id),      INTENT( IN OUT )           :: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_export_bssn_variables
+
+    MODULE SUBROUTINE read_bssn_dump_print_formatted( THIS, namefile_bin, &
+                                                            namefile )
+
+      CLASS(bssn_id),      INTENT( IN OUT )           :: THIS
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+
+    END SUBROUTINE read_bssn_dump_print_formatted
 
     MODULE SUBROUTINE print_formatted_lorene_id_bssn_variables( THIS, &
                                                                 namefile )
@@ -192,11 +203,13 @@ MODULE formul_bssn_id
     MODULE SUBROUTINE compute_and_export_bssn_constraints_particles( THIS, &
                                                            parts_obj, &
                                                            namefile, &
+                                                           namefile_sph, &
                                                            name_logfile )
 
       CLASS(bssn_id),      INTENT( IN OUT ):: THIS
       CLASS(particles),    INTENT( IN OUT ):: parts_obj
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
+      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile_sph
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
     END SUBROUTINE compute_and_export_bssn_constraints_particles

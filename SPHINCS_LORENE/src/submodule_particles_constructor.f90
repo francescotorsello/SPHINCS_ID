@@ -87,6 +87,10 @@ SUBMODULE (particles_id) particles_constructor
     ! Declare this object as non-empty (experimental)
     parts_obj% empty_object= .FALSE.
 
+    parts_obj% mass1= bns_obj% get_mass1()
+    parts_obj% mass2= bns_obj% get_mass2()
+    parts_obj% nbar_tot= 0.0D0
+
     !
     !-- Read the parameters of the particle distributions
     !
@@ -140,10 +144,10 @@ SUBMODULE (particles_id) particles_constructor
       !
       !-- Determine boundaries of the single lattice around the stars (Msun_geo)
       !
-      xmin= - bns_obj% get_distance()/2.0D0 - &
+      xmin=   bns_obj% get_center1_x() - &
                                 stretch*MAX( bns_obj% get_radius1_x_comp(), &
                                              bns_obj% get_radius1_x_opp() )
-      xmax=   bns_obj% get_distance()/2.0D0 + &
+      xmax=   bns_obj% get_center2_x() + &
                                 stretch*MAX( bns_obj% get_radius2_x_comp(), &
                                              bns_obj% get_radius2_x_opp() )
       ymin= - stretch*bns_obj% get_radius1_y()
@@ -171,10 +175,10 @@ SUBMODULE (particles_id) particles_constructor
       !
       !-- Determine boundaries of the two lattices around the stars (Msun_geo)
       !
-      xmin1= - bns_obj% get_distance()/2.0D0 - &
+      xmin1=   bns_obj% get_center1_x() - &
                                 stretch*MAX( bns_obj% get_radius1_x_comp(), &
                                              bns_obj% get_radius1_x_opp() )
-      xmax1= - bns_obj% get_distance()/2.0D0 + &
+      xmax1=   bns_obj% get_center1_x() + &
                                 stretch*MAX( bns_obj% get_radius1_x_comp(), &
                                              bns_obj% get_radius1_x_opp() )
       ymin1= - stretch*bns_obj% get_radius1_y()
@@ -182,10 +186,10 @@ SUBMODULE (particles_id) particles_constructor
       zmin1= - stretch*bns_obj% get_radius1_z()
       zmax1=   stretch*bns_obj% get_radius1_z()
 
-      xmin2=   bns_obj% get_distance()/2.0D0 - &
+      xmin2=   bns_obj% get_center2_x() - &
                                 stretch*MAX( bns_obj% get_radius2_x_comp(), &
                                              bns_obj% get_radius2_x_opp() )
-      xmax2=   bns_obj% get_distance()/2.0D0 + &
+      xmax2=   bns_obj% get_center2_x() + &
                                 stretch*MAX( bns_obj% get_radius2_x_comp(), &
                                              bns_obj% get_radius2_x_opp() )
       ymin2= - stretch*bns_obj% get_radius2_y()
@@ -305,7 +309,7 @@ SUBMODULE (particles_id) particles_constructor
 
         ! Print progress on screen
         perc= 100*( itr/parts_obj% npart )
-        IF( MOD( perc, 10 ) == 0 )THEN
+        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                   creturn//" ", perc, "%"
         ENDIF
@@ -380,10 +384,10 @@ SUBMODULE (particles_id) particles_constructor
     !-- Compute the mass density almost at the center of the stars
     !
     max_baryon_density= MAX( &
-                bns_obj%import_mass_density( - bns_obj% get_distance()/2.0D0, &
-                                               DBLE(0), DBLE(0) ), &
-                bns_obj%import_mass_density(   bns_obj% get_distance()/2.0D0, &
-                                               DBLE(0), DBLE(0) ) )
+                bns_obj% import_mass_density( bns_obj% get_center1_x(), &
+                                              DBLE(0), DBLE(0) ), &
+                bns_obj% import_mass_density( bns_obj% get_center2_x(), &
+                                              DBLE(0), DBLE(0) ) )
 
     !
     !-- Set the threshold above which a lattice point is
@@ -413,6 +417,8 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *
 
     THIS% npart= 0
+    THIS% npart1= 0
+    THIS% npart2= 0
     !
     !-- Choose the larger value for the boundary in z
     !
@@ -445,6 +451,11 @@ SUBMODULE (particles_id) particles_constructor
                                   > thres_baryon_density )THEN
 
             THIS% npart= THIS% npart + 1
+            IF( xtemp < 0 )THEN
+              THIS% npart1= THIS% npart1 + 1
+            ELSEIF( xtemp > 0 )THEN
+              THIS% npart2= THIS% npart2 + 1
+            ENDIF
             THIS% pos( 1, THIS% npart )= xtemp
             THIS% pos( 2, THIS% npart )= ytemp
             THIS% pos( 3, THIS% npart )= ztemp
@@ -454,7 +465,7 @@ SUBMODULE (particles_id) particles_constructor
           ! Print progress on screen, every 10%
           perc= 50*( THIS% nx*THIS% ny*iz + THIS% nx*iy + ix )/ &
                   ( THIS% nx*THIS% ny*THIS% nz/2 )
-          IF( MOD( perc, 10 ) == 0 )THEN
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                    creturn//" ", perc, "%"
           ENDIF
@@ -492,7 +503,7 @@ SUBMODULE (particles_id) particles_constructor
 
       ! Print progress on screen, every 10%
       perc= 50 + 50*iz/( npart_half )
-      IF( MOD( perc, 10 ) == 0 )THEN
+      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
          WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                  creturn//" ", perc, "%"
       ENDIF
@@ -520,9 +531,21 @@ SUBMODULE (particles_id) particles_constructor
       ENDIF
     ENDDO
 
+    IF( THIS% npart1 + THIS% npart2 /= THIS% npart )THEN
+      PRINT *, "** ERROR: npart1 + npart2 /= npart"
+      PRINT *, " * npart1=", THIS% npart1
+      PRINT *, " * npart2=", THIS% npart2
+      PRINT *, " * npart1 + npart2=", THIS% npart1 + THIS% npart2
+      PRINT *, " * npart=", THIS% npart
+      STOP
+    ENDIF
+
     PRINT *, " * Particles placed. Number of particles=", &
              THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
              " of the points in lattice."
+    PRINT *
+    PRINT *, " * Number of particles on NS 1=", THIS% npart1
+    PRINT *, " * Number of particles on NS 2=", THIS% npart2
     PRINT *
 
     !
@@ -531,7 +554,7 @@ SUBMODULE (particles_id) particles_constructor
     THIS% vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
     THIS% vol_a= THIS% vol/THIS% npart_temp
 
-    ! Consistency check for the volume
+    ! Consistency check for the particle volume
     IF( ABS( THIS% vol_a - dx*dy*dz ) > 1D-9 )THEN
       PRINT *, " * The particle volume vol_a=", THIS% vol_a, "Msun_geo^3"
       PRINT *, " is not equal to dx*dy*dz=", dx*dy*dz, "Msun_geo^3."
@@ -711,7 +734,7 @@ SUBMODULE (particles_id) particles_constructor
           ! Print progress on screen, every 10%
           perc= 50*( THIS% nx*THIS% ny*iz + THIS% nx*iy + ix )/ &
                   ( THIS% nx*THIS% ny*THIS% nz/2 )
-          IF( MOD( perc, 10 ) == 0 )THEN
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                    creturn//" ", perc, "%"
            ENDIF
@@ -748,7 +771,7 @@ SUBMODULE (particles_id) particles_constructor
       !ENDIF
 
       perc= 50 + 50*iz/( npart_half )
-      IF( MOD( perc, 10 ) == 0 )THEN
+      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
         WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                creturn//" ", perc, "%"
       ENDIF
@@ -832,7 +855,7 @@ SUBMODULE (particles_id) particles_constructor
           ! Print progress on screen, every 10%
           perc= 50*( nx2*ny2*( iz - 1 ) + nx2*( iy - 1 ) + ix )&
                 /( nx2*ny2*nz2/2 )
-          IF( MOD( perc, 10 ) == 0 )THEN
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                    creturn//" ", perc, "%"
           ENDIF
@@ -866,7 +889,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Print progress on screen, every 10%
       perc= 50 + 50*( iz - 2*npart_half + 1 ) &
                     /( npart_half2 - 2*npart_half )
-      IF( MOD( perc, 10 ) == 0 )THEN
+      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
         WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                 creturn//" ", perc, "%"
       ENDIF
@@ -941,9 +964,21 @@ SUBMODULE (particles_id) particles_constructor
       ENDIF
     ENDDO
 
+    IF( THIS% npart1 + THIS% npart2 /= THIS% npart )THEN
+      PRINT *, "** ERROR: npart1 + npart2 /= npart"
+      PRINT *, " * npart1=", THIS% npart1
+      PRINT *, " * npart2=", THIS% npart2
+      PRINT *, " * npart1 + npart2=", THIS% npart1 + THIS% npart2
+      PRINT *, " * npart=", THIS% npart
+      STOP
+    ENDIF
+
     PRINT *, " * Particles placed. Number of particles=", &
              THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
              " of the points in lattices."
+    PRINT *
+    PRINT *, " * Number of particles on NS 1=", THIS% npart1
+    PRINT *, " * Number of particles on NS 2=", THIS% npart2
     PRINT *
 
     !
@@ -955,7 +990,7 @@ SUBMODULE (particles_id) particles_constructor
     THIS% vol  = THIS% vol1 + THIS% vol2
     vol_a_alt  = THIS% vol/THIS% npart_temp
 
-    ! Consistency check
+    ! Consistency check for the particle volume
     IF( ABS( THIS% vol_a - vol_a_alt ) > 1D-15 )THEN
       PRINT *, " * The particle volume vol_a_alt=", vol_a_alt, "Msun_geo^3"
       PRINT *, " is not equal to dx*dy*dz=", THIS% vol_a, "Msun_geo^3."
