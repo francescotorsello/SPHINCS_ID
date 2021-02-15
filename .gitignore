@@ -5,6 +5,8 @@ SPHINCS_LORENE/*constraints.dat
 SPHINCS_LORENE/negative*.dat
 SPHINCS_LORENE/*analysis.dat
 SPHINCS_LORENE/bssn*.dat
+SPHINCS_LORENE/sph*.dat
+SPHINCS_LORENE/debug*.dat
 SPHINCS_LORENE/*.gp
 SPHINCS_LORENE/*.asc
 SPHINCS_LORENE/*.d.asc
