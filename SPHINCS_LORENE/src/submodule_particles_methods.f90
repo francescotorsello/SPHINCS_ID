@@ -36,6 +36,8 @@ SUBMODULE (particles_id) particles_methods
     USE units,               ONLY: set_units, umass
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
+                                   n1,    &  ! particle number for star 1
+                                   n2,    &  ! particle number for star 2
                                    pos_u, &  ! particle positions
                                    vel_u, &  ! particle velocities in
                                              ! coordinate frame
@@ -85,6 +87,8 @@ SUBMODULE (particles_id) particles_methods
     !-- (used by write_SPHINCS_dump)
     !
     npart= THIS% npart
+    n1= THIS% npart1
+    n2= THIS% npart2
 
     CALL set_units('NSM')
 
@@ -322,7 +326,7 @@ SUBMODULE (particles_id) particles_methods
       IF( PRESENT(namefile) )THEN
         basename= namefile
       ELSE
-        basename= "lbns."
+        basename= "NSNS."
       ENDIF
       dcount= -1 ! since it is increased before writing
       CALL write_SPHINCS_dump()
