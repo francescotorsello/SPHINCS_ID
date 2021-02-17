@@ -381,13 +381,10 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *, " * Number of lattice points= nx*ny*nz=", THIS% npart_temp
 
     !
-    !-- Compute the mass density almost at the center of the stars
+    !-- Compute the mass density at the center of the stars
     !
-    max_baryon_density= MAX( &
-                bns_obj% import_mass_density( bns_obj% get_center1_x(), &
-                                              DBLE(0), DBLE(0) ), &
-                bns_obj% import_mass_density( bns_obj% get_center2_x(), &
-                                              DBLE(0), DBLE(0) ) )
+    max_baryon_density= MAX( bns_obj% get_rho_center1(), &
+                             bns_obj% get_rho_center2() )
 
     !
     !-- Set the threshold above which a lattice point is
@@ -654,14 +651,18 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *
 
     !
-    !-- Compute the mass density almost at the center of the stars
+    !-- Compute the mass density at the center of the stars
     !
-    max_baryon_density1= bns_obj% import_mass_density( &
-                                              ( xmin1 + xmax1 )/2.0D0, &
-                                              DBLE(0), DBLE(0) )
-    max_baryon_density2= bns_obj% import_mass_density( &
-                                              ( xmin2 + xmax2 )/2.0D0, &
-                                              DBLE(0), DBLE(0) )
+
+    ! N.B. The following two densities are in LORENE units [kg m^{-3}]
+    !max_baryon_density1= bns_obj% import_mass_density( &
+    !                                 bns_obj% get_center1_x(), 0.0D0, 0.0D0 )
+    !max_baryon_density2= bns_obj% import_mass_density( &
+    !                                 bns_obj% get_center2_x(), 0.0D0, 0.0D0 )
+
+    ! The following two density ar in SPHINCS units [Msun Msun_geo^{-3}]
+    max_baryon_density1= bns_obj% get_rho_center1()
+    max_baryon_density2= bns_obj% get_rho_center2()
 
     !
     !-- Set the thresholds above which a lattice point is

@@ -1049,7 +1049,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                       + 2.0D0*ig4(4,4)* &
                         u_euler_l(ix,iy,iz,3)*u_euler_l(ix,iy,iz,3)
 
-          IF( ABS( u_euler_norm + 1.0D0 ) > 1.0D-5 )THEN
+          IF( ABS( u_euler_norm + 1.0D0 ) > 1.0D-4 )THEN
               PRINT *, "** ERROR! The fluid 4-velocity in the " &
                        // "coordinate frame does not have norm -1. " &
                        // "The norm is", u_euler_norm

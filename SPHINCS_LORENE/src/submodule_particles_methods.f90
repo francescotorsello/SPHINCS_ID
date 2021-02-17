@@ -32,7 +32,7 @@ SUBMODULE (particles_id) particles_methods
     !************************************************
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
-                                   third
+                                   third, kg2g
     USE units,               ONLY: set_units, umass
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -301,6 +301,17 @@ SUBMODULE (particles_id) particles_methods
 
     ENDDO compute_SPH_variables_on_particles
     CALL THIS% sph_computer_timer% stop_timer()
+
+    PRINT "(A28,E15.8,A10)", "  * Maximum baryon density= ", &
+             MAXVAL( THIS% baryon_density_parts, DIM= 1 )*kg2g/(m2cm**3), &
+             " g cm^{-3}"
+    PRINT "(A28,E15.8,A10)", "  * Minimum baryon density= ", &
+             MINVAL( THIS% baryon_density_parts, DIM= 1 )*kg2g/(m2cm**3), &
+             " g cm^{-3}"
+    PRINT *, " * Ratio between the two=", &
+             MAXVAL( THIS% baryon_density_parts, DIM= 1 )/ &
+             MINVAL( THIS% baryon_density_parts, DIM= 1 )
+    PRINT *
 
     PRINT *, " * Maximum nlrf=", MAXVAL( THIS% nlrf, DIM= 1 ), &
              "baryon Msun_geo^{-3}"

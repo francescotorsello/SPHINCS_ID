@@ -1230,7 +1230,7 @@ SUBMODULE (bns_id) bns_methods
     !************************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                   ONLY: Msun_geo
+    USE constants,                   ONLY: Msun_geo, lorene2hydrobase
 
     IMPLICIT NONE
 
@@ -1239,9 +1239,10 @@ SUBMODULE (bns_id) bns_methods
       ! The coordinates need to be converted from SPHINCS units (Msun_geo)
       ! to LORENE units (km). See MODULE constants for the definition of
       ! Msun_geo
-      res= get_lorene_mass_density( THIS% bns_ptr, x*Msun_geo, &
-                                                   y*Msun_geo, &
-                                                   z*Msun_geo )
+      res= get_lorene_mass_density( THIS% bns_ptr, &
+                                    x*Msun_geo, &
+                                    y*Msun_geo, &
+                                    z*Msun_geo )*lorene2hydrobase
 
     ENDIF
 
