@@ -19,6 +19,11 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
   CONTAINS
 
 
+  !-------------------!
+  !--  SUBROUTINES  --!
+  !-------------------!
+
+
   MODULE PROCEDURE construct_formul_3p1_bns
 
     !************************************************
@@ -153,9 +158,14 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     IF(.NOT.ALLOCATED( f3p1_obj% grid ))THEN
       ALLOCATE( f3p1_obj% grid( 3, ngrid_x, ngrid_y, ngrid_z ), &
                                             STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array grid in SUBROUTINE" &
-                      // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array grid ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array grid in SUBROUTINE" &
+      !                // "construct_formul_3p1." )
     ENDIF
 
     !
@@ -192,36 +202,56 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
                                  f3p1_obj% ngrid_y, &
                                  f3p1_obj% ngrid_z ), &
                                  STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array lapse in SUBROUTINE" &
-                  // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array lapse", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array lapse in SUBROUTINE" &
+      !            // "construct_formul_3p1." )
     ENDIF
     IF(.NOT.ALLOCATED( f3p1_obj% shift_u ))THEN
       ALLOCATE( f3p1_obj% shift_u( f3p1_obj% ngrid_x, &
                                    f3p1_obj% ngrid_y, &
                                    f3p1_obj% ngrid_z, &
                                    3 ), STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array shift_u in SUBROUTINE" &
-                  // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array shift_u", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !              "...allocation error for array shift_u in SUBROUTINE" &
+      !              // "construct_formul_3p1." )
     ENDIF
     IF(.NOT.ALLOCATED( f3p1_obj% g_phys3_ll ))THEN
       ALLOCATE( f3p1_obj% g_phys3_ll( f3p1_obj% ngrid_x, &
                                       f3p1_obj% ngrid_y, &
                                       f3p1_obj% ngrid_z, &
                                       10 ), STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-              "...allocation error for array g_phys3_ll in SUBROUTINE" &
-              // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_phys3_ll", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array g_phys3_ll in SUBROUTINE" &
+      !        // "construct_formul_3p1." )
     ENDIF
     IF(.NOT.ALLOCATED( f3p1_obj% K_phys3_ll ))THEN
       ALLOCATE( f3p1_obj% K_phys3_ll( f3p1_obj% ngrid_x, &
                                       f3p1_obj% ngrid_y, &
                                       f3p1_obj% ngrid_z, 10 ), &
                                       STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-              "...allocation error for array K_phys3_ll in SUBROUTINE" &
-              // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array K_phys3_ll", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array K_phys3_ll in SUBROUTINE" &
+      !        // "construct_formul_3p1." )
     ENDIF
 
     !
@@ -350,6 +380,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
   END PROCEDURE construct_formul_3p1_bns
 
+
   MODULE PROCEDURE construct_formul_3p1_bns_spacings
 
     !************************************************
@@ -475,9 +506,14 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     IF( .NOT.ALLOCATED( f3p1_obj% grid ) )THEN
         ALLOCATE( f3p1_obj% grid( 3, nx, ny, nz ), &
                                             STAT= ios, ERRMSG= err_msg )
-        CALL test_status( ios, err_msg, &
-                        "...allocation error for array grid in SUBROUTINE" &
-                        // "construct_formul_3p1." )
+        IF( ios > 0 )THEN
+          PRINT *, "...allocation error for array grid", &
+                   ". The error message is", err_msg
+          STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !                "...allocation error for array grid in SUBROUTINE" &
+        !                // "construct_formul_3p1." )
     ENDIF
 
     !
@@ -512,29 +548,49 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !
     IF(.NOT.ALLOCATED( f3p1_obj% lapse ))THEN
       ALLOCATE( f3p1_obj% lapse( nx, ny, nz ), STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array lapse in SUBROUTINE" &
-                  // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array lapse", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array lapse in SUBROUTINE" &
+      !            // "construct_formul_3p1." )
     ENDIF
     IF(.NOT.ALLOCATED( f3p1_obj% shift_u ))THEN
       ALLOCATE( f3p1_obj% shift_u( nx, ny, nz, 3 ), STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array shift_u in SUBROUTINE" &
-                  // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array shift_u", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array shift_u in SUBROUTINE" &
+      !            // "construct_formul_3p1." )
     ENDIF
     IF(.NOT.ALLOCATED( f3p1_obj% g_phys3_ll ))THEN
       ALLOCATE( f3p1_obj% g_phys3_ll( nx, ny, nz, 10 ), &
                                               STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-              "...allocation error for array g_phys3_ll in SUBROUTINE" &
-              // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_phys3_ll", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array g_phys3_ll in SUBROUTINE" &
+      !        // "construct_formul_3p1." )
     ENDIF
     IF(.NOT.ALLOCATED( f3p1_obj% K_phys3_ll ))THEN
       ALLOCATE( f3p1_obj% K_phys3_ll( nx, ny, nz, 10 ), &
                                               STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-              "...allocation error for array K_phys3_ll in SUBROUTINE" &
-              // "construct_formul_3p1." )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array K_phys3_ll", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array K_phys3_ll in SUBROUTINE" &
+      !        // "construct_formul_3p1." )
     ENDIF
 
     !
@@ -657,6 +713,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
   END PROCEDURE construct_formul_3p1_bns_spacings
 
+
   MODULE PROCEDURE analyze_constraint
 
     IMPLICIT NONE
@@ -688,8 +745,13 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
               FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
-    CALL test_status( ios, err_msg, "...error when opening " &
-             // TRIM(name_stats) )
+    IF( ios > 0 )THEN
+      PRINT *, "... error when opening " // TRIM(name_stats), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !         // TRIM(name_stats) )
 
     IF( THIS% export_constraints_details )THEN
         WRITE( UNIT = unit_analysis, IOSTAT = ios, IOMSG = err_msg, &
@@ -1198,6 +1260,85 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
   END PROCEDURE analyze_constraint
 
+
+  MODULE PROCEDURE destruct_formul_3p1
+
+    !**************************************************
+    !                                                 *
+    ! Core of the destructors of TYPES derived from   *
+    ! formul_3p1. Their destructors should call this  *
+    ! SUBROUTINE. It deallocates memory.              *
+    !                                                 *
+    ! FT                                              *
+    !                                                 *
+    !**************************************************
+
+    IMPLICIT NONE
+
+    IF( ALLOCATED( f3p1_obj% grid ) )THEN
+      DEALLOCATE( f3p1_obj% grid, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array grid. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...deallocation error for array grid in SUBROUTINE"&
+      !            // "destruct_formul_3p1." )
+    ENDIF
+    IF( ALLOCATED( f3p1_obj% lapse ) )THEN
+      DEALLOCATE( f3p1_obj% lapse, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array lapse. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...deallocation error for array lapse in SUBROUTINE"&
+      !            // "destruct_formul_3p1." )
+    ENDIF
+    IF( ALLOCATED( f3p1_obj% shift_u ) )THEN
+      DEALLOCATE( f3p1_obj% shift_u, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_u. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array shift_u in " &
+      !                // "SUBROUTINE destruct_formul_3p1." )
+    ENDIF
+    IF( ALLOCATED( f3p1_obj% g_phys3_ll ) )THEN
+      DEALLOCATE( f3p1_obj% g_phys3_ll, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_phys3_ll. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_phys3_ll in " &
+      !                // "SUBROUTINE destruct_formul_3p1." )
+    ENDIF
+    IF( ALLOCATED( f3p1_obj% K_phys3_ll ) )THEN
+      DEALLOCATE( f3p1_obj% K_phys3_ll, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array K_phys3_ll. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array K_phys3_ll in " &
+      !                // "SUBROUTINE destruct_formul_3p1." )
+    ENDIF
+
+  END PROCEDURE destruct_formul_3p1
+
+
+  !-----------------!
+  !--  FUNCTIONS  --!
+  !-----------------!
+
+
   MODULE PROCEDURE get_grid_point
 
     !*************************************************
@@ -1212,22 +1353,22 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     IMPLICIT NONE
 
     IF( ix > THIS% ngrid_x )THEN
-        PRINT *, "** ERROR in get_grid_point: ix=", ix, "> ngrid_x=", &
-                 THIS% ngrid_x
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_grid_point: ix=", ix, "> ngrid_x=", &
+               THIS% ngrid_x
+      PRINT *
+      STOP
     ENDIF
     IF( iy > THIS% ngrid_y )THEN
-        PRINT *, "** ERROR in get_grid_point iy=", iy, "> ngrid_y=", &
-                 THIS% ngrid_y
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_grid_point iy=", iy, "> ngrid_y=", &
+               THIS% ngrid_y
+      PRINT *
+      STOP
     ENDIF
     IF( iz > THIS% ngrid_z )THEN
-        PRINT *, "** ERROR in get_grid_point iz=", iz, "> ngrid_z=", &
-                 THIS% ngrid_z
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_grid_point iz=", iz, "> ngrid_z=", &
+               THIS% ngrid_z
+      PRINT *
+      STOP
     ENDIF
 
     grid_point(1)= THIS% grid(1,ix,iy,iz)
@@ -1235,6 +1376,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     grid_point(3)= THIS% grid(3,ix,iy,iz)
 
   END PROCEDURE get_grid_point
+
 
   MODULE PROCEDURE get_x_spacing
 
@@ -1251,6 +1393,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     dx= THIS% dx
 
   END PROCEDURE get_x_spacing
+
 
   MODULE PROCEDURE get_ngrid_x
 
@@ -1269,6 +1412,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
   END PROCEDURE get_ngrid_x
 
+
   MODULE PROCEDURE get_ngrid_y
 
     !*************************************************
@@ -1285,6 +1429,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ngrid_y= THIS% ngrid_y
 
   END PROCEDURE get_ngrid_y
+
 
   MODULE PROCEDURE get_ngrid_z
 
@@ -1303,6 +1448,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
   END PROCEDURE get_ngrid_z
 
+
   MODULE PROCEDURE get_HC
 
     !**************************************************
@@ -1317,24 +1463,25 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     IMPLICIT NONE
 
     IF( ix > THIS% ngrid_x )THEN
-        PRINT *, "** ERROR in get_HC: ix=", ix, "> ngrid_x=", THIS% ngrid_x
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_HC: ix=", ix, "> ngrid_x=", THIS% ngrid_x
+      PRINT *
+      STOP
     ENDIF
     IF( iy > THIS% ngrid_y )THEN
-        PRINT *, "** ERROR in get_HC: iy=", iy, "> ngrid_y=", THIS% ngrid_y
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_HC: iy=", iy, "> ngrid_y=", THIS% ngrid_y
+      PRINT *
+      STOP
     ENDIF
     IF( iz > THIS% ngrid_z )THEN
-        PRINT *, "** ERROR in get_HC: iz=", iz, "> ngrid_z=", THIS% ngrid_z
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_HC: iz=", iz, "> ngrid_z=", THIS% ngrid_z
+      PRINT *
+      STOP
     ENDIF
 
     HC_value= THIS% HC(ix,iy,iz)
 
   END PROCEDURE get_HC
+
 
   MODULE PROCEDURE get_MC
 
@@ -1350,19 +1497,19 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     IMPLICIT NONE
 
     IF( ix > THIS% ngrid_x )THEN
-        PRINT *, "** ERROR in get_MC: ix=", ix, "> ngrid_x=", THIS% ngrid_x
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_MC: ix=", ix, "> ngrid_x=", THIS% ngrid_x
+      PRINT *
+      STOP
     ENDIF
     IF( iy > THIS% ngrid_y )THEN
-        PRINT *, "** ERRORin get_MC: iy=", iy, "> ngrid_y=", THIS% ngrid_y
-        PRINT *
-        STOP
+      PRINT *, "** ERRORin get_MC: iy=", iy, "> ngrid_y=", THIS% ngrid_y
+      PRINT *
+      STOP
     ENDIF
     IF( iz > THIS% ngrid_z )THEN
-        PRINT *, "** ERRORin get_MC: iz=", iz, "> ngrid_z=", THIS% ngrid_z
-        PRINT *
-        STOP
+      PRINT *, "** ERRORin get_MC: iz=", iz, "> ngrid_z=", THIS% ngrid_z
+      PRINT *
+      STOP
     ENDIF
 
     MC_value(1)= THIS% MC(ix,iy,iz,1)
@@ -1370,6 +1517,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     MC_value(3)= THIS% MC(ix,iy,iz,3)
 
   END PROCEDURE get_MC
+
 
   MODULE PROCEDURE get_HC_parts
 
@@ -1386,27 +1534,28 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     IMPLICIT NONE
 
     IF( ix > THIS% ngrid_x )THEN
-        PRINT *, "** ERROR in get_HC_parts: ix=", ix, "> ngrid_x=", &
-                 THIS% ngrid_x
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_HC_parts: ix=", ix, "> ngrid_x=", &
+               THIS% ngrid_x
+      PRINT *
+      STOP
     ENDIF
     IF( iy > THIS% ngrid_y )THEN
-        PRINT *, "** ERROR in get_HC_parts: iy=", iy, "> ngrid_y=", &
-                 THIS% ngrid_y
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_HC_parts: iy=", iy, "> ngrid_y=", &
+               THIS% ngrid_y
+      PRINT *
+      STOP
     ENDIF
     IF( iz > THIS% ngrid_z )THEN
-        PRINT *, "** ERROR in get_HC_parts: iz=", iz, "> ngrid_z=", &
-                 THIS% ngrid_z
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_HC_parts: iz=", iz, "> ngrid_z=", &
+               THIS% ngrid_z
+      PRINT *
+      STOP
     ENDIF
 
     HC_value= THIS% HC_parts(ix,iy,iz)
 
   END PROCEDURE get_HC_parts
+
 
   MODULE PROCEDURE get_MC_parts
 
@@ -1423,22 +1572,22 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     IMPLICIT NONE
 
     IF( ix > THIS% ngrid_x )THEN
-        PRINT *, "** ERROR in get_MC_parts: ix=", ix, "> ngrid_x=", &
-                 THIS% ngrid_x
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_MC_parts: ix=", ix, "> ngrid_x=", &
+               THIS% ngrid_x
+      PRINT *
+      STOP
     ENDIF
     IF( iy > THIS% ngrid_y )THEN
-        PRINT *, "** ERROR in get_MC_parts: iy=", iy, "> ngrid_y=", &
-                 THIS% ngrid_y
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_MC_parts: iy=", iy, "> ngrid_y=", &
+               THIS% ngrid_y
+      PRINT *
+      STOP
     ENDIF
     IF( iz > THIS% ngrid_z )THEN
-        PRINT *, "** ERROR in get_MC_parts: iz=", iz, "> ngrid_z=", &
-                 THIS% ngrid_z
-        PRINT *
-        STOP
+      PRINT *, "** ERROR in get_MC_parts: iz=", iz, "> ngrid_z=", &
+               THIS% ngrid_z
+      PRINT *
+      STOP
     ENDIF
 
     MC_value(1)= THIS% MC_parts(ix,iy,iz,1)
@@ -1447,51 +1596,5 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
   END PROCEDURE get_MC_parts
 
-  MODULE PROCEDURE destruct_formul_3p1
-
-    !**************************************************
-    !                                                 *
-    ! Core of the destructors of TYPES derived from   *
-    ! formul_3p1. Their destructors should call this  *
-    ! SUBROUTINE. It deallocates memory.              *
-    !                                                 *
-    ! FT                                              *
-    !                                                 *
-    !**************************************************
-
-    IMPLICIT NONE
-
-    IF( ALLOCATED( f3p1_obj% grid ) )THEN
-      DEALLOCATE( f3p1_obj% grid, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...deallocation error for array grid in SUBROUTINE"&
-                  // "destruct_formul_3p1." )
-    ENDIF
-    IF( ALLOCATED( f3p1_obj% lapse ) )THEN
-      DEALLOCATE( f3p1_obj% lapse, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...deallocation error for array lapse in SUBROUTINE"&
-                  // "destruct_formul_3p1." )
-    ENDIF
-    IF( ALLOCATED( f3p1_obj% shift_u ) )THEN
-      DEALLOCATE( f3p1_obj% shift_u, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array shift_u in " &
-                      // "SUBROUTINE destruct_formul_3p1." )
-    ENDIF
-    IF( ALLOCATED( f3p1_obj% g_phys3_ll ) )THEN
-      DEALLOCATE( f3p1_obj% g_phys3_ll, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_phys3_ll in " &
-                      // "SUBROUTINE destruct_formul_3p1." )
-    ENDIF
-    IF( ALLOCATED( f3p1_obj% K_phys3_ll ) )THEN
-      DEALLOCATE( f3p1_obj% K_phys3_ll, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array K_phys3_ll in " &
-                      // "SUBROUTINE destruct_formul_3p1." )
-    ENDIF
-
-  END PROCEDURE destruct_formul_3p1
 
 END SUBMODULE formul_3p1_methods

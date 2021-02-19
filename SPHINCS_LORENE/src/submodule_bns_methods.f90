@@ -19,6 +19,11 @@ SUBMODULE (bns_id) bns_methods
   CONTAINS
 
 
+  !-------------------!
+  !--  SUBROUTINES  --!
+  !-------------------!
+
+
   MODULE PROCEDURE import_id_int
 
     !*****************************************************
@@ -147,6 +152,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE import_id_int
 
+
   MODULE PROCEDURE import_id_ext
 
     !*****************************************************
@@ -248,6 +254,7 @@ SUBMODULE (bns_id) bns_methods
     ENDIF
 
   END PROCEDURE import_id_ext
+
 
   MODULE PROCEDURE import_id_multid_array
 
@@ -458,6 +465,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE import_id_multid_array
 
+
   MODULE PROCEDURE import_id_hydro
 
     !*****************************************************
@@ -515,6 +523,7 @@ SUBMODULE (bns_id) bns_methods
     ENDIF
 
   END PROCEDURE import_id_hydro
+
 
   MODULE PROCEDURE import_id_particles
 
@@ -623,6 +632,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE import_id_particles
 
+
   MODULE PROCEDURE import_id_k
 
     !*****************************************************
@@ -694,6 +704,7 @@ SUBMODULE (bns_id) bns_methods
     ENDIF
 
   END PROCEDURE import_id_k
+
 
   MODULE PROCEDURE print_id_params
 
@@ -889,6 +900,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE print_id_params
 
+
   MODULE PROCEDURE destruct_binary
 
     !************************************************
@@ -934,147 +946,257 @@ SUBMODULE (bns_id) bns_methods
     IF(.NOT.ALLOCATED( THIS% lapse ))THEN
       ALLOCATE( THIS% lapse( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array lapse" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array lapse. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    !  CALL test_status( ios, err_msg, &
+    !              "...allocation error for array lapse" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% shift_x ))THEN
       ALLOCATE( THIS% shift_x( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array shift_x" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array shift_x. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array shift_x" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% shift_y ))THEN
       ALLOCATE( THIS% shift_y( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array shift_y" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array shift_y. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array shift_y" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% shift_z ))THEN
       ALLOCATE( THIS% shift_z( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array shift_z" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array shift_z. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array shift_z" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_xx ))THEN
       ALLOCATE( THIS% g_xx( d ), STAT= ios, &
           ERRMSG = err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array g_xx" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_xx. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array g_xx" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_xy ))THEN
       ALLOCATE( THIS% g_xy( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array g_xy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_xy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array g_xy" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_xz ))THEN
       ALLOCATE( THIS% g_xz( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array g_xz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_xz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array g_xz" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_yy ))THEN
       ALLOCATE( THIS% g_yy( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array g_yy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_yy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array g_yy" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_yz ))THEN
       ALLOCATE( THIS% g_yz( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array g_yz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_yz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array g_yz" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_zz ))THEN
       ALLOCATE( THIS% g_zz( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array g_zz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_zz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array g_zz" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% k_xx ))THEN
       ALLOCATE( THIS% k_xx( d ), STAT= ios, &
 
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array k_xx" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_xx. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array k_xx" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% k_xy ))THEN
       ALLOCATE( THIS% k_xy( d ), STAT= ios, &
 
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array k_xy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_xy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array k_xy" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% k_xz ))THEN
       ALLOCATE( THIS% k_xz( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array k_xz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_xz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array k_xz" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% k_yy ))THEN
       ALLOCATE( THIS%  k_yy( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array k_yy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_yy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array k_yy" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% k_yz ))THEN
       ALLOCATE( THIS% k_yz( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array k_yz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_yz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array k_yz" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% k_zz ))THEN
       ALLOCATE( THIS% k_zz( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array k_zz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_zz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array k_zz" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% baryon_density ))THEN
       ALLOCATE( THIS% baryon_density( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array baryon_density" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array baryon_density ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array baryon_density" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% energy_density ))THEN
       ALLOCATE( THIS% energy_density( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array energy_density" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array energy_density ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array energy_density" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% specific_energy ))THEN
       ALLOCATE( THIS% specific_energy( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array specific_energy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array specific_energy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array specific_energy" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% v_euler_x ))THEN
       ALLOCATE( THIS% v_euler_x( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array v_euler_x" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array v_euler_x ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array v_euler_x" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% v_euler_y ))THEN
       ALLOCATE( THIS% v_euler_y( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array v_euler_y" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array v_euler_y ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array v_euler_y" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% v_euler_z ))THEN
       ALLOCATE( THIS% v_euler_z( d ), STAT= ios, &
           ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array v_euler_z" )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array v_euler_z ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array v_euler_z" )
     ENDIF
 
     IF( SIZE( THIS% lapse ) /= d )THEN
-        PRINT *, "** ERROR in memory allocation in ", &
-                 "allocate_lorene_id_memory"
+      PRINT *, "** ERROR in memory allocation in allocate_lorene_id_memory"
     ENDIF
 
     PRINT *, "** Subroutine allocate_lorene_id_memory executed."
     PRINT *
 
   END PROCEDURE allocate_lorene_id_memory
+
 
   MODULE PROCEDURE deallocate_lorene_id_memory
 
@@ -1092,122 +1214,232 @@ SUBMODULE (bns_id) bns_methods
 
     IF(ALLOCATED( THIS% lapse ))THEN
       DEALLOCATE( THIS% lapse, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                        "...deallocation error for array lapse" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array lapse ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                  "...deallocation error for array lapse" )
     ENDIF
     IF(ALLOCATED( THIS% shift_x ))THEN
       DEALLOCATE( THIS% shift_x, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array shift_x" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_x ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array shift_x" )
     ENDIF
     IF(ALLOCATED( THIS% shift_y ))THEN
       DEALLOCATE( THIS% shift_y, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array shift_y" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_y ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array shift_y" )
     ENDIF
     IF(ALLOCATED( THIS% shift_z ))THEN
       DEALLOCATE( THIS% shift_z, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array shift_z" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_z ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array shift_z" )
     ENDIF
     IF(ALLOCATED( THIS% g_xx ))THEN
       DEALLOCATE( THIS% g_xx, STAT= ios, ERRMSG = err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_xx" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xx ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_xx" )
     ENDIF
     IF(ALLOCATED( THIS% g_xy ))THEN
       DEALLOCATE( THIS% g_xy, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                     "...deallocation error for array g_xy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !               "...deallocation error for array g_xy" )
     ENDIF
     IF(ALLOCATED( THIS% g_xz ))THEN
       DEALLOCATE( THIS% g_xz, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_xz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_xz" )
     ENDIF
     IF(ALLOCATED( THIS% g_yy ))THEN
       DEALLOCATE( THIS% g_yy, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_yy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_yy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_yy" )
     ENDIF
     IF(ALLOCATED( THIS% g_yz ))THEN
       DEALLOCATE( THIS% g_yz, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_yz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_yz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_yz" )
     ENDIF
     IF(ALLOCATED( THIS% g_zz ))THEN
       DEALLOCATE( THIS% g_zz, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_zz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_zz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_zz" )
     ENDIF
     IF(ALLOCATED( THIS% k_xx ))THEN
       DEALLOCATE( THIS% k_xx, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array k_xx" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_xx ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array k_xx" )
     ENDIF
     IF(ALLOCATED( THIS% k_xy ))THEN
       DEALLOCATE( THIS% k_xy, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array k_xy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_xy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array k_xy" )
     ENDIF
     IF(ALLOCATED( THIS% k_xz ))THEN
       DEALLOCATE( THIS% k_xz, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array k_xz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_xz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array k_xz" )
     ENDIF
     IF(ALLOCATED( THIS% k_yy ))THEN
       DEALLOCATE( THIS% k_yy, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array k_yy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_yy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array k_yy" )
     ENDIF
     IF(ALLOCATED( THIS% k_yz ))THEN
       DEALLOCATE( THIS% k_yz, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array k_yz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_yz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array k_yz" )
     ENDIF
     IF(ALLOCATED( THIS% k_zz ))THEN
       DEALLOCATE( THIS% k_zz, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array k_zz" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_zz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array k_zz" )
     ENDIF
     IF(ALLOCATED( THIS% baryon_density ))THEN
       DEALLOCATE( THIS% baryon_density, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array baryon_density" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array baryon_density ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...deallocation error for array baryon_density" )
     ENDIF
     IF(ALLOCATED( THIS% energy_density ))THEN
       DEALLOCATE( THIS% energy_density, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array energy_density" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array energy_density ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...deallocation error for array energy_density" )
     ENDIF
     IF(ALLOCATED( THIS% specific_energy ))THEN
       DEALLOCATE( THIS% specific_energy, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-      "...deallocation error for array specific_energy" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array specific_energy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...deallocation error for array specific_energy" )
     ENDIF
     IF(ALLOCATED( THIS% v_euler_x ))THEN
       DEALLOCATE( THIS% v_euler_x, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array v_euler_x" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_euler_x ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...deallocation error for array v_euler_x" )
     ENDIF
     IF(ALLOCATED( THIS% v_euler_y ))THEN
       DEALLOCATE( THIS% v_euler_y, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array v_euler_y" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_euler_y ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v_euler_y" )
     ENDIF
     IF(ALLOCATED( THIS% v_euler_z ))THEN
       DEALLOCATE( THIS% v_euler_z, STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array v_euler_z" )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_euler_z ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v_euler_z" )
     ENDIF
 
     PRINT *, "** Subroutine deallocate_lorene_id_memory executed."
@@ -1215,9 +1447,12 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE deallocate_lorene_id_memory
 
-  !
-  !-- FUNCTIONS
-  !
+
+  !-----------------!
+  !--  FUNCTIONS  --!
+  !-----------------!
+
+
   MODULE PROCEDURE import_mass_density
 
     !************************************************
@@ -1247,6 +1482,7 @@ SUBMODULE (bns_id) bns_methods
     ENDIF
 
   END PROCEDURE import_mass_density
+
 
   MODULE PROCEDURE get_field_array
 
@@ -1359,6 +1595,7 @@ SUBMODULE (bns_id) bns_methods
     END SELECT select_field
 
   END PROCEDURE get_field_array
+
 
   MODULE PROCEDURE get_field_value
 
@@ -1473,6 +1710,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_field_value
 
+
   MODULE PROCEDURE get_bns_identifier
 
     !*************************************************
@@ -1489,6 +1727,7 @@ SUBMODULE (bns_id) bns_methods
     get_bns_identifier= THIS% bns_identifier
 
   END PROCEDURE get_bns_identifier
+
 
   !MODULE PROCEDURE get_bns_ptr
   !
@@ -1518,6 +1757,7 @@ SUBMODULE (bns_id) bns_methods
   !
   !END PROCEDURE get_bns_ptr
 
+
   MODULE PROCEDURE get_gamma_1
 
     !*************************************************
@@ -1535,6 +1775,7 @@ SUBMODULE (bns_id) bns_methods
     get_gamma_1= THIS% gamma_1
 
   END PROCEDURE get_gamma_1
+
 
   MODULE PROCEDURE get_gamma_2
 
@@ -1554,6 +1795,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_gamma_2
 
+
   MODULE PROCEDURE get_kappa_1
 
     !*************************************************
@@ -1571,6 +1813,7 @@ SUBMODULE (bns_id) bns_methods
     get_kappa_1= THIS% kappa_1
 
   END PROCEDURE get_kappa_1
+
 
   MODULE PROCEDURE get_kappa_2
 
@@ -1590,6 +1833,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_kappa_2
 
+
   MODULE PROCEDURE get_angular_vel
 
     !*************************************************
@@ -1606,6 +1850,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_angular_vel
 
+
   MODULE PROCEDURE get_distance
 
     !*************************************************
@@ -1621,6 +1866,7 @@ SUBMODULE (bns_id) bns_methods
     get_distance= THIS% distance
 
   END PROCEDURE get_distance
+
 
   MODULE PROCEDURE get_distance_com
 
@@ -1639,6 +1885,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_distance_com
 
+
   MODULE PROCEDURE get_mass1
 
     !*************************************************
@@ -1654,6 +1901,7 @@ SUBMODULE (bns_id) bns_methods
     get_mass1= THIS% mass1
 
   END PROCEDURE get_mass1
+
 
   MODULE PROCEDURE get_mass2
 
@@ -1671,6 +1919,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_mass2
 
+
   MODULE PROCEDURE get_adm_mass
 
     !*************************************************
@@ -1687,6 +1936,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_adm_mass
 
+
   MODULE PROCEDURE get_angular_momentum
 
     !*************************************************
@@ -1702,6 +1952,7 @@ SUBMODULE (bns_id) bns_methods
     get_angular_momentum= THIS% angular_momentum
 
   END PROCEDURE get_angular_momentum
+
 
   MODULE PROCEDURE get_radius1_x_comp
 
@@ -1720,6 +1971,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_radius1_x_comp
 
+
   MODULE PROCEDURE get_radius1_y
 
     !*************************************************
@@ -1736,6 +1988,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_radius1_y
 
+
   MODULE PROCEDURE get_radius1_z
 
     !*************************************************
@@ -1751,6 +2004,7 @@ SUBMODULE (bns_id) bns_methods
     get_radius1_z= THIS% radius1_z
 
   END PROCEDURE get_radius1_z
+
 
   MODULE PROCEDURE get_radius1_x_opp
 
@@ -1769,6 +2023,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_radius1_x_opp
 
+
   MODULE PROCEDURE get_center1_x
 
     !*************************************************
@@ -1786,6 +2041,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_center1_x
 
+
   MODULE PROCEDURE get_barycenter1_x
 
     !*************************************************
@@ -1801,6 +2057,7 @@ SUBMODULE (bns_id) bns_methods
     get_barycenter1_x= THIS% barycenter1_x
 
   END PROCEDURE get_barycenter1_x
+
 
   MODULE PROCEDURE get_radius2_x_comp
 
@@ -1819,6 +2076,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_radius2_x_comp
 
+
   MODULE PROCEDURE get_radius2_y
 
     !*************************************************
@@ -1835,6 +2093,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_radius2_y
 
+
   MODULE PROCEDURE get_radius2_z
 
     !*************************************************
@@ -1850,6 +2109,7 @@ SUBMODULE (bns_id) bns_methods
     get_radius2_z= THIS% radius2_z
 
   END PROCEDURE get_radius2_z
+
 
   MODULE PROCEDURE get_radius2_x_opp
 
@@ -1868,6 +2128,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_radius2_x_opp
 
+
   MODULE PROCEDURE get_center2_x
 
     !*************************************************
@@ -1885,6 +2146,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_center2_x
 
+
   MODULE PROCEDURE get_barycenter2_x
 
     !*************************************************
@@ -1901,6 +2163,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_barycenter2_x
 
+
   MODULE PROCEDURE get_ent_center1
 
     !*************************************************
@@ -1916,6 +2179,7 @@ SUBMODULE (bns_id) bns_methods
     get_ent_center1= THIS% ent_center1
 
   END PROCEDURE get_ent_center1
+
 
   MODULE PROCEDURE get_nbar_center1
 
@@ -1934,6 +2198,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_nbar_center1
 
+
   MODULE PROCEDURE get_rho_center1
 
     !*************************************************
@@ -1951,6 +2216,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_rho_center1
 
+
   MODULE PROCEDURE get_energy_density_center1
 
     !*************************************************
@@ -1966,6 +2232,7 @@ SUBMODULE (bns_id) bns_methods
     get_energy_density_center1= THIS% energy_density_center1
 
   END PROCEDURE get_energy_density_center1
+
 
   MODULE PROCEDURE get_specific_energy_center1
 
@@ -1983,6 +2250,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_specific_energy_center1
 
+
   MODULE PROCEDURE get_pressure_center1
 
     !*************************************************
@@ -1999,6 +2267,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_pressure_center1
 
+
   MODULE PROCEDURE get_ent_center2
 
     !*************************************************
@@ -2014,6 +2283,7 @@ SUBMODULE (bns_id) bns_methods
     get_ent_center2= THIS% ent_center2
 
   END PROCEDURE get_ent_center2
+
 
   MODULE PROCEDURE get_nbar_center2
 
@@ -2032,6 +2302,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_nbar_center2
 
+
   MODULE PROCEDURE get_rho_center2
 
     !*************************************************
@@ -2049,6 +2320,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_rho_center2
 
+
   MODULE PROCEDURE get_energy_density_center2
 
     !*************************************************
@@ -2064,6 +2336,7 @@ SUBMODULE (bns_id) bns_methods
     get_energy_density_center2= THIS% energy_density_center2
 
   END PROCEDURE get_energy_density_center2
+
 
   MODULE PROCEDURE get_specific_energy_center2
 
@@ -2081,6 +2354,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_specific_energy_center2
 
+
   MODULE PROCEDURE get_pressure_center2
 
     !*************************************************
@@ -2096,6 +2370,7 @@ SUBMODULE (bns_id) bns_methods
     get_pressure_center2= THIS% pressure_center2
 
   END PROCEDURE get_pressure_center2
+
 
   MODULE PROCEDURE get_eos1
 
@@ -2113,6 +2388,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_eos1
 
+
   MODULE PROCEDURE get_eos2
 
     !*************************************************
@@ -2128,6 +2404,7 @@ SUBMODULE (bns_id) bns_methods
     get_eos2= THIS% eos2
 
   END PROCEDURE get_eos2
+
 
   MODULE PROCEDURE get_npeos_1
 
@@ -2145,6 +2422,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_npeos_1
 
+
   MODULE PROCEDURE get_npeos_2
 
     !*************************************************
@@ -2160,6 +2438,7 @@ SUBMODULE (bns_id) bns_methods
     get_npeos_2= THIS% npeos_2
 
   END PROCEDURE get_npeos_2
+
 
   MODULE PROCEDURE get_gamma0_1
 
@@ -2179,6 +2458,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_gamma0_1
 
+
   MODULE PROCEDURE get_gamma0_2
 
     !*************************************************
@@ -2196,6 +2476,7 @@ SUBMODULE (bns_id) bns_methods
     get_gamma0_2= THIS% gamma0_2
 
   END PROCEDURE get_gamma0_2
+
 
   MODULE PROCEDURE get_gamma1_1
 
@@ -2215,6 +2496,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_gamma1_1
 
+
   MODULE PROCEDURE get_gamma1_2
 
     !*************************************************
@@ -2232,6 +2514,7 @@ SUBMODULE (bns_id) bns_methods
     get_gamma1_2= THIS% gamma1_2
 
   END PROCEDURE get_gamma1_2
+
 
   MODULE PROCEDURE get_gamma2_1
 
@@ -2251,6 +2534,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_gamma2_1
 
+
   MODULE PROCEDURE get_gamma2_2
 
     !*************************************************
@@ -2268,6 +2552,7 @@ SUBMODULE (bns_id) bns_methods
     get_gamma2_2= THIS% gamma2_2
 
   END PROCEDURE get_gamma2_2
+
 
   MODULE PROCEDURE get_gamma3_1
 
@@ -2287,6 +2572,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_gamma3_1
 
+
   MODULE PROCEDURE get_gamma3_2
 
     !*************************************************
@@ -2304,6 +2590,7 @@ SUBMODULE (bns_id) bns_methods
     get_gamma3_2= THIS% gamma3_2
 
   END PROCEDURE get_gamma3_2
+
 
   MODULE PROCEDURE get_kappa0_1
 
@@ -2323,6 +2610,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_kappa0_1
 
+
   MODULE PROCEDURE get_kappa1_1
 
     !*************************************************
@@ -2340,6 +2628,7 @@ SUBMODULE (bns_id) bns_methods
     get_kappa1_1= THIS% kappa1_1
 
   END PROCEDURE get_kappa1_1
+
 
   MODULE PROCEDURE get_kappa2_1
 
@@ -2359,6 +2648,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_kappa2_1
 
+
   MODULE PROCEDURE get_kappa3_1
 
     !*************************************************
@@ -2376,6 +2666,7 @@ SUBMODULE (bns_id) bns_methods
     get_kappa3_1= THIS% kappa3_1
 
   END PROCEDURE get_kappa3_1
+
 
   MODULE PROCEDURE get_kappa0_2
 
@@ -2395,6 +2686,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_kappa0_2
 
+
   MODULE PROCEDURE get_kappa1_2
 
     !*************************************************
@@ -2412,6 +2704,7 @@ SUBMODULE (bns_id) bns_methods
     get_kappa1_2= THIS% kappa1_2
 
   END PROCEDURE get_kappa1_2
+
 
   MODULE PROCEDURE get_kappa2_2
 
@@ -2431,6 +2724,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_kappa2_2
 
+
   MODULE PROCEDURE get_kappa3_2
 
     !*************************************************
@@ -2448,6 +2742,7 @@ SUBMODULE (bns_id) bns_methods
     get_kappa3_2= THIS% kappa3_2
 
   END PROCEDURE get_kappa3_2
+
 
   MODULE PROCEDURE get_logp1_1
 
@@ -2468,6 +2763,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_logp1_1
 
+
   MODULE PROCEDURE get_logp1_2
 
     !*************************************************
@@ -2486,6 +2782,7 @@ SUBMODULE (bns_id) bns_methods
     get_logp1_2= THIS% logp1_2
 
   END PROCEDURE get_logp1_2
+
 
   MODULE PROCEDURE get_logRho0_1
 
@@ -2506,6 +2803,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_logRho0_1
 
+
   MODULE PROCEDURE get_logRho0_2
 
     !*************************************************
@@ -2524,6 +2822,7 @@ SUBMODULE (bns_id) bns_methods
     get_logRho0_2= THIS% logRho0_2
 
   END PROCEDURE get_logRho0_2
+
 
   MODULE PROCEDURE get_logRho1_1
 
@@ -2544,6 +2843,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_logRho1_1
 
+
   MODULE PROCEDURE get_logRho1_2
 
     !*************************************************
@@ -2562,6 +2862,7 @@ SUBMODULE (bns_id) bns_methods
     get_logRho1_2= THIS% logRho1_2
 
   END PROCEDURE get_logRho1_2
+
 
   MODULE PROCEDURE get_logRho2_1
 
@@ -2582,6 +2883,7 @@ SUBMODULE (bns_id) bns_methods
 
   END PROCEDURE get_logRho2_1
 
+
   MODULE PROCEDURE get_logRho2_2
 
     !*************************************************
@@ -2600,5 +2902,6 @@ SUBMODULE (bns_id) bns_methods
     get_logRho2_2= THIS% logRho2_2
 
   END PROCEDURE get_logRho2_2
+
 
 END SUBMODULE bns_methods

@@ -54,6 +54,7 @@ SUBMODULE (bns_id) bns_constructor
 
   END PROCEDURE construct_bns
 
+
   !
   !-- Implementation of the destructor of the bns object
   !
@@ -68,6 +69,7 @@ SUBMODULE (bns_id) bns_constructor
     CALL THIS% deallocate_lorene_id_memory()
 
   END PROCEDURE destruct_bns
+
 
   MODULE PROCEDURE construct_binary
 
@@ -120,6 +122,7 @@ SUBMODULE (bns_id) bns_constructor
     !PRINT *
 
   END PROCEDURE construct_binary
+
 
   MODULE PROCEDURE import_id_params
 
@@ -262,5 +265,6 @@ SUBMODULE (bns_id) bns_constructor
     PRINT *
 
   END PROCEDURE import_id_params
+
 
 END SUBMODULE bns_constructor

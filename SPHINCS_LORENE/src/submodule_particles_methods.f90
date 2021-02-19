@@ -19,6 +19,11 @@ SUBMODULE (particles_id) particles_methods
   CONTAINS
 
 
+  !-------------------!
+  !--  SUBROUTINES  --!
+  !-------------------!
+
+
   MODULE PROCEDURE compute_and_export_SPH_variables
 
     !************************************************
@@ -95,26 +100,61 @@ SUBMODULE (particles_id) particles_methods
     CALL allocate_SPH_memory
     CALL allocate_metric_on_particles( THIS% npart )
 
-    ALLOCATE( THIS% nu( THIS% npart ), STAT= ios, &
-              ERRMSG= err_msg )
-    CALL test_status( ios, err_msg, &
-                    "...allocation error for array nu" )
-    ALLOCATE( THIS% nlrf( THIS% npart ), STAT= ios, &
-              ERRMSG= err_msg )
-    CALL test_status( ios, err_msg, &
-                    "...allocation error for array nu" )
-    ALLOCATE( THIS% Theta( THIS% npart ), STAT= ios, &
-              ERRMSG= err_msg )
-    CALL test_status( ios, err_msg, &
-                    "...allocation error for array nu" )
-    ALLOCATE( THIS% v( 0:3, THIS% npart ), STAT= ios, &
-              ERRMSG= err_msg )
-    CALL test_status( ios, err_msg, &
-                    "...allocation error for array v" )
-    ALLOCATE( THIS% h( THIS% npart ), STAT= ios, &
-              ERRMSG= err_msg )
-    CALL test_status( ios, err_msg, &
-                    "...allocation error for array h" )
+    IF(.NOT.ALLOCATED( THIS% nu ))THEN
+      ALLOCATE( THIS% nu( THIS% npart ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array nu ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array nu" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% nlrf ))THEN
+      ALLOCATE( THIS% nlrf( THIS% npart ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array nlrf ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array nlrf" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% Theta ))THEN
+      ALLOCATE( THIS% Theta( THIS% npart ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array Theta ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array Theta" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% v ))THEN
+      ALLOCATE( THIS% v( 0:3, THIS% npart ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array v ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array v" )
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% h ))THEN
+      ALLOCATE( THIS% h( THIS% npart ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array h ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array h" )
+    ENDIF
 
     !
     !-- Compute SPH quantities
@@ -354,6 +394,7 @@ SUBMODULE (particles_id) particles_methods
 
   END PROCEDURE compute_and_export_SPH_variables
 
+
   MODULE PROCEDURE read_sphincs_dump_print_formatted
 
     !************************************************
@@ -442,17 +483,22 @@ SUBMODULE (particles_id) particles_methods
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
     IF( exist )THEN
-        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
     ELSE
-        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
-    CALL test_status( ios, err_msg, "...error when opening " &
-                      // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+              ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !                  // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -460,8 +506,13 @@ SUBMODULE (particles_id) particles_methods
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Values of the fields (including coordinates) exported by LORENE "&
     // "on each grid point"
-    CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+    !        // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column:      1        2       3       4       5", &
@@ -469,9 +520,13 @@ SUBMODULE (particles_id) particles_methods
     "       9       10      11", &
     "       12      13      14", &
     "       15      16      17"
-
-    CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+    !        // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "#      grid point      x [km]       y [km]       z [km]       lapse", &
@@ -485,8 +540,13 @@ SUBMODULE (particles_id) particles_methods
     "       baryon number per particle nu", &
     "       baryon density in the local rest frame nlrf [baryon/cm^3]", &
     "       generalized Lorentz factor Theta"
-    CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+    !        // TRIM(finalnamefile) )
 
     DO itr = 1, THIS% npart, 1
       abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
@@ -533,8 +593,13 @@ SUBMODULE (particles_id) particles_methods
         Theta( itr ), &
         Pr( itr )
 
-    CALL test_status( ios, err_msg, "...error when writing " &
-             // "the arrays in " // TRIM(finalnamefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing the arrays in " &
+                 // TRIM(finalnamefile), ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing " &
+      !       // "the arrays in " // TRIM(finalnamefile) )
     ENDDO write_data_loop
 
     CLOSE( UNIT= 2 )
@@ -553,6 +618,7 @@ SUBMODULE (particles_id) particles_methods
     PRINT *
 
   END PROCEDURE read_sphincs_dump_print_formatted
+
 
   MODULE PROCEDURE print_formatted_lorene_id_particles
 
@@ -614,8 +680,13 @@ SUBMODULE (particles_id) particles_methods
               FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
-    CALL test_status( ios, err_msg, "...error when opening " &
-                      // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !                  // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -623,8 +694,13 @@ SUBMODULE (particles_id) particles_methods
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Values of the fields (including coordinates) exported by LORENE "&
     // "on each grid point"
-    CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+    !        // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column:      1        2       3       4       5", &
@@ -633,8 +709,13 @@ SUBMODULE (particles_id) particles_methods
     "       12      13      14", &
     "       15      16      17"
 
-    CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+    !            // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
   "#      grid point      x [km]       y [km]       z [km]       lapse", &
@@ -648,8 +729,13 @@ SUBMODULE (particles_id) particles_methods
   "       baryon number per particle nu", &
   "       baryon density in the local rest frame nlrf [baryon/cm^3]", &
   "       generalized Lorentz factor Theta"
-    CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+    !          // TRIM(finalnamefile) )
 
     DO itr = 1, THIS% npart, 1
       abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
@@ -700,8 +786,13 @@ SUBMODULE (particles_id) particles_methods
         THIS% nlrf( itr ), &
         THIS% Theta( itr )
 
-    CALL test_status( ios, err_msg, "...error when writing " &
-             // "the arrays in " // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing " &
+    !         // "the arrays in " // TRIM(finalnamefile) )
     ENDDO write_data_loop
 
     CLOSE( UNIT= 2 )
@@ -715,172 +806,6 @@ SUBMODULE (particles_id) particles_methods
 
   END PROCEDURE print_formatted_lorene_id_particles
 
-  MODULE PROCEDURE get_npart
-
-    !*************************************************
-    !                                                *
-    ! Returns the total number of particles          *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    n_part= THIS% npart
-
-  END PROCEDURE get_npart
-
-  MODULE PROCEDURE get_pos
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of particle positions        *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    pos_u= THIS% pos
-
-  END PROCEDURE get_pos
-
-  MODULE PROCEDURE get_vel
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of coordinate 3-velocity of  *
-    ! particles                                      *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    vel= THIS% v(1:3,:)
-
-  END PROCEDURE get_vel
-
-  MODULE PROCEDURE get_nlrf
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of baryon density in the     *
-    ! local rest frame                               *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    nlrf= THIS% nlrf
-
-  END PROCEDURE get_nlrf
-
-  MODULE PROCEDURE get_nu
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of baryon per particle       *
-    ! [baryon (Msun_geo)^{-3}]                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    nu= THIS% nu
-
-  END PROCEDURE get_nu
-
-  MODULE PROCEDURE get_u
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of specific internal         *
-    ! energy [c^2]                                   *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    u= THIS% specific_energy_parts
-
-  END PROCEDURE get_u
-
-  MODULE PROCEDURE get_pressure
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of pressure [kg c^2 m^{-3}]  *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    pressure= THIS% pressure_parts
-
-  END PROCEDURE get_pressure
-
-  MODULE PROCEDURE get_pressure_cu
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of pressure in code units    *
-    ! [amu*c**2/(Msun_geo**3)]                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    pressure_cu= THIS% pressure_parts_cu
-
-  END PROCEDURE get_pressure_cu
-
-  MODULE PROCEDURE get_theta
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of generalized Lorentz       *
-    ! factor                                         *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    theta= THIS% Theta
-
-  END PROCEDURE get_theta
-
-  MODULE PROCEDURE get_h
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of initial guess for the     *
-    ! smoothing length [Msun_geo]                    *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    h= THIS% h
-
-  END PROCEDURE get_h
 
   MODULE PROCEDURE destruct_particles
 
@@ -897,158 +822,279 @@ SUBMODULE (particles_id) particles_methods
 
     IF( ALLOCATED( THIS% pos ))THEN
       DEALLOCATE( THIS% pos, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array pos in SUBROUTINE"&
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array pos. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array pos in SUBROUTINE"&
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% baryon_density_parts ))THEN
       DEALLOCATE( THIS% baryon_density_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array " &
-                      // "baryon_density_parts in SUBROUTINE " &
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array baryon_density_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array " &
+      !                // "baryon_density_parts in SUBROUTINE " &
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% energy_density_parts ))THEN
       DEALLOCATE( THIS% energy_density_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array " &
-                      // "energy_density_parts in SUBROUTINE " &
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array energy_density_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array " &
+      !                // "energy_density_parts in SUBROUTINE " &
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% specific_energy_parts ))THEN
       DEALLOCATE( THIS% specific_energy_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array " &
-                      // "specific_energy_parts in SUBROUTINE " &
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array specific_energy_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array " &
+      !                // "specific_energy_parts in SUBROUTINE " &
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% pressure_parts ))THEN
       DEALLOCATE( THIS% pressure_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array " &
-                      // "pressure_parts in SUBROUTINE " &
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array pressure_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array " &
+      !                // "pressure_parts in SUBROUTINE " &
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% pressure_parts_cu ))THEN
       DEALLOCATE( THIS% pressure_parts_cu, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array " &
-                      // "pressure_parts_cu in SUBROUTINE " &
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array pressure_parts_cu. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array " &
+      !                // "pressure_parts_cu in SUBROUTINE " &
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% v_euler_parts_x ))THEN
       DEALLOCATE( THIS% v_euler_parts_x, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array " &
-                      // "v_euler_parts_x in SUBROUTINE " &
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_euler_parts_x. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array " &
+      !                // "v_euler_parts_x in SUBROUTINE " &
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% v_euler_parts_y ))THEN
       DEALLOCATE( THIS% v_euler_parts_y, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array " &
-                      // "v_euler_parts_y in SUBROUTINE " &
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_euler_parts_y. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array " &
+      !                // "v_euler_parts_y in SUBROUTINE " &
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% v_euler_parts_z ))THEN
       DEALLOCATE( THIS% v_euler_parts_z, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array " &
-                      // "v_euler_parts_z in SUBROUTINE " &
-                      // "destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_euler_parts_z. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array " &
+      !                // "v_euler_parts_z in SUBROUTINE " &
+      !                // "destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% lapse_parts ))THEN
       DEALLOCATE( THIS% lapse_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array lapse_parts in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array lapse_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array lapse_parts in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% shift_parts_x ))THEN
       DEALLOCATE( THIS% shift_parts_x, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array shift_parts_x in "&
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_parts_x. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array shift_parts_x in "&
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% shift_parts_y ))THEN
       DEALLOCATE( THIS% shift_parts_y, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array shift_parts_y in "&
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_parts_y. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array shift_parts_y in "&
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% shift_parts_z ))THEN
       DEALLOCATE( THIS% shift_parts_z, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array shift_parts_z in "&
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_parts_z. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array shift_parts_z in "&
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% g_xx_parts ))THEN
       DEALLOCATE( THIS% g_xx_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_xx_parts in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xx_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_xx_parts in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% g_xy_parts ))THEN
       DEALLOCATE( THIS% g_xy_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_xy_parts in " &
-                      // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% g_yy_parts ))THEN
-      DEALLOCATE( THIS% g_yy_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_yy_parts in " &
-                      // "SUBROUTINE estruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xy_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_xy_parts in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% g_xz_parts ))THEN
       DEALLOCATE( THIS% g_xz_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_xz_parts in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xz_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_xz_parts in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% g_yy_parts ))THEN
+      DEALLOCATE( THIS% g_yy_parts, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_yy_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_yy_parts in " &
+      !                // "SUBROUTINE estruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% g_yz_parts ))THEN
       DEALLOCATE( THIS% g_yz_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_yz_parts in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_yz_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_yz_parts in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% g_zz_parts ))THEN
       DEALLOCATE( THIS% g_zz_parts, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_zz_parts in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_zz_parts. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_zz_parts in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% nlrf ))THEN
       DEALLOCATE( THIS% nlrf, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array nlrf in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array nlrf. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array nlrf in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% nu ))THEN
       DEALLOCATE( THIS% nu, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array nu in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array nu. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array nu in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% Theta ))THEN
       DEALLOCATE( THIS% Theta, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array Theta in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array Theta. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array Theta in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% h ))THEN
       DEALLOCATE( THIS% h, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array h in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array h. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array h in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% v ))THEN
       DEALLOCATE( THIS% v, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array v in " &
-                      // "SUBROUTINE destruct_particles." )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
     ENDIF
 
   END PROCEDURE destruct_particles
+
 
   MODULE PROCEDURE is_empty
 
@@ -1067,95 +1113,288 @@ SUBMODULE (particles_id) particles_methods
 
   END PROCEDURE is_empty
 
- !MODULE PROCEDURE write_lorene_bns_id_dump
- !
- !    !*************************************************
- !    !                                                *
- !    ! Returns the array of initial guess for the     *
- !    ! smoothing length                               *
- !    !                                                *
- !    ! FT                                             *
- !    !                                                *
- !    !*************************************************
- !
- !    USE input_output
- !    USE options, ONLY: basename
- !
- !    INTEGER:: a
- !
- !    LOGICAL:: exist
- !
- !    ! TODO: THIS OPTIONAL ARGUMENT DOES NOT WORK...
- !    IF( .NOT.PRESENT(TRIM(namefile)) )THEN
- !            TRIM(namefile)= "lorene-bns-id-particles-form.dat"
- !    ENDIF
- !
- !    INQUIRE( FILE= TRIM(namefile), EXIST= exist )
- !
- !    !PRINT *, TRIM(namefile)
- !    !PRINT *
- !
- !    IF( exist )THEN
- !        OPEN( UNIT= 3, FILE= TRIM(namefile), STATUS= "REPLACE", &
- !              FORM= "UNFORMATTED", &
- !              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
- !              IOMSG= err_msg )
- !    ELSE
- !        OPEN( UNIT= 3, FILE= TRIM(namefile), STATUS= "NEW", &
- !              FORM= "UNFORMATTED", &
- !              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
- !    ENDIF
- !    CALL test_status( ios, err_msg, "...error when opening " // TRIM(namefile) )
- !
- !    ! update dump counter
- !    dcount= dcount + 1
- !    ! construct file name
- !    basename= 'lbns.'
- !    CALL construct_filename(dcount,filename)
- !
- !    ! nlrf & nu are LARGE numbers --> scale for SPLASH
- !    nlrf= nlrf*m0c2_CU
- !    nu=   nu*amu/umass
- !
- !    ! write in MAGMA-type format
- !    WRITE( UNIT= 3, IOSTAT = ios, IOMSG = err_msg ) &
- !            npart,       & ! number of particles
- !            rstar,mstar, & ! radius and mass of the star
- !                           ! obsolete (see module_sph_variables)
- !            n1,n2,       & ! obsolete (see module_sph_variables)
- !            npm,         & ! obsolete (see module_sph_variables)
- !            t,           & ! time
- !            ( h(a), a=1, npart ),      & ! smoothing length
- !            escap,tkin,tgrav,tterm, & ! obsolete (see module_sph_variables)
- !            ( pos_u(1,a), a=1, npart), & ! particle positions
- !            ( pos_u(2,a), a=1, npart ),&
- !            ( pos_u(3,a), a=1, npart), &
- !            ( vel_u(1,a), a=1, npart ),& ! spatial coordinate velocity
- !            ( vel_u(2,a), a=1, npart), & ! of particles
- !            ( vel_u(3,a), a=1, npart ),&
- !            ( u(a), a=1, npart),       &
- !            ( nu(a), a=1, npart ),     &
- !            ( nlrf(a), a=1, npart),    &
- !            ( temp(a), a=1, npart ),   &
- !            ( Ye(a), a=1, npart),      &
- !            ( av(a), a=1, npart ),     & ! = 1
- !            ( divv(a), a=1, npart ),   & ! = 0
- !            ( Theta(a), a=1, npart ),  &
- !            ( Pr(a), a=1, npart )
- !            !
- !            !-- leave here for potential later use
- !            !
- !            !(pmasspm(a),a=1,npm),&
- !            !(pmpos(1,a),a=1,npm),(pmpos(2,a),a=1,npm),&
- !            !(pmpos(3,a),a=1,npm),(pmvel(1,a),a=1,npm),&
- !            !(pmvel(2,a),a=1,npm),(pmvel(3,a),a=1,npm),&
- !            !(pmdvdt(1,a),a=1,npm),(pmdvdt(2,a),a=1,npm),&
- !            !(pmdvdt(3,a),a=1,npm)
- !    CALL test_status( ios, err_msg, "...error when writing in " &
- !                      // TRIM(namefile) )
- !
- !    CLOSE( UNIT= 3 )
- !
- !END PROCEDURE write_lorene_bns_id_dump
+
+  !MODULE PROCEDURE write_lorene_bns_id_dump
+  !
+  !    !*************************************************
+  !    !                                                *
+  !    ! Returns the array of initial guess for the     *
+  !    ! smoothing length                               *
+  !    !                                                *
+  !    ! FT                                             *
+  !    !                                                *
+  !    !*************************************************
+  !
+  !    USE input_output
+  !    USE options, ONLY: basename
+  !
+  !    INTEGER:: a
+  !
+  !    LOGICAL:: exist
+  !
+  !    ! TODO: THIS OPTIONAL ARGUMENT DOES NOT WORK...
+  !    IF( .NOT.PRESENT(TRIM(namefile)) )THEN
+  !            TRIM(namefile)= "lorene-bns-id-particles-form.dat"
+  !    ENDIF
+  !
+  !    INQUIRE( FILE= TRIM(namefile), EXIST= exist )
+  !
+  !    !PRINT *, TRIM(namefile)
+  !    !PRINT *
+  !
+  !    IF( exist )THEN
+  !        OPEN( UNIT= 3, FILE= TRIM(namefile), STATUS= "REPLACE", &
+  !              FORM= "UNFORMATTED", &
+  !              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+  !              IOMSG= err_msg )
+  !    ELSE
+  !        OPEN( UNIT= 3, FILE= TRIM(namefile), STATUS= "NEW", &
+  !              FORM= "UNFORMATTED", &
+  !              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  !    ENDIF
+  !    IF( ios > 0 )THEN
+  !      PRINT *, "..error when opening " // TRIM(namefile)
+  !               ". The error message is", err_msg
+  !      STOP
+  !    ENDIF
+  !
+  !    ! update dump counter
+  !    dcount= dcount + 1
+  !    ! construct file name
+  !    basename= 'lbns.'
+  !    CALL construct_filename(dcount,filename)
+  !
+  !    ! nlrf & nu are LARGE numbers --> scale for SPLASH
+  !    nlrf= nlrf*m0c2_CU
+  !    nu=   nu*amu/umass
+  !
+  !    ! write in MAGMA-type format
+  !    WRITE( UNIT= 3, IOSTAT = ios, IOMSG = err_msg ) &
+  !            npart,       & ! number of particles
+  !            rstar,mstar, & ! radius and mass of the star
+  !                           ! obsolete (see module_sph_variables)
+  !            n1,n2,       & ! obsolete (see module_sph_variables)
+  !            npm,         & ! obsolete (see module_sph_variables)
+  !            t,           & ! time
+  !            ( h(a), a=1, npart ),      & ! smoothing length
+  !            escap,tkin,tgrav,tterm, & ! obsolete (see module_sph_variables)
+  !            ( pos_u(1,a), a=1, npart), & ! particle positions
+  !            ( pos_u(2,a), a=1, npart ),&
+  !            ( pos_u(3,a), a=1, npart), &
+  !            ( vel_u(1,a), a=1, npart ),& ! spatial coordinate velocity
+  !            ( vel_u(2,a), a=1, npart), & ! of particles
+  !            ( vel_u(3,a), a=1, npart ),&
+  !            ( u(a), a=1, npart),       &
+  !            ( nu(a), a=1, npart ),     &
+  !            ( nlrf(a), a=1, npart),    &
+  !            ( temp(a), a=1, npart ),   &
+  !            ( Ye(a), a=1, npart),      &
+  !            ( av(a), a=1, npart ),     & ! = 1
+  !            ( divv(a), a=1, npart ),   & ! = 0
+  !            ( Theta(a), a=1, npart ),  &
+  !            ( Pr(a), a=1, npart )
+  !            !
+  !            !-- leave here for potential later use
+  !            !
+  !            !(pmasspm(a),a=1,npm),&
+  !            !(pmpos(1,a),a=1,npm),(pmpos(2,a),a=1,npm),&
+  !            !(pmpos(3,a),a=1,npm),(pmvel(1,a),a=1,npm),&
+  !            !(pmvel(2,a),a=1,npm),(pmvel(3,a),a=1,npm),&
+  !            !(pmdvdt(1,a),a=1,npm),(pmdvdt(2,a),a=1,npm),&
+  !            !(pmdvdt(3,a),a=1,npm)
+  !          IF( ios > 0 )THEN
+  !            PRINT *, "..error when writing in " // TRIM(namefile)
+  !                     ". The error message is", err_msg
+  !            STOP
+  !          ENDIF
+  !          !CALL test_status( ios, err_msg, "...error when writing in " &
+  !         !            // TRIM(namefile) )
+  !
+  !    CLOSE( UNIT= 3 )
+  !
+  !END PROCEDURE write_lorene_bns_id_dump
+
+
+  !-----------------!
+  !--  FUNCTIONS  --!
+  !-----------------!
+
+
+  MODULE PROCEDURE get_npart
+
+    !*************************************************
+    !                                                *
+    ! Returns the total number of particles          *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    n_part= THIS% npart
+
+  END PROCEDURE get_npart
+
+
+  MODULE PROCEDURE get_pos
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of particle positions        *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    pos_u= THIS% pos
+
+  END PROCEDURE get_pos
+
+
+  MODULE PROCEDURE get_vel
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of coordinate 3-velocity of  *
+    ! particles                                      *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    vel= THIS% v(1:3,:)
+
+  END PROCEDURE get_vel
+
+
+  MODULE PROCEDURE get_nlrf
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of baryon density in the     *
+    ! local rest frame                               *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    nlrf= THIS% nlrf
+
+  END PROCEDURE get_nlrf
+
+
+  MODULE PROCEDURE get_nu
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of baryon per particle       *
+    ! [baryon (Msun_geo)^{-3}]                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    nu= THIS% nu
+
+  END PROCEDURE get_nu
+
+
+  MODULE PROCEDURE get_u
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of specific internal         *
+    ! energy [c^2]                                   *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    u= THIS% specific_energy_parts
+
+  END PROCEDURE get_u
+
+
+  MODULE PROCEDURE get_pressure
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of pressure [kg c^2 m^{-3}]  *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    pressure= THIS% pressure_parts
+
+  END PROCEDURE get_pressure
+
+
+  MODULE PROCEDURE get_pressure_cu
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of pressure in code units    *
+    ! [amu*c**2/(Msun_geo**3)]                       *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    pressure_cu= THIS% pressure_parts_cu
+
+  END PROCEDURE get_pressure_cu
+
+
+  MODULE PROCEDURE get_theta
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of generalized Lorentz       *
+    ! factor                                         *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    theta= THIS% Theta
+
+  END PROCEDURE get_theta
+
+
+  MODULE PROCEDURE get_h
+
+    !*************************************************
+    !                                                *
+    ! Returns the array of initial guess for the     *
+    ! smoothing length [Msun_geo]                    *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    h= THIS% h
+
+  END PROCEDURE get_h
+
 
 END SUBMODULE particles_methods

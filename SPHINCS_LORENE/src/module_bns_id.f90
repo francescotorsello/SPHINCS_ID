@@ -58,9 +58,9 @@ MODULE bns_id
     DOUBLE PRECISION:: distance                     ! [km]
     ! Distance between the centers of mass
     DOUBLE PRECISION:: distance_com                 ! [Msun_geo]
-    DOUBLE PRECISION:: mass1                        ! [M_sol]
-    DOUBLE PRECISION:: mass2                        ! [M_sol]
-    DOUBLE PRECISION:: adm_mass                     ! [M_sol]
+    DOUBLE PRECISION:: mass1                        ! [Msun]
+    DOUBLE PRECISION:: mass2                        ! [Msun]
+    DOUBLE PRECISION:: adm_mass                     ! [Msun]
     DOUBLE PRECISION:: angular_momentum= 0.0D0      ! [G Msun^2 /c]
     ! Radius of star 1, in the x direction, towards the companion
     DOUBLE PRECISION:: radius1_x_comp               ! [Msun_geo]

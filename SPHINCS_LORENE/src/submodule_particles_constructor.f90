@@ -20,25 +20,26 @@ SUBMODULE (particles_id) particles_constructor
   CONTAINS
 
 
- !MODULE PROCEDURE construct_particles_empty
- !
- !    !************************************************
- !    !                                               *
- !    ! The constructor of an empty particle object.  *
- !    !                                               *
- !    ! FT 02.11.2020                                 *
- !    !                                               *
- !    !************************************************
- !
- !
- !    IMPLICIT NONE
- !
- !
- !    parts_obj% empty_object= .TRUE.
- !
- !    parts_obj% npart_temp= 0
- !
- !END PROCEDURE construct_particles_empty
+  !MODULE PROCEDURE construct_particles_empty
+  !
+  !    !************************************************
+  !    !                                               *
+  !    ! The constructor of an empty particle object.  *
+  !    !                                               *
+  !    ! FT 02.11.2020                                 *
+  !    !                                               *
+  !    !************************************************
+  !
+  !
+  !    IMPLICIT NONE
+  !
+  !
+  !    parts_obj% empty_object= .TRUE.
+  !
+  !    parts_obj% npart_temp= 0
+  !
+  !END PROCEDURE construct_particles_empty
+
 
   MODULE PROCEDURE construct_particles
 
@@ -332,6 +333,7 @@ SUBMODULE (particles_id) particles_constructor
 
   END PROCEDURE construct_particles
 
+
   MODULE PROCEDURE place_particles_3dlattice
 
     !*****************************************************
@@ -379,6 +381,7 @@ SUBMODULE (particles_id) particles_constructor
     THIS% npart_temp = THIS% nx*THIS% ny*THIS% nz
 
     PRINT *, " * Number of lattice points= nx*ny*nz=", THIS% npart_temp
+    PRINT *
 
     !
     !-- Compute the mass density at the center of the stars
@@ -398,9 +401,15 @@ SUBMODULE (particles_id) particles_constructor
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
       ALLOCATE( THIS% pos( 3, THIS% npart_temp ), STAT= ios, &
                 ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array pos in SUBROUTINE" &
-                      // "place_particles_3D_lattice." )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                  // "place_particles_3D_lattice. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
     ENDIF
     ! Initializing the array pos to 0
     THIS% pos= 0.0D0
@@ -410,7 +419,7 @@ SUBMODULE (particles_id) particles_constructor
     !--  symmetrically w.r.t. the xy plane                  --!
     !---------------------------------------------------------!
 
-    PRINT *, "Placing particles around NSs..."
+    PRINT *, " * Placing particles around NSs..."
     PRINT *
 
     THIS% npart= 0
@@ -492,6 +501,11 @@ SUBMODULE (particles_id) particles_constructor
       !                               > thres_baryon_density )THEN
 
       THIS% npart= THIS% npart + 1
+      IF( xtemp < 0 )THEN
+        THIS% npart1= THIS% npart1 + 1
+      ELSEIF( xtemp > 0 )THEN
+        THIS% npart2= THIS% npart2 + 1
+      ENDIF
       THIS% pos( 1, THIS% npart )= xtemp
       THIS% pos( 2, THIS% npart )= ytemp
       THIS% pos( 3, THIS% npart )= ztemp
@@ -567,6 +581,7 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *
 
   END PROCEDURE place_particles_3dlattice
+
 
   MODULE PROCEDURE place_particles_3dlattices
 
@@ -677,9 +692,15 @@ SUBMODULE (particles_id) particles_constructor
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
       ALLOCATE( THIS% pos( 3, THIS% npart_temp ), STAT= ios, &
                 ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array pos in SUBROUTINE" &
-                      // "place_particles_3D_lattice." )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                  // "place_particles_3D_lattices. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
     ENDIF
 
     !---------------------------------------------------------!
@@ -1009,6 +1030,7 @@ SUBMODULE (particles_id) particles_constructor
 
   END PROCEDURE place_particles_3dlattices
 
+
   MODULE PROCEDURE analyze_hydro
 
     !************************************************
@@ -1036,21 +1058,41 @@ SUBMODULE (particles_id) particles_constructor
       FORM= "FORMATTED", &
             ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
-    CALL test_status( ios, err_msg, "...error when opening " &
-             // TRIM(namefile) )
+    IF( ios > 0 )THEN
+       PRINT *, "...error when opening ",  TRIM(namefile), &
+                " The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !         // TRIM(namefile) )
 
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Points where some of the hydro fields are negative. "
-    CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-             // TRIM(namefile) )
+    IF( ios > 0 )THEN
+       PRINT *, "...error when writing line 1 in ",  TRIM(namefile), &
+                " The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+    !         // TRIM(namefile) )
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column:      1        2       3"
-    CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-            // TRIM(namefile) )
+    IF( ios > 0 )THEN
+       PRINT *, "...error when writing line 2 in ",  TRIM(namefile), &
+                " The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+    !        // TRIM(namefile) )
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "#      x   y   z"
-    CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-            // TRIM(namefile) )
+    IF( ios > 0 )THEN
+       PRINT *, "...error when writing line 3 in ",  TRIM(namefile), &
+                " The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+    !        // TRIM(namefile) )
 
     DO itr= 1, THIS% npart, 1
       IF( THIS% baryon_density_parts ( itr ) < 0 .OR. &
@@ -1066,8 +1108,13 @@ SUBMODULE (particles_id) particles_constructor
             THIS% pos( 2, itr ), &
             THIS% pos( 3, itr )
 
-        CALL test_status( ios, err_msg, "...error in writing "&
-                        // "the arrays in " // TRIM(namefile) )
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", TRIM(namefile), &
+                   " The error message is", err_msg
+          STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, "...error in writing "&
+        !                // "the arrays in " // TRIM(namefile) )
       ENDIF
     ENDDO
 
@@ -1084,6 +1131,7 @@ SUBMODULE (particles_id) particles_constructor
     ENDIF
 
   END PROCEDURE analyze_hydro
+
 
   MODULE PROCEDURE allocate_lorene_id_parts_memory
 
@@ -1103,121 +1151,217 @@ SUBMODULE (particles_id) particles_constructor
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
       ALLOCATE( THIS% pos( 3, THIS% npart ), STAT= ios, &
             ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array pos" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array pos ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array pos" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% lapse_parts ))THEN
       ALLOCATE( THIS% lapse_parts( THIS% npart ), STAT= ios, &
             ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array lapse_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array lapse_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array lapse_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% shift_parts_x ))THEN
       ALLOCATE( THIS% shift_parts_x( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for shift_parts_x" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array shift_parts_x ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for shift_parts_x" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% shift_parts_y ))THEN
       ALLOCATE( THIS% shift_parts_y( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for shift_parts_y" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array shift_parts_y ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for shift_parts_y" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% shift_parts_z ))THEN
       ALLOCATE( THIS% shift_parts_z( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for shift_parts_z" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array shift_parts_z ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for shift_parts_z" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_xx_parts ))THEN
       ALLOCATE( THIS% g_xx_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array g_xx_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_xx_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array g_xx_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_xy_parts ))THEN
       ALLOCATE( THIS% g_xy_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array g_xy_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_xy_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array g_xy_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_xz_parts ))THEN
       ALLOCATE( THIS% g_xz_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array g_xz_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_xz_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array g_xz_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_yy_parts ))THEN
       ALLOCATE( THIS% g_yy_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array g_yy_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_yy_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array g_yy_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_yz_parts ))THEN
       ALLOCATE( THIS% g_yz_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array g_yz_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_yz_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array g_yz_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_zz_parts ))THEN
       ALLOCATE( THIS% g_zz_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array g_zz_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_zz_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array g_zz_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% baryon_density_parts ))THEN
       ALLOCATE( THIS% baryon_density_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                   "...allocation error for array baryon_density_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array baryon_density_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !     "...allocation error for array baryon_density_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% energy_density_parts ))THEN
       ALLOCATE( THIS% energy_density_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                   "...allocation error for array energy_density_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array energy_density_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !             "...allocation error for array energy_density_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% specific_energy_parts ))THEN
       ALLOCATE( THIS% specific_energy_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array specific_energy_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array specific_energy_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !    "...allocation error for array specific_energy_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% pressure_parts ))THEN
       ALLOCATE( THIS% pressure_parts( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array pressure_parts" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array pressure_parts ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array pressure_parts" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% pressure_parts_cu ))THEN
       ALLOCATE( THIS% pressure_parts_cu( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                  "...allocation error for array pressure_parts_cu" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array pressure_parts_cu ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array pressure_parts_cu" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% v_euler_parts_x ))THEN
       ALLOCATE( THIS% v_euler_parts_x( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array v_euler_parts_x" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array v_euler_parts_x ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array v_euler_parts_x" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% v_euler_parts_y ))THEN
       ALLOCATE( THIS% v_euler_parts_y( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array v_euler_parts_y" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array v_euler_parts_y ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array v_euler_parts_y" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% v_euler_parts_z ))THEN
       ALLOCATE( THIS% v_euler_parts_z( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array v_euler_parts_z" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array v_euler_parts_z ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array v_euler_parts_z" )
     ENDIF
 
     PRINT *, "** Subroutine allocate_lorene_id_parts_memory executed."
     PRINT *
 
   END PROCEDURE allocate_lorene_id_parts_memory
+
 
 END SUBMODULE particles_constructor
