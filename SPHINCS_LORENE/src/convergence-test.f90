@@ -502,8 +502,13 @@ PROGRAM convergence_test
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(name_cauchy_ct) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(name_cauchy_ct), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_cauchy_ct) )
 
       WRITE( UNIT = unit_cauchy_ct, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -569,8 +574,14 @@ PROGRAM convergence_test
                 grid_dx( 2, ix, iy, iz ), &
                 grid_dx( 3, ix, iy, iz ), &
                 convergence_factor( ix, iy, iz )
-            CALL test_status( ios, err_msg, "...error in writing " &
-                        // "the arrays in " // TRIM(name_cauchy_ct) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing he arrays in ", &
+                       TRIM(name_cauchy_ct), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, "...error in writing " &
+            !            // "the arrays in " // TRIM(name_cauchy_ct) )
           ENDDO
         ENDDO
       ENDDO
@@ -646,8 +657,13 @@ PROGRAM convergence_test
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(name_cauchy_parts_ct) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(name_cauchy_parts_ct), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_cauchy_parts_ct) )
 
       WRITE( UNIT = unit_cauchy_parts_ct, IOSTAT = ios, IOMSG = err_msg, &
              FMT = * ) &
@@ -716,8 +732,14 @@ PROGRAM convergence_test
                 grid_dx( 2, ix, iy, iz ), &
                 grid_dx( 3, ix, iy, iz ), &
                 convergence_factor( ix, iy, iz )
-            CALL test_status( ios, err_msg, "...error in writing " &
-                        // "the arrays in " // TRIM(name_cauchy_parts_ct) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing e arrays in ", &
+                       TRIM(name_cauchy_parts_ct), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, "...error in writing " &
+            !            // "the arrays in " // TRIM(name_cauchy_parts_ct) )
           ENDDO
         ENDDO
       ENDDO
@@ -902,8 +924,13 @@ PROGRAM convergence_test
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(name_cauchy_ct) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(name_cauchy_ct), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_cauchy_ct) )
 
       WRITE( UNIT = unit_cauchy_ct, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -969,8 +996,14 @@ PROGRAM convergence_test
                 grid_dx( 2, ix, iy, iz ), &
                 grid_dx( 3, ix, iy, iz ), &
                 convergence_factor( ix, iy, iz )
-            CALL test_status( ios, err_msg, "...error in writing " &
-                        // "the arrays in " // TRIM(name_cauchy_ct) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing the arrays in ", &
+                       TRIM(name_cauchy_ct), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, "...error in writing " &
+            !            // "the arrays in " // TRIM(name_cauchy_ct) )
           ENDDO
         ENDDO
       ENDDO
@@ -1092,8 +1125,13 @@ PROGRAM convergence_test
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(name_cauchy_parts_ct) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(name_cauchy_parts_ct), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_cauchy_parts_ct) )
 
       WRITE( UNIT = unit_cauchy_parts_ct, IOSTAT = ios, IOMSG = err_msg, &
              FMT = * ) &
@@ -1162,8 +1200,14 @@ PROGRAM convergence_test
                 grid_dx( 2, ix, iy, iz ), &
                 grid_dx( 3, ix, iy, iz ), &
                 convergence_factor( ix, iy, iz )
-            CALL test_status( ios, err_msg, "...error in writing " &
-                        // "the arrays in " // TRIM(name_cauchy_parts_ct) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing the arrays in ", &
+                       TRIM(name_cauchy_parts_ct), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, "...error in writing " &
+            !            // "the arrays in " // TRIM(name_cauchy_parts_ct) )
           ENDDO
         ENDDO
       ENDDO

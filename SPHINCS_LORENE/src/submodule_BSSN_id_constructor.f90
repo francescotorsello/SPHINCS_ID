@@ -56,6 +56,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
   END PROCEDURE construct_bssn_id_bns
 
+
   MODULE PROCEDURE construct_bssn_id_bns_spacings
 
     !************************************************
@@ -91,6 +92,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     PRINT *
 
   END PROCEDURE construct_bssn_id_bns_spacings
+
 
   MODULE PROCEDURE set_up_bssn
 
@@ -163,6 +165,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
   END PROCEDURE set_up_bssn
 
+
   MODULE PROCEDURE allocate_bssn_fields
 
     !***********************************************
@@ -181,33 +184,58 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
       ALLOCATE( THIS% Gamma_u( THIS% ngrid_x, THIS% ngrid_y, &
                                THIS% ngrid_z, 3 ), &
                                STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, "...allocation error for array Gamma_u" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array Gamma_u ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...allocation error for array Gamma_u" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% phi ))THEN
       ALLOCATE( THIS% phi( THIS% ngrid_x, THIS% ngrid_y, &
                            THIS% ngrid_z ), &
                            STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, "...allocation error for array phi" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array phi ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...allocation error for array phi" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% trK ))THEN
       ALLOCATE( THIS% trK( THIS% ngrid_x, THIS% ngrid_y, &
                            THIS% ngrid_z ), &
                            STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, "...allocation error for array trK" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array trK ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...allocation error for array trK" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% A_BSSN3_ll ))THEN
       ALLOCATE( THIS% A_BSSN3_ll( THIS% ngrid_x, THIS% ngrid_y, &
                                   THIS% ngrid_z, n_sym3x3 ), &
                                   STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array A_BSSN3_ll" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array A_BSSN3_ll ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array A_BSSN3_ll" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% g_BSSN3_ll ))THEN
       ALLOCATE( THIS% g_BSSN3_ll( THIS% ngrid_x, THIS% ngrid_y, &
                                   THIS% ngrid_z, n_sym3x3 ), &
                                   STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...allocation error for array g_BSSN3_ll" )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array g_BSSN3_ll ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array g_BSSN3_ll" )
     ENDIF
 
   END PROCEDURE allocate_bssn_fields

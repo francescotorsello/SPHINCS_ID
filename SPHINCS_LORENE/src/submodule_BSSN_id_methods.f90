@@ -19,6 +19,11 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
   CONTAINS
 
 
+  !-------------------!
+  !--  SUBROUTINES  --!
+  !-------------------!
+
+
   MODULE PROCEDURE compute_and_export_bssn_variables
 
     !************************************************
@@ -265,6 +270,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
   END PROCEDURE compute_and_export_bssn_variables
 
+
   MODULE PROCEDURE read_bssn_dump_print_formatted
 
     !************************************************
@@ -376,16 +382,26 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       FORM= "FORMATTED", &
             ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
-    CALL test_status( ios, err_msg, "...error when opening " &
-             // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening ", TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !         // TRIM(finalnamefile) )
 
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Values of the fields (including coordinates) exported by LORENE "&
     // "on each grid point"
-    CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-             // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 1 in ", TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+    !         // TRIM(finalnamefile) )
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column:      1        2       3       4       5", &
     "       6       7       8", &
@@ -394,8 +410,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     "       15      16      17      18      19", &
     "       20      21      22", &
     "       23      24"
-    CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 2 in ", TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+    !        // TRIM(finalnamefile) )
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "#      x [km]       y [km]       z [km]       lapse", &
     "       shift_x [c]    shift_y [c]    shift_z [c]", &
@@ -405,8 +426,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     "       A_BSSN_xx       A_BSSN_xy      A_BSSN_xz    ", &
     "       A_BSSN_yy       A_BSSN_yz      A_BSSN_zz", &
     "       Gamma_u_x       Gamma_u_y      Gamma_u_z"
-    CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in ", TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+    !        // TRIM(finalnamefile) )
 
     DO iz= 1, THIS% ngrid_z, 1
       DO iy= 1, THIS% ngrid_y, 1
@@ -483,8 +509,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
               Gamma_u( ix, iy, iz, jy ), &
               Gamma_u( ix, iy, iz, jz )
 
-          CALL test_status( ios, err_msg, "...error when writing " &
-                             // "the arrays in " // TRIM(namefile) )
+          IF( ios > 0 )THEN
+            PRINT *, "...error when writing the arrays in ", &
+                     TRIM(finalnamefile), ". The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, "...error when writing " &
+          !                  // "the arrays in " // TRIM(namefile) )
 
         ENDDO coords_x
       ENDDO coords_y
@@ -509,6 +540,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     PRINT *
 
   END PROCEDURE read_bssn_dump_print_formatted
+
 
   MODULE PROCEDURE print_formatted_lorene_id_bssn_variables
 
@@ -572,16 +604,26 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       FORM= "FORMATTED", &
             ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
-    CALL test_status( ios, err_msg, "...error when opening " &
-             // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening ", TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !         // TRIM(finalnamefile) )
 
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Values of the fields (including coordinates) exported by LORENE "&
     // "on each grid point"
-    CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-             // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 1 in ", TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+    !         // TRIM(finalnamefile) )
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column:      1        2       3       4       5", &
     "       6       7       8", &
@@ -590,8 +632,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     "       15      16      17      18      19", &
     "       20      21      22", &
     "       23      24"
-    CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 2 in ", TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+    !        // TRIM(finalnamefile) )
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "#      x [km]       y [km]       z [km]       lapse", &
     "       shift_x [c]    shift_y [c]    shift_z [c]", &
@@ -601,8 +648,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     "       A_BSSN_xx       A_BSSN_xy      A_BSSN_xz    ", &
     "       A_BSSN_yy       A_BSSN_yz      A_BSSN_zz", &
     "       Gamma_u_x       Gamma_u_y      Gamma_u_z"
-    CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-            // TRIM(finalnamefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in ", TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+    !        // TRIM(finalnamefile) )
 
     DO iz= 1, THIS% ngrid_z, 1
       DO iy= 1, THIS% ngrid_y, 1
@@ -679,8 +731,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
               THIS% Gamma_u( ix, iy, iz, jy ), &
               THIS% Gamma_u( ix, iy, iz, jz )
 
-          CALL test_status( ios, err_msg, "...error when writing " &
-                             // "the arrays in " // TRIM(namefile) )
+          IF( ios > 0 )THEN
+            PRINT *, "...error when writing the arrays in ", &
+                     TRIM(finalnamefile), ". The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, "...error when writing " &
+          !                  // "the arrays in " // TRIM(finalnamefile) )
 
         ENDDO coords_x
       ENDDO coords_y
@@ -689,13 +746,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CLOSE( UNIT= 20 )
 
     PRINT *, " * LORENE BSSN ID on the gravity grid saved to formatted " &
-             // "file ", TRIM(namefile)
+             // "file ", TRIM(finalnamefile)
 
     PRINT *, "** Subroutine print_formatted_lorene_id_BSSN_variables " &
              // "executed."
     PRINT *
 
   END PROCEDURE print_formatted_lorene_id_bssn_variables
+
 
   MODULE PROCEDURE compute_and_export_bssn_constraints_grid
 
@@ -1339,8 +1397,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
               FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
-    CALL test_status( ios, err_msg, "...error when opening " &
-             // TRIM(namefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening ", TRIM(name_logfile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !         // TRIM(name_logfile) )
 
     WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -1414,8 +1477,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(namefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(namefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(namefile) )
 
       WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -1423,22 +1491,37 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       "# Values of the stress-energy tensor and the BSSN constraints" &
       // " for the LORENE ID " &
       // "on selected grid points"
-      CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-               // TRIM(namefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 1 in ", TRIM(namefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+      !         // TRIM(namefile) )
       WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# column:      1        2       3       4       5", &
       "       6       7       8       9       10", &
       "       11       12       13       14       15", &
       "       16       17       18       19       20"
-      CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-              // TRIM(namefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 2 in ", TRIM(namefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+      !        // TRIM(namefile) )
       WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "#      x   y   z   Stress-energy (10 components)   " &
       // "Hamiltonian constraint       " &
       // "Momentum constraint (three components)       " &
       // "Connection constraint (three components)"
-      CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-              // TRIM(namefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 3 in ", TRIM(namefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+      !        // TRIM(namefile) )
 
       DO iz= 1, THIS% ngrid_z, 1
         DO iy= 1, THIS% ngrid_y, 1
@@ -1592,9 +1675,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                 THIS% Gamma_u( ix, iy, iz, 3 )
             ENDIF
 
-            CALL test_status( ios, err_msg, &
-                      "...error in writing " &
-                      // "the arrays in " // TRIM(namefile) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing the arrays in ", TRIM(namefile), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, &
+            !          "...error in writing " &
+            !          // "the arrays in " // TRIM(namefile) )
           ENDDO
         ENDDO
       ENDDO
@@ -1619,6 +1707,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !DEALLOCATE( Tmunu_ll )
 
   END PROCEDURE compute_and_export_bssn_constraints_grid
+
 
   MODULE PROCEDURE compute_and_export_bssn_constraints_particles
 
@@ -2077,8 +2166,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
               FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
-    CALL test_status( ios, err_msg, "...edeallocate_pp_grror when opening " &
-             // TRIM(namefile) )
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening ", TRIM(name_logfile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !                  // TRIM(name_logfile) )
 
     IF( debug ) PRINT *, "2"
 
@@ -2162,8 +2256,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
           FORM= "FORMATTED", &
                 ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(namefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(namefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(namefile) )
 
       IF( debug ) PRINT *, "2"
 
@@ -2172,22 +2271,37 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# Values of the BSSN constraints for the LORENE ID "&
       // "on selected grid points"
-      CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-               // TRIM(namefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 1 in ", TRIM(namefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+      !         // TRIM(namefile) )
       WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# column:      1        2       3       4       5", &
       "       6       7       8       9       10", &
       "       11       12       13       14       15", &
       "       16       17       18       19       20"
-      CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-              // TRIM(namefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 2 in ", TRIM(namefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+      !        // TRIM(namefile) )
       WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "#      x   y   z   Stress-energy (10 components)   " &
       // "Hamiltonian constraint       " &
       // "Momentum constraint (three components)       " &
       // "Connection constraint (three components)"
-      CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-              // TRIM(namefile) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 3 in ", TRIM(namefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+      !        // TRIM(namefile) )
 
       IF( debug ) PRINT *, "3"
 
@@ -2347,9 +2461,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                 THIS% GC_parts( ix, iy, iz, jz )
             ENDIF
 
-            CALL test_status( ios, err_msg, &
-                          "...error in writing " &
-                          // "the arrays in " // TRIM(namefile) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing the arrays in ", TRIM(namefile), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, &
+            !                  "...error in writing " &
+            !                  // "the arrays in " // TRIM(namefile) )
           ENDDO
         ENDDO
       ENDDO
@@ -2375,29 +2494,49 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                 FORM= "FORMATTED", &
                 ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-                        // TRIM(namefile_sph) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(namefile_sph), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !                  // TRIM(namefile_sph) )
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# Values of the SPH density"
-      CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-              // TRIM(namefile_sph) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 1 in ", TRIM(namefile_sph), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+      !        // TRIM(namefile_sph) )
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# column:      1        2       3       4"
 
-      CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-              // TRIM(namefile_sph) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 2 in ", TRIM(namefile_sph), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+      !        // TRIM(namefile_sph) )
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "#      grid point      x [km]       y [km]       z [km]       ", &
+      "#      particle      x [km]       y [km]       z [km]       ", &
       "SPH density"
 
-      CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-              // TRIM(namefile_sph) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 3 in ", TRIM(namefile_sph), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+      !        // TRIM(namefile_sph) )
 
       DO itr = 1, npart, 1
         abs_pos( 1, itr )= ABS( pos_loc( 1, itr ) )
@@ -2432,8 +2571,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
           pos_loc( 3, itr ), &
           sph_density( itr )
 
-      CALL test_status( ios, err_msg, "...error when writing " &
-               // "the arrays in " // TRIM(namefile_sph) )
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", TRIM(namefile_sph), &
+                   ". The error message is", err_msg
+          STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, "...error when writing " &
+        !         // "the arrays in " // TRIM(namefile_sph) )
       ENDDO write_data_loop
 
       CLOSE( UNIT= 2 )
@@ -2459,6 +2603,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
   END PROCEDURE compute_and_export_bssn_constraints_particles
 
+
   MODULE PROCEDURE deallocate_bssn_fields
 
     !**************************************************
@@ -2473,56 +2618,67 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     IF(ALLOCATED( THIS% Gamma_u ))THEN
       DEALLOCATE( THIS% Gamma_u, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array Gamma_u" )
+      IF( ios > 0 )THEN
+        PRINT *, "...deallocation error for array Gamma_u. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array Gamma_u" )
     ENDIF
     IF(ALLOCATED( THIS% phi ))THEN
       DEALLOCATE( THIS% phi, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array phi" )
+      IF( ios > 0 )THEN
+        PRINT *, "...deallocation error for array phi. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array phi" )
     ENDIF
     IF(ALLOCATED( THIS% trK ))THEN
       DEALLOCATE( THIS% trK, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array trK" )
+      IF( ios > 0 )THEN
+        PRINT *, "...deallocation error for array trK. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array trK" )
     ENDIF
     IF(ALLOCATED( THIS% A_BSSN3_ll ))THEN
       DEALLOCATE( THIS% A_BSSN3_ll, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array A_BSSN3_ll" )
+      IF( ios > 0 )THEN
+        PRINT *, "...deallocation error for array A_BSSN3_ll. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array A_BSSN3_ll" )
     ENDIF
     IF(ALLOCATED( THIS% g_BSSN3_ll ))THEN
       DEALLOCATE( THIS% g_BSSN3_ll, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_BSSN3_ll" )
-    ENDIF
-    IF(ALLOCATED( THIS% k_phys3_ll ))THEN
-      DEALLOCATE( THIS% k_phys3_ll, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array k_phys3_ll" )
-    ENDIF
-    IF(ALLOCATED( THIS% g_phys3_ll ))THEN
-      DEALLOCATE( THIS% g_phys3_ll, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array g_phys3_ll" )
-    ENDIF
-    IF(ALLOCATED( THIS% HC ))THEN
-      DEALLOCATE( THIS% HC, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array HC" )
-    ENDIF
-    IF(ALLOCATED( THIS% MC ))THEN
-      DEALLOCATE( THIS% MC, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array MC" )
+      IF( ios > 0 )THEN
+        PRINT *, "...deallocation error for array g_BSSN3_ll. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array g_BSSN3_ll" )
     ENDIF
     IF(ALLOCATED( THIS% GC ))THEN
       DEALLOCATE( THIS% GC, STAT= ios, ERRMSG= err_msg )
-      CALL test_status( ios, err_msg, &
-                      "...deallocation error for array GC" )
+      IF( ios > 0 )THEN
+        PRINT *, "...deallocation error for array GC. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array GC" )
     ENDIF
 
   END PROCEDURE deallocate_bssn_fields
+
 
   !
   !-- Keeping the following two SUBROUTINES separate in case it is needed
@@ -2545,6 +2701,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_bssn_fields( THIS )
 
   END PROCEDURE destruct_bssn_id
+
 
   MODULE PROCEDURE destructor
 

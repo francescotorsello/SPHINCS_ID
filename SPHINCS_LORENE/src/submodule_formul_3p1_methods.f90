@@ -1330,6 +1330,26 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       !                "...deallocation error for array K_phys3_ll in " &
       !                // "SUBROUTINE destruct_formul_3p1." )
     ENDIF
+    IF(ALLOCATED( f3p1_obj% HC ))THEN
+      DEALLOCATE( f3p1_obj% HC, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...deallocation error for array HC. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array HC" )
+    ENDIF
+    IF(ALLOCATED( f3p1_obj% MC ))THEN
+      DEALLOCATE( f3p1_obj% MC, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...deallocation error for array MC. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array MC" )
+    ENDIF
 
   END PROCEDURE destruct_formul_3p1
 
