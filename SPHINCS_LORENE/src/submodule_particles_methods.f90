@@ -375,6 +375,22 @@ SUBMODULE (particles_id) particles_methods
              "of the total baryon mass."
     PRINT *
 
+    !
+    !-- Adding the missing baryons into the particles uniformly so that
+    !-- the baryon mass is correct, but the ratio between nu_max and nu_min
+    !-- does not change.
+    !
+    THIS% nlrf= THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    THIS% nbar_tot= &
+        THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    PRINT *, " * Total mass of the considered adjusted baryons=", &
+             THIS% nbar_tot*amu/Msun, "Msun =", &
+             THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2), &
+             "of the total baryon mass."
+    PRINT *
 
     !
     !-- Exporting the SPH ID to a binary file, for evolution
