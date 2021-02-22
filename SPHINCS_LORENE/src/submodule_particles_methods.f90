@@ -37,7 +37,7 @@ SUBMODULE (particles_id) particles_methods
     !************************************************
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
-                                   third, kg2g
+                                   third, kg2g, Msun
     USE units,               ONLY: set_units, umass
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -369,6 +369,12 @@ SUBMODULE (particles_id) particles_methods
                       MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
     PRINT *, " * Total number of baryons=", THIS% nbar_tot
     PRINT *
+    PRINT *, " * Total mass of the considered baryons=", &
+             THIS% nbar_tot*amu/Msun, "Msun =", &
+             THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2), &
+             "of the total baryon mass."
+    PRINT *
+
 
     !
     !-- Exporting the SPH ID to a binary file, for evolution
