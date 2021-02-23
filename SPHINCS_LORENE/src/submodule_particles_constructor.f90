@@ -55,19 +55,21 @@ SUBMODULE (particles_id) particles_constructor
     !************************************************
 
     USE NaNChecker, ONLY: Check_Array_for_NAN
-    USE constants,  ONLY: Msun_geo
+    USE constants,  ONLY: Msun_geo, km2m
 
     IMPLICIT NONE
 
     ! The variable counter counts how many times the PROCEDURE
     ! construct_particles is called
     INTEGER, SAVE:: counter= 1
-    INTEGER:: nx, ny, nz
+    INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr, itr_i
 
     DOUBLE PRECISION:: thres
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
     DOUBLE PRECISION:: xmin1, xmax1, ymin1, ymax1, zmin1, zmax1
     DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
+    DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     CHARACTER( LEN= : ), ALLOCATABLE:: namefile
 
@@ -327,6 +329,107 @@ SUBMODULE (particles_id) particles_constructor
     !
     !namefile= "negative-hydro-particles.dat"
     !CALL parts_obj% analyze_hydro( namefile )
+
+    PRINT *, "** Computing typical length scale for the change in pressure", &
+             " on the x axis."
+
+    ALLOCATE( abs_pos( 3, parts_obj% npart ) )
+
+    DO itr = 1, parts_obj% npart, 1
+      abs_pos( 1, itr )= ABS( parts_obj% pos( 1, itr ) )
+      abs_pos( 2, itr )= ABS( parts_obj% pos( 2, itr ) )
+      abs_pos( 3, itr )= ABS( parts_obj% pos( 3, itr ) )
+    ENDDO
+
+    min_y_index= 0
+    min_abs_y= 1D+20
+    DO itr = 1, parts_obj% npart, 1
+      IF( ABS( parts_obj% pos( 2, itr ) ) < min_abs_y )THEN
+        min_abs_y= ABS( parts_obj% pos( 2, itr ) )
+        min_y_index= itr
+      ENDIF
+    ENDDO
+
+    min_z_index= 0
+    min_abs_z= 1D+20
+    DO itr = 1, parts_obj% npart, 1
+      IF( ABS( parts_obj% pos( 3, itr ) ) < min_abs_z )THEN
+        min_abs_z= ABS( parts_obj% pos( 3, itr ) )
+        min_z_index= itr
+      ENDIF
+    ENDDO
+
+    min_abs_z= MINVAL( abs_pos( 3, : ) )
+
+    PRINT *, "1"
+
+    cntr= 0
+    DO itr = 1, parts_obj% npart, 1
+      IF( .NOT.(parts_obj% pos( 3, itr ) /= min_abs_z &
+          .OR. &
+          parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index )) )THEN
+
+        cntr= cntr + 1
+        PRINT *, "x_x=", parts_obj% pos( 1, itr )
+
+      ENDIF
+    ENDDO
+    PRINT *, "cntr= ", cntr
+
+    ALLOCATE( parts_obj% pos_x( cntr ) )
+    ALLOCATE( parts_obj% pressure_parts_x( cntr ) )
+    ALLOCATE( parts_obj% pressure_parts_x_der( cntr - 5 ) )
+    ALLOCATE( parts_obj% pressure_length_scale_x( cntr - 5 ) )
+
+    PRINT *, "2"
+
+    itr_i= 0
+    DO itr = 1, parts_obj% npart, 1
+      IF( .NOT.(parts_obj% pos( 3, itr ) /= min_abs_z &
+          .OR. &
+          parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index )) )THEN
+
+        itr_i= itr_i + 1
+        parts_obj% pos_x( itr_i )= parts_obj% pos( 1, itr )
+        parts_obj% pressure_parts_x( itr_i )= parts_obj% pressure_parts( itr )
+        PRINT *, parts_obj% pos_x( itr_i )
+
+      ENDIF
+    ENDDO
+    PRINT *
+
+    PRINT *, "3"
+
+    DO itr= 3, cntr - 3, 1
+
+      parts_obj% pressure_parts_x_der( itr - 2 )=&
+                         ( + parts_obj% pressure_parts_x( itr - 2 )/12.0D0 &
+                           - 2.0*parts_obj% pressure_parts_x( itr - 1 )/3.0D0 &
+                           + 2.0*parts_obj% pressure_parts_x( itr + 1 )/3.0D0 &
+                           - parts_obj% pressure_parts_x( itr + 2 )/12.0D0 )&
+                           /( Msun_geo*km2m*ABS( parts_obj% pos_x( itr ) - &
+                                                parts_obj% pos_x( itr - 1 ) ) )
+
+      parts_obj% pressure_length_scale_x( itr - 2 )= &
+                          ABS( parts_obj% pressure_parts_x( itr - 2 )/ &
+                               parts_obj% pressure_parts_x_der( itr - 2 ) )
+
+      !PRINT *, "p=", parts_obj% pressure_parts_x( itr - 2 )
+      !PRINT *, "p_r=", parts_obj% pressure_parts_x_der( itr - 2 )
+      !PRINT *, "p/p_r=", parts_obj% pressure_length_scale_x( itr - 2 )
+      !PRINT *
+
+    ENDDO
+
+    PRINT *, " * Maximum typical length scale for change in pressure", &
+             " along the x axis= ", &
+             MAXVAL( parts_obj% pressure_length_scale_x, DIM= 1 )/km2m, " km"
+    PRINT *, " * Minimum typical length scale for change in pressure", &
+             " along the x axis= ", &
+             MINVAL( parts_obj% pressure_length_scale_x, DIM= 1 )/km2m, " km"
+    PRINT *
+    STOP
+
 
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1

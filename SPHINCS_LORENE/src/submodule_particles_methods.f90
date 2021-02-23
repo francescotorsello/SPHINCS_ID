@@ -379,9 +379,14 @@ SUBMODULE (particles_id) particles_methods
     !-- Adding the missing baryons into the particles uniformly so that
     !-- the baryon mass is correct, but the ratio between nu_max and nu_min
     !-- does not change.
+    !-- nlrf is not to be rescaled, according to Stephan, since:
+    !--   (i)  it is directly computed from the LORENE ID and should therefore
+    !--        be consistent with it
+    !--   (ii) it is anyway immediately recomputed in SPHINCS_BSSN
     !
-    THIS% nlrf= THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-    nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    !THIS% nlrf=
+    !        THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    !nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
     THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
     nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
     THIS% nbar_tot= &
