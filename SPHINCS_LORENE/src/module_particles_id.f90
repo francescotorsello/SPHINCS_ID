@@ -54,8 +54,10 @@ MODULE particles_id
     !
     ! 2-D array storing the position of the particles
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
-    ! 1-D array storing the position of the particles on the x axis
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x
+    ! 1-D array storing the position of the particles on the x axis for S 1
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x1
+    ! 1-D array storing the position of the particles on the x axis for NS2
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x2
     ! 1-D array storing the baryon mass density in the fluid frame
     ! [kg m^{-3}]
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: baryon_density_parts
@@ -65,13 +67,20 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: specific_energy_parts
     ! 1-D array storing the pressure [kg c^2 m^{-3}]
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts
-    ! 1-D array storing the pressure on the x axis [kg c^2 m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x
+    ! 1-D array storing the pressure on the x axis [kg c^2 m^{-3}] for NS 1
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x1
+    ! 1-D array storing the pressure on the x axis [kg c^2 m^{-3}] for NS 2
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x2
     ! 1-D array storing the first derivative of the pressure
-    ! along the x axis [kg c^2 m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x_der
+    ! along the x axis [kg c^2 m^{-3}] for NS 1
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x_der1
+    ! 1-D array storing the first derivative of the pressure
+    ! along the x axis [kg c^2 m^{-3}] for NS2
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x_der2
     ! 1-D array storing the typical length scale for the pressure change
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_length_scale_x
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_length_scale_x1
+    ! 1-D array storing the typical length scale for the pressure change
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_length_scale_x2
     ! 1-D array storing the pressure in code units [amu c^2/(Msun_geo**3)]
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_cu
     ! 1-D arrays storing the components of the fluid 3-velocity wrt

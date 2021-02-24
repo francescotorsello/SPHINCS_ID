@@ -62,7 +62,7 @@ SUBMODULE (particles_id) particles_constructor
     ! The variable counter counts how many times the PROCEDURE
     ! construct_particles is called
     INTEGER, SAVE:: counter= 1
-    INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr, itr_i
+    INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr1, cntr2, itr_1, itr_2
 
     DOUBLE PRECISION:: thres
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
@@ -332,6 +332,7 @@ SUBMODULE (particles_id) particles_constructor
 
     PRINT *, "** Computing typical length scale for the change in pressure", &
              " on the x axis."
+    PRINT *
 
     ALLOCATE( abs_pos( 3, parts_obj% npart ) )
 
@@ -361,75 +362,120 @@ SUBMODULE (particles_id) particles_constructor
 
     min_abs_z= MINVAL( abs_pos( 3, : ) )
 
-    PRINT *, "1"
+    !PRINT *, "1"
 
-    cntr= 0
+    cntr1= 0
+    cntr2= 0
     DO itr = 1, parts_obj% npart, 1
-      IF( .NOT.(parts_obj% pos( 3, itr ) /= min_abs_z &
-          .OR. &
-          parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index )) )THEN
+      IF( parts_obj% pos( 3, itr ) == min_abs_z &
+          .AND. &
+          ABS( ( parts_obj% pos( 2, itr ) - &
+                 parts_obj% pos( 2, min_y_index ) )/ &
+                 parts_obj% pos( 2, min_y_index ) ) < 1.0D-5 &
+      )THEN
 
-        cntr= cntr + 1
-        PRINT *, "x_x=", parts_obj% pos( 1, itr )
+        IF( parts_obj% pos( 1, itr ) < 0 )THEN
+          cntr1= cntr1 + 1
+        ELSEIF( parts_obj% pos( 1, itr ) > 0 )THEN
+          cntr2= cntr2 + 1
+        ENDIF
 
       ENDIF
     ENDDO
-    PRINT *, "cntr= ", cntr
+    !PRINT *, "cntr1= ", cntr1
+    !PRINT *, "cntr2= ", cntr2
 
-    ALLOCATE( parts_obj% pos_x( cntr ) )
-    ALLOCATE( parts_obj% pressure_parts_x( cntr ) )
-    ALLOCATE( parts_obj% pressure_parts_x_der( cntr - 5 ) )
-    ALLOCATE( parts_obj% pressure_length_scale_x( cntr - 5 ) )
+    ALLOCATE( parts_obj% pos_x1( cntr1 ) )
+    ALLOCATE( parts_obj% pos_x2( cntr2 ) )
+    ALLOCATE( parts_obj% pressure_parts_x1( cntr1 ) )
+    ALLOCATE( parts_obj% pressure_parts_x2( cntr2 ) )
+    ALLOCATE( parts_obj% pressure_parts_x_der1( cntr1 - 5 ) )
+    ALLOCATE( parts_obj% pressure_parts_x_der2( cntr2 - 5 ) )
+    ALLOCATE( parts_obj% pressure_length_scale_x1( cntr1 - 5 ) )
+    ALLOCATE( parts_obj% pressure_length_scale_x2( cntr2 - 5 ) )
 
-    PRINT *, "2"
+    !PRINT *, "2"
 
-    itr_i= 0
+    itr_1= 0
+    itr_2= 0
     DO itr = 1, parts_obj% npart, 1
-      IF( .NOT.(parts_obj% pos( 3, itr ) /= min_abs_z &
-          .OR. &
-          parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index )) )THEN
+      IF( parts_obj% pos( 3, itr ) == min_abs_z &
+          .AND. &
+          ABS( ( parts_obj% pos( 2, itr ) - &
+                 parts_obj% pos( 2, min_y_index ) )/ &
+                 parts_obj% pos( 2, min_y_index ) ) < 1.0D-5 &
+        )THEN
 
-        itr_i= itr_i + 1
-        parts_obj% pos_x( itr_i )= parts_obj% pos( 1, itr )
-        parts_obj% pressure_parts_x( itr_i )= parts_obj% pressure_parts( itr )
-        PRINT *, parts_obj% pos_x( itr_i )
+        IF( parts_obj% pos( 1, itr ) < 0 )THEN
+          itr_1= itr_1 + 1
+          parts_obj% pos_x1( itr_1 )= parts_obj% pos( 1, itr )
+          parts_obj% pressure_parts_x1( itr_1 )= &
+                                              parts_obj% pressure_parts( itr )
+        ELSEIF( parts_obj% pos( 1, itr ) > 0 )THEN
+          itr_2= itr_2 + 1
+          parts_obj% pos_x2( itr_2 )= parts_obj% pos( 1, itr )
+          parts_obj% pressure_parts_x2( itr_2 )= &
+                                              parts_obj% pressure_parts( itr )
+        ENDIF
 
       ENDIF
     ENDDO
-    PRINT *
 
-    PRINT *, "3"
+    !PRINT *, "3"
 
-    DO itr= 3, cntr - 3, 1
+    DO itr= 3, cntr1 - 3, 1
+      parts_obj% pressure_parts_x_der1( itr - 2 )=&
+                     ( + parts_obj% pressure_parts_x1( itr - 2 )/12.0D0 &
+                       - 2.0*parts_obj% pressure_parts_x1( itr - 1 )/3.0D0 &
+                       + 2.0*parts_obj% pressure_parts_x1( itr + 1 )/3.0D0 &
+                       - parts_obj% pressure_parts_x1( itr + 2 )/12.0D0 )&
+                       /( Msun_geo*km2m*ABS( parts_obj% pos_x1( itr ) - &
+                                             parts_obj% pos_x1( itr - 1 ) ) )
 
-      parts_obj% pressure_parts_x_der( itr - 2 )=&
-                         ( + parts_obj% pressure_parts_x( itr - 2 )/12.0D0 &
-                           - 2.0*parts_obj% pressure_parts_x( itr - 1 )/3.0D0 &
-                           + 2.0*parts_obj% pressure_parts_x( itr + 1 )/3.0D0 &
-                           - parts_obj% pressure_parts_x( itr + 2 )/12.0D0 )&
-                           /( Msun_geo*km2m*ABS( parts_obj% pos_x( itr ) - &
-                                                parts_obj% pos_x( itr - 1 ) ) )
+      parts_obj% pressure_length_scale_x1( itr - 2 )= &
+                          ABS( parts_obj% pressure_parts_x1( itr - 2 )/ &
+                               parts_obj% pressure_parts_x_der1( itr - 2 ) )
 
-      parts_obj% pressure_length_scale_x( itr - 2 )= &
-                          ABS( parts_obj% pressure_parts_x( itr - 2 )/ &
-                               parts_obj% pressure_parts_x_der( itr - 2 ) )
+      !PRINT *, "p1=", parts_obj% pressure_parts_x1( itr - 2 )
+      !PRINT *, "p_r1=", parts_obj% pressure_parts_x_der1( itr - 2 )
+      !PRINT *, "p/p_r1=", parts_obj% pressure_length_scale_x1( itr - 2 )
+      !PRINT *
 
-      !PRINT *, "p=", parts_obj% pressure_parts_x( itr - 2 )
-      !PRINT *, "p_r=", parts_obj% pressure_parts_x_der( itr - 2 )
-      !PRINT *, "p/p_r=", parts_obj% pressure_length_scale_x( itr - 2 )
+    ENDDO
+    DO itr= 3, cntr2 - 3, 1
+      parts_obj% pressure_parts_x_der2( itr - 2 )=&
+                     ( + parts_obj% pressure_parts_x2( itr - 2 )/12.0D0 &
+                       - 2.0*parts_obj% pressure_parts_x2( itr - 1 )/3.0D0 &
+                       + 2.0*parts_obj% pressure_parts_x2( itr + 1 )/3.0D0 &
+                       - parts_obj% pressure_parts_x2( itr + 2 )/12.0D0 )&
+                       /( Msun_geo*km2m*ABS( parts_obj% pos_x2( itr ) - &
+                                             parts_obj% pos_x2( itr - 1 ) ) )
+
+      parts_obj% pressure_length_scale_x2( itr - 2 )= &
+                          ABS( parts_obj% pressure_parts_x2( itr - 2 )/ &
+                               parts_obj% pressure_parts_x_der2( itr - 2 ) )
+
+      !PRINT *, "p2=", parts_obj% pressure_parts_x2( itr - 2 )
+      !PRINT *, "p_r2=", parts_obj% pressure_parts_x_der2( itr - 2 )
+      !PRINT *, "p/p_r2=", parts_obj% pressure_length_scale_x2( itr - 2 )
       !PRINT *
 
     ENDDO
 
     PRINT *, " * Maximum typical length scale for change in pressure", &
-             " along the x axis= ", &
-             MAXVAL( parts_obj% pressure_length_scale_x, DIM= 1 )/km2m, " km"
+             " along the x axis for NS 1= ", &
+             MAXVAL( parts_obj% pressure_length_scale_x1, DIM= 1 )/km2m, " km"
     PRINT *, " * Minimum typical length scale for change in pressure", &
-             " along the x axis= ", &
-             MINVAL( parts_obj% pressure_length_scale_x, DIM= 1 )/km2m, " km"
+             " along the x axis for NS 1= ", &
+             MINVAL( parts_obj% pressure_length_scale_x1, DIM= 1 )/km2m, " km"
     PRINT *
-    STOP
-
+    PRINT *, " * Maximum typical length scale for change in pressure", &
+             " along the x axis for NS 2= ", &
+             MAXVAL( parts_obj% pressure_length_scale_x2, DIM= 1 )/km2m, " km"
+    PRINT *, " * Minimum typical length scale for change in pressure", &
+             " along the x axis for NS 2= ", &
+             MINVAL( parts_obj% pressure_length_scale_x2, DIM= 1 )/km2m, " km"
+    PRINT *
 
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1

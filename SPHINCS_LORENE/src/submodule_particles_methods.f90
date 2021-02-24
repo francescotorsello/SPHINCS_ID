@@ -638,7 +638,7 @@ SUBMODULE (particles_id) particles_methods
     CALL deallocate_SPH_memory
 
     PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
-             // "file ", TRIM(namefile)
+             // "file", TRIM(namefile)
 
     PRINT *, "** Subroutine read_sphincs_dump_print_formatted " &
              // "executed."
