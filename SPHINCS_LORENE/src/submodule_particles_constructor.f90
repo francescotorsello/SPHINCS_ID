@@ -73,12 +73,12 @@ SUBMODULE (particles_id) particles_constructor
 
     CHARACTER( LEN= : ), ALLOCATABLE:: namefile
 
-    LOGICAL:: file_exists
+    LOGICAL:: file_exists, correct_nu
 
     NAMELIST /bns_particles/ &
               stretch, &
               nx, ny, nz, &
-              thres
+              thres, correct_nu
 
     !
     !-- Initialize the timers
@@ -89,10 +89,11 @@ SUBMODULE (particles_id) particles_constructor
 
     ! Declare this object as non-empty (experimental)
     parts_obj% empty_object= .FALSE.
+    parts_obj% empty_object= .FALSE.
 
-    parts_obj% mass1= bns_obj% get_mass1()
-    parts_obj% mass2= bns_obj% get_mass2()
-    parts_obj% nbar_tot= 0.0D0
+    parts_obj% mass1     = bns_obj% get_mass1()
+    parts_obj% mass2     = bns_obj% get_mass2()
+    parts_obj% nbar_tot  = 0.0D0
 
     !
     !-- Read the parameters of the particle distributions
@@ -105,13 +106,15 @@ SUBMODULE (particles_id) particles_constructor
     ELSE
      PRINT *
      PRINT *, "** ERROR: ", parts_obj% lorene_bns_id_parfile, &
-             " file not found!"
+              " file not found!"
      PRINT *
      STOP
     ENDIF
 
     READ( 10, NML= bns_particles )
     CLOSE( 10 )
+
+    parts_obj% correct_nu= correct_nu
 
     IF( MOD( nz, 2 ) /= 0 )THEN
      PRINT *

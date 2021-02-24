@@ -384,18 +384,20 @@ SUBMODULE (particles_id) particles_methods
     !--        be consistent with it
     !--   (ii) it is anyway immediately recomputed in SPHINCS_BSSN
     !
-    !THIS% nlrf=
-    !        THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-    !nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-    THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-    nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-    THIS% nbar_tot= &
-        THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-    PRINT *, " * Total mass of the considered adjusted baryons=", &
-             THIS% nbar_tot*amu/Msun, "Msun =", &
-             THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2), &
-             "of the total baryon mass."
-    PRINT *
+    IF( THIS% correct_nu )THEN
+      !THIS% nlrf=
+      !        THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+      !nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+      THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+      nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+      THIS% nbar_tot= &
+          THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+      PRINT *, " * Total mass of the considered corrected baryons=", &
+               THIS% nbar_tot*amu/Msun, "Msun =", &
+               THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2), &
+               "of the total baryon mass."
+      PRINT *
+    ENDIF
 
     !
     !-- Exporting the SPH ID to a binary file, for evolution

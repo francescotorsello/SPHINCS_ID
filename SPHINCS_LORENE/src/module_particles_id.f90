@@ -131,6 +131,7 @@ MODULE particles_id
     LOGICAL:: empty_object
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x
+    LOGICAL:: correct_nu
 
     TYPE(timer), PUBLIC:: placer_timer
     TYPE(timer), PUBLIC:: importer_timer
