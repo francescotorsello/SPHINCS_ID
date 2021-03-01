@@ -159,6 +159,10 @@ MODULE particles_id
 
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
 
+    !PROCEDURE, PUBLIC:: read_compose_composition
+
+    !PROCEDURE, PUBLIC:: compute_Ye_on_stars
+
     PROCEDURE, PUBLIC:: is_empty
 
     !PROCEDURE, PUBLIC:: write_lorene_bns_id_dump
