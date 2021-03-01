@@ -137,6 +137,11 @@ PROGRAM setup_lorene_id
     ENDDO part_distribution_loop
   ENDDO place_hydro_id_loops
 
+  namefile_parts="sly4"
+  CALL particles_dist( 1, 1 )% read_compose_composition()
+  !CALL particles_dist( 1, 1 )% read_compose_composition(namefile_parts)
+  STOP
+
   compute_export_sph_loops: DO itr3= 1, n_bns, 1
     part_distribution_loop2: DO itr4= 1, max_n_parts, 1
       IF( placer( itr3, itr4 ) == test_int )THEN

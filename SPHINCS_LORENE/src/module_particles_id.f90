@@ -159,7 +159,7 @@ MODULE particles_id
 
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
 
-    !PROCEDURE, PUBLIC:: read_compose_composition
+    PROCEDURE, PUBLIC:: read_compose_composition
 
     !PROCEDURE, PUBLIC:: compute_Ye_on_stars
 
@@ -294,6 +294,13 @@ MODULE particles_id
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE print_formatted_lorene_id_particles
+
+    MODULE SUBROUTINE read_compose_composition( THIS, namefile )
+
+      CLASS(particles),    INTENT( IN OUT )           :: THIS
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+
+    END SUBROUTINE read_compose_composition
 
     MODULE SUBROUTINE destruct_particles( THIS )
 

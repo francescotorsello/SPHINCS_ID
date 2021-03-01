@@ -649,6 +649,200 @@ SUBMODULE (particles_id) particles_methods
   END PROCEDURE read_sphincs_dump_print_formatted
 
 
+  MODULE PROCEDURE read_compose_composition
+
+    !************************************************
+    !                                               *
+    ! Read the electron fraction Y_e = n_e/n_b,     *
+    ! with n_e electron number density and n_b      *
+    ! baryon number density, from the .compo file   *
+    ! taken from the CompOSE database of EoS.       *
+    ! Y_e is given as a function of T, n_b, Y_q on  *
+    ! a grid; the comutation of Y_e on the stars is *
+    ! done by the SUBROUTINE compute_Ye_on_stars.   *
+    !                                               *
+    ! FT 1.03.2021                                  *
+    !                                               *
+    !************************************************
+
+    USE sph_variables,       ONLY: npart, &  ! particle number
+                                   pos_u, &  ! particle positions
+                                   vel_u, &  ! particle velocities in
+                                             ! coordinate frame
+                                   nlrf,  &  ! baryon number density in
+                                             ! local rest frame
+                                   ehat,  &  ! canonical energy per baryon
+                                   nu,    &  ! canonical baryon number per
+                                             ! particle
+                                   Theta, &  ! Generalized Lorentz factor
+                                   h,     &  ! Smoothing length
+                                   Pr,    &  ! Pressure
+                                   u,     &  ! Internal energy in local rest
+                                             ! frame (no kinetic energy)
+                                   temp,  &  ! Temperature
+                                   av,    &  ! Dissipation
+                                   ye,    &  ! Electron fraction
+                                   divv,  &  ! Divergence of velocity vel_u
+                                   allocate_SPH_memory, &
+                                   deallocate_SPH_memory
+    USE metric_on_particles, ONLY: allocate_metric_on_particles, &
+                                   deallocate_metric_on_particles, &
+                                   sq_det_g4
+    USE options,             ONLY: basename
+    USE input_output,        ONLY: set_units, dcount, read_SPHINCS_dump
+
+    IMPLICIT NONE
+
+    INTEGER:: itr, min_y_index, i_T, i_nb, i_yq, i_phase, n_pairs, i_e, cntr, &
+    i_n, Y_n, &
+    n_quad, &
+    i_i, A_i, Z_i, Y_i
+    INTEGER, PARAMETER:: unit_compose = 56
+
+    DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
+
+    DOUBLE PRECISION, DIMENSION( 1000 ):: Y_e
+
+    LOGICAL:: exist
+
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+
+    PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
+
+    !
+    !-- Set up the MODULE variables in MODULE sph_variables
+    !-- (used by write_SPHINCS_dump)
+    !
+    npart= THIS% npart
+
+    CALL set_units('NSM')
+
+    CALL allocate_SPH_memory
+    CALL allocate_metric_on_particles( THIS% npart )
+
+    ! Being abs_grid a local array, it is good practice to allocate it on the
+    ! heap, otherwise it will be stored on the stack which has a very limited
+    ! size. This results in a segmentation fault.
+    ALLOCATE( abs_pos( 3, THIS% npart ) )
+
+    IF( PRESENT(namefile) )THEN
+      finalnamefile= "../../CompOSE_EOS/RG_SLY4/"//TRIM(namefile)//".compo"
+    ELSE
+      finalnamefile= "../../CompOSE_EOS/RG_SLY4/eos.compo"
+    ENDIF
+
+    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= unit_compose, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening " // TRIM(finalnamefile), &
+                ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !                  // TRIM(finalnamefile) )
+    ELSE
+      PRINT *, "** ERROR! Unable to find file " // TRIM(finalnamefile)
+      STOP
+    ENDIF
+
+    cntr= 0
+    read_compose_compo: DO
+      READ( UNIT= unit_compose, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+                                                          i_T, i_nb, i_yq, &
+                                                          i_phase, n_pairs, &
+                                                          i_e, Y_e(itr)!, &
+                                                          !i_n, Y_n, &
+                                                          !n_quad, &
+                                                          !i_i, A_i, Z_i, Y_i
+      IF( ios > 0 )THEN
+        PRINT *, "At itr= ", itr, ", the error message is:", err_msg
+        EXIT
+      ENDIF
+      cntr= cntr + 1
+    ENDDO read_compose_compo
+    PRINT *, cntr
+    PRINT *, i_T, i_nb, i_yq, i_phase, n_pairs, i_e
+    PRINT *, "Y_e(1)= ", Y_e(1), "Y_e(2)= ", Y_e(2)
+    STOP
+
+    DO itr = 1, THIS% npart, 1
+      abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
+      abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
+      abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
+    ENDDO
+
+    min_y_index= 0
+    min_abs_y= 1D+20
+    DO itr = 1, THIS% npart, 1
+      IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
+        min_abs_y= ABS( THIS% pos( 2, itr ) )
+        min_y_index= itr
+      ENDIF
+    ENDDO
+
+    min_abs_z= MINVAL( abs_pos( 3, : ) )
+
+    write_data_loop: DO itr = 1, THIS% npart, 1
+
+      IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
+        CYCLE
+      ENDIF
+      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
+          .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
+        CYCLE
+      ENDIF
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        itr, &
+        pos_u( 1, itr ), &
+        pos_u( 2, itr ), &
+        pos_u( 3, itr ), &
+        vel_u( 1, itr ), &
+        vel_u( 2, itr ), &
+        vel_u( 3, itr ), &
+        h( itr ), &
+        u( itr ), &
+        nu( itr ), &
+        nlrf( itr ), &
+        temp( itr ), &
+        av( itr ), &
+        ye( itr ), &
+        divv( itr ), &
+        Theta( itr ), &
+        Pr( itr )
+
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing the arrays in " &
+                 // TRIM(finalnamefile), ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing " &
+      !       // "the arrays in " // TRIM(finalnamefile) )
+    ENDDO write_data_loop
+
+    CLOSE( UNIT= 2 )
+
+    !
+    !-- Deallocate MODULE variables
+    !
+    CALL deallocate_metric_on_particles
+    CALL deallocate_SPH_memory
+
+    PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
+             // "file", TRIM(namefile)
+
+    PRINT *, "** Subroutine read_sphincs_dump_print_formatted " &
+             // "executed."
+    PRINT *
+
+  END PROCEDURE read_compose_composition
+
+
   MODULE PROCEDURE print_formatted_lorene_id_particles
 
     !************************************************
