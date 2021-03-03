@@ -90,6 +90,14 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_z
 
     !
+    !-- Arrays to store the electron fraction Ye as a function of the
+    !-- baryon number density for beta-equilibrated EoS at T~0,
+    !-- imported from the CompOSE database's and software's files
+    !
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nb_table
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye_table
+
+    !
     !-- Spacetime fields
     !
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
@@ -115,6 +123,8 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: v
     ! 1-D array storing the generalized Lorentz factor
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Theta
+    ! 1-D array storing the electron fraction
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye
     ! 1-D array storing the smoothing length
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
     ! Baryonic masses of the neutron stars [Msun]
@@ -132,6 +142,7 @@ MODULE particles_id
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x
     LOGICAL:: correct_nu
+    LOGICAL:: compose_eos
 
     TYPE(timer), PUBLIC:: placer_timer
     TYPE(timer), PUBLIC:: importer_timer
@@ -161,7 +172,7 @@ MODULE particles_id
 
     PROCEDURE, PUBLIC:: read_compose_composition
 
-    !PROCEDURE, PUBLIC:: compute_Ye_on_stars
+    PROCEDURE, PUBLIC:: compute_Ye
 
     PROCEDURE, PUBLIC:: is_empty
 
@@ -301,6 +312,14 @@ MODULE particles_id
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE read_compose_composition
+
+    MODULE SUBROUTINE compute_Ye( THIS )!, nlrf, Ye )
+
+      CLASS(particles),    INTENT( IN OUT )           :: THIS
+      !DOUBLE PRECISION, DIMENSION( : ), INTENT( IN ):: nlrf
+      !DOUBLE PRECISION, DIMENSION( : ), INTENT( OUT ):: Ye
+
+    END SUBROUTINE compute_Ye
 
     MODULE SUBROUTINE destruct_particles( THIS )
 

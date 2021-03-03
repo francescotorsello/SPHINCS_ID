@@ -73,12 +73,13 @@ SUBMODULE (particles_id) particles_constructor
 
     CHARACTER( LEN= : ), ALLOCATABLE:: namefile
 
-    LOGICAL:: file_exists, correct_nu
+    LOGICAL:: file_exists, correct_nu, compose_eos
 
     NAMELIST /bns_particles/ &
               stretch, &
               nx, ny, nz, &
-              thres, correct_nu
+              thres, correct_nu, &
+              compose_eos
 
     !
     !-- Initialize the timers
@@ -115,6 +116,7 @@ SUBMODULE (particles_id) particles_constructor
     CLOSE( 10 )
 
     parts_obj% correct_nu= correct_nu
+    parts_obj% compose_eos= compose_eos
 
     IF( MOD( nz, 2 ) /= 0 )THEN
      PRINT *
@@ -482,6 +484,8 @@ SUBMODULE (particles_id) particles_constructor
 
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1
+
+    !PRINT *, "End of particle constructor"
 
   END PROCEDURE construct_particles
 

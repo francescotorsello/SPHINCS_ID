@@ -185,16 +185,16 @@ sources = ['src/module_utility.f90',
            '../SPHINCS_fix_metric/module_relativistic_Eigenvalues.f90',
            '../SPHINCS_fix_metric/module_reconstruction.f90',
            '../SPHINCS_fix_metric/module_deactivate_particles.f90',
-	   '../SPHINCS_fix_metric/module_sorting.f90']
+           '../SPHINCS_fix_metric/module_sorting.f90']
 
 #tov_executable = 'setup_TOV.x'
 #executable = 'sphincs_bssn.x'
-lorene_id_executable = 'sphincs_lorene_bns_id.x'
-lorene_id_convtest_executable = 'convergence-test.x'
+lorene_id_executable = 'sphincs_lorene_bns.x'
+lorene_id_convtest_executable = 'convergence_test.x'
 
 #Program(tov_executable, sources+['../SPHINCS_BSSN/Setup_TOV_star.f90'])
 #Program(executable, sources+['../SPHINCS_BSSN/SPHINCS_BSSN.f90'])
-Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/sphincs_lorene_bns_id.f90'])
-Program(lorene_id_convtest_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/convergence-test.f90'])
+Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/sphincs_lorene_bns.f90'])
+Program(lorene_id_convtest_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/convergence_test.f90'])
 
 Decider('MD5-timestamp')

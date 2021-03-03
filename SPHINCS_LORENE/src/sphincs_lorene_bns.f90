@@ -2,7 +2,7 @@
 ! Author:       Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-PROGRAM setup_lorene_id
+PROGRAM sphincs_lorene_bns
 
   !*****************************************************
   !                                                    *
@@ -137,11 +137,6 @@ PROGRAM setup_lorene_id
     ENDDO part_distribution_loop
   ENDDO place_hydro_id_loops
 
-  !namefile_parts="sly4"
-  !CALL particles_dist( 1, 1 )% read_compose_composition()
-  !!CALL particles_dist( 1, 1 )% read_compose_composition(namefile_parts)
-  !STOP
-
   compute_export_sph_loops: DO itr3= 1, n_bns, 1
     part_distribution_loop2: DO itr4= 1, max_n_parts, 1
       IF( placer( itr3, itr4 ) == test_int )THEN
@@ -177,6 +172,11 @@ PROGRAM setup_lorene_id
     ENDDO part_distribution_loop2
   ENDDO compute_export_sph_loops
 
+  !namefile_parts="sly4"
+  !CALL particles_dist( 1, 1 )% read_compose_composition()
+  !CALL particles_dist( 1, 1 )% compute_Ye()
+  !CALL particles_dist( 1, 1 )% read_compose_composition(namefile_parts)
+
   !
   !-- Print the particle initial data to a formatted file
   !
@@ -197,6 +197,8 @@ PROGRAM setup_lorene_id
       ENDDO
     ENDDO export_sph_loops
   ENDIF
+
+  STOP
 
   !
   !-- Construct the bssn_id objects from the bns objects
@@ -422,4 +424,4 @@ PROGRAM setup_lorene_id
 
   END SUBROUTINE
 
-END PROGRAM setup_lorene_id
+END PROGRAM sphincs_lorene_bns

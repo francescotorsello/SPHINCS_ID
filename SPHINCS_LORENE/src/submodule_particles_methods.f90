@@ -155,10 +155,22 @@ SUBMODULE (particles_id) particles_methods
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for array h" )
     ENDIF
+    IF(.NOT.ALLOCATED( THIS% Ye ))THEN
+      ALLOCATE( THIS% Ye( THIS% npart ), STAT= ios, &
+            ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array Ye ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !            "...allocation error for array lapse_parts" )
+    ENDIF
 
     !
     !-- Compute SPH quantities
     !
+
     CALL THIS% sph_computer_timer% start_timer()
     compute_SPH_variables_on_particles: DO itr= 1, THIS% npart, 1
 
@@ -333,13 +345,27 @@ SUBMODULE (particles_id) particles_methods
       ! Dissipation parameter
       av(itr)=    1.0D0
 
-      ! Electron fraction: here dummy
-      ye(itr)=    0.1D0
-
       ! Velocity divergence
       divv(itr)=  0.D0
 
     ENDDO compute_SPH_variables_on_particles
+
+    IF( THIS% compose_eos )THEN
+      CALL THIS% read_compose_composition()
+      CALL THIS% compute_Ye()
+    ENDIF
+
+    assign_ye_on_particles: DO itr= 1, THIS% npart, 1
+
+      ! Electron fraction
+      IF( THIS% compose_eos )THEN
+        ye(itr)= THIS% Ye(itr)
+      ELSE
+        ye(itr)= 0.0D0
+        THIS% Ye(itr)= 0.0D0
+      ENDIF
+
+    ENDDO assign_ye_on_particles
     CALL THIS% sph_computer_timer% stop_timer()
 
     PRINT "(A28,E15.8,A10)", "  * Maximum baryon density= ", &
@@ -665,79 +691,87 @@ SUBMODULE (particles_id) particles_methods
     !                                               *
     !************************************************
 
-    USE sph_variables,       ONLY: npart, &  ! particle number
-                                   pos_u, &  ! particle positions
-                                   vel_u, &  ! particle velocities in
-                                             ! coordinate frame
-                                   nlrf,  &  ! baryon number density in
-                                             ! local rest frame
-                                   ehat,  &  ! canonical energy per baryon
-                                   nu,    &  ! canonical baryon number per
-                                             ! particle
-                                   Theta, &  ! Generalized Lorentz factor
-                                   h,     &  ! Smoothing length
-                                   Pr,    &  ! Pressure
-                                   u,     &  ! Internal energy in local rest
-                                             ! frame (no kinetic energy)
-                                   temp,  &  ! Temperature
-                                   av,    &  ! Dissipation
-                                   ye,    &  ! Electron fraction
-                                   divv,  &  ! Divergence of velocity vel_u
-                                   allocate_SPH_memory, &
-                                   deallocate_SPH_memory
-    USE metric_on_particles, ONLY: allocate_metric_on_particles, &
-                                   deallocate_metric_on_particles, &
-                                   sq_det_g4
-    USE options,             ONLY: basename
-    USE input_output,        ONLY: set_units, dcount, read_SPHINCS_dump
+    USE constants, ONLY: fm2cm, cm2km, km2Msun_geo
+
+    !USE sph_variables,       ONLY: npart, &  ! particle number
+    !                               pos_u, &  ! particle positions
+    !                               vel_u, &  ! particle velocities in
+    !                                         ! coordinate frame
+    !                               nlrf,  &  ! baryon number density in
+    !                                         ! local rest frame
+    !                               ehat,  &  ! canonical energy per baryon
+    !                               nu,    &  ! canonical baryon number per
+    !                                         ! particle
+    !                               Theta, &  ! Generalized Lorentz factor
+    !                               h,     &  ! Smoothing length
+    !                               Pr,    &  ! Pressure
+    !                               u,     &  ! Internal energy in local rest
+    !                                         ! frame (no kinetic energy)
+    !                               temp,  &  ! Temperature
+    !                               av,    &  ! Dissipation
+    !                               ye,    &  ! Electron fraction
+    !                               divv,  &  ! Divergence of velocity vel_u
+    !                               allocate_SPH_memory, &
+    !                               deallocate_SPH_memory
+    !USE metric_on_particles, ONLY: allocate_metric_on_particles, &
+    !                               deallocate_metric_on_particles, &
+    !                               sq_det_g4
+    !USE options,             ONLY: basename
+    !USE input_output,        ONLY: set_units, dcount, read_SPHINCS_dump
 
     IMPLICIT NONE
 
     INTEGER:: itr, min_y_index, i_T, i_nb, i_yq, i_phase, n_pairs, i_e, cntr, &
-    i_n, Y_n, &
-    n_quad, &
-    i_i, A_i, Z_i, Y_i
-    INTEGER, PARAMETER:: unit_compose = 56
+              i_n, Y_n, &
+              n_quad, &
+              i_i, A_i, Z_i, Y_i, i_leptons
+    INTEGER, PARAMETER:: unit_compose= 56
+    INTEGER, PARAMETER:: max_length_eos= 10000
 
-    DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION:: min_abs_y, min_abs_z, m_n, m_p
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
-    DOUBLE PRECISION, DIMENSION( 1000 ):: Y_e
+    !DOUBLE PRECISION, DIMENSION( : ), ALLOCATABLE:: n_b, Y_e
 
     LOGICAL:: exist
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
-    PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
+    PRINT *, "** Executing the read_compose_composition subroutine..."
+
+    ALLOCATE( THIS% nb_table( max_length_eos ) )
+    ALLOCATE( THIS% Ye_table( max_length_eos ) )
+    THIS% nb_table= 0.0D0
+    THIS% Ye_table= 0.0D0
 
     !
     !-- Set up the MODULE variables in MODULE sph_variables
     !-- (used by write_SPHINCS_dump)
     !
-    npart= THIS% npart
-
-    CALL set_units('NSM')
-
-    CALL allocate_SPH_memory
-    CALL allocate_metric_on_particles( THIS% npart )
-
-    ! Being abs_grid a local array, it is good practice to allocate it on the
-    ! heap, otherwise it will be stored on the stack which has a very limited
-    ! size. This results in a segmentation fault.
-    ALLOCATE( abs_pos( 3, THIS% npart ) )
+    !npart= THIS% npart
+    !
+    !CALL set_units('NSM')
+    !
+    !CALL allocate_SPH_memory
+    !CALL allocate_metric_on_particles( THIS% npart )
+    !
+    !! Being abs_grid a local array, it is good practice to allocate it on the
+    !! heap, otherwise it will be stored on the stack which has a very limited
+    !! size. This results in a segmentation fault.
+    !ALLOCATE( abs_pos( 3, THIS% npart ) )
 
     IF( PRESENT(namefile) )THEN
-      finalnamefile= "../../CompOSE_EOS/RG_SLY4/"//TRIM(namefile)//".compo"
+      finalnamefile= "../../CompOSE_EOS/SFHO_with_electrons/" &
+                     //TRIM(namefile)//".beta"
     ELSE
-      finalnamefile= "../../CompOSE_EOS/RG_SLY4/eos.compo"
+      finalnamefile= "../../CompOSE_EOS/SFHO_with_electrons/eos.beta"
     ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
     IF( exist )THEN
-      OPEN( UNIT= unit_compose, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-            FORM= "FORMATTED", &
-            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+      OPEN( UNIT= unit_compose, FILE= TRIM(finalnamefile), &
+            FORM= "FORMATTED", ACTION= "READ", IOSTAT= ios, &
             IOMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...error when opening " // TRIM(finalnamefile), &
@@ -751,96 +785,191 @@ SUBMODULE (particles_id) particles_methods
       STOP
     ENDIF
 
+    !READ( UNIT= unit_compose, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+    !                                                    m_n, m_p, i_leptons
+
+    PRINT *, " * Reading file " // TRIM(finalnamefile) // "..."
     cntr= 0
-    read_compose_compo: DO
+    read_compose_beta: DO itr= 1, max_length_eos, 1
       READ( UNIT= unit_compose, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
-                                                          i_T, i_nb, i_yq, &
-                                                          i_phase, n_pairs, &
-                                                          i_e, Y_e(itr)!, &
-                                                          !i_n, Y_n, &
-                                                          !n_quad, &
-                                                          !i_i, A_i, Z_i, Y_i
+                        THIS% nb_table(itr), &
+                        THIS% Ye_table(itr)
+                        ! Variables for .compo file
+                        !i_T, i_nb, i_yq, &
+                        !i_phase, n_pairs, &
+                        !i_e, Y_e(itr)!, &
+                        !i_n, Y_n, &
+                        !n_quad, &
+                        !i_i, A_i, Z_i, Y_i
       IF( ios > 0 )THEN
-        PRINT *, "At itr= ", itr, ", the error message is:", err_msg
+        PRINT *, "...error when opening " // TRIM(finalnamefile), &
+                ". The error message is", err_msg
+        STOP
+      ENDIF
+      IF( ios < 0 )THEN
+        PRINT *, " * Reached end of file " // TRIM(finalnamefile)
         EXIT
       ENDIF
       cntr= cntr + 1
-    ENDDO read_compose_compo
-    PRINT *, cntr
-    PRINT *, i_T, i_nb, i_yq, i_phase, n_pairs, i_e
-    PRINT *, "Y_e(1)= ", Y_e(1), "Y_e(2)= ", Y_e(2)
-    STOP
+    ENDDO read_compose_beta
+    !PRINT *, "cntr= ", cntr
+    ! Reallocate the arrays to delete the empty elements
+    THIS% nb_table= THIS% nb_table( 1:cntr )/(fm2cm**3*cm2km**3*km2Msun_geo**3)
+    THIS% Ye_table= THIS% Ye_table( 1:cntr )
+    !PRINT *, i_T, i_nb, i_yq, i_phase, n_pairs, i_e
+    !PRINT *, "SIZE(n_b)= ", SIZE(THIS% n_b), "SIZE(Y_e)= ", SIZE(THIS% Y_e)
+    !PRINT *, "n_b(1)= ", THIS% n_b(1), "Y_e(1)= ", THIS% Y_e(1)
+    !PRINT *, "n_b(cntr)= ", THIS% n_b(cntr), "Y_e(cntr)= ", THIS% Y_e(cntr)
+    !STOP
 
-    DO itr = 1, THIS% npart, 1
-      abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
-      abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
-      abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
-    ENDDO
-
-    min_y_index= 0
-    min_abs_y= 1D+20
-    DO itr = 1, THIS% npart, 1
-      IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
-        min_abs_y= ABS( THIS% pos( 2, itr ) )
-        min_y_index= itr
-      ENDIF
-    ENDDO
-
-    min_abs_z= MINVAL( abs_pos( 3, : ) )
-
-    write_data_loop: DO itr = 1, THIS% npart, 1
-
-      IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
-        CYCLE
-      ENDIF
-      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
-          .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
-        CYCLE
-      ENDIF
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        itr, &
-        pos_u( 1, itr ), &
-        pos_u( 2, itr ), &
-        pos_u( 3, itr ), &
-        vel_u( 1, itr ), &
-        vel_u( 2, itr ), &
-        vel_u( 3, itr ), &
-        h( itr ), &
-        u( itr ), &
-        nu( itr ), &
-        nlrf( itr ), &
-        temp( itr ), &
-        av( itr ), &
-        ye( itr ), &
-        divv( itr ), &
-        Theta( itr ), &
-        Pr( itr )
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing the arrays in " &
-                 // TRIM(finalnamefile), ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing " &
-      !       // "the arrays in " // TRIM(finalnamefile) )
-    ENDDO write_data_loop
-
-    CLOSE( UNIT= 2 )
-
+    !DO itr = 1, THIS% npart, 1
+    !  abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
+    !  abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
+    !  abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
+    !ENDDO
     !
-    !-- Deallocate MODULE variables
+    !min_y_index= 0
+    !min_abs_y= 1D+20
+    !DO itr = 1, THIS% npart, 1
+    !  IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
+    !    min_abs_y= ABS( THIS% pos( 2, itr ) )
+    !    min_y_index= itr
+    !  ENDIF
+    !ENDDO
     !
-    CALL deallocate_metric_on_particles
-    CALL deallocate_SPH_memory
-
-    PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
-             // "file", TRIM(namefile)
-
-    PRINT *, "** Subroutine read_sphincs_dump_print_formatted " &
-             // "executed."
+    !min_abs_z= MINVAL( abs_pos( 3, : ) )
+    !
+    !write_data_loop: DO itr = 1, THIS% npart, 1
+    !
+    !  IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
+    !    CYCLE
+    !  ENDIF
+    !  IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
+    !      .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
+    !    CYCLE
+    !  ENDIF
+    !  WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    !    itr, &
+    !    pos_u( 1, itr ), &
+    !    pos_u( 2, itr ), &
+    !    pos_u( 3, itr ), &
+    !    vel_u( 1, itr ), &
+    !    vel_u( 2, itr ), &
+    !    vel_u( 3, itr ), &
+    !    h( itr ), &
+    !    u( itr ), &
+    !    nu( itr ), &
+    !    nlrf( itr ), &
+    !    temp( itr ), &
+    !    av( itr ), &
+    !    ye( itr ), &
+    !    divv( itr ), &
+    !    Theta( itr ), &
+    !    Pr( itr )
+    !
+    !  IF( ios > 0 )THEN
+    !    PRINT *, "...error when writing the arrays in " &
+    !             // TRIM(finalnamefile), ". The error message is", err_msg
+    !    STOP
+    !  ENDIF
+    !  !CALL test_status( ios, err_msg, "...error when writing " &
+    !  !       // "the arrays in " // TRIM(finalnamefile) )
+    !ENDDO write_data_loop
+    !
+    !CLOSE( UNIT= 2 )
+    !
+    !!
+    !!-- Deallocate MODULE variables
+    !!
+    !CALL deallocate_metric_on_particles
+    !CALL deallocate_SPH_memory
+    !
+    !PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
+    !         // "file", TRIM(namefile)
+    !
+    PRINT *, "** Subroutine read_compose_composition executed."
     PRINT *
 
   END PROCEDURE read_compose_composition
+
+
+  MODULE PROCEDURE compute_Ye
+
+    !************************************************
+    !                                               *
+    ! Interpolate the electron fraction             *
+    ! Y_e = n_e/n_b                                 *
+    ! at the particle positions, using the data     *
+    ! read by read_compose_composition.             *
+    !                                               *
+    ! FT 3.03.2021                                  *
+    !                                               *
+    !************************************************
+
+    !USE numerics, ONLY: H5_Interpolate, pa_pointer
+
+    IMPLICIT NONE
+
+    INTEGER:: d, itr2
+
+    DOUBLE PRECISION:: min_nb_table, max_nb_table
+
+    !DOUBLE PRECISION:: dn_b
+    !DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: temp1, temp2
+
+    !ALLOCATE( temp1( THIS% npart ) )
+    !ALLOCATE( temp2( THIS% npart ) )
+
+    !dn_b= THIS% n_b(2) - THIS% n_b(1)
+
+    !CALL H5_Interpolate( THIS% npart, THIS% nlrf, temp1, temp2, &
+    !                     SIZE(THIS% n_b), THIS% n_b(1), dn_b, &
+    !                     SIZE(THIS% n_b), THIS% n_b(1), dn_b, &
+    !                     SIZE(THIS% n_b), THIS% n_b(1), dn_b, &
+    !                     1,
+    !                    )
+
+    d= SIZE(THIS% nb_table)
+    min_nb_table= MINVAL( THIS% nb_table, 1 )
+    max_nb_table= MAXVAL( THIS% nb_table, 1 )
+
+    particle_loop: DO itr= 1, THIS% npart, 1
+
+      IF( THIS% nlrf(itr) < min_nb_table )THEN
+        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
+                 "is lower than the minimum value in the table =", min_nb_table
+        PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
+                 "If yes, please generate a table with a wider range."
+        STOP
+      ELSEIF( THIS% nlrf(itr) > max_nb_table )THEN
+        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
+                 "is larger than the maximum value in the table =", max_nb_table
+        PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
+                 "If yes, please generate a table with a wider range."
+        STOP
+      ENDIF
+
+      Ye_linear_interpolation_loop: DO itr2= 1, d - 1, 1
+
+        IF( THIS% nb_table(itr2) < THIS% nlrf(itr) .AND. &
+            THIS% nlrf(itr) < THIS% nb_table(itr2 + 1) )THEN
+
+          THIS% Ye(itr)= THIS% Ye_table(itr2) &
+                         + (THIS% Ye_table(itr2 + 1) - THIS% Ye_table(itr2))/ &
+                         (THIS% nb_table(itr2 + 1) - THIS% nb_table(itr2)) &
+                         *(THIS% nlrf(itr) - THIS% nb_table(itr2))
+          EXIT
+
+        ENDIF
+
+      ENDDO Ye_linear_interpolation_loop
+
+      !PRINT *, "Ye(", itr, ")=", THIS% Ye(itr)
+      !PRINT *
+
+    ENDDO particle_loop
+
+  END PROCEDURE compute_Ye
 
 
   MODULE PROCEDURE print_formatted_lorene_id_particles
@@ -930,7 +1059,7 @@ SUBMODULE (particles_id) particles_methods
     "       6       7       8", &
     "       9       10      11", &
     "       12      13      14", &
-    "       15      16      17"
+    "       15      16      17      18"
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
@@ -951,6 +1080,7 @@ SUBMODULE (particles_id) particles_methods
   "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
   "       baryon number per particle nu", &
   "       baryon density in the local rest frame nlrf [baryon/cm^3]", &
+  "       electron fraction", &
   "       generalized Lorentz factor Theta"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
@@ -1007,6 +1137,7 @@ SUBMODULE (particles_id) particles_methods
         THIS% v( 3, itr ), &
         THIS% nu( itr ), &
         THIS% nlrf( itr ), &
+        THIS% Ye( itr ), &
         THIS% Theta( itr )
 
     IF( ios > 0 )THEN
