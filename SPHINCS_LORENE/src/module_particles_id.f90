@@ -162,6 +162,10 @@ MODULE particles_id
 
     PROCEDURE:: allocate_lorene_id_parts_memory
 
+    PROCEDURE:: read_compose_composition
+
+    PROCEDURE:: compute_Ye
+
     PROCEDURE, PUBLIC:: analyze_hydro
 
     PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
@@ -169,10 +173,6 @@ MODULE particles_id
     PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
 
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
-
-    PROCEDURE, PUBLIC:: read_compose_composition
-
-    PROCEDURE, PUBLIC:: compute_Ye
 
     PROCEDURE, PUBLIC:: is_empty
 
