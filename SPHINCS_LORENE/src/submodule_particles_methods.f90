@@ -82,6 +82,8 @@ SUBMODULE (particles_id) particles_methods
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
+    CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
+
 
     PRINT *, "** Executing the compute_and_export_SPH_variables " &
              // "subroutine..."
@@ -351,7 +353,8 @@ SUBMODULE (particles_id) particles_methods
     ENDDO compute_SPH_variables_on_particles
 
     IF( THIS% compose_eos )THEN
-      CALL THIS% read_compose_composition()
+      compose_namefile= TRIM(THIS% compose_path)//TRIM(THIS% compose_filename)
+      CALL THIS% read_compose_composition( compose_namefile )
       CALL THIS% compute_Ye()
     ENDIF
 
@@ -693,42 +696,17 @@ SUBMODULE (particles_id) particles_methods
 
     USE constants, ONLY: fm2cm, cm2km, km2Msun_geo
 
-    !USE sph_variables,       ONLY: npart, &  ! particle number
-    !                               pos_u, &  ! particle positions
-    !                               vel_u, &  ! particle velocities in
-    !                                         ! coordinate frame
-    !                               nlrf,  &  ! baryon number density in
-    !                                         ! local rest frame
-    !                               ehat,  &  ! canonical energy per baryon
-    !                               nu,    &  ! canonical baryon number per
-    !                                         ! particle
-    !                               Theta, &  ! Generalized Lorentz factor
-    !                               h,     &  ! Smoothing length
-    !                               Pr,    &  ! Pressure
-    !                               u,     &  ! Internal energy in local rest
-    !                                         ! frame (no kinetic energy)
-    !                               temp,  &  ! Temperature
-    !                               av,    &  ! Dissipation
-    !                               ye,    &  ! Electron fraction
-    !                               divv,  &  ! Divergence of velocity vel_u
-    !                               allocate_SPH_memory, &
-    !                               deallocate_SPH_memory
-    !USE metric_on_particles, ONLY: allocate_metric_on_particles, &
-    !                               deallocate_metric_on_particles, &
-    !                               sq_det_g4
-    !USE options,             ONLY: basename
-    !USE input_output,        ONLY: set_units, dcount, read_SPHINCS_dump
-
     IMPLICIT NONE
 
     INTEGER:: itr, min_y_index, i_T, i_nb, i_yq, i_phase, n_pairs, i_e, cntr, &
               i_n, Y_n, &
               n_quad, &
-              i_i, A_i, Z_i, Y_i, i_leptons
+              i_i, A_i, Z_i, Y_i, i_leptons, i_ns
     INTEGER, PARAMETER:: unit_compose= 56
     INTEGER, PARAMETER:: max_length_eos= 10000
 
-    DOUBLE PRECISION:: min_abs_y, min_abs_z, m_n, m_p
+    DOUBLE PRECISION:: min_abs_y, min_abs_z, m_n, m_p, &
+                       p_nb, s_nb, mub_mn, muq_mn, mul_mn, f_nbmn, e_nbmn, h
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     !DOUBLE PRECISION, DIMENSION( : ), ALLOCATABLE:: n_b, Y_e
@@ -744,25 +722,9 @@ SUBMODULE (particles_id) particles_methods
     THIS% nb_table= 0.0D0
     THIS% Ye_table= 0.0D0
 
-    !
-    !-- Set up the MODULE variables in MODULE sph_variables
-    !-- (used by write_SPHINCS_dump)
-    !
-    !npart= THIS% npart
-    !
-    !CALL set_units('NSM')
-    !
-    !CALL allocate_SPH_memory
-    !CALL allocate_metric_on_particles( THIS% npart )
-    !
-    !! Being abs_grid a local array, it is good practice to allocate it on the
-    !! heap, otherwise it will be stored on the stack which has a very limited
-    !! size. This results in a segmentation fault.
-    !ALLOCATE( abs_pos( 3, THIS% npart ) )
 
     IF( PRESENT(namefile) )THEN
-      finalnamefile= "../../CompOSE_EOS/SFHO_with_electrons/" &
-                     //TRIM(namefile)//".beta"
+      finalnamefile= TRIM(namefile)//".beta"
     ELSE
       finalnamefile= "../../CompOSE_EOS/SFHO_with_electrons/eos.beta"
     ENDIF
@@ -792,6 +754,11 @@ SUBMODULE (particles_id) particles_methods
     cntr= 0
     read_compose_beta: DO itr= 1, max_length_eos, 1
       READ( UNIT= unit_compose, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+                        ! Variables for .thermo.ns file
+                        !i_T, i_nb, i_yq, &
+                        !p_nb, s_nb, mub_mn, muq_mn, mul_mn, f_nbmn, e_nbmn, &
+                        !i_ns, THIS% Ye_table(itr), h
+                        ! Variables for .beta file
                         THIS% nb_table(itr), &
                         THIS% Ye_table(itr)
                         ! Variables for .compo file
@@ -822,71 +789,6 @@ SUBMODULE (particles_id) particles_methods
     !PRINT *, "n_b(cntr)= ", THIS% n_b(cntr), "Y_e(cntr)= ", THIS% Y_e(cntr)
     !STOP
 
-    !DO itr = 1, THIS% npart, 1
-    !  abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
-    !  abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
-    !  abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
-    !ENDDO
-    !
-    !min_y_index= 0
-    !min_abs_y= 1D+20
-    !DO itr = 1, THIS% npart, 1
-    !  IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
-    !    min_abs_y= ABS( THIS% pos( 2, itr ) )
-    !    min_y_index= itr
-    !  ENDIF
-    !ENDDO
-    !
-    !min_abs_z= MINVAL( abs_pos( 3, : ) )
-    !
-    !write_data_loop: DO itr = 1, THIS% npart, 1
-    !
-    !  IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
-    !    CYCLE
-    !  ENDIF
-    !  IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
-    !      .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
-    !    CYCLE
-    !  ENDIF
-    !  WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    !    itr, &
-    !    pos_u( 1, itr ), &
-    !    pos_u( 2, itr ), &
-    !    pos_u( 3, itr ), &
-    !    vel_u( 1, itr ), &
-    !    vel_u( 2, itr ), &
-    !    vel_u( 3, itr ), &
-    !    h( itr ), &
-    !    u( itr ), &
-    !    nu( itr ), &
-    !    nlrf( itr ), &
-    !    temp( itr ), &
-    !    av( itr ), &
-    !    ye( itr ), &
-    !    divv( itr ), &
-    !    Theta( itr ), &
-    !    Pr( itr )
-    !
-    !  IF( ios > 0 )THEN
-    !    PRINT *, "...error when writing the arrays in " &
-    !             // TRIM(finalnamefile), ". The error message is", err_msg
-    !    STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, "...error when writing " &
-    !  !       // "the arrays in " // TRIM(finalnamefile) )
-    !ENDDO write_data_loop
-    !
-    !CLOSE( UNIT= 2 )
-    !
-    !!
-    !!-- Deallocate MODULE variables
-    !!
-    !CALL deallocate_metric_on_particles
-    !CALL deallocate_SPH_memory
-    !
-    !PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
-    !         // "file", TRIM(namefile)
-    !
     PRINT *, "** Subroutine read_compose_composition executed."
     PRINT *
 
@@ -906,28 +808,11 @@ SUBMODULE (particles_id) particles_methods
     !                                               *
     !************************************************
 
-    !USE numerics, ONLY: H5_Interpolate, pa_pointer
-
     IMPLICIT NONE
 
     INTEGER:: d, itr2
 
     DOUBLE PRECISION:: min_nb_table, max_nb_table
-
-    !DOUBLE PRECISION:: dn_b
-    !DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: temp1, temp2
-
-    !ALLOCATE( temp1( THIS% npart ) )
-    !ALLOCATE( temp2( THIS% npart ) )
-
-    !dn_b= THIS% n_b(2) - THIS% n_b(1)
-
-    !CALL H5_Interpolate( THIS% npart, THIS% nlrf, temp1, temp2, &
-    !                     SIZE(THIS% n_b), THIS% n_b(1), dn_b, &
-    !                     SIZE(THIS% n_b), THIS% n_b(1), dn_b, &
-    !                     SIZE(THIS% n_b), THIS% n_b(1), dn_b, &
-    !                     1,
-    !                    )
 
     d= SIZE(THIS% nb_table)
     min_nb_table= MINVAL( THIS% nb_table, 1 )
@@ -939,13 +824,13 @@ SUBMODULE (particles_id) particles_methods
         PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
                  "is lower than the minimum value in the table =", min_nb_table
         PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
-                 "If yes, please generate a table with a wider range."
+                 "If yes, please select a table with a wider range."
         STOP
       ELSEIF( THIS% nlrf(itr) > max_nb_table )THEN
         PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
                  "is larger than the maximum value in the table =", max_nb_table
         PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
-                 "If yes, please generate a table with a wider range."
+                 "If yes, please select a table with a wider range."
         STOP
       ENDIF
 

@@ -63,6 +63,8 @@ SUBMODULE (particles_id) particles_constructor
     ! construct_particles is called
     INTEGER, SAVE:: counter= 1
     INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr1, cntr2, itr_1, itr_2
+    ! Maximum length for strings, and for the number of imported binaries
+    INTEGER, PARAMETER:: max_length= 50
 
     DOUBLE PRECISION:: thres
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
@@ -72,6 +74,11 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     CHARACTER( LEN= : ), ALLOCATABLE:: namefile
+    ! String storing the local path to the directory where the
+    ! LORENE BNS ID files are stored
+    CHARACTER( LEN= max_length ):: compose_path
+    ! String storing the names of the LORENE BNS ID binary files
+    CHARACTER( LEN= max_length ):: compose_filename
 
     LOGICAL:: file_exists, correct_nu, compose_eos
 
@@ -79,7 +86,7 @@ SUBMODULE (particles_id) particles_constructor
               stretch, &
               nx, ny, nz, &
               thres, correct_nu, &
-              compose_eos
+              compose_eos, compose_path, compose_filename
 
     !
     !-- Initialize the timers
@@ -117,6 +124,8 @@ SUBMODULE (particles_id) particles_constructor
 
     parts_obj% correct_nu= correct_nu
     parts_obj% compose_eos= compose_eos
+    parts_obj% compose_path= compose_path
+    parts_obj% compose_filename= compose_filename
 
     IF( MOD( nz, 2 ) /= 0 )THEN
      PRINT *

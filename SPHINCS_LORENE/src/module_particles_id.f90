@@ -40,7 +40,6 @@ MODULE particles_id
 
     PRIVATE
 
-
     INTEGER:: npart, npart1, npart2, npart_temp, npart1_temp, npart2_temp
     INTEGER:: nx, ny, nz
     ! The flag call_flag is set different than 0 if the SUBROUTINE
@@ -137,6 +136,12 @@ MODULE particles_id
     DOUBLE PRECISION:: nbar_tot
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
+    ! String storing the local path to the directory where the
+    ! LORENE BNS ID files are stored
+    CHARACTER( LEN= : ), ALLOCATABLE:: compose_path
+    ! Array of strings storing the names of the LORENE BNS ID binary files
+    CHARACTER( LEN= : ), ALLOCATABLE:: compose_filename
+
 
     LOGICAL:: empty_object
     LOGICAL, PUBLIC:: export_bin

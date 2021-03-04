@@ -198,8 +198,6 @@ PROGRAM sphincs_lorene_bns
     ENDDO export_sph_loops
   ENDIF
 
-  STOP
-
   !
   !-- Construct the bssn_id objects from the bns objects
   !
