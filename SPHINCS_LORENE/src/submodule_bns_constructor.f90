@@ -175,6 +175,8 @@ SUBMODULE (bns_id) bns_constructor
                                THIS% pressure_center2, &
                                THIS% eos1, &
                                THIS% eos2, &
+                               THIS% eos1_id, &
+                               THIS% eos2_id, &
                                THIS% gamma_1, &
                                THIS% kappa_1, &
                                THIS% gamma_2, &

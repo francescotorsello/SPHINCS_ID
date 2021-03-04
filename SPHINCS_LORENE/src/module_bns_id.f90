@@ -49,6 +49,8 @@ MODULE bns_id
 
     ! Assign a unique identifies to each bns object created
     INTEGER:: bns_identifier= 0
+    ! Identifiers for the EoS
+    INTEGER:: eos1_id, eos2_id
 
     !
     !-- Parameters of the binary system
@@ -1545,6 +1547,8 @@ MODULE bns_id
                                      pressure_center2, &
                                      eos1, &
                                      eos2, &
+                                     eos1_id, &
+                                     eos2_id, &
                                      gamma_1, &
                                      kappa_1, &
                                      gamma_2, &
@@ -1625,6 +1629,8 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: pressure_center2
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos1
       CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos2
+      INTEGER(C_INT)                    :: eos1_id
+      INTEGER(C_INT)                    :: eos2_id
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma_1
       REAL(C_DOUBLE), INTENT(OUT)       :: kappa_1
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma_2
