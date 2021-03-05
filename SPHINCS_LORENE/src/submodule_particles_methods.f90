@@ -820,7 +820,19 @@ SUBMODULE (particles_id) particles_methods
 
     particle_loop: DO itr= 1, THIS% npart, 1
 
-      IF( THIS% nlrf(itr) < min_nb_table )THEN
+      ! There may be particles with initially negative hydro fields,
+      ! close to the surface of the stars. The present
+      ! version of the code sets their hydro fields to 0.
+      ! In turn, this is a problem if we read Ye from the .beta file
+      ! from the CompOSe database since the value of 0
+      ! for the baryon number density (used in the interpolation
+      ! of Ye) is not included in the .beta file.
+      ! In other words, Ye cannot be interpolated on those particles,
+      ! and the present version of the code sets Ye to 0 as well.
+      IF( THIS% nlrf(itr) == 0.0D0 )THEN
+        THIS% Ye(itr)= 0.0D0
+        CYCLE
+      ELSEIF( THIS% nlrf(itr) < min_nb_table )THEN
         PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
                  "is lower than the minimum value in the table =", min_nb_table
         PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
