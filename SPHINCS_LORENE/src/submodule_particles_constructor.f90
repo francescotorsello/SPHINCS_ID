@@ -81,6 +81,7 @@ SUBMODULE (particles_id) particles_constructor
     CHARACTER( LEN= max_length ):: compose_filename
 
     LOGICAL:: file_exists, correct_nu, compose_eos
+    LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
               stretch, &
@@ -308,30 +309,47 @@ SUBMODULE (particles_id) particles_constructor
     !-- Replace the points with negative hydro fields near the surface
     !-- with vacuum
     !
+    ALLOCATE( negative_hydro( parts_obj% npart ) )
     PRINT *, "** Cleaning LORENE hydro ID around the surfaces of the stars..."
     DO itr= 1, parts_obj% npart, 1
 
-          IF(      parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
-              .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
-              .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
-              .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0 )THEN
-              parts_obj% baryon_density_parts ( itr )= 0.0D0
-              parts_obj% energy_density_parts ( itr )= 0.0D0
-              parts_obj% specific_energy_parts( itr )= 0.0D0
-              parts_obj% pressure_parts       ( itr )= 0.0D0
-              parts_obj% v_euler_parts_x      ( itr )= 0.0D0
-              parts_obj% v_euler_parts_y      ( itr )= 0.0D0
-              parts_obj% v_euler_parts_z      ( itr )= 0.0D0
-          ENDIF
+      !negative_hydro( itr )= parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
+      !           .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
+      !           .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
+      !           .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0
 
-        ! Print progress on screen
-        perc= 100*( itr/parts_obj% npart )
-        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-          WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-                  creturn//" ", perc, "%"
-        ENDIF
+      IF(      parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
+          .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
+          .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
+          .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0 )THEN
+          parts_obj% baryon_density_parts ( itr )= 0.0D0
+          parts_obj% energy_density_parts ( itr )= 0.0D0
+          parts_obj% specific_energy_parts( itr )= 0.0D0
+          parts_obj% pressure_parts       ( itr )= 0.0D0
+          parts_obj% v_euler_parts_x      ( itr )= 0.0D0
+          parts_obj% v_euler_parts_y      ( itr )= 0.0D0
+          parts_obj% v_euler_parts_z      ( itr )= 0.0D0
+      ENDIF
+
+      ! Print progress on screen
+      perc= 100*( itr/parts_obj% npart )
+      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+        WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                creturn//" ", perc, "%"
+      ENDIF
 
     ENDDO
+    !PRINT *, "SIZE( pos( 1, : ) )", SIZE( pos( 1, : ) )
+    !pos( 1, : )= PACK( pos( 1, : ), negative_hydro )
+    !PRINT *, "SIZE( pos( 1, : ) )", SIZE( pos( 1, : ) )
+    ! LOGICAL, DIMENSION(npart):: negative_hydro
+    ! negative_hydro(itr)= parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
+    !            .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
+    !            .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
+    !            .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0
+    ! TODO: remove these particles completely. Use PACK?
+    ! pos( 1, : )= PACK( pos( 1, : ), negative_hydro )
+    ! you should check that the particles are mirrored after the deletion of the negative hydro ones
     WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
     PRINT *, " * LORENE hydro ID cleaned."
     PRINT *

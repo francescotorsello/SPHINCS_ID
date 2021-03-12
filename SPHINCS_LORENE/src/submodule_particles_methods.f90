@@ -1343,6 +1343,17 @@ SUBMODULE (particles_id) particles_methods
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
+    IF( ALLOCATED( THIS% Ye ))THEN
+      DEALLOCATE( THIS% Ye, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array Ye. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
 
   END PROCEDURE destruct_particles
 
