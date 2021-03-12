@@ -362,9 +362,9 @@ SUBMODULE (particles_id) particles_methods
 
       ! Electron fraction
       IF( THIS% compose_eos )THEN
-        ye(itr)= THIS% Ye(itr)
+        Ye(itr)= THIS% Ye(itr)
       ELSE
-        ye(itr)= 0.0D0
+        Ye(itr)= 0.0D0
         THIS% Ye(itr)= 0.0D0
       ENDIF
 

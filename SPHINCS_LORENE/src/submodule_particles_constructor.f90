@@ -309,36 +309,36 @@ SUBMODULE (particles_id) particles_constructor
     !-- Replace the points with negative hydro fields near the surface
     !-- with vacuum
     !
-    ALLOCATE( negative_hydro( parts_obj% npart ) )
-    PRINT *, "** Cleaning LORENE hydro ID around the surfaces of the stars..."
-    DO itr= 1, parts_obj% npart, 1
-
-      !negative_hydro( itr )= parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
-      !           .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
-      !           .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
-      !           .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0
-
-      IF(      parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
-          .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
-          .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
-          .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0 )THEN
-          parts_obj% baryon_density_parts ( itr )= 0.0D0
-          parts_obj% energy_density_parts ( itr )= 0.0D0
-          parts_obj% specific_energy_parts( itr )= 0.0D0
-          parts_obj% pressure_parts       ( itr )= 0.0D0
-          parts_obj% v_euler_parts_x      ( itr )= 0.0D0
-          parts_obj% v_euler_parts_y      ( itr )= 0.0D0
-          parts_obj% v_euler_parts_z      ( itr )= 0.0D0
-      ENDIF
-
-      ! Print progress on screen
-      perc= 100*( itr/parts_obj% npart )
-      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-        WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-                creturn//" ", perc, "%"
-      ENDIF
-
-    ENDDO
+    !ALLOCATE( negative_hydro( parts_obj% npart ) )
+    !PRINT *, "** Cleaning LORENE hydro ID around the surfaces of the stars..."
+    !DO itr= 1, parts_obj% npart, 1
+    !
+    !  !negative_hydro( itr )= parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
+    !  !           .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
+    !  !           .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
+    !  !           .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0
+    !
+    !  IF(      parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
+    !      .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
+    !      .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
+    !      .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0 )THEN
+    !      parts_obj% baryon_density_parts ( itr )= 0.0D0
+    !      parts_obj% energy_density_parts ( itr )= 0.0D0
+    !      parts_obj% specific_energy_parts( itr )= 0.0D0
+    !      parts_obj% pressure_parts       ( itr )= 0.0D0
+    !      parts_obj% v_euler_parts_x      ( itr )= 0.0D0
+    !      parts_obj% v_euler_parts_y      ( itr )= 0.0D0
+    !      parts_obj% v_euler_parts_z      ( itr )= 0.0D0
+    !  ENDIF
+    !
+    !  ! Print progress on screen
+    !  perc= 100*( itr/parts_obj% npart )
+    !  IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+    !    WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+    !            creturn//" ", perc, "%"
+    !  ENDIF
+    !
+    !ENDDO
     !PRINT *, "SIZE( pos( 1, : ) )", SIZE( pos( 1, : ) )
     !pos( 1, : )= PACK( pos( 1, : ), negative_hydro )
     !PRINT *, "SIZE( pos( 1, : ) )", SIZE( pos( 1, : ) )
@@ -350,9 +350,9 @@ SUBMODULE (particles_id) particles_constructor
     ! TODO: remove these particles completely. Use PACK?
     ! pos( 1, : )= PACK( pos( 1, : ), negative_hydro )
     ! you should check that the particles are mirrored after the deletion of the negative hydro ones
-    WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
-    PRINT *, " * LORENE hydro ID cleaned."
-    PRINT *
+    !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+    !PRINT *, " * LORENE hydro ID cleaned."
+    !PRINT *
 
     !
     !-- Check that the baryon density, the energy density, the specific
@@ -637,7 +637,9 @@ SUBMODULE (particles_id) particles_constructor
           !-- if the mass density is higher than the threshold
           !
           IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
-                                  > thres_baryon_density )THEN
+                                  > thres_baryon_density &
+              .AND. &
+              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
 
             THIS% npart= THIS% npart + 1
             IF( xtemp < 0 )THEN
@@ -926,7 +928,9 @@ SUBMODULE (particles_id) particles_constructor
           !-- if the mass density is higher than the threshold
           !
           IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
-                                > thres_baryon_density1 )THEN
+                                > thres_baryon_density1 &
+              .AND. &
+              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
 
             THIS% npart = THIS% npart + 1
             THIS% npart1= THIS% npart1 + 1
@@ -1047,7 +1051,9 @@ SUBMODULE (particles_id) particles_constructor
           xtemp= xmin2 + dx/2 + ( ix - 1 )*dx
 
           IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
-                                  > thres_baryon_density2 )THEN
+                                  > thres_baryon_density2 &
+              .AND. &
+              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0  )THEN
 
             THIS% npart = THIS% npart + 1
             THIS% npart2= THIS% npart2 + 1

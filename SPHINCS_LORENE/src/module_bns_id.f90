@@ -268,6 +268,10 @@ MODULE bns_id
     ! Returns the LORENE's mass density at the given point
     PROCEDURE:: import_mass_density
 
+    ! Returns 1 if the energy density or the specific energy or the pressure
+    ! are negative
+    PROCEDURE:: is_hydro_negative
+
     !
     !-- Overloaded FUNCTION to access the fields as arrays and as values
     !
@@ -617,6 +621,18 @@ MODULE bns_id
       REAL(C_DOUBLE):: res
 
     END FUNCTION import_mass_density
+
+    MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
+
+      ! Arguments
+      CLASS(bns),     INTENT( IN )       :: THIS
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: z
+      ! Result
+      INTEGER(C_INT):: res
+
+    END FUNCTION is_hydro_negative
 
     MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
 
@@ -1512,6 +1528,34 @@ MODULE bns_id
       REAL(C_DOUBLE) :: res
 
     END FUNCTION get_lorene_mass_density
+
+    FUNCTION negative_hydro( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "negative_hydro")
+
+      !************************************************
+      !                                               *
+      ! Return 1 if the energy density is nonpositive,*
+      ! or if the specific energy is nonpositive,     *
+      ! or if the pressure i nonpositive              *
+      ! at the specified point, and 0 otherwise       *
+      !                                               *
+      ! FT 12.03.2021                                 *
+      !                                               *
+      !************************************************
+
+      IMPORT :: C_INT, C_DOUBLE, C_PTR
+
+      IMPLICIT NONE
+
+      ! Argument list
+      TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: y
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
+      ! Function result
+      INTEGER(C_INT) :: res
+
+    END FUNCTION negative_hydro
 
     SUBROUTINE get_lorene_id_params( optr, &
                                      angular_vel, &

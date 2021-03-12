@@ -1484,6 +1484,39 @@ SUBMODULE (bns_id) bns_methods
   END PROCEDURE import_mass_density
 
 
+  MODULE PROCEDURE is_hydro_negative
+
+    !************************************************
+    !                                               *
+    ! Return 1 if the energy density is nonpositive,*
+    ! or if the specific energy is nonpositive,     *
+    ! or if the pressure i nonpositive              *
+    ! at the specified point                        *
+    !                                               *
+    ! FT 12.03.2021                                 *
+    !                                               *
+    !************************************************
+
+    USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
+    USE constants,                   ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
+
+      ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+      ! to LORENE units (km). See MODULE constants for the definition of
+      ! Msun_geo
+      res= negative_hydro( THIS% bns_ptr, &
+                                    x*Msun_geo, &
+                                    y*Msun_geo, &
+                                    z*Msun_geo )
+
+    ENDIF
+
+  END PROCEDURE is_hydro_negative
+
+
   MODULE PROCEDURE get_field_array
 
     !************************************************
