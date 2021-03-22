@@ -52,14 +52,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     USE McLachlan,           ONLY: initialize_BSSN, allocate_Ztmp, &
                                    deallocate_Ztmp, ADM_to_BSSN, &
                                    ADM_to_BSSN_args
-    USE Tmunu,               ONLY: allocate_Tmunu, deallocate_Tmunu
+    USE Tmunu,               ONLY: allocate_Tmunu, deallocate_Tmunu, Tmunu_ll
     USE GravityAcceleration, ONLY: dt_ehat_grav, dt_S_grav_l, &
                                    d_g_phys4_lll, &
                                    allocate_GravityAcceleration, &
                                    deallocate_GravityAcceleration
     USE options,             ONLY: basename
     USE constants,           ONLY: Msun_geo
-    USE Tmunu,               ONLY: Tmunu_ll
     !
     !-- Use the arrays from the MODULE BSSN to store the BSSN variables
     !-- for the LORENE ID on the grid, and the SUBROUTINE write_BSSN_dump

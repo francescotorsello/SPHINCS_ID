@@ -829,10 +829,11 @@ SUBMODULE (particles_id) particles_methods
       ! of Ye) is not included in the .beta file.
       ! In other words, Ye cannot be interpolated on those particles,
       ! and the present version of the code sets Ye to 0 as well.
-      IF( THIS% nlrf(itr) == 0.0D0 )THEN
-        THIS% Ye(itr)= 0.0D0
-        CYCLE
-      ELSEIF( THIS% nlrf(itr) < min_nb_table )THEN
+      !IF( THIS% nlrf(itr) == 0.0D0 )THEN
+        !THIS% Ye(itr)= 0.0D0
+        !CYCLE
+      !ELSE
+      IF( THIS% nlrf(itr) < min_nb_table )THEN
         PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
                  "is lower than the minimum value in the table =", min_nb_table
         PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
@@ -976,7 +977,7 @@ SUBMODULE (particles_id) particles_methods
   "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
   "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
   "       baryon number per particle nu", &
-  "       baryon density in the local rest frame nlrf [baryon/cm^3]", &
+  "       baryon density in the local rest frame nlrf [baryon/Msun_geo^3]", &
   "       electron fraction", &
   "       generalized Lorentz factor Theta"
     IF( ios > 0 )THEN

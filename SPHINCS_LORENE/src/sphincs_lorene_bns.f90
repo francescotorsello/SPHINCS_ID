@@ -172,11 +172,6 @@ PROGRAM sphincs_lorene_bns
     ENDDO part_distribution_loop2
   ENDDO compute_export_sph_loops
 
-  !namefile_parts="sly4"
-  !CALL particles_dist( 1, 1 )% read_compose_composition()
-  !CALL particles_dist( 1, 1 )% compute_Ye()
-  !CALL particles_dist( 1, 1 )% read_compose_composition(namefile_parts)
-
   !
   !-- Print the particle initial data to a formatted file
   !
@@ -197,7 +192,6 @@ PROGRAM sphincs_lorene_bns
       ENDDO
     ENDDO export_sph_loops
   ENDIF
-  STOP
 
   !
   !-- Construct the bssn_id objects from the bns objects

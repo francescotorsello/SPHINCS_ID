@@ -80,7 +80,7 @@ SUBMODULE (particles_id) particles_constructor
     ! String storing the names of the LORENE BNS ID binary files
     CHARACTER( LEN= max_length ):: compose_filename
 
-    LOGICAL:: file_exists, correct_nu, compose_eos
+    LOGICAL:: file_exists, correct_nu, compose_eos, exist
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
@@ -513,6 +513,136 @@ SUBMODULE (particles_id) particles_constructor
     counter= counter + 1
 
     !PRINT *, "End of particle constructor"
+
+!===============================================================================
+!===============================DEBUGGING=======================================
+!===============================================================================
+
+    namefile= "dbg-hydro.dat"
+
+    INQUIRE( FILE= TRIM(namefile), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= 2, FILE= TRIM(namefile), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= 2, FILE= TRIM(namefile), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !                  // TRIM(namefile) )
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Values of the fields (including coordinates) exported by LORENE "&
+    // "on each grid point"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 1 in " // TRIM(namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+    !        // TRIM(namefile) )
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# column:      1        2       3       4       5", &
+    "       6       7       8", &
+    "       9       10      11", &
+    "       12      13      14", &
+    "       15      16      17      18"
+
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 2 in " // TRIM(namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+    !            // TRIM(namefile) )
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "#      grid point      x [km]       y [km]       z [km]       lapse", &
+    "       shift_x [c]    shift_y [c]    shift_z [c]", &
+    "       baryon density in the local rest frame [kg m^{-3}$]", &
+    "       energy density [c^2]", &
+    "       specific energy [c^2]", &
+    "       pressure [Pa]", &
+    "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
+    "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
+    "       baryon number per particle nu", &
+    "       baryon density in the local rest frame nlrf [baryon/Msun_geo^3]", &
+    "       electron fraction", &
+    "       generalized Lorentz factor Theta"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in " // TRIM(namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+    !          // TRIM(namefile) )
+
+    DO itr = 1, parts_obj% npart, 1
+      abs_pos( 1, itr )= ABS( parts_obj% pos( 1, itr ) )
+      abs_pos( 2, itr )= ABS( parts_obj% pos( 2, itr ) )
+      abs_pos( 3, itr )= ABS( parts_obj% pos( 3, itr ) )
+    ENDDO
+
+    min_y_index= 0
+    min_abs_y= 1D+20
+    DO itr = 1, parts_obj% npart, 1
+      IF( ABS( parts_obj% pos( 2, itr ) ) < min_abs_y )THEN
+        min_abs_y= ABS( parts_obj% pos( 2, itr ) )
+        min_y_index= itr
+      ENDIF
+    ENDDO
+
+    min_abs_z= MINVAL( abs_pos( 3, : ) )
+
+    write_data_loop: DO itr = 1, parts_obj% npart, 1
+
+      IF( parts_obj% export_form_xy .AND. parts_obj% pos( 3, itr ) /= min_abs_z )THEN
+        CYCLE
+      ENDIF
+      IF( parts_obj% export_form_x .AND. ( parts_obj% pos( 3, itr ) /= min_abs_z &
+          .OR. parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) ) )THEN
+        CYCLE
+      ENDIF
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        itr, &
+        parts_obj% pos( 1, itr ), &
+        parts_obj% pos( 2, itr ), &
+        parts_obj% pos( 3, itr ), &
+        parts_obj% lapse_parts( itr ), &
+        parts_obj% shift_parts_x( itr ), &
+        parts_obj% shift_parts_y( itr ), &
+        parts_obj% shift_parts_z( itr ), &
+        parts_obj% baryon_density_parts( itr ), &
+        parts_obj% energy_density_parts( itr ), &
+        parts_obj% specific_energy_parts( itr ), &
+        parts_obj% pressure_parts( itr ), &
+        parts_obj% v_euler_parts_x( itr ), &
+        parts_obj% v_euler_parts_y( itr ), &
+        parts_obj% v_euler_parts_z( itr )
+
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in " // TRIM(namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing " &
+    !         // "the arrays in " // TRIM(finalnamefile) )
+    ENDDO write_data_loop
+
+    CLOSE( UNIT= 2 )
 
   END PROCEDURE construct_particles
 
@@ -1053,7 +1183,7 @@ SUBMODULE (particles_id) particles_constructor
           IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
                                   > thres_baryon_density2 &
               .AND. &
-              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0  )THEN
+              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
 
             THIS% npart = THIS% npart + 1
             THIS% npart2= THIS% npart2 + 1
