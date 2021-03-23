@@ -48,7 +48,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
                           grid_file, gravity_grid, &
                           check_parameter, &
                           dx_1, dy_1, dz_1, dgmin, dgmin_1, tol
-    USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
+    !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
     USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                           jyy, jyz, jzz, jx, jy, jz, n_sym3x3
@@ -279,37 +279,37 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !
     !-- Check that the imported ID does not contain NaNs
     !
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% lapse, "lapse" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jx), &
-                                                        "shift_u_x" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jy), &
-                                                        "shift_u_y" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jz), &
-                                                        "shift_u_z" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxx), &
-                                                        "g_phys3_ll_jxx" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxy), &
-                                                        "g_phys3_ll_jxy" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxz), &
-                                                        "g_phys3_ll_jxz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyy), &
-                                                        "g_phys3_ll_jyy" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyz), &
-                                                        "g_phys3_ll_jyz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jzz), &
-                                                        "g_phys3_ll_jzz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxx), &
-                                                        "K_phys3_ll_jxx" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxy), &
-                                                        "K_phys3_ll_jxy" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxz), &
-                                                        "K_phys3_ll_jxz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyy), &
-                                                        "K_phys3_ll_jyy" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyz), &
-                                                        "K_phys3_ll_jyz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jzz), &
-                                                        "K_phys3_ll_jzz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% lapse, "lapse" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jx), &
+    !                                                    "shift_u_x" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jy), &
+    !                                                    "shift_u_y" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jz), &
+    !                                                    "shift_u_z" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxx), &
+    !                                                    "g_phys3_ll_jxx" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxy), &
+    !                                                    "g_phys3_ll_jxy" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxz), &
+    !                                                    "g_phys3_ll_jxz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyy), &
+    !                                                    "g_phys3_ll_jyy" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyz), &
+    !                                                    "g_phys3_ll_jyz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jzz), &
+    !                                                    "g_phys3_ll_jzz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxx), &
+    !                                                    "K_phys3_ll_jxx" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxy), &
+    !                                                    "K_phys3_ll_jxy" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxz), &
+    !                                                    "K_phys3_ll_jxz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyy), &
+    !                                                    "K_phys3_ll_jyy" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyz), &
+    !                                                    "K_phys3_ll_jyz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jzz), &
+    !                                                    "K_phys3_ll_jzz" )
 
     !
     !-- Check that the determinant of the spatial metric is
@@ -404,7 +404,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
                           grid_file, gravity_grid, &
                           check_parameter, &
                           dx_1, dy_1, dz_1, dgmin, dgmin_1, tol
-    USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
+    !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
     USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                           jyy, jyz, jzz, jx, jy, jz, n_sym3x3
@@ -612,38 +612,38 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !
     !-- Check that the imported ID does not contain NaNs
     !
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% lapse, "lapse" )
-
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jx), &
-                                                        "shift_u_x" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jy), &
-                                                        "shift_u_y" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jz), &
-                                                        "shift_u_z" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxx), &
-                                                        "g_phys3_ll_jxx" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxy), &
-                                                        "g_phys3_ll_jxy" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxz), &
-                                                        "g_phys3_ll_jxz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyy), &
-                                                        "g_phys3_ll_jyy" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyz), &
-                                                        "g_phys3_ll_jyz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jzz), &
-                                                        "g_phys3_ll_jzz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxx), &
-                                                        "K_phys3_ll_jxx" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxy), &
-                                                        "K_phys3_ll_jxy" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxz), &
-                                                        "K_phys3_ll_jxz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyy), &
-                                                        "K_phys3_ll_jyy" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyz), &
-                                                        "K_phys3_ll_jyz" )
-    CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jzz), &
-                                                        "K_phys3_ll_jzz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% lapse, "lapse" )
+    !
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jx), &
+    !                                                    "shift_u_x" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jy), &
+    !                                                    "shift_u_y" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jz), &
+    !                                                    "shift_u_z" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxx), &
+    !                                                    "g_phys3_ll_jxx" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxy), &
+    !                                                    "g_phys3_ll_jxy" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxz), &
+    !                                                    "g_phys3_ll_jxz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyy), &
+    !                                                    "g_phys3_ll_jyy" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyz), &
+    !                                                    "g_phys3_ll_jyz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jzz), &
+    !                                                    "g_phys3_ll_jzz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxx), &
+    !                                                    "K_phys3_ll_jxx" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxy), &
+    !                                                    "K_phys3_ll_jxy" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxz), &
+    !                                                    "K_phys3_ll_jxz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyy), &
+    !                                                    "K_phys3_ll_jyy" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyz), &
+    !                                                    "K_phys3_ll_jyz" )
+    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jzz), &
+    !                                                    "K_phys3_ll_jzz" )
 
     !
     !-- Check that the determinant of the spatial metric is

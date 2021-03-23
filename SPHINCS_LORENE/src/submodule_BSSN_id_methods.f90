@@ -42,7 +42,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                                    xR, xL, yR, yL, zR, zL, &
                                    rad_coord, &
                                    deallocate_gravity_grid
-    USE NaNChecker,          ONLY: Check_Grid_Function_for_NAN
+    !USE NaNChecker,          ONLY: Check_Grid_Function_for_NAN
     USE tensor,              ONLY: itt, itx, ity, itz, ixx, ixy, &
                                    ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                    jyy, jyz, jzz, jx, jy, jz, n_sym3x3
@@ -198,39 +198,39 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !
     !-- Check the BSSN MODULE variables for NaNs
     !
-    CALL Check_Grid_Function_for_NAN( lapse, "lapse" )
-    CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jx), "shift_u_x" )
-    CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jy), "shift_u_y" )
-    CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jz), "shift_u_z" )
-    CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jxx), &
-                                                        "g_BSSN3_ll_jxx" )
-    CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jxy), &
-                                                        "g_BSSN3_ll_jxy" )
-    CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jxz), &
-                                                        "g_BSSN3_ll_jxz" )
-    CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jyy), &
-                                                        "g_BSSN3_ll_jyy" )
-    CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jyz), &
-                                                        "g_BSSN3_ll_jyz" )
-    CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jzz), &
-                                                        "g_BSSN3_ll_jzz" )
-    CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jxx), &
-                                                        "A_BSSN3_ll_jxx" )
-    CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jxy), &
-                                                        "A_BSSN3_ll_jxy" )
-    CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jxz), &
-                                                        "A_BSSN3_ll_jxz" )
-    CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jyy), &
-                                                        "A_BSSN3_ll_jyy" )
-    CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jyz), &
-                                                        "A_BSSN3_ll_jyz" )
-    CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jzz), &
-                                                        "A_BSSN3_ll_jzz" )
-    CALL Check_Grid_Function_for_NAN( phi, "phi" )
-    CALL Check_Grid_Function_for_NAN( trK, "trK" )
-    CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jx), "Gamma_u_x" )
-    CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jy), "Gamma_u_y" )
-    CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jz), "Gamma_u_z" )
+    !CALL Check_Grid_Function_for_NAN( lapse, "lapse" )
+    !CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jx), "shift_u_x" )
+    !CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jy), "shift_u_y" )
+    !CALL Check_Grid_Function_for_NAN( shift_u(:,:,:,jz), "shift_u_z" )
+    !CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jxx), &
+    !                                                    "g_BSSN3_ll_jxx" )
+    !CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jxy), &
+    !                                                    "g_BSSN3_ll_jxy" )
+    !CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jxz), &
+    !                                                    "g_BSSN3_ll_jxz" )
+    !CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jyy), &
+    !                                                    "g_BSSN3_ll_jyy" )
+    !CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jyz), &
+    !                                                    "g_BSSN3_ll_jyz" )
+    !CALL Check_Grid_Function_for_NAN( g_BSSN3_ll(:,:,:,jzz), &
+    !                                                    "g_BSSN3_ll_jzz" )
+    !CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jxx), &
+    !                                                    "A_BSSN3_ll_jxx" )
+    !CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jxy), &
+    !                                                    "A_BSSN3_ll_jxy" )
+    !CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jxz), &
+    !                                                    "A_BSSN3_ll_jxz" )
+    !CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jyy), &
+    !                                                    "A_BSSN3_ll_jyy" )
+    !CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jyz), &
+    !                                                    "A_BSSN3_ll_jyz" )
+    !CALL Check_Grid_Function_for_NAN( A_BSSN3_ll(:,:,:,jzz), &
+    !                                                    "A_BSSN3_ll_jzz" )
+    !CALL Check_Grid_Function_for_NAN( phi, "phi" )
+    !CALL Check_Grid_Function_for_NAN( trK, "trK" )
+    !CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jx), "Gamma_u_x" )
+    !CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jy), "Gamma_u_y" )
+    !CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jz), "Gamma_u_z" )
 
     !
     !-- Setting the local variables equal to the MODULE variables

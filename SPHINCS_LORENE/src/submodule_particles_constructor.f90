@@ -54,7 +54,7 @@ SUBMODULE (particles_id) particles_constructor
     !                                               *
     !************************************************
 
-    USE NaNChecker, ONLY: Check_Array_for_NAN
+    !USE NaNChecker, ONLY: Check_Array_for_NAN
     USE constants,  ONLY: Msun_geo, km2m
 
     IMPLICIT NONE
@@ -270,97 +270,40 @@ SUBMODULE (particles_id) particles_constructor
     !
     !-- Check that the imported ID does not contain NaNs
     !
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% lapse_parts, &
-                                             "lapse_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% shift_parts_x, &
-                                             "shift_parts_x" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% shift_parts_y, &
-                                             "shift_parts_y" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% shift_parts_z, &
-                                             "shift_parts_z" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_xx_parts, &
-                                             "g_xx_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_xy_parts, &
-                                             "g_xy_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_xz_parts, &
-                                             "g_xz_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_yy_parts, &
-                                             "g_yy_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_yz_parts, &
-                                             "g_yz_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_zz_parts, &
-                                             "g_zz_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, &
-            parts_obj% baryon_density_parts, "baryon_density_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, &
-            parts_obj% energy_density_parts, "energy_density_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, &
-            parts_obj% specific_energy_parts, "specific_energy_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, &
-                   parts_obj% pressure_parts, "pressure_parts" )
-    CALL Check_Array_for_NAN( parts_obj% npart, &
-                  parts_obj% v_euler_parts_x, "v_euler_parts_x" )
-    CALL Check_Array_for_NAN( parts_obj% npart, &
-                  parts_obj% v_euler_parts_y, "v_euler_parts_y" )
-    CALL Check_Array_for_NAN( parts_obj% npart, &
-                  parts_obj% v_euler_parts_z, "v_euler_parts_z" )
-
-    !
-    !-- Replace the points with negative hydro fields near the surface
-    !-- with vacuum
-    !
-    !ALLOCATE( negative_hydro( parts_obj% npart ) )
-    !PRINT *, "** Cleaning LORENE hydro ID around the surfaces of the stars..."
-    !DO itr= 1, parts_obj% npart, 1
-    !
-    !  !negative_hydro( itr )= parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
-    !  !           .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
-    !  !           .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
-    !  !           .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0
-    !
-    !  IF(      parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
-    !      .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
-    !      .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
-    !      .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0 )THEN
-    !      parts_obj% baryon_density_parts ( itr )= 0.0D0
-    !      parts_obj% energy_density_parts ( itr )= 0.0D0
-    !      parts_obj% specific_energy_parts( itr )= 0.0D0
-    !      parts_obj% pressure_parts       ( itr )= 0.0D0
-    !      parts_obj% v_euler_parts_x      ( itr )= 0.0D0
-    !      parts_obj% v_euler_parts_y      ( itr )= 0.0D0
-    !      parts_obj% v_euler_parts_z      ( itr )= 0.0D0
-    !  ENDIF
-    !
-    !  ! Print progress on screen
-    !  perc= 100*( itr/parts_obj% npart )
-    !  IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-    !    WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-    !            creturn//" ", perc, "%"
-    !  ENDIF
-    !
-    !ENDDO
-    !PRINT *, "SIZE( pos( 1, : ) )", SIZE( pos( 1, : ) )
-    !pos( 1, : )= PACK( pos( 1, : ), negative_hydro )
-    !PRINT *, "SIZE( pos( 1, : ) )", SIZE( pos( 1, : ) )
-    ! LOGICAL, DIMENSION(npart):: negative_hydro
-    ! negative_hydro(itr)= parts_obj% baryon_density_parts ( itr ) < 0.0D0 &
-    !            .OR. parts_obj% energy_density_parts ( itr ) < 0.0D0 &
-    !            .OR. parts_obj% specific_energy_parts( itr ) < 0.0D0 &
-    !            .OR. parts_obj% pressure_parts       ( itr ) < 0.0D0
-    ! TODO: remove these particles completely. Use PACK?
-    ! pos( 1, : )= PACK( pos( 1, : ), negative_hydro )
-    ! you should check that the particles are mirrored after the deletion of the negative hydro ones
-    !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
-    !PRINT *, " * LORENE hydro ID cleaned."
-    !PRINT *
-
-    !
-    !-- Check that the baryon density, the energy density, the specific
-    !-- energy, and the pressure are positive. If not, print the coordinates
-    !-- of the points to a formatted file
-    !
-    !namefile= "negative-hydro-particles.dat"
-    !CALL parts_obj% analyze_hydro( namefile )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% lapse_parts, &
+    !                                         "lapse_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% shift_parts_x, &
+    !                                         "shift_parts_x" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% shift_parts_y, &
+    !                                         "shift_parts_y" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% shift_parts_z, &
+    !                                         "shift_parts_z" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_xx_parts, &
+    !                                         "g_xx_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_xy_parts, &
+    !                                         "g_xy_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_xz_parts, &
+    !                                         "g_xz_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_yy_parts, &
+    !                                         "g_yy_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_yz_parts, &
+    !                                         "g_yz_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, parts_obj% g_zz_parts, &
+    !                                         "g_zz_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, &
+    !        parts_obj% baryon_density_parts, "baryon_density_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, &
+    !        parts_obj% energy_density_parts, "energy_density_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, &
+    !        parts_obj% specific_energy_parts, "specific_energy_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, &
+    !               parts_obj% pressure_parts, "pressure_parts" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, &
+    !              parts_obj% v_euler_parts_x, "v_euler_parts_x" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, &
+    !              parts_obj% v_euler_parts_y, "v_euler_parts_y" )
+    !CALL Check_Array_for_NAN( parts_obj% npart, &
+    !              parts_obj% v_euler_parts_z, "v_euler_parts_z" )
 
     PRINT *, "** Computing typical length scale for the change in pressure", &
              " on the x axis."
