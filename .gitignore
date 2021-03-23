@@ -50,6 +50,7 @@ SPHINCS_BSSN/*.x
 SPHINCS_BSSN/*.dat
 SPHINCS_BSSN/*.00*
 SPHINCS_BSSN/*.mod
+SPHINCS_BSSN/*.smod
 SPHINCS_BSSN/*.o
 SPHINCS_BSSN/*.optrpt
 SPHINCS_BSSN/*.asc
@@ -57,4 +58,7 @@ SPHINCS_BSSN/'*'
 SPHINCS_BSSN/*.sconsign.dblite
 SPHINCS_fix_metric/*.o
 SPHINCS_fix_metric/*.optrpt
+SPHINCS_fix_metric/*.mod
+SPHINCS_fix_metric/*.smod
+SPHINCS_fix_metric/.sconsign.dblite
 *~
