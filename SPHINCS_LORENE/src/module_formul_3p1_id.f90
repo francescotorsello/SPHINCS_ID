@@ -11,11 +11,12 @@ MODULE formul_3p1_id
   !**********************************************************************
 
 
-  USE utility,      ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
-                          show_progress
-  USE bns_id,       ONLY: bns
-  USE particles_id, ONLY: particles
-  USE timing,       ONLY: timer
+  USE utility,          ONLY: ios, err_msg, perc, creturn, run_id, &
+                              test_status, show_progress
+  USE bns_id,           ONLY: bns
+  USE particles_id,     ONLY: particles
+  USE timing,           ONLY: timer
+  USE mesh_refinement,  ONLY: grid_function_scalar, grid_function, level
 
 
   IMPLICIT NONE
@@ -38,26 +39,26 @@ MODULE formul_3p1_id
 
     INTEGER, PUBLIC:: cons_step
 
-    INTEGER:: ngrid_x, ngrid_y, ngrid_z
+    !INTEGER:: ngrid_x, ngrid_y, ngrid_z
 
-    DOUBLE PRECISION:: dx, dy, dz, dx_1, dy_1, dz_1
+    !DOUBLE PRECISION:: dx, dy, dz, dx_1, dy_1, dz_1
 
     ! Array storing the Cartesian coordinates of the grid points
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid
 
     !
     !-- Arrays storing the 3+1 variables for the LORENE ID on the grid
     !
-    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: lapse
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: shift_u
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: g_phys3_ll
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: K_phys3_ll
-
-    ! Constraints and their l2 norm
-    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC
-    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC_parts
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC_parts
+    !DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: lapse
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: shift_u
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: g_phys3_ll
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: K_phys3_ll
+    !
+    !! Constraints and their l2 norm
+    !DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC
+    !DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC_parts
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC_parts
     DOUBLE PRECISION:: HC_l2
     DOUBLE PRECISION, DIMENSION(3):: MC_l2
     DOUBLE PRECISION:: HC_parts_l2
@@ -67,8 +68,23 @@ MODULE formul_3p1_id
     LOGICAL, PUBLIC:: export_constraints
     LOGICAL, PUBLIC:: export_constraints_details
 
+    !
+    !-- New variables for the refined mesh
+    !
     TYPE(timer):: grid_timer
     TYPE(timer):: importer_timer
+
+    TYPE(level), DIMENSION(:), ALLOCATABLE :: levels
+
+    TYPE(grid_function_scalar):: lapse
+    TYPE(grid_function):: shift_u
+    TYPE(grid_function):: g_phys3_ll
+    TYPE(grid_function):: K_phys3_ll
+
+    TYPE(grid_function_scalar):: HC
+    TYPE(grid_function_scalar):: HC_parts
+    TYPE(grid_function):: MC
+    TYPE(grid_function):: MC_parts
 
 
     CONTAINS

@@ -11,12 +11,13 @@ MODULE formul_bssn_id
   !***********************************************************
 
 
-  USE utility,       ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
-                           compute_g4, determinant_sym4x4_grid, show_progress
-  USE bns_id,        ONLY: bns
-  USE formul_3p1_id, ONLY: formul_3p1
-  USE particles_id,  ONLY: particles
-  USE timing,        ONLY: timer
+  USE utility,          ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
+                              compute_g4, determinant_sym4x4_grid, show_progress
+  USE bns_id,           ONLY: bns
+  USE formul_3p1_id,    ONLY: formul_3p1
+  USE particles_id,     ONLY: particles
+  USE timing,           ONLY: timer
+  USE mesh_refinement,  ONLY: grid_function_scalar, grid_function
 
 
   IMPLICIT NONE
@@ -46,22 +47,22 @@ MODULE formul_bssn_id
     !-- Arrays storing the BSSN variables for the LORENE ID on the grid
     !
     ! Conformal connection
-    DOUBLE PRECISION, ALLOCATABLE :: Gamma_u(:,:,:,:)
+    TYPE(grid_function):: Gamma_u
     ! Conformal factor
-    DOUBLE PRECISION, ALLOCATABLE :: phi(:,:,:)
+    TYPE(grid_function_scalar):: phi
     ! Trace of extrinsic curvature
-    DOUBLE PRECISION, ALLOCATABLE :: trK(:,:,:)
+    TYPE(grid_function_scalar):: trK
     ! Conformal traceless extrinsic curvature
-    DOUBLE PRECISION, ALLOCATABLE :: A_BSSN3_ll(:,:,:,:)
+    TYPE(grid_function):: A_BSSN3_ll
     ! Conformal metric
-    DOUBLE PRECISION, ALLOCATABLE :: g_BSSN3_ll(:,:,:,:)
+    TYPE(grid_function):: g_BSSN3_ll
 
     !
     !-- Connection constraints and its l2 norm
     !
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC
+    TYPE(grid_function):: GC
     DOUBLE PRECISION, DIMENSION(3):: GC_l2
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC_parts
+    TYPE(grid_function):: GC_parts
     DOUBLE PRECISION, DIMENSION(3):: GC_parts_l2
 
     LOGICAL, PUBLIC:: export_bin

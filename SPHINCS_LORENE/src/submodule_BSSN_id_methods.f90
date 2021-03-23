@@ -37,35 +37,35 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !************************************************
 
 
-    USE grav_grid,           ONLY: ngrid_x, ngrid_y, ngrid_z, &
-                                   dx, dy, dz, dx_1, dy_1, dz_1, &
-                                   xR, xL, yR, yL, zR, zL, &
-                                   rad_coord, &
-                                   deallocate_gravity_grid
+    !USE grav_grid,           ONLY: ngrid_x, ngrid_y, ngrid_z, &
+    !                               dx, dy, dz, dx_1, dy_1, dz_1, &
+    !                               xR, xL, yR, yL, zR, zL, &
+    !                               rad_coord, &
+    !                               deallocate_gravity_grid
     !USE NaNChecker,          ONLY: Check_Grid_Function_for_NAN
-    USE tensor,              ONLY: itt, itx, ity, itz, ixx, ixy, &
-                                   ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                   jyy, jyz, jzz, jx, jy, jz, n_sym3x3
-    USE ADM,                 ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
+    USE tensor,                     ONLY: itt, itx, ity, itz, ixx, ixy, &
+                                          ixz, iyy, iyz, izz, jxx, jxy, jxz, &
+                                          jyy, jyz, jzz, jx, jy, jz, n_sym3x3
+    USE ADM_refine,                 ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
                                    K_phys3_ll, g_phys3_ll, &
                                    allocate_ADM, deallocate_ADM
-    USE McLachlan,           ONLY: initialize_BSSN, allocate_Ztmp, &
+    USE McLachlan_refine,           ONLY: initialize_BSSN, allocate_Ztmp, &
                                    deallocate_Ztmp, ADM_to_BSSN, &
                                    ADM_to_BSSN_args
-    USE Tmunu,               ONLY: allocate_Tmunu, deallocate_Tmunu, Tmunu_ll
-    USE GravityAcceleration, ONLY: dt_ehat_grav, dt_S_grav_l, &
+    USE Tmunu_refine,               ONLY: allocate_Tmunu, deallocate_Tmunu, Tmunu_ll
+    USE GravityAcceleration_refine, ONLY: dt_ehat_grav, dt_S_grav_l, &
                                    d_g_phys4_lll, &
                                    allocate_GravityAcceleration, &
                                    deallocate_GravityAcceleration
-    USE options,             ONLY: basename
-    USE constants,           ONLY: Msun_geo
+    USE options,                    ONLY: basename
+    USE constants,                  ONLY: Msun_geo
     !
     !-- Use the arrays from the MODULE BSSN to store the BSSN variables
     !-- for the LORENE ID on the grid, and the SUBROUTINE write_BSSN_dump
     !-- to export them to the binary file needed by the evolution code
     !-- in SPHINCS
     !
-    USE BSSN,   ONLY: allocate_BSSN, deallocate_BSSN, &
+    USE BSSN_refine,   ONLY: allocate_BSSN, deallocate_BSSN, &
                       Gamma_u,          & ! Conformal connection
                       phi,              & ! Conformal factor
                       trK,              & ! Trace of extrinsic curvature
@@ -80,6 +80,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                       lapse_A_BSSN,     & ! Time derivative of lapse
                       shift_B_BSSN_u,   & ! Time derivativeof shift
                       write_BSSN_dump
+    USE mesh_refinement,  ONLY: nlevels
 
     IMPLICIT NONE
 
@@ -87,7 +88,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! compute_and_export_SPH_variables is called
     INTEGER, SAVE:: call_flag= 0
 
-    INTEGER:: ix, iy, iz, i, j, k, allocation_status
+    INTEGER:: ix, iy, iz, i, j, k, allocation_status, l
     DOUBLE PRECISION:: detg
 
 
@@ -100,15 +101,15 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     PRINT *, " * Allocating needed memory..."
     PRINT *
 
-    ngrid_x= THIS% ngrid_x
-    ngrid_y= THIS% ngrid_y
-    ngrid_z= THIS% ngrid_z
-    dx= THIS% dx
-    dy= THIS% dy
-    dz= THIS% dz
-    dx_1= THIS% dx_1
-    dy_1= THIS% dy_1
-    dz_1= THIS% dz_1
+    !ngrid_x= THIS% ngrid_x
+    !ngrid_y= THIS% ngrid_y
+    !ngrid_z= THIS% ngrid_z
+    !dx= THIS% dx
+    !dy= THIS% dy
+    !dz= THIS% dz
+    !dx_1= THIS% dx_1
+    !dy_1= THIS% dy_1
+    !dz_1= THIS% dz_1
 
     CALL allocate_ADM()
     CALL allocate_BSSN()
@@ -124,33 +125,45 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL allocate_GravityAcceleration()
 
     ! Set the stress-energy tensor to 0 (here dummy)
-    Tmunu_ll(:,:,:,:)= 0.0D0
+    !Tmunu_ll(:,:,:,:)= 0.0D0
 
     !
     !-- Allocate memory for the coordinate radius
     !-- (this is needed by ADM_to_BSSN_args)
     !
-    IF( .NOT. ALLOCATED( rad_coord ) )THEN
-        ALLOCATE( rad_coord( THIS% ngrid_x, THIS% ngrid_y, &
-                             THIS% ngrid_z ), STAT= allocation_status )
-    ENDIF
-    IF( allocation_status > 0 )THEN
-       PRINT *, '...allocation error for rad_coord'
-       STOP
-    ENDIF
+    !IF( .NOT. ALLOCATED( rad_coord ) )THEN
+    !    ALLOCATE( rad_coord( THIS% ngrid_x, THIS% ngrid_y, &
+    !                         THIS% ngrid_z ), STAT= allocation_status )
+    !ENDIF
+    !IF( allocation_status > 0 )THEN
+    !   PRINT *, '...allocation error for rad_coord'
+    !   STOP
+    !ENDIF
+    !
+    !DO k= 1, THIS% ngrid_z
+    !  DO j= 1, THIS% ngrid_y
+    !    DO i= 1, THIS% ngrid_x
+    !      rad_coord( i, j, k )= SQRT( (xL+(i-1)*dx)**2 &
+    !                                + (yL+(j-1)*dy)**2 &
+    !                                + (zL+(k-1)*dz)**2 )
+    !    ENDDO
+    !  ENDDO
+    !ENDDO
 
-    DO k= 1, THIS% ngrid_z
-      DO j= 1, THIS% ngrid_y
-        DO i= 1, THIS% ngrid_x
-          rad_coord( i, j, k )= SQRT( (xL+(i-1)*dx)**2 &
-                                    + (yL+(j-1)*dy)**2 &
-                                    + (zL+(k-1)*dz)**2 )
-        ENDDO
-      ENDDO
-    ENDDO
+    ! TODO: assign to the MODULE variables and call ADM_to_BSSN
+    ref_levels: DO l= 1, nlevels
 
-    dt_lapse  = 0.0D0
-    dt_shift_u= 0.0D0
+      Tmunu_ll% levels(l)% var= 0.0D0
+
+      dt_lapse% levels(l)% var  = 0.0D0
+      dt_shift_u% levels(l)% var= 0.0D0
+
+      lapse% levels(l)% var= THIS% lapse% levels(l)% var
+      shift_u% levels(l)% var= THIS% shift_u% levels(l)% var
+      g_phys3_ll% levels(l)% var= THIS% g_phys3_ll% levels(l)% var
+      K_phys3_ll% levels(l)% var= THIS% K_phys3_ll% levels(l)% var
+
+    ENDDO ref_levels
 
     !
     !-- Compute BSSN variables, and time the process
@@ -160,40 +173,41 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     PRINT *, " * Computing BSSN variables..."
     PRINT *
     CALL THIS% bssn_computer_timer% start_timer()
-    CALL ADM_to_BSSN_args( &
-      THIS% dx, THIS% dy, THIS% dz, &
-      ! ADM variables (input)
-      THIS% g_phys3_ll(:,:,:,jxx), THIS% g_phys3_ll(:,:,:,jxy), &
-      THIS% g_phys3_ll(:,:,:,jxz), THIS% g_phys3_ll(:,:,:,jyy), &
-      THIS% g_phys3_ll(:,:,:,jyz), THIS% g_phys3_ll(:,:,:,jzz), &
-      THIS% K_phys3_ll(:,:,:,jxx), THIS% K_phys3_ll(:,:,:,jxy), &
-      THIS% K_phys3_ll(:,:,:,jxz), THIS% K_phys3_ll(:,:,:,jyy), &
-      THIS% K_phys3_ll(:,:,:,jyz), THIS% K_phys3_ll(:,:,:,jzz), &
-      THIS% lapse(:,:,:), &
-      THIS% shift_u(:,:,:,jx), &
-      THIS% shift_u(:,:,:,jy), &
-      THIS% shift_u(:,:,:,jz), &
-      dt_lapse(:,:,:), &
-      dt_shift_u(:,:,:,jx), dt_shift_u(:,:,:,jy), dt_shift_u(:,:,:,jz), &
-      ! BSSN variables (output)
-      g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
-      g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
-      g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
-      A_BSSN3_ll(:,:,:,jxx), A_BSSN3_ll(:,:,:,jxy), &
-      A_BSSN3_ll(:,:,:,jxz), A_BSSN3_ll(:,:,:,jyy), &
-      A_BSSN3_ll(:,:,:,jyz), A_BSSN3_ll(:,:,:,jzz), &
-      phi(:,:,:), trK(:,:,:), Theta_Z4(:,:,:), &
-      lapse_A_BSSN(:,:,:), &
-      shift_B_BSSN_u(:,:,:,jx), shift_B_BSSN_u(:,:,:,jy), &
-      shift_B_BSSN_u(:,:,:,jz), &
-      Gamma_u(:,:,:,jx), Gamma_u(:,:,:,jy), &
-      Gamma_u(:,:,:,jz) &
-    )
+    CALL ADM_to_BSSN()
+    !CALL ADM_to_BSSN_args( &
+    !  THIS% dx, THIS% dy, THIS% dz, &
+    !  ! ADM variables (input)
+    !  THIS% g_phys3_ll(:,:,:,jxx), THIS% g_phys3_ll(:,:,:,jxy), &
+    !  THIS% g_phys3_ll(:,:,:,jxz), THIS% g_phys3_ll(:,:,:,jyy), &
+    !  THIS% g_phys3_ll(:,:,:,jyz), THIS% g_phys3_ll(:,:,:,jzz), &
+    !  THIS% K_phys3_ll(:,:,:,jxx), THIS% K_phys3_ll(:,:,:,jxy), &
+    !  THIS% K_phys3_ll(:,:,:,jxz), THIS% K_phys3_ll(:,:,:,jyy), &
+    !  THIS% K_phys3_ll(:,:,:,jyz), THIS% K_phys3_ll(:,:,:,jzz), &
+    !  THIS% lapse(:,:,:), &
+    !  THIS% shift_u(:,:,:,jx), &
+    !  THIS% shift_u(:,:,:,jy), &
+    !  THIS% shift_u(:,:,:,jz), &
+    !  dt_lapse(:,:,:), &
+    !  dt_shift_u(:,:,:,jx), dt_shift_u(:,:,:,jy), dt_shift_u(:,:,:,jz), &
+    !  ! BSSN variables (output)
+    !  g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
+    !  g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
+    !  g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
+    !  A_BSSN3_ll(:,:,:,jxx), A_BSSN3_ll(:,:,:,jxy), &
+    !  A_BSSN3_ll(:,:,:,jxz), A_BSSN3_ll(:,:,:,jyy), &
+    !  A_BSSN3_ll(:,:,:,jyz), A_BSSN3_ll(:,:,:,jzz), &
+    !  phi(:,:,:), trK(:,:,:), Theta_Z4(:,:,:), &
+    !  lapse_A_BSSN(:,:,:), &
+    !  shift_B_BSSN_u(:,:,:,jx), shift_B_BSSN_u(:,:,:,jy), &
+    !  shift_B_BSSN_u(:,:,:,jz), &
+    !  Gamma_u(:,:,:,jx), Gamma_u(:,:,:,jy), &
+    !  Gamma_u(:,:,:,jz) &
+    !)
     CALL THIS% bssn_computer_timer% stop_timer()
 
     ! Set the MODULE variables equal to the TYPE variables
-    lapse= THIS% lapse
-    shift_u= THIS% shift_u
+    !lapse= THIS% lapse
+    !shift_u= THIS% shift_u
 
     !
     !-- Check the BSSN MODULE variables for NaNs
@@ -235,11 +249,20 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !
     !-- Setting the local variables equal to the MODULE variables
     !
-    THIS% g_BSSN3_ll= g_BSSN3_ll
-    THIS% A_BSSN3_ll= A_BSSN3_ll
-    THIS% phi       = phi
-    THIS% trK       = trK
-    THIS% Gamma_u   = Gamma_u
+    !THIS% g_BSSN3_ll= g_BSSN3_ll
+    !THIS% A_BSSN3_ll= A_BSSN3_ll
+    !THIS% phi       = phi
+    !THIS% trK       = trK
+    !THIS% Gamma_u   = Gamma_u
+    ref_levels: DO l= 1, nlevels
+
+      THIS% Gamma_u% levels(l)% var= Gamma_u% levels(l)% var
+      THIS% phi% levels(l)% var= phi% levels(l)% var
+      THIS% trK% levels(l)% var= trK% levels(l)% var
+      THIS% g_BSSN3_ll% levels(l)% var= g_BSSN3_ll% levels(l)% var
+      THIS% A_BSSN3_ll% levels(l)% var= A_BSSN3_ll% levels(l)% var
+
+    ENDDO ref_levels
 
     ! Write BSSN ID to a binary file to be read by the evolution code
     ! in SPHINCS
@@ -555,6 +578,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     USE tensor,              ONLY: itt, itx, ity, itz, ixx, ixy, &
                                    ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                    jyy, jyz, jzz, jx, jy, jz
+    USE mesh_refinement,     ONLY: output_1D, output_2D
 
     IMPLICIT NONE
 
@@ -771,16 +795,17 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     USE constants,  ONLY: c_light2, cm2m, MSun, g2kg, m2cm, &
                           lorene2hydrobase, MSun_geo, pi
     USE matrix,     ONLY: invert_4x4_matrix
-    USE grav_grid,  ONLY: ngrid_x, ngrid_y, ngrid_z, dx, dy, dz, &
-                          dx_1, dy_1, dz_1
+    !USE grav_grid,  ONLY: ngrid_x, ngrid_y, ngrid_z, dx, dy, dz, &
+    !                      dx_1, dy_1, dz_1
     USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                           jyy, jyz, jzz, jx, jy, jz, n_sym3x3, n_sym4x4
-    USE McLachlan,  ONLY: ghost_size, BSSN_CONSTRAINTS_INTERIOR
+    USE McLachlan_refine,  ONLY: BSSN_CONSTRAINTS_INTERIOR
+    USE mesh_refinement,   ONLY: allocate_grid_function, nlevels
 
     IMPLICIT NONE
 
-    INTEGER:: ix, iy, iz, allocation_status, fd_lim
+    INTEGER:: ix, iy, iz, allocation_status, fd_lim, l
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
@@ -788,42 +813,20 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     DOUBLE PRECISION:: min_abs_y, min_abs_z
     DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
 
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: baryon_density
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: energy_density
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: specific_energy
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: pressure
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z, 3 ):: v_euler
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z, 3 ):: v_euler_l
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z, 0:3 ):: u_euler_l
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: lorentz_factor
+    TYPE(grid_function_scalar):: baryon_density
+    TYPE(grid_function_scalar):: energy_density
+    TYPE(grid_function_scalar):: specific_energy
+    TYPE(grid_function_scalar):: pressure
+    TYPE(grid_function):: v_euler
+    TYPE(grid_function):: v_euler_l
+    TYPE(grid_function):: u_euler_l
+    TYPE(grid_function_scalar):: lorentz_factor
     DOUBLE PRECISION:: u_euler_norm= 0.0D0
     DOUBLE PRECISION:: detg4
     ! Spacetime metric
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z, &
-                                 n_sym4x4):: g4
+    TYPE(grid_function):: g4
     ! Stress-energy tensor
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z, &
-                                 n_sym4x4):: Tmunu_ll
+    TYPE(grid_function):: Tmunu_ll
     ! Spacetime metric as a 4x4 matrix
     DOUBLE PRECISION, DIMENSION( 4, 4 ):: g4temp
     ! Inverse spacetime metric as a 4x4 matrix
@@ -832,21 +835,11 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! Declaration of debug variables needed to compute the Hamiltonian
     ! constraint directly, without calling the Cactus-bound SUBROUTINE
     ! BSSN_CONSTRAINTS_INTERIOR
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: HC_hand
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: HC_rho
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: HC_trK
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: HC_A
-    DOUBLE PRECISION, DIMENSION( THIS% ngrid_x, &
-                                 THIS% ngrid_y, &
-                                 THIS% ngrid_z ):: HC_derphi
+    TYPE(grid_function_scalar):: HC_hand
+    TYPE(grid_function_scalar):: HC_rho
+    TYPE(grid_function_scalar):: HC_trK
+    TYPE(grid_function_scalar):: HC_A
+    TYPE(grid_function_scalar):: HC_derphi
 
     CHARACTER( LEN= : ), ALLOCATABLE:: name_constraint
     CHARACTER( LEN= : ), ALLOCATABLE:: name_analysis
@@ -854,20 +847,39 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
 
+    CALL allocate_grid_function( baryon_density, "baryon_density", 1 )
+    CALL allocate_grid_function( energy_density, "energy_density", 1 )
+    CALL allocate_grid_function( specific_energy, "specific_energy", 1 )
+    CALL allocate_grid_function( pressure, "pressure", 1 )
+
+    CALL allocate_grid_function( v_euler, "v_euler", 3 )
+    CALL allocate_grid_function( v_euler_l, "v_euler_l", 3 )
+    CALL allocate_grid_function( u_euler_l, "u_euler_l", 4 )
+    CALL allocate_grid_function( lorentz_factor, "lorentz_factor", 1 )
+
+    CALL allocate_grid_function( g4, "g4", n_sym4x4 )
+    CALL allocate_grid_function( Tmunu_ll, "Tmunu_ll", n_sym4x4 )
+
+    CALL allocate_grid_function( HC_hand, "HC_hand", 1 )
+    CALL allocate_grid_function( HC_rho, "HC_rho", 1 )
+    CALL allocate_grid_function( HC_trK, "HC_trK", 1 )
+    CALL allocate_grid_function( HC_A, "HC_A", 1 )
+    CALL allocate_grid_function( HC_derphi, "HC_derphi", 1 )
+
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
     ! size. This results in a segmentation fault.
     ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
 
-    ngrid_x= THIS% ngrid_x
-    ngrid_y= THIS% ngrid_y
-    ngrid_z= THIS% ngrid_z
-    dx= THIS% dx
-    dy= THIS% dy
-    dz= THIS% dz
-    dx_1= THIS% dx_1
-    dy_1= THIS% dy_1
-    dz_1= THIS% dz_1
+    !grid_x= THIS% ngrid_x
+    !grid_y= THIS% ngrid_y
+    !grid_z= THIS% ngrid_z
+    !x= THIS% dx
+    !y= THIS% dy
+    !z= THIS% dz
+    !x_1= THIS% dx_1
+    !y_1= THIS% dy_1
+    !z_1= THIS% dz_1
 
     !
     !-- Keeping the following lines commented, in case the arrays have to be
@@ -897,9 +909,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !  ENDDO
     !ENDDO
 
-    ALLOCATE( THIS% HC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-    ALLOCATE( THIS% MC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
-    ALLOCATE( THIS% GC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
+    !ALLOCATE( THIS% HC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
+    !ALLOCATE( THIS% MC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
+    !ALLOCATE( THIS% GC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
+
+    CALL allocate_grid_function( THIS% HC, "myHC", 1 )
+    CALL allocate_grid_function( THIS% MC, "myMC", 3 )
+    CALL allocate_grid_function( THIS% GC, "myGC", 3 )
+
     !ALLOCATE( Tmunu_ll( &
     !             THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, n_sym4x4 ) )
 
@@ -940,13 +957,19 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Import the hydro LORENE ID on the gravity grid
     !
     PRINT *, "** Importing LORENE hydro ID on the gravity grid..."
-    CALL bns_obj% import_id( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-                             THIS% grid, &
-                             baryon_density, &
-                             energy_density, &
-                             specific_energy, &
-                             pressure, &
-                             v_euler )
+    ref_levels: DO l= 1, nlevels, 1
+
+      CALL bns_obj% import_id( THIS% levels(l)% ngrid_x,
+                               THIS% levels(l)% ngrid_y,
+                               THIS% levels(l)% ngrid_z, &
+                               coords% levels(l)% var, &
+                               baryon_density% levels(l)% var, &
+                               energy_density% levels(l)% var, &
+                               specific_energy% levels(l)% var, &
+                               pressure% levels(l)% var, &
+                               v_euler% levels(l)% var )
+
+    ENDDO ref_levels
     PRINT *, " * LORENE hydro ID imported."
     PRINT *
 
@@ -954,39 +977,40 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Replace the points with negative hydro fields near the surface
     !-- with vacuum
     !
-    PRINT *, "** Cleaning LORENE hydro ID around the surfaces of the stars..."
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
-
-          IF(      baryon_density ( ix, iy, iz ) < 0.0D0 &
-              .OR. energy_density ( ix, iy, iz ) < 0.0D0 &
-              .OR. specific_energy( ix, iy, iz ) < 0.0D0 &
-              .OR. pressure       ( ix, iy, iz ) < 0.0D0 )THEN
-              baryon_density ( ix, iy, iz )= 0.0D0
-              energy_density ( ix, iy, iz )= 0.0D0
-              specific_energy( ix, iy, iz )= 0.0D0
-              pressure       ( ix, iy, iz )= 0.0D0
-              v_euler        ( ix, iy, iz, : )= 0.0D0
-          ENDIF
-
-        ! Print progress on screen
-        perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(iz - 1) &
-              + THIS% ngrid_x*(iy - 1) + ix) &
-              /( THIS% ngrid_x* THIS% ngrid_y*THIS% ngrid_z )
-        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-          WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-                  creturn//" ", perc, "%"
-        ENDIF
-
-        ENDDO
-      ENDDO
-    ENDDO
-    WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
-    PRINT *, " * LORENE hydro ID cleaned."
-    PRINT *
+    !PRINT *, "** Cleaning LORENE hydro ID around the surfaces of the stars..."
+    !DO iz= 1, THIS% ngrid_z, 1
+    !  DO iy= 1, THIS% ngrid_y, 1
+    !    DO ix= 1, THIS% ngrid_x, 1
+    !
+    !      IF(      baryon_density ( ix, iy, iz ) < 0.0D0 &
+    !          .OR. energy_density ( ix, iy, iz ) < 0.0D0 &
+    !          .OR. specific_energy( ix, iy, iz ) < 0.0D0 &
+    !          .OR. pressure       ( ix, iy, iz ) < 0.0D0 )THEN
+    !          baryon_density ( ix, iy, iz )= 0.0D0
+    !          energy_density ( ix, iy, iz )= 0.0D0
+    !          specific_energy( ix, iy, iz )= 0.0D0
+    !          pressure       ( ix, iy, iz )= 0.0D0
+    !          v_euler        ( ix, iy, iz, : )= 0.0D0
+    !      ENDIF
+    !
+    !    ! Print progress on screen
+    !    perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(iz - 1) &
+    !          + THIS% ngrid_x*(iy - 1) + ix) &
+    !          /( THIS% ngrid_x* THIS% ngrid_y*THIS% ngrid_z )
+    !    IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+    !      WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+    !              creturn//" ", perc, "%"
+    !    ENDIF
+    !
+    !    ENDDO
+    !  ENDDO
+    !ENDDO
+    !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+    !PRINT *, " * LORENE hydro ID cleaned."
+    !PRINT *
 
     !THIS% shift_u= 0.0D0*2.15D-1*THIS% shift_u
+
 
     !---------------------------!
     !--  Compute constraints  --!
@@ -996,227 +1020,238 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Compute the fluid 4-velocity in the coordinate frame
     !
     PRINT *, "** Computing fluid 4-velocity wrt Eulerian observer..."
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
+    ASSOCIATE( v_euler_l => v_euler_l% levels(l)% var, &
+               u_euler_l => u_euler_l% levels(l)% var, &
+               v_euler => v_euler% levels(l)% var, &
+               lorentz_factor => lorentz_factor% levels(l)% var, &
+               lapse => THIS% lapse% levels(l)% var, &
+               shift_u => THIS% shift_u% levels(l)% var, &
+               g_phys3_ll => THIS% g_phys3_ll% levels(l)% var, &
+               Tmunu_ll => THIS% Tmunu_ll% levels(l)% var )
+    ref_levels2: DO l= 1, nlevels
+      DO k= 1, THIS% levels(l)% ngrid_z, 1
+        DO j= 1, THIS% levels(l)% ngrid_y, 1
+          DO i= 1, THIS% levels(l)% ngrid_x, 1
 
-          !energy_density( ix, iy, iz )= baryon_density( ix, iy, iz ) &
-          !                            + ( specific_energy(ix,iy,iz) + 1.0 ) &
-          !                                 *baryon_density( ix, iy, iz )
+            !energy_density( i, j, k )= baryon_density( i, j, k ) &
+            !                            + ( specific_energy(i,j,k) + 1.0 ) &
+            !                                 *baryon_density( i, j, k )
 
-          v_euler_l(ix,iy,iz,1)= THIS% g_phys3_ll(ix,iy,iz,jxx)&
-                                      *v_euler(ix,iy,iz,1)&
-                               + THIS% g_phys3_ll(ix,iy,iz,jxy)&
-                                      *v_euler(ix,iy,iz,2)&
-                               + THIS% g_phys3_ll(ix,iy,iz,jxz)&
-                                      *v_euler(ix,iy,iz,3)
-          v_euler_l(ix,iy,iz,2)= THIS% g_phys3_ll(ix,iy,iz,jxy)&
-                                      *v_euler(ix,iy,iz,1)&
-                               + THIS% g_phys3_ll(ix,iy,iz,jyy)&
-                                      *v_euler(ix,iy,iz,2)&
-                               + THIS% g_phys3_ll(ix,iy,iz,jyz)&
-                                      *v_euler(ix,iy,iz,3)
-          v_euler_l(ix,iy,iz,3)= THIS% g_phys3_ll(ix,iy,iz,jxz)&
-                                      *v_euler(ix,iy,iz,1)&
-                               + THIS% g_phys3_ll(ix,iy,iz,jyz)&
-                                      *v_euler(ix,iy,iz,2)&
-                               + THIS% g_phys3_ll(ix,iy,iz,jzz)&
-                                      *v_euler(ix,iy,iz,3)
+            v_euler_l(i,j,k,jx)= &
+                                   g_phys3_ll(i,j,k,jxx)&
+                                        *v_euler(i,j,k,jx)&
+                                 + g_phys3_ll(i,j,k,jxy)&
+                                        *v_euler(i,j,k,jy)&
+                                 + g_phys3_ll(i,j,k,jxz)&
+                                        *v_euler(i,j,k,jz)
+            v_euler_l(i,j,k,jy)= g_phys3_ll(i,j,k,jxy)&
+                                        *v_euler(i,j,k,jx)&
+                                 + g_phys3_ll(i,j,k,jyy)&
+                                        *v_euler(i,j,k,jy)&
+                                 + g_phys3_ll(i,j,k,jyz)&
+                                        *v_euler(i,j,k,jz)
+            v_euler_l(i,j,k,jz)= g_phys3_ll(i,j,k,jxz)&
+                                        *v_euler(i,j,k,jx)&
+                                 + g_phys3_ll(i,j,k,jyz)&
+                                        *v_euler(i,j,k,jy)&
+                                 + g_phys3_ll(i,j,k,jzz)&
+                                        *v_euler(i,j,k,jz)
 
-          lorentz_factor( ix, iy, iz )= 1.0D0/SQRT( 1.0D0 &
-                              - ( v_euler_l(ix,iy,iz,1)*v_euler(ix,iy,iz,1) &
-                                + v_euler_l(ix,iy,iz,2)*v_euler(ix,iy,iz,2) &
-                                + v_euler_l(ix,iy,iz,3)*v_euler(ix,iy,iz,3) ) )
+            lorentz_factor( i, j, k )= 1.0D0/SQRT( 1.0D0 &
+                            - ( v_euler_l(i,j,k,jx)*v_euler(i,j,k,jx) &
+                              + v_euler_l(i,j,k,jy)*v_euler(i,j,k,jy) &
+                              + v_euler_l(i,j,k,jz)*v_euler(i,j,k,jz) ) )
 
-          u_euler_l(ix,iy,iz,0)= lorentz_factor( ix, iy, iz ) &
-             *( - THIS% lapse( ix, iy, iz ) &
-                + v_euler_l( ix, iy, iz, 1 )*THIS% shift_u( ix, iy, iz, 1 ) &
-                + v_euler_l( ix, iy, iz, 2 )*THIS% shift_u( ix, iy, iz, 2 ) &
-                + v_euler_l( ix, iy, iz, 3 )*THIS% shift_u( ix, iy, iz, 3 ) )
-          u_euler_l(ix,iy,iz,1)= lorentz_factor( ix, iy, iz ) &
-                                 *v_euler_l( ix, iy, iz, 1 )
-          u_euler_l(ix,iy,iz,2)= lorentz_factor( ix, iy, iz ) &
-                                 *v_euler_l( ix, iy, iz, 2 )
-          u_euler_l(ix,iy,iz,3)= lorentz_factor( ix, iy, iz ) &
-                                 *v_euler_l( ix, iy, iz, 3 )
+            u_euler_l(i,j,k,it)= lorentz_factor( i, j, k ) &
+               *( - lapse( i, j, k ) &
+                  + v_euler_l( i, j, k, jx )*shift_u( i, j, k, jx ) &
+                  + v_euler_l( i, j, k, jy )*shift_u( i, j, k, jy ) &
+                  + v_euler_l( i, j, k, jz )*shift_u( i, j, k, jz ) )
+            u_euler_l(i,j,k,ix)= lorentz_factor( i, j, k ) &
+                                   *v_euler_l( i, j, k, jx )
+            u_euler_l(i,j,k,iy)= lorentz_factor( i, j, k ) &
+                                   *v_euler_l( i, j, k, jy )
+            u_euler_l(i,j,k,ik)= lorentz_factor( i, j, k ) &
+                                   *v_euler_l( i, j, k, jz )
 
-          CALL compute_g4( ix, iy, iz, THIS% lapse, THIS% shift_u, &
-                           THIS% g_phys3_ll, g4 )
+            CALL compute_g4( i, j, k, lapse, shift_u, g_phys3_ll, g4 )
 
-          CALL determinant_sym4x4_grid( ix, iy, iz, g4, detg4 )
+            CALL determinant_sym4x4_grid( i, j, k, g4, detg4 )
 
-          IF( ABS( detg4 ) < 1.0D-10 )THEN
-              PRINT *, "The determinant of the spacetime metric "&
-                       // "is effectively 0 at the grid point " &
-                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, &
-                          ")."
-              PRINT *, "detg4=", detg4
-              PRINT *
-              STOP
-          ELSEIF( detg4 > 0.0D0 )THEN
-              PRINT *, "The determinant of the spacetime metric "&
-                       // "is positive at the grid point " &
-                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, &
-                          ")."
-              PRINT *, "detg4=", detg4
-              PRINT *
-              STOP
+            IF( ABS( detg4 ) < 1.0D-10 )THEN
+                PRINT *, "The determinant of the spacetime metric "&
+                         // "is effectively 0 at the grid point " &
+                         // "(i,j,k)= (", i, ",", j,",",k, &
+                            ")."
+                PRINT *, "detg4=", detg4
+                PRINT *
+                STOP
+            ELSEIF( detg4 > 0.0D0 )THEN
+                PRINT *, "The determinant of the spacetime metric "&
+                         // "is positive at the grid point " &
+                         // "(i,j,k)= (", i, ",", j,",",k, &
+                            ")."
+                PRINT *, "detg4=", detg4
+                PRINT *
+                STOP
+            ENDIF
+
+            g4temp(1,1)= g4(i,j,k,itt)
+            g4temp(1,2)= g4(i,j,k,itx)
+            g4temp(1,3)= g4(i,j,k,ity)
+            g4temp(1,4)= g4(i,j,k,itz)
+
+            g4temp(2,1)= g4(i,j,k,itx)
+            g4temp(2,2)= g4(i,j,k,ixx)
+            g4temp(2,3)= g4(i,j,k,ixy)
+            g4temp(2,4)= g4(i,j,k,ixz)
+
+            g4temp(3,1)= g4(i,j,k,ity)
+            g4temp(3,2)= g4(i,j,k,ixy)
+            g4temp(3,3)= g4(i,j,k,iyy)
+            g4temp(3,4)= g4(i,j,k,iyz)
+
+            g4temp(4,1)= g4(i,j,k,itz)
+            g4temp(4,2)= g4(i,j,k,ixz)
+            g4temp(4,3)= g4(i,j,k,iyz)
+            g4temp(4,4)= g4(i,j,k,izz)
+
+            CALL invert_4x4_matrix( g4temp, ig4 )
+
+            u_euler_norm= ig4(it,it)* &
+                          u_euler_l(i,j,k,it)*u_euler_l(i,j,k,it) &
+                        + 2.0D0*ig4(it,ix)* &
+                          u_euler_l(i,j,k,it)*u_euler_l(i,j,k,ix) &
+                        + 2.0D0*ig4(it,iy)* &
+                          u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iy) &
+                        + 2.0D0*ig4(it,iz)* &
+                          u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iz) &
+                        + ig4(ix,ix)* &
+                          u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,ix) &
+                        + 2.0D0*ig4(ix,iy)* &
+                          u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iy) &
+                        + 2.0D0*ig4(ix,iz)* &
+                          u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iz) &
+                        + ig4(iy,iy)* &
+                          u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iy) &
+                        + 2.0D0*ig4(iy,iz)* &
+                          u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iz) &
+                        + 2.0D0*ig4(iz,iz)* &
+                          u_euler_l(i,j,k,iz)*u_euler_l(i,j,k,iz)
+
+            IF( ABS( u_euler_norm + 1.0D0 ) > 1.0D-4 )THEN
+                PRINT *, "** ERROR! The fluid 4-velocity in the " &
+                         // "coordinate frame does not have norm -1. " &
+                         // "The norm is", u_euler_norm
+                STOP
+            ENDIF
+
+          ! Print progress on screen
+          perc= 100*(THIS% levels(l)% ngrid_x*THIS% levels(l)% ngrid_y*(k - 1) &
+                + THIS% levels(l)% ngrid_x*(j - 1) + i) &
+                /( THIS% levels(l)% ngrid_x*THIS% levels(l)% ngrid_y*THIS% levels(l)% ngrid_z )
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+            WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) creturn//" ", perc, "%"
           ENDIF
 
-          g4temp(1,1)= g4(ix,iy,iz,itt)
-          g4temp(1,2)= g4(ix,iy,iz,itx)
-          g4temp(1,3)= g4(ix,iy,iz,ity)
-          g4temp(1,4)= g4(ix,iy,iz,itz)
+          ENDDO
+        ENDDO
+      ENDDO
+      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+      PRINT *, " * Fluid 4-velocity wrt Eulerian observer computed."
+      PRINT *
 
-          g4temp(2,1)= g4(ix,iy,iz,itx)
-          g4temp(2,2)= g4(ix,iy,iz,ixx)
-          g4temp(2,3)= g4(ix,iy,iz,ixy)
-          g4temp(2,4)= g4(ix,iy,iz,ixz)
+      ! Note that the units used in the spacetime part of SPHINCS are the
+      ! same units as in the HydroBase thorn in the Einstein Toolkit.
+      ! Such units can be found here, https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
+      ! The order of magnitude of the energy density can be found in
+      ! https://www.ias.ac.in/article/fulltext/pram/084/05/0927-0941,
+      ! and it is 150 MeV fm^{-3} ~ (2.4*10^{-11}J) / (10^{-45}m^3)
+      !                           = 2.4*10^34 J m^{-3}
 
-          g4temp(3,1)= g4(ix,iy,iz,ity)
-          g4temp(3,2)= g4(ix,iy,iz,ixy)
-          g4temp(3,3)= g4(ix,iy,iz,iyy)
-          g4temp(3,4)= g4(ix,iy,iz,iyz)
+      !
+      !-- Compute the stress-energy tensor
+      !
+      PRINT *, "** Computing stress-energy tensor..."
+      Tmunu_ll= 0.0
+      DO k= 1, THIS% ngrid_z, 1
+        DO j= 1, THIS% ngrid_y, 1
+          DO i= 1, THIS% ngrid_x, 1
 
-          g4temp(4,1)= g4(ix,iy,iz,itz)
-          g4temp(4,2)= g4(ix,iy,iz,ixz)
-          g4temp(4,3)= g4(ix,iy,iz,iyz)
-          g4temp(4,4)= g4(ix,iy,iz,izz)
+            Tmunu_ll(i,j,k,itt)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,0)*u_euler_l(i,j,k,0) &
+                    + pressure(i,j,k)*g4(i,j,k,itt) &
+                     )
 
-          CALL invert_4x4_matrix( g4temp, ig4 )
+            Tmunu_ll(i,j,k,itx)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,0)*u_euler_l(i,j,k,1) &
+                    + pressure(i,j,k)*g4(i,j,k,itx) &
+                     )
 
-          u_euler_norm= ig4(1,1)* &
-                        u_euler_l(ix,iy,iz,0)*u_euler_l(ix,iy,iz,0) &
-                      + 2.0D0*ig4(1,2)* &
-                        u_euler_l(ix,iy,iz,0)*u_euler_l(ix,iy,iz,1) &
-                      + 2.0D0*ig4(1,3)* &
-                        u_euler_l(ix,iy,iz,0)*u_euler_l(ix,iy,iz,2) &
-                      + 2.0D0*ig4(1,4)* &
-                        u_euler_l(ix,iy,iz,0)*u_euler_l(ix,iy,iz,3) &
-                      + ig4(2,2)* &
-                        u_euler_l(ix,iy,iz,1)*u_euler_l(ix,iy,iz,1) &
-                      + 2.0D0*ig4(2,3)* &
-                        u_euler_l(ix,iy,iz,1)*u_euler_l(ix,iy,iz,2) &
-                      + 2.0D0*ig4(2,4)* &
-                        u_euler_l(ix,iy,iz,1)*u_euler_l(ix,iy,iz,3) &
-                      + ig4(3,3)* &
-                        u_euler_l(ix,iy,iz,2)*u_euler_l(ix,iy,iz,2) &
-                      + 2.0D0*ig4(3,4)* &
-                        u_euler_l(ix,iy,iz,2)*u_euler_l(ix,iy,iz,3) &
-                      + 2.0D0*ig4(4,4)* &
-                        u_euler_l(ix,iy,iz,3)*u_euler_l(ix,iy,iz,3)
+            Tmunu_ll(i,j,k,ity)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,0)*u_euler_l(i,j,k,2) &
+                    + pressure(i,j,k)*g4(i,j,k,ity) &
+                     )
 
-          IF( ABS( u_euler_norm + 1.0D0 ) > 1.0D-4 )THEN
-              PRINT *, "** ERROR! The fluid 4-velocity in the " &
-                       // "coordinate frame does not have norm -1. " &
-                       // "The norm is", u_euler_norm
-              STOP
+            Tmunu_ll(i,j,k,itz)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,0)*u_euler_l(i,j,k,3) &
+                    + pressure(i,j,k)*g4(i,j,k,itz) &
+                     )
+
+            Tmunu_ll(i,j,k,ixx)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,1)*u_euler_l(i,j,k,1) &
+                    + pressure(i,j,k)*g4(i,j,k,ixx) &
+                     )
+
+            Tmunu_ll(i,j,k,ixy)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,1)*u_euler_l(i,j,k,2) &
+                    + pressure(i,j,k)*g4(i,j,k,ixy) &
+                     )
+
+            Tmunu_ll(i,j,k,ixz)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,1)*u_euler_l(i,j,k,3) &
+                    + pressure(i,j,k)*g4(i,j,k,ixz) &
+                     )
+
+            Tmunu_ll(i,j,k,iyy)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,2)*u_euler_l(i,j,k,2) &
+                    + pressure(i,j,k)*g4(i,j,k,iyy)  &
+                     )
+
+            Tmunu_ll(i,j,k,iyz)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,2)*u_euler_l(i,j,k,3) &
+                    + pressure(i,j,k)*g4(i,j,k,iyz) &
+                     )
+
+            Tmunu_ll(i,j,k,izz)= lorene2hydrobase*( &
+                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                    *u_euler_l(i,j,k,3)*u_euler_l(i,j,k,3) &
+                    + pressure(i,j,k)*g4(i,j,k,izz) &
+                     )
+
+          ! Print progress on screen
+          perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(k - 1) &
+                + THIS% ngrid_x*(j - 1) + i) &
+                /( THIS% ngrid_x* THIS% ngrid_y*THIS% ngrid_z )
+          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+            WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                    creturn//" ", perc, "%"
           ENDIF
 
-        ! Print progress on screen
-        perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(iz - 1) &
-              + THIS% ngrid_x*(iy - 1) + ix) &
-              /( THIS% ngrid_x*THIS% ngrid_y*THIS% ngrid_z )
-        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-          WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) creturn//" ", perc, "%"
-        ENDIF
-
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
-    WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
-    PRINT *, " * Fluid 4-velocity wrt Eulerian observer computed."
-    PRINT *
-
-    ! Note that the units used in the spacetime part of SPHINCS are the
-    ! same units as in the HydroBase thorn in the Einstein Toolkit.
-    ! Such units can be found here, https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
-    ! The order of magnitude of the energy density can be found in
-    ! https://www.ias.ac.in/article/fulltext/pram/084/05/0927-0941,
-    ! and it is 150 MeV fm^{-3} ~ (2.4*10^{-11}J) / (10^{-45}m^3)
-    !                           = 2.4*10^34 J m^{-3}
-
-    !
-    !-- Compute the stress-energy tensor
-    !
-    PRINT *, "** Computing stress-energy tensor..."
-    Tmunu_ll= 0.0
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
-
-          Tmunu_ll(ix,iy,iz,itt)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,0)*u_euler_l(ix,iy,iz,0) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,itt) &
-                   )
-
-          Tmunu_ll(ix,iy,iz,itx)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,0)*u_euler_l(ix,iy,iz,1) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,itx) &
-                   )
-
-          Tmunu_ll(ix,iy,iz,ity)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,0)*u_euler_l(ix,iy,iz,2) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,ity) &
-                   )
-
-          Tmunu_ll(ix,iy,iz,itz)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,0)*u_euler_l(ix,iy,iz,3) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,itz) &
-                   )
-
-          Tmunu_ll(ix,iy,iz,ixx)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,1)*u_euler_l(ix,iy,iz,1) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,ixx) &
-                   )
-
-          Tmunu_ll(ix,iy,iz,ixy)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,1)*u_euler_l(ix,iy,iz,2) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,ixy) &
-                   )
-
-          Tmunu_ll(ix,iy,iz,ixz)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,1)*u_euler_l(ix,iy,iz,3) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,ixz) &
-                   )
-
-          Tmunu_ll(ix,iy,iz,iyy)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,2)*u_euler_l(ix,iy,iz,2) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,iyy)  &
-                   )
-
-          Tmunu_ll(ix,iy,iz,iyz)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,2)*u_euler_l(ix,iy,iz,3) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,iyz) &
-                   )
-
-          Tmunu_ll(ix,iy,iz,izz)= lorene2hydrobase*( &
-                  ( energy_density(ix,iy,iz) + pressure(ix,iy,iz) ) &
-                  *u_euler_l(ix,iy,iz,3)*u_euler_l(ix,iy,iz,3) &
-                  + pressure(ix,iy,iz)*g4(ix,iy,iz,izz) &
-                   )
-
-        ! Print progress on screen
-        perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(iz - 1) &
-              + THIS% ngrid_x*(iy - 1) + ix) &
-              /( THIS% ngrid_x* THIS% ngrid_y*THIS% ngrid_z )
-        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-          WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-                  creturn//" ", perc, "%"
-        ENDIF
-
-        ENDDO
-      ENDDO
-    ENDDO
+    ENDDO ref_levels2
+    END ASSOCIATE
     WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
     PRINT *, " * Stress-energy tensor computed."
     PRINT *
@@ -1318,58 +1353,75 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Compute the BSSN constraints by calling the Cactus-bound procedure
     !-- BSSN_CONSTRAINTS_INTERIOR
     !
-    imin = ghost_size
-    imax(1) = THIS% ngrid_x - ghost_size - 1
-    imax(2) = THIS% ngrid_y - ghost_size - 1
-    imax(3) = THIS% ngrid_z - ghost_size - 1
+    ASSOCIATE( lapse => THIS% lapse% levels(l)% var, &
+               shift_u => THIS% shift_u% levels(l)% var, &
+               phi => THIS% phi% levels(l)% var, &
+               trK => THIS% trK% levels(l)% var, &
+               g_BSSN3_ll => THIS% g_BSSN3_ll% levels(l)% var, &
+               A_BSSN3_ll => THIS% A_BSSN3_ll% levels(l)% var, &
+               Gamma_u => THIS% Gamma_u% levels(l)% var, &
+               HC => THIS% HC% levels(l)% var, &
+               MC => THIS% MC% levels(l)% var, &
+               GC => THIS% GC% levels(l)% var)
 
-    THIS% HC= 0.0D0
-    THIS% MC= 0.0D0
-    THIS% GC= 0.0D0
     PRINT *, "** Computing contraints..."
-    CALL BSSN_CONSTRAINTS_INTERIOR( &
-      !
-      !-- Input
-      !
-      THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-      imin, imax, &
-      THIS% dx, THIS% dy, THIS% dz, &
-      THIS% g_BSSN3_ll(:,:,:,jxx), THIS% g_BSSN3_ll(:,:,:,jxy), &
-      THIS% g_BSSN3_ll(:,:,:,jxz), THIS% g_BSSN3_ll(:,:,:,jyy), &
-      THIS% g_BSSN3_ll(:,:,:,jyz), THIS% g_BSSN3_ll(:,:,:,jzz), &
-      THIS% A_BSSN3_ll(:,:,:,jxx), THIS% A_BSSN3_ll(:,:,:,jxy), &
-      THIS% A_BSSN3_ll(:,:,:,jxz), THIS% A_BSSN3_ll(:,:,:,jyy), &
-      THIS% A_BSSN3_ll(:,:,:,jyz), THIS% A_BSSN3_ll(:,:,:,jzz), &
-      THIS% trK(:,:,:), THIS% phi(:,:,:), &
-      THIS% Gamma_u(:,:,:,jx), &
-      THIS% Gamma_u(:,:,:,jy), &
-      THIS% Gamma_u(:,:,:,jz), &
-      Tmunu_ll(:,:,:,itt), &
-      Tmunu_ll(:,:,:,itx), &
-      Tmunu_ll(:,:,:,ity), &
-      Tmunu_ll(:,:,:,itz), &
-      Tmunu_ll(:,:,:,ixx), &
-      Tmunu_ll(:,:,:,ixy), &
-      Tmunu_ll(:,:,:,ixz), &
-      Tmunu_ll(:,:,:,iyy), &
-      Tmunu_ll(:,:,:,iyz), &
-      Tmunu_ll(:,:,:,izz), &
-      THIS% lapse(:,:,:), &
-      THIS% shift_u(:,:,:,jx), &
-      THIS% shift_u(:,:,:,jy), &
-      THIS% shift_u(:,:,:,jz), &
-      !
-      !-- Output
-      !
-      ! Connection constraints
-      THIS% GC(:,:,:,jx), THIS% GC(:,:,:,jy), &
-      THIS% GC(:,:,:,jz), &
-      ! Hamiltonian and momentum constraints
-      THIS% HC(:,:,:), &
-      THIS% MC(:,:,:,jx), &
-      THIS% MC(:,:,:,jy), &
-      THIS% MC(:,:,:,jz) &
-    )
+    DO l= 1, nlevels, 1
+
+      imin(1) = THIS% levels(l)% ghost_size_x
+      imin(2) = THIS% levels(l)% ghost_size_y
+      imin(3) = THIS% levels(l)% ghost_size_z
+      imax(1) = THIS% levels(l)% ngrid_x - THIS% levels(l)% ghost_size_x - 1
+      imax(2) = THIS% levels(l)% ngrid_y - THIS% levels(l)% ghost_size_y - 1
+      imax(3) = THIS% levels(l)% ngrid_z - THIS% levels(l)% ghost_size_z - 1
+
+      HC= 0.0D0
+      MC= 0.0D0
+      GC= 0.0D0
+      CALL BSSN_CONSTRAINTS_INTERIOR( &
+        !
+        !-- Input
+        !
+        THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
+        imin, imax, &
+        dx, THIS% dy, THIS% dz, &
+        g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
+        g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
+        g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
+        A_BSSN3_ll(:,:,:,jxx), A_BSSN3_ll(:,:,:,jxy), &
+        A_BSSN3_ll(:,:,:,jxz), A_BSSN3_ll(:,:,:,jyy), &
+        A_BSSN3_ll(:,:,:,jyz), A_BSSN3_ll(:,:,:,jzz), &
+        trK(:,:,:), phi(:,:,:), &
+        Gamma_u(:,:,:,jx), &
+        Gamma_u(:,:,:,jy), &
+        Gamma_u(:,:,:,jz), &
+        Tmunu_ll(:,:,:,itt), &
+        Tmunu_ll(:,:,:,itx), &
+        Tmunu_ll(:,:,:,ity), &
+        Tmunu_ll(:,:,:,itz), &
+        Tmunu_ll(:,:,:,ixx), &
+        Tmunu_ll(:,:,:,ixy), &
+        Tmunu_ll(:,:,:,ixz), &
+        Tmunu_ll(:,:,:,iyy), &
+        Tmunu_ll(:,:,:,iyz), &
+        Tmunu_ll(:,:,:,izz), &
+        lapse(:,:,:), &
+        shift_u(:,:,:,jx), &
+        shift_u(:,:,:,jy), &
+        shift_u(:,:,:,jz), &
+        !
+        !-- Output
+        !
+        ! Connection constraints
+        GC(:,:,:,jx), GC(:,:,:,jy), &
+        GC(:,:,:,jz), &
+        ! Hamiltonian and momentum constraints
+        HC, &
+        MC(:,:,:,jx), &
+        MC(:,:,:,jy), &
+        MC(:,:,:,jz) &
+      )
+    ENDDO
+    END ASSOCIATE
     PRINT *, " * Constraints computed."
     PRINT *
 
