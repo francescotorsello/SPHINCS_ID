@@ -85,8 +85,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !grid_file= 'gravity_grid_parameters.dat'
 
     f3p1_obj% nlevels= nlevels
-    f3p1_obj% levels= levels
-    f3p1_obj% coords= coords
+    f3p1_obj% levels = levels
+    f3p1_obj% coords = coords
 
     !INQUIRE( FILE= grid_file, EXIST= file_exists)
     !IF( file_exists )THEN
@@ -1288,9 +1288,9 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !-- Compute the l2 norm of the constraints
     !
     l2_norm= 0
-    DO i= 1, nz, 1
+    DO k= 1, nz, 1
       DO j= 1, ny, 1
-        DO k= 1, nx, 1
+        DO i= 1, nx, 1
           l2_norm= l2_norm + constraint(i,j,k)*constraint(i,j,k)
         ENDDO
       ENDDO
@@ -1301,9 +1301,9 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !-- Compute the loo norm (supremum norm) of the constraints
     !
     loo_norm= 0
-    DO i= 1, nz, 1
+    DO k= 1, nz, 1
       DO j= 1, ny, 1
-        DO k= 1, nx, 1
+        DO i= 1, nx, 1
           tmp= ABS( constraint(i,j,k) )
           IF( tmp > loo_norm )THEN
             loo_norm= tmp
@@ -1556,30 +1556,32 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !                                                *
     !*************************************************
 
+    USE tensor, ONLY: jx, jy, jz
+
     IMPLICIT NONE
 
-    IF( ix > THIS% ngrid_x )THEN
-      PRINT *, "** ERROR in get_grid_point: ix=", ix, "> ngrid_x=", &
-               THIS% ngrid_x
+    IF( i > THIS% levels(l)% ngrid_x )THEN
+      PRINT *, "** ERROR in get_grid_point: i=", i, "> ngrid_x=", &
+               THIS% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iy > THIS% ngrid_y )THEN
-      PRINT *, "** ERROR in get_grid_point iy=", iy, "> ngrid_y=", &
-               THIS% ngrid_y
+    IF( j > THIS% levels(l)% ngrid_y )THEN
+      PRINT *, "** ERROR in get_grid_point j=", j, "> ngrid_y=", &
+               THIS% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iz > THIS% ngrid_z )THEN
-      PRINT *, "** ERROR in get_grid_point iz=", iz, "> ngrid_z=", &
-               THIS% ngrid_z
+    IF( k > THIS% levels(l)% ngrid_z )THEN
+      PRINT *, "** ERROR in get_grid_point k=", k, "> ngrid_z=", &
+               THIS% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    grid_point(1)= THIS% grid(1,ix,iy,iz)
-    grid_point(2)= THIS% grid(2,ix,iy,iz)
-    grid_point(3)= THIS% grid(3,ix,iy,iz)
+    grid_point(1)= THIS% coords% levels(l)% var( i, j, k, jx )
+    grid_point(2)= THIS% coords% levels(l)% var( i, j, k, jy )
+    grid_point(3)= THIS% coords% levels(l)% var( i, j, k, jz )
 
   END PROCEDURE get_grid_point
 
@@ -1596,7 +1598,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     IMPLICIT NONE
 
-    dx= THIS% dx
+    dx= THIS% levels(l)% dx
 
   END PROCEDURE get_x_spacing
 
@@ -1614,7 +1616,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     IMPLICIT NONE
 
-    ngrid_x= THIS% ngrid_x
+    ngrid_x= THIS% levels(l)% ngrid_x
 
   END PROCEDURE get_ngrid_x
 
@@ -1632,7 +1634,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     IMPLICIT NONE
 
-    ngrid_y= THIS% ngrid_y
+    ngrid_y= THIS% levels(l)% ngrid_y
 
   END PROCEDURE get_ngrid_y
 
@@ -1650,7 +1652,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     IMPLICIT NONE
 
-    ngrid_z= THIS% ngrid_z
+    ngrid_z= THIS% levels(l)% ngrid_z
 
   END PROCEDURE get_ngrid_z
 
@@ -1668,23 +1670,26 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     IMPLICIT NONE
 
-    IF( ix > THIS% ngrid_x )THEN
-      PRINT *, "** ERROR in get_HC: ix=", ix, "> ngrid_x=", THIS% ngrid_x
+    IF( i > THIS% levels(l)% ngrid_x )THEN
+      PRINT *, "** ERROR in get_HC: i=", i, "> ngrid_x=", &
+               THIS% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iy > THIS% ngrid_y )THEN
-      PRINT *, "** ERROR in get_HC: iy=", iy, "> ngrid_y=", THIS% ngrid_y
+    IF( j > THIS% levels(l)% ngrid_y )THEN
+      PRINT *, "** ERROR in get_HC: j=", j, "> ngrid_y=", &
+               THIS% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iz > THIS% ngrid_z )THEN
-      PRINT *, "** ERROR in get_HC: iz=", iz, "> ngrid_z=", THIS% ngrid_z
+    IF( k > THIS% levels(l)% ngrid_z )THEN
+      PRINT *, "** ERROR in get_HC: k=", k, "> ngrid_z=", &
+               THIS% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    HC_value= THIS% HC(ix,iy,iz)
+    HC_value= THIS% HC% levels(l)% var( i, j, k )
 
   END PROCEDURE get_HC
 
@@ -1700,27 +1705,32 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !                                                 *
     !**************************************************
 
+    USE tensor, ONLY: jx, jy, jz
+
     IMPLICIT NONE
 
-    IF( ix > THIS% ngrid_x )THEN
-      PRINT *, "** ERROR in get_MC: ix=", ix, "> ngrid_x=", THIS% ngrid_x
+    IF( i > THIS% levels(l)% ngrid_x )THEN
+      PRINT *, "** ERROR in get_HC: i=", i, "> ngrid_x=", &
+               THIS% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iy > THIS% ngrid_y )THEN
-      PRINT *, "** ERRORin get_MC: iy=", iy, "> ngrid_y=", THIS% ngrid_y
+    IF( j > THIS% levels(l)% ngrid_y )THEN
+      PRINT *, "** ERROR in get_HC: j=", j, "> ngrid_y=", &
+               THIS% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iz > THIS% ngrid_z )THEN
-      PRINT *, "** ERRORin get_MC: iz=", iz, "> ngrid_z=", THIS% ngrid_z
+    IF( k > THIS% levels(l)% ngrid_z )THEN
+      PRINT *, "** ERROR in get_HC: k=", k, "> ngrid_z=", &
+               THIS% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    MC_value(1)= THIS% MC(ix,iy,iz,1)
-    MC_value(2)= THIS% MC(ix,iy,iz,2)
-    MC_value(3)= THIS% MC(ix,iy,iz,3)
+    MC_value(1)= THIS% MC% levels(l)% var( i, j, k, jx )
+    MC_value(2)= THIS% MC% levels(l)% var( i, j, k, jy )
+    MC_value(3)= THIS% MC% levels(l)% var( i, j, k, jz )
 
   END PROCEDURE get_MC
 
@@ -1739,26 +1749,26 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     IMPLICIT NONE
 
-    IF( ix > THIS% ngrid_x )THEN
-      PRINT *, "** ERROR in get_HC_parts: ix=", ix, "> ngrid_x=", &
-               THIS% ngrid_x
+    IF( i > THIS% levels(l)% ngrid_x )THEN
+      PRINT *, "** ERROR in get_HC: i=", i, "> ngrid_x=", &
+               THIS% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iy > THIS% ngrid_y )THEN
-      PRINT *, "** ERROR in get_HC_parts: iy=", iy, "> ngrid_y=", &
-               THIS% ngrid_y
+    IF( j > THIS% levels(l)% ngrid_y )THEN
+      PRINT *, "** ERROR in get_HC: j=", j, "> ngrid_y=", &
+               THIS% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iz > THIS% ngrid_z )THEN
-      PRINT *, "** ERROR in get_HC_parts: iz=", iz, "> ngrid_z=", &
-               THIS% ngrid_z
+    IF( k > THIS% levels(l)% ngrid_z )THEN
+      PRINT *, "** ERROR in get_HC: k=", k, "> ngrid_z=", &
+               THIS% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    HC_value= THIS% HC_parts(ix,iy,iz)
+    HC_value= THIS% HC_parts% levels(l)% var( i, j, k )
 
   END PROCEDURE get_HC_parts
 
@@ -1775,30 +1785,32 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !                                                 *
     !**************************************************
 
+    USE tensor, ONLY: jx, jy, jz
+
     IMPLICIT NONE
 
-    IF( ix > THIS% ngrid_x )THEN
-      PRINT *, "** ERROR in get_MC_parts: ix=", ix, "> ngrid_x=", &
-               THIS% ngrid_x
+    IF( i > THIS% levels(l)% ngrid_x )THEN
+      PRINT *, "** ERROR in get_HC: i=", i, "> ngrid_x=", &
+               THIS% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iy > THIS% ngrid_y )THEN
-      PRINT *, "** ERROR in get_MC_parts: iy=", iy, "> ngrid_y=", &
-               THIS% ngrid_y
+    IF( j > THIS% levels(l)% ngrid_y )THEN
+      PRINT *, "** ERROR in get_HC: j=", j, "> ngrid_y=", &
+               THIS% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( iz > THIS% ngrid_z )THEN
-      PRINT *, "** ERROR in get_MC_parts: iz=", iz, "> ngrid_z=", &
-               THIS% ngrid_z
+    IF( k > THIS% levels(l)% ngrid_z )THEN
+      PRINT *, "** ERROR in get_HC: k=", k, "> ngrid_z=", &
+               THIS% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    MC_value(1)= THIS% MC_parts(ix,iy,iz,1)
-    MC_value(2)= THIS% MC_parts(ix,iy,iz,2)
-    MC_value(3)= THIS% MC_parts(ix,iy,iz,3)
+    MC_value(1)= THIS% MC_parts% levels(l)% var( i, j, k, jx )
+    MC_value(2)= THIS% MC_parts% levels(l)% var( i, j, k, jy )
+    MC_value(3)= THIS% MC_parts% levels(l)% var( i, j, k, jz )
 
   END PROCEDURE get_MC_parts
 

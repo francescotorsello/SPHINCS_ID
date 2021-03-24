@@ -232,87 +232,91 @@ MODULE formul_3p1_id
 
     END FUNCTION abs_values_in
 
-    MODULE FUNCTION get_grid_point( THIS, ix, iy, iz ) RESULT( grid_point )
+    MODULE FUNCTION get_grid_point( THIS, i, j, k, l ) RESULT( grid_point )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: ix, iy, iz
+      INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: grid_point
 
     END FUNCTION get_grid_point
 
-    MODULE FUNCTION get_x_spacing( THIS ) RESULT( dx )
+    MODULE FUNCTION get_x_spacing( THIS, l ) RESULT( dx )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dx
 
     END FUNCTION get_x_spacing
 
-    MODULE FUNCTION get_ngrid_x( THIS ) RESULT( ngrid_x )
+    MODULE FUNCTION get_ngrid_x( THIS, l ) RESULT( ngrid_x )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: ngrid_x
 
     END FUNCTION get_ngrid_x
 
-    MODULE FUNCTION get_ngrid_y( THIS ) RESULT( ngrid_y )
+    MODULE FUNCTION get_ngrid_y( THIS, l ) RESULT( ngrid_y )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: ngrid_y
 
     END FUNCTION get_ngrid_y
 
-    MODULE FUNCTION get_ngrid_z( THIS ) RESULT( ngrid_z )
+    MODULE FUNCTION get_ngrid_z( THIS, l ) RESULT( ngrid_z )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: ngrid_z
 
     END FUNCTION get_ngrid_z
 
-    MODULE FUNCTION get_HC( THIS, ix, iy, iz ) RESULT( HC_value )
+    MODULE FUNCTION get_HC( THIS, i, j, k, l ) RESULT( HC_value )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: ix, iy, iz
+      INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
 
     END FUNCTION get_HC
 
-    MODULE FUNCTION get_MC( THIS, ix, iy, iz ) RESULT( MC_value )
+    MODULE FUNCTION get_MC( THIS, i, j, k, l ) RESULT( MC_value )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: ix, iy, iz
+      INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 
     END FUNCTION get_MC
 
-    MODULE FUNCTION get_HC_parts( THIS, ix, iy, iz ) RESULT( HC_value )
+    MODULE FUNCTION get_HC_parts( THIS, i, j, k, l ) RESULT( HC_value )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: ix, iy, iz
+      INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
 
     END FUNCTION get_HC_parts
 
-    MODULE FUNCTION get_MC_parts( THIS, ix, iy, iz ) RESULT( MC_value )
+    MODULE FUNCTION get_MC_parts( THIS, i, j, k, l ) RESULT( MC_value )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: ix, iy, iz
+      INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 

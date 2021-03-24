@@ -47,16 +47,16 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                           jyy, jyz, jzz, jx, jy, jz, n_sym3x3
     USE ADM_refine,                 ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
-                                   K_phys3_ll, g_phys3_ll, &
-                                   allocate_ADM, deallocate_ADM
+                                          K_phys3_ll, g_phys3_ll, &
+                                          allocate_ADM, deallocate_ADM
     USE McLachlan_refine,           ONLY: initialize_BSSN, allocate_Ztmp, &
-                                   deallocate_Ztmp, ADM_to_BSSN, &
-                                   ADM_to_BSSN_args
-    USE Tmunu_refine,               ONLY: allocate_Tmunu, deallocate_Tmunu, Tmunu_ll
+                                          deallocate_Ztmp, ADM_to_BSSN
+    USE Tmunu_refine,               ONLY: allocate_Tmunu, deallocate_Tmunu, &
+                                          Tmunu_ll
     USE GravityAcceleration_refine, ONLY: dt_ehat_grav, dt_S_grav_l, &
-                                   d_g_phys4_lll, &
-                                   allocate_GravityAcceleration, &
-                                   deallocate_GravityAcceleration
+                                          d_g_phys4_lll, &
+                                          allocate_GravityAcceleration, &
+                                          deallocate_GravityAcceleration
     USE options,                    ONLY: basename
     USE constants,                  ONLY: Msun_geo
     !
@@ -254,7 +254,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !THIS% phi       = phi
     !THIS% trK       = trK
     !THIS% Gamma_u   = Gamma_u
-    ref_levels: DO l= 1, nlevels
+    ref_levels2: DO l= 1, nlevels
 
       THIS% Gamma_u% levels(l)% var= Gamma_u% levels(l)% var
       THIS% phi% levels(l)% var= phi% levels(l)% var
@@ -262,13 +262,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       THIS% g_BSSN3_ll% levels(l)% var= g_BSSN3_ll% levels(l)% var
       THIS% A_BSSN3_ll% levels(l)% var= A_BSSN3_ll% levels(l)% var
 
-    ENDDO ref_levels
+    ENDDO ref_levels2
 
     ! Write BSSN ID to a binary file to be read by the evolution code
     ! in SPHINCS
     IF( THIS% export_bin )THEN
       IF( PRESENT(namefile) )THEN
-        CALL write_BSSN_dump( namefile )
+        !CALL write_BSSN_dump( namefile )
       ELSE
         CALL write_BSSN_dump()
       ENDIF
@@ -293,275 +293,278 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
   END PROCEDURE compute_and_export_bssn_variables
 
 
-  MODULE PROCEDURE read_bssn_dump_print_formatted
-
-    !************************************************
-    !                                               *
-    ! Read the BSSN ID from the binary file output  *
-    ! by write_BSSN_dump, and print it to a         *
-    ! formatted file                                *
-    !                                               *
-    ! FT 08.02.2021                                 *
-    !                                               *
-    !************************************************
-
-    USE grav_grid,           ONLY: ngrid_x, ngrid_y, ngrid_z, &
-                                   !dx, dy, dz, dx_1, dy_1, dz_1, &
-                                   !xR, xL, yR, yL, zR, zL, &
-                                   !rad_coord, &
-                                   deallocate_gravity_grid
-    USE tensor,              ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz
-    USE ADM,                 ONLY: lapse, shift_u, &
-                                   allocate_ADM, deallocate_ADM
-    !USE McLachlan,           ONLY: initialize_BSSN, allocate_Ztmp, &
-    !                               deallocate_Ztmp, ADM_to_BSSN, &
-    !                               ADM_to_BSSN_args
-    !USE Tmunu,               ONLY: allocate_Tmunu, deallocate_Tmunu
-    !USE GravityAcceleration, ONLY: dt_ehat_grav, dt_S_grav_l, &
-    !                               d_g_phys4_lll, &
-    !                               allocate_GravityAcceleration, &
-    !                               deallocate_GravityAcceleration
-    USE BSSN,       ONLY: allocate_BSSN, deallocate_BSSN, &
-                          Gamma_u,          & ! Conformal connection
-                          phi,              & ! Conformal factor
-                          trK,              & ! Trace of extrinsic curvature
-                          A_BSSN3_ll,       & ! Conformal traceless
-                                              ! extrinsic curvature
-                          g_BSSN3_ll,       & ! Conformal metric
-                          Theta_Z4,         & ! Vector in the CCZ4 formulation.
-                                              ! Loaded here because ADM_TO_BSSN
-                                              ! calls SUBROUTINES that need it
-                                              ! as input; however, it is not
-                                              ! evolved in BSSN
-                          lapse_A_BSSN,     & ! Time derivative of lapse
-                          shift_B_BSSN_u,   & ! Time derivativeof shift
-                          read_BSSN_dump
-
-    IMPLICIT NONE
-
-    INTEGER:: ix, iy, iz, min_ix_y, min_iy_y, min_iz_y, &
-              min_ix_z, min_iy_z, min_iz_z
-
-    DOUBLE PRECISION:: min_abs_y, min_abs_z
-    DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
-
-    LOGICAL:: exist
-
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
-
-    PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
-
-    ngrid_x= THIS% ngrid_x
-    ngrid_y= THIS% ngrid_y
-    ngrid_z= THIS% ngrid_z
-    !dx= THIS% dx
-    !dy= THIS% dy
-    !dz= THIS% dz
-    !dx_1= THIS% dx_1
-    !dy_1= THIS% dy_1
-    !dz_1= THIS% dz_1
-
-    CALL allocate_ADM()
-    CALL allocate_BSSN()
-
-    ! Allocate temporary memory for time integration
-    !CALL allocate_Ztmp()
-
-    ! Allocate memory for the derivatives of the ADM variables
-    !CALL allocate_GravityAcceleration()
-
-    CALL read_BSSN_dump( ngrid_x, ngrid_y, ngrid_z, 00000, namefile_bin )
-
-    ! Being abs_grid a local array, it is good practice to allocate it on the
-    ! heap, otherwise it will be stored on the stack which has a very limited
-    ! size. This results in a segmentation fault.
-    ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-
-    IF( THIS% call_flag == 0 )THEN
-      PRINT *, "** The SUBROUTINE print_formatted_lorene_id_bssn_variables ", &
-        " must be called after compute_and_export_bssn_variables, otherwise", &
-        " there are no bssn fields to export to the formatted file."
-      PRINT *, "   Aborting."
-      PRINT *
-      STOP
-    ENDIF
-
-    IF( PRESENT(namefile) )THEN
-      finalnamefile= namefile
-    ELSE
-      finalnamefile= "bssn_vars.dat"
-    ENDIF
-
-    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-    IF( exist )THEN
-      OPEN( UNIT= 20, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-            FORM= "FORMATTED", &
-            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-            IOMSG= err_msg )
-    ELSE
-      OPEN( UNIT= 20, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-      FORM= "FORMATTED", &
-            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening ", TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-    !CALL test_status( ios, err_msg, "...error when opening " &
-    !         // TRIM(finalnamefile) )
-
-    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
-    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "# Values of the fields (including coordinates) exported by LORENE "&
-    // "on each grid point"
-    IF( ios > 0 )THEN
-      PRINT *, "...error when writing line 1 in ", TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-    !         // TRIM(finalnamefile) )
-    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "# column:      1        2       3       4       5", &
-    "       6       7       8", &
-    "       9       10      11", &
-    "       12      13      14", &
-    "       15      16      17      18      19", &
-    "       20      21      22", &
-    "       23      24"
-    IF( ios > 0 )THEN
-      PRINT *, "...error when writing line 2 in ", TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-    !        // TRIM(finalnamefile) )
-    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "#      x [km]       y [km]       z [km]       lapse", &
-    "       shift_x [c]    shift_y [c]    shift_z [c]", &
-    "       conformal factor phi        trace of extr. curv. trK", &
-    "       g_BSSN_xx       g_BSSN_xy      g_BSSN_xz", &
-    "       g_BSSN_yy       g_BSSN_yz      g_BSSN_zz", &
-    "       A_BSSN_xx       A_BSSN_xy      A_BSSN_xz    ", &
-    "       A_BSSN_yy       A_BSSN_yz      A_BSSN_zz", &
-    "       Gamma_u_x       Gamma_u_y      Gamma_u_z"
-    IF( ios > 0 )THEN
-      PRINT *, "...error when writing line 3 in ", TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-    !        // TRIM(finalnamefile) )
-
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
-          abs_grid( 1, ix, iy, iz )= ABS( THIS% grid( 1, ix, iy, iz ) )
-          abs_grid( 2, ix, iy, iz )= ABS( THIS% grid( 2, ix, iy, iz ) )
-          abs_grid( 3, ix, iy, iz )= ABS( THIS% grid( 3, ix, iy, iz ) )
-        ENDDO
-      ENDDO
-    ENDDO
-
-    min_abs_y= 1D+20
-    min_abs_z= 1D+20
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
-          IF( ABS( THIS% grid( 2, ix, iy, iz ) ) < min_abs_y )THEN
-            min_abs_y= ABS( THIS% grid( 2, ix, iy, iz ) )
-            min_ix_y= ix
-            min_iy_y= iy
-            min_iz_y= iz
-          ENDIF
-          IF( ABS( THIS% grid( 3, ix, iy, iz ) ) < min_abs_z )THEN
-            min_abs_z= ABS( THIS% grid( 3, ix, iy, iz ) )
-            min_ix_z= ix
-            min_iy_z= iy
-            min_iz_z= iz
-          ENDIF
-        ENDDO
-      ENDDO
-    ENDDO
-
-    coords_z: DO iz= 1, THIS% ngrid_z, 1
-      coords_y: DO iy= 1, THIS% ngrid_y, 1
-        coords_x: DO ix= 1, THIS% ngrid_x, 1
-
-          IF( THIS% export_form_xy .AND. &
-              THIS% grid( 3, ix, iy, iz ) /= &
-              THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
-            CYCLE
-          ENDIF
-          IF( THIS% export_form_x .AND. &
-              ( THIS% grid( 3, ix, iy, iz ) /= &
-                THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) &
-                .OR. &
-                THIS% grid( 2, ix, iy, iz ) /= &
-                THIS% grid( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
-            CYCLE
-          ENDIF
-
-          WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), &
-              lapse( ix, iy, iz ), &
-              shift_u( ix, iy, iz, jx ), &
-              shift_u( ix, iy, iz, jy ), &
-              shift_u( ix, iy, iz, jz ), &
-              phi(ix,iy,iz), &
-              trK(ix,iy,iz), &
-              g_BSSN3_ll( ix, iy, iz, jxx ), &
-              g_BSSN3_ll( ix, iy, iz, jxy ), &
-              g_BSSN3_ll( ix, iy, iz, jxz ), &
-              g_BSSN3_ll( ix, iy, iz, jyy ), &
-              g_BSSN3_ll( ix, iy, iz, jyz ), &
-              g_BSSN3_ll( ix, iy, iz, jzz ), &
-              A_BSSN3_ll( ix, iy, iz, jxx ), &
-              A_BSSN3_ll( ix, iy, iz, jxy ), &
-              A_BSSN3_ll( ix, iy, iz, jxz ), &
-              A_BSSN3_ll( ix, iy, iz, jyy ), &
-              A_BSSN3_ll( ix, iy, iz, jyz ), &
-              A_BSSN3_ll( ix, iy, iz, jzz ), &
-              Gamma_u( ix, iy, iz, jx ), &
-              Gamma_u( ix, iy, iz, jy ), &
-              Gamma_u( ix, iy, iz, jz )
-
-          IF( ios > 0 )THEN
-            PRINT *, "...error when writing the arrays in ", &
-                     TRIM(finalnamefile), ". The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, "...error when writing " &
-          !                  // "the arrays in " // TRIM(namefile) )
-
-        ENDDO coords_x
-      ENDDO coords_y
-    ENDDO coords_z
-
-    CLOSE( UNIT= 20 )
-
-    !
-    !-- Deallocate MODULE variables
-    !
-    CALL deallocate_ADM()
-    !CALL deallocate_Ztmp()
-    !CALL deallocate_GravityAcceleration()
-    CALL deallocate_BSSN()
-    !CALL deallocate_gravity_grid()
-
-    PRINT *, " * LORENE BSSN ID on the gravity grid saved to formatted " &
-             // "file ", TRIM(namefile)
-
-    PRINT *, "** Subroutine read_bssn_dump_print_formatted " &
-             // "executed."
-    PRINT *
-
-  END PROCEDURE read_bssn_dump_print_formatted
+!  MODULE PROCEDURE read_bssn_dump_print_formatted
+!
+!    !************************************************
+!    !                                               *
+!    ! Read the BSSN ID from the binary file output  *
+!    ! by write_BSSN_dump, and print it to a         *
+!    ! formatted file                                *
+!    !                                               *
+!    ! FT 08.02.2021                                 *
+!    !                                               *
+!    !************************************************
+!
+!    !USE grav_grid,           ONLY: ngrid_x, ngrid_y, ngrid_z, &
+!    !                               !dx, dy, dz, dx_1, dy_1, dz_1, &
+!    !                               !xR, xL, yR, yL, zR, zL, &
+!    !                               !rad_coord, &
+!    !                               deallocate_gravity_grid
+!    USE mesh_refinement,     ONLY: levels
+!    USE tensor,              ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz
+!    USE ADM,                 ONLY: lapse, shift_u, &
+!                                   allocate_ADM, deallocate_ADM
+!    !USE McLachlan,           ONLY: initialize_BSSN, allocate_Ztmp, &
+!    !                               deallocate_Ztmp, ADM_to_BSSN, &
+!    !                               ADM_to_BSSN_args
+!    !USE Tmunu,               ONLY: allocate_Tmunu, deallocate_Tmunu
+!    !USE GravityAcceleration, ONLY: dt_ehat_grav, dt_S_grav_l, &
+!    !                               d_g_phys4_lll, &
+!    !                               allocate_GravityAcceleration, &
+!    !                               deallocate_GravityAcceleration
+!    USE BSSN,       ONLY: allocate_BSSN, deallocate_BSSN, &
+!                          Gamma_u,          & ! Conformal connection
+!                          phi,              & ! Conformal factor
+!                          trK,              & ! Trace of extrinsic curvature
+!                          A_BSSN3_ll,       & ! Conformal traceless
+!                                              ! extrinsic curvature
+!                          g_BSSN3_ll,       & ! Conformal metric
+!                          Theta_Z4,         & ! Vector in the CCZ4 formulation.
+!                                              ! Loaded here because ADM_TO_BSSN
+!                                              ! calls SUBROUTINES that need it
+!                                              ! as input; however, it is not
+!                                              ! evolved in BSSN
+!                          lapse_A_BSSN,     & ! Time derivative of lapse
+!                          shift_B_BSSN_u,   & ! Time derivativeof shift
+!                          read_BSSN_dump
+!
+!    IMPLICIT NONE
+!
+!    INTEGER:: ix, iy, iz, min_ix_y, min_iy_y, min_iz_y, &
+!              min_ix_z, min_iy_z, min_iz_z
+!
+!    DOUBLE PRECISION:: min_abs_y, min_abs_z
+!    DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
+!
+!    LOGICAL:: exist
+!
+!    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+!
+!    PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
+!
+!    !ngrid_x= THIS% ngrid_x
+!    !ngrid_y= THIS% ngrid_y
+!    !ngrid_z= THIS% ngrid_z
+!    !dx= THIS% dx
+!    !dy= THIS% dy
+!    !dz= THIS% dz
+!    !dx_1= THIS% dx_1
+!    !dy_1= THIS% dy_1
+!    !dz_1= THIS% dz_1
+!
+!    levels= THIS% levels
+!
+!    CALL allocate_ADM()
+!    CALL allocate_BSSN()
+!
+!    ! Allocate temporary memory for time integration
+!    !CALL allocate_Ztmp()
+!
+!    ! Allocate memory for the derivatives of the ADM variables
+!    !CALL allocate_GravityAcceleration()
+!
+!    CALL read_BSSN_dump( ngrid_x, ngrid_y, ngrid_z, 00000, namefile_bin )
+!
+!    ! Being abs_grid a local array, it is good practice to allocate it on the
+!    ! heap, otherwise it will be stored on the stack which has a very limited
+!    ! size. This results in a segmentation fault.
+!    ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
+!
+!    IF( THIS% call_flag == 0 )THEN
+!      PRINT *, "** The SUBROUTINE print_formatted_lorene_id_bssn_variables ", &
+!        " must be called after compute_and_export_bssn_variables, otherwise", &
+!        " there are no bssn fields to export to the formatted file."
+!      PRINT *, "   Aborting."
+!      PRINT *
+!      STOP
+!    ENDIF
+!
+!    IF( PRESENT(namefile) )THEN
+!      finalnamefile= namefile
+!    ELSE
+!      finalnamefile= "bssn_vars.dat"
+!    ENDIF
+!
+!    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+!
+!    IF( exist )THEN
+!      OPEN( UNIT= 20, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+!            FORM= "FORMATTED", &
+!            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+!            IOMSG= err_msg )
+!    ELSE
+!      OPEN( UNIT= 20, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+!      FORM= "FORMATTED", &
+!            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+!    ENDIF
+!    IF( ios > 0 )THEN
+!      PRINT *, "...error when opening ", TRIM(finalnamefile), &
+!               ". The error message is", err_msg
+!      STOP
+!    ENDIF
+!    !CALL test_status( ios, err_msg, "...error when opening " &
+!    !         // TRIM(finalnamefile) )
+!
+!    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!    "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+!    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!    "# Values of the fields (including coordinates) exported by LORENE "&
+!    // "on each grid point"
+!    IF( ios > 0 )THEN
+!      PRINT *, "...error when writing line 1 in ", TRIM(finalnamefile), &
+!               ". The error message is", err_msg
+!      STOP
+!    ENDIF
+!    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+!    !         // TRIM(finalnamefile) )
+!    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!    "# column:      1        2       3       4       5", &
+!    "       6       7       8", &
+!    "       9       10      11", &
+!    "       12      13      14", &
+!    "       15      16      17      18      19", &
+!    "       20      21      22", &
+!    "       23      24"
+!    IF( ios > 0 )THEN
+!      PRINT *, "...error when writing line 2 in ", TRIM(finalnamefile), &
+!               ". The error message is", err_msg
+!      STOP
+!    ENDIF
+!    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+!    !        // TRIM(finalnamefile) )
+!    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!    "#      x [km]       y [km]       z [km]       lapse", &
+!    "       shift_x [c]    shift_y [c]    shift_z [c]", &
+!    "       conformal factor phi        trace of extr. curv. trK", &
+!    "       g_BSSN_xx       g_BSSN_xy      g_BSSN_xz", &
+!    "       g_BSSN_yy       g_BSSN_yz      g_BSSN_zz", &
+!    "       A_BSSN_xx       A_BSSN_xy      A_BSSN_xz    ", &
+!    "       A_BSSN_yy       A_BSSN_yz      A_BSSN_zz", &
+!    "       Gamma_u_x       Gamma_u_y      Gamma_u_z"
+!    IF( ios > 0 )THEN
+!      PRINT *, "...error when writing line 3 in ", TRIM(finalnamefile), &
+!               ". The error message is", err_msg
+!      STOP
+!    ENDIF
+!    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+!    !        // TRIM(finalnamefile) )
+!
+!    DO iz= 1, THIS% ngrid_z, 1
+!      DO iy= 1, THIS% ngrid_y, 1
+!        DO ix= 1, THIS% ngrid_x, 1
+!          abs_grid( 1, ix, iy, iz )= ABS( THIS% grid( 1, ix, iy, iz ) )
+!          abs_grid( 2, ix, iy, iz )= ABS( THIS% grid( 2, ix, iy, iz ) )
+!          abs_grid( 3, ix, iy, iz )= ABS( THIS% grid( 3, ix, iy, iz ) )
+!        ENDDO
+!      ENDDO
+!    ENDDO
+!
+!    min_abs_y= 1D+20
+!    min_abs_z= 1D+20
+!    DO iz= 1, THIS% ngrid_z, 1
+!      DO iy= 1, THIS% ngrid_y, 1
+!        DO ix= 1, THIS% ngrid_x, 1
+!          IF( ABS( THIS% grid( 2, ix, iy, iz ) ) < min_abs_y )THEN
+!            min_abs_y= ABS( THIS% grid( 2, ix, iy, iz ) )
+!            min_ix_y= ix
+!            min_iy_y= iy
+!            min_iz_y= iz
+!          ENDIF
+!          IF( ABS( THIS% grid( 3, ix, iy, iz ) ) < min_abs_z )THEN
+!            min_abs_z= ABS( THIS% grid( 3, ix, iy, iz ) )
+!            min_ix_z= ix
+!            min_iy_z= iy
+!            min_iz_z= iz
+!          ENDIF
+!        ENDDO
+!      ENDDO
+!    ENDDO
+!
+!    coords_z: DO iz= 1, THIS% ngrid_z, 1
+!      coords_y: DO iy= 1, THIS% ngrid_y, 1
+!        coords_x: DO ix= 1, THIS% ngrid_x, 1
+!
+!          IF( THIS% export_form_xy .AND. &
+!              THIS% grid( 3, ix, iy, iz ) /= &
+!              THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
+!            CYCLE
+!          ENDIF
+!          IF( THIS% export_form_x .AND. &
+!              ( THIS% grid( 3, ix, iy, iz ) /= &
+!                THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) &
+!                .OR. &
+!                THIS% grid( 2, ix, iy, iz ) /= &
+!                THIS% grid( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
+!            CYCLE
+!          ENDIF
+!
+!          WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
+!              THIS% grid( 1, ix, iy, iz ), &
+!              THIS% grid( 2, ix, iy, iz ), &
+!              THIS% grid( 3, ix, iy, iz ), &
+!              lapse( ix, iy, iz ), &
+!              shift_u( ix, iy, iz, jx ), &
+!              shift_u( ix, iy, iz, jy ), &
+!              shift_u( ix, iy, iz, jz ), &
+!              phi(ix,iy,iz), &
+!              trK(ix,iy,iz), &
+!              g_BSSN3_ll( ix, iy, iz, jxx ), &
+!              g_BSSN3_ll( ix, iy, iz, jxy ), &
+!              g_BSSN3_ll( ix, iy, iz, jxz ), &
+!              g_BSSN3_ll( ix, iy, iz, jyy ), &
+!              g_BSSN3_ll( ix, iy, iz, jyz ), &
+!              g_BSSN3_ll( ix, iy, iz, jzz ), &
+!              A_BSSN3_ll( ix, iy, iz, jxx ), &
+!              A_BSSN3_ll( ix, iy, iz, jxy ), &
+!              A_BSSN3_ll( ix, iy, iz, jxz ), &
+!              A_BSSN3_ll( ix, iy, iz, jyy ), &
+!              A_BSSN3_ll( ix, iy, iz, jyz ), &
+!              A_BSSN3_ll( ix, iy, iz, jzz ), &
+!              Gamma_u( ix, iy, iz, jx ), &
+!              Gamma_u( ix, iy, iz, jy ), &
+!              Gamma_u( ix, iy, iz, jz )
+!
+!          IF( ios > 0 )THEN
+!            PRINT *, "...error when writing the arrays in ", &
+!                     TRIM(finalnamefile), ". The error message is", err_msg
+!            STOP
+!          ENDIF
+!          !CALL test_status( ios, err_msg, "...error when writing " &
+!          !                  // "the arrays in " // TRIM(namefile) )
+!
+!        ENDDO coords_x
+!      ENDDO coords_y
+!    ENDDO coords_z
+!
+!    CLOSE( UNIT= 20 )
+!
+!    !
+!    !-- Deallocate MODULE variables
+!    !
+!    CALL deallocate_ADM()
+!    !CALL deallocate_Ztmp()
+!    !CALL deallocate_GravityAcceleration()
+!    CALL deallocate_BSSN()
+!    !CALL deallocate_gravity_grid()
+!
+!    PRINT *, " * LORENE BSSN ID on the gravity grid saved to formatted " &
+!             // "file ", TRIM(namefile)
+!
+!    PRINT *, "** Subroutine read_bssn_dump_print_formatted " &
+!             // "executed."
+!    PRINT *
+!
+!  END PROCEDURE read_bssn_dump_print_formatted
 
 
   MODULE PROCEDURE print_formatted_lorene_id_bssn_variables
@@ -582,7 +585,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     IMPLICIT NONE
 
-    INTEGER:: ix, iy, iz, min_ix_y, min_iy_y, min_iz_y, &
+    INTEGER:: i, j, k, min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
@@ -595,7 +598,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
     ! size. This results in a segmentation fault.
-    ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
+    !ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
 
     PRINT *, "** Executing the print_formatted_lorene_id_BSSN_variables " &
              // "subroutine..."
@@ -679,92 +682,96 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(finalnamefile) )
 
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
-          abs_grid( 1, ix, iy, iz )= ABS( THIS% grid( 1, ix, iy, iz ) )
-          abs_grid( 2, ix, iy, iz )= ABS( THIS% grid( 2, ix, iy, iz ) )
-          abs_grid( 3, ix, iy, iz )= ABS( THIS% grid( 3, ix, iy, iz ) )
-        ENDDO
-      ENDDO
-    ENDDO
+ !   DO iz= 1, THIS% ngrid_z, 1
+ !     DO iy= 1, THIS% ngrid_y, 1
+ !       DO ix= 1, THIS% ngrid_x, 1
+ !         abs_grid( 1, ix, iy, iz )= ABS( THIS% grid( 1, ix, iy, iz ) )
+ !         abs_grid( 2, ix, iy, iz )= ABS( THIS% grid( 2, ix, iy, iz ) )
+ !         abs_grid( 3, ix, iy, iz )= ABS( THIS% grid( 3, ix, iy, iz ) )
+ !       ENDDO
+ !     ENDDO
+ !   ENDDO
+ !
+ !   min_abs_y= 1D+20
+ !   min_abs_z= 1D+20
+ !   DO iz= 1, THIS% ngrid_z, 1
+ !     DO iy= 1, THIS% ngrid_y, 1
+ !       DO ix= 1, THIS% ngrid_x, 1
+ !         IF( ABS( THIS% grid( 2, ix, iy, iz ) ) < min_abs_y )THEN
+ !           min_abs_y= ABS( THIS% grid( 2, ix, iy, iz ) )
+ !           min_ix_y= ix
+ !           min_iy_y= iy
+ !           min_iz_y= iz
+ !         ENDIF
+ !         IF( ABS( THIS% grid( 3, ix, iy, iz ) ) < min_abs_z )THEN
+ !           min_abs_z= ABS( THIS% grid( 3, ix, iy, iz ) )
+ !           min_ix_z= ix
+ !           min_iy_z= iy
+ !           min_iz_z= iz
+ !         ENDIF
+ !       ENDDO
+ !     ENDDO
+ !   ENDDO
+ !
+ !   coords_z: DO iz= 1, THIS% ngrid_z, 1
+ !     coords_y: DO iy= 1, THIS% ngrid_y, 1
+ !       coords_x: DO ix= 1, THIS% ngrid_x, 1
+ !
+ !         IF( THIS% export_form_xy .AND. &
+ !             THIS% grid( 3, ix, iy, iz ) /= &
+ !             THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
+ !           CYCLE
+ !         ENDIF
+ !         IF( THIS% export_form_x .AND. &
+ !             ( THIS% grid( 3, ix, iy, iz ) /= &
+ !               THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) &
+ !               .OR. &
+ !               THIS% grid( 2, ix, iy, iz ) /= &
+ !               THIS% grid( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
+ !           CYCLE
+ !         ENDIF
+ !
+ !         WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
+ !             THIS% grid( 1, ix, iy, iz ), &
+ !             THIS% grid( 2, ix, iy, iz ), &
+ !             THIS% grid( 3, ix, iy, iz ), &
+ !             THIS% lapse( ix, iy, iz ), &
+ !             THIS% shift_u( ix, iy, iz, jx ), &
+ !             THIS% shift_u( ix, iy, iz, jy ), &
+ !             THIS% shift_u( ix, iy, iz, jz ), &
+ !             THIS% phi(ix,iy,iz), &
+ !             THIS% trK(ix,iy,iz), &
+ !             THIS% g_BSSN3_ll( ix, iy, iz, jxx ), &
+ !             THIS% g_BSSN3_ll( ix, iy, iz, jxy ), &
+ !             THIS% g_BSSN3_ll( ix, iy, iz, jxz ), &
+ !             THIS% g_BSSN3_ll( ix, iy, iz, jyy ), &
+ !             THIS% g_BSSN3_ll( ix, iy, iz, jyz ), &
+ !             THIS% g_BSSN3_ll( ix, iy, iz, jzz ), &
+ !             THIS% A_BSSN3_ll( ix, iy, iz, jxx ), &
+ !             THIS% A_BSSN3_ll( ix, iy, iz, jxy ), &
+ !             THIS% A_BSSN3_ll( ix, iy, iz, jxz ), &
+ !             THIS% A_BSSN3_ll( ix, iy, iz, jyy ), &
+ !             THIS% A_BSSN3_ll( ix, iy, iz, jyz ), &
+ !             THIS% A_BSSN3_ll( ix, iy, iz, jzz ), &
+ !             THIS% Gamma_u( ix, iy, iz, jx ), &
+ !             THIS% Gamma_u( ix, iy, iz, jy ), &
+ !             THIS% Gamma_u( ix, iy, iz, jz )
+ !
+ !         IF( ios > 0 )THEN
+ !           PRINT *, "...error when writing the arrays in ", &
+ !                    TRIM(finalnamefile), ". The error message is", err_msg
+ !           STOP
+ !         ENDIF
+ !         !CALL test_status( ios, err_msg, "...error when writing " &
+ !         !                  // "the arrays in " // TRIM(finalnamefile) )
+ !
+ !       ENDDO coords_x
+ !     ENDDO coords_y
+ !   ENDDO coords_z
 
-    min_abs_y= 1D+20
-    min_abs_z= 1D+20
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
-          IF( ABS( THIS% grid( 2, ix, iy, iz ) ) < min_abs_y )THEN
-            min_abs_y= ABS( THIS% grid( 2, ix, iy, iz ) )
-            min_ix_y= ix
-            min_iy_y= iy
-            min_iz_y= iz
-          ENDIF
-          IF( ABS( THIS% grid( 3, ix, iy, iz ) ) < min_abs_z )THEN
-            min_abs_z= ABS( THIS% grid( 3, ix, iy, iz ) )
-            min_ix_z= ix
-            min_iy_z= iy
-            min_iz_z= iz
-          ENDIF
-        ENDDO
-      ENDDO
-    ENDDO
-
-    coords_z: DO iz= 1, THIS% ngrid_z, 1
-      coords_y: DO iy= 1, THIS% ngrid_y, 1
-        coords_x: DO ix= 1, THIS% ngrid_x, 1
-
-          IF( THIS% export_form_xy .AND. &
-              THIS% grid( 3, ix, iy, iz ) /= &
-              THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
-            CYCLE
-          ENDIF
-          IF( THIS% export_form_x .AND. &
-              ( THIS% grid( 3, ix, iy, iz ) /= &
-                THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) &
-                .OR. &
-                THIS% grid( 2, ix, iy, iz ) /= &
-                THIS% grid( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
-            CYCLE
-          ENDIF
-
-          WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), &
-              THIS% lapse( ix, iy, iz ), &
-              THIS% shift_u( ix, iy, iz, jx ), &
-              THIS% shift_u( ix, iy, iz, jy ), &
-              THIS% shift_u( ix, iy, iz, jz ), &
-              THIS% phi(ix,iy,iz), &
-              THIS% trK(ix,iy,iz), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jxx ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jxy ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jxz ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jyy ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jyz ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jzz ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jxx ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jxy ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jxz ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jyy ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jyz ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jzz ), &
-              THIS% Gamma_u( ix, iy, iz, jx ), &
-              THIS% Gamma_u( ix, iy, iz, jy ), &
-              THIS% Gamma_u( ix, iy, iz, jz )
-
-          IF( ios > 0 )THEN
-            PRINT *, "...error when writing the arrays in ", &
-                     TRIM(finalnamefile), ". The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, "...error when writing " &
-          !                  // "the arrays in " // TRIM(finalnamefile) )
-
-        ENDDO coords_x
-      ENDDO coords_y
-    ENDDO coords_z
+    IF( THIS% export_form_xy )THEN
+      CALL output_2D( THIS% coords, 1, 3, 1, .TRUE. )
+    ENDIF
 
     CLOSE( UNIT= 20 )
 
@@ -799,13 +806,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !                      dx_1, dy_1, dz_1
     USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                          jyy, jyz, jzz, jx, jy, jz, n_sym3x3, n_sym4x4
+                          jyy, jyz, jzz, jx, jy, jz, &
+                          it, ix, iy, iz, n_sym3x3, n_sym4x4
     USE McLachlan_refine,  ONLY: BSSN_CONSTRAINTS_INTERIOR
     USE mesh_refinement,   ONLY: allocate_grid_function, nlevels
 
     IMPLICIT NONE
 
-    INTEGER:: ix, iy, iz, allocation_status, fd_lim, l
+    INTEGER:: i, j, k, allocation_status, fd_lim, l
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
@@ -869,7 +877,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
     ! size. This results in a segmentation fault.
-    ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
+    !ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
 
     !grid_x= THIS% ngrid_x
     !grid_y= THIS% ngrid_y
@@ -959,10 +967,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     PRINT *, "** Importing LORENE hydro ID on the gravity grid..."
     ref_levels: DO l= 1, nlevels, 1
 
-      CALL bns_obj% import_id( THIS% levels(l)% ngrid_x,
-                               THIS% levels(l)% ngrid_y,
+      CALL bns_obj% import_id( THIS% levels(l)% ngrid_x, &
+                               THIS% levels(l)% ngrid_y, &
                                THIS% levels(l)% ngrid_z, &
-                               coords% levels(l)% var, &
+                               THIS% coords% levels(l)% var, &
                                baryon_density% levels(l)% var, &
                                energy_density% levels(l)% var, &
                                specific_energy% levels(l)% var, &
@@ -1020,42 +1028,38 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Compute the fluid 4-velocity in the coordinate frame
     !
     PRINT *, "** Computing fluid 4-velocity wrt Eulerian observer..."
-    ASSOCIATE( v_euler_l => v_euler_l% levels(l)% var, &
-               u_euler_l => u_euler_l% levels(l)% var, &
-               v_euler => v_euler% levels(l)% var, &
+
+    ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
+               u_euler_l      => u_euler_l% levels(l)% var, &
+               v_euler        => v_euler% levels(l)% var, &
                lorentz_factor => lorentz_factor% levels(l)% var, &
-               lapse => THIS% lapse% levels(l)% var, &
-               shift_u => THIS% shift_u% levels(l)% var, &
-               g_phys3_ll => THIS% g_phys3_ll% levels(l)% var, &
-               Tmunu_ll => THIS% Tmunu_ll% levels(l)% var )
-    ref_levels2: DO l= 1, nlevels
-      DO k= 1, THIS% levels(l)% ngrid_z, 1
-        DO j= 1, THIS% levels(l)% ngrid_y, 1
-          DO i= 1, THIS% levels(l)% ngrid_x, 1
+               lapse          => THIS% lapse% levels(l)% var, &
+               shift_u        => THIS% shift_u% levels(l)% var, &
+               g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
+               g4             => g4% levels(l)% var, &
+               Tmunu_ll       => Tmunu_ll% levels(l)% var, &
+               energy_density => energy_density% levels(l)% var, &
+               pressure       => pressure% levels(l)% var &
+             )
+
+    ref_levels2: DO l= 1, THIS% nlevels
+      DO k= 1, THIS% get_ngrid_z(l), 1
+        DO j= 1, THIS% get_ngrid_y(l), 1
+          DO i= 1, THIS% get_ngrid_x(l), 1
 
             !energy_density( i, j, k )= baryon_density( i, j, k ) &
             !                            + ( specific_energy(i,j,k) + 1.0 ) &
             !                                 *baryon_density( i, j, k )
 
-            v_euler_l(i,j,k,jx)= &
-                                   g_phys3_ll(i,j,k,jxx)&
-                                        *v_euler(i,j,k,jx)&
-                                 + g_phys3_ll(i,j,k,jxy)&
-                                        *v_euler(i,j,k,jy)&
-                                 + g_phys3_ll(i,j,k,jxz)&
-                                        *v_euler(i,j,k,jz)
-            v_euler_l(i,j,k,jy)= g_phys3_ll(i,j,k,jxy)&
-                                        *v_euler(i,j,k,jx)&
-                                 + g_phys3_ll(i,j,k,jyy)&
-                                        *v_euler(i,j,k,jy)&
-                                 + g_phys3_ll(i,j,k,jyz)&
-                                        *v_euler(i,j,k,jz)
-            v_euler_l(i,j,k,jz)= g_phys3_ll(i,j,k,jxz)&
-                                        *v_euler(i,j,k,jx)&
-                                 + g_phys3_ll(i,j,k,jyz)&
-                                        *v_euler(i,j,k,jy)&
-                                 + g_phys3_ll(i,j,k,jzz)&
-                                        *v_euler(i,j,k,jz)
+            v_euler_l(i,j,k,jx)=   g_phys3_ll(i,j,k,jxx)*v_euler(i,j,k,jx)&
+                                 + g_phys3_ll(i,j,k,jxy)*v_euler(i,j,k,jy)&
+                                 + g_phys3_ll(i,j,k,jxz)*v_euler(i,j,k,jz)
+            v_euler_l(i,j,k,jy)=   g_phys3_ll(i,j,k,jxy)*v_euler(i,j,k,jx)&
+                                 + g_phys3_ll(i,j,k,jyy)*v_euler(i,j,k,jy)&
+                                 + g_phys3_ll(i,j,k,jyz)*v_euler(i,j,k,jz)
+            v_euler_l(i,j,k,jz)=   g_phys3_ll(i,j,k,jxz)*v_euler(i,j,k,jx)&
+                                 + g_phys3_ll(i,j,k,jyz)*v_euler(i,j,k,jy)&
+                                 + g_phys3_ll(i,j,k,jzz)*v_euler(i,j,k,jz)
 
             lorentz_factor( i, j, k )= 1.0D0/SQRT( 1.0D0 &
                             - ( v_euler_l(i,j,k,jx)*v_euler(i,j,k,jx) &
@@ -1071,7 +1075,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                                    *v_euler_l( i, j, k, jx )
             u_euler_l(i,j,k,iy)= lorentz_factor( i, j, k ) &
                                    *v_euler_l( i, j, k, jy )
-            u_euler_l(i,j,k,ik)= lorentz_factor( i, j, k ) &
+            u_euler_l(i,j,k,iz)= lorentz_factor( i, j, k ) &
                                    *v_euler_l( i, j, k, jz )
 
             CALL compute_g4( i, j, k, lapse, shift_u, g_phys3_ll, g4 )
@@ -1147,9 +1151,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
             ENDIF
 
           ! Print progress on screen
-          perc= 100*(THIS% levels(l)% ngrid_x*THIS% levels(l)% ngrid_y*(k - 1) &
-                + THIS% levels(l)% ngrid_x*(j - 1) + i) &
-                /( THIS% levels(l)% ngrid_x*THIS% levels(l)% ngrid_y*THIS% levels(l)% ngrid_z )
+          perc= 100*(THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)*(k - 1) &
+                + THIS% get_ngrid_x(l)*(j - 1) + i) &
+                /( THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)* &
+                   THIS% get_ngrid_z(l) )
           IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) creturn//" ", perc, "%"
           ENDIF
@@ -1174,74 +1179,75 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       !
       PRINT *, "** Computing stress-energy tensor..."
       Tmunu_ll= 0.0
-      DO k= 1, THIS% ngrid_z, 1
-        DO j= 1, THIS% ngrid_y, 1
-          DO i= 1, THIS% ngrid_x, 1
+      DO k= 1, THIS% get_ngrid_z(l), 1
+        DO j= 1, THIS% get_ngrid_y(l), 1
+          DO i= 1, THIS% get_ngrid_x(l), 1
 
             Tmunu_ll(i,j,k,itt)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,0)*u_euler_l(i,j,k,0) &
+                    *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,it) &
                     + pressure(i,j,k)*g4(i,j,k,itt) &
                      )
 
             Tmunu_ll(i,j,k,itx)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,0)*u_euler_l(i,j,k,1) &
+                    *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,ix) &
                     + pressure(i,j,k)*g4(i,j,k,itx) &
                      )
 
             Tmunu_ll(i,j,k,ity)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,0)*u_euler_l(i,j,k,2) &
+                    *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iy) &
                     + pressure(i,j,k)*g4(i,j,k,ity) &
                      )
 
             Tmunu_ll(i,j,k,itz)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,0)*u_euler_l(i,j,k,3) &
+                    *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iz) &
                     + pressure(i,j,k)*g4(i,j,k,itz) &
                      )
 
             Tmunu_ll(i,j,k,ixx)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,1)*u_euler_l(i,j,k,1) &
+                    *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,ix) &
                     + pressure(i,j,k)*g4(i,j,k,ixx) &
                      )
 
             Tmunu_ll(i,j,k,ixy)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,1)*u_euler_l(i,j,k,2) &
+                    *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iy) &
                     + pressure(i,j,k)*g4(i,j,k,ixy) &
                      )
 
             Tmunu_ll(i,j,k,ixz)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,1)*u_euler_l(i,j,k,3) &
+                    *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iz) &
                     + pressure(i,j,k)*g4(i,j,k,ixz) &
                      )
 
             Tmunu_ll(i,j,k,iyy)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,2)*u_euler_l(i,j,k,2) &
+                    *u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iy) &
                     + pressure(i,j,k)*g4(i,j,k,iyy)  &
                      )
 
             Tmunu_ll(i,j,k,iyz)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,2)*u_euler_l(i,j,k,3) &
+                    *u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iz) &
                     + pressure(i,j,k)*g4(i,j,k,iyz) &
                      )
 
             Tmunu_ll(i,j,k,izz)= lorene2hydrobase*( &
                     ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,3)*u_euler_l(i,j,k,3) &
+                    *u_euler_l(i,j,k,iz)*u_euler_l(i,j,k,iz) &
                     + pressure(i,j,k)*g4(i,j,k,izz) &
                      )
 
           ! Print progress on screen
-          perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(k - 1) &
-                + THIS% ngrid_x*(j - 1) + i) &
-                /( THIS% ngrid_x* THIS% ngrid_y*THIS% ngrid_z )
+          perc= 100*(THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)*(k - 1) &
+                + THIS% get_ngrid_x(l)*(j - 1) + i) &
+                /( THIS% get_ngrid_x(l)* THIS% get_ngrid_y(l)* &
+                   THIS% get_ngrid_z(l) )
           IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                     creturn//" ", perc, "%"
