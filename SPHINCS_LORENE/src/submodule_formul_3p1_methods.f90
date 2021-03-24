@@ -84,6 +84,10 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     CALL initialize_grid()
     !grid_file= 'gravity_grid_parameters.dat'
 
+    f3p1_obj% nlevels= nlevels
+    f3p1_obj% levels= levels
+    f3p1_obj% coords= coords
+
     !INQUIRE( FILE= grid_file, EXIST= file_exists)
     !IF( file_exists )THEN
     ! OPEN( 10, FILE= grid_file, STATUS= 'OLD' )
@@ -156,8 +160,6 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !! ...and its inverse
     !dgmin_1= 1.0D0/dgmin
 
-    f3p1_obj% levels = levels
-
     !
     !-- Allocating the memory for the arrays x, y, z
     !-- storing the Cartesian coordinates of the grid points
@@ -208,7 +210,6 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     CALL allocate_grid_function( f3p1_obj% shift_u, "myshift_u", 3 )
     CALL allocate_grid_function( f3p1_obj% g_phys3_ll, "myg_phys3_ll", 6 )
     CALL allocate_grid_function( f3p1_obj% K_phys3_ll, "myK_phys3_ll", 6 )
-
 
     !IF(.NOT.ALLOCATED( f3p1_obj% lapse ))THEN
     !  ALLOCATE( f3p1_obj% lapse( f3p1_obj% ngrid_x, &
@@ -275,14 +276,14 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     PRINT *
     CALL f3p1_obj% importer_timer% start_timer()
 
-    ref_levels: DO l= 1, nlevels, 1
+    ref_levels: DO l= 1, f3p1_obj% nlevels, 1
 
       CALL bns_obj% import_id( f3p1_obj% levels(l)% ngrid_x, &
                                f3p1_obj% levels(l)% ngrid_y, &
                                f3p1_obj% levels(l)% ngrid_z, &
-                               coords% levels(l)% var, &
-                               f3p1_obj% lapse% levels(l)% var, &
-                               f3p1_obj% shift_u% levels(l)% var, &
+                               f3p1_obj% coords%     levels(l)% var, &
+                               f3p1_obj% lapse%      levels(l)% var, &
+                               f3p1_obj% shift_u%    levels(l)% var, &
                                f3p1_obj% g_phys3_ll% levels(l)% var, &
                                f3p1_obj% K_phys3_ll% levels(l)% var )
 
@@ -743,466 +744,534 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     LOGICAL:: exist
 
-    unit_analysis= 20120
-    grid_points= nx*ny*nz
-
-    !
-    !-- Export the constraints to a formatted file
-    !
-    INQUIRE( FILE= TRIM(name_stats), EXIST= exist )
-
-    IF( exist )THEN
-        OPEN( UNIT= unit_analysis, FILE= TRIM(name_stats), &
-              STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= unit_analysis, FILE= TRIM(name_stats), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "... error when opening " // TRIM(name_stats), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-    !CALL test_status( ios, err_msg, "...error when opening " &
-    !         // TRIM(name_stats) )
-
     IF( THIS% export_constraints_details )THEN
-        WRITE( UNIT = unit_analysis, IOSTAT = ios, IOMSG = err_msg, &
-        FMT = * ) &
-        "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
-        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-               IOMSG = err_msg, FMT = * ) &
-        "# The rows contain the points at which", name_constraint, " have "&
-        // "values in: (-oo,1D-7], [1D-7,1D-6], [1D-6,1D-5], [1D-5,1D-4]" &
-        // ", [1D-4,1D-3], [1D-3,1D-2], [1D-2,1D-1], [1D-1,1], [1,1D+1]" &
-        // ", [1D+1,1D+2], [1D+2,1D+3], [1D+3,+oo)"
+      !
+      !-- Export the constraint analysis to a formatted file
+      !
+      unit_analysis= 20120
+
+      INQUIRE( FILE= TRIM(name_stats), EXIST= exist )
+
+      IF( exist )THEN
+          OPEN( UNIT= unit_analysis, FILE= TRIM(name_stats), &
+                STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
+      ELSE
+          OPEN( UNIT= unit_analysis, FILE= TRIM(name_stats), STATUS= "NEW", &
+                FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      IF( ios > 0 )THEN
+        PRINT *, "... error when opening " // TRIM(name_stats), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_stats) )
+
+      WRITE( UNIT = unit_analysis, IOSTAT = ios, IOMSG = err_msg, &
+      FMT = * ) &
+      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+             IOMSG = err_msg, FMT = * ) &
+      "# The rows contain the points at which", name_constraint, " have "&
+      // "values in: (-oo,1D-7], [1D-7,1D-6], [1D-6,1D-5], [1D-5,1D-4]" &
+      // ", [1D-4,1D-3], [1D-3,1D-2], [1D-2,1D-1], [1D-1,1], [1,1D+1]" &
+      // ", [1D+1,1D+2], [1D+2,1D+3], [1D+3,+oo)"
     ENDIF
 
     ! TODO: there is some repetition in the following code. To be fixed
-    cnt_7= 0
-    cnt_6= 0
-    cnt_5= 0
-    cnt_4= 0
-    cnt_m3= 0
-    cnt_m2= 0
-    cnt_m1= 0
-    cnt_0= 0
-    cnt_1= 0
-    cnt_2= 0
-    cnt_3= 0
-    cnt_oo= 0
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) <= 1D-7 )THEN
-                    cnt_7= cnt_7 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_7 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D-7 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D-6 )THEN
-                    cnt_6= cnt_6 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_6 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D-6 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D-5 )THEN
-                    cnt_5= cnt_5 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_5 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D-5 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D-4 )THEN
-                    cnt_4= cnt_4 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_4 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D-4 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D-3 )THEN
-                    cnt_m3= cnt_m3 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_m3 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D-3 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D-2 )THEN
-                    cnt_m2= cnt_m2 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_m2 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D-2 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D-1 )THEN
-                    cnt_m1= cnt_m1 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_m1 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D-1 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D+0 )THEN
-                    cnt_0= cnt_0 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_0 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D+0 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D+1 )THEN
-                    cnt_1= cnt_1 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_1 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D+1 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D+2 )THEN
-                    cnt_2= cnt_2 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_2 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D+2 &
-                .AND. ABS( constraint(ix,iy,iz) ) <= 1D+3 )THEN
-                    cnt_3= cnt_3 + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_3 == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-    ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
-    DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-            DO ix= 1, nx, 1
-                IF( ABS( constraint(ix,iy,iz) ) > 1D+3 )THEN
-                    cnt_oo= cnt_oo + 1
-                    IF( THIS% export_constraints_details )THEN
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) &!"(E15.6)" &
-                               THIS% grid( 1, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                        WRITE( UNIT= unit_analysis, IOSTAT = ios, &
-                               IOMSG = err_msg, FMT = "(F17.13)", &
-                               ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
-                        WRITE( UNIT= unit_analysis, FMT= "(A2)", &
-                               ADVANCE= "NO" ) "  "
-                    ENDIF
-                ENDIF
-            ENDDO
-        ENDDO
-    ENDDO
-    IF( THIS% export_constraints_details .AND. cnt_oo == 0 )THEN
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
-        WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    !cnt_7 = 0
+    !cnt_6 = 0
+    !cnt_5 = 0
+    !cnt_4 = 0
+    !cnt_m3= 0
+    !cnt_m2= 0
+    !cnt_m1= 0
+    !cnt_0 = 0
+    !cnt_1 = 0
+    !cnt_2 = 0
+    !cnt_3 = 0
+    !cnt_oo= 0
+
+    cnt_m7= THIS% abs_values_in( 0, 1.0e-7, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_m7 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
+    cnt_m6= THIS% abs_values_in( 1.0e-7, 1.0e-6, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_m6 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_m5= THIS% abs_values_in( 1.0e-6, 1.0e-5, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_m5 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_m4= THIS% abs_values_in( 1.0e-5, 1.0e-4, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_m4 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_m3= THIS% abs_values_in( 1.0e-4, 1.0e-3, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_m3 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_m2= THIS% abs_values_in( 1.0e-3, 1.0e-2, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_m2 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_m1= THIS% abs_values_in( 1.0e-2, 1.0e-1, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_m1 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_0= THIS% abs_values_in( 1.0e-1, 1.0, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_0 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_p1= THIS% abs_values_in( 1.0, 1e+1, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_p1 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_p2= THIS% abs_values_in( 1.0e+1, 1.0e+2, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_p2 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_p3= THIS% abs_values_in( 1.0e+2, 1.0e+3, constraint, nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_p3 == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+    cnt_oo= THIS% abs_values_in( 1.0e+3, HUGE(DBLE(1)), constraint, &
+                                      nx, ny, nz )
+    IF( THIS% export_constraints_details .AND. cnt_oo == 0 )THEN
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+    ENDIF
+    WRITE( UNIT= unit_analysis, FMT= * ) ""
+
+
+
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D-7 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D-6 )THEN
+  !                  cnt_6= cnt_6 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_6 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D-6 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D-5 )THEN
+  !                  cnt_5= cnt_5 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_5 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D-5 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D-4 )THEN
+  !                  cnt_4= cnt_4 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_4 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D-4 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D-3 )THEN
+  !                  cnt_m3= cnt_m3 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_m3 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D-3 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D-2 )THEN
+  !                  cnt_m2= cnt_m2 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_m2 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D-2 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D-1 )THEN
+  !                  cnt_m1= cnt_m1 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_m1 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D-1 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D+0 )THEN
+  !                  cnt_0= cnt_0 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_0 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D+0 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D+1 )THEN
+  !                  cnt_1= cnt_1 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_1 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D+1 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D+2 )THEN
+  !                  cnt_2= cnt_2 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_2 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D+2 &
+  !              .AND. ABS( constraint(ix,iy,iz) ) <= 1D+3 )THEN
+  !                  cnt_3= cnt_3 + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_3 == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+  !  DO iz= 1, nz, 1
+  !      DO iy= 1, ny, 1
+  !          DO ix= 1, nx, 1
+  !              IF( ABS( constraint(ix,iy,iz) ) > 1D+3 )THEN
+  !                  cnt_oo= cnt_oo + 1
+  !                  IF( THIS% export_constraints_details )THEN
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) &!"(E15.6)" &
+  !                             THIS% grid( 1, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 2, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                      WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+  !                             IOMSG = err_msg, FMT = "(F17.13)", &
+  !                             ADVANCE= "NO" ) THIS% grid( 3, ix, iy, iz )
+  !                      WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+  !                             ADVANCE= "NO" ) "  "
+  !                  ENDIF
+  !              ENDIF
+  !          ENDDO
+  !      ENDDO
+  !  ENDDO
+  !  IF( THIS% export_constraints_details .AND. cnt_oo == 0 )THEN
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !      WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
+  !  ENDIF
+  !  WRITE( UNIT= unit_analysis, FMT= * ) ""
+
     CLOSE( UNIT= unit_analysis )
+
+    grid_points= nx*ny*nz
 
     !
     !-- Compute the l2 norm of the constraints
@@ -1276,6 +1345,65 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     WRITE( UNIT = unit_logfile, FMT = * )
 
   END PROCEDURE analyze_constraint
+
+
+  MODULE PROCEDURE abs_values_in
+
+    !**************************************************
+    !                                                 *
+    !   *
+    !   *
+    !   *
+    !                                                 *
+    ! FT 24.03.2021                                   *
+    !                                                 *
+    !**************************************************
+
+    IMPLICIT NONE
+
+    INTEGER:: i, j, k
+
+    IF( SHAPE( constraint ) /= [ nx, ny, nz ] )THEN
+      PRINT *
+      PRINT *, "** ERROR in FUNCTION abs_values_in: the array given as ", &
+               "argument does not have a SHAPE compatible with the ", &
+               "corresponding refinement level. "
+      PRINT *
+      STOP
+    ENDIF
+
+    DO k= 1, nz, 1
+      DO j= 1, ny, 1
+        DO i= 1, nx, 1
+          IF( ABS( constraint(i,j,k) ) > lower_bound &
+             .AND. ABS( constraint(i,j,k) ) <= upper_bound )THEN
+            cnt= cnt + 1
+            IF( THIS% export_constraints_details )THEN
+              WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+                     IOMSG = err_msg, FMT = "(F17.13)", &
+                     ADVANCE= "NO" ) &!"(E15.6)" &
+                     THIS% coords% levels(l)% var( i, j, k, jx )
+              WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+                     ADVANCE= "NO" ) "  "
+              WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+                     IOMSG = err_msg, FMT = "(F17.13)", &
+                     ADVANCE= "NO" )
+                     THIS% coords% levels(l)% var( i, j, k, jy )
+              WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+                     ADVANCE= "NO" ) "  "
+              WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+                     IOMSG = err_msg, FMT = "(F17.13)", &
+                     ADVANCE= "NO" )
+                     THIS% coords% levels(l)% var( i, j, k, jz )
+              WRITE( UNIT= unit_analysis, FMT= "(A2)", &
+                     ADVANCE= "NO" ) "  "
+            ENDIF
+          ENDIF
+        ENDDO
+      ENDDO
+    ENDDO
+
+  END PROCEDURE abs_values_in
 
 
   MODULE PROCEDURE destruct_formul_3p1

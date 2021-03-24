@@ -71,10 +71,13 @@ MODULE formul_3p1_id
     !
     !-- New variables for the refined mesh
     !
+    INTEGER:: nlevels
+
     TYPE(timer):: grid_timer
     TYPE(timer):: importer_timer
 
     TYPE(level), DIMENSION(:), ALLOCATABLE :: levels
+    TYPE(grid_function):: coords
 
     TYPE(grid_function_scalar):: lapse
     TYPE(grid_function):: shift_u
@@ -132,6 +135,8 @@ MODULE formul_3p1_id
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
+
+    PROCEDURE:: abs_values_in
 
     PROCEDURE, PUBLIC:: get_grid_point
 
@@ -194,17 +199,30 @@ MODULE formul_3p1_id
                                           nx, ny, nz, &
                                           constraint, &
                                           name_constraint, &
-                                          unit_logfile, &
-                                          name_stats )
+                                          name_analysis )
 
       CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
       INTEGER,                            INTENT( IN )    :: nx, ny, nz
-      INTEGER,                            INTENT( IN OUT ):: unit_logfile
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
       CHARACTER( LEN= * ),                INTENT( IN OUT ):: name_constraint
-      CHARACTER( LEN= * ),                INTENT( IN OUT ):: name_stats
+      CHARACTER( LEN= * ),                INTENT( IN OUT ):: name_analysis
 
     END SUBROUTINE analyze_constraint
+
+    MODULE FUNCTION abs_values_in( THIS, lower_bound, upper_bound, &
+                                        constraint, nx, ny, nz ) &
+                    RESULT( cnt )
+
+      ! Arguments
+      CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
+      DOUBLE PRECISION                                    :: lower_bound, &
+                                                             upper_bound
+      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
+      INTEGER,                            INTENT( IN )    :: nx, ny, nz
+      ! Result
+      INTEGER                                             :: cnt
+
+    END FUNCTION abs_values_in
 
     MODULE FUNCTION get_grid_point( THIS, ix, iy, iz ) RESULT( grid_point )
 
