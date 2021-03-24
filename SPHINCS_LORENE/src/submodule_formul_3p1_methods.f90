@@ -736,11 +736,11 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     IMPLICIT NONE
 
-    INTEGER:: cnt_7, cnt_6, cnt_5, cnt_4, cnt_m3, cnt_2, cnt_0, cnt_1, &
-              cnt_m1, cnt_m2, cnt_3, cnt_oo, grid_points, ix, iy, iz, k, &
+    INTEGER:: cnt_m7, cnt_m6, cnt_m5, cnt_m4, cnt_m3, cnt_m2, cnt_m1, cnt_0, &
+              cnt_p1, cnt_p2, cnt_p3, cnt_oo, grid_points, i, j, k, &
               unit_analysis
 
-    DOUBLE PRECISION:: constraint_l2, constraint_loo, tmp
+    DOUBLE PRECISION:: tmp
 
     LOGICAL:: exist
 
@@ -750,26 +750,26 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       !
       unit_analysis= 20120
 
-      INQUIRE( FILE= TRIM(name_stats), EXIST= exist )
+      INQUIRE( FILE= TRIM(name_analysis), EXIST= exist )
 
       IF( exist )THEN
-          OPEN( UNIT= unit_analysis, FILE= TRIM(name_stats), &
+          OPEN( UNIT= unit_analysis, FILE= TRIM(name_analysis), &
                 STATUS= "REPLACE", &
                 FORM= "FORMATTED", &
                 POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
                 IOMSG= err_msg )
       ELSE
-          OPEN( UNIT= unit_analysis, FILE= TRIM(name_stats), STATUS= "NEW", &
+          OPEN( UNIT= unit_analysis, FILE= TRIM(name_analysis), STATUS= "NEW", &
                 FORM= "FORMATTED", &
                 ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
       IF( ios > 0 )THEN
-        PRINT *, "... error when opening " // TRIM(name_stats), &
+        PRINT *, "... error when opening " // TRIM(name_analysis), &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, "...error when opening " &
-      !         // TRIM(name_stats) )
+      !         // TRIM(name_analysis) )
 
       WRITE( UNIT = unit_analysis, IOSTAT = ios, IOMSG = err_msg, &
       FMT = * ) &
@@ -796,7 +796,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !cnt_3 = 0
     !cnt_oo= 0
 
-    cnt_m7= THIS% abs_values_in( 0, 1.0e-7, constraint, nx, ny, nz )
+    cnt_m7= THIS% abs_values_in( 0.0D0, 1.0D07, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_m7 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -804,7 +805,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_m6= THIS% abs_values_in( 1.0e-7, 1.0e-6, constraint, nx, ny, nz )
+    cnt_m6= THIS% abs_values_in( 1.0D-7, 1.0D-6, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_m6 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -812,7 +814,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_m5= THIS% abs_values_in( 1.0e-6, 1.0e-5, constraint, nx, ny, nz )
+    cnt_m5= THIS% abs_values_in( 1.0D-6, 1.0D-5, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_m5 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -820,7 +823,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_m4= THIS% abs_values_in( 1.0e-5, 1.0e-4, constraint, nx, ny, nz )
+    cnt_m4= THIS% abs_values_in( 1.0D-5, 1.0D-4, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_m4 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -828,7 +832,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_m3= THIS% abs_values_in( 1.0e-4, 1.0e-3, constraint, nx, ny, nz )
+    cnt_m3= THIS% abs_values_in( 1.0D-4, 1.0D-3, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_m3 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -836,7 +841,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_m2= THIS% abs_values_in( 1.0e-3, 1.0e-2, constraint, nx, ny, nz )
+    cnt_m2= THIS% abs_values_in( 1.0D-3, 1.0D-2, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_m2 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -844,7 +850,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_m1= THIS% abs_values_in( 1.0e-2, 1.0e-1, constraint, nx, ny, nz )
+    cnt_m1= THIS% abs_values_in( 1.0D-2, 1.0D-1, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_m1 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -852,7 +859,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_0= THIS% abs_values_in( 1.0e-1, 1.0, constraint, nx, ny, nz )
+    cnt_0= THIS% abs_values_in( 1.0D-1, 1.0D0, constraint, nx, ny, nz, &
+                                unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_0 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -860,7 +868,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_p1= THIS% abs_values_in( 1.0, 1e+1, constraint, nx, ny, nz )
+    cnt_p1= THIS% abs_values_in( 1.0D0, 1D+1, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_p1 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -868,7 +877,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_p2= THIS% abs_values_in( 1.0e+1, 1.0e+2, constraint, nx, ny, nz )
+    cnt_p2= THIS% abs_values_in( 1.0D+1, 1.0D+2, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_p2 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -876,7 +886,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_p3= THIS% abs_values_in( 1.0e+2, 1.0e+3, constraint, nx, ny, nz )
+    cnt_p3= THIS% abs_values_in( 1.0D+2, 1.0D+3, constraint, nx, ny, nz, &
+                                 unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_p3 == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -884,8 +895,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
     WRITE( UNIT= unit_analysis, FMT= * ) ""
 
-    cnt_oo= THIS% abs_values_in( 1.0e+3, HUGE(DBLE(1)), constraint, &
-                                      nx, ny, nz )
+    cnt_oo= THIS% abs_values_in( 1.0D+3, HUGE(DBLE(1)), constraint, &
+                                 nx, ny, nz, unit_analysis )
     IF( THIS% export_constraints_details .AND. cnt_oo == 0 )THEN
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
@@ -1276,27 +1287,26 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !
     !-- Compute the l2 norm of the constraints
     !
-    constraint_l2= 0
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
-          constraint_l2= constraint_l2 + &
-                         constraint(ix,iy,iz)*constraint(ix,iy,iz)
+    l2_norm= 0
+    DO i= 1, nz, 1
+      DO j= 1, ny, 1
+        DO k= 1, nx, 1
+          l2_norm= l2_norm + constraint(i,j,k)*constraint(i,j,k)
         ENDDO
       ENDDO
     ENDDO
-    constraint_l2= SQRT( constraint_l2/grid_points )
+    l2_norm= SQRT( l2_norm/grid_points )
 
     !
     !-- Compute the loo norm (supremum norm) of the constraints
     !
-    constraint_loo= 0
-    DO iz= 1, THIS% ngrid_z, 1
-      DO iy= 1, THIS% ngrid_y, 1
-        DO ix= 1, THIS% ngrid_x, 1
-          tmp= ABS( constraint(ix,iy,iz) )
-          IF( tmp > constraint_loo )THEN
-            constraint_loo= tmp
+    loo_norm= 0
+    DO i= 1, nz, 1
+      DO j= 1, ny, 1
+        DO k= 1, nx, 1
+          tmp= ABS( constraint(i,j,k) )
+          IF( tmp > loo_norm )THEN
+            loo_norm= tmp
           ENDIF
         ENDDO
       ENDDO
@@ -1311,13 +1321,13 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
          "given percentage of grid points:"
     WRITE( UNIT= unit_logfile, FMT = * ) ""
     WRITE( UNIT= unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (-oo,1D-7]: ", &
-        100*DBLE(cnt_7)/DBLE(grid_points) , "%"
+        100*DBLE(cnt_m7)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-7,1D-6]: ", &
-        100*DBLE(cnt_6)/DBLE(grid_points) , "%"
+        100*DBLE(cnt_m6)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-6,1D-5]: ", &
-        100*DBLE(cnt_5)/DBLE(grid_points) , "%"
+        100*DBLE(cnt_m5)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-5,1D-4]: ", &
-        100*DBLE(cnt_4)/DBLE(grid_points) , "%"
+        100*DBLE(cnt_m4)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-4,1D-3]: ", &
         100*DBLE(cnt_m3)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-3,1D-2]: ", &
@@ -1327,21 +1337,21 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-1,1]: ",   &
         100*DBLE(cnt_0)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1,10]: ",      &
-        100*DBLE(cnt_1)/DBLE(grid_points) , "%"
+        100*DBLE(cnt_p1)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (10,1D+2]: ",   &
-        100*DBLE(cnt_2)/DBLE(grid_points) , "%"
+        100*DBLE(cnt_p2)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D+2,1D+3]: ", &
-        100*DBLE(cnt_3)/DBLE(grid_points) , "%"
+        100*DBLE(cnt_p3)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D+3,+oo]: ",  &
         100*DBLE(cnt_oo)/DBLE(grid_points), "%"
     WRITE( UNIT = unit_logfile, FMT = * )
     WRITE( UNIT = unit_logfile, FMT = * ) "# l2-norm of ", name_constraint,&
-                               " over the gravity grid= ", constraint_l2
+                               " over the gravity grid= ", l2_norm
     WRITE( UNIT = unit_logfile, FMT = * )
     WRITE( UNIT = unit_logfile, FMT = * ) &
                        "# loo-norm (supremum of the absolute values) of ", &
                        name_constraint,&
-                       " over the gravity grid= ", constraint_loo
+                       " over the gravity grid= ", loo_norm
     WRITE( UNIT = unit_logfile, FMT = * )
 
   END PROCEDURE analyze_constraint
@@ -1359,11 +1369,18 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !                                                 *
     !**************************************************
 
+    USE tensor, ONLY: jx, jy, jz
+
     IMPLICIT NONE
 
-    INTEGER:: i, j, k
+    INTEGER:: i, j, k, l, ref_lev
+    INTEGER, DIMENSION(3):: shape_constraint
 
-    IF( SHAPE( constraint ) /= [ nx, ny, nz ] )THEN
+    shape_constraint= SHAPE( constraint )
+
+    IF( shape_constraint(1) /= nx .OR. &
+        shape_constraint(2) /= ny .OR. &
+        shape_constraint(3) /= nz )THEN
       PRINT *
       PRINT *, "** ERROR in FUNCTION abs_values_in: the array given as ", &
                "argument does not have a SHAPE compatible with the ", &
@@ -1372,29 +1389,37 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       STOP
     ENDIF
 
+    DO l= 1, THIS% nlevels, 1
+      IF( shape_constraint(1) == THIS% levels(l)% ngrid_x .AND. &
+          shape_constraint(2) == THIS% levels(l)% ngrid_y .AND. &
+          shape_constraint(3) == THIS% levels(l)% ngrid_z)THEN
+        ref_lev= l
+      ENDIF
+    ENDDO
+
     DO k= 1, nz, 1
       DO j= 1, ny, 1
         DO i= 1, nx, 1
-          IF( ABS( constraint(i,j,k) ) > lower_bound &
-             .AND. ABS( constraint(i,j,k) ) <= upper_bound )THEN
+          IF( ABS( constraint(i,j,k) ) > lower_bound .AND. &
+              ABS( constraint(i,j,k) ) <= upper_bound )THEN
             cnt= cnt + 1
             IF( THIS% export_constraints_details )THEN
               WRITE( UNIT= unit_analysis, IOSTAT = ios, &
                      IOMSG = err_msg, FMT = "(F17.13)", &
                      ADVANCE= "NO" ) &!"(E15.6)" &
-                     THIS% coords% levels(l)% var( i, j, k, jx )
+                     THIS% coords% levels(ref_lev)% var( i, j, k, jx )
               WRITE( UNIT= unit_analysis, FMT= "(A2)", &
                      ADVANCE= "NO" ) "  "
               WRITE( UNIT= unit_analysis, IOSTAT = ios, &
                      IOMSG = err_msg, FMT = "(F17.13)", &
-                     ADVANCE= "NO" )
-                     THIS% coords% levels(l)% var( i, j, k, jy )
+                     ADVANCE= "NO" ) &
+                     THIS% coords% levels(ref_lev)% var( i, j, k, jy )
               WRITE( UNIT= unit_analysis, FMT= "(A2)", &
                      ADVANCE= "NO" ) "  "
               WRITE( UNIT= unit_analysis, IOSTAT = ios, &
                      IOMSG = err_msg, FMT = "(F17.13)", &
-                     ADVANCE= "NO" )
-                     THIS% coords% levels(l)% var( i, j, k, jz )
+                     ADVANCE= "NO" ) &
+                     THIS% coords% levels(ref_lev)% var( i, j, k, jz )
               WRITE( UNIT= unit_analysis, FMT= "(A2)", &
                      ADVANCE= "NO" ) "  "
             ENDIF

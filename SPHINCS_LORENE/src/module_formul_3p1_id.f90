@@ -59,10 +59,6 @@ MODULE formul_3p1_id
     !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC
     !DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC_parts
     !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC_parts
-    DOUBLE PRECISION:: HC_l2
-    DOUBLE PRECISION, DIMENSION(3):: MC_l2
-    DOUBLE PRECISION:: HC_parts_l2
-    DOUBLE PRECISION, DIMENSION(3):: MC_parts_l2
 
     ! Variables to decide if and how to export the constraints
     LOGICAL, PUBLIC:: export_constraints
@@ -88,6 +84,11 @@ MODULE formul_3p1_id
     TYPE(grid_function_scalar):: HC_parts
     TYPE(grid_function):: MC
     TYPE(grid_function):: MC_parts
+
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_l2
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: MC_l2
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_parts_l2
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: MC_parts_l2
 
 
     CONTAINS
@@ -199,19 +200,25 @@ MODULE formul_3p1_id
                                           nx, ny, nz, &
                                           constraint, &
                                           name_constraint, &
-                                          name_analysis )
+                                          name_analysis, &
+                                          unit_logfile, &
+                                          l2_norm, &
+                                          loo_norm )
 
       CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
       INTEGER,                            INTENT( IN )    :: nx, ny, nz
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
-      CHARACTER( LEN= * ),                INTENT( IN OUT ):: name_constraint
-      CHARACTER( LEN= * ),                INTENT( IN OUT ):: name_analysis
+      CHARACTER( LEN= * ),                INTENT( IN )    :: name_constraint
+      CHARACTER( LEN= * ),                INTENT( IN )    :: name_analysis
+      INTEGER,                            INTENT( IN )    :: unit_logfile
+      DOUBLE PRECISION,                   INTENT( OUT )   :: l2_norm
+      DOUBLE PRECISION,                   INTENT( OUT )   :: loo_norm
 
     END SUBROUTINE analyze_constraint
 
     MODULE FUNCTION abs_values_in( THIS, lower_bound, upper_bound, &
-                                        constraint, nx, ny, nz ) &
-                    RESULT( cnt )
+                                   constraint, nx, ny, nz, &
+                                   unit_analysis ) RESULT( cnt )
 
       ! Arguments
       CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
@@ -219,6 +226,7 @@ MODULE formul_3p1_id
                                                              upper_bound
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
       INTEGER,                            INTENT( IN )    :: nx, ny, nz
+      INTEGER,                            INTENT( IN )    :: unit_analysis
       ! Result
       INTEGER                                             :: cnt
 

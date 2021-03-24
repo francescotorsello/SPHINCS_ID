@@ -1423,7 +1423,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         MC(:,:,:,jy), &
         MC(:,:,:,jz) &
       )
-    ENDD
+    ENDDO
     PRINT *, " * Constraints computed."
     PRINT *
 
@@ -1457,6 +1457,40 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ENDIF
     !CALL test_status( ios, err_msg, "...error when opening " &
     !         // TRIM(name_logfile) )
+
+    IF( .NOT.ALLOCATED( THIS% HC_l2 ))THEN
+      ALLOCATE( THIS% HC_l2( THIS% nlevels ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array HC_l2. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array HC" )
+    ENDIF
+    IF( .NOT.ALLOCATED( THIS% MC_l2 ))THEN
+      ALLOCATE( THIS% MC_l2( THIS% nlevels, 3 ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array MC_l2. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array HC" )
+    ENDIF
+    IF( .NOT.ALLOCATED( THIS% GC_l2 ))THEN
+      ALLOCATE( THIS% GC_l2( THIS% nlevels, 3 ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array GC_l2. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array HC" )
+    ENDIF
 
     WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
