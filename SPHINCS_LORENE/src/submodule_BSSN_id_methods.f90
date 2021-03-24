@@ -921,9 +921,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !ALLOCATE( THIS% MC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
     !ALLOCATE( THIS% GC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
 
-    CALL allocate_grid_function( THIS% HC, "myHC", 1 )
-    CALL allocate_grid_function( THIS% MC, "myMC", 3 )
-    CALL allocate_grid_function( THIS% GC, "myGC", 3 )
+    CALL allocate_grid_function( THIS% HC, "HC_ID", 1 )
+    CALL allocate_grid_function( THIS% MC, "MC_ID", 3 )
+    CALL allocate_grid_function( THIS% GC, "GC_ID", 3 )
 
     !ALLOCATE( Tmunu_ll( &
     !             THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, n_sym4x4 ) )
@@ -1515,10 +1515,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         !                "...deallocation error for array HC" )
       ENDIF
       IF( .NOT.ALLOCATED( THIS% HC_loo ))THEN
-        ALLOCATE( THIS% HC_l2( THIS% nlevels ), &
+        ALLOCATE( THIS% HC_loo( THIS% nlevels ), &
                   STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array HC_l2. ", &
+          PRINT *, "...allocation error for array HC_loo. ", &
                    "The error message is", err_msg
           STOP
         ENDIF
@@ -1526,10 +1526,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         !                "...deallocation error for array HC" )
       ENDIF
       IF( .NOT.ALLOCATED( THIS% MC_loo ))THEN
-        ALLOCATE( THIS% MC_l2( THIS% nlevels, 3 ), &
+        ALLOCATE( THIS% MC_loo( THIS% nlevels, 3 ), &
                   STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array MC_l2. ", &
+          PRINT *, "...allocation error for array MC_loo. ", &
                    "The error message is", err_msg
           STOP
         ENDIF
@@ -1537,10 +1537,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         !                "...deallocation error for array HC" )
       ENDIF
       IF( .NOT.ALLOCATED( THIS% GC_loo ))THEN
-        ALLOCATE( THIS% GC_l2( THIS% nlevels, 3 ), &
+        ALLOCATE( THIS% GC_loo( THIS% nlevels, 3 ), &
                   STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array GC_l2. ", &
+          PRINT *, "...allocation error for array GC_loo. ", &
                    "The error message is", err_msg
           STOP
         ENDIF
@@ -1878,17 +1878,19 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !                                                 *
     !**************************************************
 
-    USE constants,  ONLY: c_light2, cm2m, MSun, g2kg, m2cm, Msun_geo
-    USE units,      ONLY: set_units, m0c2_cu
-    USE grav_grid,  ONLY: ngrid_x, ngrid_y, ngrid_z, dx, dy, dz, &
-                          dx_1, dy_1, dz_1, rad_coord, xR, xL, yR, yL, zR, zL, &
-                          deallocate_gravity_grid
-    USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
-                          ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                          jyy, jyz, jzz, jx, jy, jz, n_sym3x3, n_sym4x4
-    USE McLachlan,  ONLY: ghost_size, BSSN_CONSTRAINTS_INTERIOR, &
-                          allocate_Ztmp, deallocate_Ztmp
-    USE ADM,                  ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
+    USE constants,            ONLY: c_light2, cm2m, MSun, g2kg, m2cm, Msun_geo
+    USE units,                ONLY: set_units, m0c2_cu
+    !USE grav_grid,  ONLY: ngrid_x, ngrid_y, ngrid_z, dx, dy, dz, &
+    !                      dx_1, dy_1, dz_1, rad_coord, xR, xL, yR, yL, zR, zL, &
+    !                      deallocate_gravity_grid
+    USE mesh_refinement,      ONLY: levels
+    USE tensor,               ONLY: itt, itx, ity, itz, ixx, ixy, &
+                                    ixz, iyy, iyz, izz, jxx, jxy, jxz, &
+                                    jyy, jyz, jzz, jx, jy, jz, &
+                                    n_sym3x3, n_sym4x4
+    USE McLachlan_refine,     ONLY: BSSN_CONSTRAINTS_INTERIOR, &
+                                    allocate_Ztmp, deallocate_Ztmp
+    USE ADM_refine,           ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
                                     K_phys3_ll, g_phys3_ll, &
                                     allocate_ADM, deallocate_ADM
     USE input_output,         ONLY: read_options
@@ -1928,14 +1930,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     USE particle_mesh,        ONLY: deallocate_all_lists, &
                                     deallocate_flag_nei_cell, &
                                     deallocate_pp_g
-    USE Tmunu,                ONLY: Tmunu_ll, allocate_Tmunu, deallocate_Tmunu
-    USE GravityAcceleration,  ONLY: allocate_GravityAcceleration, &
+    USE Tmunu_refine,                ONLY: Tmunu_ll, allocate_Tmunu, deallocate_Tmunu
+    USE GravityAcceleration_refine,  ONLY: allocate_GravityAcceleration, &
                                     deallocate_GravityAcceleration
     USE alive_flag,           ONLY: alive
 
     IMPLICIT NONE
 
-    INTEGER:: ix, iy, iz, a, allocation_status
+    INTEGER:: i, j, k, l, a, allocation_status
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
@@ -1965,24 +1967,29 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
     ! size. This results in a segmentation fault.
-    ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
+    !ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
 
-    ngrid_x= THIS% ngrid_x
-    ngrid_y= THIS% ngrid_y
-    ngrid_z= THIS% ngrid_z
-    dx= THIS% dx
-    dy= THIS% dy
-    dz= THIS% dz
-    dx_1= THIS% dx_1
-    dy_1= THIS% dy_1
-    dz_1= THIS% dz_1
+    !ngrid_x= THIS% ngrid_x
+    !ngrid_y= THIS% ngrid_y
+    !ngrid_z= THIS% ngrid_z
+    !dx= THIS% dx
+    !dy= THIS% dy
+    !dz= THIS% dz
+    !dx_1= THIS% dx_1
+    !dy_1= THIS% dy_1
+    !dz_1= THIS% dz_1
 
-    ALLOCATE( THIS% HC_parts( THIS% ngrid_x, THIS% ngrid_y, &
-                                   THIS% ngrid_z ) )
-    ALLOCATE( THIS% MC_parts( THIS% ngrid_x, THIS% ngrid_y, &
-                                   THIS% ngrid_z, 3 ) )
-    ALLOCATE( THIS% GC_parts( THIS% ngrid_x, THIS% ngrid_y, &
-                                   THIS% ngrid_z, 3 ) )
+    levels= THIS% levels
+
+    !ALLOCATE( THIS% HC_parts( THIS% ngrid_x, THIS% ngrid_y, &
+    !                               THIS% ngrid_z ) )
+    !ALLOCATE( THIS% MC_parts( THIS% ngrid_x, THIS% ngrid_y, &
+    !                               THIS% ngrid_z, 3 ) )
+    !ALLOCATE( THIS% GC_parts( THIS% ngrid_x, THIS% ngrid_y, &
+    !                               THIS% ngrid_z, 3 ) )
+    CALL allocate_grid_function( THIS% HC_parts, "HC_parts_ID", 1 )
+    CALL allocate_grid_function( THIS% MC_parts, "MC_parts_ID", 3 )
+    CALL allocate_grid_function( THIS% GC_parts, "GC_parts_ID", 3 )
 
     PRINT *, "Mapping hydro fields from particles to grid..."
 
@@ -2000,36 +2007,38 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL allocate_GravityAcceleration()
 
     ! Initialize the stress-energy tensor to 0
-    Tmunu_ll(:,:,:,:)= 0.0D0
+    DO l= 1, THIS% nlevels, 1
+      Tmunu_ll% levels(l)% var= 0.0D0
+    ENDDO
 
     !
     !-- Allocate memory for the coordinate radius
     !-- (this is needed by ADM_to_BSSN)
     !
-    IF( .NOT. ALLOCATED( rad_coord ) )THEN
-        ALLOCATE( rad_coord( THIS% ngrid_x, THIS% ngrid_y, &
-                             THIS% ngrid_z ), STAT= allocation_status )
-    ENDIF
-    IF( allocation_status > 0 )THEN
-       PRINT *, '...allocation error for rad_coord'
-       STOP
-    ENDIF
+    !IF( .NOT. ALLOCATED( rad_coord ) )THEN
+    !    ALLOCATE( rad_coord( THIS% ngrid_x, THIS% ngrid_y, &
+    !                         THIS% ngrid_z ), STAT= allocation_status )
+    !ENDIF
+    !IF( allocation_status > 0 )THEN
+    !   PRINT *, '...allocation error for rad_coord'
+    !   STOP
+    !ENDIF
+    !
+    !DO iz= 1, THIS% ngrid_z
+    !  DO iy= 1, THIS% ngrid_y
+    !    DO ix= 1, THIS% ngrid_x
+    !      rad_coord( ix, iy, iz )= SQRT( (xL+(ix-1)*dx)**2 &
+    !                                   + (yL+(iy-1)*dy)**2 &
+    !                                   + (zL+(iz-1)*dz)**2 )
+    !    ENDDO
+    !  ENDDO
+    !ENDDO
 
-    DO iz= 1, THIS% ngrid_z
-      DO iy= 1, THIS% ngrid_y
-        DO ix= 1, THIS% ngrid_x
-          rad_coord( ix, iy, iz )= SQRT( (xL+(ix-1)*dx)**2 &
-                                       + (yL+(iy-1)*dy)**2 &
-                                       + (zL+(iz-1)*dz)**2 )
-        ENDDO
-      ENDDO
-    ENDDO
-
-    dt_lapse  = 0.0D0
-    dt_shift_u= 0.0D0
-    lapse= THIS% lapse
-    shift_u= THIS% shift_u
-    g_phys3_ll= THIS% g_phys3_ll
+    !dt_lapse  = 0.0D0
+    !dt_shift_u= 0.0D0
+    !lapse= THIS% lapse
+    !shift_u= THIS% shift_u
+    !g_phys3_ll= THIS% g_phys3_ll
 
     npart= parts_obj% get_npart()
 
@@ -2239,504 +2248,598 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Compute the BSSN constraints by calling the Cactus-bound procedure
     !-- BSSN_CONSTRAINTS_INTERIOR
     !
-    imin = ghost_size
-    imax(1) = THIS% ngrid_x - ghost_size - 1
-    imax(2) = THIS% ngrid_y - ghost_size - 1
-    imax(3) = THIS% ngrid_z - ghost_size - 1
+    ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
+               shift_u    => THIS% shift_u% levels(l)% var, &
+               phi        => THIS% phi% levels(l)% var, &
+               trK        => THIS% trK% levels(l)% var, &
+               g_BSSN3_ll => THIS% g_BSSN3_ll% levels(l)% var, &
+               A_BSSN3_ll => THIS% A_BSSN3_ll% levels(l)% var, &
+               Gamma_u    => THIS% Gamma_u% levels(l)% var, &
+               Tmunu_ll   => Tmunu_ll% levels(l)% var, &
+               HC_parts   => THIS% HC_parts % levels(l)% var, &
+               MC_parts   => THIS% MC_parts % levels(l)% var, &
+               GC_parts   => THIS% GC_parts % levels(l)% var &
+               !ngrid_x    => THIS% levels% ngrid_x, &
+               !ngrid_y    => THIS% levels% ngrid_y, &
+               !ngrid_z    => THIS% levels% ngrid_z
+             )
 
-    THIS% HC_parts= 0.0
-    THIS% MC_parts= 0.0
-    THIS% GC_parts= 0.0
+      PRINT *, " * Computing contraints using particle data..."
+      DO l= 1, THIS% nlevels, 1
 
-    PRINT *, " * Computing contraints using particle data..."
-    CALL BSSN_CONSTRAINTS_INTERIOR( &
-      !
-      !-- Input
-      !
-      THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-      imin, imax, &
-      THIS% dx, THIS% dy, THIS% dz, &
-      THIS% g_BSSN3_ll(:,:,:,jxx), THIS% g_BSSN3_ll(:,:,:,jxy), &
-      THIS% g_BSSN3_ll(:,:,:,jxz), THIS% g_BSSN3_ll(:,:,:,jyy), &
-      THIS% g_BSSN3_ll(:,:,:,jyz), THIS% g_BSSN3_ll(:,:,:,jzz), &
-      THIS% A_BSSN3_ll(:,:,:,jxx), THIS% A_BSSN3_ll(:,:,:,jxy), &
-      THIS% A_BSSN3_ll(:,:,:,jxz), THIS% A_BSSN3_ll(:,:,:,jyy), &
-      THIS% A_BSSN3_ll(:,:,:,jyz), THIS% A_BSSN3_ll(:,:,:,jzz), &
-      THIS% trK(:,:,:), THIS% phi(:,:,:), &
-      THIS% Gamma_u(:,:,:,jx), &
-      THIS% Gamma_u(:,:,:,jy), THIS% Gamma_u(:,:,:,jz), &
-      Tmunu_ll(:,:,:,itt), &
-      Tmunu_ll(:,:,:,itx), &
-      Tmunu_ll(:,:,:,ity), &
-      Tmunu_ll(:,:,:,itz), &
-      Tmunu_ll(:,:,:,ixx), &
-      Tmunu_ll(:,:,:,ixy), &
-      Tmunu_ll(:,:,:,ixz), &
-      Tmunu_ll(:,:,:,iyy), &
-      Tmunu_ll(:,:,:,iyz), &
-      Tmunu_ll(:,:,:,izz), &
-      THIS% lapse(:,:,:), THIS% shift_u(:,:,:,jx), &
-      THIS% shift_u(:,:,:,jy), THIS% shift_u(:,:,:,jz), &
-      !
-      !-- Output
-      !
-      ! Connection constraints
-      THIS% GC_parts(:,:,:,jx), &
-      THIS% GC_parts(:,:,:,jy), &
-      THIS% GC_parts(:,:,:,jz), &
-      ! Hamiltonian and momentum constraints
-      THIS% HC_parts(:,:,:), &
-      THIS% MC_parts(:,:,:,jx), &
-      THIS% MC_parts(:,:,:,jy), &
-      THIS% MC_parts(:,:,:,jz) &
-    )
-    PRINT *, " * Constraints computed."
-    PRINT *
+        imin(1) = THIS% levels(l)% nghost_x
+        imin(2) = THIS% levels(l)% nghost_y
+        imin(3) = THIS% levels(l)% nghost_z
+        imax(1) = THIS% levels(l)% ngrid_x - THIS% levels(l)% nghost_x - 1
+        imax(2) = THIS% levels(l)% ngrid_y - THIS% levels(l)% nghost_y - 1
+        imax(3) = THIS% levels(l)% ngrid_z - THIS% levels(l)% nghost_z - 1
 
-    IF( debug ) PRINT *, "0"
-
-    !---------------------------------------------------------!
-    !--  Analyze constraints, and print to formatted files  --!
-    !---------------------------------------------------------!
-
-    unit_logfile= 2891
-
-    INQUIRE( FILE= TRIM(name_logfile), EXIST= exist )
-
-    IF( debug ) PRINT *, "1"
-
-    IF( exist )THEN
-        OPEN( UNIT= unit_logfile, FILE= TRIM(name_logfile), &
-              STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= unit_logfile, FILE= TRIM(name_logfile), &
-              STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening ", TRIM(name_logfile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-    !CALL test_status( ios, err_msg, "...error when opening " &
-    !                  // TRIM(name_logfile) )
-
-    IF( debug ) PRINT *, "2"
-
-    WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
-
-    IF( debug ) PRINT *, "3"
-
-    name_analysis= "bssn-hc-parts-analysis.dat"
-    name_constraint= "the Hamiltonian constraint"
-    CALL THIS% analyze_constraint( &
-         THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% HC_parts(:,:,:), name_constraint, unit_logfile, &
-         name_analysis )
-
-    name_analysis= "bssn-mc1-parts-analysis.dat"
-    name_constraint= "the first component of the momentum constraint"
-    CALL THIS% analyze_constraint( &
-         THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% MC_parts(:,:,:,1), name_constraint, unit_logfile, &
-         name_analysis )
-
-    name_analysis= "bssn-mc2-parts-analysis.dat"
-    name_constraint= "the second component of the momentum constraint"
-    CALL THIS% analyze_constraint( &
-         THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% MC_parts(:,:,:,2), name_constraint, unit_logfile, &
-         name_analysis )
-
-    name_analysis= "bssn-mc3-parts-analysis.dat"
-    name_constraint= "the third component of the momentum constraint"
-    CALL THIS% analyze_constraint( &
-         THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% MC_parts(:,:,:,3), name_constraint, unit_logfile, &
-         name_analysis )
-
-    name_analysis= "bssn-gc1-parts-analysis.dat"
-    name_constraint= "the first component of the connection constraint"
-    CALL THIS% analyze_constraint( &
-         THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% GC_parts(:,:,:,1), name_constraint, unit_logfile, &
-         name_analysis )
-
-    name_analysis= "bssn-gc2-parts-analysis.dat"
-    name_constraint= "the second component of the connection constraint"
-    CALL THIS% analyze_constraint( &
-         THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% GC_parts(:,:,:,2), name_constraint, unit_logfile, &
-         name_analysis )
-
-    name_analysis= "bssn-gc3-parts-analysis.dat"
-    name_constraint= "the third component of the connection constraint"
-    CALL THIS% analyze_constraint( &
-         THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, &
-         THIS% GC_parts(:,:,:,3), name_constraint, unit_logfile, &
-         name_analysis )
-
-    IF( debug ) PRINT *, "4"
-
-    CLOSE( UNIT= unit_logfile )
-
-    IF( THIS% export_constraints )THEN
-
-      PRINT *, " * Printing constraints to file ", TRIM(namefile), "..."
-
-      !
-      !-- Export the constraints to a formatted file
-      !
-
-      INQUIRE( FILE= TRIM(namefile), EXIST= exist )
-
-      IF( debug ) PRINT *, "1"
-
-      IF( exist )THEN
-          OPEN( UNIT= 21, FILE= TRIM(namefile), STATUS= "REPLACE", &
-                FORM= "FORMATTED", &
-                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                IOMSG= err_msg )
-      ELSE
-          OPEN( UNIT= 21, FILE= TRIM(namefile), STATUS= "NEW", &
-          FORM= "FORMATTED", &
-                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-      ENDIF
-      IF( ios > 0 )THEN
-        PRINT *, "...error when opening ", TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when opening " &
-      !         // TRIM(namefile) )
-
-      IF( debug ) PRINT *, "2"
-
-      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
-      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# Values of the BSSN constraints for the LORENE ID "&
-      // "on selected grid points"
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 1 in ", TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-      !         // TRIM(namefile) )
-      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# column:      1        2       3       4       5", &
-      "       6       7       8       9       10", &
-      "       11       12       13       14       15", &
-      "       16       17       18       19       20"
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 2 in ", TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-      !        // TRIM(namefile) )
-      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "#      x   y   z   Stress-energy (10 components)   " &
-      // "Hamiltonian constraint       " &
-      // "Momentum constraint (three components)       " &
-      // "Connection constraint (three components)"
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 3 in ", TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-      !        // TRIM(namefile) )
-
-      IF( debug ) PRINT *, "3"
-
-      DO iz= 1, THIS% ngrid_z, 1
-        DO iy= 1, THIS% ngrid_y, 1
-          DO ix= 1, THIS% ngrid_x, 1
-            abs_grid( 1, ix, iy, iz )= ABS( THIS% grid( 1, ix, iy, iz ) )
-            abs_grid( 2, ix, iy, iz )= ABS( THIS% grid( 2, ix, iy, iz ) )
-            abs_grid( 3, ix, iy, iz )= ABS( THIS% grid( 3, ix, iy, iz ) )
-          ENDDO
+        HC_parts= 0.0D0
+        MC_parts= 0.0D0
+        GC_parts= 0.0D0
+        CALL BSSN_CONSTRAINTS_INTERIOR( &
+          !
+          !-- Input
+          !
+          THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+          imin, imax, &
+          levels(l)% dx, THIS% levels(l)% dy, THIS% levels(l)% dz, &
+          g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
+          g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
+          g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
+          A_BSSN3_ll(:,:,:,jxx), A_BSSN3_ll(:,:,:,jxy), &
+          A_BSSN3_ll(:,:,:,jxz), A_BSSN3_ll(:,:,:,jyy), &
+          A_BSSN3_ll(:,:,:,jyz), A_BSSN3_ll(:,:,:,jzz), &
+          trK(:,:,:), phi(:,:,:), &
+          Gamma_u(:,:,:,jx), &
+          Gamma_u(:,:,:,jy), Gamma_u(:,:,:,jz), &
+          Tmunu_ll(:,:,:,itt), &
+          Tmunu_ll(:,:,:,itx), &
+          Tmunu_ll(:,:,:,ity), &
+          Tmunu_ll(:,:,:,itz), &
+          Tmunu_ll(:,:,:,ixx), &
+          Tmunu_ll(:,:,:,ixy), &
+          Tmunu_ll(:,:,:,ixz), &
+          Tmunu_ll(:,:,:,iyy), &
+          Tmunu_ll(:,:,:,iyz), &
+          Tmunu_ll(:,:,:,izz), &
+          lapse(:,:,:), shift_u(:,:,:,jx), &
+          shift_u(:,:,:,jy), shift_u(:,:,:,jz), &
+          !
+          !-- Output
+          !
+          ! Connection constraints
+          GC_parts(:,:,:,jx), &
+          GC_parts(:,:,:,jy), &
+          GC_parts(:,:,:,jz), &
+          ! Hamiltonian and momentum constraints
+          HC_parts(:,:,:), &
+          MC_parts(:,:,:,jx), &
+          MC_parts(:,:,:,jy), &
+          MC_parts(:,:,:,jz) &
+        )
         ENDDO
-      ENDDO
+        PRINT *, " * Constraints computed."
+        PRINT *
 
-      min_abs_y= 1D+20
-      min_abs_z= 1D+20
-      DO iz= 1, THIS% ngrid_z, 1
-        DO iy= 1, THIS% ngrid_y, 1
-          DO ix= 1, THIS% ngrid_x, 1
-            IF( ABS( THIS% grid( 2, ix, iy, iz ) ) < min_abs_y )THEN
-              min_abs_y= ABS( THIS% grid( 2, ix, iy, iz ) )
-              min_ix_y= ix
-              min_iy_y= iy
-              min_iz_y= iz
-            ENDIF
-            IF( ABS( THIS% grid( 3, ix, iy, iz ) ) < min_abs_z )THEN
-              min_abs_z= ABS( THIS% grid( 3, ix, iy, iz ) )
-              min_ix_z= ix
-              min_iy_z= iy
-              min_iz_z= iz
-            ENDIF
-          ENDDO
-        ENDDO
-      ENDDO
+        IF( debug ) PRINT *, "0"
 
-      DO iz= 1, THIS% ngrid_z, 1
+        !---------------------------------------------------------!
+        !--  Analyze constraints, and print to formatted files  --!
+        !---------------------------------------------------------!
 
-        IF( MOD( iz, THIS% cons_step ) /= 0 ) CYCLE
+        unit_logfile= 2891
 
-        DO iy= 1, THIS% ngrid_y, 1
+        INQUIRE( FILE= TRIM(name_logfile), EXIST= exist )
 
-          IF( MOD( iy, THIS% cons_step ) /= 0 ) CYCLE
+        IF( debug ) PRINT *, "1"
 
-          DO ix= 1, THIS% ngrid_x, 1
-
-            IF( MOD( ix, THIS% cons_step ) /= 0 ) CYCLE
-
-            IF( THIS% export_constraints_xy .AND. &
-                THIS% grid( 3, ix, iy, iz ) /= &
-                THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
-              CYCLE
-            ENDIF
-            IF( THIS% export_constraints_x .AND. &
-                ( THIS% grid( 3, ix, iy, iz ) /= &
-                  THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) &
-                  .OR. &
-                  THIS% grid( 2, ix, iy, iz ) /= &
-                  THIS% grid( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
-              CYCLE
-            ENDIF
-
-            IF( debug )THEN
-            WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), &
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), &
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), &
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), &
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), &
-              THIS% grid( 1, ix, iy, iz ), &
-              THIS% grid( 2, ix, iy, iz ), &
-              THIS% grid( 3, ix, iy, iz ), & ! column 18
-              !pos_loc( 1, ix, iy, iz ), &
-              !pos_loc( 2, ix, iy, iz ), &
-              !pos_loc( 3, ix, iy, iz ), &
-              !vel_loc( 1, ix, iy, iz ), &
-              !vel_loc( 2, ix, iy, iz ), &
-              !vel_loc( 3, ix, iy, iz ), &
-              !nu_loc( ix, iy, iz ), &
-              !u_loc( ix, iy, iz ), &
-              !nlrf_loc( ix, iy, iz ), &
-              !theta_loc( ix, iy, iz ), &
-              !pressure_loc( ix, iy, iz ), &
-              Tmunu_ll( ix, iy, iz, itt ), &
-              Tmunu_ll( ix, iy, iz, itx ), &
-              Tmunu_ll( ix, iy, iz, ity ), &
-              Tmunu_ll( ix, iy, iz, itz ), &
-              Tmunu_ll( ix, iy, iz, ixx ), &
-              Tmunu_ll( ix, iy, iz, ixy ), &
-              Tmunu_ll( ix, iy, iz, ixz ), &
-              Tmunu_ll( ix, iy, iz, iyy ), &
-              Tmunu_ll( ix, iy, iz, iyz ), &
-              Tmunu_ll( ix, iy, iz, izz ), &
-              THIS% HC_parts( ix, iy, iz ), &
-              THIS% MC_parts( ix, iy, iz, jx ), &
-              THIS% MC_parts( ix, iy, iz, jy ), &
-              THIS% MC_parts( ix, iy, iz, jz ), &
-              THIS% GC_parts( ix, iy, iz, jx ), &
-              THIS% GC_parts( ix, iy, iz, jy ), &
-              THIS% GC_parts( ix, iy, iz, jz ), &
-              THIS% lapse( ix, iy, iz ), &
-              THIS% shift_u( ix, iy, iz, jx ), &
-              THIS% shift_u( ix, iy, iz, jy ), &
-              THIS% shift_u( ix, iy, iz, jz ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jxx ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jxy ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jxz ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jyy ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jyz ), &
-              THIS% g_BSSN3_ll( ix, iy, iz, jzz ), &
-              THIS% k_phys3_ll( ix, iy, iz, jxx ), &
-              THIS% k_phys3_ll( ix, iy, iz, jxy ), &
-              THIS% k_phys3_ll( ix, iy, iz, jxz ), &
-              THIS% k_phys3_ll( ix, iy, iz, jyy ), &
-              THIS% k_phys3_ll( ix, iy, iz, jyz ), &
-              THIS% k_phys3_ll( ix, iy, iz, jzz ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jxx ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jxy ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jxz ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jyy ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jyz ), &
-              THIS% A_BSSN3_ll( ix, iy, iz, jzz ), &
-              THIS% trK( ix, iy, iz ), &
-              THIS% phi( ix, iy, iz ), &
-              THIS% Gamma_u(ix,iy,iz,1), &
-              THIS% Gamma_u(ix,iy,iz,2), &
-              THIS% Gamma_u(ix,iy,iz,3)
-            ELSE
-              WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
-                THIS% grid( 1, ix, iy, iz ), &
-                THIS% grid( 2, ix, iy, iz ), &
-                THIS% grid( 3, ix, iy, iz ), &
-                Tmunu_ll( ix, iy, iz, itt ), &
-                Tmunu_ll( ix, iy, iz, itx ), &
-                Tmunu_ll( ix, iy, iz, ity ), &
-                Tmunu_ll( ix, iy, iz, itz ), &
-                Tmunu_ll( ix, iy, iz, ixx ), &
-                Tmunu_ll( ix, iy, iz, ixy ), &
-                Tmunu_ll( ix, iy, iz, ixz ), &
-                Tmunu_ll( ix, iy, iz, iyy ), &
-                Tmunu_ll( ix, iy, iz, iyz ), &
-                Tmunu_ll( ix, iy, iz, izz ), &
-                THIS% HC_parts( ix, iy, iz ), &
-                THIS% MC_parts( ix, iy, iz, jx ), &
-                THIS% MC_parts( ix, iy, iz, jy ), &
-                THIS% MC_parts( ix, iy, iz, jz ), &
-                THIS% GC_parts( ix, iy, iz, jx ), &
-                THIS% GC_parts( ix, iy, iz, jy ), &
-                THIS% GC_parts( ix, iy, iz, jz )
-            ENDIF
-
-            IF( ios > 0 )THEN
-              PRINT *, "...error when writing the arrays in ", TRIM(namefile), &
-                       ". The error message is", err_msg
-              STOP
-            ENDIF
-            !CALL test_status( ios, err_msg, &
-            !                  "...error in writing " &
-            !                  // "the arrays in " // TRIM(namefile) )
-          ENDDO
-        ENDDO
-      ENDDO
-
-      IF( debug ) PRINT *, "4"
-
-      CLOSE( UNIT= 21 )
-
-      PRINT *, " * Printed."
-      PRINT *
-
-      PRINT *, " * Printing sph density to file ", TRIM(namefile_sph), "..."
-
-      INQUIRE( FILE= TRIM(namefile_sph), EXIST= exist )
-
-      IF( exist )THEN
-          OPEN( UNIT= 2, FILE= TRIM(namefile_sph), STATUS= "REPLACE", &
-                FORM= "FORMATTED", &
-                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                IOMSG= err_msg )
-      ELSE
-          OPEN( UNIT= 2, FILE= TRIM(namefile_sph), STATUS= "NEW", &
-                FORM= "FORMATTED", &
-                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-      ENDIF
-      IF( ios > 0 )THEN
-        PRINT *, "...error when opening ", TRIM(namefile_sph), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when opening " &
-      !                  // TRIM(namefile_sph) )
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# Values of the SPH density"
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 1 in ", TRIM(namefile_sph), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-      !        // TRIM(namefile_sph) )
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# column:      1        2       3       4"
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 2 in ", TRIM(namefile_sph), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-      !        // TRIM(namefile_sph) )
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "#      particle      x [km]       y [km]       z [km]       ", &
-      "SPH density"
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 3 in ", TRIM(namefile_sph), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-      !        // TRIM(namefile_sph) )
-
-      DO itr = 1, npart, 1
-        abs_pos( 1, itr )= ABS( pos_loc( 1, itr ) )
-        abs_pos( 2, itr )= ABS( pos_loc( 2, itr ) )
-        abs_pos( 3, itr )= ABS( pos_loc( 3, itr ) )
-      ENDDO
-
-      min_y_index= 0
-      min_abs_y= 1D+20
-      DO itr = 1, npart, 1
-        IF( ABS( pos_loc( 2, itr ) ) < min_abs_y )THEN
-          min_abs_y= ABS( pos_loc( 2, itr ) )
-          min_y_index= itr
+        IF( exist )THEN
+            OPEN( UNIT= unit_logfile, FILE= TRIM(name_logfile), &
+                  STATUS= "REPLACE", &
+                  FORM= "FORMATTED", &
+                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                  IOMSG= err_msg )
+        ELSE
+            OPEN( UNIT= unit_logfile, FILE= TRIM(name_logfile), &
+                  STATUS= "NEW", &
+                  FORM= "FORMATTED", &
+                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
         ENDIF
-      ENDDO
-
-      min_abs_z= MINVAL( abs_pos( 3, : ) )
-
-      write_data_loop: DO itr = 1, npart, 1
-
-        IF( THIS% export_form_xy .AND. pos_loc( 3, itr ) /= min_abs_z )THEN
-          CYCLE
-        ENDIF
-        IF( THIS% export_form_x .AND. ( pos_loc( 3, itr ) /= min_abs_z &
-            .OR. pos_loc( 2, itr ) /= pos_loc( 2, min_y_index ) ) )THEN
-          CYCLE
-        ENDIF
-        WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-          itr, &
-          pos_loc( 1, itr ), &
-          pos_loc( 2, itr ), &
-          pos_loc( 3, itr ), &
-          sph_density( itr )
-
         IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", TRIM(namefile_sph), &
+          PRINT *, "...error when opening ", TRIM(name_logfile), &
                    ". The error message is", err_msg
           STOP
         ENDIF
-        !CALL test_status( ios, err_msg, "...error when writing " &
-        !         // "the arrays in " // TRIM(namefile_sph) )
-      ENDDO write_data_loop
+        !CALL test_status( ios, err_msg, "...error when opening " &
+        !                  // TRIM(name_logfile) )
 
-      CLOSE( UNIT= 2 )
+        IF( debug ) PRINT *, "2"
 
-      PRINT *, " * Printed."
-      PRINT *
+        IF( .NOT.ALLOCATED( THIS% HC_parts_l2 ))THEN
+          ALLOCATE( THIS% HC_l2( THIS% nlevels ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array HC_l2. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
+        IF( .NOT.ALLOCATED( THIS% MC_parts_l2 ))THEN
+          ALLOCATE( THIS% MC_l2( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array MC_l2. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
+        IF( .NOT.ALLOCATED( THIS% GC_parts_l2 ))THEN
+          ALLOCATE( THIS% GC_parts_l2( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array GC_l2. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
+        IF( .NOT.ALLOCATED( THIS% HC_parts_loo ))THEN
+          ALLOCATE( THIS% HC_parts_loo( THIS% nlevels ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array HC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
+        IF( .NOT.ALLOCATED( THIS% MC_parts_loo ))THEN
+          ALLOCATE( THIS% MC_parts_loo( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array MC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
+        IF( .NOT.ALLOCATED( THIS% GC_parts_loo ))THEN
+          ALLOCATE( THIS% GC_parts_loo( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array GC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
 
-    ENDIF
+        WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+        IF( debug ) PRINT *, "3"
+
+        PRINT *, "** Analyzing constraints..."
+
+        name_analysis= "bssn-hc-parts-analysis.dat"
+        name_constraint= "the Hamiltonian constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             HC_parts, name_constraint, unit_logfile, name_analysis, &
+             THIS% HC_parts_l2(l), THIS% HC_parts_loo(l) )
+
+        name_analysis= "bssn-mc1-parts-analysis.dat"
+        name_constraint= "the first component of the momentum constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             MC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
+             THIS% MC_parts_l2(l,jx), THIS% MC_parts_loo(l,jx) )
+
+        name_analysis= "bssn-mc2-parts-analysis.dat"
+        name_constraint= "the second component of the momentum constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             MC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
+             THIS% MC_parts_l2(l,jy), THIS% MC_parts_loo(l,jy) )
+
+        name_analysis= "bssn-mc3-parts-analysis.dat"
+        name_constraint= "the third component of the momentum constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             MC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
+             THIS% MC_parts_l2(l,jz), THIS% MC_parts_loo(l,jz) )
+
+        name_analysis= "bssn-gc1-parts-analysis.dat"
+        name_constraint= "the first component of the connection constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             GC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
+             THIS% GC_parts_l2(l,jx), THIS% GC_parts_loo(l,jx) )
+
+        name_analysis= "bssn-gc2-parts-analysis.dat"
+        name_constraint= "the second component of the connection constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             GC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
+             THIS% GC_parts_l2(l,jy), THIS% GC_parts_loo(l,jy) )
+
+        name_analysis= "bssn-gc3-parts-analysis.dat"
+        name_constraint= "the third component of the connection constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             GC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
+             THIS% GC_parts_l2(l,jz), THIS% GC_parts_loo(l,jz) )
+
+        IF( debug ) PRINT *, "4"
+
+        CLOSE( UNIT= unit_logfile )
+
+        PRINT *, " * Constraints analyzed. Results saved in " &
+                 // "bssn-constraints-parts-statistics-*.log files."
+        PRINT *
+    END ASSOCIATE
+
+!    IF( THIS% export_constraints )THEN
+!
+!      PRINT *, " * Printing constraints to file ", TRIM(namefile), "..."
+!
+!      !
+!      !-- Export the constraints to a formatted file
+!      !
+!
+!      INQUIRE( FILE= TRIM(namefile), EXIST= exist )
+!
+!      IF( debug ) PRINT *, "1"
+!
+!      IF( exist )THEN
+!          OPEN( UNIT= 21, FILE= TRIM(namefile), STATUS= "REPLACE", &
+!                FORM= "FORMATTED", &
+!                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+!                IOMSG= err_msg )
+!      ELSE
+!          OPEN( UNIT= 21, FILE= TRIM(namefile), STATUS= "NEW", &
+!          FORM= "FORMATTED", &
+!                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+!      ENDIF
+!      IF( ios > 0 )THEN
+!        PRINT *, "...error when opening ", TRIM(namefile), &
+!                 ". The error message is", err_msg
+!        STOP
+!      ENDIF
+!      !CALL test_status( ios, err_msg, "...error when opening " &
+!      !         // TRIM(namefile) )
+!
+!      IF( debug ) PRINT *, "2"
+!
+!      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+!      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      "# Values of the BSSN constraints for the LORENE ID "&
+!      // "on selected grid points"
+!      IF( ios > 0 )THEN
+!        PRINT *, "...error when writing line 1 in ", TRIM(namefile), &
+!                 ". The error message is", err_msg
+!        STOP
+!      ENDIF
+!      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+!      !         // TRIM(namefile) )
+!      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      "# column:      1        2       3       4       5", &
+!      "       6       7       8       9       10", &
+!      "       11       12       13       14       15", &
+!      "       16       17       18       19       20"
+!      IF( ios > 0 )THEN
+!        PRINT *, "...error when writing line 2 in ", TRIM(namefile), &
+!                 ". The error message is", err_msg
+!        STOP
+!      ENDIF
+!      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+!      !        // TRIM(namefile) )
+!      WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      "#      x   y   z   Stress-energy (10 components)   " &
+!      // "Hamiltonian constraint       " &
+!      // "Momentum constraint (three components)       " &
+!      // "Connection constraint (three components)"
+!      IF( ios > 0 )THEN
+!        PRINT *, "...error when writing line 3 in ", TRIM(namefile), &
+!                 ". The error message is", err_msg
+!        STOP
+!      ENDIF
+!      !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+!      !        // TRIM(namefile) )
+!
+!      IF( debug ) PRINT *, "3"
+!
+!      DO iz= 1, THIS% ngrid_z, 1
+!        DO iy= 1, THIS% ngrid_y, 1
+!          DO ix= 1, THIS% ngrid_x, 1
+!            abs_grid( 1, ix, iy, iz )= ABS( THIS% grid( 1, ix, iy, iz ) )
+!            abs_grid( 2, ix, iy, iz )= ABS( THIS% grid( 2, ix, iy, iz ) )
+!            abs_grid( 3, ix, iy, iz )= ABS( THIS% grid( 3, ix, iy, iz ) )
+!          ENDDO
+!        ENDDO
+!      ENDDO
+!
+!      min_abs_y= 1D+20
+!      min_abs_z= 1D+20
+!      DO iz= 1, THIS% ngrid_z, 1
+!        DO iy= 1, THIS% ngrid_y, 1
+!          DO ix= 1, THIS% ngrid_x, 1
+!            IF( ABS( THIS% grid( 2, ix, iy, iz ) ) < min_abs_y )THEN
+!              min_abs_y= ABS( THIS% grid( 2, ix, iy, iz ) )
+!              min_ix_y= ix
+!              min_iy_y= iy
+!              min_iz_y= iz
+!            ENDIF
+!            IF( ABS( THIS% grid( 3, ix, iy, iz ) ) < min_abs_z )THEN
+!              min_abs_z= ABS( THIS% grid( 3, ix, iy, iz ) )
+!              min_ix_z= ix
+!              min_iy_z= iy
+!              min_iz_z= iz
+!            ENDIF
+!          ENDDO
+!        ENDDO
+!      ENDDO
+!
+!      DO iz= 1, THIS% ngrid_z, 1
+!
+!        IF( MOD( iz, THIS% cons_step ) /= 0 ) CYCLE
+!
+!        DO iy= 1, THIS% ngrid_y, 1
+!
+!          IF( MOD( iy, THIS% cons_step ) /= 0 ) CYCLE
+!
+!          DO ix= 1, THIS% ngrid_x, 1
+!
+!            IF( MOD( ix, THIS% cons_step ) /= 0 ) CYCLE
+!
+!            IF( THIS% export_constraints_xy .AND. &
+!                THIS% grid( 3, ix, iy, iz ) /= &
+!                THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) )THEN
+!              CYCLE
+!            ENDIF
+!            IF( THIS% export_constraints_x .AND. &
+!                ( THIS% grid( 3, ix, iy, iz ) /= &
+!                  THIS% grid( 3, min_ix_z, min_iy_z, min_iz_z ) &
+!                  .OR. &
+!                  THIS% grid( 2, ix, iy, iz ) /= &
+!                  THIS% grid( 2, min_ix_y, min_iy_y, min_iz_y ) ) )THEN
+!              CYCLE
+!            ENDIF
+!
+!            IF( debug )THEN
+!            WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
+!              THIS% grid( 1, ix, iy, iz ), &
+!              THIS% grid( 2, ix, iy, iz ), &
+!              THIS% grid( 3, ix, iy, iz ), &
+!              THIS% grid( 1, ix, iy, iz ), &
+!              THIS% grid( 2, ix, iy, iz ), &
+!              THIS% grid( 3, ix, iy, iz ), &
+!              THIS% grid( 1, ix, iy, iz ), &
+!              THIS% grid( 2, ix, iy, iz ), &
+!              THIS% grid( 3, ix, iy, iz ), &
+!              THIS% grid( 1, ix, iy, iz ), &
+!              THIS% grid( 2, ix, iy, iz ), &
+!              THIS% grid( 3, ix, iy, iz ), &
+!              THIS% grid( 1, ix, iy, iz ), &
+!              THIS% grid( 2, ix, iy, iz ), &
+!              THIS% grid( 3, ix, iy, iz ), &
+!              THIS% grid( 1, ix, iy, iz ), &
+!              THIS% grid( 2, ix, iy, iz ), &
+!              THIS% grid( 3, ix, iy, iz ), & ! column 18
+!              !pos_loc( 1, ix, iy, iz ), &
+!              !pos_loc( 2, ix, iy, iz ), &
+!              !pos_loc( 3, ix, iy, iz ), &
+!              !vel_loc( 1, ix, iy, iz ), &
+!              !vel_loc( 2, ix, iy, iz ), &
+!              !vel_loc( 3, ix, iy, iz ), &
+!              !nu_loc( ix, iy, iz ), &
+!              !u_loc( ix, iy, iz ), &
+!              !nlrf_loc( ix, iy, iz ), &
+!              !theta_loc( ix, iy, iz ), &
+!              !pressure_loc( ix, iy, iz ), &
+!              Tmunu_ll( ix, iy, iz, itt ), &
+!              Tmunu_ll( ix, iy, iz, itx ), &
+!              Tmunu_ll( ix, iy, iz, ity ), &
+!              Tmunu_ll( ix, iy, iz, itz ), &
+!              Tmunu_ll( ix, iy, iz, ixx ), &
+!              Tmunu_ll( ix, iy, iz, ixy ), &
+!              Tmunu_ll( ix, iy, iz, ixz ), &
+!              Tmunu_ll( ix, iy, iz, iyy ), &
+!              Tmunu_ll( ix, iy, iz, iyz ), &
+!              Tmunu_ll( ix, iy, iz, izz ), &
+!              THIS% HC_parts( ix, iy, iz ), &
+!              THIS% MC_parts( ix, iy, iz, jx ), &
+!              THIS% MC_parts( ix, iy, iz, jy ), &
+!              THIS% MC_parts( ix, iy, iz, jz ), &
+!              THIS% GC_parts( ix, iy, iz, jx ), &
+!              THIS% GC_parts( ix, iy, iz, jy ), &
+!              THIS% GC_parts( ix, iy, iz, jz ), &
+!              THIS% lapse( ix, iy, iz ), &
+!              THIS% shift_u( ix, iy, iz, jx ), &
+!              THIS% shift_u( ix, iy, iz, jy ), &
+!              THIS% shift_u( ix, iy, iz, jz ), &
+!              THIS% g_BSSN3_ll( ix, iy, iz, jxx ), &
+!              THIS% g_BSSN3_ll( ix, iy, iz, jxy ), &
+!              THIS% g_BSSN3_ll( ix, iy, iz, jxz ), &
+!              THIS% g_BSSN3_ll( ix, iy, iz, jyy ), &
+!              THIS% g_BSSN3_ll( ix, iy, iz, jyz ), &
+!              THIS% g_BSSN3_ll( ix, iy, iz, jzz ), &
+!              THIS% k_phys3_ll( ix, iy, iz, jxx ), &
+!              THIS% k_phys3_ll( ix, iy, iz, jxy ), &
+!              THIS% k_phys3_ll( ix, iy, iz, jxz ), &
+!              THIS% k_phys3_ll( ix, iy, iz, jyy ), &
+!              THIS% k_phys3_ll( ix, iy, iz, jyz ), &
+!              THIS% k_phys3_ll( ix, iy, iz, jzz ), &
+!              THIS% A_BSSN3_ll( ix, iy, iz, jxx ), &
+!              THIS% A_BSSN3_ll( ix, iy, iz, jxy ), &
+!              THIS% A_BSSN3_ll( ix, iy, iz, jxz ), &
+!              THIS% A_BSSN3_ll( ix, iy, iz, jyy ), &
+!              THIS% A_BSSN3_ll( ix, iy, iz, jyz ), &
+!              THIS% A_BSSN3_ll( ix, iy, iz, jzz ), &
+!              THIS% trK( ix, iy, iz ), &
+!              THIS% phi( ix, iy, iz ), &
+!              THIS% Gamma_u(ix,iy,iz,1), &
+!              THIS% Gamma_u(ix,iy,iz,2), &
+!              THIS% Gamma_u(ix,iy,iz,3)
+!            ELSE
+!              WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
+!                THIS% grid( 1, ix, iy, iz ), &
+!                THIS% grid( 2, ix, iy, iz ), &
+!                THIS% grid( 3, ix, iy, iz ), &
+!                Tmunu_ll( ix, iy, iz, itt ), &
+!                Tmunu_ll( ix, iy, iz, itx ), &
+!                Tmunu_ll( ix, iy, iz, ity ), &
+!                Tmunu_ll( ix, iy, iz, itz ), &
+!                Tmunu_ll( ix, iy, iz, ixx ), &
+!                Tmunu_ll( ix, iy, iz, ixy ), &
+!                Tmunu_ll( ix, iy, iz, ixz ), &
+!                Tmunu_ll( ix, iy, iz, iyy ), &
+!                Tmunu_ll( ix, iy, iz, iyz ), &
+!                Tmunu_ll( ix, iy, iz, izz ), &
+!                THIS% HC_parts( ix, iy, iz ), &
+!                THIS% MC_parts( ix, iy, iz, jx ), &
+!                THIS% MC_parts( ix, iy, iz, jy ), &
+!                THIS% MC_parts( ix, iy, iz, jz ), &
+!                THIS% GC_parts( ix, iy, iz, jx ), &
+!                THIS% GC_parts( ix, iy, iz, jy ), &
+!                THIS% GC_parts( ix, iy, iz, jz )
+!            ENDIF
+!
+!            IF( ios > 0 )THEN
+!              PRINT *, "...error when writing the arrays in ", TRIM(namefile), &
+!                       ". The error message is", err_msg
+!              STOP
+!            ENDIF
+!            !CALL test_status( ios, err_msg, &
+!            !                  "...error in writing " &
+!            !                  // "the arrays in " // TRIM(namefile) )
+!          ENDDO
+!        ENDDO
+!      ENDDO
+!
+!      IF( debug ) PRINT *, "4"
+!
+!      CLOSE( UNIT= 21 )
+!
+!      PRINT *, " * Printed."
+!      PRINT *
+!
+!      PRINT *, " * Printing sph density to file ", TRIM(namefile_sph), "..."
+!
+!      INQUIRE( FILE= TRIM(namefile_sph), EXIST= exist )
+!
+!      IF( exist )THEN
+!          OPEN( UNIT= 2, FILE= TRIM(namefile_sph), STATUS= "REPLACE", &
+!                FORM= "FORMATTED", &
+!                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+!                IOMSG= err_msg )
+!      ELSE
+!          OPEN( UNIT= 2, FILE= TRIM(namefile_sph), STATUS= "NEW", &
+!                FORM= "FORMATTED", &
+!                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+!      ENDIF
+!      IF( ios > 0 )THEN
+!        PRINT *, "...error when opening ", TRIM(namefile_sph), &
+!                 ". The error message is", err_msg
+!        STOP
+!      ENDIF
+!      !CALL test_status( ios, err_msg, "...error when opening " &
+!      !                  // TRIM(namefile_sph) )
+!
+!      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+!
+!      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      "# Values of the SPH density"
+!      IF( ios > 0 )THEN
+!        PRINT *, "...error when writing line 1 in ", TRIM(namefile_sph), &
+!                 ". The error message is", err_msg
+!        STOP
+!      ENDIF
+!      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+!      !        // TRIM(namefile_sph) )
+!
+!      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      "# column:      1        2       3       4"
+!
+!      IF( ios > 0 )THEN
+!        PRINT *, "...error when writing line 2 in ", TRIM(namefile_sph), &
+!                 ". The error message is", err_msg
+!        STOP
+!      ENDIF
+!      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+!      !        // TRIM(namefile_sph) )
+!
+!      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      "#      particle      x [km]       y [km]       z [km]       ", &
+!      "SPH density"
+!
+!      IF( ios > 0 )THEN
+!        PRINT *, "...error when writing line 3 in ", TRIM(namefile_sph), &
+!                 ". The error message is", err_msg
+!        STOP
+!      ENDIF
+!      !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+!      !        // TRIM(namefile_sph) )
+!
+!      DO itr = 1, npart, 1
+!        abs_pos( 1, itr )= ABS( pos_loc( 1, itr ) )
+!        abs_pos( 2, itr )= ABS( pos_loc( 2, itr ) )
+!        abs_pos( 3, itr )= ABS( pos_loc( 3, itr ) )
+!      ENDDO
+!
+!      min_y_index= 0
+!      min_abs_y= 1D+20
+!      DO itr = 1, npart, 1
+!        IF( ABS( pos_loc( 2, itr ) ) < min_abs_y )THEN
+!          min_abs_y= ABS( pos_loc( 2, itr ) )
+!          min_y_index= itr
+!        ENDIF
+!      ENDDO
+!
+!      min_abs_z= MINVAL( abs_pos( 3, : ) )
+!
+!      write_data_loop: DO itr = 1, npart, 1
+!
+!        IF( THIS% export_form_xy .AND. pos_loc( 3, itr ) /= min_abs_z )THEN
+!          CYCLE
+!        ENDIF
+!        IF( THIS% export_form_x .AND. ( pos_loc( 3, itr ) /= min_abs_z &
+!            .OR. pos_loc( 2, itr ) /= pos_loc( 2, min_y_index ) ) )THEN
+!          CYCLE
+!        ENDIF
+!        WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!          itr, &
+!          pos_loc( 1, itr ), &
+!          pos_loc( 2, itr ), &
+!          pos_loc( 3, itr ), &
+!          sph_density( itr )
+!
+!        IF( ios > 0 )THEN
+!          PRINT *, "...error when writing the arrays in ", TRIM(namefile_sph), &
+!                   ". The error message is", err_msg
+!          STOP
+!        ENDIF
+!        !CALL test_status( ios, err_msg, "...error when writing " &
+!        !         // "the arrays in " // TRIM(namefile_sph) )
+!      ENDDO write_data_loop
+!
+!      CLOSE( UNIT= 2 )
+!
+!      PRINT *, " * Printed."
+!      PRINT *
+!
+!    ENDIF
 
     !
     !-- Deallocate spacetime MODULE variables
@@ -2767,66 +2870,78 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     IMPLICIT NONE
 
-    IF(ALLOCATED( THIS% Gamma_u ))THEN
-      DEALLOCATE( THIS% Gamma_u, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...deallocation error for array Gamma_u. ", &
-                 "The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array Gamma_u" )
-    ENDIF
-    IF(ALLOCATED( THIS% phi ))THEN
-      DEALLOCATE( THIS% phi, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...deallocation error for array phi. ", &
-                 "The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array phi" )
-    ENDIF
-    IF(ALLOCATED( THIS% trK ))THEN
-      DEALLOCATE( THIS% trK, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...deallocation error for array trK. ", &
-                 "The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array trK" )
-    ENDIF
-    IF(ALLOCATED( THIS% A_BSSN3_ll ))THEN
-      DEALLOCATE( THIS% A_BSSN3_ll, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...deallocation error for array A_BSSN3_ll. ", &
-                 "The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array A_BSSN3_ll" )
-    ENDIF
-    IF(ALLOCATED( THIS% g_BSSN3_ll ))THEN
-      DEALLOCATE( THIS% g_BSSN3_ll, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...deallocation error for array g_BSSN3_ll. ", &
-                 "The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_BSSN3_ll" )
-    ENDIF
-    IF(ALLOCATED( THIS% GC ))THEN
-      DEALLOCATE( THIS% GC, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...deallocation error for array GC. ", &
-                 "The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array GC" )
-    ENDIF
+    CALL deallocate_grid_function( THIS% Gamma_u, "Gamma_u" )
+
+    CALL deallocate_grid_function( THIS% phi, "phi" )
+
+    CALL deallocate_grid_function( THIS% trK, "trK" )
+
+    CALL deallocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll" )
+
+    CALL deallocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll" )
+
+    CALL deallocate_grid_function( THIS% GC, "GC" )
+
+ !   IF(ALLOCATED( THIS% Gamma_u ))THEN
+ !     DEALLOCATE( THIS% Gamma_u, STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...deallocation error for array Gamma_u. ", &
+ !                "The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, &
+ !     !                "...deallocation error for array Gamma_u" )
+ !   ENDIF
+ !   IF(ALLOCATED( THIS% phi ))THEN
+ !     DEALLOCATE( THIS% phi, STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...deallocation error for array phi. ", &
+ !                "The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, &
+ !     !                "...deallocation error for array phi" )
+ !   ENDIF
+ !   IF(ALLOCATED( THIS% trK ))THEN
+ !     DEALLOCATE( THIS% trK, STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...deallocation error for array trK. ", &
+ !                "The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, &
+ !     !                "...deallocation error for array trK" )
+ !   ENDIF
+ !   IF(ALLOCATED( THIS% A_BSSN3_ll ))THEN
+ !     DEALLOCATE( THIS% A_BSSN3_ll, STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...deallocation error for array A_BSSN3_ll. ", &
+ !                "The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, &
+ !     !                "...deallocation error for array A_BSSN3_ll" )
+ !   ENDIF
+ !   IF(ALLOCATED( THIS% g_BSSN3_ll ))THEN
+ !     DEALLOCATE( THIS% g_BSSN3_ll, STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...deallocation error for array g_BSSN3_ll. ", &
+ !                "The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, &
+ !     !                "...deallocation error for array g_BSSN3_ll" )
+ !   ENDIF
+ !   IF(ALLOCATED( THIS% GC ))THEN
+ !     DEALLOCATE( THIS% GC, STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...deallocation error for array GC. ", &
+ !                "The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, &
+ !     !                "...deallocation error for array GC" )
+ !   ENDIF
 
   END PROCEDURE deallocate_bssn_fields
 
