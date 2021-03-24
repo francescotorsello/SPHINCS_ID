@@ -61,9 +61,11 @@ MODULE formul_bssn_id
     !-- Connection constraints and its l2 norm
     !
     TYPE(grid_function):: GC
-    DOUBLE PRECISION, DIMENSION(3):: GC_l2
     TYPE(grid_function):: GC_parts
-    DOUBLE PRECISION, DIMENSION(3):: GC_parts_l2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_l2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_parts_l2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_loo
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_parts_loo
 
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x

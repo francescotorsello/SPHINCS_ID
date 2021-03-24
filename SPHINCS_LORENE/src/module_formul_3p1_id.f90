@@ -86,9 +86,13 @@ MODULE formul_3p1_id
     TYPE(grid_function):: MC_parts
 
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_l2
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: MC_l2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_l2
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_parts_l2
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: MC_parts_l2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_l2
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_loo
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_loo
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_parts_loo
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_loo
 
 
     CONTAINS
@@ -200,8 +204,8 @@ MODULE formul_3p1_id
                                           nx, ny, nz, &
                                           constraint, &
                                           name_constraint, &
-                                          name_analysis, &
                                           unit_logfile, &
+                                          name_analysis, &
                                           l2_norm, &
                                           loo_norm )
 
@@ -258,7 +262,7 @@ MODULE formul_3p1_id
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
-      DOUBLE PRECISION:: ngrid_x
+      INTEGER:: ngrid_x
 
     END FUNCTION get_ngrid_x
 
@@ -268,7 +272,7 @@ MODULE formul_3p1_id
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
-      DOUBLE PRECISION:: ngrid_y
+      INTEGER:: ngrid_y
 
     END FUNCTION get_ngrid_y
 
@@ -278,7 +282,7 @@ MODULE formul_3p1_id
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
-      DOUBLE PRECISION:: ngrid_z
+      INTEGER:: ngrid_z
 
     END FUNCTION get_ngrid_z
 
