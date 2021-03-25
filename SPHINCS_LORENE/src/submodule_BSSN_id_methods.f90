@@ -282,7 +282,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_Tmunu()
     CALL deallocate_GravityAcceleration()
     CALL deallocate_BSSN()
-    CALL deallocate_gravity_grid()
+    !CALL deallocate_gravity_grid()
 
     call_flag= call_flag + 1
     THIS% call_flag= call_flag
@@ -809,7 +809,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                           jyy, jyz, jzz, jx, jy, jz, &
                           it, ix, iy, iz, n_sym3x3, n_sym4x4
     USE McLachlan_refine,  ONLY: BSSN_CONSTRAINTS_INTERIOR
-    USE mesh_refinement,   ONLY: allocate_grid_function, nlevels
+    USE mesh_refinement,   ONLY: allocate_grid_function, levels
 
     IMPLICIT NONE
 
@@ -965,7 +965,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Import the hydro LORENE ID on the gravity grid
     !
     PRINT *, "** Importing LORENE hydro ID on the gravity grid..."
-    ref_levels: DO l= 1, nlevels, 1
+    ref_levels: DO l= 1, THIS% nlevels, 1
 
       CALL bns_obj% import_id( THIS% levels(l)% ngrid_x, &
                                THIS% levels(l)% ngrid_y, &
@@ -1883,7 +1883,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !USE grav_grid,  ONLY: ngrid_x, ngrid_y, ngrid_z, dx, dy, dz, &
     !                      dx_1, dy_1, dz_1, rad_coord, xR, xL, yR, yL, zR, zL, &
     !                      deallocate_gravity_grid
-    USE mesh_refinement,      ONLY: levels
+    USE mesh_refinement,      ONLY: allocate_grid_function, levels
     USE tensor,               ONLY: itt, itx, ity, itz, ixx, ixy, &
                                     ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                     jyy, jyz, jzz, jx, jy, jz, &
@@ -2849,7 +2849,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_Tmunu()
     CALL deallocate_GravityAcceleration()
     !CALL deallocate_BSSN()
-    CALL deallocate_gravity_grid()
+    !CALL deallocate_gravity_grid()
 
     ! Count the number of times that this SUBROUTINE is called, since the
     ! kernel has to be tabulated only once in the present implementation
@@ -2867,6 +2867,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! FT                                              *
     !                                                 *
     !**************************************************
+
+    USE mesh_refinement, ONLY: deallocate_grid_function
 
     IMPLICIT NONE
 

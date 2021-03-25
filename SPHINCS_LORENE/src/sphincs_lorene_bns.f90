@@ -221,8 +221,8 @@ PROGRAM sphincs_lorene_bns
                         compute_and_export_3p1_variables( namefile_bssn_bin )
     IF( bssn_forms( itr3 )% export_bin )THEN
       WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
-      CALL bssn_forms( itr3 )% &
-            read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
+      !CALL bssn_forms( itr3 )% &
+      !      read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
     ENDIF
   ENDDO compute_export_bssn_loop
 

@@ -1443,6 +1443,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !                                                 *
     !**************************************************
 
+    USE mesh_refinement, ONLY: deallocate_grid_function
+
     IMPLICIT NONE
 
     CALL deallocate_grid_function( f3p1_obj% lapse, "mylapse" )

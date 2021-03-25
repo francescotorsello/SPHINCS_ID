@@ -33,6 +33,8 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     !                                                  *
     !***************************************************
 
+    USE McLachlan_refine, ONLY: initialize_BSSN
+
     IMPLICIT NONE
 
     ! Initialize the timer

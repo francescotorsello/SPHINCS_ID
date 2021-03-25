@@ -81,14 +81,14 @@ MODULE formul_bssn_id
     !--  SUBROUTINES  --!
     !-------------------!
 
-    PROCEDURE :: set_up_bssn
+    !PROCEDURE :: set_up_bssn
 
     PROCEDURE :: define_allocate_fields => allocate_bssn_fields
 
     PROCEDURE :: compute_and_export_3p1_variables &
                     => compute_and_export_bssn_variables
 
-    PROCEDURE, PUBLIC :: read_bssn_dump_print_formatted
+    !PROCEDURE, PUBLIC :: read_bssn_dump_print_formatted
 
     PROCEDURE :: print_formatted_lorene_id_3p1_variables &
                     => print_formatted_lorene_id_bssn_variables
@@ -121,7 +121,7 @@ MODULE formul_bssn_id
     ! along each axis
     MODULE PROCEDURE:: construct_bssn_id_bns
     ! Constructs the bssn_id object from the grid spacings
-    MODULE PROCEDURE:: construct_bssn_id_bns_spacings
+    !MODULE PROCEDURE:: construct_bssn_id_bns_spacings
 
   END INTERFACE bssn_id
 
@@ -138,14 +138,14 @@ MODULE formul_bssn_id
 
     END FUNCTION construct_bssn_id_bns
 
-    MODULE FUNCTION construct_bssn_id_bns_spacings( bns_obj, dx, dy, dz ) &
-                    RESULT ( bssn_obj )
-
-      CLASS(bns), INTENT( IN OUT )  :: bns_obj
-      TYPE(bssn_id)                 :: bssn_obj
-      DOUBLE PRECISION, INTENT( IN ):: dx, dy, dz
-
-    END FUNCTION construct_bssn_id_bns_spacings
+    !MODULE FUNCTION construct_bssn_id_bns_spacings( bns_obj, dx, dy, dz ) &
+    !                RESULT ( bssn_obj )
+    !
+    !  CLASS(bns), INTENT( IN OUT )  :: bns_obj
+    !  TYPE(bssn_id)                 :: bssn_obj
+    !  DOUBLE PRECISION, INTENT( IN ):: dx, dy, dz
+    !
+    !END FUNCTION construct_bssn_id_bns_spacings
 
   END INTERFACE
 
@@ -155,11 +155,11 @@ MODULE formul_bssn_id
   !
   INTERFACE
 
-    MODULE SUBROUTINE set_up_bssn( THIS )
-
-      CLASS(bssn_id), INTENT( IN OUT ):: THIS
-
-    END SUBROUTINE set_up_bssn
+    !MODULE SUBROUTINE set_up_bssn( THIS )
+    !
+    !  CLASS(bssn_id), INTENT( IN OUT ):: THIS
+    !
+    !END SUBROUTINE set_up_bssn
 
     MODULE SUBROUTINE allocate_bssn_fields( THIS )
 
@@ -174,14 +174,14 @@ MODULE formul_bssn_id
 
     END SUBROUTINE compute_and_export_bssn_variables
 
-    MODULE SUBROUTINE read_bssn_dump_print_formatted( THIS, namefile_bin, &
-                                                            namefile )
-
-      CLASS(bssn_id),      INTENT( IN OUT )           :: THIS
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
-
-    END SUBROUTINE read_bssn_dump_print_formatted
+    !MODULE SUBROUTINE read_bssn_dump_print_formatted( THIS, namefile_bin, &
+    !                                                        namefile )
+    !
+    !  CLASS(bssn_id),      INTENT( IN OUT )           :: THIS
+    !  CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
+    !  CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+    !
+    !END SUBROUTINE read_bssn_dump_print_formatted
 
     MODULE SUBROUTINE print_formatted_lorene_id_bssn_variables( THIS, &
                                                                 namefile )

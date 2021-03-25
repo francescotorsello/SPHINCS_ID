@@ -103,14 +103,14 @@ MODULE formul_3p1_id
     !-------------------!
 
     GENERIC, PUBLIC:: construct_formul_3p1 => &
-                                        construct_formul_3p1_bns_ptr, &
-                                        construct_formul_3p1_bns_spacings_ptr
+                                        construct_formul_3p1_bns_ptr!, &
+                                        !construct_formul_3p1_bns_spacings_ptr
 
     PROCEDURE::       construct_formul_3p1_bns_ptr      => &
                                         construct_formul_3p1_bns
 
-    PROCEDURE::       construct_formul_3p1_bns_spacings_ptr => &
-                                        construct_formul_3p1_bns_spacings
+    !PROCEDURE::       construct_formul_3p1_bns_spacings_ptr => &
+    !                                    construct_formul_3p1_bns_spacings
 
     PROCEDURE:: analyze_constraint
 
