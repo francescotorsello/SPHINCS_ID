@@ -2872,17 +2872,29 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     IMPLICIT NONE
 
-    CALL deallocate_grid_function( THIS% Gamma_u, "Gamma_u" )
+    IF( ALLOCATED( THIS% Gamma_u% levels ) )THEN
+      CALL deallocate_grid_function( THIS% Gamma_u, "Gamma_u_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( THIS% phi, "phi" )
+    IF( ALLOCATED( THIS% phi% levels ) )THEN
+      CALL deallocate_grid_function( THIS% phi, "phi_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( THIS% trK, "trK" )
+    IF( ALLOCATED( THIS% trK% levels ) )THEN
+      CALL deallocate_grid_function( THIS% trK, "trK_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll" )
+    IF( ALLOCATED( THIS% A_BSSN3_ll% levels ) )THEN
+      CALL deallocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll" )
+    IF( ALLOCATED( THIS% g_BSSN3_ll% levels ) )THEN
+      CALL deallocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( THIS% GC, "GC" )
+    IF( ALLOCATED( THIS% GC% levels ) )THEN
+      CALL deallocate_grid_function( THIS% GC, "GC_id" )
+    ENDIF
 
  !   IF(ALLOCATED( THIS% Gamma_u ))THEN
  !     DEALLOCATE( THIS% Gamma_u, STAT= ios, ERRMSG= err_msg )

@@ -44,14 +44,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     ! in standard 3+1 formulation
     CALL bssn_obj% construct_formul_3p1( bns_obj )
 
-    ! The construct_formul_3p1 SUBROUTINE constructs the grid,
-    ! hence the dimensions of the arrays imported from the module BSSN
-    ! are know and the arrays can be allocated
-    CALL allocate_bssn_fields( bssn_obj )  ! NOPASS to this SUBROUTINE?
-
     ! Read and store the BSSN parameters
     !CALL bssn_obj% set_up_bssn()
     CALL initialize_BSSN()
+
+    ! The construct_formul_3p1 SUBROUTINE constructs the grid,
+    ! hence the dimensions of the arrays imported from the module BSSN
+    ! are know and the arrays can be allocated
+    CALL allocate_bssn_fields( bssn_obj )
 
     PRINT *
     PRINT *, " * Ready to compute BSSN variables."
@@ -187,15 +187,15 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
     IMPLICIT NONE
 
-    CALL allocate_grid_function( THIS% Gamma_u, "myGamma_u", 3 )
+    CALL allocate_grid_function( THIS% Gamma_u, "Gamma_u_id", 3 )
 
-    CALL allocate_grid_function( THIS% phi, "myphi", 1 )
+    CALL allocate_grid_function( THIS% phi, "phi_id", 1 )
 
-    CALL allocate_grid_function( THIS% trK, "mytrK", 1 )
+    CALL allocate_grid_function( THIS% trK, "trK_id", 1 )
 
-    CALL allocate_grid_function( THIS% A_BSSN3_ll, "myA_BSSN3_ll", 6 )
+    CALL allocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll_id", 6 )
 
-    CALL allocate_grid_function( THIS% g_BSSN3_ll, "myg_BSSN3_ll", 6 )
+    CALL allocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll_id", 6 )
 
     !IF(.NOT.ALLOCATED( THIS% Gamma_u ))THEN
     !  ALLOCATE( THIS% Gamma_u( THIS% ngrid_x, THIS% ngrid_y, &

@@ -84,6 +84,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     CALL initialize_grid()
     !grid_file= 'gravity_grid_parameters.dat'
 
+    CALL allocate_grid_function( f3p1_obj% coords, "coords_id", 1 )
+
     f3p1_obj% nlevels= nlevels
     f3p1_obj% levels = levels
     f3p1_obj% coords = coords
@@ -206,10 +208,10 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !-- Allocating the memory for the arrays
     !-- storing the LORENE spacetime ID at the grid points
     !
-    CALL allocate_grid_function( f3p1_obj% lapse, "mylapse", 1 )
-    CALL allocate_grid_function( f3p1_obj% shift_u, "myshift_u", 3 )
-    CALL allocate_grid_function( f3p1_obj% g_phys3_ll, "myg_phys3_ll", 6 )
-    CALL allocate_grid_function( f3p1_obj% K_phys3_ll, "myK_phys3_ll", 6 )
+    CALL allocate_grid_function( f3p1_obj% lapse, "lapse_id", 1 )
+    CALL allocate_grid_function( f3p1_obj% shift_u, "shift_u_id", 3 )
+    CALL allocate_grid_function( f3p1_obj% g_phys3_ll, "g_phys3_ll_id", 6 )
+    CALL allocate_grid_function( f3p1_obj% K_phys3_ll, "K_phys3_ll_id", 6 )
 
     !IF(.NOT.ALLOCATED( f3p1_obj% lapse ))THEN
     !  ALLOCATE( f3p1_obj% lapse( f3p1_obj% ngrid_x, &
@@ -272,15 +274,26 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !-- Import the LORENE spacetime ID on the gravity grid,
     !-- and time the process
     !
-    PRINT *, "** Importing the LORENE spacetime ID on the gravity grid..."
+    PRINT *, "** Importing the LORENE spacetime ID on the refined mesh..."
     PRINT *
     CALL f3p1_obj% importer_timer% start_timer()
 
+    !PRINT *, "nlevels=", f3p1_obj% nlevels
+
     ref_levels: DO l= 1, f3p1_obj% nlevels, 1
 
-      CALL bns_obj% import_id( f3p1_obj% levels(l)% ngrid_x, &
-                               f3p1_obj% levels(l)% ngrid_y, &
-                               f3p1_obj% levels(l)% ngrid_z, &
+      PRINT *, " * Importing on refinement level l=", l, "..."
+
+      !PRINT *, "get_ngrid_x=", f3p1_obj% get_ngrid_x(l)
+      !PRINT *, "get_ngrid_y=", f3p1_obj% get_ngrid_y(l)
+      !PRINT *, "get_ngrid_z=", f3p1_obj% get_ngrid_z(l)
+      !PRINT *
+
+      !PRINT *, f3p1_obj% coords% levels(l)% var
+
+      CALL bns_obj% import_id( f3p1_obj% get_ngrid_x(l), &
+                               f3p1_obj% get_ngrid_y(l), &
+                               f3p1_obj% get_ngrid_z(l), &
                                f3p1_obj% coords%     levels(l)% var, &
                                f3p1_obj% lapse%      levels(l)% var, &
                                f3p1_obj% shift_u%    levels(l)% var, &
@@ -1447,21 +1460,37 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     IMPLICIT NONE
 
-    CALL deallocate_grid_function( f3p1_obj% lapse, "mylapse" )
+    IF( ALLOCATED( f3p1_obj% lapse% levels ) )THEN
+      CALL deallocate_grid_function( f3p1_obj% lapse, "lapse_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( f3p1_obj% shift_u, "myshift_u" )
+    IF( ALLOCATED( f3p1_obj% shift_u% levels ) )THEN
+      CALL deallocate_grid_function( f3p1_obj% shift_u, "shift_u_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( f3p1_obj% g_phys3_ll, "myg_phys3_ll" )
+    IF( ALLOCATED( f3p1_obj% g_phys3_ll% levels ) )THEN
+      CALL deallocate_grid_function( f3p1_obj% g_phys3_ll, "g_phys3_ll_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( f3p1_obj% K_phys3_ll, "myK_phys3_ll" )
+    IF( ALLOCATED( f3p1_obj% K_phys3_ll% levels ) )THEN
+      CALL deallocate_grid_function( f3p1_obj% K_phys3_ll, "K_phys3_ll_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( f3p1_obj% HC, "myHC" )
+    IF( ALLOCATED( f3p1_obj% HC% levels ) )THEN
+      CALL deallocate_grid_function( f3p1_obj% HC, "HC_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( f3p1_obj% HC_parts, "myHC_parts" )
+    IF( ALLOCATED( f3p1_obj% HC_parts% levels ) )THEN
+      CALL deallocate_grid_function( f3p1_obj% HC_parts, "HC_parts_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( f3p1_obj% MC, "myMC" )
+    IF( ALLOCATED( f3p1_obj% MC% levels ) )THEN
+      CALL deallocate_grid_function( f3p1_obj% MC, "MC_id" )
+    ENDIF
 
-    CALL deallocate_grid_function( f3p1_obj% MC_parts, "myMC_parts" )
+    IF( ALLOCATED( f3p1_obj% MC_parts% levels ) )THEN
+      CALL deallocate_grid_function( f3p1_obj% MC_parts, "MC_parts_id" )
+    ENDIF
 
     !IF( ALLOCATED( f3p1_obj% grid ) )THEN
     !  DEALLOCATE( f3p1_obj% grid, STAT= ios, ERRMSG= err_msg )

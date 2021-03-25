@@ -307,9 +307,9 @@ SUBMODULE (bns_id) bns_methods
             ! to LORENE units (km). See MODULE constants for the definition of
             ! Msun_geo
             CALL get_lorene_id_spacetime( THIS% bns_ptr, &
-                                pos( 1, ix, iy, iz )*Msun_geo, &
-                                pos( 2, ix, iy, iz )*Msun_geo, &
-                                pos( 3, ix, iy, iz )*Msun_geo, &
+                                pos( ix, iy, iz, jx )*Msun_geo, &
+                                pos( ix, iy, iz, jy )*Msun_geo, &
+                                pos( ix, iy, iz, jz )*Msun_geo, &
                                 lapse( ix, iy, iz ), &
                                 shift( ix, iy, iz, jx ), &
                                 shift( ix, iy, iz, jy ), &
