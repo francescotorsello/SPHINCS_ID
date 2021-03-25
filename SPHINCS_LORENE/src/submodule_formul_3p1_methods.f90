@@ -274,8 +274,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !-- Import the LORENE spacetime ID on the gravity grid,
     !-- and time the process
     !
-    PRINT *, "** Importing the LORENE spacetime ID on the refined mesh..."
     PRINT *
+    PRINT *, "** Importing the LORENE spacetime ID on the refined mesh..."
     CALL f3p1_obj% importer_timer% start_timer()
 
     !PRINT *, "nlevels=", f3p1_obj% nlevels
@@ -406,8 +406,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !  ENDDO
     !ENDDO
 
-    PRINT *, "** LORENE spacetime ID imported on the gravity grid."
-    PRINT *
+    !PRINT *, "** LORENE spacetime ID imported on the gravity grid."
+    !PRINT *
 
   END PROCEDURE construct_formul_3p1_bns
 

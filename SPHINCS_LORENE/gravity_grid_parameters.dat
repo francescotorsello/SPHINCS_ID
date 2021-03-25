@@ -1,16 +1,16 @@
 &gravity_grid
-ngrid_x=11      ! Number of grid points in the x-direction for the coarse grid.
-ngrid_y=11      ! Number of grid points in the y-direction for the coarse grid.
-ngrid_z=11      ! Number of grid points in the z-direction for the coarse grid.
-xL=-40.0                    ! Lower x coordinate for the coarse grid.
-xR= 40.0                    ! Upper x coordinate for the coarse grid.
-yL=-40.0                    ! Lower y coordinate for the coarse grid.
-yR= 40.0                    ! Upper y coordinate for the coarse grid.
-zL=-40.0                    ! Lower z coordinate for the coarse grid.
-zR= 40.0                    ! Upper z coordinate for the coarse grid.
+ngrid_x=31      ! Number of grid points in the x-direction for the coarse grid.
+ngrid_y=31      ! Number of grid points in the y-direction for the coarse grid.
+ngrid_z=31      ! Number of grid points in the z-direction for the coarse grid.
+xL=-200.0                    ! Lower x coordinate for the coarse grid.
+xR= 200.0                    ! Upper x coordinate for the coarse grid.
+yL=-200.0                    ! Lower y coordinate for the coarse grid.
+yR= 200.0                    ! Upper y coordinate for the coarse grid.
+zL=-200.0                    ! Lower z coordinate for the coarse grid.
+zR= 200.0                    ! Upper z coordinate for the coarse grid.
 nlevels= 3                  ! Number of refinement levels.
-nghost_x= 3                 ! Number of ghost zones in the x-direction.
-nghost_y= 3           	    ! Number of ghost zones in the y-direction.
-nghost_z= 3                 ! Number of ghost zones in the z-direction.
+nghost_x= 4                 ! Number of ghost zones in the x-direction.
+nghost_y= 4           	    ! Number of ghost zones in the y-direction.
+nghost_z= 4                 ! Number of ghost zones in the z-direction.
 prolongation_name= 'cubic'  ! Prolongation operator: linear or cubic.
 /

@@ -112,7 +112,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !dz_1= THIS% dz_1
 
     CALL allocate_ADM()
-    CALL allocate_BSSN()
+    !CALL allocate_BSSN()
 
     ! Allocate temporary memory for time integration
     CALL allocate_Ztmp()
@@ -256,9 +256,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !THIS% Gamma_u   = Gamma_u
     ref_levels2: DO l= 1, nlevels
 
-      THIS% Gamma_u% levels(l)% var= Gamma_u% levels(l)% var
-      THIS% phi% levels(l)% var= phi% levels(l)% var
-      THIS% trK% levels(l)% var= trK% levels(l)% var
+      THIS% Gamma_u% levels(l)% var   = Gamma_u% levels(l)% var
+      THIS% phi% levels(l)% var       = phi% levels(l)% var
+      THIS% trK% levels(l)% var       = trK% levels(l)% var
       THIS% g_BSSN3_ll% levels(l)% var= g_BSSN3_ll% levels(l)% var
       THIS% A_BSSN3_ll% levels(l)% var= A_BSSN3_ll% levels(l)% var
 
@@ -269,6 +269,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     IF( THIS% export_bin )THEN
       IF( PRESENT(namefile) )THEN
         !CALL write_BSSN_dump( namefile )
+        CALL write_BSSN_dump()
       ELSE
         CALL write_BSSN_dump()
       ENDIF
