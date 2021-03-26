@@ -43,14 +43,15 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !                               rad_coord, &
     !                               deallocate_gravity_grid
     !USE NaNChecker,          ONLY: Check_Grid_Function_for_NAN
+    USE mesh_refinement,            ONLY: nlevels
     USE tensor,                     ONLY: itt, itx, ity, itz, ixx, ixy, &
                                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                           jyy, jyz, jzz, jx, jy, jz, n_sym3x3
     USE ADM_refine,                 ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
                                           K_phys3_ll, g_phys3_ll, &
                                           allocate_ADM, deallocate_ADM
-    USE McLachlan_refine,           ONLY: initialize_BSSN, allocate_Ztmp, &
-                                          deallocate_Ztmp, ADM_to_BSSN
+    USE McLachlan_refine,           ONLY: allocate_Ztmp, deallocate_Ztmp, &
+                                          ADM_to_BSSN
     USE Tmunu_refine,               ONLY: allocate_Tmunu, deallocate_Tmunu, &
                                           Tmunu_ll
     USE GravityAcceleration_refine, ONLY: dt_ehat_grav, dt_S_grav_l, &
@@ -65,22 +66,21 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- to export them to the binary file needed by the evolution code
     !-- in SPHINCS
     !
-    USE BSSN_refine,   ONLY: allocate_BSSN, deallocate_BSSN, &
-                      Gamma_u,          & ! Conformal connection
-                      phi,              & ! Conformal factor
-                      trK,              & ! Trace of extrinsic curvature
-                      A_BSSN3_ll,       & ! Conformal traceless
-                                          ! extrinsic curvature
-                      g_BSSN3_ll,       & ! Conformal metric
-                      Theta_Z4,         & ! Vector in the CCZ4 formulation.
-                                          ! Loaded here because ADM_TO_BSSN
-                                          ! calls SUBROUTINES that need it
-                                          ! as input; however, it is not
-                                          ! evolved in BSSN
-                      lapse_A_BSSN,     & ! Time derivative of lapse
-                      shift_B_BSSN_u,   & ! Time derivativeof shift
-                      write_BSSN_dump
-    USE mesh_refinement,  ONLY: nlevels
+    USE BSSN_refine, ONLY: allocate_BSSN, deallocate_BSSN, &
+                           Gamma_u,          & ! Conformal connection
+                           phi,              & ! Conformal factor
+                           trK,              & ! Trace of extrinsic curvature
+                           A_BSSN3_ll,       & ! Conformal traceless
+                                               ! extrinsic curvature
+                           g_BSSN3_ll,       & ! Conformal metric
+                           Theta_Z4,         & ! Vector in the CCZ4 formulation
+                                               ! Used because ADM_TO_BSSN
+                                               ! calls SUBROUTINES that need it
+                                               ! as input; however, it is not
+                                               ! evolved in BSSN
+                           lapse_A_BSSN,     & ! Time derivative of lapse
+                           shift_B_BSSN_u,   & ! Time derivativeof shift
+                           write_BSSN_dump
 
     IMPLICIT NONE
 
@@ -112,7 +112,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !dz_1= THIS% dz_1
 
     CALL allocate_ADM()
-    !CALL allocate_BSSN()
+    CALL allocate_BSSN()
 
     ! Allocate temporary memory for time integration
     CALL allocate_Ztmp()
@@ -150,16 +150,16 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !  ENDDO
     !ENDDO
 
-    ! TODO: assign to the MODULE variables and call ADM_to_BSSN
-    ref_levels: DO l= 1, nlevels
+    ! Assign values to the MODULE variables, in order to call ADM_to_BSSN
+    ref_levels: DO l= 1, THIS% nlevels
 
       Tmunu_ll% levels(l)% var= 0.0D0
 
       dt_lapse% levels(l)% var  = 0.0D0
       dt_shift_u% levels(l)% var= 0.0D0
 
-      lapse% levels(l)% var= THIS% lapse% levels(l)% var
-      shift_u% levels(l)% var= THIS% shift_u% levels(l)% var
+      lapse% levels(l)% var     = THIS% lapse% levels(l)% var
+      shift_u% levels(l)% var   = THIS% shift_u% levels(l)% var
       g_phys3_ll% levels(l)% var= THIS% g_phys3_ll% levels(l)% var
       K_phys3_ll% levels(l)% var= THIS% K_phys3_ll% levels(l)% var
 
@@ -247,14 +247,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jz), "Gamma_u_z" )
 
     !
-    !-- Setting the local variables equal to the MODULE variables
+    !-- Setting the TYPE variables equal to the MODULE variables
     !
     !THIS% g_BSSN3_ll= g_BSSN3_ll
     !THIS% A_BSSN3_ll= A_BSSN3_ll
     !THIS% phi       = phi
     !THIS% trK       = trK
     !THIS% Gamma_u   = Gamma_u
-    ref_levels2: DO l= 1, nlevels
+    ref_levels2: DO l= 1, THIS% nlevels
 
       THIS% Gamma_u% levels(l)% var   = Gamma_u% levels(l)% var
       THIS% phi% levels(l)% var       = phi% levels(l)% var

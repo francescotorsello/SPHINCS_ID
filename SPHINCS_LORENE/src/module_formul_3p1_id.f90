@@ -74,6 +74,7 @@ MODULE formul_3p1_id
 
     TYPE(level), DIMENSION(:), ALLOCATABLE :: levels
     TYPE(grid_function):: coords
+    TYPE(grid_function_scalar):: rad_coord
 
     TYPE(grid_function_scalar):: lapse
     TYPE(grid_function):: shift_u
@@ -220,21 +221,20 @@ MODULE formul_3p1_id
 
     END SUBROUTINE analyze_constraint
 
-    MODULE FUNCTION abs_values_in( THIS, lower_bound, upper_bound, &
-                                   constraint, nx, ny, nz, &
-                                   unit_analysis ) RESULT( cnt )
+    MODULE SUBROUTINE abs_values_in( THIS, lower_bound, upper_bound, &
+                                     constraint, nx, ny, nz, &
+                                     export, unit_analysis, cnt )
 
-      ! Arguments
       CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
       DOUBLE PRECISION                                    :: lower_bound, &
                                                              upper_bound
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
       INTEGER,                            INTENT( IN )    :: nx, ny, nz
+      LOGICAL,                            INTENT( IN )    :: export
       INTEGER,                            INTENT( IN )    :: unit_analysis
-      ! Result
-      INTEGER                                             :: cnt
+      INTEGER,                            INTENT( OUT )   :: cnt
 
-    END FUNCTION abs_values_in
+    END SUBROUTINE abs_values_in
 
     MODULE FUNCTION get_grid_point( THIS, i, j, k, l ) RESULT( grid_point )
 

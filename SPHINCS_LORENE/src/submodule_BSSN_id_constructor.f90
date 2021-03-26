@@ -33,7 +33,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     !                                                  *
     !***************************************************
 
-    USE McLachlan_refine, ONLY: initialize_BSSN
+    USE McLachlan_refine, ONLY: initialize_BSSN, deallocate_BSSN
 
     IMPLICIT NONE
 
@@ -47,6 +47,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     ! Read and store the BSSN parameters
     !CALL bssn_obj% set_up_bssn()
     CALL initialize_BSSN()
+    CALL deallocate_BSSN()
 
     ! The construct_formul_3p1 SUBROUTINE constructs the grid,
     ! hence the dimensions of the arrays imported from the module BSSN
