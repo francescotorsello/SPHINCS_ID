@@ -775,6 +775,9 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     shape_constraint= SHAPE( constraint )
 
+    PRINT *, shape_constraint
+    PRINT *, nx, ny, nz
+
     IF( shape_constraint(1) /= nx .OR. &
         shape_constraint(2) /= ny .OR. &
         shape_constraint(3) /= nz )THEN
@@ -787,9 +790,9 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDIF
 
     DO l= 1, THIS% nlevels, 1
-      IF( shape_constraint(1) == THIS% levels(l)% ngrid_x .AND. &
-          shape_constraint(2) == THIS% levels(l)% ngrid_y .AND. &
-          shape_constraint(3) == THIS% levels(l)% ngrid_z)THEN
+      IF( shape_constraint(1) == THIS% get_ngrid_x(l) .AND. &
+          shape_constraint(2) == THIS% get_ngrid_y(l) .AND. &
+          shape_constraint(3) == THIS% get_ngrid_z(l))THEN
         ref_lev= l
       ENDIF
     ENDDO

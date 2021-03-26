@@ -851,6 +851,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     CHARACTER( LEN= : ), ALLOCATABLE:: name_constraint
     CHARACTER( LEN= : ), ALLOCATABLE:: name_analysis
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalname_logfile
+    CHARACTER( LEN= : ), ALLOCATABLE:: n_reflev
 
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -890,7 +892,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Import the hydro LORENE ID on the gravity grid
     !
     PRINT *, "** Importing LORENE hydro ID on the gravity grid..."
+    PRINT *
     ref_levels: DO l= 1, THIS% nlevels, 1
+
+      PRINT *, " * Importing on refinement level l=", l, "..."
 
       CALL bns_obj% import_id( THIS% get_ngrid_x(l), &
                                THIS% get_ngrid_y(l), &
@@ -915,235 +920,237 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !
     PRINT *, "** Computing fluid 4-velocity wrt Eulerian observer..."
 
-    ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
-               u_euler_l      => u_euler_l% levels(l)% var, &
-               v_euler        => v_euler% levels(l)% var, &
-               lorentz_factor => lorentz_factor% levels(l)% var, &
-               lapse          => THIS% lapse% levels(l)% var, &
-               shift_u        => THIS% shift_u% levels(l)% var, &
-               g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
-               g4             => g4% levels(l)% var, &
-               Tmunu_ll       => Tmunu_ll% levels(l)% var, &
-               energy_density => energy_density% levels(l)% var, &
-               pressure       => pressure% levels(l)% var &
-             )
-
     ref_levels2: DO l= 1, THIS% nlevels
-      DO k= 1, THIS% get_ngrid_z(l), 1
-        DO j= 1, THIS% get_ngrid_y(l), 1
-          DO i= 1, THIS% get_ngrid_x(l), 1
 
-            !energy_density( i, j, k )= baryon_density( i, j, k ) &
-            !                            + ( specific_energy(i,j,k) + 1.0 ) &
-            !                                 *baryon_density( i, j, k )
+      ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
+                 u_euler_l      => u_euler_l% levels(l)% var, &
+                 v_euler        => v_euler% levels(l)% var, &
+                 lorentz_factor => lorentz_factor% levels(l)% var, &
+                 lapse          => THIS% lapse% levels(l)% var, &
+                 shift_u        => THIS% shift_u% levels(l)% var, &
+                 g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
+                 g4             => g4% levels(l)% var, &
+                 Tmunu_ll       => Tmunu_ll% levels(l)% var, &
+                 energy_density => energy_density% levels(l)% var, &
+                 pressure       => pressure% levels(l)% var &
+      )
 
-            v_euler_l(i,j,k,jx)=   g_phys3_ll(i,j,k,jxx)*v_euler(i,j,k,jx)&
-                                 + g_phys3_ll(i,j,k,jxy)*v_euler(i,j,k,jy)&
+        DO k= 1, THIS% get_ngrid_z(l), 1
+          DO j= 1, THIS% get_ngrid_y(l), 1
+            DO i= 1, THIS% get_ngrid_x(l), 1
+
+              !energy_density( i, j, k )= baryon_density( i, j, k ) &
+              !                            + ( specific_energy(i,j,k) + 1.0 ) &
+              !                                 *baryon_density( i, j, k )
+
+              v_euler_l(i,j,k,jx)= g_phys3_ll(i,j,k,jxx)*v_euler(i,j,k,jx) &
+                                 + g_phys3_ll(i,j,k,jxy)*v_euler(i,j,k,jy) &
                                  + g_phys3_ll(i,j,k,jxz)*v_euler(i,j,k,jz)
-            v_euler_l(i,j,k,jy)=   g_phys3_ll(i,j,k,jxy)*v_euler(i,j,k,jx)&
-                                 + g_phys3_ll(i,j,k,jyy)*v_euler(i,j,k,jy)&
+              v_euler_l(i,j,k,jy)= g_phys3_ll(i,j,k,jxy)*v_euler(i,j,k,jx) &
+                                 + g_phys3_ll(i,j,k,jyy)*v_euler(i,j,k,jy) &
                                  + g_phys3_ll(i,j,k,jyz)*v_euler(i,j,k,jz)
-            v_euler_l(i,j,k,jz)=   g_phys3_ll(i,j,k,jxz)*v_euler(i,j,k,jx)&
-                                 + g_phys3_ll(i,j,k,jyz)*v_euler(i,j,k,jy)&
+              v_euler_l(i,j,k,jz)= g_phys3_ll(i,j,k,jxz)*v_euler(i,j,k,jx) &
+                                 + g_phys3_ll(i,j,k,jyz)*v_euler(i,j,k,jy) &
                                  + g_phys3_ll(i,j,k,jzz)*v_euler(i,j,k,jz)
 
-            lorentz_factor( i, j, k )= 1.0D0/SQRT( 1.0D0 &
-                            - ( v_euler_l(i,j,k,jx)*v_euler(i,j,k,jx) &
-                              + v_euler_l(i,j,k,jy)*v_euler(i,j,k,jy) &
-                              + v_euler_l(i,j,k,jz)*v_euler(i,j,k,jz) ) )
+              lorentz_factor( i, j, k )= 1.0D0/SQRT( 1.0D0 &
+                              - ( v_euler_l(i,j,k,jx)*v_euler(i,j,k,jx) &
+                                + v_euler_l(i,j,k,jy)*v_euler(i,j,k,jy) &
+                                + v_euler_l(i,j,k,jz)*v_euler(i,j,k,jz) ) )
 
-            u_euler_l(i,j,k,it)= lorentz_factor( i, j, k ) &
-               *( - lapse( i, j, k ) &
-                  + v_euler_l( i, j, k, jx )*shift_u( i, j, k, jx ) &
-                  + v_euler_l( i, j, k, jy )*shift_u( i, j, k, jy ) &
-                  + v_euler_l( i, j, k, jz )*shift_u( i, j, k, jz ) )
-            u_euler_l(i,j,k,ix)= lorentz_factor( i, j, k ) &
-                                   *v_euler_l( i, j, k, jx )
-            u_euler_l(i,j,k,iy)= lorentz_factor( i, j, k ) &
-                                   *v_euler_l( i, j, k, jy )
-            u_euler_l(i,j,k,iz)= lorentz_factor( i, j, k ) &
-                                   *v_euler_l( i, j, k, jz )
 
-            CALL compute_g4( i, j, k, lapse, shift_u, g_phys3_ll, g4 )
+              u_euler_l(i,j,k,it)= lorentz_factor( i, j, k ) &
+                 *( - lapse( i, j, k ) &
+                    + v_euler_l( i, j, k, jx )*shift_u( i, j, k, jx ) &
+                    + v_euler_l( i, j, k, jy )*shift_u( i, j, k, jy ) &
+                    + v_euler_l( i, j, k, jz )*shift_u( i, j, k, jz ) )
+              u_euler_l(i,j,k,ix)= lorentz_factor( i, j, k ) &
+                                     *v_euler_l( i, j, k, jx )
+              u_euler_l(i,j,k,iy)= lorentz_factor( i, j, k ) &
+                                     *v_euler_l( i, j, k, jy )
+              u_euler_l(i,j,k,iz)= lorentz_factor( i, j, k ) &
+                                     *v_euler_l( i, j, k, jz )
 
-            CALL determinant_sym4x4_grid( i, j, k, g4, detg4 )
+              CALL compute_g4( i, j, k, lapse, shift_u, g_phys3_ll, g4 )
 
-            IF( ABS( detg4 ) < 1.0D-10 )THEN
-                PRINT *, "The determinant of the spacetime metric "&
-                         // "is effectively 0 at the grid point " &
-                         // "(i,j,k)= (", i, ",", j, ",", k, &
-                            ")."
-                PRINT *, "detg4=", detg4
-                PRINT *
-                STOP
-            ELSEIF( detg4 > 0.0D0 )THEN
-                PRINT *, "The determinant of the spacetime metric "&
-                         // "is positive at the grid point " &
-                         // "(i,j,k)= (", i, ",", j, ",", k, &
-                            ")."
-                PRINT *, "detg4=", detg4
-                PRINT *
-                STOP
+              CALL determinant_sym4x4_grid( i, j, k, g4, detg4 )
+
+              IF( ABS( detg4 ) < 1.0D-10 )THEN
+                  PRINT *, "The determinant of the spacetime metric "&
+                           // "is effectively 0 at the grid point " &
+                           // "(i,j,k)= (", i, ",", j, ",", k, &
+                              ")."
+                  PRINT *, "detg4=", detg4
+                  PRINT *
+                  STOP
+              ELSEIF( detg4 > 0.0D0 )THEN
+                  PRINT *, "The determinant of the spacetime metric "&
+                           // "is positive at the grid point " &
+                           // "(i,j,k)= (", i, ",", j, ",", k, &
+                              ")."
+                  PRINT *, "detg4=", detg4
+                  PRINT *
+                  STOP
+              ENDIF
+
+              g4temp(1,1)= g4(i,j,k,itt)
+              g4temp(1,2)= g4(i,j,k,itx)
+              g4temp(1,3)= g4(i,j,k,ity)
+              g4temp(1,4)= g4(i,j,k,itz)
+
+              g4temp(2,1)= g4(i,j,k,itx)
+              g4temp(2,2)= g4(i,j,k,ixx)
+              g4temp(2,3)= g4(i,j,k,ixy)
+              g4temp(2,4)= g4(i,j,k,ixz)
+
+              g4temp(3,1)= g4(i,j,k,ity)
+              g4temp(3,2)= g4(i,j,k,ixy)
+              g4temp(3,3)= g4(i,j,k,iyy)
+              g4temp(3,4)= g4(i,j,k,iyz)
+
+              g4temp(4,1)= g4(i,j,k,itz)
+              g4temp(4,2)= g4(i,j,k,ixz)
+              g4temp(4,3)= g4(i,j,k,iyz)
+              g4temp(4,4)= g4(i,j,k,izz)
+
+              CALL invert_4x4_matrix( g4temp, ig4 )
+
+              u_euler_norm= ig4(it,it)* &
+                            u_euler_l(i,j,k,it)*u_euler_l(i,j,k,it) &
+                          + 2.0D0*ig4(it,ix)* &
+                            u_euler_l(i,j,k,it)*u_euler_l(i,j,k,ix) &
+                          + 2.0D0*ig4(it,iy)* &
+                            u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iy) &
+                          + 2.0D0*ig4(it,iz)* &
+                            u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iz) &
+                          + ig4(ix,ix)* &
+                            u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,ix) &
+                          + 2.0D0*ig4(ix,iy)* &
+                            u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iy) &
+                          + 2.0D0*ig4(ix,iz)* &
+                            u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iz) &
+                          + ig4(iy,iy)* &
+                            u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iy) &
+                          + 2.0D0*ig4(iy,iz)* &
+                            u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iz) &
+                          + 2.0D0*ig4(iz,iz)* &
+                            u_euler_l(i,j,k,iz)*u_euler_l(i,j,k,iz)
+
+              IF( ABS( u_euler_norm + 1.0D0 ) > 1.0D-4 )THEN
+                  PRINT *, "** ERROR! The fluid 4-velocity in the " &
+                           // "coordinate frame does not have norm -1. " &
+                           // "The norm is", u_euler_norm
+                  STOP
+              ENDIF
+
+            ! Print progress on screen
+            perc= 100*(THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)*(k - 1) &
+                  + THIS% get_ngrid_x(l)*(j - 1) + i) &
+                  /( THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)* &
+                     THIS% get_ngrid_z(l) )
+            IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+              WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) creturn//" ", perc, "%"
             ENDIF
 
-            g4temp(1,1)= g4(i,j,k,itt)
-            g4temp(1,2)= g4(i,j,k,itx)
-            g4temp(1,3)= g4(i,j,k,ity)
-            g4temp(1,4)= g4(i,j,k,itz)
+            ENDDO
+          ENDDO
+        ENDDO
+        WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+        PRINT *, " * Fluid 4-velocity wrt Eulerian observer computed."
+        PRINT *
 
-            g4temp(2,1)= g4(i,j,k,itx)
-            g4temp(2,2)= g4(i,j,k,ixx)
-            g4temp(2,3)= g4(i,j,k,ixy)
-            g4temp(2,4)= g4(i,j,k,ixz)
+        ! Note that the units used in the spacetime part of SPHINCS are the
+        ! same units as in the HydroBase thorn in the Einstein Toolkit.
+        ! Such units can be found here, https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
+        ! The order of magnitude of the energy density can be found in
+        ! https://www.ias.ac.in/article/fulltext/pram/084/05/0927-0941,
+        ! and it is 150 MeV fm^{-3} ~ (2.4*10^{-11}J) / (10^{-45}m^3)
+        !                           = 2.4*10^34 J m^{-3}
 
-            g4temp(3,1)= g4(i,j,k,ity)
-            g4temp(3,2)= g4(i,j,k,ixy)
-            g4temp(3,3)= g4(i,j,k,iyy)
-            g4temp(3,4)= g4(i,j,k,iyz)
+        !
+        !-- Compute the stress-energy tensor
+        !
+        PRINT *, "** Computing stress-energy tensor..."
+        Tmunu_ll= 0.0
+        DO k= 1, THIS% get_ngrid_z(l), 1
+          DO j= 1, THIS% get_ngrid_y(l), 1
+            DO i= 1, THIS% get_ngrid_x(l), 1
 
-            g4temp(4,1)= g4(i,j,k,itz)
-            g4temp(4,2)= g4(i,j,k,ixz)
-            g4temp(4,3)= g4(i,j,k,iyz)
-            g4temp(4,4)= g4(i,j,k,izz)
+              Tmunu_ll(i,j,k,itt)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,it) &
+                      + pressure(i,j,k)*g4(i,j,k,itt) &
+                       )
 
-            CALL invert_4x4_matrix( g4temp, ig4 )
+              Tmunu_ll(i,j,k,itx)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,ix) &
+                      + pressure(i,j,k)*g4(i,j,k,itx) &
+                       )
 
-            u_euler_norm= ig4(it,it)* &
-                          u_euler_l(i,j,k,it)*u_euler_l(i,j,k,it) &
-                        + 2.0D0*ig4(it,ix)* &
-                          u_euler_l(i,j,k,it)*u_euler_l(i,j,k,ix) &
-                        + 2.0D0*ig4(it,iy)* &
-                          u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iy) &
-                        + 2.0D0*ig4(it,iz)* &
-                          u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iz) &
-                        + ig4(ix,ix)* &
-                          u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,ix) &
-                        + 2.0D0*ig4(ix,iy)* &
-                          u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iy) &
-                        + 2.0D0*ig4(ix,iz)* &
-                          u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iz) &
-                        + ig4(iy,iy)* &
-                          u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iy) &
-                        + 2.0D0*ig4(iy,iz)* &
-                          u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iz) &
-                        + 2.0D0*ig4(iz,iz)* &
-                          u_euler_l(i,j,k,iz)*u_euler_l(i,j,k,iz)
+              Tmunu_ll(i,j,k,ity)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iy) &
+                      + pressure(i,j,k)*g4(i,j,k,ity) &
+                       )
 
-            IF( ABS( u_euler_norm + 1.0D0 ) > 1.0D-4 )THEN
-                PRINT *, "** ERROR! The fluid 4-velocity in the " &
-                         // "coordinate frame does not have norm -1. " &
-                         // "The norm is", u_euler_norm
-                STOP
+              Tmunu_ll(i,j,k,itz)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iz) &
+                      + pressure(i,j,k)*g4(i,j,k,itz) &
+                       )
+
+              Tmunu_ll(i,j,k,ixx)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,ix) &
+                      + pressure(i,j,k)*g4(i,j,k,ixx) &
+                       )
+
+              Tmunu_ll(i,j,k,ixy)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iy) &
+                      + pressure(i,j,k)*g4(i,j,k,ixy) &
+                       )
+
+              Tmunu_ll(i,j,k,ixz)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iz) &
+                      + pressure(i,j,k)*g4(i,j,k,ixz) &
+                       )
+
+              Tmunu_ll(i,j,k,iyy)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iy) &
+                      + pressure(i,j,k)*g4(i,j,k,iyy)  &
+                       )
+
+              Tmunu_ll(i,j,k,iyz)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iz) &
+                      + pressure(i,j,k)*g4(i,j,k,iyz) &
+                       )
+
+              Tmunu_ll(i,j,k,izz)= lorene2hydrobase*( &
+                      ( energy_density(i,j,k) + pressure(i,j,k) ) &
+                      *u_euler_l(i,j,k,iz)*u_euler_l(i,j,k,iz) &
+                      + pressure(i,j,k)*g4(i,j,k,izz) &
+                       )
+
+            ! Print progress on screen
+            perc= 100*(THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)*(k - 1) &
+                  + THIS% get_ngrid_x(l)*(j - 1) + i) &
+                  /( THIS% get_ngrid_x(l)* THIS% get_ngrid_y(l)* &
+                     THIS% get_ngrid_z(l) )
+            IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+              WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+                      creturn//" ", perc, "%"
             ENDIF
 
-          ! Print progress on screen
-          perc= 100*(THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)*(k - 1) &
-                + THIS% get_ngrid_x(l)*(j - 1) + i) &
-                /( THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)* &
-                   THIS% get_ngrid_z(l) )
-          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-            WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) creturn//" ", perc, "%"
-          ENDIF
-
+            ENDDO
           ENDDO
         ENDDO
-      ENDDO
-      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
-      PRINT *, " * Fluid 4-velocity wrt Eulerian observer computed."
-      PRINT *
-
-      ! Note that the units used in the spacetime part of SPHINCS are the
-      ! same units as in the HydroBase thorn in the Einstein Toolkit.
-      ! Such units can be found here, https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
-      ! The order of magnitude of the energy density can be found in
-      ! https://www.ias.ac.in/article/fulltext/pram/084/05/0927-0941,
-      ! and it is 150 MeV fm^{-3} ~ (2.4*10^{-11}J) / (10^{-45}m^3)
-      !                           = 2.4*10^34 J m^{-3}
-
-      !
-      !-- Compute the stress-energy tensor
-      !
-      PRINT *, "** Computing stress-energy tensor..."
-      Tmunu_ll= 0.0
-      DO k= 1, THIS% get_ngrid_z(l), 1
-        DO j= 1, THIS% get_ngrid_y(l), 1
-          DO i= 1, THIS% get_ngrid_x(l), 1
-
-            Tmunu_ll(i,j,k,itt)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,it) &
-                    + pressure(i,j,k)*g4(i,j,k,itt) &
-                     )
-
-            Tmunu_ll(i,j,k,itx)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,ix) &
-                    + pressure(i,j,k)*g4(i,j,k,itx) &
-                     )
-
-            Tmunu_ll(i,j,k,ity)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iy) &
-                    + pressure(i,j,k)*g4(i,j,k,ity) &
-                     )
-
-            Tmunu_ll(i,j,k,itz)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iz) &
-                    + pressure(i,j,k)*g4(i,j,k,itz) &
-                     )
-
-            Tmunu_ll(i,j,k,ixx)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,ix) &
-                    + pressure(i,j,k)*g4(i,j,k,ixx) &
-                     )
-
-            Tmunu_ll(i,j,k,ixy)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iy) &
-                    + pressure(i,j,k)*g4(i,j,k,ixy) &
-                     )
-
-            Tmunu_ll(i,j,k,ixz)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iz) &
-                    + pressure(i,j,k)*g4(i,j,k,ixz) &
-                     )
-
-            Tmunu_ll(i,j,k,iyy)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iy) &
-                    + pressure(i,j,k)*g4(i,j,k,iyy)  &
-                     )
-
-            Tmunu_ll(i,j,k,iyz)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iz) &
-                    + pressure(i,j,k)*g4(i,j,k,iyz) &
-                     )
-
-            Tmunu_ll(i,j,k,izz)= lorene2hydrobase*( &
-                    ( energy_density(i,j,k) + pressure(i,j,k) ) &
-                    *u_euler_l(i,j,k,iz)*u_euler_l(i,j,k,iz) &
-                    + pressure(i,j,k)*g4(i,j,k,izz) &
-                     )
-
-          ! Print progress on screen
-          perc= 100*(THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)*(k - 1) &
-                + THIS% get_ngrid_x(l)*(j - 1) + i) &
-                /( THIS% get_ngrid_x(l)* THIS% get_ngrid_y(l)* &
-                   THIS% get_ngrid_z(l) )
-          IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-            WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-                    creturn//" ", perc, "%"
-          ENDIF
-
-          ENDDO
-        ENDDO
-      ENDDO
+      END ASSOCIATE
     ENDDO ref_levels2
-    END ASSOCIATE
     WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
     PRINT *, " * Stress-energy tensor computed."
     PRINT *
@@ -1151,111 +1158,110 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! In debug mode, compute the Hamiltonian constraint by hand
     IF( debug )THEN
 
-      ASSOCIATE( HC_rho         => HC_rho% levels(l)%var, &
-                 HC_trK         => HC_trK% levels(l)%var, &
-                 HC_A           => HC_A% levels(l)%var, &
-                 HC_derphi      => HC_derphi% levels(l)%var, &
-                 HC_hand        => HC_hand% levels(l)%var, &
-                 phi            => THIS% phi% levels(l)%var, &
-                 trK            => THIS% trK% levels(l)%var, &
-                 A_BSSN3_ll     => THIS% A_BSSN3_ll% levels(l)%var, &
-                 energy_density => energy_density% levels(l)% var, &
-                 pressure       => pressure% levels(l)% var &
-               )
-
       DO l= 1, THIS% nlevels, 1
 
-        HC_rho= 0.0D0
-        HC_trK= 0.0D0
-        HC_A= 0.0D0
-        HC_derphi= 0.0D0
-        HC_hand= 0.0D0
-        fd_lim= 5
+        ASSOCIATE( HC_rho         => HC_rho% levels(l)%var, &
+                   HC_trK         => HC_trK% levels(l)%var, &
+                   HC_A           => HC_A% levels(l)%var, &
+                   HC_derphi      => HC_derphi% levels(l)%var, &
+                   HC_hand        => HC_hand% levels(l)%var, &
+                   phi            => THIS% phi% levels(l)%var, &
+                   trK            => THIS% trK% levels(l)%var, &
+                   A_BSSN3_ll     => THIS% A_BSSN3_ll% levels(l)%var, &
+                   energy_density => energy_density% levels(l)% var, &
+                   pressure       => pressure% levels(l)% var &
+        )
 
-        DO k= fd_lim, THIS% get_ngrid_z(l) - fd_lim, 1
-          DO j= fd_lim, THIS% get_ngrid_y(l) - fd_lim, 1
-            DO i= fd_lim, THIS% get_ngrid_x(l) - fd_lim, 1
+          HC_rho= 0.0D0
+          HC_trK= 0.0D0
+          HC_A= 0.0D0
+          HC_derphi= 0.0D0
+          HC_hand= 0.0D0
+          fd_lim= 5
 
-              HC_rho( i, j, k )= 2.0D0*pi*EXP(5.0D0*phi( i, j, k )) &
-                                    *lorene2hydrobase*energy_density( i, j, k )
+          DO k= fd_lim, THIS% get_ngrid_z(l) - fd_lim, 1
+            DO j= fd_lim, THIS% get_ngrid_y(l) - fd_lim, 1
+              DO i= fd_lim, THIS% get_ngrid_x(l) - fd_lim, 1
 
-              HC_trK( i, j, k )= - EXP(5.0D0*phi( i, j, k ))/12.0D0 &
-                                      *trK( i, j, k )**2
+                HC_rho( i, j, k )= 2.0D0*pi*EXP(5.0D0*phi( i, j, k )) &
+                                      *lorene2hydrobase*energy_density( i, j, k )
 
-              HC_A( i, j, k )= EXP(5.0D0*phi( i, j, k ))/8.0D0 &
-               *( A_BSSN3_ll(i, j, k,jxx)*A_BSSN3_ll(i, j, k,jxx) &
-                + A_BSSN3_ll(i, j, k,jxy)*A_BSSN3_ll(i, j, k,jxy) &
-                + A_BSSN3_ll(i, j, k,jxz)*A_BSSN3_ll(i, j, k,jxz) &
-                + A_BSSN3_ll(i, j, k,jxy)*A_BSSN3_ll(i, j, k,jxy) &
-                + A_BSSN3_ll(i, j, k,jyy)*A_BSSN3_ll(i, j, k,jyy) &
-                + A_BSSN3_ll(i, j, k,jyz)*A_BSSN3_ll(i, j, k,jyz) &
-                + A_BSSN3_ll(i, j, k,jxz)*A_BSSN3_ll(i, j, k,jxz) &
-                + A_BSSN3_ll(i, j, k,jyz)*A_BSSN3_ll(i, j, k,jyz) &
-                + A_BSSN3_ll(i, j, k,jzz)*A_BSSN3_ll(i, j, k,jzz) &
-                )
+                HC_trK( i, j, k )= - EXP(5.0D0*phi( i, j, k ))/12.0D0 &
+                                        *trK( i, j, k )**2
 
-              ! Second derivative of conformal factor with fourth-order FD
-              !HC_derphi( ix, iy, iz )= &
-              !                   ( -      EXP(THIS% phi( ix + 2, iy, iz )) &
-              !                     + 16.0*EXP(THIS% phi( ix + 1, iy, iz )) &
-              !                     - 30.0*EXP(THIS% phi( ix    , iy, iz )) &
-              !                     + 16.0*EXP(THIS% phi( ix - 1, iy, iz )) &
-              !                     -      EXP(THIS% phi( ix - 2, iy, iz )) &
-              !                     -      EXP(THIS% phi( ix, iy + 2, iz )) &
-              !                     + 16.0*EXP(THIS% phi( ix, iy + 1, iz )) &
-              !                     - 30.0*EXP(THIS% phi( ix, iy, iz )) &
-              !                     + 16.0*EXP(THIS% phi( ix, iy - 1, iz )) &
-              !                     -      EXP(THIS% phi( ix, iy - 2, iz )) &
-              !                     -      EXP(THIS% phi( ix, iy, iz + 2 )) &
-              !                     + 16.0*EXP(THIS% phi( ix, iy, iz + 1 )) &
-              !                     - 30.0*EXP(THIS% phi( ix, iy, iz )) &
-              !                     + 16.0*EXP(THIS% phi( ix, iy, iz - 1 )) &
-              !                     -      EXP(THIS% phi( ix, iy, iz - 2 )) )&
-              !                     /(12.0*THIS% dx**2)
+                HC_A( i, j, k )= EXP(5.0D0*phi( i, j, k ))/8.0D0 &
+                 *( A_BSSN3_ll(i, j, k,jxx)*A_BSSN3_ll(i, j, k,jxx) &
+                  + A_BSSN3_ll(i, j, k,jxy)*A_BSSN3_ll(i, j, k,jxy) &
+                  + A_BSSN3_ll(i, j, k,jxz)*A_BSSN3_ll(i, j, k,jxz) &
+                  + A_BSSN3_ll(i, j, k,jxy)*A_BSSN3_ll(i, j, k,jxy) &
+                  + A_BSSN3_ll(i, j, k,jyy)*A_BSSN3_ll(i, j, k,jyy) &
+                  + A_BSSN3_ll(i, j, k,jyz)*A_BSSN3_ll(i, j, k,jyz) &
+                  + A_BSSN3_ll(i, j, k,jxz)*A_BSSN3_ll(i, j, k,jxz) &
+                  + A_BSSN3_ll(i, j, k,jyz)*A_BSSN3_ll(i, j, k,jyz) &
+                  + A_BSSN3_ll(i, j, k,jzz)*A_BSSN3_ll(i, j, k,jzz) &
+                  )
 
-              ! Second derivative of conformal factor with eighth-order FD
-              HC_derphi( i, j, k )= ( &
-                              - DBLE(1.0/560.0)*EXP(phi(i + 4, j, k)) &
-                              + DBLE(8.0/315.0)*EXP(phi(i + 3, j, k)) &
-                              - DBLE(1.0/5.0  )*EXP(phi(i + 2, j, k)) &
-                              + DBLE(8.0/5.0  )*EXP(phi(i + 1, j, k)) &
-                              - DBLE(205.0/72.0)*EXP(phi(i, j, k)) &
-                              + DBLE(8.0/5.0  )*EXP(phi(i - 1, j, k)) &
-                              - DBLE(1.0/5.0  )*EXP(phi(i - 2, j, k)) &
-                              + DBLE(8.0/315.0)*EXP(phi(i - 3, j, k)) &
-                              - DBLE(1.0/560.0)*EXP(phi(i - 4, j, k)) &
-                              - DBLE(1.0/560.0)*EXP(phi(i, j + 4, k)) &
-                              + DBLE(8.0/315.0)*EXP(phi(i, j + 3, k)) &
-                              - DBLE(1.0/5.0  )*EXP(phi(i, j + 2, k)) &
-                              + DBLE(8.0/5.0  )*EXP(phi(i, j + 1, k)) &
-                              - DBLE(205.0/72.0)*EXP(phi(i, j, k)) &
-                              + DBLE(8.0/5.0  )*EXP(phi(i, j - 1, k)) &
-                              - DBLE(1.0/5.0  )*EXP(phi(i, j - 2, k)) &
-                              + DBLE(8.0/315.0)*EXP(phi(i, j - 3, k)) &
-                              - DBLE(1.0/560.0)*EXP(phi(i, j - 4, k)) &
-                              - DBLE(1.0/560.0)*EXP(phi(i, j, k + 4)) &
-                              + DBLE(8.0/315.0)*EXP(phi(i, j, k + 3)) &
-                              - DBLE(1.0/5.0  )*EXP(phi(i, j, k + 2)) &
-                              + DBLE(8.0/5.0  )*EXP(phi(i, j, k + 1)) &
-                              - DBLE(205.0/72.0)*EXP(phi(i, j, k)) &
-                              + DBLE(8.0/5.0  )*EXP(phi(i, j, k - 1)) &
-                              - DBLE(1.0/5.0  )*EXP(phi(i, j, k - 2)) &
-                              + DBLE(8.0/315.0)*EXP(phi(i, j, k - 3)) &
-                              - DBLE(1.0/560.0)*EXP(phi(i, j, k - 4)) )&
-                              /(THIS% levels(l)% dx**2)
+                ! Second derivative of conformal factor with fourth-order FD
+                !HC_derphi( ix, iy, iz )= &
+                !                   ( -      EXP(THIS% phi( ix + 2, iy, iz )) &
+                !                     + 16.0*EXP(THIS% phi( ix + 1, iy, iz )) &
+                !                     - 30.0*EXP(THIS% phi( ix    , iy, iz )) &
+                !                     + 16.0*EXP(THIS% phi( ix - 1, iy, iz )) &
+                !                     -      EXP(THIS% phi( ix - 2, iy, iz )) &
+                !                     -      EXP(THIS% phi( ix, iy + 2, iz )) &
+                !                     + 16.0*EXP(THIS% phi( ix, iy + 1, iz )) &
+                !                     - 30.0*EXP(THIS% phi( ix, iy, iz )) &
+                !                     + 16.0*EXP(THIS% phi( ix, iy - 1, iz )) &
+                !                     -      EXP(THIS% phi( ix, iy - 2, iz )) &
+                !                     -      EXP(THIS% phi( ix, iy, iz + 2 )) &
+                !                     + 16.0*EXP(THIS% phi( ix, iy, iz + 1 )) &
+                !                     - 30.0*EXP(THIS% phi( ix, iy, iz )) &
+                !                     + 16.0*EXP(THIS% phi( ix, iy, iz - 1 )) &
+                !                     -      EXP(THIS% phi( ix, iy, iz - 2 )) )&
+                !                     /(12.0*THIS% dx**2)
+
+                ! Second derivative of conformal factor with eighth-order FD
+                HC_derphi( i, j, k )= ( &
+                                - DBLE(1.0/560.0)*EXP(phi(i + 4, j, k)) &
+                                + DBLE(8.0/315.0)*EXP(phi(i + 3, j, k)) &
+                                - DBLE(1.0/5.0  )*EXP(phi(i + 2, j, k)) &
+                                + DBLE(8.0/5.0  )*EXP(phi(i + 1, j, k)) &
+                                - DBLE(205.0/72.0)*EXP(phi(i, j, k)) &
+                                + DBLE(8.0/5.0  )*EXP(phi(i - 1, j, k)) &
+                                - DBLE(1.0/5.0  )*EXP(phi(i - 2, j, k)) &
+                                + DBLE(8.0/315.0)*EXP(phi(i - 3, j, k)) &
+                                - DBLE(1.0/560.0)*EXP(phi(i - 4, j, k)) &
+                                - DBLE(1.0/560.0)*EXP(phi(i, j + 4, k)) &
+                                + DBLE(8.0/315.0)*EXP(phi(i, j + 3, k)) &
+                                - DBLE(1.0/5.0  )*EXP(phi(i, j + 2, k)) &
+                                + DBLE(8.0/5.0  )*EXP(phi(i, j + 1, k)) &
+                                - DBLE(205.0/72.0)*EXP(phi(i, j, k)) &
+                                + DBLE(8.0/5.0  )*EXP(phi(i, j - 1, k)) &
+                                - DBLE(1.0/5.0  )*EXP(phi(i, j - 2, k)) &
+                                + DBLE(8.0/315.0)*EXP(phi(i, j - 3, k)) &
+                                - DBLE(1.0/560.0)*EXP(phi(i, j - 4, k)) &
+                                - DBLE(1.0/560.0)*EXP(phi(i, j, k + 4)) &
+                                + DBLE(8.0/315.0)*EXP(phi(i, j, k + 3)) &
+                                - DBLE(1.0/5.0  )*EXP(phi(i, j, k + 2)) &
+                                + DBLE(8.0/5.0  )*EXP(phi(i, j, k + 1)) &
+                                - DBLE(205.0/72.0)*EXP(phi(i, j, k)) &
+                                + DBLE(8.0/5.0  )*EXP(phi(i, j, k - 1)) &
+                                - DBLE(1.0/5.0  )*EXP(phi(i, j, k - 2)) &
+                                + DBLE(8.0/315.0)*EXP(phi(i, j, k - 3)) &
+                                - DBLE(1.0/560.0)*EXP(phi(i, j, k - 4)) )&
+                                /(THIS% levels(l)% dx**2)
 
 
-              HC_hand( i, j, k )= HC_rho( i, j, k ) + &
-                                  HC_trK( i, j, k ) + &
-                                  HC_A( i, j, k )   + &
-                                  HC_derphi( i, j, k )
+                HC_hand( i, j, k )= HC_rho( i, j, k ) + &
+                                    HC_trK( i, j, k ) + &
+                                    HC_A( i, j, k )   + &
+                                    HC_derphi( i, j, k )
 
+              ENDDO
             ENDDO
           ENDDO
-        ENDDO
+        END ASSOCIATE
       ENDDO
-
-      END ASSOCIATE
 
     ENDIF
 
@@ -1263,24 +1269,21 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- Compute the BSSN constraints by calling the Cactus-bound procedure
     !-- BSSN_CONSTRAINTS_INTERIOR
     !
-    ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
-               shift_u    => THIS% shift_u% levels(l)% var, &
-               phi        => THIS% phi% levels(l)% var, &
-               trK        => THIS% trK% levels(l)% var, &
-               g_BSSN3_ll => THIS% g_BSSN3_ll% levels(l)% var, &
-               A_BSSN3_ll => THIS% A_BSSN3_ll% levels(l)% var, &
-               Gamma_u    => THIS% Gamma_u% levels(l)% var, &
-               Tmunu_ll   => Tmunu_ll% levels(l)% var, &
-               HC         => THIS% HC% levels(l)% var, &
-               MC         => THIS% MC% levels(l)% var, &
-               GC         => THIS% GC% levels(l)% var &
-               !ngrid_x    => THIS% levels% ngrid_x, &
-               !ngrid_y    => THIS% levels% ngrid_y, &
-               !ngrid_z    => THIS% levels% ngrid_z
-             )
+    PRINT *, "** Computing contraints..."
+    DO l= 1, THIS% nlevels, 1
 
-      PRINT *, "** Computing contraints..."
-      DO l= 1, THIS% nlevels, 1
+      ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
+                 shift_u    => THIS% shift_u% levels(l)% var, &
+                 phi        => THIS% phi% levels(l)% var, &
+                 trK        => THIS% trK% levels(l)% var, &
+                 g_BSSN3_ll => THIS% g_BSSN3_ll% levels(l)% var, &
+                 A_BSSN3_ll => THIS% A_BSSN3_ll% levels(l)% var, &
+                 Gamma_u    => THIS% Gamma_u% levels(l)% var, &
+                 Tmunu_ll   => Tmunu_ll% levels(l)% var, &
+                 HC         => THIS% HC% levels(l)% var, &
+                 MC         => THIS% MC% levels(l)% var, &
+                 GC         => THIS% GC% levels(l)% var &
+      )
 
         imin(1) = THIS% levels(l)% nghost_x
         imin(2) = THIS% levels(l)% nghost_y
@@ -1335,168 +1338,180 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
           MC(:,:,:,jy), &
           MC(:,:,:,jz) &
         )
-      ENDDO
-      PRINT *, " * Constraints computed."
-      PRINT *
+      END ASSOCIATE
+    ENDDO
+    PRINT *, " * Constraints computed."
+    PRINT *
 
       !---------------------------------------------------------!
       !--  Analyze constraints, and print to formatted files  --!
       !---------------------------------------------------------!
 
-      !
-      !-- Export the constraint statistics to a formatted file
-      !
-      unit_logfile= 2891
+    DO l= 1, THIS% nlevels, 1
 
-      INQUIRE( FILE= TRIM(name_logfile), EXIST= exist )
+      ASSOCIATE( HC         => THIS% HC% levels(l)% var, &
+                 MC         => THIS% MC% levels(l)% var, &
+                 GC         => THIS% GC% levels(l)% var &
+      )
 
-      IF( exist )THEN
-          OPEN( UNIT= unit_logfile, FILE= TRIM(name_logfile), &
-                STATUS= "REPLACE", &
-                FORM= "FORMATTED", &
-                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                IOMSG= err_msg )
-      ELSE
-          OPEN( UNIT= unit_logfile, FILE= TRIM(name_logfile), &
-                STATUS= "NEW", &
-                FORM= "FORMATTED", &
-                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-      ENDIF
-      IF( ios > 0 )THEN
-        PRINT *, "...error when opening ", TRIM(name_logfile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when opening " &
-      !         // TRIM(name_logfile) )
+        !
+        !-- Export the constraint statistics to a formatted file
+        !
+        unit_logfile= 2891
 
-      IF( .NOT.ALLOCATED( THIS% HC_l2 ))THEN
-        ALLOCATE( THIS% HC_l2( THIS% nlevels ), &
-                  STAT= ios, ERRMSG= err_msg )
+        WRITE( n_reflev, "(I1)" ) l
+        finalname_logfile= TRIM(name_logfile)//"-reflev"//n_reflev//".log"
+
+        INQUIRE( FILE= TRIM(finalname_logfile), EXIST= exist )
+
+        IF( exist )THEN
+            OPEN( UNIT= unit_logfile, FILE= TRIM(finalname_logfile), &
+                  STATUS= "REPLACE", &
+                  FORM= "FORMATTED", &
+                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                  IOMSG= err_msg )
+        ELSE
+            OPEN( UNIT= unit_logfile, FILE= TRIM(finalname_logfile), &
+                  STATUS= "NEW", &
+                  FORM= "FORMATTED", &
+                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+        ENDIF
         IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array HC_l2. ", &
-                   "The error message is", err_msg
+          PRINT *, "...error when opening ", TRIM(finalname_logfile), &
+                   ". The error message is", err_msg
           STOP
         ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...deallocation error for array HC" )
-      ENDIF
-      IF( .NOT.ALLOCATED( THIS% MC_l2 ))THEN
-        ALLOCATE( THIS% MC_l2( THIS% nlevels, 3 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array MC_l2. ", &
-                   "The error message is", err_msg
-          STOP
+        !CALL test_status( ios, err_msg, "...error when opening " &
+        !         // TRIM(name_logfile) )
+
+        IF( .NOT.ALLOCATED( THIS% HC_l2 ))THEN
+          ALLOCATE( THIS% HC_l2( THIS% nlevels ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array HC_l2. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
         ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...deallocation error for array HC" )
-      ENDIF
-      IF( .NOT.ALLOCATED( THIS% GC_l2 ))THEN
-        ALLOCATE( THIS% GC_l2( THIS% nlevels, 3 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array GC_l2. ", &
-                   "The error message is", err_msg
-          STOP
+        IF( .NOT.ALLOCATED( THIS% MC_l2 ))THEN
+          ALLOCATE( THIS% MC_l2( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array MC_l2. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
         ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...deallocation error for array HC" )
-      ENDIF
-      IF( .NOT.ALLOCATED( THIS% HC_loo ))THEN
-        ALLOCATE( THIS% HC_loo( THIS% nlevels ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array HC_loo. ", &
-                   "The error message is", err_msg
-          STOP
+        IF( .NOT.ALLOCATED( THIS% GC_l2 ))THEN
+          ALLOCATE( THIS% GC_l2( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array GC_l2. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
         ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...deallocation error for array HC" )
-      ENDIF
-      IF( .NOT.ALLOCATED( THIS% MC_loo ))THEN
-        ALLOCATE( THIS% MC_loo( THIS% nlevels, 3 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array MC_loo. ", &
-                   "The error message is", err_msg
-          STOP
+        IF( .NOT.ALLOCATED( THIS% HC_loo ))THEN
+          ALLOCATE( THIS% HC_loo( THIS% nlevels ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array HC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
         ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...deallocation error for array HC" )
-      ENDIF
-      IF( .NOT.ALLOCATED( THIS% GC_loo ))THEN
-        ALLOCATE( THIS% GC_loo( THIS% nlevels, 3 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array GC_loo. ", &
-                   "The error message is", err_msg
-          STOP
+        IF( .NOT.ALLOCATED( THIS% MC_loo ))THEN
+          ALLOCATE( THIS% MC_loo( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array MC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
         ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...deallocation error for array HC" )
-      ENDIF
+        IF( .NOT.ALLOCATED( THIS% GC_loo ))THEN
+          ALLOCATE( THIS% GC_loo( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array GC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
 
-      WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+        WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
 
-      PRINT *, "** Analyzing constraints..."
+        PRINT *, "** Analyzing constraints..."
 
-      name_analysis= "bssn-hc-analysis.dat"
-      name_constraint= "the Hamiltonian constraint"
-      CALL THIS% analyze_constraint( &
-           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
-           HC, name_constraint, unit_logfile, name_analysis, &
-           THIS% HC_l2(l), THIS% HC_loo(l) )
+        name_analysis= "bssn-hc-analysis-reflev"//n_reflev//".dat"
+        name_constraint= "the Hamiltonian constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             HC, name_constraint, unit_logfile, name_analysis, &
+             THIS% HC_l2(l), THIS% HC_loo(l) )
 
-      name_analysis= "bssn-mc1-analysis.dat"
-      name_constraint= "the first component of the momentum constraint"
-      CALL THIS% analyze_constraint( &
-           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
-           MC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
-           THIS% MC_l2(l,jx), THIS% MC_loo(l,jx) )
+        name_analysis= "bssn-mc1-analysis-reflev"//n_reflev//".dat"
+        name_constraint= "the first component of the momentum constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             MC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
+             THIS% MC_l2(l,jx), THIS% MC_loo(l,jx) )
 
-      name_analysis= "bssn-mc2-analysis.dat"
-      name_constraint= "the second component of the momentum constraint"
-      CALL THIS% analyze_constraint( &
-           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
-           MC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
-           THIS% MC_l2(l,jy), THIS% MC_loo(l,jy) )
+        name_analysis= "bssn-mc2-analysis-reflev"//n_reflev//".dat"
+        name_constraint= "the second component of the momentum constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             MC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
+             THIS% MC_l2(l,jy), THIS% MC_loo(l,jy) )
 
-      name_analysis= "bssn-mc3-analysis.dat"
-      name_constraint= "the third component of the momentum constraint"
-      CALL THIS% analyze_constraint( &
-           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
-           MC(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
-           THIS% MC_l2(l,jz), THIS% MC_loo(l,jz) )
+        name_analysis= "bssn-mc3-analysis-reflev"//n_reflev//".dat"
+        name_constraint= "the third component of the momentum constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             MC(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
+             THIS% MC_l2(l,jz), THIS% MC_loo(l,jz) )
 
-      name_analysis= "bssn-gc1-analysis.dat"
-      name_constraint= "the first component of the connection constraint"
-      CALL THIS% analyze_constraint( &
-           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
-           GC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
-           THIS% GC_l2(l,jx), THIS% GC_loo(l,jx) )
+        name_analysis= "bssn-gc1-analysis-reflev"//n_reflev//".dat"
+        name_constraint= "the first component of the connection constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             GC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
+             THIS% GC_l2(l,jx), THIS% GC_loo(l,jx) )
 
-      name_analysis= "bssn-gc2-analysis.dat"
-      name_constraint= "the second component of the connection constraint"
-      CALL THIS% analyze_constraint( &
-           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
-           GC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
-           THIS% GC_l2(l,jy), THIS% GC_loo(l,jy) )
+        name_analysis= "bssn-gc2-analysis-reflev"//n_reflev//".dat"
+        name_constraint= "the second component of the connection constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             GC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
+             THIS% GC_l2(l,jy), THIS% GC_loo(l,jy) )
 
-      name_analysis= "bssn-gc3-analysis.dat"
-      name_constraint= "the third component of the connection constraint"
-      CALL THIS% analyze_constraint( &
-           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
-           GC(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
-           THIS% GC_l2(l,jz), THIS% GC_loo(l,jz) )
+        name_analysis= "bssn-gc3-analysis-reflev"//n_reflev//".dat"
+        name_constraint= "the third component of the connection constraint"
+        CALL THIS% analyze_constraint( &
+             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             GC(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
+             THIS% GC_l2(l,jz), THIS% GC_loo(l,jz) )
 
-      CLOSE( UNIT= unit_logfile )
+        CLOSE( UNIT= unit_logfile )
 
-      PRINT *, " * Constraints analyzed. Results saved in " &
-               // "bssn-constraints-statistics-*.log files."
-      PRINT *
-    END ASSOCIATE
+        PRINT *, " * Constraints analyzed. Results saved in " &
+                 // "bssn-constraints-statistics-*.log files."
+        PRINT *
+      END ASSOCIATE
+    ENDDO
 
     IF( THIS% export_constraints )THEN
 
