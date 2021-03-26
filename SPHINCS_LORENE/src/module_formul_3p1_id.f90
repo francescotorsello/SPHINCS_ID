@@ -39,38 +39,7 @@ MODULE formul_3p1_id
 
     INTEGER, PUBLIC:: cons_step
 
-    !INTEGER:: ngrid_x, ngrid_y, ngrid_z
-
-    !DOUBLE PRECISION:: dx, dy, dz, dx_1, dy_1, dz_1
-
-    ! Array storing the Cartesian coordinates of the grid points
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid
-
-    !
-    !-- Arrays storing the 3+1 variables for the LORENE ID on the grid
-    !
-    !DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: lapse
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: shift_u
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: g_phys3_ll
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: K_phys3_ll
-    !
-    !! Constraints and their l2 norm
-    !DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC
-    !DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: HC_parts
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: MC_parts
-
-    ! Variables to decide if and how to export the constraints
-    LOGICAL, PUBLIC:: export_constraints
-    LOGICAL, PUBLIC:: export_constraints_details
-
-    !
-    !-- New variables for the refined mesh
-    !
     INTEGER:: nlevels
-
-    TYPE(timer):: grid_timer
-    TYPE(timer):: importer_timer
 
     TYPE(level), DIMENSION(:), ALLOCATABLE :: levels
     TYPE(grid_function):: coords
@@ -86,14 +55,22 @@ MODULE formul_3p1_id
     TYPE(grid_function):: MC
     TYPE(grid_function):: MC_parts
 
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_l2
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_l2
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_parts_l2
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_loo
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_parts_loo
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_l2
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_parts_l2
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_l2
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_loo
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_loo
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: HC_parts_loo
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_loo
+
+    ! Variables to decide if and how to export the constraints
+    LOGICAL, PUBLIC:: export_constraints
+    LOGICAL, PUBLIC:: export_constraints_details
+    LOGICAL, PUBLIC:: export_constraints_xy, export_constraints_x
+
+    TYPE(timer):: grid_timer
+    TYPE(timer):: importer_timer
 
 
     CONTAINS
@@ -146,7 +123,15 @@ MODULE formul_3p1_id
 
     PROCEDURE, PUBLIC:: get_grid_point
 
-    PROCEDURE, PUBLIC:: get_x_spacing
+    PROCEDURE, PUBLIC:: get_nlevels
+
+    PROCEDURE, PUBLIC:: get_levels
+
+    PROCEDURE, PUBLIC:: get_dx
+
+    PROCEDURE, PUBLIC:: get_dy
+
+    PROCEDURE, PUBLIC:: get_dz
 
     PROCEDURE, PUBLIC:: get_ngrid_x
 
@@ -246,7 +231,27 @@ MODULE formul_3p1_id
 
     END FUNCTION get_grid_point
 
-    MODULE FUNCTION get_x_spacing( THIS, l ) RESULT( dx )
+    MODULE FUNCTION get_nlevels( THIS, l ) RESULT( nlevels )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
+      ! Result
+      DOUBLE PRECISION:: nlevels
+
+    END FUNCTION get_nlevels
+
+    MODULE FUNCTION get_levels( THIS, l ) RESULT( levels )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
+      ! Result
+      TYPE(level), DIMENSION(:), ALLOCATABLE:: levels
+
+    END FUNCTION get_levels
+
+    MODULE FUNCTION get_dx( THIS, l ) RESULT( dx )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
@@ -254,7 +259,27 @@ MODULE formul_3p1_id
       ! Result
       DOUBLE PRECISION:: dx
 
-    END FUNCTION get_x_spacing
+    END FUNCTION get_dx
+
+    MODULE FUNCTION get_dy( THIS, l ) RESULT( dy )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
+      ! Result
+      DOUBLE PRECISION:: dy
+
+    END FUNCTION get_dy
+
+    MODULE FUNCTION get_dz( THIS, l ) RESULT( dz )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
+      ! Result
+      DOUBLE PRECISION:: dz
+
+    END FUNCTION get_dz
 
     MODULE FUNCTION get_ngrid_x( THIS, l ) RESULT( ngrid_x )
 

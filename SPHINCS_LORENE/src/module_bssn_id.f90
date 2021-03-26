@@ -58,10 +58,11 @@ MODULE formul_bssn_id
     TYPE(grid_function):: g_BSSN3_ll
 
     !
-    !-- Connection constraints and its l2 norm
+    !-- Connection constraints and its l2 norm and loo norm
     !
     TYPE(grid_function):: GC
     TYPE(grid_function):: GC_parts
+
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_l2
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_parts_l2
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_loo
@@ -69,7 +70,6 @@ MODULE formul_bssn_id
 
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x
-    LOGICAL, PUBLIC:: export_constraints_xy, export_constraints_x
 
     TYPE(timer):: bssn_computer_timer
 

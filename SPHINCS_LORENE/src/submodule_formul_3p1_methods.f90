@@ -85,6 +85,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       f3p1_obj% rad_coord% levels(l)% var= rad_coord% levels(l)% var
 
     ENDDO ref_levels
+    CALL deallocate_grid_function ( coords, 'coords' )
+    CALL deallocate_grid_function ( rad_coord, 'rad_coord' )
 
     !
     !-- Allocating the memory for the grid functions
@@ -101,6 +103,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     !
     PRINT *
     PRINT *, "** Importing the LORENE spacetime ID on the refined mesh..."
+    PRINT *
     CALL f3p1_obj% importer_timer% start_timer()
 
     !PRINT *, "nlevels=", f3p1_obj% nlevels
@@ -888,82 +891,6 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       CALL deallocate_grid_function( f3p1_obj% MC_parts, "MC_parts_id" )
     ENDIF
 
-    !IF( ALLOCATED( f3p1_obj% grid ) )THEN
-    !  DEALLOCATE( f3p1_obj% grid, STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !     PRINT *, "...deallocation error for array grid. ", &
-    !              "The error message is", err_msg
-    !     STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !            "...deallocation error for array grid in SUBROUTINE"&
-    !  !            // "destruct_formul_3p1." )
-    !ENDIF
-    !IF( ALLOCATED( f3p1_obj% lapse ) )THEN
-    !  DEALLOCATE( f3p1_obj% lapse, STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !     PRINT *, "...deallocation error for array lapse. ", &
-    !              "The error message is", err_msg
-    !     STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !            "...deallocation error for array lapse in SUBROUTINE"&
-    !  !            // "destruct_formul_3p1." )
-    !ENDIF
-    !IF( ALLOCATED( f3p1_obj% shift_u ) )THEN
-    !  DEALLOCATE( f3p1_obj% shift_u, STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !     PRINT *, "...deallocation error for array shift_u. ", &
-    !              "The error message is", err_msg
-    !     STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !                "...deallocation error for array shift_u in " &
-    !  !                // "SUBROUTINE destruct_formul_3p1." )
-    !ENDIF
-    !IF( ALLOCATED( f3p1_obj% g_phys3_ll ) )THEN
-    !  DEALLOCATE( f3p1_obj% g_phys3_ll, STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !     PRINT *, "...deallocation error for array g_phys3_ll. ", &
-    !              "The error message is", err_msg
-    !     STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !                "...deallocation error for array g_phys3_ll in " &
-    !  !                // "SUBROUTINE destruct_formul_3p1." )
-    !ENDIF
-    !IF( ALLOCATED( f3p1_obj% K_phys3_ll ) )THEN
-    !  DEALLOCATE( f3p1_obj% K_phys3_ll, STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !     PRINT *, "...deallocation error for array K_phys3_ll. ", &
-    !              "The error message is", err_msg
-    !     STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !                "...deallocation error for array K_phys3_ll in " &
-    !  !                // "SUBROUTINE destruct_formul_3p1." )
-    !ENDIF
-    !IF(ALLOCATED( f3p1_obj% HC ))THEN
-    !  DEALLOCATE( f3p1_obj% HC, STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !    PRINT *, "...deallocation error for array HC. ", &
-    !             "The error message is", err_msg
-    !    STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !                "...deallocation error for array HC" )
-    !ENDIF
-    !IF(ALLOCATED( f3p1_obj% MC ))THEN
-    !  DEALLOCATE( f3p1_obj% MC, STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !    PRINT *, "...deallocation error for array MC. ", &
-    !             "The error message is", err_msg
-    !    STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !                "...deallocation error for array MC" )
-    !ENDIF
-
   END PROCEDURE destruct_formul_3p1
 
 
@@ -1013,7 +940,41 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
   END PROCEDURE get_grid_point
 
 
-  MODULE PROCEDURE get_x_spacing
+  MODULE PROCEDURE get_nlevels
+
+    !**************************************************
+    !                                                 *
+    ! Returns the number of refinement levels nlevels *
+    !                                                 *
+    ! FT 26.03.2021                                   *
+    !                                                 *
+    !**************************************************
+
+    IMPLICIT NONE
+
+    nlevels= THIS% nlevels
+
+  END PROCEDURE get_nlevels
+
+
+  MODULE PROCEDURE get_levels
+
+    !**************************************************
+    !                                                 *
+    ! Returns the data structure levels               *
+    !                                                 *
+    ! FT 26.03.2021                                   *
+    !                                                 *
+    !**************************************************
+
+    IMPLICIT NONE
+
+    levels= THIS% levels
+
+  END PROCEDURE get_levels
+
+
+  MODULE PROCEDURE get_dx
 
     !*************************************************
     !                                                *
@@ -1027,7 +988,41 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
 
     dx= THIS% levels(l)% dx
 
-  END PROCEDURE get_x_spacing
+  END PROCEDURE get_dx
+
+
+  MODULE PROCEDURE get_dy
+
+    !*************************************************
+    !                                                *
+    ! Returns the grid spacing on the y axis         *
+    !                                                *
+    ! FT 26.03.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    dy= THIS% levels(l)% dy
+
+  END PROCEDURE get_dy
+
+
+  MODULE PROCEDURE get_dz
+
+    !*************************************************
+    !                                                *
+    ! Returns the grid spacing on the z axis         *
+    !                                                *
+    ! FT 26.03.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    dz= THIS% levels(l)% dz
+
+  END PROCEDURE get_dz
 
 
   MODULE PROCEDURE get_ngrid_x

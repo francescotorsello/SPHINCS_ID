@@ -10,6 +10,10 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
   ! bssn_id, and the methods it calls             *
   !                                               *
   ! FT 23.10.2020                                 *
+  !                                              *
+  ! Updated to mesh refinement                   *
+  !                                              *
+  ! FT 26.03.2021                                *
   !                                               *
   !************************************************
 
@@ -101,78 +105,6 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
  ! END PROCEDURE construct_bssn_id_bns_spacings
 
 
-!  MODULE PROCEDURE set_up_bssn
-!
-!    !************************************************
-!    !                                               *
-!    ! Read and store the BSSN parameters            *
-!    !                                               *
-!    ! FT                                            *
-!    !                                               *
-!    !************************************************
-!
-!    USE BSSN_parameters,  ONLY: Read_BSSN_Parameters, Set_BSSN_Parameters, &
-!                                fdorder, formulation, conformal_method, &
-!                                harmonic_n, harmonic_f, &
-!                                advect_lapse, advect_shift, eps_diss, &
-!                                eps_diss_max, &
-!                                evolve_a, evolve_b, alpha_driver, &
-!                                damp_k1, damp_k2, fix_advection_terms, &
-!                                gamma_shift, use_spatial_beta_driver, &
-!                                beta_driver, spatial_beta_driver_radius, &
-!                                use_spatial_shift_gamma_coeff, &
-!                                shift_gamma_coeff, &
-!                                spatial_shift_gamma_coeff_radius, &
-!                                shift_formulation, shift_alpha_power, &
-!                                minimum_lapse, lapse_threshold, &
-!                                fermi_width, use_spatial_eps
-!    !USE McLachlan_refine, ONLY: ghost_size
-!
-!    IMPLICIT NONE
-!
-!    LOGICAL, SAVE :: first = .TRUE.
-!
-!    ! Read the BSSN parameters from the parameter file, set the C++
-!    ! version of the parameters, set the ghost
-!    ! size depending on the finite-differencing order
-!    PRINT *, " * Reading BSSN parameters..."
-!    PRINT *
-!
-!    IF( first )THEN
-!      CALL Read_BSSN_Parameters()
-!      CALL Set_BSSN_Parameters( fdorder, formulation, conformal_method, &
-!                                harmonic_n, harmonic_f, &
-!                                advect_lapse, advect_shift, eps_diss, &
-!                                eps_diss_max, &
-!                                evolve_a, evolve_b, alpha_driver, &
-!                                damp_k1, damp_k2, fix_advection_terms, &
-!                                gamma_shift, use_spatial_beta_driver, &
-!                                beta_driver, spatial_beta_driver_radius, &
-!                                use_spatial_shift_gamma_coeff, &
-!                                shift_gamma_coeff, &
-!                                spatial_shift_gamma_coeff_radius, &
-!                                shift_formulation, shift_alpha_power, &
-!                                minimum_lapse, lapse_threshold, &
-!                                fermi_width, use_spatial_eps )
-!      first = .FALSE.
-!    ENDIF
-!
-!    !SELECT CASE( fdorder )
-!    !CASE(4)
-!    !    THIS% levels% ghost_size= 3
-!    !CASE(6)
-!    !    THIS% levels% ghost_size= 4
-!    !CASE(8)
-!    !    THIS% levels% ghost_size= 5
-!    !CASE DEFAULT
-!    !    PRINT *, 'Invalid value chosen for fdorder chosen.'
-!    !    PRINT *, 'Valued values are: 4, 6, 8'
-!    !    STOP
-!    !END SELECT
-!
-!  END PROCEDURE set_up_bssn
-
-
   MODULE PROCEDURE allocate_bssn_fields
 
     !***********************************************
@@ -181,80 +113,35 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     !                                              *
     ! FT 23.10.2020                                *
     !                                              *
+    ! Updated to mesh refinement                   *
+    !                                              *
+    ! FT 26.03.2021                                *
+    !                                              *
     !***********************************************
 
-    !USE tensor,    ONLY: n_sym3x3
     USE mesh_refinement,  ONLY: allocate_grid_function
 
     IMPLICIT NONE
 
-    CALL allocate_grid_function( THIS% Gamma_u, "Gamma_u_id", 3 )
+    IF( .NOT.ALLOCATED( THIS% Gamma_u% levels ) )THEN
+      CALL allocate_grid_function( THIS% Gamma_u, "Gamma_u_id", 3 )
+    ENDIF
 
-    CALL allocate_grid_function( THIS% phi, "phi_id", 1 )
+    IF( .NOT.ALLOCATED( THIS% phi% levels ) )THEN
+      CALL allocate_grid_function( THIS% phi, "phi_id", 1 )
+    ENDIF
 
-    CALL allocate_grid_function( THIS% trK, "trK_id", 1 )
+    IF( .NOT.ALLOCATED( THIS% trK% levels ) )THEN
+      CALL allocate_grid_function( THIS% trK, "trK_id", 1 )
+    ENDIF
 
-    CALL allocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll_id", 6 )
+    IF( .NOT.ALLOCATED( THIS% A_BSSN3_ll% levels ) )THEN
+      CALL allocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll_id", 6 )
+    ENDIF
 
-    CALL allocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll_id", 6 )
-
-    !IF(.NOT.ALLOCATED( THIS% Gamma_u ))THEN
-    !  ALLOCATE( THIS% Gamma_u( THIS% ngrid_x, THIS% ngrid_y, &
-    !                           THIS% ngrid_z, 3 ), &
-    !                           STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !    PRINT *, "...allocation error for array Gamma_u ", &
-    !             ". The error message is", err_msg
-    !    STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, "...allocation error for array Gamma_u" )
-    !ENDIF
-    !IF(.NOT.ALLOCATED( THIS% phi ))THEN
-    !  ALLOCATE( THIS% phi( THIS% ngrid_x, THIS% ngrid_y, &
-    !                       THIS% ngrid_z ), &
-    !                       STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !    PRINT *, "...allocation error for array phi ", &
-    !             ". The error message is", err_msg
-    !    STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, "...allocation error for array phi" )
-    !ENDIF
-    !IF(.NOT.ALLOCATED( THIS% trK ))THEN
-    !  ALLOCATE( THIS% trK( THIS% ngrid_x, THIS% ngrid_y, &
-    !                       THIS% ngrid_z ), &
-    !                       STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !    PRINT *, "...allocation error for array trK ", &
-    !             ". The error message is", err_msg
-    !    STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, "...allocation error for array trK" )
-    !ENDIF
-    !IF(.NOT.ALLOCATED( THIS% A_BSSN3_ll ))THEN
-    !  ALLOCATE( THIS% A_BSSN3_ll( THIS% ngrid_x, THIS% ngrid_y, &
-    !                              THIS% ngrid_z, n_sym3x3 ), &
-    !                              STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !    PRINT *, "...allocation error for array A_BSSN3_ll ", &
-    !             ". The error message is", err_msg
-    !    STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !                "...allocation error for array A_BSSN3_ll" )
-    !ENDIF
-    !IF(.NOT.ALLOCATED( THIS% g_BSSN3_ll ))THEN
-    !  ALLOCATE( THIS% g_BSSN3_ll( THIS% ngrid_x, THIS% ngrid_y, &
-    !                              THIS% ngrid_z, n_sym3x3 ), &
-    !                              STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !    PRINT *, "...allocation error for array g_BSSN3_ll ", &
-    !             ". The error message is", err_msg
-    !    STOP
-    !  ENDIF
-    !  !CALL test_status( ios, err_msg, &
-    !  !                "...allocation error for array g_BSSN3_ll" )
-    !ENDIF
+    IF( .NOT.ALLOCATED( THIS% g_BSSN3_ll% levels ) )THEN
+      CALL allocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll_id", 6 )
+    ENDIF
 
   END PROCEDURE allocate_bssn_fields
 

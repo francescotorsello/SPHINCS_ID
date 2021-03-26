@@ -9,6 +9,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
   ! Implementation of the methods of TYPE bssn_id *
   !                                               *
   ! FT 23.10.2020                                 *
+  !                                              *
+  ! Updated to mesh refinement                   *
+  !                                              *
+  ! FT 26.03.2021                                *
   !                                               *
   !************************************************
 
@@ -36,14 +40,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !                                               *
     !************************************************
 
-
-    !USE grav_grid,           ONLY: ngrid_x, ngrid_y, ngrid_z, &
-    !                               dx, dy, dz, dx_1, dy_1, dz_1, &
-    !                               xR, xL, yR, yL, zR, zL, &
-    !                               rad_coord, &
-    !                               deallocate_gravity_grid
     !USE NaNChecker,          ONLY: Check_Grid_Function_for_NAN
-    USE mesh_refinement,            ONLY: nlevels
+    USE mesh_refinement,            ONLY: nlevels, rad_coord, &
+                                          allocate_grid_function, &
+                                          deallocate_grid_function
     USE tensor,                     ONLY: itt, itx, ity, itz, ixx, ixy, &
                                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                           jyy, jyz, jzz, jx, jy, jz, n_sym3x3
@@ -124,6 +124,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! Allocate memory for the derivatives of the ADM variables
     CALL allocate_GravityAcceleration()
 
+    CALL allocate_grid_function ( rad_coord, 'rad_coord' )
+
     ! Set the stress-energy tensor to 0 (here dummy)
     !Tmunu_ll(:,:,:,:)= 0.0D0
 
@@ -158,6 +160,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       dt_lapse% levels(l)% var  = 0.0D0
       dt_shift_u% levels(l)% var= 0.0D0
 
+      rad_coord% levels(l)% var = THIS% rad_coord% levels(l)% var
       lapse% levels(l)% var     = THIS% lapse% levels(l)% var
       shift_u% levels(l)% var   = THIS% shift_u% levels(l)% var
       g_phys3_ll% levels(l)% var= THIS% g_phys3_ll% levels(l)% var
@@ -249,11 +252,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !
     !-- Setting the TYPE variables equal to the MODULE variables
     !
-    !THIS% g_BSSN3_ll= g_BSSN3_ll
-    !THIS% A_BSSN3_ll= A_BSSN3_ll
-    !THIS% phi       = phi
-    !THIS% trK       = trK
-    !THIS% Gamma_u   = Gamma_u
     ref_levels2: DO l= 1, THIS% nlevels
 
       THIS% Gamma_u% levels(l)% var   = Gamma_u% levels(l)% var
@@ -267,12 +265,12 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! Write BSSN ID to a binary file to be read by the evolution code
     ! in SPHINCS
     IF( THIS% export_bin )THEN
-      IF( PRESENT(namefile) )THEN
+      !IF( PRESENT(namefile) )THEN
         !CALL write_BSSN_dump( namefile )
         CALL write_BSSN_dump()
-      ELSE
-        CALL write_BSSN_dump()
-      ENDIF
+      !ELSE
+      !  CALL write_BSSN_dump()
+      !ENDIF
     ENDIF
 
     !
@@ -283,6 +281,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_Tmunu()
     CALL deallocate_GravityAcceleration()
     CALL deallocate_BSSN()
+    CALL deallocate_grid_function( rad_coord, 'rad_coord' )
     !CALL deallocate_gravity_grid()
 
     call_flag= call_flag + 1
@@ -800,23 +799,23 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !                                                 *
     !**************************************************
 
-    USE constants,  ONLY: c_light2, cm2m, MSun, g2kg, m2cm, &
-                          lorene2hydrobase, MSun_geo, pi
-    USE matrix,     ONLY: invert_4x4_matrix
-    !USE grav_grid,  ONLY: ngrid_x, ngrid_y, ngrid_z, dx, dy, dz, &
-    !                      dx_1, dy_1, dz_1
-    USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
-                          ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                          jyy, jyz, jzz, jx, jy, jz, &
-                          it, ix, iy, iz, n_sym3x3, n_sym4x4
+    USE constants,         ONLY: c_light2, cm2m, MSun, g2kg, m2cm, &
+                                 lorene2hydrobase, MSun_geo, pi
+    USE matrix,            ONLY: invert_4x4_matrix
+    USE tensor,            ONLY: itt, itx, ity, itz, ixx, ixy, &
+                                 ixz, iyy, iyz, izz, jxx, jxy, jxz, &
+                                 jyy, jyz, jzz, jx, jy, jz, &
+                                 it, ix, iy, iz, n_sym3x3, n_sym4x4
+    USE mesh_refinement,   ONLY: allocate_grid_function, &
+                                 levels, nlevels
     USE McLachlan_refine,  ONLY: BSSN_CONSTRAINTS_INTERIOR
-    USE mesh_refinement,   ONLY: allocate_grid_function, levels
 
     IMPLICIT NONE
 
     INTEGER:: i, j, k, allocation_status, fd_lim, l
     INTEGER, DIMENSION(3) :: imin, imax
-    INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y, &
+    INTEGER:: unit_logfile, &
+              min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
@@ -856,6 +855,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
 
+    ! Being abs_grid a local array, it is good practice to allocate it on the
+    ! heap, otherwise it will be stored on the stack which has a very limited
+    ! size. This results in a segmentation fault.
+    !ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
+
+    levels = THIS% levels
+    nlevels= THIS% nlevels
+
     CALL allocate_grid_function( baryon_density, "baryon_density", 1 )
     CALL allocate_grid_function( energy_density, "energy_density", 1 )
     CALL allocate_grid_function( specific_energy, "specific_energy", 1 )
@@ -875,92 +882,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL allocate_grid_function( HC_A, "HC_A", 1 )
     CALL allocate_grid_function( HC_derphi, "HC_derphi", 1 )
 
-    ! Being abs_grid a local array, it is good practice to allocate it on the
-    ! heap, otherwise it will be stored on the stack which has a very limited
-    ! size. This results in a segmentation fault.
-    !ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-
-    !grid_x= THIS% ngrid_x
-    !grid_y= THIS% ngrid_y
-    !grid_z= THIS% ngrid_z
-    !x= THIS% dx
-    !y= THIS% dy
-    !z= THIS% dz
-    !x_1= THIS% dx_1
-    !y_1= THIS% dy_1
-    !z_1= THIS% dz_1
-
-    !
-    !-- Keeping the following lines commented, in case the arrays have to be
-    !-- allocated on the heap with ALLOCATE
-    !
-
-    !
-    !-- Allocate memory for the coordinate radius
-    !-- (this is needed by ADM_to_BSSN)
-    !
-    !IF( .NOT. ALLOCATED( rad_coord ) )THEN
-    !    ALLOCATE( rad_coord( THIS% ngrid_x, THIS% ngrid_y, &
-    !                         THIS% ngrid_z ), STAT= allocation_status )
-    !ENDIF
-    !IF( allocation_status > 0 )THEN
-    !   PRINT *, '...allocation error for rad_coord'
-    !   STOP
-    !ENDIF
-    !
-    !DO iz= 1, THIS% ngrid_z
-    !  DO iy= 1, THIS% ngrid_y
-    !    DO ix= 1, THIS% ngrid_x
-    !      rad_coord( ix, iy, iz )= SQRT( (xL+(ix-1)*dx)**2 &
-    !                                   + (yL+(iy-1)*dy)**2 &
-    !                                   + (zL+(iz-1)*dz)**2 )
-    !    ENDDO
-    !  ENDDO
-    !ENDDO
-
-    !ALLOCATE( THIS% HC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-    !ALLOCATE( THIS% MC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
-    !ALLOCATE( THIS% GC( THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
-
-    CALL allocate_grid_function( THIS% HC, "HC_ID", 1 )
-    CALL allocate_grid_function( THIS% MC, "MC_ID", 3 )
-    CALL allocate_grid_function( THIS% GC, "GC_ID", 3 )
-
-    !ALLOCATE( Tmunu_ll( &
-    !             THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, n_sym4x4 ) )
-
-    !
-    !-- Import the hydro on the grid from the LORENE ID directly
-    !
-
-    !ALLOCATE( baryon_density( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-    !ALLOCATE( energy_density( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-    !ALLOCATE( specific_energy( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-    !ALLOCATE( pressure( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-    !ALLOCATE( v_euler( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
-    !ALLOCATE( v_euler_l( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 3 ) )
-    !ALLOCATE( lorentz_factor( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-    !!ALLOCATE( u_euler0( &
-    !!            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
-    !!ALLOCATE( v_coord( &
-    !!            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 0:3 ) )
-    !!ALLOCATE( u_coord( &
-    !!            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 0:3 ) )
-    !!ALLOCATE( u_coord_l( &
-    !!            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 0:3 ) )
-    !ALLOCATE( u_euler_l( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, 0:3 ) )
-    !ALLOCATE( g4( &
-    !            THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z, n_sym4x4 ) )
-    !ALLOCATE( g4temp( 4, 4 ) )
-    !ALLOCATE( ig4( 4, 4 ) )
+    CALL allocate_grid_function( THIS% HC, "HC_id", 1 )
+    CALL allocate_grid_function( THIS% MC, "MC_id", 3 )
+    CALL allocate_grid_function( THIS% GC, "GC_id", 3 )
 
     !
     !-- Import the hydro LORENE ID on the gravity grid
@@ -968,9 +892,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     PRINT *, "** Importing LORENE hydro ID on the gravity grid..."
     ref_levels: DO l= 1, THIS% nlevels, 1
 
-      CALL bns_obj% import_id( THIS% levels(l)% ngrid_x, &
-                               THIS% levels(l)% ngrid_y, &
-                               THIS% levels(l)% ngrid_z, &
+      CALL bns_obj% import_id( THIS% get_ngrid_x(l), &
+                               THIS% get_ngrid_y(l), &
+                               THIS% get_ngrid_z(l), &
                                THIS% coords% levels(l)% var, &
                                baryon_density% levels(l)% var, &
                                energy_density% levels(l)% var, &
@@ -981,45 +905,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ENDDO ref_levels
     PRINT *, " * LORENE hydro ID imported."
     PRINT *
-
-    !
-    !-- Replace the points with negative hydro fields near the surface
-    !-- with vacuum
-    !
-    !PRINT *, "** Cleaning LORENE hydro ID around the surfaces of the stars..."
-    !DO iz= 1, THIS% ngrid_z, 1
-    !  DO iy= 1, THIS% ngrid_y, 1
-    !    DO ix= 1, THIS% ngrid_x, 1
-    !
-    !      IF(      baryon_density ( ix, iy, iz ) < 0.0D0 &
-    !          .OR. energy_density ( ix, iy, iz ) < 0.0D0 &
-    !          .OR. specific_energy( ix, iy, iz ) < 0.0D0 &
-    !          .OR. pressure       ( ix, iy, iz ) < 0.0D0 )THEN
-    !          baryon_density ( ix, iy, iz )= 0.0D0
-    !          energy_density ( ix, iy, iz )= 0.0D0
-    !          specific_energy( ix, iy, iz )= 0.0D0
-    !          pressure       ( ix, iy, iz )= 0.0D0
-    !          v_euler        ( ix, iy, iz, : )= 0.0D0
-    !      ENDIF
-    !
-    !    ! Print progress on screen
-    !    perc= 100*(THIS% ngrid_x*THIS% ngrid_y*(iz - 1) &
-    !          + THIS% ngrid_x*(iy - 1) + ix) &
-    !          /( THIS% ngrid_x* THIS% ngrid_y*THIS% ngrid_z )
-    !    IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-    !      WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-    !              creturn//" ", perc, "%"
-    !    ENDIF
-    !
-    !    ENDDO
-    !  ENDDO
-    !ENDDO
-    !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
-    !PRINT *, " * LORENE hydro ID cleaned."
-    !PRINT *
-
-    !THIS% shift_u= 0.0D0*2.15D-1*THIS% shift_u
-
 
     !---------------------------!
     !--  Compute constraints  --!
@@ -1086,7 +971,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
             IF( ABS( detg4 ) < 1.0D-10 )THEN
                 PRINT *, "The determinant of the spacetime metric "&
                          // "is effectively 0 at the grid point " &
-                         // "(i,j,k)= (", i, ",", j,",",k, &
+                         // "(i,j,k)= (", i, ",", j, ",", k, &
                             ")."
                 PRINT *, "detg4=", detg4
                 PRINT *
@@ -1094,7 +979,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
             ELSEIF( detg4 > 0.0D0 )THEN
                 PRINT *, "The determinant of the spacetime metric "&
                          // "is positive at the grid point " &
-                         // "(i,j,k)= (", i, ",", j,",",k, &
+                         // "(i,j,k)= (", i, ",", j, ",", k, &
                             ")."
                 PRINT *, "detg4=", detg4
                 PRINT *
@@ -1266,24 +1151,27 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! In debug mode, compute the Hamiltonian constraint by hand
     IF( debug )THEN
 
-      ASSOCIATE( HC_rho => HC_rho% levels(l)%var, &
-                 HC_trK => HC_trK% levels(l)%var, &
-                 HC_A => HC_A% levels(l)%var, &
-                 HC_derphi => HC_derphi% levels(l)%var, &
-                 HC_hand => HC_hand% levels(l)%var, &
-                 phi => THIS% phi% levels(l)%var, &
-                 trK => THIS% trK% levels(l)%var, &
-                 A_BSSN3_ll => THIS% A_BSSN3_ll% levels(l)%var, &
+      ASSOCIATE( HC_rho         => HC_rho% levels(l)%var, &
+                 HC_trK         => HC_trK% levels(l)%var, &
+                 HC_A           => HC_A% levels(l)%var, &
+                 HC_derphi      => HC_derphi% levels(l)%var, &
+                 HC_hand        => HC_hand% levels(l)%var, &
+                 phi            => THIS% phi% levels(l)%var, &
+                 trK            => THIS% trK% levels(l)%var, &
+                 A_BSSN3_ll     => THIS% A_BSSN3_ll% levels(l)%var, &
                  energy_density => energy_density% levels(l)% var, &
                  pressure       => pressure% levels(l)% var &
                )
+
       DO l= 1, THIS% nlevels, 1
+
         HC_rho= 0.0D0
         HC_trK= 0.0D0
         HC_A= 0.0D0
         HC_derphi= 0.0D0
         HC_hand= 0.0D0
         fd_lim= 5
+
         DO k= fd_lim, THIS% get_ngrid_z(l) - fd_lim, 1
           DO j= fd_lim, THIS% get_ngrid_y(l) - fd_lim, 1
             DO i= fd_lim, THIS% get_ngrid_x(l) - fd_lim, 1
@@ -1881,19 +1769,22 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     USE constants,            ONLY: c_light2, cm2m, MSun, g2kg, m2cm, Msun_geo
     USE units,                ONLY: set_units, m0c2_cu
-    !USE grav_grid,  ONLY: ngrid_x, ngrid_y, ngrid_z, dx, dy, dz, &
-    !                      dx_1, dy_1, dz_1, rad_coord, xR, xL, yR, yL, zR, zL, &
-    !                      deallocate_gravity_grid
-    USE mesh_refinement,      ONLY: allocate_grid_function, levels
     USE tensor,               ONLY: itt, itx, ity, itz, ixx, ixy, &
                                     ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                     jyy, jyz, jzz, jx, jy, jz, &
                                     n_sym3x3, n_sym4x4
-    USE McLachlan_refine,     ONLY: BSSN_CONSTRAINTS_INTERIOR, &
-                                    allocate_Ztmp, deallocate_Ztmp
-    USE ADM_refine,           ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
-                                    K_phys3_ll, g_phys3_ll, &
-                                    allocate_ADM, deallocate_ADM
+
+    USE mesh_refinement,             ONLY: allocate_grid_function, levels
+    USE ADM_refine,                  ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
+                                           K_phys3_ll, g_phys3_ll, &
+                                           allocate_ADM, deallocate_ADM
+    USE Tmunu_refine,                ONLY: Tmunu_ll, allocate_Tmunu, &
+                                           deallocate_Tmunu
+    USE McLachlan_refine,            ONLY: BSSN_CONSTRAINTS_INTERIOR, &
+                                           allocate_Ztmp, deallocate_Ztmp
+    USE GravityAcceleration_refine,  ONLY: allocate_GravityAcceleration, &
+                                           deallocate_GravityAcceleration
+
     USE input_output,         ONLY: read_options
     USE options,              ONLY: ikernel, ndes, metric_type
     USE sph_variables,        ONLY: npart, &  ! particle number
@@ -1924,6 +1815,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     USE gradient,             ONLY: allocate_gradient, deallocate_gradient
     USE sphincs_sph,          ONLY: density, flag_dead_ll_cells
     USE set_h,                ONLY: exact_nei_tree_update
+    USE alive_flag,           ONLY: alive
+
     USE map_particles_2_grid, ONLY: map_2_grid
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
@@ -1931,10 +1824,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     USE particle_mesh,        ONLY: deallocate_all_lists, &
                                     deallocate_flag_nei_cell, &
                                     deallocate_pp_g
-    USE Tmunu_refine,                ONLY: Tmunu_ll, allocate_Tmunu, deallocate_Tmunu
-    USE GravityAcceleration_refine,  ONLY: allocate_GravityAcceleration, &
-                                    deallocate_GravityAcceleration
-    USE alive_flag,           ONLY: alive
 
     IMPLICIT NONE
 
