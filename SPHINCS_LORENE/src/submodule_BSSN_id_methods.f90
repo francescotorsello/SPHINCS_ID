@@ -852,7 +852,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CHARACTER( LEN= : ), ALLOCATABLE:: name_constraint
     CHARACTER( LEN= : ), ALLOCATABLE:: name_analysis
     CHARACTER( LEN= : ), ALLOCATABLE:: finalname_logfile
-    CHARACTER( LEN= : ), ALLOCATABLE:: n_reflev
+    CHARACTER( LEN= 2 ):: n_reflev
 
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -1288,9 +1288,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         imin(1) = THIS% levels(l)% nghost_x
         imin(2) = THIS% levels(l)% nghost_y
         imin(3) = THIS% levels(l)% nghost_z
-        imax(1) = THIS% levels(l)% ngrid_x - THIS% levels(l)% nghost_x - 1
-        imax(2) = THIS% levels(l)% ngrid_y - THIS% levels(l)% nghost_y - 1
-        imax(3) = THIS% levels(l)% ngrid_z - THIS% levels(l)% nghost_z - 1
+        imax(1) = THIS% get_ngrid_x(l) - THIS% levels(l)% nghost_x - 1
+        imax(2) = THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
+        imax(3) = THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
 
         HC= 0.0D0
         MC= 0.0D0
@@ -1301,7 +1301,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
           !
           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
           imin, imax, &
-          THIS% levels(l)% dx, THIS% levels(l)% dy, THIS% levels(l)% dz, &
+          THIS% get_dx(l), THIS% get_dy(l), THIS% get_dz(l), &
           g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
           g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
           g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
@@ -1353,14 +1353,18 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                  MC         => THIS% MC% levels(l)% var, &
                  GC         => THIS% GC% levels(l)% var &
       )
-
         !
         !-- Export the constraint statistics to a formatted file
         !
         unit_logfile= 2891
 
-        WRITE( n_reflev, "(I1)" ) l
-        finalname_logfile= TRIM(name_logfile)//"-reflev"//n_reflev//".log"
+        IF( l > 9 )THEN
+          WRITE( n_reflev, "(I2)" ) l
+        ELSE
+          WRITE( n_reflev, "(I1)" ) l
+        ENDIF
+
+        finalname_logfile= TRIM(name_logfile)//"-reflev"//TRIM(n_reflev)//".log"
 
         INQUIRE( FILE= TRIM(finalname_logfile), EXIST= exist )
 
@@ -1456,59 +1460,59 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
         PRINT *, "** Analyzing constraints..."
 
-        name_analysis= "bssn-hc-analysis-reflev"//n_reflev//".dat"
+        name_analysis= "bssn-hc-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the Hamiltonian constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              HC, name_constraint, unit_logfile, name_analysis, &
              THIS% HC_l2(l), THIS% HC_loo(l) )
 
-        name_analysis= "bssn-mc1-analysis-reflev"//n_reflev//".dat"
+        name_analysis= "bssn-mc1-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the momentum constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              MC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_l2(l,jx), THIS% MC_loo(l,jx) )
 
-        name_analysis= "bssn-mc2-analysis-reflev"//n_reflev//".dat"
+        name_analysis= "bssn-mc2-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the momentum constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              MC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_l2(l,jy), THIS% MC_loo(l,jy) )
 
-        name_analysis= "bssn-mc3-analysis-reflev"//n_reflev//".dat"
+        name_analysis= "bssn-mc3-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the momentum constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              MC(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_l2(l,jz), THIS% MC_loo(l,jz) )
 
-        name_analysis= "bssn-gc1-analysis-reflev"//n_reflev//".dat"
+        name_analysis= "bssn-gc1-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the connection constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              GC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_l2(l,jx), THIS% GC_loo(l,jx) )
 
-        name_analysis= "bssn-gc2-analysis-reflev"//n_reflev//".dat"
+        name_analysis= "bssn-gc2-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the connection constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              GC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_l2(l,jy), THIS% GC_loo(l,jy) )
 
-        name_analysis= "bssn-gc3-analysis-reflev"//n_reflev//".dat"
+        name_analysis= "bssn-gc3-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the connection constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              GC(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_l2(l,jz), THIS% GC_loo(l,jz) )
 
         CLOSE( UNIT= unit_logfile )
 
         PRINT *, " * Constraints analyzed. Results saved in " &
-                 // "bssn-constraints-statistics-*.log files."
+                 // "bssn-constraints-statistics-*-reflev*.log files."
         PRINT *
       END ASSOCIATE
     ENDDO
@@ -2164,9 +2168,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                HC_parts   => THIS% HC_parts % levels(l)% var, &
                MC_parts   => THIS% MC_parts % levels(l)% var, &
                GC_parts   => THIS% GC_parts % levels(l)% var &
-               !ngrid_x    => THIS% levels% ngrid_x, &
-               !ngrid_y    => THIS% levels% ngrid_y, &
-               !ngrid_z    => THIS% levels% ngrid_z
              )
 
       PRINT *, " * Computing contraints using particle data..."
@@ -2175,9 +2176,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         imin(1) = THIS% levels(l)% nghost_x
         imin(2) = THIS% levels(l)% nghost_y
         imin(3) = THIS% levels(l)% nghost_z
-        imax(1) = THIS% levels(l)% ngrid_x - THIS% levels(l)% nghost_x - 1
-        imax(2) = THIS% levels(l)% ngrid_y - THIS% levels(l)% nghost_y - 1
-        imax(3) = THIS% levels(l)% ngrid_z - THIS% levels(l)% nghost_z - 1
+        imax(1) = THIS% get_ngrid_x(l) - THIS% levels(l)% nghost_x - 1
+        imax(2) = THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
+        imax(3) = THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
 
         HC_parts= 0.0D0
         MC_parts= 0.0D0
@@ -2188,7 +2189,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
           !
           THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
           imin, imax, &
-          levels(l)% dx, THIS% levels(l)% dy, THIS% levels(l)% dz, &
+          THIS% get_dx(l), THIS% get_dy(l), THIS% get_dz(l), &
           g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
           g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
           g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
@@ -2338,49 +2339,49 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         name_analysis= "bssn-hc-parts-analysis.dat"
         name_constraint= "the Hamiltonian constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              HC_parts, name_constraint, unit_logfile, name_analysis, &
              THIS% HC_parts_l2(l), THIS% HC_parts_loo(l) )
 
         name_analysis= "bssn-mc1-parts-analysis.dat"
         name_constraint= "the first component of the momentum constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              MC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jx), THIS% MC_parts_loo(l,jx) )
 
         name_analysis= "bssn-mc2-parts-analysis.dat"
         name_constraint= "the second component of the momentum constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              MC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jy), THIS% MC_parts_loo(l,jy) )
 
         name_analysis= "bssn-mc3-parts-analysis.dat"
         name_constraint= "the third component of the momentum constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              MC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jz), THIS% MC_parts_loo(l,jz) )
 
         name_analysis= "bssn-gc1-parts-analysis.dat"
         name_constraint= "the first component of the connection constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              GC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_parts_l2(l,jx), THIS% GC_parts_loo(l,jx) )
 
         name_analysis= "bssn-gc2-parts-analysis.dat"
         name_constraint= "the second component of the connection constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              GC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_parts_l2(l,jy), THIS% GC_parts_loo(l,jy) )
 
         name_analysis= "bssn-gc3-parts-analysis.dat"
         name_constraint= "the third component of the connection constraint"
         CALL THIS% analyze_constraint( &
-             THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+             l, &
              GC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_parts_l2(l,jz), THIS% GC_parts_loo(l,jz) )
 

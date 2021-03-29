@@ -117,81 +117,82 @@ PROGRAM sphincs_lorene_bns
   !
   !-- Construct the particles objects from the bns objects
   !
-  place_hydro_id_loops: DO itr3= 1, n_bns, 1
-    part_distribution_loop: DO itr4= 1, max_n_parts, 1
-      IF( placer( itr3, itr4 ) == test_int )THEN
-        EXIT part_distribution_loop
-      ELSE
-
-        PRINT *, "===================================================" &
-                 // "==============="
-        PRINT *, " Placing particles for BNS", itr3, &
-                 ", distribution", itr4
-        PRINT *, "===================================================" &
-                 // "==============="
-        PRINT *
-        particles_dist( itr3, itr4 )= particles( binaries( itr3 ), &
-                                                 placer( itr3, itr4 ) )
-
-      ENDIF
-    ENDDO part_distribution_loop
-  ENDDO place_hydro_id_loops
-
-  compute_export_sph_loops: DO itr3= 1, n_bns, 1
-    part_distribution_loop2: DO itr4= 1, max_n_parts, 1
-      IF( placer( itr3, itr4 ) == test_int )THEN
-        EXIT part_distribution_loop2
-        ! Experimental: empty particles object
-        !particles_dist( itr, itr2 )= particles()
-      ELSE
-
-        PRINT *, "===================================================" &
-                 // "====================="
-        PRINT *, " Computing SPH variables for BNS", itr3, &
-                 ", distribution", itr4
-        PRINT *, "===================================================" &
-                 // "====================="
-        PRINT *
-        WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
-                                    "l", &
-                                    itr3, "-", itr4, "."
-        particles_dist( itr3, itr4 )% export_bin= export_bin
-        particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
-        particles_dist( itr3, itr4 )% export_form_x = export_form_x
-        CALL particles_dist( itr3, itr4 )% &
-             compute_and_export_SPH_variables( namefile_parts_bin )
-        IF( particles_dist( itr3, itr4 )% export_bin )THEN
-          WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
-                          "sph_vars-", itr3, "-", itr4, ".dat"
-          CALL particles_dist( itr3, itr4 )% &
-                          read_sphincs_dump_print_formatted( &
-                                        namefile_parts_bin, namefile_parts )
-        ENDIF
-
-      ENDIF
-    ENDDO part_distribution_loop2
-  ENDDO compute_export_sph_loops
-
-  !
-  !-- Print the particle initial data to a formatted file
-  !
-  IF( export_form )THEN
-    export_sph_loops: DO itr3= 1, n_bns, 1
-      DO itr4= 1, max_n_parts, 1
-        IF( placer( itr3, itr4 ) == test_int )THEN
-          EXIT
-          ! Experimental: empty particles object
-          !particles_dist( itr, itr2 )= particles()
-        ELSE
-          WRITE( namefile_parts, "(A29,I1,A1,I1,A4)" ) &
-                                 "lorene-bns-id-particles-form_", &
-                                 itr3, "-", itr4, ".dat"
-          CALL particles_dist( itr3, itr4 )% &
-               print_formatted_lorene_id_particles( namefile_parts )
-        ENDIF
-      ENDDO
-    ENDDO export_sph_loops
-  ENDIF
+ ! place_hydro_id_loops: DO itr3= 1, n_bns, 1
+ !   part_distribution_loop: DO itr4= 1, max_n_parts, 1
+ !     IF( placer( itr3, itr4 ) == test_int )THEN
+ !       EXIT part_distribution_loop
+ !     ELSE
+ !
+ !       PRINT *, "===================================================" &
+ !                // "==============="
+ !       PRINT *, " Placing particles for BNS", itr3, &
+ !                ", distribution", itr4
+ !       PRINT *, "===================================================" &
+ !                // "==============="
+ !       PRINT *
+ !       particles_dist( itr3, itr4 )= particles( binaries( itr3 ), &
+ !                                                placer( itr3, itr4 ) )
+ !
+ !     ENDIF
+ !   ENDDO part_distribution_loop
+ ! ENDDO place_hydro_id_loops
+ !
+ ! compute_export_sph_loops: DO itr3= 1, n_bns, 1
+ !   part_distribution_loop2: DO itr4= 1, max_n_parts, 1
+ !     IF( placer( itr3, itr4 ) == test_int )THEN
+ !       EXIT part_distribution_loop2
+ !       ! Experimental: empty particles object
+ !       !particles_dist( itr, itr2 )= particles()
+ !     ELSE
+ !
+ !       PRINT *, "===================================================" &
+ !                // "====================="
+ !       PRINT *, " Computing SPH variables for BNS", itr3, &
+ !                ", distribution", itr4
+ !       PRINT *, "===================================================" &
+ !                // "====================="
+ !       PRINT *
+ !       !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
+ !       !                            "l", &
+ !       !                            itr3, "-", itr4, "."
+ !       WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
+ !       particles_dist( itr3, itr4 )% export_bin= export_bin
+ !       particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
+ !       particles_dist( itr3, itr4 )% export_form_x = export_form_x
+ !       CALL particles_dist( itr3, itr4 )% &
+ !            compute_and_export_SPH_variables( namefile_parts_bin )
+ !       IF( particles_dist( itr3, itr4 )% export_bin )THEN
+ !         WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
+ !                         "sph_vars-", itr3, "-", itr4, ".dat"
+ !         CALL particles_dist( itr3, itr4 )% &
+ !                         read_sphincs_dump_print_formatted( &
+ !                                       namefile_parts_bin, namefile_parts )
+ !       ENDIF
+ !
+ !     ENDIF
+ !   ENDDO part_distribution_loop2
+ ! ENDDO compute_export_sph_loops
+ !
+ ! !
+ ! !-- Print the particle initial data to a formatted file
+ ! !
+ ! IF( export_form )THEN
+ !   export_sph_loops: DO itr3= 1, n_bns, 1
+ !     DO itr4= 1, max_n_parts, 1
+ !       IF( placer( itr3, itr4 ) == test_int )THEN
+ !         EXIT
+ !         ! Experimental: empty particles object
+ !         !particles_dist( itr, itr2 )= particles()
+ !       ELSE
+ !         WRITE( namefile_parts, "(A29,I1,A1,I1,A4)" ) &
+ !                                "lorene-bns-id-particles-form_", &
+ !                                itr3, "-", itr4, ".dat"
+ !         CALL particles_dist( itr3, itr4 )% &
+ !              print_formatted_lorene_id_particles( namefile_parts )
+ !       ENDIF
+ !     ENDDO
+ !   ENDDO export_sph_loops
+ ! ENDIF
 
   !
   !-- Construct the bssn_id objects from the bns objects
@@ -318,10 +319,18 @@ PROGRAM sphincs_lorene_bns
 
   CALL execution_timer% stop_timer()
 
+  CALL DATE_AND_TIME( date, time, zone, values )
+  end_time= date // "-" // time
+
   !
   !-- Print the timers
   !
-  PRINT *, "** Timing."
+  PRINT *, "===================================================" &
+           // "================================================"
+  PRINT *, " Timing "
+  PRINT *, "===================================================" &
+           // "================================================"
+  PRINT *
   PRINT *
   PRINT *, " * SPH:"
   CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
@@ -335,6 +344,8 @@ PROGRAM sphincs_lorene_bns
   PRINT *
   PRINT *, " * Total:"
   CALL execution_timer% print_timer( 2 )
+  PRINT *
+  PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 
   !

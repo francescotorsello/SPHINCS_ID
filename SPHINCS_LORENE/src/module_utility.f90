@@ -36,7 +36,7 @@ MODULE utility
   CHARACTER(10) :: time
   CHARACTER(5)  :: zone
   INTEGER, DIMENSION(8) :: values
-  CHARACTER( LEN= 19 ):: run_id
+  CHARACTER( LEN= 19 ):: run_id, end_time
 
 
   CONTAINS

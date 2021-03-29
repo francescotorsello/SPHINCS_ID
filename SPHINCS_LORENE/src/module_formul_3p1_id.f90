@@ -187,7 +187,7 @@ MODULE formul_3p1_id
   INTERFACE
 
     MODULE SUBROUTINE analyze_constraint( THIS, &
-                                          nx, ny, nz, &
+                                          l, &
                                           constraint, &
                                           name_constraint, &
                                           unit_logfile, &
@@ -196,7 +196,7 @@ MODULE formul_3p1_id
                                           loo_norm )
 
       CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
-      INTEGER,                            INTENT( IN )    :: nx, ny, nz
+      INTEGER,                            INTENT( IN )    :: l
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
       CHARACTER( LEN= * ),                INTENT( IN )    :: name_constraint
       CHARACTER( LEN= * ),                INTENT( IN )    :: name_analysis
@@ -207,14 +207,14 @@ MODULE formul_3p1_id
     END SUBROUTINE analyze_constraint
 
     MODULE SUBROUTINE abs_values_in( THIS, lower_bound, upper_bound, &
-                                     constraint, nx, ny, nz, &
+                                     constraint, l, &
                                      export, unit_analysis, cnt )
 
       CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
       DOUBLE PRECISION                                    :: lower_bound, &
                                                              upper_bound
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
-      INTEGER,                            INTENT( IN )    :: nx, ny, nz
+      INTEGER,                            INTENT( IN )    :: l
       LOGICAL,                            INTENT( IN )    :: export
       INTEGER,                            INTENT( IN )    :: unit_analysis
       INTEGER,                            INTENT( OUT )   :: cnt
