@@ -621,8 +621,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
       WRITE( UNIT= unit_analysis, IOSTAT = ios, &
              IOMSG = err_msg, FMT = * ) &
-      "# The rows contain the points at which", name_constraint, " have "&
-      // "values in: (-oo,1D-7], [1D-7,1D-6], [1D-6,1D-5], [1D-5,1D-4]" &
+      "# The rows contain the points (x,y,z) at which ", name_constraint, &
+      " has values in: (-oo,1D-7], [1D-7,1D-6], [1D-6,1D-5], [1D-5,1D-4]" &
       // ", [1D-4,1D-3], [1D-3,1D-2], [1D-2,1D-1], [1D-1,1], [1,1D+1]" &
       // ", [1D+1,1D+2], [1D+2,1D+3], [1D+3,+oo)"
     ENDIF
