@@ -219,17 +219,17 @@ PROGRAM sphincs_lorene_bns
     PRINT *, "===================================================" &
              // "==============="
     PRINT *
-    WRITE( namefile_bssn_bin, "(A6,I1,A4)" ) "BSSN_l", itr3, ".bin"
+    WRITE( namefile_bssn_bin, "(A15)" ) "BSSN_vars.00000"!"BSSN_l", itr3, ".bin""(A6,I1,A4)"
     bssn_forms( itr3 )% export_form_xy= export_form_xy
     bssn_forms( itr3 )% export_form_x = export_form_x
     bssn_forms( itr3 )% export_bin= export_bin
     CALL bssn_forms( itr3 )% &
                         compute_and_export_3p1_variables( namefile_bssn_bin )
-    !IF( bssn_forms( itr3 )% export_bin )THEN
-    !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
-    !  CALL bssn_forms( itr3 )% &
-    !        read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
-    !ENDIF
+    IF( bssn_forms( itr3 )% export_bin )THEN
+      WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
+      CALL bssn_forms( itr3 )% &
+            read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
+    ENDIF
   ENDDO compute_export_bssn_loop
 
   !
