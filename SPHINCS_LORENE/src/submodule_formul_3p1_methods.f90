@@ -588,6 +588,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     DOUBLE PRECISION:: tmp, total
 
     LOGICAL:: exist
+    LOGICAL, PARAMETER:: DEBUG= .FALSE.
 
     IF( THIS% export_constraints_details )THEN
       !
@@ -621,11 +622,14 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
       WRITE( UNIT= unit_analysis, IOSTAT = ios, &
              IOMSG = err_msg, FMT = * ) &
-      "# The rows contain the points (x,y,z) at which ", name_constraint, &
+      "# The rows contain the points (l,x,y,z), with l refinement level, ", &
+      "at which ", name_constraint, &
       " has values in: (-oo,1D-7], [1D-7,1D-6], [1D-6,1D-5], [1D-5,1D-4]" &
       // ", [1D-4,1D-3], [1D-3,1D-2], [1D-2,1D-1], [1D-1,1], [1,1D+1]" &
       // ", [1D+1,1D+2], [1D+2,1D+3], [1D+3,+oo)"
     ENDIF
+
+    IF( DEBUG ) PRINT *, "1"
 
     CALL THIS% abs_values_in( 0.0D0, 1.0D-7, constraint, l, &
                               THIS% export_constraints_details, &
@@ -655,6 +659,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
                               THIS% export_constraints_details, &
                               unit_analysis, cnt_m1 )
 
+    IF( DEBUG ) PRINT *, "2"
+
     CALL THIS% abs_values_in( 1.0D-1, 1.0D0, constraint, l, &
                               THIS% export_constraints_details, &
                               unit_analysis, cnt_0 )
@@ -671,21 +677,30 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
                               THIS% export_constraints_details, &
                               unit_analysis, cnt_p3 )
 
-    CALL THIS% abs_values_in( 1.0D+3, HUGE(DBLE(1)), constraint, l, &
+    CALL THIS% abs_values_in( 1.0D+3, HUGE(DBLE(1.0D0)), constraint, l, &
                               THIS% export_constraints_details, &
                               unit_analysis, cnt_oo )
 
     CLOSE( UNIT= unit_analysis )
+
+    IF( THIS% export_constraints_details )THEN
+      PRINT *, " * The details about the absolute values of ", &
+               name_constraint, " are printed to ", name_analysis
+    ENDIF
+
+    IF( DEBUG ) PRINT *, "3"
 
     nx= THIS% get_ngrid_x(l)
     ny= THIS% get_ngrid_y(l)
     nz= THIS% get_ngrid_z(l)
     grid_points= nx*ny*nz
 
+    IF( DEBUG ) PRINT *, "4"
+
     !
     !-- Compute the l2 norm of the constraints
     !
-    l2_norm= 0
+    l2_norm= 0.0D0
     DO k= 1, nz, 1
       DO j= 1, ny, 1
         DO i= 1, nx, 1
@@ -695,10 +710,12 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
     ENDDO
     l2_norm= SQRT( l2_norm/grid_points )
 
+    IF( DEBUG ) PRINT *, "5"
+
     !
     !-- Compute the loo norm (supremum norm) of the constraints
     !
-    loo_norm= 0
+    loo_norm= 0.0D0
     DO k= 1, nz, 1
       DO j= 1, ny, 1
         DO i= 1, nx, 1
@@ -709,6 +726,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
         ENDDO
       ENDDO
     ENDDO
+
+    IF( DEBUG ) PRINT *, "6"
 
     !
     !-- Write a summary of the results to the logfile
@@ -809,6 +828,10 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
               ABS( constraint(i,j,k) ) < upper_bound )THEN
             cnt= cnt + 1
             IF( export )THEN
+              WRITE( UNIT= unit_analysis, IOSTAT = ios, &
+                     IOMSG = err_msg, FMT = "(F17.13)", &
+                     ADVANCE= "NO" ) &!"(E15.6)" &
+                     l
               WRITE( UNIT= unit_analysis, IOSTAT = ios, &
                      IOMSG = err_msg, FMT = "(F17.13)", &
                      ADVANCE= "NO" ) &!"(E15.6)" &
