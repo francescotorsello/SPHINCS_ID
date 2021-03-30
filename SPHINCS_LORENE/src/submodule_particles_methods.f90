@@ -300,7 +300,11 @@ SUBMODULE (particles_id) particles_methods
       THIS% pressure_parts_cu(itr)= Pr(itr)
 
       ! Baryon per particle
-      nu(itr)= nlrf(itr)*THIS% vol_a*Theta_a*sq_g
+      IF( itr <= THIS% npart1 )THEN
+        nu(itr)= nlrf(itr)*THIS% vol1_a*Theta_a*sq_g
+      ELSE
+        nu(itr)= nlrf(itr)*THIS% vol2_a*Theta_a*sq_g
+      ENDIF
       THIS% nu(itr)= nu(itr)
       THIS% nbar_tot= THIS% nbar_tot + THIS% nu(itr)
 

@@ -41,7 +41,7 @@ MODULE particles_id
     PRIVATE
 
     INTEGER:: npart, npart1, npart2, npart_temp, npart1_temp, npart2_temp
-    INTEGER:: nx, ny, nz
+    INTEGER:: nx1, ny1, nz1, nx2, ny2, nz2, nx, ny, nz
     ! The flag call_flag is set different than 0 if the SUBROUTINE
     ! compute_and_export_SPH_variables is called
     INTEGER:: call_flag= 0
