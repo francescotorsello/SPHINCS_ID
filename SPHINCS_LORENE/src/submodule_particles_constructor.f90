@@ -858,14 +858,13 @@ SUBMODULE (particles_id) particles_constructor
 
     INTEGER:: ix, iy, iz, nx2, ny2, nz2, sgn, npart_half, npart_half2
 
-    DOUBLE PRECISION:: dx1, dy1, dz1, dx2, dy2, dz2
+    DOUBLE PRECISION:: dx, dy, dz
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim, zlim2
     DOUBLE PRECISION:: max_baryon_density1, thres_baryon_density1
     DOUBLE PRECISION:: max_baryon_density2, thres_baryon_density2
-    DOUBLE PRECISION:: mass1, mass2, mass_ratio, volume_ratio
     ! Variable used to compute the volume of a particle in an alternative way
     ! to perform a consistency check
-    DOUBLE PRECISION:: vol_a_alt1, vol_a_alt2
+    DOUBLE PRECISION:: vol_a_alt
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
 
@@ -887,58 +886,20 @@ SUBMODULE (particles_id) particles_constructor
       zlim2= zmin2
     ENDIF
 
-    mass1= bns_obj% get_mass1()
-    mass2= bns_obj% get_mass2()
+    !
+    !-- Compute lattices' steps
+    !
+    dx= ABS(xmax1 - xmin1)/DBLE( THIS% nx )
+    dy= ABS(ymax1 - ymin1)/DBLE( THIS% ny )
+    dz= ABS(zlim)/DBLE( THIS% nz/2 )
 
-    IF( mass1 > mass2 )THEN
-
-      mass_ratio= mass2/mass1
-      !
-      !-- Compute lattices' steps
-      !
-      THIS% nx2= THIS% nx
-      THIS% ny2= THIS% ny
-      THIS% nz2= THIS% nz
-      dx2= ABS(xmax2 - xmin2)/DBLE( THIS% nx2 )
-      dy2= ABS(ymax2 - ymin2)/DBLE( THIS% ny2 )
-      dz2= ABS(zlim)/DBLE( THIS% nz2/2 )
-
-      !
-      !-- Compute the number of particles for the second lattice,
-      !-- using the same lattice step
-      !
-      dx1= dx2*mass_ratio**(1.0D0/3.0D0)
-      dy1= dy2*mass_ratio**(1.0D0/3.0D0)
-      dz1= dz2*mass_ratio**(1.0D0/3.0D0)
-      THIS% nx1= NINT( ABS(xmax1 - xmin1)/dx1 )
-      THIS% ny1= NINT( ABS(ymax1 - ymin1)/dy1 )
-      THIS% nz1= NINT( 2*ABS(zlim)/dz1 )
-
-    ELSE
-
-      mass_ratio= mass1/mass2
-      !
-      !-- Compute lattices' steps
-      !
-      THIS% nx1= THIS% nx
-      THIS% ny1= THIS% ny
-      THIS% nz1= THIS% nz
-      dx1= ABS(xmax1 - xmin1)/DBLE( THIS% nx1 )
-      dy1= ABS(ymax1 - ymin1)/DBLE( THIS% ny1 )
-      dz1= ABS(zlim)/DBLE( THIS% nz1/2 )
-
-      !
-      !-- Compute the number of particles for the second lattice,
-      !-- using the same lattice step
-      !
-      dx2= dx1*mass_ratio**(1.0D0/3.0D0)
-      dy2= dy1*mass_ratio**(1.0D0/3.0D0)
-      dz2= dz1*mass_ratio**(1.0D0/3.0D0)
-      THIS% nx2= NINT( ABS(xmax2 - xmin2)/dx2 ) + 1
-      THIS% ny2= NINT( ABS(ymax2 - ymin2)/dy2 ) + 1
-      THIS% nz2= NINT( 2*ABS(zlim2)/dz2 ) + 1
-
-    ENDIF
+    !
+    !-- Compute the number of particles for the second lattice,
+    !-- using the same lattice step
+    !
+    nx2= NINT( ABS(xmax2 - xmin2)/dx )
+    ny2= NINT( ABS(ymax2 - ymin2)/dy )
+    nz2= NINT( 2*ABS(zlim2)/dz )
 
     ! Set the number of particles in the z direction to an even number
     ! since half of the particles are above the xy plane, and half below it
@@ -946,15 +907,14 @@ SUBMODULE (particles_id) particles_constructor
       nz2= nz2 - 1
     ENDIF
 
-    PRINT *, " * dx1=", dx1,  ", dy1=", dx1,  ", dz1=", dz1
-    PRINT *, " * dx2=", dx2,  ", dy2=", dx2,  ", dz2=", dz2
-    PRINT *, " * nx1=", THIS% nx1, ", ny1=", THIS% ny1, ", nz1=", THIS% nz1
-    PRINT *, " * nx2=", THIS% nx2, ", ny2=", THIS% ny2, ", nz2=", THIS% nz2
+    PRINT *, " * dx=", dx,  ", dy=", dx,  ", dz=", dz
+    PRINT *, " * nx=", THIS% nx,  ", ny=", THIS% ny,  ", nz=", THIS% nz
+    PRINT *, " * nx2=", nx2, ", ny2=", ny2, ", nz2=", nz2
     PRINT *
 
     ! Compute number of lattice points (temporary particle number)
-    THIS% npart1_temp = THIS% nx1*THIS% ny1*THIS% nz1 !+ THIS% nx*THIS% ny
-    THIS% npart2_temp = THIS% nx2*THIS% ny2*THIS% nz2 !+ nx2*ny2
+    THIS% npart1_temp = THIS% nx*THIS% ny*THIS% nz !+ THIS% nx*THIS% ny
+    THIS% npart2_temp = nx2*ny2*nz2 !+ nx2*ny2
     THIS% npart_temp  = THIS% npart1_temp + THIS% npart2_temp
 
     PRINT *, " * Number of points for lattice 1= nx1*ny1*nz1=", &
@@ -1024,17 +984,17 @@ SUBMODULE (particles_id) particles_constructor
     !
     !-- Place the first half of the particle (above or below the xy plane)
     !
-    particle_pos_z1: DO iz= 1, THIS% nz1/2, 1
+    particle_pos_z1: DO iz= 1, THIS% nz/2, 1
 
-      ztemp= sgn*( dz1/2 + ( iz - 1 )*dz1 )
+      ztemp= sgn*( dz/2 + ( iz - 1 )*dz )
 
-      particle_pos_y1: DO iy= 1, THIS% ny1, 1
+      particle_pos_y1: DO iy= 1, THIS% ny, 1
 
-        ytemp= ymin1 + dy1/2 + ( iy - 1 )*dy1
+        ytemp= ymin1 + dy/2 + ( iy - 1 )*dy
 
-        particle_pos_x1: DO ix= 1, THIS% nx1, 1
+        particle_pos_x1: DO ix= 1, THIS% nx, 1
 
-          xtemp= xmin1 + dx1/2 + ( ix - 1 )*dx1
+          xtemp= xmin1 + dx/2 + ( ix - 1 )*dx
 
           !
           !-- Promote a lattice point to a particle,
@@ -1054,8 +1014,8 @@ SUBMODULE (particles_id) particles_constructor
           ENDIF
 
           ! Print progress on screen, every 10%
-          perc= 50*(THIS% nx1*THIS% ny1*( iz - 1 ) +THIS% nx1*( iy - 1 ) + ix)&
-                /( THIS% nx1*THIS% ny1*THIS% nz1/2 )
+          perc= 50*( THIS% nx*THIS% ny*iz + THIS% nx*iy + ix )/ &
+                  ( THIS% nx*THIS% ny*THIS% nz/2 )
           IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                    creturn//" ", perc, "%"
@@ -1151,17 +1111,17 @@ SUBMODULE (particles_id) particles_constructor
     ELSE
       sgn= 1
     ENDIF
-    particle_pos_z2: DO iz= 1, THIS% nz2/2, 1
+    particle_pos_z2: DO iz= 1, nz2/2, 1
 
-      ztemp= sgn*( dz2/2 + ( iz - 1 )*dz2 )
+      ztemp= sgn*( dz/2 + ( iz - 1 )*dz )
 
-      particle_pos_y2: DO iy= 1, THIS% ny2, 1
+      particle_pos_y2: DO iy= 1, ny2, 1
 
-        ytemp= ymin2 + dy2/2 + ( iy - 1 )*dy2
+        ytemp= ymin2 + dy/2 + ( iy - 1 )*dy
 
-        particle_pos_x2: DO ix= 1, THIS% nx2, 1
+        particle_pos_x2: DO ix= 1, nx2, 1
 
-          xtemp= xmin2 + dx2/2 + ( ix - 1 )*dx2
+          xtemp= xmin2 + dx/2 + ( ix - 1 )*dx
 
           IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
                                   > thres_baryon_density2 &
@@ -1177,8 +1137,8 @@ SUBMODULE (particles_id) particles_constructor
           ENDIF
 
           ! Print progress on screen, every 10%
-          perc= 50*(THIS% nx2*THIS% ny2*( iz - 1 ) +THIS% nx2*( iy - 1 ) + ix)&
-                /( THIS% nx2*THIS% ny2*THIS% nz2/2 )
+          perc= 50*( nx2*ny2*( iz - 1 ) + nx2*( iy - 1 ) + ix )&
+                /( nx2*ny2*nz2/2 )
           IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
             WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
                    creturn//" ", perc, "%"
@@ -1308,39 +1268,22 @@ SUBMODULE (particles_id) particles_constructor
     !
     !-- Computing total volume and volume per particle
     !
-    THIS% vol1_a= dx1*dy1*dz1
+    THIS% vol_a= dx*dy*dz
     THIS% vol1 = (xmax1 - xmin1)*(ymax1 - ymin1)*2*ABS(zlim)
-    !THIS% vol2 = THIS% npart2_temp * THIS% vol_a
-    !THIS% vol  = THIS% vol1 + THIS% vol2
-    vol_a_alt1  = THIS% vol1/THIS% npart1_temp
-
-    THIS% vol2_a= dx2*dy2*dz2
-    THIS% vol2 =  dx2*THIS% nx2*dy2*THIS% ny2*dz2*THIS% nz2
-    !THIS% vol2 = (xmax2 - xmin2)*(ymax2 - ymin2)*2*ABS(zlim2)
-    !THIS% vol2 = THIS% npart2_temp * THIS% vol_a2
-    !THIS% vol  = THIS% vol1 + THIS% vol2
-    vol_a_alt2  = THIS% vol2/THIS% npart2_temp
-
-    THIS% vol= THIS% vol1 + THIS% vol2
+    THIS% vol2 = THIS% npart2_temp * THIS% vol_a
+    THIS% vol  = THIS% vol1 + THIS% vol2
+    vol_a_alt  = THIS% vol/THIS% npart_temp
 
     ! Consistency check for the particle volume
-    IF( ABS( THIS% vol1_a - vol_a_alt1 ) > 1D-15 )THEN
-      PRINT *, " * The particle volume vol_a_alt1=", vol_a_alt1, "Msun_geo^3"
-      PRINT *, " is not equal to dx1*dy1*dz1=", THIS% vol1_a, "Msun_geo^3."
-      PRINT *
-      STOP
-    ENDIF
-    ! Consistency check for the particle volume
-    IF( ABS( THIS% vol2_a - vol_a_alt2 ) > 1D-15 )THEN
-      PRINT *, " * The particle volume vol_a_alt2=", vol_a_alt2, "Msun_geo^3"
-      PRINT *, " is not equal to dx2*dy2*dz2=", THIS% vol2_a, "Msun_geo^3."
+    IF( ABS( THIS% vol_a - vol_a_alt ) > 1D-15 )THEN
+      PRINT *, " * The particle volume vol_a_alt=", vol_a_alt, "Msun_geo^3"
+      PRINT *, " is not equal to dx*dy*dz=", THIS% vol_a, "Msun_geo^3."
       PRINT *
       STOP
     ENDIF
 
     PRINT *, " * Total volume of the lattices=", THIS% vol, "Msun_geo^3"
-    PRINT *, " * Particle volume on NS 1=", THIS% vol1_a, "Msun_geo^3"
-    PRINT *, " * Particle volume on NS 2=", THIS% vol2_a, "Msun_geo^3"
+    PRINT *, " * Particle volume=", THIS% vol_a, "Msun_geo^3"
     PRINT *
 
     PRINT *, "** Subroutine place_particles_3dlattices " &
