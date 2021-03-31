@@ -56,6 +56,7 @@ SUBMODULE (particles_id) particles_constructor
 
     !USE NaNChecker, ONLY: Check_Array_for_NAN
     USE constants,  ONLY: Msun_geo, km2m
+    USE NR,         ONLY: indexx
 
     IMPLICIT NONE
 
@@ -66,7 +67,7 @@ SUBMODULE (particles_id) particles_constructor
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
 
-    DOUBLE PRECISION:: thres
+    DOUBLE PRECISION:: thres, nu_ratio
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
     DOUBLE PRECISION:: xmin1, xmax1, ymin1, ymax1, zmin1, zmax1
     DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
@@ -86,7 +87,7 @@ SUBMODULE (particles_id) particles_constructor
     NAMELIST /bns_particles/ &
               stretch, &
               nx, ny, nz, &
-              thres, correct_nu, &
+              thres, nu_ratio, correct_nu, &
               compose_eos, compose_path, compose_filename
 
     !
@@ -100,9 +101,9 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% empty_object= .FALSE.
     parts_obj% empty_object= .FALSE.
 
-    parts_obj% mass1     = bns_obj% get_mass1()
-    parts_obj% mass2     = bns_obj% get_mass2()
-    parts_obj% nbar_tot  = 0.0D0
+    parts_obj% mass1   = bns_obj% get_mass1()
+    parts_obj% mass2   = bns_obj% get_mass2()
+    parts_obj% nbar_tot= 0.0D0
 
     !
     !-- Read the parameters of the particle distributions
@@ -127,6 +128,7 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% compose_eos= compose_eos
     parts_obj% compose_path= compose_path
     parts_obj% compose_filename= compose_filename
+    parts_obj% nu_ratio= nu_ratio
 
     IF( MOD( nz, 2 ) /= 0 )THEN
      PRINT *
@@ -304,6 +306,63 @@ SUBMODULE (particles_id) particles_constructor
     !              parts_obj% v_euler_parts_y, "v_euler_parts_y" )
     !CALL Check_Array_for_NAN( parts_obj% npart, &
     !              parts_obj% v_euler_parts_z, "v_euler_parts_z" )
+
+    IF(.NOT.ALLOCATED( parts_obj% baryon_density_index ))THEN
+      ALLOCATE( parts_obj% baryon_density_index( parts_obj% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array baryon_density_index in " &
+                  // "SUBROUTINE construct_particles. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
+    ENDIF
+
+    !CALL indexx( parts_obj% npart1, &
+    !             parts_obj% baryon_density_parts( 1 : parts_obj% npart1 ), &
+    !             parts_obj% baryon_density_index( 1 : parts_obj% npart1 ) )
+    !CALL indexx( parts_obj% npart1, &
+    !             parts_obj% baryon_density_parts( 1 : parts_obj% npart1 ), &
+    !             parts_obj% baryon_density_index( 1 : parts_obj% npart1 ) )
+    !CALL indexx( parts_obj% npart1, &
+    !             parts_obj% baryon_density_parts( 1 : parts_obj% npart1 ), &
+    !             parts_obj% baryon_density_index( 1 : parts_obj% npart1 ) )
+    !
+    !CALL indexx( parts_obj% npart2, &
+    !             parts_obj% baryon_density_parts( parts_obj% npart1 + 1 : &
+    !                                              parts_obj% npart ), &
+    !             parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
+    !                                              parts_obj% npart ) )
+    !CALL indexx( parts_obj% npart2, &
+    !             parts_obj% baryon_density_parts( parts_obj% npart1 + 1 : &
+    !                                              parts_obj% npart ), &
+    !             parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
+    !                                              parts_obj% npart ) )
+    !CALL indexx( parts_obj% npart2, &
+    !             parts_obj% baryon_density_parts( parts_obj% npart1 + 1 : &
+    !                                              parts_obj% npart ), &
+    !             parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
+    !                                              parts_obj% npart ) )
+
+    !PRINT *, "baryon_density_index"
+    !DO itr= 1, parts_obj% npart1, 1
+    !  PRINT *, parts_obj% baryon_density_index( itr ), &
+    !           parts_obj% baryon_density_parts( itr )
+    !ENDDO
+    !    PRINT *, "baryon_density_parts in ascending order"
+    !DO itr= 1, parts_obj% npart1, 1
+    !  PRINT *, parts_obj% baryon_density_parts( &
+    !                                parts_obj% baryon_density_index( itr ) )
+    !ENDDO
+    !PRINT *, "baryon_density_parts in descending order"
+    !DO itr= parts_obj% npart1, 1, -1
+    !  PRINT *, parts_obj% baryon_density_parts( &
+    !                                parts_obj% baryon_density_index( itr ) )
+    !ENDDO
+    ! Ok it seems working
 
     PRINT *, "** Computing typical length scale for the change in pressure", &
              " on the x axis."
@@ -1275,7 +1334,7 @@ SUBMODULE (particles_id) particles_constructor
     vol_a_alt  = THIS% vol/THIS% npart_temp
 
     ! Consistency check for the particle volume
-    IF( ABS( THIS% vol_a - vol_a_alt ) > 1D-15 )THEN
+    IF( ABS( THIS% vol_a - vol_a_alt ) > 1D-10 )THEN
       PRINT *, " * The particle volume vol_a_alt=", vol_a_alt, "Msun_geo^3"
       PRINT *, " is not equal to dx*dy*dz=", THIS% vol_a, "Msun_geo^3."
       PRINT *

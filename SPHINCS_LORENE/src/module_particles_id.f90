@@ -46,6 +46,8 @@ MODULE particles_id
     ! compute_and_export_SPH_variables is called
     INTEGER:: call_flag= 0
 
+    INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
+
     !INTEGER, DIMENSION(:), ALLOCATABLE:: filt_pos
 
     !
@@ -134,6 +136,8 @@ MODULE particles_id
     DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
     ! Total baryon number
     DOUBLE PRECISION:: nbar_tot
+    ! Ratio between the max and min of the baryon number per particle
+    DOUBLE PRECISION:: nu_ratio
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
     ! String storing the local path to the directory where the
@@ -164,6 +168,14 @@ MODULE particles_id
     PROCEDURE:: place_particles_3dlattice
 
     PROCEDURE:: place_particles_3dlattices
+
+    !PROCEDURE:: sort_particles
+
+    GENERIC, PUBLIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
+                                           reshape_sph_field_2d_ptr
+    PROCEDURE:: reshape_sph_field_1d_ptr => reshape_sph_field_1d
+    PROCEDURE:: reshape_sph_field_2d_ptr => reshape_sph_field_2d
+
 
     PROCEDURE:: allocate_lorene_id_parts_memory
 
@@ -266,6 +278,36 @@ MODULE particles_id
                                            ymax2, zmin2, zmax2, thres
 
     END SUBROUTINE place_particles_3dlattices
+
+    !MODULE SUBROUTINE sort_particles( THIS, pos, baryon_density )
+    !
+    !  CLASS(particles), INTENT( IN OUT ):: THIS
+    !  DOUBLE PRECISION, INTENT( IN )    :: pos
+    !  DOUBLE PRECISION, INTENT( IN )    :: baryon_density
+    !
+    !END SUBROUTINE sort_particles
+
+    MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
+                                            index_array )
+
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      INTEGER,                        INTENT( IN ):: new_size1
+      INTEGER,                        INTENT( IN ):: new_size2
+      INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: field
+
+    END SUBROUTINE reshape_sph_field_1d
+
+    MODULE SUBROUTINE reshape_sph_field_2d( THIS, field, new_size1, new_size2, &
+                                            index_array )
+
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      INTEGER,                        INTENT( IN ):: new_size1
+      INTEGER,                        INTENT( IN ):: new_size2
+      INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: field
+
+    END SUBROUTINE reshape_sph_field_2d
 
     MODULE SUBROUTINE allocate_lorene_id_parts_memory( THIS )
 
