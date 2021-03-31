@@ -46,7 +46,7 @@ MODULE particles_id
     ! compute_and_export_SPH_variables is called
     INTEGER:: call_flag= 0
 
-    INTEGER, DIMENSION(:), ALLOCATABLE:: filt_pos
+    !INTEGER, DIMENSION(:), ALLOCATABLE:: filt_pos
 
     !
     !-- Hydro variables on the particles
