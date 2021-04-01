@@ -79,7 +79,7 @@ SUBMODULE (particles_id) particles_methods
     INTEGER:: nus, mus, cnt1, cnt2
 
     DOUBLE PRECISION:: g4(0:3,0:3)
-    DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2, nu_max, nu_tmp
+    DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2, nu_max1, nu_max2, nu_tmp
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp
 
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -343,199 +343,168 @@ SUBMODULE (particles_id) particles_methods
 
     ENDDO compute_SPH_variables_on_particles
 
-    CALL indexx( THIS% npart1, &
-                 THIS% nu( 1 : THIS% npart1 ), &
-                 THIS% baryon_density_index( 1 : THIS% npart1 ) )
-    CALL indexx( THIS% npart1, &
-                 THIS% nu( 1 : THIS% npart1 ), &
-                 THIS% baryon_density_index( 1 : THIS% npart1 ) )
-    CALL indexx( THIS% npart1, &
-                 THIS% nu( 1 : THIS% npart1 ), &
-                 THIS% baryon_density_index( 1 : THIS% npart1 ) )
+    IF( THIS% redistribute_nu )THEN
 
-    CALL indexx( THIS% npart2, &
-                 THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
-                 THIS% baryon_density_index( THIS% npart1 + 1 : &
-                                                  THIS% npart ) )
-    CALL indexx( THIS% npart2, &
-                 THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
-                 THIS% baryon_density_index( THIS% npart1 + 1 : &
-                                                  THIS% npart ) )
-    CALL indexx( THIS% npart2, &
-                 THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
-                 THIS% baryon_density_index( THIS% npart1 + 1 : &
-                                                  THIS% npart ) )
+      CALL indexx( THIS% npart1, &
+                   THIS% nu( 1 : THIS% npart1 ), &
+                   THIS% baryon_density_index( 1 : THIS% npart1 ) )
+      CALL indexx( THIS% npart1, &
+                   THIS% nu( 1 : THIS% npart1 ), &
+                   THIS% baryon_density_index( 1 : THIS% npart1 ) )
+      CALL indexx( THIS% npart1, &
+                   THIS% nu( 1 : THIS% npart1 ), &
+                   THIS% baryon_density_index( 1 : THIS% npart1 ) )
 
-    nu= 1.0D0
-    THIS% nu= 1.0D0
+      CALL indexx( THIS% npart2, &
+                   THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
+                   THIS% baryon_density_index( THIS% npart1 + 1 : &
+                                                    THIS% npart ) )
+      CALL indexx( THIS% npart2, &
+                   THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
+                   THIS% baryon_density_index( THIS% npart1 + 1 : &
+                                                    THIS% npart ) )
+      CALL indexx( THIS% npart2, &
+                   THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
+                   THIS% baryon_density_index( THIS% npart1 + 1 : &
+                                                    THIS% npart ) )
 
-    cnt1= 0
-    compute_nu_on_particles_star1: DO itr= THIS% npart1, 1, -1
+      nu_max1= MAXVAL( THIS% nu( 1 : THIS% npart1 ) )
+      nu_max2= MAXVAL( THIS% nu( THIS% npart1 + 1 : THIS% npart ) )
 
-      cnt1= cnt1 + 1
+      nu= 1.0D0
+      THIS% nu= 1.0D0
+      THIS% nbar_tot= 0.0D0
 
-      nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol_a &
-              *Theta( THIS% baryon_density_index( itr ) )&
-              *sq_det_g4( THIS% baryon_density_index( itr ) )
+      cnt1= 0
+      compute_nu_on_particles_star1: DO itr= THIS% npart1, 1, -1
 
-      IF( itr == THIS% npart1 ) nu_max= nu_tmp ! move this out of the loop
+        cnt1= cnt1 + 1
 
-      IF( nu_tmp > nu_max/THIS% nu_ratio )THEN
-        nu( THIS% baryon_density_index( itr ) )= nu_tmp
-        THIS% nu( THIS% baryon_density_index( itr ) )= nu_tmp
-      ELSE
-        nu( THIS% baryon_density_index( itr ) )= nu_max/THIS% nu_ratio
-        THIS% nu( THIS% baryon_density_index( itr ) )= nu_max/THIS% nu_ratio
-      ENDIF
+        nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol_a &
+                *Theta( THIS% baryon_density_index( itr ) )&
+                *sq_det_g4( THIS% baryon_density_index( itr ) )
 
-      THIS% nbar_tot= THIS% nbar_tot + &
-                      THIS% nu( THIS% baryon_density_index( itr ) )
+        !IF( itr == THIS% npart1 ) nu_max= nu_tmp ! move this out of the loop
 
-      IF( THIS% nbar_tot*amu/MSun > THIS% mass1 )THEN
-        EXIT
-      ENDIF
+        IF( nu_tmp > nu_max1/THIS% nu_ratio )THEN
+          nu( THIS% baryon_density_index( itr ) )= nu_tmp
+          THIS% nu( THIS% baryon_density_index( itr ) )= nu_tmp
+        ELSE
+          nu( THIS% baryon_density_index( itr ) )= nu_max1/THIS% nu_ratio
+          THIS% nu( THIS% baryon_density_index( itr ) )= nu_max1/THIS% nu_ratio
+        ENDIF
 
-    ENDDO compute_nu_on_particles_star1
+        THIS% nbar_tot= THIS% nbar_tot + &
+                        THIS% nu( THIS% baryon_density_index( itr ) )
 
-    cnt2= 0
-    compute_nu_on_particles_star2: DO itr= THIS% npart, THIS% npart1 + 1, -1
+        IF( THIS% nbar_tot*amu/MSun > THIS% mass1 )THEN
+          EXIT
+        ENDIF
 
-      cnt2= cnt2 + 1
+      ENDDO compute_nu_on_particles_star1
 
-      nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol_a &
-              *Theta( THIS% baryon_density_index( itr ) ) &
-              *sq_det_g4( THIS% baryon_density_index( itr ) )
+      cnt2= 0
+      compute_nu_on_particles_star2: DO itr= THIS% npart, THIS% npart1 + 1, -1
 
-      IF( itr == THIS% npart ) nu_max= nu_tmp
+        cnt2= cnt2 + 1
 
-      IF( nu_tmp > nu_max/THIS% nu_ratio )THEN
-        nu( THIS% baryon_density_index( itr ) )= nu_tmp
-        THIS% nu( THIS% baryon_density_index( itr ) )= nu_tmp
-      ELSE
-        nu( THIS% baryon_density_index( itr ) )= nu_max/THIS% nu_ratio
-        THIS% nu( THIS% baryon_density_index( itr ) )= nu_max/THIS% nu_ratio
-      ENDIF
+        nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol_a &
+                *Theta( THIS% baryon_density_index( itr ) ) &
+                *sq_det_g4( THIS% baryon_density_index( itr ) )
 
-      THIS% nbar_tot= THIS% nbar_tot + &
-                      THIS% nu( THIS% baryon_density_index( itr ) )
+        !IF( itr == THIS% npart ) nu_max= nu_tmp
 
-      IF( THIS% nbar_tot*amu/MSun - THIS% mass1 > THIS% mass2 )THEN
-        EXIT
-      ENDIF
+        IF( nu_tmp > nu_max2/THIS% nu_ratio )THEN
+          nu( THIS% baryon_density_index( itr ) )= nu_tmp
+          THIS% nu( THIS% baryon_density_index( itr ) )= nu_tmp
+        ELSE
+          nu( THIS% baryon_density_index( itr ) )= nu_max2/THIS% nu_ratio
+          THIS% nu( THIS% baryon_density_index( itr ) )= nu_max2/THIS% nu_ratio
+        ENDIF
 
-    ENDDO compute_nu_on_particles_star2
+        THIS% nbar_tot= THIS% nbar_tot + &
+                        THIS% nu( THIS% baryon_density_index( itr ) )
 
-    PRINT *, THIS% nbar_tot*amu/MSun
-    PRINT *, THIS% mass1 + THIS% mass2
+        IF( THIS% nbar_tot*amu/MSun - THIS% mass1 > THIS% mass2 )THEN
+          EXIT
+        ENDIF
 
-    CALL THIS% reshape_sph_field( pos_u, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      ENDDO compute_nu_on_particles_star2
 
-    PRINT *, "1"
+      CALL THIS% reshape_sph_field( pos_u, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( vel_u, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( vel_u, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    PRINT *, "1.05"
+      CALL THIS% reshape_sph_field( Theta, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( Theta, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( h, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    PRINT *, "1.1"
+      CALL THIS% reshape_sph_field( nlrf, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( h, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( u, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    PRINT *, "1.2"
+      CALL THIS% reshape_sph_field( Pr, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( nlrf, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( nu, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( u, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( temp, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( Pr, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( av, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( nu, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( divv, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( temp, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% pos, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    PRINT *, "1.8"
+      CALL THIS% reshape_sph_field( THIS% v, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( av, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% Theta, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( divv, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% h, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( THIS% pos, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% baryon_density_parts, cnt1 - 1, &
+                                    cnt2 - 1, THIS% baryon_density_index )
 
-    PRINT *, "2"
+      CALL THIS% reshape_sph_field( THIS% nlrf, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( THIS% v, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1 - 1, &
+                                    cnt2 - 1, THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( THIS% Theta, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1 - 1, &
+                                    cnt2 - 1, THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( THIS% h, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% pressure_parts, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( THIS% baryon_density_parts, cnt1 - 1, &
-                                  cnt2 - 1, THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% nu, cnt1 - 1, cnt2 - 1, &
+                                    THIS% baryon_density_index )
 
-    CALL THIS% reshape_sph_field( THIS% nlrf, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
+      npart= cnt1 + cnt2
+      THIS% npart= npart
+      THIS% npart1= cnt1
+      THIS% npart2= cnt2
+      n1= THIS% npart1
+      n2= THIS% npart2
 
-    CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1 - 1, &
-                                  cnt2 - 1, THIS% baryon_density_index )
-
-    CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1 - 1, &
-                                  cnt2 - 1, THIS% baryon_density_index )
-
-    CALL THIS% reshape_sph_field( THIS% pressure_parts, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
-
-    CALL THIS% reshape_sph_field( THIS% nu, cnt1 - 1, cnt2 - 1, &
-                                  THIS% baryon_density_index )
-
-    PRINT *, "3"
-
-    npart= cnt1 + cnt2
-    THIS% npart= npart
-    THIS% npart1= cnt1
-    THIS% npart2= cnt2
-    n1= THIS% npart1
-    n2= THIS% npart2
-
-    !ALLOCATE( tmp(cnt1) )
-    !DO itr= THIS% npart1, THIS% npart1 - cnt1, -1
-    !
-    !  tmp( itr )= THIS% pos( 1, THIS% baryon_density_index( itr ) )
-    !
-    !ENDDO
-    !DO itr= 1, cnt1, 1
-    !  THIS% pos( 1, itr )= temp( itr )
-    !ENDDO
-    !DEALLOCATE( tmp )
-    !ALLOCATE( tmp(cnt2) )
-    !DO itr= THIS% npart, THIS% npart - cnt2, -1
-    !
-    !  tmp( itr )= THIS% pos( 1, THIS% baryon_density_index( itr ) )
-    !
-    !ENDDO
-    !DO itr= 1, cnt2, 1
-    !  THIS% pos( 1, cnt1 + itr )= temp( itr )
-    !ENDDO
-    !THIS% pos( 1, : ) = THIS% pos( 1, 1 : cnt1 + cnt2 )
+    ENDIF
 
     IF(.NOT.ALLOCATED( THIS% Ye ))THEN
-      ALLOCATE( THIS% Ye( THIS% npart ), STAT= ios, &
-            ERRMSG= err_msg )
+      ALLOCATE( THIS% Ye( THIS% npart ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array Ye ", &
                  ". The error message is", err_msg
@@ -564,6 +533,9 @@ SUBMODULE (particles_id) particles_methods
     ENDDO assign_ye_on_particles
     CALL THIS% sph_computer_timer% stop_timer()
 
+    !
+    !-- Printouts
+    !
     PRINT "(A28,E15.8,A10)", "  * Maximum baryon density= ", &
              MAXVAL( THIS% baryon_density_parts, DIM= 1 )*kg2g/(m2cm**3), &
              " g cm^{-3}"
@@ -663,7 +635,12 @@ SUBMODULE (particles_id) particles_methods
     INTEGER:: itr, i_tmp
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp
 
-    ALLOCATE( tmp( new_size1 + new_size2 ) )
+    ALLOCATE( tmp( new_size1 + new_size2 ), STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+      PRINT *, "...allocation error for array tmp in SUBROUTINE ", &
+               "reshape_sph_field_1d. The error message is", err_msg
+      STOP
+    ENDIF
     i_tmp= 0
     DO itr= THIS% npart1, THIS% npart1 - new_size1, -1
 
@@ -671,7 +648,6 @@ SUBMODULE (particles_id) particles_methods
       tmp( i_tmp )= field( index_array( itr ) )
 
     ENDDO
-        PRINT *, "10"
     DO itr= THIS% npart, THIS% npart - new_size2, -1
 
       i_tmp= i_tmp + 1
@@ -679,51 +655,25 @@ SUBMODULE (particles_id) particles_methods
 
     ENDDO
 
-    PRINT *, "11"
+    IF( ALLOCATED( field ) ) DEALLOCATE( field, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+      PRINT *, "...deallocation error for array field in SUBROUTINE ", &
+               "reshape_sph_field_1d. The error message is", err_msg
+      STOP
+    ENDIF
+    ALLOCATE( field( new_size1 + new_size2 ), STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+      PRINT *, "...allocation error for array field in SUBROUTINE ", &
+               "reshape_sph_field_1d. The error message is", err_msg
+      STOP
+    ENDIF
 
-    DEALLOCATE( field )
-    ALLOCATE( field( new_size1 + new_size2 ) )
-    PRINT *, "12"
     DO itr= 1, new_size1 + new_size2, 1
       field( itr )= tmp( itr )
     ENDDO
-        PRINT *, "13"
-
-    !ALLOCATE( tmp( new_size1 ) )
-    !i_tmp= 0
-    !DO itr= THIS% npart1, THIS% npart1 - new_size1, -1
-    !
-    !  i_tmp= i_tmp + 1
-    !  tmp( i_tmp )= field( index_array( itr ) )
-    !
-    !ENDDO
-    !DO itr= 1, new_size1, 1
-    !  field( itr )= tmp( itr )
-    !ENDDO
-    !
-    !DEALLOCATE( tmp )
-    !
-    !ALLOCATE( tmp( new_size2 ) )
-    !i_tmp= 0
-    !DO itr= THIS% npart, THIS% npart - new_size2, -1
-    !
-    !  i_tmp= i_tmp + 1
-    !  tmp( i_tmp )= field( index_array( itr ) )
-    !
-    !ENDDO
-    !DO itr= 1, new_size2, 1
-    !  field( new_size1 + itr )= tmp( itr )
-    !ENDDO
-    !field = field( 1 : new_size1 + new_size2 )
-
-    !PRINT *, "new_sizes"
-    !PRINT *, new_size1
-    !PRINT *, new_size2
-    !PRINT *, new_size1 + new_size2
-    !PRINT *, SIZE( field )
-    !PRINT *
 
   END PROCEDURE reshape_sph_field_1d
+
 
   MODULE PROCEDURE reshape_sph_field_2d
 
@@ -742,7 +692,12 @@ SUBMODULE (particles_id) particles_methods
     INTEGER:: itr, i_tmp, itr2
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: tmp
 
-    ALLOCATE( tmp( 3, new_size1 + new_size2 ) )
+    ALLOCATE( tmp( 3, new_size1 + new_size2 ), STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+      PRINT *, "...allocation error for array tmp in SUBROUTINE ", &
+               "reshape_sph_field_2d. The error message is", err_msg
+      STOP
+    ENDIF
     DO itr2= 1, 3, 1
       i_tmp= 0
       DO itr= THIS% npart1, THIS% npart1 - new_size1, -1
@@ -758,24 +713,26 @@ SUBMODULE (particles_id) particles_methods
 
       ENDDO
     ENDDO
-        PRINT *, "11"
-    DEALLOCATE( field )
-        PRINT *, "11.5"
-    ALLOCATE( field( 3, new_size1 + new_size2 ) )
-        PRINT *, "12"
+
+    IF( ALLOCATED( field ) ) DEALLOCATE( field, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+      PRINT *, "...deallocation error for array field in SUBROUTINE ", &
+               "reshape_sph_field_2d. The error message is", err_msg
+      STOP
+    ENDIF
+
+    ALLOCATE( field( 3, new_size1 + new_size2 ), STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+      PRINT *, "...allocation error for array field in SUBROUTINE ", &
+               "reshape_sph_field_2d. The error message is", err_msg
+      STOP
+    ENDIF
+
     DO itr2= 1, 3, 1
       DO itr= 1, new_size1 + new_size2, 1
         field( itr2, itr )= tmp( itr2, itr )
       ENDDO
     ENDDO
-        PRINT *, "13"
-    !PRINT *, "new_sizes"
-    !PRINT *, new_size1
-    !PRINT *, new_size2
-    !PRINT *, new_size1 + new_size2
-    !PRINT *, SIZE( field(1,:) )
-    !PRINT *, SIZE( field(:,1) )
-    !PRINT *
 
   END PROCEDURE reshape_sph_field_2d
 
@@ -829,7 +786,7 @@ SUBMODULE (particles_id) particles_methods
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
-    PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
+    PRINT *, "** Executing the read_sphincs_dump_print_formatted subroutine..."
 
     !
     !-- Set up the MODULE variables in MODULE sph_variables

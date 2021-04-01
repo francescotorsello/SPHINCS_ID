@@ -81,13 +81,13 @@ SUBMODULE (particles_id) particles_constructor
     ! String storing the names of the LORENE BNS ID binary files
     CHARACTER( LEN= max_length ):: compose_filename
 
-    LOGICAL:: file_exists, correct_nu, compose_eos, exist
+    LOGICAL:: file_exists, redistribute_nu, correct_nu, compose_eos, exist
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
               stretch, &
               nx, ny, nz, &
-              thres, nu_ratio, correct_nu, &
+              thres, nu_ratio, redistribute_nu, correct_nu, &
               compose_eos, compose_path, compose_filename
 
     !
@@ -128,7 +128,12 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% compose_eos= compose_eos
     parts_obj% compose_path= compose_path
     parts_obj% compose_filename= compose_filename
+    parts_obj% redistribute_nu= redistribute_nu
     parts_obj% nu_ratio= nu_ratio
+
+    !IF( parts_obj% redistribute_nu )THEN
+    !  thres= 1000.0D0
+    !ENDIF
 
     IF( MOD( nz, 2 ) /= 0 )THEN
      PRINT *
@@ -320,32 +325,6 @@ SUBMODULE (particles_id) particles_constructor
       !                "...allocation error for array pos in SUBROUTINE" &
       !                // "place_particles_3D_lattice." )
     ENDIF
-
-    !CALL indexx( parts_obj% npart1, &
-    !             parts_obj% baryon_density_parts( 1 : parts_obj% npart1 ), &
-    !             parts_obj% baryon_density_index( 1 : parts_obj% npart1 ) )
-    !CALL indexx( parts_obj% npart1, &
-    !             parts_obj% baryon_density_parts( 1 : parts_obj% npart1 ), &
-    !             parts_obj% baryon_density_index( 1 : parts_obj% npart1 ) )
-    !CALL indexx( parts_obj% npart1, &
-    !             parts_obj% baryon_density_parts( 1 : parts_obj% npart1 ), &
-    !             parts_obj% baryon_density_index( 1 : parts_obj% npart1 ) )
-    !
-    !CALL indexx( parts_obj% npart2, &
-    !             parts_obj% baryon_density_parts( parts_obj% npart1 + 1 : &
-    !                                              parts_obj% npart ), &
-    !             parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
-    !                                              parts_obj% npart ) )
-    !CALL indexx( parts_obj% npart2, &
-    !             parts_obj% baryon_density_parts( parts_obj% npart1 + 1 : &
-    !                                              parts_obj% npart ), &
-    !             parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
-    !                                              parts_obj% npart ) )
-    !CALL indexx( parts_obj% npart2, &
-    !             parts_obj% baryon_density_parts( parts_obj% npart1 + 1 : &
-    !                                              parts_obj% npart ), &
-    !             parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
-    !                                              parts_obj% npart ) )
 
     !PRINT *, "baryon_density_index"
     !DO itr= 1, parts_obj% npart1, 1

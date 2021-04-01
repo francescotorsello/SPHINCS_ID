@@ -150,6 +150,7 @@ MODULE particles_id
     LOGICAL:: empty_object
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x
+    LOGICAL:: redistribute_nu
     LOGICAL:: correct_nu
     LOGICAL:: compose_eos
 
