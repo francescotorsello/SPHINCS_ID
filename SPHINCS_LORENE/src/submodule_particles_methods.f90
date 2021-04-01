@@ -348,25 +348,14 @@ SUBMODULE (particles_id) particles_methods
       CALL indexx( THIS% npart1, &
                    THIS% nu( 1 : THIS% npart1 ), &
                    THIS% baryon_density_index( 1 : THIS% npart1 ) )
-      CALL indexx( THIS% npart1, &
-                   THIS% nu( 1 : THIS% npart1 ), &
-                   THIS% baryon_density_index( 1 : THIS% npart1 ) )
-      CALL indexx( THIS% npart1, &
-                   THIS% nu( 1 : THIS% npart1 ), &
-                   THIS% baryon_density_index( 1 : THIS% npart1 ) )
 
       CALL indexx( THIS% npart2, &
                    THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
                    THIS% baryon_density_index( THIS% npart1 + 1 : &
                                                     THIS% npart ) )
-      CALL indexx( THIS% npart2, &
-                   THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
-                   THIS% baryon_density_index( THIS% npart1 + 1 : &
-                                                    THIS% npart ) )
-      CALL indexx( THIS% npart2, &
-                   THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
-                   THIS% baryon_density_index( THIS% npart1 + 1 : &
-                                                    THIS% npart ) )
+
+      THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )= &
+      THIS% npart1 + THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )
 
       nu_max1= MAXVAL( THIS% nu( 1 : THIS% npart1 ) )
       nu_max2= MAXVAL( THIS% nu( THIS% npart1 + 1 : THIS% npart ) )
@@ -431,67 +420,67 @@ SUBMODULE (particles_id) particles_methods
 
       ENDDO compute_nu_on_particles_star2
 
-      CALL THIS% reshape_sph_field( pos_u, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( pos_u, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( vel_u, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( vel_u, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( Theta, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( Theta, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( h, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( h, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( nlrf, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( nlrf, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( u, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( u, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( Pr, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( Pr, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( nu, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( nu, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( temp, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( temp, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( av, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( av, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( divv, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( divv, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% pos, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( THIS% pos, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% v, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( THIS% v, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% Theta, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( THIS% Theta, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% h, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( THIS% h, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% baryon_density_parts, cnt1 - 1, &
-                                    cnt2 - 1, THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% baryon_density_parts, cnt1, &
+                                    cnt2, THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% nlrf, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( THIS% nlrf, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1 - 1, &
-                                    cnt2 - 1, THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1, &
+                                    cnt2, THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1 - 1, &
-                                    cnt2 - 1, THIS% baryon_density_index )
+      CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1, &
+                                    cnt2, THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% pressure_parts, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( THIS% pressure_parts, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% nu, cnt1 - 1, cnt2 - 1, &
+      CALL THIS% reshape_sph_field( THIS% nu, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
       npart= cnt1 + cnt2
@@ -500,6 +489,13 @@ SUBMODULE (particles_id) particles_methods
       THIS% npart2= cnt2
       n1= THIS% npart1
       n2= THIS% npart2
+
+      PRINT *, " * Particles replaced after reassigning nu."
+      PRINT *, " * New number of particles=", THIS% npart
+      PRINT *
+      PRINT *, " * Number of particles on NS 1=", THIS% npart1
+      PRINT *, " * Number of particles on NS 2=", THIS% npart2
+      PRINT *
 
     ENDIF
 
@@ -655,7 +651,7 @@ SUBMODULE (particles_id) particles_methods
 
     ENDDO
 
-    IF( ALLOCATED( field ) ) DEALLOCATE( field, STAT= ios, ERRMSG= err_msg )
+    DEALLOCATE( field, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
       PRINT *, "...deallocation error for array field in SUBROUTINE ", &
                "reshape_sph_field_1d. The error message is", err_msg
@@ -700,21 +696,38 @@ SUBMODULE (particles_id) particles_methods
     ENDIF
     DO itr2= 1, 3, 1
       i_tmp= 0
-      DO itr= THIS% npart1, THIS% npart1 - new_size1, -1
+      DO itr= THIS% npart1, THIS% npart1 - new_size1 + 1, -1
 
         i_tmp= i_tmp + 1
         tmp( itr2, i_tmp )= field( itr2, index_array( itr ) )
+        !PRINT *, field( itr2, index_array( itr ) )
+        !PRINT *, index_array( itr )
+        !PRINT *, itr
+        !EXIT
 
       ENDDO
-      DO itr= THIS% npart, THIS% npart - new_size2, -1
+      !PRINT *, i_tmp
+      !PRINT *, new_size1
+      DO itr= THIS% npart, THIS% npart - new_size2 + 1, -1
 
         i_tmp= i_tmp + 1
         tmp( itr2, i_tmp )= field( itr2, index_array( itr ) )
+        !PRINT *, field( itr2, index_array( itr ) )
+        !PRINT *, index_array( itr )
+        !PRINT *, itr
+        !IF( field( itr2, index_array( itr ) ) < 0 )THEN
+        !  PRINT *, "The x coordinate of the second star is negative...", &
+        !           "something is wrong"
+        !  STOP
+        !ENDIF
+        !STOP
 
       ENDDO
+      !PRINT *, i_tmp - new_size1
+      !PRINT *, new_size2
     ENDDO
 
-    IF( ALLOCATED( field ) ) DEALLOCATE( field, STAT= ios, ERRMSG= err_msg )
+    DEALLOCATE( field, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
       PRINT *, "...deallocation error for array field in SUBROUTINE ", &
                "reshape_sph_field_2d. The error message is", err_msg

@@ -131,9 +131,9 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% redistribute_nu= redistribute_nu
     parts_obj% nu_ratio= nu_ratio
 
-    !IF( parts_obj% redistribute_nu )THEN
-    !  thres= 1000.0D0
-    !ENDIF
+    IF( parts_obj% redistribute_nu )THEN
+      thres= 100.0D0*parts_obj% nu_ratio
+    ENDIF
 
     IF( MOD( nz, 2 ) /= 0 )THEN
      PRINT *
