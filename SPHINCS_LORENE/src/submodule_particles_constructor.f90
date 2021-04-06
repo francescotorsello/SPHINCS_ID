@@ -555,7 +555,8 @@ SUBMODULE (particles_id) particles_constructor
       IF( parts_obj% export_form_xy .AND. parts_obj% pos( 3, itr ) /= min_abs_z )THEN
         CYCLE
       ENDIF
-      IF( parts_obj% export_form_x .AND. ( parts_obj% pos( 3, itr ) /= min_abs_z &
+      IF( parts_obj% export_form_x .AND. &
+          ( parts_obj% pos( 3, itr ) /= min_abs_z &
           .OR. parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) ) )THEN
         CYCLE
       ENDIF
@@ -892,6 +893,7 @@ SUBMODULE (particles_id) particles_constructor
 
     IF( mass1 > mass2 )THEN
 
+      ! mass_ratio < 1
       mass_ratio= mass2/mass1
       !
       !-- Compute lattices' steps
@@ -901,21 +903,18 @@ SUBMODULE (particles_id) particles_constructor
       THIS% nz2= THIS% nz
       dx2= ABS(xmax2 - xmin2)/DBLE( THIS% nx2 )
       dy2= ABS(ymax2 - ymin2)/DBLE( THIS% ny2 )
-      dz2= ABS(zlim)/DBLE( THIS% nz2/2 )
+      dz2= ABS(zlim2)/DBLE( THIS% nz2/2 )
 
-      !
-      !-- Compute the number of particles for the second lattice,
-      !-- using the same lattice step
-      !
-      dx1= dx2*mass_ratio**(1.0D0/3.0D0)
-      dy1= dy2*mass_ratio**(1.0D0/3.0D0)
-      dz1= dz2*mass_ratio**(1.0D0/3.0D0)
-      THIS% nx1= NINT( ABS(xmax1 - xmin1)/dx1 )
-      THIS% ny1= NINT( ABS(ymax1 - ymin1)/dy1 )
-      THIS% nz1= NINT( 2*ABS(zlim)/dz1 )
+      dx1= dx2*(mass_ratio**(1.0D0/3.0D0))
+      dy1= dy2*(mass_ratio**(1.0D0/3.0D0))
+      dz1= dz2*(mass_ratio**(1.0D0/3.0D0))
+      THIS% nx1= NINT( ABS(xmax1 - xmin1)/dx1 ) + 1
+      THIS% ny1= NINT( ABS(ymax1 - ymin1)/dy1 ) + 1
+      THIS% nz1= NINT( 2*ABS(zlim)/dz1 ) + 1
 
     ELSE
 
+      ! mass_ratio < 1
       mass_ratio= mass1/mass2
       !
       !-- Compute lattices' steps
@@ -927,13 +926,9 @@ SUBMODULE (particles_id) particles_constructor
       dy1= ABS(ymax1 - ymin1)/DBLE( THIS% ny1 )
       dz1= ABS(zlim)/DBLE( THIS% nz1/2 )
 
-      !
-      !-- Compute the number of particles for the second lattice,
-      !-- using the same lattice step
-      !
-      dx2= dx1*mass_ratio**(1.0D0/3.0D0)
-      dy2= dy1*mass_ratio**(1.0D0/3.0D0)
-      dz2= dz1*mass_ratio**(1.0D0/3.0D0)
+      dx2= dx1*(mass_ratio**(1.0D0/3.0D0))
+      dy2= dy1*(mass_ratio**(1.0D0/3.0D0))
+      dz2= dz1*(mass_ratio**(1.0D0/3.0D0))
       THIS% nx2= NINT( ABS(xmax2 - xmin2)/dx2 ) + 1
       THIS% ny2= NINT( ABS(ymax2 - ymin2)/dy2 ) + 1
       THIS% nz2= NINT( 2*ABS(zlim2)/dz2 ) + 1
@@ -951,6 +946,11 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *, " * nx1=", THIS% nx1, ", ny1=", THIS% ny1, ", nz1=", THIS% nz1
     PRINT *, " * nx2=", THIS% nx2, ", ny2=", THIS% ny2, ", nz2=", THIS% nz2
     PRINT *
+
+    !PRINT *, " * xmin1=", xmin1, ", xmax1=", xmax1
+    !PRINT *, " * xmin2=", xmin2, ", xmax2=", xmax2
+    !PRINT *
+    !STOP
 
     ! Compute number of lattice points (temporary particle number)
     THIS% npart1_temp = THIS% nx1*THIS% ny1*THIS% nz1 !+ THIS% nx*THIS% ny

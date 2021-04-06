@@ -499,7 +499,7 @@ SUBMODULE (particles_id) particles_methods
 
     INTEGER:: itr, min_y_index
 
-    DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION:: min_abs_y, min_abs_z1, min_abs_z2
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     LOGICAL:: exist
@@ -625,14 +625,19 @@ SUBMODULE (particles_id) particles_methods
       ENDIF
     ENDDO
 
-    min_abs_z= MINVAL( abs_pos( 3, : ) )
+    min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart1 ) )
+    min_abs_z2= MINVAL( abs_pos( 3, THIS% npart1+1:THIS% npart ) )
 
     write_data_loop: DO itr = 1, THIS% npart, 1
 
-      IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
+      IF( THIS% export_form_xy .AND. &
+          ( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
+            THIS% pos( 3, itr ) /= min_abs_z2 ) &
+      )THEN
         CYCLE
       ENDIF
-      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
+      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z1 &
+          .OR. THIS% pos( 3, itr ) /= min_abs_z2 &
           .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
         CYCLE
       ENDIF
@@ -891,7 +896,7 @@ SUBMODULE (particles_id) particles_methods
 
     INTEGER:: itr, min_y_index
 
-    DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION:: min_abs_y, min_abs_z1, min_abs_z2
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     LOGICAL:: exist
@@ -1007,14 +1012,19 @@ SUBMODULE (particles_id) particles_methods
       ENDIF
     ENDDO
 
-    min_abs_z= MINVAL( abs_pos( 3, : ) )
+    min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart1 ) )
+    min_abs_z2= MINVAL( abs_pos( 3, THIS% npart1+1:THIS% npart ) )
 
     write_data_loop: DO itr = 1, THIS% npart, 1
 
-      IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
+      IF( THIS% export_form_xy .AND. &
+          ( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
+            THIS% pos( 3, itr ) /= min_abs_z2 ) &
+      )THEN
         CYCLE
       ENDIF
-      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
+      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z1 &
+          .OR. THIS% pos( 3, itr ) /= min_abs_z2 &
           .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
         CYCLE
       ENDIF
