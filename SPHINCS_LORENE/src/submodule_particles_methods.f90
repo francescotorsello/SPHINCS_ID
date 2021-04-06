@@ -79,7 +79,8 @@ SUBMODULE (particles_id) particles_methods
     INTEGER:: nus, mus, cnt1, cnt2
 
     DOUBLE PRECISION:: g4(0:3,0:3)
-    DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2, nu_max1, nu_max2, nu_tmp
+    DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2, nu_max1, nu_max2, &
+                       nu_tmp, nu_thres1, nu_thres2
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp
 
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -343,22 +344,44 @@ SUBMODULE (particles_id) particles_methods
 
     ENDDO compute_SPH_variables_on_particles
 
+    !---------------------------------------------------------------------!
+    !--  Optional redistribution of nu on the stars, with the purpose   --!
+    !--  of having a more uniform nu over the particles without losing  --!
+    !--  baryon mass.                                                   --!
+    !---------------------------------------------------------------------!
+
     IF( THIS% redistribute_nu )THEN
+
+      ! Index particles on star 1 in increasing order of nu
 
       CALL indexx( THIS% npart1, &
                    THIS% nu( 1 : THIS% npart1 ), &
                    THIS% baryon_density_index( 1 : THIS% npart1 ) )
+
+      ! Index particles on star 2 in increasing order of nu
 
       CALL indexx( THIS% npart2, &
                    THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
                    THIS% baryon_density_index( THIS% npart1 + 1 : &
                                                     THIS% npart ) )
 
+      ! Shift indices on star 2 by npart1 since all the arrays store
+      ! the quantities on star 1 first, and then on star 2
+
       THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )= &
-      THIS% npart1 + THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )
+                  THIS% npart1 + &
+                  THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )
+
+      ! Store the maximum values of nu on the two stars, and the thresholds
 
       nu_max1= MAXVAL( THIS% nu( 1 : THIS% npart1 ) )
       nu_max2= MAXVAL( THIS% nu( THIS% npart1 + 1 : THIS% npart ) )
+
+      nu_thres1= nu_max1/THIS% nu_ratio
+      nu_thres2= nu_max2/THIS% nu_ratio
+
+      ! Reset the total baryon number to 0 (necessary), and nu to an arbitrary
+      ! value (to make debugging easier)
 
       nu= 1.0D0
       THIS% nu= 1.0D0
@@ -375,12 +398,12 @@ SUBMODULE (particles_id) particles_methods
 
         !IF( itr == THIS% npart1 ) nu_max= nu_tmp ! move this out of the loop
 
-        IF( nu_tmp > nu_max1/THIS% nu_ratio )THEN
-          nu( THIS% baryon_density_index( itr ) )= nu_tmp
+        IF( nu_tmp > nu_thres1 )THEN
+          nu( THIS% baryon_density_index( itr ) )      = nu_tmp
           THIS% nu( THIS% baryon_density_index( itr ) )= nu_tmp
         ELSE
-          nu( THIS% baryon_density_index( itr ) )= nu_max1/THIS% nu_ratio
-          THIS% nu( THIS% baryon_density_index( itr ) )= nu_max1/THIS% nu_ratio
+          nu( THIS% baryon_density_index( itr ) )      = nu_thres1
+          THIS% nu( THIS% baryon_density_index( itr ) )= nu_thres1
         ENDIF
 
         THIS% nbar_tot= THIS% nbar_tot + &
@@ -403,12 +426,12 @@ SUBMODULE (particles_id) particles_methods
 
         !IF( itr == THIS% npart ) nu_max= nu_tmp
 
-        IF( nu_tmp > nu_max2/THIS% nu_ratio )THEN
-          nu( THIS% baryon_density_index( itr ) )= nu_tmp
+        IF( nu_tmp > nu_thres2 )THEN
+          nu( THIS% baryon_density_index( itr ) )      = nu_tmp
           THIS% nu( THIS% baryon_density_index( itr ) )= nu_tmp
         ELSE
-          nu( THIS% baryon_density_index( itr ) )= nu_max2/THIS% nu_ratio
-          THIS% nu( THIS% baryon_density_index( itr ) )= nu_max2/THIS% nu_ratio
+          nu( THIS% baryon_density_index( itr ) )      = nu_thres2
+          THIS% nu( THIS% baryon_density_index( itr ) )= nu_thres2
         ENDIF
 
         THIS% nbar_tot= THIS% nbar_tot + &
@@ -419,6 +442,10 @@ SUBMODULE (particles_id) particles_methods
         ENDIF
 
       ENDDO compute_nu_on_particles_star2
+
+      !
+      !-- Reshape MODULE variables
+      !
 
       CALL THIS% reshape_sph_field( pos_u, cnt1, cnt2, &
                                     THIS% baryon_density_index )
@@ -453,10 +480,23 @@ SUBMODULE (particles_id) particles_methods
       CALL THIS% reshape_sph_field( divv, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
+      !
+      !-- Reshape TYPE member SPH variables
+      !
+
       CALL THIS% reshape_sph_field( THIS% pos, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
       CALL THIS% reshape_sph_field( THIS% v, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% v_euler_parts_x, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% v_euler_parts_y, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% v_euler_parts_z, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
       CALL THIS% reshape_sph_field( THIS% Theta, cnt1, cnt2, &
@@ -471,7 +511,7 @@ SUBMODULE (particles_id) particles_methods
       CALL THIS% reshape_sph_field( THIS% nlrf, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
-      CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1, &
+      CALL THIS% reshape_sph_field( THIS% energy_density_parts, cnt1, &
                                     cnt2, THIS% baryon_density_index )
 
       CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1, &
@@ -480,8 +520,49 @@ SUBMODULE (particles_id) particles_methods
       CALL THIS% reshape_sph_field( THIS% pressure_parts, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
+      CALL THIS% reshape_sph_field( THIS% pressure_parts_cu, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
       CALL THIS% reshape_sph_field( THIS% nu, cnt1, cnt2, &
                                     THIS% baryon_density_index )
+
+      !
+      !-- Reshape TYPE member spacetime variables
+      !
+
+      CALL THIS% reshape_sph_field( THIS% lapse_parts, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% shift_parts_x, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% shift_parts_y, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% shift_parts_z, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% g_xx_parts, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% g_xy_parts, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% g_xz_parts, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% g_yy_parts, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% g_yz_parts, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      CALL THIS% reshape_sph_field( THIS% g_zz_parts, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
+      !
+      !-- Reassign particle numbers
+      !
 
       npart= cnt1 + cnt2
       THIS% npart= npart
@@ -532,33 +613,66 @@ SUBMODULE (particles_id) particles_methods
     !
     !-- Printouts
     !
-    PRINT "(A28,E15.8,A10)", "  * Maximum baryon density= ", &
-             MAXVAL( THIS% baryon_density_parts, DIM= 1 )*kg2g/(m2cm**3), &
-             " g cm^{-3}"
-    PRINT "(A28,E15.8,A10)", "  * Minimum baryon density= ", &
-             MINVAL( THIS% baryon_density_parts, DIM= 1 )*kg2g/(m2cm**3), &
-             " g cm^{-3}"
+    !"(A28,E15.8,A10)"
+    PRINT *, " * Maximum baryon density on star 1= ", &
+              MAXVAL( THIS% baryon_density_parts(1:THIS% npart1), DIM= 1 ) &
+              *kg2g/(m2cm**3), " g cm^{-3}"
+    PRINT *, " * Minimum baryon density= on star 1 ", &
+              MINVAL( THIS% baryon_density_parts(1:THIS% npart1), DIM= 1 ) &
+              *kg2g/(m2cm**3), " g cm^{-3}"
     PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% baryon_density_parts, DIM= 1 )/ &
-             MINVAL( THIS% baryon_density_parts, DIM= 1 )
+             MAXVAL( THIS% baryon_density_parts(1:THIS% npart1), DIM= 1 )/ &
+             MINVAL( THIS% baryon_density_parts(1:THIS% npart1), DIM= 1 )
+    PRINT *
+    PRINT *, " * Maximum baryon density on star 2= ", &
+     MAXVAL( THIS% baryon_density_parts(THIS% npart1+1:THIS% npart), DIM= 1 ) &
+     *kg2g/(m2cm**3), " g cm^{-3}"
+    PRINT *, " * Minimum baryon density on star 2= ", &
+     MINVAL( THIS% baryon_density_parts(THIS% npart1+1:THIS% npart), DIM= 1 ) &
+     *kg2g/(m2cm**3), " g cm^{-3}"
+    PRINT *, " * Ratio between the two=", &
+     MAXVAL( THIS% baryon_density_parts(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
+     MINVAL( THIS% baryon_density_parts(THIS% npart1+1:THIS% npart), DIM= 1 )
     PRINT *
 
-    PRINT *, " * Maximum nlrf=", MAXVAL( THIS% nlrf, DIM= 1 ), &
+    PRINT *, " * Maximum nlrf on star 1=", &
+             MAXVAL( THIS% nlrf(1:THIS% npart1), DIM= 1 ), &
              "baryon Msun_geo^{-3}"
-    PRINT *, " * Minimum nlrf=", MINVAL( THIS% nlrf, DIM= 1 ), &
+    PRINT *, " * Minimum nlrf on star 1=", &
+             MINVAL( THIS% nlrf(1:THIS% npart1), DIM= 1 ), &
              "baryon Msun_geo^{-3}"
     PRINT *, " * Ratio between the two=", &
-                      MAXVAL( THIS% nlrf, DIM= 1 )/MINVAL( THIS% nlrf, DIM= 1 )
+             MAXVAL( THIS% nlrf(1:THIS% npart1), DIM= 1 )/ &
+             MINVAL( THIS% nlrf(1:THIS% npart1), DIM= 1 )
+    PRINT *
+    PRINT *, " * Maximum nlrf on star 2=", &
+             MAXVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 ), &
+             "baryon Msun_geo^{-3}"
+    PRINT *, " * Minimum nlrf on star 2=", &
+             MINVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 ), &
+             "baryon Msun_geo^{-3}"
+    PRINT *, " * Ratio between the two=", &
+             MAXVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
+             MINVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 )
     PRINT *
 
-    PRINT *, " * Maximum n. baryon per particle (nu)=", &
-              MAXVAL( THIS% nu, DIM= 1 )
-    PRINT *, " * Minimum n. baryon per particle (nu)=", &
-              MINVAL( THIS% nu, DIM= 1 )
+    PRINT *, " * Maximum n. baryon per particle on star 1 (nu)=", &
+             MAXVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
+    PRINT *, " * Minimum n. baryon per particle on star 1 (nu)=", &
+             MINVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
     PRINT *, " * Ratio between the two=", &
-                      MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
+             MAXVAL( THIS% nu(1:THIS% npart1), DIM= 1 )/ &
+             MINVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
+    PRINT *
+    PRINT *, " * Maximum n. baryon per particle on star 2 (nu)=", &
+             MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+    PRINT *, " * Minimum n. baryon per particle on star 2 (nu)=", &
+             MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+    PRINT *, " * Ratio between the two=", &
+             MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
+             MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+    PRINT *
     PRINT *, " * Total number of baryons=", THIS% nbar_tot
-    PRINT *
     PRINT *, " * Total mass of the considered baryons=", &
              THIS% nbar_tot*amu/Msun, "Msun =", &
              THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2), &
@@ -566,7 +680,7 @@ SUBMODULE (particles_id) particles_methods
     PRINT *
 
     !
-    !-- Adding the missing baryons into the particles uniformly so that
+    !-- Adjusting the baryons per particle uniformly so that
     !-- the baryon mass is correct, but the ratio between nu_max and nu_min
     !-- does not change.
     !-- nlrf is not to be rescaled, according to Stephan, since:
@@ -638,16 +752,26 @@ SUBMODULE (particles_id) particles_methods
       STOP
     ENDIF
     i_tmp= 0
-    DO itr= THIS% npart1, THIS% npart1 - new_size1, -1
+    DO itr= THIS% npart1, THIS% npart1 - new_size1 + 1, -1
 
       i_tmp= i_tmp + 1
       tmp( i_tmp )= field( index_array( itr ) )
+      !IF( itr == THIS% npart1 - new_size1 + 1 )THEN
+      !  PRINT *, i_tmp
+      !ENDIF
 
     ENDDO
-    DO itr= THIS% npart, THIS% npart - new_size2, -1
+    DO itr= THIS% npart, THIS% npart - new_size2 + 1, -1
 
       i_tmp= i_tmp + 1
       tmp( i_tmp )= field( index_array( itr ) )
+      !IF( itr == THIS% npart )THEN
+      !  PRINT *, i_tmp
+      !ENDIF
+      !IF( itr == THIS% npart - new_size2 + 1 )THEN
+      !  PRINT *, i_tmp
+      !  PRINT *, new_size1 + new_size2
+      !ENDIF
 
     ENDDO
 

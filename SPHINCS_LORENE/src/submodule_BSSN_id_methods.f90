@@ -2021,21 +2021,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
        STOP
     ENDIF
 
-    !IF( .NOT. ALLOCATED( tmp ) )THEN
-    !    ALLOCATE( tmp( npart ), STAT= allocation_status )
-    !ENDIF
-    !IF( allocation_status > 0 )THEN
-    !   PRINT *, '...allocation error for tmp'
-    !   STOP
-    !ENDIF
-    !IF( .NOT. ALLOCATED( tmp2 ) )THEN
-    !    ALLOCATE( tmp2( 3, npart ), STAT= allocation_status )
-    !ENDIF
-    !IF( allocation_status > 0 )THEN
-    !   PRINT *, '...allocation error for tmp2'
-    !   STOP
-    !ENDIF
-
     ! Set the SPH density to 0 by default
     sph_density= 0.0D0
 
