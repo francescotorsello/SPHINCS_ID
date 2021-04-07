@@ -629,8 +629,6 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       // ", [1D+1,1D+2], [1D+2,1D+3], [1D+3,+oo)"
     ENDIF
 
-    IF( DEBUG ) PRINT *, "1"
-
     CALL THIS% abs_values_in( 0.0D0, 1.0D-7, constraint, l, &
                               THIS% export_constraints_details, &
                               unit_analysis, cnt_m7 )
@@ -659,8 +657,6 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
                               THIS% export_constraints_details, &
                               unit_analysis, cnt_m1 )
 
-    IF( DEBUG ) PRINT *, "2"
-
     CALL THIS% abs_values_in( 1.0D-1, 1.0D0, constraint, l, &
                               THIS% export_constraints_details, &
                               unit_analysis, cnt_0 )
@@ -688,14 +684,10 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
                name_constraint, " are printed to ", name_analysis
     ENDIF
 
-    IF( DEBUG ) PRINT *, "3"
-
     nx= THIS% get_ngrid_x(l)
     ny= THIS% get_ngrid_y(l)
     nz= THIS% get_ngrid_z(l)
     grid_points= nx*ny*nz
-
-    IF( DEBUG ) PRINT *, "4"
 
     !
     !-- Compute the l2 norm of the constraints
@@ -709,8 +701,6 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
       ENDDO
     ENDDO
     l2_norm= SQRT( l2_norm/grid_points )
-
-    IF( DEBUG ) PRINT *, "5"
 
     !
     !-- Compute the loo norm (supremum norm) of the constraints
@@ -726,8 +716,6 @@ SUBMODULE (formul_3p1_id) formul_3p1_methods
         ENDDO
       ENDDO
     ENDDO
-
-    IF( DEBUG ) PRINT *, "6"
 
     !
     !-- Write a summary of the results to the logfile

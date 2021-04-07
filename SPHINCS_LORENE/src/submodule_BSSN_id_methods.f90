@@ -2112,13 +2112,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     PRINT *, " * Computing SPH density..."
     PRINT *
-    nu = nu_loc
-    pos_u = pos_loc
-    vel_u = vel_loc
-    u = u_loc
-    nlrf = nlrf_loc
-    Theta = theta_loc
-    Pr = pressure_loc
+    !nu = nu_loc
+    !pos_u = pos_loc
+    !vel_u = vel_loc
+    !u = u_loc
+    !nlrf = nlrf_loc
+    !Theta = theta_loc
+    !Pr = pressure_loc
     CALL density( npart,   &
                   pos_loc, &
                   sph_density )
@@ -2361,8 +2361,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
 
-        IF( debug ) PRINT *, "3"
-
         PRINT *, "** Analyzing constraints on refinement level ", l, "..."
 
         name_analysis= "bssn-hc-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
@@ -2372,7 +2370,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
              HC_parts, name_constraint, unit_logfile, name_analysis, &
              THIS% HC_parts_l2(l), THIS% HC_parts_loo(l) )
 
-        IF( debug ) PRINT *, "3.1"
 
         name_analysis= "bssn-mc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the momentum constraint"
@@ -2402,8 +2399,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
              GC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_parts_l2(l,jx), THIS% GC_parts_loo(l,jx) )
 
-        IF( debug ) PRINT *, "3.7"
-
         name_analysis= "bssn-gc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the connection constraint"
         CALL THIS% analyze_constraint( &
@@ -2417,8 +2412,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
              l, &
              GC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_parts_l2(l,jz), THIS% GC_parts_loo(l,jz) )
-
-        IF( debug ) PRINT *, "4"
 
         CLOSE( UNIT= unit_logfile )
 

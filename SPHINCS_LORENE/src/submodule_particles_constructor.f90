@@ -857,7 +857,7 @@ SUBMODULE (particles_id) particles_constructor
 
     IMPLICIT NONE
 
-    INTEGER:: ix, iy, iz, nx2, ny2, nz2, sgn, npart_half, npart_half2
+    INTEGER:: ix, iy, iz, nx2, ny2, nz2, sgn, npart_half, npart_half2, itr2
 
     DOUBLE PRECISION:: dx1, dy1, dz1, dx2, dy2, dz2
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim, zlim2
@@ -1297,12 +1297,32 @@ SUBMODULE (particles_id) particles_constructor
       STOP
     ENDIF
 
+    DO itr= 1, THIS% npart, 1
+      DO itr2= itr + 1, THIS% npart, 1
+        IF( THIS% pos( 1, itr ) == THIS% pos( 1, itr2 ) .AND. &
+            THIS% pos( 2, itr ) == THIS% pos( 2, itr2 ) .AND. &
+            THIS% pos( 3, itr ) == THIS% pos( 3, itr2 ) )THEN
+          PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+                   "The two particles ", itr, " and", itr2, " have the same ", &
+                   "coordinates!"
+          STOP
+        ENDIF
+      ENDDO
+    ENDDO
+
+    !
+    !-- Printouts
+    !
     PRINT *, " * Particles placed. Number of particles=", &
              THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
              " of the points in lattices."
     PRINT *
-    PRINT *, " * Number of particles on NS 1=", THIS% npart1
-    PRINT *, " * Number of particles on NS 2=", THIS% npart2
+    PRINT *, " * Number of particles on NS 1=", THIS% npart1, "=", &
+             DBLE(THIS% npart1)/DBLE(THIS% npart1_temp), &
+             " of the points in the first lattice."
+    PRINT *, " * Number of particles on NS 2=", THIS% npart2, "=", &
+             DBLE(THIS% npart2)/DBLE(THIS% npart2_temp), &
+             " of the points in the second lattice."
     PRINT *
 
     !
