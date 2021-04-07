@@ -592,11 +592,14 @@ SUBMODULE (particles_id) particles_constructor
 
     write_data_loop: DO itr = 1, parts_obj% npart, 1
 
-      IF( parts_obj% export_form_xy .AND. parts_obj% pos( 3, itr ) /= min_abs_z )THEN
+      IF( parts_obj% export_form_xy .AND. &
+          parts_obj% pos( 3, itr ) /= min_abs_z )THEN
         CYCLE
       ENDIF
-      IF( parts_obj% export_form_x .AND. ( parts_obj% pos( 3, itr ) /= min_abs_z &
-          .OR. parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) ) )THEN
+      IF( parts_obj% export_form_x .AND. &
+          ( parts_obj% pos( 3, itr ) /= min_abs_z &
+            .OR. parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) )&
+      )THEN
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
@@ -900,7 +903,7 @@ SUBMODULE (particles_id) particles_constructor
 
     IMPLICIT NONE
 
-    INTEGER:: ix, iy, iz, nx2, ny2, nz2, sgn, npart_half, npart_half2
+    INTEGER:: ix, iy, iz, nx2, ny2, nz2, sgn, npart_half, npart_half2, itr2
 
     DOUBLE PRECISION:: dx, dy, dz
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim, zlim2
@@ -1306,6 +1309,22 @@ SUBMODULE (particles_id) particles_constructor
       STOP
     ENDIF
 
+    DO itr= 1, THIS% npart, 1
+      DO itr2= itr + 1, THIS% npart, 1
+        IF( THIS% pos( 1, itr ) == THIS% pos( 1, itr2 ) .AND. &
+            THIS% pos( 2, itr ) == THIS% pos( 2, itr2 ) .AND. &
+            THIS% pos( 3, itr ) == THIS% pos( 3, itr2 ) )THEN
+          PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+                   "The two particles ", itr, " and", itr2, " have the same ", &
+                   "coordinates!"
+          STOP
+        ENDIF
+      ENDDO
+    ENDDO
+
+    !
+    !-- Printouts
+    !
     PRINT *, " * Particles placed. Number of particles=", &
              THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
              " of the points in lattices."

@@ -267,8 +267,9 @@ SUBMODULE (particles_id) particles_methods
       ! N.B. This first guess is very important, as it affects the algorithm in
       !      exact_tree_nei_update. Here it is set to 3 times the size of a
       !      particle
-      THIS% h(itr)= 3.0*(THIS% vol_a/(Msun_geo**3))**third
+      THIS% h(itr)= 3.0*(THIS% vol_a)**third
       h(itr)= THIS% h(itr)
+      ! /(Msun_geo**3)
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
