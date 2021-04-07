@@ -81,13 +81,14 @@ SUBMODULE (particles_id) particles_constructor
     ! String storing the names of the LORENE BNS ID binary files
     CHARACTER( LEN= max_length ):: compose_filename
 
-    LOGICAL:: file_exists, redistribute_nu, correct_nu, compose_eos, exist
+    LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
+              compose_eos, exist
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
               stretch, &
               nx, ny, nz, &
-              thres, nu_ratio, redistribute_nu, correct_nu, &
+              use_thres, thres, nu_ratio, redistribute_nu, correct_nu, &
               compose_eos, compose_path, compose_filename
 
     !
@@ -124,6 +125,7 @@ SUBMODULE (particles_id) particles_constructor
     READ( 10, NML= bns_particles )
     CLOSE( 10 )
 
+    parts_obj% use_thres= use_thres
     parts_obj% correct_nu= correct_nu
     parts_obj% compose_eos= compose_eos
     parts_obj% compose_path= compose_path
@@ -687,7 +689,11 @@ SUBMODULE (particles_id) particles_constructor
     !-- Set the threshold above which a lattice point is
     !-- promoted to a particle
     !
-    thres_baryon_density= max_baryon_density/thres
+    IF( THIS% use_thres )THEN
+      thres_baryon_density= max_baryon_density/thres
+    ELSE
+      thres_baryon_density= 0.0D0
+    ENDIF
 
     ! Allocating the memory for the array pos( 3, npart_temp )
     ! Note that after determining npart, the array pos is reshaped into
@@ -979,8 +985,13 @@ SUBMODULE (particles_id) particles_constructor
     !-- Set the thresholds above which a lattice point is
     !-- promoted to a particle
     !
-    thres_baryon_density1= max_baryon_density1/thres
-    thres_baryon_density2= max_baryon_density2/thres
+    IF( THIS% use_thres )THEN
+      thres_baryon_density1= max_baryon_density1/thres
+      thres_baryon_density2= max_baryon_density2/thres
+    ELSE
+      thres_baryon_density1= 0.0D0
+      thres_baryon_density2= 0.0D0
+    ENDIF
 
     ! Allocating the memory for the array pos( 3, npart_temp )
     ! Note that after determining npart, the array pos is reshaped into
