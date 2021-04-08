@@ -132,8 +132,8 @@ MODULE particles_id
     DOUBLE PRECISION:: vol, vol1, vol2
     ! Volume per particle
     DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
-    ! Total baryon number
-    DOUBLE PRECISION:: nbar_tot
+    ! Total baryon number, and baryon numbers of the stars
+    DOUBLE PRECISION:: nbar_tot, nbar1, nbar2
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
     ! String storing the local path to the directory where the

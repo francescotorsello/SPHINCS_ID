@@ -103,6 +103,8 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% mass1     = bns_obj% get_mass1()
     parts_obj% mass2     = bns_obj% get_mass2()
     parts_obj% nbar_tot  = 0.0D0
+    parts_obj% nbar1     = 0.0D0
+    parts_obj% nbar2     = 0.0D0
 
     !
     !-- Read the parameters of the particle distributions
