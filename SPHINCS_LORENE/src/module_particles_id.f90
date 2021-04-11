@@ -138,6 +138,8 @@ MODULE particles_id
     DOUBLE PRECISION:: nbar_tot
     ! Ratio between the max and min of the baryon number per particle
     DOUBLE PRECISION:: nu_ratio
+    ! Total baryon number, and baryon numbers of the stars
+    DOUBLE PRECISION:: nbar_tot, nbar1, nbar2
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
     ! String storing the local path to the directory where the

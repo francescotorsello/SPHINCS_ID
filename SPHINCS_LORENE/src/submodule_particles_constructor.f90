@@ -102,9 +102,11 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% empty_object= .FALSE.
     parts_obj% empty_object= .FALSE.
 
-    parts_obj% mass1   = bns_obj% get_mass1()
-    parts_obj% mass2   = bns_obj% get_mass2()
-    parts_obj% nbar_tot= 0.0D0
+    parts_obj% mass1     = bns_obj% get_mass1()
+    parts_obj% mass2     = bns_obj% get_mass2()
+    parts_obj% nbar_tot  = 0.0D0
+    parts_obj% nbar1     = 0.0D0
+    parts_obj% nbar2     = 0.0D0
 
     !
     !-- Read the parameters of the particle distributions
@@ -598,8 +600,7 @@ SUBMODULE (particles_id) particles_constructor
       ENDIF
       IF( parts_obj% export_form_x .AND. &
           ( parts_obj% pos( 3, itr ) /= min_abs_z &
-            .OR. parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) )&
-      )THEN
+          .OR. parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) ) )THEN
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
@@ -933,20 +934,52 @@ SUBMODULE (particles_id) particles_constructor
       zlim2= zmin2
     ENDIF
 
-    !
-    !-- Compute lattices' steps
-    !
-    dx= ABS(xmax1 - xmin1)/DBLE( THIS% nx )
-    dy= ABS(ymax1 - ymin1)/DBLE( THIS% ny )
-    dz= ABS(zlim)/DBLE( THIS% nz/2 )
+    mass1= bns_obj% get_mass1()
+    mass2= bns_obj% get_mass2()
 
-    !
-    !-- Compute the number of particles for the second lattice,
-    !-- using the same lattice step
-    !
-    nx2= NINT( ABS(xmax2 - xmin2)/dx )
-    ny2= NINT( ABS(ymax2 - ymin2)/dy )
-    nz2= NINT( 2*ABS(zlim2)/dz )
+    IF( mass1 > mass2 )THEN
+
+      ! mass_ratio < 1
+      mass_ratio= mass2/mass1
+      !
+      !-- Compute lattices' steps
+      !
+      THIS% nx2= THIS% nx
+      THIS% ny2= THIS% ny
+      THIS% nz2= THIS% nz
+      dx2= ABS(xmax2 - xmin2)/DBLE( THIS% nx2 )
+      dy2= ABS(ymax2 - ymin2)/DBLE( THIS% ny2 )
+      dz2= ABS(zlim2)/DBLE( THIS% nz2/2 )
+
+      dx1= dx2*(mass_ratio**(1.0D0/3.0D0))
+      dy1= dy2*(mass_ratio**(1.0D0/3.0D0))
+      dz1= dz2*(mass_ratio**(1.0D0/3.0D0))
+      THIS% nx1= NINT( ABS(xmax1 - xmin1)/dx1 ) + 1
+      THIS% ny1= NINT( ABS(ymax1 - ymin1)/dy1 ) + 1
+      THIS% nz1= NINT( 2*ABS(zlim)/dz1 ) + 1
+
+    ELSE
+
+      ! mass_ratio < 1
+      mass_ratio= mass1/mass2
+      !
+      !-- Compute lattices' steps
+      !
+      THIS% nx1= THIS% nx
+      THIS% ny1= THIS% ny
+      THIS% nz1= THIS% nz
+      dx1= ABS(xmax1 - xmin1)/DBLE( THIS% nx1 )
+      dy1= ABS(ymax1 - ymin1)/DBLE( THIS% ny1 )
+      dz1= ABS(zlim)/DBLE( THIS% nz1/2 )
+
+      dx2= dx1*(mass_ratio**(1.0D0/3.0D0))
+      dy2= dy1*(mass_ratio**(1.0D0/3.0D0))
+      dz2= dz1*(mass_ratio**(1.0D0/3.0D0))
+      THIS% nx2= NINT( ABS(xmax2 - xmin2)/dx2 ) + 1
+      THIS% ny2= NINT( ABS(ymax2 - ymin2)/dy2 ) + 1
+      THIS% nz2= NINT( 2*ABS(zlim2)/dz2 ) + 1
+
+    ENDIF
 
     ! Set the number of particles in the z direction to an even number
     ! since half of the particles are above the xy plane, and half below it
@@ -958,6 +991,11 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *, " * nx=", THIS% nx,  ", ny=", THIS% ny,  ", nz=", THIS% nz
     PRINT *, " * nx2=", nx2, ", ny2=", ny2, ", nz2=", nz2
     PRINT *
+
+    !PRINT *, " * xmin1=", xmin1, ", xmax1=", xmax1
+    !PRINT *, " * xmin2=", xmin2, ", xmax2=", xmax2
+    !PRINT *
+    !STOP
 
     ! Compute number of lattice points (temporary particle number)
     THIS% npart1_temp = THIS% nx*THIS% ny*THIS% nz !+ THIS% nx*THIS% ny
@@ -1329,8 +1367,12 @@ SUBMODULE (particles_id) particles_constructor
              THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
              " of the points in lattices."
     PRINT *
-    PRINT *, " * Number of particles on NS 1=", THIS% npart1
-    PRINT *, " * Number of particles on NS 2=", THIS% npart2
+    PRINT *, " * Number of particles on NS 1=", THIS% npart1, "=", &
+             DBLE(THIS% npart1)/DBLE(THIS% npart1_temp), &
+             " of the points in the first lattice."
+    PRINT *, " * Number of particles on NS 2=", THIS% npart2, "=", &
+             DBLE(THIS% npart2)/DBLE(THIS% npart2_temp), &
+             " of the points in the second lattice."
     PRINT *
 
     !

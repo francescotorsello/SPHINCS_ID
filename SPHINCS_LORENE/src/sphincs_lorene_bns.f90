@@ -107,7 +107,7 @@ PROGRAM sphincs_lorene_bns
   !-- Construct the LORENE ID from the LORENE binary files
   !
   build_bns_loop: DO itr= 1, n_bns, 1
-    binaries( itr )= bns( TRIM(common_path)//"/"//TRIM(filenames( itr )) )
+    binaries( itr )= bns( TRIM(common_path)//TRIM(filenames( itr )) )
     ! Set the variables to decide on using the geodesic gauge or not
     ! (lapse=1, shift=0)
     binaries( itr )% one_lapse = one_lapse

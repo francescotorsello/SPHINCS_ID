@@ -267,7 +267,11 @@ SUBMODULE (particles_id) particles_methods
       ! N.B. This first guess is very important, as it affects the algorithm in
       !      exact_tree_nei_update. Here it is set to 3 times the size of a
       !      particle
-      THIS% h(itr)= 3.0*(THIS% vol_a)**third
+      IF( itr <= THIS% npart1 )THEN
+        THIS% h(itr)= 3.0*(THIS% vol1_a)**third
+      ELSE
+        THIS% h(itr)= 3.0*(THIS% vol2_a)**third
+      ENDIF
       h(itr)= THIS% h(itr)
       ! /(Msun_geo**3)
 
@@ -293,9 +297,15 @@ SUBMODULE (particles_id) particles_methods
       THIS% pressure_parts_cu(itr)= Pr(itr)
 
       ! Baryon per particle
-      nu(itr)= nlrf(itr)*THIS% vol_a*Theta_a*sq_g
+      IF( itr <= THIS% npart1 )THEN
+        nu(itr)= nlrf(itr)*THIS% vol1_a*Theta_a*sq_g
+        THIS% nbar1= THIS% nbar1 + nu(itr)
+      ELSE
+        nu(itr)= nlrf(itr)*THIS% vol2_a*Theta_a*sq_g
+        THIS% nbar2= THIS% nbar2 + nu(itr)
+      ENDIF
       THIS% nu(itr)= nu(itr)
-      THIS% nbar_tot= THIS% nbar_tot + THIS% nu(itr)
+      !THIS% nbar_tot= THIS% nbar_tot + THIS% nu(itr)
 
       ! THIS% mass1*umass converts mass1 in g; umass is Msun in g
       ! amu is the atomic mass unit in g
@@ -344,6 +354,7 @@ SUBMODULE (particles_id) particles_methods
       divv(itr)=  0.D0
 
     ENDDO compute_SPH_variables_on_particles
+    THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     !---------------------------------------------------------------------!
     !--  Optional redistribution of nu on the stars, with the purpose   --!
@@ -673,15 +684,25 @@ SUBMODULE (particles_id) particles_methods
              MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
              MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
     PRINT *
+    PRINT *, " * Number of baryons on star 1=", THIS% nbar1
+    PRINT *, " * Total mass of the baryons on star 1=", &
+             THIS% nbar1*amu/Msun, "Msun =", &
+             THIS% nbar1*amu/Msun/THIS% mass1, &
+             "of the LORENE baryon mass of star 1."
+    PRINT *, " * Number of baryons on star 2=", THIS% nbar2
+    PRINT *, " * Total mass of the baryons on star 2=", &
+             THIS% nbar2*amu/Msun, "Msun =", &
+             THIS% nbar2*amu/Msun/THIS% mass2, &
+             "of the LORENE baryon mass of star 2."
     PRINT *, " * Total number of baryons=", THIS% nbar_tot
-    PRINT *, " * Total mass of the considered baryons=", &
+    PRINT *, " * Total mass of the baryons=", &
              THIS% nbar_tot*amu/Msun, "Msun =", &
              THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2), &
-             "of the total baryon mass."
+             "of the total LORENE baryon mass."
     PRINT *
 
     !
-    !-- Adjusting the baryons per particle uniformly so that
+    !-- Adjusting the baryon number per particle uniformly so that
     !-- the baryon mass is correct, but the ratio between nu_max and nu_min
     !-- does not change.
     !-- nlrf is not to be rescaled, according to Stephan, since:
@@ -693,14 +714,40 @@ SUBMODULE (particles_id) particles_methods
       !THIS% nlrf=
       !        THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
       !nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-      THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-      nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-      THIS% nbar_tot= &
-          THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-      PRINT *, " * Total mass of the considered corrected baryons=", &
+      !THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+      !nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+      !THIS% nbar_tot= &
+      !    THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+      THIS% nu( 1:THIS% npart1 )= &
+                THIS% nu( 1:THIS% npart1 )/(THIS% nbar1*amu/Msun/THIS% mass1)
+      nu( 1:THIS% npart1 )= &
+                nu( 1:THIS% npart1 )/(THIS% nbar1*amu/Msun/THIS% mass1)
+      THIS% nbar1= THIS% nbar1/(THIS% nbar1*amu/Msun/THIS% mass1)
+
+      THIS% nu( THIS% npart1 + 1:THIS% npart )= &
+                THIS% nu( THIS% npart1 + 1:THIS% npart ) &
+                /(THIS% nbar2*amu/Msun/THIS% mass2)
+      nu( THIS% npart1 + 1:THIS% npart )= &
+                nu( THIS% npart1 + 1:THIS% npart ) &
+                /(THIS% nbar2*amu/Msun/THIS% mass2)
+      THIS% nbar2= THIS% nbar2/(THIS% nbar2*amu/Msun/THIS% mass2)
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+      PRINT *, " * Number of corrected baryons on star 1=", THIS% nbar1
+      PRINT *, " * Total mass of the corrected baryons on star 1=", &
+               THIS% nbar1*amu/Msun, "Msun =", &
+               THIS% nbar1*amu/Msun/THIS% mass1, &
+               "of the LORENE baryon mass of star 1."
+      PRINT *, " * Number of corrected baryons on star 2=", THIS% nbar2
+      PRINT *, " * Total mass of the corrected baryons on star 2=", &
+               THIS% nbar2*amu/Msun, "Msun =", &
+               THIS% nbar2*amu/Msun/THIS% mass2, &
+               "of the LORENE baryon mass of star 2."
+      PRINT *, " * Total number of corrected baryons=", THIS% nbar_tot
+      PRINT *, " * Total mass of the corrected baryons=", &
                THIS% nbar_tot*amu/Msun, "Msun =", &
                THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2), &
-               "of the total baryon mass."
+               "of the total LORENE baryon mass."
       PRINT *
     ENDIF
 
@@ -917,7 +964,7 @@ SUBMODULE (particles_id) particles_methods
 
     INTEGER:: itr, min_y_index
 
-    DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION:: min_abs_y, min_abs_z1, min_abs_z2
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     LOGICAL:: exist
@@ -1043,14 +1090,19 @@ SUBMODULE (particles_id) particles_methods
       ENDIF
     ENDDO
 
-    min_abs_z= MINVAL( abs_pos( 3, : ) )
+    min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart1 ) )
+    min_abs_z2= MINVAL( abs_pos( 3, THIS% npart1+1:THIS% npart ) )
 
     write_data_loop: DO itr = 1, THIS% npart, 1
 
-      IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
+      IF( THIS% export_form_xy .AND. &
+          ( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
+            THIS% pos( 3, itr ) /= min_abs_z2 ) &
+      )THEN
         CYCLE
       ENDIF
-      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
+      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z1 &
+          .OR. THIS% pos( 3, itr ) /= min_abs_z2 &
           .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
         CYCLE
       ENDIF
@@ -1309,7 +1361,7 @@ SUBMODULE (particles_id) particles_methods
 
     INTEGER:: itr, min_y_index
 
-    DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION:: min_abs_y, min_abs_z1, min_abs_z2
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     LOGICAL:: exist
@@ -1425,14 +1477,19 @@ SUBMODULE (particles_id) particles_methods
       ENDIF
     ENDDO
 
-    min_abs_z= MINVAL( abs_pos( 3, : ) )
+    min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart1 ) )
+    min_abs_z2= MINVAL( abs_pos( 3, THIS% npart1+1:THIS% npart ) )
 
     write_data_loop: DO itr = 1, THIS% npart, 1
 
-      IF( THIS% export_form_xy .AND. THIS% pos( 3, itr ) /= min_abs_z )THEN
+      IF( THIS% export_form_xy .AND. &
+          ( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
+            THIS% pos( 3, itr ) /= min_abs_z2 ) &
+      )THEN
         CYCLE
       ENDIF
-      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z &
+      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z1 &
+          .OR. THIS% pos( 3, itr ) /= min_abs_z2 &
           .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
         CYCLE
       ENDIF
