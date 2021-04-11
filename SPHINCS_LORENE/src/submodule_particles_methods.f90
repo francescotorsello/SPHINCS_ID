@@ -251,10 +251,10 @@ SUBMODULE (particles_id) particles_methods
       !
       Theta_a= 0.D0
       DO nus=0,3
-         DO mus=0,3
-            Theta_a= Theta_a &
-                     + g4(mus,nus)*THIS% v(mus,itr)*THIS% v(nus,itr)
-         ENDDO
+        DO mus=0,3
+          Theta_a= Theta_a &
+                   + g4(mus,nus)*THIS% v(mus,itr)*THIS% v(nus,itr)
+        ENDDO
       ENDDO
       Theta_a= 1.0D0/SQRT(-Theta_a)
       Theta(itr)= Theta_a
@@ -297,14 +297,14 @@ SUBMODULE (particles_id) particles_methods
       THIS% pressure_parts_cu(itr)= Pr(itr)
 
       ! Baryon per particle
-      IF( itr <= THIS% npart1 )THEN
-        nu(itr)= nlrf(itr)*THIS% vol1_a*Theta_a*sq_g
-        THIS% nbar1= THIS% nbar1 + nu(itr)
-      ELSE
-        nu(itr)= nlrf(itr)*THIS% vol2_a*Theta_a*sq_g
-        THIS% nbar2= THIS% nbar2 + nu(itr)
-      ENDIF
-      THIS% nu(itr)= nu(itr)
+      !IF( itr <= THIS% npart1 )THEN
+      !  nu(itr)= nlrf(itr)*THIS% vol1_a*Theta_a*sq_g
+      !  THIS% nbar1= THIS% nbar1 + nu(itr)
+      !ELSE
+      !  nu(itr)= nlrf(itr)*THIS% vol2_a*Theta_a*sq_g
+      !  THIS% nbar2= THIS% nbar2 + nu(itr)
+      !ENDIF
+      !THIS% nu(itr)= nu(itr)
       !THIS% nbar_tot= THIS% nbar_tot + THIS% nu(itr)
 
       ! THIS% mass1*umass converts mass1 in g; umass is Msun in g
@@ -354,7 +354,7 @@ SUBMODULE (particles_id) particles_methods
       divv(itr)=  0.D0
 
     ENDDO compute_SPH_variables_on_particles
-    THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+    !THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     !---------------------------------------------------------------------!
     !--  Optional redistribution of nu on the stars, with the purpose   --!
@@ -366,28 +366,40 @@ SUBMODULE (particles_id) particles_methods
 
       ! Index particles on star 1 in increasing order of nu
 
-      CALL indexx( THIS% npart1, &
-                   THIS% nu( 1 : THIS% npart1 ), &
-                   THIS% baryon_density_index( 1 : THIS% npart1 ) )
+      !CALL indexx( THIS% npart1, &
+      !             THIS% baryon_density_parts( 1 : THIS% npart1 ), &
+      !             !THIS% nu( 1 : THIS% npart1 ), &
+      !             THIS% baryon_density_index( 1 : THIS% npart1 ) )
 
       ! Index particles on star 2 in increasing order of nu
 
-      CALL indexx( THIS% npart2, &
-                   THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
-                   THIS% baryon_density_index( THIS% npart1 + 1 : &
-                                                    THIS% npart ) )
+      !CALL indexx( THIS% npart2, &
+      !             THIS% baryon_density_parts( THIS% npart1 + 1 : &
+      !                                         THIS% npart ), &
+      !             !THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
+      !             THIS% baryon_density_index( THIS% npart1 + 1 : &
+      !                                         THIS% npart ) )
 
       ! Shift indices on star 2 by npart1 since all the arrays store
       ! the quantities on star 1 first, and then on star 2
 
-      THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )= &
-                  THIS% npart1 + &
-                  THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )
+      !THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )= &
+      !            THIS% npart1 + &
+      !            THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )
 
       ! Store the maximum values of nu on the two stars, and the thresholds
 
-      nu_max1= MAXVAL( THIS% nu( 1 : THIS% npart1 ) )
-      nu_max2= MAXVAL( THIS% nu( THIS% npart1 + 1 : THIS% npart ) )
+      !nu_max1= MAXVAL( THIS% nu( 1 : THIS% npart1 ) )
+      !nu_max2= MAXVAL( THIS% nu( THIS% npart1 + 1 : THIS% npart ) )
+
+      nu_max1= nlrf( THIS% baryon_density_index( THIS% npart1 ) )&
+              *THIS% vol1_a &
+              *Theta( THIS% baryon_density_index( THIS% npart1 ) )&
+              *sq_det_g4( THIS% baryon_density_index( THIS% npart1 ) )
+      nu_max2= nlrf( THIS% baryon_density_index( THIS% npart ) )&
+              *THIS% vol2_a &
+              *Theta( THIS% baryon_density_index( THIS% npart ) )&
+              *sq_det_g4( THIS% baryon_density_index( THIS% npart ) )
 
       nu_thres1= nu_max1/THIS% nu_ratio
       nu_thres2= nu_max2/THIS% nu_ratio
@@ -398,6 +410,8 @@ SUBMODULE (particles_id) particles_methods
       nu= 1.0D0
       THIS% nu= 1.0D0
       THIS% nbar_tot= 0.0D0
+      THIS% nbar1= 0.0D0
+      THIS% nbar2= 0.0D0
 
       cnt1= 0
       compute_nu_on_particles_star1: DO itr= THIS% npart1, 1, -1
@@ -418,10 +432,10 @@ SUBMODULE (particles_id) particles_methods
           THIS% nu( THIS% baryon_density_index( itr ) )= nu_thres1
         ENDIF
 
-        THIS% nbar_tot= THIS% nbar_tot + &
-                        THIS% nu( THIS% baryon_density_index( itr ) )
+        THIS% nbar1= THIS% nbar1 + &
+                     THIS% nu( THIS% baryon_density_index( itr ) )
 
-        IF( THIS% nbar_tot*amu/MSun > THIS% mass1 )THEN
+        IF( THIS% nbar1*amu/MSun > THIS% mass1 )THEN
           EXIT
         ENDIF
 
@@ -446,14 +460,15 @@ SUBMODULE (particles_id) particles_methods
           THIS% nu( THIS% baryon_density_index( itr ) )= nu_thres2
         ENDIF
 
-        THIS% nbar_tot= THIS% nbar_tot + &
-                        THIS% nu( THIS% baryon_density_index( itr ) )
+        THIS% nbar2= THIS% nbar2 + &
+                     THIS% nu( THIS% baryon_density_index( itr ) )
 
-        IF( THIS% nbar_tot*amu/MSun - THIS% mass1 > THIS% mass2 )THEN
+        IF( THIS% nbar2*amu/MSun > THIS% mass2 )THEN
           EXIT
         ENDIF
 
       ENDDO compute_nu_on_particles_star2
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
       !PRINT *, cnt1, cnt2
       !PRINT *, nu_thres1, nu_thres2, nu_tmp
       !STOP
@@ -592,6 +607,20 @@ SUBMODULE (particles_id) particles_methods
       PRINT *, " * Number of particles on NS 1=", THIS% npart1
       PRINT *, " * Number of particles on NS 2=", THIS% npart2
       PRINT *
+
+    ELSE
+
+      DO itr= 1, THIS% npart1, 1
+        nu(itr)= nlrf(itr)*THIS% vol1_a*Theta( itr )*sq_det_g4( itr )
+        THIS% nu(itr)= nu(itr)
+        THIS% nbar1= THIS% nbar1 + nu(itr)
+      ENDDO
+      DO itr= 1, THIS% npart1 + 1, THIS% npart
+        nu(itr)= nlrf(itr)*THIS% vol2_a*Theta( itr )*sq_det_g4( itr )
+        THIS% nu(itr)= nu(itr)
+        THIS% nbar2= THIS% nbar2 + nu(itr)
+      ENDDO
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     ENDIF
 

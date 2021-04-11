@@ -499,6 +499,33 @@ SUBMODULE (particles_id) particles_constructor
 
     !PRINT *, "End of particle constructor"
 
+    IF( parts_obj% redistribute_nu )THEN
+
+      ! Index particles on star 1 in increasing order of nu
+
+      CALL indexx( parts_obj% npart1, &
+                   parts_obj% baryon_density_parts( 1 : parts_obj% npart1 ), &
+                   parts_obj% baryon_density_index( 1 : parts_obj% npart1 ) )
+
+      ! Index particles on star 2 in increasing order of nu
+
+      CALL indexx( parts_obj% npart2, &
+                   parts_obj% baryon_density_parts( parts_obj% npart1 + 1 : &
+                                                    parts_obj% npart ), &
+                   parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
+                                                    parts_obj% npart ) )
+
+      ! Shift indices on star 2 by npart1 since all the arrays store
+      ! the quantities on star 1 first, and then on star 2
+
+      parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
+                                       parts_obj% npart )= &
+                     parts_obj% npart1 + &
+                     parts_obj% baryon_density_index( parts_obj% npart1 + 1 : &
+                                                      parts_obj% npart )
+
+    ENDIF
+
 !===============================================================================
 !===============================DEBUGGING=======================================
 !===============================================================================
