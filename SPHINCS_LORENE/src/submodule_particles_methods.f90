@@ -404,7 +404,7 @@ SUBMODULE (particles_id) particles_methods
 
         cnt1= cnt1 + 1
 
-        nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol_a &
+        nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol1_a &
                 *Theta( THIS% baryon_density_index( itr ) )&
                 *sq_det_g4( THIS% baryon_density_index( itr ) )
 
@@ -432,7 +432,7 @@ SUBMODULE (particles_id) particles_methods
 
         cnt2= cnt2 + 1
 
-        nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol_a &
+        nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol2_a &
                 *Theta( THIS% baryon_density_index( itr ) ) &
                 *sq_det_g4( THIS% baryon_density_index( itr ) )
 
@@ -454,6 +454,9 @@ SUBMODULE (particles_id) particles_methods
         ENDIF
 
       ENDDO compute_nu_on_particles_star2
+      !PRINT *, cnt1, cnt2
+      !PRINT *, nu_thres1, nu_thres2, nu_tmp
+      !STOP
 
       !
       !-- Reshape MODULE variables

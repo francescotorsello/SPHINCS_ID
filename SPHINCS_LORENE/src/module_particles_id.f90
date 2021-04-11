@@ -41,7 +41,7 @@ MODULE particles_id
     PRIVATE
 
     INTEGER:: npart, npart1, npart2, npart_temp, npart1_temp, npart2_temp
-    INTEGER:: nx, ny, nz
+    INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
     ! The flag call_flag is set different than 0 if the SUBROUTINE
     ! compute_and_export_SPH_variables is called
     INTEGER:: call_flag= 0
@@ -129,13 +129,11 @@ MODULE particles_id
     ! 1-D array storing the smoothing length
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
     ! Baryonic masses of the neutron stars [Msun]
-    DOUBLE PRECISION:: mass1, mass2
+    DOUBLE PRECISION:: mass1, mass2, mass_ratio
     ! Total grid volume
     DOUBLE PRECISION:: vol, vol1, vol2
     ! Volume per particle
     DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
-    ! Total baryon number
-    DOUBLE PRECISION:: nbar_tot
     ! Ratio between the max and min of the baryon number per particle
     DOUBLE PRECISION:: nu_ratio
     ! Total baryon number, and baryon numbers of the stars
