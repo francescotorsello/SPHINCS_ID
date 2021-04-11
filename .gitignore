@@ -62,3 +62,4 @@ SPHINCS_fix_metric/*.mod
 SPHINCS_fix_metric/*.smod
 SPHINCS_fix_metric/.sconsign.dblite
 *~
+**/*.diff
