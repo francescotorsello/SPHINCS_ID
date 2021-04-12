@@ -895,8 +895,22 @@ SUBMODULE (particles_id) particles_constructor
     !
     !-- Computing total volume and volume per particle
     !
+    IF(.NOT.ALLOCATED( THIS% pvol ))THEN
+      ALLOCATE( THIS% pvol( THIS% npart ), STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array pvol ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array v_euler_parts_z" )
+    ENDIF
+
     THIS% vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
     THIS% vol_a= THIS% vol/THIS% npart_temp
+
+    THIS% pvol= THIS% vol_a
 
     ! Consistency check for the particle volume
     IF( ABS( THIS% vol_a - dx*dy*dz ) > 1D-9 )THEN
@@ -1406,6 +1420,18 @@ SUBMODULE (particles_id) particles_constructor
     !
     !-- Computing total volume and volume per particle
     !
+    IF(.NOT.ALLOCATED( THIS% pvol ))THEN
+      ALLOCATE( THIS% pvol( THIS% npart ), STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array pvol ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !        "...allocation error for array v_euler_parts_z" )
+    ENDIF
+
     THIS% vol1_a= dx1*dy1*dz1
     THIS% vol1 = (xmax1 - xmin1)*(ymax1 - ymin1)*2*ABS(zlim)
     !THIS% vol2 = THIS% npart2_temp * THIS% vol_a
@@ -1418,6 +1444,13 @@ SUBMODULE (particles_id) particles_constructor
     !THIS% vol2 = THIS% npart2_temp * THIS% vol_a2
     !THIS% vol  = THIS% vol1 + THIS% vol2
     vol_a_alt2  = THIS% vol2/THIS% npart2_temp
+
+    THIS% pvol( 1:THIS% npart1 )              = THIS% vol1_a
+    THIS% pvol( THIS% npart1 + 1:THIS% npart )= THIS% vol2_a
+
+!PRINT *, THIS% vol1_a, THIS% vol2_a
+!PRINT *, THIS% pvol( THIS% npart1 ), THIS% pvol( THIS% npart1 + 1 )
+!STOP
 
     THIS% vol= THIS% vol1 + THIS% vol2
 

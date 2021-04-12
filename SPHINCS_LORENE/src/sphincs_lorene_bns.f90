@@ -161,13 +161,13 @@ PROGRAM sphincs_lorene_bns
         particles_dist( itr3, itr4 )% export_form_x = export_form_x
         CALL particles_dist( itr3, itr4 )% &
              compute_and_export_SPH_variables( namefile_parts_bin )
-        !IF( particles_dist( itr3, itr4 )% export_bin )THEN
-        !  WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
-        !                  "sph_vars-", itr3, "-", itr4, ".dat"
-        !  CALL particles_dist( itr3, itr4 )% &
-        !                  read_sphincs_dump_print_formatted( &
-        !                                namefile_parts_bin, namefile_parts )
-        !ENDIF
+        IF( particles_dist( itr3, itr4 )% export_bin )THEN
+          WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
+                          "sph_vars-", itr3, "-", itr4, ".dat"
+          CALL particles_dist( itr3, itr4 )% &
+                          read_sphincs_dump_print_formatted( &
+                                        namefile_parts_bin, namefile_parts )
+        ENDIF
 
       ENDIF
     ENDDO part_distribution_loop2
@@ -225,11 +225,11 @@ PROGRAM sphincs_lorene_bns
     bssn_forms( itr3 )% export_bin= export_bin
     CALL bssn_forms( itr3 )% &
                         compute_and_export_3p1_variables( namefile_bssn_bin )
-    !IF( bssn_forms( itr3 )% export_bin )THEN
-    !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
-    !  CALL bssn_forms( itr3 )% &
-    !        read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
-    !ENDIF
+    IF( bssn_forms( itr3 )% export_bin )THEN
+      WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
+      CALL bssn_forms( itr3 )% &
+            read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
+    ENDIF
   ENDDO compute_export_bssn_loop
 
   !

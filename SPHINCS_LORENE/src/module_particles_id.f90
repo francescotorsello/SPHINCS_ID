@@ -128,6 +128,8 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye
     ! 1-D array storing the smoothing length
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
+    ! 1-D array storing the particle volume
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
     ! Baryonic masses of the neutron stars [Msun]
     DOUBLE PRECISION:: mass1, mass2, mass_ratio
     ! Total grid volume

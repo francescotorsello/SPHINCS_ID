@@ -266,11 +266,12 @@ SUBMODULE (particles_id) particles_methods
       ! N.B. This first guess is very important, as it affects the algorithm in
       !      exact_tree_nei_update. Here it is set to 3 times the size of a
       !      particle
-      IF( itr <= THIS% npart1 )THEN
-        THIS% h(itr)= 3.0*(THIS% vol1_a)**third
-      ELSE
-        THIS% h(itr)= 3.0*(THIS% vol2_a)**third
-      ENDIF
+      !IF( itr <= THIS% npart1 )THEN
+      !  THIS% h(itr)= 3.0*(THIS% vol1_a)**third
+      !ELSE
+      !  THIS% h(itr)= 3.0*(THIS% vol2_a)**third
+      !ENDIF
+      THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
       h(itr)= THIS% h(itr)
       ! /(Msun_geo**3)
 
@@ -392,11 +393,11 @@ SUBMODULE (particles_id) particles_methods
       !nu_max2= MAXVAL( THIS% nu( THIS% npart1 + 1 : THIS% npart ) )
 
       nu_max1= nlrf( THIS% baryon_density_index( THIS% npart1 ) )&
-              *THIS% vol1_a &
+              *THIS% pvol( THIS% npart1 ) &
               *Theta( THIS% baryon_density_index( THIS% npart1 ) )&
               *sq_det_g4( THIS% baryon_density_index( THIS% npart1 ) )
       nu_max2= nlrf( THIS% baryon_density_index( THIS% npart ) )&
-              *THIS% vol2_a &
+              *THIS% pvol( THIS% npart ) &
               *Theta( THIS% baryon_density_index( THIS% npart ) )&
               *sq_det_g4( THIS% baryon_density_index( THIS% npart ) )
 
@@ -417,7 +418,8 @@ SUBMODULE (particles_id) particles_methods
 
         cnt1= cnt1 + 1
 
-        nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol1_a &
+        nu_tmp= nlrf( THIS% baryon_density_index( itr ) ) &
+                *THIS% pvol(itr) &
                 *Theta( THIS% baryon_density_index( itr ) )&
                 *sq_det_g4( THIS% baryon_density_index( itr ) )
 
@@ -445,7 +447,8 @@ SUBMODULE (particles_id) particles_methods
 
         cnt2= cnt2 + 1
 
-        nu_tmp= nlrf( THIS% baryon_density_index( itr ) )*THIS% vol2_a &
+        nu_tmp= nlrf( THIS% baryon_density_index( itr ) ) &
+                *THIS% pvol(itr) &
                 *Theta( THIS% baryon_density_index( itr ) ) &
                 *sq_det_g4( THIS% baryon_density_index( itr ) )
 
@@ -555,6 +558,9 @@ SUBMODULE (particles_id) particles_methods
       CALL THIS% reshape_sph_field( THIS% nu, cnt1, cnt2, &
                                     THIS% baryon_density_index )
 
+      CALL THIS% reshape_sph_field( THIS% pvol, cnt1, cnt2, &
+                                    THIS% baryon_density_index )
+
       !
       !-- Reshape TYPE member spacetime variables
       !
@@ -610,12 +616,12 @@ SUBMODULE (particles_id) particles_methods
     ELSE
 
       DO itr= 1, THIS% npart1, 1
-        nu(itr)= nlrf(itr)*THIS% vol1_a*Theta( itr )*sq_det_g4( itr )
+        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
         THIS% nu(itr)= nu(itr)
         THIS% nbar1= THIS% nbar1 + nu(itr)
       ENDDO
       DO itr= 1, THIS% npart1 + 1, THIS% npart
-        nu(itr)= nlrf(itr)*THIS% vol2_a*Theta( itr )*sq_det_g4( itr )
+        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
         THIS% nu(itr)= nu(itr)
         THIS% nbar2= THIS% nbar2 + nu(itr)
       ENDDO

@@ -435,13 +435,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
             DO i= 1, THIS% get_ngrid_x(l), 1
 
-              IF( THIS% export_constraints_xy .AND. &
+              IF( THIS% export_form_xy .AND. &
                   ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
                     THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                   min_iz_z, jz ) ) )THEN
                 CYCLE
               ENDIF
-              IF( THIS% export_constraints_x .AND. &
+              IF( THIS% export_form_x .AND. &
                   ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
                     THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                   min_iz_z, jz ) &
