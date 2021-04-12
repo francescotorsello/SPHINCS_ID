@@ -172,7 +172,6 @@ PROGRAM sphincs_lorene_bns
       ENDIF
     ENDDO part_distribution_loop2
   ENDDO compute_export_sph_loops
-  STOP
 
   !
   !-- Print the particle initial data to a formatted file

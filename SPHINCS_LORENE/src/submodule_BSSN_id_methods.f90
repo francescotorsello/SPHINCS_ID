@@ -647,8 +647,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
         !  ENDDO
         !ENDDO
 
-        min_abs_y= 1D+20
-        min_abs_z= 1D+20
+        min_abs_y= HUGE(1.0D0)
+        min_abs_z= HUGE(1.0D0)
         DO k= 1, THIS% get_ngrid_z(l), 1
           DO j= 1, THIS% get_ngrid_y(l), 1
             DO i= 1, THIS% get_ngrid_x(l), 1
@@ -679,13 +679,13 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
             DO i= 1, THIS% get_ngrid_x(l), 1
 
-              IF( THIS% export_constraints_xy .AND. &
+              IF( THIS% export_form_xy .AND. &
                   ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
                     THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                   min_iz_z, jz ) ) )THEN
                 CYCLE
               ENDIF
-              IF( THIS% export_constraints_x .AND. &
+              IF( THIS% export_form_x .AND. &
                   ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
                     THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                   min_iz_z, jz ) &

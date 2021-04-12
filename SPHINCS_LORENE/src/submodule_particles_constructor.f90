@@ -233,7 +233,7 @@ SUBMODULE (particles_id) particles_constructor
                                                   xmin2, xmax2, ymin2, &
                                                   ymax2, zmin2, zmax2, thres, &
                                                   bns_obj )
-     CALL parts_obj% placer_timer% stop_timer()
+      CALL parts_obj% placer_timer% stop_timer()
 
     CASE DEFAULT
 

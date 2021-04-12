@@ -164,7 +164,6 @@ SUBMODULE (particles_id) particles_methods
     !
     !-- Compute SPH quantities
     !
-
     CALL THIS% sph_computer_timer% start_timer()
     compute_SPH_variables_on_particles: DO itr= 1, THIS% npart, 1
 
@@ -357,7 +356,7 @@ SUBMODULE (particles_id) particles_methods
     !THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     !---------------------------------------------------------------------!
-    !--  Optional redistribution of nu on the stars, with the purpose   --!
+    !--  Assignment of nu on the stars, with the purpose                --!
     !--  of having a more uniform nu over the particles without losing  --!
     !--  baryon mass.                                                   --!
     !---------------------------------------------------------------------!
@@ -715,6 +714,8 @@ SUBMODULE (particles_id) particles_methods
     PRINT *, " * Ratio between the two=", &
              MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
              MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+    PRINT *, " * Baryon number ratio across the stars=", &
+             MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
     PRINT *
     PRINT *, " * Number of baryons on star 1=", THIS% nbar1
     PRINT *, " * Total mass of the baryons on star 1=", &
