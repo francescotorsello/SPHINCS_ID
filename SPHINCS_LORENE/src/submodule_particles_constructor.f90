@@ -1448,21 +1448,17 @@ SUBMODULE (particles_id) particles_constructor
     THIS% pvol( 1:THIS% npart1 )              = THIS% vol1_a
     THIS% pvol( THIS% npart1 + 1:THIS% npart )= THIS% vol2_a
 
-!PRINT *, THIS% vol1_a, THIS% vol2_a
-!PRINT *, THIS% pvol( THIS% npart1 ), THIS% pvol( THIS% npart1 + 1 )
-!STOP
-
     THIS% vol= THIS% vol1 + THIS% vol2
 
     ! Consistency check for the particle volume
-    IF( ABS( THIS% vol1_a - vol_a_alt1 ) > 1D-15 )THEN
+    IF( ABS( THIS% vol1_a - vol_a_alt1 ) > 1D-7 )THEN
       PRINT *, " * The particle volume vol_a_alt1=", vol_a_alt1, "Msun_geo^3"
       PRINT *, " is not equal to dx1*dy1*dz1=", THIS% vol1_a, "Msun_geo^3."
       PRINT *
       STOP
     ENDIF
     ! Consistency check for the particle volume
-    IF( ABS( THIS% vol2_a - vol_a_alt2 ) > 1D-15 )THEN
+    IF( ABS( THIS% vol2_a - vol_a_alt2 ) > 1D-7 )THEN
       PRINT *, " * The particle volume vol_a_alt2=", vol_a_alt2, "Msun_geo^3"
       PRINT *, " is not equal to dx2*dy2*dz2=", THIS% vol2_a, "Msun_geo^3."
       PRINT *
@@ -1479,6 +1475,39 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *
 
   END PROCEDURE place_particles_3dlattices
+
+
+  MODULE PROCEDURE place_particles_gaussianlattices
+
+    !************************************************
+    !                                               *
+    !     *
+    !     *
+    !                                               *
+    ! FT 5.12.2020                                  *
+    !                                               *
+    !************************************************
+
+    IMPLICIT NONE
+
+    THIS% mass1= bns_obj% get_mass1()
+    THIS% mass2= bns_obj% get_mass2()
+
+    IF( THIS% mass1 > THIS% mass2 )THEN
+
+      ! mass_ratio < 1
+      THIS% mass_ratio= THIS% mass2/THIS% mass1
+
+
+    ELSE
+
+      ! mass_ratio < 1
+      THIS% mass_ratio= THIS% mass1/THIS% mass2
+
+
+    ENDIF
+
+  END PROCEDURE place_particles_gaussianlattices
 
 
   MODULE PROCEDURE analyze_hydro

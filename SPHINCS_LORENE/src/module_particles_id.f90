@@ -173,7 +173,7 @@ MODULE particles_id
 
     PROCEDURE:: place_particles_3dlattices
 
-    !PROCEDURE:: sort_particles
+    PROCEDURE:: place_particles_gaussianlattices
 
     GENERIC, PUBLIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
                                            reshape_sph_field_2d_ptr
@@ -283,13 +283,19 @@ MODULE particles_id
 
     END SUBROUTINE place_particles_3dlattices
 
-    !MODULE SUBROUTINE sort_particles( THIS, pos, baryon_density )
-    !
-    !  CLASS(particles), INTENT( IN OUT ):: THIS
-    !  DOUBLE PRECISION, INTENT( IN )    :: pos
-    !  DOUBLE PRECISION, INTENT( IN )    :: baryon_density
-    !
-    !END SUBROUTINE sort_particles
+    MODULE SUBROUTINE place_particles_gaussianlattices( THIS, &
+                                  xmin1, xmax1, ymin1, ymax1, zmin1, zmax1, &
+                                  xmin2, xmax2, ymin2, ymax2, zmin2, zmax2, &
+                                  thres, bns_obj )
+
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      DOUBLE PRECISION, INTENT( IN )    :: xmin1, xmax1, ymin1, &
+                                           ymax1, zmin1, zmax1
+      DOUBLE PRECISION, INTENT( IN )    :: xmin2, xmax2, ymin2, &
+                                           ymax2, zmin2, zmax2, thres
+
+    END SUBROUTINE place_particles_gaussianlattices
 
     MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
                                             index_array )
