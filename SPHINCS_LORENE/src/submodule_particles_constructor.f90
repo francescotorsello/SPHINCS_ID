@@ -235,6 +235,51 @@ SUBMODULE (particles_id) particles_constructor
                                                   bns_obj )
       CALL parts_obj% placer_timer% stop_timer()
 
+    CASE(3)
+
+      PRINT *, " * Placing particles on two lattices, " &
+               // "one around each star."
+      PRINT *
+
+      parts_obj% nx= nx
+      parts_obj% ny= ny
+      parts_obj% nz= nz
+
+      !
+      !-- Determine boundaries of the two lattices around the stars (Msun_geo)
+      !
+      xmin1=   bns_obj% get_center1_x() - &
+                                stretch*MAX( bns_obj% get_radius1_x_comp(), &
+                                             bns_obj% get_radius1_x_opp() )
+      xmax1=   bns_obj% get_center1_x() + &
+                                stretch*MAX( bns_obj% get_radius1_x_comp(), &
+                                             bns_obj% get_radius1_x_opp() )
+      ymin1= - stretch*bns_obj% get_radius1_y()
+      ymax1=   stretch*bns_obj% get_radius1_y()
+      zmin1= - stretch*bns_obj% get_radius1_z()
+      zmax1=   stretch*bns_obj% get_radius1_z()
+
+      xmin2=   bns_obj% get_center2_x() - &
+                                stretch*MAX( bns_obj% get_radius2_x_comp(), &
+                                             bns_obj% get_radius2_x_opp() )
+      xmax2=   bns_obj% get_center2_x() + &
+                                stretch*MAX( bns_obj% get_radius2_x_comp(), &
+                                             bns_obj% get_radius2_x_opp() )
+      ymin2= - stretch*bns_obj% get_radius2_y()
+      ymax2=   stretch*bns_obj% get_radius2_y()
+      zmin2= - stretch*bns_obj% get_radius2_z()
+      zmax2=   stretch*bns_obj% get_radius2_z()
+
+      ! Place particles, and time the process
+      CALL parts_obj% placer_timer% start_timer()
+      CALL parts_obj% place_particles_gaussianlattices( xmin1, xmax1, ymin1, &
+                                                  ymax1, zmin1, zmax1, &
+                                                  xmin2, xmax2, ymin2, &
+                                                  ymax2, zmin2, zmax2, thres, &
+                                                  bns_obj )
+      CALL parts_obj% placer_timer% stop_timer()
+      STOP
+
     CASE DEFAULT
 
       PRINT *, "** There is no implemented particle placer " &
@@ -1488,10 +1533,65 @@ SUBMODULE (particles_id) particles_constructor
     !                                               *
     !************************************************
 
+    USE constants, ONLY: pi
+
     IMPLICIT NONE
+
+    INTEGER:: npart1_tmp, npart2_tmp, npart1_radius, npart2_radius, nradii1, &
+              nradii2, tmp, cnt
+    DOUBLE PRECISION:: radius1, radius2, alpha1, alpha2, itr, itr2
+
+    npart1_tmp= 1D+5
+    npart2_tmp= 1D+5*1.8D0/1.2D0
 
     THIS% mass1= bns_obj% get_mass1()
     THIS% mass2= bns_obj% get_mass2()
+    radius1    = bns_obj% get_radius1_x_comp()
+    radius2    = bns_obj% get_radius2_x_comp()
+
+    npart1_radius= NINT( radius1* &
+                   (npart1_tmp/(4.0D0/3.0D0*pi*radius1**3.0D0))**(1.0D0/3.0D0) )
+    npart2_radius= NINT( radius2* &
+                   (npart2_tmp/(4.0D0/3.0D0*pi*radius2**3.0D0))**(1.0D0/3.0D0) )
+
+    nradii1= CEILING( DBLE(npart1_tmp)/DBLE(npart1_radius) )
+    nradii2= CEILING( DBLE(npart2_tmp)/DBLE(npart2_radius) )
+
+    !alpha1= 2.0D0*pi/SQRT( DBLE(nradii1) - 1.0D0 )
+    !alpha2= 2.0D0*pi/SQRT( DBLE(nradii2) - 1.0D0 )
+    alpha1= pi/DBLE(nradii1)*(1 + SQRT( DBLE(1 + 4*nradii1) ))
+    alpha2= pi/DBLE(nradii2)*(1 + SQRT( DBLE(1 + 4*nradii2) ))
+
+    PRINT *, "npart1_radius=", npart1_radius
+    PRINT *, "npart2_radius=", npart2_radius
+    PRINT *, "npart1_tmp=", npart1_tmp
+    PRINT *, "npart2_tmp=", npart2_tmp
+
+    PRINT *, "nradii1=", nradii1
+    PRINT *, "nradii2=", nradii2
+
+    PRINT *, "nradii1*npart1_radius=", nradii1*npart1_radius
+    PRINT *, "nradii2*npart2_radius=", nradii2*npart2_radius
+
+    PRINT *, "alpha1=", alpha1
+    PRINT *, "alpha2=", alpha2
+
+    tmp= 0
+    cnt= 0
+    DO itr= 0, 2*pi-alpha1, alpha1
+      DO itr2= alpha1/2, pi-alpha1/2, alpha1
+        tmp= tmp + npart1_radius
+        cnt= cnt + 1
+      ENDDO
+    ENDDO
+    PRINT *, "itr=", itr/(2*pi-alpha1)
+    PRINT *, "itr2=", itr2/(pi-alpha1/2)
+    PRINT *, "tmp=", tmp*2
+    PRINT *, "cnt*2=", cnt*2, ", nradii1= ", nradii1
+    PRINT *, (nradii1 - cnt*2)
+    PRINT *, (nradii1 - cnt*2)*npart1_radius + tmp*2
+
+    STOP
 
     IF( THIS% mass1 > THIS% mass2 )THEN
 
