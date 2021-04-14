@@ -1533,7 +1533,8 @@ SUBMODULE (particles_id) particles_constructor
     !                                               *
     !************************************************
 
-    USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g
+    USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g, lorene2hydrobase
+    USE matrix,    ONLY: determinant_4x4_matrix
 
     IMPLICIT NONE
 
@@ -1541,7 +1542,12 @@ SUBMODULE (particles_id) particles_constructor
               nradii2, tmp, cnt, cnt2, npart1_eqplane, npart2_eqplane, &
               nradii1_plane, nradii2_plane, itr3, mass_index
     DOUBLE PRECISION:: radius1, radius2, alpha1, alpha2, itr, itr2, &
-                       mass_step1, mass_step2, mass_tmp, rad_step
+                       mass_step1, mass_step2, mass_tmp, rad_step, vol_tmp, &
+                       mass_shell, rad_coord, lat, long, &
+                       lapse, shift_x, shift_y, shift_z, &
+                       g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                       det, sq_g
+    DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_fractions1, &
                                                   mass_fractions2
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii
@@ -1695,23 +1701,94 @@ PRINT *
     ! Latitude first, longitude second
     mass_index= 1
     shell_radii= 1.0D0
-    rad_step= radius1/npart1_radius/50
+    rad_step= radius1/DBLE(npart1_radius)/100.0D0
     mass_tmp= 0.0D0
+    vol_tmp= 0.0D0
 
-    radius_loop: DO itr= rad_step, radius1, rad_step
+    radius_loop: DO rad_coord= rad_step, radius1, rad_step
 
-      mass_tmp= mass_tmp + &
-                bns_obj% import_mass_density( &
-                      bns_obj% get_center1_x() + itr*COS(0.0D0)*COS(0.0D0), &
-                      itr*COS(0.0D0)*SIN(0.0D0), itr*SIN(0.0D0) ) &
-                *4.0D0/3.0D0*pi*(itr**3.0D0 - (itr - rad_step)**3.0D0)
+      !
+      !-- Metric as matrix for easy manipulation
+      !
+      g4(0,0)= - lapse**2 &
+             + g_xx*shift_x &
+              *shift_x&
+             + 2 * g_xy*shift_x &
+              *shift_y&
+             + 2 * g_xz*shift_x &
+              *shift_z&
+             + g_yy*shift_y &
+              *shift_y&
+             + 2 * g_yz*shift_y &
+              *shift_z&
+             + g_zz*shift_z &
+              *shift_z
+      g4(0,1)= g_xx*shift_x &
+             + g_xy*shift_y &
+             + g_xz*shift_z
+      g4(0,2)= g_xy*shift_x &
+             + g_yy*shift_y &
+             + g_yz*shift_z
+      g4(0,3)= g_xz*shift_x &
+             + g_yz*shift_y &
+             + g_zz*shift_z
 
-      PRINT *, bns_obj% get_center1_x() + itr*COS(0.0D0)*COS(0.0D0), &
-               !itr*COS(0.0D0)*SIN(0.0D0), itr*SIN(0.0D0), &
-               itr, mass_tmp
+      g4(1,0)= g_xx*shift_x &
+             + g_xy*shift_y &
+             + g_xz*shift_z
+      g4(1,1)= g_xx
+      g4(1,2)= g_xy
+      g4(1,3)= g_xz
+
+      g4(2,0)= g_xy*shift_x &
+             + g_yy*shift_y &
+             + g_yz*shift_z
+      g4(2,1)= g_xy
+      g4(2,2)= g_yy
+      g4(2,3)= g_yz
+
+      g4(3,0)= g_xz*shift_x &
+             + g_yz*shift_y &
+             + g_zz*shift_z
+      g4(3,1)= g_xz
+      g4(3,2)= g_yz
+      g4(3,3)= g_zz
+
+      ! sqrt(-det(g4))
+      CALL determinant_4x4_matrix(g4,det)
+      IF( ABS(det) < 1D-10 )THEN
+          PRINT *, "The determinant of the spacetime metric is " &
+                   // "effectively 0 at particle ", itr
+          STOP
+      ELSEIF( det > 0 )THEN
+          PRINT *, "The determinant of the spacetime metric is " &
+                   // "positive at particle ", itr
+          STOP
+      ENDIF
+      sq_g= SQRT(-det)
+
+      mass_shell= bns_obj% import_mass_density( &
+                        bns_obj% get_center1_x() + rad_coord - rad_step, &
+                        0.0D0, &
+                        0.0D0 ) &
+                  !*4.0D0*pi*rad_coord**2.0D0*rad_step
+                  *(4.0D0/3.0D0)*pi &
+                  *(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)
+
+      mass_tmp= mass_tmp + mass_shell
+
+      vol_tmp= vol_tmp &
+               + 4.0D0/3.0D0*pi*(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)
+
+      PRINT *, bns_obj% get_center1_x() + rad_coord*COS(0.0D0)*COS(0.0D0), &
+               rad_coord, &
+               bns_obj% import_mass_density( &
+                     bns_obj% get_center1_x() + rad_coord, 0.0D0, 0.0D0 ), &
+               4.0D0/3.0D0*pi*(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0), &
+               mass_shell, mass_tmp/THIS% mass1
 
       IF( mass_tmp >= mass_fractions1( mass_index ) )THEN
-        shell_radii( mass_index )= itr
+        shell_radii( mass_index )= rad_coord
         IF( mass_index == npart1_radius )THEN
           EXIT
         ELSE
@@ -1721,28 +1798,75 @@ PRINT *
 
     ENDDO radius_loop
 
+    !radius_loop: DO rad_coord= rad_step, radius1 + 8.0D0/9.0D0*rad_step, rad_step
+    !
+    !  longitude_loop: DO long= 0, 2*pi - alpha1/2, alpha1
+    !
+    !    latitude_loop: DO lat= 0, 2*pi - alpha1/2, alpha1
+    !
+    !      mass_shell= bns_obj% import_mass_density( &
+    !                  bns_obj% get_center1_x() + rad_coord*COS(lat)*COS(long), &
+    !                  rad_coord*COS(lat)*SIN(long), &
+    !                  rad_coord*SIN(lat) ) &
+    !                  *(4.0D0/3.0D0)*pi&
+    !                  *(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0) &
+    !                  /nradii1
+    !
+    !      mass_tmp= mass_tmp + mass_shell
+    !
+    !      vol_tmp= vol_tmp + (4.0D0/3.0D0)*pi&
+    !               *(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)/nradii1
+    !
+    !    ENDDO latitude_loop
+    !
+    !  ENDDO longitude_loop
+    !
+    !  PRINT *, bns_obj% get_center1_x() + rad_coord, &
+    !           rad_coord, mass_tmp
+    !
+    !  IF( mass_tmp >= mass_fractions1( mass_index ) )THEN
+    !    shell_radii( mass_index )= rad_coord
+    !    IF( mass_index == npart1_radius )THEN
+    !      EXIT
+    !    ELSE
+    !      mass_index= mass_index + 1
+    !    ENDIF
+    !  ENDIF
+    !
+    !ENDDO radius_loop
+
 PRINT *
-PRINT *, mass_fractions1
+PRINT *, "vol_tmp=", vol_tmp, ", vol=", 4.0D0/3.0D0*pi*radius1**3.0D0
 PRINT *
-PRINT *, shell_radii
+PRINT *, "radius1=", radius1
 PRINT *
-PRINT *, radius1
+PRINT *, "rad_step=", rad_step
+PRINT *
+PRINT *, "mass_tmp=", mass_tmp
+PRINT *
+PRINT *, "mass_fractions1=", mass_fractions1
+PRINT *
+PRINT *, "shell_radii=", shell_radii
+PRINT *
+PRINT *, bns_obj% import_mass_density( bns_obj% get_center1_x(), &
+                                       0.0D0, &
+                                       0.0D0 )*vol_tmp
 PRINT *
 STOP
 
-      longitude_loop: DO itr2= 0, 2*pi - alpha1, alpha1
-        latitude_loop: DO itr3= alpha1/2, pi-alpha1/2, alpha1
-
-          !xtemp=
-
-          IF( .TRUE. &
-          )THEN
-            THIS% npart1= THIS% npart1 + 1
-            !THIS% pos( 1, THIS% npart )
-          ENDIF
-
-        ENDDO latitude_loop
-      ENDDO longitude_loop
+      !longitude_loop: DO itr2= 0, 2*pi - alpha1, alpha1
+      !  latitude_loop: DO itr3= alpha1/2, pi-alpha1/2, alpha1
+      !
+      !    !xtemp=
+      !
+      !    IF( .TRUE. &
+      !    )THEN
+      !      THIS% npart1= THIS% npart1 + 1
+      !      !THIS% pos( 1, THIS% npart )
+      !    ENDIF
+      !
+      !  ENDDO latitude_loop
+      !ENDDO longitude_loop
 
     STOP
 
