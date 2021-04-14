@@ -1533,13 +1533,18 @@ SUBMODULE (particles_id) particles_constructor
     !                                               *
     !************************************************
 
-    USE constants, ONLY: pi
+    USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g
 
     IMPLICIT NONE
 
     INTEGER:: npart1_tmp, npart2_tmp, npart1_radius, npart2_radius, nradii1, &
-              nradii2, tmp, cnt
-    DOUBLE PRECISION:: radius1, radius2, alpha1, alpha2, itr, itr2
+              nradii2, tmp, cnt, cnt2, npart1_eqplane, npart2_eqplane, &
+              nradii1_plane, nradii2_plane, itr3, mass_index
+    DOUBLE PRECISION:: radius1, radius2, alpha1, alpha2, itr, itr2, &
+                       mass_step1, mass_step2, mass_tmp, rad_step
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_fractions1, &
+                                                  mass_fractions2
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii
 
     npart1_tmp= 1D+5
     npart2_tmp= 1D+5*1.8D0/1.2D0
@@ -1554,16 +1559,29 @@ SUBMODULE (particles_id) particles_constructor
     npart2_radius= NINT( radius2* &
                    (npart2_tmp/(4.0D0/3.0D0*pi*radius2**3.0D0))**(1.0D0/3.0D0) )
 
+    npart1_eqplane= NINT( pi*radius1**2* &
+                   (npart1_tmp/(4.0D0/3.0D0*pi*radius1**3.0D0))**(2.0D0/3.0D0) )
+    npart2_eqplane= NINT( pi*radius2**2* &
+                   (npart2_tmp/(4.0D0/3.0D0*pi*radius2**3.0D0))**(2.0D0/3.0D0) )
+
     nradii1= CEILING( DBLE(npart1_tmp)/DBLE(npart1_radius) )
     nradii2= CEILING( DBLE(npart2_tmp)/DBLE(npart2_radius) )
 
-    !alpha1= 2.0D0*pi/SQRT( DBLE(nradii1) - 1.0D0 )
-    !alpha2= 2.0D0*pi/SQRT( DBLE(nradii2) - 1.0D0 )
-    alpha1= pi/DBLE(nradii1)*(1 + SQRT( DBLE(1 + 4*nradii1) ))
-    alpha2= pi/DBLE(nradii2)*(1 + SQRT( DBLE(1 + 4*nradii2) ))
+    nradii1_plane= CEILING( SQRT(DBLE(nradii1)) )
+    nradii2_plane= CEILING( SQRT(DBLE(nradii2)) )
+
+    IF( MOD( nradii1_plane, 2 ) /= 0 ) nradii1_plane= nradii1_plane + 1
+    IF( MOD( nradii2_plane, 2 ) /= 0 ) nradii2_plane= nradii2_plane + 1
+
+    alpha1= 2.0D0*pi/DBLE(nradii1_plane)
+    alpha2= 2.0D0*pi/DBLE(nradii2_plane)
+    !alpha1= pi/DBLE(nradii1)*(1 + SQRT( DBLE(1 + 4*nradii1) ))
+    !alpha2= pi/DBLE(nradii2)*(1 + SQRT( DBLE(1 + 4*nradii2) ))
 
     PRINT *, "npart1_radius=", npart1_radius
     PRINT *, "npart2_radius=", npart2_radius
+    PRINT *, "nradii1_plane=", nradii1_plane
+    PRINT *, "nradii2_plane=", nradii2_plane
     PRINT *, "npart1_tmp=", npart1_tmp
     PRINT *, "npart2_tmp=", npart2_tmp
 
@@ -1575,21 +1593,156 @@ SUBMODULE (particles_id) particles_constructor
 
     PRINT *, "alpha1=", alpha1
     PRINT *, "alpha2=", alpha2
+    PRINT *
+
+    PRINT *, "nradii1_plane*alpha1/(2*pi)=", nradii1_plane*alpha1/(2*pi)
+    PRINT *, "nradii2_plane*alpha2/(2*pi)=", nradii2_plane*alpha2/(2*pi)
+    PRINT *
+
+    PRINT *, "nradii1_eq=", 2*pi/alpha1
+    PRINT *, "nradii1_mer=", pi/alpha1
+    PRINT *, "nradii1_plane*nradii1_mer=", 2*2*pi/alpha1*pi/alpha1
+    PRINT *, "nradii1_plane*nradii1_mer*npart1_radius=", &
+             2*2*pi/alpha1*pi/alpha1*npart1_radius
+    PRINT *, "nradii1_eq=", 2*pi/alpha2
+    PRINT *, "nradii1_mer=", pi/alpha2
+    PRINT *, "nradii1_plane*nradii1_mer=", 2*2*pi/alpha2*pi/alpha2
+    PRINT *, "nradii1_plane*nradii1_mer*npart1_radius=", &
+             2*2*pi/alpha2*pi/alpha2*npart2_radius
+    PRINT *
 
     tmp= 0
     cnt= 0
-    DO itr= 0, 2*pi-alpha1, alpha1
+    cnt2=0
+    DO itr= 0, 2*pi - alpha1, alpha1
+      cnt= cnt + 1
       DO itr2= alpha1/2, pi-alpha1/2, alpha1
+        IF(itr==0)THEN
+          cnt2=cnt2+1
+        ENDIF
         tmp= tmp + npart1_radius
-        cnt= cnt + 1
       ENDDO
     ENDDO
     PRINT *, "itr=", itr/(2*pi-alpha1)
     PRINT *, "itr2=", itr2/(pi-alpha1/2)
     PRINT *, "tmp=", tmp*2
-    PRINT *, "cnt*2=", cnt*2, ", nradii1= ", nradii1
-    PRINT *, (nradii1 - cnt*2)
-    PRINT *, (nradii1 - cnt*2)*npart1_radius + tmp*2
+    PRINT *, "cnt=", cnt
+    PRINT *, "cnt2=", cnt2
+    !PRINT *, "cnt*2=", cnt*2
+    !PRINT *, (nradii1 - cnt*2)
+    !PRINT *, (nradii1 - cnt*2)*npart1_radius + tmp*2
+    PRINT *
+
+    ALLOCATE( mass_fractions1(npart1_radius) )
+    ALLOCATE( mass_fractions2(npart2_radius) )
+
+    mass_step1= THIS% mass1/npart1_radius
+    mass_step2= THIS% mass2/npart2_radius
+
+    DO itr= 1, npart1_radius, 1
+      mass_fractions1(itr)= itr*mass_step1
+    ENDDO
+    DO itr= 1, npart2_radius, 1
+      mass_fractions2(itr)= itr*mass_step2
+    ENDDO
+
+    IF( mass_fractions1(npart1_radius) /= THIS% mass1 )THEN
+      PRINT *, "** ERROR in ! The mass partition for star 1 is incorrect."
+      STOP
+    ENDIF
+    IF( mass_fractions2(npart2_radius) /= THIS% mass2 )THEN
+      PRINT *, "** ERROR in ! The mass partition for star 2 is incorrect."
+      STOP
+    ENDIF
+
+PRINT *
+PRINT *, mass_fractions1
+PRINT *
+
+    ! Place the particles for one star only, since the subroutine will place
+    ! particles for one star
+
+    ! Allocating the memory for the array pos( 3, npart_temp )
+    ! Note that after determining npart, the array pos is reshaped into
+    ! pos( 3, npart )
+    IF(.NOT.ALLOCATED( THIS% pos ))THEN
+      ALLOCATE( THIS% pos( 3, THIS% npart_temp ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
+    ENDIF
+    IF(.NOT.ALLOCATED( shell_radii ))THEN
+      ALLOCATE( shell_radii( npart1_radius ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array shell_radii in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
+    ENDIF
+
+    ! Latitude first, longitude second
+    mass_index= 1
+    shell_radii= 1.0D0
+    rad_step= radius1/npart1_radius/50
+    mass_tmp= 0.0D0
+
+    radius_loop: DO itr= rad_step, radius1, rad_step
+
+      mass_tmp= mass_tmp + &
+                bns_obj% import_mass_density( &
+                      bns_obj% get_center1_x() + itr*COS(0.0D0)*COS(0.0D0), &
+                      itr*COS(0.0D0)*SIN(0.0D0), itr*SIN(0.0D0) ) &
+                *4.0D0/3.0D0*pi*(itr**3.0D0 - (itr - rad_step)**3.0D0)
+
+      PRINT *, bns_obj% get_center1_x() + itr*COS(0.0D0)*COS(0.0D0), &
+               !itr*COS(0.0D0)*SIN(0.0D0), itr*SIN(0.0D0), &
+               itr, mass_tmp
+
+      IF( mass_tmp >= mass_fractions1( mass_index ) )THEN
+        shell_radii( mass_index )= itr
+        IF( mass_index == npart1_radius )THEN
+          EXIT
+        ELSE
+          mass_index= mass_index + 1
+        ENDIF
+      ENDIF
+
+    ENDDO radius_loop
+
+PRINT *
+PRINT *, mass_fractions1
+PRINT *
+PRINT *, shell_radii
+PRINT *
+PRINT *, radius1
+PRINT *
+STOP
+
+      longitude_loop: DO itr2= 0, 2*pi - alpha1, alpha1
+        latitude_loop: DO itr3= alpha1/2, pi-alpha1/2, alpha1
+
+          !xtemp=
+
+          IF( .TRUE. &
+          )THEN
+            THIS% npart1= THIS% npart1 + 1
+            !THIS% pos( 1, THIS% npart )
+          ENDIF
+
+        ENDDO latitude_loop
+      ENDDO longitude_loop
 
     STOP
 

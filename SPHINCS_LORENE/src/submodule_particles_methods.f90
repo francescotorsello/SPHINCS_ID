@@ -271,6 +271,7 @@ SUBMODULE (particles_id) particles_methods
       !ELSE
       !  THIS% h(itr)= 3.0*(THIS% vol2_a)**third
       !ENDIF
+
       THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
       h(itr)= THIS% h(itr)
       ! /(Msun_geo**3)

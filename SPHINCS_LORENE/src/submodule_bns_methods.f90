@@ -1459,7 +1459,8 @@ SUBMODULE (bns_id) bns_methods
     !************************************************
     !                                               *
     ! Returns the LORENE mass density at the point  *
-    ! given as argument.                            *
+    ! given as argument, in units of                *
+    ! MSun/(MSun_geo^3).                            *
     !                                               *
     ! FT                                            *
     !                                               *
