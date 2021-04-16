@@ -16,6 +16,8 @@ SPHINCS_LORENE/*analysis.dat
 SPHINCS_LORENE/bssn*.dat
 SPHINCS_LORENE/sph*.dat
 SPHINCS_LORENE/debug*.dat
+SPHINCS_LORENE/mass_profile*.dat
+SPHINCS_LORENE/shell_radii*.dat
 SPHINCS_LORENE/*.gp
 SPHINCS_LORENE/*.00*
 SPHINCS_LORENE/*.asc

@@ -634,6 +634,51 @@ SUBMODULE (bns_id) bns_methods
   END PROCEDURE import_id_particles
 
 
+  MODULE PROCEDURE import_id_mass_b
+
+    !*****************************************************
+    !                                                    *
+    ! Import the LORENE ID needed to compute the baryon  *
+    ! mass, storing it to variables (not arrays as the   *
+    ! others importing SUBROUTINES).                     *
+    !                                                    *
+    ! FT 15.04.2021                                      *
+    !                                                    *
+    !*****************************************************
+
+    USE constants, ONLY: Msun_geo, lorene2hydrobase
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION:: detg
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+
+      ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+      ! to LORENE units (km). See MODULE constants for the definition of
+      ! Msun_geo
+      CALL get_lorene_id_mass_b( THIS% bns_ptr, &
+                                    x*Msun_geo, &
+                                    y*Msun_geo, &
+                                    z*Msun_geo, &
+                                    lapse, &
+                                    shift_x, &
+                                    shift_y, &
+                                    shift_z, &
+                                    g_xx, &
+                                    baryon_density, &
+                                    u_euler_x, &
+                                    u_euler_y, &
+                                    u_euler_z, &
+                                    gamma_euler )
+
+      baryon_density= baryon_density*lorene2hydrobase
+
+    ENDIF
+
+  END PROCEDURE import_id_mass_b
+
+
   MODULE PROCEDURE import_id_k
 
     !*****************************************************
@@ -1484,6 +1529,38 @@ SUBMODULE (bns_id) bns_methods
     ENDIF
 
   END PROCEDURE import_mass_density
+
+
+  MODULE PROCEDURE import_spatial_metric
+
+    !************************************************
+    !                                               *
+    ! Returns the LORENE conformal factor to the    *
+    ! 4th power, equal to the diagonal components   *
+    ! of the conformally flat spatial ADM metric.   *
+    !                                               *
+    ! FT 15.04.2021                                 *
+    !                                               *
+    !************************************************
+
+    USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
+    USE constants,                   ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
+
+      ! The coordinates need to be converted from SPHINCS units (Msun_geo)
+      ! to LORENE units (km). See MODULE constants for the definition of
+      ! Msun_geo
+      res= get_lorene_spatial_metric( THIS% bns_ptr, &
+                                      x*Msun_geo, &
+                                      y*Msun_geo, &
+                                      z*Msun_geo )
+
+    ENDIF
+
+  END PROCEDURE import_spatial_metric
 
 
   MODULE PROCEDURE is_hydro_negative

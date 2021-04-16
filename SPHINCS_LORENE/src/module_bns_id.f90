@@ -243,6 +243,9 @@ MODULE bns_id
                                    ! Store the hydro ID in the arrays
                                    ! needed for the SPH part of SPHINCS
                                    import_id_particles_ptr, &
+                                   ! Store the hydro ID needed to compute
+                                   ! the baryon mass in variables
+                                   import_id_mass_b_ptr, &
                                    ! Store the spacetime ID in multi-
                                    ! dimensional arrays needed for the
                                    ! spacetime part of SPHINCS
@@ -257,6 +260,7 @@ MODULE bns_id
     PROCEDURE::       import_id_int_ptr          => import_id_int
     PROCEDURE::       import_id_ext_ptr          => import_id_ext
     PROCEDURE::       import_id_particles_ptr    => import_id_particles
+    PROCEDURE::       import_id_mass_b_ptr       => import_id_mass_b
     PROCEDURE::       import_id_multid_array_ptr => import_id_multid_array
     PROCEDURE::       import_id_hydro_ptr        => import_id_hydro
     PROCEDURE::       import_id_k_ptr            => import_id_k
@@ -267,6 +271,9 @@ MODULE bns_id
 
     ! Returns the LORENE's mass density at the given point
     PROCEDURE:: import_mass_density
+
+    ! Returns the LORENE's conformally flat spatial ADM metric
+    PROCEDURE:: import_spatial_metric
 
     ! Returns 1 if the energy density or the specific energy or the pressure
     ! are negative
@@ -589,6 +596,31 @@ MODULE bns_id
 
     END SUBROUTINE import_id_particles
 
+    MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
+                                        lapse, &
+                                        shift_x, shift_y, shift_z, &
+                                        g_xx, &
+                                        baryon_density, &
+                                        u_euler_x, u_euler_y, u_euler_z, &
+                                        gamma_euler )
+
+      CLASS(bns),       INTENT( IN OUT ):: THIS
+      REAL(C_DOUBLE),   INTENT( IN )    :: x
+      REAL(C_DOUBLE),   INTENT( IN )    :: y
+      REAL(C_DOUBLE),   INTENT( IN)     :: z
+      DOUBLE PRECISION, INTENT( IN OUT ):: lapse
+      DOUBLE PRECISION, INTENT( IN OUT ):: shift_x
+      DOUBLE PRECISION, INTENT( IN OUT ):: shift_y
+      DOUBLE PRECISION, INTENT( IN OUT ):: shift_z
+      DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
+      DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
+      DOUBLE PRECISION, INTENT( IN OUT ):: u_euler_x
+      DOUBLE PRECISION, INTENT( IN OUT ):: u_euler_y
+      DOUBLE PRECISION, INTENT( IN OUT ):: u_euler_z
+      DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
+
+    END SUBROUTINE import_id_mass_b
+
     MODULE SUBROUTINE import_id_k( THIS, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
@@ -621,6 +653,18 @@ MODULE bns_id
       REAL(C_DOUBLE):: res
 
     END FUNCTION import_mass_density
+
+    MODULE FUNCTION import_spatial_metric( THIS, x, y, z ) RESULT( res )
+
+      ! Arguments
+      CLASS(bns),     INTENT( IN )       :: THIS
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: z
+      ! Result
+      REAL(C_DOUBLE):: res
+
+    END FUNCTION import_spatial_metric
 
     MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
 
@@ -1246,7 +1290,9 @@ MODULE bns_id
   !--  Interfaces to the methods of LORENE's class Bin_NS  --!
   !----------------------------------------------------------!
 
+
   INTERFACE
+
 
     FUNCTION construct_bin_ns( c_resu_file ) RESULT( optr ) &
       BIND(C, NAME= "construct_bin_ns")
@@ -1270,6 +1316,7 @@ MODULE bns_id
       TYPE(C_PTR) :: optr
 
     END FUNCTION construct_bin_ns
+
 
     SUBROUTINE get_lorene_id( optr, &
                               x, y, z, &
@@ -1331,6 +1378,7 @@ MODULE bns_id
 
     END SUBROUTINE get_lorene_id
 
+
     SUBROUTINE get_lorene_id_spacetime( optr, &
                                         x, y, z, &
                                         lapse, &
@@ -1372,6 +1420,7 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: k_zz
 
     END SUBROUTINE get_lorene_id_spacetime
+
 
     SUBROUTINE get_lorene_id_particles( optr, &
                                         x, y, z, &
@@ -1425,6 +1474,54 @@ MODULE bns_id
 
     END SUBROUTINE get_lorene_id_particles
 
+
+    SUBROUTINE get_lorene_id_mass_b( optr, &
+                                        x, y, z, &
+                                        lapse, &
+                                        shift_x, shift_y, shift_z, &
+                                        g_diag, &
+                                        baryon_density, &
+                                        v_euler_x, v_euler_y, v_euler_z, &
+                                        gamma_euler ) &
+      BIND(C, NAME= "get_lorene_id_mass_b")
+
+      !************************************************
+      !                                               *
+      ! Import the hydro fields and the metric fields *
+      ! from LORENE, at the specified point,          *
+      ! needed to compute the baryon mass.             *
+      !                                               *
+      ! - shift vector [c]                            *
+      ! - baryon mass density [kg m^{-3}]             *
+      ! - fluid 3-velocity with respect to the        *
+      !   Eulerian observer [c]                       *
+      !                                               *
+      ! FT                                            *
+      !                                               *
+      !************************************************
+
+      IMPORT :: C_DOUBLE, C_PTR
+
+      IMPLICIT NONE
+
+      TYPE(C_PTR),    INTENT(IN), VALUE :: optr
+      REAL(C_DOUBLE), INTENT(IN), VALUE :: x
+      REAL(C_DOUBLE), INTENT(IN), VALUE :: y
+      REAL(C_DOUBLE), INTENT(IN), VALUE :: z
+      REAL(C_DOUBLE), INTENT(OUT)       :: lapse
+      REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
+      REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
+      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
+      REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
+      REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_z
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma_euler
+
+    END SUBROUTINE get_lorene_id_mass_b
+
+
     SUBROUTINE get_lorene_id_hydro( optr, &
                                     x, y, z, &
                                     baryon_density, &
@@ -1469,6 +1566,7 @@ MODULE bns_id
 
     END SUBROUTINE get_lorene_id_hydro
 
+
     SUBROUTINE get_lorene_id_k( optr, &
                                 x, y, z, &
                                 k_xx, k_xy, k_xz, &
@@ -1503,12 +1601,13 @@ MODULE bns_id
 
     END SUBROUTINE get_lorene_id_k
 
+
     FUNCTION get_lorene_mass_density( optr, x, y, z ) RESULT( res ) &
       BIND(C, NAME= "get_mass_density")
 
       !************************************************
       !                                               *
-      ! Return the baryon mass density [kg m^{-3}]   *
+      ! Return the baryon mass density [kg m^{-3}]    *
       ! from LORENE, at the specified point           *
       !                                               *
       ! FT                                            *
@@ -1528,6 +1627,35 @@ MODULE bns_id
       REAL(C_DOUBLE) :: res
 
     END FUNCTION get_lorene_mass_density
+
+
+    FUNCTION get_lorene_spatial_metric( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "get_lorene_id_g")
+
+      !************************************************
+      !                                               *
+      ! Return the diagonal components of the metric, *
+      ! all equal to the LORENE conformal factor to   *
+      ! the 4th power.
+      !                                               *
+      ! FT                                            *
+      !                                               *
+      !************************************************
+
+      IMPORT :: C_DOUBLE, C_PTR
+
+      IMPLICIT NONE
+
+      ! Argument list
+      TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: y
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
+      ! Function result
+      REAL(C_DOUBLE) :: res
+
+    END FUNCTION get_lorene_spatial_metric
+
 
     FUNCTION negative_hydro( optr, x, y, z ) RESULT( res ) &
       BIND(C, NAME= "negative_hydro")
@@ -1556,6 +1684,7 @@ MODULE bns_id
       INTEGER(C_INT) :: res
 
     END FUNCTION negative_hydro
+
 
     SUBROUTINE get_lorene_id_params( optr, &
                                      angular_vel, &
@@ -1708,6 +1837,7 @@ MODULE bns_id
 
     END SUBROUTINE get_lorene_id_params
 
+
     SUBROUTINE destruct_bin_ns( optr ) &
       BIND(C, NAME= "destruct_bin_ns")
 
@@ -1727,6 +1857,7 @@ MODULE bns_id
       TYPE(C_PTR), INTENT(IN), VALUE :: optr
 
     END SUBROUTINE destruct_bin_ns
+
 
   END INTERFACE
 

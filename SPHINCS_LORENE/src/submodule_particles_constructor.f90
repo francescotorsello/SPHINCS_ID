@@ -1533,6 +1533,7 @@ SUBMODULE (particles_id) particles_constructor
     !                                               *
     !************************************************
 
+    !$ USE OMP_LIB
     USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g, lorene2hydrobase
     USE matrix,    ONLY: determinant_4x4_matrix
 
@@ -1540,17 +1541,29 @@ SUBMODULE (particles_id) particles_constructor
 
     INTEGER:: npart1_tmp, npart2_tmp, npart1_radius, npart2_radius, nradii1, &
               nradii2, tmp, cnt, cnt2, npart1_eqplane, npart2_eqplane, &
-              nradii1_plane, nradii2_plane, itr3, mass_index
+              nradii1_plane, nradii2_plane, itr3, mass_index, r, th, phi
     DOUBLE PRECISION:: radius1, radius2, alpha1, alpha2, itr, itr2, &
                        mass_step1, mass_step2, mass_tmp, rad_step, vol_tmp, &
                        mass_shell, rad_coord, lat, long, &
                        lapse, shift_x, shift_y, shift_z, &
                        g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                       det, sq_g
+                       det, sq_g, baryon_density, &
+                       v_euler_x, v_euler_y, v_euler_z, &
+                       v_euler_x_l, v_euler_y_l, v_euler_z_l, &
+                       u_euler_t_l, u_euler_x_l, u_euler_y_l, u_euler_z_l, &
+                       lorentz_factor, lorentz_factor_rel, &
+                       n_t, n_x, n_y, n_z, gamma_euler, &
+                       lat_step, long_step, m_p, m_shell, dr, rad, mass, &
+                       rad_coord2, center1
     DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_fractions1, &
                                                   mass_fractions2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii
+
+    LOGICAL:: adapt_rad_step, exist
+
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     npart1_tmp= 1D+5
     npart2_tmp= 1D+5*1.8D0/1.2D0
@@ -1701,128 +1714,156 @@ PRINT *
     ! Latitude first, longitude second
     mass_index= 1
     shell_radii= 1.0D0
-    rad_step= radius1/DBLE(npart1_radius)/100.0D0
     mass_tmp= 0.0D0
     vol_tmp= 0.0D0
 
-    radius_loop: DO rad_coord= rad_step, radius1, rad_step
+    ! Assume same mass for particles
+    m_p             = THIS% mass1/npart1_tmp
+    m_shell         = m_p*nradii1
+    shell_radii( npart1_radius )= radius1*0.99D0!(3.0D0*(THIS% mass1/1000)/(4.0D0*pi&
+                      !*bns_obj% import_mass_density( bns_obj% get_center1_x(), &
+                      !0.0D0, 0.0D0)))**(1.0D0/3.0D0)
+    rad_coord       = shell_radii( npart1_radius )
+    !PRINT *, rad_coord
+    !PRINT *, bns_obj% get_center1_x() + rad_coord
+    !PRINT *, m_shell*npart1_radius
+    !PRINT *
 
-      !
-      !-- Metric as matrix for easy manipulation
-      !
-      g4(0,0)= - lapse**2 &
-             + g_xx*shift_x &
-              *shift_x&
-             + 2 * g_xy*shift_x &
-              *shift_y&
-             + 2 * g_xz*shift_x &
-              *shift_z&
-             + g_yy*shift_y &
-              *shift_y&
-             + 2 * g_yz*shift_y &
-              *shift_z&
-             + g_zz*shift_z &
-              *shift_z
-      g4(0,1)= g_xx*shift_x &
-             + g_xy*shift_y &
-             + g_xz*shift_z
-      g4(0,2)= g_xy*shift_x &
-             + g_yy*shift_y &
-             + g_yz*shift_z
-      g4(0,3)= g_xz*shift_x &
-             + g_yz*shift_y &
-             + g_zz*shift_z
+ !   DO itr= npart1_radius - 1, 1, -1
+ !
+ !     CALL bns_obj% import_id( bns_obj% get_center1_x() &
+ !                              + shell_radii( itr + 1 ), &
+ !                              0.0D0, &
+ !                              0.0D0, &
+ !                              lapse, shift_x, shift_y, shift_z, &
+ !                              g_xx, baryon_density, &
+ !                              v_euler_x, v_euler_y, v_euler_z, &
+ !                              gamma_euler )
+ !
+ !     ! Compute covariant spatial fluid velocity (metric is diagonal and
+ !     ! conformally flat)
+ !     !v_euler_x_l= g_xx*v_euler_x
+ !     !v_euler_y_l= g_xx*v_euler_y
+ !     !v_euler_z_l= g_xx*v_euler_z
+ !     !
+ !     !! Compute the corresponding Lorentz factor
+ !     !lorentz_factor= 1.0D0/SQRT( 1.0D0 - ( v_euler_x_l*v_euler_x &
+ !     !                                    + v_euler_y_l*v_euler_y &
+ !     !                                    + v_euler_z_l*v_euler_z ) )
+ !     !
+ !     !! Compute covariant fluid 4-velocity
+ !     !u_euler_t_l= lorentz_factor *( - lapse + v_euler_x_l*shift_x &
+ !     !                                       + v_euler_y_l*shift_y &
+ !     !                                       + v_euler_z_l*shift_z )
+ !     !u_euler_x_l= lorentz_factor*v_euler_x_l
+ !     !u_euler_y_l= lorentz_factor*v_euler_y_l
+ !     !u_euler_z_l= lorentz_factor*v_euler_z_l
+ !     !
+ !     !! Compute vector normal to spacelike hypersurface
+ !     !! (4-velocity of the Eulerian observer)
+ !     !n_t= 1.0D0/lapse
+ !     !n_x= - shift_x/lapse
+ !     !n_y= - shift_y/lapse
+ !     !n_z= - shift_z/lapse
+ !     !
+ !     !! Compute relative Lorentz factor between 4-velocity of the fluid
+ !     !! wrt the Eulerian observer and the 4-velocity of the Eulerian observer
+ !     !lorentz_factor_rel= - ( n_t*u_euler_t_l + n_x*u_euler_x_l &
+ !     !                      + n_y*u_euler_y_l + n_z*u_euler_z_l )
+ !     !
+ !     !PRINT *, lorentz_factor_rel
+ !     !PRINT *, gamma_euler
+ !     !STOP
+ !
+ !     ! Compute square root of the determinant of the spatial metric
+ !     sq_g= g_xx*SQRT( g_xx )
+ !
+ !     dr= m_shell/( baryon_density*sq_g*gamma_euler &
+ !                   *4.0D0*pi*shell_radii( itr + 1 )**2.0D0 )
+ !
+ !     PRINT *, m_shell, baryon_density, sq_g, gamma_euler, rad_coord
+ !     PRINT *, "dr=", dr
+ !     shell_radii( itr )= shell_radii( itr + 1 ) - dr
+ !     PRINT *, "shell_radii=", shell_radii( itr )
+ !
+ !     PRINT *
+ !   ENDDO
+ !   PRINT *, shell_radii
+ !   STOP
 
-      g4(1,0)= g_xx*shift_x &
-             + g_xy*shift_y &
-             + g_xz*shift_z
-      g4(1,1)= g_xx
-      g4(1,2)= g_xy
-      g4(1,3)= g_xz
-
-      g4(2,0)= g_xy*shift_x &
-             + g_yy*shift_y &
-             + g_yz*shift_z
-      g4(2,1)= g_xy
-      g4(2,2)= g_yy
-      g4(2,3)= g_yz
-
-      g4(3,0)= g_xz*shift_x &
-             + g_yz*shift_y &
-             + g_zz*shift_z
-      g4(3,1)= g_xz
-      g4(3,2)= g_yz
-      g4(3,3)= g_zz
-
-      ! sqrt(-det(g4))
-      CALL determinant_4x4_matrix(g4,det)
-      IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", itr
-          STOP
-      ELSEIF( det > 0 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "positive at particle ", itr
-          STOP
-      ENDIF
-      sq_g= SQRT(-det)
-
-      mass_shell= bns_obj% import_mass_density( &
-                        bns_obj% get_center1_x() + rad_coord - rad_step, &
-                        0.0D0, &
-                        0.0D0 ) &
-                  !*4.0D0*pi*rad_coord**2.0D0*rad_step
-                  *(4.0D0/3.0D0)*pi &
-                  *(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)
-
-      mass_tmp= mass_tmp + mass_shell
-
-      vol_tmp= vol_tmp &
-               + 4.0D0/3.0D0*pi*(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)
-
-      PRINT *, bns_obj% get_center1_x() + rad_coord*COS(0.0D0)*COS(0.0D0), &
-               rad_coord, &
-               bns_obj% import_mass_density( &
-                     bns_obj% get_center1_x() + rad_coord, 0.0D0, 0.0D0 ), &
-               4.0D0/3.0D0*pi*(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0), &
-               mass_shell, mass_tmp/THIS% mass1
-
-      IF( mass_tmp >= mass_fractions1( mass_index ) )THEN
-        shell_radii( mass_index )= rad_coord
-        IF( mass_index == npart1_radius )THEN
-          EXIT
-        ELSE
-          mass_index= mass_index + 1
-        ENDIF
-      ENDIF
-
-    ENDDO radius_loop
-
-    !radius_loop: DO rad_coord= rad_step, radius1 + 8.0D0/9.0D0*rad_step, rad_step
+    !radius_loop: DO rad_coord= rad_step, radius1, rad_step
     !
-    !  longitude_loop: DO long= 0, 2*pi - alpha1/2, alpha1
+    !  ! The definition of the baryon mass for the LORENE ID is in eq.(69)
+    !  ! of Gourgoulhon et al., PRD 63 064029 (2001)
     !
-    !    latitude_loop: DO lat= 0, 2*pi - alpha1/2, alpha1
+    !  CALL bns_obj% import_id( &
+    !                      bns_obj% get_center1_x() + rad_coord - rad_step, &
+    !                      0.0D0, &
+    !                      0.0D0, &
+    !                      lapse, shift_x, shift_y, shift_z, &
+    !                      g_xx, baryon_density, &
+    !                      v_euler_x, v_euler_y, v_euler_z, &
+    !                      gamma_euler )
     !
-    !      mass_shell= bns_obj% import_mass_density( &
-    !                  bns_obj% get_center1_x() + rad_coord*COS(lat)*COS(long), &
-    !                  rad_coord*COS(lat)*SIN(long), &
-    !                  rad_coord*SIN(lat) ) &
-    !                  *(4.0D0/3.0D0)*pi&
-    !                  *(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0) &
-    !                  /nradii1
+    !  ! Compute covariant spatial fluid velocity (metric is diagonal and
+    !  ! conformally flat)
+    !  v_euler_x_l= g_xx*v_euler_x
+    !  v_euler_y_l= g_xx*v_euler_y
+    !  v_euler_z_l= g_xx*v_euler_z
     !
-    !      mass_tmp= mass_tmp + mass_shell
+    !  ! Compute the corresponding Lorentz factor
+    !  lorentz_factor= 1.0D0/SQRT( 1.0D0 - ( v_euler_x_l*v_euler_x &
+    !                                      + v_euler_y_l*v_euler_y &
+    !                                      + v_euler_z_l*v_euler_z ) )
     !
-    !      vol_tmp= vol_tmp + (4.0D0/3.0D0)*pi&
-    !               *(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)/nradii1
+    !  ! Compute covariant fluid 4-velocity
+    !  u_euler_t_l= lorentz_factor *( - lapse + v_euler_x_l*shift_x &
+    !                                         + v_euler_y_l*shift_y &
+    !                                         + v_euler_z_l*shift_z )
+    !  u_euler_x_l= lorentz_factor*v_euler_x_l
+    !  u_euler_y_l= lorentz_factor*v_euler_y_l
+    !  u_euler_z_l= lorentz_factor*v_euler_z_l
     !
-    !    ENDDO latitude_loop
+    !  ! Compute vector normal to spacelie hypersurface
+    !  ! (4-velocity of the Eulerian observer)
+    !  n_t= 1.0D0/lapse
+    !  n_x= - shift_x/lapse
+    !  n_y= - shift_y/lapse
+    !  n_z= - shift_z/lapse
     !
-    !  ENDDO longitude_loop
+    !  ! Compute relative Lorentz factor between 4-velocity of the fluid
+    !  ! wrt the Eulerian observer and the 4-velocity of the Eulerian observer
+    !  lorentz_factor_rel= - ( n_t*u_euler_t_l + n_x*u_euler_x_l &
+    !                        + n_y*u_euler_y_l + n_z*u_euler_z_l )
     !
-    !  PRINT *, bns_obj% get_center1_x() + rad_coord, &
-    !           rad_coord, mass_tmp
+    !  !IF( gamma_euler /= lorentz_factor_rel )THEN
+    !  !  PRINT *, "gamma_euler=", gamma_euler
+    !  !  PRINT *, "lorentz_factor_rel=", lorentz_factor_rel
+    !  !  STOP
+    !  !ENDIF
+    !  !STOP
+    !
+    !  ! Compute square root of the determinant of the spatial metric
+    !  sq_g= g_xx*SQRT( g_xx )
+    !
+    !  ! Compute mass of a spherical shell the the assumption of
+    !  ! spherical symmetry
+    !  mass_shell= 4.0D0*pi*(rad_coord**2.0D0)*rad_step &
+    !              *sq_g*gamma_euler*baryon_density
+    !              !*(4.0D0/3.0D0)*pi*sq_g &
+    !              !*(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)
+    !
+    !  mass_tmp= mass_tmp + mass_shell
+    !
+    !  vol_tmp= vol_tmp &
+    !           + 4.0D0*pi*rad_coord**2.0D0*rad_step*sq_g
+    !
+    !  PRINT *, bns_obj% get_center1_x() + rad_coord*COS(0.0D0)*COS(0.0D0), &
+    !           rad_coord, &
+    !           bns_obj% import_mass_density( &
+    !                 bns_obj% get_center1_x() + rad_coord, 0.0D0, 0.0D0 ), &
+    !           + 4.0D0*pi*rad_coord**2.0D0*rad_step*sq_g, &
+    !           mass_shell, mass_tmp
     !
     !  IF( mass_tmp >= mass_fractions1( mass_index ) )THEN
     !    shell_radii( mass_index )= rad_coord
@@ -1835,24 +1876,259 @@ PRINT *
     !
     !ENDDO radius_loop
 
-PRINT *
-PRINT *, "vol_tmp=", vol_tmp, ", vol=", 4.0D0/3.0D0*pi*radius1**3.0D0
-PRINT *
-PRINT *, "radius1=", radius1
-PRINT *
-PRINT *, "rad_step=", rad_step
-PRINT *
-PRINT *, "mass_tmp=", mass_tmp
-PRINT *
-PRINT *, "mass_fractions1=", mass_fractions1
-PRINT *
-PRINT *, "shell_radii=", shell_radii
-PRINT *
-PRINT *, bns_obj% import_mass_density( bns_obj% get_center1_x(), &
-                                       0.0D0, &
-                                       0.0D0 )*vol_tmp
-PRINT *
-STOP
+! The parameterscommented below give a 0.2% error on the mass!
+!rad_step= radius1/2000.0D0
+!lat_step= pi/2/500.0D0
+!long_step= 2*pi/500.0D0
+
+! The parameterscommented below give a 0.7% error on the mass!
+!rad_step= radius1/1000.0D0
+!lat_step= pi/2/250.0D0
+!long_step= 2*pi/250.0D0
+
+
+  mass_index= 1
+  rad_step= radius1/1000.0D0
+  lat_step= pi/2/250.0D0
+  long_step= 2*pi/250.0D0
+  mass_tmp= 4.0D0/3.0D0*pi*rad_step**3.0D0 &
+            *bns_obj% import_mass_density( bns_obj% get_center1_x(), &
+                                           0.0D0, 0.0D0 )
+  mass= mass_tmp
+  rad= 0.0D0
+  center1= bns_obj% get_center1_x()
+  adapt_rad_step= .TRUE.
+
+  PRINT *, rad_step/radius1
+  PRINT *, lat_step/(2*pi)
+  PRINT *, long_step/(2*pi)
+
+  IF(.NOT.ALLOCATED( mass_profile ))THEN
+    ALLOCATE( mass_profile( 2, NINT(radius1/rad_step) ), STAT= ios, &
+              ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
+                // "place_particles_. ", &
+                "The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, &
+    !                "...allocation error for array pos in SUBROUTINE" &
+    !                // "place_particles_3D_lattice." )
+  ENDIF
+
+!  !$OMP PARALLEL DO SHARED(mass_profile,rad,rad_step) &
+!  !$OMP             PRIVATE(r,rad_coord)
+!  !radius_loop: DO rad_coord= rad_step, radius1, rad_step
+  radius_loop: DO r= 1, NINT(radius1/rad_step), 1
+
+    !IF( rad > radius1*0.9D0 .AND. adapt_rad_step )THEN
+    !  rad_step= rad_step/10.0D0
+    !  adapt_rad_step== .FALSE.
+    !ENDIF
+
+    rad_coord= r*rad_step
+
+    rad= rad + rad_step
+
+    !$OMP PARALLEL DO SHARED(long_step) &
+    !$OMP             PRIVATE(phi,long)
+    !longitude_loop: DO long= 0, 2*pi, long_step
+    longitude_loop: DO phi= 0, NINT(2*pi/(long_step)), 1
+
+      long= phi*long_step
+
+      !$OMP PARALLEL DO SHARED(center1,mass,mass_tmp,lat_step,mass_index) &
+      !$OMP             PRIVATE(th,lat,sq_g,gamma_euler,baryon_density,mass_shell)
+      !latitude_loop: DO lat= 0, pi/2, lat_step
+      latitude_loop: DO th= 0, NINT(pi/2/(lat_step)), 1
+
+        lat= th*lat_step
+
+        ! The definition of the baryon mass for the LORENE ID is in eq.(69)
+        ! of Gourgoulhon et al., PRD 63 064029 (2001)
+
+        CALL bns_obj% import_id( &
+                 center1 + rad_coord*SIN(lat)*COS(long), &
+                 rad_coord*SIN(lat)*SIN(long), &
+                 rad_coord*COS(lat), &
+                 lapse, shift_x, shift_y, shift_z, &
+                 g_xx, baryon_density, &
+                 v_euler_x, v_euler_y, v_euler_z, &
+                 gamma_euler )
+
+        ! Compute covariant spatial fluid velocity (metric is diagonal and
+        ! conformally flat)
+        !v_euler_x_l= g_xx*v_euler_x
+        !v_euler_y_l= g_xx*v_euler_y
+        !v_euler_z_l= g_xx*v_euler_z
+        !
+        !! Compute the corresponding Lorentz factor
+        !lorentz_factor= 1.0D0/SQRT( 1.0D0 - ( v_euler_x_l*v_euler_x &
+        !                                    + v_euler_y_l*v_euler_y &
+        !                                    + v_euler_z_l*v_euler_z ) )
+        !
+        !! Compute covariant fluid 4-velocity
+        !u_euler_t_l= lorentz_factor *( - lapse + v_euler_x_l*shift_x &
+        !                                       + v_euler_y_l*shift_y &
+        !                                       + v_euler_z_l*shift_z )
+        !u_euler_x_l= lorentz_factor*v_euler_x_l
+        !u_euler_y_l= lorentz_factor*v_euler_y_l
+        !u_euler_z_l= lorentz_factor*v_euler_z_l
+        !
+        !! Compute vector normal to spacelie hypersurface
+        !! (4-velocity of the Eulerian observer)
+        !n_t= 1.0D0/lapse
+        !n_x= - shift_x/lapse
+        !n_y= - shift_y/lapse
+        !n_z= - shift_z/lapse
+        !
+        !! Compute relative Lorentz factor between 4-velocity of the fluid
+        !! wrt the Eulerian observer and the 4-velocity of the Eulerian observer
+        !lorentz_factor_rel= - ( n_t*u_euler_t_l + n_x*u_euler_x_l &
+        !                      + n_y*u_euler_y_l + n_z*u_euler_z_l )
+
+
+        ! Compute square root of the determinant of the spatial metric
+        sq_g= g_xx*SQRT( g_xx )
+
+        mass_shell= &!(4.0D0*pi/nradii1)*
+                   SIN(lat)*lat_step*long_step &
+                   *(rad_coord**2.0D0)*rad_step &
+                   *sq_g*gamma_euler*baryon_density
+
+        mass_tmp= mass_tmp + 2*mass_shell
+
+        !$OMP CRITICAL
+          mass= mass + 2*mass_shell
+        !$OMP END CRITICAL
+
+        !vol_tmp= vol_tmp + (4.0D0/3.0D0)*pi&
+        !         *(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)/nradii1
+
+      ENDDO latitude_loop
+      !$OMP END PARALLEL DO
+
+    ENDDO longitude_loop
+    !$OMP END PARALLEL DO
+
+    PRINT *, bns_obj% get_center1_x() + rad, &
+             rad, mass_tmp/THIS% mass1, mass/THIS% mass1
+
+    !$OMP CRITICAL
+      mass_profile( 1, r )= rad
+      mass_profile( 2, r )= mass
+    !$OMP END CRITICAL
+
+    !IF( mass >= mass_fractions1( mass_index ) &
+    !    .AND. mass_index <= npart1_radius )THEN
+    ! shell_radii( mass_index )= rad_coord
+    ! !IF( mass_index == npart1_radius )THEN
+    ! !  EXIT
+    ! !ELSE
+    !   mass_index= mass_index + 1
+    ! !ENDIF
+    !ENDIF
+
+  ENDDO radius_loop
+!  !$OMP END PARALLEL DO
+
+  PRINT *
+  PRINT *, "radius covered by the integration=", rad
+  PRINT *
+  PRINT *, "radius1=", radius1
+  PRINT *
+  PRINT *, "mass_tmp=", mass_tmp
+  PRINT *
+  PRINT *, "mass=", mass
+  PRINT *
+
+  finalnamefile= "mass_profile.dat"
+
+  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+  IF( exist )THEN
+    OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+          FORM= "FORMATTED", &
+          POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+          IOMSG= err_msg )
+  ELSE
+    OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+          FORM= "FORMATTED", &
+          ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  ENDIF
+  IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+            ". The error message is", err_msg
+    STOP
+  ENDIF
+
+  write_data_loop: DO itr = 1, NINT(radius1/rad_step), 1
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      mass_profile( 1, itr ), mass_profile( 2, itr )
+
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in " &
+               // TRIM(finalnamefile), ". The error message is", err_msg
+      STOP
+    ENDIF
+
+  ENDDO write_data_loop
+
+  CLOSE( UNIT= 2 )
+
+
+
+  mass_index= 1
+  DO itr = 1, NINT(radius1/rad_step), 1
+
+    IF( mass_profile( 2, itr ) >= mass_fractions1( mass_index ) )THEN
+     shell_radii( mass_index )= mass_profile( 1, itr )
+     IF( mass_index == npart1_radius )THEN
+       EXIT
+     ELSE
+      mass_index= mass_index + 1
+     ENDIF
+    ENDIF
+
+  ENDDO
+
+  finalnamefile= "shell_radii.dat"
+
+  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+  IF( exist )THEN
+    OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+          FORM= "FORMATTED", &
+          POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+          IOMSG= err_msg )
+  ELSE
+    OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+          FORM= "FORMATTED", &
+          ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  ENDIF
+  IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+            ". The error message is", err_msg
+    STOP
+  ENDIF
+
+  DO itr = 1, npart1_radius, 1
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      shell_radii( itr )
+
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in " &
+               // TRIM(finalnamefile), ". The error message is", err_msg
+      STOP
+    ENDIF
+
+  ENDDO
+
+  CLOSE( UNIT= 2 )
+
 
       !longitude_loop: DO itr2= 0, 2*pi - alpha1, alpha1
       !  latitude_loop: DO itr3= alpha1/2, pi-alpha1/2, alpha1
