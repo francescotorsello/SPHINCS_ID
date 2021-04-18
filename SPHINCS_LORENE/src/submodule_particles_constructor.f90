@@ -1536,12 +1536,14 @@ SUBMODULE (particles_id) particles_constructor
     !$ USE OMP_LIB
     USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g, lorene2hydrobase
     USE matrix,    ONLY: determinant_4x4_matrix
+    USE NR,        ONLY: indexx
 
     IMPLICIT NONE
 
     INTEGER:: npart1_tmp, npart2_tmp, npart1_radius, npart2_radius, nradii1, &
               nradii2, tmp, cnt, cnt2, npart1_eqplane, npart2_eqplane, &
               nradii1_plane, nradii2_plane, itr3, mass_index, r, th, phi
+    INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx
     DOUBLE PRECISION:: radius1, radius2, alpha1, alpha2, itr, itr2, &
                        mass_step1, mass_step2, mass_tmp, rad_step, vol_tmp, &
                        mass_shell, rad_coord, lat, long, &
@@ -1554,7 +1556,7 @@ SUBMODULE (particles_id) particles_constructor
                        lorentz_factor, lorentz_factor_rel, &
                        n_t, n_x, n_y, n_z, gamma_euler, &
                        lat_step, long_step, m_p, m_shell, dr, rad, mass, &
-                       rad_coord2, center1
+                       rad_coord2, center1, mass_element
     DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_fractions1, &
                                                   mass_fractions2
@@ -1889,15 +1891,16 @@ PRINT *
 
   mass_index= 1
   rad_step= radius1/1000.0D0
-  lat_step= pi/2/250.0D0
-  long_step= 2*pi/250.0D0
+  lat_step= pi/2.0D0/250.0D0
+  long_step= 2.0D0*pi/1000.0D0
   mass_tmp= 4.0D0/3.0D0*pi*rad_step**3.0D0 &
             *bns_obj% import_mass_density( bns_obj% get_center1_x(), &
                                            0.0D0, 0.0D0 )
-  mass= mass_tmp
+  mass= 0.0D0*mass_tmp
   rad= 0.0D0
   center1= bns_obj% get_center1_x()
   adapt_rad_step= .TRUE.
+  mass_profile= 0.0D0
 
   PRINT *, rad_step/radius1
   PRINT *, lat_step/(2*pi)
@@ -1916,32 +1919,40 @@ PRINT *
     !                "...allocation error for array pos in SUBROUTINE" &
     !                // "place_particles_3D_lattice." )
   ENDIF
+  IF(.NOT.ALLOCATED( mass_profile_idx ))THEN
+    ALLOCATE( mass_profile_idx( NINT(radius1/rad_step) ), STAT= ios, &
+              ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
+                // "place_particles_. ", &
+                "The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, &
+    !                "...allocation error for array pos in SUBROUTINE" &
+    !                // "place_particles_3D_lattice." )
+  ENDIF
 
-!  !$OMP PARALLEL DO SHARED(mass_profile,rad,rad_step) &
-!  !$OMP             PRIVATE(r,rad_coord)
-!  !radius_loop: DO rad_coord= rad_step, radius1, rad_step
+  !$OMP PARALLEL DO SHARED(mass_profile,rad_step,long_step,lat_step,center1) &
+  !$OMP             PRIVATE(r,rad_coord,phi,long,th,lat,sq_g,gamma_euler ,&
+  !$OMP                     baryon_density,mass_element) !&
+!  !$OMP             REDUCTION(+:rad) !&
+!  !$OMP             SCHEDULE(STATIC)
   radius_loop: DO r= 1, NINT(radius1/rad_step), 1
-
-    !IF( rad > radius1*0.9D0 .AND. adapt_rad_step )THEN
-    !  rad_step= rad_step/10.0D0
-    !  adapt_rad_step== .FALSE.
-    !ENDIF
 
     rad_coord= r*rad_step
 
+    !$OMP PARALLEL SECTIONS REDUCTION(+:mass,rad)
     rad= rad + rad_step
 
-    !$OMP PARALLEL DO SHARED(long_step) &
-    !$OMP             PRIVATE(phi,long)
-    !longitude_loop: DO long= 0, 2*pi, long_step
-    longitude_loop: DO phi= 0, NINT(2*pi/(long_step)), 1
+!    !$OMP             PRIVATE(phi,long)
+    longitude_loop: DO phi= 1, NINT(2.0D0*pi/(long_step)), 1
 
       long= phi*long_step
 
-      !$OMP PARALLEL DO SHARED(center1,mass,mass_tmp,lat_step,mass_index) &
-      !$OMP             PRIVATE(th,lat,sq_g,gamma_euler,baryon_density,mass_shell)
-      !latitude_loop: DO lat= 0, pi/2, lat_step
-      latitude_loop: DO th= 0, NINT(pi/2/(lat_step)), 1
+!      !$OMP PARALLEL DO SHARED(center1,mass,mass_tmp,lat_step,mass_index) &
+!      !$OMP             PRIVATE(th,lat,sq_g,gamma_euler,baryon_density,mass_shell)
+      latitude_loop: DO th= 1, NINT(pi/2.0D0/(lat_step)), 1
 
         lat= th*lat_step
 
@@ -1992,55 +2003,44 @@ PRINT *
         ! Compute square root of the determinant of the spatial metric
         sq_g= g_xx*SQRT( g_xx )
 
-        mass_shell= &!(4.0D0*pi/nradii1)*
-                   SIN(lat)*lat_step*long_step &
-                   *(rad_coord**2.0D0)*rad_step &
-                   *sq_g*gamma_euler*baryon_density
+        mass_element= (rad_coord**2.0D0)*SIN(lat)*rad_step*lat_step*long_step &
+                      *sq_g*gamma_euler*baryon_density
 
-        mass_tmp= mass_tmp + 2*mass_shell
-
-        !$OMP CRITICAL
-          mass= mass + 2*mass_shell
-        !$OMP END CRITICAL
-
-        !vol_tmp= vol_tmp + (4.0D0/3.0D0)*pi&
-        !         *(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)/nradii1
+        mass= mass + 2.0D0*mass_element
 
       ENDDO latitude_loop
-      !$OMP END PARALLEL DO
+!      !$OMP END PARALLEL DO
 
     ENDDO longitude_loop
-    !$OMP END PARALLEL DO
+!    ! $OMP END PARALLEL DO
+    !$OMP END PARALLEL SECTIONS
+
+    mass_profile( 1, r )= rad
+    mass_profile( 2, r )= mass
 
     PRINT *, bns_obj% get_center1_x() + rad, &
-             rad, mass_tmp/THIS% mass1, mass/THIS% mass1
-
-    !$OMP CRITICAL
-      mass_profile( 1, r )= rad
-      mass_profile( 2, r )= mass
-    !$OMP END CRITICAL
-
-    !IF( mass >= mass_fractions1( mass_index ) &
-    !    .AND. mass_index <= npart1_radius )THEN
-    ! shell_radii( mass_index )= rad_coord
-    ! !IF( mass_index == npart1_radius )THEN
-    ! !  EXIT
-    ! !ELSE
-    !   mass_index= mass_index + 1
-    ! !ENDIF
-    !ENDIF
+             rad, mass, mass_profile( 2, r )
 
   ENDDO radius_loop
-!  !$OMP END PARALLEL DO
+  !$OMP END PARALLEL DO
+
+  CALL indexx( NINT(radius1/rad_step), mass_profile( 1, : ), mass_profile_idx )
 
   PRINT *
   PRINT *, "radius covered by the integration=", rad
   PRINT *
   PRINT *, "radius1=", radius1
   PRINT *
-  PRINT *, "mass_tmp=", mass_tmp
+  PRINT *, "mass_profile( 1, NINT(radius1/rad_step) )=", &
+           mass_profile( 1, mass_profile_idx(NINT(radius1/rad_step)) )
   PRINT *
-  PRINT *, "mass=", mass
+  PRINT *, "mass_profile( 2, NINT(radius1/rad_step) )=", &
+           mass_profile( 2, mass_profile_idx(NINT(radius1/rad_step)) )
+  PRINT *
+  PRINT *, "MAXVAL(mass_profile( 2, : ))=", &
+           MAXVAL(mass_profile( 2, : ), DIM= 1 )
+  PRINT *
+  PRINT *, "mass=", mass, ", mass/mass1=", mass/THIS% mass1
   PRINT *
 
   finalnamefile= "mass_profile.dat"
@@ -2066,7 +2066,8 @@ PRINT *
   write_data_loop: DO itr = 1, NINT(radius1/rad_step), 1
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      mass_profile( 1, itr ), mass_profile( 2, itr )
+      mass_profile( 1, mass_profile_idx(itr) ), &
+      mass_profile( 2, mass_profile_idx(itr) )
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " &
@@ -2083,8 +2084,9 @@ PRINT *
   mass_index= 1
   DO itr = 1, NINT(radius1/rad_step), 1
 
-    IF( mass_profile( 2, itr ) >= mass_fractions1( mass_index ) )THEN
-     shell_radii( mass_index )= mass_profile( 1, itr )
+    IF( mass_profile( 2, mass_profile_idx(itr) ) &
+        >= mass_fractions1( mass_index ) )THEN
+     shell_radii( mass_index )= mass_profile( 1, mass_profile_idx(itr) )
      IF( mass_index == npart1_radius )THEN
        EXIT
      ELSE
