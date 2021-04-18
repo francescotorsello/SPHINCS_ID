@@ -1935,7 +1935,8 @@ PRINT *
 
   !$OMP PARALLEL DO SHARED(mass_profile,rad_step,long_step,lat_step,center1) &
   !$OMP             PRIVATE(r,rad_coord,phi,long,th,lat,sq_g,gamma_euler ,&
-  !$OMP                     baryon_density,mass_element) !&
+  !$OMP                     baryon_density,mass_element) &
+  !$OMP             SCHEDULE(STATIC,1)
 !  !$OMP             REDUCTION(+:rad) !&
 !  !$OMP             SCHEDULE(STATIC)
   radius_loop: DO r= 1, NINT(radius1/rad_step), 1
