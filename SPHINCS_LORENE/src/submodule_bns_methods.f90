@@ -940,6 +940,112 @@ SUBMODULE (bns_id) bns_methods
   END PROCEDURE print_id_params
 
 
+  MODULE PROCEDURE integrate_baryon_mass_density
+
+    !************************************************
+    !                                               *
+    ! Perform 3D integration over a spherical grid  *
+    ! of the baryon mass density. Output baryon     *
+    ! mass and radial mass profile.                 *
+    !                                               *
+    ! FT 19.02.2021                                 *
+    !                                               *
+    !************************************************
+
+    !$ USE OMP_LIB
+    USE constants, ONLY: pi
+    USE NR,        ONLY: indexx
+
+    IMPLICIT NONE
+
+    INTEGER:: r, th, phi
+    DOUBLE PRECISION:: rad_coord, colat, long, mass_element
+    DOUBLE PRECISION:: g_xx, sq_g, baryon_density, gamma_euler
+    DOUBLE PRECISION:: rad
+
+    rad= 0.0D0
+
+    IF(.NOT.ALLOCATED( mass_profile ))THEN
+      ALLOCATE( mass_profile( 2, NINT(radius/dr) ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
+    ENDIF
+    IF(.NOT.ALLOCATED( mass_profile_idx ))THEN
+      ALLOCATE( mass_profile_idx( NINT(radius/dr) ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
+    ENDIF
+
+    !$OMP PARALLEL DO SHARED(mass_profile,dr,dphi,dth,center)&
+    !$OMP             PRIVATE(r,rad_coord,phi,long,th,colat,sq_g,gamma_euler ,&
+    !$OMP                     baryon_density,mass_element) &
+    !$OMP             SCHEDULE(STATIC,1)
+    radius_loop: DO r= 1, NINT(radius/dr), 1
+
+      rad_coord= r*dr
+
+      !$OMP PARALLEL SECTIONS REDUCTION(+:mass,rad)
+      rad= rad + dr
+
+      longitude_loop: DO phi= 1, NINT(2.0D0*pi/(dphi)), 1
+
+        long= phi*dphi
+
+        colatitude_loop: DO th= 1, NINT(pi/2.0D0/(dth)), 1
+
+          colat= th*dth
+
+          ! The definition of the baryon mass for the LORENE ID is in eq.(69)
+          ! of Gourgoulhon et al., PRD 63 064029 (2001)
+
+          CALL THIS% import_id( &
+                   center + rad_coord*SIN(colat)*COS(long), &
+                   rad_coord*SIN(colat)*SIN(long), &
+                   rad_coord*COS(colat), &
+                   g_xx, baryon_density, &
+                   gamma_euler )
+
+          ! Compute square root of the determinant of the spatial metric
+          sq_g= g_xx*SQRT( g_xx )
+
+          mass_element= (rad_coord**2.0D0)*SIN(colat)*dr*dth*dphi &
+                        *sq_g*gamma_euler*baryon_density
+
+          mass= mass + 2.0D0*mass_element
+
+        ENDDO colatitude_loop
+
+      ENDDO longitude_loop
+      !$OMP END PARALLEL SECTIONS
+
+      mass_profile( 1, r )= rad
+      mass_profile( 2, r )= mass
+
+    ENDDO radius_loop
+    !$OMP END PARALLEL DO
+
+    CALL indexx( NINT(radius/dr), mass_profile( 1, : ), mass_profile_idx )
+
+
+  END PROCEDURE integrate_baryon_mass_density
+
+
   MODULE PROCEDURE destruct_binary
 
     !************************************************

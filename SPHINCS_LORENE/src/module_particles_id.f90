@@ -173,7 +173,7 @@ MODULE particles_id
 
     PROCEDURE:: place_particles_3dlattices
 
-    PROCEDURE:: place_particles_gaussianlattices
+    PROCEDURE:: place_particles_stretched_lattice
 
     GENERIC, PUBLIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
                                            reshape_sph_field_2d_ptr
@@ -283,7 +283,7 @@ MODULE particles_id
 
     END SUBROUTINE place_particles_3dlattices
 
-    MODULE SUBROUTINE place_particles_gaussianlattices( THIS, &
+    MODULE SUBROUTINE place_particles_stretched_lattice( THIS, &
                                   xmin1, xmax1, ymin1, ymax1, zmin1, zmax1, &
                                   xmin2, xmax2, ymin2, ymax2, zmin2, zmax2, &
                                   thres, bns_obj )
@@ -295,7 +295,7 @@ MODULE particles_id
       DOUBLE PRECISION, INTENT( IN )    :: xmin2, xmax2, ymin2, &
                                            ymax2, zmin2, zmax2, thres
 
-    END SUBROUTINE place_particles_gaussianlattices
+    END SUBROUTINE place_particles_stretched_lattice
 
     MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
                                             index_array )

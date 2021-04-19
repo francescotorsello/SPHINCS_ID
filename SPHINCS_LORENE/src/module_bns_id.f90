@@ -228,6 +228,8 @@ MODULE bns_id
 
     PROCEDURE:: import_id_params
 
+    PROCEDURE:: integrate_baryon_mass_density
+
     PROCEDURE, PUBLIC:: print_id_params
 
     !
@@ -449,6 +451,20 @@ MODULE bns_id
       CLASS(bns), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE print_id_params
+
+    MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+                                                     dr, dth, dphi, &
+                                                     mass, mass_profile, &
+                                                     mass_profile_idx )
+
+      CLASS(bns), INTENT( IN OUT )      :: THIS
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+      DOUBLE PRECISION, INTENT( IN )    :: center, radius, dr, dth, dphi
+      DOUBLE PRECISION, INTENT( IN OUT ):: mass
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+                                       mass_profile
+
+    END SUBROUTINE integrate_baryon_mass_density
 
     MODULE SUBROUTINE import_id_int( THIS, n, x, y, z )
 
