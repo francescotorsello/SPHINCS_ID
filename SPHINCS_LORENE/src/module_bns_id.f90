@@ -597,26 +597,16 @@ MODULE bns_id
     END SUBROUTINE import_id_particles
 
     MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
-                                        lapse, &
-                                        shift_x, shift_y, shift_z, &
                                         g_xx, &
                                         baryon_density, &
-                                        u_euler_x, u_euler_y, u_euler_z, &
                                         gamma_euler )
 
       CLASS(bns),       INTENT( IN OUT ):: THIS
       REAL(C_DOUBLE),   INTENT( IN )    :: x
       REAL(C_DOUBLE),   INTENT( IN )    :: y
       REAL(C_DOUBLE),   INTENT( IN)     :: z
-      DOUBLE PRECISION, INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, INTENT( IN OUT ):: shift_z
       DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
       DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, INTENT( IN OUT ):: u_euler_z
       DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
 
     END SUBROUTINE import_id_mass_b
@@ -665,6 +655,7 @@ MODULE bns_id
       REAL(C_DOUBLE):: res
 
     END FUNCTION import_spatial_metric
+
 
     MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
 
@@ -1477,11 +1468,8 @@ MODULE bns_id
 
     SUBROUTINE get_lorene_id_mass_b( optr, &
                                         x, y, z, &
-                                        lapse, &
-                                        shift_x, shift_y, shift_z, &
                                         g_diag, &
                                         baryon_density, &
-                                        v_euler_x, v_euler_y, v_euler_z, &
                                         gamma_euler ) &
       BIND(C, NAME= "get_lorene_id_mass_b")
 
@@ -1508,15 +1496,8 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
-      REAL(C_DOUBLE), INTENT(OUT)       :: lapse
-      REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
-      REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
-      REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
       REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
-      REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
-      REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
-      REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_z
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma_euler
 
     END SUBROUTINE get_lorene_id_mass_b

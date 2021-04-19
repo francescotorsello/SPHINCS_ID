@@ -661,15 +661,8 @@ SUBMODULE (bns_id) bns_methods
                                     x*Msun_geo, &
                                     y*Msun_geo, &
                                     z*Msun_geo, &
-                                    lapse, &
-                                    shift_x, &
-                                    shift_y, &
-                                    shift_z, &
                                     g_xx, &
                                     baryon_density, &
-                                    u_euler_x, &
-                                    u_euler_y, &
-                                    u_euler_z, &
                                     gamma_euler )
 
       baryon_density= baryon_density*lorene2hydrobase

@@ -1542,7 +1542,8 @@ SUBMODULE (particles_id) particles_constructor
 
     INTEGER:: npart1_tmp, npart2_tmp, npart1_radius, npart2_radius, nradii1, &
               nradii2, tmp, cnt, cnt2, npart1_eqplane, npart2_eqplane, &
-              nradii1_plane, nradii2_plane, itr3, mass_index, r, th, phi
+              nradii1_plane, nradii2_plane, itr3, mass_index, r, th, phi, &
+              npart1_half
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx
     DOUBLE PRECISION:: radius1, radius2, alpha1, alpha2, itr, itr2, &
                        mass_step1, mass_step2, mass_tmp, rad_step, vol_tmp, &
@@ -1556,12 +1557,13 @@ SUBMODULE (particles_id) particles_constructor
                        lorentz_factor, lorentz_factor_rel, &
                        n_t, n_x, n_y, n_z, gamma_euler, &
                        lat_step, long_step, m_p, m_shell, dr, rad, mass, &
-                       rad_coord2, center1, mass_element
+                       rad_coord2, center1, mass_element, colat, phase
     DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_fractions1, &
                                                   mass_fractions2
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: colatitude_pos
 
     LOGICAL:: adapt_rad_step, exist
 
@@ -1580,10 +1582,10 @@ SUBMODULE (particles_id) particles_constructor
     npart2_radius= NINT( radius2* &
                    (npart2_tmp/(4.0D0/3.0D0*pi*radius2**3.0D0))**(1.0D0/3.0D0) )
 
-    npart1_eqplane= NINT( pi*radius1**2* &
-                   (npart1_tmp/(4.0D0/3.0D0*pi*radius1**3.0D0))**(2.0D0/3.0D0) )
-    npart2_eqplane= NINT( pi*radius2**2* &
-                   (npart2_tmp/(4.0D0/3.0D0*pi*radius2**3.0D0))**(2.0D0/3.0D0) )
+    !npart1_eqplane= NINT( pi*radius1**2* &
+    !               (npart1_tmp/(4.0D0/3.0D0*pi*radius1**3.0D0))**(2.0D0/3.0D0) )
+    !npart2_eqplane= NINT( pi*radius2**2* &
+    !               (npart2_tmp/(4.0D0/3.0D0*pi*radius2**3.0D0))**(2.0D0/3.0D0) )
 
     nradii1= CEILING( DBLE(npart1_tmp)/DBLE(npart1_radius) )
     nradii2= CEILING( DBLE(npart2_tmp)/DBLE(npart2_radius) )
@@ -1598,6 +1600,11 @@ SUBMODULE (particles_id) particles_constructor
     alpha2= 2.0D0*pi/DBLE(nradii2_plane)
     !alpha1= pi/DBLE(nradii1)*(1 + SQRT( DBLE(1 + 4*nradii1) ))
     !alpha2= pi/DBLE(nradii2)*(1 + SQRT( DBLE(1 + 4*nradii2) ))
+
+    ALLOCATE( colatitude_pos( nradii1_plane ) )
+    DO itr= 1, nradii1_plane, 1
+      colatitude_pos( itr )= ACOS( 2.0D0*itr/nradii1_plane - 1.0D0 )
+    ENDDO
 
     PRINT *, "npart1_radius=", npart1_radius
     PRINT *, "npart2_radius=", npart2_radius
@@ -1676,10 +1683,6 @@ SUBMODULE (particles_id) particles_constructor
       STOP
     ENDIF
 
-PRINT *
-PRINT *, mass_fractions1
-PRINT *
-
     ! Place the particles for one star only, since the subroutine will place
     ! particles for one star
 
@@ -1687,8 +1690,8 @@ PRINT *
     ! Note that after determining npart, the array pos is reshaped into
     ! pos( 3, npart )
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, THIS% npart_temp ), STAT= ios, &
-                ERRMSG= err_msg )
+      ALLOCATE( THIS% pos( 3, npart1_radius*nradii1_plane*nradii1_plane ), &
+                STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE" &
                   // "place_particles_. ", &
@@ -1714,18 +1717,18 @@ PRINT *
     ENDIF
 
     ! Latitude first, longitude second
-    mass_index= 1
-    shell_radii= 1.0D0
-    mass_tmp= 0.0D0
-    vol_tmp= 0.0D0
+    !mass_index= 1
+    !shell_radii= 1.0D0
+    !mass_tmp= 0.0D0
+    !vol_tmp= 0.0D0
 
     ! Assume same mass for particles
-    m_p             = THIS% mass1/npart1_tmp
-    m_shell         = m_p*nradii1
-    shell_radii( npart1_radius )= radius1*0.99D0!(3.0D0*(THIS% mass1/1000)/(4.0D0*pi&
+    !m_p             = THIS% mass1/npart1_tmp
+    !m_shell         = m_p*nradii1
+    !shell_radii( npart1_radius )= radius1*0.99D0!(3.0D0*(THIS% mass1/1000)/(4.0D0*pi&
                       !*bns_obj% import_mass_density( bns_obj% get_center1_x(), &
                       !0.0D0, 0.0D0)))**(1.0D0/3.0D0)
-    rad_coord       = shell_radii( npart1_radius )
+    !rad_coord       = shell_radii( npart1_radius )
     !PRINT *, rad_coord
     !PRINT *, bns_obj% get_center1_x() + rad_coord
     !PRINT *, m_shell*npart1_radius
@@ -1877,22 +1880,14 @@ PRINT *
     !  ENDIF
     !
     !ENDDO radius_loop
-
-! The parameterscommented below give a 0.2% error on the mass!
-!rad_step= radius1/2000.0D0
-!lat_step= pi/2/500.0D0
-!long_step= 2*pi/500.0D0
-
-! The parameterscommented below give a 0.7% error on the mass!
 !rad_step= radius1/1000.0D0
-!lat_step= pi/2/250.0D0
-!long_step= 2*pi/250.0D0
-
+!lat_step= pi/2.0D0/250.0D0
+!long_step= 2.0D0*pi/1000.0D0
 
   mass_index= 1
   rad_step= radius1/1000.0D0
-  lat_step= pi/2.0D0/250.0D0
-  long_step= 2.0D0*pi/1000.0D0
+  lat_step= pi/2.0D0/125.0D0
+  long_step= 2.0D0*pi/500.0D0
   mass_tmp= 4.0D0/3.0D0*pi*rad_step**3.0D0 &
             *bns_obj% import_mass_density( bns_obj% get_center1_x(), &
                                            0.0D0, 0.0D0 )
@@ -1902,9 +1897,9 @@ PRINT *
   adapt_rad_step= .TRUE.
   mass_profile= 0.0D0
 
-  PRINT *, rad_step/radius1
-  PRINT *, lat_step/(2*pi)
-  PRINT *, long_step/(2*pi)
+  !PRINT *, rad_step/radius1
+  !PRINT *, lat_step/(2*pi)
+  !PRINT *, long_step/(2*pi)
 
   IF(.NOT.ALLOCATED( mass_profile ))THEN
     ALLOCATE( mass_profile( 2, NINT(radius1/rad_step) ), STAT= ios, &
@@ -1933,12 +1928,13 @@ PRINT *
     !                // "place_particles_3D_lattice." )
   ENDIF
 
+  PRINT *, "Integrating the baryon mass density to get the mass profile..."
+  PRINT *
+
   !$OMP PARALLEL DO SHARED(mass_profile,rad_step,long_step,lat_step,center1) &
   !$OMP             PRIVATE(r,rad_coord,phi,long,th,lat,sq_g,gamma_euler ,&
   !$OMP                     baryon_density,mass_element) &
   !$OMP             SCHEDULE(STATIC,1)
-!  !$OMP             REDUCTION(+:rad) !&
-!  !$OMP             SCHEDULE(STATIC)
   radius_loop: DO r= 1, NINT(radius1/rad_step), 1
 
     rad_coord= r*rad_step
@@ -1946,13 +1942,10 @@ PRINT *
     !$OMP PARALLEL SECTIONS REDUCTION(+:mass,rad)
     rad= rad + rad_step
 
-!    !$OMP             PRIVATE(phi,long)
     longitude_loop: DO phi= 1, NINT(2.0D0*pi/(long_step)), 1
 
       long= phi*long_step
 
-!      !$OMP PARALLEL DO SHARED(center1,mass,mass_tmp,lat_step,mass_index) &
-!      !$OMP             PRIVATE(th,lat,sq_g,gamma_euler,baryon_density,mass_shell)
       latitude_loop: DO th= 1, NINT(pi/2.0D0/(lat_step)), 1
 
         lat= th*lat_step
@@ -1964,9 +1957,7 @@ PRINT *
                  center1 + rad_coord*SIN(lat)*COS(long), &
                  rad_coord*SIN(lat)*SIN(long), &
                  rad_coord*COS(lat), &
-                 lapse, shift_x, shift_y, shift_z, &
                  g_xx, baryon_density, &
-                 v_euler_x, v_euler_y, v_euler_z, &
                  gamma_euler )
 
         ! Compute covariant spatial fluid velocity (metric is diagonal and
@@ -2010,17 +2001,15 @@ PRINT *
         mass= mass + 2.0D0*mass_element
 
       ENDDO latitude_loop
-!      !$OMP END PARALLEL DO
 
     ENDDO longitude_loop
-!    ! $OMP END PARALLEL DO
     !$OMP END PARALLEL SECTIONS
 
     mass_profile( 1, r )= rad
     mass_profile( 2, r )= mass
 
-    PRINT *, bns_obj% get_center1_x() + rad, &
-             rad, mass, mass_profile( 2, r )
+    !PRINT *, bns_obj% get_center1_x() + rad, &
+    !         rad, mass, mass_profile( 2, r )
 
   ENDDO radius_loop
   !$OMP END PARALLEL DO
@@ -2043,6 +2032,8 @@ PRINT *
   PRINT *
   PRINT *, "mass=", mass, ", mass/mass1=", mass/THIS% mass1
   PRINT *
+
+PRINT *, "Print mass profile to file..."
 
   finalnamefile= "mass_profile.dat"
 
@@ -2080,7 +2071,7 @@ PRINT *
 
   CLOSE( UNIT= 2 )
 
-
+PRINT *, "Print shell radii to file..."
 
   mass_index= 1
   DO itr = 1, NINT(radius1/rad_step), 1
@@ -2146,6 +2137,79 @@ PRINT *
       !
       !  ENDDO latitude_loop
       !ENDDO longitude_loop
+
+PRINT *, "Assigning first half of particle positions..."
+
+    PRINT *, "npart1_radius=", npart1_radius
+    PRINT *, "nradii1_plane=", nradii1_plane
+    THIS% npart= 0
+    phase= 0
+    DO r= 1, npart1_radius, 1
+      !phase= phase + (r - 1.0D0)*2*pi/(SQRT(2.0D0)/(7.0D0/5.0D0)*nradii1_plane)
+      phase= phase + r*alpha1/1.618033988749894D0
+      DO th= 1, nradii1_plane, 1
+        DO phi= 1, nradii1_plane, 1 !nradii1_plane is even, see above
+          THIS% npart= THIS% npart + 1
+          THIS% pos( 1, THIS% npart )= &
+                shell_radii(r)*COS(phase + phi*alpha1)*SIN(colatitude_pos(th))
+          THIS% pos( 2, THIS% npart )= &
+                shell_radii(r)*SIN(phase + phi*alpha1)*SIN(colatitude_pos(th))
+          THIS% pos( 3, THIS% npart )= &
+                shell_radii(r)*COS(colatitude_pos(th))
+        ENDDO
+      ENDDO
+    ENDDO
+    PRINT *, "npart=", THIS% npart
+
+!PRINT *, "Mirroring particles..."
+!
+!    PRINT *, "npart/2=", THIS% npart
+!    npart1_half= THIS% npart
+!    DO itr= 1, npart1_half, 1
+!      THIS% npart= THIS% npart + 1
+!      THIS% pos( 1, THIS% npart )=   THIS% pos( 1, itr )
+!      THIS% pos( 2, THIS% npart )=   THIS% pos( 2, itr )
+!      THIS% pos( 3, THIS% npart )= - THIS% pos( 3, itr )
+!    ENDDO
+
+PRINT *, "Printing particle positions to file..."
+
+    finalnamefile= "tmp_pos.dat"
+
+    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+              ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO itr = 1, THIS% npart, 1
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        THIS% pos( 1, itr ), THIS% pos( 2, itr ), THIS% pos( 3, itr )
+
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing the arrays in " &
+                 // TRIM(finalnamefile), ". The error message is", err_msg
+        STOP
+      ENDIF
+
+    ENDDO
+
+    CLOSE( UNIT= 2 )
+
+PRINT *, "STOP..."
 
     STOP
 
