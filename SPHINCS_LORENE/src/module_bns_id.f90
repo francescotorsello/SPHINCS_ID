@@ -453,13 +453,15 @@ MODULE bns_id
     END SUBROUTINE print_id_params
 
     MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+                                                     central_density, &
                                                      dr, dth, dphi, &
                                                      mass, mass_profile, &
                                                      mass_profile_idx )
 
       CLASS(bns), INTENT( IN OUT )      :: THIS
       INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
-      DOUBLE PRECISION, INTENT( IN )    :: center, radius, dr, dth, dphi
+      DOUBLE PRECISION, INTENT( IN )    :: center, central_density, radius, &
+                                           dr, dth, dphi
       DOUBLE PRECISION, INTENT( IN OUT ):: mass
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
                                        mass_profile

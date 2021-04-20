@@ -961,12 +961,12 @@ SUBMODULE (bns_id) bns_methods
     INTEGER:: r, th, phi
     DOUBLE PRECISION:: rad_coord, colat, long, mass_element
     DOUBLE PRECISION:: g_xx, sq_g, baryon_density, gamma_euler
-    DOUBLE PRECISION:: rad
+    !DOUBLE PRECISION:: rad
 
-    rad= 0.0D0
+    !rad= 0.0D0
 
     IF(.NOT.ALLOCATED( mass_profile ))THEN
-      ALLOCATE( mass_profile( 2, NINT(radius/dr) ), STAT= ios, &
+      ALLOCATE( mass_profile( 3, 0:NINT(radius/dr) ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
@@ -979,7 +979,7 @@ SUBMODULE (bns_id) bns_methods
       !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( mass_profile_idx ))THEN
-      ALLOCATE( mass_profile_idx( NINT(radius/dr) ), STAT= ios, &
+      ALLOCATE( mass_profile_idx( 0:NINT(radius/dr) ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
@@ -992,22 +992,27 @@ SUBMODULE (bns_id) bns_methods
       !                // "place_particles_3D_lattice." )
     ENDIF
 
-    !$OMP PARALLEL DO SHARED(mass_profile,dr,dphi,dth,center)&
-    !$OMP             PRIVATE(r,rad_coord,phi,long,th,colat,sq_g,gamma_euler ,&
-    !$OMP                     baryon_density,mass_element) &
-    !$OMP             SCHEDULE(STATIC,1)
+    mass_profile( 1, 0 )= 0.0D0
+    mass_profile( 2, 0 )= 4.0D0/3.0D0*pi*dr**3.0D0*central_density
+    mass_profile( 3, 0 )= 4.0D0/3.0D0*pi*dr**3.0D0*central_density
+
+    !$OMP PARALLEL DO SHARED(dr,dphi,dth,center)&
+    !$OMP             PRIVATE(r,th,phi,rad_coord,long,colat,sq_g,gamma_euler, &
+    !$OMP                     baryon_density,mass_element,mass) !&
+!    !$OMP             SCHEDULE(STATIC,1)
     radius_loop: DO r= 1, NINT(radius/dr), 1
 
+      mass= 0.0D0
       rad_coord= r*dr
 
-      !$OMP PARALLEL SECTIONS REDUCTION(+:mass,rad)
-      rad= rad + dr
+!      !$OMP PARALLEL SECTIONS REDUCTION(+:mass,rad)
+      !rad= rad + dr
 
-      longitude_loop: DO phi= 1, NINT(2.0D0*pi/(dphi)), 1
+      longitude_loop: DO phi= 1, NINT(2.0D0*pi/dphi), 1
 
         long= phi*dphi
 
-        colatitude_loop: DO th= 1, NINT(pi/2.0D0/(dth)), 1
+        colatitude_loop: DO th= 1, NINT(pi/2.0D0/dth), 1
 
           colat= th*dth
 
@@ -1021,6 +1026,44 @@ SUBMODULE (bns_id) bns_methods
                    g_xx, baryon_density, &
                    gamma_euler )
 
+!        CALL bns_obj% import_id( &
+!                 center1 + rad_coord*SIN(lat)*COS(long), &
+!                 rad_coord*SIN(lat)*SIN(long), &
+!                 rad_coord*COS(lat), &
+!                 g_xx, baryon_density, &
+!                 gamma_euler )
+!
+!        ! Compute covariant spatial fluid velocity (metric is diagonal and
+!        ! conformally flat)
+!        !v_euler_x_l= g_xx*v_euler_x
+!        !v_euler_y_l= g_xx*v_euler_y
+!        !v_euler_z_l= g_xx*v_euler_z
+!        !
+!        !! Compute the corresponding Lorentz factor
+!        !lorentz_factor= 1.0D0/SQRT( 1.0D0 - ( v_euler_x_l*v_euler_x &
+!        !                                    + v_euler_y_l*v_euler_y &
+!        !                                    + v_euler_z_l*v_euler_z ) )
+!        !
+!        !! Compute covariant fluid 4-velocity
+!        !u_euler_t_l= lorentz_factor *( - lapse + v_euler_x_l*shift_x &
+!        !                                       + v_euler_y_l*shift_y &
+!        !                                       + v_euler_z_l*shift_z )
+!        !u_euler_x_l= lorentz_factor*v_euler_x_l
+!        !u_euler_y_l= lorentz_factor*v_euler_y_l
+!        !u_euler_z_l= lorentz_factor*v_euler_z_l
+!        !
+!        !! Compute vector normal to spacelie hypersurface
+!        !! (4-velocity of the Eulerian observer)
+!        !n_t= 1.0D0/lapse
+!        !n_x= - shift_x/lapse
+!        !n_y= - shift_y/lapse
+!        !n_z= - shift_z/lapse
+!        !
+!        !! Compute relative Lorentz factor between 4-velocity of the fluid
+!        !! wrt the Eulerian observer and the 4-velocity of the Eulerian observer
+!        !lorentz_factor_rel= - ( n_t*u_euler_t_l + n_x*u_euler_x_l &
+!        !                      + n_y*u_euler_y_l + n_z*u_euler_z_l )
+
           ! Compute square root of the determinant of the spatial metric
           sq_g= g_xx*SQRT( g_xx )
 
@@ -1032,15 +1075,28 @@ SUBMODULE (bns_id) bns_methods
         ENDDO colatitude_loop
 
       ENDDO longitude_loop
-      !$OMP END PARALLEL SECTIONS
+!      !$OMP END PARALLEL SECTIONS
 
-      mass_profile( 1, r )= rad
+      mass_profile( 1, r )= rad_coord
       mass_profile( 2, r )= mass
+
+      !PRINT *, rad_coord, mass_profile( 1, r ), mass, mass_profile( 2, r )
+      !PRINT *
 
     ENDDO radius_loop
     !$OMP END PARALLEL DO
 
-    CALL indexx( NINT(radius/dr), mass_profile( 1, : ), mass_profile_idx )
+    DO r= 1, NINT(radius/dr), 1
+      mass_profile( 3, r )= mass_profile( 3, r - 1 ) + mass_profile( 2, r )
+    ENDDO
+
+    mass= mass_profile( 3, NINT(radius/dr) )
+
+    PRINT *, "radius covered by the integration=", MAXVAL( mass_profile( 1, : ), DIM= 1 )
+    PRINT *, "mass=", mass, ", mass/mass1=", mass/THIS% mass1
+    PRINT *
+
+    CALL indexx( NINT(radius/dr) + 1, mass_profile( 1, : ), mass_profile_idx )
 
 
   END PROCEDURE integrate_baryon_mass_density
