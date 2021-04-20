@@ -284,16 +284,14 @@ MODULE particles_id
     END SUBROUTINE place_particles_3dlattices
 
     MODULE SUBROUTINE place_particles_stretched_lattice( THIS, &
-                                  xmin1, xmax1, ymin1, ymax1, zmin1, zmax1, &
-                                  xmin2, xmax2, ymin2, ymax2, zmin2, zmax2, &
-                                  thres, bns_obj )
+                                  mass_star, radius, center, npart_approx, &
+                                  npart_out, thres, bns_obj )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
-      DOUBLE PRECISION, INTENT( IN )    :: xmin1, xmax1, ymin1, &
-                                           ymax1, zmin1, zmax1
-      DOUBLE PRECISION, INTENT( IN )    :: xmin2, xmax2, ymin2, &
-                                           ymax2, zmin2, zmax2, thres
+      INTEGER,          INTENT( IN )    :: npart_approx
+      INTEGER,          INTENT( OUT )   :: npart_out
+      DOUBLE PRECISION, INTENT( IN )    :: mass_star, radius, center, thres
 
     END SUBROUTINE place_particles_stretched_lattice
 

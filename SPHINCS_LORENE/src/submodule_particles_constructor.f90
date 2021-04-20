@@ -63,7 +63,8 @@ SUBMODULE (particles_id) particles_constructor
     ! The variable counter counts how many times the PROCEDURE
     ! construct_particles is called
     INTEGER, SAVE:: counter= 1
-    INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr1, cntr2, itr_1, itr_2
+    INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr1, cntr2, &
+              npart_approx, npart2_approx, itr_1, itr_2
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
 
@@ -71,6 +72,7 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
     DOUBLE PRECISION:: xmin1, xmax1, ymin1, ymax1, zmin1, zmax1
     DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
+    DOUBLE PRECISION:: center1, center2, radius1, radius2
     DOUBLE PRECISION:: min_abs_y, min_abs_z
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
@@ -87,7 +89,7 @@ SUBMODULE (particles_id) particles_constructor
 
     NAMELIST /bns_particles/ &
               stretch, &
-              nx, ny, nz, &
+              nx, ny, nz, npart_approx, &
               use_thres, thres, nu_ratio, redistribute_nu, correct_nu, &
               compose_eos, compose_path, compose_filename
 
@@ -104,6 +106,10 @@ SUBMODULE (particles_id) particles_constructor
 
     parts_obj% mass1     = bns_obj% get_mass1()
     parts_obj% mass2     = bns_obj% get_mass2()
+    center1= bns_obj% get_center1_x()
+    center2= bns_obj% get_center2_x()
+    radius1= bns_obj% get_radius1_x_comp()
+    radius2= bns_obj% get_radius2_x_comp()
     parts_obj% nbar_tot  = 0.0D0
     parts_obj% nbar1     = 0.0D0
     parts_obj% nbar2     = 0.0D0
@@ -237,47 +243,57 @@ SUBMODULE (particles_id) particles_constructor
 
     CASE(3)
 
-      PRINT *, " * Placing particles on two lattices, " &
-               // "one around each star."
+      PRINT *, " * Placing equal-mass particles on spherical shells, " &
+               // "taking into account the mass profile of the stars."
       PRINT *
 
-      parts_obj% nx= nx
-      parts_obj% ny= ny
-      parts_obj% nz= nz
+      IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 
-      !
-      !-- Determine boundaries of the two lattices around the stars (Msun_geo)
-      !
-      xmin1=   bns_obj% get_center1_x() - &
-                                stretch*MAX( bns_obj% get_radius1_x_comp(), &
-                                             bns_obj% get_radius1_x_opp() )
-      xmax1=   bns_obj% get_center1_x() + &
-                                stretch*MAX( bns_obj% get_radius1_x_comp(), &
-                                             bns_obj% get_radius1_x_opp() )
-      ymin1= - stretch*bns_obj% get_radius1_y()
-      ymax1=   stretch*bns_obj% get_radius1_y()
-      zmin1= - stretch*bns_obj% get_radius1_z()
-      zmax1=   stretch*bns_obj% get_radius1_z()
+        ! mass_ratio < 1
+        parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
+        npart2_approx= npart_approx/parts_obj% mass_ratio
 
-      xmin2=   bns_obj% get_center2_x() - &
-                                stretch*MAX( bns_obj% get_radius2_x_comp(), &
-                                             bns_obj% get_radius2_x_opp() )
-      xmax2=   bns_obj% get_center2_x() + &
-                                stretch*MAX( bns_obj% get_radius2_x_comp(), &
-                                             bns_obj% get_radius2_x_opp() )
-      ymin2= - stretch*bns_obj% get_radius2_y()
-      ymax2=   stretch*bns_obj% get_radius2_y()
-      zmin2= - stretch*bns_obj% get_radius2_z()
-      zmax2=   stretch*bns_obj% get_radius2_z()
+        ! Place particles, and time the process
+        CALL parts_obj% placer_timer% start_timer()
+        CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass2, &
+                                                    radius2, center2, &
+                                                    npart_approx, &
+                                                    parts_obj% npart2, &
+                                                    thres, &
+                                                    bns_obj )
+        CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass1, &
+                                                    radius1, center1, &
+                                                    npart2_approx, &
+                                                    parts_obj% npart1, &
+                                                    thres, &
+                                                    bns_obj )
+        CALL parts_obj% placer_timer% stop_timer()
 
-      ! Place particles, and time the process
-      CALL parts_obj% placer_timer% start_timer()
-      CALL parts_obj% place_particles_stretched_lattice( xmin1, xmax1, ymin1, &
-                                                  ymax1, zmin1, zmax1, &
-                                                  xmin2, xmax2, ymin2, &
-                                                  ymax2, zmin2, zmax2, thres, &
-                                                  bns_obj )
-      CALL parts_obj% placer_timer% stop_timer()
+      ELSE
+
+        ! mass_ratio < 1
+        parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
+        npart2_approx= npart_approx/parts_obj% mass_ratio
+
+        ! Place particles, and time the process
+        CALL parts_obj% placer_timer% start_timer()
+        CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass1, &
+                                                    radius1, center1, &
+                                                    npart_approx, &
+                                                    parts_obj% npart, &
+                                                    thres, &
+                                                    bns_obj )
+        CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass2, &
+                                                    radius2, center2, &
+                                                    npart2_approx, &
+                                                    parts_obj% npart, &
+                                                    thres, &
+                                                    bns_obj )
+        CALL parts_obj% placer_timer% stop_timer()
+        parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
+
+      ENDIF
+
       STOP
 
     CASE DEFAULT

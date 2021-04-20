@@ -6,10 +6,10 @@ SUBMODULE (particles_id) stretched_lattice
 
   !************************************************
   !                                               *
-  ! Implementation of the constructor of TYPE     *
-  ! particles, and all the PROCEDURES it calls.   *
+  !
+  !*
   !                                               *
-  ! FT 19.04.2020                                 *
+  ! FT 19.04.2021                                 *
   !                                               *
   !************************************************
 
@@ -27,7 +27,7 @@ SUBMODULE (particles_id) stretched_lattice
     !     *
     !     *
     !                                               *
-    ! FT 5.12.2020                                  *
+    ! FT 19.04.2021                                 *
     !                                               *
     !************************************************
 
@@ -39,34 +39,18 @@ SUBMODULE (particles_id) stretched_lattice
 
     IMPLICIT NONE
 
-    INTEGER:: npart1_tmp, npart2_tmp, npart1_radius, npart2_radius, nradii1, &
-              nradii2, tmp, cnt, cnt2, npart1_eqplane, npart2_eqplane, &
-              nradii1_plane, nradii2_plane, itr3, mass_index, r, th, phi, &
-              npart1_half, shell_index
+    INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart, &
+              shell_index, r, th, phi
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
-    DOUBLE PRECISION:: radius1, radius2, alpha1, alpha2, itr, itr2, &
-                       mass_step1, mass_step2, mass_tmp, rad_step, vol_tmp, &
-                       mass_shell, rad_coord, lat, long, &
-                       lapse, shift_x, shift_y, shift_z, &
-                       g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                       det, sq_g, baryon_density, &
-                       v_euler_x, v_euler_y, v_euler_z, &
-                       v_euler_x_l, v_euler_y_l, v_euler_z_l, &
-                       u_euler_t_l, u_euler_x_l, u_euler_y_l, u_euler_z_l, &
-                       lorentz_factor, lorentz_factor_rel, &
-                       n_t, n_x, n_y, n_z, gamma_euler, &
-                       lat_step, long_step, m_p, m_shell, dr, rad, mass, &
-                       rad_coord2, center1, mass_element, colat, phase, &
-                       central_density
-    DOUBLE PRECISION:: g4(0:3,0:3)
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_fractions1, &
-                                                  mass_fractions2
+
+    DOUBLE PRECISION:: m_p, central_density, &
+                       dr, dth, dphi, phase, mass
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
                                                   alpha
 
-    LOGICAL:: adapt_rad_step, exist
+    LOGICAL:: exist
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
@@ -76,27 +60,27 @@ SUBMODULE (particles_id) stretched_lattice
 
     TYPE(colatitude_pos_shell), DIMENSION(:), ALLOCATABLE:: colatitude_pos
 
-    npart1_tmp= 1D+6
+    !npart_approx= 1D+6
     !npart2_tmp= 1D+5*1.8D0/1.2D0
 
-    THIS% mass1= bns_obj% get_mass1()
+    !THIS% mass1= bns_obj% get_mass1()
     !THIS% mass2= bns_obj% get_mass2()
-    radius1    = bns_obj% get_radius1_x_comp()
+    !radius    = bns_obj% get_radius1_x_comp()
     !radius2    = bns_obj% get_radius2_x_comp()
 
-    m_p= THIS% mass1/npart1_tmp
+    m_p= THIS% mass1/npart_approx
 
-    npart1_radius= NINT( radius1* &
-                   (npart1_tmp/(4.0D0/3.0D0*pi*radius1**3.0D0))**(1.0D0/3.0D0) )
+    n_shells= NINT( radius* &
+                  (npart_approx/(4.0D0/3.0D0*pi*radius**3.0D0))**(1.0D0/3.0D0) )
     !npart2_radius= NINT( radius2* &
     !               (npart2_tmp/(4.0D0/3.0D0*pi*radius2**3.0D0))**(1.0D0/3.0D0) )
 
-    !npart1_eqplane= NINT( pi*radius1**2* &
+    !npart1_eqplane= NINT( pi*radius**2* &
     !               (npart1_tmp/(4.0D0/3.0D0*pi*radius1**3.0D0))**(2.0D0/3.0D0) )
     !npart2_eqplane= NINT( pi*radius2**2* &
     !               (npart2_tmp/(4.0D0/3.0D0*pi*radius2**3.0D0))**(2.0D0/3.0D0) )
 
-!    nradii1= CEILING( DBLE(npart1_tmp)/DBLE(npart1_radius) )
+!    nradii1= CEILING( DBLE(npart1_tmp)/DBLE(n_shells) )
 !    !nradii2= CEILING( DBLE(npart2_tmp)/DBLE(npart2_radius) )
 !
 !    nradii1_plane= CEILING( SQRT(DBLE(nradii1)) )
@@ -115,7 +99,7 @@ SUBMODULE (particles_id) stretched_lattice
 !      colatitude_pos( itr )= ACOS( 2.0D0*itr/nradii1_plane - 1.0D0 )
 !    ENDDO
 !
-!    PRINT *, "npart1_radius=", npart1_radius
+!    PRINT *, "n_shells=", n_shells
 !    !PRINT *, "npart2_radius=", npart2_radius
 !    PRINT *, "nradii1_plane=", nradii1_plane
 !    !PRINT *, "nradii2_plane=", nradii2_plane
@@ -125,7 +109,7 @@ SUBMODULE (particles_id) stretched_lattice
 !    PRINT *, "nradii1=", nradii1
 !    !PRINT *, "nradii2=", nradii2
 !
-!    PRINT *, "nradii1*npart1_radius=", nradii1*npart1_radius
+!    PRINT *, "nradii1*n_shells=", nradii1*n_shells
 !    !PRINT *, "nradii2*npart2_radius=", nradii2*npart2_radius
 !
 !    PRINT *, "alpha1=", alpha1
@@ -139,12 +123,12 @@ SUBMODULE (particles_id) stretched_lattice
 !    PRINT *, "nradii1_eq=", 2*pi/alpha1
 !    PRINT *, "nradii1_mer=", pi/alpha1
 !    PRINT *, "nradii1_plane*nradii1_mer=", 2*2*pi/alpha1*pi/alpha1
-!    PRINT *, "nradii1_plane*nradii1_mer*npart1_radius=", &
-!             2*2*pi/alpha1*pi/alpha1*npart1_radius
+!    PRINT *, "nradii1_plane*nradii1_mer*n_shells=", &
+!             2*2*pi/alpha1*pi/alpha1*n_shells
 !    !PRINT *, "nradii1_eq=", 2*pi/alpha2
 !    !PRINT *, "nradii1_mer=", pi/alpha2
 !    !PRINT *, "nradii1_plane*nradii1_mer=", 2*2*pi/alpha2*pi/alpha2
-!    !PRINT *, "nradii1_plane*nradii1_mer*npart1_radius=", &
+!    !PRINT *, "nradii1_plane*nradii1_mer*n_shells=", &
 !    !         2*2*pi/alpha2*pi/alpha2*n    part2_radius
 !    PRINT *
 !
@@ -157,7 +141,7 @@ SUBMODULE (particles_id) stretched_lattice
 !        IF(itr==0)THEN
 !          cnt2=cnt2+1
 !        ENDIF
-!        tmp= tmp + npart1_radius
+!        tmp= tmp + n_shells
 !      ENDDO
 !    ENDDO
 !    PRINT *, "itr=", itr/(2*pi-alpha1)
@@ -167,23 +151,23 @@ SUBMODULE (particles_id) stretched_lattice
 !    PRINT *, "cnt2=", cnt2
 !    !PRINT *, "cnt*2=", cnt*2
 !    !PRINT *, (nradii1 - cnt*2)
-!    !PRINT *, (nradii1 - cnt*2)*npart1_radius + tmp*2
+!    !PRINT *, (nradii1 - cnt*2)*n_shells + tmp*2
 !    PRINT *
 !
-!    ALLOCATE( mass_fractions1(npart1_radius) )
+!    ALLOCATE( mass_fractions1(n_shells) )
 !    ALLOCATE( mass_fractions2(npart2_radius) )
 !
-!    mass_step1= THIS% mass1/npart1_radius
+!    mass_step1= THIS% mass1/n_shells
 !    mass_step2= THIS% mass2/npart2_radius
 !
-!    DO itr= 1, npart1_radius, 1
+!    DO itr= 1, n_shells, 1
 !      mass_fractions1(itr)= itr*mass_step1
 !    ENDDO
 !    !DO itr= 1, npart2_radius, 1
 !    !  mass_fractions2(itr)= itr*mass_step2
 !    !ENDDO
 !
-!    IF( mass_fractions1(npart1_radius) /= THIS% mass1 )THEN
+!    IF( mass_fractions1(n_shells) /= THIS% mass1 )THEN
 !      PRINT *, "** ERROR in ! The mass partition for star 1 is incorrect."
 !      STOP
 !    ENDIF
@@ -193,7 +177,7 @@ SUBMODULE (particles_id) stretched_lattice
 !    !ENDIF
 
     IF(.NOT.ALLOCATED( shell_radii ))THEN
-      ALLOCATE( shell_radii( npart1_radius ), STAT= ios, &
+      ALLOCATE( shell_radii( n_shells ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array shell_radii in SUBROUTINE" &
@@ -206,7 +190,7 @@ SUBMODULE (particles_id) stretched_lattice
       !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( shell_masses ))THEN
-      ALLOCATE( shell_masses( npart1_radius ), STAT= ios, &
+      ALLOCATE( shell_masses( n_shells ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array shell_masses in SUBROUTINE" &
@@ -219,28 +203,27 @@ SUBMODULE (particles_id) stretched_lattice
       !                // "place_particles_3D_lattice." )
     ENDIF
 
-    PRINT *, "Integrating the baryon mass density to get the mass profile..."
+    PRINT *, " ** Integrating the baryon mass density to get the mass profile..."
     PRINT *
 
-    rad_step= radius1/500.0D0
-    lat_step= pi/2.0D0/250.0D0
-    long_step= 2.0D0*pi/500.0D0
-    center1= bns_obj% get_center1_x()
+    dr             = radius/500.0D0
+    dth            = pi/2.0D0/250.0D0
+    dphi           = 2.0D0*pi/500.0D0
     central_density= bns_obj% get_rho_center1()
-    CALL bns_obj% integrate_baryon_mass_density( center1, radius1, &
+    CALL bns_obj% integrate_baryon_mass_density( center, radius, &
                                                  central_density, &
-                                                 rad_step, lat_step, long_step, &
+                                                 dr, dth, dphi, &
                                                  mass, mass_profile, &
                                                  mass_profile_idx )
 
-    DO itr= 1, npart1_radius, 1
+    DO itr= 1, n_shells, 1
 
-      shell_radii( itr )= radius1*itr/npart1_radius
+      shell_radii( itr )= radius*itr/n_shells
 
     ENDDO
     shell_index= 1
     itr2= 0
-    DO itr= 0, NINT(radius1/rad_step), 1
+    DO itr= 0, NINT(radius/dr), 1
 
       IF( mass_profile( 1, mass_profile_idx(itr) ) &
           >= shell_radii( shell_index ) )THEN
@@ -248,7 +231,7 @@ SUBMODULE (particles_id) stretched_lattice
         shell_masses( shell_index )= SUM( mass_profile( 2, &
                       mass_profile_idx(itr2):mass_profile_idx(itr) ), DIM= 1 )
 
-        IF( shell_index == npart1_radius )THEN
+        IF( shell_index == n_shells )THEN
           EXIT
         ELSE
          itr2= itr + 1
@@ -259,12 +242,12 @@ SUBMODULE (particles_id) stretched_lattice
 
     ENDDO
 
-    ALLOCATE( npart_shell(npart1_radius) )
-    ALLOCATE( npart_shelleq(npart1_radius) )
-    ALLOCATE( alpha(npart1_radius) )
-    ALLOCATE( colatitude_pos( npart1_radius ) )
+    ALLOCATE( npart_shell(n_shells) )
+    ALLOCATE( npart_shelleq(n_shells) )
+    ALLOCATE( alpha(n_shells) )
+    ALLOCATE( colatitude_pos( n_shells ) )
 
-    DO itr= 1, npart1_radius, 1
+    DO itr= 1, n_shells, 1
 
       npart_shelleq( itr )= CEILING( SQRT(DBLE(shell_masses( itr )/m_p)) )
       IF( MOD( npart_shelleq( itr ), 2 ) /= 0 )THEN
@@ -283,7 +266,7 @@ SUBMODULE (particles_id) stretched_lattice
       ENDDO
 
     ENDDO
-    THIS% npart= SUM( npart_shell, DIM= 1 )
+    npart= SUM( npart_shell, DIM= 1 )
 
     !PRINT *, colatitude_pos( 1 )% colatitudes
     !STOP
@@ -295,7 +278,7 @@ SUBMODULE (particles_id) stretched_lattice
     ! Note that after determining npart, the array pos is reshaped into
     ! pos( 3, npart )
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, THIS% npart ), &
+      ALLOCATE( THIS% pos( 3, npart ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE" &
@@ -317,16 +300,16 @@ SUBMODULE (particles_id) stretched_lattice
     ! Assume same mass for particles
     !m_p             = THIS% mass1/npart1_tmp
     !m_shell         = m_p*nradii1
-    !shell_radii( npart1_radius )= radius1*0.99D0!(3.0D0*(THIS% mass1/1000)/(4.0D0*pi&
+    !shell_radii( n_shells )= radius1*0.99D0!(3.0D0*(THIS% mass1/1000)/(4.0D0*pi&
                       !*bns_obj% import_mass_density( bns_obj% get_center1_x(), &
                       !0.0D0, 0.0D0)))**(1.0D0/3.0D0)
-    !rad_coord       = shell_radii( npart1_radius )
+    !rad_coord       = shell_radii( n_shells )
     !PRINT *, rad_coord
     !PRINT *, bns_obj% get_center1_x() + rad_coord
-    !PRINT *, m_shell*npart1_radius
+    !PRINT *, m_shell*n_shells
     !PRINT *
 
-  !   DO itr= npart1_radius - 1, 1, -1
+  !   DO itr= n_shells - 1, 1, -1
   !
   !     CALL bns_obj% import_id( bns_obj% get_center1_x() &
   !                              + shell_radii( itr + 1 ), &
@@ -388,96 +371,6 @@ SUBMODULE (particles_id) stretched_lattice
   !   PRINT *, shell_radii
   !   STOP
 
-    !radius_loop: DO rad_coord= rad_step, radius1, rad_step
-    !
-    !  ! The definition of the baryon mass for the LORENE ID is in eq.(69)
-    !  ! of Gourgoulhon et al., PRD 63 064029 (2001)
-    !
-    !  CALL bns_obj% import_id( &
-    !                      bns_obj% get_center1_x() + rad_coord - rad_step, &
-    !                      0.0D0, &
-    !                      0.0D0, &
-    !                      lapse, shift_x, shift_y, shift_z, &
-    !                      g_xx, baryon_density, &
-    !                      v_euler_x, v_euler_y, v_euler_z, &
-    !                      gamma_euler )
-    !
-    !  ! Compute covariant spatial fluid velocity (metric is diagonal and
-    !  ! conformally flat)
-    !  v_euler_x_l= g_xx*v_euler_x
-    !  v_euler_y_l= g_xx*v_euler_y
-    !  v_euler_z_l= g_xx*v_euler_z
-    !
-    !  ! Compute the corresponding Lorentz factor
-    !  lorentz_factor= 1.0D0/SQRT( 1.0D0 - ( v_euler_x_l*v_euler_x &
-    !                                      + v_euler_y_l*v_euler_y &
-    !                                      + v_euler_z_l*v_euler_z ) )
-    !
-    !  ! Compute covariant fluid 4-velocity
-    !  u_euler_t_l= lorentz_factor *( - lapse + v_euler_x_l*shift_x &
-    !                                         + v_euler_y_l*shift_y &
-    !                                         + v_euler_z_l*shift_z )
-    !  u_euler_x_l= lorentz_factor*v_euler_x_l
-    !  u_euler_y_l= lorentz_factor*v_euler_y_l
-    !  u_euler_z_l= lorentz_factor*v_euler_z_l
-    !
-    !  ! Compute vector normal to spacelie hypersurface
-    !  ! (4-velocity of the Eulerian observer)
-    !  n_t= 1.0D0/lapse
-    !  n_x= - shift_x/lapse
-    !  n_y= - shift_y/lapse
-    !  n_z= - shift_z/lapse
-    !
-    !  ! Compute relative Lorentz factor between 4-velocity of the fluid
-    !  ! wrt the Eulerian observer and the 4-velocity of the Eulerian observer
-    !  lorentz_factor_rel= - ( n_t*u_euler_t_l + n_x*u_euler_x_l &
-    !                        + n_y*u_euler_y_l + n_z*u_euler_z_l )
-    !
-    !  !IF( gamma_euler /= lorentz_factor_rel )THEN
-    !  !  PRINT *, "gamma_euler=", gamma_euler
-    !  !  PRINT *, "lorentz_factor_rel=", lorentz_factor_rel
-    !  !  STOP
-    !  !ENDIF
-    !  !STOP
-    !
-    !  ! Compute square root of the determinant of the spatial metric
-    !  sq_g= g_xx*SQRT( g_xx )
-    !
-    !  ! Compute mass of a spherical shell the the assumption of
-    !  ! spherical symmetry
-    !  mass_shell= 4.0D0*pi*(rad_coord**2.0D0)*rad_step &
-    !              *sq_g*gamma_euler*baryon_density
-    !              !*(4.0D0/3.0D0)*pi*sq_g &
-    !              !*(rad_coord**3.0D0 - (rad_coord - rad_step)**3.0D0)
-    !
-    !  mass_tmp= mass_tmp + mass_shell
-    !
-    !  vol_tmp= vol_tmp &
-    !           + 4.0D0*pi*rad_coord**2.0D0*rad_step*sq_g
-    !
-    !  PRINT *, bns_obj% get_center1_x() + rad_coord*COS(0.0D0)*COS(0.0D0), &
-    !           rad_coord, &
-    !           bns_obj% import_mass_density( &
-    !                 bns_obj% get_center1_x() + rad_coord, 0.0D0, 0.0D0 ), &
-    !           + 4.0D0*pi*rad_coord**2.0D0*rad_step*sq_g, &
-    !           mass_shell, mass_tmp
-    !
-    !  IF( mass_tmp >= mass_fractions1( mass_index ) )THEN
-    !    shell_radii( mass_index )= rad_coord
-    !    IF( mass_index == npart1_radius )THEN
-    !      EXIT
-    !    ELSE
-    !      mass_index= mass_index + 1
-    !    ENDIF
-    !  ENDIF
-    !
-    !ENDDO radius_loop
-  !rad_step= radius1/1000.0D0
-  !lat_step= pi/2.0D0/250.0D0
-  !long_step= 2.0D0*pi/1000.0D0
-
-
-
   PRINT *, "Print mass profile to file..."
 
   finalnamefile= "mass_profile.dat"
@@ -500,7 +393,7 @@ SUBMODULE (particles_id) stretched_lattice
     STOP
   ENDIF
 
-  write_data_loop: DO itr = 1, NINT(radius1/rad_step), 1
+  write_data_loop: DO itr = 1, NINT(radius/dr), 1
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       mass_profile( 1, mass_profile_idx(itr) ), &
@@ -525,7 +418,7 @@ SUBMODULE (particles_id) stretched_lattice
   !  IF( mass_profile( 3, mass_profile_idx(itr) ) &
   !      >= mass_fractions1( mass_index ) )THEN
   !   shell_radii( mass_index )= mass_profile( 1, mass_profile_idx(itr) )
-  !   IF( mass_index == npart1_radius )THEN
+  !   IF( mass_index == n_shells )THEN
   !     EXIT
   !   ELSE
   !    mass_index= mass_index + 1
@@ -554,7 +447,7 @@ SUBMODULE (particles_id) stretched_lattice
     STOP
   ENDIF
 
-  DO itr = 1, npart1_radius, 1
+  DO itr = 1, n_shells, 1
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       shell_radii( itr )
@@ -573,41 +466,41 @@ SUBMODULE (particles_id) stretched_lattice
 
     PRINT *, SUM( npart_shell, DIM= 1 )
 
-    THIS% npart= 0
+    npart_out= 0
     THIS% pos= 0
     phase= 0
-    DO r= 1, npart1_radius, 1
+    DO r= 1, n_shells, 1
       !phase= phase + (r - 1.0D0)*2*pi/(SQRT(2.0D0)/(7.0D0/5.0D0)*nradii1_plane)
       phase= phase + r*alpha(r)/golden_ratio
       DO th= 1, npart_shelleq( r )/2, 1
         DO phi= 1, npart_shelleq( r ), 1 !part_shelleq( r ) is even, see above
 
-          THIS% npart= THIS% npart + 1
-          THIS% pos( 1, THIS% npart )= &
-                shell_radii(r)*COS(phase + phi*alpha(r)) &
+          npart_out= npart_out + 1
+          THIS% pos( 1, npart_out )= &
+                center + shell_radii(r)*COS(phase + phi*alpha(r)) &
                               *SIN(colatitude_pos(r)% colatitudes(th))
-          THIS% pos( 2, THIS% npart )= &
+          THIS% pos( 2, npart_out )= &
                 shell_radii(r)*SIN(phase + phi*alpha(r)) &
                               *SIN(colatitude_pos(r)% colatitudes(th))
-          THIS% pos( 3, THIS% npart )= &
+          THIS% pos( 3, npart_out )= &
                 shell_radii(r)*COS(colatitude_pos(r)% colatitudes(th))
 
         ENDDO
       ENDDO
     ENDDO
-    PRINT *, "npart=", THIS% npart
+    PRINT *, "npart=", npart_out
 
     PRINT *, "Mirroring particles..."
 
-    PRINT *, "npart/2=", THIS% npart
-    npart1_half= THIS% npart
-    DO itr= 1, npart1_half, 1
-      THIS% npart= THIS% npart + 1
-      THIS% pos( 1, THIS% npart )=   THIS% pos( 1, itr )
-      THIS% pos( 2, THIS% npart )=   THIS% pos( 2, itr )
-      THIS% pos( 3, THIS% npart )= - THIS% pos( 3, itr )
+    PRINT *, "npart/2=", npart_out
+    npart_half= npart_out
+    DO itr= 1, npart_half, 1
+      npart_out= npart_out + 1
+      THIS% pos( 1, npart_out )=   THIS% pos( 1, itr )
+      THIS% pos( 2, npart_out )=   THIS% pos( 2, itr )
+      THIS% pos( 3, npart_out )= - THIS% pos( 3, itr )
     ENDDO
-    PRINT *, "npart=", THIS% npart
+    PRINT *, "npart=", npart_out
 
   PRINT *, "Printing particle positions to file..."
 
@@ -631,7 +524,7 @@ SUBMODULE (particles_id) stretched_lattice
       STOP
     ENDIF
 
-    DO itr = 1, THIS% npart, 1
+    DO itr = 1, npart_out, 1
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         THIS% pos( 1, itr ), THIS% pos( 2, itr ), THIS% pos( 3, itr )
@@ -647,22 +540,6 @@ SUBMODULE (particles_id) stretched_lattice
     CLOSE( UNIT= 2 )
 
   PRINT *, "STOP..."
-
-    STOP
-
-    IF( THIS% mass1 > THIS% mass2 )THEN
-
-      ! mass_ratio < 1
-      THIS% mass_ratio= THIS% mass2/THIS% mass1
-
-
-    ELSE
-
-      ! mass_ratio < 1
-      THIS% mass_ratio= THIS% mass1/THIS% mass2
-
-
-    ENDIF
 
   END PROCEDURE place_particles_stretched_lattice
 

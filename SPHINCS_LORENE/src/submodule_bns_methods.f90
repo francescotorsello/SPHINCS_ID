@@ -1020,11 +1020,10 @@ SUBMODULE (bns_id) bns_methods
           ! of Gourgoulhon et al., PRD 63 064029 (2001)
 
           CALL THIS% import_id( &
-                   center + rad_coord*SIN(colat)*COS(long), &
-                   rad_coord*SIN(colat)*SIN(long), &
-                   rad_coord*COS(colat), &
-                   g_xx, baryon_density, &
-                   gamma_euler )
+                   center + (rad_coord + dr)*SIN(colat)*COS(long), &
+                   (rad_coord + dr)*SIN(colat)*SIN(long), &
+                   (rad_coord + dr)*COS(colat), &
+                   g_xx, baryon_density, gamma_euler )
 
 !        CALL bns_obj% import_id( &
 !                 center1 + rad_coord*SIN(lat)*COS(long), &
