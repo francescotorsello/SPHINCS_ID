@@ -621,7 +621,7 @@ SUBMODULE (particles_id) particles_methods
         THIS% nu(itr)= nu(itr)
         THIS% nbar1= THIS% nbar1 + nu(itr)
       ENDDO
-      DO itr= 1, THIS% npart1 + 1, THIS% npart
+      DO itr= THIS% npart1 + 1, THIS% npart, 1
         nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
         THIS% nu(itr)= nu(itr)
         THIS% nbar2= THIS% nbar2 + nu(itr)
@@ -721,6 +721,7 @@ SUBMODULE (particles_id) particles_methods
     PRINT *, " * Ratio between the two=", &
              MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
              MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+    PRINT *
     PRINT *, " * Baryon number ratio across the stars=", &
              MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
     PRINT *

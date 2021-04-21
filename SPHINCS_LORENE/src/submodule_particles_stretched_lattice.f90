@@ -39,13 +39,16 @@ SUBMODULE (particles_id) stretched_lattice
 
     IMPLICIT NONE
 
-    INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart, &
+    INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart_tmp, &
               shell_index, r, th, phi
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
 
-    DOUBLE PRECISION:: m_p, central_density, &
-                       dr, dth, dphi, phase, mass
+    DOUBLE PRECISION:: xtemp, ytemp, ztemp, m_p, central_density, &
+                       dr, dth, dphi, phase, mass, baryon_density, &
+                       dr_shells, dth_shells, dphi_shells, col, rad, &
+                       g_xx, gamma_euler, proper_volume, mass_test, &
+                       proper_volume_test
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
                                                   alpha
@@ -68,7 +71,7 @@ SUBMODULE (particles_id) stretched_lattice
     !radius    = bns_obj% get_radius1_x_comp()
     !radius2    = bns_obj% get_radius2_x_comp()
 
-    m_p= THIS% mass1/npart_approx
+    m_p= mass_star/npart_approx
 
     n_shells= NINT( radius* &
                   (npart_approx/(4.0D0/3.0D0*pi*radius**3.0D0))**(1.0D0/3.0D0) )
@@ -216,6 +219,8 @@ SUBMODULE (particles_id) stretched_lattice
                                                  mass, mass_profile, &
                                                  mass_profile_idx )
 
+    mass_profile( 2:3, :)= mass_profile( 2:3, :)*mass_star/mass
+
     DO itr= 1, n_shells, 1
 
       shell_radii( itr )= radius*itr/n_shells
@@ -241,6 +246,14 @@ SUBMODULE (particles_id) stretched_lattice
       ENDIF
 
     ENDDO
+    IF( SUM( shell_masses, DIM=1 ) - mass_star > 1.0D-7 )THEN
+      PRINT *, " ** The sum of the masses of the shells do not add up to the ", &
+               "mass of the star. Stopping..."
+      PRINT *, "SUM( shell_masses )= ", SUM( shell_masses, DIM=1 )
+      PRINT *, "mass_star= ", mass_star
+      PRINT *
+      STOP
+    ENDIF
 
     ALLOCATE( npart_shell(n_shells) )
     ALLOCATE( npart_shelleq(n_shells) )
@@ -266,7 +279,7 @@ SUBMODULE (particles_id) stretched_lattice
       ENDDO
 
     ENDDO
-    npart= SUM( npart_shell, DIM= 1 )
+    npart_tmp= SUM( npart_shell, DIM= 1 )
 
     !PRINT *, colatitude_pos( 1 )% colatitudes
     !STOP
@@ -277,11 +290,24 @@ SUBMODULE (particles_id) stretched_lattice
     ! Allocating the memory for the array pos( 3, npart_temp )
     ! Note that after determining npart, the array pos is reshaped into
     ! pos( 3, npart )
-    IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, npart ), &
+    IF(.NOT.ALLOCATED( pos ))THEN
+      ALLOCATE( pos( 3, npart_tmp ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
+    ENDIF
+    IF(.NOT.ALLOCATED( pvol ))THEN
+      ALLOCATE( pvol( npart_tmp ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pvol in SUBROUTINE" &
                   // "place_particles_. ", &
                   "The error message is", err_msg
          STOP
@@ -466,24 +492,74 @@ SUBMODULE (particles_id) stretched_lattice
 
     PRINT *, SUM( npart_shell, DIM= 1 )
 
-    npart_out= 0
-    THIS% pos= 0
-    phase= 0
-    DO r= 1, n_shells, 1
-      !phase= phase + (r - 1.0D0)*2*pi/(SQRT(2.0D0)/(7.0D0/5.0D0)*nradii1_plane)
-      phase= phase + r*alpha(r)/golden_ratio
-      DO th= 1, npart_shelleq( r )/2, 1
-        DO phi= 1, npart_shelleq( r ), 1 !part_shelleq( r ) is even, see above
+    pos= 0.0D0
+    pvol=0.0D0
+    phase= 0.0D0
+    proper_volume= 0.0D0
+    dr_shells= radius/n_shells
 
-          npart_out= npart_out + 1
-          THIS% pos( 1, npart_out )= &
-                center + shell_radii(r)*COS(phase + phi*alpha(r)) &
-                              *SIN(colatitude_pos(r)% colatitudes(th))
-          THIS% pos( 2, npart_out )= &
-                shell_radii(r)*SIN(phase + phi*alpha(r)) &
-                              *SIN(colatitude_pos(r)% colatitudes(th))
-          THIS% pos( 3, npart_out )= &
-                shell_radii(r)*COS(colatitude_pos(r)% colatitudes(th))
+    DO r= 1, n_shells, 1
+
+      !phase= phase + r*alpha(r)/golden_ratio
+      CALL RANDOM_NUMBER( phase )
+      phase= phase*alpha(r)
+      rad= shell_radii(r)
+
+      DO th= 1, npart_shelleq( r )/2, 1
+
+        col= colatitude_pos(r)% colatitudes(th)
+        IF( th == 1 )THEN
+
+          dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
+
+        ELSEIF( th == npart_shelleq( r )/2 )THEN
+
+          dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
+
+        ELSE
+
+          dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col )/2.0D0 &
+                    - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
+
+        ENDIF
+
+        DO phi= 1, npart_shelleq( r ), 1 !npart_shelleq( r ) is even, see above
+
+          xtemp= center + rad*COS(phase + phi*alpha(r))*SIN(col)
+          ytemp= rad*SIN(phase + phi*alpha(r))*SIN(col)
+          ztemp= rad*COS(col)
+          baryon_density= bns_obj% import_mass_density( xtemp, ytemp, ztemp )
+
+          IF( baryon_density > 0.0D0 &
+              .AND. &
+              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
+
+            npart_out= npart_out + 1
+            pos( 1, npart_out )= xtemp
+            pos( 2, npart_out )= ytemp
+            pos( 3, npart_out )= ztemp
+
+            dphi_shells= alpha(r)
+
+            CALL bns_obj% import_id( &
+                     xtemp, ytemp, ztemp, &
+                     g_xx, baryon_density, gamma_euler )
+
+            !pvol( npart_out )= rad**2.0D0*SIN(col) &
+            !                   *dr_shells*dth_shells*dphi_shells
+            proper_volume= proper_volume + 2*rad**2.0D0*SIN(col) &
+                               *dr_shells*dth_shells*dphi_shells &
+                               *g_xx*SQRT(g_xx)
+
+          ENDIF
+
+          ! Print progress on screen, every 10%
+          !perc= 50*( THIS% nx*THIS% ny*iz + THIS% nx*iy + ix )/ &
+          !        ( THIS% nx*THIS% ny*THIS% nz/2 )
+          !IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+          !  WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
+          !         creturn//" ", perc, "%"
+          !ENDIF
 
         ENDDO
       ENDDO
@@ -496,48 +572,67 @@ SUBMODULE (particles_id) stretched_lattice
     npart_half= npart_out
     DO itr= 1, npart_half, 1
       npart_out= npart_out + 1
-      THIS% pos( 1, npart_out )=   THIS% pos( 1, itr )
-      THIS% pos( 2, npart_out )=   THIS% pos( 2, itr )
-      THIS% pos( 3, npart_out )= - THIS% pos( 3, itr )
+      pos( 1, npart_out )=   pos( 1, itr )
+      pos( 2, npart_out )=   pos( 2, itr )
+      pos( 3, npart_out )= - pos( 3, itr )
+      !pvol( npart_out )  =   pvol( itr )
     ENDDO
     PRINT *, "npart=", npart_out
 
-  PRINT *, "Printing particle positions to file..."
+    m_p= mass_star/npart_out
+    mass_test= 0.0D0
+    proper_volume_test= 0.0D0
+    DO itr= 1, npart_out, 1
+      CALL bns_obj% import_id( &
+               pos( 1, itr ), pos( 2, itr ), pos( 3, itr ), &
+               g_xx, baryon_density, gamma_euler )
+      pvol( itr )= m_p/( baryon_density*g_xx*SQRT(g_xx)*gamma_euler )
 
-    finalnamefile= "tmp_pos.dat"
-
-    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-    IF( exist )THEN
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-            FORM= "FORMATTED", &
-            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-            IOMSG= err_msg )
-    ELSE
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-            FORM= "FORMATTED", &
-            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM(finalnamefile), &
-              ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO itr = 1, npart_out, 1
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        THIS% pos( 1, itr ), THIS% pos( 2, itr ), THIS% pos( 3, itr )
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing the arrays in " &
-                 // TRIM(finalnamefile), ". The error message is", err_msg
-        STOP
-      ENDIF
-
+      proper_volume_test= proper_volume_test + pvol( itr )*g_xx*SQRT(g_xx)
+      mass_test= mass_test + &
+                  baryon_density*pvol( itr )*g_xx*SQRT(g_xx)*gamma_euler
     ENDDO
 
-    CLOSE( UNIT= 2 )
+
+    PRINT *, mass_test, mass_star, proper_volume_test, proper_volume
+    STOP
+
+  !PRINT *, "Printing particle positions to file..."
+  !
+  !  finalnamefile= "tmp_pos.dat"
+  !
+  !  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+  !
+  !  IF( exist )THEN
+  !    OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+  !          FORM= "FORMATTED", &
+  !          POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+  !          IOMSG= err_msg )
+  !  ELSE
+  !    OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+  !          FORM= "FORMATTED", &
+  !          ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  !  ENDIF
+  !  IF( ios > 0 )THEN
+  !    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+  !            ". The error message is", err_msg
+  !    STOP
+  !  ENDIF
+  !
+  !  DO itr = 1, npart_out, 1
+  !
+  !    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+  !      pos( 1, itr ), pos( 2, itr ), pos( 3, itr )
+  !
+  !    IF( ios > 0 )THEN
+  !      PRINT *, "...error when writing the arrays in " &
+  !               // TRIM(finalnamefile), ". The error message is", err_msg
+  !      STOP
+  !    ENDIF
+  !
+  !  ENDDO
+  !
+  !  CLOSE( UNIT= 2 )
 
   PRINT *, "STOP..."
 

@@ -1092,7 +1092,7 @@ SUBMODULE (bns_id) bns_methods
     mass= mass_profile( 3, NINT(radius/dr) )
 
     PRINT *, "radius covered by the integration=", MAXVAL( mass_profile( 1, : ), DIM= 1 )
-    PRINT *, "mass=", mass, ", mass/mass1=", mass/THIS% mass1
+    PRINT *, "mass=", mass
     PRINT *
 
     CALL indexx( NINT(radius/dr) + 1, mass_profile( 1, : ), mass_profile_idx )

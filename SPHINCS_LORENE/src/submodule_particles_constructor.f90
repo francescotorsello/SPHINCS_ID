@@ -75,6 +75,8 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION:: center1, center2, radius1, radius2
     DOUBLE PRECISION:: min_abs_y, min_abs_z
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
+    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos1, pos2
+    DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol1, pvol2
 
     CHARACTER( LEN= : ), ALLOCATABLE:: namefile
     ! String storing the local path to the directory where the
@@ -113,6 +115,7 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% nbar_tot  = 0.0D0
     parts_obj% nbar1     = 0.0D0
     parts_obj% nbar2     = 0.0D0
+    parts_obj% npart     = 0.0D0
 
     !
     !-- Read the parameters of the particle distributions
@@ -247,6 +250,10 @@ SUBMODULE (particles_id) particles_constructor
                // "taking into account the mass profile of the stars."
       PRINT *
 
+      IF( parts_obj% redistribute_nu == .TRUE. )THEN
+        parts_obj% redistribute_nu= .FALSE.
+      ENDIF
+
       IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 
         ! mass_ratio < 1
@@ -259,15 +266,50 @@ SUBMODULE (particles_id) particles_constructor
                                                     radius2, center2, &
                                                     npart_approx, &
                                                     parts_obj% npart2, &
+                                                    pos2, pvol1, &
                                                     thres, &
                                                     bns_obj )
         CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass1, &
                                                     radius1, center1, &
                                                     npart2_approx, &
                                                     parts_obj% npart1, &
+                                                    pos1, pvol2, &
                                                     thres, &
                                                     bns_obj )
         CALL parts_obj% placer_timer% stop_timer()
+        parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
+
+        IF(.NOT.ALLOCATED( parts_obj% pos ))THEN
+          ALLOCATE( parts_obj% pos( 3, parts_obj% npart ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+             PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                      // "place_particles_. ", &
+                      "The error message is", err_msg
+             STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...allocation error for array pos in SUBROUTINE" &
+          !                // "place_particles_3D_lattice." )
+        ENDIF
+        parts_obj% pos( :, 1:parts_obj% npart1 )= pos1
+        parts_obj% pos( :, parts_obj% npart1 + 1:parts_obj% npart )= pos2
+
+        IF(.NOT.ALLOCATED( parts_obj% pvol ))THEN
+          ALLOCATE( parts_obj% pvol( parts_obj% npart ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+             PRINT *, "...allocation error for array pvol in SUBROUTINE" &
+                      // "place_particles_. ", &
+                      "The error message is", err_msg
+             STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...allocation error for array pos in SUBROUTINE" &
+          !                // "place_particles_3D_lattice." )
+        ENDIF
+        parts_obj% pvol( 1:parts_obj% npart1 )= pvol1
+        parts_obj% pvol( parts_obj% npart1 + 1:parts_obj% npart )= pvol2
 
       ELSE
 
@@ -280,21 +322,55 @@ SUBMODULE (particles_id) particles_constructor
         CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass1, &
                                                     radius1, center1, &
                                                     npart_approx, &
-                                                    parts_obj% npart, &
+                                                    parts_obj% npart1, &
+                                                    pos1, pvol1, &
                                                     thres, &
                                                     bns_obj )
+        !parts_obj% npart1= parts_obj% npart
         CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass2, &
                                                     radius2, center2, &
                                                     npart2_approx, &
-                                                    parts_obj% npart, &
+                                                    parts_obj% npart2, &
+                                                    pos2, pvol2, &
                                                     thres, &
                                                     bns_obj )
         CALL parts_obj% placer_timer% stop_timer()
+        !parts_obj% npart2= parts_obj% npart - parts_obj% npart1
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
 
-      ENDIF
+        IF(.NOT.ALLOCATED( parts_obj% pos ))THEN
+          ALLOCATE( parts_obj% pos( 3, parts_obj% npart ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+             PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                      // "place_particles_. ", &
+                      "The error message is", err_msg
+             STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...allocation error for array pos in SUBROUTINE" &
+          !                // "place_particles_3D_lattice." )
+        ENDIF
+        parts_obj% pos( :, 1:parts_obj% npart1 )= pos1
+        parts_obj% pos( :, parts_obj% npart1 + 1:parts_obj% npart )= pos2
 
-      STOP
+        IF(.NOT.ALLOCATED( parts_obj% pvol ))THEN
+          ALLOCATE( parts_obj% pvol( parts_obj% npart ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+             PRINT *, "...allocation error for array pvol in SUBROUTINE" &
+                      // "place_particles_. ", &
+                      "The error message is", err_msg
+             STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...allocation error for array pos in SUBROUTINE" &
+          !                // "place_particles_3D_lattice." )
+        ENDIF
+        parts_obj% pvol( 1:parts_obj% npart1 )= pvol1
+        parts_obj% pvol( parts_obj% npart1 + 1:parts_obj% npart )= pvol2
+
+      ENDIF
 
     CASE DEFAULT
 
@@ -305,7 +381,8 @@ SUBMODULE (particles_id) particles_constructor
     END SELECT choose_particle_placer
 
     ! Reshape the array pos by deleting the unnecessary elements
-    parts_obj% pos= parts_obj% pos( :, 1:parts_obj% npart )
+    parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )
+    parts_obj% pvol= parts_obj% pvol( 1:parts_obj% npart )
 
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts_obj )

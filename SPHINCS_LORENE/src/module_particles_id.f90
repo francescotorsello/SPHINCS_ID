@@ -285,13 +285,15 @@ MODULE particles_id
 
     MODULE SUBROUTINE place_particles_stretched_lattice( THIS, &
                                   mass_star, radius, center, npart_approx, &
-                                  npart_out, thres, bns_obj )
+                                  npart_out, pos, pvol, thres, bns_obj )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
       INTEGER,          INTENT( IN )    :: npart_approx
       INTEGER,          INTENT( OUT )   :: npart_out
       DOUBLE PRECISION, INTENT( IN )    :: mass_star, radius, center, thres
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pvol
 
     END SUBROUTINE place_particles_stretched_lattice
 
