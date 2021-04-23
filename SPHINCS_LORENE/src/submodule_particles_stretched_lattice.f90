@@ -273,7 +273,7 @@ SUBMODULE (particles_id) stretched_lattice
       ENDIF
 
     ENDDO
-    IF( SUM( shell_masses, DIM=1 ) - mass_star > 1.0D-7 )THEN
+    IF( SUM( shell_masses, DIM=1 ) - mass_star > 1.0D-6 )THEN
       PRINT *, " ** The sum of the masses of the shells do not add up to the ", &
                "mass of the star. Stopping..."
       PRINT *, "SUM( shell_masses )= ", SUM( shell_masses, DIM=1 )
