@@ -41,7 +41,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart_tmp, cnt, &
               shell_index, r, th, phi, i_shell, npart_test, npart_shell_tmp, &
-              cnt2
+              cnt2, rel_sign, cnt3
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
 
@@ -50,12 +50,13 @@ SUBMODULE (particles_id) stretched_lattice
                        dr_shells, dth_shells, dphi_shells, col, rad, &
                        g_xx, gamma_euler, proper_volume, mass_test, &
                        proper_volume_test, npart_shell_kept, &
-                       upper_bound, lower_bound, rand_num
+                       upper_bound, lower_bound, rand_num, rand_num2, &
+                       upper_bound_tmp, lower_bound_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
                                                   alpha, m_parts
 
-    LOGICAL:: exist
+    LOGICAL:: exist, high_mass, low_mass, kept_all
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
@@ -249,7 +250,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     DO itr= 1, n_shells, 1
 
-      shell_radii( itr )= (radius*99.0D0/100.0D0)*itr/n_shells
+      shell_radii( itr )= (radius/DBLE(n_shells))*DBLE( itr - 1/2 )
 
     ENDDO
     shell_index= 1
@@ -257,7 +258,7 @@ SUBMODULE (particles_id) stretched_lattice
     DO itr= 0, NINT(radius/dr), 1
 
       IF( mass_profile( 1, mass_profile_idx(itr) ) &
-          >= shell_radii( shell_index ) )THEN
+          >= shell_radii( shell_index ) + radius/DBLE(2*n_shells) )THEN
 
         shell_masses( shell_index )= SUM( mass_profile( 2, &
                       mass_profile_idx(itr2):mass_profile_idx(itr) ), DIM= 1 )
@@ -546,9 +547,12 @@ SUBMODULE (particles_id) stretched_lattice
     proper_volume= 0.0D0
     dr_shells= radius/n_shells
     npart_out= 0
-    upper_bound= 1.05D0
-    lower_bound= 0.95D0
+    upper_bound= 1.025D0
+    lower_bound= 0.975D0
+    upper_bound_tmp= upper_bound
+    lower_bound_tmp= lower_bound
     r= 1
+    cnt2= 0
 
     PRINT *, npart_shelleq**2
 
@@ -595,7 +599,7 @@ SUBMODULE (particles_id) stretched_lattice
       itr= 1
 
       npart_shell_tmp= npart_shell( r )
-      PRINT *, npart_shell_tmp
+      !PRINT *, npart_shell_tmp
 
       DO th= 1, npart_shelleq( r )/2, 1
 
@@ -678,39 +682,171 @@ SUBMODULE (particles_id) stretched_lattice
       !          creturn//" ", npart_shell_tmp, npart_shell( r ), &
       !                        DBLE(npart_shell( r ))/DBLE(npart_shell_tmp)
 
-      m_parts( r )= shell_masses( r )/DBLE(npart_shell( r ))
+      IF( npart_shell( r ) < 0 ) npart_shell( r )= 0
+      IF( npart_shell( r ) == 0 )THEN
+        m_parts( r )= m_parts( r - 1 )
+        PRINT *, " * Placed", npart_shell( r ), " particles on spherical shell ", r
+        IF( r == n_shells )THEN
+          EXIT
+        ELSE
+          PRINT *, "r=", r
+          m_parts( r )= m_parts( r - 1 )
+          r= r + 1
+          cnt2 = 0
+          upper_bound_tmp= upper_bound
+          lower_bound_tmp= lower_bound
+          CYCLE
+        ENDIF
+      ELSE
+        m_parts( r )= shell_masses( r )/DBLE(npart_shell( r ))
+      ENDIF
+
       IF( r > 1 )THEN
-        IF( m_parts( r )/m_parts( r - 1 ) > upper_bound &
-            .OR. m_parts( r )/m_parts( r - 1 ) < lower_bound )THEN
+
+        high_mass= m_parts( r )/m_parts( r - 1 ) > upper_bound_tmp
+        low_mass = m_parts( r )/m_parts( r - 1 ) < lower_bound_tmp
+        kept_all = npart_shell_kept == 1.0D0
+        npart_shell_kept= DBLE(npart_shell( r ))/DBLE(npart_shell_tmp)
+
+        PRINT *, "cnt2=", cnt2
+        PRINT *, "upper_bound_tmp=", upper_bound_tmp
+        PRINT *, "lower_bound_tmp=", lower_bound_tmp
+        PRINT *, "n_shells=", n_shells
+        PRINT *, "r=", r
+        PRINT *, "npart_shell( r )=", npart_shell( r )
+        PRINT *, "npart_shell_tmp=", npart_shell_tmp
+        PRINT *, "npart_shell_kept=", npart_shell_kept
+        PRINT *, "high_mass=", high_mass
+        PRINT *, "low_mass=", low_mass
+        PRINT *, "kept_all=", kept_all
+        PRINT *, "m_parts( r )=", m_parts( r )
+        PRINT *, "m_parts( r - 1 )=", m_parts( r - 1 )
+        PRINT *, " m_parts( r )/m_parts( r - 1 )= ",  &
+                                   m_parts( r )/m_parts( r - 1 )
+        PRINT *
+
+        IF( high_mass .AND. kept_all )THEN
+        PRINT *, "case 1"
+
+          cnt2= cnt2 + 1
+          IF( cnt2 > 100 )THEN
+            upper_bound_tmp= upper_bound_tmp*1.01D0
+            lower_bound_tmp= lower_bound_tmp*0.99D0
+            cnt2= 1
+          ENDIF
 
           npart_out= npart_out - ( itr - 1 )
-          npart_shell_kept= DBLE(npart_shell( r ))/DBLE(npart_shell_tmp)
 
-          IF( npart_shell_kept == 1.0D0 .AND. &
-              m_parts( r )/m_parts( r - 1 ) > upper_bound )THEN
+          CALL RANDOM_NUMBER( rand_num )
+          CALL RANDOM_NUMBER( rand_num2 )
+          npart_shelleq( r )= npart_shelleq( r ) + 1*NINT( 1 + 1.0*rand_num ) &
+                                                 + 1*NINT( 1 + 1.0*rand_num2 )
 
+          IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
             CALL RANDOM_NUMBER( rand_num )
-            npart_shelleq( r )= npart_shelleq( r ) + 2*NINT( 1 + 4*rand_num )
-
-          ELSEIF( npart_shell_kept == 1.0D0 .AND. &
-              m_parts( r )/m_parts( r - 1 ) < lower_bound )THEN
-
-            CALL RANDOM_NUMBER( rand_num )
-            npart_shelleq( r )= npart_shelleq( r ) - 2*NINT( 1 + 4*rand_num )
-
-          ELSE
-            npart_shelleq( r )= CEILING( SQRT( &
-                                  (shell_masses( r )/m_parts( r - 1 )) &
-                                  /npart_shell_kept &
-                                ) )
-            !IF( npart_shelleq( r )**2.0D0 == npart_shell_tmp &
-            !    .OR. ( npart_shelleq( r ) + 1 )**2.0D0 == npart_shell_tmp )THEN
-            !  npart_shelleq( r )= npart_shelleq( r ) + 2
-            !ENDIF
+            CALL RANDOM_NUMBER( rand_num2 )
+            IF( rand_num2 < 0.5D0 )  rel_sign= - 1
+            IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+            npart_shelleq( r )= npart_shelleq( r - 1 ) &
+                              + rel_sign*NINT( 1 + rand_num )
           ENDIF
 
           CYCLE
+
+        ELSEIF( low_mass .AND. kept_all )THEN
+        PRINT *, "case 2"
+
+          cnt2= cnt2 + 1
+          IF( cnt2 > 100 )THEN
+            upper_bound_tmp= upper_bound_tmp*1.01D0
+            lower_bound_tmp= lower_bound_tmp*0.99D0
+            cnt2= 1
+          ENDIF
+
+          npart_out= npart_out - ( itr - 1 )
+
+          CALL RANDOM_NUMBER( rand_num )
+          CALL RANDOM_NUMBER( rand_num2 )
+          npart_shelleq( r )= npart_shelleq( r ) - 1*NINT( 1 + 1.0*rand_num ) &
+                                                 - 1*NINT( 1 + 1.0*rand_num2 )
+
+          IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
+            CALL RANDOM_NUMBER( rand_num )
+            CALL RANDOM_NUMBER( rand_num2 )
+            IF( rand_num2 < 0.5D0 )  rel_sign= - 1
+            IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+            npart_shelleq( r )= npart_shelleq( r - 1 ) &
+                              + rel_sign*NINT( 1 + rand_num )
+          ENDIF
+
+          CYCLE
+
+        ELSEIF( high_mass .AND. .NOT.kept_all ) THEN
+        PRINT *, "case 3"
+
+          cnt2= cnt2 + 1
+          IF( cnt2 > 100 )THEN
+            upper_bound_tmp= upper_bound_tmp*1.01D0
+            lower_bound_tmp= lower_bound_tmp*0.99D0
+            cnt2= 1
+          ENDIF
+
+          npart_out= npart_out - ( itr - 1 )
+
+          CALL RANDOM_NUMBER( rand_num )
+          CALL RANDOM_NUMBER( rand_num2 )
+          IF( rand_num2 < 0.5D0 )  rel_sign= - 1
+          IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+          npart_shelleq( r )= CEILING( SQRT( &
+                                (shell_masses( r )/m_parts( r - 1 )) &
+                                /npart_shell_kept &
+                              ) ) + rel_sign*NINT( 1 + rand_num )
+
+          IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
+            CALL RANDOM_NUMBER( rand_num )
+            CALL RANDOM_NUMBER( rand_num2 )
+            IF( rand_num2 < 0.5D0 )  rel_sign= - 1
+            IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+            npart_shelleq( r )= npart_shelleq( r - 1 ) &
+                              + rel_sign*NINT( 1 + rand_num )
+          ENDIF
+
+          CYCLE
+
+        ELSEIF( low_mass .AND. .NOT.kept_all ) THEN
+        PRINT *, "case 4"
+
+          cnt2= cnt2 + 1
+          IF( cnt2 > 100 )THEN
+            upper_bound_tmp= upper_bound_tmp*1.01D0
+            lower_bound_tmp= lower_bound_tmp*0.99D0
+            cnt2= 1
+          ENDIF
+
+          npart_out= npart_out - ( itr - 1 )
+
+          CALL RANDOM_NUMBER( rand_num )
+          CALL RANDOM_NUMBER( rand_num2 )
+          IF( rand_num2 < 0.5D0 )  rel_sign= - 1
+          IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+          npart_shelleq( r )= CEILING( SQRT( &
+                                (shell_masses( r )/m_parts( r - 1 )) &
+                                /npart_shell_kept &
+                              ) ) + rel_sign*NINT( 1 + rand_num )
+
+          IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
+            CALL RANDOM_NUMBER( rand_num )
+            CALL RANDOM_NUMBER( rand_num2 )
+            IF( rand_num2 < 0.5D0 )  rel_sign= - 1
+            IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+            npart_shelleq( r )= npart_shelleq( r - 1 ) &
+                              + rel_sign*NINT( 1 + rand_num )
+          ENDIF
+
+          CYCLE
+
         ENDIF
+
       ENDIF
 
       PRINT *, " * Placed", npart_shell( r ), " particles on spherical shell ", r
@@ -720,7 +856,12 @@ SUBMODULE (particles_id) stretched_lattice
 
       IF( r == n_shells ) EXIT
 
+      !IF( r == 2 ) STOP
+
       r= r + 1
+      cnt2 = 0
+      upper_bound_tmp= upper_bound
+      lower_bound_tmp= lower_bound
 
     ENDDO
     PRINT *, "npart=", npart_out
