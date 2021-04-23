@@ -40,7 +40,8 @@ SUBMODULE (particles_id) stretched_lattice
     IMPLICIT NONE
 
     INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart_tmp, cnt, &
-              shell_index, r, th, phi, i_shell, npart_test, npart_shell_tmp
+              shell_index, r, th, phi, i_shell, npart_test, npart_shell_tmp, &
+              cnt2
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
 
@@ -48,7 +49,8 @@ SUBMODULE (particles_id) stretched_lattice
                        dr, dth, dphi, phase, mass, baryon_density, &
                        dr_shells, dth_shells, dphi_shells, col, rad, &
                        g_xx, gamma_euler, proper_volume, mass_test, &
-                       proper_volume_test, increase
+                       proper_volume_test, npart_shell_kept, &
+                       upper_bound, lower_bound, rand_num
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
                                                   alpha, m_parts
@@ -532,11 +534,11 @@ SUBMODULE (particles_id) stretched_lattice
     DO r= 1, n_shells, 1
       pos_shells(r)% pos_shell= 0.0D0
       pos_shells(r)% pvol_shell= 0.0D0
-      pos_shells(r)% g_xx= 10.0D0
-      pos_shells(r)% baryon_density= 10.0D0
-      pos_shells(r)% gamma_euler= 10.0D0
-      m_parts( r )= shell_masses( r )/m_p
-      npart_shelleq( r )= CEILING( SQRT(DBLE(m_parts( r ))) )
+      pos_shells(r)% g_xx= 0.0D0
+      pos_shells(r)% baryon_density= 0.0D0
+      pos_shells(r)% gamma_euler= 0.0D0
+      m_parts( r )= m_p
+      npart_shelleq( r )= CEILING( SQRT(DBLE(shell_masses( r )/m_parts( r ))) )
     ENDDO
     pos  = 0.0D0
     pvol = 0.0D0
@@ -544,20 +546,22 @@ SUBMODULE (particles_id) stretched_lattice
     proper_volume= 0.0D0
     dr_shells= radius/n_shells
     npart_out= 0
+    upper_bound= 1.05D0
+    lower_bound= 0.95D0
     r= 1
 
     PRINT *, npart_shelleq**2
 
     DO
 
-      npart_shelleq( r )= NINT( increase*npart_shelleq( r ) )
+      !npart_shelleq( r )= NINT( correction*npart_shelleq( r ) )
       IF( MOD( npart_shelleq( r ), 2 ) /= 0 )THEN
         npart_shelleq( r )= npart_shelleq( r ) + 1
       ENDIF
       alpha( r )= 2.0D0*pi/DBLE(npart_shelleq( r ))
       npart_shell( r )= npart_shelleq( r )**2.0D0
 
-      IF( ALLOCATED(colatitude_pos( r )% colatitudes) ) &
+      IF( ALLOCATED( colatitude_pos( r )% colatitudes ) ) &
         DEALLOCATE( colatitude_pos( r )% colatitudes )
       ALLOCATE( colatitude_pos( r )% colatitudes( npart_shelleq( r ) ) )
 
@@ -568,15 +572,15 @@ SUBMODULE (particles_id) stretched_lattice
 
       ENDDO
 
-      IF( ALLOCATED(pos_shells( r )% pos_shell) ) &
+      IF( ALLOCATED( pos_shells( r )% pos_shell ) ) &
         DEALLOCATE( pos_shells( r )% pos_shell )
-      IF( ALLOCATED(pos_shells( r )% pvol_shell) ) &
+      IF( ALLOCATED( pos_shells( r )% pvol_shell ) ) &
         DEALLOCATE( pos_shells( r )% pvol_shell )
-      IF( ALLOCATED(pos_shells( r )% g_xx ) )&
+      IF( ALLOCATED( pos_shells( r )% g_xx ) )&
         DEALLOCATE( pos_shells( r )% g_xx )
-      IF( ALLOCATED(pos_shells( r )% baryon_density) ) &
+      IF( ALLOCATED( pos_shells( r )% baryon_density ) ) &
         DEALLOCATE( pos_shells( r )% baryon_density )
-      IF( ALLOCATED(pos_shells( r )% gamma_euler) ) &
+      IF( ALLOCATED( pos_shells( r )% gamma_euler ) ) &
         DEALLOCATE( pos_shells( r )% gamma_euler )
       ALLOCATE( pos_shells( r )% pos_shell( 3, npart_shell( r ) ) )
       ALLOCATE( pos_shells( r )% pvol_shell( npart_shell( r ) ) )
@@ -590,7 +594,8 @@ SUBMODULE (particles_id) stretched_lattice
       rad= shell_radii(r)
       itr= 1
 
-      PRINT *, npart_shelleq( r )
+      npart_shell_tmp= npart_shell( r )
+      PRINT *, npart_shell_tmp
 
       DO th= 1, npart_shelleq( r )/2, 1
 
@@ -611,6 +616,7 @@ SUBMODULE (particles_id) stretched_lattice
         ENDIF
 
         DO phi= 1, npart_shelleq( r ), 1 !npart_shelleq( r ) is even, see above
+
 
           xtemp= center + rad*COS(phase + phi*alpha(r))*SIN(col)
           ytemp= rad*SIN(phase + phi*alpha(r))*SIN(col)
@@ -668,26 +674,53 @@ SUBMODULE (particles_id) stretched_lattice
         ENDDO
       ENDDO
 
-      m_parts( r )= shell_masses( r )/npart_shell( r )
+      !WRITE( *, "(A2,I4,I4,F3.2)", ADVANCE= "NO" ) &
+      !          creturn//" ", npart_shell_tmp, npart_shell( r ), &
+      !                        DBLE(npart_shell( r ))/DBLE(npart_shell_tmp)
+
+      m_parts( r )= shell_masses( r )/DBLE(npart_shell( r ))
       IF( r > 1 )THEN
-        IF( m_parts( r )/m_parts( r - 1 ) > 1.2D0 )THEN
-          increase= 1.1D0
-          CYCLE
-        ELSEIF( m_parts( r )/m_parts( r - 1 ) < 0.8D0 )THEN
-          increase= 0.9D0
+        IF( m_parts( r )/m_parts( r - 1 ) > upper_bound &
+            .OR. m_parts( r )/m_parts( r - 1 ) < lower_bound )THEN
+
+          npart_out= npart_out - ( itr - 1 )
+          npart_shell_kept= DBLE(npart_shell( r ))/DBLE(npart_shell_tmp)
+
+          IF( npart_shell_kept == 1.0D0 .AND. &
+              m_parts( r )/m_parts( r - 1 ) > upper_bound )THEN
+
+            CALL RANDOM_NUMBER( rand_num )
+            npart_shelleq( r )= npart_shelleq( r ) + 2*NINT( 1 + 4*rand_num )
+
+          ELSEIF( npart_shell_kept == 1.0D0 .AND. &
+              m_parts( r )/m_parts( r - 1 ) < lower_bound )THEN
+
+            CALL RANDOM_NUMBER( rand_num )
+            npart_shelleq( r )= npart_shelleq( r ) - 2*NINT( 1 + 4*rand_num )
+
+          ELSE
+            npart_shelleq( r )= CEILING( SQRT( &
+                                  (shell_masses( r )/m_parts( r - 1 )) &
+                                  /npart_shell_kept &
+                                ) )
+            !IF( npart_shelleq( r )**2.0D0 == npart_shell_tmp &
+            !    .OR. ( npart_shelleq( r ) + 1 )**2.0D0 == npart_shell_tmp )THEN
+            !  npart_shelleq( r )= npart_shelleq( r ) + 2
+            !ENDIF
+          ENDIF
+
           CYCLE
         ENDIF
       ENDIF
 
       PRINT *, " * Placed", npart_shell( r ), " particles on spherical shell ", r
-      PRINT *, " m_parts( r )/m_parts( r - 1 )= ",  m_parts( r )/m_parts( r - 1 )
+      IF( r > 1 ) PRINT *, " m_parts( r )/m_parts( r - 1 )= ",  &
+                           m_parts( r )/m_parts( r - 1 )
       PRINT *
 
       IF( r == n_shells ) EXIT
 
       r= r + 1
-      increase= 1.0D0
-      STOP
 
     ENDDO
     PRINT *, "npart=", npart_out
@@ -695,8 +728,7 @@ SUBMODULE (particles_id) stretched_lattice
     PRINT *
     PRINT *, m_parts
     PRINT *
-    PRINT *, "nu_ratio= ", MAXVAL(m_parts)/MINVAL(m_parts)
-    STOP
+    PRINT *, "particle mass ratio= ", MAXVAL(m_parts)/MINVAL(m_parts)
 
     PRINT *, "Mirroring particles..."
 
@@ -747,14 +779,6 @@ SUBMODULE (particles_id) stretched_lattice
       ENDDO
     ENDDO
     PRINT *, "npart=", npart_out
-    IF( SUM( npart_shell, DIM=1 ) /= npart_out )THEN
-      PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
-               "equal to the total number of particles. Stopping.."
-      PRINT *, "SUM( npart_shell )", SUM( npart_shell, DIM=1 ), &
-               ", npart_out=", npart_out
-      PRINT *
-      STOP
-    ENDIF
     npart_test= 0
     DO r= 1, n_shells, 1
       npart_test= npart_test + npart_shell( r )
@@ -763,6 +787,14 @@ SUBMODULE (particles_id) stretched_lattice
       PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
                "equal to the total number of particles. Stopping.."
       PRINT *, "npart_test", npart_test, ", npart_out=", npart_out
+      PRINT *
+      STOP
+    ENDIF
+    IF( SUM( npart_shell, DIM=1 ) /= npart_out )THEN
+      PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
+               "equal to the total number of particles. Stopping.."
+      PRINT *, "SUM( npart_shell )", SUM( npart_shell, DIM=1 ), &
+               ", npart_out=", npart_out
       PRINT *
       STOP
     ENDIF
