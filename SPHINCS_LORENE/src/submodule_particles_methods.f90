@@ -105,6 +105,8 @@ SUBMODULE (particles_id) particles_methods
     CALL allocate_SPH_memory
     CALL allocate_metric_on_particles( THIS% npart )
 
+    IF( debug ) PRINT *, "1"
+
     IF(.NOT.ALLOCATED( THIS% nu ))THEN
       ALLOCATE( THIS% nu( THIS% npart ), STAT= ios, &
                 ERRMSG= err_msg )
@@ -160,6 +162,8 @@ SUBMODULE (particles_id) particles_methods
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for array h" )
     ENDIF
+
+    IF( debug ) PRINT *, "2"
 
     !
     !-- Compute SPH quantities
@@ -272,6 +276,14 @@ SUBMODULE (particles_id) particles_methods
       !  THIS% h(itr)= 3.0*(THIS% vol2_a)**third
       !ENDIF
 
+      IF( debug ) PRINT *, "3"
+
+      IF( .NOT.ALLOCATED( THIS% pvol ) )THEN
+        PRINT *, "** ERROR! The array pvol is not allocated. ", &
+                 "Stopping..."
+        PRINT *
+        STOP
+      ENDIF
       THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
       h(itr)= THIS% h(itr)
       ! /(Msun_geo**3)
@@ -357,6 +369,8 @@ SUBMODULE (particles_id) particles_methods
     ENDDO compute_SPH_variables_on_particles
     !THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
+    IF( debug ) PRINT *, "1"
+
     !---------------------------------------------------------------------!
     !--  Assignment of nu on the stars, with the purpose                --!
     !--  of having a more uniform nu over the particles without losing  --!
@@ -364,6 +378,15 @@ SUBMODULE (particles_id) particles_methods
     !---------------------------------------------------------------------!
 
     IF( THIS% redistribute_nu )THEN
+
+      IF( THIS% distribution_id == 3 )THEN
+        PRINT *, "** ERROR! Particle placer ", THIS% distribution_id, &
+                 " is not compatible with redistribute_nu= .TRUE."
+        PRINT *, " * Check the parameter file lorene_bns_id_particles.par. ", &
+                 "Stopping..."
+        PRINT *
+        STOP
+      ENDIF
 
       ! Index particles on star 1 in increasing order of nu
 
@@ -616,17 +639,35 @@ SUBMODULE (particles_id) particles_methods
 
     ELSE
 
-      DO itr= 1, THIS% npart1, 1
-        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-        THIS% nu(itr)= nu(itr)
-        THIS% nbar1= THIS% nbar1 + nu(itr)
-      ENDDO
-      DO itr= THIS% npart1 + 1, THIS% npart, 1
-        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-        THIS% nu(itr)= nu(itr)
-        THIS% nbar2= THIS% nbar2 + nu(itr)
-      ENDDO
-      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+      IF( THIS% distribution_id == 3 )THEN
+
+        DO itr= 1, THIS% npart1, 1
+          nu(itr)= THIS% pmass( itr )*MSun/amu
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar1= THIS% nbar1 + nu(itr)
+        ENDDO
+        DO itr= THIS% npart1 + 1, THIS% npart, 1
+          nu(itr)= THIS% pmass( itr )*MSun/amu
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar2= THIS% nbar2 + nu(itr)
+        ENDDO
+        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+      ELSE
+
+        DO itr= 1, THIS% npart1, 1
+          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar1= THIS% nbar1 + nu(itr)
+        ENDDO
+        DO itr= THIS% npart1 + 1, THIS% npart, 1
+          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar2= THIS% nbar2 + nu(itr)
+        ENDDO
+        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+      ENDIF
 
     ENDIF
 

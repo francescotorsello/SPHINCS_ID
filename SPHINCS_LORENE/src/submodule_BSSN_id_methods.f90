@@ -1895,7 +1895,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CHARACTER( 2 ):: n_reflev
 
     LOGICAL:: exist
-    LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .TRUE.
 
     levels = THIS% levels
     ! radius2 is the extraction radius. If not set here, then it is 0 by default
@@ -2104,9 +2104,9 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !nlrf = nlrf_loc
     !Theta = theta_loc
     !Pr = pressure_loc
-    CALL density( npart,   &
-                  pos_loc, &
-                  sph_density )
+    !CALL density( npart,   &
+    !              pos_loc, &
+    !              sph_density )
 
     IF( debug ) PRINT *, "6"
 

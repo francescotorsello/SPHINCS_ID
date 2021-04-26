@@ -42,6 +42,7 @@ MODULE particles_id
 
     INTEGER:: npart, npart1, npart2, npart_temp, npart1_temp, npart2_temp
     INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
+    INTEGER:: distribution_id
     ! The flag call_flag is set different than 0 if the SUBROUTINE
     ! compute_and_export_SPH_variables is called
     INTEGER:: call_flag= 0
@@ -128,8 +129,10 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye
     ! 1-D array storing the smoothing length
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
-    ! 1-D array storing the particle volume
+    ! 1-D array storing the particle volumes
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
+    ! 1-D array storing the particle masses
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pmass
     ! Baryonic masses of the neutron stars [Msun]
     DOUBLE PRECISION:: mass1, mass2, mass_ratio
     ! Total grid volume
@@ -285,7 +288,7 @@ MODULE particles_id
 
     MODULE SUBROUTINE place_particles_stretched_lattice( THIS, &
                                   mass_star, radius, center, npart_approx, &
-                                  npart_out, pos, pvol, thres, bns_obj )
+                                  npart_out, pos, pvol, pmass, thres, bns_obj )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
@@ -294,6 +297,7 @@ MODULE particles_id
       DOUBLE PRECISION, INTENT( IN )    :: mass_star, radius, center, thres
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pmass
 
     END SUBROUTINE place_particles_stretched_lattice
 
