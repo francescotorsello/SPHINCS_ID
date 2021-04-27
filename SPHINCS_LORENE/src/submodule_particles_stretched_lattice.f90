@@ -55,7 +55,8 @@ SUBMODULE (particles_id) stretched_lattice
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
                                                   alpha, m_parts, vol_shell, &
-                                                  vol_shell2
+                                                  vol_shell2, mass_shell, &
+                                                  mass_shell2
 
     LOGICAL:: exist, high_mass, low_mass, kept_all
 
@@ -246,6 +247,32 @@ SUBMODULE (particles_id) stretched_lattice
     ENDIF
     IF(.NOT.ALLOCATED( vol_shell2 ))THEN
       ALLOCATE( vol_shell2( n_shells ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array vol_shell2 in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
+    ENDIF
+    IF(.NOT.ALLOCATED( mass_shell ))THEN
+      ALLOCATE( mass_shell( n_shells ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array vol_shell in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array pos in SUBROUTINE" &
+      !                // "place_particles_3D_lattice." )
+    ENDIF
+    IF(.NOT.ALLOCATED( mass_shell2 ))THEN
+      ALLOCATE( mass_shell2( n_shells ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array vol_shell2 in SUBROUTINE" &
@@ -654,13 +681,14 @@ SUBMODULE (particles_id) stretched_lattice
       ALLOCATE( pos_shells( r )% g_xx( npart_shell( r ) ) )
       ALLOCATE( pos_shells( r )% baryon_density( npart_shell( r ) ) )
       ALLOCATE( pos_shells( r )% gamma_euler( npart_shell( r ) ) )
-      ALLOCATE( pos_shells( r )% pos_th( npart_shell( r ) ) )
-      ALLOCATE( pos_shells( r )% pos_phi( npart_shell( r ) ) )
+      ALLOCATE( pos_shells( r )% pos_th( npart_shelleq( r ) ) )
+      ALLOCATE( pos_shells( r )% pos_phi( npart_shelleq( r ) ) )
 
       !phase= phase + r*alpha(r)/golden_ratio
       CALL RANDOM_NUMBER( phase )
       phase= phase*alpha(r)
       rad= shell_radii(r)
+      dphi_shells= alpha(r)
       itr= 1
 
       npart_shell_tmp= npart_shell( r )
@@ -668,7 +696,7 @@ SUBMODULE (particles_id) stretched_lattice
 
       DO th= 1, npart_shelleq( r )/2, 1
 
-        !col= colatitude_pos(r)% colatitudes(th)
+        col= colatitude_pos(r)% colatitudes(th)
         !IF( th == 1 )THEN
         !
         !  !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
@@ -716,24 +744,64 @@ SUBMODULE (particles_id) stretched_lattice
             pos_shells(r)% pos_shell( 1, itr )= xtemp
             pos_shells(r)% pos_shell( 2, itr )= ytemp
             pos_shells(r)% pos_shell( 3, itr )= ztemp
-            pos_shells(r)% pos_th( itr )= col
-            pos_shells(r)% pos_phi( itr )= phase + phi*alpha(r)
+            !pos_shells(r)% pos_th( th )= col
+            !pos_shells(r)% pos_phi( phi )= phase + phi*alpha(r)
 
-            !dphi_shells= alpha(r)
+            IF( th == 1 )THEN
+
+              !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
+              dth_shells= 2.0D0*( col - &
+                        ( col + colatitude_pos(r)% colatitudes(th + 1) )/2.0D0 )
+
+              !PRINT *, "case 1. ", "dt_shells= ", dth_shells, &
+              !                     "col= ", col, &
+              !                     "colatitude_pos(r)% colatitudes(th + 1)=", &
+              !                     colatitude_pos(r)% colatitudes(th + 1)
+              !PRINT *
+
+            ELSEIF( th == npart_shelleq( r )/2 )THEN
+
+              !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
+              dth_shells= 2.0D0*( ( colatitude_pos(r)% colatitudes(th - 1) &
+                        + col )/2.0D0 - col )
+
+              !PRINT *, "case 2. ", "dt_shells= ", dth_shells, &
+              !                     "col= ", col, &
+              !                     "colatitude_pos(r)% colatitudes(th - 1)=", &
+              !                     colatitude_pos(r)% colatitudes(th - 1)
+              !PRINT *
+
+            ELSE
+
+              dth_shells= ABS( &
+                      ( colatitude_pos(r)% colatitudes(th + 1) + col )/2.0D0 &
+                    - ( col + colatitude_pos(r)% colatitudes(th - 1) )/2.0D0 )
+
+
+              !PRINT *, "case 3. ", "dt_shells= ", dth_shells, &
+              !                     "col= ", col, &
+              !                     "colatitude_pos(r)% colatitudes(th + 1)=", &
+              !                     colatitude_pos(r)% colatitudes(th + 1), &
+              !                     "colatitude_pos(r)% colatitudes(th - 1)=", &
+              !                     colatitude_pos(r)% colatitudes(th - 1)
+              !PRINT *
+
+            ENDIF
 
             !pvol( npart_out )= rad**2.0D0*SIN(col) &
             !                   *dr_shells*dth_shells*dphi_shells
-            !pos_shells(r)% pvol_shell2( itr )= rad**2.0D0*SIN(col) &
-            !                   *dr_shells*dth_shells*dphi_shells! &
-            !                   !*pos_shells(r)% g_xx( itr ) &
-            !                   !*SQRT(pos_shells(r)% g_xx( itr ))
 
-          !IF( pos_shells(r)% pvol_shell2( itr ) < 0 )THEN
-          !  PRINT *, "When placing first half of particles"
-          !  PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
-          !           pos_shells(r)% pvol_shell2( itr )
-          !  STOP
-          !ENDIF
+            pos_shells(r)% pvol_shell2( itr )= rad**2.0D0*SIN(col) &
+                               *dr_shells*dth_shells*dphi_shells! &
+                               !*pos_shells(r)% g_xx( itr ) &
+                               !*SQRT(pos_shells(r)% g_xx( itr ))
+
+            IF( pos_shells(r)% pvol_shell2( itr ) < 0 )THEN
+              PRINT *, "When placing first half of particles"
+              PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
+                       pos_shells(r)% pvol_shell2( itr )
+              STOP
+            ENDIF
 
             itr= itr + 1
 
@@ -1003,12 +1071,12 @@ SUBMODULE (particles_id) stretched_lattice
                                         pos_shells(r)% baryon_density( itr )
         pos_shells(r)% gamma_euler( npart_shell( r )/2 + itr )= &
                                           pos_shells(r)% gamma_euler( itr )
-        pos_shells(r)% pos_th( npart_shell( r )/2 + itr )= &
-                                          pi - pos_shells(r)% pos_th( itr )
-        pos_shells(r)% pos_phi( npart_shell( r )/2 + itr )= &
-                                          pos_shells(r)% pos_phi( itr )
-        !pos_shells(r)% pvol_shell2( npart_shell( r )/2 + itr )= &
-        !                                   pos_shells(r)% pvol_shell2( itr )
+        !pos_shells(r)% pos_th( npart_shell( r )/2 + itr )= &
+        !                                  pi - pos_shells(r)% pos_th( itr )
+        !pos_shells(r)% pos_phi( npart_shell( r )/2 + itr )= &
+        !                                  pos_shells(r)% pos_phi( itr )
+        pos_shells(r)% pvol_shell2( npart_shell( r )/2 + itr )= &
+                                           pos_shells(r)% pvol_shell2( itr )
         !pvol( npart_out )  =   pvol( itr )
         IF( pos_shells(r)% baryon_density( itr ) == 0 )THEN
           PRINT *, "When mirroring particles"
@@ -1046,89 +1114,96 @@ SUBMODULE (particles_id) stretched_lattice
       STOP
     ENDIF
 
-    DO r= 1, n_shells, 1
-
-      dphi_shells= alpha(r)
-      rad= shell_radii(r)
-
-      !DO th= 1, npart_shelleq( r )/2, 1
-      !
-      !  col= pos_shells(r)% pos_th( th )
-      !  IF( th == 1 )THEN
-      !
-      !    !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
-      !    dth_shells= 2.0D0*( col - pos_shells(r)% pos_th( th + 1 ) )
-      !
-      !  ELSEIF( th == npart_shelleq( r )/2 )THEN
-      !
-      !    !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
-      !    dth_shells= 2.0D0*( pos_shells(r)% pos_th( th - 1 ) - col )
-      !
-      !  ELSE
-      !
-      !    dth_shells= ( pos_shells(r)% pos_th( th + 1 ) + col )/2.0D0 &
-      !              - ( col + pos_shells(r)% pos_th( th - 1 ) )/2.0D0
-      !
-      !  ENDIF
-      !
-      !  DO phi= 1, npart_shelleq( r ), 1
-      !
-      !    PRINT *, "rad= ", rad, "col= ", col
-      !    PRINT *, "dr_shells= ", dr_shells, "dth_shells= ", dth_shells, &
-      !             "dphi_shells= ", dphi_shells
-      !
-      !    pos_shells(r)% pvol_shell2( itr )= rad**2.0D0*SIN(col) &
-      !                       *dr_shells*dth_shells*dphi_shells! &
-      !                       !*pos_shells(r)% g_xx( itr ) &
-      !                       !*SQRT(pos_shells(r)% g_xx( itr ))
-      !    itr= itr + 1
-      !
-      !  ENDDO
-      !ENDDO
-      DO itr= 1, npart_shell( r ), 1
-
-        !PRINT *, pos_shells(r)% pos_th
-
-        col= pos_shells(r)% pos_th( itr )
-        IF( col == MAXVAL( pos_shells(r)% pos_th ) )THEN
-
-          !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
-          dth_shells= 2.0D0*( col - pos_shells(r)% pos_th( itr + 1 ) )
-
-        ELSEIF( col == MINVAL( pos_shells(r)% pos_th ) )THEN
-
-          !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
-          dth_shells= 2.0D0*( pos_shells(r)% pos_th( itr - 1 ) - col )
-
-        ELSE
-
-          dth_shells= ( pos_shells(r)% pos_th( itr + 1 ) + col )/2.0D0 &
-                    - ( col + pos_shells(r)% pos_th( itr - 1 ) )/2.0D0
-
-        ENDIF
-
-        IF( r == 6 )THEN
-          PRINT *, "rad= ", rad, "col= ", col, pos_shells(r)% pos_th( itr )
-          PRINT *, "dr_shells= ", dr_shells, "dth_shells= ", dth_shells, &
-                   "dphi_shells= ", dphi_shells
-        ENDIF
-
-        pos_shells(r)% pvol_shell2( itr )= rad**2.0D0*SIN(col) &
-                           *dr_shells*dth_shells*dphi_shells! &
-                           !*pos_shells(r)% g_xx( itr ) &
-                           !*SQRT(pos_shells(r)% g_xx( itr ))
-
-      ENDDO
-      PRINT *
-    ENDDO
+  ! DO r= 1, n_shells, 1
+  !
+  !   dphi_shells= alpha(r)
+  !   rad= shell_radii(r)
+  !
+  !   DO th= 1, npart_shelleq( r )/2, 1
+  !
+  !     col= pos_shells(r)% pos_th( th )
+  !     IF( th == 1 )THEN
+  !
+  !       !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
+  !       dth_shells= 2.0D0*( col - pos_shells(r)% pos_th( th + 1 ) )
+  !
+  !     ELSEIF( th == npart_shelleq( r )/2 )THEN
+  !
+  !       !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
+  !       dth_shells= 2.0D0*( pos_shells(r)% pos_th( th - 1 ) - col )
+  !
+  !     ELSE
+  !
+  !       dth_shells= ( pos_shells(r)% pos_th( th + 1 ) + col )/2.0D0 &
+  !                 - ( col + pos_shells(r)% pos_th( th - 1 ) )/2.0D0
+  !
+  !     ENDIF
+  !
+  !     DO phi= 1, npart_shelleq( r ), 1
+  !
+  !       PRINT *, "rad= ", rad, "col= ", col
+  !       PRINT *, "dr_shells= ", dr_shells, "dth_shells= ", dth_shells, &
+  !                "dphi_shells= ", dphi_shells
+  !
+  !       pos_shells(r)% pvol_shell2( itr )= rad**2.0D0*SIN(col) &
+  !                          *dr_shells*dth_shells*dphi_shells! &
+  !                          !*pos_shells(r)% g_xx( itr ) &
+  !                          !*SQRT(pos_shells(r)% g_xx( itr ))
+  !       itr= itr + 1
+  !
+  !     ENDDO
+  !   ENDDO
+  !   !DO itr= 1, npart_shell( r ), 1
+  !   !
+  !   !  !PRINT *, pos_shells(r)% pos_th
+  !   !
+  !   !  col= pos_shells(r)% pos_th( itr )
+  !   !  IF( col == MAXVAL( pos_shells(r)% pos_th ) )THEN
+  !   !
+  !   !    !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
+  !   !    dth_shells= 2.0D0*( col - pos_shells(r)% pos_th( itr + 1 ) )
+  !   !
+  !   !  ELSEIF( col == MINVAL( pos_shells(r)% pos_th ) )THEN
+  !   !
+  !   !    !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
+  !   !    dth_shells= 2.0D0*( pos_shells(r)% pos_th( npart_shelleq( r ) - 1 ) - col )
+  !   !
+  !   !  ELSE
+  !   !
+  !   !    dth_shells= ( pos_shells(r)% pos_th( itr + 1 ) + col )/2.0D0 &
+  !   !              - ( col + pos_shells(r)% pos_th( itr - 1 ) )/2.0D0
+  !   !
+  !   !  ENDIF
+  !   !
+  !   !  IF( .TRUE. )THEN
+  !   !    PRINT *, "rad= ", rad, "col= ", col, &
+  !   !  !"pos_shells(r)% pos_th( itr - 1 )=", pos_shells(r)% pos_th( itr - 1 ), &
+  !   !  "pos_shells(r)% pos_th( itr + 1 )=", pos_shells(r)% pos_th( npart_shelleq( r ) + 1 )
+  !   !    PRINT *, "dr_shells= ", dr_shells, "dth_shells= ", dth_shells, &
+  !   !             "dphi_shells= ", dphi_shells
+  !   !  ENDIF
+  !   !
+  !   !  pos_shells(r)% pvol_shell2( itr )= rad**2.0D0*SIN(col) &
+  !   !                     *dr_shells*dth_shells*dphi_shells! &
+  !   !                     !*pos_shells(r)% g_xx( itr ) &
+  !   !                     !*SQRT(pos_shells(r)% g_xx( itr ))
+  !   !  IF( pos_shells(r)% pvol_shell2( itr ) <= 0.0D0 )THEN
+  !   !    PRINT *, "When computing particle volume"
+  !   !    PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
+  !   !             pos_shells(r)% pvol_shell2( itr )
+  !   !    STOP
+  !   !  ENDIF
+  !   !ENDDO
+  !   !PRINT *
+  ! ENDDO
     !DO r= 1, n_shells, 1
     !  DO itr= 1, npart_shell( r )/2, 1
     !    pos_shells(r)% pvol_shell2( npart_shell( r )/2 + itr )= &
     !                                       pos_shells(r)% pvol_shell2( itr )
     !  ENDDO
     !ENDDO
-    PRINT *
-    STOP
+  !  PRINT *
+  !  STOP
 
     mass_test= 0.0D0
     mass_test2= 0.0D0
@@ -1157,12 +1232,12 @@ SUBMODULE (particles_id) stretched_lattice
                    pos_shells(r)% pos_shell( 3, itr ), &
                    pos_shells(r)% baryon_density( itr )
         ENDIF
-        !IF( pos_shells(r)% pvol_shell2( itr ) <= 0.0D0 )THEN
-        !  PRINT *, "When computing particle volume"
-        !  PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
-        !           pos_shells(r)% pvol_shell2( itr )
-        !  STOP
-        !ENDIF
+        IF( pos_shells(r)% pvol_shell2( itr ) <= 0.0D0 )THEN
+          PRINT *, "When computing particle volume"
+          PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
+                   pos_shells(r)% pvol_shell2( itr )
+          STOP
+        ENDIF
 
         pos_shells(r)% pvol_shell( itr )= m_parts( r ) &
                           /( pos_shells(r)% baryon_density( itr ) &
@@ -1195,19 +1270,37 @@ SUBMODULE (particles_id) stretched_lattice
     PRINT *, mass_test, mass_test2, mass_star, proper_volume_test, proper_volume
     PRINT *
 
+    vol_shell( r )  = 0.0D0
+    vol_shell2( r ) = 0.0D0
+    mass_shell( r ) = 0.0D0
+    mass_shell2( r )= 0.0D0
     DO r= 1, n_shells, 1
       DO itr= 1, npart_shell( r ), 1
-        vol_shell( r ) = vol_shell( r )  + pos_shells(r)% pvol_shell( itr )
-        vol_shell2( r )= vol_shell2( r ) + pos_shells(r)% pvol_shell2( itr )
+        vol_shell( r )  = vol_shell( r )  + pos_shells(r)% pvol_shell( itr )
+        vol_shell2( r ) = vol_shell2( r ) + pos_shells(r)% pvol_shell2( itr )
+        mass_shell( r ) = mass_shell( r ) + &
+                          pos_shells(r)% baryon_density( itr ) &
+                         *pos_shells(r)% pvol_shell( itr ) &
+                         *pos_shells(r)% g_xx( itr ) &
+                         *SQRT(pos_shells(r)% g_xx( itr )) &
+                         *pos_shells(r)% gamma_euler( itr )
+        mass_shell2( r )= mass_shell2( r ) + &
+                          pos_shells(r)% baryon_density( itr ) &
+                         *pos_shells(r)% pvol_shell2( itr ) &
+                         *pos_shells(r)% g_xx( itr ) &
+                         *SQRT(pos_shells(r)% g_xx( itr )) &
+                         *pos_shells(r)% gamma_euler( itr )
       ENDDO
       IF( r > 1 )THEN
         PRINT *, vol_shell( r ), vol_shell2( r ), &
                  4.0D0/3.0D0*pi* &
                  ( shell_radii( r )**3.0D0 - shell_radii( r - 1 )**3.0D0 )
+        PRINT *, mass_shell( r ), mass_shell2( r ), shell_masses( r )
+        PRINT *
       ENDIF
     ENDDO
     PRINT *
-    !STOP
+    STOP
 
     IF(.NOT.ALLOCATED( pos ))THEN
       ALLOCATE( pos( 3, npart_out ), &

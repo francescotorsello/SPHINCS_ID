@@ -358,6 +358,13 @@ SUBMODULE (particles_id) particles_constructor
       parts_obj% pmass( 1:parts_obj% npart1 )= pmass1
       parts_obj% pmass( parts_obj% npart1 + 1:parts_obj% npart )= pmass2
 
+      PRINT *, " * Particles placed. Number of particles=", parts_obj% npart
+      PRINT *
+      PRINT *, " * Number of particles on NS 1=", parts_obj% npart1
+      PRINT *, " * Number of particles on NS 2=", parts_obj% npart2
+      PRINT *
+      STOP
+
     CASE DEFAULT
 
       PRINT *, "** There is no implemented particle placer " &
