@@ -363,7 +363,7 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *, " * Number of particles on NS 1=", parts_obj% npart1
       PRINT *, " * Number of particles on NS 2=", parts_obj% npart2
       PRINT *
-      STOP
+      !STOP
 
     CASE DEFAULT
 

@@ -747,24 +747,24 @@ SUBMODULE (particles_id) particles_methods
              MINVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 )
     PRINT *
 
+    THIS% nuratio1= MAXVAL( THIS% nu(1:THIS% npart1), DIM= 1 )/ &
+                    MINVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
     PRINT *, " * Maximum n. baryon per particle on star 1 (nu)=", &
              MAXVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
     PRINT *, " * Minimum n. baryon per particle on star 1 (nu)=", &
              MINVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
-    PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% nu(1:THIS% npart1), DIM= 1 )/ &
-             MINVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
+    PRINT *, " * Ratio between the two=", THIS% nuratio1
     PRINT *
+    THIS% nuratio2= MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 ) &
+                    /MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
     PRINT *, " * Maximum n. baryon per particle on star 2 (nu)=", &
              MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
     PRINT *, " * Minimum n. baryon per particle on star 2 (nu)=", &
              MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
-    PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
-             MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+    PRINT *, " * Ratio between the two=", THIS% nuratio2
     PRINT *
-    PRINT *, " * Baryon number ratio across the stars=", &
-             MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
+    THIS% nuratio= MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
+    PRINT *, " * Baryon number ratio across the stars=", THIS% nuratio
     PRINT *
     PRINT *, " * Number of baryons on star 1=", THIS% nbar1
     PRINT *, " * Total mass of the baryons on star 1=", &
@@ -2059,6 +2059,91 @@ SUBMODULE (particles_id) particles_methods
     n_part= THIS% npart
 
   END PROCEDURE get_npart
+
+
+  MODULE PROCEDURE get_npart1
+
+    !*************************************************
+    !                                                *
+    ! Returns the number of particles on star 1      *
+    !                                                *
+    ! FT 27.04.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    n_part= THIS% npart1
+
+  END PROCEDURE get_npart1
+
+
+  MODULE PROCEDURE get_npart2
+
+    !*************************************************
+    !                                                *
+    ! Returns the number of particles on star 2      *
+    !                                                *
+    ! FT 27.04.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    n_part= THIS% npart2
+
+  END PROCEDURE get_npart2
+
+
+  MODULE PROCEDURE get_nuratio
+
+    !*************************************************
+    !                                                *
+    ! Returns the baryon number ratio on the stars  *
+    !                                                *
+    ! FT 27.04.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    nuratio= THIS% nuratio
+
+  END PROCEDURE get_nuratio
+
+
+  MODULE PROCEDURE get_nuratio1
+
+    !*************************************************
+    !                                                *
+    ! Returns the baryon number ratio on star 1      *
+    !                                                *
+    ! FT 27.04.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    nuratio1= THIS% nuratio1
+
+  END PROCEDURE get_nuratio1
+
+
+  MODULE PROCEDURE get_nuratio2
+
+    !*************************************************
+    !                                                *
+    ! Returns the baryon number ratio on star 2      *
+    !                                                *
+    ! FT 27.04.2021                                  *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    nuratio2= THIS% nuratio2
+
+  END PROCEDURE get_nuratio2
 
 
   MODULE PROCEDURE get_pos

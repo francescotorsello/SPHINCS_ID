@@ -2044,6 +2044,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ENDIF
 
     IF( debug ) PRINT *, "0"
+    STOP
 
     nu_loc      = parts_obj% get_nu()
     pos_loc     = parts_obj% get_pos()

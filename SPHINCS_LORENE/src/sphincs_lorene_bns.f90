@@ -345,6 +345,29 @@ PROGRAM sphincs_lorene_bns
   PRINT *, " * Total:"
   CALL execution_timer% print_timer( 2 )
   PRINT *
+
+  !
+  !-- Print a summary
+  !
+  PRINT *, "===================================================" &
+           // "================================================"
+  PRINT *, " Summary "
+  PRINT *, "===================================================" &
+           // "================================================"
+  PRINT *
+  PRINT *
+  PRINT *, " * SPH:"
+  PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
+  PRINT *, "   Particle number on star 1= ", particles_dist( 1, 1 )% get_npart1()
+  PRINT *, "   Particle number on star 2= ", particles_dist( 1, 1 )% get_npart2()
+  PRINT *
+  PRINT *, "   Baryon number ratio on both stars=", &
+           particles_dist( 1, 1 )% get_nuratio()
+  PRINT *, "   Baryon number ratio on star 1=", &
+           particles_dist( 1, 1 )% get_nuratio1()
+  PRINT *, "   Baryon number ratio on star 2=", &
+           particles_dist( 1, 1 )% get_nuratio2()
+  PRINT *
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 

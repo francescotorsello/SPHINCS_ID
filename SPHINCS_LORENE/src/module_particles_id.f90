@@ -143,6 +143,8 @@ MODULE particles_id
     DOUBLE PRECISION:: nu_ratio
     ! Total baryon number, and baryon numbers of the stars
     DOUBLE PRECISION:: nbar_tot, nbar1, nbar2
+    ! Baryon number ratio on both stars, on star 1 and on star 2
+    DOUBLE PRECISION:: nuratio, nuratio1, nuratio2
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
     ! String storing the local path to the directory where the
@@ -207,6 +209,11 @@ MODULE particles_id
     !-----------------!
 
     PROCEDURE, PUBLIC:: get_npart
+    PROCEDURE, PUBLIC:: get_npart1
+    PROCEDURE, PUBLIC:: get_npart2
+    PROCEDURE, PUBLIC:: get_nuratio
+    PROCEDURE, PUBLIC:: get_nuratio1
+    PROCEDURE, PUBLIC:: get_nuratio2
     PROCEDURE, PUBLIC:: get_pos
     PROCEDURE, PUBLIC:: get_vel
     PROCEDURE, PUBLIC:: get_nlrf
@@ -260,6 +267,10 @@ MODULE particles_id
   !-- Their implementations are in submodule_particles_constructor.f90
   !
   INTERFACE
+
+    !-------------------!
+    !--  SUBROUTINES  --!
+    !-------------------!
 
     MODULE SUBROUTINE place_particles_3dlattice( THIS, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
@@ -388,6 +399,10 @@ MODULE particles_id
 
     END SUBROUTINE destruct_particles
 
+    !-----------------!
+    !--  FUNCTIONS  --!
+    !-----------------!
+
     MODULE FUNCTION is_empty( THIS ) RESULT( answer )
 
       CLASS(particles), INTENT( IN ):: THIS
@@ -410,6 +425,51 @@ MODULE particles_id
       INTEGER:: n_part
 
     END FUNCTION get_npart
+
+    MODULE FUNCTION get_npart1( THIS ) RESULT( n_part )
+
+      ! Arguments
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      ! Result
+      INTEGER:: n_part
+
+    END FUNCTION get_npart1
+
+    MODULE FUNCTION get_npart2( THIS ) RESULT( n_part )
+
+      ! Arguments
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      ! Result
+      INTEGER:: n_part
+
+    END FUNCTION get_npart2
+
+    MODULE FUNCTION get_nuratio( THIS ) RESULT( nuratio )
+
+      ! Arguments
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      ! Result
+      DOUBLE PRECISION:: nuratio
+
+    END FUNCTION get_nuratio
+
+    MODULE FUNCTION get_nuratio1( THIS ) RESULT( nuratio1 )
+
+      ! Arguments
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      ! Result
+      DOUBLE PRECISION:: nuratio1
+
+    END FUNCTION get_nuratio1
+
+    MODULE FUNCTION get_nuratio2( THIS ) RESULT( nuratio2 )
+
+      ! Arguments
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      ! Result
+      DOUBLE PRECISION:: nuratio2
+
+    END FUNCTION get_nuratio2
 
     MODULE FUNCTION get_pos( THIS ) RESULT( pos_u )
 
