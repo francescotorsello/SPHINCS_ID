@@ -2044,7 +2044,6 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ENDIF
 
     IF( debug ) PRINT *, "0"
-    STOP
 
     nu_loc      = parts_obj% get_nu()
     pos_loc     = parts_obj% get_pos()
@@ -2098,16 +2097,16 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     PRINT *, " * Computing SPH density..."
     PRINT *
-    !nu = nu_loc
-    !pos_u = pos_loc
-    !vel_u = vel_loc
-    !u = u_loc
-    !nlrf = nlrf_loc
-    !Theta = theta_loc
-    !Pr = pressure_loc
-    !CALL density( npart,   &
-    !              pos_loc, &
-    !              sph_density )
+    nu   = nu_loc
+    pos_u= pos_loc
+    vel_u= vel_loc
+    u    = u_loc
+    nlrf = nlrf_loc
+    Theta= theta_loc
+    Pr   = pressure_loc
+    CALL density( npart,   &
+                  pos_loc, &
+                  sph_density )
 
     IF( debug ) PRINT *, "6"
 

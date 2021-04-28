@@ -388,7 +388,7 @@ SUBMODULE (particles_id) stretched_lattice
       DO itr2= 1, npart_shelleq( itr ), 1
 
         colatitude_pos( itr )% colatitudes( itr2 )= &
-                      ACOS( 2.0D0*itr2/(npart_shelleq( itr ) + 1.0D0 ) - 1.0D0 )
+                ACOS( 2.0D0*itr2/(npart_shelleq( itr ) + 1.0D0 ) - 1.0D0 )
 
       ENDDO
 
@@ -655,6 +655,9 @@ SUBMODULE (particles_id) stretched_lattice
 
         colatitude_pos( r )% colatitudes( itr2 )= &
                       ACOS( 2.0D0*itr2/(npart_shelleq( r ) + 1.0D0 ) - 1.0D0 )
+        !colatitude_pos( r )% colatitudes( itr2 )= &
+        !              colatitude_pos( r )% colatitudes( itr2 ) &
+        !              *( 1 + rel_sign*0.05D0*phase_th )
 
       ENDDO
 
@@ -698,16 +701,23 @@ SUBMODULE (particles_id) stretched_lattice
       !phase_th= phase_th*ABS( MINVAL( colatitude_pos(r)% colatitudes, DIM= 1 ) &
       !                     - pi/2.0D0 )*4.0D0/5.0D0
 
-!      !$OMP PARALLEL DO DEFAULT(PRIVATE) &
-!      !$OMP             SHARED(npart_shelleq,center,rad,alpha,pos_shells, &
-!      !$OMP                    npart_out,npart_shell,colatitude_pos)
-      DO th= 1, npart_shelleq( r )/2, 1
+      !PRINT *, "Right before OMP"
+      !PRINT *
+
+!      !$OMP PARALLEL DO DEFAULT(NONE), &
+!      !$OMP             PRIVATE(phase,col,xtemp,ytemp,ztemp, &
+!      !$OMP                     dphi_shells,dth_shells, &
+!      !$OMP                     th,phi,rand_num2,phase_th,rel_sign) &
+!      !$OMP             SHARED(r,npart_shelleq,center,rad,alpha,pos_shells, &
+!      !$OMP                    npart_out,npart_shell,colatitude_pos,bns_obj, &
+!      !$OMP                    dr_shells,itr)
+      DO th= 1, npart_shelleq( r )/2, 1 !npart_shelleq( r ) is even, see above
 
         CALL RANDOM_NUMBER( phase )
         phase= phase*alpha(r)
         dphi_shells= alpha(r)
 
-        col= colatitude_pos(r)% colatitudes(th)! + phase_th
+        col= colatitude_pos(r)% colatitudes(th)
         !IF( th == 1 )THEN
         !
         !  !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
@@ -724,8 +734,21 @@ SUBMODULE (particles_id) stretched_lattice
         !            - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
         !
         !ENDIF
+        !PRINT *, "Right before longitude loop"
 
-        DO phi= 1, npart_shelleq( r ), 1 !npart_shelleq( r ) is even, see above
+        DO phi= 1, npart_shelleq( r ), 1
+
+          CALL RANDOM_NUMBER( phase_th )
+          CALL RANDOM_NUMBER( rand_num2 )
+          IF( rand_num2 >= 0.5D0 ) rel_sign=  1
+          IF( rand_num2 < 0.5D0 )  rel_sign= -1
+
+          IF( col*( 1 + rel_sign*0.05D0*phase_th ) < pi .AND. &
+              col*( 1 + rel_sign*0.05D0*phase_th ) > pi/2.0D0 )THEN
+
+            col= col*( 1 + rel_sign*0.05D0*phase_th )
+
+          ENDIF
 
 
           xtemp= center + rad*COS(phase + phi*alpha(r))*SIN(col)
@@ -831,18 +854,29 @@ SUBMODULE (particles_id) stretched_lattice
           !ENDIF
 
         ENDDO
+        !PRINT *, "Right after longitude loop"
       ENDDO
 !      !$OMP END PARALLEL DO
+      !PRINT *, "Right after OMP"
+      IF( itr /= npart_shell( r )/2 + 1 )THEN
+        PRINT *, "** ERROR! Mismatch in the particle counters on shell ", r
+        PRINT *, "itr=", itr, "npart_shell( r )/2", npart_shell( r )/2
+        PRINT *, "itr should be equal to npart_shell( r )/2 + 1. Stopping..."
+        PRINT *
+        STOP
+      ENDIF
 
       !WRITE( *, "(A2,I4,I4,F3.2)", ADVANCE= "NO" ) &
       !          creturn//" ", npart_shell_tmp, npart_shell( r ), &
       !                        DBLE(npart_shell( r ))/DBLE(npart_shell_tmp)
 
+      !PRINT *, "Right before safety check"
+
       IF( npart_shell( r ) < 0 ) npart_shell( r )= 0
       IF( npart_shell( r ) == 0 )THEN
         m_parts( r )= m_parts( r - 1 )
         PRINT *, " * Placed", npart_shell( r ), &
-                 " particles on spherical shell ", r
+                 " particles on spherical shell ", r, " of ", n_shells
         IF( r == n_shells )THEN
           EXIT
         ELSE
@@ -857,6 +891,8 @@ SUBMODULE (particles_id) stretched_lattice
       ELSE
         m_parts( r )= shell_masses( r )/DBLE(npart_shell( r ))
       ENDIF
+
+      !PRINT *, "Right before correction of particle number"
 
       IF( r > 1 )THEN
 
@@ -1000,14 +1036,18 @@ SUBMODULE (particles_id) stretched_lattice
                               + rel_sign*NINT( 1 + rand_num )
           ENDIF
 
+          PRINT *, "Right after correction of particle number"
+
           CYCLE
 
         ENDIF
 
       ENDIF
 
-      PRINT *, " * Placed", npart_shell( r ), " particles on spherical shell ", r
-      IF( r > 1 ) PRINT *, " m_parts( r )/m_parts( r - 1 )= ",  &
+      PRINT *, " * Placed", npart_shell( r ), &
+               " particles on spherical shell ", r, " of ", n_shells
+      IF( r > 1 ) PRINT *, "   Ratio of particle masses on last 2 shells: ", &
+                           "   m_parts(", r, ")/m_parts(", r - 1, ")= ",  &
                            m_parts( r )/m_parts( r - 1 )
       PRINT *
 
@@ -1044,6 +1084,17 @@ SUBMODULE (particles_id) stretched_lattice
     PRINT *, m_parts
     PRINT *
     PRINT *, "particle mass ratio= ", MAXVAL(m_parts)/MINVAL(m_parts)
+    npart_test= 0
+    DO r= 1, n_shells, 1
+      npart_test= npart_test + npart_shell( r )
+    ENDDO
+    IF( npart_test/2 /= npart_out )THEN
+      PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
+               "equal to the total number of particles. Stopping.."
+      PRINT *, "npart_test", npart_test/2, ", npart_out=", npart_out
+      PRINT *
+      STOP
+    ENDIF
 
     PRINT *, "Mirroring particles..."
 
@@ -1096,6 +1147,7 @@ SUBMODULE (particles_id) stretched_lattice
                    pos_shells(r)% pos_shell( 2, itr ), &
                    pos_shells(r)% pos_shell( 3, itr ), &
                    pos_shells(r)% baryon_density( itr )
+          STOP
         ENDIF
         !IF( pos_shells(r)% pvol_shell2( itr ) < 0 )THEN
         !  PRINT *, "When mirroring particles"
