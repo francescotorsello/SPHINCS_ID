@@ -34,10 +34,13 @@ env['F90'] = 'ifort'
 env['CXX'] = 'icpc'
 
 # F90 flags for production
-env['F90FLAGS'] = ['-O0', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-fp-stack-check', '-traceback', '-fpe0', '-warn', '-debug extended']
+env['F90FLAGS'] = ['-O3', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn']
 #, '-heap-arrays'
 
-# F90 flags for debuging
+# F90 flags for debugging
+#env['F90FLAGS'] = ['-O0', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-fp-stack-check', '-traceback', '-fpe0', '-warn', '-debug extended']
+
+# More F90 flags for debugging
 #env['F90FLAGS'] = ['-r8','-g','-qopenmp','-O0', '-ftz', '-heap-arrays 5000',, '-fno-alias', '-traceback', '-debug', '-debug all', '-nolib-inline','-align all', '-check bounds', '-fno-inline-functions', '-prec-div', '-prec-sqrt', '-fp-stack-check', '-init=snan,arrays', '-traceback', '-fPIC', '-fpe3', '-heap-arrays 32', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-fp-model strict', '-no-wrap-margin', '-ftrapuv', '-mp']
 
 # Do not use FORTRANFLAGS
