@@ -302,7 +302,7 @@ SUBMODULE (particles_id) stretched_lattice
     PRINT *, " * Integrating the baryon mass density to get the mass profile..."
     PRINT *
 
-    !CALL OMP_SET_NUM_THREADS(80)
+    CALL OMP_SET_NUM_THREADS(80)
 
     dr             = radius/500.0D0
     dth            = pi/2.0D0/250.0D0
@@ -322,7 +322,7 @@ SUBMODULE (particles_id) stretched_lattice
     shell_radii= 0.0D0
     DO itr= 1, n_shells, 1
 
-      shell_radii( itr )= (radius/DBLE(n_shells))*DBLE( itr - 1/2 )
+      shell_radii( itr )= (( radius*last_r )/DBLE(n_shells))*DBLE( itr - 1/2 )
 
     ENDDO
     shell_index= 1
@@ -1535,7 +1535,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     PRINT *, " * Particles placed."
 
-    STOP
+    !STOP
 
   END PROCEDURE place_particles_stretched_lattice
 

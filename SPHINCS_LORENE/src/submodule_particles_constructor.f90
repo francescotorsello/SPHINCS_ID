@@ -74,7 +74,8 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
     DOUBLE PRECISION:: center1, center2, radius1, radius2
     DOUBLE PRECISION:: min_abs_y, min_abs_z
-    DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor
+    DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor, &
+                       last_r
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos1, pos2
     DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol1, pvol2, &
@@ -96,7 +97,7 @@ SUBMODULE (particles_id) particles_constructor
               nx, ny, nz, &
               use_thres, thres, nu_ratio, redistribute_nu, correct_nu, &
               compose_eos, compose_path, compose_filename, &
-              npart_approx, upper_bound, lower_bound, &
+              npart_approx, last_r, upper_bound, lower_bound, &
               upper_factor, lower_factor, max_steps
 
     !
@@ -193,6 +194,14 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *
       PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
                "max_steps should be an integer greater than or equal to 10!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( last_r < 0.95D0 .OR. last_r > 1.0D0 )THEN
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+               "last_r should be greater than or equal to 0.95, ", &
+               "and lower than or equal to 1!"
       PRINT *
       STOP
     ENDIF
@@ -304,6 +313,7 @@ SUBMODULE (particles_id) particles_constructor
                                                     pos2, pvol2, pmass2, &
                                                     thres, &
                                                     bns_obj, &
+                                                    last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps )
@@ -314,6 +324,7 @@ SUBMODULE (particles_id) particles_constructor
                                                     pos1, pvol1, pmass1, &
                                                     thres, &
                                                     bns_obj, &
+                                                    last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps )
@@ -335,6 +346,7 @@ SUBMODULE (particles_id) particles_constructor
                                                     pos1, pvol1, pmass1, &
                                                     thres, &
                                                     bns_obj, &
+                                                    last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps )
@@ -346,6 +358,7 @@ SUBMODULE (particles_id) particles_constructor
                                                     pos2, pvol2, pmass2, &
                                                     thres, &
                                                     bns_obj, &
+                                                    last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps )
