@@ -33,7 +33,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     !$ USE OMP_LIB
     USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g, lorene2hydrobase, &
-                         golden_ratio, third
+                         golden_ratio, third, half
     USE matrix,    ONLY: determinant_4x4_matrix
     USE NR,        ONLY: indexx
 
@@ -51,7 +51,7 @@ SUBMODULE (particles_id) stretched_lattice
                        dr_shells, dth_shells, dphi_shells, col, rad, &
                        g_xx, gamma_euler, proper_volume, mass_test, mass_test2,&
                        proper_volume_test, npart_shell_kept, &
-                       upper_bound, lower_bound, rand_num, rand_num2, &
+                       rand_num, rand_num2, &
                        upper_bound_tmp, lower_bound_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
@@ -299,10 +299,10 @@ SUBMODULE (particles_id) stretched_lattice
       !                // "place_particles_3D_lattice." )
     ENDIF
 
-    PRINT *, " ** Integrating the baryon mass density to get the mass profile..."
+    PRINT *, " * Integrating the baryon mass density to get the mass profile..."
     PRINT *
 
-    CALL OMP_SET_NUM_THREADS(80)
+    !CALL OMP_SET_NUM_THREADS(80)
 
     dr             = radius/500.0D0
     dth            = pi/2.0D0/250.0D0
@@ -618,20 +618,7 @@ SUBMODULE (particles_id) stretched_lattice
 
   CLOSE( UNIT= 2 )
 
-  PRINT *, "Assigning first half of particle positions..."
-
-    !DO r= 1, n_shells, 1
-    !  pos_shells(r)% pos_shell= 0.0D0
-    !  pos_shells(r)% pos_phi= -1.0D0
-    !  pos_shells(r)% pos_th= -1.0D0
-    !  pos_shells(r)% pvol_shell= 0.0D0
-    !  pos_shells(r)% pvol_shell2= 0.0D0
-    !  pos_shells(r)% g_xx= 0.0D0
-    !  pos_shells(r)% baryon_density= 0.0D0
-    !  pos_shells(r)% gamma_euler= 0.0D0
-    !  m_parts( r )= m_p
-    !  npart_shelleq( r )= CEILING( SQRT(DBLE(shell_masses( r )/m_parts( r ))) )
-    !ENDDO
+  PRINT *, " * Assigning first half of particle positions..."
 
     DO r= 1, n_shells, 1
       IF( ALLOCATED( pos_shells( r )% pos_shell ) ) &
@@ -688,8 +675,10 @@ SUBMODULE (particles_id) stretched_lattice
     vol_shell2= 0.0D0
     dr_shells= radius/n_shells
     npart_out= 0
-    upper_bound= 1.025D0
-    lower_bound= 0.975D0
+    !upper_bound= 1.025D0
+    !lower_bound= 0.975D0
+    !upper_factor= 1.01D0
+    !lower_factor= 0.99D0
     upper_bound_tmp= upper_bound
     lower_bound_tmp= lower_bound
     r= 1
@@ -729,45 +718,6 @@ SUBMODULE (particles_id) stretched_lattice
         !              *( 1 + rel_sign*0.05D0*phase_th )
 
       ENDDO
-
-      !PRINT *, "Before deallocation, shell ", r, "iteration ", cnt2 + 1
-      !PRINT *
-
-      !IF( ALLOCATED( pos_shells( r )% pos_shell ) ) &
-      !   DEALLOCATE( pos_shells( r )% pos_shell )
-      !  PRINT *, "0.1"
-      !IF( ALLOCATED( pos_shells( r )% pvol_shell ) ) &
-      !   DEALLOCATE( pos_shells( r )% pvol_shell )
-      !          PRINT *, "0.2"
-      !IF( ALLOCATED( pos_shells( r )% pvol_shell2 ) ) &
-      !   DEALLOCATE( pos_shells( r )% pvol_shell2 )
-      !          PRINT *, "0.3"
-      !IF( ALLOCATED( pos_shells( r )% g_xx ) )&
-      !   DEALLOCATE( pos_shells( r )% g_xx )
-      !          PRINT *, "0.4"
-      !IF( ALLOCATED( pos_shells( r )% baryon_density ) ) &
-      !   DEALLOCATE( pos_shells( r )% baryon_density )
-      !          PRINT *, "0.5"
-      !IF( ALLOCATED( pos_shells( r )% gamma_euler ) ) &
-      !   DEALLOCATE( pos_shells( r )% gamma_euler )
-      !                  PRINT *, "0.6"
-      !IF( ALLOCATED( pos_shells( r )% pos_th ) ) &
-      !   DEALLOCATE( pos_shells( r )% pos_th )
-      !                  PRINT *, "0.7"
-      !IF( ALLOCATED( pos_shells( r )% pos_phi ) ) &
-      !   DEALLOCATE( pos_shells( r )% pos_phi )
-
-!PRINT *, "Before allocation, shell ", r, "iteration ", cnt2 + 1
-!PRINT *
-
-      !ALLOCATE( pos_shells( r )% pos_shell( 3, npart_shell( r ) ) )
-      !ALLOCATE( pos_shells( r )% pvol_shell( npart_shell( r ) ) )
-      !ALLOCATE( pos_shells( r )% pvol_shell2( npart_shell( r ) ) )
-      !ALLOCATE( pos_shells( r )% g_xx( npart_shell( r ) ) )
-      !ALLOCATE( pos_shells( r )% baryon_density( npart_shell( r ) ) )
-      !ALLOCATE( pos_shells( r )% gamma_euler( npart_shell( r ) ) )
-      !ALLOCATE( pos_shells( r )% pos_th( npart_shelleq( r ) ) )
-      !ALLOCATE( pos_shells( r )% pos_phi( npart_shelleq( r ) ) )
 
       !phase= phase + r*alpha(r)/golden_ratio
       !CALL RANDOM_NUMBER( phase )
@@ -826,8 +776,8 @@ SUBMODULE (particles_id) stretched_lattice
 
           CALL RANDOM_NUMBER( phase_th )
           CALL RANDOM_NUMBER( rand_num2 )
-          IF( rand_num2 >= 0.5D0 ) rel_sign=  1
-          IF( rand_num2 < 0.5D0 )  rel_sign= -1
+          IF( rand_num2 >= half ) rel_sign=  1
+          IF( rand_num2 < half )  rel_sign= -1
 
           IF( col*( 1 + rel_sign*0.05D0*phase_th ) < pi .AND. &
               col*( 1 + rel_sign*0.05D0*phase_th ) > pi/2.0D0 )THEN
@@ -1015,9 +965,9 @@ SUBMODULE (particles_id) stretched_lattice
 
           cnt2= cnt2 + 1
 !PRINT *, "1.2"
-          IF( cnt2 > 100 )THEN
-            upper_bound_tmp= upper_bound_tmp*1.01D0
-            lower_bound_tmp= lower_bound_tmp*0.99D0
+          IF( cnt2 > max_steps )THEN
+            upper_bound_tmp= upper_bound_tmp*upper_factor
+            lower_bound_tmp= lower_bound_tmp*lower_factor
             cnt2= 1
           ENDIF
 !PRINT *, "1.4"
@@ -1031,8 +981,8 @@ SUBMODULE (particles_id) stretched_lattice
           IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
             CALL RANDOM_NUMBER( rand_num )
             CALL RANDOM_NUMBER( rand_num2 )
-            IF( rand_num2 < 0.5D0 )  rel_sign= - 1
-            IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+            IF( rand_num2 < half )  rel_sign= - 1
+            IF( rand_num2 >= half ) rel_sign=   1
             npart_shelleq( r )= npart_shelleq( r - 1 ) &
                               + rel_sign*NINT( 1 + rand_num )
           ENDIF
@@ -1043,9 +993,9 @@ SUBMODULE (particles_id) stretched_lattice
         !PRINT *, "case 2"
 
           cnt2= cnt2 + 1
-          IF( cnt2 > 100 )THEN
-            upper_bound_tmp= upper_bound_tmp*1.01D0
-            lower_bound_tmp= lower_bound_tmp*0.99D0
+          IF( cnt2 > max_steps )THEN
+            upper_bound_tmp= upper_bound_tmp*upper_factor
+            lower_bound_tmp= lower_bound_tmp*lower_factor
             cnt2= 1
           ENDIF
 
@@ -1059,8 +1009,8 @@ SUBMODULE (particles_id) stretched_lattice
           IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
             CALL RANDOM_NUMBER( rand_num )
             CALL RANDOM_NUMBER( rand_num2 )
-            IF( rand_num2 < 0.5D0 )  rel_sign= - 1
-            IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+            IF( rand_num2 < half )  rel_sign= - 1
+            IF( rand_num2 >= half ) rel_sign=   1
             npart_shelleq( r )= npart_shelleq( r - 1 ) &
                               + rel_sign*NINT( 1 + rand_num )
           ENDIF
@@ -1071,9 +1021,9 @@ SUBMODULE (particles_id) stretched_lattice
         !PRINT *, "case 3"
 
           cnt2= cnt2 + 1
-          IF( cnt2 > 100 )THEN
-            upper_bound_tmp= upper_bound_tmp*1.01D0
-            lower_bound_tmp= lower_bound_tmp*0.99D0
+          IF( cnt2 > max_steps )THEN
+            upper_bound_tmp= upper_bound_tmp*upper_factor
+            lower_bound_tmp= lower_bound_tmp*lower_factor
             cnt2= 1
           ENDIF
 
@@ -1081,8 +1031,8 @@ SUBMODULE (particles_id) stretched_lattice
 
           CALL RANDOM_NUMBER( rand_num )
           CALL RANDOM_NUMBER( rand_num2 )
-          IF( rand_num2 < 0.5D0 )  rel_sign= - 1
-          IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+          IF( rand_num2 < half )  rel_sign= - 1
+          IF( rand_num2 >= half ) rel_sign=   1
           npart_shelleq( r )= CEILING( SQRT( &
                                 (shell_masses( r )/m_parts( r - 1 )) &
                                 /npart_shell_kept &
@@ -1091,8 +1041,8 @@ SUBMODULE (particles_id) stretched_lattice
           IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
             CALL RANDOM_NUMBER( rand_num )
             CALL RANDOM_NUMBER( rand_num2 )
-            IF( rand_num2 < 0.5D0 )  rel_sign= - 1
-            IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+            IF( rand_num2 < half )  rel_sign= - 1
+            IF( rand_num2 >= half ) rel_sign=   1
             npart_shelleq( r )= npart_shelleq( r - 1 ) &
                               + rel_sign*NINT( 1 + rand_num )
           ENDIF
@@ -1103,9 +1053,9 @@ SUBMODULE (particles_id) stretched_lattice
         !PRINT *, "case 4"
 
           cnt2= cnt2 + 1
-          IF( cnt2 > 100 )THEN
-            upper_bound_tmp= upper_bound_tmp*1.01D0
-            lower_bound_tmp= lower_bound_tmp*0.99D0
+          IF( cnt2 > max_steps )THEN
+            upper_bound_tmp= upper_bound_tmp*upper_factor
+            lower_bound_tmp= lower_bound_tmp*lower_factor
             cnt2= 1
           ENDIF
 
@@ -1113,8 +1063,8 @@ SUBMODULE (particles_id) stretched_lattice
 
           CALL RANDOM_NUMBER( rand_num )
           CALL RANDOM_NUMBER( rand_num2 )
-          IF( rand_num2 < 0.5D0 )  rel_sign= - 1
-          IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+          IF( rand_num2 < half )  rel_sign= - 1
+          IF( rand_num2 >= half ) rel_sign=   1
           npart_shelleq( r )= CEILING( SQRT( &
                                 (shell_masses( r )/m_parts( r - 1 )) &
                                 /npart_shell_kept &
@@ -1123,8 +1073,8 @@ SUBMODULE (particles_id) stretched_lattice
           IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
             CALL RANDOM_NUMBER( rand_num )
             CALL RANDOM_NUMBER( rand_num2 )
-            IF( rand_num2 < 0.5D0 )  rel_sign= - 1
-            IF( rand_num2 >= 0.5D0 ) rel_sign=   1
+            IF( rand_num2 < half )  rel_sign= - 1
+            IF( rand_num2 >= half ) rel_sign=   1
             npart_shelleq( r )= npart_shelleq( r - 1 ) &
                               + rel_sign*NINT( 1 + rand_num )
           ENDIF

@@ -64,7 +64,7 @@ SUBMODULE (particles_id) particles_constructor
     ! construct_particles is called
     INTEGER, SAVE:: counter= 1
     INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr1, cntr2, &
-              npart_approx, npart2_approx, itr_1, itr_2
+              npart_approx, npart2_approx, itr_1, itr_2, max_steps
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
 
@@ -74,6 +74,7 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
     DOUBLE PRECISION:: center1, center2, radius1, radius2
     DOUBLE PRECISION:: min_abs_y, min_abs_z
+    DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos1, pos2
     DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol1, pvol2, &
@@ -92,9 +93,11 @@ SUBMODULE (particles_id) particles_constructor
 
     NAMELIST /bns_particles/ &
               stretch, &
-              nx, ny, nz, npart_approx, &
+              nx, ny, nz, &
               use_thres, thres, nu_ratio, redistribute_nu, correct_nu, &
-              compose_eos, compose_path, compose_filename
+              compose_eos, compose_path, compose_filename, &
+              npart_approx, upper_bound, lower_bound, &
+              upper_factor, lower_factor, max_steps
 
     !
     !-- Initialize the timers
@@ -151,17 +154,47 @@ SUBMODULE (particles_id) particles_constructor
     ENDIF
 
     IF( MOD( nz, 2 ) /= 0 )THEN
-     PRINT *
-     PRINT *, "** ERROR: nz should be even!"
-     PRINT *
-     STOP
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: nz should be even!"
+      PRINT *
+      STOP
     ENDIF
 
     IF( nx == 0 .OR. ny == 0 .OR. nz == 0 )THEN
-     PRINT *
-     PRINT *, "** ERROR: nx, ny, nz cannot be 0!"
-     PRINT *
-     STOP
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+               "nx, ny, nz cannot be 0!"
+      PRINT *
+      STOP
+    ENDIF
+
+    IF( upper_bound <= lower_bound )THEN
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+               "upper_bound should be greater than lower_bound!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( upper_factor < 1.0D0 )THEN
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+               "upper_factor should be greater than or equal to 1!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( lower_factor > 1 )THEN
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+               "lower_factor should be smaller than or equal to 1!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( max_steps < 10 )THEN
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+               "max_steps should be an integer greater than or equal to 10!"
+      PRINT *
+      STOP
     ENDIF
 
     ! TODO: Add check that the number of rows in placer is the same as the
@@ -270,14 +303,20 @@ SUBMODULE (particles_id) particles_constructor
                                                     parts_obj% npart2, &
                                                     pos2, pvol2, pmass2, &
                                                     thres, &
-                                                    bns_obj )
+                                                    bns_obj, &
+                                                    upper_bound, lower_bound, &
+                                                    upper_factor, lower_factor,&
+                                                    max_steps )
         CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass1, &
                                                     radius1, center1, &
                                                     npart2_approx, &
                                                     parts_obj% npart1, &
                                                     pos1, pvol1, pmass1, &
                                                     thres, &
-                                                    bns_obj )
+                                                    bns_obj, &
+                                                    upper_bound, lower_bound, &
+                                                    upper_factor, lower_factor,&
+                                                    max_steps )
         CALL parts_obj% placer_timer% stop_timer()
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
 
@@ -295,7 +334,10 @@ SUBMODULE (particles_id) particles_constructor
                                                     parts_obj% npart1, &
                                                     pos1, pvol1, pmass1, &
                                                     thres, &
-                                                    bns_obj )
+                                                    bns_obj, &
+                                                    upper_bound, lower_bound, &
+                                                    upper_factor, lower_factor,&
+                                                    max_steps )
         !parts_obj% npart1= parts_obj% npart
         CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass2, &
                                                     radius2, center2, &
@@ -303,7 +345,10 @@ SUBMODULE (particles_id) particles_constructor
                                                     parts_obj% npart2, &
                                                     pos2, pvol2, pmass2, &
                                                     thres, &
-                                                    bns_obj )
+                                                    bns_obj, &
+                                                    upper_bound, lower_bound, &
+                                                    upper_factor, lower_factor,&
+                                                    max_steps )
         CALL parts_obj% placer_timer% stop_timer()
         !parts_obj% npart2= parts_obj% npart - parts_obj% npart1
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
