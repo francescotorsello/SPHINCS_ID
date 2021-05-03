@@ -435,6 +435,20 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )
     parts_obj% pvol= parts_obj% pvol( 1:parts_obj% npart )
 
+    ! Check that there aren't particles with the same coordinates
+    DO itr= 1, THIS% npart, 1
+      DO itr2= itr + 1, THIS% npart, 1
+        IF( parts_obj% pos( 1, itr ) == parts_obj% pos( 1, itr2 ) .AND. &
+            parts_obj% pos( 2, itr ) == parts_obj% pos( 2, itr2 ) .AND. &
+            parts_obj% pos( 3, itr ) == parts_obj% pos( 3, itr2 ) )THEN
+          PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+                   "The two particles ", itr, " and", itr2, " have the same ", &
+                   "coordinates!"
+          STOP
+        ENDIF
+      ENDDO
+    ENDDO
+
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts_obj )
 
@@ -1577,19 +1591,6 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *, " * npart=", THIS% npart
       STOP
     ENDIF
-
-    DO itr= 1, THIS% npart, 1
-      DO itr2= itr + 1, THIS% npart, 1
-        IF( THIS% pos( 1, itr ) == THIS% pos( 1, itr2 ) .AND. &
-            THIS% pos( 2, itr ) == THIS% pos( 2, itr2 ) .AND. &
-            THIS% pos( 3, itr ) == THIS% pos( 3, itr2 ) )THEN
-          PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-                   "The two particles ", itr, " and", itr2, " have the same ", &
-                   "coordinates!"
-          STOP
-        ENDIF
-      ENDDO
-    ENDDO
 
     !
     !-- Printouts

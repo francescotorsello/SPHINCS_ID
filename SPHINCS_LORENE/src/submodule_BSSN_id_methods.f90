@@ -1895,7 +1895,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CHARACTER( 2 ):: n_reflev
 
     LOGICAL:: exist
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     levels = THIS% levels
     ! radius2 is the extraction radius. If not set here, then it is 0 by default

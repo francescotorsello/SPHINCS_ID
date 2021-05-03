@@ -284,7 +284,7 @@ SUBMODULE (particles_id) particles_methods
         PRINT *
         STOP
       ENDIF
-      THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
+      THIS% h(itr)= 1.0*(THIS% pvol(itr))**third
       h(itr)= THIS% h(itr)
       ! /(Msun_geo**3)
 
