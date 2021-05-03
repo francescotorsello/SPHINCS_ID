@@ -161,6 +161,7 @@ MODULE particles_id
     LOGICAL:: redistribute_nu
     LOGICAL:: correct_nu
     LOGICAL:: compose_eos
+    LOGICAL:: randomize_phi, randomize_theta, randomize_r
 
     TYPE(timer), PUBLIC:: placer_timer
     TYPE(timer), PUBLIC:: importer_timer

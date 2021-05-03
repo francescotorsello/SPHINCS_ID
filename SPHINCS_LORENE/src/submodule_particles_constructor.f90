@@ -64,9 +64,10 @@ SUBMODULE (particles_id) particles_constructor
     ! construct_particles is called
     INTEGER, SAVE:: counter= 1
     INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr1, cntr2, &
-              npart_approx, npart2_approx, itr_1, itr_2, max_steps
+              npart_approx, npart2_approx, itr_1, itr_2, max_steps, itr2
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
+    INTEGER, DIMENSION( : ), ALLOCATABLE:: x_sort, y_sort, z_sort
 
     DOUBLE PRECISION:: thres, nu_ratio
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
@@ -89,7 +90,7 @@ SUBMODULE (particles_id) particles_constructor
     CHARACTER( LEN= max_length ):: compose_filename
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
-              compose_eos, exist
+              compose_eos, exist, randomize_phi, randomize_theta, randomize_r
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
@@ -98,7 +99,8 @@ SUBMODULE (particles_id) particles_constructor
               use_thres, thres, nu_ratio, redistribute_nu, correct_nu, &
               compose_eos, compose_path, compose_filename, &
               npart_approx, last_r, upper_bound, lower_bound, &
-              upper_factor, lower_factor, max_steps
+              upper_factor, lower_factor, max_steps, &
+              randomize_phi, randomize_theta, randomize_r
 
     !
     !-- Initialize the timers
@@ -122,6 +124,9 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% nbar2     = 0.0D0
     parts_obj% npart     = 0.0D0
     parts_obj% distribution_id= dist
+    parts_obj% randomize_phi  = randomize_phi
+    parts_obj% randomize_theta= randomize_theta
+    parts_obj% randomize_r    = randomize_r
 
     !
     !-- Read the parameters of the particle distributions
@@ -417,7 +422,6 @@ SUBMODULE (particles_id) particles_constructor
       parts_obj% pmass( parts_obj% npart1 + 1:parts_obj% npart )= pmass2
 
       PRINT *, " * Particles placed. Number of particles=", parts_obj% npart
-      PRINT *
       PRINT *, " * Number of particles on NS 1=", parts_obj% npart1
       PRINT *, " * Number of particles on NS 2=", parts_obj% npart2
       PRINT *
@@ -435,19 +439,96 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )
     parts_obj% pvol= parts_obj% pvol( 1:parts_obj% npart )
 
+    IF(.NOT.ALLOCATED( x_sort ))THEN
+      ALLOCATE( x_sort( parts_obj% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array x_sort in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( y_sort ))THEN
+      ALLOCATE( y_sort( parts_obj% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array y_sort in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( z_sort ))THEN
+      ALLOCATE( z_sort( parts_obj% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array z_sort in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    ! Sort x, y, z coordinates of the particles
+    CALL indexx( parts_obj% npart, parts_obj% pos( 1, : ), x_sort )
+    CALL indexx( parts_obj% npart, parts_obj% pos( 2, : ), y_sort )
+    CALL indexx( parts_obj% npart, parts_obj% pos( 3, : ), z_sort )
+
     ! Check that there aren't particles with the same coordinates
-    DO itr= 1, THIS% npart, 1
-      DO itr2= itr + 1, THIS% npart, 1
-        IF( parts_obj% pos( 1, itr ) == parts_obj% pos( 1, itr2 ) .AND. &
-            parts_obj% pos( 2, itr ) == parts_obj% pos( 2, itr2 ) .AND. &
-            parts_obj% pos( 3, itr ) == parts_obj% pos( 3, itr2 ) )THEN
-          PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-                   "The two particles ", itr, " and", itr2, " have the same ", &
-                   "coordinates!"
-          STOP
-        ENDIF
-      ENDDO
+    PRINT *, "** Checking that there are no multiple particles", &
+             " at the same position..."
+    DO itr= 1, parts_obj% npart - 1, 1
+      IF( parts_obj% pos( 1, x_sort(itr) ) == &
+                parts_obj% pos( 1, x_sort(itr + 1) ) .AND. &
+          parts_obj% pos( 2, x_sort(itr) ) == &
+                parts_obj% pos( 2, x_sort(itr + 1) ) .AND. &
+          parts_obj% pos( 3, x_sort(itr) ) == &
+                parts_obj% pos( 3, x_sort(itr + 1) ) )THEN
+        PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+                 "The two particles ", itr, " and", itr - 1, " have the same ",&
+                 "coordinates!"
+        STOP
+      ENDIF
     ENDDO
+    DO itr= 1, parts_obj% npart - 1, 1
+      IF( parts_obj% pos( 1, y_sort(itr) ) == &
+                parts_obj% pos( 1, y_sort(itr + 1) ) .AND. &
+          parts_obj% pos( 2, y_sort(itr) ) == &
+                parts_obj% pos( 2, y_sort(itr + 1) ) .AND. &
+          parts_obj% pos( 3, y_sort(itr) ) == &
+                parts_obj% pos( 3, y_sort(itr + 1) ) )THEN
+        PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+                 "The two particles ", itr, " and", itr - 1, " have the same ",&
+                 "coordinates!"
+        STOP
+      ENDIF
+    ENDDO
+    DO itr= 1, parts_obj% npart - 1, 1
+      IF( parts_obj% pos( 1, z_sort(itr) ) == &
+                parts_obj% pos( 1, z_sort(itr + 1) ) .AND. &
+          parts_obj% pos( 2, z_sort(itr) ) == &
+                parts_obj% pos( 2, z_sort(itr + 1) ) .AND. &
+          parts_obj% pos( 3, z_sort(itr) ) == &
+                parts_obj% pos( 3, z_sort(itr + 1) ) )THEN
+        PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+                 "The two particles ", itr, " and", itr - 1, " have the same ",&
+                 "coordinates!"
+        STOP
+      ENDIF
+    ENDDO
+
+    !DO itr= 1, parts_obj% npart, 1
+    !  DO itr2= itr + 1, parts_obj% npart, 1
+    !    IF( parts_obj% pos( 1, itr ) == parts_obj% pos( 1, itr2 ) .AND. &
+    !        parts_obj% pos( 2, itr ) == parts_obj% pos( 2, itr2 ) .AND. &
+    !        parts_obj% pos( 3, itr ) == parts_obj% pos( 3, itr2 ) )THEN
+    !      PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+    !               "The two particles ", itr, " and", itr2, " have the same ", &
+    !               "coordinates!"
+    !      STOP
+    !    ENDIF
+    !  ENDDO
+    !ENDDO
 
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts_obj )

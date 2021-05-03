@@ -743,15 +743,20 @@ SUBMODULE (particles_id) stretched_lattice
       !$OMP                     th,phi,rand_num2,phase_th,rel_sign), &
       !$OMP             SHARED(r,npart_shelleq,center,rad,alpha,pos_shells, &
       !$OMP                    npart_shell,colatitude_pos,bns_obj,n_shells, &
-      !$OMP                    dr_shells, shell_radii, shell_thickness), &
+      !$OMP                    dr_shells, shell_radii, shell_thickness, THIS), &
       !$OMP             REDUCTION(+:npart_out,itr)
       DO th= 1, npart_shelleq( r )/2, 1 !npart_shelleq( r ) is even, see above
 
         !PRINT *, "itr= ", itr
         !STOP
 
-        CALL RANDOM_NUMBER( phase )
-        phase= phase*alpha(r)
+        IF( THIS% randomize_phi )THEN
+
+          CALL RANDOM_NUMBER( phase )
+          phase= phase*alpha(r)
+
+        ENDIF
+
         dphi_shells= alpha(r)
 
         !col= colatitude_pos(r)% colatitudes(th)
@@ -775,32 +780,40 @@ SUBMODULE (particles_id) stretched_lattice
 
         DO phi= 1, npart_shelleq( r ), 1
 
-          CALL RANDOM_NUMBER( phase_th )
-          CALL RANDOM_NUMBER( rand_num2 )
-          IF( rand_num2 >= half ) rel_sign=  1
-          IF( rand_num2 < half )  rel_sign= -1
-
           col= colatitude_pos(r)% colatitudes(th)
-          col_tmp= col*( 1.0D0 + rel_sign*0.05D0*phase_th )
+          IF( THIS% randomize_theta )THEN
 
-          IF( col_tmp < pi .AND. col_tmp > pi/2.0D0 )THEN
+            CALL RANDOM_NUMBER( phase_th )
+            CALL RANDOM_NUMBER( rand_num2 )
+            IF( rand_num2 >= half ) rel_sign=  1
+            IF( rand_num2 < half )  rel_sign= -1
 
-            col= col_tmp
+            col_tmp= col*( 1.0D0 + rel_sign*0.05D0*phase_th )
+
+            IF( col_tmp < pi .AND. col_tmp > pi/2.0D0 )THEN
+
+              col= col_tmp
+
+            ENDIF
 
           ENDIF
-
-          CALL RANDOM_NUMBER( delta_r )
-          CALL RANDOM_NUMBER( rand_num2 )
-          IF( rand_num2 >= half ) rel_sign=  1
-          IF( rand_num2 < half )  rel_sign= -1
 
           rad= shell_radii(r)
-          !PRINT *, rad
-          IF( r/n_shells < 0.75D0 )THEN
-            rad= rad + rel_sign*delta_r*0.35D0*shell_thickness
+          IF( THIS% randomize_r )THEN
+
+            CALL RANDOM_NUMBER( delta_r )
+            CALL RANDOM_NUMBER( rand_num2 )
+            IF( rand_num2 >= half ) rel_sign=  1
+            IF( rand_num2 < half )  rel_sign= -1
+
+            !PRINT *, rad
+            IF( r/n_shells < 0.75D0 )THEN
+              rad= rad + rel_sign*delta_r*0.35D0*shell_thickness
+            ENDIF
+            !PRINT *, rad, shell_thickness, rel_sign
+            !PRINT *
+
           ENDIF
-          !PRINT *, rad, shell_thickness, rel_sign
-          !PRINT *
 
           IF( rad < 0 )THEN
             PRINT *, " * ERROR! rad < 0. Check the computation of the radial", &
@@ -1121,7 +1134,7 @@ SUBMODULE (particles_id) stretched_lattice
         STOP
       ENDIF
 
-      PRINT *, " * Placed", npart_shell( r ), &
+      PRINT *, " * Placed", npart_shell( r )/2, &
                " particles on spherical shell ", r, " of ", n_shells
       IF( r > 1 ) PRINT *, "   Ratio of particle masses on last 2 shells: ", &
                            "   m_parts(", r, ")/m_parts(", r - 1, ")= ",  &
@@ -1568,7 +1581,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     CLOSE( UNIT= 2 )
 
-    PRINT *, " * Particles placed."
+    !PRINT *, " * Particles placed."
 
     !STOP
 

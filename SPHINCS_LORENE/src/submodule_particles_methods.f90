@@ -1544,35 +1544,43 @@ SUBMODULE (particles_id) particles_methods
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !          // TRIM(finalnamefile) )
 
-    DO itr = 1, THIS% npart, 1
-      abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
-      abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
-      abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
-    ENDDO
-
-    min_y_index= 0
-    min_abs_y= 1D+20
-    DO itr = 1, THIS% npart, 1
-      IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
-        min_abs_y= ABS( THIS% pos( 2, itr ) )
-        min_y_index= itr
-      ENDIF
-    ENDDO
-
-    min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart1 ) )
-    min_abs_z2= MINVAL( abs_pos( 3, THIS% npart1+1:THIS% npart ) )
+    !DO itr = 1, THIS% npart, 1
+    !  abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
+    !  abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
+    !  abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
+    !ENDDO
+    !
+    !min_y_index= 0
+    !min_abs_y= 1D+20
+    !DO itr = 1, THIS% npart, 1
+    !  IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
+    !    min_abs_y= ABS( THIS% pos( 2, itr ) )
+    !    min_y_index= itr
+    !  ENDIF
+    !ENDDO
+    !
+    !min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart1 ) )
+    !min_abs_z2= MINVAL( abs_pos( 3, THIS% npart1+1:THIS% npart ) )
 
     write_data_loop: DO itr = 1, THIS% npart, 1
 
       IF( THIS% export_form_xy .AND. &
-          ( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
-            THIS% pos( 3, itr ) /= min_abs_z2 ) &
+          !( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
+          !  THIS% pos( 3, itr ) /= min_abs_z2 ) &
+          ( THIS% pos( 3, itr ) >=  0.5D0 .OR. &
+            THIS% pos( 3, itr ) <= -0.5D0 ) &
       )THEN
         CYCLE
       ENDIF
-      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z1 &
-          .OR. THIS% pos( 3, itr ) /= min_abs_z2 &
-          .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
+      IF( THIS% export_form_x .AND. &
+          !( THIS% pos( 3, itr ) /= min_abs_z1 &
+          !.OR. THIS% pos( 3, itr ) /= min_abs_z2 &
+          !.OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
+          ( THIS% pos( 3, itr ) >=  0.5D0 .OR. &
+            THIS% pos( 3, itr ) <= -0.5D0 .OR. &
+            THIS% pos( 2, itr ) >=  0.5D0 .OR. &
+            THIS% pos( 2, itr ) <= -0.5D0 ) &
+      )THEN
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
