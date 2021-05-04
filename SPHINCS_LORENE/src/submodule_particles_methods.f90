@@ -284,7 +284,7 @@ SUBMODULE (particles_id) particles_methods
         PRINT *
         STOP
       ENDIF
-      THIS% h(itr)= 1.0*(THIS% pvol(itr))**third
+      THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
       h(itr)= THIS% h(itr)
       ! /(Msun_geo**3)
 
@@ -292,6 +292,8 @@ SUBMODULE (particles_id) particles_methods
       ! Computed from the LORENE baryon mass density in [kg/m^3]
       nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% nlrf(itr)= nlrf(itr)
+
+      THIS% sph_density( itr )= THIS% nlrf(itr)*Theta_a*sq_g
 
       ! Internal energy per baryon (specific internal energy)
       ! In module_TOV.f90, this quantity is computed as follows,
@@ -846,6 +848,19 @@ SUBMODULE (particles_id) particles_methods
       CALL write_SPHINCS_dump()
     ENDIF
 
+    !PRINT *, " * Computing SPH density..."
+    !PRINT *
+    !nu   = nu_loc
+    !pos_u= pos_loc
+    !vel_u= vel_loc
+    !u    = u_loc
+    !nlrf = nlrf_loc
+    !Theta= theta_loc
+    !Pr   = pressure_loc
+    !CALL density( THIS% npart,   &
+    !              THIS% pos, &
+    !              THIS% sph_density )
+
     CALL deallocate_metric_on_particles
     CALL deallocate_SPH_memory
 
@@ -1178,14 +1193,22 @@ SUBMODULE (particles_id) particles_methods
     write_data_loop: DO itr = 1, THIS% npart, 1
 
       IF( THIS% export_form_xy .AND. &
-          ( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
-            THIS% pos( 3, itr ) /= min_abs_z2 ) &
+          !( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
+          !  THIS% pos( 3, itr ) /= min_abs_z2 ) &
+          ( THIS% pos( 3, itr ) >=  0.5D0 .OR. &
+            THIS% pos( 3, itr ) <= -0.5D0 ) &
       )THEN
         CYCLE
       ENDIF
-      IF( THIS% export_form_x .AND. ( THIS% pos( 3, itr ) /= min_abs_z1 &
-          .OR. THIS% pos( 3, itr ) /= min_abs_z2 &
-          .OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
+      IF( THIS% export_form_x .AND. &
+          !( THIS% pos( 3, itr ) /= min_abs_z1 &
+          !.OR. THIS% pos( 3, itr ) /= min_abs_z2 &
+          !.OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
+          ( THIS% pos( 3, itr ) >=  0.5D0 .OR. &
+            THIS% pos( 3, itr ) <= -0.5D0 .OR. &
+            THIS% pos( 2, itr ) >=  0.5D0 .OR. &
+            THIS% pos( 2, itr ) <= -0.5D0 ) &
+      )THEN
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
@@ -1513,7 +1536,7 @@ SUBMODULE (particles_id) particles_methods
     "       6       7       8", &
     "       9       10      11", &
     "       12      13      14", &
-    "       15      16      17      18"
+    "       15      16      17      18     19"
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
@@ -1535,7 +1558,8 @@ SUBMODULE (particles_id) particles_methods
   "       baryon number per particle nu", &
   "       baryon density in the local rest frame nlrf [baryon/Msun_geo^3]", &
   "       electron fraction", &
-  "       generalized Lorentz factor Theta"
+  "       generalized Lorentz factor Theta", &
+  "       computing frame baryon number density"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
@@ -1605,7 +1629,8 @@ SUBMODULE (particles_id) particles_methods
         THIS% nu( itr ), &
         THIS% nlrf( itr ), &
         THIS% Ye( itr ), &
-        THIS% Theta( itr )
+        THIS% Theta( itr ), &
+        THIS% sph_density( itr )
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &
@@ -1917,6 +1942,17 @@ SUBMODULE (particles_id) particles_methods
       DEALLOCATE( THIS% Ye, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array Ye. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% sph_density ))THEN
+      DEALLOCATE( THIS% sph_density, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array sph_density. ", &
                   "The error message is", err_msg
          STOP
       ENDIF

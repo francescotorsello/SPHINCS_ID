@@ -2765,24 +2765,31 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       !  abs_pos( itr, jz )= ABS( pos_loc( 3, itr ) )
       !ENDDO
 
-      min_y_index= 0
-      min_abs_y= 1D+20
-      DO itr = 1, npart, 1
-        IF( ABS( pos_loc( 2, itr ) ) < min_abs_y )THEN
-          min_abs_y= ABS( pos_loc( 2, itr ) )
-          min_y_index= itr
-        ENDIF
-      ENDDO
-
-      min_abs_z= MINVAL( abs_pos( 3, : ) )
+      !min_y_index= 0
+      !min_abs_y= 1D+20
+      !DO itr = 1, npart, 1
+      !  IF( ABS( pos_loc( 2, itr ) ) < min_abs_y )THEN
+      !    min_abs_y= ABS( pos_loc( 2, itr ) )
+      !    min_y_index= itr
+      !  ENDIF
+      !ENDDO
+      !
+      !min_abs_z= MINVAL( abs_pos( 3, : ) )
 
       write_data_loop: DO itr = 1, npart, 1
 
-        IF( THIS% export_form_xy .AND. pos_loc( 3, itr ) /= min_abs_z )THEN
+        IF( THIS% export_form_xy .AND. &
+            ( pos_loc( 3, itr ) >=  0.5D0 .OR. &
+              pos_loc( 3, itr ) <= -0.5D0 ) &
+        )THEN
           CYCLE
         ENDIF
-        IF( THIS% export_form_x .AND. ( pos_loc( 3, itr ) /= min_abs_z &
-            .OR. pos_loc( 2, itr ) /= pos_loc( 2, min_y_index ) ) )THEN
+        IF( THIS% export_form_x .AND. &
+            ( pos_loc( 3, itr ) >=  0.5D0 .OR. &
+              pos_loc( 3, itr ) <= -0.5D0 .OR. &
+              pos_loc( 2, itr ) >=  0.5D0 .OR. &
+              pos_loc( 2, itr ) <= -0.5D0 ) &
+        )THEN
           CYCLE
         ENDIF
         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &

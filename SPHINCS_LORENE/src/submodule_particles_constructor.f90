@@ -2073,6 +2073,13 @@ SUBMODULE (particles_id) particles_constructor
       !CALL test_status( ios, err_msg, &
       !        "...allocation error for array v_euler_parts_z" )
     ENDIF
+    IF(.NOT.ALLOCATED( THIS% sph_density ))THEN
+        ALLOCATE( THIS% sph_density( THIS% npart ), STAT= ios )
+    ENDIF
+    IF( ios > 0 )THEN
+       PRINT *, '...allocation error for sph_density'
+       STOP
+    ENDIF
 
     PRINT *, "** Subroutine allocate_lorene_id_parts_memory executed."
     PRINT *

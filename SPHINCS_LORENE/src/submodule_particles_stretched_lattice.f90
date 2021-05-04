@@ -33,7 +33,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     !$ USE OMP_LIB
     USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g, lorene2hydrobase, &
-                         golden_ratio, third, half
+                         golden_ratio, third, half, amu, g2kg
     USE matrix,    ONLY: determinant_4x4_matrix
     USE NR,        ONLY: indexx
 
@@ -41,7 +41,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart_tmp, cnt, &
               shell_index, r, th, phi, i_shell, npart_test, npart_shell_tmp, &
-              cnt2, rel_sign, cnt3, dim_seed
+              cnt2, rel_sign, cnt3, dim_seed, r_cnt, first_shell
     !INTEGER, PARAMETER:: max_length= 5D+6
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx, seed
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
@@ -286,7 +286,7 @@ SUBMODULE (particles_id) stretched_lattice
       !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( m_parts ))THEN
-      ALLOCATE( m_parts( n_shells ), STAT= ios, &
+      ALLOCATE( m_parts( 0:n_shells ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
@@ -316,8 +316,12 @@ SUBMODULE (particles_id) stretched_lattice
 
     mass_profile( 2:3, : )= mass_profile( 2:3, : )*mass_star/mass
 
-    PRINT *, "mass_profile( 2, mass_profile_idx(NINT(radius/dr)) )= ", &
-             mass_profile( 2, mass_profile_idx(NINT(radius/dr)) )
+    !PRINT *, "mass_profile( 2, mass_profile_idx(NINT(radius/dr)) )= ", &
+    !         mass_profile( 2, mass_profile_idx(NINT(radius/dr)) )
+    !DO itr= 1, NINT(radius/dr), 1
+    !  PRINT *, mass_profile( 3, mass_profile_idx(itr) )
+    !ENDDO
+    !STOP
 
     shell_radii= 0.0D0
     DO itr= 1, n_shells, 1
@@ -325,7 +329,7 @@ SUBMODULE (particles_id) stretched_lattice
       shell_radii( itr )= (( radius*last_r )/DBLE(n_shells))*DBLE( itr - 1/2 )
 
     ENDDO
-    shell_thickness= shell_radii( 2 ) - shell_radii( 1 )
+    !shell_thickness= shell_radii( 2 ) - shell_radii( 1 )
     shell_index= 1
     itr2= 0
     shell_masses= 0.0D0
@@ -355,7 +359,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     ENDDO
     IF( ABS( SUM( shell_masses, DIM= 1 ) - mass_star )/mass_star > 5.0D-3 )THEN
-      PRINT *, " ** The sum of the masses of the shells do not add up to the ", &
+      PRINT *, " ** The masses of the shells do not add up to the ", &
                "mass of the star. Stopping..."
       PRINT *, "SUM( shell_masses )= ", SUM( shell_masses, DIM=1 )
       PRINT *, "mass_star= ", mass_star
@@ -418,6 +422,7 @@ SUBMODULE (particles_id) stretched_lattice
         m_parts( r )= shell_masses( r )/npart_shell( r )
       ENDIF
     ENDDO
+    m_parts( 0 )= m_parts( NINT(DBLE(n_shells/2)) )!first_shell= NINT(DBLE(n_shells/2))
     PRINT *, npart_shell
     PRINT *
     PRINT *, m_parts
@@ -682,8 +687,9 @@ SUBMODULE (particles_id) stretched_lattice
     !lower_factor= 0.99D0
     upper_bound_tmp= upper_bound
     lower_bound_tmp= lower_bound
-    r= 1
+    r= 1!first_shell
     cnt2= 0
+    r_cnt= 1
 
     !----------------------!
     !--  Main iteration  --!
@@ -692,6 +698,8 @@ SUBMODULE (particles_id) stretched_lattice
     CALL OMP_SET_NUM_THREADS(1)
 
     DO
+
+      !IF( r_cnt == 2 ) r= 1
 
 !PRINT *, "Start of iteration, shell ", r, "iteration ", cnt2 + 1
 !PRINT *
@@ -719,6 +727,8 @@ SUBMODULE (particles_id) stretched_lattice
         !              *( 1 + rel_sign*0.05D0*phase_th )
 
       ENDDO
+      !PRINT *, npart_shell( r ), npart_shelleq( r )
+      !PRINT *
 
       !phase= phase + r*alpha(r)/golden_ratio
       !CALL RANDOM_NUMBER( phase )
@@ -808,7 +818,7 @@ SUBMODULE (particles_id) stretched_lattice
 
             !PRINT *, rad
             IF( r/n_shells < 0.75D0 )THEN
-              rad= rad + rel_sign*delta_r*0.35D0*shell_thickness
+              rad= rad + rel_sign*delta_r*0.35D0*dr_shells
             ENDIF
             !PRINT *, rad, shell_thickness, rel_sign
             !PRINT *
@@ -971,10 +981,15 @@ SUBMODULE (particles_id) stretched_lattice
 
       !PRINT *, "Right before correction of particle number"
 
-      IF( r > 1 )THEN
+      IF( r > 0 )THEN
 
-        high_mass= m_parts( r )/m_parts( r - 1 ) > upper_bound_tmp
-        low_mass = m_parts( r )/m_parts( r - 1 ) < lower_bound_tmp
+        !IF( r_cnt == 2 )THEN
+        !  high_mass= m_parts( r )/m_parts( first_shell ) > upper_bound_tmp
+        !  low_mass = m_parts( r )/m_parts( first_shell ) < lower_bound_tmp
+        !ELSE
+          high_mass= m_parts( r )/m_parts( r - 1 ) > upper_bound_tmp
+          low_mass = m_parts( r )/m_parts( r - 1 ) < lower_bound_tmp
+        !ENDIF
         kept_all = npart_shell_kept == 1.0D0
         npart_shell_kept= DBLE(npart_shell( r ))/DBLE(npart_shell_tmp)
 
@@ -1122,21 +1137,23 @@ SUBMODULE (particles_id) stretched_lattice
 
       ENDIF
 
-      npart_test= 0
-      DO itr= 1, r, 1
-        npart_test= npart_test + npart_shell( itr )
-      ENDDO
-      IF( npart_test/2 /= npart_out )THEN
-        PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
-                 "equal to the total number of particles. Stopping.."
-        PRINT *, "npart_test", npart_test/2, ", npart_out=", npart_out
-        PRINT *
-        STOP
+      IF( r_cnt > 1 )THEN
+        npart_test= 0
+        DO itr= 1, r, 1
+          npart_test= npart_test + npart_shell( itr )
+        ENDDO
+        IF( npart_test/2 /= npart_out )THEN
+          PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
+                   "equal to the total number of particles. Stopping.."
+          PRINT *, "npart_test", npart_test/2, ", npart_out=", npart_out
+          PRINT *
+          STOP
+        ENDIF
       ENDIF
 
       PRINT *, " * Placed", npart_shell( r )/2, &
                " particles on spherical shell ", r, " of ", n_shells
-      IF( r > 1 ) PRINT *, "   Ratio of particle masses on last 2 shells: ", &
+      IF( r > 0 ) PRINT *, "   Ratio of particle masses on last 2 shells: ", &
                            "   m_parts(", r, ")/m_parts(", r - 1, ")= ",  &
                            m_parts( r )/m_parts( r - 1 )
       PRINT *, "  Placed", npart_out, " particles overall, so far."
@@ -1147,6 +1164,7 @@ SUBMODULE (particles_id) stretched_lattice
       !IF( r == 2 ) STOP
 
       r= r + 1
+      r_cnt= r_cnt + 1
       cnt2 = 0
       upper_bound_tmp= upper_bound
       lower_bound_tmp= lower_bound
@@ -1182,7 +1200,7 @@ SUBMODULE (particles_id) stretched_lattice
     IF( npart_test/2 /= npart_out )THEN
       PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
                "equal to the total number of particles. Stopping.."
-      PRINT *, "npart_test", npart_test/2, ", npart_out=", npart_out
+      PRINT *, "npart_test=", npart_test/2, ", npart_out=", npart_out
       PRINT *
       STOP
     ENDIF
@@ -1462,6 +1480,18 @@ SUBMODULE (particles_id) stretched_lattice
     PRINT *, "volumes of the star:", proper_volume, proper_volume_test, &
                                      4.0D0/3.0D0*pi*radius**3.0D0
     PRINT *
+    !STOP
+
+    !DO r= 1, n_shells, 1
+    !  DO itr= 1, npart_shell( r ), 1
+    !
+    !    PRINT*, (m_parts( r )*MSun/amu)/pos_shells(r)% pvol_shell( itr ) &
+    !            /(pos_shells(r)% g_xx( itr ) &
+    !              *SQRT(pos_shells(r)% g_xx( itr )) &
+    !              *pos_shells(r)% gamma_euler( itr )), &
+    !            pos_shells(r)% baryon_density( itr )*MSun/amu
+    !  ENDDO
+    !ENDDO
     !STOP
 
     IF(.NOT.ALLOCATED( pos ))THEN

@@ -119,8 +119,14 @@ MODULE particles_id
     ! 1-D array storing baryon density in the local rest frame
     ! baryon (Msun_geo)^{-3}
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf
+    ! 1-D array storing baryon density in the computing frame
+    ! baryon (Msun_geo)^{-3}
+    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar
     ! 1-D array storing the baryon number per particle
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu
+    ! 1-D array storing the SPH estimate of the baryon number density
+    ! in the computing frame (Msun_geo)^{-3}
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: sph_density
     ! 2-D array storing the coordinate fluid 4-velocity [c]
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: v
     ! 1-D array storing the generalized Lorentz factor
