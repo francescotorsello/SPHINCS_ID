@@ -2031,27 +2031,27 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
 
     IF( debug ) PRINT *, "-2"
 
-    CALL allocate_RCB_tree_memory_3D(npart)
-    iorig(1:npart)= (/ (a,a=1,npart) /)
+    !CALL allocate_RCB_tree_memory_3D(npart)
+    !iorig(1:npart)= (/ (a,a=1,npart) /)
 
     IF( debug ) PRINT *, "-1"
 
     h= parts_obj% get_h()
 
-    IF( counter == 1 )THEN
-      ! tabulate kernel, get ndes
-      CALL ktable(ikernel,ndes)
-    ENDIF
+    !IF( counter == 1 )THEN
+    !  ! tabulate kernel, get ndes
+    !  CALL ktable(ikernel,ndes)
+    !ENDIF
 
     IF( debug ) PRINT *, "0"
 
-    nu_loc      = parts_obj% get_nu()
-    pos_loc     = parts_obj% get_pos()
-    vel_loc     = parts_obj% get_vel()
-    u_loc       = parts_obj% get_u()
-    nlrf_loc    = parts_obj% get_nlrf()
-    theta_loc   = parts_obj% get_theta()
-    pressure_loc= parts_obj% get_pressure_cu()
+    !nu_loc      = parts_obj% get_nu()
+    !pos_loc     = parts_obj% get_pos()
+    !vel_loc     = parts_obj% get_vel()
+    !u_loc       = parts_obj% get_u()
+    !nlrf_loc    = parts_obj% get_nlrf()
+    !theta_loc   = parts_obj% get_theta()
+    !pressure_loc= parts_obj% get_pressure_cu()
 
     IF( debug ) PRINT *, "1"
 
@@ -2059,7 +2059,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     PRINT *
 
     ! flag that particles are 'alive'
-    ALLOCATE( alive( npart ) )
+    IF( .NOT.ALLOCATED( alive ) ) ALLOCATE( alive( npart ) )
     alive( 1:npart )= 1
 
     CALL allocate_gradient( npart )
@@ -2086,27 +2086,27 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !-- the stress-energy tensor from the particles to the grid
     !
 
-    PRINT *, " * Computing neighbours..."
-    PRINT *
-    CALL exact_nei_tree_update( ndes,    &
-                                npart,   &
-                                pos_loc, &
-                                nu_loc )
-
-    IF( debug ) PRINT *, "5"
-
-    PRINT *, " * Computing SPH density..."
-    PRINT *
-    nu   = nu_loc
-    pos_u= pos_loc
-    vel_u= vel_loc
-    u    = u_loc
-    nlrf = nlrf_loc
-    Theta= theta_loc
-    Pr   = pressure_loc
-    CALL density( npart,   &
-                  pos_loc, &
-                  sph_density )
+    !PRINT *, " * Computing neighbours..."
+    !PRINT *
+    !CALL exact_nei_tree_update( ndes,    &
+    !                            npart,   &
+    !                            pos_loc, &
+    !                            nu_loc )
+    !
+    !IF( debug ) PRINT *, "5"
+    !
+    !PRINT *, " * Computing SPH density..."
+    !PRINT *
+    !nu   = nu_loc
+    !pos_u= pos_loc
+    !vel_u= vel_loc
+    !u    = u_loc
+    !nlrf = nlrf_loc
+    !Theta= theta_loc
+    !Pr   = pressure_loc
+    !CALL density( npart,   &
+    !              pos_loc, &
+    !              sph_density )
 
     IF( debug ) PRINT *, "6"
 
@@ -2141,14 +2141,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_pp_g
     CALL deallocate_all_lists
     CALL deallocate_metric_on_particles
-    CALL deallocate_gradient
+    !CALL deallocate_gradient
     DEALLOCATE( alive )
     !DEALLOCATE(W_no_norm)
     !DEALLOCATE(dWdv_no_norm)
     !DEALLOCATE(fmass)
     !DEALLOCATE(fpoten)
     !DEALLOCATE(dphidh)
-    CALL deallocate_RCB_tree_memory_3D
+    !CALL deallocate_RCB_tree_memory_3D
     CALL deallocate_SPH_memory
 
     !

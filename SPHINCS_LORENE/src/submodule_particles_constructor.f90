@@ -2080,6 +2080,13 @@ SUBMODULE (particles_id) particles_constructor
        PRINT *, '...allocation error for sph_density'
        STOP
     ENDIF
+    IF(.NOT.ALLOCATED( THIS% nstar ))THEN
+        ALLOCATE( THIS% nstar( THIS% npart ), STAT= ios )
+    ENDIF
+    IF( ios > 0 )THEN
+       PRINT *, '...allocation error for nstar'
+       STOP
+    ENDIF
 
     PRINT *, "** Subroutine allocate_lorene_id_parts_memory executed."
     PRINT *

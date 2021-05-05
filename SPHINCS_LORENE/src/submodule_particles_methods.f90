@@ -66,8 +66,17 @@ SUBMODULE (particles_id) particles_methods
                                    deallocate_metric_on_particles, &
                                    sq_det_g4
     USE options,             ONLY: basename
-    USE input_output,        ONLY: dcount, write_SPHINCS_dump
+    USE input_output,        ONLY: dcount, write_SPHINCS_dump, read_options
     USE NR,                  ONLY: indexx
+
+    USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D,&
+                                   deallocate_RCB_tree_memory_3D, iorig
+    USE kernel_table,        ONLY: ktable
+    USE options,             ONLY: ikernel, ndes
+    USE set_h,               ONLY: exact_nei_tree_update
+    USE gradient,            ONLY: allocate_gradient, deallocate_gradient
+    USE sphincs_sph,         ONLY: density!, flag_dead_ll_cells
+    USE alive_flag,          ONLY: alive
 
     IMPLICIT NONE
 
@@ -76,7 +85,7 @@ SUBMODULE (particles_id) particles_methods
     INTEGER, SAVE:: call_flag= 0
 
     ! Spacetime indices \mu and \nu
-    INTEGER:: nus, mus, cnt1, cnt2
+    INTEGER:: nus, mus, cnt1, cnt2, a
 
     DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2, nu_max1, nu_max2, &
@@ -101,6 +110,7 @@ SUBMODULE (particles_id) particles_methods
     n2= THIS% npart2
 
     CALL set_units('NSM')
+    CALL read_options
 
     CALL allocate_SPH_memory
     CALL allocate_metric_on_particles( THIS% npart )
@@ -848,8 +858,35 @@ SUBMODULE (particles_id) particles_methods
       CALL write_SPHINCS_dump()
     ENDIF
 
-    !PRINT *, " * Computing SPH density..."
-    !PRINT *
+    CALL allocate_RCB_tree_memory_3D(npart)
+    iorig(1:npart)= (/ (a,a=1,npart) /)
+
+    IF( call_flag == 0 )THEN
+      ! tabulate kernel, get ndes
+      CALL ktable(ikernel,ndes)
+    ENDIF
+
+    ! flag that particles are 'alive'
+    ALLOCATE( alive( npart ) )
+    alive( 1:npart )= 1
+
+    CALL allocate_gradient( npart )
+
+    IF( debug ) PRINT *, "-1"
+
+    !
+    !-- Seems like computing neighbors and SPH density is not needed to map
+    !-- the stress-energy tensor from the particles to the grid
+    !
+    PRINT *, " * Computing neighbours..."
+    PRINT *
+    CALL exact_nei_tree_update( ndes,    &
+                                THIS% npart,   &
+                                THIS% pos, &
+                                THIS% nu )
+
+    PRINT *, " * Computing SPH density by kernel interpolation..."
+    PRINT *
     !nu   = nu_loc
     !pos_u= pos_loc
     !vel_u= vel_loc
@@ -857,11 +894,16 @@ SUBMODULE (particles_id) particles_methods
     !nlrf = nlrf_loc
     !Theta= theta_loc
     !Pr   = pressure_loc
-    !CALL density( THIS% npart,   &
-    !              THIS% pos, &
-    !              THIS% sph_density )
+    CALL density( THIS% npart,   &
+                  THIS% pos, &
+                  THIS% nstar )
 
+    PRINT *, " * Deallocating MODULE variables..."
+    PRINT *
     CALL deallocate_metric_on_particles
+    CALL deallocate_gradient
+    DEALLOCATE( alive )
+    CALL deallocate_RCB_tree_memory_3D
     CALL deallocate_SPH_memory
 
     call_flag= call_flag + 1
@@ -1536,7 +1578,8 @@ SUBMODULE (particles_id) particles_methods
     "       6       7       8", &
     "       9       10      11", &
     "       12      13      14", &
-    "       15      16      17      18     19"
+    "       15      16      17      18     19     20      21", &
+    "       22      23      24"
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
@@ -1559,7 +1602,8 @@ SUBMODULE (particles_id) particles_methods
   "       baryon density in the local rest frame nlrf [baryon/Msun_geo^3]", &
   "       electron fraction", &
   "       generalized Lorentz factor Theta", &
-  "       computing frame baryon number density"
+  "       computing frame baryon number density", &
+  "       computing frame baryon number density from kernel interpolation"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
@@ -1630,7 +1674,8 @@ SUBMODULE (particles_id) particles_methods
         THIS% nlrf( itr ), &
         THIS% Ye( itr ), &
         THIS% Theta( itr ), &
-        THIS% sph_density( itr )
+        THIS% sph_density( itr ), &
+        THIS% nstar( itr )
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &
@@ -1953,6 +1998,17 @@ SUBMODULE (particles_id) particles_methods
       DEALLOCATE( THIS% sph_density, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array sph_density. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% nstar ))THEN
+      DEALLOCATE( THIS% nstar, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array nstar. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
