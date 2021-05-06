@@ -52,7 +52,8 @@ SUBMODULE (particles_id) stretched_lattice
                        g_xx, gamma_euler, proper_volume, mass_test, mass_test2,&
                        proper_volume_test, npart_shell_kept, &
                        rand_num, rand_num2, delta_r, shell_thickness, &
-                       upper_bound_tmp, lower_bound_tmp, col_tmp
+                       upper_bound_tmp, lower_bound_tmp, col_tmp, &
+                       surface_density, density_step
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
                                                   alpha, m_parts, vol_shell, &
@@ -308,6 +309,32 @@ SUBMODULE (particles_id) stretched_lattice
     dth            = pi/2.0D0/250.0D0
     dphi           = 2.0D0*pi/500.0D0
     central_density= bns_obj% get_rho_center1()
+
+    surface_density= bns_obj% import_mass_density( center + radius, &
+                                                   0.0D0, 0.0D0 )
+    density_step= ( central_density - surface_density )/(n_shells)
+    !shell_index= 2
+    !DO itr= 0, 200, 1
+    !
+    !  IF( bns_obj% import_mass_density( center + itr*radius/200, 0.0D0, 0.0D0 )&
+    !    <= central_density - ( shell_index - 1 )*density_step &
+    !  )THEN
+    !
+    !    shell_radii( shell_index )= itr*radius/200
+    !    shell_index= shell_index + 1
+    !
+    !    !shell_radii( itr + 1 )= &
+    !    !  ( ( central_density - itr*density_step)*Msun/amu )**(-third)
+    !
+    !  ENDIF
+    !
+    !ENDDO
+    !shell_radii( 1 )= shell_radii( 2 )/2.0D0
+    !PRINT *, n_shells, central_density, surface_density, density_step
+    !PRINT *, radius
+    !PRINT *, shell_radii
+    !STOP
+
     CALL bns_obj% integrate_baryon_mass_density( center, radius, &
                                                  central_density, &
                                                  dr, dth, dphi, &
@@ -330,6 +357,21 @@ SUBMODULE (particles_id) stretched_lattice
 
     ENDDO
     !shell_thickness= shell_radii( 2 ) - shell_radii( 1 )
+
+    surface_density= bns_obj% import_mass_density( center + radius, &
+                                                   0.0D0, 0.0D0 )
+    density_step= ( central_density - surface_density )/DBLE( n_shells - 1 )
+    !DO itr= 0, n_shells - 1, 1
+    !
+    !  shell_radii( itr + 1 )= &
+    !    ( ( central_density - itr*density_step )*Msun )**(-third)
+    !
+    !ENDDO
+    !PRINT *, n_shells, central_density, surface_density, density_step
+    !PRINT *, radius
+    !PRINT *, shell_radii
+    !STOP
+
     shell_index= 1
     itr2= 0
     shell_masses= 0.0D0
@@ -551,7 +593,7 @@ SUBMODULE (particles_id) stretched_lattice
   ENDIF
   IF( ios > 0 )THEN
     PRINT *, "...error when opening " // TRIM(finalnamefile), &
-            ". The error message is", err_msg
+             ". The error message is", err_msg
     STOP
   ENDIF
 
