@@ -874,16 +874,14 @@ SUBMODULE (particles_id) particles_methods
 
     IF( debug ) PRINT *, "-1"
 
-    !
-    !-- Seems like computing neighbors and SPH density is not needed to map
-    !-- the stress-energy tensor from the particles to the grid
-    !
     PRINT *, " * Computing neighbours..."
     PRINT *
     CALL exact_nei_tree_update( ndes,    &
                                 THIS% npart,   &
                                 THIS% pos, &
                                 THIS% nu )
+
+    THIS% h= h
 
     PRINT *, " * Computing SPH density by kernel interpolation..."
     PRINT *
@@ -1579,7 +1577,7 @@ SUBMODULE (particles_id) particles_methods
     "       9       10      11", &
     "       12      13      14", &
     "       15      16      17      18     19     20      21", &
-    "       22      23      24"
+    "       22      23      24      25"
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
@@ -1603,7 +1601,8 @@ SUBMODULE (particles_id) particles_methods
   "       electron fraction", &
   "       generalized Lorentz factor Theta", &
   "       computing frame baryon number density", &
-  "       computing frame baryon number density from kernel interpolation"
+  "       computing frame baryon number density from kernel interpolation", &
+  "       smoothing length"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
@@ -1675,7 +1674,8 @@ SUBMODULE (particles_id) particles_methods
         THIS% Ye( itr ), &
         THIS% Theta( itr ), &
         THIS% sph_density( itr ), &
-        THIS% nstar( itr )
+        THIS% nstar( itr ), &
+        THIS% h( itr )
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &

@@ -824,6 +824,10 @@ SUBMODULE (particles_id) stretched_lattice
 
     CALL OMP_SET_NUM_THREADS(1)
 
+    PRINT *, THIS% randomize_phi
+    PRINT *, THIS% randomize_theta
+    PRINT *, THIS% randomize_r
+
     DO
 
       !IF( r_cnt == 2 ) r= 1
@@ -866,12 +870,20 @@ SUBMODULE (particles_id) stretched_lattice
                       !ACOS( 2.0D0*itr2/(npart_shelleq( r )/2 + 1.0D0 )&
                       !    - 1.0D0 )
                       !alpha( r )*1.0D0/2.0D0 + ( itr2 - 1 )*alpha( r )
-                      ACOS( 2.0D0*COS(pi/3.0D0*itr2/(npart_shelleq( r )/4 &
-                          + 1.0D0 ) ) - 1.0D0 )
+          ACOS( 2.0D0*( 1.0D0 - COS( pi/3.0D0*( 1.0D0/2.0D0 + DBLE(itr2 - 1)*DBLE(npart_shelleq( r )/4 + 1.0D0 -(1.0D0/2.0D0)-(1.0D0/2.0D0) )/DBLE(npart_shelleq( r )/4 - 1.0D0 ) ) &
+                           /DBLE(npart_shelleq( r )/4 + 1.0D0 ) ) ) &
+              - 1.0D0 )
+              !5.0D0/12.0D0
         !colatitude_pos( r )% colatitudes( itr2 )= &
         !              colatitude_pos( r )% colatitudes( itr2 ) &
         !              *( 1 + rel_sign*0.05D0*phase_th )
-
+        IF( colatitude_pos( r )% colatitudes( itr2 ) <= pi/2 .OR. &
+            colatitude_pos( r )% colatitudes( itr2 ) >= pi &
+        )THEN
+          PRINT *, "The colatitudes are not in the interval (pi/2,pi). ", &
+                   "Stopping..."
+          STOP
+        ENDIF
       ENDDO
       !PRINT *, npart_shell( r ), npart_shelleq( r )
       !PRINT *
@@ -1168,7 +1180,8 @@ SUBMODULE (particles_id) stretched_lattice
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( m_parts( r )/m_parts( r - 1 ) > 1.1D0*upper_bound &
+            IF( r > 0.8D0*n_shells .AND. &
+                m_parts( r )/m_parts( r - 1 ) > 1.1D0*upper_bound &
                 !upper_bound_tmp > 1.1D0*upper_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1210,7 +1223,8 @@ SUBMODULE (particles_id) stretched_lattice
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( m_parts( r )/m_parts( r - 1 ) < 0.9D0*lower_bound &
+            IF( r > 0.8D0*n_shells .AND. &
+                m_parts( r )/m_parts( r - 1 ) < 0.9D0*lower_bound &
                 !lower_bound_tmp < 0.9D0*lower_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1252,7 +1266,8 @@ SUBMODULE (particles_id) stretched_lattice
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( m_parts( r )/m_parts( r - 1 ) > 1.1D0*upper_bound &
+            IF( r > 0.8D0*n_shells .AND. &
+                m_parts( r )/m_parts( r - 1 ) > 1.1D0*upper_bound &
                 !upper_bound_tmp > 1.1D0*upper_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1298,7 +1313,8 @@ SUBMODULE (particles_id) stretched_lattice
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( m_parts( r )/m_parts( r - 1 ) < 0.9D0*lower_bound &
+            IF( r > 0.8D0*n_shells .AND. &
+                m_parts( r )/m_parts( r - 1 ) < 0.9D0*lower_bound &
                 !lower_bound_tmp < 0.9D0*lower_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1829,7 +1845,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     !PRINT *, " * Particles placed."
 
-    STOP
+    !STOP
 
   END PROCEDURE place_particles_stretched_lattice
 
