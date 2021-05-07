@@ -487,6 +487,8 @@ SUBMODULE (particles_id) particles_constructor
         PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
                  "The two particles ", itr, " and", itr - 1, " have the same ",&
                  "coordinates!"
+        PRINT *, parts_obj% pos( 1, x_sort(itr) ), parts_obj% pos( 1, x_sort(itr) ), parts_obj% pos( 1, x_sort(itr) )
+        PRINT *, parts_obj% pos( 1, x_sort(itr + 1) ), parts_obj% pos( 1, x_sort(itr + 1) ), parts_obj% pos( 1, x_sort(itr + 1) )
         STOP
       ENDIF
     ENDDO
@@ -500,6 +502,8 @@ SUBMODULE (particles_id) particles_constructor
         PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
                  "The two particles ", itr, " and", itr - 1, " have the same ",&
                  "coordinates!"
+        PRINT *, parts_obj% pos( 1, y_sort(itr) ), parts_obj% pos( 1, y_sort(itr) ), parts_obj% pos( 1, y_sort(itr) )
+        PRINT *, parts_obj% pos( 1, y_sort(itr + 1) ), parts_obj% pos( 1, y_sort(itr + 1) ), parts_obj% pos( 1, y_sort(itr + 1) )
         STOP
       ENDIF
     ENDDO
@@ -513,6 +517,8 @@ SUBMODULE (particles_id) particles_constructor
         PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
                  "The two particles ", itr, " and", itr - 1, " have the same ",&
                  "coordinates!"
+        PRINT *, parts_obj% pos( 1, z_sort(itr) ), parts_obj% pos( 1, z_sort(itr) ), parts_obj% pos( 1, z_sort(itr) )
+        PRINT *, parts_obj% pos( 1, z_sort(itr + 1) ), parts_obj% pos( 1, z_sort(itr + 1) ), parts_obj% pos( 1, z_sort(itr + 1) )
         STOP
       ENDIF
     ENDDO
