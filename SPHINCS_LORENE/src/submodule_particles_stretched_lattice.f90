@@ -863,8 +863,11 @@ SUBMODULE (particles_id) stretched_lattice
       DO itr2= 1, npart_shelleq( r )/4, 1
 
         colatitude_pos( r )% colatitudes( itr2 )= &
-                      ACOS( 2.0D0*itr2/(npart_shelleq( r )/2 + 1.0D0 )&
-                          - 1.0D0 )
+                      !ACOS( 2.0D0*itr2/(npart_shelleq( r )/2 + 1.0D0 )&
+                      !    - 1.0D0 )
+                      !alpha( r )*1.0D0/2.0D0 + ( itr2 - 1 )*alpha( r )
+                      ACOS( 2.0D0*COS(pi/3.0D0*itr2/(npart_shelleq( r )/4 &
+                          + 1.0D0 ) ) - 1.0D0 )
         !colatitude_pos( r )% colatitudes( itr2 )= &
         !              colatitude_pos( r )% colatitudes( itr2 ) &
         !              *( 1 + rel_sign*0.05D0*phase_th )
@@ -1165,6 +1168,20 @@ SUBMODULE (particles_id) stretched_lattice
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
+            IF( m_parts( r )/m_parts( r - 1 ) > 1.1D0*upper_bound &
+                !upper_bound_tmp > 1.1D0*upper_bound &
+            )THEN
+              CALL RANDOM_NUMBER( rand_num2 )
+              rand_num= NINT( 5.0D0*( rand_num2 + 1.0D0 ) )
+              npart_shelleq( r )= rand_num*npart_shelleq( r )
+                                !  npart_shelleq( r - 1 ) &
+                                !+ rel_sign*NINT( 1 + rand_num )
+              upper_bound_tmp= upper_bound
+              lower_bound_tmp= lower_bound
+              npart_out= npart_out - npart_shell( r )/2
+              cnt2= 1
+              CYCLE
+            ENDIF
             cnt2= 1
           ENDIF
 !PRINT *, "1.4"
@@ -1193,6 +1210,20 @@ SUBMODULE (particles_id) stretched_lattice
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
+            IF( m_parts( r )/m_parts( r - 1 ) < 0.9D0*lower_bound &
+                !lower_bound_tmp < 0.9D0*lower_bound &
+            )THEN
+              CALL RANDOM_NUMBER( rand_num2 )
+              rand_num= NINT( 5.0D0*( rand_num2 + 1.0D0 ) )
+              npart_shelleq( r )= npart_shelleq( r )/rand_num
+                                !  npart_shelleq( r - 1 ) &
+                                !+ rel_sign*NINT( 1 + rand_num )
+              upper_bound_tmp= upper_bound
+              lower_bound_tmp= lower_bound
+              npart_out= npart_out - npart_shell( r )/2
+              cnt2= 1
+              CYCLE
+            ENDIF
             cnt2= 1
           ENDIF
 
@@ -1221,6 +1252,20 @@ SUBMODULE (particles_id) stretched_lattice
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
+            IF( m_parts( r )/m_parts( r - 1 ) > 1.1D0*upper_bound &
+                !upper_bound_tmp > 1.1D0*upper_bound &
+            )THEN
+              CALL RANDOM_NUMBER( rand_num2 )
+              rand_num= NINT( 5.0D0*( rand_num2 + 1.0D0 ) )
+              npart_shelleq( r )= rand_num*npart_shelleq( r )
+                                !  npart_shelleq( r - 1 ) &
+                                !+ rel_sign*NINT( 1 + rand_num )
+              upper_bound_tmp= upper_bound
+              lower_bound_tmp= lower_bound
+              npart_out= npart_out - npart_shell( r )/2
+              cnt2= 1
+              CYCLE
+            ENDIF
             cnt2= 1
           ENDIF
 
@@ -1231,7 +1276,7 @@ SUBMODULE (particles_id) stretched_lattice
           IF( rand_num2 < half )  rel_sign= - 1
           IF( rand_num2 >= half ) rel_sign=   1
           npart_shelleq( r )= CEILING( SQRT( &
-                                (shell_masses( r )/m_parts( r - 1 )) &
+                                2*(shell_masses( r )/m_parts( r - 1 )) &
                                 /npart_shell_kept &
                               ) ) + rel_sign*NINT( 1 + rand_num )
 
@@ -1253,6 +1298,20 @@ SUBMODULE (particles_id) stretched_lattice
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
+            IF( m_parts( r )/m_parts( r - 1 ) < 0.9D0*lower_bound &
+                !lower_bound_tmp < 0.9D0*lower_bound &
+            )THEN
+              CALL RANDOM_NUMBER( rand_num2 )
+              rand_num= NINT( 5.0D0*( rand_num2 + 1.0D0 ) )
+              npart_shelleq( r )= npart_shelleq( r )/rand_num
+                                !  npart_shelleq( r - 1 ) &
+                                !+ rel_sign*NINT( 1 + rand_num )
+              upper_bound_tmp= upper_bound
+              lower_bound_tmp= lower_bound
+              npart_out= npart_out - npart_shell( r )/2
+              cnt2= 1
+              CYCLE
+            ENDIF
             cnt2= 1
           ENDIF
 
@@ -1263,7 +1322,7 @@ SUBMODULE (particles_id) stretched_lattice
           IF( rand_num2 < half )  rel_sign= - 1
           IF( rand_num2 >= half ) rel_sign=   1
           npart_shelleq( r )= CEILING( SQRT( &
-                                (shell_masses( r )/m_parts( r - 1 )) &
+                                2*(shell_masses( r )/m_parts( r - 1 )) &
                                 /npart_shell_kept &
                               ) ) + rel_sign*NINT( 1 + rand_num )
 
@@ -1281,6 +1340,10 @@ SUBMODULE (particles_id) stretched_lattice
           CYCLE
 
         ENDIF
+
+        !IF( shell_radii( r )/radius > 0.85D0 )THEN
+        !  npart_shelleq( r )= npart_shelleq( r )*5
+        !ENDIF
 
       ENDIF
 
@@ -1301,9 +1364,11 @@ SUBMODULE (particles_id) stretched_lattice
       PRINT *, " * Placed", npart_shell( r )/2, &
                " particles on one emisphere of spherical shell ", r, &
                " out of ", n_shells
-      IF( r > 0 ) PRINT *, "   Ratio of particle masses on last 2 shells: ", &
+      IF( r > 1 ) PRINT *, "   Ratio of particle masses on last 2 shells: ", &
                            "   m_parts(", r, ")/m_parts(", r - 1, ")= ",  &
                            m_parts( r )/m_parts( r - 1 )
+      PRINT *, "   Shell radius= ", shell_radii( r )/radius*100.0D0, &
+               "% of the radius of the star"
       PRINT *, "   Placed", npart_out, " particles overall, so far."
       PRINT *
 
