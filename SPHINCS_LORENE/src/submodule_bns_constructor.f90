@@ -29,7 +29,7 @@ SUBMODULE (bns_id) bns_constructor
 
     INTEGER, SAVE:: bns_counter= 1
 
-    DOUBLE PRECISION:: tmp
+    !DOUBLE PRECISION:: tmp
 
     ! Construct LORENE Bin_NS object
     IF( PRESENT( resu_file ) )THEN
@@ -101,11 +101,13 @@ SUBMODULE (bns_id) bns_constructor
 
       IF( exist )THEN
 
+        PRINT *, resu_file//C_NULL_CHAR
         THIS% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
 
       ELSE
 
-        PRINT *, "** ERROR: File ", resu_file, "cannot be found!"
+        PRINT *, "** ERROR in bns SUBROUTINE construct_binary: File ", &
+                 resu_file, "cannot be found!"
         PRINT *
         STOP
 
@@ -117,6 +119,9 @@ SUBMODULE (bns_id) bns_constructor
       THIS% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
 
     ENDIF
+
+    PRINT *, "17"
+
 
     !PRINT *, "** Subroutine construct_binary executed."
     !PRINT *

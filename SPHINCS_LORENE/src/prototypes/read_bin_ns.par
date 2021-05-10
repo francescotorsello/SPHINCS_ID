@@ -1,0 +1,17 @@
+Name of the file containing the initial data on spectral grid :
+-------------------------------------------------------------
+lorene-id-files/resu.d
+
+Parameters of the Cartesian grid :
+--------------------------------
+30		Number of points in the x direction
+30		Number of points in the y direction
+30		Number of points in the z direction
+-25	25	x_min, x_max	Range of x  [km]
+-25	25	y_min, y_max	Range of y  [km]
+-25	25	z_min, z_max	Range of z  [km]
+
+
+
+
+

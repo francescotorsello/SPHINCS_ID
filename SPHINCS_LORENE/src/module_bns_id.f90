@@ -1485,10 +1485,10 @@ MODULE bns_id
 
 
     SUBROUTINE get_lorene_id_mass_b( optr, &
-                                        x, y, z, &
-                                        g_diag, &
-                                        baryon_density, &
-                                        gamma_euler ) &
+                                     x, y, z, &
+                                     g_diag, &
+                                     baryon_density, &
+                                     gamma_euler ) &
       BIND(C, NAME= "get_lorene_id_mass_b")
 
       !************************************************

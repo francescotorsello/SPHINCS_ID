@@ -13,22 +13,23 @@ PROGRAM proto_apm
   !                                                    *
   !*****************************************************
 
+  USE bns_id,         ONLY: bns
   !USE particles_id,   ONLY: particles
-  USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D,&
-                                 iorig
-  USE kernel_table,        ONLY: ktable
-  USE sph_variables,       ONLY: Rstar,divv,av,Pr,ye,temp,nlrf,&
-                                 u,Theta,vel_u,tterm,tgrav,tkin,&
-                                 escap,t,n1,n2,pos_u,h,nu,npart,&
-                                 npm,Nstar,allocate_sph_memory
-  USE options,             ONLY: basename,ikernel,ndes,av_max,icow
-  USE input_output,        ONLY: read_options
-  USE units,               ONLY: umass,m0c2_CU,set_units
+  USE RCB_tree_3D,    ONLY: allocate_RCB_tree_memory_3D,&
+                            iorig
+  USE kernel_table,   ONLY: ktable
+  USE sph_variables,  ONLY: Rstar,divv,av,Pr,ye,temp,nlrf,&
+                            u,Theta,vel_u,tterm,tgrav,tkin,&
+                            escap,t,n1,n2,pos_u,h,nu,npart,&
+                            npm,Nstar,allocate_sph_memory
+  USE options,        ONLY: basename,ikernel,ndes,av_max,icow
+  USE input_output,   ONLY: read_options
+  USE units,          ONLY: umass,m0c2_CU,set_units
 
-  USE APM,                 ONLY: density_loop,position_correction,&
-                                 assign_h
-  USE set_h,               ONLY: exact_nei_tree_update
-  USE analyze,             ONLY: COM
+  USE APM,            ONLY: density_loop,position_correction,&
+                            assign_h
+  USE set_h,          ONLY: exact_nei_tree_update
+  USE analyze,        ONLY: COM
 
   IMPLICIT NONE
 
@@ -62,8 +63,11 @@ PROGRAM proto_apm
 
   LOGICAL:: exist
 
+  CHARACTER( LEN= : ), ALLOCATABLE:: namefile
   CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
   CHARACTER( LEN= : ), ALLOCATABLE:: err_msg
+
+  TYPE( bns ):: binary
 
   !---------------------------!
   !--  End of declarations  --!
@@ -76,6 +80,10 @@ PROGRAM proto_apm
   !PRINT *, "Hello world!"
   PRINT *, "** Beginning of PROGRAM proto_apm."
   PRINT *
+
+  namefile= "poly2-75_1.2-1.8_45km.bin"
+
+  binary= bns( namefile )
 
   ALLOCATE( pos(3,max_npart) )
   ALLOCATE( lapse_parts(max_npart) )
@@ -268,8 +276,8 @@ PROGRAM proto_apm
 
   ! Here you should get the LORENE ensity on the new positions...this means you
   ! need to compile LORENE and SPHINCS_LORENE...however, you might be able to
-  ! use the SUBROUTINES bound to LORENE without creating a bns object
-
+  ! use the SUBROUTINES bound to LORENE without creating a bns object..
+  ! no, you need a bns object
 
   PRINT *, "** End of PROGRAM proto_apm."
   PRINT *

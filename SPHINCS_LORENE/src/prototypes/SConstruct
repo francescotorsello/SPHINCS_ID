@@ -3,8 +3,10 @@ import os
 import glob
 
 env = DefaultEnvironment(ENV = {'PATH' : os.environ['PATH'],
-                                'INTEL_LICENSE_FILE' : os.environ['INTEL_LICENSE_FILE'],
-                                'LD_LIBRARY_PATH' : os.environ['LD_LIBRARY_PATH']},
+                                'INTEL_LICENSE_FILE' :
+                                  os.environ['INTEL_LICENSE_FILE'],
+                                'LD_LIBRARY_PATH' :
+                                  os.environ['LD_LIBRARY_PATH']},
                          LINK = 'ifort',
                          LINKFLAGS = '-g -qopenmp',
                          TOOLS= ['default', 'ifort'])
@@ -23,8 +25,8 @@ if ARGUMENTS.get('VERBOSE') != '1':
     env['HDF5COMSTR'] = "Generating $TARGET"
 
 # Build options
-env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran']#, 'lorene_export', 'lorene', 'lorenef77']
-#env['LIBPATH'] = ['../../../Lorene/Lib']
+env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+env['LIBPATH'] = ['../../../../../Lorene/Lib']
 env['F90FILESUFFIXES']=['.f90','.f']
 
 # Fortran compiler
@@ -56,70 +58,70 @@ env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-repor
 # See also https://www.nas.nasa.gov/hecc/support/kb/recommended-intel-compiler-debugging-options_92.html
 #env['CXXFLAGS'] = ['-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', '-Wconversion', '-Winline', '-Wabi=11', '-Wold-style-cast', '-Woverloaded-virtual', '-traceback', '-check-uninit', '-ftrapuv', '-debug', '-debug extended', '-fpe3', '-mp', '-fp-model strict','-align all', '-check bounds', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons']
 
-env['F90PATH'] = [ '.', '../../BSSN', '../SPHINCS_fix_metric', "../SPHINCS_BSSN" ]
-env['CPPPATH'] = [ '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/Include/' ]
+env['F90PATH'] = [ '.', '../../../../BSSN', '../../../SPHINCS_fix_metric', "../../../SPHINCS_BSSN" ]
+env['CPPPATH'] = [ '../../../../../Lorene/Export/C++/Include', '../../../../../Lorene/C++/Include/' ]
 Progress('Evaluating $TARGET\n')
 
 #lorene_sources = '../../../Lorene/C++/Source/**/*.C'
 lorene_sources = [
-Glob('../../../Lorene/C++/Source/Binaire/*.C'),
+Glob('../../../../../Lorene/C++/Source/Binaire/*.C'),
 #Glob('../../../Lorene/C++/Source/Binary_xcts/*.C'),
 #Glob('../../../Lorene/C++/Source/Star/*.C'),
-Glob('../../../Lorene/C++/Source/Tenseur/*.C'),
-Glob('../../../Lorene/C++/Source/Valeur/*.C'),
-Glob('../../../Lorene/C++/Source/Tensor/*.C'),
-Glob('../../../Lorene/C++/Source/Tensor/Scalar/*.C'),
-Glob('../../../Lorene/C++/Source/Metric/*.C'),
-Glob('../../../Lorene/C++/Source/Metrique/*.C'),
-Glob('../../../Lorene/C++/Source/Connection/*.C'),
-Glob('../../../Lorene/C++/Source/Diff/*.C'),
-Glob('../../../Lorene/C++/Source/Itbl/*.C'),
-Glob('../../../Lorene/C++/Source/Tbl/*.C'),
-Glob('../../../Lorene/C++/Source/Mtbl/*.C'),
-Glob('../../../Lorene/C++/Source/Grille3d/*.C'),
-Glob('../../../Lorene/C++/Source/Map/*.C'),
-Glob('../../../Lorene/C++/Source/Mtbl_cf/*.C'),
-Glob('../../../Lorene/C++/Source/Etoile/*.C'),
-Glob('../../../Lorene/C++/Source/Eos/*.C'),
-Glob('../../../Lorene/C++/Source/Map_et/*.C'),
-Glob('../../../Lorene/C++/Source/Mg3d/*.C'),
-Glob('../../../Lorene/C++/Source/Cmp/*.C'),
-Glob('../../../Lorene/C++/Source/Matrice/*.C'),
-Glob('../../../Lorene/C++/Source/Param/*.C'),
-Glob('../../../Lorene/C++/Source/Param_elliptic/*.C'),
-Glob('../../../Lorene/C++/Source/Coord/*.C'),
-Glob('../../../Lorene/C++/Source/Base_val/*.C'),
-Glob('../../../Lorene/C++/Source/Base_vect/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Utilities/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/PDE/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Operators/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Coef/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Coef/FFTW3/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Graphics/save_profile.C'),
+Glob('../../../../../Lorene/C++/Source/Tenseur/*.C'),
+Glob('../../../../../Lorene/C++/Source/Valeur/*.C'),
+Glob('../../../../../Lorene/C++/Source/Tensor/*.C'),
+Glob('../../../../../Lorene/C++/Source/Tensor/Scalar/*.C'),
+Glob('../../../../../Lorene/C++/Source/Metric/*.C'),
+Glob('../../../../../Lorene/C++/Source/Metrique/*.C'),
+Glob('../../../../../Lorene/C++/Source/Connection/*.C'),
+Glob('../../../../../Lorene/C++/Source/Diff/*.C'),
+Glob('../../../../../Lorene/C++/Source/Itbl/*.C'),
+Glob('../../../../../Lorene/C++/Source/Tbl/*.C'),
+Glob('../../../../../Lorene/C++/Source/Mtbl/*.C'),
+Glob('../../../../../Lorene/C++/Source/Grille3d/*.C'),
+Glob('../../../../../Lorene/C++/Source/Map/*.C'),
+Glob('../../../../../Lorene/C++/Source/Mtbl_cf/*.C'),
+Glob('../../../../../Lorene/C++/Source/Etoile/*.C'),
+Glob('../../../../../Lorene/C++/Source/Eos/*.C'),
+Glob('../../../../../Lorene/C++/Source/Map_et/*.C'),
+Glob('../../../../../Lorene/C++/Source/Mg3d/*.C'),
+Glob('../../../../../Lorene/C++/Source/Cmp/*.C'),
+Glob('../../../../../Lorene/C++/Source/Matrice/*.C'),
+Glob('../../../../../Lorene/C++/Source/Param/*.C'),
+Glob('../../../../../Lorene/C++/Source/Param_elliptic/*.C'),
+Glob('../../../../../Lorene/C++/Source/Coord/*.C'),
+Glob('../../../../../Lorene/C++/Source/Base_val/*.C'),
+Glob('../../../../../Lorene/C++/Source/Base_vect/*.C'),
+Glob('../../../../../Lorene/C++/Source/Non_class_members/Utilities/*.C'),
+Glob('../../../../../Lorene/C++/Source/Non_class_members/PDE/*.C'),
+Glob('../../../../../Lorene/C++/Source/Non_class_members/Operators/*.C'),
+Glob('../../../../../Lorene/C++/Source/Non_class_members/Coef/*.C'),
+Glob('../../../../../Lorene/C++/Source/Non_class_members/Coef/FFTW3/*.C'),
+Glob('../../../../../Lorene/C++/Source/Non_class_members/Graphics/save_profile.C'),
 #Glob('../../../Lorene/C++/Source/Non_class_members/Coef/FFT991/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_helmholtz_minus_2d/*.C'),
+Glob('../../../../../Lorene/C++/Source/Ope_elementary/*.C'),
+Glob('../../../../../Lorene/C++/Source/Ope_elementary/Ope_helmholtz_minus_2d/*.C'),
 Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_helmholtz_minus_pseudo_1d/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_poisson_2d/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_poisson_pseudo_1d/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_pois_vect_r/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order_r2/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_vorton/*.C')
+Glob('../../../../../Lorene/C++/Source/Ope_elementary/Ope_poisson_2d/*.C'),
+Glob('../../../../../Lorene/C++/Source/Ope_elementary/Ope_poisson_pseudo_1d/*.C'),
+Glob('../../../../../Lorene/C++/Source/Ope_elementary/Ope_pois_vect_r/*.C'),
+Glob('../../../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order/*.C'),
+Glob('../../../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order_r2/*.C'),
+Glob('../../../../../Lorene/C++/Source/Ope_elementary/Ope_vorton/*.C')
 ]
 
 lorene_sources_bin_ns = [#'../../../Lorene/Export/BinNS/read_bin_ns.C',
-                         '../../../Lorene/Export/C++/Source/bin_ns.C',
-                         '../../../Lorene/Export/C++/Source/bin_ns_aux.C',
-                         '../../../Lorene/Export/C++/Source/write_lines.C']
+                         '../../../../../Lorene/Export/C++/Source/bin_ns.C',
+                         '../../../../../Lorene/Export/C++/Source/bin_ns_aux.C',
+                         '../../../../../Lorene/Export/C++/Source/write_lines.C']
 
-sources = [#'src/module_utility.f90',
-           #'src/module_bns_id.f90',
+sources = ['../module_utility.f90',
+           '../module_bns_id.f90',
            #'src/module_particles_id.f90',
            #'src/module_formul_3p1_id.f90',
            #'src/module_bssn_id.f90',
-           #'src/submodule_bns_constructor.f90',
-           #'src/submodule_bns_methods.f90',
+           '../submodule_bns_constructor.f90',
+           '../submodule_bns_methods.f90',
            #'src/submodule_particles_constructor.f90',
            #'src/submodule_particles_stretched_lattice.f90',
            #'src/submodule_particles_methods.f90',
@@ -243,7 +245,6 @@ proto_sources = ['../../../SPHINCS_fix_metric/module_files.f90',
 
 proto_apm = 'proto_apm.x'
 
-#Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/proto_artificial-pressure.f90'])
-Program(proto_apm, sources + ['proto_artificial-pressure.f90'])
+Program(proto_apm, lorene_sources_bin_ns + lorene_sources + sources + ['proto_artificial-pressure.f90'])
 
 Decider('MD5-timestamp')
