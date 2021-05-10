@@ -1388,7 +1388,7 @@ SUBMODULE (particles_id) particles_methods
                         !n_quad, &
                         !i_i, A_i, Z_i, Y_i
       IF( ios > 0 )THEN
-        PRINT *, "...error when opening " // TRIM(finalnamefile), &
+        PRINT *, "...error when reading " // TRIM(finalnamefile), &
                 ". The error message is", err_msg
         STOP
       ENDIF
@@ -1407,6 +1407,7 @@ SUBMODULE (particles_id) particles_methods
     !PRINT *, "n_b(1)= ", THIS% n_b(1), "Y_e(1)= ", THIS% Y_e(1)
     !PRINT *, "n_b(cntr)= ", THIS% n_b(cntr), "Y_e(cntr)= ", THIS% Y_e(cntr)
     !STOP
+    CLOSE( unit_compose )
 
     PRINT *, "** Subroutine read_compose_composition executed."
     PRINT *
