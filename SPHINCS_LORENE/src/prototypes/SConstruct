@@ -207,7 +207,8 @@ sources = [#'src/module_utility.f90',
            '../../../SPHINCS_fix_metric/module_relativistic_Eigenvalues.f90',
            '../../../SPHINCS_fix_metric/module_reconstruction.f90',
            '../../../SPHINCS_fix_metric/module_deactivate_particles.f90',
-           '../../../SPHINCS_fix_metric/module_sorting.f90']
+           '../../../SPHINCS_fix_metric/module_sorting.f90',
+           '../../../SPHINCS_fix_metric/module_Artificial_Pressure_Method.f90']
 
 proto_sources = ['../../../SPHINCS_fix_metric/module_files.f90',
                  '../../../SPHINCS_fix_metric/module_constants.f90',

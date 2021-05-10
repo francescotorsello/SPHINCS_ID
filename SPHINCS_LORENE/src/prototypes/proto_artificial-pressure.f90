@@ -23,11 +23,15 @@ PROGRAM proto_apm
                                  npm,Nstar,allocate_sph_memory
   USE options,             ONLY: basename,ikernel,ndes,av_max,icow
 
+  USE APM,                 ONLY: density_loop,position_correction,&
+                                 assign_h
+  USE set_h,               ONLY: exact_nei_tree_update
+
   IMPLICIT NONE
 
   INTEGER, PARAMETER:: unit_id  = 23
   INTEGER, PARAMETER:: max_npart= 5D+6
-  INTEGER:: tmp, ios, itr, a
+  INTEGER:: tmp, ios, itr, a, nout
 
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
@@ -157,26 +161,30 @@ PROGRAM proto_apm
 
   CLOSE( unit_id )
 
-  !pos                  = pos                  ( :, 1:npart )
-  !lapse_parts          = lapse_parts          ( 1:npart )
-  !shift_parts_x        = shift_parts_x        ( 1:npart )
-  !shift_parts_y        = shift_parts_y        ( 1:npart )
-  !shift_parts_z        = shift_parts_z        ( 1:npart )
-  !baryon_density_parts = baryon_density_parts ( 1:npart )
-  !energy_density_parts = energy_density_parts ( 1:npart )
-  !specific_energy_parts= specific_energy_parts( 1:npart )
-  !pressure_parts       = pressure_parts       ( 1:npart )
-  !v_euler_parts_x      = v_euler_parts_x      ( 1:npart )
-  !v_euler_parts_y      = v_euler_parts_y      ( 1:npart )
-  !v_euler_parts_z      = v_euler_parts_z      ( 1:npart )
-  !v                    = v                    ( :, 1:npart )
-  !nu                   = nu                   ( 1:npart )
-  !nlrf                 = nlrf                 ( 1:npart )
-  !Ye                   = Ye                   ( 1:npart )
-  !Theta                = Theta                ( 1:npart )
-  !sph_density          = sph_density          ( 1:npart )
-  !nstar                = nstar                ( 1:npart )
-  !h0                    = h                    ( 1:npart )
+  pos                  = pos                  ( :, 1:npart )
+  lapse_parts          = lapse_parts          ( 1:npart )
+  shift_parts_x        = shift_parts_x        ( 1:npart )
+  shift_parts_y        = shift_parts_y        ( 1:npart )
+  shift_parts_z        = shift_parts_z        ( 1:npart )
+  baryon_density_parts = baryon_density_parts ( 1:npart )
+  energy_density_parts = energy_density_parts ( 1:npart )
+  specific_energy_parts= specific_energy_parts( 1:npart )
+  pressure_parts       = pressure_parts       ( 1:npart )
+  v_euler_parts_x      = v_euler_parts_x      ( 1:npart )
+  v_euler_parts_y      = v_euler_parts_y      ( 1:npart )
+  v_euler_parts_z      = v_euler_parts_z      ( 1:npart )
+  v                    = v                    ( :, 1:npart )
+  nu0                  = nu0                  ( 1:npart )
+  nlrf0                = nlrf0                ( 1:npart )
+  Ye0                  = Ye0                  ( 1:npart )
+  Theta0               = Theta0               ( 1:npart )
+  sph_density          = sph_density          ( 1:npart )
+  nstar0               = nstar0               ( 1:npart )
+  h0                   = h0                   ( 1:npart )
+
+  !-------------------------------!
+  !-- Needed calls from SPHINCS --!
+  !-------------------------------!
 
   CALL allocate_SPH_memory
 
@@ -194,6 +202,16 @@ PROGRAM proto_apm
   ! tabulate kernel, get ndes
   CALL ktable(ikernel,ndes)
 
+  !-----------------------------------------------------------------------!
+  !-- At this point I can apply the artificial pressure method (can I?) --!
+  !-----------------------------------------------------------------------!
+
+  ! In setup_tov_star distribute_and_stretch is called
+  ! In distribute_and_stretch, setup_uniform_sphere is called
+  ! setup_uniform_sphere first place positions in a cubic lattice or a
+  ! close-packed lattice, then assigns the smoothing length
+
+  CALL assign_h(npart,nout,pos_u,h0,h)
 
   PRINT *, "** End of PROGRAM proto_apm."
   PRINT *
