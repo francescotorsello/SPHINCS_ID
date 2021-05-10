@@ -14,12 +14,20 @@ PROGRAM proto_apm
   !*****************************************************
 
   !USE particles_id,   ONLY: particles
+  USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D,&
+                                 iorig
+  USE kernel_table,        ONLY: ktable
+  USE sph_variables,       ONLY: Rstar,divv,av,Pr,ye,temp,nlrf,&
+                                 u,Theta,vel_u,tterm,tgrav,tkin,&
+                                 escap,t,n1,n2,pos_u,h,nu,npart,&
+                                 npm,Nstar,allocate_sph_memory
+  USE options,             ONLY: basename,ikernel,ndes,av_max,icow
 
   IMPLICIT NONE
 
   INTEGER, PARAMETER:: unit_id  = 23
   INTEGER, PARAMETER:: max_npart= 5D+6
-  INTEGER:: npart, tmp, ios, itr
+  INTEGER:: tmp, ios, itr, a
 
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
@@ -34,13 +42,13 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_y
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_z
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: v
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Theta
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu0
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf0
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye0
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Theta0
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: sph_density
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar0
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h0
 
   LOGICAL:: exist
 
@@ -72,13 +80,13 @@ PROGRAM proto_apm
   ALLOCATE( v_euler_parts_y(max_npart) )
   ALLOCATE( v_euler_parts_z(max_npart) )
   ALLOCATE( v(3,max_npart) )
-  ALLOCATE( nu(max_npart) )
-  ALLOCATE( nlrf(max_npart) )
-  ALLOCATE( Ye(max_npart) )
-  ALLOCATE( Theta(max_npart) )
+  ALLOCATE( nu0(max_npart) )
+  ALLOCATE( nlrf0(max_npart) )
+  ALLOCATE( Ye0(max_npart) )
+  ALLOCATE( Theta0(max_npart) )
   ALLOCATE( sph_density(max_npart) )
-  ALLOCATE( nstar(max_npart) )
-  ALLOCATE( h(max_npart) )
+  ALLOCATE( nstar0(max_npart) )
+  ALLOCATE( h0(max_npart) )
 
   finalnamefile= "lorene-bns-id-particles.dat"
 
@@ -126,13 +134,13 @@ PROGRAM proto_apm
       v( 1, itr ), &
       v( 2, itr ), &
       v( 3, itr ), &
-      nu( itr ), &
-      nlrf( itr ), &
-      Ye( itr ), &
-      Theta( itr ), &
+      nu0( itr ), &
+      nlrf0( itr ), &
+      Ye0( itr ), &
+      Theta0( itr ), &
       sph_density( itr ), &
-      nstar( itr ), &
-      h( itr )
+      nstar0( itr ), &
+      h0( itr )
     IF( ios > 0 )THEN
       PRINT *, "...error when reading " // TRIM(finalnamefile), &
               " at step ", itr,". The status variable is ", ios, &
@@ -149,26 +157,43 @@ PROGRAM proto_apm
 
   CLOSE( unit_id )
 
-  pos                  = pos                  ( :, 1:npart )
-  lapse_parts          = lapse_parts          ( 1:npart )
-  shift_parts_x        = shift_parts_x        ( 1:npart )
-  shift_parts_y        = shift_parts_y        ( 1:npart )
-  shift_parts_z        = shift_parts_z        ( 1:npart )
-  baryon_density_parts = baryon_density_parts ( 1:npart )
-  energy_density_parts = energy_density_parts ( 1:npart )
-  specific_energy_parts= specific_energy_parts( 1:npart )
-  pressure_parts       = pressure_parts       ( 1:npart )
-  v_euler_parts_x      = v_euler_parts_x      ( 1:npart )
-  v_euler_parts_y      = v_euler_parts_y      ( 1:npart )
-  v_euler_parts_z      = v_euler_parts_z      ( 1:npart )
-  v                    = v                    ( :, 1:npart )
-  nu                   = nu                   ( 1:npart )
-  nlrf                 = nlrf                 ( 1:npart )
-  Ye                   = Ye                   ( 1:npart )
-  Theta                = Theta                ( 1:npart )
-  sph_density          = sph_density          ( 1:npart )
-  nstar                = nstar                ( 1:npart )
-  h                    = h                    ( 1:npart )
+  !pos                  = pos                  ( :, 1:npart )
+  !lapse_parts          = lapse_parts          ( 1:npart )
+  !shift_parts_x        = shift_parts_x        ( 1:npart )
+  !shift_parts_y        = shift_parts_y        ( 1:npart )
+  !shift_parts_z        = shift_parts_z        ( 1:npart )
+  !baryon_density_parts = baryon_density_parts ( 1:npart )
+  !energy_density_parts = energy_density_parts ( 1:npart )
+  !specific_energy_parts= specific_energy_parts( 1:npart )
+  !pressure_parts       = pressure_parts       ( 1:npart )
+  !v_euler_parts_x      = v_euler_parts_x      ( 1:npart )
+  !v_euler_parts_y      = v_euler_parts_y      ( 1:npart )
+  !v_euler_parts_z      = v_euler_parts_z      ( 1:npart )
+  !v                    = v                    ( :, 1:npart )
+  !nu                   = nu                   ( 1:npart )
+  !nlrf                 = nlrf                 ( 1:npart )
+  !Ye                   = Ye                   ( 1:npart )
+  !Theta                = Theta                ( 1:npart )
+  !sph_density          = sph_density          ( 1:npart )
+  !nstar                = nstar                ( 1:npart )
+  !h0                    = h                    ( 1:npart )
+
+  CALL allocate_SPH_memory
+
+  pos_u                = pos                  ( :, 1:npart )
+  vel_u                = v                    ( :, 1:npart )
+  h                    = h0                   ( 1:npart )
+
+  CALL allocate_RCB_tree_memory_3D(npart)
+  iorig(1:npart)= (/ (a,a=1,npart) /)
+
+  !CALL allocate_metric_on_particles(npart)
+  ! for now: just constant
+  !av(1:npart)= av_max
+
+  ! tabulate kernel, get ndes
+  CALL ktable(ikernel,ndes)
+
 
   PRINT *, "** End of PROGRAM proto_apm."
   PRINT *
