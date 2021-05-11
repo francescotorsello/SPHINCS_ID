@@ -593,7 +593,7 @@ MODULE bns_id
       INTEGER,                        INTENT( IN )    :: n
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: x
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: y
-      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN)     :: z
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: z
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y

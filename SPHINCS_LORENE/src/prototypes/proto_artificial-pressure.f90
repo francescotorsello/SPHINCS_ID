@@ -30,14 +30,29 @@ PROGRAM proto_apm
                             assign_h
   USE set_h,          ONLY: exact_nei_tree_update
   USE analyze,        ONLY: COM
+  USE matrix,         ONLY: determinant_4x4_matrix
+  USE constants,      ONLY: Msun_geo, km2m, g2kg, amu
+  USE NR,             ONLY: indexx
 
   IMPLICIT NONE
 
   INTEGER, PARAMETER:: unit_id  = 23
   INTEGER, PARAMETER:: max_npart= 5D+6
-  INTEGER:: npart_tmp, tmp, ios, itr, a, nout
+  INTEGER:: npart_tmp, tmp, ios, itr, a, nout, nus, mus
+  INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort, xy_sort, xyz_sort, lim
 
-  DOUBLE PRECISION com_x,com_y,com_z,com_d
+  DOUBLE PRECISION:: com_x, com_y, com_z, com_d, det, sq_g, Theta_a, &
+                     nu_corr, max_nu, min_nu
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
+                     shift_x, shift_y, shift_z, &
+                     g_xx, g_xy, g_xz, &
+                     g_yy, g_yz, g_zz, &
+                     baryon_density, &
+                     energy_density, &
+                     specific_energy, &
+                     pressure, &
+                     v_euler_x, v_euler_y, v_euler_z
+  DOUBLE PRECISION:: g4(0:3,0:3)
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_parts_x
@@ -59,7 +74,8 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar0
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h0
 
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Nstar_real
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sorted_pos
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
 
   LOGICAL:: exist
 
@@ -203,6 +219,86 @@ PROGRAM proto_apm
   nstar0               = nstar0               ( 1:npart_tmp )
   h0                   = h0                   ( 1:npart_tmp )
 
+  !---------------------------!
+  !-- Place ghost particles --!
+  !---------------------------!
+
+  PRINT *, "Sorting positions"
+  PRINT *
+
+  ALLOCATE( sorted_pos(3,npart_tmp) )
+  ALLOCATE( x_sort(npart_tmp) )
+  ALLOCATE( xy_sort(npart_tmp) )
+  ALLOCATE( xyz_sort(npart_tmp) )
+  sorted_pos= 0.0D0
+
+  PRINT *, sorted_pos(:,1)
+  PRINT *, sorted_pos(:,npart_tmp)
+  PRINT *
+
+  ! Sort particle positions along x
+  CALL indexx( npart_tmp, pos( 1, : ), x_sort )
+
+  DO a= 1, npart_tmp, 1
+    sorted_pos(1,a)= pos(1,x_sort(a))
+    sorted_pos(2,a)= pos(2,x_sort(a))
+    sorted_pos(3,a)= pos(3,x_sort(a))
+  ENDDO
+  PRINT *, "After sorting x"
+  PRINT *, sorted_pos(:,1)
+  PRINT *, sorted_pos(:,npart_tmp)
+  PRINT *
+
+  ! Sort along y
+  ALLOCATE( lim(npart_tmp) )
+  lim(0)= 0
+  itr= 1
+  DO a= 1, npart_tmp - 1, 1
+    IF( sorted_pos(1,a) /= sorted_pos(1,a + 1) )THEN
+      lim(itr)= a
+      CALL indexx( lim(itr)-lim(itr-1), pos( 2, lim(itr-1)+1:lim(itr) ), &
+                   xy_sort(lim(itr-1)+1:lim(itr)) )
+      xy_sort(lim(itr-1)+1:lim(itr))= xy_sort(lim(itr-1)+1:lim(itr)) + lim(itr-1)
+      itr= itr + 1
+    ENDIF
+  ENDDO
+  DO a= 1, npart_tmp, 1
+    sorted_pos(1,a)= pos(1,xy_sort(a))
+    sorted_pos(2,a)= pos(2,xy_sort(a))
+    sorted_pos(3,a)= pos(3,xy_sort(a))
+  ENDDO
+  PRINT *, "After sorting y"
+  PRINT *, sorted_pos(:,1)
+  PRINT *, sorted_pos(:,npart_tmp)
+  PRINT *
+
+  ! Sort along z
+  lim(0)= 0
+  itr= 1
+  DO a= 1, npart_tmp - 1, 1
+    IF( sorted_pos(2,a) /= sorted_pos(2,a + 1) )THEN
+      lim(itr)= a
+      CALL indexx( lim(itr)-lim(itr-1), pos( 3, lim(itr-1)+1:lim(itr) ), &
+                   xyz_sort(lim(itr-1)+1:lim(itr)) )
+      xyz_sort(lim(itr-1)+1:lim(itr))= xyz_sort(lim(itr-1)+1:lim(itr)) + lim(itr-1)
+      itr= itr + 1
+    ENDIF
+  ENDDO
+  DO a= 1, npart_tmp, 1
+    sorted_pos(1,a)= pos(1,xyz_sort(a))
+    sorted_pos(2,a)= pos(2,xyz_sort(a))
+    sorted_pos(3,a)= pos(3,xyz_sort(a))
+  ENDDO
+  PRINT *, "After sorting z"
+  PRINT *, sorted_pos(:,1)
+  PRINT *, sorted_pos(:,npart_tmp)
+  PRINT *
+
+  PRINT *, "End of sorting algorithm"
+  PRINT *
+
+  STOP
+
   !-------------------------------!
   !-- Needed calls from SPHINCS --!
   !-------------------------------!
@@ -241,22 +337,23 @@ PROGRAM proto_apm
   ! setup_uniform_sphere first place positions in a cubic lattice or a
   ! close-packed lattice, then assigns the smoothing length
 
-  PRINT *, "npart_tmp=", npart_tmp
-  PRINT *
   CALL assign_h(npart_tmp,npart,pos_u,h0,h)
+  PRINT *, "npart_tmp=", npart_tmp
+  PRINT *, "npart=", npart
+  PRINT *
 
   !STOP
 
   ! measure SPH-particle number density
   ALLOCATE( Nstar_real(max_npart) )
   nu= 1.0D0
-  CALL density_loop(npart,pos_u,nu,h,Nstar)
+  CALL density_loop(npart,pos_u,nu,h,nstar_real)
 
   ! In setup_uniform_sphere, get_profile_density is called
   ! this computed nstar, but we have it from the ID file
 
   ! assign nu's
-  nu= nstar/Nstar
+  nu= nstar0/nstar_real
 
   ! In setup_uniform_sphere, reset_COM is called
   !CALL reset_COM(npart,nu,pos_u)
@@ -274,10 +371,137 @@ PROGRAM proto_apm
   ! Re-estimate nu
   CALL density_loop(npart,pos_u,nu,h,Nstar)
 
-  ! Here you should get the LORENE ensity on the new positions...this means you
-  ! need to compile LORENE and SPHINCS_LORENE...however, you might be able to
-  ! use the SUBROUTINES bound to LORENE without creating a bns object..
-  ! no, you need a bns object
+  ! Here you should get the LORENE density on the new positions
+  ALLOCATE( lapse          (npart) )
+  ALLOCATE( shift_x        (npart) )
+  ALLOCATE( shift_y        (npart) )
+  ALLOCATE( shift_z        (npart) )
+  ALLOCATE( g_xx           (npart) )
+  ALLOCATE( g_xy           (npart) )
+  ALLOCATE( g_xz           (npart) )
+  ALLOCATE( g_yy           (npart) )
+  ALLOCATE( g_yz           (npart) )
+  ALLOCATE( g_zz           (npart) )
+  ALLOCATE( baryon_density (npart) )
+  ALLOCATE( energy_density (npart) )
+  ALLOCATE( specific_energy(npart) )
+  ALLOCATE( pressure       (npart) )
+  ALLOCATE( v_euler_x      (npart) )
+  ALLOCATE( v_euler_y      (npart) )
+  ALLOCATE( v_euler_z      (npart) )
+  CALL binary% import_id( npart, pos_u(1,:), pos_u(1,:), pos_u(1,:), &
+                          lapse, shift_x, shift_y, shift_z, &
+                          g_xx, g_xy, g_xz, &
+                          g_yy, g_yz, g_zz, &
+                          baryon_density, &
+                          energy_density, &
+                          specific_energy, &
+                          pressure, &
+                          v_euler_x, v_euler_y, v_euler_z )
+  max_nu= 0.0D0
+  min_nu= 1.0D60
+  DO a=1,npart
+
+    ! Coordinate velocity of the fluid [c]
+    vel_u(0,itr)= 1.0D0
+    vel_u(1,itr)= lapse(a)*v_euler_x(a)- shift_x(a)
+    vel_u(2,itr)= lapse(a)*v_euler_y(a)- shift_y(a)
+    vel_u(3,itr)= lapse(a)*v_euler_z(a)- shift_z(a)
+
+    !
+    !-- Metric as matrix for easy manipulation
+    !
+    g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
+           + 2*g_xy(a)*shift_x(a)*shift_y(a) &
+           + 2*g_xz(a)*shift_x(a)*shift_z(a) &
+           + g_yy(a)*shift_y(a)*shift_y(a) &
+           + 2*g_yz(a)*shift_y(a)*shift_z(a) &
+           + g_zz(a)*shift_z(a)*shift_z(a)
+    g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+    g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+    g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+
+    g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+    g4(1,1)= g_xx(a)
+    g4(1,2)= g_xy(a)
+    g4(1,3)= g_xz(a)
+
+    g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+    g4(2,1)= g_xy(a)
+    g4(2,2)= g_yy(a)
+    g4(2,3)= g_yz(a)
+
+    g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+    g4(3,1)= g_xz(a)
+    g4(3,2)= g_yz(a)
+    g4(3,3)= g_zz(a)
+
+    ! sqrt(-det(g4))
+    CALL determinant_4x4_matrix(g4,det)
+    IF( ABS(det) < 1D-10 )THEN
+        PRINT *, "The determinant of the spacetime metric is " &
+                 // "effectively 0 at particle ", a
+        STOP
+    ELSEIF( det > 0 )THEN
+        PRINT *, "The determinant of the spacetime metric is " &
+                 // "positive at particle ", a
+        STOP
+    ENDIF
+    sq_g= SQRT(-det)
+
+    !
+    !-- Generalized Lorentz factor
+    !
+    Theta_a= 0.D0
+    DO nus=0,3
+      DO mus=0,3
+        Theta_a= Theta_a &
+                 + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+      ENDDO
+    ENDDO
+    Theta_a= 1.0D0/SQRT(-Theta_a)
+    Theta(a)= Theta_a
+
+    nstar_real(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+
+    ! Recompute nu taking into account the nstar just computed from th star
+    ! Maybe this step s not needed, and the artificial pressurecan be
+    ! computed at this point
+!    nu_corr= 1.0D0 + (nstar_real(a) - nstar(a))/nstar_real(a)
+!    nu_corr= MAX(nu_corr,0.2D0)
+!    nu_corr= MIN(nu_corr,5.0D0)
+!    nu(a)  = nu_corr*nu(a)
+!
+!    ! baryon numbers
+!    max_nu= MAX(nu(a),max_nu)
+!    min_nu= MIN(nu(a),min_nu)
+
+    ! inside
+ !   IF( NORM2(pos_u(:,a)) < Rstar )THEN
+ !      dNstar=     (Nstar_real(a)-Nstar_P(a))/Nstar_P(a)
+ !      aPr(a)=     MAX(1.0D0 + dNstar,0.1D0)
+ !      aPr_max=    MAX(aPr_max,aPr(a))
+ !      err_N_max=  MAX(err_N_max,ABS(dNstar))
+ !      err_N_min=  MIN(err_N_min,ABS(dNstar))
+ !      err_N_mean= err_N_mean + ABS(dNstar)
+ !      n_inside=   n_inside + 1
+ !      ! outside
+ !   ELSE
+ !      IF( it == 1 )THEN
+ !         aPr(a)= aPr_0
+ !      ELSE
+ !         aPr(a)= aPr_outside
+ !      ENDIF
+ !   ENDIF
+
+  ENDDO
+
+!  PRINT *, "max_nu=", max_nu
+!  PRINT *, "min_nu=", min_nu
+!  PRINT *, "max_nu/min_nu=", max_nu/min_nu
+!  PRINT *
+
+  ! Here setup_uniform_sphere ends
 
   PRINT *, "** End of PROGRAM proto_apm."
   PRINT *

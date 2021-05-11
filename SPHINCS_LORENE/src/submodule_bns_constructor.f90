@@ -101,7 +101,6 @@ SUBMODULE (bns_id) bns_constructor
 
       IF( exist )THEN
 
-        PRINT *, resu_file//C_NULL_CHAR
         THIS% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
 
       ELSE

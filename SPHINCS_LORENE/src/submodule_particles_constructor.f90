@@ -2079,19 +2079,43 @@ SUBMODULE (particles_id) particles_constructor
       !CALL test_status( ios, err_msg, &
       !        "...allocation error for array v_euler_parts_z" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% sph_density ))THEN
-        ALLOCATE( THIS% sph_density( THIS% npart ), STAT= ios )
-    ENDIF
-    IF( ios > 0 )THEN
-       PRINT *, '...allocation error for sph_density'
-       STOP
-    ENDIF
     IF(.NOT.ALLOCATED( THIS% nstar ))THEN
         ALLOCATE( THIS% nstar( THIS% npart ), STAT= ios )
     ENDIF
     IF( ios > 0 )THEN
        PRINT *, '...allocation error for nstar'
        STOP
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% nstar_int ))THEN
+        ALLOCATE( THIS% nstar_int( THIS% npart ), STAT= ios )
+    ENDIF
+    IF( ios > 0 )THEN
+       PRINT *, '...allocation error for nstar_int'
+       STOP
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% particle_density ))THEN
+        ALLOCATE( THIS% particle_density( THIS% npart ), STAT= ios )
+    ENDIF
+    IF( ios > 0 )THEN
+       PRINT *, '...allocation error for particle_density'
+       STOP
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% particle_density_int ))THEN
+        ALLOCATE( THIS% particle_density_int( THIS% npart ), STAT= ios )
+    ENDIF
+    IF( ios > 0 )THEN
+       PRINT *, '...allocation error for particle_density_int'
+       STOP
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% pmass ))THEN
+      ALLOCATE( THIS% pmass( THIS% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
     ENDIF
 
     PRINT *, "** Subroutine allocate_lorene_id_parts_memory executed."

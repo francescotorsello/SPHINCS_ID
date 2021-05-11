@@ -71,6 +71,7 @@ SUBMODULE (particles_id) particles_methods
 
     USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D,&
                                    deallocate_RCB_tree_memory_3D, iorig
+    USE APM,                 ONLY: density_loop
     USE kernel_table,        ONLY: ktable
     USE options,             ONLY: ikernel, ndes
     USE set_h,               ONLY: exact_nei_tree_update
@@ -303,7 +304,9 @@ SUBMODULE (particles_id) particles_methods
       nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% nlrf(itr)= nlrf(itr)
 
-      THIS% sph_density( itr )= THIS% nlrf(itr)*Theta_a*sq_g
+      THIS% nstar( itr )= THIS% nlrf(itr)*Theta_a*sq_g
+      THIS% pmass( itr )= THIS% nstar( itr )*THIS% pvol( itr )
+      THIS% particle_density( itr )= (THIS% nstar( itr ))/( THIS% pmass(itr) )
 
       ! Internal energy per baryon (specific internal energy)
       ! In module_TOV.f90, this quantity is computed as follows,
@@ -876,25 +879,27 @@ SUBMODULE (particles_id) particles_methods
 
     PRINT *, " * Computing neighbours..."
     PRINT *
-    CALL exact_nei_tree_update( ndes,    &
-                                THIS% npart,   &
-                                THIS% pos, &
+    CALL exact_nei_tree_update( ndes,        &
+                                THIS% npart, &
+                                THIS% pos,   &
                                 THIS% nu )
 
     THIS% h= h
 
     PRINT *, " * Computing SPH density by kernel interpolation..."
     PRINT *
-    !nu   = nu_loc
-    !pos_u= pos_loc
-    !vel_u= vel_loc
-    !u    = u_loc
-    !nlrf = nlrf_loc
-    !Theta= theta_loc
-    !Pr   = pressure_loc
-    CALL density( THIS% npart,   &
-                  THIS% pos, &
-                  THIS% nstar )
+    ! density calls dens_ll_cell, which computes nstar on particle a as
+    ! Na=     Na + nu(b)*Wab_ha, so this is nstar= nlrf*sq_g*Theta
+    ! It has to be compare with sph_density= nlrf*sq_g*Theta
+    CALL density( THIS% npart,&
+                  THIS% pos,   &
+                  THIS% nstar_int )
+
+    PRINT *, " * Computing particle number density by kernel interpolation..."
+    PRINT *
+    nu= 1.0D0
+    CALL density_loop( THIS% npart, THIS% pos, nu, h, &
+                       THIS% particle_density_int )
 
     PRINT *, " * Deallocating MODULE variables..."
     PRINT *
@@ -1578,7 +1583,7 @@ SUBMODULE (particles_id) particles_methods
     "       9       10      11", &
     "       12      13      14", &
     "       15      16      17      18     19     20      21", &
-    "       22      23      24      25"
+    "       22      23      24      25     26     27      28      29"
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
@@ -1603,7 +1608,10 @@ SUBMODULE (particles_id) particles_methods
   "       generalized Lorentz factor Theta", &
   "       computing frame baryon number density", &
   "       computing frame baryon number density from kernel interpolation", &
-  "       smoothing length"
+  "       smoothing length", &
+  "       particle density [particle/Msun_geo^3]", &
+  "       particle volume [1/Msun_geo^3]", &
+  "       particle mass [Msun]"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
@@ -1674,9 +1682,13 @@ SUBMODULE (particles_id) particles_methods
         THIS% nlrf( itr ), &
         THIS% Ye( itr ), &
         THIS% Theta( itr ), &
-        THIS% sph_density( itr ), &
         THIS% nstar( itr ), &
-        THIS% h( itr )
+        THIS% nstar_int( itr ), &
+        THIS% h( itr ), &
+        THIS% particle_density( itr ), &
+        THIS% particle_density_int( itr ), &
+        THIS% pvol( itr ), &
+        THIS% pmass( itr )
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &
@@ -1995,10 +2007,10 @@ SUBMODULE (particles_id) particles_methods
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% sph_density ))THEN
-      DEALLOCATE( THIS% sph_density, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% nstar ))THEN
+      DEALLOCATE( THIS% nstar, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array sph_density. ", &
+         PRINT *, "...deallocation error for array nstar. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
@@ -2006,10 +2018,43 @@ SUBMODULE (particles_id) particles_methods
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% nstar ))THEN
-      DEALLOCATE( THIS% nstar, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% nstar_int ))THEN
+      DEALLOCATE( THIS% nstar_int, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array nstar. ", &
+         PRINT *, "...deallocation error for array nstar_int. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% particle_density ))THEN
+      DEALLOCATE( THIS% particle_density, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array particle_density. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% particle_density_int ))THEN
+      DEALLOCATE( THIS% particle_density_int, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array particle_density_int. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% pmass ))THEN
+      DEALLOCATE( THIS% pmass, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array pmass. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
