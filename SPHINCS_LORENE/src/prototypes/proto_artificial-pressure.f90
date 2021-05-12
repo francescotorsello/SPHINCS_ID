@@ -45,7 +45,7 @@ PROGRAM proto_apm
                      nu_corr, max_nu, min_nu, smaller_radius, larger_radius, &
                      dr, rad, col, col_tmp, alpha, phase_th, rand_num, &
                      center, long, xtemp, ytemp, ztemp, radius_z, rel_sign, &
-                     phase_phi
+                     phase_phi, h_max
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -383,11 +383,26 @@ PROGRAM proto_apm
   !PRINT *, MAXVAL( pos_star1( 1, : ), DIM= 1 ), &
   !         smaller_radius, larger_radius, center, dr, alpha
 
+  ! You need to place ghost particles one smoothing length outside of the
+  ! surface
+
+  ! Find the maximum of the smoothing lencth of the particles whose distance form thecenter is higher than radius_z, and place particles outside of that
+
+  h_max= 0.0D0
+  DO a= 1, npart_tmp, 1
+    IF( SQRT( pos( 1, a )**2.0D0 + pos( 2, a )**2.0D0 + pos( 3, a )**2.0D0 ) &
+        > 0.95D0*radius_z )THEN
+      IF( h0(a) > h_max )THEN
+        h_max= h0(a)
+      ENDIF
+    ENDIF
+  ENDDO
+
   PRINT *, " * Placing ghost particles..."
 
   DO r= 1, 30, 1
 
-    rad= radius_z + DBLE( r )*dr
+    rad= radius_z + h_max + DBLE( r )*dr
 
     DO th= 1, npart_eq/2, 1
 
@@ -470,8 +485,6 @@ PROGRAM proto_apm
   CLOSE( UNIT= 2 )
 
   PRINT *, " * Printed."
-
-  STOP
 
   !-------------------------------!
   !-- Needed calls from SPHINCS --!
@@ -651,22 +664,22 @@ PROGRAM proto_apm
 !    min_nu= MIN(nu(a),min_nu)
 
     ! inside
- !   IF( NORM2(pos_u(:,a)) < Rstar )THEN
- !      dNstar=     (Nstar_real(a)-Nstar_P(a))/Nstar_P(a)
- !      aPr(a)=     MAX(1.0D0 + dNstar,0.1D0)
- !      aPr_max=    MAX(aPr_max,aPr(a))
- !      err_N_max=  MAX(err_N_max,ABS(dNstar))
- !      err_N_min=  MIN(err_N_min,ABS(dNstar))
- !      err_N_mean= err_N_mean + ABS(dNstar)
- !      n_inside=   n_inside + 1
- !      ! outside
- !   ELSE
- !      IF( it == 1 )THEN
- !         aPr(a)= aPr_0
- !      ELSE
- !         aPr(a)= aPr_outside
- !      ENDIF
- !   ENDIF
+    !IF( NORM2(pos_u(:,a)) < Rstar )THEN
+    !   dNstar=     (Nstar_real(a)-Nstar_P(a))/Nstar_P(a)
+    !   aPr(a)=     MAX(1.0D0 + dNstar,0.1D0)
+    !   aPr_max=    MAX(aPr_max,aPr(a))
+    !   err_N_max=  MAX(err_N_max,ABS(dNstar))
+    !   err_N_min=  MIN(err_N_min,ABS(dNstar))
+    !   err_N_mean= err_N_mean + ABS(dNstar)
+    !   n_inside=   n_inside + 1
+    !   ! outside
+    !ELSE
+    !   IF( it == 1 )THEN
+    !      aPr(a)= aPr_0
+    !   ELSE
+    !      aPr(a)= aPr_outside
+    !   ENDIF
+    !ENDIF
 
   ENDDO
 
