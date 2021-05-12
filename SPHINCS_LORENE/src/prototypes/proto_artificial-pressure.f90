@@ -30,18 +30,22 @@ PROGRAM proto_apm
   USE set_h,          ONLY: exact_nei_tree_update
   USE analyze,        ONLY: COM
   USE matrix,         ONLY: determinant_4x4_matrix
-  USE constants,      ONLY: Msun_geo, km2m, g2kg, amu
+  USE constants,      ONLY: Msun_geo, km2m, g2kg, amu, pi, half
   USE NR,             ONLY: indexx
 
   IMPLICIT NONE
 
   INTEGER, PARAMETER:: unit_id  = 23
   INTEGER, PARAMETER:: max_npart= 5D+6
-  INTEGER:: npart_tmp, tmp, ios, itr, a, nout, nus, mus
+  INTEGER:: npart_tmp, tmp, ios, itr, a, nout, nus, mus, npart_eq, &
+            npart_ghost_shell, npart_ghost, r, th, phi, npart1
   INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort, xy_sort, xyz_sort, lim
 
   DOUBLE PRECISION:: com_x, com_y, com_z, com_d, det, sq_g, Theta_a, &
-                     nu_corr, max_nu, min_nu
+                     nu_corr, max_nu, min_nu, smaller_radius, larger_radius, &
+                     dr, rad, col, col_tmp, alpha, phase_th, rand_num, &
+                     center, long, xtemp, ytemp, ztemp, radius_z, rel_sign, &
+                     phase_phi
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -73,7 +77,9 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar0
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h0
 
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_star1
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sorted_pos
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
 
   LOGICAL:: exist
@@ -121,7 +127,7 @@ PROGRAM proto_apm
   ALLOCATE( nstar0(max_npart) )
   ALLOCATE( h0(max_npart) )
 
-  finalnamefile= "lorene-bns-id-particles-shells.dat"
+  finalnamefile= "lorene-bns-id-particles-shells-2.dat"
 
   INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -222,65 +228,65 @@ PROGRAM proto_apm
   !-- Place ghost particles --!
   !---------------------------!
 
-  PRINT *, "Sorting positions"
-  PRINT *
-
-  finalnamefile= "lorene-bns-id-particles-shells.dat"
-
-  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-  IF( exist )THEN
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-            FORM= "FORMATTED", &
-            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-            IOMSG= err_msg )
-  ELSE
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-            FORM= "FORMATTED", &
-            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-  ENDIF
-  IF( ios > 0 )THEN
-    PRINT *, "...error when opening " // TRIM(finalnamefile), &
-             ". The error message is", err_msg
-    STOP
-  ENDIF
-
-
-  ALLOCATE( sorted_pos(3,npart_tmp) )
-  ALLOCATE( x_sort(npart_tmp) )
-  ALLOCATE( xy_sort(npart_tmp) )
-  ALLOCATE( xyz_sort(npart_tmp) )
-  sorted_pos= 0.0D0
-  x_sort    = 0.0D0
-  xy_sort   = 0.0D0
-  xyz_sort  = 0.0D0
-
-  PRINT *, sorted_pos(:,1)
-  PRINT *, sorted_pos(:,npart_tmp)
-  PRINT *
-
-  ! Sort particle positions along x
-  CALL indexx( npart_tmp, pos( 1, : ), x_sort )
-
-  DO a= 1, npart_tmp, 1
-    sorted_pos(1,a)= pos(1,x_sort(a))
-    sorted_pos(2,a)= pos(2,x_sort(a))
-    sorted_pos(3,a)= pos(3,x_sort(a))
-  ENDDO
-  PRINT *, "After sorting x"
-
-  ! Why do you need to subsort the posiions over y and z? x is perhaps enough
-
+  !PRINT *, "Sorting positions"
+  !PRINT *
+  !
+  !finalnamefile= "sorted_pos.dat"
+  !
+  !INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+  !
+  !IF( exist )THEN
+  !    OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+  !          FORM= "FORMATTED", &
+  !          POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+  !          IOMSG= err_msg )
+  !ELSE
+  !    OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+  !          FORM= "FORMATTED", &
+  !          ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  !ENDIF
+  !IF( ios > 0 )THEN
+  !  PRINT *, "...error when opening " // TRIM(finalnamefile), &
+  !           ". The error message is", err_msg
+  !  STOP
+  !ENDIF
+  !
+  !
+  !ALLOCATE( sorted_pos(3,npart_tmp) )
+  !ALLOCATE( x_sort(npart_tmp) )
+  !ALLOCATE( xy_sort(npart_tmp) )
+  !ALLOCATE( xyz_sort(npart_tmp) )
+  !sorted_pos= 0.0D0
+  !x_sort    = 0.0D0
+  !xy_sort   = 0.0D0
+  !xyz_sort  = 0.0D0
+  !
   !PRINT *, sorted_pos(:,1)
   !PRINT *, sorted_pos(:,npart_tmp)
   !PRINT *
-  DO a= 1, npart_tmp, 1
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      a, &
-      sorted_pos( 1, a ), &
-      sorted_pos( 2, a ), &
-      sorted_pos( 3, a )
-  ENDDO
+  !
+  !! Sort particle positions along x
+  !CALL indexx( npart_tmp, pos( 1, : ), x_sort )
+  !
+  !DO a= 1, npart_tmp, 1
+  !  sorted_pos(1,a)= pos(1,x_sort(a))
+  !  sorted_pos(2,a)= pos(2,x_sort(a))
+  !  sorted_pos(3,a)= pos(3,x_sort(a))
+  !ENDDO
+  !PRINT *, "After sorting x"
+  !
+  !! Why do you need to subsort the posiions over y and z? x is perhaps enough
+  !
+  !!PRINT *, sorted_pos(:,1)
+  !!PRINT *, sorted_pos(:,npart_tmp)
+  !!PRINT *
+  !DO a= 1, npart_tmp, 1
+  !  WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+  !    a, &
+  !    sorted_pos( 1, a ), &
+  !    sorted_pos( 2, a ), &
+  !    sorted_pos( 3, a )
+  !ENDDO
 
   ! Sort along y
   !ALLOCATE( lim(npart_tmp) )
@@ -345,7 +351,125 @@ PROGRAM proto_apm
   !PRINT *, "End of sorting algorithm"
   !PRINT *
 
+  !CLOSE( UNIT= 2 )
+
+  ALLOCATE( ghost_pos( 3, max_npart ) )
+  ALLOCATE( pos_star1( 3, npart_tmp ) )
+  ghost_pos= 0.0D0
+  pos_star1= 0.0D0
+  itr= 1
+  DO a= 1, npart_tmp, 1
+    IF( pos( 1, a ) < 0.0D0 )THEN
+      pos_star1( 1, itr )= pos( 1 ,a )
+      pos_star1( 2, itr )= pos( 2 ,a )
+      pos_star1( 3, itr )= pos( 3 ,a )
+      itr= itr + 1
+    ENDIF
+  ENDDO
+  npart1= itr
+  pos_star1 = pos_star1( :, 1:npart1 - 1 )
+  !smaller_radius= binary% get_radius1_x_opp()
+  !larger_radius = binary% get_radius1_x_comp()
+  center        = binary% get_center1_x()
+  smaller_radius= ABS( MINVAL( pos_star1( 1, : ), DIM= 1 ) - center )
+  larger_radius = ABS( center - MAXVAL( pos_star1( 1, : ), DIM= 1 ) )
+  radius_z= ABS( MAXVAL( pos_star1( 3, : ), DIM= 1 ) )
+  dr= ( larger_radius - smaller_radius )/5.0D0
+  npart_eq= 500
+  alpha= 2*pi/DBLE(npart_eq)
+  !npart_ghost_shell= ( npart_eq**2 )/2
+  itr= 1
+
+  !PRINT *, MAXVAL( pos_star1( 1, : ), DIM= 1 ), &
+  !         smaller_radius, larger_radius, center, dr, alpha
+
+  PRINT *, " * Placing ghost particles..."
+
+  DO r= 1, 30, 1
+
+    rad= radius_z + DBLE( r )*dr
+
+    DO th= 1, npart_eq/2, 1
+
+      CALL RANDOM_NUMBER( phase_phi )
+      phase_phi= phase_phi*alpha
+
+      col= ( th - 1 )*alpha !+ r*alpha/20.0D0
+      CALL RANDOM_NUMBER( phase_th )
+      CALL RANDOM_NUMBER( rand_num )
+      IF( rand_num >= half ) rel_sign=  1
+      IF( rand_num < half )  rel_sign= -1
+
+      col_tmp= col*( 1.0D0 + rel_sign*0.05D0*phase_th )
+
+      IF( col_tmp < pi .AND. col_tmp > 0 )THEN
+
+        col= col_tmp
+
+      ENDIF
+
+
+      DO phi= 1, npart_eq, 1
+
+        long= phase_phi + phi*alpha
+
+        xtemp= center + rad*COS(long)*SIN(col)
+        ytemp= rad*SIN(long)*SIN(col)
+        ztemp= rad*COS(col)
+
+        IF( binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
+        )THEN
+
+          ghost_pos( 1, itr )= xtemp
+          ghost_pos( 2, itr )= ytemp
+          ghost_pos( 3, itr )= ztemp
+
+          itr= itr + 1
+
+        ENDIF
+
+      ENDDO
+    ENDDO
+  ENDDO
+  npart_ghost= itr
+  ghost_pos = ghost_pos( :, 1:npart_ghost )
+
+  PRINT *, " * Ghost particles placed."
+  PRINT *
+
+  PRINT *, " * Printing ghost particles to file..."
+
+  finalnamefile= "ghost_pos.dat"
+
+  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+  IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+  ELSE
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  ENDIF
+  IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+             ". The error message is", err_msg
+    STOP
+  ENDIF
+
+  DO a= 1, npart_ghost, 1
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      a, &
+      ghost_pos( 1, a ), &
+      ghost_pos( 2, a ), &
+      ghost_pos( 3, a )
+  ENDDO
+
   CLOSE( UNIT= 2 )
+
+  PRINT *, " * Printed."
 
   STOP
 
