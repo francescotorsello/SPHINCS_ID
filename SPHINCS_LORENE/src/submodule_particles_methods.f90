@@ -654,7 +654,7 @@ SUBMODULE (particles_id) particles_methods
 
     ELSE
 
-      IF( THIS% distribution_id == 3 )THEN
+      IF( .FALSE. .AND. THIS% distribution_id == 3 )THEN
 
         DO itr= 1, THIS% npart1, 1
           nu(itr)= THIS% pmass( itr )*MSun/amu

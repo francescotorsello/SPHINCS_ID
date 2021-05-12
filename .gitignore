@@ -9,6 +9,7 @@ SPHINCS_LORENE/**/eos_*.dat
 SPHINCS_LORENE/**/hydro*.dat
 SPHINCS_LORENE/**/press*.dat
 SPHINCS_LORENE/**/specific*.dat
+SPHINCS_LORENE/**/sorted*.dat
 SPHINCS_LORENE/**/dbg*.dat
 SPHINCS_LORENE/**/binns*.dat
 SPHINCS_LORENE/**/negative*.dat
@@ -43,8 +44,8 @@ SPHINCS_LORENE/**/*.smod
 SPHINCS_LORENE/src/**/*.o
 SPHINCS_LORENE/src/**/*.optrpt
 SPHINCS_LORENE/**/*.x
-SPHINCS_LORENE/id-plots/
-SPHINCS_LORENE/gnuplot-scripts/
+SPHINCS_LORENE/**/id-plots/
+SPHINCS_LORENE/**/gnuplot-scripts/
 SPHINCS_LORENE/archive/
 SPHINCS_LORENE/lorene-id-files/
 SPHINCS_LORENE/fort*

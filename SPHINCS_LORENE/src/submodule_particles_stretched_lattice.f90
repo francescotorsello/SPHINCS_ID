@@ -84,6 +84,9 @@ SUBMODULE (particles_id) stretched_lattice
 
     TYPE(pos_on_shells), DIMENSION(:), ALLOCATABLE:: pos_shells
 
+    PRINT *, "** Executing the place_particles_shells..."
+    PRINT *
+
     CALL RANDOM_SEED( SIZE= dim_seed )
     ALLOCATE( seed( dim_seed ) )
     seed( 1 )= 0
@@ -1024,61 +1027,61 @@ SUBMODULE (particles_id) stretched_lattice
             !pos_shells(r)% pos_th( th )= col
             !pos_shells(r)% pos_phi( phi )= phase + phi*alpha(r)
 
-         !   IF( th == 1 )THEN
-         !
-         !     !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
-         !     dth_shells= 2.0D0*ABS( col - &
-         !               ( col + colatitude_pos(r)% colatitudes(th + 1) )/2.0D0 )
-         !
-         !     !PRINT *, "case 1. ", "dt_shells= ", dth_shells, &
-         !     !                     "col= ", col, &
-         !     !                     "colatitude_pos(r)% colatitudes(th + 1)=", &
-         !     !                     colatitude_pos(r)% colatitudes(th + 1)
-         !     !PRINT *
-         !
-         !   ELSEIF( th == npart_shelleq( r )/2 )THEN
-         !
-         !     !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
-         !     dth_shells= 2.0D0*ABS( ( colatitude_pos(r)% colatitudes(th - 1) &
-         !               + col )/2.0D0 - col )
-         !
-         !     !PRINT *, "case 2. ", "dt_shells= ", dth_shells, &
-         !     !                     "col= ", col, &
-         !     !                     "colatitude_pos(r)% colatitudes(th - 1)=", &
-         !     !                     colatitude_pos(r)% colatitudes(th - 1)
-         !     !PRINT *
-         !
-         !   ELSE
-         !
-         !     dth_shells= ABS( &
-         !             ( colatitude_pos(r)% colatitudes(th + 1) + col )/2.0D0 &
-         !           - ( col + colatitude_pos(r)% colatitudes(th - 1) )/2.0D0 )
-         !
-         !
-         !     !PRINT *, "case 3. ", "dt_shells= ", dth_shells, &
-         !     !                     "col= ", col, &
-         !     !                     "colatitude_pos(r)% colatitudes(th + 1)=", &
-         !     !                     colatitude_pos(r)% colatitudes(th + 1), &
-         !     !                     "colatitude_pos(r)% colatitudes(th - 1)=", &
-         !     !                     colatitude_pos(r)% colatitudes(th - 1)
-         !     !PRINT *
-         !
-         !   ENDIF
-         !
-         !   !pvol( npart_out )= rad**2.0D0*SIN(col) &
-         !   !                   *dr_shells*dth_shells*dphi_shells
-         !
-         !   pos_shells(r)% pvol_shell2( itr )= rad**2.0D0*SIN(col) &
-         !                      *dr_shells*dth_shells*dphi_shells! &
-         !                      !*pos_shells(r)% g_xx( itr ) &
-         !                      !*SQRT(pos_shells(r)% g_xx( itr ))
-         !
-         !   IF( pos_shells(r)% pvol_shell2( itr ) <= 0 )THEN
-         !     PRINT *, "When placing first half of particles"
-         !     PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
-         !              pos_shells(r)% pvol_shell2( itr )
-         !     STOP
-         !   ENDIF
+            IF( th == 1 )THEN
+
+              !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
+              dth_shells= 2.0D0*ABS( col - &
+                        ( col + colatitude_pos(r)% colatitudes(th + 1) )/2.0D0 )
+
+              !PRINT *, "case 1. ", "dt_shells= ", dth_shells, &
+              !                     "col= ", col, &
+              !                     "colatitude_pos(r)% colatitudes(th + 1)=", &
+              !                     colatitude_pos(r)% colatitudes(th + 1)
+              !PRINT *
+
+            ELSEIF( th == npart_shelleq( r )/4 )THEN
+
+              !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
+              dth_shells= 2.0D0*ABS( ( colatitude_pos(r)% colatitudes(th - 1) &
+                        + col )/2.0D0 - col )
+
+              !PRINT *, "case 2. ", "dt_shells= ", dth_shells, &
+              !                     "col= ", col, &
+              !                     "colatitude_pos(r)% colatitudes(th - 1)=", &
+              !                     colatitude_pos(r)% colatitudes(th - 1)
+              !PRINT *
+
+            ELSE
+
+              dth_shells= ABS( &
+                      ( colatitude_pos(r)% colatitudes(th + 1) + col )/2.0D0 &
+                    - ( col + colatitude_pos(r)% colatitudes(th - 1) )/2.0D0 )
+
+
+              !PRINT *, "case 3. ", "dt_shells= ", dth_shells, &
+              !                     "col= ", col, &
+              !                     "colatitude_pos(r)% colatitudes(th + 1)=", &
+              !                     colatitude_pos(r)% colatitudes(th + 1), &
+              !                     "colatitude_pos(r)% colatitudes(th - 1)=", &
+              !                     colatitude_pos(r)% colatitudes(th - 1)
+              !PRINT *
+
+            ENDIF
+
+            !pvol( npart_out )= rad**2.0D0*SIN(col) &
+            !                   *dr_shells*dth_shells*dphi_shells
+
+            pos_shells(r)% pvol_shell2( itr + 1 )= rad**2.0D0*SIN(col) &
+                               *dr_shells*dth_shells*dphi_shells! &
+                               !*pos_shells(r)% g_xx( itr ) &
+                               !*SQRT(pos_shells(r)% g_xx( itr ))
+
+            IF( pos_shells(r)% pvol_shell2( itr + 1 ) <= 0 )THEN
+              PRINT *, "When placing first half of particles"
+              PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr + 1, " ) =", &
+                       pos_shells(r)% pvol_shell2( itr + 1 )
+              STOP
+            ENDIF
 
 !PRINT *, "2.4"
             itr= itr + 1
@@ -1773,7 +1776,7 @@ SUBMODULE (particles_id) stretched_lattice
         pos( 1, itr + npart_shell_tmp )= pos_shells(r)% pos_shell( 1, itr )
         pos( 2, itr + npart_shell_tmp )= pos_shells(r)% pos_shell( 2, itr )
         pos( 3, itr + npart_shell_tmp )= pos_shells(r)% pos_shell( 3, itr )
-        pvol( itr + npart_shell_tmp )  = pos_shells(r)% pvol_shell( itr )
+        pvol( itr + npart_shell_tmp )  = pos_shells(r)% pvol_shell2( itr )
         pmass( itr + npart_shell_tmp ) = m_parts( r )
         cnt= cnt + 1
       ENDDO
@@ -1843,7 +1846,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     CLOSE( UNIT= 2 )
 
-    !PRINT *, " * Particles placed."
+    PRINT *, " * Particles placed."
 
     !STOP
 

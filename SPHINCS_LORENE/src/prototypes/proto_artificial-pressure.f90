@@ -26,8 +26,7 @@ PROGRAM proto_apm
   USE input_output,   ONLY: read_options
   USE units,          ONLY: umass,m0c2_CU,set_units
 
-  USE APM,            ONLY: density_loop,position_correction,&
-                            assign_h
+  USE APM,            ONLY: density_loop, position_correction, assign_h
   USE set_h,          ONLY: exact_nei_tree_update
   USE analyze,        ONLY: COM
   USE matrix,         ONLY: determinant_4x4_matrix
@@ -190,7 +189,7 @@ PROGRAM proto_apm
   ENDDO
   IF( tmp /= npart_tmp )THEN
     PRINT *, "** ERROR! Mismatch in the values of the particle number read", &
-             " from " // TRIM(finalnamefile), "in two ways. "
+             " from " // TRIM(finalnamefile), " in two ways. "
     PRINT *, "tmp= ", tmp, ", npart_tmp= ", npart_tmp
     PRINT *, "Stopping..."
     STOP
@@ -226,11 +225,35 @@ PROGRAM proto_apm
   PRINT *, "Sorting positions"
   PRINT *
 
+  finalnamefile= "lorene-bns-id-particles-shells.dat"
+
+  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+  IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+  ELSE
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  ENDIF
+  IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+             ". The error message is", err_msg
+    STOP
+  ENDIF
+
+
   ALLOCATE( sorted_pos(3,npart_tmp) )
   ALLOCATE( x_sort(npart_tmp) )
   ALLOCATE( xy_sort(npart_tmp) )
   ALLOCATE( xyz_sort(npart_tmp) )
   sorted_pos= 0.0D0
+  x_sort    = 0.0D0
+  xy_sort   = 0.0D0
+  xyz_sort  = 0.0D0
 
   PRINT *, sorted_pos(:,1)
   PRINT *, sorted_pos(:,npart_tmp)
@@ -245,57 +268,84 @@ PROGRAM proto_apm
     sorted_pos(3,a)= pos(3,x_sort(a))
   ENDDO
   PRINT *, "After sorting x"
-  PRINT *, sorted_pos(:,1)
-  PRINT *, sorted_pos(:,npart_tmp)
-  PRINT *
+
+  ! Why do you need to subsort the posiions over y and z? x is perhaps enough
+
+  !PRINT *, sorted_pos(:,1)
+  !PRINT *, sorted_pos(:,npart_tmp)
+  !PRINT *
+  DO a= 1, npart_tmp, 1
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      a, &
+      sorted_pos( 1, a ), &
+      sorted_pos( 2, a ), &
+      sorted_pos( 3, a )
+  ENDDO
 
   ! Sort along y
-  ALLOCATE( lim(npart_tmp) )
-  lim(0)= 0
-  itr= 1
-  DO a= 1, npart_tmp - 1, 1
-    IF( sorted_pos(1,a) /= sorted_pos(1,a + 1) )THEN
-      lim(itr)= a
-      CALL indexx( lim(itr)-lim(itr-1), pos( 2, lim(itr-1)+1:lim(itr) ), &
-                   xy_sort(lim(itr-1)+1:lim(itr)) )
-      xy_sort(lim(itr-1)+1:lim(itr))= xy_sort(lim(itr-1)+1:lim(itr)) + lim(itr-1)
-      itr= itr + 1
-    ENDIF
-  ENDDO
-  DO a= 1, npart_tmp, 1
-    sorted_pos(1,a)= pos(1,xy_sort(a))
-    sorted_pos(2,a)= pos(2,xy_sort(a))
-    sorted_pos(3,a)= pos(3,xy_sort(a))
-  ENDDO
-  PRINT *, "After sorting y"
-  PRINT *, sorted_pos(:,1)
-  PRINT *, sorted_pos(:,npart_tmp)
-  PRINT *
+  !ALLOCATE( lim(npart_tmp) )
+  !lim(0)= 0
+  !itr= 1
+  !DO a= 1, npart_tmp - 1, 1
+  !  IF( sorted_pos(1,a) /= sorted_pos(1,a + 1) )THEN
+  !    lim(itr)= a
+  !    CALL indexx( lim(itr)-lim(itr-1), pos( 2, lim(itr-1)+1:lim(itr) ), &
+  !                 xy_sort(lim(itr-1)+1:lim(itr)) )
+  !    xy_sort(lim(itr-1)+1:lim(itr))= xy_sort(lim(itr-1)+1:lim(itr)) + lim(itr-1)
+  !    itr= itr + 1
+  !  ENDIF
+  !ENDDO
+  !!PRINT *, x_sort
+  !DO a= 1, npart_tmp, 1
+  !  sorted_pos(1,a)= sorted_pos(1,xy_sort(a))
+  !  sorted_pos(2,a)= sorted_pos(2,xy_sort(a))
+  !  sorted_pos(3,a)= sorted_pos(3,xy_sort(a))
+  !ENDDO
+  !
+  !DO a= 1, npart_tmp, 1
+  !  WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+  !    a, &
+  !    sorted_pos( 1, a ), &
+  !    sorted_pos( 2, a ), &
+  !    sorted_pos( 3, a )
+  !ENDDO
+  !
+  !!DO a= 1, itr - 1, 1
+  !!  DO itr2= 1, lim(itr)-lim(itr-1), 1
+  !!    sorted_pos(1,itr2)= pos(1,xy_sort(itr2))
+  !!  ENDDO
+  !!ENDDO
+  !PRINT *, "After sorting y"
+  !PRINT *, sorted_pos(:,1)
+  !PRINT *, sorted_pos(:,npart_tmp)
+  !PRINT *
 
   ! Sort along z
-  lim(0)= 0
-  itr= 1
-  DO a= 1, npart_tmp - 1, 1
-    IF( sorted_pos(2,a) /= sorted_pos(2,a + 1) )THEN
-      lim(itr)= a
-      CALL indexx( lim(itr)-lim(itr-1), pos( 3, lim(itr-1)+1:lim(itr) ), &
-                   xyz_sort(lim(itr-1)+1:lim(itr)) )
-      xyz_sort(lim(itr-1)+1:lim(itr))= xyz_sort(lim(itr-1)+1:lim(itr)) + lim(itr-1)
-      itr= itr + 1
-    ENDIF
-  ENDDO
-  DO a= 1, npart_tmp, 1
-    sorted_pos(1,a)= pos(1,xyz_sort(a))
-    sorted_pos(2,a)= pos(2,xyz_sort(a))
-    sorted_pos(3,a)= pos(3,xyz_sort(a))
-  ENDDO
-  PRINT *, "After sorting z"
-  PRINT *, sorted_pos(:,1)
-  PRINT *, sorted_pos(:,npart_tmp)
-  PRINT *
+  !lim(0)= 0
+  !itr= 1
+  !DO a= 1, npart_tmp - 1, 1
+  !  IF( sorted_pos(2,a) /= sorted_pos(2,a + 1) )THEN
+  !    lim(itr)= a
+  !    CALL indexx( lim(itr)-lim(itr-1), pos( 3, lim(itr-1)+1:lim(itr) ), &
+  !                 xyz_sort(lim(itr-1)+1:lim(itr)) )
+  !    xyz_sort(lim(itr-1)+1:lim(itr))= xyz_sort(lim(itr-1)+1:lim(itr)) + lim(itr-1)
+  !    itr= itr + 1
+  !  ENDIF
+  !ENDDO
+  !DO a= 1, npart_tmp, 1
+  !  sorted_pos(1,a)= pos(1,xyz_sort(a))
+  !  sorted_pos(2,a)= pos(2,xyz_sort(a))
+  !  sorted_pos(3,a)= pos(3,xyz_sort(a))
+  !ENDDO
+  !PRINT *, "After sorting z"
+  !PRINT *, sorted_pos(:,1)
+  !PRINT *, sorted_pos(:,npart_tmp)
+  !PRINT *
+  !
+  !PRINT *, "End of sorting algorithm"
+  !PRINT *
 
-  PRINT *, "End of sorting algorithm"
-  PRINT *
+  CLOSE( UNIT= 2 )
 
   STOP
 
