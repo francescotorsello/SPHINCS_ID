@@ -30,7 +30,7 @@ PROGRAM proto_apm
   USE set_h,          ONLY: exact_nei_tree_update
   USE analyze,        ONLY: COM
   USE matrix,         ONLY: determinant_4x4_matrix
-  USE constants,      ONLY: Msun_geo, km2m, g2kg, amu, pi, half
+  USE constants,      ONLY: MSun, Msun_geo, km2m, g2kg, amu, pi, half
   USE NR,             ONLY: indexx
 
   IMPLICIT NONE
@@ -38,14 +38,15 @@ PROGRAM proto_apm
   INTEGER, PARAMETER:: unit_id  = 23
   INTEGER, PARAMETER:: max_npart= 5D+6
   INTEGER:: npart_tmp, tmp, ios, itr, a, nout, nus, mus, npart_eq, &
-            npart_ghost_shell, npart_ghost, r, th, phi, npart1
+            npart_ghost_shell, npart_ghost, npart_all, r, th, phi, npart1
   INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort, xy_sort, xyz_sort, lim
 
   DOUBLE PRECISION:: com_x, com_y, com_z, com_d, det, sq_g, Theta_a, &
                      nu_corr, max_nu, min_nu, smaller_radius, larger_radius, &
                      dr, rad, col, col_tmp, alpha, phase_th, rand_num, &
                      center, long, xtemp, ytemp, ztemp, radius_z, rel_sign, &
-                     phase_phi, h_max
+                     phase_phi, h_max, h_av, dNstar, art_pr_max, err_N_max , &
+                     err_N_min, err_N_mean, nu_all, mass_star
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -55,6 +56,7 @@ PROGRAM proto_apm
                      specific_energy, &
                      pressure, &
                      v_euler_x, v_euler_y, v_euler_z
+  DOUBLE PRECISION, DIMENSION(3):: pos_tmp
   DOUBLE PRECISION:: g4(0:3,0:3)
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
@@ -80,7 +82,12 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_star1
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sorted_pos
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
 
   LOGICAL:: exist
 
@@ -375,7 +382,7 @@ PROGRAM proto_apm
   larger_radius = ABS( center - MAXVAL( pos_star1( 1, : ), DIM= 1 ) )
   radius_z= ABS( MAXVAL( pos_star1( 3, : ), DIM= 1 ) )
   dr= ( larger_radius - smaller_radius )/5.0D0
-  npart_eq= 500
+  npart_eq= 50
   alpha= 2*pi/DBLE(npart_eq)
   !npart_ghost_shell= ( npart_eq**2 )/2
   itr= 1
@@ -389,27 +396,32 @@ PROGRAM proto_apm
   ! Find the maximum of the smoothing lencth of the particles whose distance form thecenter is higher than radius_z, and place particles outside of that
 
   h_max= 0.0D0
+  h_av = 0.0D0
+  itr  = 0
   DO a= 1, npart_tmp, 1
     IF( SQRT( pos( 1, a )**2.0D0 + pos( 2, a )**2.0D0 + pos( 3, a )**2.0D0 ) &
-        > 0.95D0*radius_z )THEN
+        > 0.99D0*radius_z )THEN
+      itr= itr + 1
       IF( h0(a) > h_max )THEN
         h_max= h0(a)
       ENDIF
+      h_av= h_av + h0(a)
     ENDIF
   ENDDO
+  h_av= h_av/itr
 
   PRINT *, " * Placing ghost particles..."
 
-  DO r= 1, 30, 1
+  DO r= 1, 10, 1
 
-    rad= radius_z + h_max + DBLE( r )*dr
+    rad= radius_z + h_av + DBLE( r )*dr
 
     DO th= 1, npart_eq/2, 1
 
       CALL RANDOM_NUMBER( phase_phi )
       phase_phi= phase_phi*alpha
 
-      col= ( th - 1 )*alpha !+ r*alpha/20.0D0
+      col= ( th - 1 )*alpha + alpha/2.0D0
       CALL RANDOM_NUMBER( phase_th )
       CALL RANDOM_NUMBER( rand_num )
       IF( rand_num >= half ) rel_sign=  1
@@ -449,7 +461,7 @@ PROGRAM proto_apm
   npart_ghost= itr
   ghost_pos = ghost_pos( :, 1:npart_ghost )
 
-  PRINT *, " * Ghost particles placed."
+  PRINT *, " * ", npart_ghost, " ghost particles placed."
   PRINT *
 
   PRINT *, " * Printing ghost particles to file..."
@@ -486,6 +498,12 @@ PROGRAM proto_apm
 
   PRINT *, " * Printed."
 
+  npart_all= npart + npart_ghost
+  ALLOCATE( all_pos( 3, npart_all ) )
+
+  all_pos( :, 1:npart_tmp )          = pos
+  all_pos( :, npart_tmp+1:npart_all )= ghost_pos
+
   !-------------------------------!
   !-- Needed calls from SPHINCS --!
   !-------------------------------!
@@ -498,12 +516,12 @@ PROGRAM proto_apm
   !-------------------------------!
   CALL read_options
 
-  npart= npart_tmp
+  npart= npart_all
   CALL allocate_SPH_memory
 
-  pos_u                = pos                  ( :, 1:npart_tmp )
-  vel_u                = v                    ( :, 1:npart_tmp )
-  h                    = h0                   ( 1:npart_tmp )
+  pos_u( :, 1:npart_tmp )= all_pos( :, 1:npart_tmp )
+  vel_u( :, 1:npart_tmp )= v  ( :, 1:npart_tmp )
+  h    ( 1:npart_tmp )   = h0 ( 1:npart_tmp )
 
   CALL allocate_RCB_tree_memory_3D(npart)
   iorig(1:npart)= (/ (a,a=1,npart) /)
@@ -519,45 +537,67 @@ PROGRAM proto_apm
   !-- At this point I can apply the artificial pressure method (can I?) --!
   !-----------------------------------------------------------------------!
 
+  PRINT *, " * Setting up ID for APM iteration..."
+  PRINT *
+
   ! In setup_tov_star distribute_and_stretch is called
   ! In distribute_and_stretch, setup_uniform_sphere is called
   ! setup_uniform_sphere first place positions in a cubic lattice or a
   ! close-packed lattice, then assigns the smoothing length
+  ! The ghost particles are included already here
 
-  CALL assign_h(npart_tmp,npart,pos_u,h0,h)
+  PRINT *, "assign h..."
+  PRINT *
+  CALL assign_h( npart_all, &
+                 npart, &
+                 all_pos, h0, &
+                 h )
   PRINT *, "npart_tmp=", npart_tmp
+  PRINT *, "npart_all=", npart_all
   PRINT *, "npart=", npart
   PRINT *
 
   !STOP
-
+  PRINT *, "density loop..."
+  PRINT *
   ! measure SPH-particle number density
-  ALLOCATE( Nstar_real(max_npart) )
+  ALLOCATE( Nstar_real(npart) )
   nu= 1.0D0
-  CALL density_loop(npart,pos_u,nu,h,nstar_real)
+  CALL density_loop( npart, all_pos, &    ! input
+                     nu, h, nstar_real )  ! output
+
+  ALLOCATE( nstar_p( npart ) )
+  ! The following stands for get_profile_density
+  nstar_p( 1:npart_tmp )      = nstar0( 1:npart_tmp )
+  nstar_p( npart_tmp+1:npart )= 0.0D0
 
   ! In setup_uniform_sphere, get_profile_density is called
   ! this computed nstar, but we have it from the ID file
 
   ! assign nu's
-  nu= nstar0/nstar_real
+  nu= nstar_p/nstar_real
 
   ! In setup_uniform_sphere, reset_COM is called
   !CALL reset_COM(npart,nu,pos_u)
-  CALL COM(npart,pos_u,nu,com_x,com_y,com_z,com_d)
-  DO a=1,npart
-     pos_u(1,a)= pos_u(1,a) - com_x
-     pos_u(2,a)= pos_u(2,a) - com_y
-     pos_u(3,a)= pos_u(3,a) - com_z
-  ENDDO
+!  CALL COM( npart, all_pos, nu, &       ! input
+!            com_x, com_y, com_z, com_d) ! output
+!
+!  DO a= 1, npart, 1
+!     all_pos(1,a)= all_pos(1,a) - com_x
+!     all_pos(2,a)= all_pos(2,a) - com_y
+!     all_pos(3,a)= all_pos(3,a) - com_z
+!  ENDDO
 
   ! at this point, the particle should be mirrored (?)
-  ! TODO: distinguish the two stars and write the prototype to handle one star
-  !       at the time
 
+  PRINT *, "density loop..."
+  PRINT *
   ! Re-estimate nu
-  CALL density_loop(npart,pos_u,nu,h,Nstar)
+  CALL density_loop( npart, all_pos, &    ! input
+                     nu, h, nstar_real )  ! output
 
+  PRINT *, "import ID..."
+  PRINT *
   ! Here you should get the LORENE density on the new positions
   ALLOCATE( lapse          (npart) )
   ALLOCATE( shift_x        (npart) )
@@ -576,7 +616,10 @@ PROGRAM proto_apm
   ALLOCATE( v_euler_x      (npart) )
   ALLOCATE( v_euler_y      (npart) )
   ALLOCATE( v_euler_z      (npart) )
-  CALL binary% import_id( npart, pos_u(1,:), pos_u(1,:), pos_u(1,:), &
+
+  CALL binary% import_id( npart, all_pos(1,1:npart_tmp), &
+                          all_pos(2,1:npart_tmp), &
+                          all_pos(3,1:npart_tmp), &
                           lapse, shift_x, shift_y, shift_z, &
                           g_xx, g_xy, g_xz, &
                           g_yy, g_yz, g_zz, &
@@ -585,9 +628,13 @@ PROGRAM proto_apm
                           specific_energy, &
                           pressure, &
                           v_euler_x, v_euler_y, v_euler_z )
+
   max_nu= 0.0D0
   min_nu= 1.0D60
-  DO a=1,npart
+
+  ALLOCATE( art_pr( npart_all ) )
+
+  DO a= 1, npart_tmp, 1
 
     ! Coordinate velocity of the fluid [c]
     vel_u(0,itr)= 1.0D0
@@ -649,10 +696,10 @@ PROGRAM proto_apm
     Theta_a= 1.0D0/SQRT(-Theta_a)
     Theta(a)= Theta_a
 
-    nstar_real(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+    nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
 
     ! Recompute nu taking into account the nstar just computed from th star
-    ! Maybe this step s not needed, and the artificial pressurecan be
+    ! Maybe this step s not needed, and the artificial pressure can be
     ! computed at this point
 !    nu_corr= 1.0D0 + (nstar_real(a) - nstar(a))/nstar_real(a)
 !    nu_corr= MAX(nu_corr,0.2D0)
@@ -681,7 +728,283 @@ PROGRAM proto_apm
     !   ENDIF
     !ENDIF
 
+    !dNstar= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+    !art_pr(a) = MAX( 1.0D0 + dNstar, 0.1D0 )
+    !art_pr_max= MAX( art_pr_max, art_pr(a) )
+    !err_N_max = MAX( err_N_max, ABS(dNstar) )
+    !err_N_min = MIN( err_N_min, ABS(dNstar) )
+    !err_N_mean= err_N_mean + ABS(dNstar)
+
   ENDDO
+
+  ! Here finishes setup_uniform_sphere
+
+  PRINT *, " * ID set up for the APM iteration."
+  PRINT *
+
+  !-------------------------------------------------!
+  !-- iterate to (close to) uniform particle mass --!
+  !-------------------------------------------------!
+
+  PRINT *, " * Performing APM iteration..."
+  PRINT *
+
+  ALLOCATE( freeze( npart_all ) )
+
+  mass_star= binary% get_mass1()
+  nu_all= (mass_star/DBLE(npart_tmp))*MSun/amu
+  nu= nu_all
+  DO a= 1, npart_all
+    IF( a < npart_tmp )THEN
+      freeze(a)= 0
+    ELSE
+      freeze(a)= 1
+    ENDIF
+  ENDDO
+
+  PRINT *, "iterating..."
+
+  apm_iteration: DO itr= 1, 1, 1
+
+    CALL assign_h( npart_all, &
+                   npart, &
+                   all_pos, h0, &
+                   h )
+
+    CALL density_loop( npart, all_pos, &    ! input
+                       nu, h, nstar_real )  ! output
+
+    CALL binary% import_id( npart, all_pos(1,1:npart_tmp), &
+                            all_pos(2,1:npart_tmp), &
+                            all_pos(3,1:npart_tmp), &
+                            lapse, shift_x, shift_y, shift_z, &
+                            g_xx, g_xy, g_xz, &
+                            g_yy, g_yz, g_zz, &
+                            baryon_density, &
+                            energy_density, &
+                            specific_energy, &
+                            pressure, &
+                            v_euler_x, v_euler_y, v_euler_z )
+
+    DO a= 1, npart_tmp, 1
+
+      ! Coordinate velocity of the fluid [c]
+      vel_u(0,itr)= 1.0D0
+      vel_u(1,itr)= lapse(a)*v_euler_x(a)- shift_x(a)
+      vel_u(2,itr)= lapse(a)*v_euler_y(a)- shift_y(a)
+      vel_u(3,itr)= lapse(a)*v_euler_z(a)- shift_z(a)
+
+      !
+      !-- Metric as matrix for easy manipulation
+      !
+      g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
+             + 2*g_xy(a)*shift_x(a)*shift_y(a) &
+             + 2*g_xz(a)*shift_x(a)*shift_z(a) &
+             + g_yy(a)*shift_y(a)*shift_y(a) &
+             + 2*g_yz(a)*shift_y(a)*shift_z(a) &
+             + g_zz(a)*shift_z(a)*shift_z(a)
+      g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+      g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+      g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+
+      g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+      g4(1,1)= g_xx(a)
+      g4(1,2)= g_xy(a)
+      g4(1,3)= g_xz(a)
+
+      g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+      g4(2,1)= g_xy(a)
+      g4(2,2)= g_yy(a)
+      g4(2,3)= g_yz(a)
+
+      g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+      g4(3,1)= g_xz(a)
+      g4(3,2)= g_yz(a)
+      g4(3,3)= g_zz(a)
+
+      ! sqrt(-det(g4))
+      CALL determinant_4x4_matrix(g4,det)
+      IF( ABS(det) < 1D-10 )THEN
+          PRINT *, "The determinant of the spacetime metric is " &
+                   // "effectively 0 at particle ", a
+          STOP
+      ELSEIF( det > 0 )THEN
+          PRINT *, "The determinant of the spacetime metric is " &
+                   // "positive at particle ", a
+          STOP
+      ENDIF
+      sq_g= SQRT(-det)
+
+      !
+      !-- Generalized Lorentz factor
+      !
+      Theta_a= 0.D0
+      DO nus=0,3
+        DO mus=0,3
+          Theta_a= Theta_a &
+                   + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+        ENDDO
+      ENDDO
+      Theta_a= 1.0D0/SQRT(-Theta_a)
+      Theta(a)= Theta_a
+
+      nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+
+    ENDDO
+
+    art_pr_max= 0.0D0
+    err_N_max=  0.0D0
+    err_N_min=  1.D30
+    err_N_mean= 0.0D0
+    DO a= 1, npart_tmp, 1
+
+      dNstar= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+      art_pr(a) = MAX( 1.0D0 + dNstar, 0.1D0 )
+      art_pr_max= MAX( art_pr_max, art_pr(a) )
+      err_N_max = MAX( err_N_max, ABS(dNstar) )
+      err_N_min = MIN( err_N_min, ABS(dNstar) )
+      err_N_mean= err_N_mean + ABS(dNstar)
+
+    ENDDO
+
+    nstar_p( npart_tmp+1:npart_all )= 0.0D0
+    art_pr ( npart_tmp+1:npart_all )= art_pr_max
+
+    CALL position_correction( npart_all, &
+                              all_pos, h, nu_all, art_pr, nstar_real, &
+                              correction_pos )
+
+    DO a=1,npart
+      pos_tmp= all_pos(:,a) + correction_pos(:,a)
+      IF( binary% import_mass_density( &
+                              all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
+          .AND. &
+          binary% import_mass_density( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0 &
+      )THEN
+        all_pos(:,a)= pos_tmp
+      ENDIF
+    ENDDO
+
+  ENDDO apm_iteration
+
+  PRINT *, "Iteration completed."
+  PRINT *
+
+  ! Now get rid of the ghost particles
+  pos= all_pos( :, 1:npart_tmp )
+  npart= npart_tmp
+  PRINT *, npart
+
+  ! Rescale to the center of mass
+  ! TODO: this rescales the COM to (0,0,0), but this is wrong for the binary
+  !       commented for now
+!  CALL COM( npart, pos, nu, &       ! input
+!            com_x, com_y, com_z, com_d) ! output
+!
+!  DO a= 1, npart, 1
+!     all_pos(1,a)= all_pos(1,a) - com_x
+!     all_pos(2,a)= all_pos(2,a) - com_y
+!     all_pos(3,a)= all_pos(3,a) - com_z
+!  ENDDO
+
+  !-------------------------------------------------------------------!
+  !-- now assign baryon number to match profile as good as possible --!
+  !-------------------------------------------------------------------!
+
+  PRINT *, " * Assign baryon number..."
+  PRINT *
+
+  CALL assign_h( npart_all, &
+                 npart, &
+                 pos, h0, &
+                 h )
+
+  CALL density_loop( npart, pos, &    ! input
+                     nu, h, nstar_real )  ! output
+
+  CALL binary% import_id( npart, pos(1,1:npart), &
+                          pos(2,1:npart), &
+                          pos(3,1:npart), &
+                          lapse, shift_x, shift_y, shift_z, &
+                          g_xx, g_xy, g_xz, &
+                          g_yy, g_yz, g_zz, &
+                          baryon_density, &
+                          energy_density, &
+                          specific_energy, &
+                          pressure, &
+                          v_euler_x, v_euler_y, v_euler_z )
+
+  DO a= 1, npart, 1
+
+    ! Coordinate velocity of the fluid [c]
+    vel_u(0,itr)= 1.0D0
+    vel_u(1,itr)= lapse(a)*v_euler_x(a)- shift_x(a)
+    vel_u(2,itr)= lapse(a)*v_euler_y(a)- shift_y(a)
+    vel_u(3,itr)= lapse(a)*v_euler_z(a)- shift_z(a)
+
+    !
+    !-- Metric as matrix for easy manipulation
+    !
+    g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
+           + 2*g_xy(a)*shift_x(a)*shift_y(a) &
+           + 2*g_xz(a)*shift_x(a)*shift_z(a) &
+           + g_yy(a)*shift_y(a)*shift_y(a) &
+           + 2*g_yz(a)*shift_y(a)*shift_z(a) &
+           + g_zz(a)*shift_z(a)*shift_z(a)
+    g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+    g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+    g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+
+    g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+    g4(1,1)= g_xx(a)
+    g4(1,2)= g_xy(a)
+    g4(1,3)= g_xz(a)
+
+    g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+    g4(2,1)= g_xy(a)
+    g4(2,2)= g_yy(a)
+    g4(2,3)= g_yz(a)
+
+    g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+    g4(3,1)= g_xz(a)
+    g4(3,2)= g_yz(a)
+    g4(3,3)= g_zz(a)
+
+    ! sqrt(-det(g4))
+    CALL determinant_4x4_matrix(g4,det)
+    IF( ABS(det) < 1D-10 )THEN
+        PRINT *, "The determinant of the spacetime metric is " &
+                 // "effectively 0 at particle ", a
+        STOP
+    ELSEIF( det > 0 )THEN
+        PRINT *, "The determinant of the spacetime metric is " &
+                 // "positive at particle ", a
+        STOP
+    ENDIF
+    sq_g= SQRT(-det)
+
+    !
+    !-- Generalized Lorentz factor
+    !
+    Theta_a= 0.D0
+    DO nus=0,3
+      DO mus=0,3
+        Theta_a= Theta_a &
+                 + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+      ENDDO
+    ENDDO
+    Theta_a= 1.0D0/SQRT(-Theta_a)
+    Theta(a)= Theta_a
+
+    nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+
+  ENDDO
+
+  nu= nstar_p/nstar_real
+
+  PRINT *, "Baryon number assigned."
+  PRINT *
 
 !  PRINT *, "max_nu=", max_nu
 !  PRINT *, "min_nu=", min_nu

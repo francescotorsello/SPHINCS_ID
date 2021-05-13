@@ -553,6 +553,8 @@ SUBMODULE (bns_id) bns_methods
         STOP
       ENDIF
 
+      PRINT *, "** Importing ID on particles..."
+
       import_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from SPHINCS units (Msun_geo)
@@ -626,7 +628,7 @@ SUBMODULE (bns_id) bns_methods
       ENDDO import_id_loop
       WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *, "** Subroutine import_id_particles executed."
       PRINT *
 
     ENDIF
