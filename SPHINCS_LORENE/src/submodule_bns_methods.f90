@@ -1725,7 +1725,7 @@ SUBMODULE (bns_id) bns_methods
     !                                               *
     ! Return 1 if the energy density is nonpositive,*
     ! or if the specific energy is nonpositive,     *
-    ! or if the pressure i nonpositive              *
+    ! or if the pressure is nonpositive             *
     ! at the specified point                        *
     !                                               *
     ! FT 12.03.2021                                 *

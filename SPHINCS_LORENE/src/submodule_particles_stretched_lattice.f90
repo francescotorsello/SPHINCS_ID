@@ -53,7 +53,8 @@ SUBMODULE (particles_id) stretched_lattice
                        proper_volume_test, npart_shell_kept, &
                        rand_num, rand_num2, delta_r, shell_thickness, &
                        upper_bound_tmp, lower_bound_tmp, col_tmp, &
-                       surface_density, density_step, n_shells_tmp
+                       surface_density, density_step, n_shells_tmp, &
+                       gxx_tmp, baryon_density_tmp, gamma_euler_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile, &
                                                     particle_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
@@ -493,6 +494,37 @@ SUBMODULE (particles_id) stretched_lattice
     ALLOCATE( alpha( n_shells ) )
     ALLOCATE( colatitude_pos( n_shells ) )
     ALLOCATE( pos_shells( n_shells ) )
+
+  CALL bns_obj% import_id( &
+           center, 0.0D0, 0.0D0, &
+           gxx_tmp, &
+           baryon_density_tmp, &
+           gamma_euler_tmp )
+
+    npart_shelleq(1)= CEILING( SQRT(DBLE(2*shell_masses(1)/m_p)) )
+    PRINT *, npart_shelleq(1), ( npart_shelleq(1)**2 )/2
+    IF( MOD( npart_shelleq(1), 2 ) /= 0 )THEN
+      npart_shelleq(1)= npart_shelleq(1) + 1
+    ENDIF
+    IF( MOD( npart_shelleq(1)/2, 2 ) /= 0 )THEN
+      npart_shelleq(1)= 2*( npart_shelleq(1)/2 + 1 )
+    ENDIF
+    PRINT *, ( npart_shelleq(1)**2 )/2
+    PRINT *, ( 4.0D0/3.0D0*pi*shell_radii(1)**3.0D0 )* &
+             gxx_tmp*SQRT(gxx_tmp)* &
+             baryon_density_tmp*gamma_euler_tmp/(shell_masses(1)/(( npart_shelleq(1)**2 )/2))
+    PRINT *
+    PRINT *, shell_masses(1), ( 4.0D0/3.0D0*pi*shell_radii(1)**3.0D0 )* &
+             gxx_tmp*SQRT(gxx_tmp)* &
+             baryon_density_tmp*gamma_euler_tmp, (( 4.0D0/3.0D0*pi*shell_radii(1)**3.0D0 )* &
+             gxx_tmp*SQRT(gxx_tmp)* &
+             baryon_density_tmp*gamma_euler_tmp)/shell_masses(1)
+    PRINT *
+    PRINT *, gxx_tmp*SQRT(gxx_tmp)*baryon_density_tmp*gamma_euler_tmp, &
+             shell_masses(1)/( 4.0D0/3.0D0*pi*shell_radii(1)**3.0D0 ), &
+             gxx_tmp*SQRT(gxx_tmp)*baryon_density_tmp*gamma_euler_tmp/ &
+             (shell_masses(1)/( 4.0D0/3.0D0*pi*shell_radii(1)**3.0D0 ))
+    STOP
 
     npart_shelleq= 0
     DO r= 1, n_shells, 1
