@@ -42,8 +42,8 @@ PROGRAM proto_apm
 
   INTEGER, PARAMETER:: unit_id   = 23
   INTEGER, PARAMETER:: max_npart = 5D+6
-  INTEGER, PARAMETER:: apm_max_it= 100
-  INTEGER, PARAMETER:: max_inc   = 30
+  INTEGER, PARAMETER:: apm_max_it= 50
+  INTEGER, PARAMETER:: max_inc   = 20
   INTEGER, PARAMETER:: nn_des    = 301
   INTEGER:: npart_real, tmp, ios, itr, itr2, a, nout, nus, mus, npart_eq, &
             npart_ghost_shell, npart_ghost, npart_all, r, th, phi, npart1, &
@@ -55,7 +55,8 @@ PROGRAM proto_apm
                      dr, rad, col, col_tmp, alpha, phase_th, rand_num, &
                      center, long, xtemp, ytemp, ztemp, radius_z, rel_sign, &
                      phase_phi, h_max, h_av, dNstar, art_pr_max, err_N_max , &
-                     err_N_min, err_N_mean, nu_all, mass_star, err_mean_old
+                     err_N_min, err_N_mean, nu_all, mass_star, err_mean_old, &
+                     rad_x, rad_y, rad_z, radius_y, nstar_real_err, nstar_p_err
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -66,6 +67,7 @@ PROGRAM proto_apm
                      pressure, &
                      v_euler_x, v_euler_y, v_euler_z
   DOUBLE PRECISION, DIMENSION(3):: pos_tmp
+  DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
   DOUBLE PRECISION:: g4(0:3,0:3)
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
@@ -144,7 +146,7 @@ PROGRAM proto_apm
   ALLOCATE( nstar0(max_npart) )
   ALLOCATE( h0(max_npart) )
 
-  finalnamefile= "lorene-bns-id-particles-lattices-2.dat"
+  finalnamefile= "lorene-bns-id-particles-shells.dat"
 
   INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -374,25 +376,26 @@ PROGRAM proto_apm
   ALLOCATE( pos_star1( 3, npart_real ) )
   ghost_pos= 0.0D0
   pos_star1= 0.0D0
-  itr= 1
+  itr= 0
   DO a= 1, npart_real, 1
     IF( pos( 1, a ) < 0.0D0 )THEN
+      itr= itr + 1
       pos_star1( 1, itr )= pos( 1 ,a )
       pos_star1( 2, itr )= pos( 2 ,a )
       pos_star1( 3, itr )= pos( 3 ,a )
-      itr= itr + 1
     ENDIF
   ENDDO
-  npart1= itr
-  pos_star1 = pos_star1( :, 1:npart1 - 1 )
+  npart_real= itr
+  pos_star1 = pos_star1( :, 1:npart_real )
   !smaller_radius= binary% get_radius1_x_opp()
   !larger_radius = binary% get_radius1_x_comp()
   center        = binary% get_center1_x()
   smaller_radius= ABS( MINVAL( pos_star1( 1, : ), DIM= 1 ) - center )
   larger_radius = ABS( center - MAXVAL( pos_star1( 1, : ), DIM= 1 ) )
+  radius_y= ABS( MAXVAL( pos_star1( 2, : ), DIM= 1 ) )
   radius_z= ABS( MAXVAL( pos_star1( 3, : ), DIM= 1 ) )
-  dr= ( larger_radius - smaller_radius )/5.0D0
-  npart_eq= 110
+  dr= ( larger_radius - smaller_radius )/15.0D0
+  npart_eq= 150
   alpha= 2*pi/DBLE(npart_eq)
   !npart_ghost_shell= ( npart_eq**2 )/2
   itr= 1
@@ -409,7 +412,7 @@ PROGRAM proto_apm
   h_av = 0.0D0
   itr  = 0
   DO a= 1, npart_real, 1
-    IF( SQRT( pos( 1, a )**2.0D0 + pos( 2, a )**2.0D0 + pos( 3, a )**2.0D0 ) &
+    IF( SQRT( pos_star1( 1, a )**2.0D0 + pos_star1( 2, a )**2.0D0 + pos_star1( 3, a )**2.0D0 ) &
         > 0.99D0*radius_z )THEN
       itr= itr + 1
       IF( h0(a) > h_max )THEN
@@ -423,9 +426,11 @@ PROGRAM proto_apm
   PRINT *, " * Placing ghost particles..."
 
   itr= 1
-  DO r= 1, 11, 1
+  DO r= 1, 20, 1
 
-    rad= 0*radius_z + smaller_radius + DBLE( r )*dr + h_av
+    rad_x= smaller_radius + 2*DBLE( r - 1 )*dr !+ h_av
+    rad_y= radius_y + 2*DBLE( r - 1 )*dr !+ h_av
+    rad_z= radius_z + 2*DBLE( r - 1 )*dr !+ h_av
 
     DO th= 1, npart_eq/2, 1
 
@@ -433,27 +438,27 @@ PROGRAM proto_apm
       phase_phi= phase_phi*alpha
 
       col= ( th - 1 )*alpha + alpha/2.0D0
-      CALL RANDOM_NUMBER( phase_th )
-      CALL RANDOM_NUMBER( rand_num )
-      IF( rand_num >= half ) rel_sign=  1
-      IF( rand_num < half )  rel_sign= -1
-
-      col_tmp= col*( 1.0D0 + rel_sign*0.05D0*phase_th )
-
-      IF( col_tmp < pi .AND. col_tmp > 0 )THEN
-
-        col= col_tmp
-
-      ENDIF
+      !CALL RANDOM_NUMBER( phase_th )
+      !CALL RANDOM_NUMBER( rand_num )
+      !IF( rand_num >= half ) rel_sign=  1
+      !IF( rand_num < half )  rel_sign= -1
+      !
+      !col_tmp= col*( 1.0D0 + rel_sign*0.05D0*phase_th )
+      !
+      !IF( col_tmp < pi .AND. col_tmp > 0 )THEN
+      !
+      !  col= col_tmp
+      !
+      !ENDIF
 
 
       DO phi= 1, npart_eq, 1
 
         long= phase_phi + phi*alpha
 
-        xtemp= center + rad*COS(long)*SIN(col)
-        ytemp= rad*SIN(long)*SIN(col)
-        ztemp= rad*COS(col)
+        xtemp= center + rad_x*COS(long)*SIN(col)
+        ytemp= rad_y*SIN(long)*SIN(col)
+        ztemp= rad_z*COS(col)
 
         IF( binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
         )THEN
@@ -514,7 +519,7 @@ PROGRAM proto_apm
   npart_all= npart_real + npart_ghost
   ALLOCATE( all_pos( 3, npart_all ) )
 
-  all_pos( :, 1:npart_real )          = pos
+  all_pos( :, 1:npart_real )          = pos_star1
   all_pos( :, npart_real+1:npart_all )= ghost_pos
 
   PRINT *, "npart_real=", npart_real
@@ -897,7 +902,13 @@ PROGRAM proto_apm
       dNstar= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
       art_pr(a) = MAX( 1.0D0 + dNstar, 0.1D0 )
       art_pr_max= MAX( art_pr_max, art_pr(a) )
-      err_N_max = MAX( err_N_max, ABS(dNstar) )
+      IF( ABS(dNstar) > err_N_max )THEN
+        err_N_max     = ABS(dNstar)
+        pos_maxerr    = all_pos(:,a)
+        nstar_real_err= nstar_real(a)
+        nstar_p_err   = nstar_p(a)
+      ENDIF
+      !err_N_max = MAX( err_N_max, ABS(dNstar) )
       err_N_min = MIN( err_N_min, ABS(dNstar) )
       err_N_mean= err_N_mean + ABS(dNstar)
 
@@ -941,11 +952,14 @@ PROGRAM proto_apm
     itr2= 0
     DO a= 1, npart_all, 1
       pos_tmp= all_pos(:,a) + correction_pos(:,a)
-      IF( binary% import_mass_density( &
-                              all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
-          .AND. &
+      IF( &!binary% import_mass_density( &
+          !                    all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
+          !.AND. &
           binary% import_mass_density( &
                               pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0 &
+          .AND. &
+          binary% is_hydro_negative( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) == 0 &
       )THEN
         itr2= itr2 + 1
         !IF( binary% is_hydro_negative( &
@@ -966,11 +980,22 @@ PROGRAM proto_apm
     err_N_mean= err_N_mean/DBLE(itr2)
     PRINT *, "itr2= ", itr2
 
-    PRINT*
-    PRINT*,'...done with position update #: ', itr
-    PRINT*,'...err_N_max=  ',err_N_max
-    PRINT*,'...err_N_min=  ',err_N_min
-    PRINT*,'...err_N_mean= ',err_N_mean
+    PRINT *
+    PRINT *, '...done with position update #: ', itr
+    PRINT *
+    PRINT *, '...err_N_max=  ', err_N_max
+    PRINT *, "   at pos=", pos_maxerr
+    PRINT *, "   with r/r_x_opp= ", SQRT( &
+                                  ( ABS(pos_maxerr(1)) - ABS(center) )**2.0D0 &
+                                        + pos_maxerr(2)**2.0D0 &
+                                        + pos_maxerr(3)**2.0D0 ) &
+                                  /smaller_radius
+    PRINT *
+    PRINT *, "   nstar_real_err= ", nstar_real_err
+    PRINT *, "   nstar_p_err   = ", nstar_p_err
+    PRINT *
+    PRINT *, '...err_N_min=  ', err_N_min
+    PRINT *, '...err_N_mean= ', err_N_mean
 
     ! exit condition
     IF( err_N_mean > err_mean_old ) n_inc= n_inc + 1
