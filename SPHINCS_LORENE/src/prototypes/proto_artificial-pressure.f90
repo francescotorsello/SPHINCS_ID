@@ -43,7 +43,8 @@ PROGRAM proto_apm
   INTEGER, PARAMETER:: unit_id   = 23
   INTEGER, PARAMETER:: max_npart = 5D+6
   INTEGER, PARAMETER:: apm_max_it= 100
-  INTEGER, PARAMETER:: max_inc= 20
+  INTEGER, PARAMETER:: max_inc   = 30
+  INTEGER, PARAMETER:: nn_des    = 301
   INTEGER:: npart_real, tmp, ios, itr, itr2, a, nout, nus, mus, npart_eq, &
             npart_ghost_shell, npart_ghost, npart_all, r, th, phi, npart1, &
             n_inc
@@ -96,6 +97,7 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
 
   LOGICAL:: exist
 
@@ -142,7 +144,7 @@ PROGRAM proto_apm
   ALLOCATE( nstar0(max_npart) )
   ALLOCATE( h0(max_npart) )
 
-  finalnamefile= "lorene-bns-id-particles-shells.dat"
+  finalnamefile= "lorene-bns-id-particles-lattices-2.dat"
 
   INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -390,7 +392,7 @@ PROGRAM proto_apm
   larger_radius = ABS( center - MAXVAL( pos_star1( 1, : ), DIM= 1 ) )
   radius_z= ABS( MAXVAL( pos_star1( 3, : ), DIM= 1 ) )
   dr= ( larger_radius - smaller_radius )/5.0D0
-  npart_eq= 100
+  npart_eq= 110
   alpha= 2*pi/DBLE(npart_eq)
   !npart_ghost_shell= ( npart_eq**2 )/2
   itr= 1
@@ -421,9 +423,9 @@ PROGRAM proto_apm
   PRINT *, " * Placing ghost particles..."
 
   itr= 1
-  DO r= 1, 10, 1
+  DO r= 1, 11, 1
 
-    rad= radius_z + h_av + DBLE( r )*dr
+    rad= 0*radius_z + smaller_radius + DBLE( r )*dr + h_av
 
     DO th= 1, npart_eq/2, 1
 
@@ -574,8 +576,8 @@ PROGRAM proto_apm
 
   PRINT *, "assign h..."
   PRINT *
-  CALL assign_h( npart_all, &
-                 npart, &
+  CALL assign_h( nn_des, &
+                 npart_all, &
                  all_pos, h0, &
                  h )
   PRINT *, "npart_real=", npart_real
@@ -589,13 +591,13 @@ PROGRAM proto_apm
   ! measure SPH-particle number density
   ALLOCATE( nstar_real(npart) )
   nu= 1.0D0
-  CALL density_loop( npart, all_pos, &    ! input
+  CALL density_loop( npart_all, all_pos, &    ! input
                      nu, h, nstar_real )  ! output
 
-  ALLOCATE( nstar_p( npart ) )
+  ALLOCATE( nstar_p( npart_all ) )
   ! The following stands for get_profile_density
   nstar_p( 1:npart_real )      = nstar0( 1:npart_real )
-  nstar_p( npart_real+1:npart )= 0.0D0
+  nstar_p( npart_real+1:npart_all )= 0.0D0
 
   ! In setup_uniform_sphere, get_profile_density is called
   ! this computed nstar, but we have it from the ID file
@@ -619,7 +621,7 @@ PROGRAM proto_apm
   PRINT *, "density loop..."
   PRINT *
   ! Re-estimate nu
-  CALL density_loop( npart, all_pos, &    ! input
+  CALL density_loop( npart_all, all_pos, &    ! input
                      nu, h, nstar_real )  ! output
 
   PRINT *, "import ID..."
@@ -663,10 +665,10 @@ PROGRAM proto_apm
   DO a= 1, npart_real, 1
 
     ! Coordinate velocity of the fluid [c]
-    vel_u(0,itr)= 1.0D0
-    vel_u(1,itr)= lapse(a)*v_euler_x(a)- shift_x(a)
-    vel_u(2,itr)= lapse(a)*v_euler_y(a)- shift_y(a)
-    vel_u(3,itr)= lapse(a)*v_euler_z(a)- shift_z(a)
+    vel_u(0,a)= 1.0D0
+    vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+    vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+    vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
     !
     !-- Metric as matrix for easy manipulation
@@ -777,9 +779,10 @@ PROGRAM proto_apm
 
   ALLOCATE( freeze( npart_all ) )
   ALLOCATE( correction_pos( 3, npart_all ) )
+  ALLOCATE( h_guess( npart_all ) )
 
   mass_star= binary% get_mass1()
-  nu_all= (mass_star/DBLE(npart_real))*MSun/amu
+  nu_all= (mass_star/DBLE(npart_real))*umass/amu
   nu= nu_all
   DO a= 1, npart_all
     IF( a < npart_real )THEN
@@ -796,14 +799,15 @@ PROGRAM proto_apm
 
     PRINT *, "assign h..."
 
-    CALL assign_h( npart_all, &
-                   npart, &
-                   all_pos, h0, &
+    h_guess= h
+    CALL assign_h( nn_des, &
+                   npart_all, &
+                   all_pos, h_guess, &
                    h )
 
     PRINT *, "density_loop..."
 
-    CALL density_loop( npart, all_pos, &    ! input
+    CALL density_loop( npart_all, all_pos, &    ! input
                        nu, h, nstar_real )  ! output
 
     CALL binary% import_id( npart_real, all_pos(1,1:npart_real), &
@@ -821,10 +825,10 @@ PROGRAM proto_apm
     DO a= 1, npart_real, 1
 
       ! Coordinate velocity of the fluid [c]
-      vel_u(0,itr)= 1.0D0
-      vel_u(1,itr)= lapse(a)*v_euler_x(a)- shift_x(a)
-      vel_u(2,itr)= lapse(a)*v_euler_y(a)- shift_y(a)
-      vel_u(3,itr)= lapse(a)*v_euler_z(a)- shift_z(a)
+      vel_u(0,a)= 1.0D0
+      vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+      vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+      vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
       !
       !-- Metric as matrix for easy manipulation
@@ -897,6 +901,23 @@ PROGRAM proto_apm
       err_N_min = MIN( err_N_min, ABS(dNstar) )
       err_N_mean= err_N_mean + ABS(dNstar)
 
+      IF( ISNAN(nstar_real(a)) )THEN
+        PRINT *, "nstar_real is a NaN at particle ", a
+        PRINT *, "nstar_p is ", nstar_p(a)
+        STOP
+      ENDIF
+      IF( ISNAN(nstar_p(a)) )THEN
+        PRINT *, "nstar_p is a NaN at particle ", a
+        PRINT *, "nstar_real is ", nstar_real(a)
+        STOP
+      ENDIF
+      IF( ISNAN(dNstar) )THEN
+        PRINT *, "dNstar is a NaN at particle ", a
+        PRINT *, "nstar_real is ", nstar_real(a)
+        PRINT *, "nstar_p is ", nstar_p(a)
+        STOP
+      ENDIF
+
     ENDDO
 
     nstar_p( npart_real+1:npart_all )= 0.0D0
@@ -904,12 +925,12 @@ PROGRAM proto_apm
 
     PRINT *, "Before calling position_correction"
 
-    !PRINT *, npart_all
-    !PRINT *, SIZE(all_pos(1,:))
-    !PRINT *, SIZE(h)
-    !PRINT *, SIZE(art_pr)
-    !PRINT *, SIZE(nstar_real)
-    !PRINT *, SIZE(correction_pos(1,:))
+    PRINT *, npart_all
+    PRINT *, SIZE(all_pos(1,:))
+    PRINT *, SIZE(h)
+    PRINT *, SIZE(art_pr)
+    PRINT *, SIZE(nstar_real)
+    PRINT *, SIZE(correction_pos(1,:))
 
     CALL position_correction( npart_all, &
                               all_pos, h, nu_all, art_pr, nstar_real, &
@@ -918,8 +939,8 @@ PROGRAM proto_apm
     PRINT *, "After calling position_correction"
 
     itr2= 0
-    DO a= 1, npart_all
-      !pos_tmp= all_pos(:,a) + correction_pos(:,a)
+    DO a= 1, npart_all, 1
+      pos_tmp= all_pos(:,a) + correction_pos(:,a)
       IF( binary% import_mass_density( &
                               all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
           .AND. &
@@ -927,30 +948,33 @@ PROGRAM proto_apm
                               pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0 &
       )THEN
         itr2= itr2 + 1
-        IF( binary% is_hydro_negative( &
-                                all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
-            .OR. &
-            binary% is_hydro_negative( &
-                                pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0 &
-        )THEN
-          all_pos(:,a)= all_pos(:,a) + correction_pos(:,a)
-        ELSE
-          all_pos(:,a)= all_pos(:,a) + correction_pos(:,a)/2.0D0
-        ENDIF
+        !IF( binary% is_hydro_negative( &
+        !                        all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
+        !    .OR. &
+        !    binary% is_hydro_negative( &
+        !                        pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0 &
+        !)THEN
+          all_pos(:,a)= pos_tmp
+        !ELSE
+        !  all_pos(:,a)= all_pos(:,a) + correction_pos(:,a)/2.0D0
+        !ENDIF
       ENDIF
     ENDDO
 
+    !PRINT *, "err_N_mean= ", err_N_mean
+    !npart_real= itr2
     err_N_mean= err_N_mean/DBLE(itr2)
+    PRINT *, "itr2= ", itr2
 
     PRINT*
-    PRINT*,'...done with position update #: ',itr
+    PRINT*,'...done with position update #: ', itr
     PRINT*,'...err_N_max=  ',err_N_max
     PRINT*,'...err_N_min=  ',err_N_min
     PRINT*,'...err_N_mean= ',err_N_mean
 
     ! exit condition
-    IF( err_N_mean > err_mean_old )n_inc= n_inc + 1
-    IF( n_inc == max_inc )EXIT
+    IF( err_N_mean > err_mean_old ) n_inc= n_inc + 1
+    IF( n_inc == max_inc ) EXIT
     err_mean_old= err_N_mean
 
   ENDDO apm_iteration
@@ -1045,10 +1069,10 @@ PROGRAM proto_apm
   DO a= 1, npart, 1
 
     ! Coordinate velocity of the fluid [c]
-    vel_u(0,itr)= 1.0D0
-    vel_u(1,itr)= lapse(a)*v_euler_x(a)- shift_x(a)
-    vel_u(2,itr)= lapse(a)*v_euler_y(a)- shift_y(a)
-    vel_u(3,itr)= lapse(a)*v_euler_z(a)- shift_z(a)
+    vel_u(0,a)= 1.0D0
+    vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+    vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+    vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
     !
     !-- Metric as matrix for easy manipulation
