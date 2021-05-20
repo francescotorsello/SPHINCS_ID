@@ -524,7 +524,7 @@ SUBMODULE (particles_id) stretched_lattice
              shell_masses(1)/( 4.0D0/3.0D0*pi*shell_radii(1)**3.0D0 ), &
              gxx_tmp*SQRT(gxx_tmp)*baryon_density_tmp*gamma_euler_tmp/ &
              (shell_masses(1)/( 4.0D0/3.0D0*pi*shell_radii(1)**3.0D0 ))
-    STOP
+    !STOP
 
     npart_shelleq= 0
     DO r= 1, n_shells, 1
@@ -902,10 +902,10 @@ SUBMODULE (particles_id) stretched_lattice
       DO itr2= 1, npart_shelleq( r )/4, 1
 
         colatitude_pos( r )% colatitudes( itr2 )= &
-                      !ACOS( 2.0D0*itr2/(npart_shelleq( r )/2 + 1.0D0 )&
-                      !    - 1.0D0 )
-                      !alpha( r )*1.0D0/2.0D0 + ( itr2 - 1 )*alpha( r )
-          ACOS( 2.0D0*( 1.0D0 - COS( pi/3.0D0*( 1.0D0/2.0D0 + DBLE(itr2 - 1)*DBLE(npart_shelleq( r )/4 + 1.0D0 -(1.0D0/2.0D0)-(1.0D0/2.0D0) )/DBLE(npart_shelleq( r )/4 - 1.0D0 ) ) &
+        !              ACOS( 2.0D0*itr2/(npart_shelleq( r )/2 + 1.0D0 )&
+        !                  - 1.0D0 )
+          !            alpha( r )*1.0D0/2.0D0 + ( itr2 - 1 )*alpha( r )
+          ACOS( 2.0D0*( 1.0D0 - COS( pi/3.0D0*( 2.0D0/3.0D0 + DBLE(itr2 - 1)*DBLE(npart_shelleq( r )/4 + 1.0D0 -(2.0D0/3.0D0)-(2.0D0/3.0D0) )/DBLE(npart_shelleq( r )/4 - 1.0D0 ) ) &
                            /DBLE(npart_shelleq( r )/4 + 1.0D0 ) ) ) &
               - 1.0D0 )
               !5.0D0/12.0D0

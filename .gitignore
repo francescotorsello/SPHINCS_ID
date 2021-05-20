@@ -10,6 +10,7 @@ SPHINCS_LORENE/**/hydro*.dat
 SPHINCS_LORENE/**/press*.dat
 SPHINCS_LORENE/**/specific*.dat
 SPHINCS_LORENE/**/sorted*.dat
+SPHINCS_LORENE/**/mpa1*.dat
 SPHINCS_LORENE/**/ghost*.dat
 SPHINCS_LORENE/**/proto*.out
 SPHINCS_LORENE/**/apm*.dat

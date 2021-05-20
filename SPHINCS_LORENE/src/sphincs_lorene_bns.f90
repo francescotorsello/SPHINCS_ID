@@ -17,6 +17,7 @@ PROGRAM sphincs_lorene_bns
   !*****************************************************
 
   USE sphincs_lorene
+  USE constants, ONLY: lorene2hydrobase, c_light2
 
   IMPLICIT NONE
 
@@ -89,6 +90,13 @@ PROGRAM sphincs_lorene_bns
   !---------------------------!
   !--  End of declarations  --!
   !---------------------------!
+
+  PRINT *, lorene2hydrobase
+  PRINT *, 2.45191D-4/lorene2hydrobase/1000
+  PRINT *, LOG10(2.45191D-4/lorene2hydrobase/1000)
+  PRINT *
+  PRINT *, LOG10(10**(34.616)/c_light2)
+  STOP
 
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time

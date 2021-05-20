@@ -42,12 +42,12 @@ PROGRAM proto_apm
 
   INTEGER, PARAMETER:: unit_id   = 23
   INTEGER, PARAMETER:: max_npart = 5D+6
-  INTEGER, PARAMETER:: apm_max_it= 50
+  INTEGER, PARAMETER:: apm_max_it= 900
   INTEGER, PARAMETER:: max_inc   = 20
   INTEGER, PARAMETER:: nn_des    = 301
   INTEGER:: npart_real, tmp, ios, itr, itr2, a, nout, nus, mus, npart_eq, &
             npart_ghost_shell, npart_ghost, npart_all, r, th, phi, npart1, &
-            n_inc
+            n_inc, nx, ny, nz, i, j, k
   INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort, xy_sort, xyz_sort, lim
 
   DOUBLE PRECISION:: com_x, com_y, com_z, com_d, det, sq_g, Theta_a, &
@@ -56,7 +56,9 @@ PROGRAM proto_apm
                      center, long, xtemp, ytemp, ztemp, radius_z, rel_sign, &
                      phase_phi, h_max, h_av, dNstar, art_pr_max, err_N_max , &
                      err_N_min, err_N_mean, nu_all, mass_star, err_mean_old, &
-                     rad_x, rad_y, rad_z, radius_y, nstar_real_err, nstar_p_err
+                     rad_x, rad_y, rad_z, radius_y, nstar_real_err, &
+                     nstar_p_err, dx, dy, dz, xmin, xmax, ymin, ymax, &
+                     zmin, zmax, eps, x_ell, y_ell, z_ell
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -395,7 +397,7 @@ PROGRAM proto_apm
   radius_y= ABS( MAXVAL( pos_star1( 2, : ), DIM= 1 ) )
   radius_z= ABS( MAXVAL( pos_star1( 3, : ), DIM= 1 ) )
   dr= ( larger_radius - smaller_radius )/15.0D0
-  npart_eq= 150
+  npart_eq= 110
   alpha= 2*pi/DBLE(npart_eq)
   !npart_ghost_shell= ( npart_eq**2 )/2
   itr= 1
@@ -423,58 +425,139 @@ PROGRAM proto_apm
   ENDDO
   h_av= h_av/itr
 
-  PRINT *, " * Placing ghost particles..."
+!  PRINT *, " * Placing ghost particles..."
+!
+!  itr= 1
+!  DO r= 1, 30, 1
+!
+!    rad_x= smaller_radius + 2*DBLE( r - 1 )*dr !+ h_av
+!    rad_y= radius_y + 2*DBLE( r - 1 )*dr !+ h_av
+!    rad_z= radius_z + 2*DBLE( r - 1 )*dr !+ h_av
+!
+!    DO th= 1, npart_eq/2, 1
+!
+!      CALL RANDOM_NUMBER( phase_phi )
+!      phase_phi= phase_phi*alpha
+!
+!      col= ( th - 1 )*alpha + alpha/2.0D0
+!      CALL RANDOM_NUMBER( phase_th )
+!      CALL RANDOM_NUMBER( rand_num )
+!      IF( rand_num >= half ) rel_sign=  1
+!      IF( rand_num < half )  rel_sign= -1
+!
+!      col_tmp= col*( 1.0D0 + rel_sign*0.05D0*phase_th )
+!
+!      IF( col_tmp < pi .AND. col_tmp > 0 )THEN
+!
+!        col= col_tmp
+!
+!      ENDIF
+!
+!
+!      DO phi= 1, npart_eq, 1
+!
+!        long= phase_phi + phi*alpha
+!
+!        xtemp= center + rad_x*COS(long)*SIN(col)
+!        ytemp= rad_y*SIN(long)*SIN(col)
+!        ztemp= rad_z*COS(col)
+!
+!        IF( binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
+!        )THEN
+!
+!          ghost_pos( 1, itr )= xtemp
+!          ghost_pos( 2, itr )= ytemp
+!          ghost_pos( 3, itr )= ztemp
+!
+!          itr= itr + 1
+!
+!        ENDIF
+!
+!      ENDDO
+!    ENDDO
+!  ENDDO
+!  npart_ghost= itr - 1
+!  IF( npart_ghost == 0 )THEN
+!    PRINT *, "No ghost particles were placed. Stopping.."
+!    PRINT *
+!    STOP
+!  ENDIF
+!  ghost_pos = ghost_pos( :, 1:npart_ghost )
 
-  itr= 1
-  DO r= 1, 20, 1
+  PRINT *, "Placing ghost particles on a lattice..."
 
-    rad_x= smaller_radius + 2*DBLE( r - 1 )*dr !+ h_av
-    rad_y= radius_y + 2*DBLE( r - 1 )*dr !+ h_av
-    rad_z= radius_z + 2*DBLE( r - 1 )*dr !+ h_av
+  nx= 150
+  ny= 150
+  nz= 150
+  eps= 5.0D-1
+  xmin= center - larger_radius*( 1.0D0 + eps )
+  xmax= center + larger_radius*( 1.0D0 + eps )
+  ymin= - radius_y*( 1.0D0 + eps )
+  ymax=   radius_y*( 1.0D0 + eps )
+  zmin= - radius_z*( 1.0D0 + eps )
+  zmax=   radius_z*( 1.0D0 + eps )
+  dx= ABS( xmax - xmin )/DBLE( nx )
+  dy= ABS( ymax - ymin )/DBLE( ny )
+  dz= ABS( zmax - zmin )/DBLE( nz )
 
-    DO th= 1, npart_eq/2, 1
+  rad_x= larger_radius + h_av/10.0D0
+  rad_y= radius_y + h_av/10.0D0
+  rad_z= radius_z + h_av/10.0D0
 
-      CALL RANDOM_NUMBER( phase_phi )
-      phase_phi= phase_phi*alpha
+  PRINT *, "rad_x= ", rad_x
+  PRINT *, "rad_y= ", rad_y
+  PRINT *, "rad_z= ", rad_z
 
-      col= ( th - 1 )*alpha + alpha/2.0D0
-      !CALL RANDOM_NUMBER( phase_th )
-      !CALL RANDOM_NUMBER( rand_num )
-      !IF( rand_num >= half ) rel_sign=  1
-      !IF( rand_num < half )  rel_sign= -1
-      !
-      !col_tmp= col*( 1.0D0 + rel_sign*0.05D0*phase_th )
-      !
-      !IF( col_tmp < pi .AND. col_tmp > 0 )THEN
-      !
-      !  col= col_tmp
-      !
-      !ENDIF
+  itr= 0
+  DO k= 1, nz, 1
 
+    ztemp= zmin + dz/2 + ( k - 1 )*dz
 
-      DO phi= 1, npart_eq, 1
+    DO j= 1, ny, 1
 
-        long= phase_phi + phi*alpha
+      ytemp= ymin + dy/2 + ( j - 1 )*dy
 
-        xtemp= center + rad_x*COS(long)*SIN(col)
-        ytemp= rad_y*SIN(long)*SIN(col)
-        ztemp= rad_z*COS(col)
+      DO i= 1, nx, 1
+
+        xtemp= xmin + dx/2 + ( i - 1 )*dx
+
+        x_ell= center + rad_x*COS(ATAN( ytemp/xtemp )) &
+               *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 + ztemp**2.0D0 )))
+
+        y_ell= rad_y*SIN(ATAN( ytemp/xtemp )) &
+               *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 + ztemp**2.0D0 )))
+
+        z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 + ztemp**2.0D0 ))
 
         IF( binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
+            .AND. &
+            !SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 + ztemp**2.0D0 ) <= &
+            !      larger_radius*( 1.0D0 + eps ) &
+            SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 + ztemp**2.0D0 ) <= &
+            1.1D0*SQRT( ( x_ell - center )**2.0D0 + 0.25*y_ell**2.0D0 + z_ell**2.0D0 ) &
+            .AND. &
+            !SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 + ztemp**2.0D0 ) >= &
+            !      larger_radius + h_av/10.0D0 &
+            SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 + ztemp**2.0D0 ) >= &
+            SQRT( ( x_ell - center )**2.0D0 + 0.25*y_ell**2.0D0 + z_ell**2.0D0 ) &
         )THEN
 
+          itr= itr + 1
           ghost_pos( 1, itr )= xtemp
           ghost_pos( 2, itr )= ytemp
           ghost_pos( 3, itr )= ztemp
 
-          itr= itr + 1
-
         ENDIF
 
-      ENDDO
+       ENDDO
     ENDDO
   ENDDO
-  npart_ghost= itr - 1
+  npart_ghost= itr
+  IF( npart_ghost == 0 )THEN
+    PRINT *, "No ghost particles were placed. Stopping.."
+    PRINT *
+    STOP
+  ENDIF
   ghost_pos = ghost_pos( :, 1:npart_ghost )
 
   PRINT *, " * ", npart_ghost, " ghost particles placed."
@@ -504,9 +587,17 @@ PROGRAM proto_apm
     STOP
   ENDIF
 
+  DO a= 1, npart_real, 1
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      1, a, &
+      pos( 1, a ), &
+      pos( 2, a ), &
+      pos( 3, a )
+  ENDDO
+
   DO a= 1, npart_ghost, 1
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      a, &
+      2, a, &
       ghost_pos( 1, a ), &
       ghost_pos( 2, a ), &
       ghost_pos( 3, a )
@@ -594,7 +685,7 @@ PROGRAM proto_apm
   PRINT *, "density loop..."
   PRINT *
   ! measure SPH-particle number density
-  ALLOCATE( nstar_real(npart) )
+  ALLOCATE( nstar_real(npart_all) )
   nu= 1.0D0
   CALL density_loop( npart_all, all_pos, &    ! input
                      nu, h, nstar_real )  ! output
@@ -950,7 +1041,7 @@ PROGRAM proto_apm
     PRINT *, "After calling position_correction"
 
     itr2= 0
-    DO a= 1, npart_all, 1
+    DO a= 1, npart_real, 1
       pos_tmp= all_pos(:,a) + correction_pos(:,a)
       IF( &!binary% import_mass_density( &
           !                    all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
@@ -977,9 +1068,9 @@ PROGRAM proto_apm
 
     !PRINT *, "err_N_mean= ", err_N_mean
     !npart_real= itr2
-    err_N_mean= err_N_mean/DBLE(itr2)
+    err_N_mean= err_N_mean/DBLE(npart_real)
     PRINT *, "itr2= ", itr2
-
+    PRINT *, "npart_real= ", npart_real
     PRINT *
     PRINT *, '...done with position update #: ', itr
     PRINT *
@@ -999,7 +1090,7 @@ PROGRAM proto_apm
 
     ! exit condition
     IF( err_N_mean > err_mean_old ) n_inc= n_inc + 1
-    IF( n_inc == max_inc ) EXIT
+    !IF( n_inc == max_inc ) EXIT
     err_mean_old= err_N_mean
 
   ENDDO apm_iteration
