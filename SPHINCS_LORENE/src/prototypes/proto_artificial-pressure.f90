@@ -30,13 +30,16 @@ PROGRAM proto_apm
   USE set_h,               ONLY: exact_nei_tree_update
   USE analyze,             ONLY: COM
   USE matrix,              ONLY: determinant_4x4_matrix
-  USE constants,           ONLY: MSun, Msun_geo, km2m, g2kg, amu, pi, half
+  USE constants,           ONLY: MSun, Msun_geo, km2m, g2kg, amu, pi, half, m0c2
   USE NR,                  ONLY: indexx
   USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                  deallocate_metric_on_particles
   USE gradient,            ONLY: allocate_gradient, deallocate_gradient
   USE alive_flag,          ONLY: alive
   USE set_h,               ONLY: exact_nei_tree_update
+
+  USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos
+  USE sphincs_sph,         ONLY: density
 
   IMPLICIT NONE
 
@@ -62,7 +65,8 @@ PROGRAM proto_apm
                      err_N_min, err_N_mean, nu_all, mass_star, err_mean_old, &
                      rad_x, rad_y, rad_z, radius_y, nstar_real_err, &
                      nstar_p_err, dx, dy, dz, xmin, xmax, ymin, ymax, &
-                     zmin, zmax, eps, x_ell, y_ell, z_ell, delta, dN, dN_av
+                     zmin, zmax, eps, x_ell, y_ell, z_ell, delta, dN, dN_av, &
+                     dN_max
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -106,8 +110,10 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_int
 
   LOGICAL:: exist
+  LOGICAL, PARAMETER:: post_correction= .FALSE.
 
   CHARACTER( LEN= : ), ALLOCATABLE:: namefile
   CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
@@ -152,7 +158,7 @@ PROGRAM proto_apm
   ALLOCATE( nstar0(max_npart) )
   ALLOCATE( h0(max_npart) )
 
-  finalnamefile= "lorene-bns-id-particles-lattices-200k.dat"
+  finalnamefile= "lorene-bns-id-particles-shells.dat"
 
   INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -1235,7 +1241,8 @@ PROGRAM proto_apm
 
     ALLOCATE( h_guess( npart_real ) )
 
-    h_guess= h0
+    h_guess(1:npart_real)= h0
+    !h_guess(npart_real+1:npart_all)= h0(1)
 
     ALLOCATE( nstar_real( npart_real ) )
     ALLOCATE( nstar_p( npart_real ) )
@@ -1260,6 +1267,14 @@ PROGRAM proto_apm
 
   ENDIF
 
+  !----------------------------------------------------!
+  !-- at this point, pos contains the real particles --!
+  !----------------------------------------------------!
+
+  !----------------------------!
+  !-- enforce centre of mass --!
+  !----------------------------!
+
   ! Rescale to the center of mass
   ! TODO: this rescales the COM to (0,0,0), but this is wrong for the binary
   !       commented for now
@@ -1281,21 +1296,27 @@ PROGRAM proto_apm
 
   PRINT *, "1"
 
+  h      = h(1:npart_real)
+  h_guess= h_guess(1:npart_real)
+  nu     = nu(1:npart_real)
+
   CALL assign_h( nn_des, &           !
                  npart_real, &        !
-                 pos(:,1:npart_real), h_guess(1:npart_real), & ! Input
-                 h(1:npart_real) )                 ! Output
+                 pos, h_guess, & ! Input
+                 h )                 ! Output
 
   PRINT *, "2"
 
   ! Measure SPH particle number density
   nu= 1.0D0
-  CALL density_loop( npart_real, pos(:,1:npart_real), &    ! input
-                     nu(1:npart_real), h(1:npart_real), nstar_real(1:npart_real) )      ! output
+  CALL density_loop( npart_real, pos, &    ! input
+                     nu, h, nstar_real )      ! output
 
   PRINT *, "3"
 
-  CALL binary% import_id( npart_real, pos(1,1:npart_real), pos(2,1:npart_real), pos(3,1:npart_real), &
+  CALL binary% import_id( npart_real, pos(1,:), &
+                          pos(2,:), &
+                          pos(3,:), &
                           lapse, shift_x, shift_y, shift_z, &
                           g_xx, g_xy, g_xz, &
                           g_yy, g_yz, g_zz, &
@@ -1379,14 +1400,19 @@ PROGRAM proto_apm
 
   ENDDO
 
+  !nstar_p( npart_real+1:npart_all )= 0.0D0
+
   PRINT *, "4"
 
   PRINT *, "npart_real= ", npart_real
   PRINT *, "SIZE(nu)= ", SIZE(nu)
   PRINT *
 
-  nu(1:npart_real)= nstar_p(1:npart_real)/nstar_real(1:npart_real)
-  nu= nu(1:npart_real)
+  !nu(1:npart_real)= nstar_p(1:npart_real)/nstar_real(1:npart_real)
+  !nu= nu(1:npart_real)
+
+  !nu(1:npart_all)= nstar_p(1:npart_all)/nstar_real(1:npart_all)
+  nu= nstar_p/nstar_real
 
   PRINT *, "SIZE(nu)= ", SIZE(nu)
   PRINT *
@@ -1399,105 +1425,119 @@ PROGRAM proto_apm
   PRINT *, "max_nu/min_nu=", MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
   PRINT *
 
-  STOP
+  !STOP
 
-  ! just a few iterations to NOT get the nu-ratio too large
-  mass_it: DO itr= 1, m_max_it, 1
+  IF( post_correction )THEN
 
-     ! measure density
-     CALL density_loop( npart_real, pos, &    ! input
-                  nu(1:npart_real), h(1:npart_real), nstar_real(1:npart_real) )      ! output
+    ! just a few iterations to NOT get the nu-ratio too large
+    mass_it: DO itr= 1, m_max_it, 1
+
+       ! measure density
+       CALL density_loop( npart_real, pos, &    ! input
+                          nu, h, nstar_real )      ! output
 
 
-     CALL binary% import_id( npart_real, pos(1,:), pos(2,:), pos(3,:), &
-                             lapse, shift_x, shift_y, shift_z, &
-                             g_xx, g_xy, g_xz, &
-                             g_yy, g_yz, g_zz, &
-                             baryon_density, &
-                             energy_density, &
-                             specific_energy, &
-                             pressure, &
-                             v_euler_x, v_euler_y, v_euler_z )
+       CALL binary% import_id( npart_real, pos(1,:), &
+                               pos(2,:), &
+                               pos(3,:), &
+                               lapse, shift_x, shift_y, shift_z, &
+                               g_xx, g_xy, g_xz, &
+                               g_yy, g_yz, g_zz, &
+                               baryon_density, &
+                               energy_density, &
+                               specific_energy, &
+                               pressure, &
+                               v_euler_x, v_euler_y, v_euler_z )
 
-     DO a= 1, npart_real, 1
+       DO a= 1, npart_real, 1
 
-       ! Coordinate velocity of the fluid [c]
-       vel_u(0,a)= 1.0D0
-       vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-       vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-       vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+         ! Coordinate velocity of the fluid [c]
+         vel_u(0,a)= 1.0D0
+         vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+         vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+         vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
-       !
-       !-- Metric as matrix for easy manipulation
-       !
-       g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
-              + 2*g_xy(a)*shift_x(a)*shift_y(a) &
-              + 2*g_xz(a)*shift_x(a)*shift_z(a) &
-              + g_yy(a)*shift_y(a)*shift_y(a) &
-              + 2*g_yz(a)*shift_y(a)*shift_z(a) &
-              + g_zz(a)*shift_z(a)*shift_z(a)
-       g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-       g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-       g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+         !
+         !-- Metric as matrix for easy manipulation
+         !
+         g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
+                + 2*g_xy(a)*shift_x(a)*shift_y(a) &
+                + 2*g_xz(a)*shift_x(a)*shift_z(a) &
+                + g_yy(a)*shift_y(a)*shift_y(a) &
+                + 2*g_yz(a)*shift_y(a)*shift_z(a) &
+                + g_zz(a)*shift_z(a)*shift_z(a)
+         g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+         g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+         g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
 
-       g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-       g4(1,1)= g_xx(a)
-       g4(1,2)= g_xy(a)
-       g4(1,3)= g_xz(a)
+         g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+         g4(1,1)= g_xx(a)
+         g4(1,2)= g_xy(a)
+         g4(1,3)= g_xz(a)
 
-       g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-       g4(2,1)= g_xy(a)
-       g4(2,2)= g_yy(a)
-       g4(2,3)= g_yz(a)
+         g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+         g4(2,1)= g_xy(a)
+         g4(2,2)= g_yy(a)
+         g4(2,3)= g_yz(a)
 
-       g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-       g4(3,1)= g_xz(a)
-       g4(3,2)= g_yz(a)
-       g4(3,3)= g_zz(a)
+         g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+         g4(3,1)= g_xz(a)
+         g4(3,2)= g_yz(a)
+         g4(3,3)= g_zz(a)
 
-       ! sqrt(-det(g4))
-       CALL determinant_4x4_matrix(g4,det)
-       IF( ABS(det) < 1D-10 )THEN
-           PRINT *, "The determinant of the spacetime metric is " &
-                    // "effectively 0 at particle ", a
-           STOP
-       ELSEIF( det > 0 )THEN
-           PRINT *, "The determinant of the spacetime metric is " &
-                    // "positive at particle ", a
-           STOP
-       ENDIF
-       sq_g= SQRT(-det)
+         ! sqrt(-det(g4))
+         CALL determinant_4x4_matrix(g4,det)
+         IF( ABS(det) < 1D-10 )THEN
+             PRINT *, "The determinant of the spacetime metric is " &
+                      // "effectively 0 at particle ", a
+             STOP
+         ELSEIF( det > 0 )THEN
+             PRINT *, "The determinant of the spacetime metric is " &
+                      // "positive at particle ", a
+             STOP
+         ENDIF
+         sq_g= SQRT(-det)
 
-       !
-       !-- Generalized Lorentz factor
-       !
-       Theta_a= 0.D0
-       DO nus=0,3
-         DO mus=0,3
-           Theta_a= Theta_a &
-                    + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+         !
+         !-- Generalized Lorentz factor
+         !
+         Theta_a= 0.D0
+         DO nus=0,3
+           DO mus=0,3
+             Theta_a= Theta_a &
+                      + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+           ENDDO
          ENDDO
+         Theta_a= 1.0D0/SQRT(-Theta_a)
+         Theta(a)= Theta_a
+
+         nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+
        ENDDO
-       Theta_a= 1.0D0/SQRT(-Theta_a)
-       Theta(a)= Theta_a
 
-       nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+       !nstar_p( npart_real+1:npart_all )= 0.0D0
 
-     ENDDO
+       ! get RELATIVE nu's right
+       dN_av= 0.0D0
+       DO a= 1, npart_real, 1
+          dN=    (nstar_real(a)-nstar_p(a))/nstar_p(a)
+          nu(a)= nu(a)*(1.0D0 - dN)
+          dN_av= dN_av + dN
+       ENDDO
+       dN_av= dN_av/DBLE(npart_real)
 
-     ! get RELATIVE nu's right
-     dN_av= 0.0D0
-     DO a= 1, npart_real, 1
-        dN=    (nstar_real(a)-nstar_p(a))/nstar_p(a)
-        nu(a)= nu(a)*(1.0D0 - dN)
-        dN_av= dN_av + dN
-     ENDDO
-     dN_av= dN_av/DBLE(npart_real)
+       PRINT *, "max_nu=", MAXVAL( nu, DIM= 1 )
+       PRINT *, "min_nu=", MINVAL( nu, DIM= 1 )
+       PRINT *, "max_nu/min_nu=", MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
+       PRINT *
 
-     ! exit condition
-     IF( dN_av < tol )EXIT
+       ! exit condition
+       IF( dN_av < tol )EXIT
 
-  ENDDO mass_it
+    ENDDO mass_it
+
+  ENDIF
+
 
   ! TODO: Enforce center of mass
   !       Mirror particles
@@ -1506,6 +1546,156 @@ PROGRAM proto_apm
   PRINT *, "min_nu=", MINVAL( nu, DIM= 1 )
   PRINT *, "max_nu/min_nu=", MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
   PRINT *
+
+  !-------------------!
+  !-- monitoring... --!
+  !-------------------!
+
+  ! measure density
+  CALL density_loop( npart_real, pos, &    ! input
+                     nu, h, nstar_real )      ! output
+
+
+  CALL binary% import_id( npart_real, pos(1,:), &
+                          pos(2,:), &
+                          pos(3,:), &
+                          lapse, shift_x, shift_y, shift_z, &
+                          g_xx, g_xy, g_xz, &
+                          g_yy, g_yz, g_zz, &
+                          baryon_density, &
+                          energy_density, &
+                          specific_energy, &
+                          pressure, &
+                          v_euler_x, v_euler_y, v_euler_z )
+
+  DO a= 1, npart_real, 1
+
+    ! Coordinate velocity of the fluid [c]
+    vel_u(0,a)= 1.0D0
+    vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+    vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+    vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+
+    !
+    !-- Metric as matrix for easy manipulation
+    !
+    g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
+           + 2*g_xy(a)*shift_x(a)*shift_y(a) &
+           + 2*g_xz(a)*shift_x(a)*shift_z(a) &
+           + g_yy(a)*shift_y(a)*shift_y(a) &
+           + 2*g_yz(a)*shift_y(a)*shift_z(a) &
+           + g_zz(a)*shift_z(a)*shift_z(a)
+    g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+    g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+    g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+
+    g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+    g4(1,1)= g_xx(a)
+    g4(1,2)= g_xy(a)
+    g4(1,3)= g_xz(a)
+
+    g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+    g4(2,1)= g_xy(a)
+    g4(2,2)= g_yy(a)
+    g4(2,3)= g_yz(a)
+
+    g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+    g4(3,1)= g_xz(a)
+    g4(3,2)= g_yz(a)
+    g4(3,3)= g_zz(a)
+
+    ! sqrt(-det(g4))
+    CALL determinant_4x4_matrix(g4,det)
+    IF( ABS(det) < 1D-10 )THEN
+        PRINT *, "The determinant of the spacetime metric is " &
+                 // "effectively 0 at particle ", a
+        STOP
+    ELSEIF( det > 0 )THEN
+        PRINT *, "The determinant of the spacetime metric is " &
+                 // "positive at particle ", a
+        STOP
+    ENDIF
+    sq_g= SQRT(-det)
+
+    !
+    !-- Generalized Lorentz factor
+    !
+    Theta_a= 0.D0
+    DO nus=0,3
+      DO mus=0,3
+        Theta_a= Theta_a &
+                 + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+      ENDDO
+    ENDDO
+    Theta_a= 1.0D0/SQRT(-Theta_a)
+    Theta(a)= Theta_a
+
+    nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+
+  ENDDO
+
+  !nstar_p( npart_real+1:npart_all )= 0.0D0
+
+  ! get RELATIVE nu's right
+  dN_av= 0.0D0
+      dN_max= 0.0D0
+  DO a= 1, npart_real, 1
+    dN=     ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+    dN_max= MAX(dN_max,dN)
+    dN_av=  dN_av + dN
+  ENDDO
+  dN_av= dN_av/DBLE(npart_real)
+  PRINT*,'...dN_max ',dN_max
+  PRINT*,'...dN_av  ',dN_av
+
+  ALLOCATE( nstar_int( npart_real ) )
+
+  CALL exact_nei_tree_update( nn_des, &           !
+                              npart_real, &        !
+                              pos, nu )
+
+  CALL density( npart_real, pos, nstar_int )
+
+PRINT *, "0"
+
+  finalnamefile= "densities.dat"
+
+  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+  IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+  ELSE
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  ENDIF
+  IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+             ". The error message is", err_msg
+    STOP
+  ENDIF
+
+PRINT *, "1"
+
+  nu= 1.0D0
+  CALL density_loop( npart_real, pos, &    ! input
+                     nu, h, nstar_real )      ! output
+
+  DO a= 1, npart_real, 1
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      a, &
+      pos( 1, a ), pos( 2, a ), pos( 3, a ), &
+      nstar_p( a ), &
+      nstar_int( a ), &
+      nstar_real( a ), &
+      nstar_real( a )*nstar_p( 1 )/nstar_real( 1 ), &
+      ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+  ENDDO
+
+  CLOSE( UNIT= 2 )
 
   ! Here setup_uniform_sphere ends
 
