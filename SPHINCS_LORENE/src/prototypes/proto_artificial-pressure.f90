@@ -51,7 +51,7 @@ PROGRAM proto_apm
   INTEGER, PARAMETER:: max_inc     = 50
   INTEGER, PARAMETER:: nn_des      = 301
   DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
-  DOUBLE PRECISION, PARAMETER:: iter_tol= 1.0D-3
+  DOUBLE PRECISION, PARAMETER:: iter_tol= 1.0D-2
   LOGICAL, PARAMETER:: run_apm     = .FALSE.
   LOGICAL, PARAMETER:: post_correction= .FALSE.
 
@@ -72,7 +72,7 @@ PROGRAM proto_apm
                      zmin, zmax, eps, x_ell, y_ell, z_ell, delta, dN, dN_av, &
                      dN_max, spec_ener, press, mass_dens, tmp3, tmp4, nu_tot, &
                      mass, mean_nu, variance_nu, stddev_nu, max_nu2, min_nu2, &
-                     nu_tmp, nu_ratio
+                     nu_tmp, nu_ratio, err_N_mean_min
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -965,6 +965,7 @@ PROGRAM proto_apm
     PRINT *, "iterating..."
 
     n_inc= 0
+    err_N_mean_min= HUGE(1.0D0)
     apm_iteration: DO itr= 1, apm_max_it, 1
 
       PRINT *, "assign h..."
@@ -1146,6 +1147,9 @@ PROGRAM proto_apm
       !PRINT *, "err_N_mean= ", err_N_mean
       !npart_real= itr2
       err_N_mean= err_N_mean/DBLE(npart_real)
+
+      err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
+
       !PRINT *, "itr2= ", itr2
       PRINT *, "npart_real= ", npart_real
       PRINT *
@@ -1164,6 +1168,7 @@ PROGRAM proto_apm
       PRINT *
       PRINT *, '...err_N_min=  ', err_N_min
       PRINT *, '...err_N_mean= ', err_N_mean
+      PRINT *, '...err_N_mean_min= ', err_N_mean_min
       PRINT *
 
       PRINT *, "max_nu=", MAXVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
@@ -1173,14 +1178,22 @@ PROGRAM proto_apm
 
       ! exit condition
       !IF( err_N_mean > err_mean_old ) n_inc= n_inc + 1
-      IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
-          .AND. &
-          err_N_max < 10.0D0 &
+      !IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
+      !    .AND. &
+      !    err_N_max < 10.0D0 &
+      !)THEN
+      !  n_inc= n_inc + 1
+      !  PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
+      !  PRINT *, "ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)= ", &
+      !           ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)
+      !ENDIF
+      IF( ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min) < iter_tol &
       )THEN
         n_inc= n_inc + 1
         PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
-        PRINT *, "ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)= ", &
-                 ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)
+        PRINT *, "ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min)= ", &
+                 ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min), " < ", &
+                 iter_tol
       ENDIF
       IF( n_inc == max_inc ) EXIT
       err_mean_old= err_N_mean

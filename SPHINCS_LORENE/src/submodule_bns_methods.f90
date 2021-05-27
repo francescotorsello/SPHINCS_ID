@@ -844,9 +844,12 @@ SUBMODULE (bns_id) bns_methods
                THIS% pressure_center2/lorene2hydrobase*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *
-      PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(THIS% eos1)
-      PRINT *, " Equations of state for star 2 (EOS2) = ", TRIM(THIS% eos2)
+      IF( show_progress ) &
+        PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(THIS% eos1)
+      IF( show_progress ) &
+        PRINT *, " Equations of state for star 2 (EOS2) = ", TRIM(THIS% eos2)
       PRINT *
+      STOP
 
       IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
 
