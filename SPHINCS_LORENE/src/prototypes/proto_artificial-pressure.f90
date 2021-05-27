@@ -30,7 +30,8 @@ PROGRAM proto_apm
   USE set_h,               ONLY: exact_nei_tree_update
   USE analyze,             ONLY: COM
   USE matrix,              ONLY: determinant_4x4_matrix
-  USE constants,           ONLY: MSun, Msun_geo, km2m, g2kg, amu, pi, half, m0c2
+  USE constants,           ONLY: MSun, Msun_geo, km2m, g2kg, amu, pi, half, &
+                                 m0c2, lorene2hydrobase, c_light
   USE NR,                  ONLY: indexx
   USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                  deallocate_metric_on_particles
@@ -45,16 +46,19 @@ PROGRAM proto_apm
 
   INTEGER, PARAMETER:: unit_id     = 23
   INTEGER, PARAMETER:: max_npart   = 5D+6
-  INTEGER, PARAMETER:: apm_max_it  = 900
+  INTEGER, PARAMETER:: apm_max_it  = 1500
   INTEGER, PARAMETER:: m_max_it    = 50
-  INTEGER, PARAMETER:: max_inc     = 20
+  INTEGER, PARAMETER:: max_inc     = 50
   INTEGER, PARAMETER:: nn_des      = 301
   DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
+  DOUBLE PRECISION, PARAMETER:: iter_tol= 1.0D-3
   LOGICAL, PARAMETER:: run_apm     = .FALSE.
+  LOGICAL, PARAMETER:: post_correction= .FALSE.
 
   INTEGER:: npart_real, tmp, ios, itr, itr2, a, nout, nus, mus, npart_eq, &
             npart_ghost_shell, npart_ghost, npart_all, r, th, phi, npart1, &
-            n_inc, nx, ny, nz, i, j, k, tmp2
+            n_inc, nx, ny, nz, i, j, k, tmp2, a_numax, a_numin, &
+            a_numax2, a_numin2
   INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort, xy_sort, xyz_sort, lim
 
   DOUBLE PRECISION:: com_x, com_y, com_z, com_d, det, sq_g, Theta_a, &
@@ -66,7 +70,9 @@ PROGRAM proto_apm
                      rad_x, rad_y, rad_z, radius_y, nstar_real_err, &
                      nstar_p_err, dx, dy, dz, xmin, xmax, ymin, ymax, &
                      zmin, zmax, eps, x_ell, y_ell, z_ell, delta, dN, dN_av, &
-                     dN_max
+                     dN_max, spec_ener, press, mass_dens, tmp3, tmp4, nu_tot, &
+                     mass, mean_nu, variance_nu, stddev_nu, max_nu2, min_nu2, &
+                     nu_tmp, nu_ratio
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -111,9 +117,10 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_int
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_one
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density_final
 
   LOGICAL:: exist
-  LOGICAL, PARAMETER:: post_correction= .FALSE.
 
   CHARACTER( LEN= : ), ALLOCATABLE:: namefile
   CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
@@ -128,6 +135,48 @@ PROGRAM proto_apm
   !CALL DATE_AND_TIME( date, time, zone, values )
   !run_id= date // "-" // time
 
+!  CALL select_EOS_parameters( 'APR4' )
+!
+!  finalnamefile= "apr4_sphincs.dat"
+!
+!  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+!
+!  IF( exist )THEN
+!      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+!            FORM= "FORMATTED", &
+!            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+!            IOMSG= err_msg )
+!  ELSE
+!      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+!            FORM= "FORMATTED", &
+!            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+!  ENDIF
+!  IF( ios > 0 )THEN
+!    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+!             ". The error message is", err_msg
+!    STOP
+!  ENDIF
+!
+!  WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!    "   baryon mass density [g cm^{-3}]    pressure [dyne cm^{-2}]", &
+!    "   specific energy (or internal energy) [c^2]"
+!
+!  DO a= 1, 50000, 1
+!
+!    mass_dens= ( 1.0D10 + (DBLE(a)/5.0D5)*( 1.0D20 - 1.0D10 ) )*lorene2hydrobase
+!
+!    CALL gen_pwp_eos( mass_dens, spec_ener, press, 0.0D0, tmp3, tmp4 )
+!
+!    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!      (mass_dens/lorene2hydrobase)/1000.0D0, &
+!      (press/lorene2hydrobase*(c_light/100.0D0)**2.0D0)*10, &
+!      spec_ener
+!
+!  ENDDO
+!
+!  CLOSE( UNIT= 2 )
+!
+!  STOP
 
   !PRINT *, "Hello world!"
   PRINT *, "** Beginning of PROGRAM proto_apm."
@@ -401,6 +450,8 @@ PROGRAM proto_apm
   pos_star1 = pos_star1( :, 1:npart_real )
   !smaller_radius= binary% get_radius1_x_opp()
   !larger_radius = binary% get_radius1_x_comp()
+  mass          = binary% get_mass1()
+  mass_star     = binary% get_mass1()
   center        = binary% get_center1_x()
   smaller_radius= ABS( MINVAL( pos_star1( 1, : ), DIM= 1 ) - center )
   larger_radius = ABS( center - MAXVAL( pos_star1( 1, : ), DIM= 1 ) )
@@ -901,7 +952,6 @@ PROGRAM proto_apm
     ALLOCATE( correction_pos( 3, npart_all ) )
     ALLOCATE( h_guess( npart_all ) )
 
-    mass_star= binary% get_mass1()
     nu_all= (mass_star/DBLE(npart_real))*umass/amu
     nu= nu_all
     DO a= 1, npart_all
@@ -1072,7 +1122,9 @@ PROGRAM proto_apm
             !                    all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
             !.AND. &
             binary% import_mass_density( &
-                                pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0 &
+                                pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0.0D0 &
+            .AND. &
+            nstar_p(a) > 0.0D0 &
             .AND. &
             binary% is_hydro_negative( &
                                 pos_tmp(1), pos_tmp(2), pos_tmp(3) ) == 0 &
@@ -1120,8 +1172,17 @@ PROGRAM proto_apm
       PRINT *
 
       ! exit condition
-      IF( err_N_mean > err_mean_old ) n_inc= n_inc + 1
-      !IF( n_inc == max_inc ) EXIT
+      !IF( err_N_mean > err_mean_old ) n_inc= n_inc + 1
+      IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
+          .AND. &
+          err_N_max < 10.0D0 &
+      )THEN
+        n_inc= n_inc + 1
+        PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
+        PRINT *, "ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)= ", &
+                 ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)
+      ENDIF
+      IF( n_inc == max_inc ) EXIT
       err_mean_old= err_N_mean
 
     ENDDO apm_iteration
@@ -1175,6 +1236,8 @@ PROGRAM proto_apm
     h_guess= h
 
   ELSE
+
+    nu_all= (mass_star/DBLE(npart_real))*umass/amu
 
     finalnamefile= "apm_pos.dat"
 
@@ -1402,27 +1465,243 @@ PROGRAM proto_apm
 
   !nstar_p( npart_real+1:npart_all )= 0.0D0
 
+  nu= nu_all
+  PRINT *, "nu_all= ", nu_all
+
+  nu_tot= 0.0D0
+  DO a= 1, npart_real, 1
+    nu_tot= nu_tot + nu(a)
+  ENDDO
+
+  PRINT *, "nu_tot=", nu_tot
+  PRINT *, "mass estimate= ", nu_tot*amu/MSun, "=", &
+           100.0D0*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
+  PRINT *
+
   PRINT *, "4"
 
   PRINT *, "npart_real= ", npart_real
   PRINT *, "SIZE(nu)= ", SIZE(nu)
   PRINT *
 
+  nu_ratio= MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
+  PRINT *, "nu_ratio before correction = ", nu_ratio
+  PRINT *
+
+  !-----------------------------------------!
+  !-- monitoring before correction  nu... --!
+  !-----------------------------------------!
+
+ ! ! measure density
+ ! CALL density_loop( npart_real, pos, &    ! input
+ !                    nu, h, nstar_real )      ! output
+ !
+ ! CALL binary% import_id( npart_real, pos(1,:), &
+ !                         pos(2,:), &
+ !                         pos(3,:), &
+ !                         lapse, shift_x, shift_y, shift_z, &
+ !                         g_xx, g_xy, g_xz, &
+ !                         g_yy, g_yz, g_zz, &
+ !                         baryon_density, &
+ !                         energy_density, &
+ !                         specific_energy, &
+ !                         pressure, &
+ !                         v_euler_x, v_euler_y, v_euler_z )
+ !
+ ! DO a= 1, npart_real, 1
+ !
+ !   ! Coordinate velocity of the fluid [c]
+ !   vel_u(0,a)= 1.0D0
+ !   vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+ !   vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+ !   vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+ !
+ !   !
+ !   !-- Metric as matrix for easy manipulation
+ !   !
+ !   g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
+ !          + 2*g_xy(a)*shift_x(a)*shift_y(a) &
+ !          + 2*g_xz(a)*shift_x(a)*shift_z(a) &
+ !          + g_yy(a)*shift_y(a)*shift_y(a) &
+ !          + 2*g_yz(a)*shift_y(a)*shift_z(a) &
+ !          + g_zz(a)*shift_z(a)*shift_z(a)
+ !   g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+ !   g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+ !   g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+ !
+ !   g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+ !   g4(1,1)= g_xx(a)
+ !   g4(1,2)= g_xy(a)
+ !   g4(1,3)= g_xz(a)
+ !
+ !   g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+ !   g4(2,1)= g_xy(a)
+ !   g4(2,2)= g_yy(a)
+ !   g4(2,3)= g_yz(a)
+ !
+ !   g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+ !   g4(3,1)= g_xz(a)
+ !   g4(3,2)= g_yz(a)
+ !   g4(3,3)= g_zz(a)
+ !
+ !   ! sqrt(-det(g4))
+ !   CALL determinant_4x4_matrix(g4,det)
+ !   IF( ABS(det) < 1D-10 )THEN
+ !       PRINT *, "The determinant of the spacetime metric is " &
+ !                // "effectively 0 at particle ", a
+ !       STOP
+ !   ELSEIF( det > 0 )THEN
+ !       PRINT *, "The determinant of the spacetime metric is " &
+ !                // "positive at particle ", a
+ !       STOP
+ !   ENDIF
+ !   sq_g= SQRT(-det)
+ !
+ !   !
+ !   !-- Generalized Lorentz factor
+ !   !
+ !   Theta_a= 0.D0
+ !   DO nus=0,3
+ !     DO mus=0,3
+ !       Theta_a= Theta_a &
+ !                + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+ !     ENDDO
+ !   ENDDO
+ !   Theta_a= 1.0D0/SQRT(-Theta_a)
+ !   Theta(a)= Theta_a
+ !
+ !   nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+ !
+ ! ENDDO
+ !
+ ! !nstar_p( npart_real+1:npart_all )= 0.0D0
+ !
+ ! ! get RELATIVE nu's right
+ ! dN_av= 0.0D0
+ !     dN_max= 0.0D0
+ ! DO a= 1, npart_real, 1
+ !   dN=     ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+ !   dN_max= MAX(dN_max,dN)
+ !   dN_av=  dN_av + dN
+ ! ENDDO
+ ! dN_av= dN_av/DBLE(npart_real)
+ ! PRINT*,'...dN_max ',dN_max
+ ! PRINT*,'...dN_av  ',dN_av
+ !
+ ! IF( .NOT.ALLOCATED( nstar_int ) ) ALLOCATE( nstar_int( npart_real ) )
+ !
+ ! CALL exact_nei_tree_update( nn_des, &           !
+ !                             npart_real, &        !
+ !                             pos, nu )
+ !
+ ! CALL density( npart_real, pos, nstar_int )
+ !
+ ! PRINT *, "0"
+ !
+ ! finalnamefile= "densities-before-nu-correction.dat"
+ !
+ ! INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+ !
+ ! IF( exist )THEN
+ !     OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+ !           FORM= "FORMATTED", &
+ !           POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+ !           IOMSG= err_msg )
+ ! ELSE
+ !     OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+ !           FORM= "FORMATTED", &
+ !           ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+ ! ENDIF
+ ! IF( ios > 0 )THEN
+ !   PRINT *, "...error when opening " // TRIM(finalnamefile), &
+ !            ". The error message is", err_msg
+ !   STOP
+ ! ENDIF
+ !
+ ! PRINT *, "1"
+ !
+ ! IF( .NOT.ALLOCATED( nu_one ) ) ALLOCATE( nu_one( npart_real ) )
+ ! IF( .NOT.ALLOCATED( particle_density_final ) ) &
+ !   ALLOCATE( particle_density_final( npart_real ) )
+ ! nu_one= 1.0D0
+ ! CALL density_loop( npart_real, pos, &    ! input
+ !                    nu_one, h, particle_density_final )      ! output
+ !
+ ! DO a= 1, npart_real, 1
+ !   WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+ !     a, &
+ !     pos( 1, a ), pos( 2, a ), pos( 3, a ), &
+ !     nstar_p( a ), &
+ !     nstar_int( a ), &
+ !     particle_density_final( a ), &
+ !     particle_density_final( a )*nstar_p( 1 )/particle_density_final( 1 ), &
+ !     ABS(nstar_real(a)-nstar_p(a))/nstar_p(a), &
+ !     nu(a)
+ ! ENDDO
+ !
+ ! CLOSE( UNIT= 2 )
+
+  nu= nu_all
+
+  !----------------------!
+  !-- Correcting nu... --!
+  !----------------------!
+
+  PRINT *, "Correcting nu"
+  PRINT *
+
   !nu(1:npart_real)= nstar_p(1:npart_real)/nstar_real(1:npart_real)
   !nu= nu(1:npart_real)
 
   !nu(1:npart_all)= nstar_p(1:npart_all)/nstar_real(1:npart_all)
-  nu= nstar_p/nstar_real
+  !nu= nstar_p/nstar_real
+  !
+  !DO a= 1, npart_real, 1
+  !
+  !  nu_tmp= nu(a)
+  !  nu(a)= nstar_p(a)/nstar_real(a)
+  !  IF( MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 ) > 3.0D0*nu_ratio )THEN
+  !    nu(a)= nu_tmp
+  !  ENDIF
+  !
+  !ENDDO
 
-  PRINT *, "SIZE(nu)= ", SIZE(nu)
-  PRINT *
+  DO a= 1, npart_real, 1
+
+    nu_tmp= nu(a)
+    nu(a)= nstar_p(a)/nstar_real(a)
+    IF( MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 ) > 3.0D0*nu_ratio )THEN
+      nu(a)= nu_tmp
+    ENDIF
+
+  ENDDO
+
+  nu_ratio= MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
+  PRINT *, "nu_ratio after correction = ", nu_ratio
+
+  max_nu= 0.0D0
+  min_nu= HUGE(1.0D0)
+  DO a= 1, npart_real, 1
+     IF( nu(a) > max_nu )THEN
+       max_nu= nu(a)
+       a_numax= a
+     ENDIF
+     IF( nu(a) < min_nu )THEN
+       min_nu= nu(a)
+       a_numin= a
+     ENDIF
+  ENDDO
 
   PRINT *, "Baryon number assigned."
   PRINT *
 
-  PRINT *, "max_nu=", MAXVAL( nu, DIM= 1 )
-  PRINT *, "min_nu=", MINVAL( nu, DIM= 1 )
-  PRINT *, "max_nu/min_nu=", MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
+  PRINT *, "max_nu=", max_nu
+  PRINT *, "        at ", pos(:, a_numax), " r= ", &
+           NORM2( pos(:, a_numax) )/larger_radius
+  PRINT *, "min_nu=", min_nu
+  PRINT *, "        at ", pos(:, a_numin), " r= ", &
+           NORM2( pos(:, a_numin) )/larger_radius
+  PRINT *, "max_nu/min_nu=", max_nu/min_nu
   PRINT *
 
   !STOP
@@ -1519,17 +1798,22 @@ PROGRAM proto_apm
 
        ! get RELATIVE nu's right
        dN_av= 0.0D0
+       max_nu= 0.0D0
+       min_nu= HUGE(1.0D0)
        DO a= 1, npart_real, 1
           dN=    (nstar_real(a)-nstar_p(a))/nstar_p(a)
           nu(a)= nu(a)*(1.0D0 - dN)
           dN_av= dN_av + dN
+          IF( nu(a) > max_nu )THEN
+            max_nu= nu(a)
+            a_numax= a
+          ENDIF
+          IF( nu(a) < min_nu )THEN
+            min_nu= nu(a)
+            a_numin= a
+          ENDIF
        ENDDO
        dN_av= dN_av/DBLE(npart_real)
-
-       PRINT *, "max_nu=", MAXVAL( nu, DIM= 1 )
-       PRINT *, "min_nu=", MINVAL( nu, DIM= 1 )
-       PRINT *, "max_nu/min_nu=", MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
-       PRINT *
 
        ! exit condition
        IF( dN_av < tol )EXIT
@@ -1542,9 +1826,60 @@ PROGRAM proto_apm
   ! TODO: Enforce center of mass
   !       Mirror particles
 
-  PRINT *, "max_nu=", MAXVAL( nu, DIM= 1 )
-  PRINT *, "min_nu=", MINVAL( nu, DIM= 1 )
-  PRINT *, "max_nu/min_nu=", MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
+  PRINT *, "max_nu=", max_nu
+  PRINT *, "        at ", pos(:, a_numax), " r= ", &
+           NORM2( pos(:, a_numax) )/larger_radius
+  PRINT *, "min_nu=", min_nu
+  PRINT *, "        at ", pos(:, a_numin), " r= ", &
+           NORM2( pos(:, a_numin) )/larger_radius
+  PRINT *, "max_nu/min_nu=", max_nu/min_nu
+  PRINT *
+
+  max_nu2= 0.0D0
+  min_nu2= HUGE(1.0D0)
+  DO a= 1, npart_real, 1
+     IF( nu(a) > max_nu2 .AND. a /= a_numax )THEN
+       max_nu2= nu(a)
+       a_numax2= a
+     ENDIF
+     IF( nu(a) < min_nu2 .AND. a /= a_numin )THEN
+       min_nu2= nu(a)
+       a_numin2= a
+     ENDIF
+  ENDDO
+
+  PRINT *, "Excluding the absolute max and min of nu:"
+  PRINT *
+  PRINT *, "max_nu=", max_nu2
+  PRINT *, "        at ", pos(:, a_numax2), " r= ", &
+           NORM2( pos(:, a_numax2) )/larger_radius
+  PRINT *, "min_nu=", min_nu2
+  PRINT *, "        at ", pos(:, a_numin2), " r= ", &
+           NORM2( pos(:, a_numin2) )/larger_radius
+  PRINT *, "max_nu/min_nu=", max_nu2/min_nu2
+  PRINT *
+
+  nu_tot= 0.0D0
+  DO a= 1, npart_real, 1
+    nu_tot= nu_tot + nu(a)
+  ENDDO
+  mean_nu= nu_tot/npart_real
+
+  variance_nu = 0.0                       ! compute variance
+  DO a = 1, npart_real, 1
+    variance_nu = variance_nu + (nu(a) - mean_nu)**2.0D0
+  END DO
+  variance_nu = variance_nu / DBLE(npart_real - 1)
+  stddev_nu   = SQRT(variance_nu)            ! compute standard deviation
+
+  PRINT *, "nu_tot=", nu_tot
+  PRINT *, "mass estimate= ", nu_tot*amu/MSun, "=", &
+           100.0D0*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
+  PRINT *
+  PRINT *, "mean_nu=", mean_nu
+  PRINT *, "variance_nu=", variance_nu
+  PRINT *, "stddev_nu=", stddev_nu
+  PRINT *, "stddev_nu/mean_nu=", stddev_nu/mean_nu
   PRINT *
 
   !-------------------!
@@ -1554,7 +1889,6 @@ PROGRAM proto_apm
   ! measure density
   CALL density_loop( npart_real, pos, &    ! input
                      nu, h, nstar_real )      ! output
-
 
   CALL binary% import_id( npart_real, pos(1,:), &
                           pos(2,:), &
@@ -1648,7 +1982,7 @@ PROGRAM proto_apm
   PRINT*,'...dN_max ',dN_max
   PRINT*,'...dN_av  ',dN_av
 
-  ALLOCATE( nstar_int( npart_real ) )
+  IF( .NOT.ALLOCATED( nstar_int ) ) ALLOCATE( nstar_int( npart_real ) )
 
   CALL exact_nei_tree_update( nn_des, &           !
                               npart_real, &        !
@@ -1680,9 +2014,12 @@ PRINT *, "0"
 
 PRINT *, "1"
 
-  nu= 1.0D0
+  IF( .NOT.ALLOCATED( nu_one ) ) ALLOCATE( nu_one( npart_real ) )
+  IF( .NOT.ALLOCATED( particle_density_final ) ) &
+    ALLOCATE( particle_density_final( npart_real ) )
+  nu_one= 1.0D0
   CALL density_loop( npart_real, pos, &    ! input
-                     nu, h, nstar_real )      ! output
+                     nu_one, h, particle_density_final )      ! output
 
   DO a= 1, npart_real, 1
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
@@ -1690,9 +2027,10 @@ PRINT *, "1"
       pos( 1, a ), pos( 2, a ), pos( 3, a ), &
       nstar_p( a ), &
       nstar_int( a ), &
-      nstar_real( a ), &
-      nstar_real( a )*nstar_p( 1 )/nstar_real( 1 ), &
-      ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+      particle_density_final( a ), &
+      particle_density_final( a )*nstar_p( 1 )/particle_density_final( 1 ), &
+      ABS(nstar_real(a)-nstar_p(a))/nstar_p(a), &
+      nu(a)
   ENDDO
 
   CLOSE( UNIT= 2 )

@@ -11,6 +11,9 @@ SPHINCS_LORENE/**/press*.dat
 SPHINCS_LORENE/**/specific*.dat
 SPHINCS_LORENE/**/sorted*.dat
 SPHINCS_LORENE/**/mpa1*.dat
+SPHINCS_LORENE/**/ap3*.dat
+SPHINCS_LORENE/**/apr4*.dat
+SPHINCS_LORENE/**/wff1*.dat
 SPHINCS_LORENE/**/ghost*.dat
 SPHINCS_LORENE/**/proto*.out
 SPHINCS_LORENE/**/apm*.dat

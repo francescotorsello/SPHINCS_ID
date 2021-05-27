@@ -134,7 +134,7 @@ SUBMODULE (bns_id) bns_methods
           ENDIF
 
         ENDDO import_id_loop
-        WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+        IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       ELSE
 
@@ -246,7 +246,7 @@ SUBMODULE (bns_id) bns_methods
         ENDIF
 
       ENDDO import_id_loop
-      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+      IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_lorene_id executed."
       PRINT *
@@ -456,7 +456,7 @@ SUBMODULE (bns_id) bns_methods
           ENDDO coords_x
         ENDDO coords_y
       ENDDO coords_z
-      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+      IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_lorene_id executed."
       PRINT *
@@ -516,7 +516,7 @@ SUBMODULE (bns_id) bns_methods
           ENDDO coords_x
         ENDDO coords_y
       ENDDO coords_z
-      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+      IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_lorene_id_hydro executed."
       PRINT *
@@ -626,7 +626,7 @@ SUBMODULE (bns_id) bns_methods
         ENDIF
 
       ENDDO import_id_loop
-      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+      IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_id_particles executed."
       PRINT *
@@ -737,7 +737,7 @@ SUBMODULE (bns_id) bns_methods
         ENDIF
 
       ENDDO import_id_loop
-      WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+      IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_lorene_id_k executed."
       PRINT *
@@ -844,8 +844,8 @@ SUBMODULE (bns_id) bns_methods
                THIS% pressure_center2/lorene2hydrobase*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *
-      PRINT *, " Equations of state for star 1 (EOS1) = ", THIS% eos1
-      PRINT *, " Equations of state for star 2 (EOS2) = ", THIS% eos2
+      PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(THIS% eos1)
+      PRINT *, " Equations of state for star 2 (EOS2) = ", TRIM(THIS% eos2)
       PRINT *
 
       IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
@@ -889,7 +889,8 @@ SUBMODULE (bns_id) bns_methods
                  "rho_nuc c^2 / n_nuc^gamma3_1", THIS% kappa3_1, &
                  "[pure number]"
         PRINT *, "  Base 10 exponent of the pressure at the first fiducial " &
-                 // "density (dyne/cm^2)= ", THIS% logP1_1
+                 // "density (between gamma_0 and gamma_1) (dyne/cm^2)= ", &
+                 THIS% logP1_1
         PRINT *, "  Base 10 exponent of first fiducial density (g/cm^3) = ", &
                  THIS% logRho0_1
         PRINT *, "  Base 10 exponent of second fiducial density (g/cm^3) = ",&
@@ -920,7 +921,8 @@ SUBMODULE (bns_id) bns_methods
                  "rho_nuc c^2 / n_nuc^gamma3_2", THIS% kappa3_2, &
                  "[pure number]"
         PRINT *, "  Base 10 exponent of the pressure at the first fiducial " &
-                 // "density (dyne/cm^2)= ", THIS% logP1_2
+                 // "density (between gamma_0 and gamma_1) (dyne/cm^2)= ", &
+                 THIS% logP1_2
         PRINT *, "  Base 10 exponent of first fiducial density (g/cm^3) = ", &
                  THIS% logRho0_2
         PRINT *, "  Base 10 exponent of second fiducial density (g/cm^3) = ",&
