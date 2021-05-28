@@ -48,17 +48,19 @@ PROGRAM proto_apm
   INTEGER, PARAMETER:: max_npart   = 5D+6
   INTEGER, PARAMETER:: apm_max_it  = 1500
   INTEGER, PARAMETER:: m_max_it    = 50
-  INTEGER, PARAMETER:: max_inc     = 50
+  INTEGER, PARAMETER:: max_inc     = 150
   INTEGER, PARAMETER:: nn_des      = 301
+  DOUBLE PRECISION, PARAMETER:: nuratio_thres= 2.0D0
   DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
-  DOUBLE PRECISION, PARAMETER:: iter_tol= 1.0D-2
-  LOGICAL, PARAMETER:: run_apm     = .FALSE.
+  DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
+  LOGICAL, PARAMETER:: run_apm     = .TRUE.
   LOGICAL, PARAMETER:: post_correction= .FALSE.
+  LOGICAL, PARAMETER:: correct_nu  = .TRUE.
 
   INTEGER:: npart_real, tmp, ios, itr, itr2, a, nout, nus, mus, npart_eq, &
             npart_ghost_shell, npart_ghost, npart_all, r, th, phi, npart1, &
             n_inc, nx, ny, nz, i, j, k, tmp2, a_numax, a_numin, &
-            a_numax2, a_numin2
+            a_numax2, a_numin2, npart_real_half, npart_missing
   INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort, xy_sort, xyz_sort, lim
 
   DOUBLE PRECISION:: com_x, com_y, com_z, com_d, det, sq_g, Theta_a, &
@@ -72,7 +74,8 @@ PROGRAM proto_apm
                      zmin, zmax, eps, x_ell, y_ell, z_ell, delta, dN, dN_av, &
                      dN_max, spec_ener, press, mass_dens, tmp3, tmp4, nu_tot, &
                      mass, mean_nu, variance_nu, stddev_nu, max_nu2, min_nu2, &
-                     nu_tmp, nu_ratio, err_N_mean_min
+                     nu_tmp, nu_ratio, err_N_mean_min, err_N_mean_min_old, &
+                     com_star
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -107,6 +110,9 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h0
 
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_star1
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_star1_tmp
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sorted_pos
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
@@ -453,6 +459,7 @@ PROGRAM proto_apm
   mass          = binary% get_mass1()
   mass_star     = binary% get_mass1()
   center        = binary% get_center1_x()
+  com_star           = binary% get_barycenter1_x()
   smaller_radius= ABS( MINVAL( pos_star1( 1, : ), DIM= 1 ) - center )
   larger_radius = ABS( center - MAXVAL( pos_star1( 1, : ), DIM= 1 ) )
   radius_y= ABS( MAXVAL( pos_star1( 2, : ), DIM= 1 ) )
@@ -461,7 +468,6 @@ PROGRAM proto_apm
   npart_eq= 110
   alpha= 2*pi/DBLE(npart_eq)
   !npart_ghost_shell= ( npart_eq**2 )/2
-  itr= 1
 
   PRINT *, "center=", center
   PRINT *, "smaller_radius=", smaller_radius
@@ -469,6 +475,33 @@ PROGRAM proto_apm
   PRINT *, "radius_y=", radius_y
   PRINT *, "radius_z=", radius_z
   PRINT *
+
+  !----------------------------------------------------------------------!
+  !-- Store particle above xy plane as the first half, and mirror them --!
+  !-- to the second half                                               --!
+  !----------------------------------------------------------------------!
+
+ ! pos_star1_tmp= pos_star1
+ ! itr= 0
+ ! DO a= 1, npart_real, 1
+ !   IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+ !     itr= itr + 1
+ !     pos_star1( 1, itr )= pos_star1_tmp( 1, a )
+ !     pos_star1( 2, itr )= pos_star1_tmp( 2, a )
+ !     pos_star1( 3, itr )= pos_star1_tmp( 3, a )
+ !   ENDIF
+ ! ENDDO
+ ! npart_real_half= itr
+ ! !PRINT *, "npart_real_half=", npart_real_half
+ ! !PRINT *, "npart_real_half*2=", npart_real_half*2
+ ! !PRINT *, "npart_real=", npart_real
+ ! !STOP
+ ! DO a= 1, npart_real_half, 1
+ !   pos_star1( 1, npart_real_half + a )=   pos_star1( 1, a )
+ !   pos_star1( 2, npart_real_half + a )=   pos_star1( 2, a )
+ !   pos_star1( 3, npart_real_half + a )= - pos_star1( 3, a )
+ ! ENDDO
+
 
   !PRINT *, MAXVAL( pos_star1( 1, : ), DIM= 1 ), &
   !         smaller_radius, larger_radius, center, dr, alpha
@@ -661,9 +694,9 @@ PROGRAM proto_apm
     DO a= 1, npart_real, 1
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         1, a, &
-        pos( 1, a ), &
-        pos( 2, a ), &
-        pos( 3, a )
+        pos_star1( 1, a ), &
+        pos_star1( 2, a ), &
+        pos_star1( 3, a )
     ENDDO
 
     DO a= 1, npart_ghost, 1
@@ -717,7 +750,7 @@ PROGRAM proto_apm
 
   ! flag that particles are 'alive'
   ALLOCATE( alive( npart ) )
-  alive( 1:npart )= 1
+  alive= 1
 
   CALL allocate_gradient( npart )
   CALL allocate_metric_on_particles( npart )
@@ -776,18 +809,50 @@ PROGRAM proto_apm
     ! assign nu's
     nu= nstar_p/nstar_real
 
-    ! In setup_uniform_sphere, reset_COM is called
-    !CALL reset_COM(npart,nu,pos_u)
-  !  CALL COM( npart, all_pos, nu, &       ! input
-  !            com_x, com_y, com_z, com_d) ! output
-  !
-  !  DO a= 1, npart, 1
-  !     all_pos(1,a)= all_pos(1,a) - com_x
-  !     all_pos(2,a)= all_pos(2,a) - com_y
-  !     all_pos(3,a)= all_pos(3,a) - com_z
-  !  ENDDO
+    !----------------------------------------------------!
+    !-- enforce centre of mass after having changed nu --!
+    !----------------------------------------------------!
 
-    ! at this point, the particle should be mirrored (?)
+    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *
+
+    DO a= 1, npart_real, 1
+      all_pos(1,a)= all_pos(1,a) - ( com_x - com_star )
+      all_pos(2,a)= all_pos(2,a) - com_y
+      all_pos(3,a)= all_pos(3,a) - com_z
+    ENDDO
+
+    !--------------------------------------------------!
+    !-- Mirror the positions after having changed nu --!
+    !--------------------------------------------------!
+
+    pos_star1_tmp= all_pos(:,1:npart_real)
+    itr= 0
+    DO a= 1, npart_real, 1
+      IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+        itr= itr + 1
+        all_pos( 1, itr )= pos_star1_tmp( 1, a )
+        all_pos( 2, itr )= pos_star1_tmp( 2, a )
+        all_pos( 3, itr )= pos_star1_tmp( 3, a )
+      ENDIF
+    ENDDO
+    npart_real_half= itr
+    PRINT *, "npart_real_half=", npart_real_half
+    PRINT *, "npart_real_half*2=", npart_real_half*2
+    PRINT *, "npart_real=", npart_real
+    !STOP
+    DO a= 1, npart_real_half, 1
+      all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
+      all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
+      all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
+    ENDDO
 
     PRINT *, "density loop..."
     PRINT *
@@ -951,7 +1016,10 @@ PROGRAM proto_apm
     ALLOCATE( freeze( npart_all ) )
     ALLOCATE( correction_pos( 3, npart_all ) )
     ALLOCATE( h_guess( npart_all ) )
+    ALLOCATE( all_pos_tmp( 3, npart_real ) )
+    ALLOCATE( all_pos_tmp2( 3, npart_all ) )
 
+    ! Set the particles to be equal-mass
     nu_all= (mass_star/DBLE(npart_real))*umass/amu
     nu= nu_all
     DO a= 1, npart_all
@@ -963,10 +1031,63 @@ PROGRAM proto_apm
     ENDDO
 
     PRINT *, "iterating..."
+    PRINT *
 
     n_inc= 0
     err_N_mean_min= HUGE(1.0D0)
     apm_iteration: DO itr= 1, apm_max_it, 1
+
+      PRINT *, "mirroring particles..."
+
+      all_pos_tmp= all_pos(:,1:npart_real)
+      itr2= 0
+      DO a= 1, npart_real, 1
+
+        IF( all_pos_tmp( 3, a ) > 0.0D0 &
+            .AND. &
+            itr2 < npart_real/2 &
+        )THEN
+          itr2= itr2 + 1
+          all_pos( 1, itr2 )= all_pos_tmp( 1 ,a )
+          all_pos( 2, itr2 )= all_pos_tmp( 2 ,a )
+          all_pos( 3, itr2 )= all_pos_tmp( 3 ,a )
+        ENDIF
+
+      ENDDO
+      npart_real_half= itr2
+      PRINT *, "npart_real_half=", npart_real_half
+      PRINT *, "npart_real/2=", npart_real/2
+      PRINT *
+
+      IF( npart_real_half < npart_real/2 )THEN
+
+        npart_missing= npart_real/2 - npart_real_half
+
+        DO a= npart_real_half + 1, npart_real/2, 1
+
+          all_pos( :, a )= all_pos_tmp2( :, a )
+
+        ENDDO
+
+      ENDIF
+
+      !PRINT *, "npart_real_half=", npart_real_half
+      !PRINT *, "npart_real_half*2=", npart_real_half*2
+      !PRINT *, "npart_real=", npart_real
+      !STOP
+      DO a= 1, npart_real_half, 1
+        all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
+        all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
+        all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
+      ENDDO
+      !IF( npart_real_half*2 /= npart_real )THEN
+      !  PRINT *, " ** ERROR! npart_real_half*2 /= npart_real"
+      !  PRINT *, "npart_real_half= ", npart_real_half
+      !  PRINT *, "npart_real_half*2= ", npart_real_half*2
+      !  PRINT *, "npart_real=", npart_real
+      !  PRINT *
+      !  STOP
+      !ENDIF
 
       PRINT *, "assign h..."
 
@@ -1109,13 +1230,14 @@ PROGRAM proto_apm
       !PRINT *, SIZE(nstar_real)
       !PRINT *, SIZE(correction_pos(1,:))
 
+      all_pos_tmp2= all_pos(:,1:npart_real)
+
       CALL position_correction( npart_all, &
                                 all_pos, h, nu_all, art_pr, nstar_real, &
                                 correction_pos )
 
       PRINT *, "After calling position_correction"
 
-      ! TODO: mirror the particles here (or only afterwards?)
       itr2= 0
       DO a= 1, npart_real, 1
         pos_tmp= all_pos(:,a) + correction_pos(:,a)
@@ -1177,7 +1299,11 @@ PROGRAM proto_apm
       PRINT *
 
       ! exit condition
-      !IF( err_N_mean > err_mean_old ) n_inc= n_inc + 1
+      IF( err_N_mean > err_mean_old )THEN
+        n_inc= n_inc + 1
+        PRINT *, "n_inc= ", n_inc
+        PRINT *
+      ENDIF
       !IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
       !    .AND. &
       !    err_N_max < 10.0D0 &
@@ -1187,21 +1313,74 @@ PROGRAM proto_apm
       !  PRINT *, "ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)= ", &
       !           ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)
       !ENDIF
-      IF( ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min) < iter_tol &
-      )THEN
-        n_inc= n_inc + 1
-        PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
-        PRINT *, "ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min)= ", &
-                 ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min), " < ", &
-                 iter_tol
-      ENDIF
+      !IF( ABS(err_N_mean_min - err_N_mean_min_old)/ABS(err_N_mean_min_old) &
+      !      < 10.0D0*iter_tol &
+      !    .AND. &
+      !    ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min) < iter_tol &
+      !)THEN
+      !  n_inc= n_inc + 1
+      !  PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
+      !  PRINT *, err_N_mean, "err_N_mean"
+      !  PRINT *, err_N_mean_min, "err_N_mean_min"
+      !  PRINT *, "ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min)= ", &
+      !           ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min), " < ", &
+      !           iter_tol
+      !ELSE
+      !  n_inc= 0
+      !ENDIF
       IF( n_inc == max_inc ) EXIT
-      err_mean_old= err_N_mean
+      err_mean_old      = err_N_mean
+      err_N_mean_min_old= err_N_mean_min
 
     ENDDO apm_iteration
 
     PRINT *, "Iteration completed."
     PRINT *
+
+    ! Now get rid of the ghost particles
+    pos= all_pos( :, 1:npart_real )
+    npart= npart_real
+    PRINT *, npart
+
+    h_guess= h
+
+    !----------------------------!
+    !-- enforce centre of mass --!
+    !----------------------------!
+
+    CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
+              com_x, com_y, com_z, com_d) ! output
+
+    DO a= 1, npart_real, 1
+      pos(1,a)= pos(1,a) - ( com_x - com_star )
+      pos(2,a)= pos(2,a) - com_y
+      pos(3,a)= pos(3,a) - com_z
+    ENDDO
+
+    !-------------------------------------------------------!
+    !-- Mirror the positions after the last APM iteration --!
+    !-------------------------------------------------------!
+
+    pos_star1_tmp= pos
+    itr= 0
+    DO a= 1, npart_real, 1
+      IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+        itr= itr + 1
+        pos( 1, itr )= pos_star1_tmp( 1, a )
+        pos( 2, itr )= pos_star1_tmp( 2, a )
+        pos( 3, itr )= pos_star1_tmp( 3, a )
+      ENDIF
+    ENDDO
+    npart_real_half= itr
+    !PRINT *, "npart_real_half=", npart_real_half
+    !PRINT *, "npart_real_half*2=", npart_real_half*2
+    !PRINT *, "npart_real=", npart_real
+    !STOP
+    DO a= 1, npart_real_half, 1
+      pos( 1, npart_real_half + a )=   pos( 1, a )
+      pos( 2, npart_real_half + a )=   pos( 2, a )
+      pos( 3, npart_real_half + a )= - pos( 3, a )
+    ENDDO
 
     finalnamefile= "apm_pos.dat"
 
@@ -1226,9 +1405,9 @@ PROGRAM proto_apm
     DO a= 1, npart_real, 1
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         1, a, &
-        all_pos( 1, a ), &
-        all_pos( 2, a ), &
-        all_pos( 3, a )
+        pos( 1, a ), &
+        pos( 2, a ), &
+        pos( 3, a )
     ENDDO
 
     DO a= npart_real + 1, npart_all, 1
@@ -1240,13 +1419,6 @@ PROGRAM proto_apm
     ENDDO
 
     CLOSE( UNIT= 2 )
-
-    ! Now get rid of the ghost particles
-    pos= all_pos( :, 1:npart_real )
-    npart= npart_real
-    PRINT *, npart
-
-    h_guess= h
 
   ELSE
 
@@ -1346,22 +1518,6 @@ PROGRAM proto_apm
   !----------------------------------------------------!
   !-- at this point, pos contains the real particles --!
   !----------------------------------------------------!
-
-  !----------------------------!
-  !-- enforce centre of mass --!
-  !----------------------------!
-
-  ! Rescale to the center of mass
-  ! TODO: this rescales the COM to (0,0,0), but this is wrong for the binary
-  !       commented for now
-!  CALL COM( npart, pos, nu, &       ! input
-!            com_x, com_y, com_z, com_d) ! output
-!
-!  DO a= 1, npart, 1
-!     all_pos(1,a)= all_pos(1,a) - com_x
-!     all_pos(2,a)= all_pos(2,a) - com_y
-!     all_pos(3,a)= all_pos(3,a) - com_z
-!  ENDDO
 
   !-------------------------------------------------------------------!
   !-- now assign baryon number to match profile as good as possible --!
@@ -1683,8 +1839,9 @@ PROGRAM proto_apm
 
     nu_tmp= nu(a)
     nu(a)= nstar_p(a)/nstar_real(a)
-    IF( MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 ) > 3.0D0*nu_ratio )THEN
-      nu(a)= nu_tmp
+    IF( MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 ) > nuratio_thres*nu_ratio )THEN
+      IF( nu(a) > nu_tmp ) nu(a)= nu_tmp*SQRT(nuratio_thres)
+      IF( nu(a) < nu_tmp ) nu(a)= nu_tmp/SQRT(nuratio_thres)
     ENDIF
 
   ENDDO
@@ -1885,15 +2042,117 @@ PROGRAM proto_apm
   variance_nu = variance_nu / DBLE(npart_real - 1)
   stddev_nu   = SQRT(variance_nu)            ! compute standard deviation
 
-  PRINT *, "nu_tot=", nu_tot
-  PRINT *, "mass estimate= ", nu_tot*amu/MSun, "=", &
-           100.0D0*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
-  PRINT *
   PRINT *, "mean_nu=", mean_nu
   PRINT *, "variance_nu=", variance_nu
   PRINT *, "stddev_nu=", stddev_nu
   PRINT *, "stddev_nu/mean_nu=", stddev_nu/mean_nu
   PRINT *
+
+  PRINT *, "Before correcting nu to match the mass of the star..."
+  PRINT *
+  PRINT *, "nu_tot=", nu_tot
+  PRINT *, "mass estimate= ", nu_tot*amu/MSun, "=", &
+           100.0D0*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
+  PRINT *
+
+  !----------------------------------------------------!
+  !-- enforce centre of mass after having changed nu --!
+  !----------------------------------------------------!
+
+  CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
+            com_x, com_y, com_z, com_d) ! output
+
+  DO a= 1, npart_real, 1
+    pos(1,a)= pos(1,a) - ( com_x - com_star )
+    pos(2,a)= pos(2,a) - com_y
+    pos(3,a)= pos(3,a) - com_z
+  ENDDO
+
+  !--------------------------------------------------!
+  !-- Mirror the positions after having changed nu --!
+  !--------------------------------------------------!
+
+  pos_star1_tmp= pos
+  itr= 0
+  DO a= 1, npart_real, 1
+    IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+      itr= itr + 1
+      pos( 1, itr )= pos_star1_tmp( 1, a )
+      pos( 2, itr )= pos_star1_tmp( 2, a )
+      pos( 3, itr )= pos_star1_tmp( 3, a )
+    ENDIF
+  ENDDO
+  npart_real_half= itr
+  !PRINT *, "npart_real_half=", npart_real_half
+  !PRINT *, "npart_real_half*2=", npart_real_half*2
+  !PRINT *, "npart_real=", npart_real
+  !STOP
+  DO a= 1, npart_real_half, 1
+    pos( 1, npart_real_half + a )=   pos( 1, a )
+    pos( 2, npart_real_half + a )=   pos( 2, a )
+    pos( 3, npart_real_half + a )= - pos( 3, a )
+  ENDDO
+
+  IF( correct_nu )THEN
+    !THIS% nlrf=
+    !        THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    !nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    !THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    !nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    !THIS% nbar_tot= &
+    !    THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+    nu= nu/(nu_tot*amu/Msun/mass)
+    nu_tot= 0.0D0
+    DO a= 1, npart_real, 1
+      nu_tot= nu_tot + nu(a)
+    ENDDO
+
+    PRINT *, "After correcting nu to match the mass of the star..."
+    PRINT *
+    PRINT *, "nu_tot=", nu_tot
+    PRINT *, "mass estimate= ", nu_tot*amu/MSun, "=", &
+             100.0D0*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
+    PRINT *
+
+    !----------------------------!
+    !-- enforce centre of mass --!
+    !----------------------------!
+
+    CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
+              com_x, com_y, com_z, com_d) ! output
+
+    DO a= 1, npart_real, 1
+      pos(1,a)= pos(1,a) - ( com_x - com_star )
+      pos(2,a)= pos(2,a) - com_y
+      pos(3,a)= pos(3,a) - com_z
+    ENDDO
+
+    !-------------------------------------------!
+    !-- Mirror the positions after nu changed --!
+    !-------------------------------------------!
+
+    pos_star1_tmp= pos
+    itr= 0
+    DO a= 1, npart_real, 1
+      IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+        itr= itr + 1
+        pos( 1, itr )= pos_star1_tmp( 1, a )
+        pos( 2, itr )= pos_star1_tmp( 2, a )
+        pos( 3, itr )= pos_star1_tmp( 3, a )
+      ENDIF
+    ENDDO
+    npart_real_half= itr
+    !PRINT *, "npart_real_half=", npart_real_half
+    !PRINT *, "npart_real_half*2=", npart_real_half*2
+    !PRINT *, "npart_real=", npart_real
+    !STOP
+    DO a= 1, npart_real_half, 1
+      pos( 1, npart_real_half + a )=   pos( 1, a )
+      pos( 2, npart_real_half + a )=   pos( 2, a )
+      pos( 3, npart_real_half + a )= - pos( 3, a )
+    ENDDO
+
+  ENDIF
 
   !-------------------!
   !-- monitoring... --!

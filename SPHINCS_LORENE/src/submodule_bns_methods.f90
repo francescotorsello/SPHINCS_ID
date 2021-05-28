@@ -848,8 +848,7 @@ SUBMODULE (bns_id) bns_methods
         PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(THIS% eos1)
       IF( show_progress ) &
         PRINT *, " Equations of state for star 2 (EOS2) = ", TRIM(THIS% eos2)
-      PRINT *
-      STOP
+      IF( show_progress ) PRINT *
 
       IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
 
