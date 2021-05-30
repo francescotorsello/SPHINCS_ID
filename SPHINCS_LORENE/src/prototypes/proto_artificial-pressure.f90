@@ -75,7 +75,7 @@ PROGRAM proto_apm
                      dN_max, spec_ener, press, mass_dens, tmp3, tmp4, nu_tot, &
                      mass, mean_nu, variance_nu, stddev_nu, max_nu2, min_nu2, &
                      nu_tmp, nu_ratio, err_N_mean_min, err_N_mean_min_old, &
-                     com_star
+                     com_star, r_tmp
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -111,6 +111,8 @@ PROGRAM proto_apm
 
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_star1
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_star1_tmp
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu0_tmp, nstar0_tmp, &
+                                                  h0_tmp
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sorted_pos
@@ -481,27 +483,35 @@ PROGRAM proto_apm
   !-- to the second half                                               --!
   !----------------------------------------------------------------------!
 
- ! pos_star1_tmp= pos_star1
- ! itr= 0
- ! DO a= 1, npart_real, 1
- !   IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
- !     itr= itr + 1
- !     pos_star1( 1, itr )= pos_star1_tmp( 1, a )
- !     pos_star1( 2, itr )= pos_star1_tmp( 2, a )
- !     pos_star1( 3, itr )= pos_star1_tmp( 3, a )
- !   ENDIF
- ! ENDDO
- ! npart_real_half= itr
- ! !PRINT *, "npart_real_half=", npart_real_half
- ! !PRINT *, "npart_real_half*2=", npart_real_half*2
- ! !PRINT *, "npart_real=", npart_real
- ! !STOP
- ! DO a= 1, npart_real_half, 1
- !   pos_star1( 1, npart_real_half + a )=   pos_star1( 1, a )
- !   pos_star1( 2, npart_real_half + a )=   pos_star1( 2, a )
- !   pos_star1( 3, npart_real_half + a )= - pos_star1( 3, a )
- ! ENDDO
-
+  pos_star1_tmp= pos_star1
+  nu0_tmp= nu0
+  nstar0_tmp= nstar0
+  h0_tmp= h0
+  itr= 0
+  DO a= 1, npart_real, 1
+    IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+      itr= itr + 1
+      pos_star1( 1, itr )= pos_star1_tmp( 1, a )
+      pos_star1( 2, itr )= pos_star1_tmp( 2, a )
+      pos_star1( 3, itr )= pos_star1_tmp( 3, a )
+      nu0( itr )         = nu0_tmp( itr )
+      nstar0( itr )      = nstar0_tmp( itr )
+      h0( itr )          = h0_tmp( itr )
+    ENDIF
+  ENDDO
+  npart_real_half= itr
+  !PRINT *, "npart_real_half=", npart_real_half
+  !PRINT *, "npart_real_half*2=", npart_real_half*2
+  !PRINT *, "npart_real=", npart_real
+  !STOP
+  DO a= 1, npart_real_half, 1
+    pos_star1( 1, npart_real_half + a )=   pos_star1( 1, a )
+    pos_star1( 2, npart_real_half + a )=   pos_star1( 2, a )
+    pos_star1( 3, npart_real_half + a )= - pos_star1( 3, a )
+    nu0( npart_real_half + a )         =   nu0_tmp( a )
+    nstar0( npart_real_half + a )      =   nstar0_tmp( a )
+    h0( npart_real_half + a )          =   h0_tmp( a )
+  ENDDO
 
   !PRINT *, MAXVAL( pos_star1( 1, : ), DIM= 1 ), &
   !         smaller_radius, larger_radius, center, dr, alpha
@@ -800,7 +810,7 @@ PROGRAM proto_apm
 
     ALLOCATE( nstar_p( npart_all ) )
     ! The following stands for get_profile_density
-    nstar_p( 1:npart_real )      = nstar0( 1:npart_real )
+    nstar_p( 1:npart_real )          = nstar0( 1:npart_real )
     nstar_p( npart_real+1:npart_all )= 0.0D0
 
     ! In setup_uniform_sphere, get_profile_density is called
@@ -829,6 +839,16 @@ PROGRAM proto_apm
       all_pos(3,a)= all_pos(3,a) - com_z
     ENDDO
 
+    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *
+
     !--------------------------------------------------!
     !-- Mirror the positions after having changed nu --!
     !--------------------------------------------------!
@@ -853,6 +873,19 @@ PROGRAM proto_apm
       all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
       all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
     ENDDO
+
+    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *
+
+    !STOP
+
 
     PRINT *, "density loop..."
     PRINT *
@@ -1030,6 +1063,32 @@ PROGRAM proto_apm
       ENDIF
     ENDDO
 
+    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *
+
+    DO a= 1, npart_real, 1
+      all_pos(1,a)= all_pos(1,a) - ( com_x - com_star )
+      all_pos(2,a)= all_pos(2,a) - com_y
+      all_pos(3,a)= all_pos(3,a) - com_z
+    ENDDO
+
+    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *
+
     PRINT *, "iterating..."
     PRINT *
 
@@ -1075,10 +1134,10 @@ PROGRAM proto_apm
       !PRINT *, "npart_real_half*2=", npart_real_half*2
       !PRINT *, "npart_real=", npart_real
       !STOP
-      DO a= 1, npart_real_half, 1
-        all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
-        all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
-        all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
+      DO a= 1, npart_real/2, 1
+        all_pos( 1, npart_real/2 + a )=   all_pos( 1, a )
+        all_pos( 2, npart_real/2 + a )=   all_pos( 2, a )
+        all_pos( 3, npart_real/2 + a )= - all_pos( 3, a )
       ENDDO
       !IF( npart_real_half*2 /= npart_real )THEN
       !  PRINT *, " ** ERROR! npart_real_half*2 /= npart_real"
@@ -1089,6 +1148,18 @@ PROGRAM proto_apm
       !  STOP
       !ENDIF
 
+      CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+                com_x, com_y, com_z, com_d ) ! output
+
+      PRINT *, "com_star=", com_star
+      PRINT *, "com_x=", com_x
+      PRINT *, "com_y=", com_y
+      PRINT *, "com_z=", com_z
+      PRINT *, "com_d=", com_d
+      PRINT *
+
+      !STOP
+
       PRINT *, "assign h..."
 
       h_guess= h
@@ -1097,10 +1168,32 @@ PROGRAM proto_apm
                      all_pos, h_guess, &
                      h )
 
+      find_nan_in_h: DO a= 1, npart_all, 1
+
+        IF( ISNAN( h( a ) ) )THEN
+          PRINT *, "** ERROR! h(", a, ") is a NaN!", &
+                   " Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO find_nan_in_h
+
       PRINT *, "density_loop..."
 
       CALL density_loop( npart_all, all_pos, &    ! input
                          nu, h, nstar_real )      ! output
+
+      find_nan_in_nstar_real: DO a= 1, npart_all, 1
+
+        IF( ISNAN( nstar_real( a ) ) )THEN
+          PRINT *, "** ERROR! nstar_real(", a, ") is a NaN!", &
+                   " Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO find_nan_in_nstar_real
 
       CALL binary% import_id( npart_real, all_pos(1,1:npart_real), &
                               all_pos(2,1:npart_real), &
@@ -1176,7 +1269,21 @@ PROGRAM proto_apm
         Theta_a= 1.0D0/SQRT(-Theta_a)
         Theta(a)= Theta_a
 
-        nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+        nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3) &
+                    /(amu*g2kg)
+
+        IF( ISNAN( nstar_p( a ) ) )THEN
+          PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
+                   " Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+        IF( nstar_p( a ) == 0 )THEN
+          PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!", &
+                   " Stopping.."
+          PRINT *
+          STOP
+        ENDIF
 
       ENDDO
 
@@ -1199,16 +1306,6 @@ PROGRAM proto_apm
         err_N_min = MIN( err_N_min, ABS(dNstar) )
         err_N_mean= err_N_mean + ABS(dNstar)
 
-        IF( ISNAN(nstar_real(a)) )THEN
-          PRINT *, "nstar_real is a NaN at particle ", a
-          PRINT *, "nstar_p is ", nstar_p(a)
-          STOP
-        ENDIF
-        IF( ISNAN(nstar_p(a)) )THEN
-          PRINT *, "nstar_p is a NaN at particle ", a
-          PRINT *, "nstar_real is ", nstar_real(a)
-          STOP
-        ENDIF
         IF( ISNAN(dNstar) )THEN
           PRINT *, "dNstar is a NaN at particle ", a
           PRINT *, "nstar_real is ", nstar_real(a)
@@ -1217,6 +1314,19 @@ PROGRAM proto_apm
         ENDIF
 
       ENDDO
+
+      IF( ISNAN( art_pr_max ) )THEN
+        PRINT *, "** ERROR! art_pr_max is a NaN!", &
+                 " Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+      IF( ISNAN( nu_all ) )THEN
+        PRINT *, "** ERROR! nu_all is a NaN!", &
+                 " Stopping.."
+        PRINT *
+        STOP
+      ENDIF
 
       nstar_p( npart_real+1:npart_all )= 0.0D0
       art_pr ( npart_real+1:npart_all )= art_pr_max
@@ -1230,11 +1340,65 @@ PROGRAM proto_apm
       !PRINT *, SIZE(nstar_real)
       !PRINT *, SIZE(correction_pos(1,:))
 
-      all_pos_tmp2= all_pos(:,1:npart_real)
+      find_nan_in_art_pr: DO a= 1, npart_all, 1
+
+        IF( ISNAN( art_pr( a ) ) )THEN
+          PRINT *, "** ERROR! art_pr(", a, ") is a NaN!", &
+                   " Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+        IF( art_pr( a ) > HUGE(1.0D0) )THEN
+          PRINT *, "** ERROR! art_pr(", a, ")= ", art_pr( a ), " is infinite!",&
+                   " Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO find_nan_in_art_pr
+
+      find_nan_in_all_pos: DO a= 1, npart_all, 1
+
+        DO itr2= 1, 3, 1
+          IF( ISNAN( all_pos( itr2, a ) ) )THEN
+            PRINT *, "** ERROR! all_pos(", itr2, ",", a, ") is a NaN!", &
+                     " Stopping.."
+            PRINT *
+            STOP
+          ENDIF
+        ENDDO
+
+      ENDDO find_nan_in_all_pos
+
+      all_pos_tmp2= all_pos
 
       CALL position_correction( npart_all, &
                                 all_pos, h, nu_all, art_pr, nstar_real, &
                                 correction_pos )
+
+      find_nan_in_correction_pos: DO a= 1, npart_all, 1
+
+        DO itr2= 1, 3, 1
+          IF( ISNAN( correction_pos( itr2, a ) ) )THEN
+            PRINT *, "** ERROR! correction_pos(", itr2, ",", a, ") is a NaN!"
+            PRINT *, " *        Particle position: x=", all_pos(1,a), &
+                     ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+            r_tmp= SQRT( ( all_pos(1,a) - center )**2.0D0 + &
+                           all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )
+            PRINT *, " *        Particle radius: r=", r_tmp, &
+                     "=", r_tmp/larger_radius*100.0D0, &
+                     "% of the larger radius of the star."
+            PRINT *, " *        Particle colatitude: theta=", &
+                     ACOS( all_pos(3,a)/r_tmp )/pi, " pi"
+            PRINT *, " *        Particle longitude: phi=", &
+                     ATAN( all_pos(2,a)/all_pos(1,a) )/pi, " pi"
+            PRINT *, " * Stopping.."
+            PRINT *
+            STOP
+          ENDIF
+        ENDDO
+
+      ENDDO find_nan_in_correction_pos
 
       PRINT *, "After calling position_correction"
 
@@ -1265,6 +1429,10 @@ PROGRAM proto_apm
           !ENDIF
         ENDIF
       ENDDO
+
+      PRINT *, "After correcting positions"
+
+      STOP
 
       !PRINT *, "err_N_mean= ", err_N_mean
       !npart_real= itr2
