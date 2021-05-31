@@ -312,6 +312,17 @@ PROGRAM proto_apm
   nstar0               = nstar0               ( 1:npart_real )
   h0                   = h0                   ( 1:npart_real )
 
+  DO a= 1, npart_real, 1
+    IF( baryon_density_parts(a) == 0 )THEN
+      PRINT *, "baryon_density_parts(", a, ")= 0 ! Stopping..."
+      STOP
+    ENDIF
+    IF( baryon_density_parts(a) < 0 )THEN
+      PRINT *, "baryon_density_parts(", a, ")< 0 ! Stopping..."
+      STOP
+    ENDIF
+  ENDDO
+
   !---------------------------!
   !-- Place ghost particles --!
   !---------------------------!
@@ -823,6 +834,60 @@ PROGRAM proto_apm
     !-- enforce centre of mass after having changed nu --!
     !----------------------------------------------------!
 
+!    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+!              com_x, com_y, com_z, com_d ) ! output
+!
+!    PRINT *, "com_star=", com_star
+!    PRINT *, "com_x=", com_x
+!    PRINT *, "com_y=", com_y
+!    PRINT *, "com_z=", com_z
+!    PRINT *, "com_d=", com_d
+!    PRINT *
+!
+!    DO a= 1, npart_real, 1
+!      all_pos(1,a)= all_pos(1,a) - ( com_x - com_star )
+!      all_pos(2,a)= all_pos(2,a) - com_y
+!      all_pos(3,a)= all_pos(3,a) - com_z
+!    ENDDO
+!
+!    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+!              com_x, com_y, com_z, com_d ) ! output
+!
+!    PRINT *, "com_star=", com_star
+!    PRINT *, "com_x=", com_x
+!    PRINT *, "com_y=", com_y
+!    PRINT *, "com_z=", com_z
+!    PRINT *, "com_d=", com_d
+!    PRINT *
+
+    !-----------------------------------------------------------------------!
+    !-- Mirror the positions after having repositioned the center of mass --!
+    !-----------------------------------------------------------------------!
+
+ !   pos_star1_tmp= all_pos(:,1:npart_real)
+ !   nu0_tmp= nu
+ !   itr= 0
+ !   DO a= 1, npart_real, 1
+ !     IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+ !       itr= itr + 1
+ !       all_pos( 1, itr )= pos_star1_tmp( 1, a )
+ !       all_pos( 2, itr )= pos_star1_tmp( 2, a )
+ !       all_pos( 3, itr )= pos_star1_tmp( 3, a )
+ !       nu( itr )        = nu0_tmp( a )
+ !     ENDIF
+ !   ENDDO
+ !   npart_real_half= itr
+ !   PRINT *, "npart_real_half=", npart_real_half
+ !   PRINT *, "npart_real_half*2=", npart_real_half*2
+ !   PRINT *, "npart_real=", npart_real
+ !   !STOP
+ !   DO a= 1, npart_real_half, 1
+ !     all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
+ !     all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
+ !     all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
+ !     nu( npart_real_half + a )        =   nu( a )
+ !   ENDDO
+
     CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
               com_x, com_y, com_z, com_d ) ! output
 
@@ -831,61 +896,15 @@ PROGRAM proto_apm
     PRINT *, "com_y=", com_y
     PRINT *, "com_z=", com_z
     PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
     PRINT *
 
-    DO a= 1, npart_real, 1
-      all_pos(1,a)= all_pos(1,a) - ( com_x - com_star )
-      all_pos(2,a)= all_pos(2,a) - com_y
-      all_pos(3,a)= all_pos(3,a) - com_z
-    ENDDO
-
-    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    PRINT *, "com_star=", com_star
-    PRINT *, "com_x=", com_x
-    PRINT *, "com_y=", com_y
-    PRINT *, "com_z=", com_z
-    PRINT *, "com_d=", com_d
+    PRINT *, "assign h..."
     PRINT *
-
-    !--------------------------------------------------!
-    !-- Mirror the positions after having changed nu --!
-    !--------------------------------------------------!
-
-    pos_star1_tmp= all_pos(:,1:npart_real)
-    itr= 0
-    DO a= 1, npart_real, 1
-      IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
-        itr= itr + 1
-        all_pos( 1, itr )= pos_star1_tmp( 1, a )
-        all_pos( 2, itr )= pos_star1_tmp( 2, a )
-        all_pos( 3, itr )= pos_star1_tmp( 3, a )
-      ENDIF
-    ENDDO
-    npart_real_half= itr
-    PRINT *, "npart_real_half=", npart_real_half
-    PRINT *, "npart_real_half*2=", npart_real_half*2
-    PRINT *, "npart_real=", npart_real
-    !STOP
-    DO a= 1, npart_real_half, 1
-      all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
-      all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
-      all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
-    ENDDO
-
-    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    PRINT *, "com_star=", com_star
-    PRINT *, "com_x=", com_x
-    PRINT *, "com_y=", com_y
-    PRINT *, "com_z=", com_z
-    PRINT *, "com_d=", com_d
-    PRINT *
-
-    !STOP
-
+    CALL assign_h( nn_des, &
+                   npart_all, &
+                   all_pos, h0, &
+                   h )
 
     PRINT *, "density loop..."
     PRINT *
@@ -995,6 +1014,25 @@ PROGRAM proto_apm
 
       nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
 
+      IF( ISNAN( nstar_p( a ) ) )THEN
+        PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
+                 " Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+      IF( nstar_p( a ) == 0 )THEN
+        PRINT *, "** ERROR! When setting up ID: ", &
+                 "nstar_p(", a, ")= 0 on a real particle!"
+        PRINT *, " * Particle position: x=", all_pos(1,a), &
+                 ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+        PRINT *, "   sq_g=", sq_g
+        PRINT *, "   Theta_a=", Theta_a
+        PRINT *, "   baryon_density(a)=", baryon_density(a)
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+
       ! Recompute nu taking into account the nstar just computed from th star
       ! Maybe this step s not needed, and the artificial pressure can be
       ! computed at this point
@@ -1063,6 +1101,23 @@ PROGRAM proto_apm
       ENDIF
     ENDDO
 
+ !   CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+ !             com_x, com_y, com_z, com_d ) ! output
+ !
+ !   PRINT *, "com_star=", com_star
+ !   PRINT *, "com_x=", com_x
+ !   PRINT *, "com_y=", com_y
+ !   PRINT *, "com_z=", com_z
+ !   PRINT *, "com_d=", com_d
+ !   PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+ !   PRINT *
+ !
+ !   DO a= 1, npart_real, 1
+ !     all_pos(1,a)= all_pos(1,a) - ( com_x - com_star )
+ !     all_pos(2,a)= all_pos(2,a) - com_y
+ !     all_pos(3,a)= all_pos(3,a) - com_z
+ !   ENDDO
+
     CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
               com_x, com_y, com_z, com_d ) ! output
 
@@ -1071,22 +1126,7 @@ PROGRAM proto_apm
     PRINT *, "com_y=", com_y
     PRINT *, "com_z=", com_z
     PRINT *, "com_d=", com_d
-    PRINT *
-
-    DO a= 1, npart_real, 1
-      all_pos(1,a)= all_pos(1,a) - ( com_x - com_star )
-      all_pos(2,a)= all_pos(2,a) - com_y
-      all_pos(3,a)= all_pos(3,a) - com_z
-    ENDDO
-
-    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    PRINT *, "com_star=", com_star
-    PRINT *, "com_x=", com_x
-    PRINT *, "com_y=", com_y
-    PRINT *, "com_z=", com_z
-    PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
     PRINT *
 
     PRINT *, "iterating..."
@@ -1156,9 +1196,57 @@ PROGRAM proto_apm
       PRINT *, "com_y=", com_y
       PRINT *, "com_z=", com_z
       PRINT *, "com_d=", com_d
+      PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
       PRINT *
 
       !STOP
+
+  !    finalnamefile= "dbg-pos.dat"
+  !
+  !    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+  !
+  !    IF( exist )THEN
+  !        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+  !              FORM= "FORMATTED", &
+  !              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+  !              IOMSG= err_msg )
+  !    ELSE
+  !        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+  !              FORM= "FORMATTED", &
+  !              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+  !    ENDIF
+  !    IF( ios > 0 )THEN
+  !      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+  !               ". The error message is", err_msg
+  !      STOP
+  !    ENDIF
+  !
+  !    DO a= 1, npart_real/2, 1
+  !      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+  !        1, a, &
+  !        all_pos( 1, a ), &
+  !        all_pos( 2, a ), &
+  !        all_pos( 3, a )
+  !    ENDDO
+  !
+  !    DO a= npart_real/2+1, npart_real, 1
+  !      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+  !        2, a, &
+  !        all_pos( 1, a ), &
+  !        all_pos( 2, a ), &
+  !        all_pos( 3, a )
+  !    ENDDO
+  !
+  !    DO a= npart_real+1, npart_all, 1
+  !      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+  !        3, a, &
+  !        all_pos( 1, a ), &
+  !        all_pos( 2, a ), &
+  !        all_pos( 3, a )
+  !    ENDDO
+  !
+  !    CLOSE( UNIT= 2 )
+
 
       PRINT *, "assign h..."
 
@@ -1279,8 +1367,13 @@ PROGRAM proto_apm
           STOP
         ENDIF
         IF( nstar_p( a ) == 0 )THEN
-          PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!", &
-                   " Stopping.."
+          PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
+          PRINT *, " * Particle position: x=", all_pos(1,a), &
+                   ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+          PRINT *, "   sq_g=", sq_g
+          PRINT *, "   Theta_a=", Theta_a
+          PRINT *, "   baryon_density(a)=", baryon_density(a)
+          PRINT *, " * Stopping.."
           PRINT *
           STOP
         ENDIF
@@ -1432,7 +1525,7 @@ PROGRAM proto_apm
 
       PRINT *, "After correcting positions"
 
-      STOP
+      !STOP
 
       !PRINT *, "err_N_mean= ", err_N_mean
       !npart_real= itr2
@@ -1516,14 +1609,14 @@ PROGRAM proto_apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-    CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
-              com_x, com_y, com_z, com_d) ! output
-
-    DO a= 1, npart_real, 1
-      pos(1,a)= pos(1,a) - ( com_x - com_star )
-      pos(2,a)= pos(2,a) - com_y
-      pos(3,a)= pos(3,a) - com_z
-    ENDDO
+ !   CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
+ !             com_x, com_y, com_z, com_d) ! output
+ !
+ !   DO a= 1, npart_real, 1
+ !     pos(1,a)= pos(1,a) - ( com_x - com_star )
+ !     pos(2,a)= pos(2,a) - com_y
+ !     pos(3,a)= pos(3,a) - com_z
+ !   ENDDO
 
     !-------------------------------------------------------!
     !-- Mirror the positions after the last APM iteration --!
@@ -2230,36 +2323,44 @@ PROGRAM proto_apm
   CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
             com_x, com_y, com_z, com_d) ! output
 
-  DO a= 1, npart_real, 1
-    pos(1,a)= pos(1,a) - ( com_x - com_star )
-    pos(2,a)= pos(2,a) - com_y
-    pos(3,a)= pos(3,a) - com_z
-  ENDDO
+  PRINT *, "com_star=", com_star
+  PRINT *, "com_x=", com_x
+  PRINT *, "com_y=", com_y
+  PRINT *, "com_z=", com_z
+  PRINT *, "com_d=", com_d
+  PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+  PRINT *
 
-  !--------------------------------------------------!
-  !-- Mirror the positions after having changed nu --!
-  !--------------------------------------------------!
-
-  pos_star1_tmp= pos
-  itr= 0
-  DO a= 1, npart_real, 1
-    IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
-      itr= itr + 1
-      pos( 1, itr )= pos_star1_tmp( 1, a )
-      pos( 2, itr )= pos_star1_tmp( 2, a )
-      pos( 3, itr )= pos_star1_tmp( 3, a )
-    ENDIF
-  ENDDO
-  npart_real_half= itr
-  !PRINT *, "npart_real_half=", npart_real_half
-  !PRINT *, "npart_real_half*2=", npart_real_half*2
-  !PRINT *, "npart_real=", npart_real
-  !STOP
-  DO a= 1, npart_real_half, 1
-    pos( 1, npart_real_half + a )=   pos( 1, a )
-    pos( 2, npart_real_half + a )=   pos( 2, a )
-    pos( 3, npart_real_half + a )= - pos( 3, a )
-  ENDDO
+!  DO a= 1, npart_real, 1
+!    pos(1,a)= pos(1,a) - ( com_x - com_star )
+!    pos(2,a)= pos(2,a) - com_y
+!    pos(3,a)= pos(3,a) - com_z
+!  ENDDO
+!
+!  !--------------------------------------------------!
+!  !-- Mirror the positions after having changed nu --!
+!  !--------------------------------------------------!
+!
+!  pos_star1_tmp= pos
+!  itr= 0
+!  DO a= 1, npart_real, 1
+!    IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+!      itr= itr + 1
+!      pos( 1, itr )= pos_star1_tmp( 1, a )
+!      pos( 2, itr )= pos_star1_tmp( 2, a )
+!      pos( 3, itr )= pos_star1_tmp( 3, a )
+!    ENDIF
+!  ENDDO
+!  npart_real_half= itr
+!  !PRINT *, "npart_real_half=", npart_real_half
+!  !PRINT *, "npart_real_half*2=", npart_real_half*2
+!  !PRINT *, "npart_real=", npart_real
+!  !STOP
+!  DO a= 1, npart_real_half, 1
+!    pos( 1, npart_real_half + a )=   pos( 1, a )
+!    pos( 2, npart_real_half + a )=   pos( 2, a )
+!    pos( 3, npart_real_half + a )= - pos( 3, a )
+!  ENDDO
 
   IF( correct_nu )THEN
     !THIS% nlrf=
@@ -2286,14 +2387,14 @@ PROGRAM proto_apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-    CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
-              com_x, com_y, com_z, com_d) ! output
-
-    DO a= 1, npart_real, 1
-      pos(1,a)= pos(1,a) - ( com_x - com_star )
-      pos(2,a)= pos(2,a) - com_y
-      pos(3,a)= pos(3,a) - com_z
-    ENDDO
+  !  CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
+  !            com_x, com_y, com_z, com_d) ! output
+  !
+  !  DO a= 1, npart_real, 1
+  !    pos(1,a)= pos(1,a) - ( com_x - com_star )
+  !    pos(2,a)= pos(2,a) - com_y
+  !    pos(3,a)= pos(3,a) - com_z
+  !  ENDDO
 
     !-------------------------------------------!
     !-- Mirror the positions after nu changed --!
@@ -2405,6 +2506,25 @@ PROGRAM proto_apm
     Theta(a)= Theta_a
 
     nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+
+    IF( ISNAN( nstar_p( a ) ) )THEN
+      PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
+               " Stopping.."
+      PRINT *
+      STOP
+    ENDIF
+    IF( nstar_p( a ) == 0 )THEN
+      PRINT *, "** ERROR! When setting up ID: ", &
+               "nstar_p(", a, ")= 0 on a real particle!"
+      PRINT *, " * Particle position: x=", all_pos(1,a), &
+               ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+      PRINT *, "   sq_g=", sq_g
+      PRINT *, "   Theta_a=", Theta_a
+      PRINT *, "   baryon_density(a)=", baryon_density(a)
+      PRINT *, " * Stopping.."
+      PRINT *
+      STOP
+    ENDIF
 
   ENDDO
 
