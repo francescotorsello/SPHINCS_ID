@@ -115,6 +115,7 @@ PROGRAM proto_apm
                                                   h0_tmp
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sorted_pos
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
@@ -1533,6 +1534,10 @@ PROGRAM proto_apm
 
       err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
 
+      IF( err_N_mean_min == err_N_mean )THEN
+        all_pos_best= all_pos
+      ENDIF
+
       !PRINT *, "itr2= ", itr2
       PRINT *, "npart_real= ", npart_real
       PRINT *
@@ -1599,7 +1604,7 @@ PROGRAM proto_apm
     PRINT *
 
     ! Now get rid of the ghost particles
-    pos= all_pos( :, 1:npart_real )
+    pos= all_pos_best( :, 1:npart_real )
     npart= npart_real
     PRINT *, npart
 

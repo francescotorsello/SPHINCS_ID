@@ -54,7 +54,7 @@ SUBMODULE (particles_id) stretched_lattice
                        rand_num, rand_num2, delta_r, shell_thickness, &
                        upper_bound_tmp, lower_bound_tmp, col_tmp, &
                        surface_density, density_step, n_shells_tmp, &
-                       gxx_tmp, baryon_density_tmp, gamma_euler_tmp
+                       gxx_tmp, baryon_density_tmp, gamma_euler_tmp, rho_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile, &
                                                     particle_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
@@ -357,6 +357,11 @@ SUBMODULE (particles_id) stretched_lattice
     density_step= ( central_density - surface_density )/(n_shells)
     shell_radii= 0.0D0
 
+    !--------------------------------------------------------------!
+    !-- Place shells based on constant intervals of mass density --!
+    !-- this does the opposite of what I want....
+    !--------------------------------------------------------------!
+
     !shell_index= 2
     !DO itr= 0, 200, 1
     !
@@ -378,42 +383,105 @@ SUBMODULE (particles_id) stretched_lattice
     !PRINT *, radius
     !PRINT *, shell_radii
     !STOP
-    !DO itr= 0, n_shells - 1, 1
-    !
-    !  shell_scales( itr + 1 )= &
-    !      ( ( central_density - itr*density_step )/m_p )**(-third)
-    !
-    !ENDDO
-    !!shell_scales= shell_scales - shell_scales( 1 )
-    !!shell_scales= shell_scales/shell_scales( n_shells )
-    !PRINT *, shell_scales
-    !PRINT *, SUM( shell_scales , DIM= 1 )
+
+    !-----------------------------------------------------!
+    !-- Place shells based on mass density a that point --!
+    !-----------------------------------------------------!
+
+!    DO itr= 0, n_shells - 1, 1
+!
+!      shell_scales( itr + 1 )= &
+!          ( ( central_density - itr*density_step )/m_p )**(-third)
+!
+!    ENDDO
+!    shell_scales= shell_scales - shell_scales( 1 )
+!    shell_scales= shell_scales/shell_scales( n_shells )
+!    PRINT *, shell_scales
+!    PRINT *, SUM( shell_scales , DIM= 1 )
+!    !STOP
+!    DO itr= 0, n_shells - 1, 1
+!
+!      shell_radii( itr + 1 )= 1.0D0 &!last_r*radius &
+!          *( ( central_density - itr*density_step )/m_p )**(-third)
+!
+!    ENDDO
+!    !shell_radii= shell_radii*(last_r*radius)/shell_radii( n_shells )
+!    PRINT *, n_shells, central_density, surface_density, density_step
+!    PRINT *, radius
+!    PRINT *, shell_radii
+!    !STOP
+!    shell_index= 1
+!    DO r= 1, 500, 1
+!
+!      IF( particle_profile( 2, r ) > shell_index )THEN
+!        shell_radii( shell_index ) = particle_profile( 1, r )
+!        shell_index= shell_index + 1
+!      ENDIF
+!
+!    ENDDO
+!    IF( shell_radii( n_shells ) > 0.98D0*radius )THEN
+!      shell_radii( n_shells )= shell_radii( n_shells - 1 ) &
+!                               + ( shell_radii( n_shells ) &
+!                                 - shell_radii( n_shells - 1 ) )/2.0D0
+!    ENDIF
+!    !PRINT *, radius
+!    !PRINT *, shell_radii
+!    !STOP
+
+    !---------------------------------------------------------------------!
+    !-- Place shells based on mass density a that point, second version --!
+    !---------------------------------------------------------------------!
+
+    shell_radii= 0
+    shell_radii(1)= ( central_density/m_p )**(-third)
+    DO itr= 2, n_shells, 1
+
+      rho_tmp= bns_obj% import_mass_density( center + shell_radii( itr - 1 ), 0.0D0, 0.0D0 )
+
+      IF( rho_tmp == 0 )THEN
+        shell_radii= shell_radii*itr/n_shells
+      ENDIF
+
+      shell_radii( itr )= shell_radii( itr - 1 ) + &
+        ( bns_obj% import_mass_density( center + shell_radii( itr - 1 ), 0.0D0, 0.0D0 )&
+          /m_p )**(-third)
+
+    ENDDO
+    shell_radii= shell_radii*(radius*last_r/shell_radii(n_shells))
+    PRINT *, "n_shells= ", n_shells
+    PRINT *, "shell_radii= ", shell_radii
+    PRINT *
     !STOP
-    !DO itr= 0, n_shells - 1, 1
-    !
-    !  shell_radii( itr + 1 )= 1.0D0 &!last_r*radius &
-    !      *( ( central_density - itr*density_step )/m_p )**(-third)
-    !
-    !ENDDO
-    !!shell_radii= shell_radii*(last_r*radius)/shell_radii( n_shells )
-    !PRINT *, n_shells, central_density, surface_density, density_step
-    !PRINT *, radius
-    !PRINT *, shell_radii
-    !STOP
-    !shell_index= 1
-    !DO r= 1, 500, 1
-    !
-    !  IF( particle_profile( 2, r ) > shell_index )THEN
-    !    shell_radii( shell_index ) = particle_profile( 1, r )
-    !    shell_index= shell_index + 1
-    !  ENDIF
-    !
-    !ENDDO
-    !IF( shell_radii( n_shells ) > 0.98D0*radius )THEN
-    !  shell_radii( n_shells )= shell_radii( n_shells - 1 ) &
-    !                           + ( shell_radii( n_shells ) &
-    !                             - shell_radii( n_shells - 1 ) )/2.0D0
-    !ENDIF
+!    shell_scales= shell_scales - shell_scales( 1 )
+!    shell_scales= shell_scales/shell_scales( n_shells )
+!    PRINT *, shell_scales
+!    PRINT *, SUM( shell_scales , DIM= 1 )
+!    !STOP
+!    DO itr= 0, n_shells - 1, 1
+!
+!      shell_radii( itr + 1 )= 1.0D0 &!last_r*radius &
+!          *( ( central_density - itr*density_step )/m_p )**(-third)
+!
+!    ENDDO
+!    !shell_radii= shell_radii*(last_r*radius)/shell_radii( n_shells )
+!    PRINT *, n_shells, central_density, surface_density, density_step
+!    PRINT *, radius
+!    PRINT *, shell_radii
+!    !STOP
+!    shell_index= 1
+!    DO r= 1, 500, 1
+!
+!      IF( particle_profile( 2, r ) > shell_index )THEN
+!        shell_radii( shell_index ) = particle_profile( 1, r )
+!        shell_index= shell_index + 1
+!      ENDIF
+!
+!    ENDDO
+!    IF( shell_radii( n_shells ) > 0.98D0*radius )THEN
+!      shell_radii( n_shells )= shell_radii( n_shells - 1 ) &
+!                               + ( shell_radii( n_shells ) &
+!                                 - shell_radii( n_shells - 1 ) )/2.0D0
+!    ENDIF
     !PRINT *, radius
     !PRINT *, shell_radii
     !STOP
@@ -441,13 +509,17 @@ SUBMODULE (particles_id) stretched_lattice
     !ENDDO
     !STOP
 
-    shell_radii= 0.0D0
-    DO itr= 1, n_shells, 1
+    !-------------------------------------------------!
+    !-- Place shells based on constant step on mass --!
+    !-------------------------------------------------!
 
-      shell_radii( itr )= (( radius*last_r )/DBLE(n_shells))*DBLE( itr - 1/2 )
-
-    ENDDO
-    shell_thickness= shell_radii( 2 ) - shell_radii( 1 )
+ !   shell_radii= 0.0D0
+ !   DO itr= 1, n_shells, 1
+ !
+ !     shell_radii( itr )= (( radius*last_r )/DBLE(n_shells))*DBLE( itr - 1/2 )
+ !
+ !   ENDDO
+ !   shell_thickness= shell_radii( 2 ) - shell_radii( 1 )
 
     !surface_density= bns_obj% import_mass_density( center + radius, &
     !                                               0.0D0, 0.0D0 )
@@ -786,6 +858,8 @@ SUBMODULE (particles_id) stretched_lattice
 
   CLOSE( UNIT= 2 )
 
+  !STOP
+
   PRINT *, " * Assigning first half of particle positions..."
 
     DO r= 1, n_shells, 1
@@ -902,12 +976,12 @@ SUBMODULE (particles_id) stretched_lattice
       DO itr2= 1, npart_shelleq( r )/4, 1
 
         colatitude_pos( r )% colatitudes( itr2 )= &
-        !              ACOS( 2.0D0*itr2/(npart_shelleq( r )/2 + 1.0D0 )&
-        !                  - 1.0D0 )
+                      ACOS( 2.0D0*DBLE(itr2)/ &
+                            (DBLE(npart_shelleq( r )/2) + 0.625D0 ) - 1.0D0 )
           !            alpha( r )*1.0D0/2.0D0 + ( itr2 - 1 )*alpha( r )
-          ACOS( 2.0D0*( 1.0D0 - COS( pi/3.0D0*( 2.0D0/3.0D0 + DBLE(itr2 - 1)*DBLE(npart_shelleq( r )/4 + 1.0D0 -(2.0D0/3.0D0)-(2.0D0/3.0D0) )/DBLE(npart_shelleq( r )/4 - 1.0D0 ) ) &
-                           /DBLE(npart_shelleq( r )/4 + 1.0D0 ) ) ) &
-              - 1.0D0 )
+        !  ACOS( 2.0D0*( 1.0D0 - COS( pi/3.0D0*( 2.0D0/3.0D0 + DBLE(itr2 - 1)*DBLE(npart_shelleq( r )/4 + 1.0D0 -(1.0D0/2.0D0)-(2.0D0/3.0D0) )/DBLE(npart_shelleq( r )/4 - 1.0D0 ) ) &
+        !                   /DBLE(npart_shelleq( r )/4 + 1.0D0 ) ) ) &
+        !      - 1.0D0 )
               !5.0D0/12.0D0
         !colatitude_pos( r )% colatitudes( itr2 )= &
         !              colatitude_pos( r )% colatitudes( itr2 ) &
@@ -1029,6 +1103,22 @@ SUBMODULE (particles_id) stretched_lattice
           xtemp= center + rad*COS(phase + phi*alpha(r))*SIN(col)
           ytemp= rad*SIN(phase + phi*alpha(r))*SIN(col)
           ztemp= rad*COS(col)
+
+          IF( ISNAN( xtemp ) )THEN
+            PRINT *, "** ERROR when placing first half of the particles! ", &
+                     "xtemp is a NaN. Stopping.."
+            STOP
+          ENDIF
+          IF( ISNAN( ytemp ) )THEN
+            PRINT *, "** ERROR when placing first half of the particles! ", &
+                     "ytemp is a NaN. Stopping.."
+            STOP
+          ENDIF
+          IF( ISNAN( ztemp ) )THEN
+            PRINT *, "** ERROR when placing first half of the particles! ", &
+                     "ztemp is a NaN. Stopping.."
+            STOP
+          ENDIF
 
 !PRINT *, "2.2"
 

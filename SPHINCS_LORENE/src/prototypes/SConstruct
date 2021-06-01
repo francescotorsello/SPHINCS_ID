@@ -202,12 +202,11 @@ sources = ['../module_utility.f90',
            '../../../SPHINCS_fix_metric/module_reconstruction.f90',
            '../../../SPHINCS_fix_metric/module_deactivate_particles.f90',
            '../../../SPHINCS_fix_metric/module_sorting.f90',
-           '../../../SPHINCS_fix_metric/module_Artificial_Pressure_Method.f90',
            '../../../SPHINCS_fix_metric/module_piecewise_polytrope.f90'
            ]
 
 proto_apm = 'proto_apm.x'
 
-Program(proto_apm, lorene_sources_bin_ns + lorene_sources + sources + ['proto_artificial-pressure.f90'])
+Program(proto_apm, lorene_sources_bin_ns + lorene_sources + sources + ['../../../SPHINCS_fix_metric/module_Artificial_Pressure_Method.f90'] + ['proto_artificial-pressure.f90'])
 
 Decider('MD5-timestamp')
