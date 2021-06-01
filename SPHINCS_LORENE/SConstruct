@@ -50,6 +50,9 @@ env['F90FLAGS'] = ['-O3', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-re
 # C++ flags for production (union of the flags in the SPHINCS SConstruct files
 # and the flags in the file local_settings in the LORENE home directory)
 env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', '-Wconversion', '-Winline', '-Wabi=11', '-Wold-style-cast', '-Woverloaded-virtual']
+#-ip, -ipo, -ipo=n
+# icx compiler: best of icc and best of clang
+# -o prog
 
 # C++ flags for debugging (union of the flags in the SPHINCS SConstruct files
 # and the flags in the file local_settings in the LORENE home directory)

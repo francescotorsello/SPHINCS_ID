@@ -57,7 +57,7 @@ PROGRAM proto_apm
   LOGICAL, PARAMETER:: post_correction= .FALSE.
   LOGICAL, PARAMETER:: correct_nu  = .TRUE.
 
-  INTEGER:: npart_real, tmp, ios, itr, itr2, a, nout, nus, mus, npart_eq, &
+  INTEGER:: npart_real, tmp, ios, itr, itr2, itr3, a, nout, nus, mus, npart_eq,&
             npart_ghost_shell, npart_ghost, npart_all, r, th, phi, npart1, &
             n_inc, nx, ny, nz, i, j, k, tmp2, a_numax, a_numin, &
             a_numax2, a_numin2, npart_real_half, npart_missing
@@ -75,7 +75,7 @@ PROGRAM proto_apm
                      dN_max, spec_ener, press, mass_dens, tmp3, tmp4, nu_tot, &
                      mass, mean_nu, variance_nu, stddev_nu, max_nu2, min_nu2, &
                      nu_tmp, nu_ratio, err_N_mean_min, err_N_mean_min_old, &
-                     com_star, r_tmp
+                     com_star, r_tmp, ptmp1, ptmp2, ptmp3
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -216,7 +216,7 @@ PROGRAM proto_apm
   ALLOCATE( nstar0(max_npart) )
   ALLOCATE( h0(max_npart) )
 
-  finalnamefile= "lorene-bns-id-particles-shells.dat"
+  finalnamefile= "lorene-bns-id-particles-shells-nonclustered-200k.dat"
 
   INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -835,59 +835,116 @@ PROGRAM proto_apm
     !-- enforce centre of mass after having changed nu --!
     !----------------------------------------------------!
 
-!    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-!              com_x, com_y, com_z, com_d ) ! output
-!
-!    PRINT *, "com_star=", com_star
-!    PRINT *, "com_x=", com_x
-!    PRINT *, "com_y=", com_y
-!    PRINT *, "com_z=", com_z
-!    PRINT *, "com_d=", com_d
-!    PRINT *
-!
-!    DO a= 1, npart_real, 1
-!      all_pos(1,a)= all_pos(1,a) - ( com_x - com_star )
-!      all_pos(2,a)= all_pos(2,a) - com_y
-!      all_pos(3,a)= all_pos(3,a) - com_z
-!    ENDDO
-!
-!    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-!              com_x, com_y, com_z, com_d ) ! output
-!
-!    PRINT *, "com_star=", com_star
-!    PRINT *, "com_x=", com_x
-!    PRINT *, "com_y=", com_y
-!    PRINT *, "com_z=", com_z
-!    PRINT *, "com_d=", com_d
-!    PRINT *
+    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+    PRINT *
+
+    !itr2= 0
+    !itr3= 0
+    DO a= 1, npart_real, 1
+      pos_tmp(1)= all_pos(1,a) - ( com_x - com_star )
+      pos_tmp(2)= all_pos(2,a) - com_y
+      pos_tmp(3)= all_pos(3,a) - com_z
+      !PRINT *, all_pos(:,a)
+      !PRINT *, pos_tmp
+      !PRINT *, binary% import_mass_density( &
+      !                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0.0D0 &
+      !          .AND. &
+      !          binary% is_hydro_negative( &
+      !                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) == 0
+      !PRINT *
+      IF( binary% import_mass_density( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0.0D0 &
+          .AND. &
+          binary% is_hydro_negative( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) == 0 &
+      )THEN
+        !itr2= itr2 + 1
+        all_pos(:,a)= pos_tmp
+      !ELSE
+        !itr3= itr3 + 1
+        !PRINT *, binary% import_mass_density( &
+        !          pos_tmp(1), pos_tmp(2), pos_tmp(3) )
+        !PRINT *, binary% is_hydro_negative( &
+        !          pos_tmp(1), pos_tmp(2), pos_tmp(3) )
+        !PRINT *
+      ENDIF
+      !PRINT *, all_pos(:,a)
+      !PRINT *
+    ENDDO
+    !PRINT *, itr2/npart_real, "% of the particles are moved when resetting COM"
+    !PRINT *, itr3/npart_real, "% of the particles are not moved when resetting COM"!
+    !PRINT *
+
+  !  PRINT *, all_pos(1,107412), all_pos(2,107412), all_pos(3,107412)
+  !  PRINT *
+  !
+  !  ptmp1= -13.0612773587391
+  !  ptmp2= 0.162909268893096
+  !  ptmp3= 5.86403190029371
+  !
+  !  PRINT *, " * Importing the density from LORENE with ", &
+  !           "import_mass_density, before calling resetting COM, ", &
+  !           "at the position that has a 0 density:"
+  !  PRINT *, "   baryon_density(107412)=", binary% import_mass_density( &
+  !           all_pos(1,107412), all_pos(2,107412), all_pos(3,107412) )
+  !  PRINT *, "   baryon_density(bad point)=", binary% import_mass_density( &
+  !           ptmp1, ptmp2, ptmp3 )
+  !  PRINT *
+  !
+  !  all_pos(1,:)= all_pos(1,:) - ( com_x - com_star )
+  !  all_pos(2,:)= all_pos(2,:) - com_y
+  !  all_pos(3,:)= all_pos(3,:) - com_z
+  !
+  !  PRINT *, all_pos(1,107412), all_pos(2,107412), all_pos(3,107412)
+  !  PRINT *
+
+    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+    PRINT *
 
     !-----------------------------------------------------------------------!
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
- !   pos_star1_tmp= all_pos(:,1:npart_real)
- !   nu0_tmp= nu
- !   itr= 0
- !   DO a= 1, npart_real, 1
- !     IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
- !       itr= itr + 1
- !       all_pos( 1, itr )= pos_star1_tmp( 1, a )
- !       all_pos( 2, itr )= pos_star1_tmp( 2, a )
- !       all_pos( 3, itr )= pos_star1_tmp( 3, a )
- !       nu( itr )        = nu0_tmp( a )
- !     ENDIF
- !   ENDDO
- !   npart_real_half= itr
- !   PRINT *, "npart_real_half=", npart_real_half
- !   PRINT *, "npart_real_half*2=", npart_real_half*2
- !   PRINT *, "npart_real=", npart_real
- !   !STOP
- !   DO a= 1, npart_real_half, 1
- !     all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
- !     all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
- !     all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
- !     nu( npart_real_half + a )        =   nu( a )
- !   ENDDO
+    pos_star1_tmp= all_pos(:,1:npart_real)
+    nu0_tmp= nu
+    itr= 0
+    DO a= 1, npart_real, 1
+      IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+        itr= itr + 1
+        all_pos( 1, itr )= pos_star1_tmp( 1, a )
+        all_pos( 2, itr )= pos_star1_tmp( 2, a )
+        all_pos( 3, itr )= pos_star1_tmp( 3, a )
+        nu( itr )        = nu0_tmp( a )
+      ENDIF
+    ENDDO
+    npart_real_half= itr
+    !PRINT *, "npart_real_half=", npart_real_half
+    !PRINT *, "npart_real_half*2=", npart_real_half*2
+    !PRINT *, "npart_real=", npart_real
+    !PRINT *
+    !STOP
+    DO a= 1, npart_real_half, 1
+      all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
+      all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
+      all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
+      nu( npart_real_half + a )        =   nu( a )
+    ENDDO
 
     CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
               com_x, com_y, com_z, com_d ) ! output
@@ -934,6 +991,13 @@ PROGRAM proto_apm
     ALLOCATE( v_euler_y      (npart_real) )
     ALLOCATE( v_euler_z      (npart_real) )
 
+    PRINT *, " * Importing the density from LORENE with ", &
+             "import_mass_density, before calling import_id, at the position ",&
+             "that has a 0 density:"
+    PRINT *, "   baryon_density(107412)=", binary% import_mass_density( &
+             all_pos(1,107412), all_pos(2,107412), all_pos(3,107412) )
+    PRINT *
+
     CALL binary% import_id( npart_real, all_pos(1,1:npart_real), &
                             all_pos(2,1:npart_real), &
                             all_pos(3,1:npart_real), &
@@ -945,6 +1009,27 @@ PROGRAM proto_apm
                             specific_energy, &
                             pressure, &
                             v_euler_x, v_euler_y, v_euler_z )
+
+    DO a= 1, npart_real, 1
+      IF( baryon_density( a ) == 0 )THEN
+        PRINT *, "** ERROR! When importing ID: ", &
+                 "baryon_density(", a, ")= 0 on a real particle!"
+        PRINT *, " * Particle position: x=", all_pos(1,a), &
+                 ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+        PRINT *, "   baryon_density(a)=", baryon_density(a)
+        PRINT *, "   energy_density(a)=", energy_density(a)
+        PRINT *, "   specific_energy(a)=", specific_energy(a)
+        PRINT *, "   pressure(a)=", pressure(a)
+        PRINT *
+        PRINT *, " * Importing again the density from LORENE with ", &
+                 "import_mass_density:"
+        PRINT *, "   baryon_density(", a, ")=", binary% import_mass_density( &
+                 all_pos(1,a), all_pos(2,a), all_pos(3,a) )
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+    ENDDO
 
     max_nu= 0.0D0
     min_nu= 1.0D60
@@ -1078,6 +1163,8 @@ PROGRAM proto_apm
     PRINT *, " * ID set up for the APM iteration."
     PRINT *
 
+    !STOP
+
     !-------------------------------------------------!
     !-- iterate to (close to) uniform particle mass --!
     !-------------------------------------------------!
@@ -1102,22 +1189,30 @@ PROGRAM proto_apm
       ENDIF
     ENDDO
 
- !   CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
- !             com_x, com_y, com_z, com_d ) ! output
- !
- !   PRINT *, "com_star=", com_star
- !   PRINT *, "com_x=", com_x
- !   PRINT *, "com_y=", com_y
- !   PRINT *, "com_z=", com_z
- !   PRINT *, "com_d=", com_d
- !   PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
- !   PRINT *
- !
- !   DO a= 1, npart_real, 1
- !     all_pos(1,a)= all_pos(1,a) - ( com_x - com_star )
- !     all_pos(2,a)= all_pos(2,a) - com_y
- !     all_pos(3,a)= all_pos(3,a) - com_z
- !   ENDDO
+    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+    PRINT *
+
+    DO a= 1, npart_real, 1
+      pos_tmp(1)= all_pos(1,a) - ( com_x - com_star )
+      pos_tmp(2)= all_pos(2,a) - com_y
+      pos_tmp(3)= all_pos(3,a) - com_z
+      IF( binary% import_mass_density( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0.0D0 &
+          .AND. &
+          binary% is_hydro_negative( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) == 0 &
+      )THEN
+        all_pos(:,a)= pos_tmp
+      ENDIF
+    ENDDO
 
     CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
               com_x, com_y, com_z, com_d ) ! output
@@ -1614,14 +1709,41 @@ PROGRAM proto_apm
     !-- enforce centre of mass --!
     !----------------------------!
 
- !   CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
- !             com_x, com_y, com_z, com_d) ! output
- !
- !   DO a= 1, npart_real, 1
- !     pos(1,a)= pos(1,a) - ( com_x - com_star )
- !     pos(2,a)= pos(2,a) - com_y
- !     pos(3,a)= pos(3,a) - com_z
- !   ENDDO
+    CALL COM( npart_real, pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+    PRINT *
+
+    DO a= 1, npart_real, 1
+      pos_tmp(1)= pos(1,a) - ( com_x - com_star )
+      pos_tmp(2)= pos(2,a) - com_y
+      pos_tmp(3)= pos(3,a) - com_z
+      IF( binary% import_mass_density( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0.0D0 &
+          .AND. &
+          binary% is_hydro_negative( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) == 0 &
+      )THEN
+        pos(:,a)= pos_tmp
+      ENDIF
+    ENDDO
+
+    CALL COM( npart_real, pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+    PRINT *
 
     !-------------------------------------------------------!
     !-- Mirror the positions after the last APM iteration --!
@@ -2325,8 +2447,8 @@ PROGRAM proto_apm
   !-- enforce centre of mass after having changed nu --!
   !----------------------------------------------------!
 
-  CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
-            com_x, com_y, com_z, com_d) ! output
+  CALL COM( npart_real, pos(:,1:npart_real), nu(1:npart_real), & ! input
+            com_x, com_y, com_z, com_d ) ! output
 
   PRINT *, "com_star=", com_star
   PRINT *, "com_x=", com_x
@@ -2336,36 +2458,55 @@ PROGRAM proto_apm
   PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
   PRINT *
 
-!  DO a= 1, npart_real, 1
-!    pos(1,a)= pos(1,a) - ( com_x - com_star )
-!    pos(2,a)= pos(2,a) - com_y
-!    pos(3,a)= pos(3,a) - com_z
-!  ENDDO
-!
-!  !--------------------------------------------------!
-!  !-- Mirror the positions after having changed nu --!
-!  !--------------------------------------------------!
-!
-!  pos_star1_tmp= pos
-!  itr= 0
-!  DO a= 1, npart_real, 1
-!    IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
-!      itr= itr + 1
-!      pos( 1, itr )= pos_star1_tmp( 1, a )
-!      pos( 2, itr )= pos_star1_tmp( 2, a )
-!      pos( 3, itr )= pos_star1_tmp( 3, a )
-!    ENDIF
-!  ENDDO
-!  npart_real_half= itr
-!  !PRINT *, "npart_real_half=", npart_real_half
-!  !PRINT *, "npart_real_half*2=", npart_real_half*2
-!  !PRINT *, "npart_real=", npart_real
-!  !STOP
-!  DO a= 1, npart_real_half, 1
-!    pos( 1, npart_real_half + a )=   pos( 1, a )
-!    pos( 2, npart_real_half + a )=   pos( 2, a )
-!    pos( 3, npart_real_half + a )= - pos( 3, a )
-!  ENDDO
+  DO a= 1, npart_real, 1
+    pos_tmp(1)= pos(1,a) - ( com_x - com_star )
+    pos_tmp(2)= pos(2,a) - com_y
+    pos_tmp(3)= pos(3,a) - com_z
+    IF( binary% import_mass_density( &
+                            pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0.0D0 &
+        .AND. &
+        binary% is_hydro_negative( &
+                            pos_tmp(1), pos_tmp(2), pos_tmp(3) ) == 0 &
+    )THEN
+      pos(:,a)= pos_tmp
+    ENDIF
+  ENDDO
+
+  CALL COM( npart_real, pos(:,1:npart_real), nu(1:npart_real), & ! input
+            com_x, com_y, com_z, com_d ) ! output
+
+  PRINT *, "com_star=", com_star
+  PRINT *, "com_x=", com_x
+  PRINT *, "com_y=", com_y
+  PRINT *, "com_z=", com_z
+  PRINT *, "com_d=", com_d
+  PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+  PRINT *
+
+  !----------------------------------------------------------------!
+  !-- Mirror the positions after having reset the center of mass --!
+  !----------------------------------------------------------------!
+
+  pos_star1_tmp= pos
+  itr= 0
+  DO a= 1, npart_real, 1
+    IF( pos_star1_tmp( 3, a ) > 0.0D0 )THEN
+      itr= itr + 1
+      pos( 1, itr )= pos_star1_tmp( 1, a )
+      pos( 2, itr )= pos_star1_tmp( 2, a )
+      pos( 3, itr )= pos_star1_tmp( 3, a )
+    ENDIF
+  ENDDO
+  npart_real_half= itr
+  !PRINT *, "npart_real_half=", npart_real_half
+  !PRINT *, "npart_real_half*2=", npart_real_half*2
+  !PRINT *, "npart_real=", npart_real
+  !STOP
+  DO a= 1, npart_real_half, 1
+    pos( 1, npart_real_half + a )=   pos( 1, a )
+    pos( 2, npart_real_half + a )=   pos( 2, a )
+    pos( 3, npart_real_half + a )= - pos( 3, a )
+  ENDDO
 
   IF( correct_nu )THEN
     !THIS% nlrf=
@@ -2392,14 +2533,41 @@ PROGRAM proto_apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-  !  CALL COM( npart_real, pos, nu(1:npart_real), &       ! input
-  !            com_x, com_y, com_z, com_d) ! output
-  !
-  !  DO a= 1, npart_real, 1
-  !    pos(1,a)= pos(1,a) - ( com_x - com_star )
-  !    pos(2,a)= pos(2,a) - com_y
-  !    pos(3,a)= pos(3,a) - com_z
-  !  ENDDO
+    CALL COM( npart_real, pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+    PRINT *
+
+    DO a= 1, npart_real, 1
+      pos_tmp(1)= pos(1,a) - ( com_x - com_star )
+      pos_tmp(2)= pos(2,a) - com_y
+      pos_tmp(3)= pos(3,a) - com_z
+      IF( binary% import_mass_density( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0.0D0 &
+          .AND. &
+          binary% is_hydro_negative( &
+                              pos_tmp(1), pos_tmp(2), pos_tmp(3) ) == 0 &
+      )THEN
+        pos(:,a)= pos_tmp
+      ENDIF
+    ENDDO
+
+    CALL COM( npart_real, pos(:,1:npart_real), nu(1:npart_real), & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    PRINT *, "com_star=", com_star
+    PRINT *, "com_x=", com_x
+    PRINT *, "com_y=", com_y
+    PRINT *, "com_z=", com_z
+    PRINT *, "com_d=", com_d
+    PRINT *, "|com_x-com_star/com_star|=", ABS( com_x-com_star )/ABS( com_star )
+    PRINT *
 
     !-------------------------------------------!
     !-- Mirror the positions after nu changed --!
