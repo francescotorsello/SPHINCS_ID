@@ -216,7 +216,7 @@ PROGRAM proto_apm
   ALLOCATE( nstar0(max_npart) )
   ALLOCATE( h0(max_npart) )
 
-  finalnamefile= "lorene-bns-id-particles-shells-nonclustered-200k.dat"
+  finalnamefile= "lorene-bns-id-particles-shells-nonclustered-500k.dat"
 
   INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -1699,7 +1699,7 @@ PROGRAM proto_apm
     PRINT *
 
     ! Now get rid of the ghost particles
-    pos= all_pos_best( :, 1:npart_real )
+    pos= all_pos( :, 1:npart_real )
     npart= npart_real
     PRINT *, npart
 

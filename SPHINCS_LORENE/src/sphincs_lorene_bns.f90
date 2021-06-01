@@ -17,7 +17,7 @@ PROGRAM sphincs_lorene_bns
   !*****************************************************
 
   USE sphincs_lorene
-  USE constants, ONLY: lorene2hydrobase, c_light2
+  USE constants, ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase
 
   IMPLICIT NONE
 
@@ -97,6 +97,24 @@ PROGRAM sphincs_lorene_bns
   !PRINT *
   !PRINT *, LOG10(10**(34.616)/c_light2)
   !STOP
+
+  PRINT *, "** Polytropic constant used for gamma= 2.75 single polytrope:"
+  PRINT *, "   k used in LORENE= ", 0.01691726009823966
+  PRINT *, "   k converted in SPHINCS units= ", &
+                                 0.01691726009823966*k_lorene2hydrobase(2.75D0)
+  PRINT *
+  PRINT *, "** Polytropic constant used for gamma= 2 single polytrope:"
+  PRINT *, "   k used in LORENE= ", 0.02686965902663748
+  PRINT *, "   k converted in SPHINCS units= ", &
+                                 0.02686965902663748*k_lorene2hydrobase(2.0D0)
+  !PRINT *, "   k used in LORENE, corresponding to k-100 in SPHINCS units= ", &
+  !         100/k_lorene2hydrobase(2.0D0)
+  PRINT *
+  ! Our testbed cases are gamma= 2.75, k= 30000; and gamma=2, k= 100
+  ! in SPHINCS units
+  ! 7.901e+14 density for 1.4 GRAVITATIONAL mass
+  ! 1.4-1.4 systems for both ; 1.6-1.6 ; 1.2-1.8 GRAVIATIONAL masses
+  STOP
 
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time
