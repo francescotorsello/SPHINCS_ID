@@ -17,7 +17,8 @@ PROGRAM sphincs_lorene_bns
   !*****************************************************
 
   USE sphincs_lorene
-  USE constants, ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase
+  USE constants, ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
+                       k_lorene2hydrobase_piecewisepolytrope
 
   IMPLICIT NONE
 
@@ -107,9 +108,19 @@ PROGRAM sphincs_lorene_bns
   PRINT *, "   k used in LORENE= ", 0.02686965902663748
   PRINT *, "   k converted in SPHINCS units= ", &
                                  0.02686965902663748*k_lorene2hydrobase(2.0D0)
+  PRINT *
+  PRINT *, "** Polytropic constant used for the crust in PWP:"
+  PRINT *, "   k used in LORENE= ", 3.99874D-8
+  PRINT *, "   k converted in SPHINCS units= ", &
+                  3.99874D-8*k_lorene2hydrobase_piecewisepolytrope(1.35692395D0)
+  PRINT *
+  !PRINT *, "** Polytropic constant used for the crust in PWP:"
+  !PRINT *, "   k used in LORENE= ", 8.948185D-2
+  !PRINT *, "   k converted in SPHINCS units= ", &
+  !                               8.948185D-2*k_lorene2hydrobase(1.35692395D0)
+  !PRINT *
   !PRINT *, "   k used in LORENE, corresponding to k-100 in SPHINCS units= ", &
   !         100/k_lorene2hydrobase(2.0D0)
-  PRINT *
   ! Our testbed cases are gamma= 2.75, k= 30000; and gamma=2, k= 100
   ! in SPHINCS units
   ! 7.901e+14 density for 1.4 GRAVITATIONAL mass, poly 2
