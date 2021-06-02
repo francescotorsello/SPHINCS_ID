@@ -18,6 +18,8 @@ SPHINCS_LORENE/**/ghost*.dat
 SPHINCS_LORENE/**/proto*.out
 SPHINCS_LORENE/**/apm*.dat
 SPHINCS_LORENE/**/dbg*.dat
+SPHINCS_LORENE/**/font-*
+SPHINCS_LORENE/**/par_eos.d
 SPHINCS_LORENE/**/densities.dat
 SPHINCS_LORENE/**/binns*.dat
 SPHINCS_LORENE/**/negative*.dat

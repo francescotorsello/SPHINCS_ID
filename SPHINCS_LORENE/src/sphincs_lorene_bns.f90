@@ -112,7 +112,7 @@ PROGRAM sphincs_lorene_bns
   PRINT *
   ! Our testbed cases are gamma= 2.75, k= 30000; and gamma=2, k= 100
   ! in SPHINCS units
-  ! 7.901e+14 density for 1.4 GRAVITATIONAL mass
+  ! 7.901e+14 density for 1.4 GRAVITATIONAL mass, poly 2
   ! 1.4-1.4 systems for both ; 1.6-1.6 ; 1.2-1.8 GRAVIATIONAL masses
   STOP
 
