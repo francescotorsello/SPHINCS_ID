@@ -53,7 +53,7 @@ PROGRAM proto_apm
   DOUBLE PRECISION, PARAMETER:: nuratio_thres= 2.0D0
   DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
   DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
-  LOGICAL, PARAMETER:: run_apm     = .TRUE.
+  LOGICAL, PARAMETER:: run_apm     = .FALSE.
   LOGICAL, PARAMETER:: post_correction= .FALSE.
   LOGICAL, PARAMETER:: correct_nu  = .TRUE.
 

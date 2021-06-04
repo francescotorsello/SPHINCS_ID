@@ -102,4 +102,8 @@ PROGRAM write_par_eos
 
   CLOSE( UNIT= 2 )
 
+  PRINT *
+  PRINT *, "Parameter file", namefile," written."
+  PRINT *
+
 END PROGRAM write_par_eos

@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) stretched_lattice
+SUBMODULE (particles_id) spherical_shells
 
   !************************************************
   !                                               *
@@ -20,7 +20,7 @@ SUBMODULE (particles_id) stretched_lattice
   CONTAINS
 
 
-  MODULE PROCEDURE place_particles_stretched_lattice
+  MODULE PROCEDURE place_particles_spherical_shells
 
     !************************************************
     !                                               *
@@ -1972,7 +1972,7 @@ SUBMODULE (particles_id) stretched_lattice
 
     !STOP
 
-  END PROCEDURE place_particles_stretched_lattice
+  END PROCEDURE place_particles_spherical_shells
 
 
-END SUBMODULE stretched_lattice
+END SUBMODULE spherical_shells

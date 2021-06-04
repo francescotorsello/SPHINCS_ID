@@ -311,7 +311,7 @@ SUBMODULE (particles_id) particles_constructor
 
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
-        CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass2, &
+        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
                                                     radius2, center2, &
                                                     npart_approx, &
                                                     parts_obj% npart2, &
@@ -322,7 +322,7 @@ SUBMODULE (particles_id) particles_constructor
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps )
-        CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass1, &
+        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
                                                     radius1, center1, &
                                                     npart2_approx, &
                                                     parts_obj% npart1, &
@@ -344,7 +344,7 @@ SUBMODULE (particles_id) particles_constructor
 
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
-        CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass1, &
+        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
                                                     radius1, center1, &
                                                     npart_approx, &
                                                     parts_obj% npart1, &
@@ -356,7 +356,7 @@ SUBMODULE (particles_id) particles_constructor
                                                     upper_factor, lower_factor,&
                                                     max_steps )
         !parts_obj% npart1= parts_obj% npart
-        CALL parts_obj% place_particles_stretched_lattice( parts_obj% mass2, &
+        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
                                                     radius2, center2, &
                                                     npart2_approx, &
                                                     parts_obj% npart2, &

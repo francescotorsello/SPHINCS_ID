@@ -190,7 +190,7 @@ MODULE particles_id
 
     PROCEDURE:: place_particles_3dlattices
 
-    PROCEDURE:: place_particles_stretched_lattice
+    PROCEDURE:: place_particles_spherical_shells
 
     GENERIC, PUBLIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
                                            reshape_sph_field_2d_ptr
@@ -207,6 +207,8 @@ MODULE particles_id
     PROCEDURE, PUBLIC:: analyze_hydro
 
     PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
+
+    PROCEDURE, PUBLIC:: compute_and_export_SPH_variables_apm
 
     PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
 
@@ -309,7 +311,7 @@ MODULE particles_id
 
     END SUBROUTINE place_particles_3dlattices
 
-    MODULE SUBROUTINE place_particles_stretched_lattice( THIS, &
+    MODULE SUBROUTINE place_particles_spherical_shells( THIS, &
                                   mass_star, radius, center, npart_approx, &
                                   npart_out, pos, pvol, pmass, thres, bns_obj, &
                                   last_r, upper_bound, lower_bound, &
@@ -327,7 +329,7 @@ MODULE particles_id
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pvol
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pmass
 
-    END SUBROUTINE place_particles_stretched_lattice
+    END SUBROUTINE place_particles_spherical_shells
 
     MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
                                             index_array )
@@ -378,6 +380,16 @@ MODULE particles_id
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_export_SPH_variables
+
+    MODULE SUBROUTINE compute_and_export_SPH_variables_apm( THIS, &
+                                                            pos, &
+                                                            namefile )
+
+      CLASS(particles),    INTENT( IN OUT ):: THIS
+      DOUBLE PRECISION, DIMENSION(:), INTENT( INOUT ):: pos
+      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+
+    END SUBROUTINE compute_and_export_SPH_variables_apm
 
     MODULE SUBROUTINE read_sphincs_dump_print_formatted( THIS, namefile_bin, &
                                                                namefile )
