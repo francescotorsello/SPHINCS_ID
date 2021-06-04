@@ -62,6 +62,8 @@ PROGRAM proto_apm
             n_inc, nx, ny, nz, i, j, k, tmp2, a_numax, a_numin, &
             a_numax2, a_numin2, npart_real_half, npart_missing
   INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort, xy_sort, xyz_sort, lim
+  INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
+  INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
 
   DOUBLE PRECISION:: com_x, com_y, com_z, com_d, det, sq_g, Theta_a, &
                      nu_corr, max_nu, min_nu, smaller_radius, larger_radius, &
@@ -75,7 +77,7 @@ PROGRAM proto_apm
                      dN_max, spec_ener, press, mass_dens, tmp3, tmp4, nu_tot, &
                      mass, mean_nu, variance_nu, stddev_nu, max_nu2, min_nu2, &
                      nu_tmp, nu_ratio, err_N_mean_min, err_N_mean_min_old, &
-                     com_star, r_tmp, ptmp1, ptmp2, ptmp3
+                     com_star, r_tmp, ptmp1, ptmp2, ptmp3, dist
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse, &
                      shift_x, shift_y, shift_z, &
                      g_xx, g_xy, g_xz, &
@@ -116,6 +118,8 @@ PROGRAM proto_apm
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: nearest_neighbors
+
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sorted_pos
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
@@ -2225,12 +2229,14 @@ PROGRAM proto_apm
 
   DO a= 1, npart_real, 1
 
+    !IF( a == 1 ) PRINT *, "1"
+
     nu_tmp= nu(a)
     nu(a)= nstar_p(a)/nstar_real(a)
-    IF( MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 ) > nuratio_thres*nu_ratio )THEN
-      IF( nu(a) > nu_tmp ) nu(a)= nu_tmp*SQRT(nuratio_thres)
-      IF( nu(a) < nu_tmp ) nu(a)= nu_tmp/SQRT(nuratio_thres)
-    ENDIF
+    !IF( MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 ) > nuratio_thres*nu_ratio )THEN
+      IF( nu(a) > nu_tmp*SQRT(nuratio_thres) ) nu(a)= nu_tmp*SQRT(nuratio_thres)
+      IF( nu(a) < nu_tmp/SQRT(nuratio_thres) ) nu(a)= nu_tmp/SQRT(nuratio_thres)
+    !ENDIF
 
   ENDDO
 
@@ -2712,8 +2718,9 @@ PROGRAM proto_apm
     dN_av=  dN_av + dN
   ENDDO
   dN_av= dN_av/DBLE(npart_real)
-  PRINT*,'...dN_max ',dN_max
-  PRINT*,'...dN_av  ',dN_av
+  PRINT *,'...dN_max ', dN_max
+  PRINT *,'...dN_av  ', dN_av
+  PRINT *
 
   IF( .NOT.ALLOCATED( nstar_int ) ) ALLOCATE( nstar_int( npart_real ) )
 
@@ -2722,6 +2729,49 @@ PROGRAM proto_apm
                               pos, nu )
 
   CALL density( npart_real, pos, nstar_int )
+
+  PRINT *, "** Finding nearest neighbors..."
+
+  ALLOCATE( neighbors_lists( npart_real ) )
+  ALLOCATE( n_neighbors( npart_real ) )
+  ALLOCATE( nearest_neighbors( 2, npart_real ) )
+
+  neighbors_lists= 0
+  n_neighbors= 0
+  nearest_neighbors(1,:)= 0
+  nearest_neighbors(2,:)= HUGE(1.0D0)
+
+  find_neighbors: DO a= 1, npart_real, 1
+
+    CALL get_neighbours_bf( a, npart_real, pos, h, 3, &           ! Input
+                            n_neighbors(a), neighbors_lists(:) )  ! Output
+
+    DO itr= 1, n_neighbors(a), 1
+
+      dist= NORM2( pos(:,a) - pos(:,neighbors_lists(itr)) )
+
+      !PRINT *, "dist= ", dist
+      !PRINT *, "nearest_neighbors(2,a)= ", nearest_neighbors(2,a)
+      !PRINT *, "dist < nearest_neighbors(2,a)= ", dist < nearest_neighbors(2,a)
+
+      IF( dist < nearest_neighbors(2,a) )THEN
+
+        nearest_neighbors(1,a)= neighbors_lists(itr)
+        nearest_neighbors(2,a)= dist
+
+      ENDIF
+
+    ENDDO
+
+    !PRINT *, "dist= ", dist
+    !PRINT *, "nearest_neighbors(2,a)= ", nearest_neighbors(2,a)
+    !PRINT *
+
+  ENDDO find_neighbors
+
+  PRINT *, " * Nearest neighbors found. "
+  PRINT *, " * Average number of neighbors= ", DBLE(SUM(n_neighbors))/DBLE(npart_real)
+  PRINT *
 
 PRINT *, "0"
 
@@ -2763,7 +2813,8 @@ PRINT *, "1"
       particle_density_final( a ), &
       particle_density_final( a )*nstar_p( 1 )/particle_density_final( 1 ), &
       ABS(nstar_real(a)-nstar_p(a))/nstar_p(a), &
-      nu(a)
+      nu(a), &
+      nearest_neighbors(2,a)
   ENDDO
 
   CLOSE( UNIT= 2 )
@@ -2773,7 +2824,56 @@ PRINT *, "1"
   PRINT *, "** End of PROGRAM proto_apm."
   PRINT *
 
+
   CONTAINS
+
+
+  SUBROUTINE get_neighbours_bf(ipart,npart,pos,h,dimensions,nnei,neilist)
+
+    !**************************************************************
+    !                                                             *
+    ! just for test purposes: get neighbours of particle ipart in *
+    ! a "brute force" way; ipart is ALSO on the neighbour list;   *
+    ! SKR 8.2.2010                                                *
+    !                                                             *
+    ! Removed particle itself from its own neighbors' list        *
+    ! FT 04.06.2021                                               *
+    !                                                             *
+    !**************************************************************
+
+    IMPLICIT NONE
+
+    INTEGER,INTENT(IN)::          ipart,npart,dimensions
+    DOUBLE PRECISION,INTENT(IN):: pos(dimensions,npart),h(npart)
+    INTEGER,INTENT(OUT)::         nnei,neilist(npart)
+    INTEGER a
+    DOUBLE PRECISION diff(dimensions),d2,r_int2
+
+    ! square of interaction radius
+    r_int2= (2.0D0*h(ipart))**2
+
+    nnei= 0
+!    !$OMP PARALLEL DO SHARED(pos,dimensions,ipart,npart,r_int2,nnei,neilist)&
+!    !$OMP             PRIVATE(a,diff,d2)
+    DO a= 1, npart, 1
+
+      IF( a /= ipart )THEN
+
+        diff= pos(1:dimensions,a)-pos(1:dimensions,ipart)
+        d2= DOT_PRODUCT(diff,diff)
+
+        ! neighbour?
+        IF(d2 < r_int2)THEN
+          nnei= nnei + 1
+          neilist(nnei)= a
+        ENDIF
+
+      ENDIF
+
+    ENDDO
+!    !$OMP END PARALLEL DO
+
+  END SUBROUTINE get_neighbours_bf
 
 
 END PROGRAM proto_apm

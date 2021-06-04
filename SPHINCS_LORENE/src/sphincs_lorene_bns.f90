@@ -99,21 +99,21 @@ PROGRAM sphincs_lorene_bns
   !PRINT *, LOG10(10**(34.616)/c_light2)
   !STOP
 
-  PRINT *, "** Polytropic constant used for gamma= 2.75 single polytrope:"
-  PRINT *, "   k used in LORENE= ", 0.01691726009823966
-  PRINT *, "   k converted in SPHINCS units= ", &
-                                 0.01691726009823966*k_lorene2hydrobase(2.75D0)
-  PRINT *
-  PRINT *, "** Polytropic constant used for gamma= 2 single polytrope:"
-  PRINT *, "   k used in LORENE= ", 0.02686965902663748
-  PRINT *, "   k converted in SPHINCS units= ", &
-                                 0.02686965902663748*k_lorene2hydrobase(2.0D0)
-  PRINT *
-  PRINT *, "** Polytropic constant used for the crust in PWP:"
-  PRINT *, "   k used in LORENE= ", 3.99874D-8
-  PRINT *, "   k converted in SPHINCS units= ", &
-                  3.99874D-8*k_lorene2hydrobase_piecewisepolytrope(1.35692395D0)
-  PRINT *
+  !PRINT *, "** Polytropic constant used for gamma= 2.75 single polytrope:"
+  !PRINT *, "   k used in LORENE= ", 0.01691726009823966
+  !PRINT *, "   k converted in SPHINCS units= ", &
+  !                               0.01691726009823966*k_lorene2hydrobase(2.75D0)
+  !PRINT *
+  !PRINT *, "** Polytropic constant used for gamma= 2 single polytrope:"
+  !PRINT *, "   k used in LORENE= ", 0.02686965902663748
+  !PRINT *, "   k converted in SPHINCS units= ", &
+  !                               0.02686965902663748*k_lorene2hydrobase(2.0D0)
+  !PRINT *
+  !PRINT *, "** Polytropic constant used for the crust in PWP:"
+  !PRINT *, "   k used in LORENE= ", 3.99874D-8
+  !PRINT *, "   k converted in SPHINCS units= ", &
+  !                3.99874D-8*k_lorene2hydrobase_piecewisepolytrope(1.35692395D0)
+  !PRINT *
   !PRINT *, "** Polytropic constant used for the crust in PWP:"
   !PRINT *, "   k used in LORENE= ", 8.948185D-2
   !PRINT *, "   k converted in SPHINCS units= ", &
@@ -125,7 +125,7 @@ PROGRAM sphincs_lorene_bns
   ! in SPHINCS units
   ! 7.901e+14 density for 1.4 GRAVITATIONAL mass, poly 2
   ! 1.4-1.4 systems for both ; 1.6-1.6 ; 1.2-1.8 GRAVIATIONAL masses
-  STOP
+  !STOP
 
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time

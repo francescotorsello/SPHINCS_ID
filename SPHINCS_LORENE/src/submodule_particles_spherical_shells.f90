@@ -1970,7 +1970,7 @@ SUBMODULE (particles_id) spherical_shells
 
     PRINT *, " * Particles placed."
 
-    !STOP
+    STOP
 
   END PROCEDURE place_particles_spherical_shells
 
