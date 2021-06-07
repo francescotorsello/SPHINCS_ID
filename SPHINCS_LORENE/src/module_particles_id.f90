@@ -382,12 +382,22 @@ MODULE particles_id
     END SUBROUTINE compute_and_export_SPH_variables
 
     MODULE SUBROUTINE compute_and_export_SPH_variables_apm( THIS, &
-                                                            pos, &
+                                                            binary, &
+                                                            pos_input, &
+                                                            pvol, &
+                                                            center, &
+                                                            com, &
+                                                            mass, &
                                                             namefile )
 
-      CLASS(particles),    INTENT( IN OUT ):: THIS
-      DOUBLE PRECISION, DIMENSION(:), INTENT( INOUT ):: pos
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CLASS(particles),                 INTENT( INOUT ):: THIS
+      CLASS(bns),                       INTENT( IN )   :: binary
+      DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
+      DOUBLE PRECISION, DIMENSION(:),   INTENT( INOUT ):: pvol
+      DOUBLE PRECISION,                 INTENT( IN )   :: center
+      DOUBLE PRECISION,                 INTENT( IN )   :: com
+      DOUBLE PRECISION,                 INTENT( IN )   :: mass
+      CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_export_SPH_variables_apm
 

@@ -73,7 +73,7 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
     DOUBLE PRECISION:: xmin1, xmax1, ymin1, ymax1, zmin1, zmax1
     DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
-    DOUBLE PRECISION:: center1, center2, radius1, radius2
+    DOUBLE PRECISION:: center1, center2, radius1, radius2, com1, com2
     DOUBLE PRECISION:: min_abs_y, min_abs_z
     DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor, &
                        last_r
@@ -113,16 +113,18 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% empty_object= .FALSE.
     parts_obj% empty_object= .FALSE.
 
-    parts_obj% mass1     = bns_obj% get_mass1()
-    parts_obj% mass2     = bns_obj% get_mass2()
-    center1= bns_obj% get_center1_x()
-    center2= bns_obj% get_center2_x()
-    radius1= bns_obj% get_radius1_x_comp()
-    radius2= bns_obj% get_radius2_x_comp()
-    parts_obj% nbar_tot  = 0.0D0
-    parts_obj% nbar1     = 0.0D0
-    parts_obj% nbar2     = 0.0D0
-    parts_obj% npart     = 0.0D0
+    parts_obj% mass1          = bns_obj% get_mass1()
+    parts_obj% mass2          = bns_obj% get_mass2()
+    center1                   = bns_obj% get_center1_x()
+    center2                   = bns_obj% get_center2_x()
+    com1                      = bns_obj% get_barycenter1_x()
+    com2                      = bns_obj% get_barycenter2_x()
+    radius1                   = bns_obj% get_radius1_x_comp()
+    radius2                   = bns_obj% get_radius2_x_comp()
+    parts_obj% nbar_tot       = 0.0D0
+    parts_obj% nbar1          = 0.0D0
+    parts_obj% nbar2          = 0.0D0
+    parts_obj% npart          = 0.0D0
     parts_obj% distribution_id= dist
     parts_obj% randomize_phi  = randomize_phi
     parts_obj% randomize_theta= randomize_theta
@@ -535,6 +537,20 @@ SUBMODULE (particles_id) particles_constructor
     !    ENDIF
     !  ENDDO
     !ENDDO
+
+    PRINT *
+    PRINT *, "Right before calling the APM SUBROUTINE"
+    PRINT *
+
+    CALL parts_obj% compute_and_export_SPH_variables_apm( bns_obj, &
+                                        parts_obj% pos(:,1:parts_obj% npart1), &
+                                        parts_obj% pvol(1:parts_obj% npart1), &
+                                        center1, com1, parts_obj% mass1 )
+
+    PRINT *, "Right after calling the APM SUBROUTINE"
+    PRINT *
+
+    STOP
 
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts_obj )
