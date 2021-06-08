@@ -295,9 +295,11 @@ SUBMODULE (particles_id) particles_methods
         PRINT *
         STOP
       ENDIF
-      THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
-      h(itr)= THIS% h(itr)
-      ! /(Msun_geo**3)
+      IF( .NOT.THIS% apm_iterate )THEN
+        THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
+        h(itr)= THIS% h(itr)
+        ! /(Msun_geo**3)
+      ENDIF
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
@@ -651,6 +653,10 @@ SUBMODULE (particles_id) particles_methods
       PRINT *, " * Number of particles on NS 1=", THIS% npart1
       PRINT *, " * Number of particles on NS 2=", THIS% npart2
       PRINT *
+
+    ELSEIF( THIS% apm_iterate )THEN
+
+      ! Do nothing, nu is already computed in the APM iteration
 
     ELSE
 

@@ -7,7 +7,7 @@ SUBMODULE (particles_id) particles_apm
   !****************************************************
   !                                                   *
   ! Implementation of the method                      *
-  ! compute_and_export_SPH_variables_apm              *
+  ! perform_apm              *
   ! of TYPE particles.                                *
   !                                                   *
   ! FT 04.06.2021                                     *
@@ -21,7 +21,7 @@ SUBMODULE (particles_id) particles_apm
   CONTAINS
 
 
-  MODULE PROCEDURE compute_and_export_SPH_variables_apm
+  MODULE PROCEDURE perform_apm
 
     !****************************************************
     !                                                   *
@@ -55,21 +55,22 @@ SUBMODULE (particles_id) particles_apm
     USE constants,           ONLY: third, Msun, Msun_geo, km2m, g2kg, amu, pi
 
     USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
-                                   npart, h, nu, vel_u, Theta
-                                   ! ,Rstar,divv,av,Pr,ye,temp,nlrf,&
-                                   ! u,Theta,vel_u,tterm,tgrav,tkin,&
-                                   ! escap,t,n1,n2,pos_u,h,nu,npart,&
-                                   ! npm,Nstar
+                                   npart, h, nu, Theta, &
+                                   divv,av,Pr,ye,temp,nlrf,&
+                                   u,tterm,tgrav,tkin,&
+                                   escap,t,n1,n2,pos_u,&
+                                   npm,Nstar, S_l, ehat, cs, Kent, vel_u
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                    deallocate_metric_on_particles
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
     USE alive_flag,          ONLY: alive
     USE set_h,               ONLY: exact_nei_tree_update
-    USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig
-    USE kernel_table,        ONLY: ktable
-    USE input_output,        ONLY: read_options
-    USE units,               ONLY: umass, set_units
-    USE options,             ONLY: ikernel, ndes
+    USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
+                                   deallocate_RCB_tree_memory_3D
+    !USE kernel_table,        ONLY: ktable
+    !USE input_output,        ONLY: read_options
+    USE units,               ONLY: umass!, set_units
+    !USE options,             ONLY: ikernel, ndes
 
     USE APM,                 ONLY: density_loop, position_correction, assign_h
     USE analyze,             ONLY: COM
@@ -81,15 +82,15 @@ SUBMODULE (particles_id) particles_apm
 
     INTEGER,          PARAMETER:: max_npart   = 5D+6
     INTEGER,          PARAMETER:: nn_des      = 301
-    INTEGER,          PARAMETER:: apm_max_it  = 1500
+    !INTEGER,          PARAMETER:: apm_max_it  = 1500
     INTEGER,          PARAMETER:: m_max_it    = 50
-    INTEGER,          PARAMETER:: max_inc     = 150
-    DOUBLE PRECISION, PARAMETER:: nuratio_thres= 2.0D0
+    !INTEGER,          PARAMETER:: max_inc     = 150
+    !DOUBLE PRECISION, PARAMETER:: nuratio_thres= 2.0D0
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
     LOGICAL,          PARAMETER:: debug= .TRUE.
-    LOGICAL,          PARAMETER:: post_correction= .FALSE.
-    LOGICAL,          PARAMETER:: correct_nu  = .TRUE.
+    !LOGICAL,          PARAMETER:: post_correction= .FALSE.
+    !LOGICAL,          PARAMETER:: correct_nu  = .TRUE.
 
     INTEGER:: a, itr, itr2, n_inc            ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all, npart_missing
@@ -127,6 +128,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
@@ -167,7 +169,7 @@ SUBMODULE (particles_id) particles_apm
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array h_guess in SUBROUTINE ", &
-                  "compute_and_export_SPH_variables_apm. The error message is",&
+                  "perform_apm. The error message is",&
                   err_msg
          STOP
       ENDIF
@@ -253,7 +255,7 @@ SUBMODULE (particles_id) particles_apm
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
-                  "compute_and_export_SPH_variables_apm. The error message is",&
+                  "perform_apm. The error message is",&
                   err_msg
          STOP
       ENDIF
@@ -278,7 +280,7 @@ SUBMODULE (particles_id) particles_apm
     dx= ABS( xmax - xmin )/DBLE( nx )
     dy= ABS( ymax - ymin )/DBLE( ny )
     dz= ABS( zmax - zmin )/DBLE( nz )
-    delta= 0.25D0
+    delta= 1.0D0
 
     rad_x= larger_radius + h_av/1.0D0
     rad_y= radius_y + h_av/1.0D0
@@ -394,7 +396,7 @@ SUBMODULE (particles_id) particles_apm
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
-                  "compute_and_export_SPH_variables_apm. The error message is",&
+                  "perform_apm. The error message is",&
                   err_msg
          STOP
       ENDIF
@@ -414,8 +416,8 @@ SUBMODULE (particles_id) particles_apm
     !----------------------------!
 
     ! setup unit system
-    CALL set_units('NSM')
-    CALL read_options       ! TODO: set units and read options only once in the constructor
+    !CALL set_units('NSM')
+    !CALL read_options       ! TODO: set units and read options only once in the constructor
 
     npart= npart_all
     CALL allocate_SPH_memory
@@ -423,11 +425,13 @@ SUBMODULE (particles_id) particles_apm
     CALL allocate_RCB_tree_memory_3D(npart)
     iorig(1:npart)= (/ (a,a=1,npart) /)
 
+    IF( debug ) PRINT *, "10"
+
     ! tabulate kernel, get ndes
-    CALL ktable(ikernel,ndes)
+    !CALL ktable(ikernel,ndes)
 
     ! flag that particles are 'alive'
-    ALLOCATE( alive( npart ) )
+    If( .NOT.ALLOCATED( alive ) ) ALLOCATE( alive( npart ) )
     alive= 1
 
     CALL allocate_gradient( npart )
@@ -454,7 +458,7 @@ SUBMODULE (particles_id) particles_apm
       ALLOCATE( nstar_real( npart_all ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array nstar_real in SUBROUTINE ", &
-                  "compute_and_export_SPH_variables_apm. The error message is",&
+                  "perform_apm. The error message is",&
                   err_msg
          STOP
       ENDIF
@@ -470,7 +474,7 @@ SUBMODULE (particles_id) particles_apm
       ALLOCATE( nstar_p( npart_all ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array nstar_p in SUBROUTINE ", &
-                  "compute_and_export_SPH_variables_apm. The error message is",&
+                  "perform_apm. The error message is",&
                   err_msg
          STOP
       ENDIF
@@ -496,6 +500,17 @@ SUBMODULE (particles_id) particles_apm
     ALLOCATE( v_euler_y      (npart_real) )
     ALLOCATE( v_euler_z      (npart_real) )
 
+    IF(.NOT.ALLOCATED( vel ))THEN
+      ALLOCATE( vel( 0:3, npart_real ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array vel in SUBROUTINE ", &
+                  "perform_apm. The error message is",&
+                  err_msg
+         STOP
+      ENDIF
+    ENDIF
+
     IF( debug ) PRINT *, "6"
 
     CALL binary% import_id( npart_real, all_pos(1,1:npart_real), &
@@ -519,7 +534,7 @@ SUBMODULE (particles_id) particles_apm
       ALLOCATE( art_pr( npart_all ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array art_pr in SUBROUTINE ", &
-                  "compute_and_export_SPH_variables_apm. The error message is",&
+                  "perform_apm. The error message is",&
                   err_msg
          STOP
       ENDIF
@@ -528,10 +543,10 @@ SUBMODULE (particles_id) particles_apm
     DO a= 1, npart_real, 1
 
       ! Coordinate velocity of the fluid [c]
-      vel_u(0,a)= 1.0D0
-      vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-      vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-      vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+      vel(0,a)= 1.0D0
+      vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+      vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+      vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
       !
       !-- Metric as matrix for easy manipulation
@@ -581,7 +596,7 @@ SUBMODULE (particles_id) particles_apm
       DO nus=0,3
         DO mus=0,3
           Theta_a= Theta_a &
-                   + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+                   + g4(mus,nus)*vel(mus,a)*vel(nus,a)
         ENDDO
       ENDDO
       Theta_a= 1.0D0/SQRT(-Theta_a)
@@ -976,10 +991,10 @@ SUBMODULE (particles_id) particles_apm
       DO a= 1, npart_real, 1
 
         ! Coordinate velocity of the fluid [c]
-        vel_u(0,a)= 1.0D0
-        vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-        vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-        vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+        vel(0,a)= 1.0D0
+        vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+        vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+        vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
         !
         !-- Metric as matrix for easy manipulation
@@ -1029,7 +1044,7 @@ SUBMODULE (particles_id) particles_apm
         DO nus=0,3
           DO mus=0,3
             Theta_a= Theta_a &
-                     + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+                     + g4(mus,nus)*vel(mus,a)*vel(nus,a)
           ENDDO
         ENDDO
         Theta_a= 1.0D0/SQRT(-Theta_a)
@@ -1279,7 +1294,7 @@ SUBMODULE (particles_id) particles_apm
       ALLOCATE( pos( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE ", &
-                  "compute_and_export_SPH_variables_apm. The error message is",&
+                  "perform_apm. The error message is",&
                   err_msg
          STOP
       ENDIF
@@ -1484,10 +1499,10 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
       ! Coordinate velocity of the fluid [c]
-      vel_u(0,a)= 1.0D0
-      vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-      vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-      vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+      vel(0,a)= 1.0D0
+      vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+      vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+      vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
       !
       !-- Metric as matrix for easy manipulation
@@ -1537,7 +1552,7 @@ SUBMODULE (particles_id) particles_apm
       DO nus=0,3
         DO mus=0,3
           Theta_a= Theta_a &
-                   + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+                   + g4(mus,nus)*vel(mus,a)*vel(nus,a)
         ENDDO
       ENDDO
       Theta_a= 1.0D0/SQRT(-Theta_a)
@@ -1620,10 +1635,10 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, "max_nu/min_nu=", max_nu/min_nu
     PRINT *
 
-    IF( post_correction )THEN
+    IF( mass_it )THEN
 
       ! just a few iterations to NOT get the nu-ratio too large
-      mass_it: DO itr= 1, m_max_it, 1
+      mass_iteration: DO itr= 1, m_max_it, 1
 
          ! measure density
          CALL density_loop( npart_real, pos, &    ! input
@@ -1645,10 +1660,10 @@ SUBMODULE (particles_id) particles_apm
          DO a= 1, npart_real, 1
 
            ! Coordinate velocity of the fluid [c]
-           vel_u(0,a)= 1.0D0
-           vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-           vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-           vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+           vel(0,a)= 1.0D0
+           vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+           vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+           vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
            !
            !-- Metric as matrix for easy manipulation
@@ -1698,7 +1713,7 @@ SUBMODULE (particles_id) particles_apm
            DO nus=0,3
              DO mus=0,3
                Theta_a= Theta_a &
-                        + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+                        + g4(mus,nus)*vel(mus,a)*vel(nus,a)
              ENDDO
            ENDDO
            Theta_a= 1.0D0/SQRT(-Theta_a)
@@ -1732,7 +1747,7 @@ SUBMODULE (particles_id) particles_apm
          ! exit condition
          IF( dN_av < tol )EXIT
 
-      ENDDO mass_it
+      ENDDO mass_iteration
 
     ENDIF
 
@@ -2036,10 +2051,10 @@ SUBMODULE (particles_id) particles_apm
     DO a= 1, npart_real, 1
 
       ! Coordinate velocity of the fluid [c]
-      vel_u(0,a)= 1.0D0
-      vel_u(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-      vel_u(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-      vel_u(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+      vel(0,a)= 1.0D0
+      vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+      vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+      vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
       !
       !-- Metric as matrix for easy manipulation
@@ -2089,7 +2104,7 @@ SUBMODULE (particles_id) particles_apm
       DO nus=0,3
         DO mus=0,3
           Theta_a= Theta_a &
-                   + g4(mus,nus)*vel_u(mus,a)*vel_u(nus,a)
+                   + g4(mus,nus)*vel(mus,a)*vel(nus,a)
         ENDDO
       ENDDO
       Theta_a= 1.0D0/SQRT(-Theta_a)
@@ -2133,13 +2148,21 @@ SUBMODULE (particles_id) particles_apm
     PRINT *,'...dN_av  ', dN_av
     PRINT *
 
+    IF( debug ) PRINT *, "100"
+
     IF( .NOT.ALLOCATED( nstar_int ) ) ALLOCATE( nstar_int( npart_real ) )
+
+    IF( debug ) PRINT *, "101"
 
     CALL exact_nei_tree_update( nn_des, &           !
                                 npart_real, &        !
                                 pos, nu )
 
+    IF( debug ) PRINT *, "102"
+
     CALL density( npart_real, pos, nstar_int )
+
+    IF( debug ) PRINT *, "103"
 
     PRINT *, "** Finding nearest neighbors..."
 
@@ -2152,39 +2175,39 @@ SUBMODULE (particles_id) particles_apm
     nearest_neighbors(1,:)= 0
     nearest_neighbors(2,:)= HUGE(1.0D0)
 
-    find_neighbors: DO a= 1, npart_real, 1
+ !   find_neighbors: DO a= 1, npart_real, 1
+ !
+ !     CALL get_neighbours_bf( a, npart_real, pos, h, 3, &           ! Input
+ !                             n_neighbors(a), neighbors_lists(:) )  ! Output
+ !
+ !     DO itr= 1, n_neighbors(a), 1
+ !
+ !       dist= NORM2( pos(:,a) - pos(:,neighbors_lists(itr)) )
+ !
+ !       !PRINT *, "dist= ", dist
+ !       !PRINT *, "nearest_neighbors(2,a)= ", nearest_neighbors(2,a)
+ !       !PRINT *, "dist < nearest_neighbors(2,a)= ", dist < nearest_neighbors(2,a)
+ !
+ !       IF( dist < nearest_neighbors(2,a) )THEN
+ !
+ !         nearest_neighbors(1,a)= neighbors_lists(itr)
+ !         nearest_neighbors(2,a)= dist
+ !
+ !       ENDIF
+ !
+ !     ENDDO
+ !
+ !     !PRINT *, "dist= ", dist
+ !     !PRINT *, "nearest_neighbors(2,a)= ", nearest_neighbors(2,a)
+ !     !PRINT *
+ !
+ !   ENDDO find_neighbors
+ !
+ !   PRINT *, " * Nearest neighbors found. "
+ !   PRINT *, " * Average number of neighbors= ", DBLE(SUM(n_neighbors))/DBLE(npart_real)
+ !   PRINT *
 
-      CALL get_neighbours_bf( a, npart_real, pos, h, 3, &           ! Input
-                              n_neighbors(a), neighbors_lists(:) )  ! Output
-
-      DO itr= 1, n_neighbors(a), 1
-
-        dist= NORM2( pos(:,a) - pos(:,neighbors_lists(itr)) )
-
-        !PRINT *, "dist= ", dist
-        !PRINT *, "nearest_neighbors(2,a)= ", nearest_neighbors(2,a)
-        !PRINT *, "dist < nearest_neighbors(2,a)= ", dist < nearest_neighbors(2,a)
-
-        IF( dist < nearest_neighbors(2,a) )THEN
-
-          nearest_neighbors(1,a)= neighbors_lists(itr)
-          nearest_neighbors(2,a)= dist
-
-        ENDIF
-
-      ENDDO
-
-      !PRINT *, "dist= ", dist
-      !PRINT *, "nearest_neighbors(2,a)= ", nearest_neighbors(2,a)
-      !PRINT *
-
-    ENDDO find_neighbors
-
-    PRINT *, " * Nearest neighbors found. "
-    PRINT *, " * Average number of neighbors= ", DBLE(SUM(n_neighbors))/DBLE(npart_real)
-    PRINT *
-
-    PRINT *, "0"
+    IF( debug ) PRINT *, "0"
 
     finalnamefile= "densities.dat"
 
@@ -2206,7 +2229,7 @@ SUBMODULE (particles_id) particles_apm
       STOP
     ENDIF
 
-    PRINT *, "1"
+    IF( debug ) PRINT *, "1"
 
     IF( .NOT.ALLOCATED( nu_one ) ) ALLOCATE( nu_one( npart_real ) )
     IF( .NOT.ALLOCATED( particle_density_final ) ) &
@@ -2230,18 +2253,44 @@ SUBMODULE (particles_id) particles_apm
 
     CLOSE( UNIT= 2 )
 
+    IF( debug ) PRINT *, "2"
 
-    STOP
+    pos_input= pos
+    h_output = h
+    nu_output= nu
 
-    THIS% pos= pos
-    THIS% h  = h
-    THIS% nu = nu
+    IF( debug ) PRINT *, "3"
 
-    CALL deallocate_gradient()
+  !  PRINT *, ALLOCATED(pos_u)
+  !  PRINT *, ALLOCATED(vel_u)
+  !  PRINT *, ALLOCATED(S_l)
+  !  PRINT *, ALLOCATED(u)
+  !  PRINT *, ALLOCATED(h)
+  !  PRINT *, ALLOCATED(Nstar)
+  !  PRINT *, ALLOCATED(nlrf)
+  !  PRINT *, ALLOCATED(temp)
+  !  PRINT *, ALLOCATED(Ye)
+  !  PRINT *, ALLOCATED(nu)
+  !  PRINT *, ALLOCATED(ehat)
+  !  PRINT *, ALLOCATED(theta)
+  !  PRINT *, ALLOCATED(Pr)
+  !  PRINT *, ALLOCATED(cs)
+  !  PRINT *, ALLOCATED(av)
+  !  PRINT *, ALLOCATED(Kent)
+  !  PRINT *, ALLOCATED(divv)
+  !  PRINT *
+
     CALL deallocate_metric_on_particles()
+    IF( debug ) PRINT *, "4"
+    CALL deallocate_gradient()
+    IF( debug ) PRINT *, "5"
+    CALL deallocate_RCB_tree_memory_3D()
+    IF( debug ) PRINT *, "6"
     CALL deallocate_sph_memory()
 
-  END PROCEDURE compute_and_export_SPH_variables_apm
+    !STOP
+
+  END PROCEDURE perform_apm
 
 
   SUBROUTINE get_neighbours_bf(ipart,npart,pos,h,dimensions,nnei,neilist)
@@ -2252,7 +2301,7 @@ SUBMODULE (particles_id) particles_apm
     ! a "brute force" way; ipart is ALSO on the neighbour list;   *
     ! SKR 8.2.2010                                                *
     !                                                             *
-    ! Removed particle itself from its own neighbors' list        *
+    ! Removed ipart from its own neighbors' list                  *
     ! FT 04.06.2021                                               *
     !                                                             *
     !**************************************************************

@@ -173,6 +173,7 @@ MODULE particles_id
     LOGICAL:: correct_nu
     LOGICAL:: compose_eos
     LOGICAL:: randomize_phi, randomize_theta, randomize_r
+    LOGICAL:: apm_iterate
 
     TYPE(timer), PUBLIC:: placer_timer
     TYPE(timer), PUBLIC:: importer_timer
@@ -192,6 +193,8 @@ MODULE particles_id
 
     PROCEDURE:: place_particles_spherical_shells
 
+    PROCEDURE:: perform_apm
+
     GENERIC, PUBLIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
                                            reshape_sph_field_2d_ptr
     PROCEDURE:: reshape_sph_field_1d_ptr => reshape_sph_field_1d
@@ -207,8 +210,6 @@ MODULE particles_id
     PROCEDURE, PUBLIC:: analyze_hydro
 
     PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
-
-    PROCEDURE, PUBLIC:: compute_and_export_SPH_variables_apm
 
     PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
 
@@ -381,25 +382,34 @@ MODULE particles_id
 
     END SUBROUTINE compute_and_export_SPH_variables
 
-    MODULE SUBROUTINE compute_and_export_SPH_variables_apm( THIS, &
-                                                            binary, &
-                                                            pos_input, &
-                                                            pvol, &
-                                                            center, &
-                                                            com_star, &
-                                                            mass, &
-                                                            namefile )
+    MODULE SUBROUTINE perform_apm( THIS, &
+                                   binary, &
+                                   pos_input, &
+                                   pvol, h_output, nu_output, &
+                                   center, &
+                                   com_star, &
+                                   mass, &
+                                   apm_max_it, max_inc, &
+                                   mass_it, correct_nu, nuratio_thres, &
+                                   namefile )
 
       CLASS(particles),                 INTENT( INOUT ):: THIS
       CLASS(bns),                       INTENT( INOUT ):: binary
       DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
       DOUBLE PRECISION, DIMENSION(:),   INTENT( INOUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: h_output
+      DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
       DOUBLE PRECISION,                 INTENT( IN )   :: center
       DOUBLE PRECISION,                 INTENT( IN )   :: com_star
       DOUBLE PRECISION,                 INTENT( IN )   :: mass
+      INTEGER,                          INTENT( IN )   :: apm_max_it
+      INTEGER,                          INTENT( IN )   :: max_inc
+      LOGICAL,                          INTENT( IN )   :: mass_it
+      LOGICAL,                          INTENT( IN )   :: correct_nu
+      DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_thres
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: namefile
 
-    END SUBROUTINE compute_and_export_SPH_variables_apm
+    END SUBROUTINE perform_apm
 
     MODULE SUBROUTINE read_sphincs_dump_print_formatted( THIS, namefile_bin, &
                                                                namefile )

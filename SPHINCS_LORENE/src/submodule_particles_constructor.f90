@@ -57,6 +57,10 @@ SUBMODULE (particles_id) particles_constructor
     !USE NaNChecker, ONLY: Check_Array_for_NAN
     USE constants,  ONLY: Msun_geo, km2m
     USE NR,         ONLY: indexx
+    USE kernel_table,        ONLY: ktable
+    USE input_output,        ONLY: read_options
+    USE units,               ONLY: umass, set_units
+    USE options,             ONLY: ikernel, ndes
 
     IMPLICIT NONE
 
@@ -68,6 +72,8 @@ SUBMODULE (particles_id) particles_constructor
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
     INTEGER, DIMENSION( : ), ALLOCATABLE:: x_sort, y_sort, z_sort
+    ! APM parameters
+    INTEGER:: apm_max_it, max_inc
 
     DOUBLE PRECISION:: thres, nu_ratio
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
@@ -81,6 +87,7 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos1, pos2
     DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol1, pvol2, &
                                                        pmass1, pmass2
+    DOUBLE PRECISION:: nuratio_thres
 
     CHARACTER( LEN= : ), ALLOCATABLE:: namefile
     ! String storing the local path to the directory where the
@@ -90,7 +97,8 @@ SUBMODULE (particles_id) particles_constructor
     CHARACTER( LEN= max_length ):: compose_filename
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
-              compose_eos, exist, randomize_phi, randomize_theta, randomize_r
+              compose_eos, exist, randomize_phi, randomize_theta, &
+              randomize_r, apm_iterate, mass_it
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
@@ -100,7 +108,8 @@ SUBMODULE (particles_id) particles_constructor
               compose_eos, compose_path, compose_filename, &
               npart_approx, last_r, upper_bound, lower_bound, &
               upper_factor, lower_factor, max_steps, &
-              randomize_phi, randomize_theta, randomize_r
+              randomize_phi, randomize_theta, randomize_r, &
+              apm_iterate, apm_max_it, max_inc, mass_it, nuratio_thres
 
     !
     !-- Initialize the timers
@@ -156,6 +165,12 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% compose_filename= compose_filename
     parts_obj% redistribute_nu= redistribute_nu
     parts_obj% nu_ratio= nu_ratio
+    ! APM parameters
+    parts_obj% apm_iterate   = apm_iterate
+    !parts_obj% apm_max_it   = apm_max_it
+    !parts_obj% max_inc      = max_inc
+    !parts_obj% mass_it      = mass_it
+    !parts_obj% nuratio_thres= nuratio_thres
 
     IF( parts_obj% redistribute_nu )THEN
       thres= 100.0D0*parts_obj% nu_ratio
@@ -212,6 +227,13 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *
       STOP
     ENDIF
+
+    ! setup unit system
+    CALL set_units('NSM')
+    CALL read_options       ! TODO: set units and read options only once in the constructor
+
+    ! tabulate kernel, get ndes
+    CALL ktable(ikernel,ndes)
 
     ! TODO: Add check that the number of rows in placer is the same as the
     !       number of bns objects, and that all bns have a value for placer
@@ -542,10 +564,57 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *, "Right before calling the APM SUBROUTINE"
     PRINT *
 
-    CALL parts_obj% compute_and_export_SPH_variables_apm( bns_obj, &
-                                        parts_obj% pos(:,1:parts_obj% npart1), &
-                                        parts_obj% pvol(1:parts_obj% npart1), &
-                                        center1, com1, parts_obj% mass1 )
+    IF( apm_iterate )THEN
+
+      IF(.NOT.ALLOCATED( parts_obj% h ))THEN
+        ALLOCATE( parts_obj% h( parts_obj% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array h in SUBROUTINE ", &
+                    "construct_particles. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+      IF(.NOT.ALLOCATED( parts_obj% nu ))THEN
+        ALLOCATE( parts_obj% nu( parts_obj% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nu in SUBROUTINE ", &
+                    "construct_particles. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+      ! Star 1
+      CALL parts_obj% perform_apm( &
+                  bns_obj, &
+                  parts_obj% pos(:,1:parts_obj% npart1), &
+                  parts_obj% pvol(1:parts_obj% npart1), &
+                  parts_obj% h(1:parts_obj% npart1), &
+                  parts_obj% nu(1:parts_obj% npart1), &
+                  center1, com1, parts_obj% mass1, &
+                  apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
+                  nuratio_thres )
+
+      PRINT *, "APM done for star 1"
+      PRINT *
+      STOP
+
+      ! Star 2
+      CALL parts_obj% perform_apm( &
+                  bns_obj, &
+                  parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
+                  parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
+                  parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
+                  parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
+                  center2, com2, parts_obj% mass2, &
+                  apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
+                  nuratio_thres )
+
+    ENDIF
 
     PRINT *, "Right after calling the APM SUBROUTINE"
     PRINT *
