@@ -391,7 +391,8 @@ MODULE particles_id
                                    mass, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
-                                   namefile )
+                                   namefile_pos_id, namefile_pos, &
+                                   namefile_results )
 
       CLASS(particles),                 INTENT( INOUT ):: THIS
       CLASS(bns),                       INTENT( INOUT ):: binary
@@ -407,7 +408,12 @@ MODULE particles_id
       LOGICAL,                          INTENT( IN )   :: mass_it
       LOGICAL,                          INTENT( IN )   :: correct_nu
       DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_thres
-      CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: namefile
+      CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
+                                                            namefile_pos_id
+      CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
+                                                            namefile_pos
+      CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
+                                                            namefile_results
 
     END SUBROUTINE perform_apm
 

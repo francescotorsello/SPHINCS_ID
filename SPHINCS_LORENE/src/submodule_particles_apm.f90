@@ -352,7 +352,11 @@ SUBMODULE (particles_id) particles_apm
 
     PRINT *, " * Printing ghost particles to file..."
 
-    finalnamefile= "ghost_pos.dat"
+    IF( PRESENT(namefile_pos_id) )THEN
+      finalnamefile= namefile_pos_id
+    ELSE
+      finalnamefile= "apm_pos_id.dat"
+    ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -1415,7 +1419,11 @@ SUBMODULE (particles_id) particles_apm
              ABS( com_x - com_star )/ABS( com_star )
     PRINT *
 
-    finalnamefile= "apm_pos.dat"
+    IF( PRESENT(namefile_pos) )THEN
+      finalnamefile= namefile_pos
+    ELSE
+      finalnamefile= "apm_pos.dat"
+    ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -2215,7 +2223,11 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "0"
 
-    finalnamefile= "densities.dat"
+    IF( PRESENT(namefile_results) )THEN
+      finalnamefile= namefile_results
+    ELSE
+      finalnamefile= "apm_results.dat"
+    ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 

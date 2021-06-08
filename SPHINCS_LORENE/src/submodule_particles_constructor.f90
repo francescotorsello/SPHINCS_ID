@@ -97,6 +97,9 @@ SUBMODULE (particles_id) particles_constructor
     ! String storing the names of the LORENE BNS ID binary files
     CHARACTER( LEN= max_length ):: compose_filename
 
+    CHARACTER( LEN= max_length ):: filename_apm_pos_id, filename_apm_pos, &
+                                   filename_apm_results
+
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
               randomize_r, apm_iterate, mass_it
@@ -589,6 +592,10 @@ SUBMODULE (particles_id) particles_constructor
         ENDIF
       ENDIF
 
+      filename_apm_pos_id = "apm_pos_id1.dat"
+      filename_apm_pos    = "apm_pos1.dat"
+      filename_apm_results= "apm_results1.dat"
+
       ! Star 1
       CALL parts_obj% perform_apm( &
                   bns_obj, &
@@ -598,13 +605,15 @@ SUBMODULE (particles_id) particles_constructor
                   parts_obj% nu(1:parts_obj% npart1), &
                   center1, com1, parts_obj% mass1, &
                   apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                  nuratio_thres )
+                  nuratio_thres, &
+                  filename_apm_pos_id, filename_apm_pos, filename_apm_results )
 
       PRINT *, "APM done for star 1"
       PRINT *
 
-      PRINT *, SIZE( parts_obj% pos(1,parts_obj% npart1+1:parts_obj% npart) )
-      PRINT *
+      filename_apm_pos_id = "apm_pos_id2.dat"
+      filename_apm_pos    = "apm_pos2.dat"
+      filename_apm_results= "apm_results2.dat"
 
       ! Star 2
       CALL parts_obj% perform_apm( &
@@ -615,7 +624,8 @@ SUBMODULE (particles_id) particles_constructor
                   parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
                   center2, com2, parts_obj% mass2, &
                   apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                  nuratio_thres )
+                  nuratio_thres, &
+                  filename_apm_pos_id, filename_apm_pos, filename_apm_results )
 
       PRINT *, "APM done for star 2"
       PRINT *
