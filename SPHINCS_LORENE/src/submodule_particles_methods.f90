@@ -657,6 +657,10 @@ SUBMODULE (particles_id) particles_methods
     ELSEIF( THIS% apm_iterate )THEN
 
       ! Do nothing, nu is already computed in the APM iteration
+      nu= THIS% nu
+      h = THIS% h
+      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
+      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
 
     ELSE
 
@@ -870,14 +874,14 @@ SUBMODULE (particles_id) particles_methods
     CALL allocate_RCB_tree_memory_3D(npart)
     iorig(1:npart)= (/ (a,a=1,npart) /)
 
-    IF( call_flag == 0 )THEN
-      ! tabulate kernel, get ndes
-      CALL ktable(ikernel,ndes)
-    ENDIF
+    !IF( call_flag == 0 )THEN
+    !  ! tabulate kernel, get ndes
+    !  CALL ktable(ikernel,ndes)
+    !ENDIF
 
     ! flag that particles are 'alive'
-    ALLOCATE( alive( npart ) )
-    alive( 1:npart )= 1
+    !ALLOCATE( alive( npart ) )
+    !alive( 1:npart )= 1
 
     CALL allocate_gradient( npart )
 

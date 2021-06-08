@@ -63,8 +63,8 @@ SUBMODULE (particles_id) particles_apm
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                    deallocate_metric_on_particles
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE alive_flag,          ONLY: alive
-    USE set_h,               ONLY: exact_nei_tree_update
+    !USE alive_flag,          ONLY: alive
+    USE set_h,               ONLY: exact_nei_tree_update, posmash
     USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
                                    deallocate_RCB_tree_memory_3D
     !USE kernel_table,        ONLY: ktable
@@ -163,6 +163,10 @@ SUBMODULE (particles_id) particles_apm
     IF( debug ) PRINT *, "0"
 
     npart_real= SIZE( pos_input(1,:) )
+
+    IF( mass == THIS% mass2 )THEN
+      PRINT *, "npart_real=", npart_real
+    ENDIF
 
     IF(.NOT.ALLOCATED( h_guess ))THEN
       ALLOCATE( h_guess( max_npart ), STAT= ios, &
@@ -431,8 +435,8 @@ SUBMODULE (particles_id) particles_apm
     !CALL ktable(ikernel,ndes)
 
     ! flag that particles are 'alive'
-    If( .NOT.ALLOCATED( alive ) ) ALLOCATE( alive( npart ) )
-    alive= 1
+    !IF( .NOT.ALLOCATED( alive ) ) ALLOCATE( alive( npart ) )
+    !alive= 1
 
     CALL allocate_gradient( npart )
     CALL allocate_metric_on_particles( npart )
@@ -1186,7 +1190,7 @@ SUBMODULE (particles_id) particles_apm
 
       ENDDO find_nan_in_correction_pos
 
-      PRINT *, "After calling position_correction"
+      IF( debug ) PRINT *, "After calling position_correction"
 
       itr2= 0
       DO a= 1, npart_real, 1
@@ -1216,7 +1220,7 @@ SUBMODULE (particles_id) particles_apm
         ENDIF
       ENDDO
 
-      PRINT *, "After correcting positions"
+      IF( debug ) PRINT *, "After correcting positions"
 
       err_N_mean= err_N_mean/DBLE(npart_real)
 
@@ -1375,7 +1379,7 @@ SUBMODULE (particles_id) particles_apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    pos_tmp= pos(:,1:npart_real)
+    pos_tmp= pos
     nu_tmp= nu
     itr= 0
     DO a= 1, npart_real, 1
@@ -1879,7 +1883,7 @@ SUBMODULE (particles_id) particles_apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    pos_tmp= pos(:,1:npart_real)
+    pos_tmp= pos
     nu_tmp= nu
     itr= 0
     DO a= 1, npart_real, 1
@@ -2005,7 +2009,7 @@ SUBMODULE (particles_id) particles_apm
       !-- Mirror the positions after having repositioned the center of mass --!
       !-----------------------------------------------------------------------!
 
-      pos_tmp= pos(:,1:npart_real)
+      pos_tmp= pos
       nu_tmp= nu
       itr= 0
       DO a= 1, npart_real, 1
@@ -2154,9 +2158,11 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "101"
 
-    CALL exact_nei_tree_update( nn_des, &           !
-                                npart_real, &        !
+    CALL exact_nei_tree_update( nn_des, &
+                                npart_real, &
                                 pos, nu )
+
+    !IF( mass == THIS% mass2 ) STOP
 
     IF( debug ) PRINT *, "102"
 
@@ -2280,13 +2286,14 @@ SUBMODULE (particles_id) particles_apm
   !  PRINT *, ALLOCATED(divv)
   !  PRINT *
 
+    DEALLOCATE( posmash )
     CALL deallocate_metric_on_particles()
     IF( debug ) PRINT *, "4"
     CALL deallocate_gradient()
     IF( debug ) PRINT *, "5"
     CALL deallocate_RCB_tree_memory_3D()
     IF( debug ) PRINT *, "6"
-    CALL deallocate_sph_memory()
+    CALL deallocate_SPH_memory()
 
     !STOP
 

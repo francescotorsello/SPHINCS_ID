@@ -55,12 +55,13 @@ SUBMODULE (particles_id) particles_constructor
     !************************************************
 
     !USE NaNChecker, ONLY: Check_Array_for_NAN
-    USE constants,  ONLY: Msun_geo, km2m
-    USE NR,         ONLY: indexx
-    USE kernel_table,        ONLY: ktable
-    USE input_output,        ONLY: read_options
-    USE units,               ONLY: umass, set_units
-    USE options,             ONLY: ikernel, ndes
+    USE constants,      ONLY: Msun_geo, km2m
+    USE NR,             ONLY: indexx
+    USE kernel_table,   ONLY: ktable
+    USE input_output,   ONLY: read_options
+    USE units,          ONLY: umass, set_units
+    USE options,        ONLY: ikernel, ndes
+    USE alive_flag,     ONLY: alive
 
     IMPLICIT NONE
 
@@ -601,7 +602,9 @@ SUBMODULE (particles_id) particles_constructor
 
       PRINT *, "APM done for star 1"
       PRINT *
-      STOP
+
+      PRINT *, SIZE( parts_obj% pos(1,parts_obj% npart1+1:parts_obj% npart) )
+      PRINT *
 
       ! Star 2
       CALL parts_obj% perform_apm( &
@@ -614,15 +617,20 @@ SUBMODULE (particles_id) particles_constructor
                   apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
                   nuratio_thres )
 
+      PRINT *, "APM done for star 2"
+      PRINT *
+
     ENDIF
 
     PRINT *, "Right after calling the APM SUBROUTINE"
     PRINT *
 
-    STOP
-
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts_obj )
+
+    ! flag that particles are 'alive'
+    ALLOCATE( alive( parts_obj% npart ) )
+    alive( 1:parts_obj% npart )= 1
 
     !
     !-- Import the needed LORENE ID on the particles, and time the process
