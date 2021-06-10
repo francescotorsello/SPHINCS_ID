@@ -661,6 +661,7 @@ SUBMODULE (particles_id) particles_methods
       h = THIS% h
       THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
       THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     ELSE
 

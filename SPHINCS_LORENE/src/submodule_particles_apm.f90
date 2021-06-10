@@ -52,7 +52,8 @@ SUBMODULE (particles_id) particles_apm
     !                                                   *
     !****************************************************
 
-    USE constants,           ONLY: third, Msun, Msun_geo, km2m, g2kg, amu, pi
+    USE constants,           ONLY: half, third, Msun, Msun_geo, km2m, g2kg, &
+                                   amu, pi
 
     USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
                                    npart, h, nu, Theta, &
@@ -82,23 +83,18 @@ SUBMODULE (particles_id) particles_apm
 
     INTEGER,          PARAMETER:: max_npart   = 5D+6
     INTEGER,          PARAMETER:: nn_des      = 301
-    !INTEGER,          PARAMETER:: apm_max_it  = 1500
     INTEGER,          PARAMETER:: m_max_it    = 50
-    !INTEGER,          PARAMETER:: max_inc     = 150
-    !DOUBLE PRECISION, PARAMETER:: nuratio_thres= 2.0D0
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
     LOGICAL,          PARAMETER:: debug= .TRUE.
-    !LOGICAL,          PARAMETER:: post_correction= .FALSE.
-    !LOGICAL,          PARAMETER:: correct_nu  = .TRUE.
 
-    INTEGER:: a, itr, itr2, n_inc            ! iterators
+    INTEGER:: a, a2, itr, itr2, n_inc            ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all, npart_missing
     INTEGER:: nx, ny, nz, i, j, k, nus, mus
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
-    DOUBLE PRECISION:: h_max, h_av, eps, delta
+    DOUBLE PRECISION:: h_max, h_av, eps!, delta
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, dx, dy, dz, &
                        rad_x, rad_y, rad_z, com_x, com_y, com_z, com_d
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, x_ell, y_ell, z_ell
@@ -113,6 +109,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
     DOUBLE PRECISION:: dist
+    DOUBLE PRECISION:: rand_num, rand_num2
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
@@ -284,7 +281,7 @@ SUBMODULE (particles_id) particles_apm
     dx= ABS( xmax - xmin )/DBLE( nx )
     dy= ABS( ymax - ymin )/DBLE( ny )
     dz= ABS( zmax - zmin )/DBLE( nz )
-    delta= 1.0D0
+    !delta= 1.0D0
 
     rad_x= larger_radius + h_av/1.0D0
     rad_y= radius_y + h_av/1.0D0
@@ -293,39 +290,38 @@ SUBMODULE (particles_id) particles_apm
     itr= 0
     DO k= 1, nz, 1
 
-      ztemp= zmin + dz/2 + ( k - 1 )*dz
+      ztemp= zmin + dz/2.0D0 + DBLE( k - 1 )*dz
 
       DO j= 1, ny, 1
 
-        ytemp= ymin + dy/2 + ( j - 1 )*dy
+        ytemp= ymin + dy/2.0D0 + DBLE( j - 1 )*dy
 
         DO i= 1, nx, 1
 
-          xtemp= xmin + dx/2 + ( i - 1 )*dx
+          xtemp= xmin + dx/2.0D0 + DBLE( i - 1 )*dx
 
-          x_ell= center + rad_x*COS(ATAN( ytemp/xtemp )) &
+          x_ell= center + rad_x*COS(ATAN( ytemp/( xtemp - center ) )) &
                  *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
                                        + ytemp**2.0D0 + ztemp**2.0D0 )))
 
-          y_ell= rad_y*SIN(ATAN( ytemp/xtemp )) &
+          y_ell= rad_y*SIN(ATAN( ytemp/( xtemp - center ) )) &
                  *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
                                        + ytemp**2.0D0 + ztemp**2.0D0 )))
 
           z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                     + ytemp**2.0D0 + ztemp**2.0D0 ))
+                                   + ytemp**2.0D0 + ztemp**2.0D0 ) )
 
-          IF( binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
-              .AND. &
-              ! TODO: understand why delta is needed...
-              SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+          IF( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
                     + ztemp**2.0D0 ) <= &
                     1.1D0*SQRT( ( x_ell - center )**2.0D0 &
-                                + delta*y_ell**2.0D0 + z_ell**2.0D0 ) &
+                                + y_ell**2.0D0 + z_ell**2.0D0 ) &
               .AND. &
               SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
                     + ztemp**2.0D0 ) >= &
-              SQRT( ( x_ell - center )**2.0D0 + delta*y_ell**2.0D0 &
+              SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
                     + z_ell**2.0D0 ) &
+              .AND. &
+              binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
           )THEN
 
             itr= itr + 1
@@ -976,10 +972,60 @@ SUBMODULE (particles_id) particles_apm
       find_nan_in_nstar_real: DO a= 1, npart_all, 1
 
         IF( ISNAN( nstar_real( a ) ) )THEN
-          PRINT *, "** ERROR! nstar_real(", a, ") is a NaN!", &
-                   " Stopping.."
-          PRINT *
-          STOP
+
+          PRINT *, "** WARNING! nstar_real(", a, ") is a NaN!", &
+                   "   Changing its value to one from a neighboring particle."
+          PRINT *, " * h(", a, ")=", h(a)
+          PRINT *, " * nu(", a, ")=", nu(a)
+          PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
+          PRINT *, " * r(", a, ")=", SQRT( ( all_pos(1,a) - center )**2.0D0 &
+                                + all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )
+
+          IF( a == 1 )THEN
+            DO a2= 2, npart_all, 1
+              IF( .NOT.ISNAN( nstar_real( a2 ) ) )THEN
+                nstar_real( a )= nstar_real( a2 )
+                EXIT
+              ENDIF
+            ENDDO
+          ELSEIF( npart_real == a )THEN
+            nstar_real( a )= nstar_real( a - 1 )
+          ELSEIF( npart_real + 1 == a )THEN
+            nstar_real( a )= nstar_real( a + 1 )
+          !ELSEIF( npart_all == a )THEN
+          !  nstar_real( a )= nstar_real( a - 1 )
+          ELSE
+            nstar_real( a )= nstar_real( a - 1 )
+          ENDIF
+          ! TODO: here you need a recursive SUBROUTINE
+          !CALL RANDOM_NUMBER( rand_num )
+          !CALL RANDOM_NUMBER( rand_num2 )
+          !IF( rand_num2 < half )  rel_sign= - 1
+          !IF( rand_num2 >= half ) rel_sign=   1
+          !pos_corr_tmp= all_pos(:,a)*( 1.0D0 + rel_sign*rand_num/100.0D0 )
+          !IF( binary% import_mass_density( &
+          !        pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
+          !    .AND. &
+          !    binary% is_hydro_negative( &
+          !        pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+          !)THEN
+          !
+          !  all_pos(:,a)= pos_corr_tmp
+          !
+          !ENDIF
+          !CALL density_loop( npart_all, all_pos, &    ! input
+          !                   nu, h, nstar_real )      ! output
+
+          !PRINT *, "** ERROR! nstar_real(", a, ") is a NaN!"
+          !PRINT *, " * h(", a, ")=", h(a)
+          !PRINT *, " * nu(", a, ")=", nu(a)
+          !PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
+          !PRINT *, " * r(", a, ")=", SQRT( ( all_pos(1,a) - center )**2.0D0 &
+          !                      + all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )
+          !PRINT *, " Stopping.."
+          !PRINT *
+          !STOP
+
         ENDIF
 
       ENDDO find_nan_in_nstar_real

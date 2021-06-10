@@ -230,7 +230,22 @@ PROGRAM sphincs_lorene_bns
       ENDDO
     ENDDO export_sph_loops
   ENDIF
-  STOP
+
+  PRINT *, "===================================================" &
+           // "================================================"
+  PRINT *, " Timing "
+  PRINT *, "===================================================" &
+           // "================================================"
+  PRINT *
+  PRINT *
+  PRINT *, " * SPH:"
+  CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
+  CALL particles_dist( 1, 1 )% apm1_timer% print_timer( 2 )
+  CALL particles_dist( 1, 1 )% apm2_timer% print_timer( 2 )
+  CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
+  CALL particles_dist( 1, 1 )% sph_computer_timer% print_timer( 2 )
+  PRINT *
+  !STOP
 
   !
   !-- Construct the bssn_id objects from the bns objects
@@ -372,6 +387,8 @@ PROGRAM sphincs_lorene_bns
   PRINT *
   PRINT *, " * SPH:"
   CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
+  CALL particles_dist( 1, 1 )% apm1_timer% print_timer( 2 )
+  CALL particles_dist( 1, 1 )% apm2_timer% print_timer( 2 )
   CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
   CALL particles_dist( 1, 1 )% sph_computer_timer% print_timer( 2 )
   PRINT *
@@ -399,7 +416,7 @@ PROGRAM sphincs_lorene_bns
   PRINT *, "   Particle number on star 1= ", particles_dist( 1, 1 )% get_npart1()
   PRINT *, "   Particle number on star 2= ", particles_dist( 1, 1 )% get_npart2()
   PRINT *
-  PRINT *, "   Baryon number ratio on both stars=", &
+  PRINT *, "   Baryon number ratio over both stars=", &
            particles_dist( 1, 1 )% get_nuratio()
   PRINT *, "   Baryon number ratio on star 1=", &
            particles_dist( 1, 1 )% get_nuratio1()

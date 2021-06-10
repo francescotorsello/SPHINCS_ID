@@ -119,6 +119,8 @@ SUBMODULE (particles_id) particles_constructor
     !-- Initialize the timers
     !
     parts_obj% placer_timer      = timer( "placer_timer" )
+    parts_obj% apm1_timer        = timer( "apm_star1_timer" )
+    parts_obj% apm2_timer        = timer( "apm_star2_timer" )
     parts_obj% importer_timer    = timer( "importer_timer" )
     parts_obj% sph_computer_timer= timer( "sph_computer_timer" )
 
@@ -597,6 +599,7 @@ SUBMODULE (particles_id) particles_constructor
       filename_apm_results= "apm_results1.dat"
 
       ! Star 1
+      CALL parts_obj% apm1_timer% start_timer()
       CALL parts_obj% perform_apm( &
                   bns_obj, &
                   parts_obj% pos(:,1:parts_obj% npart1), &
@@ -607,6 +610,7 @@ SUBMODULE (particles_id) particles_constructor
                   apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
                   nuratio_thres, &
                   filename_apm_pos_id, filename_apm_pos, filename_apm_results )
+      CALL parts_obj% apm1_timer% stop_timer()
 
       PRINT *, "APM done for star 1"
       PRINT *
@@ -616,6 +620,7 @@ SUBMODULE (particles_id) particles_constructor
       filename_apm_results= "apm_results2.dat"
 
       ! Star 2
+      CALL parts_obj% apm2_timer% start_timer()
       CALL parts_obj% perform_apm( &
                   bns_obj, &
                   parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
@@ -626,6 +631,7 @@ SUBMODULE (particles_id) particles_constructor
                   apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
                   nuratio_thres, &
                   filename_apm_pos_id, filename_apm_pos, filename_apm_results )
+      CALL parts_obj% apm2_timer% stop_timer()
 
       PRINT *, "APM done for star 2"
       PRINT *

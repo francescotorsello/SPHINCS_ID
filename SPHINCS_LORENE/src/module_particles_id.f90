@@ -176,6 +176,8 @@ MODULE particles_id
     LOGICAL:: apm_iterate
 
     TYPE(timer), PUBLIC:: placer_timer
+    TYPE(timer), PUBLIC:: apm1_timer
+    TYPE(timer), PUBLIC:: apm2_timer
     TYPE(timer), PUBLIC:: importer_timer
     TYPE(timer), PUBLIC:: sph_computer_timer
 
