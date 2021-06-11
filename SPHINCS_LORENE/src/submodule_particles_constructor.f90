@@ -335,10 +335,6 @@ SUBMODULE (particles_id) particles_constructor
 
       IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 
-        ! mass_ratio < 1
-        parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
-        npart2_approx= npart_approx/parts_obj% mass_ratio
-
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
@@ -352,6 +348,11 @@ SUBMODULE (particles_id) particles_constructor
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps )
+
+        ! mass_ratio < 1
+        parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
+        npart2_approx= MIN(npart_approx,parts_obj% npart2)/parts_obj% mass_ratio
+
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
                                                     radius1, center1, &
                                                     npart2_approx, &
@@ -364,14 +365,11 @@ SUBMODULE (particles_id) particles_constructor
                                                     upper_factor, lower_factor,&
                                                     max_steps )
         CALL parts_obj% placer_timer% stop_timer()
+
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
 
       ELSE
 
-        ! mass_ratio < 1
-        parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
-        npart2_approx= npart_approx/parts_obj% mass_ratio
-
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
@@ -385,7 +383,13 @@ SUBMODULE (particles_id) particles_constructor
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps )
-        !parts_obj% npart1= parts_obj% npart
+
+        ! mass_ratio < 1
+        parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
+        !npart2_approx= npart_approx/parts_obj% mass_ratio
+        !npart2_approx= MIN(npart_approx,parts_obj% npart1)/(parts_obj% mass_ratio)
+        npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
+
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
                                                     radius2, center2, &
                                                     npart2_approx, &
@@ -397,9 +401,33 @@ SUBMODULE (particles_id) particles_constructor
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps )
+
+        !IF( parts_obj% npart1/parts_obj% npart2 )THEN
+        !  CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
+        !                                          radius2, center2, &
+        !                                          npart2_approx, &
+        !                                          parts_obj% npart2, &
+        !                                          pos2, pvol2, pmass2, &
+        !                                          thres, &
+        !                                          bns_obj, &
+        !                                          last_r, &
+        !                                          upper_bound, lower_bound, &
+        !                                          upper_factor, lower_factor,&
+        !                                          max_steps )
+        !ENDIF
+
         CALL parts_obj% placer_timer% stop_timer()
-        !parts_obj% npart2= parts_obj% npart - parts_obj% npart1
+
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
+
+        PRINT *
+        PRINT *, "npart1= ", parts_obj% npart1
+        PRINT *, "npart_approx= ", npart_approx
+        PRINT *, "npart2= ", parts_obj% npart2
+        PRINT *, "npart2_approx= ", npart2_approx
+        PRINT *, "npart= ", parts_obj% npart
+        PRINT *
+        STOP
 
       ENDIF
 

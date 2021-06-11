@@ -137,7 +137,7 @@ SUBMODULE (particles_id) spherical_shells
       particle_profile( 2, r )= n_shells_tmp
 
     ENDDO
-    n_shells= FLOOR( n_shells_tmp )
+    n_shells= NINT( n_shells_tmp )
     !PRINT *, n_shells_tmp, n_shells, shell_index
     !STOP
 
@@ -436,15 +436,14 @@ SUBMODULE (particles_id) spherical_shells
     shell_radii(1)= ( central_density/m_p )**(-third)
     DO itr= 2, n_shells, 1
 
-      rho_tmp= bns_obj% import_mass_density( center + shell_radii( itr - 1 ), 0.0D0, 0.0D0 )
+      rho_tmp= bns_obj% import_mass_density( center + shell_radii( itr - 1 ), &
+                                             0.0D0, 0.0D0 )
 
       IF( rho_tmp == 0 )THEN
         shell_radii= shell_radii*itr/n_shells
       ENDIF
 
-      shell_radii( itr )= shell_radii( itr - 1 ) + &
-        ( bns_obj% import_mass_density( center + shell_radii( itr - 1 ), 0.0D0, 0.0D0 )&
-          /m_p )**(-third)
+      shell_radii( itr )= shell_radii( itr - 1 ) + ( rho_tmp/m_p )**(-third)
 
     ENDDO
     shell_radii= shell_radii*(radius*last_r/shell_radii(n_shells))
@@ -905,9 +904,10 @@ SUBMODULE (particles_id) spherical_shells
       pos_shells(r)% baryon_density= 0.0D0
       pos_shells(r)% gamma_euler= 0.0D0
       m_parts( r )= m_p
-      npart_shelleq( r )= CEILING( SQRT(DBLE(2*shell_masses( r )/m_parts( r ))) )
+      npart_shelleq( r )= CEILING( SQRT(DBLE(2*shell_masses( r )/m_parts( r ))))
 
     ENDDO
+    npart_shelleq( 1 )= 4
 
     pos  = 0.0D0
     pmass = 0.0D0
@@ -944,6 +944,7 @@ SUBMODULE (particles_id) spherical_shells
 !PRINT *, "Start of iteration, shell ", r, "iteration ", cnt2 + 1
 !PRINT *
       !npart_shelleq( r )= NINT( correction*npart_shelleq( r ) )
+      !IF( r == 1 ) npart_shelleq( r )= npart_shelleq( r )/1.5
       IF( MOD( npart_shelleq( r ), 2 ) /= 0 )THEN
         CALL RANDOM_NUMBER( rand_num2 )
         IF( rand_num2 >= half ) rel_sign=  1
@@ -1265,6 +1266,12 @@ SUBMODULE (particles_id) spherical_shells
         m_parts( r )= shell_masses( r )/DBLE(npart_shell( r ))
       ENDIF
 
+      IF( r == 2 .AND. m_parts( r ) > m_parts( r - 1 ) )THEN
+        npart_shelleq( r )= NINT( m_parts( r )/m_parts( r - 1 )*npart_shelleq( r ) )
+        npart_out= npart_out - npart_shell( r )/2
+        CYCLE
+      ENDIF
+
       !PRINT *, "Right before correction of particle number"
       !PRINT *, npart_out
 
@@ -1496,7 +1503,7 @@ SUBMODULE (particles_id) spherical_shells
         IF( npart_test/2 /= npart_out )THEN
           PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
                    "equal to the total number of particles. Stopping.."
-          PRINT *, "npart_test", npart_test/2, ", npart_out=", npart_out
+          PRINT *, "npart_test=", npart_test/2, ", npart_out=", npart_out
           PRINT *
           STOP
         ENDIF
