@@ -768,7 +768,11 @@ SUBMODULE (particles_id) spherical_shells
 
   PRINT *, "Print mass profile to file..."
 
-  finalnamefile= "mass_profile.dat"
+  IF( PRESENT(filename_mass_profile) )THEN
+    finalnamefile= filename_mass_profile
+  ELSE
+    finalnamefile= "mass_profile.dat"
+  ENDIF
 
   INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -822,7 +826,11 @@ SUBMODULE (particles_id) spherical_shells
   !
   !ENDDO
 
-  finalnamefile= "shell_radii.dat"
+  IF( PRESENT(filename_shells_radii) )THEN
+    finalnamefile= filename_shells_radii
+  ELSE
+    finalnamefile= "shell_radii.dat"
+  ENDIF
 
   INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -1923,7 +1931,11 @@ SUBMODULE (particles_id) spherical_shells
 
     PRINT *, "Printing particle positions to file..."
 
-    finalnamefile= "tmp_pos.dat"
+    IF( PRESENT(filename_shells_pos) )THEN
+      finalnamefile= filename_shells_pos
+    ELSE
+      finalnamefile= "shells_pos.dat"
+    ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 

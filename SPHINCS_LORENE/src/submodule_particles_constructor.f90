@@ -100,6 +100,9 @@ SUBMODULE (particles_id) particles_constructor
     CHARACTER( LEN= max_length ):: filename_apm_pos_id, filename_apm_pos, &
                                    filename_apm_results
 
+    CHARACTER( LEN= max_length ):: filename_mass_profile, &
+                                   filename_shells_radii, filename_shells_pos
+
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
               randomize_r, apm_iterate, mass_it
@@ -335,6 +338,10 @@ SUBMODULE (particles_id) particles_constructor
 
       IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 
+        filename_mass_profile= "shells_mass_profile2.dat"
+        filename_shells_radii= "shells_radii2.dat"
+        filename_shells_pos  = "shells_pos2.dat"
+
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
@@ -347,11 +354,18 @@ SUBMODULE (particles_id) particles_constructor
                                                     last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
-                                                    max_steps )
+                                                    max_steps, &
+                                                    filename_mass_profile, &
+                                                    filename_shells_radii, &
+                                                    filename_shells_pos )
 
         ! mass_ratio < 1
         parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
         npart2_approx= MIN(npart_approx,parts_obj% npart2)/parts_obj% mass_ratio
+
+        filename_mass_profile= "shells_mass_profile1.dat"
+        filename_shells_radii= "shells_radii1.dat"
+        filename_shells_pos  = "shells_pos1.dat"
 
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
                                                     radius1, center1, &
@@ -363,12 +377,19 @@ SUBMODULE (particles_id) particles_constructor
                                                     last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
-                                                    max_steps )
+                                                    max_steps, &
+                                                    filename_mass_profile, &
+                                                    filename_shells_radii, &
+                                                    filename_shells_pos )
         CALL parts_obj% placer_timer% stop_timer()
 
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
 
       ELSE
+
+        filename_mass_profile= "shells_mass_profile1.dat"
+        filename_shells_radii= "shells_radii1.dat"
+        filename_shells_pos  = "shells_pos1.dat"
 
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
@@ -382,7 +403,10 @@ SUBMODULE (particles_id) particles_constructor
                                                     last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
-                                                    max_steps )
+                                                    max_steps, &
+                                                    filename_mass_profile, &
+                                                    filename_shells_radii, &
+                                                    filename_shells_pos )
 
         ! mass_ratio < 1
         parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
@@ -390,6 +414,10 @@ SUBMODULE (particles_id) particles_constructor
         !npart2_approx= MIN(npart_approx,parts_obj% npart1)/(parts_obj% mass_ratio)
         npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
 
+        filename_mass_profile= "shells_mass_profile2.dat"
+        filename_shells_radii= "shells_radii2.dat"
+        filename_shells_pos  = "shells_pos2.dat"
+
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
                                                     radius2, center2, &
                                                     npart2_approx, &
@@ -400,7 +428,10 @@ SUBMODULE (particles_id) particles_constructor
                                                     last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
-                                                    max_steps )
+                                                    max_steps, &
+                                                    filename_mass_profile, &
+                                                    filename_shells_radii, &
+                                                    filename_shells_pos )
 
         !IF( parts_obj% npart1/parts_obj% npart2 )THEN
         !  CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &

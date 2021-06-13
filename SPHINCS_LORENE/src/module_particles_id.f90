@@ -318,7 +318,9 @@ MODULE particles_id
                                   mass_star, radius, center, npart_approx, &
                                   npart_out, pos, pvol, pmass, thres, bns_obj, &
                                   last_r, upper_bound, lower_bound, &
-                                  upper_factor, lower_factor, max_steps )
+                                  upper_factor, lower_factor, max_steps, &
+                                  filename_mass_profile, filename_shells_radii,&
+                                  filename_shells_pos )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
@@ -329,8 +331,11 @@ MODULE particles_id
       DOUBLE PRECISION, INTENT( IN )    :: upper_bound, lower_bound, &
                                            upper_factor, lower_factor
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
-      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pvol
-      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pmass
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pmass
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_mass_profile
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_radii
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_pos
 
     END SUBROUTINE place_particles_spherical_shells
 
