@@ -74,7 +74,7 @@ SUBMODULE (particles_id) particles_constructor
     INTEGER, PARAMETER:: max_length= 50
     INTEGER, DIMENSION( : ), ALLOCATABLE:: x_sort, y_sort, z_sort
     ! APM parameters
-    INTEGER:: apm_max_it, max_inc
+    INTEGER:: apm_max_it, max_inc, n_particles_first_shell
 
     DOUBLE PRECISION:: thres, nu_ratio
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
@@ -105,7 +105,7 @@ SUBMODULE (particles_id) particles_constructor
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
-              randomize_r, apm_iterate, mass_it
+              randomize_r, apm_iterate, mass_it, find_npart
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
@@ -115,7 +115,7 @@ SUBMODULE (particles_id) particles_constructor
               compose_eos, compose_path, compose_filename, &
               npart_approx, last_r, upper_bound, lower_bound, &
               upper_factor, lower_factor, max_steps, &
-              randomize_phi, randomize_theta, randomize_r, &
+              randomize_phi, randomize_theta, randomize_r, find_npart, &
               apm_iterate, apm_max_it, max_inc, mass_it, nuratio_thres
 
     !
@@ -342,6 +342,8 @@ SUBMODULE (particles_id) particles_constructor
         filename_shells_radii= "shells_radii2.dat"
         filename_shells_pos  = "shells_pos2.dat"
 
+        n_particles_first_shell= 4
+
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
@@ -355,6 +357,8 @@ SUBMODULE (particles_id) particles_constructor
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps, &
+                                                    n_particles_first_shell, &
+                                                    find_npart, &
                                                     filename_mass_profile, &
                                                     filename_shells_radii, &
                                                     filename_shells_pos )
@@ -367,6 +371,8 @@ SUBMODULE (particles_id) particles_constructor
         filename_shells_radii= "shells_radii1.dat"
         filename_shells_pos  = "shells_pos1.dat"
 
+        n_particles_first_shell= n_particles_first_shell/parts_obj% mass_ratio
+
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
                                                     radius1, center1, &
                                                     npart2_approx, &
@@ -378,6 +384,8 @@ SUBMODULE (particles_id) particles_constructor
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps, &
+                                                    n_particles_first_shell, &
+                                                    find_npart, &
                                                     filename_mass_profile, &
                                                     filename_shells_radii, &
                                                     filename_shells_pos )
@@ -391,22 +399,29 @@ SUBMODULE (particles_id) particles_constructor
         filename_shells_radii= "shells_radii1.dat"
         filename_shells_pos  = "shells_pos1.dat"
 
+        n_particles_first_shell= 4
+
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
+
+        !DO
+
         CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
-                                                    radius1, center1, &
-                                                    npart_approx, &
-                                                    parts_obj% npart1, &
-                                                    pos1, pvol1, pmass1, &
-                                                    thres, &
-                                                    bns_obj, &
-                                                    last_r, &
-                                                    upper_bound, lower_bound, &
-                                                    upper_factor, lower_factor,&
-                                                    max_steps, &
-                                                    filename_mass_profile, &
-                                                    filename_shells_radii, &
-                                                    filename_shells_pos )
+                                              radius1, center1, &
+                                              npart_approx, &
+                                              parts_obj% npart1, &
+                                              pos1, pvol1, pmass1, &
+                                              thres, &
+                                              bns_obj, &
+                                              last_r, &
+                                              upper_bound, lower_bound, &
+                                              upper_factor, lower_factor,&
+                                              max_steps, &
+                                              n_particles_first_shell, &
+                                              find_npart, &
+                                              filename_mass_profile, &
+                                              filename_shells_radii, &
+                                              filename_shells_pos )
 
         ! mass_ratio < 1
         parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
@@ -418,34 +433,47 @@ SUBMODULE (particles_id) particles_constructor
         filename_shells_radii= "shells_radii2.dat"
         filename_shells_pos  = "shells_pos2.dat"
 
-        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
-                                                    radius2, center2, &
-                                                    npart2_approx, &
-                                                    parts_obj% npart2, &
-                                                    pos2, pvol2, pmass2, &
-                                                    thres, &
-                                                    bns_obj, &
-                                                    last_r, &
-                                                    upper_bound, lower_bound, &
-                                                    upper_factor, lower_factor,&
-                                                    max_steps, &
-                                                    filename_mass_profile, &
-                                                    filename_shells_radii, &
-                                                    filename_shells_pos )
+        n_particles_first_shell= 4!n_particles_first_shell/parts_obj% mass_ratio
 
-        !IF( parts_obj% npart1/parts_obj% npart2 )THEN
-        !  CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
-        !                                          radius2, center2, &
-        !                                          npart2_approx, &
-        !                                          parts_obj% npart2, &
-        !                                          pos2, pvol2, pmass2, &
-        !                                          thres, &
-        !                                          bns_obj, &
-        !                                          last_r, &
-        !                                          upper_bound, lower_bound, &
-        !                                          upper_factor, lower_factor,&
-        !                                          max_steps )
+        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
+                                              radius2, center2, &
+                                              npart2_approx, &
+                                              parts_obj% npart2, &
+                                              pos2, pvol2, pmass2, &
+                                              thres, &
+                                              bns_obj, &
+                                              last_r, &
+                                              upper_bound, lower_bound, &
+                                              upper_factor, lower_factor,&
+                                              max_steps, &
+                                              n_particles_first_shell, &
+                                              find_npart, &
+                                              filename_mass_profile, &
+                                              filename_shells_radii, &
+                                              filename_shells_pos )
+
+          !IF( parts_obj% npart1/parts_obj% npart2 >= &
+          !    0.9D0*parts_obj% mass_ratio .AND. &
+          !    parts_obj% npart1/parts_obj% npart2 <= &
+          !    1.1D0*parts_obj% mass_ratio &
+          !)THEN
+          !  EXIT
+          !ENDIF
+
+          !IF( parts_obj% npart1/parts_obj% npart2 )THEN
+          !  CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
+          !                                          radius2, center2, &
+          !                                          npart2_approx, &
+          !                                          parts_obj% npart2, &
+          !                                          pos2, pvol2, pmass2, &
+          !                                          thres, &
+          !                                          bns_obj, &
+          !                                          last_r, &
+          !                                          upper_bound, lower_bound, &
+          !                                          upper_factor, lower_factor,&
+          !                                          max_steps )
         !ENDIF
+        !ENDDO
 
         CALL parts_obj% placer_timer% stop_timer()
 

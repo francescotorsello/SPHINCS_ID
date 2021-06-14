@@ -319,20 +319,23 @@ MODULE particles_id
                                   npart_out, pos, pvol, pmass, thres, bns_obj, &
                                   last_r, upper_bound, lower_bound, &
                                   upper_factor, lower_factor, max_steps, &
+                                  n_particles_first_shell, find_npart, &
                                   filename_mass_profile, filename_shells_radii,&
                                   filename_shells_pos )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
-      INTEGER,          INTENT( IN )    :: npart_approx, max_steps
+      INTEGER,          INTENT( IN )    :: npart_approx, max_steps, &
+                                           n_particles_first_shell
       INTEGER,          INTENT( OUT )   :: npart_out
       DOUBLE PRECISION, INTENT( IN )    :: mass_star, radius, center, &
                                            last_r, thres
-      DOUBLE PRECISION, INTENT( IN )    :: upper_bound, lower_bound, &
-                                           upper_factor, lower_factor
+      DOUBLE PRECISION, INTENT( INOUT ) :: upper_bound, lower_bound
+      DOUBLE PRECISION, INTENT( IN )    :: upper_factor, lower_factor
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pmass
+      LOGICAL,          INTENT( IN )    :: find_npart
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_mass_profile
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_radii
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_pos

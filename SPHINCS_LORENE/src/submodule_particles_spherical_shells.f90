@@ -41,7 +41,7 @@ SUBMODULE (particles_id) spherical_shells
 
     INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart_tmp, cnt, &
               shell_index, r, th, phi, i_shell, npart_test, npart_shell_tmp, &
-              cnt2, rel_sign, cnt3, dim_seed, r_cnt, first_shell
+              cnt2, rel_sign, cnt3, dim_seed, r_cnt, first_shell, prev_shell
     !INTEGER, PARAMETER:: max_length= 5D+6
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx, seed
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
@@ -532,7 +532,7 @@ SUBMODULE (particles_id) spherical_shells
       IF( shell_index == n_shells )THEN
 
         shell_masses( shell_index )= SUM( mass_profile( 2, &
-         mass_profile_idx(itr2):mass_profile_idx(NINT(radius/dr)) ), DIM= 1 )
+         mass_profile_idx(itr2):mass_profile_idx(NINT(radius/dr)-1) ), DIM= 1 )
 
         EXIT
 
@@ -556,9 +556,11 @@ SUBMODULE (particles_id) spherical_shells
                "mass of the star. Stopping..."
       PRINT *, "SUM( shell_masses )= ", SUM( shell_masses, DIM=1 )
       PRINT *, "mass_star= ", mass_star
+      PRINT *, "shell_masses=", shell_masses
       PRINT *
       STOP
     ENDIF
+    !STOP
 
     ALLOCATE( npart_shell( n_shells ) )
     ALLOCATE( npart_shelleq( n_shells ) )
@@ -915,7 +917,7 @@ SUBMODULE (particles_id) spherical_shells
       npart_shelleq( r )= CEILING( SQRT(DBLE(2*shell_masses( r )/m_parts( r ))))
 
     ENDDO
-    npart_shelleq( 1 )= 4
+    npart_shelleq( 1 )= n_particles_first_shell !4
 
     pos  = 0.0D0
     pmass = 0.0D0
@@ -931,7 +933,7 @@ SUBMODULE (particles_id) spherical_shells
     !lower_factor= 0.99D0
     upper_bound_tmp= upper_bound
     lower_bound_tmp= lower_bound
-    r= 1!first_shell
+    r= CEILING(DBLE(n_shells)/2.0D0)!first_shell
     cnt2= 0
     r_cnt= 1
 
@@ -945,7 +947,18 @@ SUBMODULE (particles_id) spherical_shells
     PRINT *, THIS% randomize_theta
     PRINT *, THIS% randomize_r
 
-    DO
+    find_desired_npart: DO
+
+      !DO r= 1, n_shells, 1
+      !  m_parts( r )= m_p
+      !  npart_shelleq( r )= &
+      !            CEILING( SQRT(DBLE(2*shell_masses( r )/m_parts( r ))))
+      !ENDDO
+      !npart_shelleq( 1 )= n_particles_first_shell !4
+      !
+      !r= 1
+
+    place_particles_on_shells: DO
 
       !IF( r_cnt == 2 ) r= 1
 
@@ -1283,14 +1296,24 @@ SUBMODULE (particles_id) spherical_shells
       !PRINT *, "Right before correction of particle number"
       !PRINT *, npart_out
 
-      IF( r > 1 )THEN
+      !IF( r > 1 )THEN
+      IF( r /= CEILING(DBLE(n_shells)/2.0D0) )THEN
 
         !IF( r_cnt == 2 )THEN
         !  high_mass= m_parts( r )/m_parts( first_shell ) > upper_bound_tmp
         !  low_mass = m_parts( r )/m_parts( first_shell ) < lower_bound_tmp
         !ELSE
-          high_mass= m_parts( r )/m_parts( r - 1 ) > upper_bound_tmp
-          low_mass = m_parts( r )/m_parts( r - 1 ) < lower_bound_tmp
+
+        IF( r < CEILING(DBLE(n_shells)/2.0D0) )THEN
+          prev_shell= r + 1
+        ELSEIF( r > CEILING(DBLE(n_shells)/2.0D0) )THEN
+          prev_shell= r - 1
+        ELSEIF( r == 1 )THEN
+          EXIT
+        ENDIF
+
+          high_mass= m_parts( r )/m_parts( prev_shell ) > upper_bound_tmp
+          low_mass = m_parts( r )/m_parts( prev_shell ) < lower_bound_tmp
         !ENDIF
         npart_shell_kept= DBLE(npart_shell( r ))/DBLE(npart_shell_tmp)
         kept_all = npart_shell_kept == 1.0D0
@@ -1321,7 +1344,7 @@ SUBMODULE (particles_id) spherical_shells
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
             IF( r > 0.8D0*n_shells .AND. &
-                m_parts( r )/m_parts( r - 1 ) > 1.1D0*upper_bound &
+                m_parts( r )/m_parts( prev_shell ) > 1.1D0*upper_bound &
                 !upper_bound_tmp > 1.1D0*upper_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1364,7 +1387,7 @@ SUBMODULE (particles_id) spherical_shells
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
             IF( r > 0.8D0*n_shells .AND. &
-                m_parts( r )/m_parts( r - 1 ) < 0.9D0*lower_bound &
+                m_parts( r )/m_parts( prev_shell ) < 0.9D0*lower_bound &
                 !lower_bound_tmp < 0.9D0*lower_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1407,7 +1430,7 @@ SUBMODULE (particles_id) spherical_shells
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
             IF( r > 0.8D0*n_shells .AND. &
-                m_parts( r )/m_parts( r - 1 ) > 1.1D0*upper_bound &
+                m_parts( r )/m_parts( prev_shell ) > 1.1D0*upper_bound &
                 !upper_bound_tmp > 1.1D0*upper_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1454,7 +1477,7 @@ SUBMODULE (particles_id) spherical_shells
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
             IF( r > 0.8D0*n_shells .AND. &
-                m_parts( r )/m_parts( r - 1 ) < 0.9D0*lower_bound &
+                m_parts( r )/m_parts( prev_shell ) < 0.9D0*lower_bound &
                 !lower_bound_tmp < 0.9D0*lower_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1503,43 +1526,68 @@ SUBMODULE (particles_id) spherical_shells
 
       ENDIF
 
-      IF( r_cnt > 1 )THEN
-        npart_test= 0
-        DO itr= 1, r, 1
-          npart_test= npart_test + npart_shell( itr )
-        ENDDO
-        IF( npart_test/2 /= npart_out )THEN
-          PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
-                   "equal to the total number of particles. Stopping.."
-          PRINT *, "npart_test=", npart_test/2, ", npart_out=", npart_out
-          PRINT *
-          STOP
-        ENDIF
-      ENDIF
+      !IF( r_cnt > 1 )THEN
+      !  npart_test= 0
+      !  DO itr= 1, r, 1
+      !    npart_test= npart_test + npart_shell( itr )
+      !  ENDDO
+      !  IF( npart_test/2 /= npart_out )THEN
+      !    PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
+      !             "equal to the total number of particles. Stopping.."
+      !    PRINT *, "npart_test=", npart_test/2, ", npart_out=", npart_out
+      !    PRINT *
+      !    STOP
+      !  ENDIF
+      !ENDIF
 
       PRINT *, " * Placed", npart_shell( r )/2, &
                " particles on one emisphere of spherical shell ", r, &
                " out of ", n_shells
-      IF( r > 1 ) PRINT *, "   Ratio of particle masses on last 2 shells: ", &
-                           "   m_parts(", r, ")/m_parts(", r - 1, ")= ",  &
-                           m_parts( r )/m_parts( r - 1 )
+      IF( r /= CEILING(DBLE(n_shells)/2.0D0) ) PRINT *, "   Ratio of particle masses on last 2 shells: ", &
+                           "   m_parts(", r, ")/m_parts(", prev_shell, ")= ",  &
+                           m_parts( r )/m_parts( prev_shell )
       PRINT *, "   Shell radius= ", shell_radii( r )/radius*100.0D0, &
                "% of the radius of the star"
       PRINT *, "   Placed", npart_out, " particles overall, so far."
       PRINT *
 
-      IF( r == n_shells ) EXIT
+      !IF( r == n_shells ) EXIT
+      IF( r == n_shells )THEN
+        r= CEILING(DBLE(n_shells)/2.0D0) - 1
+        r_cnt= r_cnt + 1
+        cnt2 = 0
+        upper_bound_tmp= upper_bound
+        lower_bound_tmp= lower_bound
+        PRINT *, "last shell"
+      ELSEIF( r == 1 )THEN
+        PRINT *, "exit"
+        EXIT
+      ELSEIF( r < CEILING(DBLE(n_shells)/2.0D0) )THEN
+        r= r - 1
+        r_cnt= r_cnt + 1
+        cnt2 = 0
+        upper_bound_tmp= upper_bound
+        lower_bound_tmp= lower_bound
+        PRINT *, "inner layers"
+      ELSEIF( r >= CEILING(DBLE(n_shells)/2.0D0) )THEN
+        r= r + 1
+        r_cnt= r_cnt + 1
+        cnt2 = 0
+        upper_bound_tmp= upper_bound
+        lower_bound_tmp= lower_bound
+        PRINT *, "outer layers"
+      ENDIF
 
       !PRINT *, npart_shelleq( r ), (npart_shelleq( r )**2)/2, npart_shell( r )
       !PRINT *, colatitude_pos( r )% colatitudes
 
       !IF( r == 2 ) STOP
 
-      r= r + 1
-      r_cnt= r_cnt + 1
-      cnt2 = 0
-      upper_bound_tmp= upper_bound
-      lower_bound_tmp= lower_bound
+   !   r= r + 1
+   !   r_cnt= r_cnt + 1
+   !   cnt2 = 0
+   !   upper_bound_tmp= upper_bound
+   !   lower_bound_tmp= lower_bound
 
       !pos_shells( r )% pos_shell= &
       !                pos_shells( r )% pos_shell( :, 1:npart_shell( r ) )
@@ -1558,7 +1606,7 @@ SUBMODULE (particles_id) spherical_shells
       !pos_shells( r )% pos_phi= &
       !                pos_shells( r )% pos_phi( 1:npart_shell( r ) )
 
-    ENDDO
+    ENDDO place_particles_on_shells
     PRINT *, "npart=", npart_out
     PRINT *, npart_shell
     PRINT *
@@ -1576,6 +1624,46 @@ SUBMODULE (particles_id) spherical_shells
       PRINT *
       STOP
     ENDIF
+
+    IF( ( 2*npart_out >= 1.225D0*npart_approx .OR. &
+          2*npart_out <= 0.775D0*npart_approx ) .AND. find_npart )THEN
+      r= 1
+      r_cnt= 1
+      cnt2 = 0
+      upper_bound_tmp= upper_bound
+      lower_bound_tmp= lower_bound
+      npart_out= 0
+    ELSE
+      EXIT
+    ENDIF
+
+    !IF( find_npart )THEN
+    !  IF( 2*npart_out >= 1.2D0*npart_approx )THEN
+    !    !m_p= 1.1D0*m_p
+    !    !upper_bound    = 1.1D0*upper_bound
+    !    !lower_bound    = 1.1D0*lower_bound
+    !    upper_bound_tmp= upper_bound
+    !    lower_bound_tmp= lower_bound
+    !  ELSEIF( 2*npart_out <= 0.8D0*npart_approx )THEN
+    !    !m_p= 0.9D0*m_p
+    !    !upper_bound    = 0.9D0*upper_bound
+    !    !lower_bound    = 0.9D0*lower_bound
+    !    upper_bound_tmp= upper_bound
+    !    lower_bound_tmp= lower_bound
+    !  ELSE
+    !    EXIT
+    !  ENDIF
+    !  r= 1
+    !  r_cnt= 1
+    !  cnt2 = 0
+    !  !upper_bound_tmp= upper_bound
+    !  !lower_bound_tmp= lower_bound
+    !  npart_out= 0
+    !ELSE
+    !  EXIT
+    !ENDIF
+
+    ENDDO find_desired_npart
     !STOP
 
     PRINT *, "Mirroring particles..."
