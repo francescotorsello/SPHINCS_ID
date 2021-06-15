@@ -479,14 +479,14 @@ SUBMODULE (particles_id) particles_constructor
 
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
 
-        PRINT *
-        PRINT *, "npart1= ", parts_obj% npart1
-        PRINT *, "npart_approx= ", npart_approx
-        PRINT *, "npart2= ", parts_obj% npart2
-        PRINT *, "npart2_approx= ", npart2_approx
-        PRINT *, "npart= ", parts_obj% npart
-        PRINT *
-        STOP
+        !PRINT *
+        !PRINT *, "npart1= ", parts_obj% npart1
+        !PRINT *, "npart_approx= ", npart_approx
+        !PRINT *, "npart2= ", parts_obj% npart2
+        !PRINT *, "npart2_approx= ", npart2_approx
+        !PRINT *, "npart= ", parts_obj% npart
+        !PRINT *
+        !STOP
 
       ENDIF
 
