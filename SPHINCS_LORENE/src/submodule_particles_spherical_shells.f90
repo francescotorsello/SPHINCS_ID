@@ -1268,7 +1268,7 @@ SUBMODULE (particles_id) spherical_shells
 
       IF( npart_shell( r ) < 0 ) npart_shell( r )= 0
       IF( npart_shell( r ) == 0 )THEN
-        m_parts( r )= m_parts( r - 1 )
+        m_parts( r )= m_parts( prev_shell )
         PRINT *, " * Placed", npart_shell( r )/2, &
                  " particles on one emisphere of spherical shell ", r, &
                  " out of ", n_shells
@@ -1276,7 +1276,7 @@ SUBMODULE (particles_id) spherical_shells
           EXIT
         ELSE
           PRINT *, "r=", r
-          m_parts( r )= m_parts( r - 1 )
+          m_parts( r )= m_parts( prev_shell )
           r= r + 1
           cnt2 = 0
           upper_bound_tmp= upper_bound
@@ -1287,11 +1287,12 @@ SUBMODULE (particles_id) spherical_shells
         m_parts( r )= shell_masses( r )/DBLE(npart_shell( r ))
       ENDIF
 
-      IF( r == 2 .AND. m_parts( r ) > m_parts( r - 1 ) )THEN
-        npart_shelleq( r )= NINT( m_parts( r )/m_parts( r - 1 )*npart_shelleq( r ) )
-        npart_out= npart_out - npart_shell( r )/2
-        CYCLE
-      ENDIF
+      !IF( r == 2 .AND. m_parts( r ) > m_parts( r - 1 ) )THEN
+      !  npart_shelleq( r )= &
+      !              NINT( m_parts( r )/m_parts( r - 1 )*npart_shelleq( r ) )
+      !  npart_out= npart_out - npart_shell( r )/2
+      !  CYCLE
+      !ENDIF
 
       !PRINT *, "Right before correction of particle number"
       !PRINT *, npart_out
@@ -1558,9 +1559,9 @@ SUBMODULE (particles_id) spherical_shells
         cnt2 = 0
         upper_bound_tmp= upper_bound
         lower_bound_tmp= lower_bound
-        PRINT *, "last shell"
+        !PRINT *, "last shell"
       ELSEIF( r == 1 )THEN
-        PRINT *, "exit"
+        !PRINT *, "exit"
         EXIT
       ELSEIF( r < CEILING(DBLE(n_shells)/2.0D0) )THEN
         r= r - 1
@@ -1568,14 +1569,14 @@ SUBMODULE (particles_id) spherical_shells
         cnt2 = 0
         upper_bound_tmp= upper_bound
         lower_bound_tmp= lower_bound
-        PRINT *, "inner layers"
+        !PRINT *, "inner layers"
       ELSEIF( r >= CEILING(DBLE(n_shells)/2.0D0) )THEN
         r= r + 1
         r_cnt= r_cnt + 1
         cnt2 = 0
         upper_bound_tmp= upper_bound
         lower_bound_tmp= lower_bound
-        PRINT *, "outer layers"
+        !PRINT *, "outer layers"
       ENDIF
 
       !PRINT *, npart_shelleq( r ), (npart_shelleq( r )**2)/2, npart_shell( r )
