@@ -425,8 +425,15 @@ PROGRAM sphincs_lorene_bns
   PRINT *
   PRINT *, " * SPH:"
   PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
-  PRINT *, "   Particle number on star 1= ", particles_dist( 1, 1 )% get_npart1()
-  PRINT *, "   Particle number on star 2= ", particles_dist( 1, 1 )% get_npart2()
+  PRINT *, "   Particle number on star 1: npart1=", &
+                                        particles_dist( 1, 1 )% get_npart1()
+  PRINT *, "   Particle number on star 2: npart2=", &
+                                        particles_dist( 1, 1 )% get_npart2()
+  PRINT *, "   Particle number ratio: npart1/npart2= ", &
+                          DBLE(particles_dist( 1, 1 )% get_npart1()) &
+                         /DBLE(particles_dist( 1, 1 )% get_npart2())
+  PRINT *, "   Star mass ratio: mass1/mass2= ", &
+                         binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
   PRINT *
   PRINT *, "   Baryon number ratio over both stars=", &
            particles_dist( 1, 1 )% get_nuratio()

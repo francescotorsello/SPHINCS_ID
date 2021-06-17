@@ -827,6 +827,7 @@ SUBMODULE (particles_id) particles_apm
              ABS( com_x-com_star )/ABS( com_star )
     PRINT *
 
+    all_pos_tmp2= -1.0D0
     PRINT *, " * The APM iteration starts here."
     PRINT *
 
@@ -836,6 +837,7 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "mirroring particles..."
 
+      ! Find particles above the xy plane
       all_pos_tmp= all_pos(:,1:npart_real)
       itr2= 0
       DO a= 1, npart_real, 1
@@ -845,26 +847,30 @@ SUBMODULE (particles_id) particles_apm
             itr2 < npart_real/2 &
         )THEN
           itr2= itr2 + 1
-          all_pos( 1, itr2 )= all_pos_tmp( 1 ,a )
-          all_pos( 2, itr2 )= all_pos_tmp( 2 ,a )
-          all_pos( 3, itr2 )= all_pos_tmp( 3 ,a )
+          all_pos( 1, itr2 )= all_pos_tmp( 1, a )
+          all_pos( 2, itr2 )= all_pos_tmp( 2, a )
+          all_pos( 3, itr2 )= all_pos_tmp( 3, a )
         ENDIF
 
       ENDDO
       npart_real_half= itr2
 
-      IF( npart_real_half < npart_real/2 )THEN
+      ! If some of the particles crossed the xy plane top-down in the
+      ! last step, replace them with their previous position
+      ! above the xy plane
+   !   IF( npart_real_half < npart_real/2 )THEN
+   !
+   !     npart_missing= npart_real/2 - npart_real_half
+   !
+   !     DO a= npart_real_half + 1, npart_real/2, 1
+   !
+   !       all_pos( :, a )= all_pos_tmp2( :, a )
+   !
+   !     ENDDO
+   !
+   !   ENDIF
 
-        npart_missing= npart_real/2 - npart_real_half
-
-        DO a= npart_real_half + 1, npart_real/2, 1
-
-          all_pos( :, a )= all_pos_tmp2( :, a )
-
-        ENDDO
-
-      ENDIF
-
+      ! Mirror the particles above the xy plane, to below the xy plane
       DO a= 1, npart_real/2, 1
         all_pos( 1, npart_real/2 + a )=   all_pos( 1, a )
         all_pos( 2, npart_real/2 + a )=   all_pos( 2, a )
@@ -1268,6 +1274,19 @@ SUBMODULE (particles_id) particles_apm
           !  all_pos(:,a)= all_pos(:,a) + correction_pos(:,a)/2.0D0
           !ENDIF
         ENDIF
+      ENDDO
+
+      ! If some of the particles crossed the xy plane top-down in the
+      ! last step, reflect them back above the xy plane
+      DO a= 1, npart_real, 1
+
+        IF( all_pos_tmp2( 3, a ) > 0 .AND. &
+            all_pos( 3, a ) <= 0 )THEN
+
+          all_pos( 3, a )= all_pos_tmp2( 3, a )
+
+        ENDIF
+
       ENDDO
 
       IF( debug ) PRINT *, "After correcting positions"

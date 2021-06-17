@@ -1272,11 +1272,17 @@ SUBMODULE (particles_id) spherical_shells
         PRINT *, " * Placed", npart_shell( r )/2, &
                  " particles on one emisphere of spherical shell ", r, &
                  " out of ", n_shells
-        IF( r == n_shells )THEN
+        IF( r == 1 )THEN
           EXIT
-        ELSE
+        ELSEIF( r < CEILING(DBLE(n_shells)/2.0D0) )THEN
           PRINT *, "r=", r
-          m_parts( r )= m_parts( prev_shell )
+          r= r - 1
+          cnt2 = 0
+          upper_bound_tmp= upper_bound
+          lower_bound_tmp= lower_bound
+          CYCLE
+        ELSEIF( r >= CEILING(DBLE(n_shells)/2.0D0) )THEN
+          PRINT *, "r=", r
           r= r + 1
           cnt2 = 0
           upper_bound_tmp= upper_bound
@@ -2076,7 +2082,8 @@ SUBMODULE (particles_id) spherical_shells
 
     CLOSE( UNIT= 2 )
 
-    PRINT *, " * Particles placed."
+    PRINT *, " * SUBROUTINE place_particles_spherical_shells executed."
+    PRINT *
 
     !STOP
 

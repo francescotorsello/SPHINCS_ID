@@ -365,7 +365,13 @@ SUBMODULE (particles_id) particles_constructor
 
         ! mass_ratio < 1
         parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
-        npart2_approx= MIN(npart_approx,parts_obj% npart2)/parts_obj% mass_ratio
+
+        IF( parts_obj% mass_ratio >= 0.95 .AND. &
+            parts_obj% mass_ratio <= 1.05 )THEN
+          npart2_approx= npart_approx/parts_obj% mass_ratio
+        ELSE
+          npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
+        ENDIF
 
         filename_mass_profile= "shells_mass_profile1.dat"
         filename_shells_radii= "shells_radii1.dat"
@@ -427,7 +433,12 @@ SUBMODULE (particles_id) particles_constructor
         parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
         !npart2_approx= npart_approx/parts_obj% mass_ratio
         !npart2_approx= MIN(npart_approx,parts_obj% npart1)/(parts_obj% mass_ratio)
-        npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
+        IF( parts_obj% mass_ratio >= 0.95 .AND. &
+            parts_obj% mass_ratio <= 1.05 )THEN
+          npart2_approx= npart_approx/parts_obj% mass_ratio
+        ELSE
+          npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
+        ENDIF
 
         filename_mass_profile= "shells_mass_profile2.dat"
         filename_shells_radii= "shells_radii2.dat"
