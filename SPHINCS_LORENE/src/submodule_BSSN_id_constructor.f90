@@ -38,6 +38,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     !***************************************************
 
     USE McLachlan_refine, ONLY: initialize_BSSN, deallocate_BSSN
+    USE mesh_refinement,  ONLY: levels
 
     IMPLICIT NONE
 
@@ -46,7 +47,15 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
     ! Construct the gravity grid and import the LORENE ID on it,
     ! in standard 3+1 formulation
-    CALL bssn_obj% construct_formul_3p1( bns_obj )
+    IF( PRESENT(dx) .AND. PRESENT(dy) .AND. PRESENT(dz) )THEN
+
+      CALL bssn_obj% construct_formul_3p1( bns_obj, dx, dy, dz )
+
+    ELSE
+
+      CALL bssn_obj% construct_formul_3p1( bns_obj )
+
+    ENDIF
 
     ! Read and store the BSSN parameters
     !CALL bssn_obj% set_up_bssn()
@@ -58,6 +67,8 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     ! are know and the arrays can be allocated
     CALL allocate_bssn_fields( bssn_obj )
 
+    DEALLOCATE( levels )
+
     PRINT *
     PRINT *, " * Ready to compute BSSN variables."
     PRINT *
@@ -65,44 +76,45 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
   END PROCEDURE construct_bssn_id_bns
 
 
- ! MODULE PROCEDURE construct_bssn_id_bns_spacings
- !
- !   !************************************************
- !   !                                               *
- !   ! This constructor of TYPE bssn_id calls the    *
- !   ! SUBROUTINES that rely on an bns object, and   *
- !   ! allocates memory. It constructs the grid      *
- !   ! using the grid spacings.                      *
- !   !                                               *
- !   ! FT                                            *
- !   !                                               *
- !   !************************************************
- !
- !   USE McLachlan_refine, ONLY: initialize_BSSN
- !
- !   IMPLICIT NONE
- !
- !   ! Initialize the timer
- !   bssn_obj% bssn_computer_timer= timer( "bssn_computer_timer" )
- !
- !   ! Construct the gravity grid and import the LORENE ID on it,
- !   ! in standard 3+1 formulation
- !   CALL bssn_obj% construct_formul_3p1( bns_obj, dx, dy, dz )
- !
- !   ! The construct_formul_3p1 SUBROUTINE constructs the grid,
- !   ! hence the dimensions of the arrays imported from the module BSSN
- !   ! are know and the arrays can be allocated
- !   CALL allocate_bssn_fields( bssn_obj )  ! NOPASS to this SUBROUTINE?
- !
- !   ! Read and store the BSSN parameters
- !   !CALL bssn_obj% set_up_bssn()
- !   CALL initialize_BSSN()
- !
- !   PRINT *
- !   PRINT *, " * Ready to compute BSSN variables."
- !   PRINT *
- !
- ! END PROCEDURE construct_bssn_id_bns_spacings
+!  MODULE PROCEDURE construct_bssn_id_bns_spacings
+!
+!    !************************************************
+!    !                                               *
+!    ! This constructor of TYPE bssn_id calls the    *
+!    ! SUBROUTINES that rely on an bns object, and   *
+!    ! allocates memory. It constructs the grid      *
+!    ! using the grid spacings.                      *
+!    !                                               *
+!    ! FT 21.06.2021                                 *
+!    !                                               *
+!    !************************************************
+!
+!    USE McLachlan_refine, ONLY: initialize_BSSN
+!
+!    IMPLICIT NONE
+!
+!    ! Initialize the timer
+!    bssn_obj% bssn_computer_timer= timer( "bssn_computer_timer" )
+!
+!    ! Construct the gravity grid and import the LORENE ID on it,
+!    ! in standard 3+1 formulation
+!    CALL bssn_obj% construct_formul_3p1( bns_obj, dx, dy, dz )
+!
+!    ! Read and store the BSSN parameters
+!    !CALL bssn_obj% set_up_bssn()
+!    CALL initialize_BSSN()
+!    CALL deallocate_BSSN()
+!
+!    ! The construct_formul_3p1 SUBROUTINE constructs the grid,
+!    ! hence the dimensions of the arrays imported from the module BSSN
+!    ! are know and the arrays can be allocated
+!    CALL allocate_bssn_fields( bssn_obj )
+!
+!    PRINT *
+!    PRINT *, " * Ready to compute BSSN variables."
+!    PRINT *
+!
+!  END PROCEDURE construct_bssn_id_bns_spacings
 
 
   MODULE PROCEDURE allocate_bssn_fields

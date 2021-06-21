@@ -131,21 +131,23 @@ MODULE formul_bssn_id
   !
   INTERFACE
 
-    MODULE FUNCTION construct_bssn_id_bns( bns_obj ) RESULT ( bssn_obj )
+    MODULE FUNCTION construct_bssn_id_bns( bns_obj, dx, dy, dz ) &
+                    RESULT ( bssn_obj )
 
       CLASS(bns), INTENT( IN OUT ):: bns_obj
       TYPE(bssn_id)               :: bssn_obj
+      DOUBLE PRECISION, OPTIONAL  :: dx, dy, dz
 
     END FUNCTION construct_bssn_id_bns
 
-    !MODULE FUNCTION construct_bssn_id_bns_spacings( bns_obj, dx, dy, dz ) &
-    !                RESULT ( bssn_obj )
-    !
-    !  CLASS(bns), INTENT( IN OUT )  :: bns_obj
-    !  TYPE(bssn_id)                 :: bssn_obj
-    !  DOUBLE PRECISION, INTENT( IN ):: dx, dy, dz
-    !
-    !END FUNCTION construct_bssn_id_bns_spacings
+ !   MODULE FUNCTION construct_bssn_id_bns_spacings( bns_obj, dx, dy, dz ) &
+ !                   RESULT ( bssn_obj )
+ !
+ !     CLASS(bns), INTENT( IN OUT )  :: bns_obj
+ !     TYPE(bssn_id)                 :: bssn_obj
+ !     DOUBLE PRECISION, INTENT( IN ):: dx, dy, dz
+ !
+ !   END FUNCTION construct_bssn_id_bns_spacings
 
   END INTERFACE
 

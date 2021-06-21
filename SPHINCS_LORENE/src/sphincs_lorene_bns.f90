@@ -29,7 +29,7 @@ PROGRAM sphincs_lorene_bns
   ! Maximum number of particle distributions
   INTEGER, PARAMETER:: max_n_parts= 250
   ! Number of binary systems of neutron stars (BNS) to import
-  INTEGER:: n_bns
+  INTEGER:: n_bns, ref_lev
   ! Export the constraints every constraints_step-th step
   INTEGER:: constraints_step
 
@@ -85,7 +85,7 @@ PROGRAM sphincs_lorene_bns
                             export_constraints_x, compute_constraints, &
                             export_constraints, export_constraints_details, &
                             constraints_step, compute_parts_constraints, &
-                            numerator_ratio_dx, denominator_ratio_dx, &
+                            numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
                             one_lapse, zero_shift, show_progress, &
                             run_sph, run_spacetime
 

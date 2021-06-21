@@ -223,8 +223,8 @@ write_par_eos = 'write_par_eos.x'
 
 #Program(tov_executable, sources+['../SPHINCS_BSSN/Setup_TOV_star.f90'])
 #Program(executable, sources+['../SPHINCS_BSSN/SPHINCS_BSSN.f90'])
-Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/sphincs_lorene_bns.f90'])
-#Program(lorene_id_convtest_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/convergence_test.f90'])
-Program(write_par_eos, lorene_sources_bin_ns + lorene_sources + sources + ['src/write_par_eos.f90'])
+#Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/sphincs_lorene_bns.f90'])
+Program(lorene_id_convtest_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/convergence_test.f90'])
+#Program(write_par_eos, lorene_sources_bin_ns + lorene_sources + sources + ['src/write_par_eos.f90'])
 #
 Decider('MD5-timestamp')

@@ -84,7 +84,7 @@ MODULE formul_3p1_id
                                         construct_formul_3p1_bns_ptr!, &
                                         !construct_formul_3p1_bns_spacings_ptr
 
-    PROCEDURE::       construct_formul_3p1_bns_ptr      => &
+    PROCEDURE::       construct_formul_3p1_bns_ptr => &
                                         construct_formul_3p1_bns
 
     !PROCEDURE::       construct_formul_3p1_bns_spacings_ptr => &
@@ -156,21 +156,22 @@ MODULE formul_3p1_id
   !
   INTERFACE
 
-    MODULE SUBROUTINE construct_formul_3p1_bns( f3p1_obj, bns_obj )
+    MODULE SUBROUTINE construct_formul_3p1_bns( f3p1_obj, bns_obj, dx, dy, dz )
 
       CLASS(bns),        INTENT( IN OUT ):: bns_obj
       CLASS(formul_3p1), INTENT( IN OUT ):: f3p1_obj
+      DOUBLE PRECISION, OPTIONAL         :: dx, dy, dz
 
     END SUBROUTINE construct_formul_3p1_bns
 
-    MODULE SUBROUTINE construct_formul_3p1_bns_spacings( f3p1_obj, bns_obj, &
-                                                         dx, dy, dz )
-
-      CLASS(bns),        INTENT( IN OUT ):: bns_obj
-      CLASS(formul_3p1), INTENT( IN OUT ):: f3p1_obj
-      DOUBLE PRECISION,  INTENT( IN )    :: dx, dy, dz
-
-    END SUBROUTINE construct_formul_3p1_bns_spacings
+ !   MODULE SUBROUTINE construct_formul_3p1_bns_spacings( f3p1_obj, bns_obj, &
+ !                                                        dx, dy, dz )
+ !
+ !     CLASS(bns),        INTENT( IN OUT ):: bns_obj
+ !     CLASS(formul_3p1), INTENT( IN OUT ):: f3p1_obj
+ !     DOUBLE PRECISION,  INTENT( IN )    :: dx, dy, dz
+ !
+ !   END SUBROUTINE construct_formul_3p1_bns_spacings
 
     MODULE SUBROUTINE destruct_formul_3p1( f3p1_obj )
 
