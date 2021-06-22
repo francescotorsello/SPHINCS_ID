@@ -217,10 +217,28 @@ PROGRAM convergence_test
 
     PRINT *, "** The grid spacing is dx=", bssn_forms( itr3 )% get_dx(ref_lev)
     PRINT *, "** The number of grid points for dx is:", &
-                              bssn_forms( itr3 )% get_dx(ref_lev), "**3"
+                            bssn_forms( itr3 )% get_ngrid_x(ref_lev), "**3"
     PRINT *
 
   ENDDO construct_bssn_loop
+
+  IF( debug )THEN
+    PRINT *, "bssn_forms( 1 )% get_ngrid_x=", bssn_forms( 1 )% get_ngrid_x(ref_lev)
+    PRINT *, "bssn_forms( 1 )% get_ngrid_y=", bssn_forms( 1 )% get_ngrid_y(ref_lev)
+    PRINT *, "bssn_forms( 1 )% get_ngrid_z=", bssn_forms( 1 )% get_ngrid_z(ref_lev)
+    PRINT *, "bssn_forms( 2 )% get_ngrid_x=", bssn_forms( 2 )% get_ngrid_x(ref_lev)
+    PRINT *, "bssn_forms( 2 )% get_ngrid_y=", bssn_forms( 2 )% get_ngrid_y(ref_lev)
+    PRINT *, "bssn_forms( 2 )% get_ngrid_z=", bssn_forms( 2 )% get_ngrid_z(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_ngrid_x=", bssn_forms( 3 )% get_ngrid_x(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_ngrid_y=", bssn_forms( 3 )% get_ngrid_y(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_ngrid_z=", bssn_forms( 3 )% get_ngrid_z(ref_lev)
+    PRINT *
+    PRINT *, "bssn_forms( 1 )% get_dx ", bssn_forms( 1 )% get_dx(ref_lev)
+    PRINT *, "bssn_forms( 2 )% get_dy ", bssn_forms( 2 )% get_dx(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_dz ", bssn_forms( 3 )% get_dx(ref_lev)
+    PRINT *
+    STOP
+  ENDIF
 
   !
   !-- Compute the BSSN variables
@@ -246,7 +264,7 @@ PROGRAM convergence_test
   IF( export_form )THEN
     export_bssn_loop: DO itr3 = min_bssn, max_bssn, 1
       WRITE( namefile_bssn, "(A24,I1,A4)" ) &
-                            "lorene-bns-id-bssn-form_", itr3, ".dat"
+                            "lorene-bns-id-bssn-form_", itr3
       bssn_forms( itr3 )% export_form_xy= export_form_xy
       bssn_forms( itr3 )% export_form_x = export_form_x
       CALL bssn_forms( itr3 )% &
@@ -275,7 +293,7 @@ PROGRAM convergence_test
                // "==============="
       PRINT *
 
-      WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3
+      WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, ".dat"
       WRITE( name_logfile, "(A28,I1,A4)" ) &
                           "bssn-constraints-statistics-", itr3
 
@@ -359,25 +377,37 @@ PROGRAM convergence_test
 
   CALL execution_timer% stop_timer()
 
+  CALL DATE_AND_TIME( date, time, zone, values )
+  end_time= date // "-" // time
+
   !
   !-- Print the timers
   !
   PRINT *, "** Timing."
   PRINT *
   PRINT *
-  PRINT *, " * BSSN formulation with spacing:", bssn_forms( 1 )% get_dx(ref_lev)
+  PRINT *, " * BSSN formulation with uniform resolution:", &
+           bssn_forms( 1 )% get_dx(ref_lev)
+  PRINT *, "    and number of points:", bssn_forms( 1 )% get_ngrid_x(ref_lev), &
+           "**3"
   !original_dx
   CALL bssn_forms( 1 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 1 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 1 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
-  PRINT *, " * BSSN formulation with spacing:", bssn_forms( 2 )% get_dx(ref_lev)
+  PRINT *, " * BSSN formulation with uniform resolution:", &
+           bssn_forms( 2 )% get_dx(ref_lev)
+  PRINT *, "    and number of points:", bssn_forms( 2 )% get_ngrid_x(ref_lev), &
+           "**3"
   !original_dx/2
   CALL bssn_forms( 2 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 2 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 2 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
-  PRINT *, " * BSSN formulation with spacing:", bssn_forms( 3 )% get_dx(ref_lev)
+  PRINT *, " * BSSN formulation with uniform resolution:", &
+           bssn_forms( 3 )% get_dx(ref_lev)
+  PRINT *, "    and number of points:", bssn_forms( 3 )% get_ngrid_x(ref_lev), &
+           "**3"
   !original_dx/4
   CALL bssn_forms( 3 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 3 )% importer_timer% print_timer( 2 )
@@ -385,6 +415,10 @@ PROGRAM convergence_test
   PRINT *
   PRINT *, " * Total:"
   CALL execution_timer% print_timer( 2 )
+  PRINT *
+
+  PRINT *
+  PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 
   !
@@ -813,15 +847,19 @@ PROGRAM convergence_test
     PRINT *, "** Computing convergence factor..."
 
     IF( debug )THEN
-      PRINT *, "formul_dx% get_ngrid_x ", formul_dx%  get_ngrid_x(ref_lev)
-      PRINT *, "formul_dx% get_ngrid_y ", formul_dx%  get_ngrid_y(ref_lev)
-      PRINT *, "formul_dx% get_ngrid_z ", formul_dx%  get_ngrid_z(ref_lev)
-      PRINT *, "formul_dx2% get_ngrid_x", formul_dx2% get_ngrid_x(ref_lev)
-      PRINT *, "formul_dx2% get_ngrid_y", formul_dx2% get_ngrid_y(ref_lev)
-      PRINT *, "formul_dx2% get_ngrid_z", formul_dx2% get_ngrid_z(ref_lev)
-      PRINT *, "formul_dx4% get_ngrid_x", formul_dx4% get_ngrid_x(ref_lev)
-      PRINT *, "formul_dx4% get_ngrid_y", formul_dx4% get_ngrid_y(ref_lev)
-      PRINT *, "formul_dx4% get_ngrid_z", formul_dx4% get_ngrid_z(ref_lev)
+      PRINT *, "formul_dx%  get_ngrid_x=", formul_dx%  get_ngrid_x(ref_lev)
+      PRINT *, "formul_dx%  get_ngrid_y=", formul_dx%  get_ngrid_y(ref_lev)
+      PRINT *, "formul_dx%  get_ngrid_z=", formul_dx%  get_ngrid_z(ref_lev)
+      PRINT *, "formul_dx2% get_ngrid_x=", formul_dx2% get_ngrid_x(ref_lev)
+      PRINT *, "formul_dx2% get_ngrid_y=", formul_dx2% get_ngrid_y(ref_lev)
+      PRINT *, "formul_dx2% get_ngrid_z=", formul_dx2% get_ngrid_z(ref_lev)
+      PRINT *, "formul_dx4% get_ngrid_x=", formul_dx4% get_ngrid_x(ref_lev)
+      PRINT *, "formul_dx4% get_ngrid_y=", formul_dx4% get_ngrid_y(ref_lev)
+      PRINT *, "formul_dx4% get_ngrid_z=", formul_dx4% get_ngrid_z(ref_lev)
+      PRINT *
+      PRINT *, "formul_dx%  get_dx=", formul_dx %  get_dx(ref_lev)
+      PRINT *, "formul_dx2% get_dy=", formul_dx2%  get_dx(ref_lev)
+      PRINT *, "formul_dx4% get_dz=", formul_dx4%  get_dx(ref_lev)
       PRINT *
       STOP
     ENDIF
