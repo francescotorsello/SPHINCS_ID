@@ -56,7 +56,7 @@ PROGRAM convergence_test
   ! LORENE BNS ID files are stored
   CHARACTER( LEN= max_length ):: common_path
 
-  LOGICAL, PARAMETER:: debug= .TRUE.
+  LOGICAL, PARAMETER:: debug= .FALSE.
   ! Logical variable to check if files exist
   LOGICAL:: exist
   ! Logical variables to steer the execution
