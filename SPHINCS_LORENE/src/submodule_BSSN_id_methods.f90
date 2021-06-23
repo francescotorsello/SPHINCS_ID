@@ -2141,14 +2141,14 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_pp_g
     CALL deallocate_all_lists
     CALL deallocate_metric_on_particles
-    !CALL deallocate_gradient
+    CALL deallocate_gradient
     DEALLOCATE( alive )
     !DEALLOCATE(W_no_norm)
     !DEALLOCATE(dWdv_no_norm)
     !DEALLOCATE(fmass)
     !DEALLOCATE(fpoten)
     !DEALLOCATE(dphidh)
-    !CALL deallocate_RCB_tree_memory_3D
+    CALL deallocate_RCB_tree_memory_3D
     CALL deallocate_SPH_memory
 
     !

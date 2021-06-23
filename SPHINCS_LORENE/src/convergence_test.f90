@@ -56,7 +56,7 @@ PROGRAM convergence_test
   ! LORENE BNS ID files are stored
   CHARACTER( LEN= max_length ):: common_path
 
-  LOGICAL, PARAMETER:: debug= .FALSE.
+  LOGICAL, PARAMETER:: debug= .TRUE.
   ! Logical variable to check if files exist
   LOGICAL:: exist
   ! Logical variables to steer the execution
@@ -237,7 +237,7 @@ PROGRAM convergence_test
     PRINT *, "bssn_forms( 2 )% get_dy ", bssn_forms( 2 )% get_dx(ref_lev)
     PRINT *, "bssn_forms( 3 )% get_dz ", bssn_forms( 3 )% get_dx(ref_lev)
     PRINT *
-    STOP
+    !STOP
   ENDIF
 
   !
@@ -264,7 +264,7 @@ PROGRAM convergence_test
   IF( export_form )THEN
     export_bssn_loop: DO itr3 = min_bssn, max_bssn, 1
       WRITE( namefile_bssn, "(A24,I1,A4)" ) &
-                            "lorene-bns-id-bssn-form_", itr3
+                            "lorene-bns-id-bssn-form_", itr3, ".dat"
       bssn_forms( itr3 )% export_form_xy= export_form_xy
       bssn_forms( itr3 )% export_form_x = export_form_x
       CALL bssn_forms( itr3 )% &
@@ -861,7 +861,7 @@ PROGRAM convergence_test
       PRINT *, "formul_dx2% get_dy=", formul_dx2%  get_dx(ref_lev)
       PRINT *, "formul_dx4% get_dz=", formul_dx4%  get_dx(ref_lev)
       PRINT *
-      STOP
+      !STOP
     ENDIF
 
     choose_constraints: SELECT CASE( use_constraints )

@@ -317,7 +317,8 @@ SUBMODULE (particles_id) particles_constructor
       ENDDO
 
       ! Allocate the temporary array to store data
-      ALLOCATE( tmp_pos( n_cols, npart_tmp ) )
+      ALLOCATE( tmp_pos( n_cols, 2*npart_tmp ) )
+      tmp_pos= 0.0D0
 
       ! Read the data into the temporary array
       DO itr= 1, npart_tmp, 1
@@ -337,7 +338,8 @@ SUBMODULE (particles_id) particles_constructor
       CLOSE( UNIT= unit_pos )
 
       ! Allocate the temporary array to store data
-      ALLOCATE( tmp_pos2( 3, npart_tmp ) )
+      ALLOCATE( tmp_pos2( 3, 2*npart_tmp ) )
+      tmp_pos2= 0.0D0
 
       ! Separate particle positions on star 1 and star 2,
       ! and compute the temporary npart1 and npart2 (before mirroring)
@@ -401,7 +403,15 @@ SUBMODULE (particles_id) particles_constructor
 
       ENDDO
 
-      !parts_obj% npart1= 2*parts_obj% npart1
+      DO itr= 1, parts_obj% npart1, 1
+
+        tmp_pos2(1,parts_obj% npart1+itr)=   tmp_pos2(1,itr)
+        tmp_pos2(2,parts_obj% npart1+itr)=   tmp_pos2(2,itr)
+        tmp_pos2(3,parts_obj% npart1+itr)= - tmp_pos2(3,itr)
+
+      ENDDO
+
+      parts_obj% npart1= 2*parts_obj% npart1
 
       parts_obj% npart2= 0
       DO itr= npart1_tmp + 1, npart_tmp, 1
@@ -417,7 +427,17 @@ SUBMODULE (particles_id) particles_constructor
 
       ENDDO
 
-      parts_obj% npart1= 2*parts_obj% npart1
+      DO itr= 1, parts_obj% npart2, 1
+
+        tmp_pos2(1,parts_obj% npart1+parts_obj% npart2+itr)=   &
+                                            tmp_pos2(1,parts_obj% npart1+itr)
+        tmp_pos2(2,parts_obj% npart1+parts_obj% npart2+itr)=   &
+                                            tmp_pos2(2,parts_obj% npart1+itr)
+        tmp_pos2(3,parts_obj% npart1+parts_obj% npart2+itr)= &
+                                          - tmp_pos2(3,parts_obj% npart1+itr)
+
+      ENDDO
+
       parts_obj% npart2= 2*parts_obj% npart2
       parts_obj% npart = parts_obj% npart1 + parts_obj% npart2
 
@@ -442,51 +462,32 @@ SUBMODULE (particles_id) particles_constructor
       !--  symmetrically w.r.t. the xy plane                  --!
       !---------------------------------------------------------!
 
-      ! Particles with z > 0 for star 1
-      parts_obj% pos(1,1:parts_obj% npart1/2)= &
-                                    tmp_pos2(1,1:parts_obj% npart1/2)
+  !    ! Particles with z > 0 for star 1
+  !    parts_obj% pos(:,1:parts_obj% npart1/2)= &
+  !                                  tmp_pos2(:,1:parts_obj% npart1/2)
+  !
+  !    ! Particles with z < 0 for star 1
+  !    parts_obj% pos(1:2,parts_obj% npart1/2+1:parts_obj% npart1)= &
+  !                                  tmp_pos2(1:2,1:parts_obj% npart1/2)
+  !
+  !    parts_obj% pos(3,parts_obj% npart1/2+1:parts_obj% npart1)= &
+  !                                - tmp_pos2(3,1:parts_obj% npart1/2)
+  !
+  !    ! Particles with z > 0 for star 2
+  !    parts_obj% pos(:,parts_obj% npart1+1: &
+  !                     parts_obj% npart1+parts_obj% npart2/2)= &
+  !    tmp_pos2(:,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
+  !
+  !    ! Particles with z < 0 for star 2
+  !    parts_obj% pos(1:2,parts_obj% npart1+parts_obj% npart2/2+1: &
+  !                     parts_obj% npart)= &
+  !    tmp_pos2(1:2,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
+  !
+  !    parts_obj% pos(3,parts_obj% npart1+parts_obj% npart2/2+1: &
+  !                     parts_obj% npart)= &
+  !    tmp_pos2(3,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
 
-      parts_obj% pos(2,1:parts_obj% npart1/2)= &
-                                    tmp_pos2(2,1:parts_obj% npart1/2)
-
-      parts_obj% pos(3,1:parts_obj% npart1/2)= &
-                                    tmp_pos2(3,1:parts_obj% npart1/2)
-
-      ! Particles with z < 0 for star 1
-      parts_obj% pos(1,parts_obj% npart1/2+1:parts_obj% npart1)= &
-                                    tmp_pos2(1,1:parts_obj% npart1/2)
-
-      parts_obj% pos(2,parts_obj% npart1/2+1:parts_obj% npart1)= &
-                                    tmp_pos2(2,1:parts_obj% npart1/2)
-
-      parts_obj% pos(3,parts_obj% npart1/2+1:parts_obj% npart1)= &
-                                  - tmp_pos2(3,1:parts_obj% npart1/2)
-
-      ! Particles with z > 0 for star 2
-      parts_obj% pos(1,parts_obj% npart1+1: &
-                       parts_obj% npart1+parts_obj% npart2/2)= &
-      tmp_pos2(1,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
-
-      parts_obj% pos(2,parts_obj% npart1+1: &
-                       parts_obj% npart1+parts_obj% npart2/2)= &
-      tmp_pos2(2,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
-
-      parts_obj% pos(3,parts_obj% npart1+1: &
-                       parts_obj% npart1+parts_obj% npart2/2)= &
-    - tmp_pos2(3,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
-
-      ! Particles with z < 0 for star 2
-      parts_obj% pos(1,parts_obj% npart1+parts_obj% npart2/2+1: &
-                       parts_obj% npart)= &
-      tmp_pos2(1,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
-
-      parts_obj% pos(2,parts_obj% npart1+parts_obj% npart2/2+1: &
-                       parts_obj% npart)= &
-      tmp_pos2(2,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
-
-      parts_obj% pos(3,parts_obj% npart1+parts_obj% npart2/2+1: &
-                       parts_obj% npart)= &
-    - tmp_pos2(3,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
+      parts_obj% pos= tmp_pos2(:,1:parts_obj% npart)
 
       PRINT *, " * Particle positions read. Number of particles=", &
                parts_obj% npart
