@@ -1814,6 +1814,8 @@ PROGRAM proto_apm
 
   ELSE
 
+    ! Read particles from formatted file
+
     nu_all= (mass_star/DBLE(npart_real))*umass/amu
 
     finalnamefile= "apm_pos.dat"
