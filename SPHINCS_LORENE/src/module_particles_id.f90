@@ -174,6 +174,7 @@ MODULE particles_id
     LOGICAL:: compose_eos
     LOGICAL:: randomize_phi, randomize_theta, randomize_r
     LOGICAL:: apm_iterate
+    LOGICAL:: read_nu
 
     TYPE(timer), PUBLIC:: placer_timer
     TYPE(timer), PUBLIC:: apm1_timer

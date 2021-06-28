@@ -78,6 +78,7 @@ SUBMODULE (particles_id) particles_methods
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
     USE sphincs_sph,         ONLY: density!, flag_dead_ll_cells
     USE alive_flag,          ONLY: alive
+    USE APM,                 ONLY: assign_h
 
     IMPLICIT NONE
 
@@ -92,6 +93,7 @@ SUBMODULE (particles_id) particles_methods
     DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2, nu_max1, nu_max2, &
                        nu_tmp, nu_thres1, nu_thres2
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: h_guess
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -295,7 +297,9 @@ SUBMODULE (particles_id) particles_methods
         PRINT *
         STOP
       ENDIF
+
       IF( .NOT.THIS% apm_iterate )THEN
+
         THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
         h(itr)= THIS% h(itr)
         ! /(Msun_geo**3)
@@ -654,9 +658,38 @@ SUBMODULE (particles_id) particles_methods
       PRINT *, " * Number of particles on NS 2=", THIS% npart2
       PRINT *
 
+    ELSEIF( THIS% read_nu )THEN
+
+      IF( .TRUE. ) PRINT *, "44"
+      IF( .TRUE. ) PRINT *, "ndes=", ndes
+      IF( .TRUE. ) PRINT *, "SIZE( THIS% nu )=", SIZE( THIS% nu )
+      IF( .TRUE. ) PRINT *, "SIZE( nu )=", SIZE( nu )
+
+      nu= THIS% nu
+            IF( .TRUE. ) PRINT *, "SIZE( nu )=", SIZE( nu )
+
+      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
+      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+      !ALLOCATE( h_guess( THIS% npart ) )
+      !h_guess= (3.0D0*THIS% pvol)**third
+      !
+      !CALL assign_h( ndes,      &
+      !               THIS% npart, &
+      !               THIS% pos, h_guess, & ! Input
+      !               h )                 ! Output
+
+      !CALL exact_nei_tree_update( ndes,      &
+      !                            THIS% npart, &
+      !                            THIS% pos,   &
+      !                            THIS% nu )
+      !THIS% h= h
+
     ELSEIF( THIS% apm_iterate )THEN
 
-      ! Do nothing, nu is already computed in the APM iteration
+      ! Do nothing, nu is already computed in the APM iteration,
+      ! or read from file
       nu= THIS% nu
       h = THIS% h
       THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
@@ -897,12 +930,19 @@ SUBMODULE (particles_id) particles_methods
 
     THIS% h= h
 
+    PRINT *, THIS% npart
+    PRINT *, SIZE(THIS% pos(1,:))
+    PRINT *, SIZE(THIS% nu)
+    PRINT *, SIZE(THIS% h)
+
+    !STOP
+
     PRINT *, " * Computing SPH density by kernel interpolation..."
     PRINT *
     ! density calls dens_ll_cell, which computes nstar on particle a as
     ! Na=     Na + nu(b)*Wab_ha, so this is nstar= nlrf*sq_g*Theta
-    ! It has to be compare with sph_density= nlrf*sq_g*Theta
-    CALL density( THIS% npart,&
+    ! It has to be compared with particle_density_int= nlrf*sq_g*Theta
+    CALL density( THIS% npart, &
                   THIS% pos,   &
                   THIS% nstar_int )
 

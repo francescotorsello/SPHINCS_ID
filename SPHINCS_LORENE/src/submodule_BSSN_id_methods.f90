@@ -101,8 +101,19 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     PRINT *, " * Allocating needed memory..."
     PRINT *
 
+    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    IF( ios > 0 )THEN
+     PRINT*,'...allocation error for levels'
+     STOP
+    ENDIF
     levels = THIS% levels
     nlevels= THIS% nlevels
+
+    !DO l= 1, THIS% nlevels, 1
+    !  levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
+    !  levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
+    !  levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
+    !ENDDO
 
     CALL allocate_ADM()
     CALL allocate_BSSN()
@@ -249,6 +260,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_BSSN()
     CALL deallocate_grid_function( rad_coord, 'rad_coord' )
     !CALL deallocate_gravity_grid()
+    DEALLOCATE( levels )
 
     call_flag= call_flag + 1
     THIS% call_flag= call_flag
@@ -821,6 +833,11 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
 
+    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    IF( ios > 0 )THEN
+     PRINT*,'...allocation error for levels'
+     STOP
+    ENDIF
     levels = THIS% levels
     nlevels= THIS% nlevels
 
@@ -1781,6 +1798,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !DEALLOCATE( g4temp )
     !DEALLOCATE( ig4 )
     !DEALLOCATE( Tmunu_ll )
+    DEALLOCATE( levels )
 
   END PROCEDURE compute_and_export_bssn_constraints_grid
 
@@ -1811,7 +1829,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                                     n_sym3x3, n_sym4x4
 
     USE mesh_refinement,             ONLY: allocate_grid_function, levels, &
-                                           rad_coord, deallocate_grid_function
+                                           rad_coord, nlevels, &
+                                           deallocate_grid_function
     USE ADM_refine,                  ONLY: lapse, dt_lapse, shift_u, &
                                            dt_shift_u, &
                                            K_phys3_ll, g_phys3_ll, &
@@ -1895,13 +1914,30 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CHARACTER( 2 ):: n_reflev
 
     LOGICAL:: exist
-    LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .TRUE.
 
+    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    IF( ios > 0 )THEN
+     PRINT*,'...allocation error for levels'
+     STOP
+    ENDIF
+    nlevels= THIS% nlevels
     levels = THIS% levels
     ! radius2 is the extraction radius. If not set here, then it is 0 by default
     ! and the metric is not interpolate on the particle in
     ! get_metric_on_particles
     radius2= HUGE(DBLE(1.0D0))
+
+    DO l= 1, THIS% nlevels, 1
+      levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
+      levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
+      levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
+    ENDDO
+
+    PRINT *, "ngrid_x=", THIS% levels(1)%ngrid_x
+    PRINT *, "ngrid_y=", THIS% levels(1)%ngrid_y
+    PRINT *, "ngrid_z=", THIS% levels(1)%ngrid_z
+    PRINT *
 
     CALL allocate_grid_function( THIS% HC_parts, "HC_parts_ID", 1 )
     CALL allocate_grid_function( THIS% MC_parts, "MC_parts_ID", 3 )
@@ -1915,8 +1951,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     ! Allocate temporary memory for time integration
     CALL allocate_Ztmp()
 
-    ! Allocate memory for the stress-energy tensor (used in
-    ! write_BSSN_dump)
+    ! Allocate memory for the stress-energy tensor (used in write_BSSN_dump)
     CALL allocate_Tmunu()
 
     ! Allocate memory for the derivatives of the ADM variables
@@ -2130,6 +2165,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
                      nlrf_loc     , &
                      theta_loc    , &
                      pressure_loc )
+
+    !IF( counter == 2 )THEN
+    !  STOP
+    !ENDIF
 
     IF( debug ) PRINT *, "7"
 
@@ -2824,6 +2863,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CALL deallocate_GravityAcceleration()
     CALL deallocate_BSSN()
     !CALL deallocate_gravity_grid()
+    DEALLOCATE( levels )
 
     ! Count the number of times that this SUBROUTINE is called, since the
     ! kernel has to be tabulated only once in the present implementation

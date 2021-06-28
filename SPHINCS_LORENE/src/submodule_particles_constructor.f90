@@ -77,6 +77,8 @@ SUBMODULE (particles_id) particles_constructor
     ! APM parameters
     INTEGER:: apm_max_it, max_inc, n_particles_first_shell
     INTEGER, PARAMETER:: unit_pos= 2289
+    ! Variable storing the number of column where nu is written
+    INTEGER:: column_nu
     ! Array storing the columns of the file parts_pos (defined below) that
     ! contain the particle positions
     INTEGER, DIMENSION(3):: columns
@@ -120,11 +122,12 @@ SUBMODULE (particles_id) particles_constructor
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
-              randomize_r, apm_iterate, mass_it, find_npart
+              randomize_r, apm_iterate, mass_it, find_npart, read_nu
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
               parts_pos_path, parts_pos, columns, header_lines, n_cols, &
+              read_nu, column_nu, &
               stretch, &
               nx, ny, nz, &
               use_thres, thres, nu_ratio, redistribute_nu, correct_nu, &
@@ -196,6 +199,7 @@ SUBMODULE (particles_id) particles_constructor
     !parts_obj% max_inc      = max_inc
     !parts_obj% mass_it      = mass_it
     !parts_obj% nuratio_thres= nuratio_thres
+    parts_obj% read_nu       = read_nu
 
     parts_pos_namefile= TRIM(parts_pos_path)//TRIM(parts_pos)
 
@@ -303,10 +307,10 @@ SUBMODULE (particles_id) particles_constructor
 
       npart_tmp= nlines - header_lines
 
-      PRINT *, "nlines=", nlines
-      PRINT *, "header_lines=", header_lines
-      PRINT *, "npart_tmp=", npart_tmp
-      PRINT *
+      !PRINT *, "nlines=", nlines
+      !PRINT *, "header_lines=", header_lines
+      !PRINT *, "npart_tmp=", npart_tmp
+      !PRINT *
 
       OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
             FORM= "FORMATTED", ACTION= "READ" )
@@ -338,7 +342,11 @@ SUBMODULE (particles_id) particles_constructor
       CLOSE( UNIT= unit_pos )
 
       ! Allocate the temporary array to store data
-      ALLOCATE( tmp_pos2( 3, 2*npart_tmp ) )
+      IF( read_nu )THEN
+        ALLOCATE( tmp_pos2( 4, 2*npart_tmp ) )
+      ELSE
+        ALLOCATE( tmp_pos2( 3, 2*npart_tmp ) )
+      ENDIF
       tmp_pos2= 0.0D0
 
       ! Separate particle positions on star 1 and star 2,
@@ -352,6 +360,7 @@ SUBMODULE (particles_id) particles_constructor
           tmp_pos2(1,npart1_tmp)= tmp_pos(columns(1),itr)
           tmp_pos2(2,npart1_tmp)= tmp_pos(columns(2),itr)
           tmp_pos2(3,npart1_tmp)= tmp_pos(columns(3),itr)
+          IF( read_nu ) tmp_pos2(4,npart1_tmp)= tmp_pos(column_nu,itr)
 
         ENDIF
 
@@ -366,6 +375,7 @@ SUBMODULE (particles_id) particles_constructor
           tmp_pos2(1,npart1_tmp+npart2_tmp)= tmp_pos(columns(1),itr)
           tmp_pos2(2,npart1_tmp+npart2_tmp)= tmp_pos(columns(2),itr)
           tmp_pos2(3,npart1_tmp+npart2_tmp)= tmp_pos(columns(3),itr)
+          IF( read_nu ) tmp_pos2(4,npart1_tmp+npart2_tmp)= tmp_pos(column_nu,itr)
 
         ENDIF
 
@@ -388,6 +398,7 @@ SUBMODULE (particles_id) particles_constructor
       tmp_pos(columns(1),:)= tmp_pos2(1,:)
       tmp_pos(columns(2),:)= tmp_pos2(2,:)
       tmp_pos(columns(3),:)= tmp_pos2(3,:)
+      IF( read_nu ) tmp_pos(column_nu,:) = tmp_pos2(4,:)
 
       parts_obj% npart1= 0
       DO itr= 1, npart1_tmp, 1
@@ -398,6 +409,7 @@ SUBMODULE (particles_id) particles_constructor
           tmp_pos2(1,parts_obj% npart1)= tmp_pos(columns(1),itr)
           tmp_pos2(2,parts_obj% npart1)= tmp_pos(columns(2),itr)
           tmp_pos2(3,parts_obj% npart1)= tmp_pos(columns(3),itr)
+          IF( read_nu ) tmp_pos2(4,parts_obj% npart1)= tmp_pos(column_nu,itr)
 
         ENDIF
 
@@ -408,6 +420,7 @@ SUBMODULE (particles_id) particles_constructor
         tmp_pos2(1,parts_obj% npart1+itr)=   tmp_pos2(1,itr)
         tmp_pos2(2,parts_obj% npart1+itr)=   tmp_pos2(2,itr)
         tmp_pos2(3,parts_obj% npart1+itr)= - tmp_pos2(3,itr)
+        IF( read_nu ) tmp_pos2(4,parts_obj% npart1+itr)= tmp_pos2(4,itr)
 
       ENDDO
 
@@ -422,6 +435,7 @@ SUBMODULE (particles_id) particles_constructor
           tmp_pos2(1,parts_obj% npart1+parts_obj% npart2)= tmp_pos(columns(1),itr)
           tmp_pos2(2,parts_obj% npart1+parts_obj% npart2)= tmp_pos(columns(2),itr)
           tmp_pos2(3,parts_obj% npart1+parts_obj% npart2)= tmp_pos(columns(3),itr)
+          IF( read_nu ) tmp_pos2(4,parts_obj% npart1+parts_obj% npart2)= tmp_pos(column_nu,itr)
 
         ENDIF
 
@@ -435,6 +449,8 @@ SUBMODULE (particles_id) particles_constructor
                                             tmp_pos2(2,parts_obj% npart1+itr)
         tmp_pos2(3,parts_obj% npart1+parts_obj% npart2+itr)= &
                                           - tmp_pos2(3,parts_obj% npart1+itr)
+        IF( read_nu ) tmp_pos2(4,parts_obj% npart1+parts_obj% npart2+itr)= &
+                                            tmp_pos2(4,parts_obj% npart1+itr)
 
       ENDDO
 
@@ -448,7 +464,20 @@ SUBMODULE (particles_id) particles_constructor
                   ERRMSG= err_msg )
         IF( ios > 0 )THEN
            PRINT *, "...allocation error for array pos in SUBROUTINE" &
-                    // "place_particles_3D_lattices. ", &
+                    // ". ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !                "...allocation error for array pos in SUBROUTINE" &
+        !                // "place_particles_3D_lattice." )
+      ENDIF
+      IF( read_nu .AND. .NOT.ALLOCATED( parts_obj% nu ))THEN
+        ALLOCATE( parts_obj% nu( parts_obj% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nu in SUBROUTINE" &
+                    // ". ", &
                     "The error message is", err_msg
            STOP
         ENDIF
@@ -487,7 +516,8 @@ SUBMODULE (particles_id) particles_constructor
   !                     parts_obj% npart)= &
   !    tmp_pos2(3,parts_obj% npart1/2+1:parts_obj% npart1/2+parts_obj% npart2/2)
 
-      parts_obj% pos= tmp_pos2(:,1:parts_obj% npart)
+      parts_obj% pos= tmp_pos2(1:3,1:parts_obj% npart)
+      IF( read_nu ) parts_obj% nu= tmp_pos2(4,1:parts_obj% npart)
 
       PRINT *, " * Particle positions read. Number of particles=", &
                parts_obj% npart

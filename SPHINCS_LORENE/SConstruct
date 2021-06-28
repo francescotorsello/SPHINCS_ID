@@ -221,6 +221,8 @@ lorene_id_executable = 'sphincs_lorene_bns.x'
 lorene_id_convtest_executable = 'convergence_test.x'
 write_par_eos = 'write_par_eos.x'
 
+#['../SPHINCS_fix_metric/module_Artificial_Pressure_Method.f90']
+
 #Program(tov_executable, sources+['../SPHINCS_BSSN/Setup_TOV_star.f90'])
 #Program(executable, sources+['../SPHINCS_BSSN/SPHINCS_BSSN.f90'])
 Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/sphincs_lorene_bns.f90'])
