@@ -2155,6 +2155,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     IF( debug .AND. .TRUE. ) PRINT *, "pressure_loc= ", pressure_loc(npart/2)
     IF( debug .AND. .TRUE. ) PRINT *
 
+    !IF( counter == 2 ) STOP
+
     PRINT *, " * Mapping stress-energy tensor from the particles to the grid..."
     PRINT *
     CALL map_2_grid( npart        , &
@@ -2169,6 +2171,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !IF( counter == 2 )THEN
     !  STOP
     !ENDIF
+
+    PRINT *, "6.5"
+
+    !IF( counter == 2 ) STOP
 
     IF( debug ) PRINT *, "7"
 
@@ -2189,6 +2195,8 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     !DEALLOCATE(dphidh)
     CALL deallocate_RCB_tree_memory_3D
     CALL deallocate_SPH_memory
+
+    IF( debug ) PRINT *, "8.1"
 
     !
     !-- Compute the BSSN constraints by calling the Cactus-bound procedure

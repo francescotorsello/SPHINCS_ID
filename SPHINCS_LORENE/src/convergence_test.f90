@@ -229,13 +229,13 @@ PROGRAM convergence_test
     PRINT *, "bssn_forms( 2 )% get_ngrid_x=", bssn_forms( 2 )% get_ngrid_x(ref_lev)
     PRINT *, "bssn_forms( 2 )% get_ngrid_y=", bssn_forms( 2 )% get_ngrid_y(ref_lev)
     PRINT *, "bssn_forms( 2 )% get_ngrid_z=", bssn_forms( 2 )% get_ngrid_z(ref_lev)
-    PRINT *, "bssn_forms( 3 )% get_ngrid_x=", bssn_forms( 3 )% get_ngrid_x(ref_lev)
-    PRINT *, "bssn_forms( 3 )% get_ngrid_y=", bssn_forms( 3 )% get_ngrid_y(ref_lev)
-    PRINT *, "bssn_forms( 3 )% get_ngrid_z=", bssn_forms( 3 )% get_ngrid_z(ref_lev)
-    PRINT *
+    !PRINT *, "bssn_forms( 3 )% get_ngrid_x=", bssn_forms( 3 )% get_ngrid_x(ref_lev)
+    !PRINT *, "bssn_forms( 3 )% get_ngrid_y=", bssn_forms( 3 )% get_ngrid_y(ref_lev)
+    !PRINT *, "bssn_forms( 3 )% get_ngrid_z=", bssn_forms( 3 )% get_ngrid_z(ref_lev)
+    !PRINT *
     PRINT *, "bssn_forms( 1 )% get_dx ", bssn_forms( 1 )% get_dx(ref_lev)
     PRINT *, "bssn_forms( 2 )% get_dy ", bssn_forms( 2 )% get_dx(ref_lev)
-    PRINT *, "bssn_forms( 3 )% get_dz ", bssn_forms( 3 )% get_dx(ref_lev)
+    !PRINT *, "bssn_forms( 3 )% get_dz ", bssn_forms( 3 )% get_dx(ref_lev)
     PRINT *
     !STOP
   ENDIF
@@ -272,6 +272,9 @@ PROGRAM convergence_test
     ENDDO export_bssn_loop
   ENDIF
 
+! There doesn't seem to be a bug until here
+!STOP
+
   !
   !-- Compute the BSSN constraints
   !
@@ -303,6 +306,7 @@ PROGRAM convergence_test
                                                       name_logfile )
 
     ENDIF
+
     IF( compute_parts_constraints )THEN
 
       PRINT *, "===================================================" &
@@ -329,6 +333,10 @@ PROGRAM convergence_test
 
   ENDDO compute_export_bssn_constraints_loop
 
+! Here the bug appears. Since I am only computing the constraints with particles
+! it must be in there
+!STOP
+
   !
   !-- The BSSN formulations on grids with different resolutions are ready
   !-- to be used in a convergence test
@@ -349,9 +357,9 @@ PROGRAM convergence_test
     PRINT *, ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17, ref_lev ))
     PRINT *
     PRINT *, ABS(bssn_forms( 1 )% get_HC( 1 + 30,   1 + 25,   1 + 17, ref_lev )) &
-             - ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev ))
+           - ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev ))
     PRINT *, ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev )) &
-             - ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17, ref_lev ))
+           - ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17, ref_lev ))
     STOP
   ENDIF
 
@@ -380,6 +388,8 @@ PROGRAM convergence_test
   CALL DATE_AND_TIME( date, time, zone, values )
   end_time= date // "-" // time
 
+!STOP
+
   !
   !-- Print the timers
   !
@@ -404,14 +414,14 @@ PROGRAM convergence_test
   CALL bssn_forms( 2 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 2 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
-  PRINT *, " * BSSN formulation with uniform resolution:", &
-           bssn_forms( 3 )% get_dx(ref_lev)
-  PRINT *, "    and number of points:", bssn_forms( 3 )% get_ngrid_x(ref_lev), &
-           "**3"
-  !original_dx/4
-  CALL bssn_forms( 3 )% grid_timer% print_timer( 2 )
-  CALL bssn_forms( 3 )% importer_timer% print_timer( 2 )
-  CALL bssn_forms( 3 )% bssn_computer_timer% print_timer( 2 )
+!  PRINT *, " * BSSN formulation with uniform resolution:", &
+!           bssn_forms( 3 )% get_dx(ref_lev)
+!  PRINT *, "    and number of points:", bssn_forms( 3 )% get_ngrid_x(ref_lev), &
+!           "**3"
+!  !original_dx/4
+!  CALL bssn_forms( 3 )% grid_timer% print_timer( 2 )
+!  CALL bssn_forms( 3 )% importer_timer% print_timer( 2 )
+!  CALL bssn_forms( 3 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
   PRINT *, " * Total:"
   CALL execution_timer% print_timer( 2 )
