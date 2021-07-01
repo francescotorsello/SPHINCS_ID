@@ -229,13 +229,13 @@ PROGRAM convergence_test
     PRINT *, "bssn_forms( 2 )% get_ngrid_x=", bssn_forms( 2 )% get_ngrid_x(ref_lev)
     PRINT *, "bssn_forms( 2 )% get_ngrid_y=", bssn_forms( 2 )% get_ngrid_y(ref_lev)
     PRINT *, "bssn_forms( 2 )% get_ngrid_z=", bssn_forms( 2 )% get_ngrid_z(ref_lev)
-    !PRINT *, "bssn_forms( 3 )% get_ngrid_x=", bssn_forms( 3 )% get_ngrid_x(ref_lev)
-    !PRINT *, "bssn_forms( 3 )% get_ngrid_y=", bssn_forms( 3 )% get_ngrid_y(ref_lev)
-    !PRINT *, "bssn_forms( 3 )% get_ngrid_z=", bssn_forms( 3 )% get_ngrid_z(ref_lev)
-    !PRINT *
+    PRINT *, "bssn_forms( 3 )% get_ngrid_x=", bssn_forms( 3 )% get_ngrid_x(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_ngrid_y=", bssn_forms( 3 )% get_ngrid_y(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_ngrid_z=", bssn_forms( 3 )% get_ngrid_z(ref_lev)
+    PRINT *
     PRINT *, "bssn_forms( 1 )% get_dx ", bssn_forms( 1 )% get_dx(ref_lev)
     PRINT *, "bssn_forms( 2 )% get_dy ", bssn_forms( 2 )% get_dx(ref_lev)
-    !PRINT *, "bssn_forms( 3 )% get_dz ", bssn_forms( 3 )% get_dx(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_dz ", bssn_forms( 3 )% get_dx(ref_lev)
     PRINT *
     !STOP
   ENDIF
@@ -414,14 +414,14 @@ PROGRAM convergence_test
   CALL bssn_forms( 2 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 2 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
-!  PRINT *, " * BSSN formulation with uniform resolution:", &
-!           bssn_forms( 3 )% get_dx(ref_lev)
-!  PRINT *, "    and number of points:", bssn_forms( 3 )% get_ngrid_x(ref_lev), &
-!           "**3"
-!  !original_dx/4
-!  CALL bssn_forms( 3 )% grid_timer% print_timer( 2 )
-!  CALL bssn_forms( 3 )% importer_timer% print_timer( 2 )
-!  CALL bssn_forms( 3 )% bssn_computer_timer% print_timer( 2 )
+  PRINT *, " * BSSN formulation with uniform resolution:", &
+           bssn_forms( 3 )% get_dx(ref_lev)
+  PRINT *, "    and number of points:", bssn_forms( 3 )% get_ngrid_x(ref_lev), &
+           "**3"
+  !original_dx/4
+  CALL bssn_forms( 3 )% grid_timer% print_timer( 2 )
+  CALL bssn_forms( 3 )% importer_timer% print_timer( 2 )
+  CALL bssn_forms( 3 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
   PRINT *, " * Total:"
   CALL execution_timer% print_timer( 2 )
