@@ -55,14 +55,19 @@ MODULE bns_id
     !
     !-- Parameters of the binary system
     !
-    DOUBLE PRECISION:: angular_vel                  ! [rad/s]
+    DOUBLE PRECISION:: angular_vel                  ! [rad/s]   
     ! Distance between the points of maximum baryon density
     DOUBLE PRECISION:: distance                     ! [km]
     ! Distance between the centers of mass
     DOUBLE PRECISION:: distance_com                 ! [Msun_geo]
     DOUBLE PRECISION:: mass1                        ! [Msun]
     DOUBLE PRECISION:: mass2                        ! [Msun]
+    DOUBLE PRECISION:: mass_grav1                   ! [Msun]
+    DOUBLE PRECISION:: mass_grav2                   ! [Msun]
     DOUBLE PRECISION:: adm_mass                     ! [Msun]
+    ! For the following variable,
+    ! mOmega= ( angular_vel[km^{-1}] )*( mass_grav1[km] + mass_grav2[km] )
+    DOUBLE PRECISION:: mOmega                       ! [pure umber]
     DOUBLE PRECISION:: angular_momentum= 0.0D0      ! [G Msun^2 /c]
     ! Radius of star 1, in the x direction, towards the companion
     DOUBLE PRECISION:: radius1_x_comp               ! [Msun_geo]
@@ -1691,6 +1696,8 @@ MODULE bns_id
                                      distance_com, &
                                      mass1, &
                                      mass2, &
+                                     mass_grav1, &
+                                     mass_grav2, &
                                      adm_mass, &
                                      angular_momentum, &
                                      radius1_x_comp, &
@@ -1773,6 +1780,8 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: distance_com
       REAL(C_DOUBLE), INTENT(OUT)       :: mass1
       REAL(C_DOUBLE), INTENT(OUT)       :: mass2
+      REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav1
+      REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav2
       REAL(C_DOUBLE), INTENT(OUT)       :: adm_mass
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_x_comp

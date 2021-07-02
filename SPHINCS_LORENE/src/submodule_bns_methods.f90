@@ -759,7 +759,7 @@ SUBMODULE (bns_id) bns_methods
     !*****************************************************
 
     USE constants, ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                         lorene2hydrobase
+                         lorene2hydrobase, c_light, cm2km
 
     IMPLICIT NONE
 
@@ -780,15 +780,21 @@ SUBMODULE (bns_id) bns_methods
       PRINT *, " Distance between the barycenters = ", &
                THIS% distance_com, " M_sun^geo"
       PRINT *
-      PRINT *, " Mass of NS 1 = ", THIS% mass1, " M_sun"
-      PRINT *, " Mass of NS 2 = ", THIS% mass2, " M_sun"
+      PRINT *, " Baryonic mass of NS 1 = ", THIS% mass1, " M_sun"
+      PRINT *, " Baryonic mass of NS 2 = ", THIS% mass2, " M_sun"
+      PRINT *, " Gravitational mass of NS 1 = ", THIS% mass_grav1, " M_sun"
+      PRINT *, " Gravitational mass of NS 2 = ", THIS% mass_grav2, " M_sun"
       PRINT *, " ADM mass = ", THIS% adm_mass, " M_sun"
       PRINT *
       PRINT *, " Stellar center of NS 1 = ", THIS% center1_x, " M_sun^geo"
       PRINT *, " Stellar center of NS 2 = ", THIS% center2_x, " M_sun^geo"
       PRINT *, " Barycenter of NS 1 = ", THIS% barycenter1_x, " M_sun^geo"
       PRINT *, " Barycenter of NS 2 = ", THIS% barycenter2_x, " M_sun^geo"
-      PRINT *, " Angular velocity = ", THIS% angular_vel, " rad/s"
+      PRINT *, " Angular velocity Omega_0 = ", THIS% angular_vel, " rad/s = ", &
+               THIS% angular_vel/(c_light*cm2km), "km^{-1}"
+      PRINT *, " mOmega = ", &
+               "Omega_0[km^{-1}]*(mass_grav1[km] + mass_grav2[km]) = ",&
+               THIS% mOmega, "[pure number]"
       PRINT *, " Angular momentum of the system = ", &
                THIS% angular_momentum, " G M_sun^2 /c"
       PRINT *

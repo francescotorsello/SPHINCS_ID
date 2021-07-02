@@ -423,25 +423,27 @@ PROGRAM sphincs_lorene_bns
            // "================================================"
   PRINT *
   PRINT *
-  PRINT *, " * SPH:"
-  PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
-  PRINT *, "   Particle number on star 1: npart1=", &
-                                        particles_dist( 1, 1 )% get_npart1()
-  PRINT *, "   Particle number on star 2: npart2=", &
-                                        particles_dist( 1, 1 )% get_npart2()
-  PRINT *, "   Particle number ratio: npart1/npart2= ", &
-                          DBLE(particles_dist( 1, 1 )% get_npart1()) &
-                         /DBLE(particles_dist( 1, 1 )% get_npart2())
-  PRINT *, "   Star mass ratio: mass1/mass2= ", &
-                         binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
-  PRINT *
-  PRINT *, "   Baryon number ratio over both stars=", &
-           particles_dist( 1, 1 )% get_nuratio()
-  PRINT *, "   Baryon number ratio on star 1=", &
-           particles_dist( 1, 1 )% get_nuratio1()
-  PRINT *, "   Baryon number ratio on star 2=", &
-           particles_dist( 1, 1 )% get_nuratio2()
-  PRINT *
+  IF( run_sph )THEN
+    PRINT *, " * SPH:"
+    PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
+    PRINT *, "   Particle number on star 1: npart1=", &
+                                          particles_dist( 1, 1 )% get_npart1()
+    PRINT *, "   Particle number on star 2: npart2=", &
+                                          particles_dist( 1, 1 )% get_npart2()
+    PRINT *, "   Particle number ratio: npart1/npart2= ", &
+                            DBLE(particles_dist( 1, 1 )% get_npart1()) &
+                           /DBLE(particles_dist( 1, 1 )% get_npart2())
+    PRINT *, "   Star mass ratio: mass1/mass2= ", &
+                           binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
+    PRINT *
+    PRINT *, "   Baryon number ratio over both stars=", &
+             particles_dist( 1, 1 )% get_nuratio()
+    PRINT *, "   Baryon number ratio on star 1=", &
+             particles_dist( 1, 1 )% get_nuratio1()
+    PRINT *, "   Baryon number ratio on star 2=", &
+             particles_dist( 1, 1 )% get_nuratio2()
+    PRINT *
+  ENDIF
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 

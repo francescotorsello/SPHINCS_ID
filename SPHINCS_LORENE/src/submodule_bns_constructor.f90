@@ -139,7 +139,8 @@ SUBMODULE (bns_id) bns_constructor
     !                                                    *
     !*****************************************************
 
-    USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase
+    USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
+                         c_light, cm2km
 
     IMPLICIT NONE
 
@@ -151,6 +152,8 @@ SUBMODULE (bns_id) bns_constructor
                                THIS% distance_com, &
                                THIS% mass1, &
                                THIS% mass2, &
+                               THIS% mass_grav1, &
+                               THIS% mass_grav2, &
                                THIS% adm_mass, &
                                THIS% angular_momentum, &
                                THIS% radius1_x_comp, &
@@ -239,7 +242,6 @@ SUBMODULE (bns_id) bns_constructor
     THIS% energy_density_center2 = THIS% energy_density_center2*lorene2hydrobase
     THIS% pressure_center2       = THIS% pressure_center2*lorene2hydrobase
 
-
     ! Convert polytropic constants from LORENE units to SPHINCS units
     IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
 
@@ -264,6 +266,11 @@ SUBMODULE (bns_id) bns_constructor
       STOP
 
     ENDIF
+
+    ! Compute mOmega
+
+    THIS% mOmega= THIS% angular_vel/(c_light*cm2km) &
+                  *(THIS% mass_grav1 + THIS% mass_grav2)*Msun_geo
 
     CALL print_id_params( THIS )
 
