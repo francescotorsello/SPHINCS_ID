@@ -67,7 +67,9 @@ MODULE bns_id
     DOUBLE PRECISION:: adm_mass                     ! [Msun]
     ! For the following variable,
     ! mOmega= ( angular_vel[km^{-1}] )*( mass_grav1[km] + mass_grav2[km] )
-    DOUBLE PRECISION:: mOmega                       ! [pure umber]
+    DOUBLE PRECISION:: mOmega                       ! [pure number]
+    ! Estimated time of the merger
+    DOUBLE PRECISION:: t_merger                     ! [Msun]
     DOUBLE PRECISION:: angular_momentum= 0.0D0      ! [G Msun^2 /c]
     ! Radius of star 1, in the x direction, towards the companion
     DOUBLE PRECISION:: radius1_x_comp               ! [Msun_geo]

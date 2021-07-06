@@ -658,38 +658,17 @@ SUBMODULE (particles_id) particles_methods
       PRINT *, " * Number of particles on NS 2=", THIS% npart2
       PRINT *
 
-    ELSEIF( THIS% read_nu )THEN
+    ELSEIF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
 
-      IF( .TRUE. ) PRINT *, "44"
-      IF( .TRUE. ) PRINT *, "ndes=", ndes
-      IF( .TRUE. ) PRINT *, "SIZE( THIS% nu )=", SIZE( THIS% nu )
-      IF( .TRUE. ) PRINT *, "SIZE( nu )=", SIZE( nu )
-
+      ! Do nothing, nu is already read fom file
       nu= THIS% nu
-            IF( .TRUE. ) PRINT *, "SIZE( nu )=", SIZE( nu )
-
       THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
       THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
       THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
-      !ALLOCATE( h_guess( THIS% npart ) )
-      !h_guess= (3.0D0*THIS% pvol)**third
-      !
-      !CALL assign_h( ndes,      &
-      !               THIS% npart, &
-      !               THIS% pos, h_guess, & ! Input
-      !               h )                 ! Output
-
-      !CALL exact_nei_tree_update( ndes,      &
-      !                            THIS% npart, &
-      !                            THIS% pos,   &
-      !                            THIS% nu )
-      !THIS% h= h
-
     ELSEIF( THIS% apm_iterate )THEN
 
-      ! Do nothing, nu is already computed in the APM iteration,
-      ! or read from file
+      ! Do nothing, nu and h are already computed in the APM iteration
       nu= THIS% nu
       h = THIS% h
       THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
@@ -930,11 +909,6 @@ SUBMODULE (particles_id) particles_methods
 
     THIS% h= h
 
-    PRINT *, THIS% npart
-    PRINT *, SIZE(THIS% pos(1,:))
-    PRINT *, SIZE(THIS% nu)
-    PRINT *, SIZE(THIS% h)
-
     !STOP
 
     PRINT *, " * Computing SPH density by kernel interpolation..."
@@ -954,10 +928,10 @@ SUBMODULE (particles_id) particles_methods
 
     PRINT *, " * Deallocating MODULE variables..."
     PRINT *
-    CALL deallocate_metric_on_particles
-    CALL deallocate_gradient
-    DEALLOCATE( alive )
-    CALL deallocate_RCB_tree_memory_3D
+    !CALL deallocate_metric_on_particles
+    !CALL deallocate_gradient
+    !DEALLOCATE( alive )
+    !CALL deallocate_RCB_tree_memory_3D
     CALL deallocate_SPH_memory
 
     call_flag= call_flag + 1

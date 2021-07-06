@@ -776,9 +776,10 @@ SUBMODULE (bns_id) bns_methods
       PRINT *, " ** The parameters of the binary system are:"
       PRINT *
       PRINT *, " Distance between the points of highest density = ",&
-               THIS% distance, " M_sun^geo"
+               THIS% distance, " M_sun^geo = ", THIS% distance*Msun_geo, " km"
       PRINT *, " Distance between the barycenters = ", &
-               THIS% distance_com, " M_sun^geo"
+               THIS% distance_com, " M_sun^geo", THIS% distance_com*Msun_geo, &
+               " km"
       PRINT *
       PRINT *, " Baryonic mass of NS 1 = ", THIS% mass1, " M_sun"
       PRINT *, " Baryonic mass of NS 2 = ", THIS% mass2, " M_sun"
@@ -797,6 +798,20 @@ SUBMODULE (bns_id) bns_methods
                THIS% mOmega, "[pure number]"
       PRINT *, " Angular momentum of the system = ", &
                THIS% angular_momentum, " G M_sun^2 /c"
+      PRINT *, " Estimated time of the merger t_merger = ", THIS% t_merger, &
+               " M_sun^geo = ", THIS% t_merger*MSun_geo/(c_light*cm2km)*1000.0,&
+               " ms, from Peters_PR_136_B1224_1964, eq. (5.10)"
+      PRINT *
+      PRINT *, " Estimated separation to have the merger at t_merger = 2000", &
+               " Msun_geo = ", 2000.0D0*MSun_geo/(c_light*cm2km)*1000.0, &
+               " ms :", &
+               ( 2000.0D0*( THIS% mass_grav1*THIS% mass_grav2* &
+                  ( THIS% mass_grav1 + THIS% mass_grav2 ) )/(5.0D0/256.0D0) ) &
+                **(1.0D0/4.0D0), "M_sun^geo = ", &
+                ( 2000.0D0*( THIS% mass_grav1*THIS% mass_grav2* &
+                ( THIS% mass_grav1 + THIS% mass_grav2 ) )/(5.0D0/256.0D0) ) &
+                **(1.0D0/4.0D0)*Msun_geo, &
+                "km, from Peters_PR_136_B1224_1964, eq. (5.10)"
       PRINT *
       PRINT *, " Radii of star 1: "
       PRINT *, "  x direction, towards companion = ", &

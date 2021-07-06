@@ -16,6 +16,7 @@ SPHINCS_LORENE/**/apr4*.dat
 SPHINCS_LORENE/**/wff1*.dat
 SPHINCS_LORENE/**/ghost*.dat
 SPHINCS_LORENE/**/proto*.out
+SPHINCS_LORENE/**/contour*.dat
 SPHINCS_LORENE/**/apm*.dat
 SPHINCS_LORENE/**/dbg*.dat
 SPHINCS_LORENE/**/font-*

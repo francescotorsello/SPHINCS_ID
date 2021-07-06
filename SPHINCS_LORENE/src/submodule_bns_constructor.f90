@@ -272,6 +272,12 @@ SUBMODULE (bns_id) bns_constructor
     THIS% mOmega= THIS% angular_vel/(c_light*cm2km) &
                   *(THIS% mass_grav1 + THIS% mass_grav2)*Msun_geo
 
+    ! Compute t_mrg
+
+    THIS% t_merger= 5.0D0/256.0D0*(THIS% distance**4.0D0) &
+                    /( THIS% mass_grav1*THIS% mass_grav2* &
+                       ( THIS% mass_grav1 + THIS% mass_grav2 ) )
+
     CALL print_id_params( THIS )
 
     PRINT *, "** Subroutine import_lorene_id_params executed."

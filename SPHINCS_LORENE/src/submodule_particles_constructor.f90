@@ -122,7 +122,8 @@ SUBMODULE (particles_id) particles_constructor
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
-              randomize_r, apm_iterate, mass_it, find_npart, read_nu
+              randomize_r, apm_iterate, mass_it, find_npart, read_nu, &
+              reflect_particles_x
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
 
     NAMELIST /bns_particles/ &
@@ -135,7 +136,8 @@ SUBMODULE (particles_id) particles_constructor
               npart_approx, last_r, upper_bound, lower_bound, &
               upper_factor, lower_factor, max_steps, &
               randomize_phi, randomize_theta, randomize_r, find_npart, &
-              apm_iterate, apm_max_it, max_inc, mass_it, nuratio_thres
+              apm_iterate, apm_max_it, max_inc, mass_it, nuratio_thres, &
+              reflect_particles_x
 
     !
     !-- Initialize the timers
@@ -670,35 +672,80 @@ SUBMODULE (particles_id) particles_constructor
         ! mass_ratio < 1
         parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
 
-        IF( parts_obj% mass_ratio >= 0.95 .AND. &
-            parts_obj% mass_ratio <= 1.05 )THEN
-          npart2_approx= npart_approx/parts_obj% mass_ratio
+        IF( parts_obj% mass_ratio >= 0.995 .AND. &
+            parts_obj% mass_ratio <= 1.005 .AND. reflect_particles_x )THEN
+
+          IF(.NOT.ALLOCATED( pos1 ))THEN
+            ALLOCATE( pos1( 3, parts_obj% npart2 ), &
+                      STAT= ios, ERRMSG= err_msg )
+            IF( ios > 0 )THEN
+               PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                        // "place_particles_. ", &
+                        "The error message is", err_msg
+               STOP
+            ENDIF
+          ENDIF
+          IF(.NOT.ALLOCATED( pvol1 ))THEN
+            ALLOCATE( pvol1( parts_obj% npart2 ), &
+                      STAT= ios, ERRMSG= err_msg )
+            IF( ios > 0 )THEN
+               PRINT *, "...allocation error for array pvol in SUBROUTINE" &
+                        // "place_particles_. ", &
+                        "The error message is", err_msg
+               STOP
+            ENDIF
+          ENDIF
+          IF(.NOT.ALLOCATED( pmass1 ))THEN
+            ALLOCATE( pmass1( parts_obj% npart2 ), &
+                      STAT= ios, ERRMSG= err_msg )
+            IF( ios > 0 )THEN
+               PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                        // "place_particles_. ", &
+                        "The error message is", err_msg
+               STOP
+            ENDIF
+          ENDIF
+          pos1(1,:)= - pos2(1,:)
+          pos1(2,:)=   pos2(2,:)
+          pos1(3,:)=   pos2(3,:)
+          pvol1 = pvol2
+          pmass1= pmass2
+          parts_obj% npart1= parts_obj% npart2
+
         ELSE
-          npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
+
+          IF( parts_obj% mass_ratio >= 0.95 .AND. &
+              parts_obj% mass_ratio <= 1.05 )THEN
+            npart2_approx= npart_approx/parts_obj% mass_ratio
+          ELSE
+            npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
+          ENDIF
+
+          filename_mass_profile= "shells_mass_profile1.dat"
+          filename_shells_radii= "shells_radii1.dat"
+          filename_shells_pos  = "shells_pos1.dat"
+
+          n_particles_first_shell= n_particles_first_shell/parts_obj% mass_ratio
+
+          CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
+                                                radius1, center1, &
+                                                npart2_approx, &
+                                                parts_obj% npart1, &
+                                                pos1, pvol1, pmass1, &
+                                                thres, &
+                                                bns_obj, &
+                                                last_r, &
+                                                upper_bound, lower_bound, &
+                                                upper_factor, lower_factor,&
+                                                max_steps, &
+                                                n_particles_first_shell, &
+                                                find_npart, &
+                                                filename_mass_profile, &
+                                                filename_shells_radii, &
+                                                filename_shells_pos )
+
         ENDIF
 
-        filename_mass_profile= "shells_mass_profile1.dat"
-        filename_shells_radii= "shells_radii1.dat"
-        filename_shells_pos  = "shells_pos1.dat"
-
-        n_particles_first_shell= n_particles_first_shell/parts_obj% mass_ratio
-
-        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
-                                                    radius1, center1, &
-                                                    npart2_approx, &
-                                                    parts_obj% npart1, &
-                                                    pos1, pvol1, pmass1, &
-                                                    thres, &
-                                                    bns_obj, &
-                                                    last_r, &
-                                                    upper_bound, lower_bound, &
-                                                    upper_factor, lower_factor,&
-                                                    max_steps, &
-                                                    n_particles_first_shell, &
-                                                    find_npart, &
-                                                    filename_mass_profile, &
-                                                    filename_shells_radii, &
-                                                    filename_shells_pos )
         CALL parts_obj% placer_timer% stop_timer()
 
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
@@ -737,35 +784,80 @@ SUBMODULE (particles_id) particles_constructor
         parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
         !npart2_approx= npart_approx/parts_obj% mass_ratio
         !npart2_approx= MIN(npart_approx,parts_obj% npart1)/(parts_obj% mass_ratio)
-        IF( parts_obj% mass_ratio >= 0.95 .AND. &
-            parts_obj% mass_ratio <= 1.05 )THEN
-          npart2_approx= npart_approx/parts_obj% mass_ratio
+
+        IF( parts_obj% mass_ratio >= 0.995 .AND. &
+            parts_obj% mass_ratio <= 1.005 .AND. reflect_particles_x )THEN
+
+          IF(.NOT.ALLOCATED( pos2 ))THEN
+            ALLOCATE( pos2( 3, parts_obj% npart1 ), &
+                      STAT= ios, ERRMSG= err_msg )
+            IF( ios > 0 )THEN
+               PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                        // "place_particles_. ", &
+                        "The error message is", err_msg
+               STOP
+            ENDIF
+          ENDIF
+          IF(.NOT.ALLOCATED( pvol2 ))THEN
+            ALLOCATE( pvol2( parts_obj% npart1 ), &
+                      STAT= ios, ERRMSG= err_msg )
+            IF( ios > 0 )THEN
+               PRINT *, "...allocation error for array pvol in SUBROUTINE" &
+                        // "place_particles_. ", &
+                        "The error message is", err_msg
+               STOP
+            ENDIF
+          ENDIF
+          IF(.NOT.ALLOCATED( pmass2 ))THEN
+            ALLOCATE( pmass2( parts_obj% npart1 ), &
+                      STAT= ios, ERRMSG= err_msg )
+            IF( ios > 0 )THEN
+               PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                        // "place_particles_. ", &
+                        "The error message is", err_msg
+               STOP
+            ENDIF
+          ENDIF
+          pos2(1,:)= - pos1(1,:)
+          pos2(2,:)=   pos1(2,:)
+          pos2(3,:)=   pos1(3,:)
+          pvol2 = pvol1
+          pmass2= pmass1
+          parts_obj% npart2= parts_obj% npart1
+
         ELSE
-          npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
+
+          IF( parts_obj% mass_ratio >= 0.95 .AND. &
+              parts_obj% mass_ratio <= 1.05 )THEN
+            npart2_approx= npart_approx/parts_obj% mass_ratio
+          ELSE
+            npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
+          ENDIF
+
+          filename_mass_profile= "shells_mass_profile2.dat"
+          filename_shells_radii= "shells_radii2.dat"
+          filename_shells_pos  = "shells_pos2.dat"
+
+          n_particles_first_shell= 4!n_particles_first_shell/parts_obj% mass_ratio
+
+          CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
+                                                radius2, center2, &
+                                                npart2_approx, &
+                                                parts_obj% npart2, &
+                                                pos2, pvol2, pmass2, &
+                                                thres, &
+                                                bns_obj, &
+                                                last_r, &
+                                                upper_bound, lower_bound, &
+                                                upper_factor, lower_factor,&
+                                                max_steps, &
+                                                n_particles_first_shell, &
+                                                find_npart, &
+                                                filename_mass_profile, &
+                                                filename_shells_radii, &
+                                                filename_shells_pos )
+
         ENDIF
-
-        filename_mass_profile= "shells_mass_profile2.dat"
-        filename_shells_radii= "shells_radii2.dat"
-        filename_shells_pos  = "shells_pos2.dat"
-
-        n_particles_first_shell= 4!n_particles_first_shell/parts_obj% mass_ratio
-
-        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
-                                              radius2, center2, &
-                                              npart2_approx, &
-                                              parts_obj% npart2, &
-                                              pos2, pvol2, pmass2, &
-                                              thres, &
-                                              bns_obj, &
-                                              last_r, &
-                                              upper_bound, lower_bound, &
-                                              upper_factor, lower_factor,&
-                                              max_steps, &
-                                              n_particles_first_shell, &
-                                              find_npart, &
-                                              filename_mass_profile, &
-                                              filename_shells_radii, &
-                                              filename_shells_pos )
 
           !IF( parts_obj% npart1/parts_obj% npart2 >= &
           !    0.9D0*parts_obj% mass_ratio .AND. &
@@ -969,7 +1061,7 @@ SUBMODULE (particles_id) particles_constructor
     !ENDDO
 
     PRINT *
-    PRINT *, "Right before calling the APM SUBROUTINE"
+    PRINT *, " ** Placing particles using the APM..."
     PRINT *
 
     IF( apm_iterate )THEN
@@ -1017,30 +1109,53 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *, "APM done for star 1"
       PRINT *
 
-      filename_apm_pos_id = "apm_pos_id2.dat"
-      filename_apm_pos    = "apm_pos2.dat"
-      filename_apm_results= "apm_results2.dat"
+      IF( parts_obj% mass_ratio >= 0.995 .AND. &
+          parts_obj% mass_ratio <= 1.005 .AND. reflect_particles_x )THEN
 
-      ! Star 2
-      CALL parts_obj% apm2_timer% start_timer()
-      CALL parts_obj% perform_apm( &
-                  bns_obj, &
-                  parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
-                  parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
-                  parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
-                  parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
-                  center2, com2, parts_obj% mass2, &
-                  apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                  nuratio_thres, &
-                  filename_apm_pos_id, filename_apm_pos, filename_apm_results )
-      CALL parts_obj% apm2_timer% stop_timer()
+        parts_obj% pos(1,parts_obj% npart1+1:parts_obj% npart)= &
+                                  - parts_obj% pos(1,1:parts_obj% npart1)
+        parts_obj% pos(2,parts_obj% npart1+1:parts_obj% npart)= &
+                                    parts_obj% pos(2,1:parts_obj% npart1)
+        parts_obj% pos(3,parts_obj% npart1+1:parts_obj% npart)= &
+                                    parts_obj% pos(3,1:parts_obj% npart1)
 
-      PRINT *, "APM done for star 2"
-      PRINT *
+        parts_obj% nu(parts_obj% npart1+1:parts_obj% npart)= &
+                                    parts_obj% nu(1:parts_obj% npart1)
+
+        parts_obj% h(parts_obj% npart1+1:parts_obj% npart)= &
+                                    parts_obj% h(1:parts_obj% npart1)
+
+        parts_obj% npart2= parts_obj% npart1
+        parts_obj% npart= parts_obj% npart1 + parts_obj% npart1
+
+      ELSE
+
+        filename_apm_pos_id = "apm_pos_id2.dat"
+        filename_apm_pos    = "apm_pos2.dat"
+        filename_apm_results= "apm_results2.dat"
+
+        ! Star 2
+        CALL parts_obj% apm2_timer% start_timer()
+        CALL parts_obj% perform_apm( &
+                    bns_obj, &
+                    parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
+                    parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
+                    parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
+                    parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
+                    center2, com2, parts_obj% mass2, &
+                    apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
+                    nuratio_thres, &
+                    filename_apm_pos_id, filename_apm_pos, filename_apm_results )
+        CALL parts_obj% apm2_timer% stop_timer()
+
+        PRINT *, "APM done for star 2"
+        PRINT *
+
+      ENDIF
 
     ENDIF
 
-    PRINT *, "Right after calling the APM SUBROUTINE"
+    PRINT *, " ** Particles placed according to the APM."
     PRINT *
 
     ! Allocate needed memory
