@@ -825,6 +825,18 @@ SUBMODULE (particles_id) particles_constructor
           pmass2= pmass1
           parts_obj% npart2= parts_obj% npart1
 
+        ELSEIF( ( parts_obj% mass_ratio <= 0.995 .OR. &
+                parts_obj% mass_ratio >= 1.005 ) .AND. reflect_particles_x )THEN
+
+          PRINT *, "** ERROR! The two stars are not the same. The particles", &
+                   " on star 1 cannot be reflected with respect to the yz ", &
+                   " plane to become the particles star 2."
+          PRINT *, "   Please, choose an equal-mass system, or set the ", &
+                   "   variable reflect_particles_x to .FALSE. in the file", &
+                   "   lorene_bns_id_particles ."
+          PRINT *
+          STOP
+
         ELSE
 
           IF( parts_obj% mass_ratio >= 0.95 .AND. &
@@ -1127,6 +1139,18 @@ SUBMODULE (particles_id) particles_constructor
 
         parts_obj% npart2= parts_obj% npart1
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart1
+
+      ELSEIF( ( parts_obj% mass_ratio <= 0.995 .OR. &
+              parts_obj% mass_ratio >= 1.005 ) .AND. reflect_particles_x )THEN
+
+        PRINT *, "** ERROR! The two stars are not the same. The particles", &
+                 " on star 1 cannot be reflected with respect to the yz ", &
+                 " plane to become the particles star 2."
+        PRINT *, "   Please, choose an equal-mass system, or set the ", &
+                 "   variable reflect_particles_x to .FALSE. in the file", &
+                 "   lorene_bns_id_particles ."
+        PRINT *
+        STOP
 
       ELSE
 
