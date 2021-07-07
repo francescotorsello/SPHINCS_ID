@@ -70,7 +70,8 @@ SUBMODULE (particles_id) particles_constructor
     INTEGER, SAVE:: counter= 1
     INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr1, cntr2, &
               npart_approx, npart2_approx, itr_1, itr_2, max_steps, itr2, &
-              nlines, header_lines, n_cols, npart_tmp, npart1_tmp, npart2_tmp
+              nlines, header_lines, n_cols, npart_tmp, npart1_tmp, npart2_tmp, &
+              nx_gh, ny_gh, nz_gh
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
     INTEGER, DIMENSION( : ), ALLOCATABLE:: x_sort, y_sort, z_sort
@@ -137,7 +138,7 @@ SUBMODULE (particles_id) particles_constructor
               upper_factor, lower_factor, max_steps, &
               randomize_phi, randomize_theta, randomize_r, find_npart, &
               apm_iterate, apm_max_it, max_inc, mass_it, nuratio_thres, &
-              reflect_particles_x
+              reflect_particles_x, nx_gh, ny_gh, nz_gh
 
     !
     !-- Initialize the timers
@@ -825,17 +826,17 @@ SUBMODULE (particles_id) particles_constructor
           pmass2= pmass1
           parts_obj% npart2= parts_obj% npart1
 
-        ELSEIF( ( parts_obj% mass_ratio <= 0.995 .OR. &
-                parts_obj% mass_ratio >= 1.005 ) .AND. reflect_particles_x )THEN
-
-          PRINT *, "** ERROR! The two stars are not the same. The particles", &
-                   " on star 1 cannot be reflected with respect to the yz ", &
-                   " plane to become the particles star 2."
-          PRINT *, "   Please, choose an equal-mass system, or set the ", &
-                   "   variable reflect_particles_x to .FALSE. in the file", &
-                   "   lorene_bns_id_particles ."
-          PRINT *
-          STOP
+        !ELSEIF( ( parts_obj% mass_ratio <= 0.995 .OR. &
+        !        parts_obj% mass_ratio >= 1.005 ) .AND. reflect_particles_x )THEN
+        !
+        !  PRINT *, "** ERROR! The two stars are not the same. The particles", &
+        !           " on star 1 cannot be reflected with respect to the yz", &
+        !           " plane to become the particles on star 2."
+        !  PRINT *, "   Please, choose an equal-mass system, or set the", &
+        !           " variable reflect_particles_x to .FALSE. in the file", &
+        !           " lorene_bns_id_particles ."
+        !  PRINT *
+        !  STOP
 
         ELSE
 
@@ -1114,7 +1115,7 @@ SUBMODULE (particles_id) particles_constructor
                   parts_obj% nu(1:parts_obj% npart1), &
                   center1, com1, parts_obj% mass1, &
                   apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                  nuratio_thres, &
+                  nuratio_thres, nx_gh, ny_gh, nz_gh, &
                   filename_apm_pos_id, filename_apm_pos, filename_apm_results )
       CALL parts_obj% apm1_timer% stop_timer()
 
@@ -1140,17 +1141,17 @@ SUBMODULE (particles_id) particles_constructor
         parts_obj% npart2= parts_obj% npart1
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart1
 
-      ELSEIF( ( parts_obj% mass_ratio <= 0.995 .OR. &
-              parts_obj% mass_ratio >= 1.005 ) .AND. reflect_particles_x )THEN
-
-        PRINT *, "** ERROR! The two stars are not the same. The particles", &
-                 " on star 1 cannot be reflected with respect to the yz ", &
-                 " plane to become the particles star 2."
-        PRINT *, "   Please, choose an equal-mass system, or set the ", &
-                 "   variable reflect_particles_x to .FALSE. in the file", &
-                 "   lorene_bns_id_particles ."
-        PRINT *
-        STOP
+      !ELSEIF( ( parts_obj% mass_ratio <= 0.995 .OR. &
+      !        parts_obj% mass_ratio >= 1.005 ) .AND. reflect_particles_x )THEN
+      !
+      !  PRINT *, "** ERROR! The two stars are not the same. The particles", &
+      !           " on star 1 cannot be reflected with respect to the yz ", &
+      !           " plane to become the particles star 2."
+      !  PRINT *, "   Please, choose an equal-mass system, or set the ", &
+      !           "   variable reflect_particles_x to .FALSE. in the file", &
+      !           "   lorene_bns_id_particles ."
+      !  PRINT *
+      !  STOP
 
       ELSE
 
@@ -1168,7 +1169,7 @@ SUBMODULE (particles_id) particles_constructor
                     parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
                     center2, com2, parts_obj% mass2, &
                     apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                    nuratio_thres, &
+                    nuratio_thres, nx_gh, ny_gh, nz_gh, &
                     filename_apm_pos_id, filename_apm_pos, filename_apm_results )
         CALL parts_obj% apm2_timer% stop_timer()
 

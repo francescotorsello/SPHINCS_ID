@@ -7,8 +7,7 @@ SUBMODULE (particles_id) particles_apm
   !****************************************************
   !                                                   *
   ! Implementation of the method                      *
-  ! perform_apm              *
-  ! of TYPE particles.                                *
+  ! perform_apm of TYPE particles.                    *
   !                                                   *
   ! FT 04.06.2021                                     *
   !                                                   *
@@ -97,6 +96,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: h_max, h_av, eps!, delta
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, dx, dy, dz, &
                        rad_x, rad_y, rad_z, com_x, com_y, com_z, com_d
+    DOUBLE PRECISION:: max_r_real, min_r_ghost, r_real, r_ghost, max_z_real
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, x_ell, y_ell, z_ell
     DOUBLE PRECISION:: min_nu, max_nu, min_nu2, max_nu2
     DOUBLE PRECISION:: det, sq_g, Theta_a
@@ -179,6 +179,14 @@ SUBMODULE (particles_id) particles_apm
     h_guess= 0.0D0
     DO a= 1, npart_real, 1
       h_guess(a)= pvol(a)**third
+      IF( ISNAN( h_guess(a) ) )THEN
+        PRINT *, " ** ERROR! h_guess(", a, &
+                 ") is a NaN in SUBROUTINE perform_apm!"
+        PRINT *, "pvol(", a, ")=", pvol(a)
+        PRINT *, "    Stopping..."
+        PRINT *
+        STOP
+      ENDIF
     ENDDO
 
     IF( debug ) PRINT *, "0.5"
@@ -220,19 +228,40 @@ SUBMODULE (particles_id) particles_apm
     !-- outside than the surface of the particles.                     --!
     !--------------------------------------------------------------------!
 
-    smaller_radius= ABS( MINVAL( pos_input( 1, : ), DIM= 1 ) - center )
-    larger_radius = ABS( center - MAXVAL( pos_input( 1, : ), DIM= 1 ) )
-    radius_y= ABS( MAXVAL( pos_input( 2, : ), DIM= 1 ) )
-    radius_z= ABS( MAXVAL( pos_input( 3, : ), DIM= 1 ) )
+    !smaller_radius= ABS( MINVAL( pos_input( 1, : ), DIM= 1 ) - center )
+    !larger_radius = ABS( center - MAXVAL( pos_input( 1, : ), DIM= 1 ) )
+    !radius_y= ABS( MAXVAL( pos_input( 2, : ), DIM= 1 ) )
+    !radius_z= ABS( MAXVAL( pos_input( 3, : ), DIM= 1 ) )
+
+    IF( pos_input( 1, 10 ) < 0 )THEN
+
+      smaller_radius= MIN( binary% get_radius1_x_comp(), &
+                           binary% get_radius1_x_opp() )
+      larger_radius = MAX( binary% get_radius1_x_comp(), &
+                           binary% get_radius1_x_opp() )
+      radius_y= binary% get_radius1_y()
+      radius_z= binary% get_radius1_z()
+
+    ELSE
+
+      smaller_radius= MIN( binary% get_radius2_x_comp(), &
+                           binary% get_radius2_x_opp() )
+      larger_radius = MAX( binary% get_radius2_x_comp(), &
+                           binary% get_radius2_x_opp() )
+      radius_y= binary% get_radius2_y()
+      radius_z= binary% get_radius2_z()
+
+    ENDIF
 
     h_max= 0.0D0
     h_av = 0.0D0
     itr  = 0
+    max_z_real= ABS( MAXVAL( pos_input( 3, : ), DIM= 1 ) )
     DO a= 1, npart_real, 1
 
       IF( SQRT( ( pos_input( 1, a ) - center )**2.0D0 &
                 + pos_input( 2, a )**2.0D0 &
-                + pos_input( 3, a )**2.0D0 ) > 0.99D0*radius_z )THEN
+                + pos_input( 3, a )**2.0D0 ) > 0.99D0*max_z_real )THEN
 
         itr= itr + 1
         IF( h_guess(a) > h_max )THEN
@@ -244,6 +273,8 @@ SUBMODULE (particles_id) particles_apm
 
     ENDDO
     h_av= h_av/itr
+    IF( debug ) PRINT *, "h_av=", h_av
+    IF( debug ) PRINT *
 
     IF( debug ) PRINT *, "2"
 
@@ -268,9 +299,18 @@ SUBMODULE (particles_id) particles_apm
              "surfaces..."
     PRINT *
 
-    nx= 150
-    ny= 150
-    nz= 150
+    max_r_real= 0.0D0
+    DO itr= 1, npart_real, 1
+
+      r_real= SQRT( ( pos_input( 1, itr ) - center )**2.0D0 &
+                  + pos_input( 2, itr )**2.0D0 + pos_input( 3, itr )**2.0D0 )
+      IF( r_real > max_r_real ) max_r_real= r_real
+
+    ENDDO
+
+    nx= nx_gh
+    ny= ny_gh
+    nz= nz_gh
     eps= 5.0D-1
     xmin= center - larger_radius*( 1.0D0 + eps )
     xmax= center + larger_radius*( 1.0D0 + eps )
@@ -287,59 +327,106 @@ SUBMODULE (particles_id) particles_apm
     rad_y= radius_y + h_av/1.0D0
     rad_z= radius_z + h_av/1.0D0
 
-    itr= 0
-    DO k= 1, nz, 1
+    IF( debug ) PRINT *, "larger_radius= ", larger_radius
+    IF( debug ) PRINT *, "radius_y= ", radius_y
+    IF( debug ) PRINT *, "radius_z= ", radius_z
+    IF( debug ) PRINT *, "rad_x= ", rad_x
+    IF( debug ) PRINT *, "rad_y= ", rad_y
+    IF( debug ) PRINT *, "rad_z= ", rad_z
+    IF( debug ) PRINT *
 
-      ztemp= zmin + dz/2.0D0 + DBLE( k - 1 )*dz
+   ! DO
 
-      DO j= 1, ny, 1
+      itr= 0
+      DO k= 1, nz, 1
 
-        ytemp= ymin + dy/2.0D0 + DBLE( j - 1 )*dy
+        ztemp= zmin + dz/2.0D0 + DBLE( k - 1 )*dz
 
-        DO i= 1, nx, 1
+        DO j= 1, ny, 1
 
-          xtemp= xmin + dx/2.0D0 + DBLE( i - 1 )*dx
+          ytemp= ymin + dy/2.0D0 + DBLE( j - 1 )*dy
 
-          x_ell= center + rad_x*COS(ATAN( ytemp/( xtemp - center ) )) &
-                 *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                       + ytemp**2.0D0 + ztemp**2.0D0 )))
+          DO i= 1, nx, 1
 
-          y_ell= rad_y*SIN(ATAN( ytemp/( xtemp - center ) )) &
-                 *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                       + ytemp**2.0D0 + ztemp**2.0D0 )))
+            xtemp= xmin + dx/2.0D0 + DBLE( i - 1 )*dx
 
-          z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                   + ytemp**2.0D0 + ztemp**2.0D0 ) )
+            x_ell= center + rad_x*COS(ATAN( ytemp/( xtemp - center ) )) &
+                   *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
+                                         + ytemp**2.0D0 + ztemp**2.0D0 )))
 
-          IF( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-                    + ztemp**2.0D0 ) <= &
-                    1.1D0*SQRT( ( x_ell - center )**2.0D0 &
-                                + y_ell**2.0D0 + z_ell**2.0D0 ) &
-              .AND. &
-              SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-                    + ztemp**2.0D0 ) >= &
-              SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
-                    + z_ell**2.0D0 ) &
-              .AND. &
-              binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
-          )THEN
+            y_ell= rad_y*SIN(ATAN( ytemp/( xtemp - center ) )) &
+                   *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
+                                         + ytemp**2.0D0 + ztemp**2.0D0 )))
 
-            itr= itr + 1
-            ghost_pos( 1, itr )= xtemp
-            ghost_pos( 2, itr )= ytemp
-            ghost_pos( 3, itr )= ztemp
+            z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 &
+                                     + ytemp**2.0D0 + ztemp**2.0D0 ) )
 
-          ENDIF
+            IF( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+                      + ztemp**2.0D0 ) <= &
+                      1.1D0*SQRT( ( x_ell - center )**2.0D0 &
+                                  + y_ell**2.0D0 + z_ell**2.0D0 ) &
+                .AND. &
+                SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+                      + ztemp**2.0D0 ) >= &
+                SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
+                      + z_ell**2.0D0 ) &
+                .AND. &
+                binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
+            )THEN
 
-         ENDDO
+              itr= itr + 1
+              ghost_pos( 1, itr )= xtemp
+              ghost_pos( 2, itr )= ytemp
+              ghost_pos( 3, itr )= ztemp
+
+            ENDIF
+
+           ENDDO
+        ENDDO
       ENDDO
-    ENDDO
-    npart_ghost= itr
-    IF( npart_ghost == 0 )THEN
-      PRINT *, "** ERROR: No ghost particles were placed. Stopping.."
-      PRINT *
-      STOP
-    ENDIF
+      npart_ghost= itr
+      IF( npart_ghost == 0 )THEN
+        PRINT *, "** ERROR: No ghost particles were placed. Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+      !ghost_pos = ghost_pos( :, 1:npart_ghost )
+
+      ! Test that there are no real particles too close to the ghost particles
+    !  max_r_real= 0.0D0
+    !  DO itr= 1, npart_real, 1
+    !
+    !    r_real= SQRT( ( pos_input( 1, itr ) - center )**2.0D0 &
+    !                + pos_input( 2, itr )**2.0D0 + pos_input( 3, itr )**2.0D0 )
+    !    IF( r_real > max_r_real ) max_r_real= r_real
+    !
+    !  ENDDO
+    !
+    !  min_r_ghost= HUGE(0.0D0)
+    !  DO itr= 1, npart_ghost, 1
+    !
+    !    r_ghost= SQRT( ( ghost_pos( 1, itr ) - center )**2.0D0 &
+    !                 + ghost_pos( 2, itr )**2.0D0 + ghost_pos( 3, itr )**2.0D0 )
+    !    IF( r_ghost < min_r_ghost ) min_r_ghost= r_ghost
+    !
+    !  ENDDO
+    !
+    !  PRINT *, max_r_real, min_r_ghost
+    !
+    !  IF( min_r_ghost - max_r_real < 0 .OR. &
+    !      ABS( min_r_ghost - max_r_real ) < larger_radius*0.005D0 )THEN
+    !
+    !    rad_x= rad_x*( 1.0D0 + 0.005D0 )
+    !    rad_y= rad_y*( 1.0D0 + 0.005D0 )
+    !    rad_z= rad_z*( 1.0D0 + 0.005D0 )
+    !
+    !  ELSE
+    !
+    !    EXIT
+    !
+    !  ENDIF
+    !
+    !ENDDO
     ghost_pos = ghost_pos( :, 1:npart_ghost )
 
     PRINT *, " * ", npart_ghost, " ghost particles placed around ", &
@@ -392,6 +479,8 @@ SUBMODULE (particles_id) particles_apm
 
     PRINT *, " * Positions of ghost and real particles printed to ", &
              finalnamefile, " ."
+
+    STOP
 
     npart_all= npart_real + npart_ghost
 
@@ -835,6 +924,54 @@ SUBMODULE (particles_id) particles_apm
     err_N_mean_min= HUGE(1.0D0)
     apm_iteration: DO itr= 1, apm_max_it, 1
 
+      IF( MOD( itr, 15 ) == 0 )THEN
+
+        IF( debug ) PRINT *, "printing positions to file..."
+
+        IF( PRESENT(namefile_pos) )THEN
+          finalnamefile= namefile_pos
+        ELSE
+          finalnamefile= "apm_pos.dat"
+        ENDIF
+
+        INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+        IF( exist )THEN
+            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+                  FORM= "FORMATTED", &
+                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                  IOMSG= err_msg )
+        ELSE
+            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+                  FORM= "FORMATTED", &
+                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+        ENDIF
+        IF( ios > 0 )THEN
+          PRINT *, "...error when opening " // TRIM(finalnamefile), &
+                   ". The error message is", err_msg
+          STOP
+        ENDIF
+
+        DO a= 1, npart_real, 1
+          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+            1, a, &
+            all_pos( 1, a ), &
+            all_pos( 2, a ), &
+            all_pos( 3, a )
+        ENDDO
+
+        DO a= npart_real + 1, npart_all, 1
+          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+            2, a, &
+            all_pos( 1, a ), &
+            all_pos( 2, a ), &
+            all_pos( 3, a )
+        ENDDO
+
+        CLOSE( UNIT= 2 )
+
+      ENDIF
+
       IF( debug ) PRINT *, "mirroring particles..."
 
       ! Find particles above the xy plane
@@ -1175,7 +1312,7 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
       nstar_p( npart_real+1:npart_all )= 0.0D0
-      art_pr ( npart_real+1:npart_all )= art_pr_max
+      art_pr ( npart_real+1:npart_all )= 3.0D0*art_pr_max
 
       PRINT *, "Before calling position_correction"
 
@@ -2243,7 +2380,7 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "103"
 
-    PRINT *, "** Finding nearest neighbors..."
+  !  PRINT *, "** Finding nearest neighbors..."
 
     ALLOCATE( neighbors_lists( npart_real ) )
     ALLOCATE( n_neighbors( npart_real ) )

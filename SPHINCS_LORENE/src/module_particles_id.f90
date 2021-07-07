@@ -402,6 +402,7 @@ MODULE particles_id
                                    mass, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
+                                   nx_gh, ny_gh, nz_gh, &
                                    namefile_pos_id, namefile_pos, &
                                    namefile_results )
 
@@ -419,6 +420,7 @@ MODULE particles_id
       LOGICAL,                          INTENT( IN )   :: mass_it
       LOGICAL,                          INTENT( IN )   :: correct_nu
       DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_thres
+      INTEGER,                          INTENT( IN )   :: nx_gh, ny_gh, nz_gh
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
                                                             namefile_pos_id
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &

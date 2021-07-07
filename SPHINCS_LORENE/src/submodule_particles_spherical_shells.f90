@@ -1275,14 +1275,22 @@ SUBMODULE (particles_id) spherical_shells
         IF( r == 1 )THEN
           EXIT
         ELSEIF( r < CEILING(DBLE(n_shells)/2.0D0) )THEN
-          PRINT *, "r=", r
+          !PRINT *, "r=", r
           r= r - 1
           cnt2 = 0
           upper_bound_tmp= upper_bound
           lower_bound_tmp= lower_bound
           CYCLE
+        ELSEIF( r == n_shells )THEN
+          !PRINT *, "r=", r
+          r= CEILING(DBLE(n_shells)/2.0D0) - 1
+          r_cnt= r_cnt + 1
+          cnt2 = 0
+          upper_bound_tmp= upper_bound
+          lower_bound_tmp= lower_bound
+          CYCLE
         ELSEIF( r >= CEILING(DBLE(n_shells)/2.0D0) )THEN
-          PRINT *, "r=", r
+          !PRINT *, "r=", r
           r= r + 1
           cnt2 = 0
           upper_bound_tmp= upper_bound
