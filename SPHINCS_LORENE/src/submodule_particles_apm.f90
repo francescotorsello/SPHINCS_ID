@@ -480,7 +480,7 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * Positions of ghost and real particles printed to ", &
              finalnamefile, " ."
 
-    STOP
+    !STOP
 
     npart_all= npart_real + npart_ghost
 

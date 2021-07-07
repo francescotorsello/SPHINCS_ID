@@ -1914,7 +1914,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CHARACTER( 2 ):: n_reflev
 
     LOGICAL:: exist
-    LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .TRUE.
 
     ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -1934,10 +1934,10 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
       levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
     ENDDO
 
-    PRINT *, "ngrid_x=", THIS% levels(1)%ngrid_x
-    PRINT *, "ngrid_y=", THIS% levels(1)%ngrid_y
-    PRINT *, "ngrid_z=", THIS% levels(1)%ngrid_z
-    PRINT *
+    IF( debug ) PRINT *, "ngrid_x=", THIS% levels(1)%ngrid_x
+    IF( debug ) PRINT *, "ngrid_y=", THIS% levels(1)%ngrid_y
+    IF( debug ) PRINT *, "ngrid_z=", THIS% levels(1)%ngrid_z
+    IF( debug ) PRINT *
 
     CALL allocate_grid_function( THIS% HC_parts, "HC_parts_ID", 1 )
     CALL allocate_grid_function( THIS% MC_parts, "MC_parts_ID", 3 )

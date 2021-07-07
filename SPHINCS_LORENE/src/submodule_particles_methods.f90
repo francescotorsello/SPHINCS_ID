@@ -928,10 +928,10 @@ SUBMODULE (particles_id) particles_methods
 
     PRINT *, " * Deallocating MODULE variables..."
     PRINT *
-    !CALL deallocate_metric_on_particles
-    !CALL deallocate_gradient
-    !DEALLOCATE( alive )
-    !CALL deallocate_RCB_tree_memory_3D
+    CALL deallocate_metric_on_particles
+    CALL deallocate_gradient
+    DEALLOCATE( alive )
+    CALL deallocate_RCB_tree_memory_3D
     CALL deallocate_SPH_memory
 
     call_flag= call_flag + 1

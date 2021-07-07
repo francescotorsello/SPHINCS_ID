@@ -1073,11 +1073,11 @@ SUBMODULE (particles_id) particles_constructor
     !  ENDDO
     !ENDDO
 
-    PRINT *
-    PRINT *, " ** Placing particles using the APM..."
-    PRINT *
-
     IF( apm_iterate )THEN
+
+      PRINT *
+      PRINT *, " ** Placing particles using the APM..."
+      PRINT *
 
       IF(.NOT.ALLOCATED( parts_obj% h ))THEN
         ALLOCATE( parts_obj% h( parts_obj% npart ), STAT= ios, &
@@ -1178,10 +1178,10 @@ SUBMODULE (particles_id) particles_constructor
 
       ENDIF
 
-    ENDIF
+      PRINT *, " ** Particles placed according to the APM."
+      PRINT *
 
-    PRINT *, " ** Particles placed according to the APM."
-    PRINT *
+    ENDIF
 
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts_obj )
