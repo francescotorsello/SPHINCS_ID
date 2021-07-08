@@ -1463,9 +1463,9 @@ SUBMODULE (particles_id) particles_apm
       ! Exit condition
       IF( err_N_mean > err_mean_old )THEN
         n_inc= n_inc + 1
-        PRINT *, "n_inc= ", n_inc
-        PRINT *
       ENDIF
+      PRINT *, "n_inc= ", n_inc
+      PRINT *
       !IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
       !    .AND. &
       !    err_N_max < 10.0D0 &

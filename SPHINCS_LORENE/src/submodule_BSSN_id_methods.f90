@@ -1914,7 +1914,7 @@ SUBMODULE (formul_bssn_id) bssn_id_methods
     CHARACTER( 2 ):: n_reflev
 
     LOGICAL:: exist
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
     IF( ios > 0 )THEN

@@ -557,6 +557,18 @@ SUBMODULE (particles_id) particles_constructor
 
       parts_obj% pvol= pvol_tmp
 
+      IF( parts_obj% mass1 > parts_obj% mass2 )THEN
+
+        ! mass_ratio < 1
+        parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
+
+      ELSE
+
+        ! mass_ratio < 1
+        parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
+
+      ENDIF
+
       !STOP
 
     CASE(1)
@@ -1162,15 +1174,15 @@ SUBMODULE (particles_id) particles_constructor
         ! Star 2
         CALL parts_obj% apm2_timer% start_timer()
         CALL parts_obj% perform_apm( &
-                    bns_obj, &
-                    parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
-                    parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
-                    parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
-                    parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
-                    center2, com2, parts_obj% mass2, &
-                    apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                    nuratio_thres, nx_gh, ny_gh, nz_gh, &
-                    filename_apm_pos_id, filename_apm_pos, filename_apm_results )
+                  bns_obj, &
+                  parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
+                  parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
+                  parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
+                  parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
+                  center2, com2, parts_obj% mass2, &
+                  apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
+                  nuratio_thres, nx_gh, ny_gh, nz_gh, &
+                  filename_apm_pos_id, filename_apm_pos, filename_apm_results )
         CALL parts_obj% apm2_timer% stop_timer()
 
         PRINT *, "APM done for star 2"
