@@ -72,6 +72,9 @@ MODULE bns_id
     DOUBLE PRECISION:: t_merger                     ! [Msun]
     DOUBLE PRECISION:: angular_momentum= 0.0D0      ! [G Msun^2 /c]
     ! Areal (or circumferential) radius of star 1
+    ! Note that these are the areal radii of the stars in the binary system,
+    ! which are different than those for an isolated star. The latter are used
+    ! in the mass-radius diagrams
     DOUBLE PRECISION:: area_radius1                 ! [Msun_geo]
     ! Radius of star 1, in the x direction, towards the companion
     DOUBLE PRECISION:: radius1_x_comp               ! [Msun_geo]
@@ -86,6 +89,9 @@ MODULE bns_id
     ! Barycenter of star 1
     DOUBLE PRECISION:: barycenter1_x                ! [Msun_geo]
     ! Areal (or circumferential) radius of star 2
+    ! Note that these are the areal radii of the stars in the binary system,
+    ! which are different than those for an isolated star. The latter are used
+    ! in the mass-radius diagrams
     DOUBLE PRECISION:: area_radius2                 ! [Msun_geo]
     ! Radius of star 2, in the x direction, towards the companion
     DOUBLE PRECISION:: radius2_x_comp               ! [Msun_geo]

@@ -814,7 +814,10 @@ SUBMODULE (bns_id) bns_methods
                 "km, from Peters_PR_136_B1224_1964, eq. (5.10)"
       PRINT *
       PRINT *, " Radii of star 1: "
-      PRINT *, "  Areal (or circumferential) radius, x direction:", &
+      PRINT *, "  Areal (or circumferential) radius for the star in the", &
+               "  binary system [the one used in the", &
+               "  (gravitational)mass-(areal)radius diagrams",&
+               "  is for a TOV star], x direction:", &
                THIS% area_radius1, " M_sun^geo = ", &
                THIS% area_radius1*Msun_geo, " km"
       PRINT *, "  x direction, towards companion = ", &
@@ -824,7 +827,10 @@ SUBMODULE (bns_id) bns_methods
       PRINT *, "  y direction = ", THIS% radius1_y, " M_sun^geo"
       PRINT *, "  z direction = ", THIS% radius1_z, " M_sun^geo"
       PRINT *, " Radii of star 2 :"
-      PRINT *, "  Areal (or circumferential) radius:", &
+      PRINT *, "  Areal (or circumferential) radius for the star in the", &
+               "  binary system [the one used in the", &
+               "  (gravitational)mass-(areal)radius diagrams",&
+               "  is for a TOV star], x direction:", &
                THIS% area_radius2, " M_sun^geo", &
                THIS% area_radius2*Msun_geo, " km"
       PRINT *, "  x direction, towards companion = ", &

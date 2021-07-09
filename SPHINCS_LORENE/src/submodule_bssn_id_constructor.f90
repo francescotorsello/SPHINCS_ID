@@ -6,14 +6,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
   !************************************************
   !                                               *
-  ! Implementation of the constructor of TYPE     *
-  ! bssn_id, and the methods it calls             *
+  ! Implementation of the constructor and         *
+  ! destructor of TYPE bssn_id                    *
   !                                               *
   ! FT 23.10.2020                                 *
-  !                                              *
-  ! Updated to mesh refinement                   *
-  !                                              *
-  ! FT 26.03.2021                                *
+  !                                               *
+  ! Updated to mesh refinement                    *
+  !                                               *
+  ! FT 26.03.2021                                 *
   !                                               *
   !************************************************
 
@@ -116,46 +116,46 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 !
 !  END PROCEDURE construct_bssn_id_bns_spacings
 
+  !
+  !-- Keeping the following two SUBROUTINES separate in case it is needed
+  !-- to add other PROCEDURES to the destructor (probably superfluous...)
+  !
+  MODULE PROCEDURE destruct_bssn_id
 
-  MODULE PROCEDURE allocate_bssn_fields
-
-    !***********************************************
-    !                                              *
-    ! Allocate memory for the BSSN variables.      *
-    !                                              *
-    ! FT 23.10.2020                                *
-    !                                              *
-    ! Updated to mesh refinement                   *
-    !                                              *
-    ! FT 26.03.2021                                *
-    !                                              *
-    !***********************************************
-
-    USE mesh_refinement,  ONLY: allocate_grid_function
+    !**************************************************
+    !                                                 *
+    ! Finalizer for members of the extended class     *
+    ! bssn_id, not the primitive class formul_3p1     *
+    !                                                 *
+    ! FT                                              *
+    !                                                 *
+    !**************************************************
 
     IMPLICIT NONE
 
-    IF( .NOT.ALLOCATED( THIS% Gamma_u% levels ) )THEN
-      CALL allocate_grid_function( THIS% Gamma_u, "Gamma_u_id", 3 )
-    ENDIF
+    !PRINT *, "Inside destruct_BSSN_id"
+    CALL deallocate_bssn_fields( THIS )
 
-    IF( .NOT.ALLOCATED( THIS% phi% levels ) )THEN
-      CALL allocate_grid_function( THIS% phi, "phi_id", 1 )
-    ENDIF
+  END PROCEDURE destruct_bssn_id
 
-    IF( .NOT.ALLOCATED( THIS% trK% levels ) )THEN
-      CALL allocate_grid_function( THIS% trK, "trK_id", 1 )
-    ENDIF
 
-    IF( .NOT.ALLOCATED( THIS% A_BSSN3_ll% levels ) )THEN
-      CALL allocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll_id", 6 )
-    ENDIF
+  MODULE PROCEDURE destructor
 
-    IF( .NOT.ALLOCATED( THIS% g_BSSN3_ll% levels ) )THEN
-      CALL allocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll_id", 6 )
-    ENDIF
+    !**************************************************
+    !                                                 *
+    ! Destructor of TYPE bssn_id                      *
+    !                                                 *
+    ! FT                                              *
+    !                                                 *
+    !**************************************************
 
-  END PROCEDURE allocate_bssn_fields
+    IMPLICIT NONE
+
+    !PRINT *, "Inside destructor"
+    CALL destruct_bssn_id( THIS )
+    CALL destruct_formul_3p1( THIS )
+
+  END PROCEDURE destructor
 
 
 END SUBMODULE bssn_id_constructor
