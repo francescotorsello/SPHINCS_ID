@@ -156,12 +156,14 @@ SUBMODULE (bns_id) bns_constructor
                                THIS% mass_grav2, &
                                THIS% adm_mass, &
                                THIS% angular_momentum, &
+                               THIS% area_radius1, &
                                THIS% radius1_x_comp, &
                                THIS% radius1_y, &
                                THIS% radius1_z, &
                                THIS% radius1_x_opp, &
                                THIS% center1_x, &
                                THIS% barycenter1_x, &
+                               THIS% area_radius2, &
                                THIS% radius2_x_comp, &
                                THIS% radius2_y, &
                                THIS% radius2_z, &
@@ -219,12 +221,14 @@ SUBMODULE (bns_id) bns_constructor
     ! See MODULE constants for the definition of Msun_geo
     THIS% distance      = THIS% distance/Msun_geo
     THIS% distance_com  = THIS% distance_com/Msun_geo
+    THIS% area_radius1  = THIS% area_radius1/Msun_geo
     THIS% radius1_x_comp= THIS% radius1_x_comp/Msun_geo
     THIS% radius1_y     = THIS% radius1_y/Msun_geo
     THIS% radius1_z     = THIS% radius1_z/Msun_geo
     THIS% radius1_x_opp = THIS% radius1_x_opp/Msun_geo
     THIS% center1_x     = THIS% center1_x/Msun_geo
     THIS% barycenter1_x = THIS% barycenter1_x/Msun_geo
+    THIS% area_radius2  = THIS% area_radius2/Msun_geo
     THIS% radius2_x_comp= THIS% radius2_x_comp/Msun_geo
     THIS% radius2_y     = THIS% radius2_y/Msun_geo
     THIS% radius2_z     = THIS% radius2_z/Msun_geo

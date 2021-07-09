@@ -71,6 +71,8 @@ MODULE bns_id
     ! Estimated time of the merger
     DOUBLE PRECISION:: t_merger                     ! [Msun]
     DOUBLE PRECISION:: angular_momentum= 0.0D0      ! [G Msun^2 /c]
+    ! Areal (or circumferential) radius of star 1
+    DOUBLE PRECISION:: area_radius1                 ! [Msun_geo]
     ! Radius of star 1, in the x direction, towards the companion
     DOUBLE PRECISION:: radius1_x_comp               ! [Msun_geo]
     ! Radius of star 1, in the y direction
@@ -83,6 +85,8 @@ MODULE bns_id
     DOUBLE PRECISION:: center1_x                    ! [Msun_geo]
     ! Barycenter of star 1
     DOUBLE PRECISION:: barycenter1_x                ! [Msun_geo]
+    ! Areal (or circumferential) radius of star 2
+    DOUBLE PRECISION:: area_radius2                 ! [Msun_geo]
     ! Radius of star 2, in the x direction, towards the companion
     DOUBLE PRECISION:: radius2_x_comp               ! [Msun_geo]
     ! Radius of star 2, in the y direction
@@ -1702,12 +1706,14 @@ MODULE bns_id
                                      mass_grav2, &
                                      adm_mass, &
                                      angular_momentum, &
+                                     area_radius1, &
                                      radius1_x_comp, &
                                      radius1_y, &
                                      radius1_z, &
                                      radius1_x_opp, &
                                      center1_x, &
                                      barycenter1_x, &
+                                     area_radius2, &
                                      radius2_x_comp, &
                                      radius2_y, &
                                      radius2_z, &
@@ -1786,12 +1792,14 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav2
       REAL(C_DOUBLE), INTENT(OUT)       :: adm_mass
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum
+      REAL(C_DOUBLE), INTENT(OUT)       :: area_radius1
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_x_comp
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_y
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_z
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_x_opp
       REAL(C_DOUBLE), INTENT(OUT)       :: center1_x
       REAL(C_DOUBLE), INTENT(OUT)       :: barycenter1_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: area_radius2
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_x_comp
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_y
       REAL(C_DOUBLE), INTENT(OUT)       :: radius2_z
