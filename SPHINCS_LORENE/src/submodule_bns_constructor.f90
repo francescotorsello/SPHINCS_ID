@@ -128,166 +128,32 @@ SUBMODULE (bns_id) bns_constructor
   END PROCEDURE construct_binary
 
 
-  MODULE PROCEDURE import_id_params
+  MODULE PROCEDURE destruct_binary
 
-    !*****************************************************
-    !                                                    *
-    ! Store the parameters of the binary neutron         *
-    ! stars' LORENE ID into member variables             *
-    !                                                    *
-    ! FT 5.10.2020                                       *
-    !                                                    *
-    !*****************************************************
-
-    USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         c_light, cm2km
+    !************************************************
+    !                                               *
+    ! Destruct the LORENE Bin_NS object and free    *
+    ! the pointeri pointing to it                   *
+    !                                               *
+    ! FT                                            *
+    !                                               *
+    !************************************************
 
     IMPLICIT NONE
 
-    PRINT *, "** Executing the import_lorene_id_params subroutine..."
+    !PRINT *, "** Executing the destruct_binary subroutine."
 
-    CALL get_lorene_id_params( THIS% bns_ptr, &
-                               THIS% angular_vel, &
-                               THIS% distance, &
-                               THIS% distance_com, &
-                               THIS% mass1, &
-                               THIS% mass2, &
-                               THIS% mass_grav1, &
-                               THIS% mass_grav2, &
-                               THIS% adm_mass, &
-                               THIS% angular_momentum, &
-                               THIS% area_radius1, &
-                               THIS% radius1_x_comp, &
-                               THIS% radius1_y, &
-                               THIS% radius1_z, &
-                               THIS% radius1_x_opp, &
-                               THIS% center1_x, &
-                               THIS% barycenter1_x, &
-                               THIS% area_radius2, &
-                               THIS% radius2_x_comp, &
-                               THIS% radius2_y, &
-                               THIS% radius2_z, &
-                               THIS% radius2_x_opp, &
-                               THIS% center2_x, &
-                               THIS% barycenter2_x, &
-                               THIS% ent_center1, &
-                               THIS% nbar_center1, &
-                               THIS% rho_center1, &
-                               THIS% energy_density_center1, &
-                               THIS% specific_energy_center1, &
-                               THIS% pressure_center1, &
-                               THIS% ent_center2, &
-                               THIS% nbar_center2, &
-                               THIS% rho_center2, &
-                               THIS% energy_density_center2, &
-                               THIS% specific_energy_center2, &
-                               THIS% pressure_center2, &
-                               THIS% eos1, &
-                               THIS% eos2, &
-                               THIS% eos1_id, &
-                               THIS% eos2_id, &
-                               THIS% gamma_1, &
-                               THIS% kappa_1, &
-                               THIS% gamma_2, &
-                               THIS% kappa_2, &
-                               THIS% npeos_1, &
-                               THIS% gamma0_1, &
-                               THIS% gamma1_1, &
-                               THIS% gamma2_1, &
-                               THIS% gamma3_1, &
-                               THIS% kappa0_1, &
-                               THIS% kappa1_1, &
-                               THIS% kappa2_1, &
-                               THIS% kappa3_1, &
-                               THIS% logP1_1,  &
-                               THIS% logRho0_1,&
-                               THIS% logRho1_1,&
-                               THIS% logRho2_1,&
-                               THIS% npeos_2,  &
-                               THIS% gamma0_2, &
-                               THIS% gamma1_2, &
-                               THIS% gamma2_2, &
-                               THIS% gamma3_2, &
-                               THIS% kappa0_2, &
-                               THIS% kappa1_2, &
-                               THIS% kappa2_2, &
-                               THIS% kappa3_2, &
-                               THIS% logP1_2,  &
-                               THIS% logRho0_2,&
-                               THIS% logRho1_2,&
-                               THIS% logRho2_2)
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 
-    ! Convert distances from LORENE units (km) to SPHINCS units (Msun_geo)
-    ! See MODULE constants for the definition of Msun_geo
-    THIS% distance      = THIS% distance/Msun_geo
-    THIS% distance_com  = THIS% distance_com/Msun_geo
-    THIS% area_radius1  = THIS% area_radius1/Msun_geo
-    THIS% radius1_x_comp= THIS% radius1_x_comp/Msun_geo
-    THIS% radius1_y     = THIS% radius1_y/Msun_geo
-    THIS% radius1_z     = THIS% radius1_z/Msun_geo
-    THIS% radius1_x_opp = THIS% radius1_x_opp/Msun_geo
-    THIS% center1_x     = THIS% center1_x/Msun_geo
-    THIS% barycenter1_x = THIS% barycenter1_x/Msun_geo
-    THIS% area_radius2  = THIS% area_radius2/Msun_geo
-    THIS% radius2_x_comp= THIS% radius2_x_comp/Msun_geo
-    THIS% radius2_y     = THIS% radius2_y/Msun_geo
-    THIS% radius2_z     = THIS% radius2_z/Msun_geo
-    THIS% radius2_x_opp = THIS% radius2_x_opp/Msun_geo
-    THIS% center2_x     = THIS% center2_x/Msun_geo
-    THIS% barycenter2_x = THIS% barycenter2_x/Msun_geo
-
-    ! Convert hydro quantities from LORENE units to SPHINCS units
-    THIS% nbar_center1           = THIS% nbar_center1*(MSun_geo*km2m)**3
-    THIS% rho_center1            = THIS% rho_center1*lorene2hydrobase
-    THIS% energy_density_center1 = THIS% energy_density_center1*lorene2hydrobase
-    THIS% pressure_center1       = THIS% pressure_center1*lorene2hydrobase
-    THIS% nbar_center2           = THIS% nbar_center2*(MSun_geo*km2m)**3
-    THIS% rho_center2            = THIS% rho_center2*lorene2hydrobase
-    THIS% energy_density_center2 = THIS% energy_density_center2*lorene2hydrobase
-    THIS% pressure_center2       = THIS% pressure_center2*lorene2hydrobase
-
-    ! Convert polytropic constants from LORENE units to SPHINCS units
-    IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
-
-      THIS% kappa_1= THIS% kappa_1*k_lorene2hydrobase( THIS% gamma_1 )
-      THIS% kappa_2= THIS% kappa_2*k_lorene2hydrobase( THIS% gamma_2 )
-
-    ELSEIF( THIS% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
-
-      THIS% kappa0_1= THIS% kappa0_1*k_lorene2hydrobase( THIS% gamma0_1 )
-      THIS% kappa1_1= THIS% kappa1_2*k_lorene2hydrobase( THIS% gamma1_1 )
-      THIS% kappa2_1= THIS% kappa2_1*k_lorene2hydrobase( THIS% gamma2_1 )
-      THIS% kappa3_1= THIS% kappa3_2*k_lorene2hydrobase( THIS% gamma3_1 )
-      THIS% kappa0_2= THIS% kappa0_1*k_lorene2hydrobase( THIS% gamma0_2 )
-      THIS% kappa1_2= THIS% kappa1_2*k_lorene2hydrobase( THIS% gamma1_2 )
-      THIS% kappa2_2= THIS% kappa2_1*k_lorene2hydrobase( THIS% gamma2_2 )
-      THIS% kappa3_2= THIS% kappa3_2*k_lorene2hydrobase( THIS% gamma3_2 )
-
-    ELSE
-
-      PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-               " The equation of state is unknown!"
-      STOP
+      CALL destruct_bin_ns( THIS% bns_ptr )
+      THIS% bns_ptr = C_NULL_PTR
 
     ENDIF
 
-    ! Compute mOmega
+    !PRINT *, "** Subroutine destruct_binary executed."
+    !PRINT *
 
-    THIS% mOmega= THIS% angular_vel/(c_light*cm2km) &
-                  *(THIS% mass_grav1 + THIS% mass_grav2)*Msun_geo
-
-    ! Compute t_mrg
-
-    THIS% t_merger= 5.0D0/256.0D0*(THIS% distance**4.0D0) &
-                    /( THIS% mass_grav1*THIS% mass_grav2* &
-                       ( THIS% mass_grav1 + THIS% mass_grav2 ) )
-
-    CALL print_id_params( THIS )
-
-    PRINT *, "** Subroutine import_lorene_id_params executed."
-    PRINT *
-
-  END PROCEDURE import_id_params
+  END PROCEDURE destruct_binary
 
 
 END SUBMODULE bns_constructor
