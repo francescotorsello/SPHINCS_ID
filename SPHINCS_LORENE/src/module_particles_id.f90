@@ -206,6 +206,8 @@ MODULE particles_id
 
     PROCEDURE:: allocate_lorene_id_parts_memory
 
+    PROCEDURE:: deallocate_lorene_id_parts_memory
+
     PROCEDURE:: read_compose_composition
 
     PROCEDURE:: compute_Ye
@@ -280,15 +282,18 @@ MODULE particles_id
 
   END INTERFACE
 
+
   !
   !-- Interfaces of the methods of TYPE particles called by its constructor
   !-- Their implementations are in submodule_particles_constructor.f90
   !
   INTERFACE
 
+
     !-------------------!
     !--  SUBROUTINES  --!
     !-------------------!
+
 
     MODULE SUBROUTINE place_particles_3dlattice( THIS, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
@@ -300,6 +305,7 @@ MODULE particles_id
                                            ymax, zmin, zmax, thres
 
     END SUBROUTINE place_particles_3dlattice
+
 
     MODULE SUBROUTINE place_particles_3dlattices( THIS, &
                                   xmin1, xmax1, ymin1, ymax1, zmin1, zmax1, &
@@ -314,6 +320,7 @@ MODULE particles_id
                                            ymax2, zmin2, zmax2, thres
 
     END SUBROUTINE place_particles_3dlattices
+
 
     MODULE SUBROUTINE place_particles_spherical_shells( THIS, &
                                   mass_star, radius, center, npart_approx, &
@@ -343,6 +350,7 @@ MODULE particles_id
 
     END SUBROUTINE place_particles_spherical_shells
 
+
     MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
                                             index_array )
 
@@ -353,6 +361,7 @@ MODULE particles_id
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: field
 
     END SUBROUTINE reshape_sph_field_1d
+
 
     MODULE SUBROUTINE reshape_sph_field_2d( THIS, field, new_size1, new_size2, &
                                             index_array )
@@ -365,11 +374,20 @@ MODULE particles_id
 
     END SUBROUTINE reshape_sph_field_2d
 
+
     MODULE SUBROUTINE allocate_lorene_id_parts_memory( THIS )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE allocate_lorene_id_parts_memory
+
+
+    MODULE SUBROUTINE deallocate_lorene_id_parts_memory( THIS )
+
+      CLASS(particles), INTENT( IN OUT ):: THIS
+
+    END SUBROUTINE deallocate_lorene_id_parts_memory
+
 
   END INTERFACE
 

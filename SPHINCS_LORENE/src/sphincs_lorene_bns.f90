@@ -201,7 +201,7 @@ PROGRAM sphincs_lorene_bns
           !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
           !                            "l", &
           !                            itr3, "-", itr4, "."
-          WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
+          WRITE( namefile_parts_bin, "(A5)" ) "NSNS.00000"
           namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
 
           particles_dist( itr3, itr4 )% export_bin= export_bin

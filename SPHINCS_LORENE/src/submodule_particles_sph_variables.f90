@@ -1,16 +1,22 @@
-! File:         submodule_particles_methods.f90
+! File:         submodule_particles_sph_variables.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_methods
+SUBMODULE (particles_id) particles_sph_variables
 
-  !***************************************************
-  !                                                  *
-  ! Implementation of the methods of TYPE particles. *
-  !                                                  *
-  ! FT 16.10.2020                                    *
-  !                                                  *
-  !***************************************************
+  !****************************************************
+  !                                                   *
+  ! Implementation of the methods of TYPE particles   *
+  ! that compute, print and read the SPH variables.   *
+  !                                                   *
+  ! FT 16.10.2020                                     *
+  !                                                   *
+  ! Renamed from particles_methods to                 *
+  ! particles_sph_variables upon improving modularity *
+  !                                                   *
+  ! FT 12.07.2021                                     *
+  !                                                   *
+  !****************************************************
 
 
   IMPLICIT NONE
@@ -879,7 +885,7 @@ SUBMODULE (particles_id) particles_methods
 
       IF( PRESENT(namefile) )THEN
 
-        finalnamefile= TRIM( namefile ) // "00000"
+        finalnamefile= TRIM( namefile )
         CALL write_SPHINCS_dump( finalnamefile )
 
       ELSE
@@ -949,152 +955,6 @@ SUBMODULE (particles_id) particles_methods
     PRINT *
 
   END PROCEDURE compute_and_export_SPH_variables
-
-
-  MODULE PROCEDURE reshape_sph_field_1d
-
-    !************************************************
-    !                                               *
-    ! Read the SPH ID from the binary file output   *
-    ! by write_SPHINCS_dump, and print it to a      *
-    ! formatted file                                *
-    !                                               *
-    ! FT 31.03.2021                                 *
-    !                                               *
-    !************************************************
-
-    IMPLICIT NONE
-
-    INTEGER:: itr, i_tmp
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp
-
-    ALLOCATE( tmp( new_size1 + new_size2 ), STAT= ios, ERRMSG= err_msg )
-    IF( ios > 0 )THEN
-      PRINT *, "...allocation error for array tmp in SUBROUTINE ", &
-               "reshape_sph_field_1d. The error message is", err_msg
-      STOP
-    ENDIF
-    i_tmp= 0
-    DO itr= THIS% npart1, THIS% npart1 - new_size1 + 1, -1
-
-      i_tmp= i_tmp + 1
-      tmp( i_tmp )= field( index_array( itr ) )
-      !IF( itr == THIS% npart1 - new_size1 + 1 )THEN
-      !  PRINT *, i_tmp
-      !ENDIF
-
-    ENDDO
-    DO itr= THIS% npart, THIS% npart - new_size2 + 1, -1
-
-      i_tmp= i_tmp + 1
-      tmp( i_tmp )= field( index_array( itr ) )
-      !IF( itr == THIS% npart )THEN
-      !  PRINT *, i_tmp
-      !ENDIF
-      !IF( itr == THIS% npart - new_size2 + 1 )THEN
-      !  PRINT *, i_tmp
-      !  PRINT *, new_size1 + new_size2
-      !ENDIF
-
-    ENDDO
-
-    DEALLOCATE( field, STAT= ios, ERRMSG= err_msg )
-    IF( ios > 0 )THEN
-      PRINT *, "...deallocation error for array field in SUBROUTINE ", &
-               "reshape_sph_field_1d. The error message is", err_msg
-      STOP
-    ENDIF
-    ALLOCATE( field( new_size1 + new_size2 ), STAT= ios, ERRMSG= err_msg )
-    IF( ios > 0 )THEN
-      PRINT *, "...allocation error for array field in SUBROUTINE ", &
-               "reshape_sph_field_1d. The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO itr= 1, new_size1 + new_size2, 1
-      field( itr )= tmp( itr )
-    ENDDO
-
-  END PROCEDURE reshape_sph_field_1d
-
-
-  MODULE PROCEDURE reshape_sph_field_2d
-
-    !************************************************
-    !                                               *
-    ! Read the SPH ID from the binary file output   *
-    ! by write_SPHINCS_dump, and print it to a      *
-    ! formatted file                                *
-    !                                               *
-    ! FT 31.03.2021                                 *
-    !                                               *
-    !************************************************
-
-    IMPLICIT NONE
-
-    INTEGER:: itr, i_tmp, itr2
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: tmp
-
-    ALLOCATE( tmp( 3, new_size1 + new_size2 ), STAT= ios, ERRMSG= err_msg )
-    IF( ios > 0 )THEN
-      PRINT *, "...allocation error for array tmp in SUBROUTINE ", &
-               "reshape_sph_field_2d. The error message is", err_msg
-      STOP
-    ENDIF
-    DO itr2= 1, 3, 1
-      i_tmp= 0
-      DO itr= THIS% npart1, THIS% npart1 - new_size1 + 1, -1
-
-        i_tmp= i_tmp + 1
-        tmp( itr2, i_tmp )= field( itr2, index_array( itr ) )
-        !PRINT *, field( itr2, index_array( itr ) )
-        !PRINT *, index_array( itr )
-        !PRINT *, itr
-        !EXIT
-
-      ENDDO
-      !PRINT *, i_tmp
-      !PRINT *, new_size1
-      DO itr= THIS% npart, THIS% npart - new_size2 + 1, -1
-
-        i_tmp= i_tmp + 1
-        tmp( itr2, i_tmp )= field( itr2, index_array( itr ) )
-        !PRINT *, field( itr2, index_array( itr ) )
-        !PRINT *, index_array( itr )
-        !PRINT *, itr
-        !IF( field( itr2, index_array( itr ) ) < 0 )THEN
-        !  PRINT *, "The x coordinate of the second star is negative...", &
-        !           "something is wrong"
-        !  STOP
-        !ENDIF
-        !STOP
-
-      ENDDO
-      !PRINT *, i_tmp - new_size1
-      !PRINT *, new_size2
-    ENDDO
-
-    DEALLOCATE( field, STAT= ios, ERRMSG= err_msg )
-    IF( ios > 0 )THEN
-      PRINT *, "...deallocation error for array field in SUBROUTINE ", &
-               "reshape_sph_field_2d. The error message is", err_msg
-      STOP
-    ENDIF
-
-    ALLOCATE( field( 3, new_size1 + new_size2 ), STAT= ios, ERRMSG= err_msg )
-    IF( ios > 0 )THEN
-      PRINT *, "...allocation error for array field in SUBROUTINE ", &
-               "reshape_sph_field_2d. The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO itr2= 1, 3, 1
-      DO itr= 1, new_size1 + new_size2, 1
-        field( itr2, itr )= tmp( itr2, itr )
-      ENDDO
-    ENDDO
-
-  END PROCEDURE reshape_sph_field_2d
 
 
   MODULE PROCEDURE read_sphincs_dump_print_formatted
@@ -1335,199 +1195,6 @@ SUBMODULE (particles_id) particles_methods
   END PROCEDURE read_sphincs_dump_print_formatted
 
 
-  MODULE PROCEDURE read_compose_composition
-
-    !************************************************
-    !                                               *
-    ! Read the electron fraction Y_e = n_e/n_b,     *
-    ! with n_e electron number density and n_b      *
-    ! baryon number density, from the .compo file   *
-    ! taken from the CompOSE database of EoS.       *
-    ! Y_e is given as a function of T, n_b, Y_q on  *
-    ! a grid; the comutation of Y_e on the stars is *
-    ! done by the SUBROUTINE compute_Ye_on_stars.   *
-    !                                               *
-    ! FT 1.03.2021                                  *
-    !                                               *
-    !************************************************
-
-    USE constants, ONLY: fm2cm, cm2km, km2Msun_geo
-
-    IMPLICIT NONE
-
-    INTEGER:: itr, min_y_index, i_T, i_nb, i_yq, i_phase, n_pairs, i_e, cntr, &
-              i_n, Y_n, &
-              n_quad, &
-              i_i, A_i, Z_i, Y_i, i_leptons, i_ns
-    INTEGER, PARAMETER:: unit_compose= 56
-    INTEGER, PARAMETER:: max_length_eos= 10000
-
-    DOUBLE PRECISION:: min_abs_y, min_abs_z, m_n, m_p, &
-                       p_nb, s_nb, mub_mn, muq_mn, mul_mn, f_nbmn, e_nbmn, h
-    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
-
-    !DOUBLE PRECISION, DIMENSION( : ), ALLOCATABLE:: n_b, Y_e
-
-    LOGICAL:: exist
-
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
-
-    PRINT *, "** Executing the read_compose_composition subroutine..."
-
-    ALLOCATE( THIS% nb_table( max_length_eos ) )
-    ALLOCATE( THIS% Ye_table( max_length_eos ) )
-    THIS% nb_table= 0.0D0
-    THIS% Ye_table= 0.0D0
-
-
-    IF( PRESENT(namefile) )THEN
-      finalnamefile= TRIM(namefile)//".beta"
-    ELSE
-      finalnamefile= "../../CompOSE_EOS/SFHO_with_electrons/eos.beta"
-    ENDIF
-
-    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-    IF( exist )THEN
-      OPEN( UNIT= unit_compose, FILE= TRIM(finalnamefile), &
-            FORM= "FORMATTED", ACTION= "READ", IOSTAT= ios, &
-            IOMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...error when opening " // TRIM(finalnamefile), &
-                ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when opening " &
-      !                  // TRIM(finalnamefile) )
-    ELSE
-      PRINT *, "** ERROR! Unable to find file " // TRIM(finalnamefile)
-      STOP
-    ENDIF
-
-    !READ( UNIT= unit_compose, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
-    !                                                    m_n, m_p, i_leptons
-
-    PRINT *, " * Reading file " // TRIM(finalnamefile) // "..."
-    cntr= 0
-    read_compose_beta: DO itr= 1, max_length_eos, 1
-      READ( UNIT= unit_compose, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
-                        ! Variables for .thermo.ns file
-                        !i_T, i_nb, i_yq, &
-                        !p_nb, s_nb, mub_mn, muq_mn, mul_mn, f_nbmn, e_nbmn, &
-                        !i_ns, THIS% Ye_table(itr), h
-                        ! Variables for .beta file
-                        THIS% nb_table(itr), &
-                        THIS% Ye_table(itr)
-                        ! Variables for .compo file
-                        !i_T, i_nb, i_yq, &
-                        !i_phase, n_pairs, &
-                        !i_e, Y_e(itr)!, &
-                        !i_n, Y_n, &
-                        !n_quad, &
-                        !i_i, A_i, Z_i, Y_i
-      IF( ios > 0 )THEN
-        PRINT *, "...error when reading " // TRIM(finalnamefile), &
-                ". The error message is", err_msg
-        STOP
-      ENDIF
-      IF( ios < 0 )THEN
-        PRINT *, " * Reached end of file " // TRIM(finalnamefile)
-        EXIT
-      ENDIF
-      cntr= cntr + 1
-    ENDDO read_compose_beta
-    !PRINT *, "cntr= ", cntr
-    ! Reallocate the arrays to delete the empty elements
-    THIS% nb_table= THIS% nb_table( 1:cntr )/(fm2cm**3*cm2km**3*km2Msun_geo**3)
-    THIS% Ye_table= THIS% Ye_table( 1:cntr )
-    !PRINT *, i_T, i_nb, i_yq, i_phase, n_pairs, i_e
-    !PRINT *, "SIZE(n_b)= ", SIZE(THIS% n_b), "SIZE(Y_e)= ", SIZE(THIS% Y_e)
-    !PRINT *, "n_b(1)= ", THIS% n_b(1), "Y_e(1)= ", THIS% Y_e(1)
-    !PRINT *, "n_b(cntr)= ", THIS% n_b(cntr), "Y_e(cntr)= ", THIS% Y_e(cntr)
-    !STOP
-    CLOSE( unit_compose )
-
-    PRINT *, "** Subroutine read_compose_composition executed."
-    PRINT *
-
-  END PROCEDURE read_compose_composition
-
-
-  MODULE PROCEDURE compute_Ye
-
-    !************************************************
-    !                                               *
-    ! Interpolate the electron fraction             *
-    ! Y_e = n_e/n_b                                 *
-    ! at the particle positions, using the data     *
-    ! read by read_compose_composition.             *
-    !                                               *
-    ! FT 3.03.2021                                  *
-    !                                               *
-    !************************************************
-
-    IMPLICIT NONE
-
-    INTEGER:: d, itr2
-
-    DOUBLE PRECISION:: min_nb_table, max_nb_table
-
-    d= SIZE(THIS% nb_table)
-    min_nb_table= MINVAL( THIS% nb_table, 1 )
-    max_nb_table= MAXVAL( THIS% nb_table, 1 )
-
-    particle_loop: DO itr= 1, THIS% npart, 1
-
-      ! There may be particles with initially negative hydro fields,
-      ! close to the surface of the stars. The present
-      ! version of the code sets their hydro fields to 0.
-      ! In turn, this is a problem if we read Ye from the .beta file
-      ! from the CompOSe database since the value of 0
-      ! for the baryon number density (used in the interpolation
-      ! of Ye) is not included in the .beta file.
-      ! In other words, Ye cannot be interpolated on those particles,
-      ! and the present version of the code sets Ye to 0 as well.
-      !IF( THIS% nlrf(itr) == 0.0D0 )THEN
-        !THIS% Ye(itr)= 0.0D0
-        !CYCLE
-      !ELSE
-      IF( THIS% nlrf(itr) < min_nb_table )THEN
-        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
-                 "is lower than the minimum value in the table =", min_nb_table
-        PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
-                 "If yes, please select a table with a wider range."
-        STOP
-      ELSEIF( THIS% nlrf(itr) > max_nb_table )THEN
-        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
-                 "is larger than the maximum value in the table =", max_nb_table
-        PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
-                 "If yes, please select a table with a wider range."
-        STOP
-      ENDIF
-
-      Ye_linear_interpolation_loop: DO itr2= 1, d - 1, 1
-
-        IF( THIS% nb_table(itr2) < THIS% nlrf(itr) .AND. &
-            THIS% nlrf(itr) < THIS% nb_table(itr2 + 1) )THEN
-
-          THIS% Ye(itr)= THIS% Ye_table(itr2) &
-                         + (THIS% Ye_table(itr2 + 1) - THIS% Ye_table(itr2))/ &
-                         (THIS% nb_table(itr2 + 1) - THIS% nb_table(itr2)) &
-                         *(THIS% nlrf(itr) - THIS% nb_table(itr2))
-          EXIT
-
-        ENDIF
-
-      ENDDO Ye_linear_interpolation_loop
-
-      !PRINT *, "Ye(", itr, ")=", THIS% Ye(itr)
-      !PRINT *
-
-    ENDDO particle_loop
-
-  END PROCEDURE compute_Ye
-
-
   MODULE PROCEDURE print_formatted_lorene_id_particles
 
     !************************************************
@@ -1744,377 +1411,106 @@ SUBMODULE (particles_id) particles_methods
   END PROCEDURE print_formatted_lorene_id_particles
 
 
-  MODULE PROCEDURE destruct_particles
+  MODULE PROCEDURE analyze_hydro
 
-    !*************************************************
-    !                                                *
-    ! Destructor of a particles object               *
-    ! It deallocates memory                          *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    IF( ALLOCATED( THIS% pos ))THEN
-      DEALLOCATE( THIS% pos, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array pos. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array pos in SUBROUTINE"&
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% baryon_density_parts ))THEN
-      DEALLOCATE( THIS% baryon_density_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array baryon_density_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array " &
-      !                // "baryon_density_parts in SUBROUTINE " &
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% energy_density_parts ))THEN
-      DEALLOCATE( THIS% energy_density_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array energy_density_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array " &
-      !                // "energy_density_parts in SUBROUTINE " &
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% specific_energy_parts ))THEN
-      DEALLOCATE( THIS% specific_energy_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array specific_energy_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array " &
-      !                // "specific_energy_parts in SUBROUTINE " &
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% pressure_parts ))THEN
-      DEALLOCATE( THIS% pressure_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array pressure_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array " &
-      !                // "pressure_parts in SUBROUTINE " &
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% pressure_parts_cu ))THEN
-      DEALLOCATE( THIS% pressure_parts_cu, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array pressure_parts_cu. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array " &
-      !                // "pressure_parts_cu in SUBROUTINE " &
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% v_euler_parts_x ))THEN
-      DEALLOCATE( THIS% v_euler_parts_x, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_parts_x. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array " &
-      !                // "v_euler_parts_x in SUBROUTINE " &
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% v_euler_parts_y ))THEN
-      DEALLOCATE( THIS% v_euler_parts_y, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_parts_y. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array " &
-      !                // "v_euler_parts_y in SUBROUTINE " &
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% v_euler_parts_z ))THEN
-      DEALLOCATE( THIS% v_euler_parts_z, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_parts_z. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array " &
-      !                // "v_euler_parts_z in SUBROUTINE " &
-      !                // "destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% lapse_parts ))THEN
-      DEALLOCATE( THIS% lapse_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array lapse_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array lapse_parts in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% shift_parts_x ))THEN
-      DEALLOCATE( THIS% shift_parts_x, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array shift_parts_x. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array shift_parts_x in "&
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% shift_parts_y ))THEN
-      DEALLOCATE( THIS% shift_parts_y, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array shift_parts_y. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array shift_parts_y in "&
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% shift_parts_z ))THEN
-      DEALLOCATE( THIS% shift_parts_z, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array shift_parts_z. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array shift_parts_z in "&
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% g_xx_parts ))THEN
-      DEALLOCATE( THIS% g_xx_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_xx_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_xx_parts in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% g_xy_parts ))THEN
-      DEALLOCATE( THIS% g_xy_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_xy_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_xy_parts in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% g_xz_parts ))THEN
-      DEALLOCATE( THIS% g_xz_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_xz_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_xz_parts in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% g_yy_parts ))THEN
-      DEALLOCATE( THIS% g_yy_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_yy_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_yy_parts in " &
-      !                // "SUBROUTINE estruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% g_yz_parts ))THEN
-      DEALLOCATE( THIS% g_yz_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_yz_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_yz_parts in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% g_zz_parts ))THEN
-      DEALLOCATE( THIS% g_zz_parts, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_zz_parts. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_zz_parts in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% nlrf ))THEN
-      DEALLOCATE( THIS% nlrf, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array nlrf. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array nlrf in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% nu ))THEN
-      DEALLOCATE( THIS% nu, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array nu. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array nu in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% Theta ))THEN
-      DEALLOCATE( THIS% Theta, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array Theta. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array Theta in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% h ))THEN
-      DEALLOCATE( THIS% h, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array h. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array h in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% v ))THEN
-      DEALLOCATE( THIS% v, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array v in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% Ye ))THEN
-      DEALLOCATE( THIS% Ye, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array Ye. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array v in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% nstar ))THEN
-      DEALLOCATE( THIS% nstar, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array nstar. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array v in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% nstar_int ))THEN
-      DEALLOCATE( THIS% nstar_int, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array nstar_int. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array v in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% particle_density ))THEN
-      DEALLOCATE( THIS% particle_density, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array particle_density. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array v in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% particle_density_int ))THEN
-      DEALLOCATE( THIS% particle_density_int, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array particle_density_int. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array v in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-    IF( ALLOCATED( THIS% pmass ))THEN
-      DEALLOCATE( THIS% pmass, STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array pmass. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array v in " &
-      !                // "SUBROUTINE destruct_particles." )
-    ENDIF
-
-  END PROCEDURE destruct_particles
-
-
-  MODULE PROCEDURE is_empty
-
-    !*************************************************
-    !                                                *
-    ! Returns the variable empty_object              *
-    ! (experimental)                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !                                               *
+    ! Export the points where some of the hydro     *
+    ! fields are negative to a formatted file       *
+    !                                               *
+    ! FT 5.12.2020                                  *
+    !                                               *
+    !************************************************
 
     IMPLICIT NONE
 
-    answer= THIS% empty_object
+    LOGICAL:: exist, negative_hydro
 
-  END PROCEDURE is_empty
+    INQUIRE( FILE= TRIM(namefile), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= 20, FILE= TRIM(namefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= 20, FILE= TRIM(namefile), STATUS= "NEW", &
+      FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+       PRINT *, "...error when opening ",  TRIM(namefile), &
+                " The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when opening " &
+    !         // TRIM(namefile) )
+
+    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Points where some of the hydro fields are negative. "
+    IF( ios > 0 )THEN
+       PRINT *, "...error when writing line 1 in ",  TRIM(namefile), &
+                " The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+    !         // TRIM(namefile) )
+    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# column:      1        2       3"
+    IF( ios > 0 )THEN
+       PRINT *, "...error when writing line 2 in ",  TRIM(namefile), &
+                " The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+    !        // TRIM(namefile) )
+    WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "#      x   y   z"
+    IF( ios > 0 )THEN
+       PRINT *, "...error when writing line 3 in ",  TRIM(namefile), &
+                " The error message is", err_msg
+       STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+    !        // TRIM(namefile) )
+
+    DO itr= 1, THIS% npart, 1
+      IF( THIS% baryon_density_parts ( itr ) < 0 .OR. &
+          THIS% energy_density_parts ( itr ) < 0 .OR. &
+          THIS% specific_energy_parts( itr ) < 0 .OR. &
+          THIS% pressure_parts       ( itr ) < 0 )THEN
+
+        negative_hydro= .TRUE.
+
+        WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, &
+               FMT = * )&
+            THIS% pos( 1, itr ), &
+            THIS% pos( 2, itr ), &
+            THIS% pos( 3, itr )
+
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", TRIM(namefile), &
+                   " The error message is", err_msg
+          STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, "...error in writing "&
+        !                // "the arrays in " // TRIM(namefile) )
+      ENDIF
+    ENDDO
+
+    CLOSE( UNIT= 20 )
+
+    IF( negative_hydro )THEN
+      PRINT *, "** WARNING! Some of the hydro fields are negative on", &
+               " some of the particles! See the file ", namefile, &
+               " for the positions of such particles."
+      PRINT *
+    ELSE
+      PRINT *, " * The hydro fields are positive on the particles."
+      PRINT *
+    ENDIF
+
+  END PROCEDURE analyze_hydro
 
 
   !MODULE PROCEDURE write_lorene_bns_id_dump
@@ -2218,271 +1614,5 @@ SUBMODULE (particles_id) particles_methods
   !END PROCEDURE write_lorene_bns_id_dump
 
 
-  !-----------------!
-  !--  FUNCTIONS  --!
-  !-----------------!
+END SUBMODULE particles_sph_variables
 
-
-  MODULE PROCEDURE get_npart
-
-    !*************************************************
-    !                                                *
-    ! Returns the total number of particles          *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    n_part= THIS% npart
-
-  END PROCEDURE get_npart
-
-
-  MODULE PROCEDURE get_npart1
-
-    !*************************************************
-    !                                                *
-    ! Returns the number of particles on star 1      *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    n_part= THIS% npart1
-
-  END PROCEDURE get_npart1
-
-
-  MODULE PROCEDURE get_npart2
-
-    !*************************************************
-    !                                                *
-    ! Returns the number of particles on star 2      *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    n_part= THIS% npart2
-
-  END PROCEDURE get_npart2
-
-
-  MODULE PROCEDURE get_nuratio
-
-    !*************************************************
-    !                                                *
-    ! Returns the baryon number ratio on the stars  *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    nuratio= THIS% nuratio
-
-  END PROCEDURE get_nuratio
-
-
-  MODULE PROCEDURE get_nuratio1
-
-    !*************************************************
-    !                                                *
-    ! Returns the baryon number ratio on star 1      *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    nuratio1= THIS% nuratio1
-
-  END PROCEDURE get_nuratio1
-
-
-  MODULE PROCEDURE get_nuratio2
-
-    !*************************************************
-    !                                                *
-    ! Returns the baryon number ratio on star 2      *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    nuratio2= THIS% nuratio2
-
-  END PROCEDURE get_nuratio2
-
-
-  MODULE PROCEDURE get_pos
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of particle positions        *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    pos_u= THIS% pos
-
-  END PROCEDURE get_pos
-
-
-  MODULE PROCEDURE get_vel
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of coordinate 3-velocity of  *
-    ! particles                                      *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    vel= THIS% v(1:3,:)
-
-  END PROCEDURE get_vel
-
-
-  MODULE PROCEDURE get_nlrf
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of baryon density in the     *
-    ! local rest frame                               *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    nlrf= THIS% nlrf
-
-  END PROCEDURE get_nlrf
-
-
-  MODULE PROCEDURE get_nu
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of baryon per particle       *
-    ! [baryon (Msun_geo)^{-3}]                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    nu= THIS% nu
-
-  END PROCEDURE get_nu
-
-
-  MODULE PROCEDURE get_u
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of specific internal         *
-    ! energy [c^2]                                   *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    u= THIS% specific_energy_parts
-
-  END PROCEDURE get_u
-
-
-  MODULE PROCEDURE get_pressure
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of pressure [kg c^2 m^{-3}]  *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    pressure= THIS% pressure_parts
-
-  END PROCEDURE get_pressure
-
-
-  MODULE PROCEDURE get_pressure_cu
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of pressure in code units    *
-    ! [amu*c**2/(Msun_geo**3)]                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    pressure_cu= THIS% pressure_parts_cu
-
-  END PROCEDURE get_pressure_cu
-
-
-  MODULE PROCEDURE get_theta
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of generalized Lorentz       *
-    ! factor                                         *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    theta= THIS% Theta
-
-  END PROCEDURE get_theta
-
-
-  MODULE PROCEDURE get_h
-
-    !*************************************************
-    !                                                *
-    ! Returns the array of initial guess for the     *
-    ! smoothing length [Msun_geo]                    *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
-
-    IMPLICIT NONE
-
-    h= THIS% h
-
-  END PROCEDURE get_h
-
-
-END SUBMODULE particles_methods
