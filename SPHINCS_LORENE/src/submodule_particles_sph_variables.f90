@@ -885,7 +885,8 @@ SUBMODULE (particles_id) particles_sph_variables
 
       IF( PRESENT(namefile) )THEN
 
-        finalnamefile= TRIM( namefile )
+        finalnamefile= TRIM( namefile ) // "00000"
+        dcount= -1 ! since it is increased before writing
         CALL write_SPHINCS_dump( finalnamefile )
 
       ELSE
