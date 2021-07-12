@@ -180,6 +180,10 @@ SUBMODULE (particles_id) particles_compose
       ! of Ye) is not included in the .beta file.
       ! In other words, Ye cannot be interpolated on those particles,
       ! and the present version of the code sets Ye to 0 as well.
+
+      ! The problem above is solved: particles are not placed if the hydro
+      ! is negative or zero.
+
       !IF( THIS% nlrf(itr) == 0.0D0 )THEN
         !THIS% Ye(itr)= 0.0D0
         !CYCLE

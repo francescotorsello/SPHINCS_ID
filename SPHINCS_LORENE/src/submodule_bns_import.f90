@@ -14,6 +14,8 @@ SUBMODULE (bns_id) bns_import
   ! Renamed from bns_methods to bns_import upon        *
   ! improving modularity                               *
   !                                                    *
+  ! OMP parallelized loops that call LORENE            *
+  !                                                    *
   ! FT 12.07.2021                                      *
   !                                                    *
   !*****************************************************
@@ -72,6 +74,9 @@ SUBMODULE (bns_id) bns_import
           ALLOCATED( THIS% v_euler_z ) &
       )THEN
 
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( n, THIS, x, y, z ) &
+        !$OMP             PRIVATE( itr )
         import_id_loop: DO itr= 1, n, 1
 
           ! The coordinates need to be converted from SPHINCS units (Msun_geo)
@@ -98,6 +103,11 @@ SUBMODULE (bns_id) bns_import
                               THIS% v_euler_x( itr ), &
                               THIS% v_euler_y( itr ), &
                               THIS% v_euler_z( itr ) )
+
+        ENDDO import_id_loop
+        !$OMP END PARALLEL DO
+
+        DO itr= 1, n, 1
 
           !
           !-- The following follows from the assumption of conformal
@@ -139,7 +149,7 @@ SUBMODULE (bns_id) bns_import
                     creturn//" ", perc, "%"
           ENDIF
 
-        ENDDO import_id_loop
+        ENDDO
         IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       ELSE
@@ -184,6 +194,14 @@ SUBMODULE (bns_id) bns_import
         STOP
       ENDIF
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( n, THIS, x, y, z, lapse, &
+      !$OMP                     shift_x, shift_y, shift_z, &
+      !$OMP                     g_xx, k_xx, k_xy, k_xz, k_yy, k_yz, k_zz, &
+      !$OMP                     baryon_density, energy_density, &
+      !$OMP                     specific_energy, &
+      !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
+      !$OMP             PRIVATE( itr )
       import_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from SPHINCS units (Msun_geo)
@@ -210,6 +228,11 @@ SUBMODULE (bns_id) bns_import
                             u_euler_x( itr ), &
                             u_euler_y( itr ), &
                             u_euler_z( itr ) )
+
+      ENDDO import_id_loop
+      !$OMP END PARALLEL DO
+
+      DO itr= 1, n, 1
 
         !
         !-- The following follows from the assumption of conformal
@@ -251,7 +274,7 @@ SUBMODULE (bns_id) bns_import
                   creturn//" ", perc, "%"
         ENDIF
 
-      ENDDO import_id_loop
+      ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_lorene_id executed."
@@ -305,6 +328,10 @@ SUBMODULE (bns_id) bns_import
         STOP
       ENDIF
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nx, ny, nz, THIS, pos, &
+      !$OMP                     lapse, shift, g, k ) &
+      !$OMP             PRIVATE( ix, iy, iz )
       coords_z: DO iz= 1, nz, 1
         coords_y: DO iy= 1, ny, 1
           coords_x: DO ix= 1, nx, 1
@@ -327,6 +354,15 @@ SUBMODULE (bns_id) bns_import
                                 k( ix, iy, iz, jyy ), &
                                 k( ix, iy, iz, jyz ), &
                                 k( ix, iy, iz, jzz ) )
+
+          ENDDO coords_x
+        ENDDO coords_y
+      ENDDO coords_z
+      !$OMP END PARALLEL DO
+
+      DO iz= 1, nz, 1
+        DO iy= 1, ny, 1
+          DO ix= 1, nx, 1
 
             !
             !-- The following follows from the assumption of
@@ -459,9 +495,9 @@ SUBMODULE (bns_id) bns_import
               !        creturn//" ", perc2, "%"
             ENDIF
 
-          ENDDO coords_x
-        ENDDO coords_y
-      ENDDO coords_z
+          ENDDO
+        ENDDO
+      ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_lorene_id executed."
@@ -492,6 +528,11 @@ SUBMODULE (bns_id) bns_import
 
     IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nx, ny, nz, THIS, pos, &
+      !$OMP                     baryon_density, energy_density, &
+      !$OMP                     specific_energy, pressure, u_euler ) &
+      !$OMP             PRIVATE( ix, iy, iz )
       coords_z: DO iz= 1, nz, 1
         coords_y: DO iy= 1, ny, 1
           coords_x: DO ix= 1, nx, 1
@@ -507,22 +548,27 @@ SUBMODULE (bns_id) bns_import
                               energy_density( ix, iy, iz ), &
                               specific_energy( ix, iy, iz ), &
                               pressure( ix, iy, iz ), &
-                              u_euler( ix, iy, iz, 1 ), &
-                              u_euler( ix, iy, iz, 2 ), &
-                              u_euler( ix, iy, iz, 3 ) )
-
-            ! Print progress on screen
-            perc= 100*(nx*ny*(iz - 1) &
-                  + nx*(iy - 1) + ix)/( nx*ny*nz )
-            IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-              WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-                      creturn//" ", perc, "%"
-            ENDIF
+                              u_euler( ix, iy, iz, jx ), &
+                              u_euler( ix, iy, iz, jy ), &
+                              u_euler( ix, iy, iz, jz ) )
 
           ENDDO coords_x
         ENDDO coords_y
       ENDDO coords_z
-      IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+      !$OMP END PARALLEL DO
+
+      !      ! Print progress on screen
+      !      perc= 100*(nx*ny*(iz - 1) &
+      !            + nx*(iy - 1) + ix)/( nx*ny*nz )
+      !      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+      !        WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+      !                creturn//" ", perc, "%"
+      !      ENDIF
+      !
+      !    ENDDO coords_x
+      !  ENDDO coords_y
+      !ENDDO coords_z
+      !IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_lorene_id_hydro executed."
       PRINT *
@@ -561,6 +607,14 @@ SUBMODULE (bns_id) bns_import
 
       PRINT *, "** Importing ID on particles..."
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( n, THIS, x, y, z, lapse, &
+      !$OMP                     shift_x, shift_y, shift_z, &
+      !$OMP                     g_xx, &
+      !$OMP                     baryon_density, energy_density, &
+      !$OMP                     specific_energy, pressure, &
+      !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
+      !$OMP             PRIVATE( itr )
       import_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from SPHINCS units (Msun_geo)
@@ -582,6 +636,11 @@ SUBMODULE (bns_id) bns_import
                                       u_euler_x( itr ), &
                                       u_euler_y( itr ), &
                                       u_euler_z( itr ) )
+
+      ENDDO import_id_loop
+      !$OMP END PARALLEL DO
+
+      DO itr= 1, n, 1
 
         !
         !-- The following follows from the assumption of conformal
@@ -631,7 +690,7 @@ SUBMODULE (bns_id) bns_import
                   creturn//" ", perc, "%"
         ENDIF
 
-      ENDDO import_id_loop
+      ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_id_particles executed."
@@ -708,6 +767,10 @@ SUBMODULE (bns_id) bns_import
         STOP
       ENDIF
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( n, THIS, x, y, z, &
+      !$OMP                     k_xx, k_xy, k_xz, k_yy, k_yz, k_zz ) &
+      !$OMP             PRIVATE( itr )
       import_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from SPHINCS units (Msun_geo)
@@ -723,6 +786,11 @@ SUBMODULE (bns_id) bns_import
                               k_yy( itr ), &
                               k_yz( itr ), &
                               k_zz( itr ) )
+
+      ENDDO import_id_loop
+      !$OMP END PARALLEL DO
+
+      DO itr= 1, n, 1
 
         !
         !-- Convert the extrinsic curvature from LORENE units to
@@ -742,7 +810,7 @@ SUBMODULE (bns_id) bns_import
                   creturn//" ", perc, "%"
         ENDIF
 
-      ENDDO import_id_loop
+      ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine import_lorene_id_k executed."
