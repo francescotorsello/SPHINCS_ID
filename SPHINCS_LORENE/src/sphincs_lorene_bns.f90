@@ -53,6 +53,12 @@ PROGRAM sphincs_lorene_bns
   ! String storing the local path to the directory where the
   ! LORENE BNS ID files are stored
   CHARACTER( LEN= max_length ):: common_path
+  ! String storing the local path to the directory where the
+  ! SPH output is to be saved
+  CHARACTER( LEN= max_length ):: sph_path
+  ! String storing the local path to the directory where the
+  ! spacetime output is to be saved
+  CHARACTER( LEN= max_length ):: spacetime_path
 
   ! Logical variable to check if files exist
   LOGICAL:: exist
@@ -87,7 +93,7 @@ PROGRAM sphincs_lorene_bns
                             constraints_step, compute_parts_constraints, &
                             numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
                             one_lapse, zero_shift, show_progress, &
-                            run_sph, run_spacetime
+                            run_sph, run_spacetime, sph_path, spacetime_path
 
   !---------------------------!
   !--  End of declarations  --!
@@ -196,9 +202,12 @@ PROGRAM sphincs_lorene_bns
           !                            "l", &
           !                            itr3, "-", itr4, "."
           WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
+          namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
+
           particles_dist( itr3, itr4 )% export_bin= export_bin
           particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
           particles_dist( itr3, itr4 )% export_form_x = export_form_x
+
           CALL particles_dist( itr3, itr4 )% &
                compute_and_export_SPH_variables( namefile_parts_bin )
           !IF( particles_dist( itr3, itr4 )% export_bin )THEN
@@ -227,6 +236,7 @@ PROGRAM sphincs_lorene_bns
             WRITE( namefile_parts, "(A29,I1,A1,I1,A4)" ) &
                                    "lorene-bns-id-particles-form_", &
                                    itr3, "-", itr4, ".dat"
+            namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
             CALL particles_dist( itr3, itr4 )% &
                  print_formatted_lorene_id_particles( namefile_parts )
           ENDIF
@@ -279,9 +289,12 @@ PROGRAM sphincs_lorene_bns
                // "==============="
       PRINT *
       WRITE( namefile_bssn_bin, "(A15)" ) "BSSN_vars.00000"!"BSSN_l", itr3, ".bin""(A6,I1,A4)"
+      namefile_bssn_bin= TRIM( spacetime_path ) // TRIM( namefile_bssn_bin )
+
       bssn_forms( itr3 )% export_form_xy= export_form_xy
       bssn_forms( itr3 )% export_form_x = export_form_x
       bssn_forms( itr3 )% export_bin= export_bin
+
       CALL bssn_forms( itr3 )% &
                           compute_and_export_3p1_variables( namefile_bssn_bin )
       !IF( bssn_forms( itr3 )% export_bin )THEN
@@ -298,6 +311,9 @@ PROGRAM sphincs_lorene_bns
       export_bssn_loop: DO itr3 = 1, n_bns, 1
         WRITE( namefile_bssn, "(A24,I1,A4)" ) &
                               "lorene-bns-id-bssn-form_", itr3, ".dat"
+
+        namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+
         CALL bssn_forms( itr3 )% &
                     print_formatted_lorene_id_3p1_variables( namefile_bssn )
       ENDDO export_bssn_loop
@@ -328,6 +344,9 @@ PROGRAM sphincs_lorene_bns
                                                 ".dat"
           WRITE( name_logfile, "(A28,I1)" ) &
                               "bssn-constraints-statistics-", itr3
+
+          namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+          name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
           CALL bssn_forms( itr3 )% &
                       compute_and_export_3p1_constraints( binaries( itr3 ), &
@@ -362,6 +381,10 @@ PROGRAM sphincs_lorene_bns
             WRITE( name_logfile, "(A34,I1,A1,I1,A4)" ) &
                                  "bssn-constraints-parts-statistics-", itr3, &
                                  "-", itr4
+
+            namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+            namefile_sph = TRIM( sph_path ) // TRIM( namefile_sph )
+            name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
             CALL bssn_forms( itr3 )% &
                         compute_and_export_3p1_constraints( &

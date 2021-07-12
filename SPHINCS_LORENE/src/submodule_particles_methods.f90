@@ -98,6 +98,7 @@ SUBMODULE (particles_id) particles_methods
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
 
     PRINT *, "** Executing the compute_and_export_SPH_variables " &
@@ -875,13 +876,20 @@ SUBMODULE (particles_id) particles_methods
     !-- Exporting the SPH ID to a binary file, for evolution
     !
     IF( THIS% export_bin )THEN
+
       IF( PRESENT(namefile) )THEN
-        basename= namefile
+
+        finalnamefile= TRIM( namefile ) // "00000"
+        CALL write_SPHINCS_dump( finalnamefile )
+
       ELSE
+
         basename= "NSNS."
+        dcount= -1 ! since it is increased before writing
+        CALL write_SPHINCS_dump()
+
       ENDIF
-      dcount= -1 ! since it is increased before writing
-      CALL write_SPHINCS_dump()
+
     ENDIF
 
     CALL allocate_RCB_tree_memory_3D(npart)
