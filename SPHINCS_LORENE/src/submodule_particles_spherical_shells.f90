@@ -84,6 +84,7 @@ SUBMODULE (particles_id) spherical_shells
     END TYPE
 
     TYPE(pos_on_shells), DIMENSION(:), ALLOCATABLE:: pos_shells
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: pos_shell_tmp
 
     PRINT *, "** Executing the place_particles_shells..."
     PRINT *
@@ -1168,8 +1169,10 @@ SUBMODULE (particles_id) spherical_shells
             pos_shells(r)% pos_shell( 1, itr + 1 )= xtemp
             pos_shells(r)% pos_shell( 2, itr + 1 )= ytemp
             pos_shells(r)% pos_shell( 3, itr + 1 )= ztemp
-            !pos_shells(r)% pos_th( th )= col
-            !pos_shells(r)% pos_phi( phi )= phase + phi*alpha(r)
+            !pos_shell_tmp( 1, r, th, phi )= xtemp
+            !pos_shell_tmp( 2, r, th, phi )= ytemp
+            !pos_shell_tmp( 3, r, th, phi )= ztemp
+
 
             IF( th == 1 )THEN
 

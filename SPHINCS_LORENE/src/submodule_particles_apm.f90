@@ -120,6 +120,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
@@ -332,7 +333,17 @@ SUBMODULE (particles_id) particles_apm
     dx= ABS( xmax - xmin )/DBLE( nx )
     dy= ABS( ymax - ymin )/DBLE( ny )
     dz= ABS( zmax - zmin )/DBLE( nz )
-    !delta= 1.0D0
+
+    IF(.NOT.ALLOCATED( ghost_pos_tmp ))THEN
+      ALLOCATE( ghost_pos_tmp( 3, nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
+                  "perform_apm. The error message is",&
+                  err_msg
+         STOP
+      ENDIF
+    ENDIF
 
     rad_x= larger_radius + h_av/1.0D0
     rad_y= radius_y + h_av/1.0D0
@@ -346,103 +357,97 @@ SUBMODULE (particles_id) particles_apm
     IF( debug ) PRINT *, "rad_z= ", rad_z
     IF( debug ) PRINT *
 
-   ! DO
+    ghost_pos_tmp= HUGE(0.0D0)
 
-      itr= 0
-      DO k= 1, nz, 1
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nx, ny, nz, xmin, ymin, zmin, dx, dy, dz, &
+    !$OMP                     ghost_pos_tmp, binary, &
+    !$OMP                     center, rad_x, rad_y, rad_z ) &
+    !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp, &
+    !$OMP                      x_ell, y_ell, z_ell )
+    DO k= 1, nz, 1
 
-        ztemp= zmin + dz/2.0D0 + DBLE( k - 1 )*dz
+      ztemp= zmin + dz/2.0D0 + DBLE( k - 1 )*dz
 
-        DO j= 1, ny, 1
+      DO j= 1, ny, 1
 
-          ytemp= ymin + dy/2.0D0 + DBLE( j - 1 )*dy
+        ytemp= ymin + dy/2.0D0 + DBLE( j - 1 )*dy
 
-          DO i= 1, nx, 1
+        DO i= 1, nx, 1
 
-            xtemp= xmin + dx/2.0D0 + DBLE( i - 1 )*dx
+          xtemp= xmin + dx/2.0D0 + DBLE( i - 1 )*dx
 
-            x_ell= center + rad_x*COS(ATAN( ytemp/( xtemp - center ) )) &
-                   *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                         + ytemp**2.0D0 + ztemp**2.0D0 )))
+          x_ell= center + rad_x*COS(ATAN( ytemp/( xtemp - center ) )) &
+                 *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
+                                       + ytemp**2.0D0 + ztemp**2.0D0 )))
 
-            y_ell= rad_y*SIN(ATAN( ytemp/( xtemp - center ) )) &
-                   *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                         + ytemp**2.0D0 + ztemp**2.0D0 )))
+          y_ell= rad_y*SIN(ATAN( ytemp/( xtemp - center ) )) &
+                 *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
+                                       + ytemp**2.0D0 + ztemp**2.0D0 )))
 
-            z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                     + ytemp**2.0D0 + ztemp**2.0D0 ) )
+          z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 &
+                                   + ytemp**2.0D0 + ztemp**2.0D0 ) )
 
-            IF( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-                      + ztemp**2.0D0 ) <= &
-                      1.1D0*SQRT( ( x_ell - center )**2.0D0 &
-                                  + y_ell**2.0D0 + z_ell**2.0D0 ) &
-                .AND. &
-                SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-                      + ztemp**2.0D0 ) >= &
-                SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
-                      + z_ell**2.0D0 ) &
-                .AND. &
-                binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
-            )THEN
+          IF( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+                    + ztemp**2.0D0 ) <= &
+                    1.1D0*SQRT( ( x_ell - center )**2.0D0 &
+                                + y_ell**2.0D0 + z_ell**2.0D0 ) &
+              .AND. &
+              SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+                    + ztemp**2.0D0 ) >= &
+              SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
+                    + z_ell**2.0D0 ) &
+              .AND. &
+              binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
+          )THEN
 
-              itr= itr + 1
-              ghost_pos( 1, itr )= xtemp
-              ghost_pos( 2, itr )= ytemp
-              ghost_pos( 3, itr )= ztemp
+            !itr= itr + 1
+            !ghost_pos( 1, itr )= xtemp
+            !ghost_pos( 2, itr )= ytemp
+            !ghost_pos( 3, itr )= ztemp
+            ghost_pos_tmp( 1, i, j, k )= xtemp
+            ghost_pos_tmp( 2, i, j, k )= ytemp
+            ghost_pos_tmp( 3, i, j, k )= ztemp
 
-            ENDIF
+          ENDIF
 
-           ENDDO
-        ENDDO
+         ENDDO
       ENDDO
-      npart_ghost= itr
-      IF( npart_ghost == 0 )THEN
-        PRINT *, "** ERROR: No ghost particles were placed. Stopping.."
-        PRINT *
-        STOP
-      ENDIF
-      !ghost_pos = ghost_pos( :, 1:npart_ghost )
+    ENDDO
+    !$OMP END PARALLEL DO
 
-      ! Test that there are no real particles too close to the ghost particles
-    !  max_r_real= 0.0D0
-    !  DO itr= 1, npart_real, 1
-    !
-    !    r_real= SQRT( ( pos_input( 1, itr ) - center )**2.0D0 &
-    !                + pos_input( 2, itr )**2.0D0 + pos_input( 3, itr )**2.0D0 )
-    !    IF( r_real > max_r_real ) max_r_real= r_real
-    !
-    !  ENDDO
-    !
-    !  min_r_ghost= HUGE(0.0D0)
-    !  DO itr= 1, npart_ghost, 1
-    !
-    !    r_ghost= SQRT( ( ghost_pos( 1, itr ) - center )**2.0D0 &
-    !                 + ghost_pos( 2, itr )**2.0D0 + ghost_pos( 3, itr )**2.0D0 )
-    !    IF( r_ghost < min_r_ghost ) min_r_ghost= r_ghost
-    !
-    !  ENDDO
-    !
-    !  PRINT *, max_r_real, min_r_ghost
-    !
-    !  IF( min_r_ghost - max_r_real < 0 .OR. &
-    !      ABS( min_r_ghost - max_r_real ) < larger_radius*0.005D0 )THEN
-    !
-    !    rad_x= rad_x*( 1.0D0 + 0.005D0 )
-    !    rad_y= rad_y*( 1.0D0 + 0.005D0 )
-    !    rad_z= rad_z*( 1.0D0 + 0.005D0 )
-    !
-    !  ELSE
-    !
-    !    EXIT
-    !
-    !  ENDIF
-    !
-    !ENDDO
+    itr= 0
+    DO k= 1, nz, 1
+
+      DO j= 1, ny, 1
+
+        DO i= 1, nx, 1
+
+          IF( ghost_pos_tmp( 1, i, j, k ) < HUGE(0.0D0) )THEN
+
+            itr= itr + 1
+            ghost_pos( 1, itr )= ghost_pos_tmp( 1, i, j, k )
+            ghost_pos( 2, itr )= ghost_pos_tmp( 2, i, j, k )
+            ghost_pos( 3, itr )= ghost_pos_tmp( 3, i, j, k )
+
+          ENDIF
+
+         ENDDO
+      ENDDO
+    ENDDO
+    npart_ghost= itr
+    IF( npart_ghost == 0 )THEN
+      PRINT *, "** ERROR: No ghost particles were placed. Stopping.."
+      PRINT *
+      STOP
+    ENDIF
     ghost_pos = ghost_pos( :, 1:npart_ghost )
 
     PRINT *, " * ", npart_ghost, " ghost particles placed around ", &
              npart_real, "real particles."
     PRINT *
+
+    DEALLOCATE( ghost_pos_tmp )
 
     PRINT *, " * Printing ghost particles to file..."
 
@@ -491,7 +496,7 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * Positions of ghost and real particles printed to ", &
              finalnamefile, " ."
 
-    !STOP
+    STOP
 
     npart_all= npart_real + npart_ghost
 
