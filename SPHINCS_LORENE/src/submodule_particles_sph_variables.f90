@@ -307,7 +307,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
       IF( .NOT.THIS% apm_iterate )THEN
 
-        THIS% h(itr)= 3.0*(THIS% pvol(itr))**third
+        THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
         h(itr)= THIS% h(itr)
         ! /(Msun_geo**3)
       ENDIF

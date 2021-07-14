@@ -2090,6 +2090,8 @@ SUBMODULE (particles_id) spherical_shells
 
     CLOSE( UNIT= 2 )
 
+    CALL OMP_SET_NUM_THREADS(80)
+
     PRINT *, " * SUBROUTINE place_particles_spherical_shells executed."
     PRINT *
 

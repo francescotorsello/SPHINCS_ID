@@ -165,6 +165,10 @@ SUBMODULE (particles_id) particles_apm
       PRINT *, "npart_real=", npart_real
     ENDIF
 
+    !---------------------------------------!
+    !-- Allocate, assign and test h_guess --!
+    !---------------------------------------!
+
     IF(.NOT.ALLOCATED( h_guess ))THEN
       ALLOCATE( h_guess( max_npart ), STAT= ios, &
           ERRMSG= err_msg )
@@ -178,12 +182,19 @@ SUBMODULE (particles_id) particles_apm
 
     h_guess= 0.0D0
     DO a= 1, npart_real, 1
-      h_guess(a)= pvol(a)**third
+      h_guess(a)= 3.0D0*(pvol(a)**third)
       IF( ISNAN( h_guess(a) ) )THEN
         PRINT *, " ** ERROR! h_guess(", a, &
                  ") is a NaN in SUBROUTINE perform_apm!"
         PRINT *, "pvol(", a, ")=", pvol(a)
         PRINT *, "    Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+      IF( h_guess( a ) <= 0.0D0 )THEN
+        PRINT *, "** ERROR! h_guess(", a, ") is zero or negative!"
+        PRINT *, "   pvol(", a, ")=", pvol(a)
+        PRINT *, "   Stopping..."
         PRINT *
         STOP
       ENDIF
@@ -544,6 +555,28 @@ SUBMODULE (particles_id) particles_apm
                    all_pos, h_guess, &
                    h )
 
+    DO a= 1, npart_all, 1
+
+      IF( ISNAN( h( a ) ) )THEN
+        PRINT *, "** ERROR! h(", a, ") is a NaN!"
+        PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+        PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+        PRINT *, " Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+      IF( h( a ) <= 0.0D0 )THEN
+        PRINT *, "** ERROR! h(", a, ") is zero or negative!"
+        PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+        PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+        PRINT *, " * h(", a, ")= ", h(a)
+        PRINT *, " Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+    ENDDO
+
     PRINT *, " * Measure SPH particle number density..."
     PRINT *
 
@@ -560,6 +593,27 @@ SUBMODULE (particles_id) particles_apm
     nu= 1.0D0
     CALL density_loop( npart_all, all_pos, &    ! input
                        nu, h, nstar_real )      ! output
+
+    DO a= 1, npart_all, 1
+
+      IF( ISNAN( nstar_real( a ) ) )THEN
+
+        PRINT *, "** WARNING! nstar_real(", a, ") is a NaN!", &
+                 "   Changing the values of nstar_real and h to one taken", &
+                 "   from a neighboring particle."
+        IF( debug ) PRINT *, " * h(", a, ")=", h(a)
+        IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
+        IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
+        IF( debug ) PRINT *, " * r(", a, ")=", &
+                              SQRT( ( all_pos(1,a) - center )**2.0D0 &
+                              + all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )
+        PRINT *, " * Check if the smoothing length is 0 for some particles,", &
+                 "   and if so, make its initial guess, h_guess, a bit larger."
+        PRINT *
+
+      ENDIF
+
+    ENDDO
 
     IF( debug ) PRINT *, "4"
 
@@ -1085,12 +1139,13 @@ SUBMODULE (particles_id) particles_apm
       IF( debug ) PRINT *, "assign h..."
 
       h_guess(1:npart_real)= h
+      !h_guess(npart_real+1:npart_all)= dx*dy*dz
       CALL assign_h( nn_des, &
                      npart_all, &
                      all_pos, h_guess, &
                      h )
 
-      find_nan_in_h: DO a= 1, npart_all, 1
+      find_problem_in_h: DO a= 1, npart_all, 1
 
         IF( ISNAN( h( a ) ) )THEN
           PRINT *, "** ERROR! h(", a, ") is a NaN!"
@@ -1100,8 +1155,17 @@ SUBMODULE (particles_id) particles_apm
           PRINT *
           STOP
         ENDIF
+        IF( h( a ) <= 0.0D0 )THEN
+          PRINT *, "** ERROR! h(", a, ") is zero or negative!"
+          PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+          PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+          PRINT *, " * h(", a, ")= ", h(a)
+          PRINT *, " Stopping..."
+          PRINT *
+          STOP
+        ENDIF
 
-      ENDDO find_nan_in_h
+      ENDDO find_problem_in_h
 
       IF( debug ) PRINT *, "density_loop..."
 
@@ -1117,28 +1181,36 @@ SUBMODULE (particles_id) particles_apm
         IF( ISNAN( nstar_real( a ) ) )THEN
 
           PRINT *, "** WARNING! nstar_real(", a, ") is a NaN!", &
-                   "   Changing its value to one from a neighboring particle."
-          PRINT *, " * h(", a, ")=", h(a)
-          PRINT *, " * nu(", a, ")=", nu(a)
-          PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
-          PRINT *, " * r(", a, ")=", SQRT( ( all_pos(1,a) - center )**2.0D0 &
+                   "   Changing the values of nstar_real and h to one taken", &
+                   "   from a neighboring particle."
+          IF( debug ) PRINT *, " * h(", a, ")=", h(a)
+          IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
+          IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
+          IF( debug ) PRINT *, " * r(", a, ")=", &
+                                SQRT( ( all_pos(1,a) - center )**2.0D0 &
                                 + all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )
+          PRINT *
+          STOP
 
           IF( a == 1 )THEN
             DO a2= 2, npart_all, 1
               IF( .NOT.ISNAN( nstar_real( a2 ) ) )THEN
                 nstar_real( a )= nstar_real( a2 )
+                h( a )= h( a2 )
                 EXIT
               ENDIF
             ENDDO
           ELSEIF( npart_real == a )THEN
             nstar_real( a )= nstar_real( a - 1 )
+            h( a )= h( a - 1 )
           ELSEIF( npart_real + 1 == a )THEN
             nstar_real( a )= nstar_real( a + 1 )
+            h( a )= h( a + 1 )
           !ELSEIF( npart_all == a )THEN
           !  nstar_real( a )= nstar_real( a - 1 )
           ELSE
             nstar_real( a )= nstar_real( a - 1 )
+            h( a )= h( a - 1 )
           ENDIF
           ! TODO: here you need a recursive SUBROUTINE
           !CALL RANDOM_NUMBER( rand_num )
