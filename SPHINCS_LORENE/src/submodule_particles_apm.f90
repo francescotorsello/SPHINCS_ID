@@ -1389,7 +1389,7 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
       nstar_p( npart_real+1:npart_all )= 0.0D0
-      art_pr ( npart_real+1:npart_all )= 3.0D0*art_pr_max
+      art_pr ( npart_real+1:npart_all )= 1.0D0*art_pr_max
 
       PRINT *, "Before calling position_correction"
 

@@ -84,7 +84,14 @@ SUBMODULE (particles_id) spherical_shells
     END TYPE
 
     TYPE(pos_on_shells), DIMENSION(:), ALLOCATABLE:: pos_shells
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: pos_shell_tmp
+
+    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: pos_shell_tmp
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: g_xx_tmp
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: bar_density_tmp
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: gam_euler_tmp
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pvol_tmp
+
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     PRINT *, "** Executing the place_particles_shells..."
     PRINT *
@@ -938,11 +945,17 @@ SUBMODULE (particles_id) spherical_shells
     cnt2= 0
     r_cnt= 1
 
+    ALLOCATE( pos_shell_tmp  ( 3, CEILING(SQRT(DBLE(2*npart_approx))), CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( g_xx_tmp       ( CEILING(SQRT(DBLE(2*npart_approx))), CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( bar_density_tmp( CEILING(SQRT(DBLE(2*npart_approx))), CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( gam_euler_tmp  ( CEILING(SQRT(DBLE(2*npart_approx))), CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( pvol_tmp       ( CEILING(SQRT(DBLE(2*npart_approx))), CEILING(SQRT(DBLE(2*npart_approx))) ) )
+
     !----------------------!
     !--  Main iteration  --!
     !----------------------!
 
-    CALL OMP_SET_NUM_THREADS(1)
+    CALL OMP_SET_NUM_THREADS(80)
 
     PRINT *, THIS% randomize_phi
     PRINT *, THIS% randomize_theta
@@ -960,6 +973,12 @@ SUBMODULE (particles_id) spherical_shells
       !r= 1
 
     place_particles_on_shells: DO
+
+      pos_shell_tmp  = HUGE(0.0D0)
+      g_xx_tmp       = 0.0D0
+      bar_density_tmp= 0.0D0
+      gam_euler_tmp  = 0.0D0
+      pvol_tmp       = 0.0D0
 
       !IF( r_cnt == 2 ) r= 1
 
@@ -1043,7 +1062,9 @@ SUBMODULE (particles_id) spherical_shells
       !$OMP                     th,phi,rand_num2,phase_th,rel_sign), &
       !$OMP             SHARED(r,npart_shelleq,center,rad,alpha,pos_shells, &
       !$OMP                    npart_shell,colatitude_pos,bns_obj,n_shells, &
-      !$OMP                    dr_shells, shell_radii, shell_thickness, THIS), &
+      !$OMP                    dr_shells, shell_radii, shell_thickness, THIS, &
+      !$OMP                    g_xx_tmp, bar_density_tmp, gam_euler_tmp, &
+      !$OMP                    pos_shell_tmp, pvol_tmp ), &
       !$OMP             REDUCTION(+:npart_out,itr)
       DO th= 1, npart_shelleq( r )/4, 1 !npart_shelleq( r ) is even, see above
 
@@ -1145,33 +1166,40 @@ SUBMODULE (particles_id) spherical_shells
 
 !PRINT *, "2.2"
 
+          !CALL bns_obj% import_id( &
+          !         xtemp, ytemp, ztemp, &
+          !         pos_shells(r)% g_xx( itr + 1 ), &
+          !         pos_shells(r)% baryon_density( itr + 1 ), &
+          !         pos_shells(r)% gamma_euler( itr + 1 ) )
+
           CALL bns_obj% import_id( &
                    xtemp, ytemp, ztemp, &
-                   pos_shells(r)% g_xx( itr + 1 ), &
-                   pos_shells(r)% baryon_density( itr + 1 ), &
-                   pos_shells(r)% gamma_euler( itr + 1 ) )
+                   g_xx_tmp( th, phi ), &
+                   bar_density_tmp( th, phi ), &
+                   gam_euler_tmp( th, phi ) )
 
-          IF( pos_shells(r)% baryon_density( itr + 1 ) > 0.0D0 &
+          IF( bar_density_tmp( th, phi ) > 0.0D0 &
+              !pos_shells(r)% baryon_density( itr + 1 ) > 0.0D0 &
               .AND. &
               bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
 
-            IF( pos_shells(r)% baryon_density( itr + 1 ) == 0 )THEN
+            IF( bar_density_tmp( th, phi ) == 0 )THEN
+                !pos_shells(r)% baryon_density( itr + 1 ) == 0 )THEN
               PRINT *, "When placing first half of particles"
-              PRINT *, r, itr, itr + 1, pos_shells(r)% pos_shell( 1, itr + 1 ), &
-                       pos_shells(r)% pos_shell( 2, itr + 1 ), &
-                       pos_shells(r)% pos_shell( 3, itr + 1 ), &
-                       pos_shells(r)% baryon_density( itr + 1 )
+              PRINT *, r, th, phi, xtemp, ytemp, ztemp, &
+                       bar_density_tmp( th, phi )
             ENDIF
 
 !PRINT *, "2.3"
 
-            npart_out= npart_out + 1
-            pos_shells(r)% pos_shell( 1, itr + 1 )= xtemp
-            pos_shells(r)% pos_shell( 2, itr + 1 )= ytemp
-            pos_shells(r)% pos_shell( 3, itr + 1 )= ztemp
-            !pos_shell_tmp( 1, r, th, phi )= xtemp
-            !pos_shell_tmp( 2, r, th, phi )= ytemp
-            !pos_shell_tmp( 3, r, th, phi )= ztemp
+            !npart_out= npart_out + 1
+            !pos_shells(r)% pos_shell( 1, itr + 1 )= xtemp
+            !pos_shells(r)% pos_shell( 2, itr + 1 )= ytemp
+            !pos_shells(r)% pos_shell( 3, itr + 1 )= ztemp
+
+            pos_shell_tmp( 1, th, phi )= xtemp
+            pos_shell_tmp( 2, th, phi )= ytemp
+            pos_shell_tmp( 3, th, phi )= ztemp
 
 
             IF( th == 1 )THEN
@@ -1218,20 +1246,25 @@ SUBMODULE (particles_id) spherical_shells
             !pvol( npart_out )= rad**2.0D0*SIN(col) &
             !                   *dr_shells*dth_shells*dphi_shells
 
-            pos_shells(r)% pvol_shell2( itr + 1 )= rad**2.0D0*SIN(col) &
-                               *dr_shells*dth_shells*dphi_shells! &
-                               !*pos_shells(r)% g_xx( itr ) &
-                               !*SQRT(pos_shells(r)% g_xx( itr ))
+         ! This is commented out to parallelize the loop
+         !   pos_shells(r)% pvol_shell2( itr + 1 )= rad**2.0D0*SIN(col) &
+         !                      *dr_shells*dth_shells*dphi_shells! &
+         !                      !*pos_shells(r)% g_xx( itr ) &
+         !                      !*SQRT(pos_shells(r)% g_xx( itr ))
 
-            IF( pos_shells(r)% pvol_shell2( itr + 1 ) <= 0 )THEN
+             pvol_tmp( th, phi )= rad**2.0D0*SIN(col) &
+                                     *dr_shells*dth_shells*dphi_shells! &
+
+            IF( pvol_tmp( th, phi ) <= 0 )THEN
+                ! pos_shells(r)% pvol_shell2( itr + 1 ) <= 0 )THEN
               PRINT *, "When placing first half of particles"
-              PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr + 1, " ) =", &
-                       pos_shells(r)% pvol_shell2( itr + 1 )
+              PRINT *, "pvol_tmp( ", r, th, phi, " ) =", &
+                       pvol_tmp( th, phi )
               STOP
             ENDIF
 
 !PRINT *, "2.4"
-            itr= itr + 1
+            !itr= itr + 1
             !PRINT *, itr, npart_out, col/pi, phi*alpha(r)/pi
 
           ELSE
@@ -1253,14 +1286,16 @@ SUBMODULE (particles_id) spherical_shells
         !PRINT *, "Right after longitude loop"
       ENDDO
       !$OMP END PARALLEL DO
+
       !PRINT *, "Right after OMP"
-      IF( itr /= npart_shell( r )/2 )THEN
-        PRINT *, "** ERROR! Mismatch in the particle counters on shell ", r
-        PRINT *, "itr=", itr, "npart_shell( r )/2=", npart_shell( r )/2
-        PRINT *, "itr should be equal to npart_shell( r )/2. Stopping..."
-        PRINT *
-        STOP
-      ENDIF
+
+    !  IF( itr /= npart_shell( r )/2 )THEN
+    !    PRINT *, "** ERROR! Mismatch in the particle counters on shell ", r
+    !    PRINT *, "itr=", itr, "npart_shell( r )/2=", npart_shell( r )/2
+    !    PRINT *, "itr should be equal to npart_shell( r )/2. Stopping..."
+    !    PRINT *
+    !    STOP
+    !  ENDIF
       !PRINT *, npart_out
 
       !WRITE( *, "(A2,I4,I4,F3.2)", ADVANCE= "NO" ) &
@@ -1310,6 +1345,40 @@ SUBMODULE (particles_id) spherical_shells
       !  npart_out= npart_out - npart_shell( r )/2
       !  CYCLE
       !ENDIF
+
+      IF( debug ) PRINT *, "10.9"
+
+      itr= 0
+      DO th= 1, npart_shelleq( r )/4, 1
+        DO phi= 1, npart_shelleq( r ), 1
+
+          IF( pos_shell_tmp( 1, th, phi ) < HUGE(0.0D0) )THEN
+
+            itr= itr + 1
+            pos_shells(r)% pos_shell( 1, itr )= &
+                                              pos_shell_tmp( 1, th, phi )
+            pos_shells(r)% pos_shell( 2, itr )= &
+                                              pos_shell_tmp( 2, th, phi )
+            pos_shells(r)% pos_shell( 3, itr )= &
+                                              pos_shell_tmp( 3, th, phi )
+
+            pos_shells(r)% g_xx( itr )          = &
+                                              g_xx_tmp( th, phi )
+            pos_shells(r)% baryon_density( itr )= &
+                                              bar_density_tmp( th, phi )
+            pos_shells(r)% gamma_euler( itr )   = &
+                                              gam_euler_tmp( th, phi )
+            pos_shells(r)% pvol_shell2( itr )   = &
+                                              pvol_tmp( th, phi )
+
+
+          ENDIF
+
+        ENDDO
+      ENDDO
+      npart_out= npart_out + itr
+
+      IF( debug ) PRINT *, "11"
 
       !PRINT *, "Right before correction of particle number"
       !PRINT *, npart_out
@@ -1558,6 +1627,8 @@ SUBMODULE (particles_id) spherical_shells
       !  ENDIF
       !ENDIF
 
+      IF( debug ) PRINT *, "10"
+
       PRINT *, " * Placed", npart_shell( r )/2, &
                " particles on one emisphere of spherical shell ", r, &
                " out of ", n_shells
@@ -1595,6 +1666,8 @@ SUBMODULE (particles_id) spherical_shells
         lower_bound_tmp= lower_bound
         !PRINT *, "outer layers"
       ENDIF
+
+      IF( debug ) PRINT *, "12"
 
       !PRINT *, npart_shelleq( r ), (npart_shelleq( r )**2)/2, npart_shell( r )
       !PRINT *, colatitude_pos( r )% colatitudes
@@ -1655,6 +1728,8 @@ SUBMODULE (particles_id) spherical_shells
       EXIT
     ENDIF
 
+    IF( debug ) PRINT *, "13"
+
     !IF( find_npart )THEN
     !  IF( 2*npart_out >= 1.2D0*npart_approx )THEN
     !    !m_p= 1.1D0*m_p
@@ -1683,6 +1758,8 @@ SUBMODULE (particles_id) spherical_shells
 
     ENDDO find_desired_npart
     !STOP
+
+    IF( debug ) PRINT *, "14"
 
     PRINT *, "Mirroring particles..."
 
