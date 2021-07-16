@@ -41,7 +41,8 @@ SUBMODULE (particles_id) spherical_shells
 
     INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart_tmp, cnt, &
               shell_index, r, th, phi, i_shell, npart_test, npart_shell_tmp, &
-              cnt2, rel_sign, cnt3, dim_seed, r_cnt, first_shell, prev_shell
+              cnt2, rel_sign, cnt3, dim_seed, r_cnt, first_shell, prev_shell, &
+              npart_discard
     !INTEGER, PARAMETER:: max_length= 5D+6
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx, seed
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
@@ -1045,6 +1046,7 @@ SUBMODULE (particles_id) spherical_shells
       !dphi_shells= alpha(r)
       !rad= shell_radii(r)
       itr= 0
+      npart_discard= 0
 
       npart_shell_tmp= npart_shell( r )
       !PRINT *, npart_shell_tmp
@@ -1061,11 +1063,11 @@ SUBMODULE (particles_id) spherical_shells
       !$OMP                     dphi_shells,dth_shells, delta_r, &
       !$OMP                     th,phi,rand_num2,phase_th,rel_sign), &
       !$OMP             SHARED(r,npart_shelleq,center,rad,alpha,pos_shells, &
-      !$OMP                    npart_shell,colatitude_pos,bns_obj,n_shells, &
+      !$OMP                    colatitude_pos,bns_obj,n_shells, &
       !$OMP                    dr_shells, shell_radii, shell_thickness, THIS, &
       !$OMP                    g_xx_tmp, bar_density_tmp, gam_euler_tmp, &
       !$OMP                    pos_shell_tmp, pvol_tmp ), &
-      !$OMP             REDUCTION(+:npart_out,itr)
+      !$OMP             REDUCTION(+:npart_discard)
       DO th= 1, npart_shelleq( r )/4, 1 !npart_shelleq( r ) is even, see above
 
         !PRINT *, "itr= ", itr
@@ -1269,7 +1271,7 @@ SUBMODULE (particles_id) spherical_shells
 
           ELSE
 
-            npart_shell( r )= npart_shell( r ) - 2
+            npart_discard= npart_discard + 2
             !PRINT *, "removed"
 
           ENDIF
@@ -1286,6 +1288,8 @@ SUBMODULE (particles_id) spherical_shells
         !PRINT *, "Right after longitude loop"
       ENDDO
       !$OMP END PARALLEL DO
+
+      npart_shell( r )= npart_shell( r ) - npart_discard
 
       !PRINT *, "Right after OMP"
 
