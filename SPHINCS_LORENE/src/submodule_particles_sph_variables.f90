@@ -298,20 +298,6 @@ SUBMODULE (particles_id) particles_sph_variables
 
       IF( debug ) PRINT *, "3"
 
-      IF( .NOT.ALLOCATED( THIS% pvol ) )THEN
-        PRINT *, "** ERROR! The array pvol is not allocated. ", &
-                 "Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-
-      IF( .NOT.THIS% apm_iterate )THEN
-
-        THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
-        h(itr)= THIS% h(itr)
-        ! /(Msun_geo**3)
-      ENDIF
-
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
       nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
@@ -396,6 +382,37 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ENDDO compute_SPH_variables_on_particles
     !THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+    IF( .NOT.ALLOCATED( THIS% pvol ) )THEN
+      PRINT *, "** ERROR! The array pvol is not allocated. ", &
+               "Stopping..."
+      PRINT *
+      STOP
+    ENDIF
+
+    IF( .NOT.THIS% apm_iterate1 )THEN
+
+      compute_h1: DO itr= 1, THIS% npart1, 1
+
+        THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
+        h(itr)= THIS% h(itr)
+        ! /(Msun_geo**3)
+
+      ENDDO compute_h1
+
+    ENDIF
+
+    IF( .NOT.THIS% apm_iterate2 )THEN
+
+      compute_h2: DO itr= THIS% npart1 + 1, THIS% npart, 1
+
+        THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
+        h(itr)= THIS% h(itr)
+        ! /(Msun_geo**3)
+
+      ENDDO compute_h2
+
+    ENDIF
 
     IF( debug ) PRINT *, "1"
 
@@ -665,19 +682,78 @@ SUBMODULE (particles_id) particles_sph_variables
       PRINT *, " * Number of particles on NS 2=", THIS% npart2
       PRINT *
 
-    ELSEIF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
+    ELSEIF( THIS% mass_ratio >= 0.995 .AND. &
+            THIS% mass_ratio <= 1.005 .AND. &
+            THIS% reflect_particles_x )THEN
 
-      ! Do nothing, nu is already read fom file
-      nu= THIS% nu
-      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
-      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
-      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+      IF( THIS% apm_iterate1 )THEN
 
-    ELSEIF( THIS% apm_iterate )THEN
+        ! Do nothing, nu and h are already computed in the APM iteration
+        nu= THIS% nu
+        h = THIS% h
+        THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
+        THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+      ELSE
+
+        DO itr= 1, THIS% npart1, 1
+          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar1= THIS% nbar1 + nu(itr)
+        ENDDO
+
+        nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
+        THIS% nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
+        THIS% nbar2   = THIS% nbar1
+
+        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+      ENDIF
+
+    ELSEIF( THIS% apm_iterate1 .AND. THIS% apm_iterate2 )THEN
 
       ! Do nothing, nu and h are already computed in the APM iteration
       nu= THIS% nu
       h = THIS% h
+      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
+      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+    ELSEIF( THIS% apm_iterate1 .AND. .NOT.THIS% apm_iterate2 )THEN
+
+      ! Do nothing, nu and h are already computed in the APM iteration
+      nu(1:THIS% npart1)= THIS% nu(1:THIS% npart1)
+      h(1:THIS% npart1) = THIS% h(1:THIS% npart1)
+      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
+
+      DO itr= THIS% npart1 + 1, THIS% npart, 1
+        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+        THIS% nu(itr)= nu(itr)
+        THIS% nbar2= THIS% nbar2 + nu(itr)
+      ENDDO
+
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+    ELSEIF( .NOT.THIS% apm_iterate1 .AND. THIS% apm_iterate2 )THEN
+
+      DO itr= 1, THIS% npart1, 1
+        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+        THIS% nu(itr)= nu(itr)
+        THIS% nbar1= THIS% nbar1 + nu(itr)
+      ENDDO
+
+      ! Do nothing, nu and h are already computed in the APM iteration
+      nu(THIS% npart1+1:THIS% npart)= THIS% nu(THIS% npart1+1:THIS% npart)
+      h(THIS% npart1+1:THIS% npart) = THIS% h(THIS% npart1+1:THIS% npart)
+      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
+    ELSEIF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
+
+      ! Do nothing, nu is already read fom file
+      nu= THIS% nu
       THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
       THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
       THIS% nbar_tot= THIS% nbar1 + THIS% nbar2

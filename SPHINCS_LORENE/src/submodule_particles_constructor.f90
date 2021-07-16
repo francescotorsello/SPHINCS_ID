@@ -123,8 +123,8 @@ SUBMODULE (particles_id) particles_constructor
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
-              randomize_r, apm_iterate, mass_it, find_npart, read_nu, &
-              reflect_particles_x
+              randomize_r, apm_iterate1, apm_iterate2, mass_it, find_npart, &
+              read_nu, reflect_particles_x
     LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -138,8 +138,8 @@ SUBMODULE (particles_id) particles_constructor
               npart_approx, last_r, upper_bound, lower_bound, &
               upper_factor, lower_factor, max_steps, &
               randomize_phi, randomize_theta, randomize_r, find_npart, &
-              apm_iterate, apm_max_it, max_inc, mass_it, nuratio_thres, &
-              reflect_particles_x, nx_gh, ny_gh, nz_gh
+              apm_iterate1, apm_iterate2, apm_max_it, max_inc, mass_it, &
+              nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh
 
     !
     !-- Initialize the timers
@@ -190,15 +190,17 @@ SUBMODULE (particles_id) particles_constructor
     READ( 10, NML= bns_particles )
     CLOSE( 10 )
 
-    parts_obj% use_thres= use_thres
-    parts_obj% correct_nu= correct_nu
-    parts_obj% compose_eos= compose_eos
-    parts_obj% compose_path= compose_path
-    parts_obj% compose_filename= compose_filename
-    parts_obj% redistribute_nu= redistribute_nu
-    parts_obj% nu_ratio= nu_ratio
+    parts_obj% use_thres          = use_thres
+    parts_obj% correct_nu         = correct_nu
+    parts_obj% compose_eos        = compose_eos
+    parts_obj% compose_path       = compose_path
+    parts_obj% compose_filename   = compose_filename
+    parts_obj% redistribute_nu    = redistribute_nu
+    parts_obj% nu_ratio           = nu_ratio
+    parts_obj% reflect_particles_x= reflect_particles_x
     ! APM parameters
-    parts_obj% apm_iterate   = apm_iterate
+    parts_obj% apm_iterate1   = apm_iterate1
+    parts_obj% apm_iterate2   = apm_iterate2
     !parts_obj% apm_max_it   = apm_max_it
     !parts_obj% max_inc      = max_inc
     !parts_obj% mass_it      = mass_it
@@ -1086,10 +1088,10 @@ SUBMODULE (particles_id) particles_constructor
     !  ENDDO
     !ENDDO
 
-    IF( apm_iterate )THEN
+    IF( apm_iterate1 )THEN
 
       PRINT *
-      PRINT *, " ** Placing particles using the APM..."
+      PRINT *, " ** Placing particles on star 1 using the APM..."
       PRINT *
 
       IF(.NOT.ALLOCATED( parts_obj% h ))THEN
@@ -1132,7 +1134,7 @@ SUBMODULE (particles_id) particles_constructor
                   filename_apm_pos_id, filename_apm_pos, filename_apm_results )
       CALL parts_obj% apm1_timer% stop_timer()
 
-      PRINT *, "APM done for star 1"
+      PRINT *, " ** Particles placed on star 1 according to the APM."
       PRINT *
 
       IF( parts_obj% mass_ratio >= 0.995 .AND. &
@@ -1165,33 +1167,60 @@ SUBMODULE (particles_id) particles_constructor
       !           "   lorene_bns_id_particles ."
       !  PRINT *
       !  STOP
-
-      ELSE
-
-        filename_apm_pos_id = "apm_pos_id2.dat"
-        filename_apm_pos    = "apm_pos2.dat"
-        filename_apm_results= "apm_results2.dat"
-
-        ! Star 2
-        CALL parts_obj% apm2_timer% start_timer()
-        CALL parts_obj% perform_apm( &
-                  bns_obj, &
-                  parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
-                  parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
-                  parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
-                  parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
-                  center2, com2, parts_obj% mass2, &
-                  apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                  nuratio_thres, nx_gh, ny_gh, nz_gh, &
-                  filename_apm_pos_id, filename_apm_pos, filename_apm_results )
-        CALL parts_obj% apm2_timer% stop_timer()
-
-        PRINT *, "APM done for star 2"
-        PRINT *
+      PRINT *, " ** Particles placed on star 1 according to the APM", &
+               " reflected about the yz plane onto star 2."
+      PRINT *
 
       ENDIF
+    ENDIF
+    IF( apm_iterate2 .AND. .NOT.(parts_obj% mass_ratio >= 0.995 .AND. &
+        parts_obj% mass_ratio <= 1.005 .AND. reflect_particles_x) )THEN
 
-      PRINT *, " ** Particles placed according to the APM."
+      PRINT *
+      PRINT *, " ** Placing particles on star 2 using the APM..."
+      PRINT *
+
+      IF(.NOT.ALLOCATED( parts_obj% h ))THEN
+        ALLOCATE( parts_obj% h( parts_obj% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array h in SUBROUTINE ", &
+                    "construct_particles. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+      IF(.NOT.ALLOCATED( parts_obj% nu ))THEN
+        ALLOCATE( parts_obj% nu( parts_obj% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nu in SUBROUTINE ", &
+                    "construct_particles. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+      filename_apm_pos_id = "apm_pos_id2.dat"
+      filename_apm_pos    = "apm_pos2.dat"
+      filename_apm_results= "apm_results2.dat"
+
+      ! Star 2
+      CALL parts_obj% apm2_timer% start_timer()
+      CALL parts_obj% perform_apm( &
+                bns_obj, &
+                parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
+                parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
+                parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
+                parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
+                center2, com2, parts_obj% mass2, &
+                apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
+                nuratio_thres, nx_gh, ny_gh, nz_gh, &
+                filename_apm_pos_id, filename_apm_pos, filename_apm_results )
+      CALL parts_obj% apm2_timer% stop_timer()
+
+      PRINT *, " ** Particles placed on star 2 according to the APM."
       PRINT *
 
     ENDIF

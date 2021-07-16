@@ -496,7 +496,7 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * Positions of ghost and real particles printed to ", &
              finalnamefile, " ."
 
-    STOP
+    !STOP
 
     npart_all= npart_real + npart_ghost
 
@@ -2553,7 +2553,13 @@ SUBMODULE (particles_id) particles_apm
     IF( debug ) PRINT *, "2"
 
     pos_input= pos
+
+    IF( debug ) PRINT *, "2.5"
+
     h_output = h
+
+    IF( debug ) PRINT *, "2.6"
+
     nu_output= nu
 
     IF( debug ) PRINT *, "3"

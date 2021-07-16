@@ -496,7 +496,7 @@ SUBMODULE (particles_id) spherical_shells
     PRINT *, " * Integrating the baryon mass density to get the mass profile..."
     PRINT *
 
-    CALL OMP_SET_NUM_THREADS(80)
+    !CALL OMP_SET_NUM_THREADS(80)
 
     dr             = radius/500.0D0
     dth            = pi/2.0D0/250.0D0
@@ -955,11 +955,11 @@ SUBMODULE (particles_id) spherical_shells
     !--  Main iteration  --!
     !----------------------!
 
-    CALL OMP_SET_NUM_THREADS(80)
+    !CALL OMP_SET_NUM_THREADS(80)
 
-    PRINT *, THIS% randomize_phi
-    PRINT *, THIS% randomize_theta
-    PRINT *, THIS% randomize_r
+    IF( debug ) PRINT *, THIS% randomize_phi
+    IF( debug ) PRINT *, THIS% randomize_theta
+    IF( debug ) PRINT *, THIS% randomize_r
 
     find_desired_npart: DO
 
@@ -1759,6 +1759,12 @@ SUBMODULE (particles_id) spherical_shells
     ENDDO find_desired_npart
     !STOP
 
+    DEALLOCATE( pos_shell_tmp   )
+    DEALLOCATE( g_xx_tmp        )
+    DEALLOCATE( bar_density_tmp )
+    DEALLOCATE( gam_euler_tmp   )
+    DEALLOCATE( pvol_tmp        )
+
     IF( debug ) PRINT *, "14"
 
     PRINT *, "Mirroring particles..."
@@ -2170,7 +2176,7 @@ SUBMODULE (particles_id) spherical_shells
 
     CLOSE( UNIT= 2 )
 
-    CALL OMP_SET_NUM_THREADS(80)
+    !CALL OMP_SET_NUM_THREADS(80)
 
     PRINT *, " * SUBROUTINE place_particles_spherical_shells executed."
     PRINT *

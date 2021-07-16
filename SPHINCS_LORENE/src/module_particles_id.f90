@@ -173,8 +173,9 @@ MODULE particles_id
     LOGICAL:: correct_nu
     LOGICAL:: compose_eos
     LOGICAL:: randomize_phi, randomize_theta, randomize_r
-    LOGICAL:: apm_iterate
+    LOGICAL:: apm_iterate1, apm_iterate2
     LOGICAL:: read_nu
+    LOGICAL:: reflect_particles_x
 
     TYPE(timer), PUBLIC:: placer_timer
     TYPE(timer), PUBLIC:: apm1_timer
