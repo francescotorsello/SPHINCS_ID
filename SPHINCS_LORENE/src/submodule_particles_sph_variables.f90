@@ -101,7 +101,7 @@ SUBMODULE (particles_id) particles_sph_variables
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: h_guess
 
-    LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .TRUE.
 
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
@@ -296,8 +296,6 @@ SUBMODULE (particles_id) particles_sph_variables
       !  THIS% h(itr)= 3.0*(THIS% vol2_a)**third
       !ENDIF
 
-      IF( debug ) PRINT *, "3"
-
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
       nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
@@ -392,11 +390,19 @@ SUBMODULE (particles_id) particles_sph_variables
 
     IF( .NOT.THIS% apm_iterate1 )THEN
 
+      IF( debug ) PRINT *, "Compute first guess for h for star 1..."
+
       compute_h1: DO itr= 1, THIS% npart1, 1
 
         THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
         h(itr)= THIS% h(itr)
         ! /(Msun_geo**3)
+        IF( debug .AND. THIS% h(itr) <= 0.0D0 )THEN
+          PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
+          PRINT *, "Stopping..."
+          PRINT *
+          STOP
+        ENDIF
 
       ENDDO compute_h1
 
@@ -404,11 +410,19 @@ SUBMODULE (particles_id) particles_sph_variables
 
     IF( .NOT.THIS% apm_iterate2 )THEN
 
+      IF( debug ) PRINT *, "Compute first guess for h for star 2..."
+
       compute_h2: DO itr= THIS% npart1 + 1, THIS% npart, 1
 
         THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
         h(itr)= THIS% h(itr)
         ! /(Msun_geo**3)
+        IF( debug .AND. THIS% h(itr) <= 0.0D0 )THEN
+          PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
+          PRINT *, "Stopping..."
+          PRINT *
+          STOP
+        ENDIF
 
       ENDDO compute_h2
 
@@ -682,6 +696,14 @@ SUBMODULE (particles_id) particles_sph_variables
       PRINT *, " * Number of particles on NS 2=", THIS% npart2
       PRINT *
 
+    ELSEIF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
+
+      ! Do nothing, nu is already read from file
+      nu= THIS% nu
+      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
+      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
     ELSEIF( THIS% mass_ratio >= 0.995 .AND. &
             THIS% mass_ratio <= 1.005 .AND. &
             THIS% reflect_particles_x )THEN
@@ -705,7 +727,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
         nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
         THIS% nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
-        THIS% nbar2   = THIS% nbar1
+        THIS% nbar2= THIS% nbar1
 
         THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
@@ -748,14 +770,6 @@ SUBMODULE (particles_id) particles_sph_variables
       h(THIS% npart1+1:THIS% npart) = THIS% h(THIS% npart1+1:THIS% npart)
       THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
 
-      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-
-    ELSEIF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
-
-      ! Do nothing, nu is already read fom file
-      nu= THIS% nu
-      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
-      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
       THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     ELSE
@@ -993,12 +1007,33 @@ SUBMODULE (particles_id) particles_sph_variables
 
     PRINT *, " * Computing neighbours..."
     PRINT *
+    CALL assign_h( ndes, &
+                   THIS% npart, &
+                   THIS% pos, THIS% h, &
+                   h )
     CALL exact_nei_tree_update( ndes,        &
                                 THIS% npart, &
                                 THIS% pos,   &
                                 THIS% nu )
 
     THIS% h= h
+
+    check_h: DO itr= 1, THIS% npart, 1
+
+      IF( ISNAN( THIS% h(itr) ) )THEN
+        PRINT *, "** ERROR! h(", itr, ") is a NaN"
+        PRINT *, "Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+      IF( THIS% h(itr) <= 0.0D0 )THEN
+        PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
+        PRINT *, "Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+    ENDDO check_h
 
     !STOP
 

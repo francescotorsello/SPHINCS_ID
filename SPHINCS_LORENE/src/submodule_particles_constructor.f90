@@ -549,16 +549,16 @@ SUBMODULE (particles_id) particles_constructor
 
       ! First guess of the particle volume (it will be computed exactly later)
 
-      pvol_tmp= 0
+      pvol_tmp= 0.0D0
       DO itr= 1, parts_obj% npart - 1, 1
 
         pvol_tmp= pvol_tmp + ABS( parts_obj% pos(3,itr + 1) &
                                 - parts_obj% pos(3,itr) )
 
       ENDDO
-      pvol_tmp= pvol_tmp/( parts_obj% npart - 1)
+      pvol_tmp= pvol_tmp/( parts_obj% npart - 1 )
 
-      parts_obj% pvol= pvol_tmp
+      parts_obj% pvol= 2.0D0*pvol_tmp**3.0D0
 
       IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 

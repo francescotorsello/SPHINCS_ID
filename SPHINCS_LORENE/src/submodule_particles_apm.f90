@@ -345,9 +345,9 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
     ENDIF
 
-    rad_x= larger_radius + h_av/1.0D0
-    rad_y= radius_y + h_av/1.0D0
-    rad_z= radius_z + h_av/1.0D0
+    rad_x= larger_radius + 0.20D0 !+ h_av/7.0D0
+    rad_y= radius_y + 0.20D0 !+ h_av/7.0D0
+    rad_z= radius_z + 0.20D0 !+ h_av/7.0D0
 
     IF( debug ) PRINT *, "larger_radius= ", larger_radius
     IF( debug ) PRINT *, "radius_y= ", radius_y
