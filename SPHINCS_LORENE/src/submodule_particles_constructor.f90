@@ -991,89 +991,133 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )
     parts_obj% pvol= parts_obj% pvol( 1:parts_obj% npart )
 
-    IF(.NOT.ALLOCATED( x_sort ))THEN
-      ALLOCATE( x_sort( parts_obj% npart ), &
-                STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array x_sort in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( y_sort ))THEN
-      ALLOCATE( y_sort( parts_obj% npart ), &
-                STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array y_sort in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( z_sort ))THEN
-      ALLOCATE( z_sort( parts_obj% npart ), &
-                STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array z_sort in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    ! Sort x, y, z coordinates of the particles
-    CALL indexx( parts_obj% npart, parts_obj% pos( 1, : ), x_sort )
-    CALL indexx( parts_obj% npart, parts_obj% pos( 2, : ), y_sort )
-    CALL indexx( parts_obj% npart, parts_obj% pos( 3, : ), z_sort )
+ !   IF(.NOT.ALLOCATED( x_sort ))THEN
+ !     ALLOCATE( x_sort( parts_obj% npart ), &
+ !               STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...allocation error for array x_sort in SUBROUTINE" &
+ !                 // "place_particles_. ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
+ !   IF(.NOT.ALLOCATED( y_sort ))THEN
+ !     ALLOCATE( y_sort( parts_obj% npart ), &
+ !               STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...allocation error for array y_sort in SUBROUTINE" &
+ !                 // "place_particles_. ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
+ !   IF(.NOT.ALLOCATED( z_sort ))THEN
+ !     ALLOCATE( z_sort( parts_obj% npart ), &
+ !               STAT= ios, ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...allocation error for array z_sort in SUBROUTINE" &
+ !                 // "place_particles_. ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
+ !   ! Sort x, y, z coordinates of the particles
+ !   CALL indexx( parts_obj% npart, parts_obj% pos( 1, : ), x_sort )
+ !   CALL indexx( parts_obj% npart, parts_obj% pos( 2, : ), y_sort )
+ !   CALL indexx( parts_obj% npart, parts_obj% pos( 3, : ), z_sort )
 
     ! Check that there aren't particles with the same coordinates
     PRINT *, "** Checking that there are no multiple particles", &
              " at the same position..."
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( parts_obj ) &
+    !$OMP             PRIVATE( itr, itr2 )
     DO itr= 1, parts_obj% npart - 1, 1
-      IF( parts_obj% pos( 1, x_sort(itr) ) == &
-                parts_obj% pos( 1, x_sort(itr + 1) ) .AND. &
-          parts_obj% pos( 2, x_sort(itr) ) == &
-                parts_obj% pos( 2, x_sort(itr + 1) ) .AND. &
-          parts_obj% pos( 3, x_sort(itr) ) == &
-                parts_obj% pos( 3, x_sort(itr + 1) ) )THEN
-        PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-                 "The two particles ", itr, " and", itr - 1, " have the same ",&
-                 "coordinates!"
-        PRINT *, parts_obj% pos( 1, x_sort(itr) ), parts_obj% pos( 1, x_sort(itr) ), parts_obj% pos( 1, x_sort(itr) )
-        PRINT *, parts_obj% pos( 1, x_sort(itr + 1) ), parts_obj% pos( 1, x_sort(itr + 1) ), parts_obj% pos( 1, x_sort(itr + 1) )
-        STOP
-      ENDIF
+      DO itr2= itr + 1, parts_obj% npart, 1
+
+        ! If they have the same radial distance
+      !  IF( parts_obj% pos( 1, itr )**2.0D0 + parts_obj% pos( 2, itr )**2.0D0 &
+      !      + parts_obj% pos( 3, itr )**2.0D0 == &
+      !      parts_obj% pos( 1, itr2 )**2.0D0 + parts_obj% pos(2, itr2 )**2.0D0 &
+      !      + parts_obj% pos( 3, itr2 )**2.0D0 &
+      !  )THEN
+
+          ! If they have the same x
+          IF( parts_obj% pos( 1, itr ) == &
+              parts_obj% pos( 1, itr2 ) )THEN
+
+            ! If they have the same y
+            IF( parts_obj% pos( 2, itr ) == &
+                parts_obj% pos( 2, itr2 ) )THEN
+
+              ! If they have the same z
+              IF( parts_obj% pos( 3, itr ) == &
+                  parts_obj% pos( 3, itr2 ) )THEN
+
+                ! They are the same
+                PRINT *, "** ERROR! ", "The two particles ", itr, " and", &
+                         itr2, " have the same coordinates!"
+                PRINT *, parts_obj% pos( :, itr )
+                PRINT *, parts_obj% pos( :, itr2 )
+                PRINT *, " * Stopping..."
+                PRINT *
+                STOP
+
+              ENDIF
+            ENDIF
+          ENDIF
+      !  ENDIF
+
+      ENDDO
     ENDDO
-    DO itr= 1, parts_obj% npart - 1, 1
-      IF( parts_obj% pos( 1, y_sort(itr) ) == &
-                parts_obj% pos( 1, y_sort(itr + 1) ) .AND. &
-          parts_obj% pos( 2, y_sort(itr) ) == &
-                parts_obj% pos( 2, y_sort(itr + 1) ) .AND. &
-          parts_obj% pos( 3, y_sort(itr) ) == &
-                parts_obj% pos( 3, y_sort(itr + 1) ) )THEN
-        PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-                 "The two particles ", itr, " and", itr - 1, " have the same ",&
-                 "coordinates!"
-        PRINT *, parts_obj% pos( 1, y_sort(itr) ), parts_obj% pos( 1, y_sort(itr) ), parts_obj% pos( 1, y_sort(itr) )
-        PRINT *, parts_obj% pos( 1, y_sort(itr + 1) ), parts_obj% pos( 1, y_sort(itr + 1) ), parts_obj% pos( 1, y_sort(itr + 1) )
-        STOP
-      ENDIF
-    ENDDO
-    DO itr= 1, parts_obj% npart - 1, 1
-      IF( parts_obj% pos( 1, z_sort(itr) ) == &
-                parts_obj% pos( 1, z_sort(itr + 1) ) .AND. &
-          parts_obj% pos( 2, z_sort(itr) ) == &
-                parts_obj% pos( 2, z_sort(itr + 1) ) .AND. &
-          parts_obj% pos( 3, z_sort(itr) ) == &
-                parts_obj% pos( 3, z_sort(itr + 1) ) )THEN
-        PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-                 "The two particles ", itr, " and", itr - 1, " have the same ",&
-                 "coordinates!"
-        PRINT *, parts_obj% pos( 1, z_sort(itr) ), parts_obj% pos( 1, z_sort(itr) ), parts_obj% pos( 1, z_sort(itr) )
-        PRINT *, parts_obj% pos( 1, z_sort(itr + 1) ), parts_obj% pos( 1, z_sort(itr + 1) ), parts_obj% pos( 1, z_sort(itr + 1) )
-        STOP
-      ENDIF
-    ENDDO
+    !$OMP END PARALLEL DO
+
+  !  DO itr= 1, parts_obj% npart - 1, 1
+  !    IF( parts_obj% pos( 1, x_sort(itr) ) == &
+  !              parts_obj% pos( 1, x_sort(itr + 1) ) .AND. &
+  !        parts_obj% pos( 2, x_sort(itr) ) == &
+  !              parts_obj% pos( 2, x_sort(itr + 1) ) .AND. &
+  !        parts_obj% pos( 3, x_sort(itr) ) == &
+  !              parts_obj% pos( 3, x_sort(itr + 1) ) )THEN
+  !      PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+  !               "The two particles ", itr, " and", itr - 1, " have the same ",&
+  !               "coordinates!"
+  !      PRINT *, parts_obj% pos( 1, x_sort(itr) ), parts_obj% pos( 1, x_sort(itr) ), parts_obj% pos( 1, x_sort(itr) )
+  !      PRINT *, parts_obj% pos( 1, x_sort(itr + 1) ), parts_obj% pos( 1, x_sort(itr + 1) ), parts_obj% pos( 1, x_sort(itr + 1) )
+  !      STOP
+  !    ENDIF
+  !  ENDDO
+  !  DO itr= 1, parts_obj% npart - 1, 1
+  !    IF( parts_obj% pos( 1, y_sort(itr) ) == &
+  !              parts_obj% pos( 1, y_sort(itr + 1) ) .AND. &
+  !        parts_obj% pos( 2, y_sort(itr) ) == &
+  !              parts_obj% pos( 2, y_sort(itr + 1) ) .AND. &
+  !        parts_obj% pos( 3, y_sort(itr) ) == &
+  !              parts_obj% pos( 3, y_sort(itr + 1) ) )THEN
+  !      PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+  !               "The two particles ", itr, " and", itr - 1, " have the same ",&
+  !               "coordinates!"
+  !      PRINT *, parts_obj% pos( 1, y_sort(itr) ), parts_obj% pos( 1, y_sort(itr) ), parts_obj% pos( 1, y_sort(itr) )
+  !      PRINT *, parts_obj% pos( 1, y_sort(itr + 1) ), parts_obj% pos( 1, y_sort(itr + 1) ), parts_obj% pos( 1, y_sort(itr + 1) )
+  !      STOP
+  !    ENDIF
+  !  ENDDO
+  !  DO itr= 1, parts_obj% npart - 1, 1
+  !    IF( parts_obj% pos( 1, z_sort(itr) ) == &
+  !              parts_obj% pos( 1, z_sort(itr + 1) ) .AND. &
+  !        parts_obj% pos( 2, z_sort(itr) ) == &
+  !              parts_obj% pos( 2, z_sort(itr + 1) ) .AND. &
+  !        parts_obj% pos( 3, z_sort(itr) ) == &
+  !              parts_obj% pos( 3, z_sort(itr + 1) ) )THEN
+  !      PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
+  !               "The two particles ", itr, " and", itr - 1, " have the same ",&
+  !               "coordinates!"
+  !      PRINT *, parts_obj% pos( 1, z_sort(itr) ), parts_obj% pos( 1, z_sort(itr) ), parts_obj% pos( 1, z_sort(itr) )
+  !      PRINT *, parts_obj% pos( 1, z_sort(itr + 1) ), parts_obj% pos( 1, z_sort(itr + 1) ), parts_obj% pos( 1, z_sort(itr + 1) )
+  !      STOP
+  !    ENDIF
+  !  ENDDO
 
     !DO itr= 1, parts_obj% npart, 1
     !  DO itr2= itr + 1, parts_obj% npart, 1
@@ -1330,152 +1374,152 @@ SUBMODULE (particles_id) particles_constructor
     !ENDDO
     ! Ok it seems working
 
-    PRINT *, "** Computing typical length scale for the change in pressure", &
-             " on the x axis."
-    PRINT *
-
-    ALLOCATE( abs_pos( 3, parts_obj% npart ) )
-
-    DO itr = 1, parts_obj% npart, 1
-      abs_pos( 1, itr )= ABS( parts_obj% pos( 1, itr ) )
-      abs_pos( 2, itr )= ABS( parts_obj% pos( 2, itr ) )
-      abs_pos( 3, itr )= ABS( parts_obj% pos( 3, itr ) )
-    ENDDO
-
-    min_y_index= 0
-    min_abs_y= 1D+20
-    DO itr = 1, parts_obj% npart, 1
-      IF( ABS( parts_obj% pos( 2, itr ) ) < min_abs_y )THEN
-        min_abs_y= ABS( parts_obj% pos( 2, itr ) )
-        min_y_index= itr
-      ENDIF
-    ENDDO
-
-    min_z_index= 0
-    min_abs_z= 1D+20
-    DO itr = 1, parts_obj% npart, 1
-      IF( ABS( parts_obj% pos( 3, itr ) ) < min_abs_z )THEN
-        min_abs_z= ABS( parts_obj% pos( 3, itr ) )
-        min_z_index= itr
-      ENDIF
-    ENDDO
-
-    min_abs_z= MINVAL( abs_pos( 3, : ) )
-
-    !PRINT *, "1"
-
-    cntr1= 0
-    cntr2= 0
-    DO itr = 1, parts_obj% npart, 1
-      IF( parts_obj% pos( 3, itr ) == min_abs_z &
-          .AND. &
-          ABS( ( parts_obj% pos( 2, itr ) - &
-                 parts_obj% pos( 2, min_y_index ) )/ &
-                 parts_obj% pos( 2, min_y_index ) ) < 1.0D-5 &
-      )THEN
-
-        IF( parts_obj% pos( 1, itr ) < 0 )THEN
-          cntr1= cntr1 + 1
-        ELSEIF( parts_obj% pos( 1, itr ) > 0 )THEN
-          cntr2= cntr2 + 1
-        ENDIF
-
-      ENDIF
-    ENDDO
-    !PRINT *, "cntr1= ", cntr1
-    !PRINT *, "cntr2= ", cntr2
-
-    ALLOCATE( parts_obj% pos_x1( cntr1 ) )
-    ALLOCATE( parts_obj% pos_x2( cntr2 ) )
-    ALLOCATE( parts_obj% pressure_parts_x1( cntr1 ) )
-    ALLOCATE( parts_obj% pressure_parts_x2( cntr2 ) )
-    ALLOCATE( parts_obj% pressure_parts_x_der1( cntr1 - 5 ) )
-    ALLOCATE( parts_obj% pressure_parts_x_der2( cntr2 - 5 ) )
-    ALLOCATE( parts_obj% pressure_length_scale_x1( cntr1 - 5 ) )
-    ALLOCATE( parts_obj% pressure_length_scale_x2( cntr2 - 5 ) )
-
-    !PRINT *, "2"
-
-    itr_1= 0
-    itr_2= 0
-    DO itr = 1, parts_obj% npart, 1
-      IF( parts_obj% pos( 3, itr ) == min_abs_z &
-          .AND. &
-          ABS( ( parts_obj% pos( 2, itr ) - &
-                 parts_obj% pos( 2, min_y_index ) )/ &
-                 parts_obj% pos( 2, min_y_index ) ) < 1.0D-5 &
-        )THEN
-
-        IF( parts_obj% pos( 1, itr ) < 0 )THEN
-          itr_1= itr_1 + 1
-          parts_obj% pos_x1( itr_1 )= parts_obj% pos( 1, itr )
-          parts_obj% pressure_parts_x1( itr_1 )= &
-                                              parts_obj% pressure_parts( itr )
-        ELSEIF( parts_obj% pos( 1, itr ) > 0 )THEN
-          itr_2= itr_2 + 1
-          parts_obj% pos_x2( itr_2 )= parts_obj% pos( 1, itr )
-          parts_obj% pressure_parts_x2( itr_2 )= &
-                                              parts_obj% pressure_parts( itr )
-        ENDIF
-
-      ENDIF
-    ENDDO
-
-    !PRINT *, "3"
-
-    DO itr= 3, cntr1 - 3, 1
-      parts_obj% pressure_parts_x_der1( itr - 2 )=&
-                     ( + parts_obj% pressure_parts_x1( itr - 2 )/12.0D0 &
-                       - 2.0*parts_obj% pressure_parts_x1( itr - 1 )/3.0D0 &
-                       + 2.0*parts_obj% pressure_parts_x1( itr + 1 )/3.0D0 &
-                       - parts_obj% pressure_parts_x1( itr + 2 )/12.0D0 )&
-                       /( Msun_geo*km2m*ABS( parts_obj% pos_x1( itr ) - &
-                                             parts_obj% pos_x1( itr - 1 ) ) )
-
-      parts_obj% pressure_length_scale_x1( itr - 2 )= &
-                          ABS( parts_obj% pressure_parts_x1( itr - 2 )/ &
-                               parts_obj% pressure_parts_x_der1( itr - 2 ) )
-
-      !PRINT *, "p1=", parts_obj% pressure_parts_x1( itr - 2 )
-      !PRINT *, "p_r1=", parts_obj% pressure_parts_x_der1( itr - 2 )
-      !PRINT *, "p/p_r1=", parts_obj% pressure_length_scale_x1( itr - 2 )
-      !PRINT *
-
-    ENDDO
-    DO itr= 3, cntr2 - 3, 1
-      parts_obj% pressure_parts_x_der2( itr - 2 )=&
-                     ( + parts_obj% pressure_parts_x2( itr - 2 )/12.0D0 &
-                       - 2.0*parts_obj% pressure_parts_x2( itr - 1 )/3.0D0 &
-                       + 2.0*parts_obj% pressure_parts_x2( itr + 1 )/3.0D0 &
-                       - parts_obj% pressure_parts_x2( itr + 2 )/12.0D0 )&
-                       /( Msun_geo*km2m*ABS( parts_obj% pos_x2( itr ) - &
-                                             parts_obj% pos_x2( itr - 1 ) ) )
-
-      parts_obj% pressure_length_scale_x2( itr - 2 )= &
-                          ABS( parts_obj% pressure_parts_x2( itr - 2 )/ &
-                               parts_obj% pressure_parts_x_der2( itr - 2 ) )
-
-      !PRINT *, "p2=", parts_obj% pressure_parts_x2( itr - 2 )
-      !PRINT *, "p_r2=", parts_obj% pressure_parts_x_der2( itr - 2 )
-      !PRINT *, "p/p_r2=", parts_obj% pressure_length_scale_x2( itr - 2 )
-      !PRINT *
-
-    ENDDO
-
-    PRINT *, " * Maximum typical length scale for change in pressure", &
-             " along the x axis for NS 1= ", &
-             MAXVAL( parts_obj% pressure_length_scale_x1, DIM= 1 )/km2m, " km"
-    PRINT *, " * Minimum typical length scale for change in pressure", &
-             " along the x axis for NS 1= ", &
-             MINVAL( parts_obj% pressure_length_scale_x1, DIM= 1 )/km2m, " km"
-    PRINT *
-    PRINT *, " * Maximum typical length scale for change in pressure", &
-             " along the x axis for NS 2= ", &
-             MAXVAL( parts_obj% pressure_length_scale_x2, DIM= 1 )/km2m, " km"
-    PRINT *, " * Minimum typical length scale for change in pressure", &
-             " along the x axis for NS 2= ", &
-             MINVAL( parts_obj% pressure_length_scale_x2, DIM= 1 )/km2m, " km"
-    PRINT *
+!    PRINT *, "** Computing typical length scale for the change in pressure", &
+!             " on the x axis."
+!    PRINT *
+!
+!    ALLOCATE( abs_pos( 3, parts_obj% npart ) )
+!
+!    DO itr = 1, parts_obj% npart, 1
+!      abs_pos( 1, itr )= ABS( parts_obj% pos( 1, itr ) )
+!      abs_pos( 2, itr )= ABS( parts_obj% pos( 2, itr ) )
+!      abs_pos( 3, itr )= ABS( parts_obj% pos( 3, itr ) )
+!    ENDDO
+!
+!    min_y_index= 0
+!    min_abs_y= 1D+20
+!    DO itr = 1, parts_obj% npart, 1
+!      IF( ABS( parts_obj% pos( 2, itr ) ) < min_abs_y )THEN
+!        min_abs_y= ABS( parts_obj% pos( 2, itr ) )
+!        min_y_index= itr
+!      ENDIF
+!    ENDDO
+!
+!    min_z_index= 0
+!    min_abs_z= 1D+20
+!    DO itr = 1, parts_obj% npart, 1
+!      IF( ABS( parts_obj% pos( 3, itr ) ) < min_abs_z )THEN
+!        min_abs_z= ABS( parts_obj% pos( 3, itr ) )
+!        min_z_index= itr
+!      ENDIF
+!    ENDDO
+!
+!    min_abs_z= MINVAL( abs_pos( 3, : ) )
+!
+!    !PRINT *, "1"
+!
+!    cntr1= 0
+!    cntr2= 0
+!    DO itr = 1, parts_obj% npart, 1
+!      IF( parts_obj% pos( 3, itr ) == min_abs_z &
+!          .AND. &
+!          ABS( ( parts_obj% pos( 2, itr ) - &
+!                 parts_obj% pos( 2, min_y_index ) )/ &
+!                 parts_obj% pos( 2, min_y_index ) ) < 1.0D-5 &
+!      )THEN
+!
+!        IF( parts_obj% pos( 1, itr ) < 0 )THEN
+!          cntr1= cntr1 + 1
+!        ELSEIF( parts_obj% pos( 1, itr ) > 0 )THEN
+!          cntr2= cntr2 + 1
+!        ENDIF
+!
+!      ENDIF
+!    ENDDO
+!    !PRINT *, "cntr1= ", cntr1
+!    !PRINT *, "cntr2= ", cntr2
+!
+!    ALLOCATE( parts_obj% pos_x1( cntr1 ) )
+!    ALLOCATE( parts_obj% pos_x2( cntr2 ) )
+!    ALLOCATE( parts_obj% pressure_parts_x1( cntr1 ) )
+!    ALLOCATE( parts_obj% pressure_parts_x2( cntr2 ) )
+!    ALLOCATE( parts_obj% pressure_parts_x_der1( cntr1 - 5 ) )
+!    ALLOCATE( parts_obj% pressure_parts_x_der2( cntr2 - 5 ) )
+!    ALLOCATE( parts_obj% pressure_length_scale_x1( cntr1 - 5 ) )
+!    ALLOCATE( parts_obj% pressure_length_scale_x2( cntr2 - 5 ) )
+!
+!    !PRINT *, "2"
+!
+!    itr_1= 0
+!    itr_2= 0
+!    DO itr = 1, parts_obj% npart, 1
+!      IF( parts_obj% pos( 3, itr ) == min_abs_z &
+!          .AND. &
+!          ABS( ( parts_obj% pos( 2, itr ) - &
+!                 parts_obj% pos( 2, min_y_index ) )/ &
+!                 parts_obj% pos( 2, min_y_index ) ) < 1.0D-5 &
+!        )THEN
+!
+!        IF( parts_obj% pos( 1, itr ) < 0 )THEN
+!          itr_1= itr_1 + 1
+!          parts_obj% pos_x1( itr_1 )= parts_obj% pos( 1, itr )
+!          parts_obj% pressure_parts_x1( itr_1 )= &
+!                                              parts_obj% pressure_parts( itr )
+!        ELSEIF( parts_obj% pos( 1, itr ) > 0 )THEN
+!          itr_2= itr_2 + 1
+!          parts_obj% pos_x2( itr_2 )= parts_obj% pos( 1, itr )
+!          parts_obj% pressure_parts_x2( itr_2 )= &
+!                                              parts_obj% pressure_parts( itr )
+!        ENDIF
+!
+!      ENDIF
+!    ENDDO
+!
+!    !PRINT *, "3"
+!
+!    DO itr= 3, cntr1 - 3, 1
+!      parts_obj% pressure_parts_x_der1( itr - 2 )=&
+!                     ( + parts_obj% pressure_parts_x1( itr - 2 )/12.0D0 &
+!                       - 2.0*parts_obj% pressure_parts_x1( itr - 1 )/3.0D0 &
+!                       + 2.0*parts_obj% pressure_parts_x1( itr + 1 )/3.0D0 &
+!                       - parts_obj% pressure_parts_x1( itr + 2 )/12.0D0 )&
+!                       /( Msun_geo*km2m*ABS( parts_obj% pos_x1( itr ) - &
+!                                             parts_obj% pos_x1( itr - 1 ) ) )
+!
+!      parts_obj% pressure_length_scale_x1( itr - 2 )= &
+!                          ABS( parts_obj% pressure_parts_x1( itr - 2 )/ &
+!                               parts_obj% pressure_parts_x_der1( itr - 2 ) )
+!
+!      !PRINT *, "p1=", parts_obj% pressure_parts_x1( itr - 2 )
+!      !PRINT *, "p_r1=", parts_obj% pressure_parts_x_der1( itr - 2 )
+!      !PRINT *, "p/p_r1=", parts_obj% pressure_length_scale_x1( itr - 2 )
+!      !PRINT *
+!
+!    ENDDO
+!    DO itr= 3, cntr2 - 3, 1
+!      parts_obj% pressure_parts_x_der2( itr - 2 )=&
+!                     ( + parts_obj% pressure_parts_x2( itr - 2 )/12.0D0 &
+!                       - 2.0*parts_obj% pressure_parts_x2( itr - 1 )/3.0D0 &
+!                       + 2.0*parts_obj% pressure_parts_x2( itr + 1 )/3.0D0 &
+!                       - parts_obj% pressure_parts_x2( itr + 2 )/12.0D0 )&
+!                       /( Msun_geo*km2m*ABS( parts_obj% pos_x2( itr ) - &
+!                                             parts_obj% pos_x2( itr - 1 ) ) )
+!
+!      parts_obj% pressure_length_scale_x2( itr - 2 )= &
+!                          ABS( parts_obj% pressure_parts_x2( itr - 2 )/ &
+!                               parts_obj% pressure_parts_x_der2( itr - 2 ) )
+!
+!      !PRINT *, "p2=", parts_obj% pressure_parts_x2( itr - 2 )
+!      !PRINT *, "p_r2=", parts_obj% pressure_parts_x_der2( itr - 2 )
+!      !PRINT *, "p/p_r2=", parts_obj% pressure_length_scale_x2( itr - 2 )
+!      !PRINT *
+!
+!    ENDDO
+!
+!    PRINT *, " * Maximum typical length scale for change in pressure", &
+!             " along the x axis for NS 1= ", &
+!             MAXVAL( parts_obj% pressure_length_scale_x1, DIM= 1 )/km2m, " km"
+!    PRINT *, " * Minimum typical length scale for change in pressure", &
+!             " along the x axis for NS 1= ", &
+!             MINVAL( parts_obj% pressure_length_scale_x1, DIM= 1 )/km2m, " km"
+!    PRINT *
+!    PRINT *, " * Maximum typical length scale for change in pressure", &
+!             " along the x axis for NS 2= ", &
+!             MAXVAL( parts_obj% pressure_length_scale_x2, DIM= 1 )/km2m, " km"
+!    PRINT *, " * Minimum typical length scale for change in pressure", &
+!             " along the x axis for NS 2= ", &
+!             MINVAL( parts_obj% pressure_length_scale_x2, DIM= 1 )/km2m, " km"
+!    PRINT *
 
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1
@@ -1508,10 +1552,6 @@ SUBMODULE (particles_id) particles_constructor
                                                       parts_obj% npart )
 
     ENDIF
-
-!===============================================================================
-!===============================DEBUGGING=======================================
-!===============================================================================
 
     IF( debug )THEN
 
@@ -1612,7 +1652,9 @@ SUBMODULE (particles_id) particles_constructor
         ENDIF
         IF( parts_obj% export_form_x .AND. &
             ( parts_obj% pos( 3, itr ) /= min_abs_z &
-            .OR. parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) ) )THEN
+              .OR. &
+              parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) ) &
+        )THEN
           CYCLE
         ENDIF
         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &

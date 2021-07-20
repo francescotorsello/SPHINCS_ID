@@ -101,7 +101,7 @@ SUBMODULE (particles_id) particles_sph_variables
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: h_guess
 
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
@@ -188,7 +188,13 @@ SUBMODULE (particles_id) particles_sph_variables
     !
     !-- Compute SPH quantities
     !
+
     CALL THIS% sph_computer_timer% start_timer()
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( THIS, pos_u, vel_u, sq_det_g4, Theta, nlrf, &
+    !$OMP                     Pr, u, temp, av, divv ) &
+    !$OMP             PRIVATE( itr, g4, det, sq_g, Theta_a, &
+    !$OMP                      nus, mus )
     compute_SPH_variables_on_particles: DO itr= 1, THIS% npart, 1
 
       ! Particle positions [Msun_geo]
@@ -379,6 +385,8 @@ SUBMODULE (particles_id) particles_sph_variables
       divv(itr)=  0.D0
 
     ENDDO compute_SPH_variables_on_particles
+    !$OMP END PARALLEL DO
+
     !THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     IF( .NOT.ALLOCATED( THIS% pvol ) )THEN

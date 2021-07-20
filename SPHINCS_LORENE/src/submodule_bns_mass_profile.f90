@@ -84,15 +84,11 @@ SUBMODULE (bns_id) bns_mass_profile
 
     !$OMP PARALLEL DO SHARED(dr,dphi,dth,center)&
     !$OMP             PRIVATE(r,th,phi,rad_coord,long,colat,sq_g,gamma_euler, &
-    !$OMP                     baryon_density,mass_element,mass) !&
-  !    !$OMP             SCHEDULE(STATIC,1)
+    !$OMP                     baryon_density,mass_element,mass)
     radius_loop: DO r= 1, NINT(radius/dr), 1
 
       mass= 0.0D0
       rad_coord= r*dr
-
-  !      !$OMP PARALLEL SECTIONS REDUCTION(+:mass,rad)
-      !rad= rad + dr
 
       longitude_loop: DO phi= 1, NINT(2.0D0*pi/dphi), 1
 
@@ -160,13 +156,9 @@ SUBMODULE (bns_id) bns_mass_profile
         ENDDO colatitude_loop
 
       ENDDO longitude_loop
-  !      !$OMP END PARALLEL SECTIONS
 
       mass_profile( 1, r )= rad_coord
       mass_profile( 2, r )= mass
-
-      !PRINT *, rad_coord, mass_profile( 1, r ), mass, mass_profile( 2, r )
-      !PRINT *
 
     ENDDO radius_loop
     !$OMP END PARALLEL DO
