@@ -307,10 +307,6 @@ SUBMODULE (particles_id) particles_sph_variables
       nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% nlrf(itr)= nlrf(itr)
 
-      THIS% nstar( itr )= THIS% nlrf(itr)*Theta_a*sq_g
-      THIS% pmass( itr )= THIS% nstar( itr )*THIS% pvol( itr )
-      THIS% particle_density( itr )= (THIS% nstar( itr ))/( THIS% pmass(itr) )
-
       ! Internal energy per baryon (specific internal energy)
       ! In module_TOV.f90, this quantity is computed as follows,
       ! eps= pressure/(Gammap-1.0D0)/density
@@ -387,7 +383,18 @@ SUBMODULE (particles_id) particles_sph_variables
     ENDDO compute_SPH_variables_on_particles
     !$OMP END PARALLEL DO
 
-    !THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+    IF( THIS% distribution_id == 3 )THEN
+
+      THIS% nstar= THIS% nlrf*Theta_a*sq_g
+      THIS% particle_density= (THIS% nstar)/( THIS% pmass )
+
+    ELSE
+
+      THIS% nstar= THIS% nlrf*Theta_a*sq_g
+      THIS% pmass= THIS% nstar*THIS% pvol
+      THIS% particle_density= (THIS% nstar)/( THIS% pmass )
+
+    ENDIF
 
     IF( .NOT.ALLOCATED( THIS% pvol ) )THEN
       PRINT *, "** ERROR! The array pvol is not allocated. ", &
@@ -725,6 +732,20 @@ SUBMODULE (particles_id) particles_sph_variables
         THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
         THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
+      ELSEIF( THIS% distribution_id == 3 )THEN
+
+        DO itr= 1, THIS% npart1, 1
+          nu(itr)= THIS% pmass(itr)*MSun/amu
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar1= THIS% nbar1 + nu(itr)
+        ENDDO
+
+        nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
+        THIS% nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
+        THIS% nbar2= THIS% nbar1
+
+        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+
       ELSE
 
         DO itr= 1, THIS% npart1, 1
@@ -757,21 +778,45 @@ SUBMODULE (particles_id) particles_sph_variables
       h(1:THIS% npart1) = THIS% h(1:THIS% npart1)
       THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
 
-      DO itr= THIS% npart1 + 1, THIS% npart, 1
-        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-        THIS% nu(itr)= nu(itr)
-        THIS% nbar2= THIS% nbar2 + nu(itr)
-      ENDDO
+      IF( THIS% distribution_id == 3 )THEN
+
+        DO itr= THIS% npart1 + 1, THIS% npart, 1
+          nu(itr)= THIS% pmass(itr)*MSun/amu
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar2= THIS% nbar2 + nu(itr)
+        ENDDO
+
+      ELSE
+
+        DO itr= THIS% npart1 + 1, THIS% npart, 1
+          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar2= THIS% nbar2 + nu(itr)
+        ENDDO
+
+      ENDIF
 
       THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     ELSEIF( .NOT.THIS% apm_iterate1 .AND. THIS% apm_iterate2 )THEN
 
-      DO itr= 1, THIS% npart1, 1
-        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-        THIS% nu(itr)= nu(itr)
-        THIS% nbar1= THIS% nbar1 + nu(itr)
-      ENDDO
+      IF( THIS% distribution_id == 3 )THEN
+
+        DO itr= 1, THIS% npart1, 1
+          nu(itr)= THIS% pmass(itr)*MSun/amu
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar1= THIS% nbar1 + nu(itr)
+        ENDDO
+
+      ELSE
+
+        DO itr= 1, THIS% npart1, 1
+          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+          THIS% nu(itr)= nu(itr)
+          THIS% nbar1= THIS% nbar1 + nu(itr)
+        ENDDO
+
+      ENDIF
 
       ! Do nothing, nu and h are already computed in the APM iteration
       nu(THIS% npart1+1:THIS% npart)= THIS% nu(THIS% npart1+1:THIS% npart)
@@ -782,15 +827,15 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ELSE
 
-      IF( .FALSE. .AND. THIS% distribution_id == 3 )THEN
+      IF( THIS% distribution_id == 3 )THEN
 
         DO itr= 1, THIS% npart1, 1
-          nu(itr)= THIS% pmass( itr )*MSun/amu
+          nu(itr)= THIS% pmass(itr)*MSun/amu
           THIS% nu(itr)= nu(itr)
           THIS% nbar1= THIS% nbar1 + nu(itr)
         ENDDO
         DO itr= THIS% npart1 + 1, THIS% npart, 1
-          nu(itr)= THIS% pmass( itr )*MSun/amu
+          nu(itr)= THIS% pmass(itr)*MSun/amu
           THIS% nu(itr)= nu(itr)
           THIS% nbar2= THIS% nbar2 + nu(itr)
         ENDDO
@@ -1025,6 +1070,7 @@ SUBMODULE (particles_id) particles_sph_variables
                                 THIS% nu )
 
     THIS% h= h
+    THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
 
     check_h: DO itr= 1, THIS% npart, 1
 

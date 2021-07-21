@@ -504,7 +504,7 @@ PROGRAM sphincs_lorene_bns
     INTEGER:: stat
 
     CHARACTER( LEN= : ), ALLOCATABLE:: lorene_bns_id_parameters
-    CHARACTER( LEN= : ), ALLOCATABLE:: msg
+    CHARACTER( LEN= 100 ):: msg
 
     lorene_bns_id_parameters= 'lorene_bns_id_parameters.par'
 

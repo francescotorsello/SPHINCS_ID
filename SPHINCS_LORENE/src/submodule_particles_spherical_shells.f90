@@ -17,6 +17,9 @@ SUBMODULE (particles_id) spherical_shells
   IMPLICIT NONE
 
 
+  !DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii
+
+
   CONTAINS
 
 
@@ -36,6 +39,7 @@ SUBMODULE (particles_id) spherical_shells
                          golden_ratio, third, half, amu, g2kg, sixth
     USE matrix,    ONLY: determinant_4x4_matrix
     USE NR,        ONLY: indexx
+    USE APM,       ONLY: assign_h
 
     IMPLICIT NONE
 
@@ -109,44 +113,17 @@ SUBMODULE (particles_id) spherical_shells
     ENDDO
     CALL RANDOM_SEED( PUT= seed )
 
-    m_p= mass_star/npart_approx
+    !-----------------------------------!
+    !-- Compute desired particle mass --!
+    !-----------------------------------!
 
-    !n_shells= NINT( radius* &
-    !              (npart_approx/(4.0D0/3.0D0*pi*radius**3.0D0))**third )
-    !PRINT *, n_shells
+    m_p= mass_star/npart_approx
 
     !------------------------------------------!
     !-- Compute number of spherical surfaces --!
     !------------------------------------------!
 
-    IF(.NOT.ALLOCATED( particle_profile ))THEN
-      ALLOCATE( particle_profile( 2, 500 ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array particle_profile in" &
-                  // "SUBROUTINE place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
-    ENDIF
-    n_shells_tmp= 0.0D0
-    particle_profile= 0.0D0
-    shell_index= 1
-    DO r= 1, 500, 1
-
-      n_shells_tmp= n_shells_tmp + &
-                      radius/500*( ( bns_obj% import_mass_density( &
-                                     center + r*radius/500, 0.0D0, 0.0D0 ) &
-                                     )/m_p )**third
-      particle_profile( 1, r )= r*radius/500
-      particle_profile( 2, r )= n_shells_tmp
-
-    ENDDO
-    n_shells= NINT( n_shells_tmp )
-    !n_shells= number_surfaces( m_p, center, radius, bns_obj )
+    n_shells= number_surfaces( m_p, center, radius, bns_obj )
 
     !------------------------------------------------!
     !-- Allocate memory for the spherical surfaces --!
@@ -161,9 +138,6 @@ SUBMODULE (particles_id) spherical_shells
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( shell_masses ))THEN
       ALLOCATE( shell_masses( n_shells ), STAT= ios, &
@@ -174,9 +148,6 @@ SUBMODULE (particles_id) spherical_shells
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( shell_scales ))THEN
       ALLOCATE( shell_scales( n_shells ), STAT= ios, &
@@ -187,9 +158,6 @@ SUBMODULE (particles_id) spherical_shells
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( vol_shell ))THEN
       ALLOCATE( vol_shell( n_shells ), STAT= ios, &
@@ -200,9 +168,6 @@ SUBMODULE (particles_id) spherical_shells
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( vol_shell2 ))THEN
       ALLOCATE( vol_shell2( n_shells ), STAT= ios, &
@@ -213,9 +178,6 @@ SUBMODULE (particles_id) spherical_shells
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( mass_shell ))THEN
       ALLOCATE( mass_shell( n_shells ), STAT= ios, &
@@ -226,9 +188,6 @@ SUBMODULE (particles_id) spherical_shells
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( mass_shell2 ))THEN
       ALLOCATE( mass_shell2( n_shells ), STAT= ios, &
@@ -239,12 +198,9 @@ SUBMODULE (particles_id) spherical_shells
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( m_parts ))THEN
-      ALLOCATE( m_parts( 0:n_shells ), STAT= ios, &
+      ALLOCATE( m_parts( 1:n_shells ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
@@ -252,9 +208,6 @@ SUBMODULE (particles_id) spherical_shells
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
 
     central_density= bns_obj% get_rho_center1()
@@ -286,8 +239,9 @@ SUBMODULE (particles_id) spherical_shells
 
     ! Printout
     PRINT *, " * Number of the spherical surfaces= ", n_shells
-    PRINT *, " * Radii of the surfaces in units of the radius of the star= ", &
-             shell_radii/radius
+    PRINT *, " * Radii of the surfaces in units of the equatorial radius", &
+             " of the star, towards the companion= "
+    PRINT *, shell_radii/radius
     PRINT *
 
     !---------------------------------!
@@ -382,7 +336,7 @@ SUBMODULE (particles_id) spherical_shells
       STOP
     ENDIF
 
-    write_data_loop: DO itr = 1, NINT(radius/dr), 1
+    write_data_loop: DO itr = 1, NINT(radius/dr) - 1, 1
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         mass_profile( 1, mass_profile_idx(itr) ), &
@@ -519,16 +473,16 @@ SUBMODULE (particles_id) spherical_shells
     r_cnt= 1
 
     ! These array are needed to be able to parallelize the loops on each surface
-    ALLOCATE( pos_shell_tmp  ( 3, CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( g_xx_tmp       (    CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( bar_density_tmp(    CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( gam_euler_tmp  (    CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( pvol_tmp       (    CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( pos_shell_tmp  ( 3, 10*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( g_xx_tmp       (    10*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( bar_density_tmp(    10*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( gam_euler_tmp  (    10*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( pvol_tmp       (    10*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
 
     !--------------------------------------------------!
     !--  Main iteration over the spherical surfaces  --!
@@ -733,8 +687,15 @@ SUBMODULE (particles_id) spherical_shells
             IF( th == 1 )THEN
 
         !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
-              dth_shells= 2.0D0*ABS( col - &
+              IF( npart_shelleq(r) == 4 )THEN
+
+                dth_shells= pi
+
+              ELSE
+
+                dth_shells= 2.0D0*ABS( col - &
                         ( col + colatitude_pos(r)% colatitudes(th + 1) )/2.0D0 )
+              ENDIF
 
             ELSEIF( th == npart_shelleq( r )/4 )THEN
 
@@ -847,26 +808,20 @@ SUBMODULE (particles_id) spherical_shells
       DO th= 1, npart_shelleq(r)/4, 1
         DO phi= 1, npart_shelleq(r), 1
 
-          IF( pos_shell_tmp( 1, th, phi ) < center + 1.1D0*radius &
+          IF( pos_shell_tmp( 1, th, phi ) < center + 1.2D0*radius &
               .AND. &
-              pos_shell_tmp( 1, th, phi ) > center - 1.1D0*radius )THEN
+              pos_shell_tmp( 1, th, phi ) > center - 1.2D0*radius )THEN
 
             itr= itr + 1
-            pos_shells(r)% pos_shell( 1, itr )= &
-                                              pos_shell_tmp( 1, th, phi )
-            pos_shells(r)% pos_shell( 2, itr )= &
-                                              pos_shell_tmp( 2, th, phi )
-            pos_shells(r)% pos_shell( 3, itr )= &
-                                              pos_shell_tmp( 3, th, phi )
 
-            pos_shells(r)% g_xx( itr )          = &
-                                              g_xx_tmp( th, phi )
-            pos_shells(r)% baryon_density( itr )= &
-                                              bar_density_tmp( th, phi )
-            pos_shells(r)% gamma_euler( itr )   = &
-                                              gam_euler_tmp( th, phi )
-            pos_shells(r)% pvol_shell2( itr )   = &
-                                              pvol_tmp( th, phi )
+            pos_shells(r)% pos_shell( 1, itr )= pos_shell_tmp( 1, th, phi )
+            pos_shells(r)% pos_shell( 2, itr )= pos_shell_tmp( 2, th, phi )
+            pos_shells(r)% pos_shell( 3, itr )= pos_shell_tmp( 3, th, phi )
+
+            pos_shells(r)% g_xx( itr )          = g_xx_tmp( th, phi )
+            pos_shells(r)% baryon_density( itr )= bar_density_tmp( th, phi )
+            pos_shells(r)% gamma_euler( itr )   = gam_euler_tmp( th, phi )
+            pos_shells(r)% pvol_shell2( itr )   = pvol_tmp( th, phi )
 
 
           ENDIF
@@ -1204,8 +1159,9 @@ SUBMODULE (particles_id) spherical_shells
 
     ! Print out the total number of particles on the northern emispheres,
     ! and the final mass ratio
-    PRINT *, " * Particles on the norther emispheres=", npart_out
+    PRINT *, " * Particles on the northern emispheres=", npart_out
     PRINT *, " * Particle mass ratio= ", MAXVAL(m_parts)/MINVAL(m_parts)
+    PRINT *
 
     ! Safety check
     !npart_test= 0
@@ -1216,7 +1172,7 @@ SUBMODULE (particles_id) spherical_shells
     IF( npart_test/2 /= npart_out )THEN
       PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
                "equal to the total number of particles. Stopping.."
-      PRINT *, " * npart_test=", npart_test/2, ", npart_out=", npart_out
+      PRINT *, " * npart_test/2=", npart_test/2, ", npart_out=", npart_out
       PRINT *, " * Array npart_shell=", npart_shell
       PRINT *
       STOP
@@ -1225,11 +1181,51 @@ SUBMODULE (particles_id) spherical_shells
     IF( debug ) PRINT *, "13"
 
     ! Deallocate temporary arrays
-    DEALLOCATE( pos_shell_tmp   )
-    DEALLOCATE( g_xx_tmp        )
-    DEALLOCATE( bar_density_tmp )
-    DEALLOCATE( gam_euler_tmp   )
-    DEALLOCATE( pvol_tmp        )
+    IF( ALLOCATED(pos_shell_tmp) )THEN
+      DEALLOCATE( pos_shell_tmp  , STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF( ALLOCATED(g_xx_tmp) )THEN
+      DEALLOCATE( g_xx_tmp       , STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array m_parts in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF( ALLOCATED(bar_density_tmp) )THEN
+      DEALLOCATE( bar_density_tmp, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array m_parts in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF( ALLOCATED(gam_euler_tmp) )THEN
+      DEALLOCATE( gam_euler_tmp  , STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array m_parts in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF( ALLOCATED(pvol_tmp) )THEN
+      DEALLOCATE( pvol_tmp       , STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array m_parts in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
 
     IF( debug ) PRINT *, "14"
 
@@ -1238,6 +1234,7 @@ SUBMODULE (particles_id) spherical_shells
     !
     PRINT *, " * Mirroring particles from the northern emispheres to the", &
              " southern ones..."
+    PRINT *
 
     IF( debug ) PRINT *, " * npart/2=", npart_out
 
@@ -1282,6 +1279,7 @@ SUBMODULE (particles_id) spherical_shells
 
     ENDDO
     PRINT *, " * Final number of particles=", npart_out
+    PRINT *
 
     ! Safety checks (maybe redundant at this point, but better to be paranoid)
     npart_test= 0
@@ -1304,138 +1302,143 @@ SUBMODULE (particles_id) spherical_shells
       STOP
     ENDIF
 
-    mass_test= 0.0D0
-    mass_test2= 0.0D0
-    proper_volume_test= 0.0D0
-    proper_volume= 0.0D0
-    i_shell= 1
-    DO r= 1, n_shells, 1
-      !DO itr= i_shell, (i_shell - 1) + (npart_shelleq(r)**2.0D0)/2.0D0, 1
-      !  CALL bns_obj% import_id( &
-      !           pos( 1, itr ), pos( 2, itr ), pos( 3, itr ), &
-      !           g_xx, baryon_density, gamma_euler )
-      !
-      !  pvol( itr )= m_parts( r )/( baryon_density*g_xx*SQRT(g_xx)*gamma_euler )
-      !
-      !  proper_volume_test= proper_volume_test + 2.0D0*pvol( itr )*g_xx*SQRT(g_xx)
-      !  mass_test= mass_test + &
-      !              2.0D0*baryon_density*pvol( itr )*g_xx*SQRT(g_xx)*gamma_euler
-      !ENDDO
-      !i_shell= i_shell + (npart_shelleq(r)**2.0D0)/2.0D0
-      DO itr= 1, npart_shell( r ), 1
+    IF( debug )THEN
 
-        IF( pos_shells(r)% baryon_density( itr ) == 0 )THEN
-          PRINT *, "When computing particle volume"
-          PRINT *, r, itr, pos_shells(r)% pos_shell( 1, itr ), &
-                   pos_shells(r)% pos_shell( 2, itr ), &
-                   pos_shells(r)% pos_shell( 3, itr ), &
-                   pos_shells(r)% baryon_density( itr )
+      mass_test= 0.0D0
+      mass_test2= 0.0D0
+      proper_volume_test= 0.0D0
+      proper_volume= 0.0D0
+      i_shell= 1
+      DO r= 1, n_shells, 1
+        !DO itr= i_shell, (i_shell - 1) + (npart_shelleq(r)**2.0D0)/2.0D0, 1
+        !  CALL bns_obj% import_id( &
+        !           pos( 1, itr ), pos( 2, itr ), pos( 3, itr ), &
+        !           g_xx, baryon_density, gamma_euler )
+        !
+        !  pvol( itr )= m_parts( r )/( baryon_density*g_xx*SQRT(g_xx)*gamma_euler )
+        !
+        !  proper_volume_test= proper_volume_test + 2.0D0*pvol( itr )*g_xx*SQRT(g_xx)
+        !  mass_test= mass_test + &
+        !              2.0D0*baryon_density*pvol( itr )*g_xx*SQRT(g_xx)*gamma_euler
+        !ENDDO
+        !i_shell= i_shell + (npart_shelleq(r)**2.0D0)/2.0D0
+        DO itr= 1, npart_shell( r ), 1
+
+          IF( pos_shells(r)% baryon_density( itr ) == 0 )THEN
+            PRINT *, "When computing particle volume"
+            PRINT *, r, itr, pos_shells(r)% pos_shell( 1, itr ), &
+                     pos_shells(r)% pos_shell( 2, itr ), &
+                     pos_shells(r)% pos_shell( 3, itr ), &
+                     pos_shells(r)% baryon_density( itr )
+          ENDIF
+          !IF( pos_shells(r)% pvol_shell2( itr ) <= 0.0D0 )THEN
+          !  PRINT *, "When computing particle volume"
+          !  PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
+          !           pos_shells(r)% pvol_shell2( itr )
+          !  STOP
+          !ENDIF
+
+          pos_shells(r)% pvol_shell( itr )= m_parts( r ) &
+                            /( pos_shells(r)% baryon_density( itr ) &
+                              *pos_shells(r)% g_xx( itr ) &
+                              *SQRT(pos_shells(r)% g_xx( itr )) &
+                              *pos_shells(r)% gamma_euler( itr ) )
+
+          proper_volume_test= proper_volume_test + &
+                              pos_shells(r)% pvol_shell( itr )! &
+                              !*pos_shells(r)% g_xx( itr ) &
+                              !*SQRT(pos_shells(r)% g_xx( itr ))
+
+          proper_volume= proper_volume + pos_shells(r)% pvol_shell2( itr )
+          !PRINT *, proper_volume
+
+          mass_test= mass_test + pos_shells(r)% baryon_density( itr ) &
+                    *pos_shells(r)% pvol_shell( itr ) &
+                    *pos_shells(r)% g_xx( itr ) &
+                    *SQRT(pos_shells(r)% g_xx( itr )) &
+                    *pos_shells(r)% gamma_euler( itr )
+          mass_test2= mass_test2 + pos_shells(r)% baryon_density( itr ) &
+                    *pos_shells(r)% pvol_shell2( itr ) &
+                    *pos_shells(r)% g_xx( itr ) &
+                    *SQRT(pos_shells(r)% g_xx( itr )) &
+                    *pos_shells(r)% gamma_euler( itr )
+
+        ENDDO
+      ENDDO
+
+      PRINT *, mass_test, mass_test2, mass_star, proper_volume_test, proper_volume
+      PRINT *
+
+      mass_test = 0.0D0
+      mass_test2= 0.0D0
+      proper_volume_test = 0.0D0
+      proper_volume= 0.0D0
+      vol_shell( r )  = 0.0D0
+      vol_shell2( r ) = 0.0D0
+      mass_shell( r ) = 0.0D0
+      mass_shell2( r )= 0.0D0
+      DO r= 1, n_shells, 1
+        DO itr= 1, npart_shell( r ), 1
+          !IF( pos_shells(r)% pvol_shell2( itr ) <= 0 )THEN
+          !  PRINT *, "When computing shell volumes and masses"
+          !  PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
+          !           pos_shells(r)% pvol_shell2( itr )
+          !  STOP
+          !ENDIF
+          vol_shell( r )  = vol_shell( r )  + pos_shells(r)% pvol_shell( itr )
+          vol_shell2( r ) = vol_shell2( r ) + pos_shells(r)% pvol_shell2( itr )
+          mass_shell( r ) = mass_shell( r ) + &
+                            pos_shells(r)% baryon_density( itr ) &
+                           *pos_shells(r)% pvol_shell( itr ) &
+                           *pos_shells(r)% g_xx( itr ) &
+                           *SQRT(pos_shells(r)% g_xx( itr )) &
+                           *pos_shells(r)% gamma_euler( itr )
+          mass_shell2( r )= mass_shell2( r ) + &
+                            pos_shells(r)% baryon_density( itr ) &
+                           *pos_shells(r)% pvol_shell2( itr ) &
+                           *pos_shells(r)% g_xx( itr ) &
+                           *SQRT(pos_shells(r)% g_xx( itr )) &
+                           *pos_shells(r)% gamma_euler( itr )
+        ENDDO
+        mass_test= mass_test + mass_shell( r )
+        mass_test2= mass_test2 + mass_shell2( r )
+        proper_volume= proper_volume + vol_shell( r )
+        proper_volume_test= proper_volume_test + vol_shell2( r )
+        IF( r > 1 )THEN
+          PRINT *, "shell", r
+          PRINT *, "  shell volumes:", vol_shell( r ), vol_shell2( r ), &
+                   4.0D0/3.0D0*pi* &
+                   ( shell_radii( r )**3.0D0 - shell_radii( r - 1 )**3.0D0 )
+          PRINT *, "  shell masses:", mass_shell( r ), mass_shell2( r ), &
+                   shell_masses( r )
+          PRINT *
         ENDIF
-        !IF( pos_shells(r)% pvol_shell2( itr ) <= 0.0D0 )THEN
-        !  PRINT *, "When computing particle volume"
-        !  PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
-        !           pos_shells(r)% pvol_shell2( itr )
-        !  STOP
-        !ENDIF
-
-        pos_shells(r)% pvol_shell( itr )= m_parts( r ) &
-                          /( pos_shells(r)% baryon_density( itr ) &
-                            *pos_shells(r)% g_xx( itr ) &
-                            *SQRT(pos_shells(r)% g_xx( itr )) &
-                            *pos_shells(r)% gamma_euler( itr ) )
-
-        proper_volume_test= proper_volume_test + &
-                            pos_shells(r)% pvol_shell( itr )! &
-                            !*pos_shells(r)% g_xx( itr ) &
-                            !*SQRT(pos_shells(r)% g_xx( itr ))
-
-        proper_volume= proper_volume + pos_shells(r)% pvol_shell2( itr )
-        !PRINT *, proper_volume
-
-        mass_test= mass_test + pos_shells(r)% baryon_density( itr ) &
-                  *pos_shells(r)% pvol_shell( itr ) &
-                  *pos_shells(r)% g_xx( itr ) &
-                  *SQRT(pos_shells(r)% g_xx( itr )) &
-                  *pos_shells(r)% gamma_euler( itr )
-        mass_test2= mass_test2 + pos_shells(r)% baryon_density( itr ) &
-                  *pos_shells(r)% pvol_shell2( itr ) &
-                  *pos_shells(r)% g_xx( itr ) &
-                  *SQRT(pos_shells(r)% g_xx( itr )) &
-                  *pos_shells(r)% gamma_euler( itr )
-
       ENDDO
-    ENDDO
+      PRINT *
+      PRINT *, "masses of the star:", mass_test, mass_test2, mass_star
+      PRINT *, "volumes of the star:", proper_volume, proper_volume_test, &
+                                       4.0D0/3.0D0*pi*radius**3.0D0
+      PRINT *
 
-    PRINT *, mass_test, mass_test2, mass_star, proper_volume_test, proper_volume
-    PRINT *
+      !STOP
 
-    mass_test = 0.0D0
-    mass_test2= 0.0D0
-    proper_volume_test = 0.0D0
-    proper_volume= 0.0D0
-    vol_shell( r )  = 0.0D0
-    vol_shell2( r ) = 0.0D0
-    mass_shell( r ) = 0.0D0
-    mass_shell2( r )= 0.0D0
-    DO r= 1, n_shells, 1
-      DO itr= 1, npart_shell( r ), 1
-        !IF( pos_shells(r)% pvol_shell2( itr ) <= 0 )THEN
-        !  PRINT *, "When computing shell volumes and masses"
-        !  PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
-        !           pos_shells(r)% pvol_shell2( itr )
-        !  STOP
-        !ENDIF
-        vol_shell( r )  = vol_shell( r )  + pos_shells(r)% pvol_shell( itr )
-        vol_shell2( r ) = vol_shell2( r ) + pos_shells(r)% pvol_shell2( itr )
-        mass_shell( r ) = mass_shell( r ) + &
-                          pos_shells(r)% baryon_density( itr ) &
-                         *pos_shells(r)% pvol_shell( itr ) &
-                         *pos_shells(r)% g_xx( itr ) &
-                         *SQRT(pos_shells(r)% g_xx( itr )) &
-                         *pos_shells(r)% gamma_euler( itr )
-        mass_shell2( r )= mass_shell2( r ) + &
-                          pos_shells(r)% baryon_density( itr ) &
-                         *pos_shells(r)% pvol_shell2( itr ) &
-                         *pos_shells(r)% g_xx( itr ) &
-                         *SQRT(pos_shells(r)% g_xx( itr )) &
-                         *pos_shells(r)% gamma_euler( itr )
-      ENDDO
-      mass_test= mass_test + mass_shell( r )
-      mass_test2= mass_test2 + mass_shell2( r )
-      proper_volume= proper_volume + vol_shell( r )
-      proper_volume_test= proper_volume_test + vol_shell2( r )
-      IF( r > 1 )THEN
-        PRINT *, "shell", r
-        PRINT *, "  shell volumes:", vol_shell( r ), vol_shell2( r ), &
-                 4.0D0/3.0D0*pi* &
-                 ( shell_radii( r )**3.0D0 - shell_radii( r - 1 )**3.0D0 )
-        PRINT *, "  shell masses:", mass_shell( r ), mass_shell2( r ), &
-                 shell_masses( r )
-        PRINT *
-      ENDIF
-    ENDDO
-    PRINT *
-    PRINT *, "masses of the star:", mass_test, mass_test2, mass_star
-    PRINT *, "volumes of the star:", proper_volume, proper_volume_test, &
-                                     4.0D0/3.0D0*pi*radius**3.0D0
-    PRINT *
-    !STOP
+      !DO r= 1, n_shells, 1
+      !  DO itr= 1, npart_shell( r ), 1
+      !
+      !    PRINT*, (m_parts( r )*MSun/amu)/pos_shells(r)% pvol_shell( itr ) &
+      !            /(pos_shells(r)% g_xx( itr ) &
+      !              *SQRT(pos_shells(r)% g_xx( itr )) &
+      !              *pos_shells(r)% gamma_euler( itr )), &
+      !            pos_shells(r)% baryon_density( itr )*MSun/amu
+      !  ENDDO
+      !ENDDO
+      !STOP
 
-    !DO r= 1, n_shells, 1
-    !  DO itr= 1, npart_shell( r ), 1
-    !
-    !    PRINT*, (m_parts( r )*MSun/amu)/pos_shells(r)% pvol_shell( itr ) &
-    !            /(pos_shells(r)% g_xx( itr ) &
-    !              *SQRT(pos_shells(r)% g_xx( itr )) &
-    !              *pos_shells(r)% gamma_euler( itr )), &
-    !            pos_shells(r)% baryon_density( itr )*MSun/amu
-    !  ENDDO
-    !ENDDO
-    !STOP
+    ENDIF
 
-    !-----------------------------------------------!
-    !--  Save particles to TYPE member variables  --!
-    !-----------------------------------------------!
+    !---------------------------------------!
+    !--  Save particles to output arrays  --!
+    !---------------------------------------!
 
     IF(.NOT.ALLOCATED( pos ))THEN
       ALLOCATE( pos( 3, npart_out ), &
@@ -1556,6 +1559,9 @@ SUBMODULE (particles_id) spherical_shells
     PRINT *, " * SUBROUTINE place_particles_spherical_shells executed."
     PRINT *
 
+    IF( debug ) PRINT *, "20"
+
+    !STOP
 
   END PROCEDURE place_particles_spherical_shells
 

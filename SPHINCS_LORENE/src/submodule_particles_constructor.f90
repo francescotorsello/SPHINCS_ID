@@ -654,11 +654,14 @@ SUBMODULE (particles_id) particles_constructor
                // "taking into account the mass profile of the stars."
       PRINT *
 
+      ! Here the particle mass is computed using the radial mass profile
+      ! of the star, so nu should not be redistributed to achieve a given
+      ! particle mass ratio
       IF( parts_obj% redistribute_nu == .TRUE. )THEN
-        parts_obj% redistribute_nu= .FALSE.
+          parts_obj% redistribute_nu= .FALSE.
       ENDIF
 
-      IF( parts_obj% mass1 > parts_obj% mass2 )THEN
+      first_star_more_massive: IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 
         filename_mass_profile= "shells_mass_profile2.dat"
         filename_shells_radii= "shells_radii2.dat"
@@ -688,7 +691,7 @@ SUBMODULE (particles_id) particles_constructor
         ! mass_ratio < 1
         parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
 
-        IF( parts_obj% mass_ratio >= 0.995 .AND. &
+        equal_masses: IF( parts_obj% mass_ratio >= 0.995 .AND. &
             parts_obj% mass_ratio <= 1.005 .AND. reflect_particles_x )THEN
 
           IF(.NOT.ALLOCATED( pos1 ))THEN
@@ -760,7 +763,7 @@ SUBMODULE (particles_id) particles_constructor
                                                 filename_shells_radii, &
                                                 filename_shells_pos )
 
-        ENDIF
+        ENDIF equal_masses
 
         CALL parts_obj% placer_timer% stop_timer()
 
@@ -796,12 +799,14 @@ SUBMODULE (particles_id) particles_constructor
                                               filename_shells_radii, &
                                               filename_shells_pos )
 
+        IF( debug ) PRINT *, "30"
+
         ! mass_ratio < 1
         parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
-        !npart2_approx= npart_approx/parts_obj% mass_ratio
-        !npart2_approx= MIN(npart_approx,parts_obj% npart1)/(parts_obj% mass_ratio)
 
-        IF( parts_obj% mass_ratio >= 0.995 .AND. &
+        IF( debug ) PRINT *, "31"
+
+        equal_masses2: IF( parts_obj% mass_ratio >= 0.995 .AND. &
             parts_obj% mass_ratio <= 1.005 .AND. reflect_particles_x )THEN
 
           IF(.NOT.ALLOCATED( pos2 ))THEN
@@ -841,18 +846,6 @@ SUBMODULE (particles_id) particles_constructor
           pmass2= pmass1
           parts_obj% npart2= parts_obj% npart1
 
-        !ELSEIF( ( parts_obj% mass_ratio <= 0.995 .OR. &
-        !        parts_obj% mass_ratio >= 1.005 ) .AND. reflect_particles_x )THEN
-        !
-        !  PRINT *, "** ERROR! The two stars are not the same. The particles", &
-        !           " on star 1 cannot be reflected with respect to the yz", &
-        !           " plane to become the particles on star 2."
-        !  PRINT *, "   Please, choose an equal-mass system, or set the", &
-        !           " variable reflect_particles_x to .FALSE. in the file", &
-        !           " lorene_bns_id_particles ."
-        !  PRINT *
-        !  STOP
-
         ELSE
 
           IF( parts_obj% mass_ratio >= 0.95 .AND. &
@@ -867,6 +860,8 @@ SUBMODULE (particles_id) particles_constructor
           filename_shells_pos  = "shells_pos2.dat"
 
           n_particles_first_shell= 4!n_particles_first_shell/parts_obj% mass_ratio
+
+          IF( debug ) PRINT *, "32"
 
           CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
                                                 radius2, center2, &
@@ -885,45 +880,17 @@ SUBMODULE (particles_id) particles_constructor
                                                 filename_shells_radii, &
                                                 filename_shells_pos )
 
-        ENDIF
-
-          !IF( parts_obj% npart1/parts_obj% npart2 >= &
-          !    0.9D0*parts_obj% mass_ratio .AND. &
-          !    parts_obj% npart1/parts_obj% npart2 <= &
-          !    1.1D0*parts_obj% mass_ratio &
-          !)THEN
-          !  EXIT
-          !ENDIF
-
-          !IF( parts_obj% npart1/parts_obj% npart2 )THEN
-          !  CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
-          !                                          radius2, center2, &
-          !                                          npart2_approx, &
-          !                                          parts_obj% npart2, &
-          !                                          pos2, pvol2, pmass2, &
-          !                                          thres, &
-          !                                          bns_obj, &
-          !                                          last_r, &
-          !                                          upper_bound, lower_bound, &
-          !                                          upper_factor, lower_factor,&
-          !                                          max_steps )
-        !ENDIF
-        !ENDDO
+        ENDIF equal_masses2
 
         CALL parts_obj% placer_timer% stop_timer()
 
         parts_obj% npart= parts_obj% npart1 + parts_obj% npart2
 
-        !PRINT *
-        !PRINT *, "npart1= ", parts_obj% npart1
-        !PRINT *, "npart_approx= ", npart_approx
-        !PRINT *, "npart2= ", parts_obj% npart2
-        !PRINT *, "npart2_approx= ", npart2_approx
-        !PRINT *, "npart= ", parts_obj% npart
-        !PRINT *
-        !STOP
+      ENDIF first_star_more_massive
 
-      ENDIF
+      !
+      !-- Assign TYPE member variables
+      !
 
       IF(.NOT.ALLOCATED( parts_obj% pos ))THEN
         ALLOCATE( parts_obj% pos( 3, parts_obj% npart ), &
@@ -983,6 +950,7 @@ SUBMODULE (particles_id) particles_constructor
 
       PRINT *, "** There is no implemented particle placer " &
                // "corresponding to the number", dist
+      PRINT *, " * Stopping..."
       STOP
 
     END SELECT choose_particle_placer
@@ -1029,6 +997,7 @@ SUBMODULE (particles_id) particles_constructor
     ! Check that there aren't particles with the same coordinates
     PRINT *, "** Checking that there are no multiple particles", &
              " at the same position..."
+    PRINT *
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( parts_obj ) &
@@ -1276,6 +1245,8 @@ SUBMODULE (particles_id) particles_constructor
     ALLOCATE( alive( parts_obj% npart ) )
     alive( 1:parts_obj% npart )= 1
 
+    IF( debug ) PRINT *, "33"
+
     !
     !-- Import the needed LORENE ID on the particles, and time the process
     !
@@ -1304,6 +1275,8 @@ SUBMODULE (particles_id) particles_constructor
                              parts_obj% v_euler_parts_y, &
                              parts_obj% v_euler_parts_z )
     CALL parts_obj% importer_timer% stop_timer()
+
+    IF( debug ) PRINT *, "34"
 
     !
     !-- Check that the imported ID does not contain NaNs
@@ -1553,139 +1526,140 @@ SUBMODULE (particles_id) particles_constructor
 
     ENDIF
 
-    IF( debug )THEN
-
-      namefile= "dbg-hydro.dat"
-
-      INQUIRE( FILE= TRIM(namefile), EXIST= exist )
-
-      IF( exist )THEN
-          OPEN( UNIT= 2, FILE= TRIM(namefile), STATUS= "REPLACE", &
-                FORM= "FORMATTED", &
-                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                IOMSG= err_msg )
-      ELSE
-          OPEN( UNIT= 2, FILE= TRIM(namefile), STATUS= "NEW", &
-                FORM= "FORMATTED", &
-                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-      ENDIF
-      IF( ios > 0 )THEN
-        PRINT *, "...error when opening " // TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when opening " &
-      !                  // TRIM(namefile) )
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# Values of the fields (including coordinates) exported by LORENE "&
-      // "on each grid point"
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 1 in " // TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-      !        // TRIM(namefile) )
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "# column:      1        2       3       4       5", &
-      "       6       7       8", &
-      "       9       10      11", &
-      "       12      13      14", &
-      "       15      16      17      18"
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 2 in " // TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-      !            // TRIM(namefile) )
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "#      grid point      x [km]       y [km]       z [km]       lapse", &
-      "       shift_x [c]    shift_y [c]    shift_z [c]", &
-      "       baryon density in the local rest frame [kg m^{-3}$]", &
-      "       energy density [c^2]", &
-      "       specific energy [c^2]", &
-      "       pressure [Pa]", &
-      "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
-      "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
-      "       baryon number per particle nu", &
-      "       baryon density in the local rest frame nlrf [baryon/Msun_geo^3]", &
-      "       electron fraction", &
-      "       generalized Lorentz factor Theta"
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing line 3 in " // TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-      !          // TRIM(namefile) )
-
-      DO itr = 1, parts_obj% npart, 1
-        abs_pos( 1, itr )= ABS( parts_obj% pos( 1, itr ) )
-        abs_pos( 2, itr )= ABS( parts_obj% pos( 2, itr ) )
-        abs_pos( 3, itr )= ABS( parts_obj% pos( 3, itr ) )
-      ENDDO
-
-      min_y_index= 0
-      min_abs_y= 1D+20
-      DO itr = 1, parts_obj% npart, 1
-        IF( ABS( parts_obj% pos( 2, itr ) ) < min_abs_y )THEN
-          min_abs_y= ABS( parts_obj% pos( 2, itr ) )
-          min_y_index= itr
-        ENDIF
-      ENDDO
-
-      min_abs_z= MINVAL( abs_pos( 3, : ) )
-
-      write_data_loop: DO itr = 1, parts_obj% npart, 1
-
-        IF( parts_obj% export_form_xy .AND. &
-            parts_obj% pos( 3, itr ) /= min_abs_z )THEN
-          CYCLE
-        ENDIF
-        IF( parts_obj% export_form_x .AND. &
-            ( parts_obj% pos( 3, itr ) /= min_abs_z &
-              .OR. &
-              parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) ) &
-        )THEN
-          CYCLE
-        ENDIF
-        WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-          itr, &
-          parts_obj% pos( 1, itr ), &
-          parts_obj% pos( 2, itr ), &
-          parts_obj% pos( 3, itr ), &
-          parts_obj% lapse_parts( itr ), &
-          parts_obj% shift_parts_x( itr ), &
-          parts_obj% shift_parts_y( itr ), &
-          parts_obj% shift_parts_z( itr ), &
-          parts_obj% baryon_density_parts( itr ), &
-          parts_obj% energy_density_parts( itr ), &
-          parts_obj% specific_energy_parts( itr ), &
-          parts_obj% pressure_parts( itr ), &
-          parts_obj% v_euler_parts_x( itr ), &
-          parts_obj% v_euler_parts_y( itr ), &
-          parts_obj% v_euler_parts_z( itr )
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing the arrays in " // TRIM(namefile), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, "...error when writing " &
-      !         // "the arrays in " // TRIM(finalnamefile) )
-      ENDDO write_data_loop
-
-      CLOSE( UNIT= 2 )
-
-    ENDIF
+    ! TODO: fix this by removing the abs_pos array
+ !   IF( debug )THEN
+ !
+ !     namefile= "dbg-hydro.dat"
+ !
+ !     INQUIRE( FILE= TRIM(namefile), EXIST= exist )
+ !
+ !     IF( exist )THEN
+ !         OPEN( UNIT= 2, FILE= TRIM(namefile), STATUS= "REPLACE", &
+ !               FORM= "FORMATTED", &
+ !               POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+ !               IOMSG= err_msg )
+ !     ELSE
+ !         OPEN( UNIT= 2, FILE= TRIM(namefile), STATUS= "NEW", &
+ !               FORM= "FORMATTED", &
+ !               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+ !     ENDIF
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...error when opening " // TRIM(namefile), &
+ !                ". The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, "...error when opening " &
+ !     !                  // TRIM(namefile) )
+ !
+ !     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+ !     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+ !
+ !     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+ !     "# Values of the fields (including coordinates) exported by LORENE "&
+ !     // "on each grid point"
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...error when writing line 1 in " // TRIM(namefile), &
+ !                ". The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+ !     !        // TRIM(namefile) )
+ !
+ !     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+ !     "# column:      1        2       3       4       5", &
+ !     "       6       7       8", &
+ !     "       9       10      11", &
+ !     "       12      13      14", &
+ !     "       15      16      17      18"
+ !
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...error when writing line 2 in " // TRIM(namefile), &
+ !                ". The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+ !     !            // TRIM(namefile) )
+ !
+ !     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+ !     "#      grid point      x [km]       y [km]       z [km]       lapse", &
+ !     "       shift_x [c]    shift_y [c]    shift_z [c]", &
+ !     "       baryon density in the local rest frame [kg m^{-3}$]", &
+ !     "       energy density [c^2]", &
+ !     "       specific energy [c^2]", &
+ !     "       pressure [Pa]", &
+ !     "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
+ !     "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
+ !     "       baryon number per particle nu", &
+ !     "       baryon density in the local rest frame nlrf [baryon/Msun_geo^3]", &
+ !     "       electron fraction", &
+ !     "       generalized Lorentz factor Theta"
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...error when writing line 3 in " // TRIM(namefile), &
+ !                ". The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
+ !     !          // TRIM(namefile) )
+ !
+ !     DO itr = 1, parts_obj% npart, 1
+ !       abs_pos( 1, itr )= ABS( parts_obj% pos( 1, itr ) )
+ !       abs_pos( 2, itr )= ABS( parts_obj% pos( 2, itr ) )
+ !       abs_pos( 3, itr )= ABS( parts_obj% pos( 3, itr ) )
+ !     ENDDO
+ !
+ !     min_y_index= 0
+ !     min_abs_y= 1D+20
+ !     DO itr = 1, parts_obj% npart, 1
+ !       IF( ABS( parts_obj% pos( 2, itr ) ) < min_abs_y )THEN
+ !         min_abs_y= ABS( parts_obj% pos( 2, itr ) )
+ !         min_y_index= itr
+ !       ENDIF
+ !     ENDDO
+ !
+ !     min_abs_z= MINVAL( abs_pos( 3, : ) )
+ !
+ !     write_data_loop: DO itr = 1, parts_obj% npart, 1
+ !
+ !       IF( parts_obj% export_form_xy .AND. &
+ !           parts_obj% pos( 3, itr ) /= min_abs_z )THEN
+ !         CYCLE
+ !       ENDIF
+ !       IF( parts_obj% export_form_x .AND. &
+ !           ( parts_obj% pos( 3, itr ) /= min_abs_z &
+ !             .OR. &
+ !             parts_obj% pos( 2, itr ) /= parts_obj% pos( 2, min_y_index ) ) &
+ !       )THEN
+ !         CYCLE
+ !       ENDIF
+ !       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+ !         itr, &
+ !         parts_obj% pos( 1, itr ), &
+ !         parts_obj% pos( 2, itr ), &
+ !         parts_obj% pos( 3, itr ), &
+ !         parts_obj% lapse_parts( itr ), &
+ !         parts_obj% shift_parts_x( itr ), &
+ !         parts_obj% shift_parts_y( itr ), &
+ !         parts_obj% shift_parts_z( itr ), &
+ !         parts_obj% baryon_density_parts( itr ), &
+ !         parts_obj% energy_density_parts( itr ), &
+ !         parts_obj% specific_energy_parts( itr ), &
+ !         parts_obj% pressure_parts( itr ), &
+ !         parts_obj% v_euler_parts_x( itr ), &
+ !         parts_obj% v_euler_parts_y( itr ), &
+ !         parts_obj% v_euler_parts_z( itr )
+ !
+ !     IF( ios > 0 )THEN
+ !       PRINT *, "...error when writing the arrays in " // TRIM(namefile), &
+ !                ". The error message is", err_msg
+ !       STOP
+ !     ENDIF
+ !     !CALL test_status( ios, err_msg, "...error when writing " &
+ !     !         // "the arrays in " // TRIM(finalnamefile) )
+ !     ENDDO write_data_loop
+ !
+ !     CLOSE( UNIT= 2 )
+ !
+ !   ENDIF
 
   END PROCEDURE construct_particles
 
