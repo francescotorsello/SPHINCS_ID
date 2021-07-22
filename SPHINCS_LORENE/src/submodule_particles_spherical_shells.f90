@@ -39,7 +39,7 @@ SUBMODULE (particles_id) spherical_shells
     !                                               *
     !************************************************
 
-!    !$ USE OMP_LIB
+    !$ USE OMP_LIB
     USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g, lorene2hydrobase, &
                          golden_ratio, third, half, amu, g2kg, sixth
     USE matrix,    ONLY: determinant_4x4_matrix
@@ -461,7 +461,7 @@ SUBMODULE (particles_id) spherical_shells
     ENDDO initialization
     !npart_shelleq( 1 )= n_particles_first_shell !4
 
-    ! TODO: Delete deprecated variables
+    ! TODO: Delete deprecated/unused variables
     pos  = 0.0D0
     pmass = 0.0D0
     phase= 0.0D0
@@ -492,7 +492,7 @@ SUBMODULE (particles_id) spherical_shells
     !--  Main iteration over the spherical surfaces  --!
     !--------------------------------------------------!
 
-    !CALL OMP_SET_NUM_THREADS(80)
+    CALL OMP_SET_NUM_THREADS(80)
 
     IF( debug ) PRINT *, THIS% randomize_phi
     IF( debug ) PRINT *, THIS% randomize_theta
@@ -691,7 +691,7 @@ SUBMODULE (particles_id) spherical_shells
 
           ! Place a particle at a given position only if the hydro
           ! computed by LORENE is acceptable
-          place_particle_or_not: IF( bar_density_tmp( th, phi ) > 0.0D0 &
+          IF( bar_density_tmp( th, phi ) > 0.0D0 &
               !pos_shells(r)% baryon_density( itr + 1 ) > 0.0D0 &
               .AND. &
               bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
@@ -761,7 +761,7 @@ SUBMODULE (particles_id) spherical_shells
             ! discard the position and count the number of discarded positions
             npart_discard= npart_discard + 2
 
-          ENDIF place_particle_or_not
+          ENDIF
 
           ! Print progress on screen, every 10%
           !perc= 50*( THIS% nx*THIS% ny*iz + THIS% nx*iy + ix )/ &
@@ -1131,88 +1131,23 @@ SUBMODULE (particles_id) spherical_shells
 
       IF( npart_shelleq(r)*npart_shelleq(r)/4 > size_pos_shell )THEN
 
-        DEALLOCATE( pos_shells(r)% pos_shell, STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        DEALLOCATE( pos_shells(r)% g_xx, STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        DEALLOCATE( pos_shells(r)% baryon_density, STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        DEALLOCATE( pos_shells(r)% gamma_euler, STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        DEALLOCATE( pos_shells(r)% pvol_shell2, STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
+        CALL reallocate_array_2d( pos_shells(r)% pos_shell, 3, &
+                      npart_shelleq(r)*npart_shelleq(r)/4 )
 
-        ALLOCATE( pos_shells(r)% pos_shell( 3, &
-                  npart_shelleq(r)*npart_shelleq(r)/4 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        ALLOCATE( pos_shells(r)% g_xx( npart_shelleq(r)*npart_shelleq(r)/4 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        ALLOCATE( pos_shells(r)% baryon_density( &
-                  npart_shelleq(r)*npart_shelleq(r)/4 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        ALLOCATE( pos_shells(r)% gamma_euler( &
-                  npart_shelleq(r)*npart_shelleq(r)/4 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        ALLOCATE( pos_shells(r)% pvol_shell2( &
-                  npart_shelleq(r)*npart_shelleq(r)/4 ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
+        CALL reallocate_array_1d( pos_shells(r)% g_xx, &
+                      npart_shelleq(r)*npart_shelleq(r)/4 )
+
+        CALL reallocate_array_1d( pos_shells(r)% baryon_density, &
+                      npart_shelleq(r)*npart_shelleq(r)/4 )
+
+        CALL reallocate_array_1d( pos_shells(r)% gamma_euler, &
+                      npart_shelleq(r)*npart_shelleq(r)/4 )
+
+        CALL reallocate_array_1d( pos_shells(r)% pvol_shell2, &
+                      npart_shelleq(r)*npart_shelleq(r)/4 )
 
       ENDIF
+
       itr= 0
       DO th= 1, npart_shelleq(r)/4, 1
         DO phi= 1, npart_shelleq(r), 1
@@ -1689,6 +1624,8 @@ SUBMODULE (particles_id) spherical_shells
 
     IF( debug ) PRINT *, "20"
 
+CALL OMP_SET_NUM_THREADS(80)
+
     !STOP
 
   END PROCEDURE place_particles_spherical_shells
@@ -1737,6 +1674,58 @@ SUBMODULE (particles_id) spherical_shells
     n_shells_tmp= NINT( n_shells_tmp )
 
   END FUNCTION number_surfaces
+
+
+  SUBROUTINE reallocate_array_1d( array, new_dim )
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(IN OUT):: array
+    INTEGER, INTENT(IN):: new_dim
+
+    DEALLOCATE( array, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...deallocation error in SUBROUTINE" &
+                // "reallocate_tmp_variable. ", &
+                "The error message is", err_msg, ", and IOSTAT= ", ios
+       STOP
+    ENDIF
+
+    ALLOCATE( array( new_dim ), STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error in SUBROUTINE" &
+                // "reallocate_tmp_variable. ", &
+                "The error message is", err_msg, ", and IOSTAT= ", ios
+       STOP
+    ENDIF
+
+  END SUBROUTINE reallocate_array_1d
+
+
+  SUBROUTINE reallocate_array_2d( array, new_dim, new_dim2 )
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(IN OUT):: array
+    INTEGER, INTENT(IN):: new_dim, new_dim2
+
+    DEALLOCATE( array, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...deallocation error in SUBROUTINE" &
+                // "reallocate_tmp_variable. ", &
+                "The error message is", err_msg, ", and IOSTAT= ", ios
+       STOP
+    ENDIF
+
+    ALLOCATE( array( new_dim, new_dim2 ), STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error in SUBROUTINE" &
+                // "reallocate_tmp_variable. ", &
+                "The error message is", err_msg, ", and IOSTAT= ", ios
+       STOP
+    ENDIF
+
+  END SUBROUTINE reallocate_array_2d
 
 
 END SUBMODULE spherical_shells
