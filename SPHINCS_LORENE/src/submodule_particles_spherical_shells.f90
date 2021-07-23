@@ -74,7 +74,7 @@ SUBMODULE (particles_id) spherical_shells
 
     LOGICAL:: exist, high_mass, low_mass, kept_all
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile, finalnamefile2
 
     TYPE:: colatitude_pos_shell
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: colatitudes
@@ -256,91 +256,23 @@ SUBMODULE (particles_id) spherical_shells
     !-- Print mass profile and surfaces' radii to file --!
     !----------------------------------------------------!
 
-    PRINT *, " * Print mass profile to file..."
-    PRINT *
-
     IF( PRESENT(filename_mass_profile) )THEN
       finalnamefile= filename_mass_profile
     ELSE
       finalnamefile= "mass_profile.dat"
     ENDIF
 
-    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-    IF( exist )THEN
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-            FORM= "FORMATTED", &
-            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-            IOMSG= err_msg )
-    ELSE
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-            FORM= "FORMATTED", &
-            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    write_data_loop: DO itr = 1, NINT(radius/dr) - 1, 1
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        mass_profile( 1, mass_profile_idx(itr) ), &
-        mass_profile( 2, mass_profile_idx(itr) ), &
-        mass_profile( 3, mass_profile_idx(itr) )
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing the arrays in " &
-                 // TRIM(finalnamefile), ". The error message is", err_msg
-        STOP
-      ENDIF
-
-    ENDDO write_data_loop
-
-    CLOSE( UNIT= 2 )
-
-    PRINT *, " * Print shell radii to file..."
-    PRINT *
-
     IF( PRESENT(filename_shells_radii) )THEN
-      finalnamefile= filename_shells_radii
+      finalnamefile2= filename_shells_radii
     ELSE
-      finalnamefile= "shell_radii.dat"
+      finalnamefile2= "shell_radii.dat"
     ENDIF
 
-    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-    IF( exist )THEN
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-            FORM= "FORMATTED", &
-            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-            IOMSG= err_msg )
-    ELSE
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-            FORM= "FORMATTED", &
-            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM(finalnamefile), &
-              ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO itr = 1, n_shells, 1
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        shell_radii( itr )
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when writing the arrays in " &
-                 // TRIM(finalnamefile), ". The error message is", err_msg
-        STOP
-      ENDIF
-
-    ENDDO
-
-    CLOSE( UNIT= 2 )
+    CALL print_mass_profile_surface_radii( mass_profile, mass_profile_idx, &
+                                           shell_radii, radius, dr, &
+                                           n_shells, &
+                                           filename_mass_profile, &
+                                           filename_shells_radii )
 
     !---------------------------------------------------------!
     !-- Initialize quantities before starting the iteration --!
@@ -402,9 +334,7 @@ SUBMODULE (particles_id) spherical_shells
       npart_shelleq( r )= CEILING( SQRT(DBLE(2*shell_masses( r )/m_parts( r ))))
 
     ENDDO initialization
-    !npart_shelleq( 1 )= n_particles_first_shell !4
 
-    ! TODO: Delete deprecated/unused variables
     pos  = 0.0D0
     pmass = 0.0D0
     phase= 0.0D0
@@ -435,7 +365,7 @@ SUBMODULE (particles_id) spherical_shells
     !--  Main iteration over the spherical surfaces  --!
     !--------------------------------------------------!
 
-    CALL OMP_SET_NUM_THREADS(80)
+    !CALL OMP_SET_NUM_THREADS(80)
 
     IF( debug ) PRINT *, THIS% randomize_phi
     IF( debug ) PRINT *, THIS% randomize_theta
@@ -639,52 +569,16 @@ SUBMODULE (particles_id) spherical_shells
               .AND. &
               bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
 
-            !npart_out= npart_out + 1
-            !pos_shells(r)% pos_shell( 1, itr + 1 )= xtemp
-            !pos_shells(r)% pos_shell( 2, itr + 1 )= ytemp
-            !pos_shells(r)% pos_shell( 3, itr + 1 )= ztemp
-
             npart_shell_cnt= npart_shell_cnt + 1
             pos_shell_tmp( 1, th, phi )= xtemp
             pos_shell_tmp( 2, th, phi )= ytemp
             pos_shell_tmp( 3, th, phi )= ztemp
 
             ! Compute particle volume
-            IF( th == 1 )THEN
-
-        !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
-              IF( npart_shelleq(r) == 4 )THEN
-
-                dth_shells= pi
-
-              ELSE
-
-                dth_shells= 2.0D0*ABS( col - &
-                        ( col + colatitude_pos(r)% colatitudes(th + 1) )/2.0D0 )
-              ENDIF
-
-            ELSEIF( th == npart_shelleq( r )/4 )THEN
-
-        !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
-              dth_shells= 2.0D0*ABS( ( colatitude_pos(r)% colatitudes(th - 1) &
-                        + col )/2.0D0 - col )
-
-            ELSE
-
-              dth_shells= ABS( &
-                      ( colatitude_pos(r)% colatitudes(th + 1) + col )/2.0D0 &
-                    - ( col + colatitude_pos(r)% colatitudes(th - 1) )/2.0D0 )
-
-            ENDIF
-
-         ! This is commented out to parallelize the loop
-         !   pos_shells(r)% pvol_shell2( itr + 1 )= rad**2.0D0*SIN(col) &
-         !                      *dr_shells*dth_shells*dphi_shells! &
-         !                      !*pos_shells(r)% g_xx( itr ) &
-         !                      !*SQRT(pos_shells(r)% g_xx( itr ))
-
-            pvol_tmp( th, phi )= rad**2.0D0*SIN(col) &
-                                     *dr_shells*dth_shells*dphi_shells! &
+            pvol_tmp( th, phi )= particle_volume( rad, col, dr_shells, &
+                                               dth_shells, dphi_shells, th, &
+                                               colatitude_pos(r)% colatitudes, &
+                                               npart_shelleq(r) )
 
             ! Safety check
             IF( pvol_tmp( th, phi ) <= 0 )THEN
@@ -705,14 +599,6 @@ SUBMODULE (particles_id) spherical_shells
             npart_discard= npart_discard + 2
 
           ENDIF
-
-          ! Print progress on screen, every 10%
-          !perc= 50*( THIS% nx*THIS% ny*iz + THIS% nx*iy + ix )/ &
-          !        ( THIS% nx*THIS% ny*THIS% nz/2 )
-          !IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-          !  WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
-          !         creturn//" ", perc, "%"
-          !ENDIF
 
         ENDDO
 
@@ -1811,6 +1697,171 @@ CALL OMP_SET_NUM_THREADS(80)
     ENDIF
 
   END SUBROUTINE assign_surfaces_mass
+
+
+  SUBROUTINE print_mass_profile_surface_radii( mass_profile, mass_profile_idx, &
+                                               shell_radii, radius, dr, &
+                                               n_shells, &
+                                               filename_mass_profile, &
+                                               filename_shells_radii )
+
+    !************************************************
+    !                                               *
+    ! Print star's radial mass profile and radii of *
+    ! spherical surfaces to different ASCII files   *
+    !                                               *
+    ! FT 23.07.2021                                 *
+    !                                               *
+    !************************************************
+
+    USE constants,  ONLY: third
+
+    IMPLICIT NONE
+
+    INTEGER,          INTENT( IN ):: n_shells
+    DOUBLE PRECISION, INTENT( IN ):: radius, dr
+
+    INTEGER, DIMENSION( : ),                 INTENT( IN ):: mass_profile_idx
+    DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN ):: shell_radii
+    DOUBLE PRECISION, DIMENSION( :, : ),     INTENT( IN ):: mass_profile
+
+    CHARACTER( LEN= * ), INTENT( IN ):: filename_mass_profile, &
+                                        filename_shells_radii
+
+    LOGICAL:: exist
+
+    PRINT *, " * Print mass profile to file..."
+    PRINT *
+
+    INQUIRE( FILE= TRIM(filename_mass_profile), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(filename_mass_profile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= 2, FILE= TRIM(filename_mass_profile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(filename_mass_profile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    write_data_loop: DO itr = 1, NINT(radius/dr) - 1, 1
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        mass_profile( 1, mass_profile_idx(itr) ), &
+        mass_profile( 2, mass_profile_idx(itr) ), &
+        mass_profile( 3, mass_profile_idx(itr) )
+
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing the arrays in " &
+                 // TRIM(filename_mass_profile), ". The error message is", &
+                 err_msg
+        STOP
+      ENDIF
+
+    ENDDO write_data_loop
+
+    CLOSE( UNIT= 2 )
+
+    PRINT *, " * Print surfaces' radii to file..."
+    PRINT *
+
+    INQUIRE( FILE= TRIM(filename_shells_radii), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(filename_shells_radii), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= 2, FILE= TRIM(filename_shells_radii), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(filename_shells_radii), &
+              ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO itr = 1, n_shells, 1
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        shell_radii( itr )
+
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing the arrays in " &
+                 // TRIM(filename_shells_radii), ". The error message is", &
+                 err_msg
+        STOP
+      ENDIF
+
+    ENDDO
+
+    CLOSE( UNIT= 2 )
+
+  END SUBROUTINE print_mass_profile_surface_radii
+
+
+  FUNCTION particle_volume( rad, col, dr_shells, dth_shells, dphi_shells, th, &
+                            colatitudes, npart_equator ) RESULT( pvol )
+
+    !******************************************
+    !                                         *
+    ! Compute the geometrical particle volume *
+    ! not the proper particle volume.         *
+    !                                         *
+    ! FT 23.07.2021                           *
+    !                                         *
+    !******************************************
+
+    USE constants,  ONLY: pi
+
+    IMPLICIT NONE
+
+    INTEGER,          INTENT( IN ):: th, npart_equator
+    DOUBLE PRECISION, INTENT( IN ):: rad, col, dr_shells, dphi_shells
+    DOUBLE PRECISION, INTENT( IN OUT ):: dth_shells
+    DOUBLE PRECISION, DIMENSION(:), INTENT( IN ):: colatitudes
+
+    DOUBLE PRECISION:: pvol
+
+    IF( th == 1 )THEN
+
+    !dth_shells= pi - ( col + colatitude_pos(r)% colatitudes(th+1) )/2.0D0
+      IF( npart_equator == 4 )THEN
+
+        dth_shells= pi
+
+      ELSE
+
+        dth_shells= 2.0D0*ABS( col - &
+                ( col + colatitudes(th + 1) )/2.0D0 )
+      ENDIF
+
+    ELSEIF( th == npart_equator/4 )THEN
+
+    !dth_shells= ( colatitude_pos(r)% colatitudes(th-1) + col - pi )/2.0D0
+      dth_shells= 2.0D0*ABS( ( colatitudes(th - 1) &
+                + col )/2.0D0 - col )
+
+    ELSE
+
+      dth_shells= ABS( &
+              ( colatitudes(th + 1) + col )/2.0D0 &
+            - ( col + colatitudes(th - 1) )/2.0D0 )
+
+    ENDIF
+
+    pvol= rad**2.0D0*SIN(col)*dr_shells*dth_shells*dphi_shells! &
+
+  END FUNCTION particle_volume
 
 
 END SUBMODULE spherical_shells
