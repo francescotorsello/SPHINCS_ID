@@ -100,6 +100,8 @@ SUBMODULE (particles_id) spherical_shells
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: bar_density_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: gam_euler_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pvol_tmp
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: npart_surface_tmp
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: npart_discarded
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -313,14 +315,14 @@ SUBMODULE (particles_id) spherical_shells
       IF( ALLOCATED( pos_shells( r )% pos_phi ) ) &
         DEALLOCATE( pos_shells( r )% pos_phi )
 
-      ALLOCATE( pos_shells( r )% pos_shell     ( 3, 10*npart_approx ) )
-      ALLOCATE( pos_shells( r )% pvol_shell    (    10*npart_approx ) )
-      ALLOCATE( pos_shells( r )% pvol_shell2   (    10*npart_approx ) )
-      ALLOCATE( pos_shells( r )% g_xx          (    10*npart_approx ) )
-      ALLOCATE( pos_shells( r )% baryon_density(    10*npart_approx ) )
-      ALLOCATE( pos_shells( r )% gamma_euler   (    10*npart_approx ) )
-      ALLOCATE( pos_shells( r )% pos_th        (    10*npart_approx ) )
-      ALLOCATE( pos_shells( r )% pos_phi       (    10*npart_approx ) )
+      ALLOCATE( pos_shells( r )% pos_shell     ( 3, npart_approx ) )
+      ALLOCATE( pos_shells( r )% pvol_shell    (    npart_approx ) )
+      ALLOCATE( pos_shells( r )% pvol_shell2   (    npart_approx ) )
+      ALLOCATE( pos_shells( r )% g_xx          (    npart_approx ) )
+      ALLOCATE( pos_shells( r )% baryon_density(    npart_approx ) )
+      ALLOCATE( pos_shells( r )% gamma_euler   (    npart_approx ) )
+      ALLOCATE( pos_shells( r )% pos_th        (    npart_approx ) )
+      ALLOCATE( pos_shells( r )% pos_phi       (    npart_approx ) )
 
       pos_shells(r)% pos_shell= 0.0D0
       pos_shells(r)% pos_phi= -1.0D0
@@ -350,16 +352,20 @@ SUBMODULE (particles_id) spherical_shells
     r_cnt= 1
 
     ! These array are needed to be able to parallelize the loops on each surface
-    ALLOCATE( pos_shell_tmp  ( 3, 10*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( g_xx_tmp       (    10*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( bar_density_tmp(    10*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( gam_euler_tmp  (    10*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( pvol_tmp       (    10*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  10*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( pos_shell_tmp  ( 3, 5*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( g_xx_tmp       (    5*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( bar_density_tmp(    5*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( gam_euler_tmp  (    5*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( pvol_tmp       (    5*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( npart_discarded(    5*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( npart_surface_tmp(  5*CEILING(SQRT(DBLE(2*npart_approx))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
 
     !--------------------------------------------------!
     !--  Main iteration over the spherical surfaces  --!
@@ -449,15 +455,17 @@ SUBMODULE (particles_id) spherical_shells
 
       ENDDO
 
-      npart_discard  = 0
-      npart_shell_cnt= 0
-      npart_shell_tmp= npart_shell( r )
-      ! Initialize temporary arrays
-      pos_shell_tmp  = huge_real
-      g_xx_tmp       = 0.0D0
-      bar_density_tmp= 0.0D0
-      gam_euler_tmp  = 0.0D0
-      pvol_tmp       = 0.0D0
+      npart_discard    = 0
+      npart_shell_cnt  = 0
+      npart_shell_tmp  = npart_shell( r )
+      ! Initialize te  mporary arrays
+      pos_shell_tmp    = huge_real
+      g_xx_tmp         = 0.0D0
+      bar_density_tmp  = 0.0D0
+      gam_euler_tmp    = 0.0D0
+      pvol_tmp         = 0.0D0
+      npart_discarded  = 0.0D0
+      npart_surface_tmp= 0.0D0
 
       IF( debug ) PRINT *, "Right before OMP, shell ", r, "iteration ", cnt2 + 1
 
@@ -471,8 +479,9 @@ SUBMODULE (particles_id) spherical_shells
       !$OMP                     pos_shells, colatitude_pos, bns_obj, n_shells, &
       !$OMP                     dr_shells, shell_radii, shell_thickness, THIS, &
       !$OMP                     g_xx_tmp, bar_density_tmp, gam_euler_tmp, &
-      !$OMP                     pos_shell_tmp, pvol_tmp, dphi_shells ), &
-      !$OMP             REDUCTION( + : npart_discard, npart_shell_cnt )
+      !$OMP                     pos_shell_tmp, pvol_tmp, dphi_shells, &
+      !$OMP                     npart_discarded, npart_surface_tmp )!, &
+ !     !$OMP             REDUCTION( + : npart_discard, npart_shell_cnt )
  !     !$OMP DO PRIVATE( phase, col, col_tmp, xtemp, ytemp, ztemp, &
  !     !$OMP             dth_shells, delta_r, &
  !     !$OMP             th, phi, rand_num2, phase_th, rel_sign ), &
@@ -569,7 +578,8 @@ SUBMODULE (particles_id) spherical_shells
               .AND. &
               bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
 
-            npart_shell_cnt= npart_shell_cnt + 1
+            !npart_shell_cnt= npart_shell_cnt + 1
+            npart_surface_tmp( th, phi )= 1
             pos_shell_tmp( 1, th, phi )= xtemp
             pos_shell_tmp( 2, th, phi )= ytemp
             pos_shell_tmp( 3, th, phi )= ztemp
@@ -596,7 +606,8 @@ SUBMODULE (particles_id) spherical_shells
 
             ! If the hydro is not positive, or the position is outside the star,
             ! discard the position and count the number of discarded positions
-            npart_discard= npart_discard + 2
+            !npart_discard= npart_discard + 2
+            npart_discarded( th, phi )= 2
 
           ENDIF
 
@@ -605,8 +616,10 @@ SUBMODULE (particles_id) spherical_shells
       ENDDO
       !$OMP END PARALLEL DO
 
+      npart_discard   = SUM( SUM( npart_discarded, DIM= 1 ), DIM= 1 )
+      npart_shell_cnt = SUM( SUM( npart_surface_tmp, DIM= 1 ), DIM= 1 )
       npart_shell( r )= npart_shell( r ) - npart_discard
-      npart_out= npart_out + npart_shell( r )/2
+      npart_out       = npart_out + npart_shell( r )/2
 
       IF( debug ) PRINT *, "Right after OMP"
 
@@ -1056,10 +1069,6 @@ SUBMODULE (particles_id) spherical_shells
     PRINT *
 
     ! Safety check
-    !npart_test= 0
-    !DO r= 1, n_shells, 1
-    !  npart_test= npart_test + npart_shell( r )
-    !ENDDO
     npart_test= SUM( npart_shell, DIM= 1 )
     IF( npart_test/2 /= npart_out )THEN
       PRINT *, "** ERROR! The sum of the particles on the shells is not ", &
@@ -1111,6 +1120,24 @@ SUBMODULE (particles_id) spherical_shells
     ENDIF
     IF( ALLOCATED(pvol_tmp) )THEN
       DEALLOCATE( pvol_tmp       , STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array m_parts in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF( ALLOCATED(npart_discarded) )THEN
+      DEALLOCATE( npart_discarded       , STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array npart_discarded in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF( ALLOCATED(npart_surface_tmp) )THEN
+      DEALLOCATE( npart_surface_tmp       , STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array m_parts in SUBROUTINE" &
                   // "place_particles_. ", &
@@ -1194,7 +1221,7 @@ SUBMODULE (particles_id) spherical_shells
       STOP
     ENDIF
 
-    IF( debug )THEN
+    debug_if: IF( debug )THEN
 
       mass_test= 0.0D0
       mass_test2= 0.0D0
@@ -1326,7 +1353,7 @@ SUBMODULE (particles_id) spherical_shells
       !ENDDO
       !STOP
 
-    ENDIF
+    ENDIF debug_if
 
     !---------------------------------------!
     !--  Save particles to output arrays  --!
@@ -1453,7 +1480,7 @@ SUBMODULE (particles_id) spherical_shells
 
     IF( debug ) PRINT *, "20"
 
-CALL OMP_SET_NUM_THREADS(80)
+    !CALL OMP_SET_NUM_THREADS(80)
 
     !STOP
 
