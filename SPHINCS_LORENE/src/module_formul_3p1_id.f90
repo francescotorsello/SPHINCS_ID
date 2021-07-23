@@ -402,7 +402,6 @@ MODULE formul_3p1_id
     SUBROUTINE compute_and_export_3p1_constraints_particles_interface( THIS, &
                                                              parts_obj, &
                                                              namefile, &
-                                                             namefile_sph, &
                                                              name_logfile )
 
       IMPORT:: formul_3p1
@@ -410,7 +409,6 @@ MODULE formul_3p1_id
       CLASS(formul_3p1),   INTENT( IN OUT ):: THIS
       CLASS(particles),    INTENT( IN OUT ):: parts_obj
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile_sph
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
     END SUBROUTINE compute_and_export_3p1_constraints_particles_interface

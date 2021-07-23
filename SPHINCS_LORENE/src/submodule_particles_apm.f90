@@ -55,11 +55,7 @@ SUBMODULE (particles_id) particles_apm
                                    amu, pi
 
     USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
-                                   npart, h, nu, Theta, &
-                                   divv,av,Pr,ye,temp,nlrf,&
-                                   u,tterm,tgrav,tkin,&
-                                   escap,t,n1,n2,pos_u,&
-                                   npm,Nstar, S_l, ehat, cs, Kent, vel_u
+                                   npart, h, nu, Theta
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                    deallocate_metric_on_particles
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
@@ -88,7 +84,7 @@ SUBMODULE (particles_id) particles_apm
     LOGICAL,          PARAMETER:: debug= .TRUE.
 
     INTEGER:: a, a2, itr, itr2, n_inc            ! iterators
-    INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all, npart_missing
+    INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k, nus, mus
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
 
@@ -96,7 +92,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: h_max, h_av, eps!, delta
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, dx, dy, dz, &
                        rad_x, rad_y, rad_z, com_x, com_y, com_z, com_d
-    DOUBLE PRECISION:: max_r_real, min_r_ghost, r_real, r_ghost, max_z_real
+    DOUBLE PRECISION:: max_r_real, r_real, max_z_real
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, x_ell, y_ell, z_ell
     DOUBLE PRECISION:: min_nu, max_nu, min_nu2, max_nu2
     DOUBLE PRECISION:: det, sq_g, Theta_a
@@ -108,8 +104,6 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: art_pr_max
     DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
-    DOUBLE PRECISION:: dist
-    DOUBLE PRECISION:: rand_num, rand_num2
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors

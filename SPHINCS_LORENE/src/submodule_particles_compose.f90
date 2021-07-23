@@ -48,16 +48,17 @@ SUBMODULE (particles_id) particles_compose
 
     IMPLICIT NONE
 
-    INTEGER:: itr, min_y_index, i_T, i_nb, i_yq, i_phase, n_pairs, i_e, cntr, &
-              i_n, Y_n, &
-              n_quad, &
-              i_i, A_i, Z_i, Y_i, i_leptons, i_ns
+    ! The commented variables might be useful in the future
+
+    INTEGER:: itr, cntr!, &
+              !i_t, i_nb, i_phase, n_pairs, i_e, i_n, Y_n, &
+              !n_quad, &
+              !i_i, A_i, Z_i, Y_i, i_leptons, i_ns
     INTEGER, PARAMETER:: unit_compose= 56
     INTEGER, PARAMETER:: max_length_eos= 10000
 
-    DOUBLE PRECISION:: min_abs_y, min_abs_z, m_n, m_p, &
-                       p_nb, s_nb, mub_mn, muq_mn, mul_mn, f_nbmn, e_nbmn, h
-    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
+    !DOUBLE PRECISION:: m_n, m_p, &
+    !                   p_nb, s_nb, mub_mn, muq_mn, mul_mn, f_nbmn, e_nbmn, h
 
     !DOUBLE PRECISION, DIMENSION( : ), ALLOCATABLE:: n_b, Y_e
 

@@ -1297,7 +1297,7 @@ MODULE bns_id
       ! Argument
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_logRho1_1
+      DOUBLE PRECISION:: get_logRho1_2
 
     END FUNCTION get_logRho1_2
 

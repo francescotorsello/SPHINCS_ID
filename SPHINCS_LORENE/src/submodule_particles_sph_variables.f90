@@ -44,7 +44,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
                                    third, kg2g, Msun
-    USE units,               ONLY: set_units, umass
+    USE units,               ONLY: set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
                                    n1,    &  ! particle number for star 1
@@ -54,7 +54,7 @@ SUBMODULE (particles_id) particles_sph_variables
                                              ! coordinate frame
                                    nlrf,  &  ! baryon number density in
                                              ! local rest frame
-                                   ehat,  &  ! canonical energy per baryon
+                                   !ehat,  &  ! canonical energy per baryon
                                    nu,    &  ! canonical baryon number per
                                              ! particle
                                    Theta, &  ! Generalized Lorentz factor
@@ -79,7 +79,7 @@ SUBMODULE (particles_id) particles_sph_variables
                                    deallocate_RCB_tree_memory_3D, iorig
     USE APM,                 ONLY: density_loop
     USE kernel_table,        ONLY: ktable
-    USE options,             ONLY: ikernel, ndes
+    USE options,             ONLY: ndes
     USE set_h,               ONLY: exact_nei_tree_update
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
     USE sphincs_sph,         ONLY: density!, flag_dead_ll_cells
@@ -96,10 +96,8 @@ SUBMODULE (particles_id) particles_sph_variables
     INTEGER:: nus, mus, cnt1, cnt2, a
 
     DOUBLE PRECISION:: g4(0:3,0:3)
-    DOUBLE PRECISION:: det,sq_g, Theta_a, temp1, temp2, nu_max1, nu_max2, &
+    DOUBLE PRECISION:: det,sq_g, Theta_a, nu_max1, nu_max2, &
                        nu_tmp, nu_thres1, nu_thres2
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: h_guess
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -1141,7 +1139,7 @@ SUBMODULE (particles_id) particles_sph_variables
                                              ! coordinate frame
                                    nlrf,  &  ! baryon number density in
                                              ! local rest frame
-                                   ehat,  &  ! canonical energy per baryon
+                                   !ehat,  &  ! canonical energy per baryon
                                    nu,    &  ! canonical baryon number per
                                              ! particle
                                    Theta, &  ! Generalized Lorentz factor
@@ -1156,10 +1154,8 @@ SUBMODULE (particles_id) particles_sph_variables
                                    allocate_SPH_memory, &
                                    deallocate_SPH_memory
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
-                                   deallocate_metric_on_particles, &
-                                   sq_det_g4
-    USE options,             ONLY: basename
-    USE input_output,        ONLY: set_units, dcount, read_SPHINCS_dump
+                                   deallocate_metric_on_particles
+    USE input_output,        ONLY: set_units, read_SPHINCS_dump
 
     IMPLICIT NONE
 
@@ -1376,9 +1372,8 @@ SUBMODULE (particles_id) particles_sph_variables
 
     IMPLICIT NONE
 
-    INTEGER:: itr, min_y_index
+    INTEGER:: itr
 
-    DOUBLE PRECISION:: min_abs_y, min_abs_z1, min_abs_z2
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     LOGICAL:: exist

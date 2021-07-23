@@ -208,13 +208,11 @@ MODULE formul_bssn_id
     MODULE SUBROUTINE compute_and_export_bssn_constraints_particles( THIS, &
                                                            parts_obj, &
                                                            namefile, &
-                                                           namefile_sph, &
                                                            name_logfile )
 
       CLASS(bssn_id),      INTENT( IN OUT ):: THIS
       CLASS(particles),    INTENT( IN OUT ):: parts_obj
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile_sph
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
     END SUBROUTINE compute_and_export_bssn_constraints_particles

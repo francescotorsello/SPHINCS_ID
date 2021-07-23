@@ -717,8 +717,6 @@ SUBMODULE (bns_id) bns_import
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION:: detg
-
     IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 
       ! The coordinates need to be converted from SPHINCS units (Msun_geo)
@@ -754,8 +752,6 @@ SUBMODULE (bns_id) bns_import
     USE constants, ONLY: Msun_geo
 
     IMPLICIT NONE
-
-    DOUBLE PRECISION:: detg
 
     IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 

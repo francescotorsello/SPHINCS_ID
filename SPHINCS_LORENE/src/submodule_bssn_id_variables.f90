@@ -61,11 +61,8 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
                                           ADM_to_BSSN
     USE Tmunu_refine,               ONLY: allocate_Tmunu, deallocate_Tmunu, &
                                           Tmunu_ll
-    USE GravityAcceleration_refine, ONLY: dt_ehat_grav, dt_S_grav_l, &
-                                          d_g_phys4_lll, &
-                                          allocate_GravityAcceleration, &
+    USE GravityAcceleration_refine, ONLY: allocate_GravityAcceleration, &
                                           deallocate_GravityAcceleration
-    USE options,                    ONLY: basename
     USE constants,                  ONLY: Msun_geo
     !
     !-- Use the arrays from the MODULE BSSN to store the BSSN variables
@@ -80,13 +77,13 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
                            A_BSSN3_ll,       & ! Conformal traceless
                                                ! extrinsic curvature
                            g_BSSN3_ll,       & ! Conformal metric
-                           Theta_Z4,         & ! Vector in the CCZ4 formulation
+                           !Theta_Z4,         & ! Vector in the CCZ4 formulation
                                                ! Used because ADM_TO_BSSN
                                                ! calls SUBROUTINES that need it
                                                ! as input; however, it is not
                                                ! evolved in BSSN
-                           lapse_A_BSSN,     & ! Time derivative of lapse
-                           shift_B_BSSN_u,   & ! Time derivativeof shift
+                           !lapse_A_BSSN,     & ! Time derivative of lapse
+                           !shift_B_BSSN_u,   & ! Time derivativeof shift
                            write_BSSN_dump
 
     IMPLICIT NONE
@@ -95,9 +92,7 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
     ! compute_and_export_SPH_variables is called
     INTEGER, SAVE:: call_flag= 0
 
-    INTEGER:: ix, iy, iz, i, j, k, allocation_status, l
-    DOUBLE PRECISION:: detg
-
+    INTEGER:: l
 
     PRINT *, "** Computing and exporting BSSN ID..."
 
@@ -301,13 +296,13 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
                             A_BSSN3_ll,     & ! Conformal traceless
                                               ! extrinsic curvature
                             g_BSSN3_ll,     & ! Conformal metric
-                            Theta_Z4,       & ! Vector in the CCZ4 formulation.
+                            !Theta_Z4,       & ! Vector in the CCZ4 formulation.
                                               ! Loaded here because ADM_TO_BSSN
                                               ! calls SUBROUTINES that need it
                                               ! as input; however, it is not
                                               ! evolved in BSSN
-                            lapse_A_BSSN,   & ! Time derivative of lapse
-                            shift_B_BSSN_u, & ! Time derivativeof shift
+                            !lapse_A_BSSN,   & ! Time derivative of lapse
+                            !shift_B_BSSN_u, & ! Time derivativeof shift
                             read_BSSN_dump
 
     IMPLICIT NONE
@@ -316,7 +311,6 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
               min_ix_z, min_iy_z, min_iz_z
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
-    DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
 
     LOGICAL:: exist
 
@@ -551,7 +545,6 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
               min_ix_z, min_iy_z, min_iz_z
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
-    DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
 
     LOGICAL:: exist
 

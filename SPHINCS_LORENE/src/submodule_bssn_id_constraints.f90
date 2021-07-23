@@ -52,7 +52,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k, allocation_status, fd_lim, l
+    INTEGER:: i, j, k, fd_lim, l
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, &
               min_ix_y, min_iy_y, min_iz_y, &
@@ -1086,7 +1086,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     !**************************************************
 
     USE constants,            ONLY: c_light2, cm2m, MSun, g2kg, m2cm, Msun_geo
-    USE units,                ONLY: set_units, m0c2_cu
+    USE units,                ONLY: set_units
     USE tensor,               ONLY: itt, itx, ity, itz, ixx, ixy, &
                                     ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                     jyy, jyz, jzz, jx, jy, jz, &
@@ -1095,9 +1095,8 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     USE mesh_refinement,             ONLY: allocate_grid_function, levels, &
                                            rad_coord, nlevels, &
                                            deallocate_grid_function
-    USE ADM_refine,                  ONLY: lapse, dt_lapse, shift_u, &
-                                           dt_shift_u, &
-                                           K_phys3_ll, g_phys3_ll, &
+    USE ADM_refine,                  ONLY: lapse, shift_u, &
+                                           g_phys3_ll, &
                                            allocate_ADM, deallocate_ADM
     USE BSSN_refine,                 ONLY: allocate_BSSN, deallocate_BSSN
     USE Tmunu_refine,                ONLY: Tmunu_ll, allocate_Tmunu, &
@@ -1110,14 +1109,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
 
     USE input_output,         ONLY: read_options
-    USE options,              ONLY: ikernel, ndes, metric_type
+    USE options,              ONLY: ndes
     USE sph_variables,        ONLY: npart, &  ! particle number
                                     pos_u, &  ! particle positions
                                     vel_u, &  ! particle velocities in
                                               ! coordinate frame
                                     nlrf,  &  ! baryon number density in
                                               ! local rest frame
-                                    ehat,  &  ! canonical energy per baryon
+                                    !ehat,  &  ! canonical energy per baryon
                                     nu,    &  ! canonical baryon number per
                                               ! particle
                                     Theta, &  ! Generalized Lorentz factor
@@ -1125,11 +1124,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
                                     Pr,    &  ! Pressure
                                     u,     &  ! Internal energy in local rest
                                               ! frame (no kinetic energy)
-                                    temp,  &  ! Temperature
-                                    av,    &  ! Dissipation
-                                    Ye,    &  ! Electron fraction
-                                    divv,  &  ! Divergence of velocity vel_u
-                                    Nstar, &  ! Comput.frame baryon number
+                                    !temp,  &  ! Temperature
+                                    !av,    &  ! Dissipation
+                                    !Ye,    &  ! Electron fraction
+                                    !divv,  &  ! Divergence of velocity vel_u
+                                    !Nstar, &  ! Comput.frame baryon number
                                               ! density
                                     allocate_SPH_memory, &
                                     deallocate_SPH_memory
@@ -1155,13 +1154,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
-    INTEGER:: itr, min_y_index
     INTEGER, SAVE:: counter= 1
 
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
     DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
-    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_loc
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_loc
@@ -2006,123 +2003,6 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
       PRINT *, " * Printed."
       PRINT *
-
-  !     PRINT *, " * Printing sph density to file ", TRIM(namefile_sph), "..."
-  !
-  !     INQUIRE( FILE= TRIM(namefile_sph), EXIST= exist )
-  !
-  !     IF( exist )THEN
-  !         OPEN( UNIT= 2, FILE= TRIM(namefile_sph), STATUS= "REPLACE", &
-  !               FORM= "FORMATTED", &
-  !               POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-  !               IOMSG= err_msg )
-  !     ELSE
-  !         OPEN( UNIT= 2, FILE= TRIM(namefile_sph), STATUS= "NEW", &
-  !               FORM= "FORMATTED", &
-  !               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-  !     ENDIF
-  !     IF( ios > 0 )THEN
-  !       PRINT *, "...error when opening ", TRIM(namefile_sph), &
-  !                ". The error message is", err_msg
-  !       STOP
-  !     ENDIF
-  !     !CALL test_status( ios, err_msg, "...error when opening " &
-  !     !                  // TRIM(namefile_sph) )
-  !
-  !     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  !     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
-  !
-  !     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  !     "# Values of the SPH density"
-  !     IF( ios > 0 )THEN
-  !       PRINT *, "...error when writing line 1 in ", TRIM(namefile_sph), &
-  !                ". The error message is", err_msg
-  !       STOP
-  !     ENDIF
-  !     !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-  !     !        // TRIM(namefile_sph) )
-  !
-  !     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  !     "# column:      1        2       3       4"
-  !
-  !     IF( ios > 0 )THEN
-  !       PRINT *, "...error when writing line 2 in ", TRIM(namefile_sph), &
-  !                ". The error message is", err_msg
-  !       STOP
-  !     ENDIF
-  !     !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-  !     !        // TRIM(namefile_sph) )
-  !
-  !     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  !     "#      particle      x [km]       y [km]       z [km]       ", &
-  !     "SPH density"
-  !
-  !     IF( ios > 0 )THEN
-  !       PRINT *, "...error when writing line 3 in ", TRIM(namefile_sph), &
-  !                ". The error message is", err_msg
-  !       STOP
-  !     ENDIF
-  !     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-  !     !        // TRIM(namefile_sph) )
-  !
-  !     !IF( ALLOCATED( abs_grid ) )THEN
-  !     !  DEALLOCATE( abs_grid )
-  !     !ENDIF
-  !     !ALLOCATE( abs_grid( npart, 3 ) )
-  !
-  !     !DO itr = 1, npart, 1
-  !     !  abs_pos( itr, jx )= ABS( pos_loc( 1, itr ) )
-  !     !  abs_pos( itr, jy )= ABS( pos_loc( 2, itr ) )
-  !     !  abs_pos( itr, jz )= ABS( pos_loc( 3, itr ) )
-  !     !ENDDO
-  !
-  !     !min_y_index= 0
-  !     !min_abs_y= 1D+20
-  !     !DO itr = 1, npart, 1
-  !     !  IF( ABS( pos_loc( 2, itr ) ) < min_abs_y )THEN
-  !     !    min_abs_y= ABS( pos_loc( 2, itr ) )
-  !     !    min_y_index= itr
-  !     !  ENDIF
-  !     !ENDDO
-  !     !
-  !     !min_abs_z= MINVAL( abs_pos( 3, : ) )
-  !
-  !     write_data_loop: DO itr = 1, npart, 1
-  !
-  !       IF( THIS% export_form_xy .AND. &
-  !           ( pos_loc( 3, itr ) >=  0.5D0 .OR. &
-  !             pos_loc( 3, itr ) <= -0.5D0 ) &
-  !       )THEN
-  !         CYCLE
-  !       ENDIF
-  !       IF( THIS% export_form_x .AND. &
-  !           ( pos_loc( 3, itr ) >=  0.5D0 .OR. &
-  !             pos_loc( 3, itr ) <= -0.5D0 .OR. &
-  !             pos_loc( 2, itr ) >=  0.5D0 .OR. &
-  !             pos_loc( 2, itr ) <= -0.5D0 ) &
-  !       )THEN
-  !         CYCLE
-  !       ENDIF
-  !       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  !         itr, &
-  !         pos_loc( 1, itr ), &
-  !         pos_loc( 2, itr ), &
-  !         pos_loc( 3, itr ), &
-  !         sph_density( itr )
-  !
-  !       IF( ios > 0 )THEN
-  !         PRINT *, "...error when writing the arrays in ", TRIM(namefile_sph), &
-  !                  ". The error message is", err_msg
-  !         STOP
-  !       ENDIF
-  !       !CALL test_status( ios, err_msg, "...error when writing " &
-  !       !         // "the arrays in " // TRIM(namefile_sph) )
-  !     ENDDO write_data_loop
-  !
-  !     CLOSE( UNIT= 2 )
-  !
-  !     PRINT *, " * Printed."
-  !     PRINT *
 
     ENDIF
 

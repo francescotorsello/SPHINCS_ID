@@ -59,7 +59,7 @@ SUBMODULE (particles_id) particles_constructor
     USE NR,             ONLY: indexx
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
-    USE units,          ONLY: umass, set_units
+    USE units,          ONLY: set_units
     USE options,        ONLY: ikernel, ndes
     USE alive_flag,     ONLY: alive
 
@@ -68,13 +68,13 @@ SUBMODULE (particles_id) particles_constructor
     ! The variable counter counts how many times the PROCEDURE
     ! construct_particles is called
     INTEGER, SAVE:: counter= 1
-    INTEGER:: nx, ny, nz, min_y_index, min_z_index, cntr1, cntr2, &
-              npart_approx, npart2_approx, itr_1, itr_2, max_steps, itr2, &
+    INTEGER:: nx, ny, nz, &
+              npart_approx, npart2_approx, max_steps, itr2, &
               nlines, header_lines, n_cols, npart_tmp, npart1_tmp, npart2_tmp, &
               nx_gh, ny_gh, nz_gh
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
-    INTEGER, DIMENSION( : ), ALLOCATABLE:: x_sort, y_sort, z_sort
+    !INTEGER, DIMENSION( : ), ALLOCATABLE:: x_sort, y_sort, z_sort
     ! APM parameters
     INTEGER:: apm_max_it, max_inc, n_particles_first_shell
     INTEGER, PARAMETER:: unit_pos= 2289
@@ -89,11 +89,10 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION:: xmin1, xmax1, ymin1, ymax1, zmin1, zmax1
     DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
     DOUBLE PRECISION:: center1, center2, radius1, radius2, com1, com2
-    DOUBLE PRECISION:: min_abs_y, min_abs_z
     DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor, &
                        last_r
     DOUBLE PRECISION:: pvol_tmp
-    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
+
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos2
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos1, pos2
@@ -101,7 +100,6 @@ SUBMODULE (particles_id) particles_constructor
                                                        pmass1, pmass2
     DOUBLE PRECISION:: nuratio_thres
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: namefile
     ! String storing the name of the directory storing the files containing
     ! the particle distributions
     CHARACTER( LEN= max_length ):: parts_pos_path
@@ -125,7 +123,7 @@ SUBMODULE (particles_id) particles_constructor
               compose_eos, exist, randomize_phi, randomize_theta, &
               randomize_r, apm_iterate1, apm_iterate2, mass_it, find_npart, &
               read_nu, reflect_particles_x
-    LOGICAL, DIMENSION( : ), ALLOCATABLE:: negative_hydro
+
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     NAMELIST /bns_particles/ &
@@ -650,7 +648,7 @@ SUBMODULE (particles_id) particles_constructor
 
     CASE(3)
 
-      PRINT *, "** Placing equal-mass particles on spherical shells, " &
+      PRINT *, "** Placing equal-mass particles on spherical surfaces, " &
                // "taking into account the mass profile of the stars."
       PRINT *
 
@@ -676,14 +674,11 @@ SUBMODULE (particles_id) particles_constructor
                                                     npart_approx, &
                                                     parts_obj% npart2, &
                                                     pos2, pvol2, pmass2, &
-                                                    thres, &
                                                     bns_obj, &
                                                     last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps, &
-                                                    n_particles_first_shell, &
-                                                    find_npart, &
                                                     filename_mass_profile, &
                                                     filename_shells_radii, &
                                                     filename_shells_pos )
@@ -751,14 +746,11 @@ SUBMODULE (particles_id) particles_constructor
                                                 npart2_approx, &
                                                 parts_obj% npart1, &
                                                 pos1, pvol1, pmass1, &
-                                                thres, &
                                                 bns_obj, &
                                                 last_r, &
                                                 upper_bound, lower_bound, &
                                                 upper_factor, lower_factor,&
                                                 max_steps, &
-                                                n_particles_first_shell, &
-                                                find_npart, &
                                                 filename_mass_profile, &
                                                 filename_shells_radii, &
                                                 filename_shells_pos )
@@ -787,14 +779,11 @@ SUBMODULE (particles_id) particles_constructor
                                               npart_approx, &
                                               parts_obj% npart1, &
                                               pos1, pvol1, pmass1, &
-                                              thres, &
                                               bns_obj, &
                                               last_r, &
                                               upper_bound, lower_bound, &
                                               upper_factor, lower_factor,&
                                               max_steps, &
-                                              n_particles_first_shell, &
-                                              find_npart, &
                                               filename_mass_profile, &
                                               filename_shells_radii, &
                                               filename_shells_pos )
@@ -868,14 +857,11 @@ SUBMODULE (particles_id) particles_constructor
                                                 npart2_approx, &
                                                 parts_obj% npart2, &
                                                 pos2, pvol2, pmass2, &
-                                                thres, &
                                                 bns_obj, &
                                                 last_r, &
                                                 upper_bound, lower_bound, &
                                                 upper_factor, lower_factor,&
                                                 max_steps, &
-                                                n_particles_first_shell, &
-                                                find_npart, &
                                                 filename_mass_profile, &
                                                 filename_shells_radii, &
                                                 filename_shells_pos )

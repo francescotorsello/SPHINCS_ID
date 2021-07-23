@@ -75,8 +75,6 @@ SUBMODULE (bns_id) bns_constructor
 
     IMPLICIT NONE
 
-    INTEGER:: itr
-
     CHARACTER(KIND= C_CHAR, LEN= 7):: default_case
 
     LOGICAL:: exist

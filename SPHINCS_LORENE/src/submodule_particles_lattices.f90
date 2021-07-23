@@ -358,7 +358,7 @@ SUBMODULE (particles_id) particles_lattices
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k, nx2, ny2, nz2, sgn, npart_half, npart_half2, itr2
+    INTEGER:: i, j, k, sgn, npart_half, npart_half2
 
     DOUBLE PRECISION:: dx1, dy1, dz1, dx2, dy2, dz2
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim, zlim2
@@ -369,8 +369,6 @@ SUBMODULE (particles_id) particles_lattices
     DOUBLE PRECISION:: vol_a_alt1, vol_a_alt2
 
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: pos_tmp
-
-    CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
 
     PRINT *, "** Executing the place_particles_3dlattices " &
              // "subroutine..."

@@ -48,28 +48,25 @@ SUBMODULE (particles_id) spherical_shells
 
     IMPLICIT NONE
 
-    INTEGER:: n_shells, itr2, itr3, mass_index, npart_half, npart_tmp, cnt, &
-              shell_index, r, th, phi, i_shell, npart_test, npart_shell_tmp, &
-              cnt2, rel_sign, cnt3, dim_seed, r_cnt, first_shell, prev_shell, &
+    INTEGER:: n_shells, itr2, cnt, &
+              r, th, phi, i_shell, npart_test, npart_shell_tmp, &
+              cnt2, rel_sign, dim_seed, r_cnt, prev_shell, &
               npart_discard, npart_shell_cnt, size_pos_shell
     !INTEGER, PARAMETER:: max_length= 5D+6
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx, seed
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
 
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, m_p, central_density, &
-                       dr, dth, dphi, phase, phase_th, mass, baryon_density, &
+                       dr, dth, dphi, phase, phase_th, mass, &
                        dr_shells, dth_shells, dphi_shells, col, rad, &
-                       g_xx, gamma_euler, proper_volume, mass_test, mass_test2,&
+                       proper_volume, mass_test, mass_test2,&
                        proper_volume_test, npart_shell_kept, &
                        rand_num, rand_num2, delta_r, shell_thickness, &
-                       upper_bound_tmp, lower_bound_tmp, col_tmp, &
-                       surface_density, density_step, n_shells_tmp, &
-                       gxx_tmp, baryon_density_tmp, gamma_euler_tmp, rho_tmp
+                       upper_bound_tmp, lower_bound_tmp, col_tmp
 
     DOUBLE PRECISION, PARAMETER:: huge_real= 1.0D30!ABS( HUGE(0.0D0) )
 
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile, &
-                                                    particle_profile
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
                                                   alpha, m_parts, vol_shell, &
                                                   vol_shell2, mass_shell, &
@@ -215,31 +212,12 @@ SUBMODULE (particles_id) spherical_shells
       ENDIF
     ENDIF
 
-  !  surface_density= bns_obj% import_mass_density( center + radius, &
-  !                                                 0.0D0, 0.0D0 )
-  !  density_step= ( central_density - surface_density )/(n_shells)
-  !  shell_radii= 0.0D0
+    !-------------------------------------------------------!
+    !-- Place surfaces based on mass density a that point --!
+    !-------------------------------------------------------!
 
-    !-----------------------------------------------------!
-    !-- Place shells based on mass density a that point --!
-    !-----------------------------------------------------!
-
-    central_density= bns_obj% get_rho_center1()
-    shell_radii= 0.0D0
-    shell_radii(1)= ( central_density/m_p )**(-third)
-    DO itr= 2, n_shells, 1
-
-      rho_tmp= bns_obj% import_mass_density( center + shell_radii( itr - 1 ), &
-                                             0.0D0, 0.0D0 )
-
-      IF( rho_tmp == 0 )THEN
-        shell_radii= shell_radii*itr/n_shells
-      ENDIF
-
-      shell_radii( itr )= shell_radii( itr - 1 ) + ( rho_tmp/m_p )**(-third)
-
-    ENDDO
-    shell_radii= shell_radii*(radius*last_r/shell_radii(n_shells))
+    CALL place_surfaces( bns_obj, center, radius, m_p, n_shells, &
+                         shell_radii, last_r )
 
     ! Printout
     PRINT *, " * Number of the spherical surfaces= ", n_shells
@@ -270,44 +248,9 @@ SUBMODULE (particles_id) spherical_shells
     !-- Assign masses to each spherical surface --!
     !---------------------------------------------!
 
-    shell_index= 1
-    itr2= 0
-    shell_masses= 0.0D0
-    assign_masses_to_surfaces: DO itr= 0, NINT(radius/dr), 1
-
-      IF( shell_index == n_shells )THEN
-
-        shell_masses( shell_index )= SUM( mass_profile( 2, &
-         mass_profile_idx(itr2):mass_profile_idx(NINT(radius/dr)-1) ), DIM= 1 )
-
-        EXIT
-
-      ENDIF
-
-      IF( mass_profile( 1, mass_profile_idx(itr) ) &
-          >= shell_radii( shell_index ) &!+ radius/DBLE(2*n_shells)
-      )THEN
-
-       shell_masses( shell_index )= SUM( mass_profile( 2, &
-                     mass_profile_idx(itr2):mass_profile_idx(itr) ), DIM= 1 )
-
-       itr2= itr + 1
-       shell_index= shell_index + 1
-
-      ENDIF
-
-    ENDDO assign_masses_to_surfaces
-
-    ! Safety check
-    IF( ABS( SUM( shell_masses, DIM= 1 ) - mass_star )/mass_star > 5.0D-3 )THEN
-      PRINT *, " ** The masses of the shells do not add up to the ", &
-               "mass of the star. Stopping..."
-      PRINT *, " * SUM( shell_masses )= ", SUM( shell_masses, DIM=1 )
-      PRINT *, " * Baryon mass of the star= ", mass_star
-      PRINT *, " * Array shell_masses=", shell_masses
-      PRINT *
-      STOP
-    ENDIF
+    CALL assign_surfaces_mass( shell_masses, shell_radii, radius, dr, &
+                               n_shells, mass_profile_idx, mass_profile, &
+                               mass_star )
 
     !----------------------------------------------------!
     !-- Print mass profile and surfaces' radii to file --!
@@ -1634,6 +1577,16 @@ CALL OMP_SET_NUM_THREADS(80)
   FUNCTION number_surfaces( m_p, center, radius, bns_obj ) &
            RESULT( n_shells_tmp )
 
+    !************************************************
+    !                                               *
+    ! Compute the number of spherical surfaces      *
+    ! by integrating the linear particle density    *
+    ! along the larger equatorial radius            *
+    !                                               *
+    ! FT 22.07.2021                                 *
+    !                                               *
+    !************************************************
+
     USE constants, ONLY: third
 
     IMPLICIT NONE
@@ -1678,6 +1631,14 @@ CALL OMP_SET_NUM_THREADS(80)
 
   SUBROUTINE reallocate_array_1d( array, new_dim )
 
+    !************************************
+    !                                   *
+    ! Reallocate a 1-dimensional array  *
+    !                                   *
+    ! FT 22.07.2021                     *
+    !                                   *
+    !************************************
+
     IMPLICIT NONE
 
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(IN OUT):: array
@@ -1704,6 +1665,14 @@ CALL OMP_SET_NUM_THREADS(80)
 
   SUBROUTINE reallocate_array_2d( array, new_dim, new_dim2 )
 
+    !************************************
+    !                                   *
+    ! Reallocate a 2-dimensional array  *
+    !                                   *
+    ! FT 22.07.2021                     *
+    !                                   *
+    !************************************
+
     IMPLICIT NONE
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(IN OUT):: array
@@ -1726,6 +1695,122 @@ CALL OMP_SET_NUM_THREADS(80)
     ENDIF
 
   END SUBROUTINE reallocate_array_2d
+
+
+  SUBROUTINE place_surfaces( bns_obj, center, radius, m_p, n_shells, &
+                             shell_radii, last_r )
+
+    !************************************************
+    !                                               *
+    ! Place the spherical surface, according to     *
+    ! the baryon mass density of the star           *
+    ! along the larger equatorial radius            *
+    !                                               *
+    ! FT 23.07.2021                                 *
+    !                                               *
+    !************************************************
+
+    USE constants,  ONLY: third
+
+    IMPLICIT NONE
+
+    INTEGER,          INTENT( IN ):: n_shells
+    CLASS(bns),       INTENT( IN ):: bns_obj
+    DOUBLE PRECISION, INTENT( IN ):: center, radius, m_p, last_r
+    DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN OUT ):: shell_radii
+
+    DOUBLE PRECISION:: rho_tmp, central_density
+
+    central_density= bns_obj% get_rho_center1()
+
+    shell_radii= 0.0D0
+
+    shell_radii(1)= ( central_density/m_p )**(-third)
+    DO itr= 2, n_shells, 1
+
+      rho_tmp= bns_obj% import_mass_density( center + shell_radii( itr - 1 ), &
+                                             0.0D0, 0.0D0 )
+
+      IF( rho_tmp == 0 )THEN
+        shell_radii= shell_radii*itr/n_shells
+      ENDIF
+
+      shell_radii( itr )= shell_radii( itr - 1 ) + ( rho_tmp/m_p )**(-third)
+
+    ENDDO
+    shell_radii= shell_radii*(radius*last_r/shell_radii(n_shells))
+
+  END SUBROUTINE place_surfaces
+
+
+  SUBROUTINE assign_surfaces_mass( shell_masses, shell_radii, radius, dr, &
+                                   n_shells, mass_profile_idx, mass_profile, &
+                                   mass_star )
+
+    !************************************************
+    !                                               *
+    ! Assign a mass to each spherical surface,      *
+    ! based on the radial mass profile of the star  *
+    ! (computed along the larger equatorial radius) *
+    !                                               *
+    ! FT 23.07.2021                                 *
+    !                                               *
+    !************************************************
+
+    USE constants,  ONLY: third
+
+    IMPLICIT NONE
+
+    INTEGER,          INTENT( IN ):: n_shells
+    DOUBLE PRECISION, INTENT( IN ):: radius, dr, mass_star
+
+    INTEGER, DIMENSION( : ),                 INTENT( IN ):: mass_profile_idx
+    DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN ):: shell_radii
+    DOUBLE PRECISION, DIMENSION( :, : ),     INTENT( IN ):: mass_profile
+    DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN OUT ):: shell_masses
+
+    INTEGER shell_index, itr2
+
+    shell_index= 1
+    itr2= 0
+    shell_masses= 0.0D0
+    assign_masses_to_surfaces: DO itr= 0, NINT(radius/dr), 1
+
+      IF( shell_index == n_shells )THEN
+
+        shell_masses( shell_index )= SUM( mass_profile( 2, &
+         mass_profile_idx(itr2):mass_profile_idx(NINT(radius/dr)-1) ), DIM= 1 )
+
+        EXIT
+
+      ENDIF
+
+      IF( mass_profile( 1, mass_profile_idx(itr) ) &
+          >= shell_radii( shell_index ) &!+ radius/DBLE(2*n_shells)
+      )THEN
+
+       shell_masses( shell_index )= SUM( mass_profile( 2, &
+                     mass_profile_idx(itr2):mass_profile_idx(itr) ), DIM= 1 )
+
+       itr2= itr + 1
+       shell_index= shell_index + 1
+
+      ENDIF
+
+    ENDDO assign_masses_to_surfaces
+
+    ! Safety check
+    IF( ABS( SUM( shell_masses, DIM= 1 ) - mass_star )/mass_star > 5.0D-3 )THEN
+      PRINT *, " ** The masses of the shells do not add up to the ", &
+               "mass of the star. Stopping..."
+      PRINT *, " * SUM( shell_masses )= ", SUM( shell_masses, DIM=1 )
+      PRINT *, " * Baryon mass of the star= ", mass_star
+      PRINT *, " * Array shell_masses=", shell_masses
+      PRINT *
+      STOP
+    ENDIF
+
+  END SUBROUTINE assign_surfaces_mass
 
 
 END SUBMODULE spherical_shells

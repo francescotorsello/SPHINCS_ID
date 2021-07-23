@@ -60,8 +60,6 @@ PROGRAM sphincs_lorene_bns
   ! spacetime output is to be saved
   CHARACTER( LEN= max_length ):: spacetime_path
 
-  ! Logical variable to check if files exist
-  LOGICAL:: exist
   ! Logical variables to steer the execution
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
             compute_constraints, export_constraints_xy, &
@@ -390,7 +388,6 @@ PROGRAM sphincs_lorene_bns
                         compute_and_export_3p1_constraints( &
                                                 particles_dist( itr3, itr4 ), &
                                                 namefile_bssn, &
-                                                namefile_sph, &
                                                 name_logfile )
 
           ENDIF
