@@ -169,8 +169,9 @@ SUBMODULE (bns_id) bns_mass_profile
 
     mass= mass_profile( 3, NINT(radius/dr) )
 
-    PRINT *, "radius covered by the integration=", MAXVAL( mass_profile( 1, : ), DIM= 1 )
-    PRINT *, "mass=", mass
+    PRINT *, " * Radius covered by the integration of baryon mass density=", &
+             MAXVAL( mass_profile( 1, : ), DIM= 1 )
+    PRINT *, " * Integrated baryon mass of the star=", mass
     PRINT *
 
     CALL indexx( NINT(radius/dr) + 1, mass_profile( 1, : ), mass_profile_idx )

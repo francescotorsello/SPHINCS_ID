@@ -81,7 +81,6 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: m_max_it    = 50
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
-    LOGICAL,          PARAMETER:: debug= .TRUE.
 
     INTEGER:: a, a2, itr, itr2, n_inc            ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
@@ -151,6 +150,8 @@ SUBMODULE (particles_id) particles_apm
     LOGICAL:: exist
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+
+    LOGICAL,          PARAMETER:: debug= .FALSE.
 
     IF( debug ) PRINT *, "0"
 
@@ -1137,7 +1138,7 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "assign h..."
 
-      h_guess(1:npart_real)= h
+      h_guess(1:npart_real)= h(1:npart_real)
       !h_guess(npart_real+1:npart_all)= dx*dy*dz
       CALL assign_h( nn_des, &
                      npart_all, &

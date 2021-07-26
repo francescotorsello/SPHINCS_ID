@@ -69,12 +69,13 @@ SUBMODULE (particles_id) particles_constructor
     ! construct_particles is called
     INTEGER, SAVE:: counter= 1
     INTEGER:: nx, ny, nz, &
-              npart_approx, npart2_approx, max_steps, itr2, &
+              npart_approx, npart2_approx, max_steps, itr2, x_idx, &
               nlines, header_lines, n_cols, npart_tmp, npart1_tmp, npart2_tmp, &
               nx_gh, ny_gh, nz_gh
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
-    !INTEGER, DIMENSION( : ), ALLOCATABLE:: x_sort, y_sort, z_sort
+    INTEGER, DIMENSION( : ), ALLOCATABLE:: x_sort!, y_sort, z_sort
+    INTEGER, DIMENSION( : ), ALLOCATABLE:: x_number
     ! APM parameters
     INTEGER:: apm_max_it, max_inc, n_particles_first_shell
     INTEGER, PARAMETER:: unit_pos= 2289
@@ -945,16 +946,26 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )
     parts_obj% pvol= parts_obj% pvol( 1:parts_obj% npart )
 
- !   IF(.NOT.ALLOCATED( x_sort ))THEN
- !     ALLOCATE( x_sort( parts_obj% npart ), &
- !               STAT= ios, ERRMSG= err_msg )
- !     IF( ios > 0 )THEN
- !        PRINT *, "...allocation error for array x_sort in SUBROUTINE" &
- !                 // "place_particles_. ", &
- !                 "The error message is", err_msg
- !        STOP
- !     ENDIF
- !   ENDIF
+    IF(.NOT.ALLOCATED( x_sort ))THEN
+      ALLOCATE( x_sort( parts_obj% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array x_sort in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( x_number ))THEN
+      ALLOCATE( x_number( parts_obj% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array x_number in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
  !   IF(.NOT.ALLOCATED( y_sort ))THEN
  !     ALLOCATE( y_sort( parts_obj% npart ), &
  !               STAT= ios, ERRMSG= err_msg )
@@ -975,58 +986,198 @@ SUBMODULE (particles_id) particles_constructor
  !        STOP
  !     ENDIF
  !   ENDIF
- !   ! Sort x, y, z coordinates of the particles
- !   CALL indexx( parts_obj% npart, parts_obj% pos( 1, : ), x_sort )
+
+    ! Sort x, y, z coordinates of the particles
+    CALL indexx( parts_obj% npart, parts_obj% pos( 1, : ), x_sort )
  !   CALL indexx( parts_obj% npart, parts_obj% pos( 2, : ), y_sort )
  !   CALL indexx( parts_obj% npart, parts_obj% pos( 3, : ), z_sort )
+
+    x_number= 1
+    itr2= 1
+    ! Find the number of times each x appears
+    DO itr= 1, parts_obj% npart - 1, 1
+
+      IF( parts_obj% pos( 1, x_sort(itr) ) == &
+          parts_obj% pos( 1, x_sort(itr+1) ) )THEN
+
+        x_number(itr2)= x_number(itr2) + 1
+
+      !ELSEIF( parts_obj% pos( 1, x_sort(itr) ) /= &
+      !        parts_obj% pos( 1, x_sort(itr+1) ) )THEN
+      ELSE
+
+        itr2= itr2 + 1
+
+      ENDIF
+
+    ENDDO
+    !PRINT *, SUM(x_number), parts_obj% npart
+    !PRINT *, SIZE(x_number)
+    x_number= x_number(1:itr2)
+    !PRINT *, SIZE(x_number)
+    !PRINT *, x_number
+
+    IF( SUM( x_number ) /= parts_obj% npart )THEN
+
+      PRINT *, "** ERROR! The sum of the numbers of particles with the same", &
+               " x is not equal to the particle number."
+      PRINT *, " * SUM( x_number )=", SUM( x_number ), ", ", &
+               "parts_obj% npart=", parts_obj% npart
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+    DO itr= 1, SIZE(x_number), 1
+
+      IF( itr == 1 )THEN
+        x_idx= 1
+      ELSE
+        x_idx= SUM(x_number(1:itr-1)) + 1
+      ENDIF
+
+      DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
+
+        ! If they do not have the same y
+        IF( parts_obj% pos( 1, x_sort(itr2) ) /= &
+            parts_obj% pos( 1, x_sort(itr2+1) ) )THEN
+
+          PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
+                   " and", x_sort(itr2+1), &
+                   " do not have the same x, but should!"
+          PRINT *, parts_obj% pos( :, x_sort(itr2) )
+          PRINT *, parts_obj% pos( :, x_sort(itr2+1) )
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+
+        ENDIF
+
+      ENDDO
+
+    ENDDO
 
     ! Check that there aren't particles with the same coordinates
     PRINT *, "** Checking that there are no multiple particles", &
              " at the same position..."
     PRINT *
 
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( parts_obj ) &
-    !$OMP             PRIVATE( itr, itr2 )
-    DO itr= 1, parts_obj% npart - 1, 1
-      DO itr2= itr + 1, parts_obj% npart, 1
+    ! Star 1
 
-        ! If they have the same radial distance
-      !  IF( parts_obj% pos( 1, itr )**2.0D0 + parts_obj% pos( 2, itr )**2.0D0 &
-      !      + parts_obj% pos( 3, itr )**2.0D0 == &
-      !      parts_obj% pos( 1, itr2 )**2.0D0 + parts_obj% pos(2, itr2 )**2.0D0 &
-      !      + parts_obj% pos( 3, itr2 )**2.0D0 &
-      !  )THEN
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( parts_obj, x_sort, x_number ) &
+    !$OMP             PRIVATE( itr, x_idx )
+    DO itr= 1, SIZE(x_number), 1
+
+      IF( itr == 1 )THEN
+        x_idx= 1
+      ELSE
+        x_idx= SUM(x_number(1:itr-1)) + 1
+      ENDIF
+
+      DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
 
           ! If they have the same x
-          IF( parts_obj% pos( 1, itr ) == &
-              parts_obj% pos( 1, itr2 ) )THEN
+          !IF( parts_obj% pos( 1, x_sort(itr) ) == &
+          !    parts_obj% pos( 1, x_sort(itr+1) ) )THEN
 
             ! If they have the same y
-            IF( parts_obj% pos( 2, itr ) == &
-                parts_obj% pos( 2, itr2 ) )THEN
+            IF( parts_obj% pos( 2, x_sort(itr2) ) == &
+                parts_obj% pos( 2, x_sort(itr2+1) ) )THEN
 
               ! If they have the same z
-              IF( parts_obj% pos( 3, itr ) == &
-                  parts_obj% pos( 3, itr2 ) )THEN
+              IF( parts_obj% pos( 3, x_sort(itr2) ) == &
+                  parts_obj% pos( 3, x_sort(itr2+1) ) )THEN
 
                 ! They are the same
-                PRINT *, "** ERROR! ", "The two particles ", itr, " and", &
-                         itr2, " have the same coordinates!"
-                PRINT *, parts_obj% pos( :, itr )
-                PRINT *, parts_obj% pos( :, itr2 )
+                PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
+                         " and", x_sort(itr2+1), " have the same coordinates!"
+                PRINT *, parts_obj% pos( :, x_sort(itr2) )
+                PRINT *, parts_obj% pos( :, x_sort(itr2+1) )
                 PRINT *, " * Stopping..."
                 PRINT *
                 STOP
 
               ENDIF
             ENDIF
-          ENDIF
-      !  ENDIF
+          !ENDIF
 
       ENDDO
     ENDDO
     !$OMP END PARALLEL DO
+
+  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !  !$OMP             SHARED( parts_obj, x_sort ) &
+  !  !$OMP             PRIVATE( itr )
+  !  DO itr= 1, parts_obj% npart - 1, 1
+  !    DO itr2= itr + 1, parts_obj% npart1, 1
+  !
+  !        ! If they have the same x
+  !        IF( parts_obj% pos( 1, x_sort(itr) ) == &
+  !            parts_obj% pos( 1, x_sort(itr+1) ) )THEN
+  !
+  !          ! If they have the same y
+  !          IF( parts_obj% pos( 2, x_sort(itr) ) == &
+  !              parts_obj% pos( 2, x_sort(itr+1) ) )THEN
+  !
+  !            ! If they have the same z
+  !            IF( parts_obj% pos( 3, x_sort(itr) ) == &
+  !                parts_obj% pos( 3, x_sort(itr+1) ) )THEN
+  !
+  !              ! They are the same
+  !              PRINT *, "** ERROR! ", "The two particles ", x_sort(itr), &
+  !                       " and", x_sort(itr+1), " have the same coordinates!"
+  !              PRINT *, parts_obj% pos( :, x_sort(itr) )
+  !              PRINT *, parts_obj% pos( :, x_sort(itr+1) )
+  !              PRINT *, " * Stopping..."
+  !              PRINT *
+  !              STOP
+  !
+  !            ENDIF
+  !          ENDIF
+  !        ENDIF
+  !
+  !    ENDDO
+  !  ENDDO
+  !  !$OMP END PARALLEL DO
+
+    ! Star 2
+
+  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !  !$OMP             SHARED( parts_obj ) &
+  !  !$OMP             PRIVATE( itr, itr2 )
+  !  DO itr= parts_obj% npart1 + 1, parts_obj% npart - 1, 1
+  !    DO itr2= itr + 1, parts_obj% npart, 1
+  !
+  !        ! If they have the same x
+  !        IF( parts_obj% pos( 1, itr ) == &
+  !            parts_obj% pos( 1, itr2 ) )THEN
+  !
+  !          ! If they have the same y
+  !          IF( parts_obj% pos( 2, itr ) == &
+  !              parts_obj% pos( 2, itr2 ) )THEN
+  !
+  !            ! If they have the same z
+  !            IF( parts_obj% pos( 3, itr ) == &
+  !                parts_obj% pos( 3, itr2 ) )THEN
+  !
+  !              ! They are the same
+  !              PRINT *, "** ERROR! ", "The two particles ", itr, " and", &
+  !                       itr2, " have the same coordinates!"
+  !              PRINT *, parts_obj% pos( :, itr )
+  !              PRINT *, parts_obj% pos( :, itr2 )
+  !              PRINT *, " * Stopping..."
+  !              PRINT *
+  !              STOP
+  !
+  !            ENDIF
+  !          ENDIF
+  !        ENDIF
+  !
+  !    ENDDO
+  !  ENDDO
+  !  !$OMP END PARALLEL DO
 
   !  DO itr= 1, parts_obj% npart - 1, 1
   !    IF( parts_obj% pos( 1, x_sort(itr) ) == &

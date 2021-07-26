@@ -690,6 +690,8 @@ SUBMODULE (particles_id) spherical_shells
 
         ! Logical variables that steer the iteration
 
+        ! This speeds up the iteration considerably, since the inner layers
+        ! seem to always want a larger tolerance
         IF( r <= 0.45D0*n_shells )THEN
           upper_bound_tmp= upper_bound_tmp*1.1D0
           lower_bound_tmp= lower_bound_tmp*0.9D0
@@ -1685,9 +1687,9 @@ SUBMODULE (particles_id) spherical_shells
     INTEGER shell_index, itr2
 
     shell_index= 1
-    itr2= 0
+    itr2= 1
     shell_masses= 0.0D0
-    assign_masses_to_surfaces: DO itr= 0, NINT(radius/dr), 1
+    assign_masses_to_surfaces: DO itr= 1, NINT(radius/dr), 1
 
       IF( shell_index == n_shells )THEN
 
