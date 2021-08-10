@@ -55,7 +55,7 @@ SUBMODULE (particles_id) particles_constructor
     !************************************************
 
     !USE NaNChecker, ONLY: Check_Array_for_NAN
-    USE constants,      ONLY: Msun_geo, km2m
+    USE constants,      ONLY: Msun_geo, km2m, amu
     USE NR,             ONLY: indexx
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
@@ -266,7 +266,7 @@ SUBMODULE (particles_id) particles_constructor
 
     ! setup unit system
     CALL set_units('NSM')
-    CALL read_options       ! TODO: set units and read options only once in the constructor
+    CALL read_options
 
     ! tabulate kernel, get ndes
     CALL ktable(ikernel,ndes)
@@ -490,6 +490,19 @@ SUBMODULE (particles_id) particles_constructor
         !                "...allocation error for array pos in SUBROUTINE" &
         !                // "place_particles_3D_lattice." )
       ENDIF
+      IF( read_nu .AND. .NOT.ALLOCATED( parts_obj% pmass ))THEN
+        ALLOCATE( parts_obj% pmass( parts_obj% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                    // ". ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !                "...allocation error for array pos in SUBROUTINE" &
+        !                // "place_particles_3D_lattice." )
+      ENDIF
 
       !---------------------------------------------------------!
       !--  Storing the particle positions into the array pos  --!
@@ -570,6 +583,8 @@ SUBMODULE (particles_id) particles_constructor
         parts_obj% mass_ratio= parts_obj% mass1/parts_obj% mass2
 
       ENDIF
+
+      parts_obj% pmass= parts_obj% nu * amu
 
       !STOP
 

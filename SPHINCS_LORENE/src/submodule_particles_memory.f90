@@ -283,6 +283,17 @@ SUBMODULE (particles_id) particles_memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                  // " place_particles_. ", &
+                  "The STAT variable is", ios, ". ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( THIS% u_pwp ))THEN
+      ALLOCATE( THIS% u_pwp( THIS% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array u_pwp in SUBROUTINE" &
                   // "place_particles_. ", &
                   "The error message is", err_msg
          STOP
@@ -640,6 +651,17 @@ SUBMODULE (particles_id) particles_memory
       DEALLOCATE( THIS% pmass, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array pmass. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% u_pwp ))THEN
+      DEALLOCATE( THIS% u_pwp, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array u_pwp. ", &
                   "The error message is", err_msg
          STOP
       ENDIF

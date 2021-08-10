@@ -85,6 +85,10 @@ SUBMODULE (particles_id) particles_sph_variables
     USE sphincs_sph,         ONLY: density!, flag_dead_ll_cells
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
+    USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
+                                   get_u_pwp
+    USE constants,           ONLY: m0c2, kg2g, m2cm
+    USE units,               ONLY: m0c2_cu
 
     IMPLICIT NONE
 
@@ -381,14 +385,26 @@ SUBMODULE (particles_id) particles_sph_variables
     ENDDO compute_SPH_variables_on_particles
     !$OMP END PARALLEL DO
 
-    IF( THIS% distribution_id == 3 )THEN
+    CALL select_EOS_parameters('APR4')
+    CALL gen_pwp_eos_all( THIS% npart, nlrf*m0c2_cu, u )
+    THIS% pressure_parts_cu= Pr
+    THIS% u_pwp= get_u_pwp()
+    u= get_u_pwp()
 
-      THIS% nstar= THIS% nlrf*Theta_a*sq_g
+    !PRINT *, THIS% pressure_parts( 1000 )*((Msun_geo*km2m)**3)/(amu*g2kg)
+    !PRINT *, THIS% pressure_parts_cu( 1000 )
+    !PRINT *
+    !STOP
+
+    IF( THIS% distribution_id == 3 .OR. &
+        ( THIS% distribution_id == 0 .AND. THIS% read_nu ) )THEN
+
+      THIS% nstar= ( THIS% nlrf*THIS% Theta )*sq_det_g4
       THIS% particle_density= (THIS% nstar)/( THIS% pmass )
 
     ELSE
 
-      THIS% nstar= THIS% nlrf*Theta_a*sq_g
+      THIS% nstar= ( THIS% nlrf*THIS% Theta )*sq_det_g4
       THIS% pmass= THIS% nstar*THIS% pvol
       THIS% particle_density= (THIS% nstar)/( THIS% pmass )
 
@@ -1368,7 +1384,7 @@ SUBMODULE (particles_id) particles_sph_variables
     !                                               *
     !************************************************
 
-    USE constants, ONLY: c_light2, cm2m
+    USE constants, ONLY: c_light2, cm2m, Msun_geo, amu, g2kg, km2m, km2cm
 
     IMPLICIT NONE
 
@@ -1532,7 +1548,8 @@ SUBMODULE (particles_id) particles_sph_variables
         THIS% baryon_density_parts( itr ), &
         THIS% energy_density_parts( itr ), &
         THIS% specific_energy_parts( itr ), &
-        THIS% pressure_parts( itr ), &
+        THIS% pressure_parts( itr )*((Msun_geo*km2m)**3)/(amu*g2kg), &
+        THIS% pressure_parts_cu( itr ), &
         THIS% v_euler_parts_x( itr ), &
         THIS% v_euler_parts_y( itr ), &
         THIS% v_euler_parts_z( itr ), &
@@ -1549,7 +1566,8 @@ SUBMODULE (particles_id) particles_sph_variables
         THIS% particle_density( itr ), &
         THIS% particle_density_int( itr ), &
         THIS% pvol( itr ), &
-        THIS% pmass( itr )
+        THIS% pmass( itr ), &
+        THIS% u_pwp( itr )
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &

@@ -67,6 +67,9 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: energy_density_parts
     ! 1-D array storing the specific internal energy [c^2]
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: specific_energy_parts
+    ! 1-D array storing the specific internal energy computed using formula (9)
+    ! in Read et al., Phys.Rev.D79:124032,2009, arXiv:0812.2163[c^2]
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: u_pwp
     ! 1-D array storing the pressure [kg c^2 m^{-3}]
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts
     ! 1-D array storing the pressure on the x axis [kg c^2 m^{-3}] for NS 1
