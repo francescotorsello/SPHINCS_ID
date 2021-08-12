@@ -170,6 +170,9 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% randomize_theta= randomize_theta
     parts_obj% randomize_r    = randomize_r
 
+    parts_obj% eos1= bns_obj% get_eos1()
+    parts_obj% eos2= bns_obj% get_eos2()
+
     !
     !-- Read the parameters of the particle distributions
     !

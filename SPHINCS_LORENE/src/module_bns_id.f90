@@ -130,8 +130,12 @@ MODULE bns_id
     ! Central pressure for star 2 [Msun c^2 Msun_geo^-3]
     DOUBLE PRECISION:: pressure_center2 ;
     ! Names of the equations of state (EoS) of the two neutron stars
-    CHARACTER(KIND= C_CHAR, LEN= 100):: eos1
-    CHARACTER(KIND= C_CHAR, LEN= 100):: eos2
+    !CHARACTER(KIND= C_CHAR, LEN= 100):: eos1
+    !CHARACTER(KIND= C_CHAR, LEN= 100):: eos2
+    CHARACTER( LEN=: ), ALLOCATABLE:: eos1
+    CHARACTER( LEN=: ), ALLOCATABLE:: eos2
+    !CHARACTER(KIND=C_CHAR), DIMENSION(100):: eos1
+    !CHARACTER(KIND=C_CHAR), DIMENSION(100):: eos2
     !
     !-- Parameters of polytropic equations of state for the two NSs
     !
@@ -1824,8 +1828,8 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center2
       REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy_center2
       REAL(C_DOUBLE), INTENT(OUT)       :: pressure_center2
-      CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos1
-      CHARACTER(KIND= C_CHAR), DIMENSION(100), INTENT(OUT):: eos2
+      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos1
+      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos2
       INTEGER(C_INT)                    :: eos1_id
       INTEGER(C_INT)                    :: eos2_id
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma_1

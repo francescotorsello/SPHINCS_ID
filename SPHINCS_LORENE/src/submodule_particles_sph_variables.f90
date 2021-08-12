@@ -86,7 +86,7 @@ SUBMODULE (particles_id) particles_sph_variables
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
-                                   get_u_pwp
+                                   get_u_pwp, shorten_eos_name
     USE constants,           ONLY: m0c2, kg2g, m2cm
     USE units,               ONLY: m0c2_cu
 
@@ -385,7 +385,7 @@ SUBMODULE (particles_id) particles_sph_variables
     ENDDO compute_SPH_variables_on_particles
     !$OMP END PARALLEL DO
 
-    CALL select_EOS_parameters('APR4')
+    CALL select_EOS_parameters(shorten_eos_name(THIS% eos1))
     CALL gen_pwp_eos_all( THIS% npart, nlrf*m0c2_cu, u )
     THIS% pressure_parts_cu= Pr
     THIS% u_pwp= get_u_pwp()
@@ -1690,6 +1690,36 @@ SUBMODULE (particles_id) particles_sph_variables
     ENDIF
 
   END PROCEDURE analyze_hydro
+
+
+ ! SUBROUTINE compute_hydro_from_enthalpy_pwp( enthalpy, baryon_density, &
+ !                                             pressure, energy_density, &
+ !                                             specific_energy )
+ !
+ !   !**************************************************
+ !   !                                                 *
+ !   ! Compute the values of the the baryon density,   *
+ !   ! the pressure, the energy density and the        *
+ !   ! specific energy, from the value of the enthalpy *
+ !   ! for piecewise polytropic EOS                    *
+ !   !                                                 *
+ !   ! FT 11.08.2021                                   *
+ !   !                                                 *
+ !   !**************************************************
+ !
+ !   IMPLICIT NONE
+ !
+ !   USE pwp_eos,  ONLY: get_Gamma1, get_Gamma2,
+ !
+ !   DOUBLE PRECISION, INTENT(IN) :: enthalpy
+ !   DOUBLE PRECISION, INTENT(OUT):: baryon_density
+ !   DOUBLE PRECISION, INTENT(OUT):: pressure
+ !   DOUBLE PRECISION, INTENT(OUT):: energy_density
+ !   DOUBLE PRECISION, INTENT(OUT):: specific_energy
+ !
+ !
+ !
+ ! END SUBROUTINE compute_hydro_from_enthalpy_pwp
 
 
   !MODULE PROCEDURE write_lorene_bns_id_dump

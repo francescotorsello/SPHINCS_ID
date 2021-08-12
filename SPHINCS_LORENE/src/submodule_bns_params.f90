@@ -37,10 +37,19 @@ SUBMODULE (bns_id) bns_params
     !                                                    *
     !*****************************************************
 
+    USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR
+
     USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
                          c_light, cm2km
 
     IMPLICIT NONE
+
+    INTEGER:: i, nchars
+
+    CHARACTER(KIND= C_CHAR), DIMENSION(100):: eos1_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(100):: eos2_tmp_c
+    !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos1_tmp
+    !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos2_tmp
 
     PRINT *, "** Executing the import_lorene_id_params subroutine..."
 
@@ -80,8 +89,8 @@ SUBMODULE (bns_id) bns_params
                                THIS% energy_density_center2, &
                                THIS% specific_energy_center2, &
                                THIS% pressure_center2, &
-                               THIS% eos1, &
-                               THIS% eos2, &
+                               eos1_tmp_c, &
+                               eos2_tmp_c, &
                                THIS% eos1_id, &
                                THIS% eos2_id, &
                                THIS% gamma_1, &
@@ -179,6 +188,63 @@ SUBMODULE (bns_id) bns_params
     THIS% t_merger= 5.0D0/256.0D0*(THIS% distance**4.0D0) &
                     /( THIS% mass_grav1*THIS% mass_grav2* &
                        ( THIS% mass_grav1 + THIS% mass_grav2 ) )
+
+    ! Convert C++ strings to FORTRAN strings
+    i= 1
+    DO
+      IF( eos1_tmp_c(i) == C_NULL_CHAR ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
+
+    !ALLOCATE( eos1_tmp( nchars ), STAT= ios, ERRMSG= err_msg )
+    !IF( ios > 0 )THEN
+    !   PRINT *, "...allocation error for array eos1_tmp. ", &
+    !            "The error message is ", err_msg
+    !   PRINT *, "The STAT variable is ", ios
+    !   STOP
+    !ENDIF
+    !eos1_tmp = TRANSFER( eos1_tmp_c(1:nchars), eos1_tmp )
+
+    ALLOCATE( CHARACTER(nchars):: THIS% eos1, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos1. ", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       STOP
+    ENDIF
+    THIS% eos1= TRANSFER( eos1_tmp_c(1:nchars), THIS% eos1 )
+    !DO i= 1, nchars, 1
+    !  THIS% eos1(i:i)= eos1_tmp(i)
+    !ENDDO
+
+    i= 1
+    DO
+      IF( eos2_tmp_c(i) == C_NULL_CHAR ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
+
+    !ALLOCATE( eos2_tmp( nchars ), STAT= ios, ERRMSG= err_msg )
+    !IF( ios > 0 )THEN
+    !   PRINT *, "...allocation error for array eos2_tmp. ", &
+    !            "The error message is ", err_msg
+    !   PRINT *, "The STAT variable is ", ios
+    !   STOP
+    !ENDIF
+    !eos2_tmp = TRANSFER( eos2_tmp_c(1:nchars), eos2_tmp )
+
+    ALLOCATE( CHARACTER(nchars):: THIS% eos2, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos2. ", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       STOP
+    ENDIF
+    THIS% eos2= TRANSFER( eos2_tmp_c(1:nchars), THIS% eos2 )
+    !DO i= 1, nchars, 1
+    !  THIS% eos2(i:i)= eos2_tmp(i)
+    !ENDDO
 
     CALL print_id_params( THIS )
 
@@ -318,11 +384,11 @@ SUBMODULE (bns_id) bns_params
                THIS% pressure_center2/lorene2hydrobase*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *
-      IF( show_progress ) &
+      !IF( show_progress ) &
         PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(THIS% eos1)
-      IF( show_progress ) &
+      !IF( show_progress ) &
         PRINT *, " Equations of state for star 2 (EOS2) = ", TRIM(THIS% eos2)
-      IF( show_progress ) PRINT *
+      !IF( show_progress ) PRINT *
 
       IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
 
