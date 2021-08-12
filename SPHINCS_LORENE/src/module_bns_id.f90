@@ -130,12 +130,9 @@ MODULE bns_id
     ! Central pressure for star 2 [Msun c^2 Msun_geo^-3]
     DOUBLE PRECISION:: pressure_center2 ;
     ! Names of the equations of state (EoS) of the two neutron stars
-    !CHARACTER(KIND= C_CHAR, LEN= 100):: eos1
-    !CHARACTER(KIND= C_CHAR, LEN= 100):: eos2
     CHARACTER( LEN=: ), ALLOCATABLE:: eos1
     CHARACTER( LEN=: ), ALLOCATABLE:: eos2
-    !CHARACTER(KIND=C_CHAR), DIMENSION(100):: eos1
-    !CHARACTER(KIND=C_CHAR), DIMENSION(100):: eos2
+
     !
     !-- Parameters of polytropic equations of state for the two NSs
     !
@@ -348,6 +345,8 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: get_pressure_center2
     PROCEDURE, PUBLIC:: get_eos1
     PROCEDURE, PUBLIC:: get_eos2
+    PROCEDURE, PUBLIC:: get_eos1_id
+    PROCEDURE, PUBLIC:: get_eos2_id
 
     ! PROCEDURES to be used for single polytropic EOS
     PROCEDURE, PUBLIC:: get_gamma_1
@@ -1079,6 +1078,24 @@ MODULE bns_id
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos2
 
     END FUNCTION get_eos2
+
+    MODULE FUNCTION get_eos1_id( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      INTEGER:: get_eos1_id
+
+    END FUNCTION get_eos1_id
+
+    MODULE FUNCTION get_eos2_id( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      INTEGER:: get_eos2_id
+
+    END FUNCTION get_eos2_id
 
     MODULE FUNCTION get_npeos_1( THIS )
 

@@ -43,6 +43,7 @@ MODULE particles_id
     INTEGER:: npart, npart1, npart2, npart_temp, npart1_temp, npart2_temp
     INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
     INTEGER:: distribution_id
+    INTEGER:: eos1_id, eos2_id
     ! The flag call_flag is set different than 0 if the SUBROUTINE
     ! compute_and_export_SPH_variables is called
     INTEGER:: call_flag= 0
@@ -169,7 +170,6 @@ MODULE particles_id
 
     CHARACTER( LEN= : ), ALLOCATABLE:: eos1
     CHARACTER( LEN= : ), ALLOCATABLE:: eos2
-
 
     LOGICAL:: empty_object
     LOGICAL, PUBLIC:: export_bin

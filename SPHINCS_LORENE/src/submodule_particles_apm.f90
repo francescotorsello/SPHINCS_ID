@@ -512,9 +512,6 @@ SUBMODULE (particles_id) particles_apm
     h_guess= h_guess(1:npart_all)
     h_guess(npart_real+1:npart_all)= ( dx*dy*dz )**third
 
-    PRINT *, "SIZE(npart_all)= ", SIZE(h_guess)
-    PRINT *
-
     !----------------------------!
     !-- Allocate needed memory --!
     !----------------------------!
@@ -1172,9 +1169,9 @@ SUBMODULE (particles_id) particles_apm
       CALL density_loop( npart_all, all_pos, &    ! input
                          nu, h, nstar_real )      ! output
 
-      PRINT *, "npart_real= ", npart_real
-      PRINT *, "npart_all= ", npart_all
-      PRINT *
+      IF( debug ) PRINT *, "npart_real= ", npart_real
+      IF( debug ) PRINT *, "npart_all= ", npart_all
+      IF( debug ) PRINT *
 
       find_nan_in_nstar_real: DO a= 1, npart_all, 1
 
@@ -1386,14 +1383,14 @@ SUBMODULE (particles_id) particles_apm
       nstar_p( npart_real+1:npart_all )= 0.0D0
       art_pr ( npart_real+1:npart_all )= 1.0D0*art_pr_max
 
-      PRINT *, "Before calling position_correction"
+      IF( debug ) PRINT *, "Before calling position_correction"
 
-      !PRINT *, npart_all
-      !PRINT *, SIZE(all_pos(1,:))
-      !PRINT *, SIZE(h)
-      !PRINT *, SIZE(art_pr)
-      !PRINT *, SIZE(nstar_real)
-      !PRINT *, SIZE(correction_pos(1,:))
+      IF( debug ) PRINT *, npart_all
+      IF( debug ) PRINT *, SIZE(all_pos(1,:))
+      IF( debug ) PRINT *, SIZE(h)
+      IF( debug ) PRINT *, SIZE(art_pr)
+      IF( debug ) PRINT *, SIZE(nstar_real)
+      IF( debug ) PRINT *, SIZE(correction_pos(1,:))
 
       find_nan_in_art_pr: DO a= 1, npart_all, 1
 
@@ -1536,7 +1533,7 @@ SUBMODULE (particles_id) particles_apm
       IF( err_N_mean > err_mean_old )THEN
         n_inc= n_inc + 1
       ENDIF
-      PRINT *, "n_inc= ", n_inc
+      PRINT *, "   n_inc= ", n_inc
       PRINT *
       !IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
       !    .AND. &
@@ -1584,7 +1581,7 @@ SUBMODULE (particles_id) particles_apm
 
     pos= all_pos( :, 1:npart_real )
     npart= npart_real
-    PRINT *, npart
+    IF( debug ) PRINT *, npart
 
     h_guess= h
 
@@ -2559,25 +2556,6 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "3"
 
-  !  PRINT *, ALLOCATED(pos_u)
-  !  PRINT *, ALLOCATED(vel_u)
-  !  PRINT *, ALLOCATED(S_l)
-  !  PRINT *, ALLOCATED(u)
-  !  PRINT *, ALLOCATED(h)
-  !  PRINT *, ALLOCATED(Nstar)
-  !  PRINT *, ALLOCATED(nlrf)
-  !  PRINT *, ALLOCATED(temp)
-  !  PRINT *, ALLOCATED(Ye)
-  !  PRINT *, ALLOCATED(nu)
-  !  PRINT *, ALLOCATED(ehat)
-  !  PRINT *, ALLOCATED(theta)
-  !  PRINT *, ALLOCATED(Pr)
-  !  PRINT *, ALLOCATED(cs)
-  !  PRINT *, ALLOCATED(av)
-  !  PRINT *, ALLOCATED(Kent)
-  !  PRINT *, ALLOCATED(divv)
-  !  PRINT *
-
     DEALLOCATE( posmash )
     CALL deallocate_metric_on_particles()
     IF( debug ) PRINT *, "4"
@@ -2586,8 +2564,6 @@ SUBMODULE (particles_id) particles_apm
     CALL deallocate_RCB_tree_memory_3D()
     IF( debug ) PRINT *, "6"
     CALL deallocate_SPH_memory()
-
-    !STOP
 
   END PROCEDURE perform_apm
 

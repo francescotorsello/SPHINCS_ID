@@ -385,16 +385,15 @@ SUBMODULE (particles_id) particles_sph_variables
     ENDDO compute_SPH_variables_on_particles
     !$OMP END PARALLEL DO
 
-    CALL select_EOS_parameters(shorten_eos_name(THIS% eos1))
-    CALL gen_pwp_eos_all( THIS% npart, nlrf*m0c2_cu, u )
-    THIS% pressure_parts_cu= Pr
-    THIS% u_pwp= get_u_pwp()
-    u= get_u_pwp()
+    IF( THIS% eos1_id == 110 .AND. THIS% eos2_id == 110 )THEN
 
-    !PRINT *, THIS% pressure_parts( 1000 )*((Msun_geo*km2m)**3)/(amu*g2kg)
-    !PRINT *, THIS% pressure_parts_cu( 1000 )
-    !PRINT *
-    !STOP
+      CALL select_EOS_parameters(shorten_eos_name(THIS% eos1))
+      CALL gen_pwp_eos_all( THIS% npart, nlrf*m0c2_cu, u )
+      THIS% pressure_parts_cu= Pr
+      THIS% u_pwp= get_u_pwp()
+      u= get_u_pwp()
+
+    ENDIF
 
     IF( THIS% distribution_id == 3 .OR. &
         ( THIS% distribution_id == 0 .AND. THIS% read_nu ) )THEN

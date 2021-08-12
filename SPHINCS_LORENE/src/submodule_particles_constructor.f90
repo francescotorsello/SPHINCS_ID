@@ -173,6 +173,9 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% eos1= bns_obj% get_eos1()
     parts_obj% eos2= bns_obj% get_eos2()
 
+    parts_obj% eos1_id= bns_obj% get_eos1_id()
+    parts_obj% eos2_id= bns_obj% get_eos2_id()
+
     !
     !-- Read the parameters of the particle distributions
     !
@@ -400,6 +403,106 @@ SUBMODULE (particles_id) particles_constructor
         PRINT *
         STOP
       ENDIF
+
+      ! Check that the positions are within the stars read from the LORENE
+      ! binary file. This checks that the positions read from the formatted
+      ! file are compatible with the binary file read
+
+      ! Star 1
+      IF( MINVAL( ABS( tmp_pos2(1,1:npart1_tmp) ) ) < ABS(center1) - &
+                                           bns_obj% get_radius1_x_comp() &
+          .OR. &
+          MAXVAL( ABS( tmp_pos2(1,1:npart1_tmp) ) ) > ABS(center1) + &
+                                           bns_obj% get_radius1_x_opp() &
+          .OR. &
+          ABS( MINVAL( tmp_pos2(2,1:npart1_tmp) ) ) > bns_obj% get_radius1_y() &
+          .OR. &
+          ABS( MAXVAL( tmp_pos2(2,1:npart1_tmp) ) ) > bns_obj% get_radius1_y() &
+          .OR. &
+          ABS( MINVAL( tmp_pos2(3,1:npart1_tmp) ) ) > bns_obj% get_radius1_z() &
+          .OR. &
+          ABS( MAXVAL( tmp_pos2(3,1:npart1_tmp) ) ) > bns_obj% get_radius1_z() &
+          .OR. &
+          MINVAL( ABS( tmp_pos2(1,1:npart1_tmp) ) ) > ABS(center1) - &
+                                           0.95*bns_obj% get_radius1_x_comp() &
+          .OR. &
+          MAXVAL( ABS( tmp_pos2(1,1:npart1_tmp) ) ) < ABS(center1) + &
+                                           0.95*bns_obj% get_radius1_x_opp() &
+          .OR. &
+          ABS( MINVAL( tmp_pos2(2,1:npart1_tmp) ) ) < &
+                      0.95*bns_obj% get_radius1_y() &
+          .OR. &
+          ABS( MAXVAL( tmp_pos2(2,1:npart1_tmp) ) ) < &
+                      0.95*bns_obj% get_radius1_y() &
+          .OR. &
+          ABS( MINVAL( tmp_pos2(3,1:npart1_tmp) ) ) < &
+                      0.95*bns_obj% get_radius1_z() &
+          .OR. &
+          ABS( MAXVAL( tmp_pos2(3,1:npart1_tmp) ) ) < &
+                      0.95*bns_obj% get_radius1_z() &
+
+      )THEN
+
+        PRINT *, "** ERROR! The positions of the particles on star 1, ", &
+                 "read from file " &
+                 // TRIM(parts_pos_namefile), " are not compatible with the ", &
+                 "binary system read from the LORENE binary file. Stopping..."
+        PRINT *
+        STOP
+
+      ENDIF
+
+      ! Star 2
+      IF( MINVAL( ABS( tmp_pos2(1,npart1_tmp:npart_tmp) ) ) < ABS(center2) - &
+                                           bns_obj% get_radius2_x_comp() &
+          .OR. &
+          MAXVAL( ABS( tmp_pos2(1,npart1_tmp:npart_tmp) ) ) > ABS(center2) + &
+                                           bns_obj% get_radius2_x_opp() &
+          .OR. &
+          ABS( MINVAL( tmp_pos2(2,npart1_tmp:npart_tmp) ) ) > &
+                      bns_obj% get_radius2_y() &
+          .OR. &
+          ABS( MAXVAL( tmp_pos2(2,npart1_tmp:npart_tmp) ) ) > &
+                      bns_obj% get_radius2_y() &
+          .OR. &
+          ABS( MINVAL( tmp_pos2(3,npart1_tmp:npart_tmp) ) ) > &
+                      bns_obj% get_radius2_z() &
+          .OR. &
+          ABS( MAXVAL( tmp_pos2(3,npart1_tmp:npart_tmp) ) ) > &
+                      bns_obj% get_radius2_z() &
+          .OR. &
+          MINVAL( ABS( tmp_pos2(1,npart1_tmp:npart_tmp) ) ) > ABS(center2) - &
+                                           0.95*bns_obj% get_radius2_x_comp() &
+          .OR. &
+          MAXVAL( ABS( tmp_pos2(1,npart1_tmp:npart_tmp) ) ) < ABS(center2) + &
+                                           0.95*bns_obj% get_radius2_x_opp() &
+          .OR. &
+          ABS( MINVAL( tmp_pos2(2,npart1_tmp:npart_tmp) ) ) < &
+                      0.95*bns_obj% get_radius2_y() &
+          .OR. &
+          ABS( MAXVAL( tmp_pos2(2,npart1_tmp:npart_tmp) ) ) < &
+                      0.95*bns_obj% get_radius2_y() &
+          .OR. &
+          ABS( MINVAL( tmp_pos2(3,npart1_tmp:npart_tmp) ) ) < &
+                      0.95*bns_obj% get_radius2_z() &
+          .OR. &
+          ABS( MAXVAL( tmp_pos2(3,npart1_tmp:npart_tmp) ) ) < &
+                      0.95*bns_obj% get_radius2_z() &
+
+      )THEN
+
+        PRINT *, "** ERROR! The positions of the particles on star 2, ", &
+                 "read from file " &
+                 // TRIM(parts_pos_namefile), " are not compatible with the ", &
+                 "binary system read from the LORENE binary file. Stopping..."
+        PRINT *
+        STOP
+
+      ENDIF
+
+      !DO itr= 1, npart1_tmp, 1
+      !  IF( tmp_pos2(1,itr) <  )
+      !ENDDO
 
       ! Mirror the particles on star 1
 
@@ -964,6 +1067,11 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )
     parts_obj% pvol= parts_obj% pvol( 1:parts_obj% npart )
 
+    ! Check that there aren't particles with the same coordinates
+    PRINT *, "** Checking that there are no multiple particles", &
+             " at the same position..."
+    PRINT *
+
     IF(.NOT.ALLOCATED( x_sort ))THEN
       ALLOCATE( x_sort( parts_obj% npart ), &
                 STAT= ios, ERRMSG= err_msg )
@@ -1075,11 +1183,6 @@ SUBMODULE (particles_id) particles_constructor
       ENDDO
 
     ENDDO
-
-    ! Check that there aren't particles with the same coordinates
-    PRINT *, "** Checking that there are no multiple particles", &
-             " at the same position..."
-    PRINT *
 
     ! Star 1
 

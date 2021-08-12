@@ -947,6 +947,40 @@ SUBMODULE (bns_id) bns_access
   END PROCEDURE get_eos2
 
 
+  MODULE PROCEDURE get_eos1_id
+
+    !***************************************************
+    !                                                  *
+    ! Returns the LORENE ID-number of the EOS for NS 1 *
+    !                                                  *
+    ! FT                                               *
+    !                                                  *
+    !***************************************************
+
+    IMPLICIT NONE
+
+    get_eos1_id= THIS% eos1_id
+
+  END PROCEDURE get_eos1_id
+
+
+  MODULE PROCEDURE get_eos2_id
+
+    !***************************************************
+    !                                                  *
+    ! Returns the LORENE ID-number of the EOS for NS 2 *
+    !                                                  *
+    ! FT                                               *
+    !                                                  *
+    !***************************************************
+
+    IMPLICIT NONE
+
+    get_eos2_id= THIS% eos2_id
+
+  END PROCEDURE get_eos2_id
+
+
   MODULE PROCEDURE get_npeos_1
 
     !*************************************************
