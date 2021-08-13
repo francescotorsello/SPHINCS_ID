@@ -31,6 +31,8 @@ SUBMODULE (bns_id) bns_constructor
 
     !DOUBLE PRECISION:: tmp
 
+    bns_obj% binary_construction_timer= timer( "binary_construction_timer" )
+
     ! Construct LORENE Bin_NS object
     IF( PRESENT( resu_file ) )THEN
         CALL bns_obj% construct_binary( resu_file )
@@ -65,7 +67,7 @@ SUBMODULE (bns_id) bns_constructor
     !PRINT *, "Inside destructor of bns."
     !PRINT *
 
-    ! Deallocate memory, if allocated
+    ! Deallocate memory
     CALL THIS% deallocate_lorene_id_memory()
 
   END PROCEDURE destruct_bns
@@ -99,7 +101,9 @@ SUBMODULE (bns_id) bns_constructor
 
       IF( exist )THEN
 
+        CALL THIS% binary_construction_timer% start_timer()
         THIS% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
+        CALL THIS% binary_construction_timer% stop_timer()
 
       ELSE
 
@@ -113,12 +117,11 @@ SUBMODULE (bns_id) bns_constructor
     ELSE
 
       default_case= "read_it"
+      CALL THIS% binary_construction_timer% start_timer()
       THIS% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
+      CALL THIS% binary_construction_timer% stop_timer()
 
     ENDIF
-
-    PRINT *, "17"
-
 
     !PRINT *, "** Subroutine construct_binary executed."
     !PRINT *

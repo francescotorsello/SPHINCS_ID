@@ -412,6 +412,8 @@ PROGRAM sphincs_lorene_bns
   PRINT *, "===================================================" &
            // "================================================"
   PRINT *
+  PRINT *, " * LORENE:"
+  CALL binaries( 1 )% binary_construction_timer% print_timer( 2 )
   PRINT *
   IF( run_sph )THEN
     PRINT *, " * SPH:"
@@ -441,7 +443,6 @@ PROGRAM sphincs_lorene_bns
   PRINT *, " Summary "
   PRINT *, "===================================================" &
            // "================================================"
-  PRINT *
   PRINT *
   IF( run_sph )THEN
     PRINT *, " * SPH:"

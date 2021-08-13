@@ -27,7 +27,8 @@ MODULE bns_id
                                          C_PTR, C_NULL_PTR, C_ASSOCIATED
   USE utility,                     ONLY: itr, ios, err_msg, test_status, &
                                          perc, creturn, compute_g4, &
-                                         determinant_sym4x4_grid, show_progress
+                                         determinant_sym4x4_grid, show_progress                                        
+  USE timing,                      ONLY: timer
 
 
   IMPLICIT NONE
@@ -227,6 +228,8 @@ MODULE bns_id
 
     ! Variables to set the geodesic gauge (lapse=1, shift=0)
     LOGICAL, PUBLIC:: one_lapse, zero_shift
+
+    TYPE(timer), PUBLIC:: binary_construction_timer
 
 
     CONTAINS

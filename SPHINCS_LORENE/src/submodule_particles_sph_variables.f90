@@ -387,6 +387,11 @@ SUBMODULE (particles_id) particles_sph_variables
 
     IF( THIS% eos1_id == 110 .AND. THIS% eos2_id == 110 )THEN
 
+      PRINT *, " * Computing pressure and specific internal energy from", &
+               " the baryon mass density, using the exact formulas for", &
+               " piecewise polytropic EOS..."
+      PRINT *
+
       CALL select_EOS_parameters(shorten_eos_name(THIS% eos1))
       CALL gen_pwp_eos_all( THIS% npart, nlrf*m0c2_cu, u )
       THIS% pressure_parts_cu= Pr
