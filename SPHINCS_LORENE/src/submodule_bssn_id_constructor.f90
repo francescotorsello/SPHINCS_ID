@@ -39,6 +39,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
     USE McLachlan_refine, ONLY: initialize_BSSN, deallocate_BSSN
     USE mesh_refinement,  ONLY: levels
+    USE Extract_Mass,     ONLY: radius2
 
     IMPLICIT NONE
 
@@ -68,6 +69,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     CALL allocate_bssn_fields( bssn_obj )
 
     DEALLOCATE( levels )
+
+    ! radius2 is the extraction radius. If not set here, then it is 0 by default
+    ! and the metric is not interpolate on the particle in
+    ! get_metric_on_particles
+    radius2= HUGE(DBLE(1.0D0))
 
     PRINT *
     PRINT *, " * Ready to compute BSSN variables."

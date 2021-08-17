@@ -160,6 +160,12 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     !
     PRINT *, "** Computing fluid 4-velocity wrt Eulerian observer..."
 
+!    !$OMP PARALLEL DEFAULT( NONE ) &
+!    !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
+!    !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
+!    !$OMP                  show_progress, l ) &
+!    !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
+!    !$OMP                   perc )
     ref_levels2: DO l= 1, THIS% nlevels
 
       ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
@@ -175,6 +181,12 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
                  pressure       => pressure% levels(l)% var &
       )
 
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
+        !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
+        !$OMP                  show_progress, l ) &
+        !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
+        !$OMP                   perc )
         DO k= 1, THIS% get_ngrid_z(l), 1
           DO j= 1, THIS% get_ngrid_y(l), 1
             DO i= 1, THIS% get_ngrid_x(l), 1
@@ -295,6 +307,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
             ENDDO
           ENDDO
         ENDDO
+        !$OMP END PARALLEL DO
         WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
         PRINT *, " * Fluid 4-velocity wrt Eulerian observer computed."
         PRINT *
@@ -312,6 +325,13 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
         !
         PRINT *, "** Computing stress-energy tensor..."
         Tmunu_ll= 0.0
+!        !$OMP DO
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
+        !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
+        !$OMP                  show_progress, l ) &
+        !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
+        !$OMP                   perc )
         DO k= 1, THIS% get_ngrid_z(l), 1
           DO j= 1, THIS% get_ngrid_y(l), 1
             DO i= 1, THIS% get_ngrid_x(l), 1
@@ -389,8 +409,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
             ENDDO
           ENDDO
         ENDDO
+        !$OMP END PARALLEL DO
+!        !$OMP END DO
       END ASSOCIATE
     ENDDO ref_levels2
+!    !$OMP END PARALLEL
     WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
     PRINT *, " * Stress-energy tensor computed."
     PRINT *
@@ -510,6 +533,12 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     !-- BSSN_CONSTRAINTS_INTERIOR
     !
     PRINT *, "** Computing contraints..."
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
+    !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
+    !$OMP                  show_progress ) &
+    !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
+    !$OMP                   perc, l, imin, imax )
     DO l= 1, THIS% nlevels, 1
 
       ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
@@ -580,6 +609,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
         )
       END ASSOCIATE
     ENDDO
+    !$OMP END PARALLEL DO
     PRINT *, " * Constraints computed."
     PRINT *
 
@@ -1105,7 +1135,6 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
                                            allocate_Ztmp, deallocate_Ztmp
     USE GravityAcceleration_refine,  ONLY: allocate_GravityAcceleration, &
                                            deallocate_GravityAcceleration
-    USE Extract_Mass,                ONLY: radius2
 
 
     USE input_output,         ONLY: read_options
@@ -1184,10 +1213,6 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     ENDIF
     nlevels= THIS% nlevels
     levels = THIS% levels
-    ! radius2 is the extraction radius. If not set here, then it is 0 by default
-    ! and the metric is not interpolate on the particle in
-    ! get_metric_on_particles
-    radius2= HUGE(DBLE(1.0D0))
 
     DO l= 1, THIS% nlevels, 1
       levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
@@ -1228,35 +1253,6 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
       shift_u%    levels(l)% var= THIS% shift_u%    levels(l)% var
       lapse%      levels(l)% var= THIS% lapse%      levels(l)% var
     ENDDO
-
-    !
-    !-- Allocate memory for the coordinate radius
-    !-- (this is needed by ADM_to_BSSN)
-    !
-    !IF( .NOT. ALLOCATED( rad_coord ) )THEN
-    !    ALLOCATE( rad_coord( THIS% ngrid_x, THIS% ngrid_y, &
-    !                         THIS% ngrid_z ), STAT= allocation_status )
-    !ENDIF
-    !IF( allocation_status > 0 )THEN
-    !   PRINT *, '...allocation error for rad_coord'
-    !   STOP
-    !ENDIF
-    !
-    !DO iz= 1, THIS% ngrid_z
-    !  DO iy= 1, THIS% ngrid_y
-    !    DO ix= 1, THIS% ngrid_x
-    !      rad_coord( ix, iy, iz )= SQRT( (xL+(ix-1)*dx)**2 &
-    !                                   + (yL+(iy-1)*dy)**2 &
-    !                                   + (zL+(iz-1)*dz)**2 )
-    !    ENDDO
-    !  ENDDO
-    !ENDDO
-
-    !dt_lapse  = 0.0D0
-    !dt_shift_u= 0.0D0
-    !lapse= THIS% lapse
-    !shift_u= THIS% shift_u
-    !g_phys3_ll= THIS% g_phys3_ll
 
     npart= parts_obj% get_npart()
 
@@ -1464,6 +1460,9 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     !-- BSSN_CONSTRAINTS_INTERIOR
     !
     PRINT *, " * Computing contraints using particle data..."
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP          SHARED( THIS, Tmunu_ll, show_progress ) &
+    !$OMP          PRIVATE( i, j, k, l, imin, imax )
     DO l= 1, THIS% nlevels, 1
 
       ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
@@ -1532,6 +1531,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
         )
       END ASSOCIATE
     ENDDO
+    !$OMP END PARALLEL DO
     PRINT *, " * Constraints computed."
     PRINT *
 

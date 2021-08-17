@@ -304,7 +304,7 @@ SUBMODULE (bns_id) bns_import
 
     IMPLICIT NONE
 
-    INTEGER:: ix, iy, iz
+    INTEGER:: i, j, k
 
     DOUBLE PRECISION:: detg
     DOUBLE PRECISION:: detg4
@@ -330,162 +330,116 @@ SUBMODULE (bns_id) bns_import
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nx, ny, nz, THIS, pos, &
-      !$OMP                     lapse, shift, g, k ) &
-      !$OMP             PRIVATE( ix, iy, iz )
-      coords_z: DO iz= 1, nz, 1
-        coords_y: DO iy= 1, ny, 1
-          coords_x: DO ix= 1, nx, 1
+      !$OMP                     lapse, shift, g, ek ) &
+      !$OMP             PRIVATE( i, j, k )
+      coords_z: DO k= 1, nz, 1
+        coords_y: DO j= 1, ny, 1
+          coords_x: DO i= 1, nx, 1
 
             ! The coordinates need to be converted from SPHINCS units (Msun_geo)
             ! to LORENE units (km). See MODULE constants for the definition of
             ! Msun_geo
             CALL get_lorene_id_spacetime( THIS% bns_ptr, &
-                                pos( ix, iy, iz, jx )*Msun_geo, &
-                                pos( ix, iy, iz, jy )*Msun_geo, &
-                                pos( ix, iy, iz, jz )*Msun_geo, &
-                                lapse( ix, iy, iz ), &
-                                shift( ix, iy, iz, jx ), &
-                                shift( ix, iy, iz, jy ), &
-                                shift( ix, iy, iz, jz ), &
-                                g( ix, iy, iz, jxx ), &
-                                k( ix, iy, iz, jxx ), &
-                                k( ix, iy, iz, jxy ), &
-                                k( ix, iy, iz, jxz ), &
-                                k( ix, iy, iz, jyy ), &
-                                k( ix, iy, iz, jyz ), &
-                                k( ix, iy, iz, jzz ) )
+                                pos( i, j, k, jx )*Msun_geo, &
+                                pos( i, j, k, jy )*Msun_geo, &
+                                pos( i, j, k, jz )*Msun_geo, &
+                                lapse( i, j, k ), &
+                                shift( i, j, k, jx ), &
+                                shift( i, j, k, jy ), &
+                                shift( i, j, k, jz ), &
+                                g( i, j, k, jxx ), &
+                                ek( i, j, k, jxx ), &
+                                ek( i, j, k, jxy ), &
+                                ek( i, j, k, jxz ), &
+                                ek( i, j, k, jyy ), &
+                                ek( i, j, k, jyz ), &
+                                ek( i, j, k, jzz ) )
 
           ENDDO coords_x
         ENDDO coords_y
       ENDDO coords_z
       !$OMP END PARALLEL DO
 
-      DO iz= 1, nz, 1
-        DO iy= 1, ny, 1
-          DO ix= 1, nx, 1
+      DO k= 1, nz, 1
+        DO j= 1, ny, 1
+          DO i= 1, nx, 1
 
             !
             !-- The following follows from the assumption of
             !-- conformal flatness in LORENE
             !
-            g( ix, iy, iz, jyy )= g( ix, iy, iz, jxx )
-            g( ix, iy, iz, jzz )= g( ix, iy, iz, jxx )
-            g( ix, iy, iz, jxy )= 0.0D0
-            g( ix, iy, iz, jxz )= 0.0D0
-            g( ix, iy, iz, jyz )= 0.0D0
+            g( i, j, k, jyy )= g( i, j, k, jxx )
+            g( i, j, k, jzz )= g( i, j, k, jxx )
+            g( i, j, k, jxy )= 0.0D0
+            g( i, j, k, jxz )= 0.0D0
+            g( i, j, k, jyz )= 0.0D0
 
             !
             !- Set/unset the geodesic gauge
             !
             IF( THIS% one_lapse )THEN
-              lapse( ix, iy, iz )= 1.0D0
+              lapse( i, j, k )= 1.0D0
             ENDIF
             IF( THIS% zero_shift )THEN
-              shift( ix, iy, iz, jx )= 0.0D0
-              shift( ix, iy, iz, jy )= 0.0D0
-              shift( ix, iy, iz, jz )= 0.0D0
+              shift( i, j, k, jx )= 0.0D0
+              shift( i, j, k, jy )= 0.0D0
+              shift( i, j, k, jz )= 0.0D0
             ENDIF
 
             !
             !-- Convert the extrinsic curvature from LORENE units to
             !-- SPHINCS units
             !
-            k( ix, iy, iz, jxx )= k( ix, iy, iz, jxx )*Msun_geo
-            k( ix, iy, iz, jxy )= k( ix, iy, iz, jxy )*Msun_geo
-            k( ix, iy, iz, jxz )= k( ix, iy, iz, jxz )*Msun_geo
-            k( ix, iy, iz, jyy )= k( ix, iy, iz, jyy )*Msun_geo
-            k( ix, iy, iz, jyz )= k( ix, iy, iz, jyz )*Msun_geo
-            k( ix, iy, iz, jzz )= k( ix, iy, iz, jzz )*Msun_geo
+            ek( i, j, k, jxx )= ek( i, j, k, jxx )*Msun_geo
+            ek( i, j, k, jxy )= ek( i, j, k, jxy )*Msun_geo
+            ek( i, j, k, jxz )= ek( i, j, k, jxz )*Msun_geo
+            ek( i, j, k, jyy )= ek( i, j, k, jyy )*Msun_geo
+            ek( i, j, k, jyz )= ek( i, j, k, jyz )*Msun_geo
+            ek( i, j, k, jzz )= ek( i, j, k, jzz )*Msun_geo
 
-!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
-!                PRINT *, "5"
-!              ENDIF
-
-            !IF( ix == 1 .AND. iy == 1 .AND. iz == 54 )THEN
-            !  PRINT *, "g_xx=", g(1,1,54,jxx)
-            !  PRINT *, "g_xy=", g(1,1,54,jxy)
-            !  PRINT *, "g_xz=", g(1,1,54,jxz)
-            !  PRINT *, "g_yy=", g(1,1,54,jyy)
-            !  PRINT *, "g_yz=", g(1,1,54,jyz)
-            !  PRINT *, "g_zz=", g(1,1,54,jzz)
-            !  PRINT *
-            !ENDIF
-            !IF( ix == 1 .AND. iy == 1 .AND. iz == 55 )THEN
-            !  PRINT *, "g_xx=", g(1,1,55,jxx)
-            !  PRINT *, "g_xy=", g(1,1,55,jxy)
-            !  PRINT *, "g_xz=", g(1,1,55,jxz)
-            !  PRINT *, "g_yy=", g(1,1,55,jyy)
-            !  PRINT *, "g_yz=", g(1,1,55,jyz)
-            !  PRINT *, "g_zz=", g(1,1,55,jzz)
-            !  PRINT *
-            !ENDIF
-
-            detg= 2.0D0*g(ix,iy,iz,jxy)*g(ix,iy,iz,jxz)*g(ix,iy,iz,jyz) &
-                  - g(ix,iy,iz,jzz)*g(ix,iy,iz,jxy)**2 + g(ix,iy,iz,jyy) &
-                   *( g(ix,iy,iz,jxx)*g(ix,iy,iz,jzz) - g(ix,iy,iz,jxz)**2 ) &
-                  - g(ix,iy,iz,jxx)*g(ix,iy,iz,jyz)**2
-
-!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
-!                PRINT *, "6"
-!              ENDIF
+            detg= 2.0D0*g(i,j,k,jxy)*g(i,j,k,jxz)*g(i,j,k,jyz) &
+                  - g(i,j,k,jzz)*g(i,j,k,jxy)**2 + g(i,j,k,jyy) &
+                   *( g(i,j,k,jxx)*g(i,j,k,jzz) - g(i,j,k,jxz)**2 ) &
+                  - g(i,j,k,jxx)*g(i,j,k,jyz)**2
 
             IF( ABS( detg ) < 1D-10 )THEN
               PRINT *, "The determinant of the spatial metric " &
                        // "is effectively 0 at the grid point " &
-                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, ")."
+                       // "(ix,iy,iz)= (", i, ",", j,",", k, ")."
               PRINT *, "detg=", detg
               PRINT *
               STOP
             ELSEIF( detg < 0 )THEN
               PRINT *, "The determinant of the spatial metric " &
                        // "is negative at the grid point " &
-                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, ")."
+                       // "(ix,iy,iz)= (", i, ",", j,",", k, ")."
               PRINT *, "detg=", detg
               PRINT *
               STOP
             ENDIF
 
-!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
-!  PRINT *, "7"
-!ENDIF
+            CALL compute_g4( i, j, k, lapse, shift, g, g4 )
 
-            CALL compute_g4( ix, iy, iz, lapse, shift, g, g4 )
-
-!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
-!  PRINT *, "8"
-!ENDIF
-
-            CALL determinant_sym4x4_grid( ix, iy, iz, g4, detg4 )
-
-!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
-!  PRINT *, "9"
-!ENDIF
+            CALL determinant_sym4x4_grid( i, j, k, g4, detg4 )
 
             IF( ABS( detg4 ) < 1D-10 )THEN
               PRINT *, "The determinant of the spacetime metric "&
                        // "is effectively 0 at the grid point " &
-                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, ")."
+                       // "(ix,iy,iz)= (", i, ",", j,",", k, ")."
               PRINT *, "detg4=", detg4
               PRINT *
               STOP
             ELSEIF( detg4 > 0 )THEN
               PRINT *, "The determinant of the spacetime metric "&
                        // "is positive at the grid point " &
-                       // "(ix,iy,iz)= (", ix, ",", iy,",",iz, ")."
+                       // "(ix,iy,iz)= (", i, ",", j,",", k, ")."
               PRINT *, "detg4=", detg4
               PRINT *
               STOP
             ENDIF
 
-!IF( ix < 10 .AND. iy == 1 .AND. iz == 1 )THEN
-!  PRINT *, "10"
-!ENDIF
-!IF( ix < 20 .AND. iy == 1 .AND. iz == 1 )THEN
-!  PRINT *, "ix=", ix, ", iy=", iy, ", iz=", iz
-!ENDIF
-
             ! Print progress on screen
-            perc= 100*( nx*ny*(iz - 1) + nx*(iy - 1) + ix )/( nx*ny*nz )
+            perc= 100*( nx*ny*(k - 1) + nx*(j - 1) + i )/( nx*ny*nz )
             !perc2= 100.0*DBLE(nx*ny*(iz - 1) + nx*(iy - 1) + ix)/DBLE( nx*ny*nz )
             !perc= 100*cnt/( nx*ny*nz )
             IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN

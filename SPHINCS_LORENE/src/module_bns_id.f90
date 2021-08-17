@@ -566,7 +566,7 @@ MODULE bns_id
                                               lapse, &
                                               shift, &
                                               g, &
-                                              k )
+                                              ek )
 
       CLASS(bns),                           INTENT( IN OUT ):: THIS
       INTEGER,                              INTENT( IN )    :: nx
@@ -576,7 +576,7 @@ MODULE bns_id
       DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: lapse
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: shift
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: k
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
 
     END SUBROUTINE import_id_multid_array
 
