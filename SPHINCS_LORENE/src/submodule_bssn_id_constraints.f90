@@ -534,11 +534,8 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     !
     PRINT *, "** Computing contraints..."
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
-    !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
-    !$OMP                  show_progress ) &
-    !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
-    !$OMP                   perc, l, imin, imax )
+    !$OMP          SHARED( THIS, Tmunu_ll ) &
+    !$OMP          PRIVATE( l, imin, imax )
     DO l= 1, THIS% nlevels, 1
 
       ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
@@ -599,7 +596,8 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
           !-- Output
           !
           ! Connection constraints
-          GC(:,:,:,jx), GC(:,:,:,jy), &
+          GC(:,:,:,jx), &
+          GC(:,:,:,jy), &
           GC(:,:,:,jz), &
           ! Hamiltonian and momentum constraints
           HC(:,:,:), &
@@ -1459,10 +1457,10 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     !-- Compute the BSSN constraints by calling the Cactus-bound procedure
     !-- BSSN_CONSTRAINTS_INTERIOR
     !
-    PRINT *, " * Computing contraints using particle data..."
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP          SHARED( THIS, Tmunu_ll, show_progress ) &
-    !$OMP          PRIVATE( i, j, k, l, imin, imax )
+    PRINT *, " * Computing constraints using particle data..."
+!    !$OMP PARALLEL DO DEFAULT( NONE ) &
+!    !$OMP          SHARED( THIS, Tmunu_ll ) &
+!    !$OMP          PRIVATE( l, imin, imax )
     DO l= 1, THIS% nlevels, 1
 
       ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
@@ -1503,7 +1501,8 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
           A_BSSN3_ll(:,:,:,jyz), A_BSSN3_ll(:,:,:,jzz), &
           trK(:,:,:), phi(:,:,:), &
           Gamma_u(:,:,:,jx), &
-          Gamma_u(:,:,:,jy), Gamma_u(:,:,:,jz), &
+          Gamma_u(:,:,:,jy), &
+          Gamma_u(:,:,:,jz), &
           Tmunu_ll(:,:,:,itt), &
           Tmunu_ll(:,:,:,itx), &
           Tmunu_ll(:,:,:,ity), &
@@ -1514,8 +1513,10 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
           Tmunu_ll(:,:,:,iyy), &
           Tmunu_ll(:,:,:,iyz), &
           Tmunu_ll(:,:,:,izz), &
-          lapse(:,:,:), shift_u(:,:,:,jx), &
-          shift_u(:,:,:,jy), shift_u(:,:,:,jz), &
+          lapse(:,:,:), &
+          shift_u(:,:,:,jx), &
+          shift_u(:,:,:,jy), &
+          shift_u(:,:,:,jz), &
           !
           !-- Output
           !
@@ -1531,7 +1532,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
         )
       END ASSOCIATE
     ENDDO
-    !$OMP END PARALLEL DO
+!    !$OMP END PARALLEL DO
     PRINT *, " * Constraints computed."
     PRINT *
 
