@@ -431,7 +431,7 @@ SUBMODULE (bns_id) bns_access
 
     !*************************************************
     !                                                *
-    ! Returns the mass of NS 1 [Msun]                *
+    ! Returns the baryon mass of NS 1 [Msun]         *
     !                                                *
     ! FT                                             *
     !                                                *
@@ -448,7 +448,7 @@ SUBMODULE (bns_id) bns_access
 
     !*************************************************
     !                                                *
-    ! Returns the mass of NS 2 [Msun]                *
+    ! Returns the baryon mass of NS 2 [Msun]         *
     !                                                *
     ! FT                                             *
     !                                                *
@@ -459,6 +459,40 @@ SUBMODULE (bns_id) bns_access
     get_mass2= THIS% mass2
 
   END PROCEDURE get_mass2
+
+
+  MODULE PROCEDURE get_grav_mass1
+
+    !*************************************************
+    !                                                *
+    ! Returns the gravitational mass of NS 1 [Msun]  *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_grav_mass1= THIS% mass_grav1
+
+  END PROCEDURE get_grav_mass1
+
+
+  MODULE PROCEDURE get_grav_mass2
+
+    !*************************************************
+    !                                                *
+    ! Returns the gravitational mass of NS 2 [Msun]  *
+    !                                                *
+    ! FT                                             *
+    !                                                *
+    !*************************************************
+
+    IMPLICIT NONE
+
+    get_grav_mass2= THIS% mass_grav2
+
+  END PROCEDURE get_grav_mass2
 
 
   MODULE PROCEDURE get_adm_mass

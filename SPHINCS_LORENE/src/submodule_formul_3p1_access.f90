@@ -205,6 +205,57 @@ SUBMODULE (formul_3p1_id) formul_3p1_access
   END PROCEDURE get_ngrid_z
 
 
+  MODULE PROCEDURE get_xR
+
+    !***********************************************
+    !                                              *
+    ! Returns the x boundary of refinement level l *
+    !                                              *
+    ! FT                                           *
+    !                                              *
+    !***********************************************
+
+    IMPLICIT NONE
+
+    xR= THIS% levels(l)% xR
+
+  END PROCEDURE get_xR
+
+
+  MODULE PROCEDURE get_yR
+
+    !***********************************************
+    !                                              *
+    ! Returns the y boundary of refinement level l *
+    !                                              *
+    ! FT                                           *
+    !                                              *
+    !***********************************************
+
+    IMPLICIT NONE
+
+    yR= THIS% levels(l)% yR
+
+  END PROCEDURE get_yR
+
+
+  MODULE PROCEDURE get_zR
+
+    !***********************************************
+    !                                              *
+    ! Returns the z boundary of refinement level l *
+    !                                              *
+    ! FT                                           *
+    !                                              *
+    !***********************************************
+
+    IMPLICIT NONE
+
+    zR= THIS% levels(l)% zR
+
+  END PROCEDURE get_zR
+
+
   MODULE PROCEDURE get_HC
 
     !**************************************************

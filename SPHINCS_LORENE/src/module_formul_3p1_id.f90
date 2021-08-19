@@ -139,6 +139,12 @@ MODULE formul_3p1_id
 
     PROCEDURE, PUBLIC:: get_ngrid_z
 
+    PROCEDURE, PUBLIC:: get_xR
+
+    PROCEDURE, PUBLIC:: get_yR
+
+    PROCEDURE, PUBLIC:: get_zR
+
     PROCEDURE, PUBLIC:: get_HC
 
     PROCEDURE, PUBLIC:: get_MC
@@ -232,11 +238,10 @@ MODULE formul_3p1_id
 
     END FUNCTION get_grid_point
 
-    MODULE FUNCTION get_nlevels( THIS, l ) RESULT( nlevels )
+    MODULE FUNCTION get_nlevels( THIS ) RESULT( nlevels )
 
       ! Arguments
       CLASS(formul_3p1), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: nlevels
 
@@ -311,6 +316,36 @@ MODULE formul_3p1_id
       INTEGER:: ngrid_z
 
     END FUNCTION get_ngrid_z
+
+    MODULE FUNCTION get_xR( THIS, l ) RESULT( xR )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
+      ! Result
+      INTEGER:: xR
+
+    END FUNCTION get_xR
+
+    MODULE FUNCTION get_yR( THIS, l ) RESULT( yR )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
+      ! Result
+      INTEGER:: yR
+
+    END FUNCTION get_yR
+
+    MODULE FUNCTION get_zR( THIS, l ) RESULT( zR )
+
+      ! Arguments
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      INTEGER,           INTENT( IN )    :: l
+      ! Result
+      INTEGER:: zR
+
+    END FUNCTION get_zR
 
     MODULE FUNCTION get_HC( THIS, i, j, k, l ) RESULT( HC_value )
 

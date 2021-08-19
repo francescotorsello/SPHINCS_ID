@@ -1068,7 +1068,7 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% pvol= parts_obj% pvol( 1:parts_obj% npart )
 
     ! Check that there aren't particles with the same coordinates
-    PRINT *, "** Checking that there are no multiple particles", &
+    PRINT *, "** Checking that there are not multiple particles", &
              " at the same position..."
     PRINT *
 

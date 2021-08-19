@@ -320,6 +320,8 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: get_distance_com
     PROCEDURE, PUBLIC:: get_mass1
     PROCEDURE, PUBLIC:: get_mass2
+    PROCEDURE, PUBLIC:: get_grav_mass1
+    PROCEDURE, PUBLIC:: get_grav_mass2
     PROCEDURE, PUBLIC:: get_adm_mass
     PROCEDURE, PUBLIC:: get_angular_momentum
     PROCEDURE, PUBLIC:: get_radius1_x_comp
@@ -829,6 +831,24 @@ MODULE bns_id
       DOUBLE PRECISION:: get_mass2
 
     END FUNCTION get_mass2
+
+    MODULE FUNCTION get_grav_mass1( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_grav_mass1
+
+    END FUNCTION get_grav_mass1
+
+    MODULE FUNCTION get_grav_mass2( THIS )
+
+      ! Argument
+      CLASS(bns), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_grav_mass2
+
+    END FUNCTION get_grav_mass2
 
     MODULE FUNCTION get_adm_mass( THIS )
 

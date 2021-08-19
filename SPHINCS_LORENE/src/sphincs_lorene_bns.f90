@@ -18,7 +18,7 @@ PROGRAM sphincs_lorene_bns
 
   USE sphincs_lorene
   USE constants, ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
-                       k_lorene2hydrobase_piecewisepolytrope
+                       k_lorene2hydrobase_piecewisepolytrope, MSun_geo
 
   IMPLICIT NONE
 
@@ -425,7 +425,7 @@ PROGRAM sphincs_lorene_bns
     PRINT *
   ENDIF
   IF( run_spacetime )THEN
-    PRINT *, " * Gravity:"
+    PRINT *, " * Spacetime:"
     CALL bssn_forms( 1 )% grid_timer% print_timer( 2 )
     CALL bssn_forms( 1 )% importer_timer% print_timer( 2 )
     CALL bssn_forms( 1 )% bssn_computer_timer% print_timer( 2 )
@@ -444,8 +444,51 @@ PROGRAM sphincs_lorene_bns
   PRINT *, "===================================================" &
            // "================================================"
   PRINT *
+  PRINT *, " * Binary system of neutron stars:"
+  PRINT *
+  PRINT *, "   Baryon mass of neutron star 1= ", binaries( 1 )% get_mass1(), &
+           "Msun"
+  PRINT *, "   Baryon mass of neutron star 2= ", binaries( 1 )% get_mass1(), &
+           "Msun"
+  PRINT *, "   Baryon mass of neutron star 1= ", &
+           binaries( 1 )% get_grav_mass1(), "Msun"
+  PRINT *, "   Baryon mass of neutron star 2= ", &
+           binaries( 1 )% get_grav_mass1(), "Msun"
+  PRINT *
+  PRINT *, "   Equatorial (not areal) radius of neutron star 1 towards " &
+           // "companion= ", &
+               binaries( 1 )% get_radius1_x_comp(), "Msun_geo"
+  PRINT *, "   Equatorial (not areal) radius of neutron star 2 towards " &
+           // "companion= ", &
+               binaries( 1 )% get_radius2_x_comp(), "Msun_geo"
+  PRINT *, "   Equatorial (not areal) radius of neutron star 1 opposite to " &
+           // "companion= ", &
+               binaries( 1 )% get_radius1_x_opp(), "Msun_geo"
+  PRINT *, "   Equatorial (not areal) radius of neutron star 2 opposite to " &
+           // "companion= ", &
+               binaries( 1 )% get_radius2_x_opp(), "Msun_geo"
+  PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
+               binaries( 1 )% get_radius1_y(), "Msun_geo"
+  PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
+               binaries( 1 )% get_radius2_y(), "Msun_geo"
+  PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
+               binaries( 1 )% get_radius1_z(), "Msun_geo"
+  PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
+               binaries( 1 )% get_radius2_z(), "Msun_geo"
+  PRINT *
+  PRINT *, "   EOS for neutron star 1= ", &
+               binaries( 1 )% get_eos1()
+  PRINT *, "   EOS for neutron star 2= ", &
+               binaries( 1 )% get_eos2()
+  PRINT *
+  PRINT *, "   Central baryon mass density for star 1= ", &
+               binaries( 1 )% get_rho_center1(), "Msun/Msun_geo**3"
+  PRINT *, "   Central baryon mass density for star 2= ", &
+               binaries( 1 )% get_rho_center2(), "Msun/Msun_geo**3"
+  PRINT *
   IF( run_sph )THEN
     PRINT *, " * SPH:"
+    PRINT *
     PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
     PRINT *, "   Particle number on star 1: npart1=", &
                                           particles_dist( 1, 1 )% get_npart1()
@@ -463,6 +506,33 @@ PROGRAM sphincs_lorene_bns
              particles_dist( 1, 1 )% get_nuratio1()
     PRINT *, "   Baryon number ratio on star 2=", &
              particles_dist( 1, 1 )% get_nuratio2()
+    PRINT *
+  ENDIF
+  IF( run_spacetime )THEN
+    PRINT *, " * Spacetime:"
+    PRINT *
+    PRINT *, "   Number of refinement levels= ", bssn_forms( 1 )% get_nlevels()
+    PRINT *
+    PRINT *, "   Number of grid points on each level= ", &
+             bssn_forms( 1 )% get_ngrid_x( 1 ), "**3"
+    PRINT *
+    DO itr= 1, bssn_forms( 1 )% get_nlevels(), 1
+      PRINT *, "   Resolution on level ", itr, "= ", &
+               bssn_forms( 1 )% get_dx(itr)
+    ENDDO
+    PRINT *
+    DO itr= 1, bssn_forms( 1 )% get_nlevels(), 1
+      PRINT *, "   x boundary of level ", itr, "= ", &
+               bssn_forms( 1 )% get_xR(itr)
+      PRINT *, "   y boundary of level ", itr, "= ", &
+               bssn_forms( 1 )% get_yR(itr)
+      PRINT *, "   z boundary of level ", itr, "= ", &
+               bssn_forms( 1 )% get_zR(itr)
+               !bssn_forms( 1 )% get_dx(itr)* &
+               !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0, "Msun_geo= ", &
+               !bssn_forms( 1 )% get_dx(itr)* &
+               !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0*Msun_geo, "km "
+    ENDDO
     PRINT *
   ENDIF
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time
