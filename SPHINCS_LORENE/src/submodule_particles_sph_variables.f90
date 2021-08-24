@@ -306,15 +306,9 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
-      THIS% nlrf(itr)= nlrf(itr)
-
-      ! Internal energy per baryon (specific internal energy)
-      ! In module_TOV.f90, this quantity is computed as follows,
-      ! eps= pressure/(Gammap-1.0D0)/density
-      !    = energy_density/mass_density
-      ! In LORENE, the specific energy is computed as
-      ! e_spec= (energy_density - mass_density)/mass_density
+      !nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
+      THIS% nlrf(itr)= &
+                 THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
 
       ! Specific internal energy [c^2]
       u(itr)= THIS% specific_energy_parts(itr)
@@ -324,31 +318,6 @@ SUBMODULE (particles_id) particles_sph_variables
       !                      energy density
       Pr(itr)= THIS% pressure_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% pressure_parts_cu(itr)= Pr(itr)
-
-      ! Baryon per particle
-      !IF( itr <= THIS% npart1 )THEN
-      !  nu(itr)= nlrf(itr)*THIS% vol1_a*Theta_a*sq_g
-      !  THIS% nbar1= THIS% nbar1 + nu(itr)
-      !ELSE
-      !  nu(itr)= nlrf(itr)*THIS% vol2_a*Theta_a*sq_g
-      !  THIS% nbar2= THIS% nbar2 + nu(itr)
-      !ENDIF
-      !THIS% nu(itr)= nu(itr)
-      !THIS% nbar_tot= THIS% nbar_tot + THIS% nu(itr)
-
-      ! THIS% mass1*umass converts mass1 in g; umass is Msun in g
-      ! amu is the atomic mass unit in g
-      !temp1= THIS% mass1*umass/amu/THIS% npart1
-      !temp2= THIS% mass2*umass/amu/THIS% npart2
-      !IF( nu(itr) /= temp1 )THEN
-      !  PRINT *, "The two formulas to compute the baryons per particle ", &
-      !           "do not give consistent results at particle ", itr, "."
-      !  PRINT *, "nu(itr)*THIS% vol_a=", nu(itr)
-      !  PRINT *, "THIS% mass1*umass/THIS% npart1/amu=", temp1
-      !  PRINT *, "THIS% mass2*umass/THIS% npart2/amu=", temp2
-      !  PRINT *
-      !  STOP
-      !ENDIF
 
       IF( debug )THEN
         IF( itr >= THIS% npart/10 - 200 .AND. itr <= THIS% npart/10 )THEN
@@ -385,42 +354,34 @@ SUBMODULE (particles_id) particles_sph_variables
     ENDDO compute_SPH_variables_on_particles
     !$OMP END PARALLEL DO
 
-    IF( THIS% eos1_id == 110 .AND. THIS% eos2_id == 110 )THEN
 
-      PRINT *, " * Computing pressure and specific internal energy from", &
-               " the baryon mass density, using the exact formulas for", &
-               " piecewise polytropic EOS..."
-      PRINT *
+    ! Compute nstar (proper baryon number density) from LORENE
+    THIS% nstar= ( THIS% nlrf*THIS% Theta )*sq_det_g4
 
-      CALL select_EOS_parameters(shorten_eos_name(THIS% eos1))
-      CALL gen_pwp_eos_all( THIS% npart, nlrf*m0c2_cu, u )
-      THIS% pressure_parts_cu= Pr
-      THIS% u_pwp= get_u_pwp()
-      u= get_u_pwp()
-
-    ENDIF
-
-    IF( THIS% distribution_id == 3 .OR. &
-        ( THIS% distribution_id == 0 .AND. THIS% read_nu ) )THEN
-
-      THIS% nstar= ( THIS% nlrf*THIS% Theta )*sq_det_g4
-      THIS% particle_density= (THIS% nstar)/( THIS% pmass )
-
-    ELSE
-
-      THIS% nstar= ( THIS% nlrf*THIS% Theta )*sq_det_g4
-      THIS% pmass= THIS% nstar*THIS% pvol
-      THIS% particle_density= (THIS% nstar)/( THIS% pmass )
-
-    ENDIF
-
+    !
+    !-- Compute the particle proper mass, if not computed yet
+    !
     IF( .NOT.ALLOCATED( THIS% pvol ) )THEN
       PRINT *, "** ERROR! The array pvol is not allocated. ", &
                "Stopping..."
       PRINT *
       STOP
     ENDIF
+    IF( .NOT.( THIS% distribution_id == 3 .OR. &
+        ( THIS% distribution_id == 0 .AND. THIS% read_nu ) ) )THEN
 
+      THIS% pmass= THIS% nstar*THIS% pvol
+
+    ENDIF
+
+    ! Compute particle number density from LORENE
+    THIS% particle_density= ( THIS% nstar )/( THIS% pmass )
+
+
+    !
+    !-- Compute the first guess for the smoothing length, if the APM was not
+    !-- used
+    !
     IF( .NOT.THIS% apm_iterate1 )THEN
 
       IF( debug ) PRINT *, "Compute first guess for h for star 1..."
@@ -463,13 +424,17 @@ SUBMODULE (particles_id) particles_sph_variables
 
     IF( debug ) PRINT *, "1"
 
-    !---------------------------------------------------------------------!
-    !--  Assignment of nu on the stars, with the purpose                --!
-    !--  of having a more uniform nu over the particles without losing  --!
-    !--  baryon mass.                                                   --!
-    !---------------------------------------------------------------------!
+    !-------------------------------------!
+    !--  Assignment of nu on the stars. --!
+    !-------------------------------------!
 
     IF( THIS% redistribute_nu )THEN
+
+      !---------------------------------------------------------------------!
+      !--  Assignment of nu on the stars, with the purpose                --!
+      !--  of having a more uniform nu over the particles without losing  --!
+      !--  baryon mass. This is used only on the lattice, optionally.     --!
+      !---------------------------------------------------------------------!
 
       IF( THIS% distribution_id == 3 )THEN
         PRINT *, "** ERROR! Particle placer ", THIS% distribution_id, &
@@ -479,34 +444,6 @@ SUBMODULE (particles_id) particles_sph_variables
         PRINT *
         STOP
       ENDIF
-
-      ! Index particles on star 1 in increasing order of nu
-
-      !CALL indexx( THIS% npart1, &
-      !             THIS% baryon_density_parts( 1 : THIS% npart1 ), &
-      !             !THIS% nu( 1 : THIS% npart1 ), &
-      !             THIS% baryon_density_index( 1 : THIS% npart1 ) )
-
-      ! Index particles on star 2 in increasing order of nu
-
-      !CALL indexx( THIS% npart2, &
-      !             THIS% baryon_density_parts( THIS% npart1 + 1 : &
-      !                                         THIS% npart ), &
-      !             !THIS% nu( THIS% npart1 + 1 : THIS% npart ), &
-      !             THIS% baryon_density_index( THIS% npart1 + 1 : &
-      !                                         THIS% npart ) )
-
-      ! Shift indices on star 2 by npart1 since all the arrays store
-      ! the quantities on star 1 first, and then on star 2
-
-      !THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )= &
-      !            THIS% npart1 + &
-      !            THIS% baryon_density_index( THIS% npart1 + 1 : THIS% npart )
-
-      ! Store the maximum values of nu on the two stars, and the thresholds
-
-      !nu_max1= MAXVAL( THIS% nu( 1 : THIS% npart1 ) )
-      !nu_max2= MAXVAL( THIS% nu( THIS% npart1 + 1 : THIS% npart ) )
 
       nu_max1= nlrf( THIS% baryon_density_index( THIS% npart1 ) )&
               *THIS% pvol( THIS% npart1 ) &
@@ -587,9 +524,6 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ENDDO compute_nu_on_particles_star2
       THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-      !PRINT *, cnt1, cnt2
-      !PRINT *, nu_thres1, nu_thres2, nu_tmp
-      !STOP
 
       !
       !-- Reshape MODULE variables
@@ -731,6 +665,8 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ELSEIF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
 
+      ! If the particle positions and nu were read from formatted file...
+
       ! Do nothing, nu is already read from file
       nu= THIS% nu
       THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
@@ -741,7 +677,13 @@ SUBMODULE (particles_id) particles_sph_variables
             THIS% mass_ratio <= 1.005 .AND. &
             THIS% reflect_particles_x )THEN
 
+      ! If the stars have practically the same mass, and the user wants
+      ! to have the same particles on them, but reflected with respect to
+      ! the yz plane...
+
       IF( THIS% apm_iterate1 )THEN
+
+        ! If the APM was used for star 1...
 
         ! Do nothing, nu and h are already computed in the APM iteration
         nu= THIS% nu
@@ -750,7 +692,12 @@ SUBMODULE (particles_id) particles_sph_variables
         THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
         THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
-      ELSEIF( THIS% distribution_id == 3 )THEN
+      !ELSEIF( THIS% distribution_id == 3 )THEN
+      ELSE
+
+        ! If the APM was not used for star 1...
+
+        ! Set nu based on the particle mass...
 
         DO itr= 1, THIS% npart1, 1
           nu(itr)= THIS% pmass(itr)*MSun/amu
@@ -758,19 +705,7 @@ SUBMODULE (particles_id) particles_sph_variables
           THIS% nbar1= THIS% nbar1 + nu(itr)
         ENDDO
 
-        nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
-        THIS% nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
-        THIS% nbar2= THIS% nbar1
-
-        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-
-      ELSE
-
-        DO itr= 1, THIS% npart1, 1
-          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-          THIS% nu(itr)= nu(itr)
-          THIS% nbar1= THIS% nbar1 + nu(itr)
-        ENDDO
+        ! ...and copy this nu to the particles on star 2
 
         nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
         THIS% nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
@@ -778,9 +713,30 @@ SUBMODULE (particles_id) particles_sph_variables
 
         THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
+ !     ELSE
+ !
+ !       ! If the APM was not used for star 1 and the particles are on
+ !       ! lattices...
+ !
+ !       DO itr= 1, THIS% npart1, 1
+ !         nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+ !         THIS% nu(itr)= nu(itr)
+ !         THIS% nbar1= THIS% nbar1 + nu(itr)
+ !       ENDDO
+ !
+ !       nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
+ !       THIS% nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
+ !       THIS% nbar2= THIS% nbar1
+ !
+ !       THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+ !
       ENDIF
 
     ELSEIF( THIS% apm_iterate1 .AND. THIS% apm_iterate2 )THEN
+
+      ! If the stars do not have the same mass...
+
+      ! If the APM was used for both of them...
 
       ! Do nothing, nu and h are already computed in the APM iteration
       nu= THIS% nu
@@ -791,12 +747,18 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ELSEIF( THIS% apm_iterate1 .AND. .NOT.THIS% apm_iterate2 )THEN
 
-      ! Do nothing, nu and h are already computed in the APM iteration
+      ! If the stars do not have the same mass...
+
+      ! If the APM was used for star 1 only...
+
+      ! Do nothing on star 1, nu and h are already computed in the APM iteration
       nu(1:THIS% npart1)= THIS% nu(1:THIS% npart1)
       h(1:THIS% npart1) = THIS% h(1:THIS% npart1)
       THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
 
-      IF( THIS% distribution_id == 3 )THEN
+      ! Set nu based on the particle mass on star 2...
+
+  !    IF( THIS% distribution_id == 3 )THEN
 
         DO itr= THIS% npart1 + 1, THIS% npart, 1
           nu(itr)= THIS% pmass(itr)*MSun/amu
@@ -804,21 +766,27 @@ SUBMODULE (particles_id) particles_sph_variables
           THIS% nbar2= THIS% nbar2 + nu(itr)
         ENDDO
 
-      ELSE
-
-        DO itr= THIS% npart1 + 1, THIS% npart, 1
-          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-          THIS% nu(itr)= nu(itr)
-          THIS% nbar2= THIS% nbar2 + nu(itr)
-        ENDDO
-
-      ENDIF
+  !    ELSE
+  !
+  !      DO itr= THIS% npart1 + 1, THIS% npart, 1
+  !        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+  !        THIS% nu(itr)= nu(itr)
+  !        THIS% nbar2= THIS% nbar2 + nu(itr)
+  !      ENDDO
+  !
+  !    ENDIF
 
       THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
     ELSEIF( .NOT.THIS% apm_iterate1 .AND. THIS% apm_iterate2 )THEN
 
-      IF( THIS% distribution_id == 3 )THEN
+      ! If the stars do not have the same mass...
+
+      ! If the APM was used for star 2 only...
+
+      ! Set nu based on the particle mass on star 1...
+
+  !    IF( THIS% distribution_id == 3 )THEN
 
         DO itr= 1, THIS% npart1, 1
           nu(itr)= THIS% pmass(itr)*MSun/amu
@@ -826,17 +794,17 @@ SUBMODULE (particles_id) particles_sph_variables
           THIS% nbar1= THIS% nbar1 + nu(itr)
         ENDDO
 
-      ELSE
+  !    ELSE
+  !
+  !      DO itr= 1, THIS% npart1, 1
+  !        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+  !        THIS% nu(itr)= nu(itr)
+  !        THIS% nbar1= THIS% nbar1 + nu(itr)
+  !      ENDDO
+  !
+  !    ENDIF
 
-        DO itr= 1, THIS% npart1, 1
-          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-          THIS% nu(itr)= nu(itr)
-          THIS% nbar1= THIS% nbar1 + nu(itr)
-        ENDDO
-
-      ENDIF
-
-      ! Do nothing, nu and h are already computed in the APM iteration
+      ! Do nothing on star 2, nu and h are already computed in the APM iteration
       nu(THIS% npart1+1:THIS% npart)= THIS% nu(THIS% npart1+1:THIS% npart)
       h(THIS% npart1+1:THIS% npart) = THIS% h(THIS% npart1+1:THIS% npart)
       THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
@@ -845,7 +813,11 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ELSE
 
-      IF( THIS% distribution_id == 3 )THEN
+      ! If the APM was not used on both stars...
+
+      ! Set nu based on the particle mass on both stars...
+
+  !    IF( THIS% distribution_id == 3 )THEN
 
         DO itr= 1, THIS% npart1, 1
           nu(itr)= THIS% pmass(itr)*MSun/amu
@@ -859,23 +831,132 @@ SUBMODULE (particles_id) particles_sph_variables
         ENDDO
         THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 
-      ELSE
-
-        DO itr= 1, THIS% npart1, 1
-          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-          THIS% nu(itr)= nu(itr)
-          THIS% nbar1= THIS% nbar1 + nu(itr)
-        ENDDO
-        DO itr= THIS% npart1 + 1, THIS% npart, 1
-          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-          THIS% nu(itr)= nu(itr)
-          THIS% nbar2= THIS% nbar2 + nu(itr)
-        ENDDO
-        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-
-      ENDIF
+  !    ELSE
+  !
+  !      DO itr= 1, THIS% npart1, 1
+  !        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+  !        THIS% nu(itr)= nu(itr)
+  !        THIS% nbar1= THIS% nbar1 + nu(itr)
+  !      ENDDO
+  !      DO itr= THIS% npart1 + 1, THIS% npart, 1
+  !        nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
+  !        THIS% nu(itr)= nu(itr)
+  !        THIS% nbar2= THIS% nbar2 + nu(itr)
+  !      ENDDO
+  !      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+  !
+  !    ENDIF
 
     ENDIF
+
+    !------------------------------------------------------------------------!
+    ! Compute SPH density estimate (nu has to be assigned before this step)  !
+    !------------------------------------------------------------------------!
+
+    CALL allocate_RCB_tree_memory_3D(npart)
+    iorig(1:npart)= (/ (a,a=1,npart) /)
+
+    CALL allocate_gradient( npart )
+
+    IF( debug ) PRINT *, "-1"
+
+    PRINT *, " * Computing neighbours..."
+    PRINT *
+    ! Determine smoothing length so that each particle has exactly
+    ! 300 neighbours inside 2h
+    CALL assign_h( ndes, &
+                   THIS% npart, &
+                   THIS% pos, THIS% h, &
+                   h )
+    ! Redo the previous step slightly different (it's built-in;
+    ! exact_nei_tree_update does not work if I don't call assign_h first),
+    ! then update the neighbour-tree and fill the neighbour-data
+    CALL exact_nei_tree_update( ndes,        &
+                                THIS% npart, &
+                                THIS% pos,   &
+                                THIS% nu )
+
+    ! Update the member variables storing smoothing lengt and particle volume
+    THIS% h= h
+    THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
+
+    !
+    !-- Check that the smoothing length is acceptable
+    !
+    check_h: DO itr= 1, THIS% npart, 1
+
+      IF( ISNAN( THIS% h(itr) ) )THEN
+        PRINT *, "** ERROR! h(", itr, ") is a NaN"
+        PRINT *, "Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+      IF( THIS% h(itr) <= 0.0D0 )THEN
+        PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
+        PRINT *, "Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+    ENDDO check_h
+
+    !
+    !-- Compute the proper baryon number density with kernel interpolation
+    !
+
+    PRINT *, " * Computing SPH proper baryon number density with kernel", &
+             " interpolation..."
+    PRINT *
+    ! density calls dens_ll_cell, which computes nstar on particle a as
+    ! Na=     Na + nu(b)*Wab_ha, so this is nstar= nlrf*sq_g*Theta
+    ! It has to be compared with nstar= nlrf*sq_g*Theta
+    CALL density( THIS% npart, &
+                  THIS% pos,   &
+                  THIS% nstar_int )
+
+    !-------------------------------------------------------------------------!
+    !-------------------------------------------------------------------------!
+    ! This point here is CRUCIAL: the particle distribution may NOT resolve   !
+    ! properly the steep density gradient at the surface, even if the APM     !
+    ! is used. This implies that the kernel interpolated nstar_int will be    !
+    ! different than nstar close to the surface.                              !
+    ! The error can be such that the recovery fails in SPHINCS_BSSN, and      !
+    ! this is of course a problem. Now, the density used in SPHINCS_BSSN      !
+    ! during the evolution is not the one given by LORENE, even though the    !
+    ! latter is perhaps more accurate. Hence, once nstar_int is computed,     !
+    ! nlrf should be recomputed from it, so that the density on the particles !
+    ! corresponds to the density that "they see", that is, the kernel         !
+    ! interpolated density that uses these values of nu.                      !
+    !-------------------------------------------------------------------------!
+    !-------------------------------------------------------------------------!
+
+    THIS% nlrf= ( THIS% nstar_int/THIS% Theta )/sq_det_g4
+    nlrf= THIS% nlrf
+
+    !-----------------------------------------------------------------------!
+    ! For piecewise polytropes, do not use the LORENE pressure and specific !
+    ! internal energy. Compute them using the exact formulas for piecewise  !
+    ! polytropic instead, starting from the kernel interpolated density     !
+    !-----------------------------------------------------------------------!
+
+    IF( THIS% eos1_id == 110 .AND. THIS% eos2_id == 110 )THEN
+
+      PRINT *, " * Computing pressure and specific internal energy from", &
+               " the baryon mass density, using the exact formulas for", &
+               " piecewise polytropic EOS..."
+      PRINT *
+
+      CALL select_EOS_parameters(shorten_eos_name(THIS% eos1))
+      CALL gen_pwp_eos_all( THIS% npart, nlrf*m0c2_cu, u )
+      THIS% pressure_parts_cu= Pr
+      THIS% u_pwp= get_u_pwp()
+      u= get_u_pwp()
+
+    ENDIF
+
+    !-------------------!
+    ! Assignment of Ye  !
+    !-------------------!
 
     IF(.NOT.ALLOCATED( THIS% Ye ))THEN
       ALLOCATE( THIS% Ye( THIS% npart ), STAT= ios, ERRMSG= err_msg )
@@ -1059,64 +1140,6 @@ SUBMODULE (particles_id) particles_sph_variables
       ENDIF
 
     ENDIF
-
-    CALL allocate_RCB_tree_memory_3D(npart)
-    iorig(1:npart)= (/ (a,a=1,npart) /)
-
-    !IF( call_flag == 0 )THEN
-    !  ! tabulate kernel, get ndes
-    !  CALL ktable(ikernel,ndes)
-    !ENDIF
-
-    ! flag that particles are 'alive'
-    !ALLOCATE( alive( npart ) )
-    !alive( 1:npart )= 1
-
-    CALL allocate_gradient( npart )
-
-    IF( debug ) PRINT *, "-1"
-
-    PRINT *, " * Computing neighbours..."
-    PRINT *
-    CALL assign_h( ndes, &
-                   THIS% npart, &
-                   THIS% pos, THIS% h, &
-                   h )
-    CALL exact_nei_tree_update( ndes,        &
-                                THIS% npart, &
-                                THIS% pos,   &
-                                THIS% nu )
-
-    THIS% h= h
-    THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
-
-    check_h: DO itr= 1, THIS% npart, 1
-
-      IF( ISNAN( THIS% h(itr) ) )THEN
-        PRINT *, "** ERROR! h(", itr, ") is a NaN"
-        PRINT *, "Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-      IF( THIS% h(itr) <= 0.0D0 )THEN
-        PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
-        PRINT *, "Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-
-    ENDDO check_h
-
-    !STOP
-
-    PRINT *, " * Computing SPH density by kernel interpolation..."
-    PRINT *
-    ! density calls dens_ll_cell, which computes nstar on particle a as
-    ! Na=     Na + nu(b)*Wab_ha, so this is nstar= nlrf*sq_g*Theta
-    ! It has to be compared with particle_density_int= nlrf*sq_g*Theta
-    CALL density( THIS% npart, &
-                  THIS% pos,   &
-                  THIS% nstar_int )
 
     PRINT *, " * Computing particle number density by kernel interpolation..."
     PRINT *

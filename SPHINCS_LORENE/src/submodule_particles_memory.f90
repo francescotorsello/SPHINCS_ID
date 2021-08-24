@@ -299,6 +299,16 @@ SUBMODULE (particles_id) particles_memory
          STOP
       ENDIF
     ENDIF
+    IF(.NOT.ALLOCATED( THIS% nlrf_int ))THEN
+      ALLOCATE( THIS% nlrf_int( THIS% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array u_pwp in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
 
     PRINT *, "** Subroutine allocate_lorene_id_parts_memory executed."
     PRINT *
@@ -660,6 +670,17 @@ SUBMODULE (particles_id) particles_memory
     ENDIF
     IF( ALLOCATED( THIS% u_pwp ))THEN
       DEALLOCATE( THIS% u_pwp, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array u_pwp. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( THIS% nlrf_int ))THEN
+      DEALLOCATE( THIS% nlrf_int, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array u_pwp. ", &
                   "The error message is", err_msg

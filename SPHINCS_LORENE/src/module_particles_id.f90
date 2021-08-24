@@ -121,8 +121,11 @@ MODULE particles_id
     !-- SPH fields
     !
     ! 1-D array storing baryon density in the local rest frame
-    ! baryon (Msun_geo)^{-3}
+    ! baryon (Msun_geo)^{-3}, computed directlyfrom the LORENE desnity
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf
+    ! 1-D array storing baryon density in the local rest frame
+    ! baryon (Msun_geo)^{-3}, computed from the kernel interpolated nstar_int
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_int
     ! 1-D array storing the baryon number per particle
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu
     ! 1-D array storing the SPH estimate of the baryon number density

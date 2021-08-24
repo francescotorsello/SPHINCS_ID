@@ -17,8 +17,9 @@ PROGRAM sphincs_lorene_bns
   !*****************************************************
 
   USE sphincs_lorene
-  USE constants, ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
-                       k_lorene2hydrobase_piecewisepolytrope, MSun_geo
+  USE constants,      ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
+                            k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
+                            kg2g, m2cm
 
   IMPLICIT NONE
 
@@ -446,13 +447,16 @@ PROGRAM sphincs_lorene_bns
   PRINT *
   PRINT *, " * Binary system of neutron stars:"
   PRINT *
+  PRINT *, "   Used binary file produced by LORENE: " &
+           // TRIM(common_path)//TRIM(filenames( 1 ))
+  PRINT *
   PRINT *, "   Baryon mass of neutron star 1= ", binaries( 1 )% get_mass1(), &
            "Msun"
   PRINT *, "   Baryon mass of neutron star 2= ", binaries( 1 )% get_mass1(), &
            "Msun"
-  PRINT *, "   Baryon mass of neutron star 1= ", &
+  PRINT *, "   Gravitational mass of neutron star 1= ", &
            binaries( 1 )% get_grav_mass1(), "Msun"
-  PRINT *, "   Baryon mass of neutron star 2= ", &
+  PRINT *, "   Gravitational mass of neutron star 2= ", &
            binaries( 1 )% get_grav_mass1(), "Msun"
   PRINT *
   PRINT *, "   Equatorial (not areal) radius of neutron star 1 towards " &
@@ -482,9 +486,13 @@ PROGRAM sphincs_lorene_bns
                binaries( 1 )% get_eos2()
   PRINT *
   PRINT *, "   Central baryon mass density for star 1= ", &
-               binaries( 1 )% get_rho_center1(), "Msun/Msun_geo**3"
+               binaries( 1 )% get_rho_center1(), "Msun/Msun_geo**3= ", &
+               binaries( 1 )% get_rho_center1() &
+               /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
   PRINT *, "   Central baryon mass density for star 2= ", &
-               binaries( 1 )% get_rho_center2(), "Msun/Msun_geo**3"
+               binaries( 1 )% get_rho_center2(), "Msun/Msun_geo**3= ", &
+               binaries( 1 )% get_rho_center2() &
+               /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
   PRINT *
   IF( run_sph )THEN
     PRINT *, " * SPH:"
