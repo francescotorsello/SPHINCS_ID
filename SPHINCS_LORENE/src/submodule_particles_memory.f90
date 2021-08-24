@@ -283,7 +283,7 @@ SUBMODULE (particles_id) particles_memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                  // " place_particles_. ", &
+                  // " allocate_lorene_id_parts_memory. ", &
                   "The STAT variable is", ios, ". ", &
                   "The error message is", err_msg
          STOP
@@ -294,7 +294,7 @@ SUBMODULE (particles_id) particles_memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array u_pwp in SUBROUTINE" &
-                  // "place_particles_. ", &
+                  // "allocate_lorene_id_parts_memory. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
@@ -303,8 +303,8 @@ SUBMODULE (particles_id) particles_memory
       ALLOCATE( THIS% nlrf_int( THIS% npart ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array u_pwp in SUBROUTINE" &
-                  // "place_particles_. ", &
+         PRINT *, "...allocation error for array nlrf_int in SUBROUTINE" &
+                  // "allocate_lorene_id_parts_memory. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
