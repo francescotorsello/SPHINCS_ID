@@ -179,7 +179,7 @@ SUBMODULE (particles_id) particles_constructor
     !
     !-- Read the parameters of the particle distributions
     !
-    parts_obj% lorene_bns_id_parfile= 'lorene_bns_id_particles.par'
+    parts_obj% lorene_bns_id_parfile= 'sphincs_lorene_bns_particles.par'
 
     INQUIRE( FILE= parts_obj% lorene_bns_id_parfile, EXIST= file_exists )
     IF( file_exists )THEN

@@ -1,0 +1,145 @@
+&bns_particles
+!------------------------------------------------------------------------!
+! Parameters needed to read the particle positions from a formatted file !
+!   The code assumes that one star has negative x coordinates, and the   !
+!   other has positive x coordinates; the code also reflect the          !
+!   particles with z > 0 to z < 0, to impose the equatorial-plane        !
+!   symmetry                                                             !
+!------------------------------------------------------------------------!
+parts_pos_path="pos-archive/"     ! Path to the directory containing the
+                                  ! formatted files with the particle positions
+parts_pos=!"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
+          !"apm-pos-nu_1218_45km_pol275_500k.dat"  ! positions and, optionally, nu
+          "apm-pos-nu_135135_42km_apr4_500k_hr.dat"
+          !"apm-pos_1218_45km_pol275_1M.dat"
+          !"apm-pos_1218_45km_pol275_2M.dat"
+columns(:)=!2,3,4            ! Columns containing the particle positions;
+           1,2,3             ! x,y,z in this order
+read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
+                              ! positions are also read from the file
+column_nu=!19                  ! Column containing nu (baryon number per particle)
+          4
+n_cols=!21                   ! Total number of columns in the file
+       4
+header_lines=!4              ! Number of header lines in the file
+             0
+!-------------------------------------------------------!
+! Reflect particles with respect to the yz plane if the !
+! stars have masses that differ less than 0.5%          !
+!-------------------------------------------------------!
+reflect_particles_x= .TRUE.
+!---------------------------------------------------------------!
+! Parameters needed to place and filter particles on lattice(s) !
+!---------------------------------------------------------------!
+stretch=1.2     ! Factor by which the lattices around the stars are stretched
+nx=94           ! Number of particles in the x direction for each lattice
+ny=94           ! Number of particles in the y direction for each lattice
+nz=94           ! EVEN number of particles in the z direction for each lattice
+use_thres=.TRUE.
+thres=300.0      ! (~rho_max)/thres is the minimum mass density considered
+                ! when placing particles. Used only when redistribute_nu is
+                ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
+redistribute_nu=.FALSE. ! If .TRUE., nu is reassigned on the particles such that
+                       ! the baryon number ratio does not exceed nu_ratio on
+                       ! each star
+nu_ratio=3.0           ! Desired baryon number ratio. Used only when
+                       ! redistribute_nu is .TRUE.
+!---------------------------------------------------------------!
+! Parameters needed to place particles on spherical shells      !
+!   This method integrates the density over the stars, computes !
+!   the masses of the shells and then the number of particles   !
+!   per shell, trying to minimize the particle mass ratio       !
+!   by iteration.                                               !
+!---------------------------------------------------------------!
+npart_approx= 1.0D+4 ! Usually, the final number of particles on the less
+                   ! massive star is between 1.4*npart_approx and 2*npart_approx
+                   ! The approximate number of particles on the more massive star
+                   ! is npart_approx/mass_ratio
+last_r= 0.99D0     ! The radius of the last spherical shell is last_r*(star radius)
+                   ! The last shell always contains the mass of the last
+                   ! layers up to the edge of the star
+upper_bound= 1.025D0  ! Desired upper bound for the differences between particle
+                      ! masses on neighbouring spherical shells
+lower_bound= 0.975D0  ! Desired lower bound for the same differences as above
+                      ! It might not be possible to obtain a particle number on
+                      ! a shell such that the above bound are respected.
+                      ! If this happens, usually the particle number on the shell
+                      ! changes periodically during the iteration and the latter
+                      ! never converges. This is mainly due to the fact that while
+                      ! the particle masses and the shell masses are real numbers,
+                      ! the particle number is an integer. Explicitly, it might be
+                      ! that a real number of particles is needed to have a certain
+                      ! particle mass on a shell with a given mass. In the current
+                      ! implementation, the shell mass is kept constant, hence an
+                      ! integer number of particle cannot necessarily converge.
+                      ! The currently implemented solution is to allow for a small
+                      ! change in the bounds above, that can be specified with the
+                      ! following parameters.
+max_steps= 100        ! If, after max_steps, the iteration did not converge,
+                      ! multiply upper_bound by upper_factor, and lower_bound
+                      ! by lower_factor. max_steps >= 10. 100 is a nice value
+upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
+lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
+randomize_phi=   .FALSE.  ! Randomize particle positions in phi
+randomize_theta= .FALSE. ! Randomize particle positions in theta
+randomize_r=     .FALSE. ! Randomize particle positions in r
+find_npart= .FALSE.
+!----------------------------------------------------!
+! Parameters for the Artifical Pressure Method (APM) !
+!----------------------------------------------------!
+apm_iterate1=.FALSE.    ! If .TRUE. applies the APM to the first star
+apm_iterate2=.FALSE.    ! If .TRUE. applies the APM to the second star
+                       ! Note that if reflect_particles_x= .TRUE. and the
+                       ! star mass ratio is in [0.995,1.005], the particles
+                       ! on the second star will be the reflection about the yz
+                       ! plane of the particles on the first star, irrespectively
+                       ! of the value of apm_iterate2
+apm_max_it=3           ! Maximum number of iterations
+max_inc= 150            ! Sets the EXIT condition: If the average over all the
+                        ! particles of the error in the density estimate grows
+                        ! max_inc times, exit the iteration.
+mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
+                        ! the particles, changing their mass in order to match
+                        ! the star density better. The mass ratio grows very
+                        ! fast in all the tried experiments, hence the
+                        ! suggested value is .FALSE.
+nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
+                        ! to be used in the one-time-only final correction
+                        ! of the particle masses to match the star density even
+                        ! better (without moving the particles)
+nx_gh=250               ! Number of lattice points in the x direction for ghosts
+ny_gh=250               ! Number of lattice points in the y direction for ghosts
+nz_gh=250               ! Number of lattice points in the z direction for ghosts
+!---------------------------------------!
+! Flag to correct the number of baryons !
+!---------------------------------------!
+correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
+                   ! (increased) to include the total baryonic masses of the
+                   ! stars (in smaller radii). A fraction of the latter is
+                   ! otherwise left out due to the thres parameter
+!--------------------------------------------------------------------------!
+! Parameters needed to read the electron fraction when using a CompOSE EoS !
+! CHECK THAT THE EoS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
+! FILE lorene_bns_id_parameters.par MATCH!                                 !
+!--------------------------------------------------------------------------!
+compose_eos=.FALSE. ! If .TRUE., reads in the table of Ye (electron fraction)
+                   ! as a function of nb (baryon number density) from the .beta
+                   ! file computed with the CompOSE software, and linearly
+                   ! interpolates Ye on the particles.
+ ! compose_path is the path to the directory containing the CompOSE EoS.
+ ! compose_filename is the subpath of compose_path to the file
+ ! with .beta extension. NOTE: the .beta extension is omitted here, so that
+ ! to read the file great_eos.beta in the directory compose_path/GREAT_EoS,
+ ! one writes compose_filename="GREAT_EoS/great_eos"
+compose_path="../../CompOSE_EOS/"
+compose_filename=!"SFHO_with_electrons/eos"
+                 !"SFHX_with_electrons/eos"
+                 !"TNTYST_with_electrons/eos"
+                 !"FT_with_electrons/eos"
+                 !"SRO_APR_SNA/eos"
+                 !"SRO_SLy4_SNA/eos"
+                 !"RG_SLY4/eos"
+                 "DD2-SF_RDF1.8/eos"
+                 !"DD2-SF_RDF1.9/eos"
+
+/

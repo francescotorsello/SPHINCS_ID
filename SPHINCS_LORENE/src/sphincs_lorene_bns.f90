@@ -582,7 +582,7 @@ PROGRAM sphincs_lorene_bns
     CHARACTER( LEN= : ), ALLOCATABLE:: lorene_bns_id_parameters
     CHARACTER( LEN= 100 ):: msg
 
-    lorene_bns_id_parameters= 'lorene_bns_id_parameters.par'
+    lorene_bns_id_parameters= 'sphincs_lorene_bns_parameters.par'
 
     INQUIRE( FILE= lorene_bns_id_parameters, EXIST= file_exists )
     IF( file_exists )THEN

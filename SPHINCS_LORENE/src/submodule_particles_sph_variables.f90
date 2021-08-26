@@ -89,6 +89,7 @@ SUBMODULE (particles_id) particles_sph_variables
                                    get_u_pwp, shorten_eos_name
     USE constants,           ONLY: m0c2, kg2g, m2cm
     USE units,               ONLY: m0c2_cu
+    USE sphincs_sph,         ONLY: ncand
 
     IMPLICIT NONE
 
@@ -102,6 +103,8 @@ SUBMODULE (particles_id) particles_sph_variables
     DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION:: det,sq_g, Theta_a, nu_max1, nu_max2, &
                        nu_tmp, nu_thres1, nu_thres2
+
+    LOGICAL:: few_ncand
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -867,17 +870,52 @@ SUBMODULE (particles_id) particles_sph_variables
                    THIS% npart, &
                    THIS% pos, THIS% h, &
                    h )
+
     PRINT *, " * Computing neighbours..."
     PRINT *
-    ! Redo the previous step slightly different (it's built-in;
-    ! exact_nei_tree_update does not work if I don't call assign_h first),
-    ! then update the neighbour-tree and fill the neighbour-data
-    CALL exact_nei_tree_update( ndes,        &
-                                THIS% npart, &
-                                THIS% pos,   &
-                                THIS% nu )
+    DO
 
-    ! Update the member variables storing smoothing lengt and particle volume
+      few_ncand= .FALSE.
+
+      ! Redo the previous step slightly different (it's built-in;
+      ! exact_nei_tree_update does not work if I don't call assign_h first),
+      ! then update the neighbour-tree and fill the neighbour-data
+      CALL exact_nei_tree_update( ndes,        &
+                                  THIS% npart, &
+                                  THIS% pos,   &
+                                  THIS% nu )
+
+      !
+      !-- Check that the number of candidate neighbours is larger than
+      !-- or equal to ndes - 1
+      !
+      DO itr= 1, SIZE(ncand), 1
+
+        ! If there are too few candidate neighbors
+        IF( ncand(itr) < ndes - 1 )THEN
+
+          ! Increase the smoothing length and rebuild the tree
+          few_ncand= .TRUE.
+          h= 3.0D0*h
+
+          EXIT
+
+        ELSE
+
+          few_ncand= .FALSE.
+
+        ENDIF
+
+      ENDDO
+
+      IF( .NOT.few_ncand )THEN
+        PRINT *, " * Smoothing lengths assigned and tree is built."
+        EXIT
+      ENDIF
+
+    ENDDO
+
+    ! Update the member variables storing smoothing length and particle volume
     THIS% h= h
     THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
 
@@ -923,11 +961,10 @@ SUBMODULE (particles_id) particles_sph_variables
     ! different than nstar close to the surface.                              !
     ! The error can be such that the recovery fails in SPHINCS_BSSN, and      !
     ! this is of course a problem. Now, the density used in SPHINCS_BSSN      !
-    ! during the evolution is not the one given by LORENE, even though the    !
-    ! latter is perhaps more accurate. Hence, once nstar_int is computed,     !
-    ! nlrf should be recomputed from it, so that the density on the particles !
-    ! corresponds to the density that "they see", that is, the kernel         !
-    ! interpolated density that uses these values of nu.                      !
+    ! during the evolution is not the one given by LORENE. Hence, once        !
+    ! nstar_int is computed, nlrf should be recomputed from it, so that the   !
+    ! density on the particles corresponds to the density that "they see",    !
+    ! that is, the kernel interpolated density that uses these values of nu.  !
     !-------------------------------------------------------------------------!
     !-------------------------------------------------------------------------!
 
