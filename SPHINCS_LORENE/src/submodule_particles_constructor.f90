@@ -99,7 +99,7 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos1, pos2
     DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol1, pvol2, &
                                                        pmass1, pmass2
-    DOUBLE PRECISION:: nuratio_thres
+    DOUBLE PRECISION:: nuratio_thres, nuratio_des
 
     ! String storing the name of the directory storing the files containing
     ! the particle distributions
@@ -122,7 +122,7 @@ SUBMODULE (particles_id) particles_constructor
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
-              randomize_r, apm_iterate1, apm_iterate2, mass_it, find_npart, &
+              randomize_r, apm_iterate1, apm_iterate2, mass_it, &
               read_nu, reflect_particles_x
 
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -136,21 +136,22 @@ SUBMODULE (particles_id) particles_constructor
               compose_eos, compose_path, compose_filename, &
               npart_approx, last_r, upper_bound, lower_bound, &
               upper_factor, lower_factor, max_steps, &
-              randomize_phi, randomize_theta, randomize_r, find_npart, &
+              randomize_phi, randomize_theta, randomize_r, &
               apm_iterate1, apm_iterate2, apm_max_it, max_inc, mass_it, &
-              nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh
+              nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
+              nuratio_des
 
     !
     !-- Initialize the timers
     !
-    parts_obj% placer_timer      = timer( "placer_timer" )
-    parts_obj% apm1_timer        = timer( "apm_star1_timer" )
-    parts_obj% apm2_timer        = timer( "apm_star2_timer" )
-    parts_obj% importer_timer    = timer( "importer_timer" )
-    parts_obj% sph_computer_timer= timer( "sph_computer_timer" )
+    parts_obj% placer_timer       = timer( "placer_timer" )
+    parts_obj% apm1_timer         = timer( "apm_star1_timer" )
+    parts_obj% apm2_timer         = timer( "apm_star2_timer" )
+    parts_obj% importer_timer     = timer( "importer_timer" )
+    parts_obj% sph_computer_timer = timer( "sph_computer_timer" )
+    parts_obj% same_particle_timer= timer( "same_particle_timer" )
 
     ! Declare this object as non-empty (experimental)
-    parts_obj% empty_object= .FALSE.
     parts_obj% empty_object= .FALSE.
 
     parts_obj% mass1          = bns_obj% get_mass1()
@@ -166,9 +167,6 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% nbar2          = 0.0D0
     parts_obj% npart          = 0.0D0
     parts_obj% distribution_id= dist
-    parts_obj% randomize_phi  = randomize_phi
-    parts_obj% randomize_theta= randomize_theta
-    parts_obj% randomize_r    = randomize_r
 
     parts_obj% eos1= bns_obj% get_eos1()
     parts_obj% eos2= bns_obj% get_eos2()
@@ -203,6 +201,9 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% redistribute_nu    = redistribute_nu
     parts_obj% nu_ratio           = nu_ratio
     parts_obj% reflect_particles_x= reflect_particles_x
+    parts_obj% randomize_phi      = randomize_phi
+    parts_obj% randomize_theta    = randomize_theta
+    parts_obj% randomize_r        = randomize_r
     ! APM parameters
     parts_obj% apm_iterate1   = apm_iterate1
     parts_obj% apm_iterate2   = apm_iterate2
@@ -266,6 +267,14 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
                "last_r should be greater than or equal to 0.95, ", &
                "and lower than or equal to 1!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( apm_max_it < 0 .OR. max_inc < 0 .OR. nuratio_thres < 0 &
+        .OR. nuratio_des < 0 .OR. nx_gh < 0 .OR. ny_gh < 0 .OR. nz_gh < 0 )THEN
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+               "the numeric parameters for the APM method should be positive!"
       PRINT *
       STOP
     ENDIF
@@ -365,7 +374,7 @@ SUBMODULE (particles_id) particles_constructor
       npart1_tmp= 0
       DO itr= 1, npart_tmp, 1
 
-        IF( tmp_pos(columns(1),itr) < 0 )THEN
+        IF( tmp_pos(columns(1),itr) < 0.0D0 )THEN
 
           npart1_tmp= npart1_tmp + 1
           tmp_pos2(1,npart1_tmp)= tmp_pos(columns(1),itr)
@@ -380,13 +389,13 @@ SUBMODULE (particles_id) particles_constructor
       npart2_tmp= 0
       DO itr= 1, npart_tmp, 1
 
-        IF( tmp_pos(columns(1),itr) > 0 )THEN
+        IF( tmp_pos(columns(1),itr) > 0.0D0 )THEN
 
           npart2_tmp= npart2_tmp + 1
           tmp_pos2(1,npart1_tmp+npart2_tmp)= tmp_pos(columns(1),itr)
           tmp_pos2(2,npart1_tmp+npart2_tmp)= tmp_pos(columns(2),itr)
           tmp_pos2(3,npart1_tmp+npart2_tmp)= tmp_pos(columns(3),itr)
-          IF( read_nu ) tmp_pos2(4,npart1_tmp+npart2_tmp)= tmp_pos(column_nu,itr)
+          IF( read_nu ) tmp_pos2(4,npart1_tmp+npart2_tmp)=tmp_pos(column_nu,itr)
 
         ENDIF
 
@@ -395,10 +404,9 @@ SUBMODULE (particles_id) particles_constructor
       IF( npart1_tmp + npart2_tmp /= npart_tmp )THEN
         PRINT *, "** ERROR! parts_obj% npart1 + parts_obj% npart2 /= npart_tmp"
         PRINT *
-        PRINT *, "   parts_obj% npart1= ", npart1_tmp
-        PRINT *, "   parts_obj% npart2= ", npart2_tmp
-        PRINT *, "   parts_obj% npart1 + parts_obj% npart2= ", &
-                 npart1_tmp + npart2_tmp
+        PRINT *, "   npart1_tmp= ", npart1_tmp
+        PRINT *, "   npart2_tmp= ", npart2_tmp
+        PRINT *, "   npart1_tmp + npart2_tmp= ", npart1_tmp + npart2_tmp
         PRINT *, "   npart_tmp= ", npart_tmp
         PRINT *
         STOP
@@ -783,9 +791,9 @@ SUBMODULE (particles_id) particles_constructor
 
       first_star_more_massive: IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 
-        filename_mass_profile= "shells_mass_profile2.dat"
-        filename_shells_radii= "shells_radii2.dat"
-        filename_shells_pos  = "shells_pos2.dat"
+        filename_mass_profile= "spherical_surfaces_mass_profile2.dat"
+        filename_shells_radii= "spherical_surfaces_radii2.dat"
+        filename_shells_pos  = "spherical_surfaces_pos2.dat"
 
         n_particles_first_shell= 4
 
@@ -857,9 +865,9 @@ SUBMODULE (particles_id) particles_constructor
             npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
           ENDIF
 
-          filename_mass_profile= "shells_mass_profile1.dat"
-          filename_shells_radii= "shells_radii1.dat"
-          filename_shells_pos  = "shells_pos1.dat"
+          filename_mass_profile= "spherical_surfaces_mass_profile1.dat"
+          filename_shells_radii= "spherical_surfaces_radii1.dat"
+          filename_shells_pos  = "spherical_surfaces_pos1.dat"
 
           n_particles_first_shell= n_particles_first_shell/parts_obj% mass_ratio
 
@@ -885,9 +893,9 @@ SUBMODULE (particles_id) particles_constructor
 
       ELSE
 
-        filename_mass_profile= "shells_mass_profile1.dat"
-        filename_shells_radii= "shells_radii1.dat"
-        filename_shells_pos  = "shells_pos1.dat"
+        filename_mass_profile= "spherical_surfaces_mass_profile1.dat"
+        filename_shells_radii= "spherical_surfaces_radii1.dat"
+        filename_shells_pos  = "spherical_surfaces_pos1.dat"
 
         n_particles_first_shell= 4
 
@@ -966,9 +974,9 @@ SUBMODULE (particles_id) particles_constructor
             npart2_approx= parts_obj% npart1/parts_obj% mass_ratio
           ENDIF
 
-          filename_mass_profile= "shells_mass_profile2.dat"
-          filename_shells_radii= "shells_radii2.dat"
-          filename_shells_pos  = "shells_pos2.dat"
+          filename_mass_profile= "spherical_surfaces_mass_profile2.dat"
+          filename_shells_radii= "spherical_surfaces_radii2.dat"
+          filename_shells_pos  = "spherical_surfaces_pos2.dat"
 
           n_particles_first_shell= 4!n_particles_first_shell/parts_obj% mass_ratio
 
@@ -1072,6 +1080,8 @@ SUBMODULE (particles_id) particles_constructor
              " at the same position..."
     PRINT *
 
+    CALL parts_obj% same_particle_timer% start_timer()
+
     IF(.NOT.ALLOCATED( x_sort ))THEN
       ALLOCATE( x_sort( parts_obj% npart ), &
                 STAT= ios, ERRMSG= err_msg )
@@ -1092,31 +1102,9 @@ SUBMODULE (particles_id) particles_constructor
          STOP
       ENDIF
     ENDIF
- !   IF(.NOT.ALLOCATED( y_sort ))THEN
- !     ALLOCATE( y_sort( parts_obj% npart ), &
- !               STAT= ios, ERRMSG= err_msg )
- !     IF( ios > 0 )THEN
- !        PRINT *, "...allocation error for array y_sort in SUBROUTINE" &
- !                 // "place_particles_. ", &
- !                 "The error message is", err_msg
- !        STOP
- !     ENDIF
- !   ENDIF
- !   IF(.NOT.ALLOCATED( z_sort ))THEN
- !     ALLOCATE( z_sort( parts_obj% npart ), &
- !               STAT= ios, ERRMSG= err_msg )
- !     IF( ios > 0 )THEN
- !        PRINT *, "...allocation error for array z_sort in SUBROUTINE" &
- !                 // "place_particles_. ", &
- !                 "The error message is", err_msg
- !        STOP
- !     ENDIF
- !   ENDIF
 
-    ! Sort x, y, z coordinates of the particles
+    ! Sort x coordinates of the particles
     CALL indexx( parts_obj% npart, parts_obj% pos( 1, : ), x_sort )
- !   CALL indexx( parts_obj% npart, parts_obj% pos( 2, : ), y_sort )
- !   CALL indexx( parts_obj% npart, parts_obj% pos( 3, : ), z_sort )
 
     x_number= 1
     itr2= 1
@@ -1128,8 +1116,6 @@ SUBMODULE (particles_id) particles_constructor
 
         x_number(itr2)= x_number(itr2) + 1
 
-      !ELSEIF( parts_obj% pos( 1, x_sort(itr) ) /= &
-      !        parts_obj% pos( 1, x_sort(itr+1) ) )THEN
       ELSE
 
         itr2= itr2 + 1
@@ -1137,11 +1123,7 @@ SUBMODULE (particles_id) particles_constructor
       ENDIF
 
     ENDDO
-    !PRINT *, SUM(x_number), parts_obj% npart
-    !PRINT *, SIZE(x_number)
     x_number= x_number(1:itr2)
-    !PRINT *, SIZE(x_number)
-    !PRINT *, x_number
 
     IF( SUM( x_number ) /= parts_obj% npart )THEN
 
@@ -1155,6 +1137,9 @@ SUBMODULE (particles_id) particles_constructor
 
     ENDIF
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( parts_obj, x_sort, x_number ) &
+    !$OMP             PRIVATE( itr, itr2, x_idx )
     DO itr= 1, SIZE(x_number), 1
 
       IF( itr == 1 )THEN
@@ -1165,7 +1150,7 @@ SUBMODULE (particles_id) particles_constructor
 
       DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
 
-        ! If they do not have the same y
+        ! If they do not have the same x
         IF( parts_obj% pos( 1, x_sort(itr2) ) /= &
             parts_obj% pos( 1, x_sort(itr2+1) ) )THEN
 
@@ -1181,14 +1166,12 @@ SUBMODULE (particles_id) particles_constructor
         ENDIF
 
       ENDDO
-
     ENDDO
-
-    ! Star 1
+    !$OMP END PARALLEL DO
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( parts_obj, x_sort, x_number ) &
-    !$OMP             PRIVATE( itr, x_idx )
+    !$OMP             PRIVATE( itr, itr2, x_idx )
     DO itr= 1, SIZE(x_number), 1
 
       IF( itr == 1 )THEN
@@ -1199,170 +1182,36 @@ SUBMODULE (particles_id) particles_constructor
 
       DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
 
-          ! If they have the same x
-          !IF( parts_obj% pos( 1, x_sort(itr) ) == &
-          !    parts_obj% pos( 1, x_sort(itr+1) ) )THEN
+        ! If they have the same y
+        IF( parts_obj% pos( 2, x_sort(itr2) ) == &
+            parts_obj% pos( 2, x_sort(itr2+1) ) )THEN
 
-            ! If they have the same y
-            IF( parts_obj% pos( 2, x_sort(itr2) ) == &
-                parts_obj% pos( 2, x_sort(itr2+1) ) )THEN
+          ! If they have the same z
+          IF( parts_obj% pos( 3, x_sort(itr2) ) == &
+              parts_obj% pos( 3, x_sort(itr2+1) ) )THEN
 
-              ! If they have the same z
-              IF( parts_obj% pos( 3, x_sort(itr2) ) == &
-                  parts_obj% pos( 3, x_sort(itr2+1) ) )THEN
+            ! They are the same
+            PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
+                     " and", x_sort(itr2+1), " have the same coordinates!"
+            PRINT *, parts_obj% pos( :, x_sort(itr2) )
+            PRINT *, parts_obj% pos( :, x_sort(itr2+1) )
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
 
-                ! They are the same
-                PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
-                         " and", x_sort(itr2+1), " have the same coordinates!"
-                PRINT *, parts_obj% pos( :, x_sort(itr2) )
-                PRINT *, parts_obj% pos( :, x_sort(itr2+1) )
-                PRINT *, " * Stopping..."
-                PRINT *
-                STOP
-
-              ENDIF
-            ENDIF
-          !ENDIF
+          ENDIF
+        ENDIF
 
       ENDDO
     ENDDO
     !$OMP END PARALLEL DO
 
-  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-  !  !$OMP             SHARED( parts_obj, x_sort ) &
-  !  !$OMP             PRIVATE( itr )
-  !  DO itr= 1, parts_obj% npart - 1, 1
-  !    DO itr2= itr + 1, parts_obj% npart1, 1
-  !
-  !        ! If they have the same x
-  !        IF( parts_obj% pos( 1, x_sort(itr) ) == &
-  !            parts_obj% pos( 1, x_sort(itr+1) ) )THEN
-  !
-  !          ! If they have the same y
-  !          IF( parts_obj% pos( 2, x_sort(itr) ) == &
-  !              parts_obj% pos( 2, x_sort(itr+1) ) )THEN
-  !
-  !            ! If they have the same z
-  !            IF( parts_obj% pos( 3, x_sort(itr) ) == &
-  !                parts_obj% pos( 3, x_sort(itr+1) ) )THEN
-  !
-  !              ! They are the same
-  !              PRINT *, "** ERROR! ", "The two particles ", x_sort(itr), &
-  !                       " and", x_sort(itr+1), " have the same coordinates!"
-  !              PRINT *, parts_obj% pos( :, x_sort(itr) )
-  !              PRINT *, parts_obj% pos( :, x_sort(itr+1) )
-  !              PRINT *, " * Stopping..."
-  !              PRINT *
-  !              STOP
-  !
-  !            ENDIF
-  !          ENDIF
-  !        ENDIF
-  !
-  !    ENDDO
-  !  ENDDO
-  !  !$OMP END PARALLEL DO
-
-    ! Star 2
-
-  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-  !  !$OMP             SHARED( parts_obj ) &
-  !  !$OMP             PRIVATE( itr, itr2 )
-  !  DO itr= parts_obj% npart1 + 1, parts_obj% npart - 1, 1
-  !    DO itr2= itr + 1, parts_obj% npart, 1
-  !
-  !        ! If they have the same x
-  !        IF( parts_obj% pos( 1, itr ) == &
-  !            parts_obj% pos( 1, itr2 ) )THEN
-  !
-  !          ! If they have the same y
-  !          IF( parts_obj% pos( 2, itr ) == &
-  !              parts_obj% pos( 2, itr2 ) )THEN
-  !
-  !            ! If they have the same z
-  !            IF( parts_obj% pos( 3, itr ) == &
-  !                parts_obj% pos( 3, itr2 ) )THEN
-  !
-  !              ! They are the same
-  !              PRINT *, "** ERROR! ", "The two particles ", itr, " and", &
-  !                       itr2, " have the same coordinates!"
-  !              PRINT *, parts_obj% pos( :, itr )
-  !              PRINT *, parts_obj% pos( :, itr2 )
-  !              PRINT *, " * Stopping..."
-  !              PRINT *
-  !              STOP
-  !
-  !            ENDIF
-  !          ENDIF
-  !        ENDIF
-  !
-  !    ENDDO
-  !  ENDDO
-  !  !$OMP END PARALLEL DO
-
-  !  DO itr= 1, parts_obj% npart - 1, 1
-  !    IF( parts_obj% pos( 1, x_sort(itr) ) == &
-  !              parts_obj% pos( 1, x_sort(itr + 1) ) .AND. &
-  !        parts_obj% pos( 2, x_sort(itr) ) == &
-  !              parts_obj% pos( 2, x_sort(itr + 1) ) .AND. &
-  !        parts_obj% pos( 3, x_sort(itr) ) == &
-  !              parts_obj% pos( 3, x_sort(itr + 1) ) )THEN
-  !      PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-  !               "The two particles ", itr, " and", itr - 1, " have the same ",&
-  !               "coordinates!"
-  !      PRINT *, parts_obj% pos( 1, x_sort(itr) ), parts_obj% pos( 1, x_sort(itr) ), parts_obj% pos( 1, x_sort(itr) )
-  !      PRINT *, parts_obj% pos( 1, x_sort(itr + 1) ), parts_obj% pos( 1, x_sort(itr + 1) ), parts_obj% pos( 1, x_sort(itr + 1) )
-  !      STOP
-  !    ENDIF
-  !  ENDDO
-  !  DO itr= 1, parts_obj% npart - 1, 1
-  !    IF( parts_obj% pos( 1, y_sort(itr) ) == &
-  !              parts_obj% pos( 1, y_sort(itr + 1) ) .AND. &
-  !        parts_obj% pos( 2, y_sort(itr) ) == &
-  !              parts_obj% pos( 2, y_sort(itr + 1) ) .AND. &
-  !        parts_obj% pos( 3, y_sort(itr) ) == &
-  !              parts_obj% pos( 3, y_sort(itr + 1) ) )THEN
-  !      PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-  !               "The two particles ", itr, " and", itr - 1, " have the same ",&
-  !               "coordinates!"
-  !      PRINT *, parts_obj% pos( 1, y_sort(itr) ), parts_obj% pos( 1, y_sort(itr) ), parts_obj% pos( 1, y_sort(itr) )
-  !      PRINT *, parts_obj% pos( 1, y_sort(itr + 1) ), parts_obj% pos( 1, y_sort(itr + 1) ), parts_obj% pos( 1, y_sort(itr + 1) )
-  !      STOP
-  !    ENDIF
-  !  ENDDO
-  !  DO itr= 1, parts_obj% npart - 1, 1
-  !    IF( parts_obj% pos( 1, z_sort(itr) ) == &
-  !              parts_obj% pos( 1, z_sort(itr + 1) ) .AND. &
-  !        parts_obj% pos( 2, z_sort(itr) ) == &
-  !              parts_obj% pos( 2, z_sort(itr + 1) ) .AND. &
-  !        parts_obj% pos( 3, z_sort(itr) ) == &
-  !              parts_obj% pos( 3, z_sort(itr + 1) ) )THEN
-  !      PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-  !               "The two particles ", itr, " and", itr - 1, " have the same ",&
-  !               "coordinates!"
-  !      PRINT *, parts_obj% pos( 1, z_sort(itr) ), parts_obj% pos( 1, z_sort(itr) ), parts_obj% pos( 1, z_sort(itr) )
-  !      PRINT *, parts_obj% pos( 1, z_sort(itr + 1) ), parts_obj% pos( 1, z_sort(itr + 1) ), parts_obj% pos( 1, z_sort(itr + 1) )
-  !      STOP
-  !    ENDIF
-  !  ENDDO
-
-    !DO itr= 1, parts_obj% npart, 1
-    !  DO itr2= itr + 1, parts_obj% npart, 1
-    !    IF( parts_obj% pos( 1, itr ) == parts_obj% pos( 1, itr2 ) .AND. &
-    !        parts_obj% pos( 2, itr ) == parts_obj% pos( 2, itr2 ) .AND. &
-    !        parts_obj% pos( 3, itr ) == parts_obj% pos( 3, itr2 ) )THEN
-    !      PRINT *, "** ERROR in SUBROUTINE place_particles_3dlattices! ", &
-    !               "The two particles ", itr, " and", itr2, " have the same ", &
-    !               "coordinates!"
-    !      STOP
-    !    ENDIF
-    !  ENDDO
-    !ENDDO
+    CALL parts_obj% same_particle_timer% stop_timer()
 
     IF( apm_iterate1 )THEN
 
       PRINT *
-      PRINT *, " ** Placing particles on star 1 using the APM..."
+      PRINT *, "** Placing particles on star 1 using the APM..."
       PRINT *
 
       IF(.NOT.ALLOCATED( parts_obj% h ))THEN
@@ -1401,11 +1250,11 @@ SUBMODULE (particles_id) particles_constructor
                   parts_obj% nu(1:parts_obj% npart1), &
                   center1, com1, parts_obj% mass1, &
                   apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                  nuratio_thres, nx_gh, ny_gh, nz_gh, &
+                  nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
                   filename_apm_pos_id, filename_apm_pos, filename_apm_results )
       CALL parts_obj% apm1_timer% stop_timer()
 
-      PRINT *, " ** Particles placed on star 1 according to the APM."
+      PRINT *, "** Particles placed on star 1 according to the APM."
       PRINT *
 
       IF( parts_obj% mass_ratio >= 0.995 .AND. &
@@ -1438,7 +1287,7 @@ SUBMODULE (particles_id) particles_constructor
       !           "   lorene_bns_id_particles ."
       !  PRINT *
       !  STOP
-      PRINT *, " ** Particles placed on star 1 according to the APM", &
+      PRINT *, "** Particles placed on star 1 according to the APM", &
                " reflected about the yz plane onto star 2."
       PRINT *
 
@@ -1448,7 +1297,7 @@ SUBMODULE (particles_id) particles_constructor
         parts_obj% mass_ratio <= 1.005 .AND. reflect_particles_x) )THEN
 
       PRINT *
-      PRINT *, " ** Placing particles on star 2 using the APM..."
+      PRINT *, "** Placing particles on star 2 using the APM..."
       PRINT *
 
       IF(.NOT.ALLOCATED( parts_obj% h ))THEN
@@ -1487,11 +1336,11 @@ SUBMODULE (particles_id) particles_constructor
                 parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
                 center2, com2, parts_obj% mass2, &
                 apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
-                nuratio_thres, nx_gh, ny_gh, nz_gh, &
+                nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
                 filename_apm_pos_id, filename_apm_pos, filename_apm_results )
       CALL parts_obj% apm2_timer% stop_timer()
 
-      PRINT *, " ** Particles placed on star 2 according to the APM."
+      PRINT *, "** Particles placed on star 2 according to the APM."
       PRINT *
 
     ENDIF

@@ -371,12 +371,6 @@ SUBMODULE (particles_id) spherical_shells
     !--  Main iteration over the spherical surfaces  --!
     !--------------------------------------------------!
 
-    !CALL OMP_SET_NUM_THREADS(80)
-
-    IF( debug ) PRINT *, THIS% randomize_phi
-    IF( debug ) PRINT *, THIS% randomize_theta
-    IF( debug ) PRINT *, THIS% randomize_r
-
     PRINT *, " * Assigning first half of particle positions..."
     PRINT *
 
@@ -529,8 +523,10 @@ SUBMODULE (particles_id) spherical_shells
             IF( rand_num2 >= half ) rel_sign=  1
             IF( rand_num2 < half )  rel_sign= -1
 
-            IF( r/n_shells < 0.75D0 )THEN
+            IF( r/n_shells < 0.8D0 )THEN
               rad= rad + rel_sign*delta_r*0.35D0*dr_shells
+            ELSE
+              rad= rad - delta_r*0.35D0*dr_shells
             ENDIF
 
           ENDIF
@@ -1424,7 +1420,7 @@ SUBMODULE (particles_id) spherical_shells
     IF( PRESENT(filename_shells_pos) )THEN
       finalnamefile= filename_shells_pos
     ELSE
-      finalnamefile= "shells_pos.dat"
+      finalnamefile= "spherical_surfaces_pos.dat"
     ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
@@ -1481,10 +1477,6 @@ SUBMODULE (particles_id) spherical_shells
     PRINT *
 
     IF( debug ) PRINT *, "20"
-
-    !CALL OMP_SET_NUM_THREADS(80)
-
-    !STOP
 
   END PROCEDURE place_particles_spherical_shells
 

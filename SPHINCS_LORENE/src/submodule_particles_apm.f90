@@ -101,7 +101,7 @@ SUBMODULE (particles_id) particles_apm
                        err_mean_old, err_n_min, err_N_max, dN, dNstar, &
                        nstar_p_err, nstar_real_err, r_tmp, dN_max, dN_av
     DOUBLE PRECISION:: art_pr_max
-    DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2
+    DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
@@ -178,7 +178,7 @@ SUBMODULE (particles_id) particles_apm
 
     h_guess= 0.0D0
     DO a= 1, npart_real, 1
-      h_guess(a)= 3.0D0*(pvol(a)**third)
+      h_guess(a)= 9.0D0*(pvol(a)**third)
       IF( ISNAN( h_guess(a) ) )THEN
         PRINT *, " ** ERROR! h_guess(", a, &
                  ") is a NaN in SUBROUTINE perform_apm!"
@@ -975,6 +975,9 @@ SUBMODULE (particles_id) particles_apm
     err_N_mean_min= HUGE(1.0D0)
     apm_iteration: DO itr= 1, apm_max_it, 1
 
+      PRINT *, ' * Starting with APM step #: ', itr
+      PRINT *
+
       IF( MOD( itr, 15 ) == 0 )THEN
 
         IF( debug ) PRINT *, "printing positions to file..."
@@ -1138,9 +1141,9 @@ SUBMODULE (particles_id) particles_apm
       h_guess(1:npart_real)= h(1:npart_real)
       !h_guess(npart_real+1:npart_all)= dx*dy*dz
       CALL assign_h( nn_des, &
-                     npart_all, &
-                     all_pos, h_guess, &
-                     h )
+                     npart_real, &
+                     all_pos(:,1:npart_real), h_guess(1:npart_real) , &
+                     h(1:npart_real)  )
 
       find_problem_in_h: DO a= 1, npart_all, 1
 
@@ -1166,8 +1169,9 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "density_loop..."
 
-      CALL density_loop( npart_all, all_pos, &    ! input
-                         nu, h, nstar_real )      ! output
+      CALL density_loop( npart_real, all_pos(:,1:npart_real), &    ! input
+                         nu(1:npart_real) , h(1:npart_real) , &
+                         nstar_real(1:npart_real) )      ! output
 
       IF( debug ) PRINT *, "npart_real= ", npart_real
       IF( debug ) PRINT *, "npart_all= ", npart_all
@@ -1209,34 +1213,6 @@ SUBMODULE (particles_id) particles_apm
             nstar_real( a )= nstar_real( a - 1 )
             h( a )= h( a - 1 )
           ENDIF
-          ! TODO: here you need a recursive SUBROUTINE
-          !CALL RANDOM_NUMBER( rand_num )
-          !CALL RANDOM_NUMBER( rand_num2 )
-          !IF( rand_num2 < half )  rel_sign= - 1
-          !IF( rand_num2 >= half ) rel_sign=   1
-          !pos_corr_tmp= all_pos(:,a)*( 1.0D0 + rel_sign*rand_num/100.0D0 )
-          !IF( binary% import_mass_density( &
-          !        pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-          !    .AND. &
-          !    binary% is_hydro_negative( &
-          !        pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-          !)THEN
-          !
-          !  all_pos(:,a)= pos_corr_tmp
-          !
-          !ENDIF
-          !CALL density_loop( npart_all, all_pos, &    ! input
-          !                   nu, h, nstar_real )      ! output
-
-          !PRINT *, "** ERROR! nstar_real(", a, ") is a NaN!"
-          !PRINT *, " * h(", a, ")=", h(a)
-          !PRINT *, " * nu(", a, ")=", nu(a)
-          !PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
-          !PRINT *, " * r(", a, ")=", SQRT( ( all_pos(1,a) - center )**2.0D0 &
-          !                      + all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )
-          !PRINT *, " Stopping.."
-          !PRINT *
-          !STOP
 
         ENDIF
 
@@ -1409,18 +1385,147 @@ SUBMODULE (particles_id) particles_apm
 
       ENDDO find_nan_in_art_pr
 
-      find_nan_in_all_pos: DO a= 1, npart_all, 1
+      ! Measure SPH particle number density, to compute nu= nstar_p/nstar_real
+      !CALL assign_h( nn_des, &           !
+      !               npart_real, &        !
+      !               all_pos(:,1:npart_real), h_guess(1:npart_real), & ! Input
+      !               h(1:npart_real) )                 ! Output
 
-        DO itr2= 1, 3, 1
-          IF( ISNAN( all_pos( itr2, a ) ) )THEN
-            PRINT *, "** ERROR! all_pos(", itr2, ",", a, ") is a NaN!", &
-                     " Stopping.."
-            PRINT *
-            STOP
-          ENDIF
-        ENDDO
+      !IF( MAXVAL( nu_tmp(1:npart_real), DIM= 1 )/MINVAL( nu_tmp(1:npart_real) &
+      !    < nu_thres )THEN
+      !  PRINT *, " * Baryon number ratio", &
+      !           MAXVAL( nu_tmp(1:npart_real), DIM= 1 ) &
+      !           /MINVAL( nu_tmp(1:npart_real), " is less than nu_thres= " &
+      !           nu_thres
+      !  PRINT *, "** APM iteration completed."
+      !  PRINT *
+      !ENDIF
 
-      ENDDO find_nan_in_all_pos
+      err_N_mean= err_N_mean/DBLE(npart_real)
+
+      err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
+
+      IF( err_N_mean_min == err_N_mean )THEN
+        all_pos_best= all_pos
+      ENDIF
+
+      !PRINT *, "itr2= ", itr2
+      PRINT *, " * Maximum relative error between the star density profile", &
+               "   and its SPH estimate: err_N_max= ", err_N_max
+      PRINT *, "     at position: x=", pos_maxerr(1), ", y=", pos_maxerr(2), &
+               ", z=", pos_maxerr(3)
+      PRINT *, "     with r/r_x_opp= ", SQRT( &
+                                    ( ABS(pos_maxerr(1)) - ABS(center) )**2.0D0 &
+                                          + pos_maxerr(2)**2.0D0 &
+                                          + pos_maxerr(3)**2.0D0 ) &
+                                    /smaller_radius
+      PRINT *, "   The LORENE density is   = ", nstar_p_err
+      PRINT *, "   The SPH estimate is= ", nstar_real_err
+      PRINT *
+      PRINT *, " * Minimum relative error between the star density profile", &
+               " and its SPH estimate: ", err_N_min
+      PRINT *, " * Average relative error between the star density profile", &
+               " and its SPH estimate: ", err_N_mean
+      PRINT *, " * Minimum of the average relative error between the star", &
+               " density profile and its SPH estimate: ", err_N_mean_min
+      PRINT *
+
+      !
+      !-- Compute what would be the baryon number at this step
+      !
+
+      ! Compute particle number density
+      nu= 1.0D0
+      CALL density_loop( npart_real, all_pos(:,1:npart_real), &    ! input
+                         nu(1:npart_real), h(1:npart_real), &
+                         nstar_real(1:npart_real) )      ! output
+      !CALL density_loop( npart_all, all_pos, &    ! input
+      !                   nu, h, nstar_real )      ! output
+      nu= nu_all
+
+      DO a= 1, npart_real, 1
+
+        nu_tmp2= nu(a)
+        nu_tmp(a)= nstar_p(a)/nstar_real(a)
+
+          IF( nu_tmp(a) > nu_tmp2*SQRT(nuratio_thres) ) nu_tmp(a)= &
+                                            nu_tmp2*SQRT(nuratio_thres)
+          IF( nu_tmp(a) < nu_tmp2/SQRT(nuratio_thres) ) nu_tmp(a)= &
+                                            nu_tmp2/SQRT(nuratio_thres)
+
+      ENDDO
+      nuratio_tmp= MAXVAL( nu_tmp(1:npart_real), DIM= 1 )&
+                  /MINVAL( nu_tmp(1:npart_real), DIM= 1 )
+      !   PRINT *, "   max_nu=", &
+      !            MAXVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
+      !   PRINT *, "   min_nu=", &
+      !            MINVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
+      !   PRINT *, "   max_nu/min_nu=", &
+      !            MAXVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )&
+      !            /MINVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
+      !   PRINT *
+
+      PRINT *, " * Stopping the APM iteration at this step, with a threshold", &
+               " for the baryon number ratio equal to "
+      PRINT *, "   nu_thres=", nuratio_thres, ","
+      PRINT *, "   the baryon number ratio would be equal to the following."
+      PRINT *, " * Temporary CORRECTED maximum baryon number at this step=", &
+               MAXVAL( nu_tmp(1:npart_real), DIM= 1 )
+      PRINT *, " * Temporary CORRECTED minimum baryon number at this step=", &
+               MINVAL( nu_tmp(1:npart_real), DIM= 1 )
+      PRINT *, " * Temporary CORRECTED baryon number ratio at this step=", &
+               nuratio_tmp
+      PRINT *
+
+      ! Exit condition
+      IF( err_N_mean > err_mean_old )THEN
+        n_inc= n_inc + 1
+      ENDIF
+      PRINT *, " * n_inc= ", n_inc
+      PRINT *
+      !IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
+      !    .AND. &
+      !    err_N_max < 10.0D0 &
+      !)THEN
+      !  n_inc= n_inc + 1
+      !  PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
+      !  PRINT *, "ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)= ", &
+      !           ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)
+      !ENDIF
+      !IF( ABS(err_N_mean_min - err_N_mean_min_old)/ABS(err_N_mean_min_old) &
+      !      < 10.0D0*iter_tol &
+      !    .AND. &
+      !    ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min) < iter_tol &
+      !)THEN
+      !  n_inc= n_inc + 1
+      !  PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
+      !  PRINT *, err_N_mean, "err_N_mean"
+      !  PRINT *, err_N_mean_min, "err_N_mean_min"
+      !  PRINT *, "ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min)= ", &
+      !           ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min), " < ", &
+      !           iter_tol
+      !ELSE
+      !  n_inc= 0
+      !ENDIF
+
+      IF( nuratio_des > 0.0D0 )THEN
+
+        IF( nuratio_tmp > nuratio_des*0.95D0 .OR. &
+            nuratio_tmp < nuratio_des*1.05D0 ) EXIT
+
+      ELSE
+
+        IF( n_inc == max_inc .OR. itr == apm_max_it ) EXIT
+
+      ENDIF
+      err_mean_old      = err_N_mean
+      err_N_mean_min_old= err_N_mean_min
+
+      !
+      !-- If the particle distribution is not yet good enough, update it
+      !
+      PRINT *, " * Updating positions..."
+      PRINT *
 
       all_pos_tmp2= all_pos
 
@@ -1457,10 +1562,7 @@ SUBMODULE (particles_id) particles_apm
       itr2= 0
       DO a= 1, npart_real, 1
         pos_corr_tmp= all_pos(:,a) + correction_pos(:,a)
-        IF( &!binary% import_mass_density( &
-            !                    all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
-            !.AND. &
-            binary% import_mass_density( &
+        IF( binary% import_mass_density( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
             .AND. &
             nstar_p(a) > 0.0D0 &
@@ -1468,19 +1570,25 @@ SUBMODULE (particles_id) particles_apm
             binary% is_hydro_negative( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
         )THEN
+
           itr2= itr2 + 1
-          !IF( binary% is_hydro_negative( &
-          !                        all_pos(1,a), all_pos(2,a), all_pos(3,a) ) > 0 &
-          !    .OR. &
-          !    binary% is_hydro_negative( &
-          !                        pos_tmp(1), pos_tmp(2), pos_tmp(3) ) > 0 &
-          !)THEN
-            all_pos(:,a)= pos_corr_tmp
-          !ELSE
-          !  all_pos(:,a)= all_pos(:,a) + correction_pos(:,a)/2.0D0
-          !ENDIF
+          all_pos(:,a)= pos_corr_tmp
+
         ENDIF
       ENDDO
+
+      find_nan_in_all_pos: DO a= 1, npart_all, 1
+
+        DO itr2= 1, 3, 1
+          IF( ISNAN( all_pos( itr2, a ) ) )THEN
+            PRINT *, "** ERROR! all_pos(", itr2, ",", a, ") is a NaN!", &
+                     " Stopping.."
+            PRINT *
+            STOP
+          ENDIF
+        ENDDO
+
+      ENDDO find_nan_in_all_pos
 
       ! If some of the particles crossed the xy plane top-down in the
       ! last step, reflect them back above the xy plane
@@ -1497,75 +1605,9 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "After correcting positions"
 
-      err_N_mean= err_N_mean/DBLE(npart_real)
-
-      err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
-
-      IF( err_N_mean_min == err_N_mean )THEN
-        all_pos_best= all_pos
-      ENDIF
-
-      !PRINT *, "itr2= ", itr2
-      PRINT *, ' * Done with position update #: ', itr
-      PRINT *
-      PRINT *, '   err_N_max=  ', err_N_max
-      PRINT *, "   at pos=", pos_maxerr
-      PRINT *, "   with r/r_x_opp= ", SQRT( &
-                                    ( ABS(pos_maxerr(1)) - ABS(center) )**2.0D0 &
-                                          + pos_maxerr(2)**2.0D0 &
-                                          + pos_maxerr(3)**2.0D0 ) &
-                                    /smaller_radius
-      PRINT *
-      PRINT *, "   nstar_real_err= ", nstar_real_err
-      PRINT *, "   nstar_p_err   = ", nstar_p_err
-      PRINT *
-      PRINT *, '   err_N_min=  ', err_N_min
-      PRINT *, '   err_N_mean= ', err_N_mean
-      PRINT *, '   err_N_mean_min= ', err_N_mean_min
-      PRINT *
-
-      PRINT *, "   max_nu=", MAXVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
-      PRINT *, "   min_nu=", MINVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
-      PRINT *, "   max_nu/min_nu=", MAXVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )/MINVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
-      PRINT *
-
-      ! Exit condition
-      IF( err_N_mean > err_mean_old )THEN
-        n_inc= n_inc + 1
-      ENDIF
-      PRINT *, "   n_inc= ", n_inc
-      PRINT *
-      !IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
-      !    .AND. &
-      !    err_N_max < 10.0D0 &
-      !)THEN
-      !  n_inc= n_inc + 1
-      !  PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
-      !  PRINT *, "ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)= ", &
-      !           ABS( err_N_mean - err_mean_old )/ABS(err_mean_old)
-      !ENDIF
-      !IF( ABS(err_N_mean_min - err_N_mean_min_old)/ABS(err_N_mean_min_old) &
-      !      < 10.0D0*iter_tol &
-      !    .AND. &
-      !    ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min) < iter_tol &
-      !)THEN
-      !  n_inc= n_inc + 1
-      !  PRINT *, "n_inc/max_inc= ", n_inc, "/", max_inc
-      !  PRINT *, err_N_mean, "err_N_mean"
-      !  PRINT *, err_N_mean_min, "err_N_mean_min"
-      !  PRINT *, "ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min)= ", &
-      !           ABS(err_N_mean - err_N_mean_min)/ABS(err_N_mean_min), " < ", &
-      !           iter_tol
-      !ELSE
-      !  n_inc= 0
-      !ENDIF
-      IF( n_inc == max_inc ) EXIT
-      err_mean_old      = err_N_mean
-      err_N_mean_min_old= err_N_mean_min
-
     ENDDO apm_iteration
 
-    PRINT *, "Iteration completed."
+    PRINT *, "** APM iteration completed."
     PRINT *
 
     ! Now get rid of the ghost particles
@@ -1583,7 +1625,7 @@ SUBMODULE (particles_id) particles_apm
     npart= npart_real
     IF( debug ) PRINT *, npart
 
-    h_guess= h
+    h_guess= h(1:npart_real)
 
     !----------------------------!
     !-- enforce centre of mass --!
@@ -1689,6 +1731,10 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * |com_x-com_star/com_star|=", &
              ABS( com_x - com_star )/ABS( com_star )
     PRINT *
+
+    !-----------------------------!
+    !-- Print positions to file --!
+    !-----------------------------!
 
     IF( PRESENT(namefile_pos) )THEN
       finalnamefile= namefile_pos
@@ -1846,52 +1892,74 @@ SUBMODULE (particles_id) particles_apm
     ENDDO
 
     nu= nu_all
-    PRINT *, "nu_all= ", nu_all
+    PRINT *, " * Baryon number on all particles before correction nu_all= ", &
+             nu_all
 
     nu_tot= 0.0D0
     DO a= 1, npart_real, 1
       nu_tot= nu_tot + nu(a)
     ENDDO
 
-    PRINT *, "nu_tot=", nu_tot
-    PRINT *, "mass estimate= ", nu_tot*amu/MSun, "=", &
+    PRINT *, " * Total baryon number nu_tot=", nu_tot
+    PRINT *, " * Total baryon mass= ", nu_tot*amu/MSun, "=", &
              100.0D0*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
     PRINT *
 
     IF( debug ) PRINT *, "4"
 
-    PRINT *, "npart_real= ", npart_real
-    PRINT *, "SIZE(nu)= ", SIZE(nu)
-    PRINT *
+    IF( debug ) PRINT *, "npart_real= ", npart_real
+    IF( debug ) PRINT *, "SIZE(nu)= ", SIZE(nu)
+    IF( debug ) PRINT *
 
-    nu_ratio= MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
-    PRINT *, "nu_ratio before correction = ", nu_ratio
-    PRINT *
+    IF( debug ) nu_ratio= MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
+    IF( debug ) PRINT *, " * nu_ratio before correction = ", nu_ratio
+    IF( debug ) PRINT *
 
     !----------------------!
     !-- Correcting nu... --!
     !----------------------!
 
-    PRINT *, "Correcting nu"
+    PRINT *, " * Correcting nu..."
     PRINT *
 
     DO a= 1, npart_real, 1
 
-      !IF( a == 1 ) PRINT *, "1"
-
       nu_tmp2= nu(a)
       nu(a)= nstar_p(a)/nstar_real(a)
-      !IF( MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 ) > nuratio_thres*nu_ratio )THEN
+
         IF( nu(a) > nu_tmp2*SQRT(nuratio_thres) ) nu(a)= &
                                           nu_tmp2*SQRT(nuratio_thres)
         IF( nu(a) < nu_tmp2/SQRT(nuratio_thres) ) nu(a)= &
                                           nu_tmp2/SQRT(nuratio_thres)
-      !ENDIF
+
+    ENDDO
+
+    !
+    !-- Check that nu is acceptable
+    !
+    DO a= 1, npart_real, 1
+
+      IF( ISNAN( nu(a) ) )THEN
+        PRINT *, " * ERROR! nu(", a, ") is a NaN."
+        PRINT *, " nstar_real(a)= ", nstar_real(a)
+        PRINT *, " nstar_p(a)= ", nstar_p(a)
+        PRINT *, " Stopping..."
+        PRINT *
+      ENDIF
+      IF( nu(a) < 0.0D0 )THEN
+        PRINT *, " * ERROR! nu(", a, ") is negative."
+        PRINT *, " nu(a)= ", nu(a)
+        PRINT *, " nstar_real(a)= ", nstar_real(a)
+        PRINT *, " nstar_p(a)= ", nstar_p(a)
+        PRINT *, " Stopping..."
+        PRINT *
+      ENDIF
 
     ENDDO
 
     nu_ratio= MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
-    PRINT *, "nu_ratio after correction = ", nu_ratio
+    PRINT *, " * nu_ratio after correction = ", nu_ratio
+    PRINT *
 
     max_nu= 0.0D0
     min_nu= HUGE(1.0D0)
@@ -1906,16 +1974,7 @@ SUBMODULE (particles_id) particles_apm
        ENDIF
     ENDDO
 
-    PRINT *, "Baryon number assigned."
-    PRINT *
-
-    PRINT *, "max_nu=", max_nu
-    PRINT *, "        at ", pos(:, a_numax), " r= ", &
-             NORM2( pos(:, a_numax) )/larger_radius
-    PRINT *, "min_nu=", min_nu
-    PRINT *, "        at ", pos(:, a_numin), " r= ", &
-             NORM2( pos(:, a_numin) )/larger_radius
-    PRINT *, "max_nu/min_nu=", max_nu/min_nu
+    PRINT *, " * Baryon number assigned."
     PRINT *
 
     IF( mass_it )THEN
@@ -2002,7 +2061,8 @@ SUBMODULE (particles_id) particles_apm
            Theta_a= 1.0D0/SQRT(-Theta_a)
            Theta(a)= Theta_a
 
-           nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
+           nstar_p(a)= &
+                sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
 
          ENDDO
 
@@ -2034,13 +2094,20 @@ SUBMODULE (particles_id) particles_apm
 
     ENDIF
 
-    PRINT *, "max_nu=", max_nu
-    PRINT *, "        at ", pos(:, a_numax), " r= ", &
-             NORM2( pos(:, a_numax) )/larger_radius
-    PRINT *, "min_nu=", min_nu
-    PRINT *, "        at ", pos(:, a_numin), " r= ", &
-             NORM2( pos(:, a_numin) )/larger_radius
-    PRINT *, "max_nu/min_nu=", max_nu/min_nu
+  !  PRINT *, "max_nu=", max_nu
+  !  PRINT *, "        at ", pos(:, a_numax), " r= ", &
+  !           NORM2( pos(:, a_numax) )/larger_radius
+  !  PRINT *, "min_nu=", min_nu
+  !  PRINT *, "        at ", pos(:, a_numin), " r= ", &
+  !           NORM2( pos(:, a_numin) )/larger_radius
+  !  PRINT *, "max_nu/min_nu=", max_nu/min_nu
+  !  PRINT *
+    PRINT *, " * CORRECTED maximum baryon number at this step=", &
+             max_nu
+    PRINT *, " * CORRECTED minimum baryon number at this step=", &
+             min_nu
+    PRINT *, " * CORRECTED baryon number ratio at this step=", &
+             max_nu/min_nu
     PRINT *
 
     max_nu2= 0.0D0

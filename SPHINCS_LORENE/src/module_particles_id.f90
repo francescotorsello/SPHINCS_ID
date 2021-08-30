@@ -187,6 +187,7 @@ MODULE particles_id
     LOGICAL:: reflect_particles_x
 
     TYPE(timer), PUBLIC:: placer_timer
+    TYPE(timer), PUBLIC:: same_particle_timer
     TYPE(timer), PUBLIC:: apm1_timer
     TYPE(timer), PUBLIC:: apm2_timer
     TYPE(timer), PUBLIC:: importer_timer
@@ -427,6 +428,7 @@ MODULE particles_id
                                    mass, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
+                                   nuratio_des, &
                                    nx_gh, ny_gh, nz_gh, &
                                    namefile_pos_id, namefile_pos, &
                                    namefile_results )
@@ -445,6 +447,7 @@ MODULE particles_id
       LOGICAL,                          INTENT( IN )   :: mass_it
       LOGICAL,                          INTENT( IN )   :: correct_nu
       DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_thres
+      DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_des
       INTEGER,                          INTENT( IN )   :: nx_gh, ny_gh, nz_gh
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
                                                             namefile_pos_id

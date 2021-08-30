@@ -51,7 +51,7 @@ nu_ratio=3.0           ! Desired baryon number ratio. Used only when
 !   per shell, trying to minimize the particle mass ratio       !
 !   by iteration.                                               !
 !---------------------------------------------------------------!
-npart_approx= 1.0D+4 ! Usually, the final number of particles on the less
+npart_approx= 5.0D+4 ! Usually, the final number of particles on the less
                    ! massive star is between 1.4*npart_approx and 2*npart_approx
                    ! The approximate number of particles on the more massive star
                    ! is npart_approx/mass_ratio
@@ -80,33 +80,37 @@ max_steps= 100        ! If, after max_steps, the iteration did not converge,
                       ! by lower_factor. max_steps >= 10. 100 is a nice value
 upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
 lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
-randomize_phi=   .FALSE.  ! Randomize particle positions in phi
-randomize_theta= .FALSE. ! Randomize particle positions in theta
-randomize_r=     .FALSE. ! Randomize particle positions in r
-find_npart= .FALSE.
+randomize_phi=  .TRUE. ! Randomize particle positions in phi
+randomize_theta=.TRUE. ! Randomize particle positions in theta
+randomize_r=    .TRUE.  ! Randomize particle positions in r
 !----------------------------------------------------!
 ! Parameters for the Artifical Pressure Method (APM) !
 !----------------------------------------------------!
-apm_iterate1=.FALSE.    ! If .TRUE. applies the APM to the first star
-apm_iterate2=.FALSE.    ! If .TRUE. applies the APM to the second star
+apm_iterate1=.TRUE.    ! If .TRUE. applies the APM to the first star
+apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
                        ! Note that if reflect_particles_x= .TRUE. and the
                        ! star mass ratio is in [0.995,1.005], the particles
                        ! on the second star will be the reflection about the yz
                        ! plane of the particles on the first star, irrespectively
                        ! of the value of apm_iterate2
-apm_max_it=3           ! Maximum number of iterations
-max_inc= 150            ! Sets the EXIT condition: If the average over all the
+apm_max_it=1500         ! Maximum number of iterations, irrespective of the
+                        ! EXIT condition
+max_inc= 1            ! Sets the EXIT condition: If the average over all the
                         ! particles of the error in the density estimate grows
                         ! max_inc times, exit the iteration.
+nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
+                        ! to be used in the one-time-only final correction
+                        ! of the particle masses to match the star density even
+                        ! better (without moving the particles)
+nuratio_des= 1.7D0      ! Sets the EXIT condition: If the baryon number ratio
+                        ! is within 5% of nuratio_des, exit the iteration
+                        ! Set nuratio_des to 0 to deactivate and exit the APM
+                        ! iteration using max_inc
 mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
                         ! the particles, changing their mass in order to match
                         ! the star density better. The mass ratio grows very
                         ! fast in all the tried experiments, hence the
                         ! suggested value is .FALSE.
-nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
-                        ! to be used in the one-time-only final correction
-                        ! of the particle masses to match the star density even
-                        ! better (without moving the particles)
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts

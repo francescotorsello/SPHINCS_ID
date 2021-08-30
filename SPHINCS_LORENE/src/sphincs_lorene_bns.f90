@@ -419,6 +419,7 @@ PROGRAM sphincs_lorene_bns
   IF( run_sph )THEN
     PRINT *, " * SPH:"
     CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
+    CALL particles_dist( 1, 1 )% same_particle_timer% print_timer( 2 )
     CALL particles_dist( 1, 1 )% apm1_timer% print_timer( 2 )
     CALL particles_dist( 1, 1 )% apm2_timer% print_timer( 2 )
     CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
