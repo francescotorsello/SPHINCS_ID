@@ -103,7 +103,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
 nuratio_des= 1.7D0      ! Sets the EXIT condition: If the baryon number ratio
-                        ! is within 5% of nuratio_des, exit the iteration
+                        ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
 mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving

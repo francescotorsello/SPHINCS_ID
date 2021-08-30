@@ -278,6 +278,13 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *
       STOP
     ENDIF
+    IF( nuratio_des >= nuratio_thres )THEN
+      PRINT *
+      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+               "nuratio_des has to be stricly lower than nuratio_thres!"
+      PRINT *
+      STOP
+    ENDIF
 
     ! setup unit system
     CALL set_units('NSM')

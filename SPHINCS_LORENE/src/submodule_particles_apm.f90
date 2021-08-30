@@ -1140,10 +1140,13 @@ SUBMODULE (particles_id) particles_apm
 
       h_guess(1:npart_real)= h(1:npart_real)
       !h_guess(npart_real+1:npart_all)= dx*dy*dz
+      !CALL assign_h( nn_des, &
+      !               npart_real, &
+      !               all_pos(:,1:npart_real), h_guess(1:npart_real), &
+      !               h(1:npart_real)  )
       CALL assign_h( nn_des, &
-                     npart_real, &
-                     all_pos(:,1:npart_real), h_guess(1:npart_real) , &
-                     h(1:npart_real)  )
+                     npart_all, &
+                     all_pos, h_guess, h )
 
       find_problem_in_h: DO a= 1, npart_all, 1
 
@@ -1169,9 +1172,11 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "density_loop..."
 
-      CALL density_loop( npart_real, all_pos(:,1:npart_real), &    ! input
-                         nu(1:npart_real) , h(1:npart_real) , &
-                         nstar_real(1:npart_real) )      ! output
+      !CALL density_loop( npart_real, all_pos(:,1:npart_real), &    ! input
+      !                   nu(1:npart_real) , h(1:npart_real) , &
+      !                   nstar_real(1:npart_real) )      ! output
+      CALL density_loop( npart_all, all_pos, &    ! input
+                         nu, h, nstar_real )      ! output
 
       IF( debug ) PRINT *, "npart_real= ", npart_real
       IF( debug ) PRINT *, "npart_all= ", npart_all
@@ -1436,11 +1441,11 @@ SUBMODULE (particles_id) particles_apm
 
       ! Compute particle number density
       nu= 1.0D0
-      CALL density_loop( npart_real, all_pos(:,1:npart_real), &    ! input
-                         nu(1:npart_real), h(1:npart_real), &
-                         nstar_real(1:npart_real) )      ! output
-      !CALL density_loop( npart_all, all_pos, &    ! input
-      !                   nu, h, nstar_real )      ! output
+      !CALL density_loop( npart_real, all_pos(:,1:npart_real), &    ! input
+      !                   nu(1:npart_real), h(1:npart_real), &
+      !                   nstar_real(1:npart_real) )      ! output
+      CALL density_loop( npart_all, all_pos, &    ! input
+                         nu, h, nstar_real )      ! output
       nu= nu_all
 
       DO a= 1, npart_real, 1
@@ -1508,10 +1513,12 @@ SUBMODULE (particles_id) particles_apm
       !  n_inc= 0
       !ENDIF
 
+      ! EXIT conditions
       IF( nuratio_des > 0.0D0 )THEN
 
-        IF( nuratio_tmp > nuratio_des*0.95D0 .OR. &
-            nuratio_tmp < nuratio_des*1.05D0 ) EXIT
+        IF( nuratio_tmp >= nuratio_des*0.975D0 .AND. &
+            nuratio_tmp <= nuratio_des*1.025D0 .AND. &
+            nuratio_tmp /= nuratio_thres ) EXIT
 
       ELSE
 
