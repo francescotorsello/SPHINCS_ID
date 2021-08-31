@@ -55,7 +55,7 @@ SUBMODULE (particles_id) particles_apm
                                    amu, pi
 
     USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
-                                   npart, h, nu, Theta
+                                   npart, h, nu
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                    deallocate_metric_on_particles
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
@@ -82,9 +82,9 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
 
-    INTEGER:: a, a2, itr, itr2, n_inc            ! iterators
+    INTEGER:: a, a2, itr, itr2, n_inc         ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
-    INTEGER:: nx, ny, nz, i, j, k, nus, mus
+    INTEGER:: nx, ny, nz, i, j, k!, nus, mus
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
@@ -94,11 +94,11 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: max_r_real, r_real, max_z_real
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, x_ell, y_ell, z_ell
     DOUBLE PRECISION:: min_nu, max_nu, min_nu2, max_nu2
-    DOUBLE PRECISION:: det, sq_g, Theta_a
+    !DOUBLE PRECISION:: det, sq_g, Theta_a
     ! The value of nu equal for all the particles, used during the APM iteration
     DOUBLE PRECISION:: nu_all
     DOUBLE PRECISION:: err_N_mean_min, err_N_mean_min_old, err_N_mean, &
-                       err_mean_old, err_n_min, err_N_max, dN, dNstar, &
+                       err_mean_old, err_n_min, err_N_max, dN, &!dNstar, &
                        nstar_p_err, nstar_real_err, r_tmp, dN_max, dN_av
     DOUBLE PRECISION:: art_pr_max
     DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp
@@ -109,7 +109,7 @@ SUBMODULE (particles_id) particles_apm
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
-    DOUBLE PRECISION:: g4(0:3,0:3)
+    !DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
@@ -119,13 +119,14 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
+    !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
 
@@ -489,7 +490,7 @@ SUBMODULE (particles_id) particles_apm
     CLOSE( UNIT= 2 )
 
     PRINT *, " * Positions of ghost and real particles printed to ", &
-             finalnamefile, " ."
+             TRIM(finalnamefile), " ."
 
     !STOP
 
@@ -510,6 +511,7 @@ SUBMODULE (particles_id) particles_apm
     all_pos( :, npart_real+1:npart_all )= ghost_pos
 
     h_guess= h_guess(1:npart_all)
+    !h_guess(1:npart_real)= 10.0D0*h_guess(1:npart_real)
     h_guess(npart_real+1:npart_all)= ( dx*dy*dz )**third
 
     !----------------------------!
@@ -644,16 +646,16 @@ SUBMODULE (particles_id) particles_apm
     ALLOCATE( v_euler_y      (npart_real) )
     ALLOCATE( v_euler_z      (npart_real) )
 
-    IF(.NOT.ALLOCATED( vel ))THEN
-      ALLOCATE( vel( 0:3, npart_real ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array vel in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
+ !   IF(.NOT.ALLOCATED( vel ))THEN
+ !     ALLOCATE( vel( 0:3, npart_real ), STAT= ios, &
+ !         ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...allocation error for array vel in SUBROUTINE ", &
+ !                 "perform_apm. The error message is",&
+ !                 err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
 
     IF( debug ) PRINT *, "6"
 
@@ -684,90 +686,10 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
     ENDIF
 
-    DO a= 1, npart_real, 1
-
-      ! Coordinate velocity of the fluid [c]
-      vel(0,a)= 1.0D0
-      vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-      vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-      vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
-
-      !
-      !-- Metric as matrix for easy manipulation
-      !
-      g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
-             + 2*g_xy(a)*shift_x(a)*shift_y(a) &
-             + 2*g_xz(a)*shift_x(a)*shift_z(a) &
-             + g_yy(a)*shift_y(a)*shift_y(a) &
-             + 2*g_yz(a)*shift_y(a)*shift_z(a) &
-             + g_zz(a)*shift_z(a)*shift_z(a)
-      g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-
-      g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      g4(1,1)= g_xx(a)
-      g4(1,2)= g_xy(a)
-      g4(1,3)= g_xz(a)
-
-      g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      g4(2,1)= g_xy(a)
-      g4(2,2)= g_yy(a)
-      g4(2,3)= g_yz(a)
-
-      g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-      g4(3,1)= g_xz(a)
-      g4(3,2)= g_yz(a)
-      g4(3,3)= g_zz(a)
-
-      ! sqrt(-det(g4))
-      CALL determinant_4x4_matrix(g4,det)
-      IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", a
-          STOP
-      ELSEIF( det > 0 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "positive at particle ", a
-          STOP
-      ENDIF
-      sq_g= SQRT(-det)
-
-      !
-      !-- Generalized Lorentz factor
-      !
-      Theta_a= 0.D0
-      DO nus=0,3
-        DO mus=0,3
-          Theta_a= Theta_a &
-                   + g4(mus,nus)*vel(mus,a)*vel(nus,a)
-        ENDDO
-      ENDDO
-      Theta_a= 1.0D0/SQRT(-Theta_a)
-      Theta(a)= Theta_a
-
-      nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
-
-      IF( ISNAN( nstar_p( a ) ) )THEN
-        PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
-                 " Stopping.."
-        PRINT *
-        STOP
-      ENDIF
-      IF( nstar_p( a ) == 0 )THEN
-        PRINT *, "** ERROR! When setting up ID: ", &
-                 "nstar_p(", a, ")= 0 on a real particle!"
-        PRINT *, " * Particle position: x=", all_pos(1,a), &
-                 ", y=", all_pos(2,a), ", z=", all_pos(3,a)
-        PRINT *, "   sq_g=", sq_g
-        PRINT *, "   Theta_a=", Theta_a
-        PRINT *, "   baryon_density(a)=", baryon_density(a)
-        PRINT *, " * Stopping.."
-        PRINT *
-        STOP
-      ENDIF
-
-    ENDDO
+    CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
+                          shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                          g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                          baryon_density, nstar_p )
 
     IF( debug ) PRINT *, "8"
 
@@ -926,6 +848,10 @@ SUBMODULE (particles_id) particles_apm
              ABS( com_x-com_star )/ABS( com_star )
     PRINT *
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( all_pos, com_star, &
+    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
+    !$OMP             PRIVATE( pos_corr_tmp, a )
     DO a= 1, npart_real, 1
 
       pos_corr_tmp(1)= all_pos(1,a) - ( com_x - com_star )
@@ -944,6 +870,7 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
     ENDDO
+    !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "10"
 
@@ -966,6 +893,16 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * |com_x-com_star/com_star|=", &
              ABS( com_x-com_star )/ABS( com_star )
     PRINT *
+
+    IF(.NOT.ALLOCATED( dNstar ))THEN
+      ALLOCATE( dNstar( npart_real ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array dNstar in SUBROUTINE ", &
+                  "perform_apm. The error message is",&
+                  err_msg
+         STOP
+      ENDIF
+    ENDIF
 
     all_pos_tmp2= -1.0D0
     PRINT *, " * The APM iteration starts here."
@@ -1025,6 +962,52 @@ SUBMODULE (particles_id) particles_apm
         CLOSE( UNIT= 2 )
 
       ENDIF
+
+      IF( debug ) PRINT *, "enforcing center of mass..."
+
+      CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
+                com_x, com_y, com_z, com_d ) ! output
+
+      IF( debug )THEN
+      PRINT *, "** After center of mass correction:"
+      PRINT *, " * x coordinate of the center of mass of the star, ", &
+               "from LORENE: com_star= ", com_star, "Msun_geo"
+      PRINT *, " * x coordinate of the center of mass of the particle ", &
+               "distribution: com_x= ", com_x, "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the particle ", &
+               "distribution: com_y= ", com_y, "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the particle ", &
+               "distribution: com_z= ", com_z, "Msun_geo"
+      PRINT *, " * Distance of the center of mass of the particle ", &
+               "distribution from the  origin: com_d= ", com_d
+      PRINT *, " * |com_x-com_star/com_star|=", &
+               ABS( com_x-com_star )/ABS( com_star )
+      PRINT *
+      ENDIF
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( all_pos, com_star, &
+      !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
+      !$OMP             PRIVATE( pos_corr_tmp, a )
+      DO a= 1, npart_real, 1
+
+        pos_corr_tmp(1)= all_pos(1,a) - ( com_x - com_star )
+        pos_corr_tmp(2)= all_pos(2,a) - com_y
+        pos_corr_tmp(3)= all_pos(3,a) - com_z
+
+        IF( binary% import_mass_density( &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
+            .AND. &
+            binary% is_hydro_negative( &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+        )THEN
+
+          all_pos(:,a)= pos_corr_tmp
+
+        ENDIF
+
+      ENDDO
+      !$OMP END PARALLEL DO
 
       IF( debug ) PRINT *, "mirroring particles..."
 
@@ -1235,90 +1218,10 @@ SUBMODULE (particles_id) particles_apm
                               pressure, &
                               v_euler_x, v_euler_y, v_euler_z )
 
-      DO a= 1, npart_real, 1
-
-        ! Coordinate velocity of the fluid [c]
-        vel(0,a)= 1.0D0
-        vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-        vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-        vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
-
-        !
-        !-- Metric as matrix for easy manipulation
-        !
-        g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
-               + 2*g_xy(a)*shift_x(a)*shift_y(a) &
-               + 2*g_xz(a)*shift_x(a)*shift_z(a) &
-               + g_yy(a)*shift_y(a)*shift_y(a) &
-               + 2*g_yz(a)*shift_y(a)*shift_z(a) &
-               + g_zz(a)*shift_z(a)*shift_z(a)
-        g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-        g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-        g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-
-        g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-        g4(1,1)= g_xx(a)
-        g4(1,2)= g_xy(a)
-        g4(1,3)= g_xz(a)
-
-        g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-        g4(2,1)= g_xy(a)
-        g4(2,2)= g_yy(a)
-        g4(2,3)= g_yz(a)
-
-        g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-        g4(3,1)= g_xz(a)
-        g4(3,2)= g_yz(a)
-        g4(3,3)= g_zz(a)
-
-        ! sqrt(-det(g4))
-        CALL determinant_4x4_matrix(g4,det)
-        IF( ABS(det) < 1D-10 )THEN
-            PRINT *, "The determinant of the spacetime metric is " &
-                     // "effectively 0 at particle ", a
-            STOP
-        ELSEIF( det > 0 )THEN
-            PRINT *, "The determinant of the spacetime metric is " &
-                     // "positive at particle ", a
-            STOP
-        ENDIF
-        sq_g= SQRT(-det)
-
-        !
-        !-- Generalized Lorentz factor
-        !
-        Theta_a= 0.D0
-        DO nus=0,3
-          DO mus=0,3
-            Theta_a= Theta_a &
-                     + g4(mus,nus)*vel(mus,a)*vel(nus,a)
-          ENDDO
-        ENDDO
-        Theta_a= 1.0D0/SQRT(-Theta_a)
-        Theta(a)= Theta_a
-
-        nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3) &
-                    /(amu*g2kg)
-
-        IF( ISNAN( nstar_p( a ) ) )THEN
-          PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
-                   " Stopping.."
-          PRINT *
-          STOP
-        ENDIF
-        IF( nstar_p( a ) == 0 )THEN
-          PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
-          PRINT *, " * Particle position: x=", all_pos(1,a), &
-                   ", y=", all_pos(2,a), ", z=", all_pos(3,a)
-          PRINT *, "   sq_g=", sq_g
-          PRINT *, "   Theta_a=", Theta_a
-          PRINT *, "   baryon_density(a)=", baryon_density(a)
-          PRINT *, " * Stopping.."
-          PRINT *
-          STOP
-        ENDIF
-
-      ENDDO
+      CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
+                            shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                            g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                            baryon_density, nstar_p )
 
       art_pr_max= 0.0D0
       err_N_max=  0.0D0
@@ -1326,20 +1229,22 @@ SUBMODULE (particles_id) particles_apm
       err_N_mean= 0.0D0
       DO a= 1, npart_real, 1
 
-        dNstar= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
-        art_pr(a) = MAX( 1.0D0 + dNstar, 0.1D0 )
+        dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+        art_pr(a) = MAX( 1.0D0 + dNstar(a), 0.1D0 )
         art_pr_max= MAX( art_pr_max, art_pr(a) )
-        IF( ABS(dNstar) > err_N_max )THEN
-          err_N_max     = ABS(dNstar)
+
+        IF( ABS(dNstar(a)) > err_N_max )THEN
+          err_N_max     = ABS(dNstar(a))
           pos_maxerr    = all_pos(:,a)
           nstar_real_err= nstar_real(a)
           nstar_p_err   = nstar_p(a)
         ENDIF
-        !err_N_max = MAX( err_N_max, ABS(dNstar) )
-        err_N_min = MIN( err_N_min, ABS(dNstar) )
-        err_N_mean= err_N_mean + ABS(dNstar)
 
-        IF( ISNAN(dNstar) )THEN
+        !err_N_max = MAX( err_N_max, ABS(dNstar) )
+        err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
+        err_N_mean= err_N_mean + ABS(dNstar(a))
+
+        IF( ISNAN(dNstar(a)) )THEN
           PRINT *, "dNstar is a NaN at particle ", a
           PRINT *, "nstar_real is ", nstar_real(a)
           PRINT *, "nstar_p is ", nstar_p(a)
@@ -1389,22 +1294,6 @@ SUBMODULE (particles_id) particles_apm
         ENDIF
 
       ENDDO find_nan_in_art_pr
-
-      ! Measure SPH particle number density, to compute nu= nstar_p/nstar_real
-      !CALL assign_h( nn_des, &           !
-      !               npart_real, &        !
-      !               all_pos(:,1:npart_real), h_guess(1:npart_real), & ! Input
-      !               h(1:npart_real) )                 ! Output
-
-      !IF( MAXVAL( nu_tmp(1:npart_real), DIM= 1 )/MINVAL( nu_tmp(1:npart_real) &
-      !    < nu_thres )THEN
-      !  PRINT *, " * Baryon number ratio", &
-      !           MAXVAL( nu_tmp(1:npart_real), DIM= 1 ) &
-      !           /MINVAL( nu_tmp(1:npart_real), " is less than nu_thres= " &
-      !           nu_thres
-      !  PRINT *, "** APM iteration completed."
-      !  PRINT *
-      !ENDIF
 
       err_N_mean= err_N_mean/DBLE(npart_real)
 
@@ -1566,9 +1455,26 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "After calling position_correction"
 
-      itr2= 0
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( all_pos, correction_pos, &
+      !$OMP                     dNstar, binary, npart_real, nstar_p ) &
+      !$OMP             PRIVATE( pos_corr_tmp, a )
       DO a= 1, npart_real, 1
-        pos_corr_tmp= all_pos(:,a) + correction_pos(:,a)
+
+        IF( dNstar(a) >= 100.0D0 )THEN
+
+          pos_corr_tmp= all_pos(:,a) + 10.0D0*correction_pos(:,a)
+
+        ELSEIF( dNstar(a) >= 10.0D0 )THEN
+
+          pos_corr_tmp= all_pos(:,a) + 3.0D0*correction_pos(:,a)
+
+        ELSE
+
+          pos_corr_tmp= all_pos(:,a) + correction_pos(:,a)
+
+        ENDIF
+
         IF( binary% import_mass_density( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
             .AND. &
@@ -1578,11 +1484,11 @@ SUBMODULE (particles_id) particles_apm
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
         )THEN
 
-          itr2= itr2 + 1
           all_pos(:,a)= pos_corr_tmp
 
         ENDIF
       ENDDO
+      !$OMP END PARALLEL DO
 
       find_nan_in_all_pos: DO a= 1, npart_all, 1
 
@@ -1658,6 +1564,10 @@ SUBMODULE (particles_id) particles_apm
              ABS( com_x-com_star )/ABS( com_star )
     PRINT *
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, com_star, &
+    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
+    !$OMP             PRIVATE( pos_corr_tmp, a )
     DO a= 1, npart_real, 1
 
       pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star )
@@ -1676,6 +1586,7 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
     ENDDO
+    !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "10"
 
@@ -1826,77 +1737,10 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "3.5"
 
-    DO a= 1, npart_real, 1
-
-      IF( baryon_density(a) <= 0 )THEN
-        PRINT *, " * The baryon density is 0 at particle ", a
-        PRINT *
-        STOP
-      ENDIF
-
-      ! Coordinate velocity of the fluid [c]
-      vel(0,a)= 1.0D0
-      vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-      vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-      vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
-
-      !
-      !-- Metric as matrix for easy manipulation
-      !
-      g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
-             + 2*g_xy(a)*shift_x(a)*shift_y(a) &
-             + 2*g_xz(a)*shift_x(a)*shift_z(a) &
-             + g_yy(a)*shift_y(a)*shift_y(a) &
-             + 2*g_yz(a)*shift_y(a)*shift_z(a) &
-             + g_zz(a)*shift_z(a)*shift_z(a)
-      g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-
-      g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      g4(1,1)= g_xx(a)
-      g4(1,2)= g_xy(a)
-      g4(1,3)= g_xz(a)
-
-      g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      g4(2,1)= g_xy(a)
-      g4(2,2)= g_yy(a)
-      g4(2,3)= g_yz(a)
-
-      g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-      g4(3,1)= g_xz(a)
-      g4(3,2)= g_yz(a)
-      g4(3,3)= g_zz(a)
-
-      ! sqrt(-det(g4))
-      CALL determinant_4x4_matrix(g4,det)
-      IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", a
-          STOP
-      ELSEIF( det > 0 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "positive at particle ", a
-          STOP
-      ENDIF
-      sq_g= SQRT(-det)
-
-      !
-      !-- Generalized Lorentz factor
-      !
-      Theta_a= 0.D0
-      DO nus=0,3
-        DO mus=0,3
-          Theta_a= Theta_a &
-                   + g4(mus,nus)*vel(mus,a)*vel(nus,a)
-        ENDDO
-      ENDDO
-      Theta_a= 1.0D0/SQRT(-Theta_a)
-      Theta(a)= Theta_a
-
-      nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
-
-    ENDDO
+    CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
+                          shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                          g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                          baryon_density, nstar_p )
 
     nu= nu_all
     PRINT *, " * Baryon number on all particles before correction nu_all= ", &
@@ -2006,72 +1850,10 @@ SUBMODULE (particles_id) particles_apm
                                  pressure, &
                                  v_euler_x, v_euler_y, v_euler_z )
 
-         DO a= 1, npart_real, 1
-
-           ! Coordinate velocity of the fluid [c]
-           vel(0,a)= 1.0D0
-           vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-           vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-           vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
-
-           !
-           !-- Metric as matrix for easy manipulation
-           !
-           g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
-                  + 2*g_xy(a)*shift_x(a)*shift_y(a) &
-                  + 2*g_xz(a)*shift_x(a)*shift_z(a) &
-                  + g_yy(a)*shift_y(a)*shift_y(a) &
-                  + 2*g_yz(a)*shift_y(a)*shift_z(a) &
-                  + g_zz(a)*shift_z(a)*shift_z(a)
-           g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-           g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-           g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-
-           g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-           g4(1,1)= g_xx(a)
-           g4(1,2)= g_xy(a)
-           g4(1,3)= g_xz(a)
-
-           g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-           g4(2,1)= g_xy(a)
-           g4(2,2)= g_yy(a)
-           g4(2,3)= g_yz(a)
-
-           g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-           g4(3,1)= g_xz(a)
-           g4(3,2)= g_yz(a)
-           g4(3,3)= g_zz(a)
-
-           ! sqrt(-det(g4))
-           CALL determinant_4x4_matrix(g4,det)
-           IF( ABS(det) < 1D-10 )THEN
-               PRINT *, "The determinant of the spacetime metric is " &
-                        // "effectively 0 at particle ", a
-               STOP
-           ELSEIF( det > 0 )THEN
-               PRINT *, "The determinant of the spacetime metric is " &
-                        // "positive at particle ", a
-               STOP
-           ENDIF
-           sq_g= SQRT(-det)
-
-           !
-           !-- Generalized Lorentz factor
-           !
-           Theta_a= 0.D0
-           DO nus=0,3
-             DO mus=0,3
-               Theta_a= Theta_a &
-                        + g4(mus,nus)*vel(mus,a)*vel(nus,a)
-             ENDDO
-           ENDDO
-           Theta_a= 1.0D0/SQRT(-Theta_a)
-           Theta(a)= Theta_a
-
-           nstar_p(a)= &
-                sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
-
-         ENDDO
+         CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
+                               shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                               g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                               baryon_density, nstar_p )
 
          !nstar_p( npart_real+1:npart_all )= 0.0D0
 
@@ -2191,6 +1973,10 @@ SUBMODULE (particles_id) particles_apm
              ABS( com_x-com_star )/ABS( com_star )
     PRINT *
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, com_star, &
+    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
+    !$OMP             PRIVATE( pos_corr_tmp, a )
     DO a= 1, npart_real, 1
 
       pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star )
@@ -2209,6 +1995,7 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
     ENDDO
+    !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "10"
 
@@ -2273,13 +2060,7 @@ SUBMODULE (particles_id) particles_apm
     PRINT *
 
     IF( correct_nu )THEN
-      !THIS% nlrf=
-      !        THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-      !nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-      !THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-      !nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
-      !THIS% nbar_tot= &
-      !    THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% mass1 + THIS% mass2))
+
       nu= nu/(nu_tot*amu/Msun/mass)
       nu_tot= 0.0D0
       DO a= 1, npart_real, 1
@@ -2317,6 +2098,10 @@ SUBMODULE (particles_id) particles_apm
                ABS( com_x-com_star )/ABS( com_star )
       PRINT *
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, com_star, &
+      !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
+      !$OMP             PRIVATE( pos_corr_tmp, a )
       DO a= 1, npart_real, 1
 
         pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star )
@@ -2335,6 +2120,7 @@ SUBMODULE (particles_id) particles_apm
         ENDIF
 
       ENDDO
+      !$OMP END PARALLEL DO
 
       IF( debug ) PRINT *, "10"
 
@@ -2405,90 +2191,10 @@ SUBMODULE (particles_id) particles_apm
                             pressure, &
                             v_euler_x, v_euler_y, v_euler_z )
 
-    DO a= 1, npart_real, 1
-
-      ! Coordinate velocity of the fluid [c]
-      vel(0,a)= 1.0D0
-      vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-      vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-      vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
-
-      !
-      !-- Metric as matrix for easy manipulation
-      !
-      g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
-             + 2*g_xy(a)*shift_x(a)*shift_y(a) &
-             + 2*g_xz(a)*shift_x(a)*shift_z(a) &
-             + g_yy(a)*shift_y(a)*shift_y(a) &
-             + 2*g_yz(a)*shift_y(a)*shift_z(a) &
-             + g_zz(a)*shift_z(a)*shift_z(a)
-      g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-
-      g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      g4(1,1)= g_xx(a)
-      g4(1,2)= g_xy(a)
-      g4(1,3)= g_xz(a)
-
-      g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      g4(2,1)= g_xy(a)
-      g4(2,2)= g_yy(a)
-      g4(2,3)= g_yz(a)
-
-      g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-      g4(3,1)= g_xz(a)
-      g4(3,2)= g_yz(a)
-      g4(3,3)= g_zz(a)
-
-      ! sqrt(-det(g4))
-      CALL determinant_4x4_matrix(g4,det)
-      IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", a
-          STOP
-      ELSEIF( det > 0 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "positive at particle ", a
-          STOP
-      ENDIF
-      sq_g= SQRT(-det)
-
-      !
-      !-- Generalized Lorentz factor
-      !
-      Theta_a= 0.D0
-      DO nus=0,3
-        DO mus=0,3
-          Theta_a= Theta_a &
-                   + g4(mus,nus)*vel(mus,a)*vel(nus,a)
-        ENDDO
-      ENDDO
-      Theta_a= 1.0D0/SQRT(-Theta_a)
-      Theta(a)= Theta_a
-
-      nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3)/(amu*g2kg)
-
-      IF( ISNAN( nstar_p( a ) ) )THEN
-        PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
-                 " Stopping.."
-        PRINT *
-        STOP
-      ENDIF
-      IF( nstar_p( a ) == 0 )THEN
-        PRINT *, "** ERROR! When setting up ID: ", &
-                 "nstar_p(", a, ")= 0 on a real particle!"
-        PRINT *, " * Particle position: x=", all_pos(1,a), &
-                 ", y=", all_pos(2,a), ", z=", all_pos(3,a)
-        PRINT *, "   sq_g=", sq_g
-        PRINT *, "   Theta_a=", Theta_a
-        PRINT *, "   baryon_density(a)=", baryon_density(a)
-        PRINT *, " * Stopping.."
-        PRINT *
-        STOP
-      ENDIF
-
-    ENDDO
+    CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
+                          shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                          g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                          baryon_density, nstar_p )
 
     !nstar_p( npart_real+1:npart_all )= 0.0D0
 
@@ -2640,6 +2346,142 @@ SUBMODULE (particles_id) particles_apm
     CALL deallocate_SPH_memory()
 
   END PROCEDURE perform_apm
+
+
+  SUBROUTINE compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
+                              shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                              g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                              baryon_density, nstar_p )
+
+    !**************************************************************
+    !                                                             *
+    ! Compute nstar_p, the proper baryon mass density, given the  *
+    ! LORENE ID                                                   *
+    !                                                             *
+    ! FT 31.08.2021                                               *
+    !                                                             *
+    !**************************************************************
+
+    USE constants, ONLY: Msun_geo, km2m, amu, g2kg
+    USE matrix,              ONLY: determinant_4x4_matrix
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN):: npart_real
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: lapse
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_x
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_y
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_z
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_x
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_y
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_z
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xx
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xy
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xz
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yy
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yz
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_zz
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
+    DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_p
+
+    INTEGER:: a, mus, nus
+    DOUBLE PRECISION:: det, sq_g, Theta_a
+    DOUBLE PRECISION, DIMENSION(0:3,npart_real):: vel
+    DOUBLE PRECISION:: g4(0:3,0:3)
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, lapse, shift_x, shift_y, shift_z, &
+    !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
+    !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+    !$OMP                     baryon_density, vel, nstar_p ) &
+    !$OMP             PRIVATE( a, det, sq_g, Theta_a, g4 )
+    DO a= 1, npart_real, 1
+
+      ! Coordinate velocity of the fluid [c]
+      vel(0,a)= 1.0D0
+      vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+      vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+      vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+
+      !
+      !-- Metric as matrix for easy manipulation
+      !
+      g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
+             + 2*g_xy(a)*shift_x(a)*shift_y(a) &
+             + 2*g_xz(a)*shift_x(a)*shift_z(a) &
+             + g_yy(a)*shift_y(a)*shift_y(a) &
+             + 2*g_yz(a)*shift_y(a)*shift_z(a) &
+             + g_zz(a)*shift_z(a)*shift_z(a)
+      g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+      g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+      g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+
+      g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+      g4(1,1)= g_xx(a)
+      g4(1,2)= g_xy(a)
+      g4(1,3)= g_xz(a)
+
+      g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+      g4(2,1)= g_xy(a)
+      g4(2,2)= g_yy(a)
+      g4(2,3)= g_yz(a)
+
+      g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+      g4(3,1)= g_xz(a)
+      g4(3,2)= g_yz(a)
+      g4(3,3)= g_zz(a)
+
+      ! sqrt(-det(g4))
+      CALL determinant_4x4_matrix(g4,det)
+      IF( ABS(det) < 1D-10 )THEN
+          PRINT *, "The determinant of the spacetime metric is " &
+                   // "effectively 0 at particle ", a
+          STOP
+      ELSEIF( det > 0 )THEN
+          PRINT *, "The determinant of the spacetime metric is " &
+                   // "positive at particle ", a
+          STOP
+      ENDIF
+      sq_g= SQRT(-det)
+
+      !
+      !-- Generalized Lorentz factor
+      !
+      Theta_a= 0.D0
+      DO nus=0,3
+        DO mus=0,3
+          Theta_a= Theta_a &
+                   + g4(mus,nus)*vel(mus,a)*vel(nus,a)
+        ENDDO
+      ENDDO
+      Theta_a= 1.0D0/SQRT(-Theta_a)
+      !Theta(a)= Theta_a
+
+      nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3) &
+                  /(amu*g2kg)
+
+      IF( ISNAN( nstar_p( a ) ) )THEN
+        PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
+                 " Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+      IF( nstar_p( a ) == 0 )THEN
+        PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
+        !PRINT *, " * Particle position: x=", all_pos(1,a), &
+        !         ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+        PRINT *, "   sq_g=", sq_g
+        PRINT *, "   Theta_a=", Theta_a
+        PRINT *, "   baryon_density(", a, ")=", baryon_density(a)
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+  END SUBROUTINE compute_nstar_p
 
 
   SUBROUTINE get_neighbours_bf(ipart,npart,pos,h,dimensions,nnei,neilist)

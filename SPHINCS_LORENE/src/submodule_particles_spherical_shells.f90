@@ -523,10 +523,10 @@ SUBMODULE (particles_id) spherical_shells
             IF( rand_num2 >= half ) rel_sign=  1
             IF( rand_num2 < half )  rel_sign= -1
 
-            IF( r/n_shells < 0.8D0 )THEN
+            IF( r/n_shells < 0.94D0 )THEN
               rad= rad + rel_sign*delta_r*0.35D0*dr_shells
             ELSE
-              rad= rad - delta_r*0.35D0*dr_shells
+              rad= rad - 0.5D0*( 1.0D0 + delta_r )*0.35D0*dr_shells
             ENDIF
 
           ENDIF

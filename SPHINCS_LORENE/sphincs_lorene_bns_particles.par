@@ -93,7 +93,7 @@ apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
                        ! on the second star will be the reflection about the yz
                        ! plane of the particles on the first star, irrespectively
                        ! of the value of apm_iterate2
-apm_max_it=1500         ! Maximum number of iterations, irrespective of the
+apm_max_it=2         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 1            ! Sets the EXIT condition: If the average over all the
                         ! particles of the error in the density estimate grows
@@ -102,7 +102,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.7D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.5D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
