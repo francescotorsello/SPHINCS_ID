@@ -32,7 +32,7 @@ PROGRAM sphincs_lorene_bns
   ! Number of binary systems of neutron stars (BNS) to import
   INTEGER:: n_bns, ref_lev
   ! Export the constraints every constraints_step-th step
-  INTEGER:: constraints_step
+  INTEGER:: constraints_step, last_level
 
   ! Matrix storing the information on how to place particles for each bns
   ! object. Row i contains information about the i^th bns object.
@@ -542,6 +542,16 @@ PROGRAM sphincs_lorene_bns
                !bssn_forms( 1 )% get_dx(itr)* &
                !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0*Msun_geo, "km "
     ENDDO
+    PRINT *
+    last_level= bssn_forms( 1 )% get_nlevels()
+    PRINT *, "   Number of grid points across the x-axis-diameter of star 1=", &
+             FLOOR( ( binaries( 1 )% get_radius1_x_comp() + &
+             binaries( 1 )% get_radius1_x_opp() ) &
+             /bssn_forms( 1 )% get_dx( last_level ) )
+    PRINT *, "   Number of grid points across the x-axis-diameter of star 2=", &
+             FLOOR( ( binaries( 1 )% get_radius2_x_comp() + &
+            binaries( 1 )% get_radius2_x_opp() ) &
+            /bssn_forms( 1 )% get_dx( last_level ) )
     PRINT *
   ENDIF
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time

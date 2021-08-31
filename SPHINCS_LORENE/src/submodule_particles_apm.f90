@@ -511,31 +511,20 @@ SUBMODULE (particles_id) particles_apm
     all_pos( :, npart_real+1:npart_all )= ghost_pos
 
     h_guess= h_guess(1:npart_all)
-    !h_guess(1:npart_real)= 10.0D0*h_guess(1:npart_real)
     h_guess(npart_real+1:npart_all)= ( dx*dy*dz )**third
 
     !----------------------------!
     !-- Allocate needed memory --!
     !----------------------------!
 
-    ! setup unit system
-    !CALL set_units('NSM')
-    !CALL read_options       ! TODO: set units and read options only once in the constructor
-
     npart= npart_all
+
     CALL allocate_SPH_memory
 
     CALL allocate_RCB_tree_memory_3D(npart)
     iorig(1:npart)= (/ (a,a=1,npart) /)
 
     IF( debug ) PRINT *, "10"
-
-    ! tabulate kernel, get ndes
-    !CALL ktable(ikernel,ndes)
-
-    ! flag that particles are 'alive'
-    !IF( .NOT.ALLOCATED( alive ) ) ALLOCATE( alive( npart ) )
-    !alive= 1
 
     CALL allocate_gradient( npart )
     CALL allocate_metric_on_particles( npart )
@@ -717,6 +706,10 @@ SUBMODULE (particles_id) particles_apm
              ABS( com_x-com_star )/ABS( com_star )
     PRINT *
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( all_pos, com_star, &
+    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
+    !$OMP             PRIVATE( pos_corr_tmp, a )
     DO a= 1, npart_real, 1
 
       pos_corr_tmp(1)= all_pos(1,a) - ( com_x - com_star )
@@ -735,6 +728,7 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
     ENDDO
+    !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "10"
 
@@ -776,12 +770,16 @@ SUBMODULE (particles_id) particles_apm
     ENDDO
     npart_real_half= itr
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( all_pos, npart_real_half, nu ) &
+    !$OMP             PRIVATE( a )
     DO a= 1, npart_real_half, 1
       all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
       all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
       all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
       nu( npart_real_half + a )        =   nu( a )
     ENDDO
+    !$OMP END PARALLEL DO
 
     PRINT *, "** After mirroring particles:"
     PRINT *, " * x coordinate of the center of mass of the star, ", &
@@ -1045,11 +1043,16 @@ SUBMODULE (particles_id) particles_apm
    !   ENDIF
 
       ! Mirror the particles above the xy plane, to below the xy plane
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( all_pos, npart_real ) &
+      !$OMP             PRIVATE( a )
       DO a= 1, npart_real/2, 1
         all_pos( 1, npart_real/2 + a )=   all_pos( 1, a )
         all_pos( 2, npart_real/2 + a )=   all_pos( 2, a )
         all_pos( 3, npart_real/2 + a )= - all_pos( 3, a )
       ENDDO
+      !$OMP END PARALLEL DO
 
       IF( debug )THEN
 
@@ -1227,6 +1230,7 @@ SUBMODULE (particles_id) particles_apm
       err_N_max=  0.0D0
       err_N_min=  1.D30
       err_N_mean= 0.0D0
+
       DO a= 1, npart_real, 1
 
         dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
@@ -1303,7 +1307,6 @@ SUBMODULE (particles_id) particles_apm
         all_pos_best= all_pos
       ENDIF
 
-      !PRINT *, "itr2= ", itr2
       PRINT *, " * Maximum relative error between the star density profile", &
                "   and its SPH estimate: err_N_max= ", err_N_max
       PRINT *, "     at position: x=", pos_maxerr(1), ", y=", pos_maxerr(2), &
@@ -1337,6 +1340,10 @@ SUBMODULE (particles_id) particles_apm
                          nu, h, nstar_real )      ! output
       nu= nu_all
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nu_tmp, nu, nstar_p, nstar_real, &
+      !$OMP                     nuratio_thres, npart_real ) &
+      !$OMP             PRIVATE( nu_tmp2, a )
       DO a= 1, npart_real, 1
 
         nu_tmp2= nu(a)
@@ -1348,16 +1355,9 @@ SUBMODULE (particles_id) particles_apm
                                             nu_tmp2/SQRT(nuratio_thres)
 
       ENDDO
+      !$OMP END PARALLEL DO
       nuratio_tmp= MAXVAL( nu_tmp(1:npart_real), DIM= 1 )&
                   /MINVAL( nu_tmp(1:npart_real), DIM= 1 )
-      !   PRINT *, "   max_nu=", &
-      !            MAXVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
-      !   PRINT *, "   min_nu=", &
-      !            MINVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
-      !   PRINT *, "   max_nu/min_nu=", &
-      !            MAXVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )&
-      !            /MINVAL( nstar_p(1:npart_real)/nstar_real(1:npart_real), DIM= 1 )
-      !   PRINT *
 
       PRINT *, " * Stopping the APM iteration at this step, with a threshold", &
                " for the baryon number ratio equal to "
@@ -1505,6 +1505,10 @@ SUBMODULE (particles_id) particles_apm
 
       ! If some of the particles crossed the xy plane top-down in the
       ! last step, reflect them back above the xy plane
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( all_pos, all_pos_tmp2, npart_real ) &
+      !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
         IF( all_pos_tmp2( 3, a ) > 0 .AND. &
@@ -1515,6 +1519,7 @@ SUBMODULE (particles_id) particles_apm
         ENDIF
 
       ENDDO
+      !$OMP END PARALLEL DO
 
       IF( debug ) PRINT *, "After correcting positions"
 
@@ -1773,6 +1778,10 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * Correcting nu..."
     PRINT *
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nu_tmp, nu, nstar_p, nstar_real, &
+    !$OMP                     nuratio_thres, npart_real ) &
+    !$OMP             PRIVATE( nu_tmp2, a )
     DO a= 1, npart_real, 1
 
       nu_tmp2= nu(a)
@@ -1784,6 +1793,7 @@ SUBMODULE (particles_id) particles_apm
                                           nu_tmp2/SQRT(nuratio_thres)
 
     ENDDO
+    !$OMP END PARALLEL DO
 
     !
     !-- Check that nu is acceptable
@@ -2037,12 +2047,16 @@ SUBMODULE (particles_id) particles_apm
     ENDDO
     npart_real_half= itr
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, nu, npart_real_half ) &
+    !$OMP             PRIVATE( a )
     DO a= 1, npart_real_half, 1
       pos( 1, npart_real_half + a )=   pos( 1, a )
       pos( 2, npart_real_half + a )=   pos( 2, a )
       pos( 3, npart_real_half + a )= - pos( 3, a )
       nu( npart_real_half + a )    =   nu( a )
     ENDDO
+    !$OMP END PARALLEL DO
 
     PRINT *, "** After mirroring particles:"
     PRINT *, " * x coordinate of the center of mass of the star, ", &
@@ -2162,12 +2176,16 @@ SUBMODULE (particles_id) particles_apm
       ENDDO
       npart_real_half= itr
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, nu, npart_real_half ) &
+      !$OMP             PRIVATE( a )
       DO a= 1, npart_real_half, 1
         pos( 1, npart_real_half + a )=   pos( 1, a )
         pos( 2, npart_real_half + a )=   pos( 2, a )
         pos( 3, npart_real_half + a )= - pos( 3, a )
         nu( npart_real_half + a )    =   nu( a )
       ENDDO
+      !$OMP END PARALLEL DO
 
     ENDIF
 
