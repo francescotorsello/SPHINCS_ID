@@ -59,14 +59,10 @@ SUBMODULE (particles_id) particles_apm
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                    deallocate_metric_on_particles
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    !USE alive_flag,          ONLY: alive
     USE set_h,               ONLY: exact_nei_tree_update, posmash
     USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
                                    deallocate_RCB_tree_memory_3D
-    !USE kernel_table,        ONLY: ktable
-    !USE input_output,        ONLY: read_options
-    USE units,               ONLY: umass!, set_units
-    !USE options,             ONLY: ikernel, ndes
+    USE units,               ONLY: umass
 
     USE APM,                 ONLY: density_loop, position_correction, assign_h
     USE analyze,             ONLY: COM
@@ -84,7 +80,7 @@ SUBMODULE (particles_id) particles_apm
 
     INTEGER:: a, a2, itr, itr2, n_inc         ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
-    INTEGER:: nx, ny, nz, i, j, k!, nus, mus
+    INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
@@ -94,7 +90,6 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: max_r_real, r_real, max_z_real
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, x_ell, y_ell, z_ell
     DOUBLE PRECISION:: min_nu, max_nu, min_nu2, max_nu2
-    !DOUBLE PRECISION:: det, sq_g, Theta_a
     ! The value of nu equal for all the particles, used during the APM iteration
     DOUBLE PRECISION:: nu_all
     DOUBLE PRECISION:: err_N_mean_min, err_N_mean_min_old, err_N_mean, &
@@ -109,7 +104,6 @@ SUBMODULE (particles_id) particles_apm
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
-    !DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
@@ -119,7 +113,6 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
-    !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
@@ -635,17 +628,6 @@ SUBMODULE (particles_id) particles_apm
     ALLOCATE( v_euler_y      (npart_real) )
     ALLOCATE( v_euler_z      (npart_real) )
 
- !   IF(.NOT.ALLOCATED( vel ))THEN
- !     ALLOCATE( vel( 0:3, npart_real ), STAT= ios, &
- !         ERRMSG= err_msg )
- !     IF( ios > 0 )THEN
- !        PRINT *, "...allocation error for array vel in SUBROUTINE ", &
- !                 "perform_apm. The error message is",&
- !                 err_msg
- !        STOP
- !     ENDIF
- !   ENDIF
-
     IF( debug ) PRINT *, "6"
 
     CALL binary% import_id( npart_real, all_pos(1,1:npart_real), &
@@ -686,115 +668,17 @@ SUBMODULE (particles_id) particles_apm
     !-- enforce centre of mass after having changed nu --!
     !----------------------------------------------------!
 
-    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( debug ) PRINT *, "9"
-
-    PRINT *, "** Before center of mass correction:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( all_pos, com_star, &
-    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
-    !$OMP             PRIVATE( pos_corr_tmp, a )
-    DO a= 1, npart_real, 1
-
-      pos_corr_tmp(1)= all_pos(1,a) - ( com_x - com_star )
-      pos_corr_tmp(2)= all_pos(2,a) - com_y
-      pos_corr_tmp(3)= all_pos(3,a) - com_z
-
-      IF( binary% import_mass_density( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-          .AND. &
-          binary% is_hydro_negative( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-      )THEN
-
-        all_pos(:,a)= pos_corr_tmp
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    IF( debug ) PRINT *, "10"
-
-    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( debug ) PRINT *, "9"
-
-    PRINT *, "** After center of mass correction:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
+    CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
+                                 nu(1:npart_real), binary, com_star, &
+                                 verbose= .TRUE. )
 
     !-----------------------------------------------------------------------!
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    pos_tmp= all_pos(:,1:npart_real)
-    nu_tmp= nu
-    itr= 0
-    DO a= 1, npart_real, 1
-      IF( pos_tmp( 3, a ) > 0.0D0 )THEN
-        itr= itr + 1
-        all_pos( 1, itr )= pos_tmp( 1, a )
-        all_pos( 2, itr )= pos_tmp( 2, a )
-        all_pos( 3, itr )= pos_tmp( 3, a )
-        nu( itr )        = nu_tmp( a )
-      ENDIF
-    ENDDO
-    npart_real_half= itr
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( all_pos, npart_real_half, nu ) &
-    !$OMP             PRIVATE( a )
-    DO a= 1, npart_real_half, 1
-      all_pos( 1, npart_real_half + a )=   all_pos( 1, a )
-      all_pos( 2, npart_real_half + a )=   all_pos( 2, a )
-      all_pos( 3, npart_real_half + a )= - all_pos( 3, a )
-      nu( npart_real_half + a )        =   nu( a )
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    PRINT *, "** After mirroring particles:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
+    CALL impose_equatorial_plane_symmetry( npart_real, &
+                                           all_pos(:,1:npart_real), &
+                                           nu(1:npart_real) )
 
     PRINT *, " * ID set up for the APM iteration."
     PRINT *
@@ -826,76 +710,23 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
     ENDDO
 
-    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( debug ) PRINT *, "9"
-
-    PRINT *, "** Before center of mass correction:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( all_pos, com_star, &
-    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
-    !$OMP             PRIVATE( pos_corr_tmp, a )
-    DO a= 1, npart_real, 1
-
-      pos_corr_tmp(1)= all_pos(1,a) - ( com_x - com_star )
-      pos_corr_tmp(2)= all_pos(2,a) - com_y
-      pos_corr_tmp(3)= all_pos(3,a) - com_z
-
-      IF( binary% import_mass_density( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-          .AND. &
-          binary% is_hydro_negative( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-      )THEN
-
-        all_pos(:,a)= pos_corr_tmp
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    IF( debug ) PRINT *, "10"
-
-    CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( debug ) PRINT *, "9"
-
-    PRINT *, "** After center of mass correction:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
+    CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
+                                 nu(1:npart_real), binary, com_star, &
+                                 verbose= .TRUE. )
 
     IF(.NOT.ALLOCATED( dNstar ))THEN
       ALLOCATE( dNstar( npart_real ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array dNstar in SUBROUTINE ", &
+                  "perform_apm. The error message is",&
+                  err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( nu_tmp ))THEN
+      ALLOCATE( nu_tmp( npart_real ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array nu_tmp in SUBROUTINE ", &
                   "perform_apm. The error message is",&
                   err_msg
          STOP
@@ -963,96 +794,14 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "enforcing center of mass..."
 
-      CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-                com_x, com_y, com_z, com_d ) ! output
-
-      IF( debug )THEN
-      PRINT *, "** After center of mass correction:"
-      PRINT *, " * x coordinate of the center of mass of the star, ", &
-               "from LORENE: com_star= ", com_star, "Msun_geo"
-      PRINT *, " * x coordinate of the center of mass of the particle ", &
-               "distribution: com_x= ", com_x, "Msun_geo"
-      PRINT *, " * y coordinate of the center of mass of the particle ", &
-               "distribution: com_y= ", com_y, "Msun_geo"
-      PRINT *, " * z coordinate of the center of mass of the particle ", &
-               "distribution: com_z= ", com_z, "Msun_geo"
-      PRINT *, " * Distance of the center of mass of the particle ", &
-               "distribution from the  origin: com_d= ", com_d
-      PRINT *, " * |com_x-com_star/com_star|=", &
-               ABS( com_x-com_star )/ABS( com_star )
-      PRINT *
-      ENDIF
-
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, com_star, &
-      !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
-      !$OMP             PRIVATE( pos_corr_tmp, a )
-      DO a= 1, npart_real, 1
-
-        pos_corr_tmp(1)= all_pos(1,a) - ( com_x - com_star )
-        pos_corr_tmp(2)= all_pos(2,a) - com_y
-        pos_corr_tmp(3)= all_pos(3,a) - com_z
-
-        IF( binary% import_mass_density( &
-                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-            .AND. &
-            binary% is_hydro_negative( &
-                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-        )THEN
-
-          all_pos(:,a)= pos_corr_tmp
-
-        ENDIF
-
-      ENDDO
-      !$OMP END PARALLEL DO
+      CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
+                                   nu(1:npart_real), binary, com_star )
 
       IF( debug ) PRINT *, "mirroring particles..."
 
-      ! Find particles above the xy plane
-      all_pos_tmp= all_pos(:,1:npart_real)
-      itr2= 0
-      DO a= 1, npart_real, 1
-
-        IF( all_pos_tmp( 3, a ) > 0.0D0 &
-            .AND. &
-            itr2 < npart_real/2 &
-        )THEN
-          itr2= itr2 + 1
-          all_pos( 1, itr2 )= all_pos_tmp( 1, a )
-          all_pos( 2, itr2 )= all_pos_tmp( 2, a )
-          all_pos( 3, itr2 )= all_pos_tmp( 3, a )
-        ENDIF
-
-      ENDDO
-      npart_real_half= itr2
-
-      ! If some of the particles crossed the xy plane top-down in the
-      ! last step, replace them with their previous position
-      ! above the xy plane
-   !   IF( npart_real_half < npart_real/2 )THEN
-   !
-   !     npart_missing= npart_real/2 - npart_real_half
-   !
-   !     DO a= npart_real_half + 1, npart_real/2, 1
-   !
-   !       all_pos( :, a )= all_pos_tmp2( :, a )
-   !
-   !     ENDDO
-   !
-   !   ENDIF
-
-      ! Mirror the particles above the xy plane, to below the xy plane
-
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, npart_real ) &
-      !$OMP             PRIVATE( a )
-      DO a= 1, npart_real/2, 1
-        all_pos( 1, npart_real/2 + a )=   all_pos( 1, a )
-        all_pos( 2, npart_real/2 + a )=   all_pos( 2, a )
-        all_pos( 3, npart_real/2 + a )= - all_pos( 3, a )
-      ENDDO
-      !$OMP END PARALLEL DO
+      CALL impose_equatorial_plane_symmetry( npart_real, &
+                                             all_pos(:,1:npart_real), &
+                                             nu(1:npart_real) )
 
       IF( debug )THEN
 
@@ -1126,10 +875,7 @@ SUBMODULE (particles_id) particles_apm
 
       h_guess(1:npart_real)= h(1:npart_real)
       !h_guess(npart_real+1:npart_all)= dx*dy*dz
-      !CALL assign_h( nn_des, &
-      !               npart_real, &
-      !               all_pos(:,1:npart_real), h_guess(1:npart_real), &
-      !               h(1:npart_real)  )
+
       CALL assign_h( nn_des, &
                      npart_all, &
                      all_pos, h_guess, h )
@@ -1158,9 +904,6 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "density_loop..."
 
-      !CALL density_loop( npart_real, all_pos(:,1:npart_real), &    ! input
-      !                   nu(1:npart_real) , h(1:npart_real) , &
-      !                   nstar_real(1:npart_real) )      ! output
       CALL density_loop( npart_all, all_pos, &    ! input
                          nu, h, nstar_real )      ! output
 
@@ -1333,9 +1076,6 @@ SUBMODULE (particles_id) particles_apm
 
       ! Compute particle number density
       nu= 1.0D0
-      !CALL density_loop( npart_real, all_pos(:,1:npart_real), &    ! input
-      !                   nu(1:npart_real), h(1:npart_real), &
-      !                   nstar_real(1:npart_real) )      ! output
       CALL density_loop( npart_all, all_pos, &    ! input
                          nu, h, nstar_real )      ! output
       nu= nu_all
@@ -1402,7 +1142,9 @@ SUBMODULE (particles_id) particles_apm
       !  n_inc= 0
       !ENDIF
 
-      ! EXIT conditions
+      !
+      !-- EXIT conditions
+      !
       IF( nuratio_des > 0.0D0 )THEN
 
         IF( nuratio_tmp >= nuratio_des*0.975D0 .AND. &
@@ -1549,111 +1291,17 @@ SUBMODULE (particles_id) particles_apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-    CALL COM( npart_real, pos, nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( debug ) PRINT *, "9"
-
-    PRINT *, "** Before center of mass correction:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, com_star, &
-    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
-    !$OMP             PRIVATE( pos_corr_tmp, a )
-    DO a= 1, npart_real, 1
-
-      pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star )
-      pos_corr_tmp(2)= pos(2,a) - com_y
-      pos_corr_tmp(3)= pos(3,a) - com_z
-
-      IF( binary% import_mass_density( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-          .AND. &
-          binary% is_hydro_negative( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-      )THEN
-
-        pos(:,a)= pos_corr_tmp
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    IF( debug ) PRINT *, "10"
-
-    CALL COM( npart_real, pos, nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( debug ) PRINT *, "9"
-
-    PRINT *, "** After center of mass correction:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
+    CALL correct_center_of_mass( npart_real, pos, &
+                                 nu(1:npart_real), binary, com_star, &
+                                 verbose= .TRUE. )
 
     !-----------------------------------------------------------------------!
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    pos_tmp= pos
-    nu_tmp= nu
-    itr= 0
-    DO a= 1, npart_real, 1
-      IF( pos_tmp( 3, a ) > 0.0D0 )THEN
-        itr= itr + 1
-        pos( 1, itr )= pos_tmp( 1, a )
-        pos( 2, itr )= pos_tmp( 2, a )
-        pos( 3, itr )= pos_tmp( 3, a )
-        nu( itr )    = nu_tmp( a )
-      ENDIF
-    ENDDO
-    npart_real_half= itr
-
-    DO a= 1, npart_real_half, 1
-      pos( 1, npart_real_half + a )=   pos( 1, a )
-      pos( 2, npart_real_half + a )=   pos( 2, a )
-      pos( 3, npart_real_half + a )= - pos( 3, a )
-      nu( npart_real_half + a )    =   nu( a )
-    ENDDO
-
-    PRINT *, "** After mirroring particles:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x - com_star )/ABS( com_star )
-    PRINT *
+    CALL impose_equatorial_plane_symmetry( npart_real, &
+                                           all_pos(:,1:npart_real), &
+                                           nu(1:npart_real) )
 
     !-----------------------------!
     !-- Print positions to file --!
@@ -1959,120 +1607,6 @@ SUBMODULE (particles_id) particles_apm
              100.0D0*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
     PRINT *
 
-    !----------------------------!
-    !-- enforce centre of mass --!
-    !----------------------------!
-
-    CALL COM( npart_real, pos, nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( debug ) PRINT *, "9"
-
-    PRINT *, "** Before center of mass correction:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, com_star, &
-    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
-    !$OMP             PRIVATE( pos_corr_tmp, a )
-    DO a= 1, npart_real, 1
-
-      pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star )
-      pos_corr_tmp(2)= pos(2,a) - com_y
-      pos_corr_tmp(3)= pos(3,a) - com_z
-
-      IF( binary% import_mass_density( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-          .AND. &
-          binary% is_hydro_negative( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-      )THEN
-
-        pos(:,a)= pos_corr_tmp
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    IF( debug ) PRINT *, "10"
-
-    CALL COM( npart_real, pos, nu(1:npart_real), & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( debug ) PRINT *, "9"
-
-    PRINT *, "** After center of mass correction:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x-com_star )/ABS( com_star )
-    PRINT *
-
-    !-----------------------------------------------------------------------!
-    !-- Mirror the positions after having repositioned the center of mass --!
-    !-----------------------------------------------------------------------!
-
-    pos_tmp= pos
-    nu_tmp= nu
-    itr= 0
-    DO a= 1, npart_real, 1
-      IF( pos_tmp( 3, a ) > 0.0D0 )THEN
-        itr= itr + 1
-        pos( 1, itr )= pos_tmp( 1, a )
-        pos( 2, itr )= pos_tmp( 2, a )
-        pos( 3, itr )= pos_tmp( 3, a )
-        nu( itr )    = nu_tmp( a )
-      ENDIF
-    ENDDO
-    npart_real_half= itr
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, nu, npart_real_half ) &
-    !$OMP             PRIVATE( a )
-    DO a= 1, npart_real_half, 1
-      pos( 1, npart_real_half + a )=   pos( 1, a )
-      pos( 2, npart_real_half + a )=   pos( 2, a )
-      pos( 3, npart_real_half + a )= - pos( 3, a )
-      nu( npart_real_half + a )    =   nu( a )
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    PRINT *, "** After mirroring particles:"
-    PRINT *, " * x coordinate of the center of mass of the star, ", &
-             "from LORENE: com_star= ", com_star, "Msun_geo"
-    PRINT *, " * x coordinate of the center of mass of the particle ", &
-             "distribution: com_x= ", com_x, "Msun_geo"
-    PRINT *, " * y coordinate of the center of mass of the particle ", &
-             "distribution: com_y= ", com_y, "Msun_geo"
-    PRINT *, " * z coordinate of the center of mass of the particle ", &
-             "distribution: com_z= ", com_z, "Msun_geo"
-    PRINT *, " * Distance of the center of mass of the particle ", &
-             "distribution from the  origin: com_d= ", com_d
-    PRINT *, " * |com_x-com_star/com_star|=", &
-             ABS( com_x - com_star )/ABS( com_star )
-    PRINT *
-
     IF( correct_nu )THEN
 
       nu= nu/(nu_tot*amu/Msun/mass)
@@ -2088,106 +1622,23 @@ SUBMODULE (particles_id) particles_apm
                100.0D0*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
       PRINT *
 
-      !----------------------------!
-      !-- enforce centre of mass --!
-      !----------------------------!
-
-      CALL COM( npart_real, pos, nu(1:npart_real), & ! input
-                com_x, com_y, com_z, com_d ) ! output
-
-      IF( debug ) PRINT *, "9"
-
-      PRINT *, "** Before center of mass correction:"
-      PRINT *, " * x coordinate of the center of mass of the star, ", &
-               "from LORENE: com_star= ", com_star, "Msun_geo"
-      PRINT *, " * x coordinate of the center of mass of the particle ", &
-               "distribution: com_x= ", com_x, "Msun_geo"
-      PRINT *, " * y coordinate of the center of mass of the particle ", &
-               "distribution: com_y= ", com_y, "Msun_geo"
-      PRINT *, " * z coordinate of the center of mass of the particle ", &
-               "distribution: com_z= ", com_z, "Msun_geo"
-      PRINT *, " * Distance of the center of mass of the particle ", &
-               "distribution from the  origin: com_d= ", com_d
-      PRINT *, " * |com_x-com_star/com_star|=", &
-               ABS( com_x-com_star )/ABS( com_star )
-      PRINT *
-
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( pos, com_star, &
-      !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
-      !$OMP             PRIVATE( pos_corr_tmp, a )
-      DO a= 1, npart_real, 1
-
-        pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star )
-        pos_corr_tmp(2)= pos(2,a) - com_y
-        pos_corr_tmp(3)= pos(3,a) - com_z
-
-        IF( binary% import_mass_density( &
-                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-            .AND. &
-            binary% is_hydro_negative( &
-                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-        )THEN
-
-          pos(:,a)= pos_corr_tmp
-
-        ENDIF
-
-      ENDDO
-      !$OMP END PARALLEL DO
-
-      IF( debug ) PRINT *, "10"
-
-      CALL COM( npart_real, pos, nu(1:npart_real), & ! input
-                com_x, com_y, com_z, com_d ) ! output
-
-      IF( debug ) PRINT *, "9"
-
-      PRINT *, "** After center of mass correction:"
-      PRINT *, " * x coordinate of the center of mass of the star, ", &
-               "from LORENE: com_star= ", com_star, "Msun_geo"
-      PRINT *, " * x coordinate of the center of mass of the particle ", &
-               "distribution: com_x= ", com_x, "Msun_geo"
-      PRINT *, " * y coordinate of the center of mass of the particle ", &
-               "distribution: com_y= ", com_y, "Msun_geo"
-      PRINT *, " * z coordinate of the center of mass of the particle ", &
-               "distribution: com_z= ", com_z, "Msun_geo"
-      PRINT *, " * Distance of the center of mass of the particle ", &
-               "distribution from the  origin: com_d= ", com_d
-      PRINT *, " * |com_x-com_star/com_star|=", &
-               ABS( com_x-com_star )/ABS( com_star )
-      PRINT *
-
-      !-----------------------------------------------------------------------!
-      !-- Mirror the positions after having repositioned the center of mass --!
-      !-----------------------------------------------------------------------!
-
-      pos_tmp= pos
-      nu_tmp= nu
-      itr= 0
-      DO a= 1, npart_real, 1
-        IF( pos_tmp( 3, a ) > 0.0D0 )THEN
-          itr= itr + 1
-          pos( 1, itr )= pos_tmp( 1, a )
-          pos( 2, itr )= pos_tmp( 2, a )
-          pos( 3, itr )= pos_tmp( 3, a )
-          nu( itr )    = nu_tmp( a )
-        ENDIF
-      ENDDO
-      npart_real_half= itr
-
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( pos, nu, npart_real_half ) &
-      !$OMP             PRIVATE( a )
-      DO a= 1, npart_real_half, 1
-        pos( 1, npart_real_half + a )=   pos( 1, a )
-        pos( 2, npart_real_half + a )=   pos( 2, a )
-        pos( 3, npart_real_half + a )= - pos( 3, a )
-        nu( npart_real_half + a )    =   nu( a )
-      ENDDO
-      !$OMP END PARALLEL DO
-
     ENDIF
+
+    !----------------------------!
+    !-- enforce centre of mass --!
+    !----------------------------!
+
+    CALL correct_center_of_mass( npart_real, pos, &
+                                 nu(1:npart_real), binary, com_star, &
+                                 verbose= .TRUE. )
+
+    !-----------------------------------------------------------------------!
+    !-- Mirror the positions after having repositioned the center of mass --!
+    !-----------------------------------------------------------------------!
+
+    CALL impose_equatorial_plane_symmetry( npart_real, &
+                                           all_pos(:,1:npart_real), &
+                                           nu(1:npart_real) )
 
     !-------------------!
     !-- monitoring... --!
@@ -2500,6 +1951,199 @@ SUBMODULE (particles_id) particles_apm
     !$OMP END PARALLEL DO
 
   END SUBROUTINE compute_nstar_p
+
+
+  SUBROUTINE correct_center_of_mass( npart_real, pos, nu, binary, com_star, &
+                                     verbose )
+
+    !***********************************************************
+    !                                                          *
+    ! Translate the particles so that their center of mass     *
+    ! coincides with the center of mass of the star, given by  *
+    ! LORENE                                                   *
+    !                                                          *
+    ! FT 1.09.2021                                             *
+    !                                                          *
+    !***********************************************************
+
+    USE analyze, ONLY: COM
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN):: npart_real
+    DOUBLE PRECISION, INTENT(IN):: com_star
+    LOGICAL, INTENT(IN), OPTIONAL:: verbose
+    TYPE(bns), INTENT(IN):: binary
+
+    DOUBLE PRECISION, DIMENSION(3,npart_real), INTENT(INOUT):: pos
+    DOUBLE PRECISION, DIMENSION(npart_real),   INTENT(INOUT):: nu
+
+    INTEGER:: a
+    DOUBLE PRECISION:: com_x, com_y, com_z, com_d
+    DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
+
+    CALL COM( npart_real, pos, nu, & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+      PRINT *, "** Before center of mass correction:"
+      PRINT *, " * x coordinate of the center of mass of the star, ", &
+               "from LORENE: com_star= ", com_star, "Msun_geo"
+      PRINT *, " * x coordinate of the center of mass of the particle ", &
+               "distribution: com_x= ", com_x, "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the particle ", &
+               "distribution: com_y= ", com_y, "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the particle ", &
+               "distribution: com_z= ", com_z, "Msun_geo"
+      PRINT *, " * Distance of the center of mass of the particle ", &
+               "distribution from the  origin: com_d= ", com_d
+      PRINT *, " * |com_x-com_star/com_star|=", &
+               ABS( com_x-com_star )/ABS( com_star )
+      PRINT *
+    ENDIF
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, com_star, &
+    !$OMP                     com_x, com_y, com_z, binary, npart_real ) &
+    !$OMP             PRIVATE( pos_corr_tmp, a )
+    DO a= 1, npart_real, 1
+
+      pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star )
+      pos_corr_tmp(2)= pos(2,a) - com_y
+      pos_corr_tmp(3)= pos(3,a) - com_z
+
+      IF( binary% import_mass_density( &
+                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
+          .AND. &
+          binary% is_hydro_negative( &
+                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+      )THEN
+
+        pos(:,a)= pos_corr_tmp
+
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    CALL COM( npart_real, pos, nu, & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+      PRINT *, "** After center of mass correction:"
+      PRINT *, " * x coordinate of the center of mass of the star, ", &
+               "from LORENE: com_star= ", com_star, "Msun_geo"
+      PRINT *, " * x coordinate of the center of mass of the particle ", &
+               "distribution: com_x= ", com_x, "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the particle ", &
+               "distribution: com_y= ", com_y, "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the particle ", &
+               "distribution: com_z= ", com_z, "Msun_geo"
+      PRINT *, " * Distance of the center of mass of the particle ", &
+               "distribution from the  origin: com_d= ", com_d
+      PRINT *, " * |com_x-com_star/com_star|=", &
+               ABS( com_x-com_star )/ABS( com_star )
+      PRINT *
+    ENDIF
+
+  END SUBROUTINE correct_center_of_mass
+
+
+  SUBROUTINE impose_equatorial_plane_symmetry( npart_real, pos, nu, com_star, &
+                                               verbose )
+
+    !*************************************************************
+    !                                                            *
+    ! Mirror the particle with z>0 with respect to the xy plane, *
+    ! to impose the equatorial-plane symmetry                    *
+    !                                                            *
+    ! FT 1.09.2021                                               *
+    !                                                            *
+    !*************************************************************
+
+    USE analyze, ONLY: COM
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN):: npart_real
+    DOUBLE PRECISION, INTENT(IN), OPTIONAL:: com_star
+    LOGICAL, INTENT(IN), OPTIONAL:: verbose
+
+    DOUBLE PRECISION, DIMENSION(3,npart_real), INTENT(INOUT):: pos
+    DOUBLE PRECISION, DIMENSION(npart_real),   INTENT(INOUT):: nu
+
+    INTEGER:: a, itr, npart_real_half
+    DOUBLE PRECISION:: com_x, com_y, com_z, com_d
+
+    DOUBLE PRECISION, DIMENSION(3,npart_real):: pos_tmp
+    DOUBLE PRECISION, DIMENSION(npart_real)  :: nu_tmp
+
+    pos_tmp= pos
+    nu_tmp= nu
+    itr= 0
+    DO a= 1, npart_real, 1
+      IF( pos_tmp( 3, a ) > 0.0D0 &
+          .AND. &
+          itr < npart_real/2 )THEN
+        itr= itr + 1
+        pos( 1, itr )= pos_tmp( 1, a )
+        pos( 2, itr )= pos_tmp( 2, a )
+        pos( 3, itr )= pos_tmp( 3, a )
+        nu( itr )    = nu_tmp( a )
+      ENDIF
+    ENDDO
+    npart_real_half= itr
+
+    ! If some of the particles crossed the xy plane top-down in the
+    ! last step, replace them with their previous position
+    ! above the xy plane
+!   IF( npart_real_half < npart_real/2 )THEN
+!
+!     npart_missing= npart_real/2 - npart_real_half
+!
+!     DO a= npart_real_half + 1, npart_real/2, 1
+!
+!       pos( :, a )= all_pos_tmp2( :, a )
+!
+!     ENDDO
+!
+!   ENDIF
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, npart_real_half, nu ) &
+    !$OMP             PRIVATE( a )
+    DO a= 1, npart_real_half, 1
+      pos( 1, npart_real_half + a )=   pos( 1, a )
+      pos( 2, npart_real_half + a )=   pos( 2, a )
+      pos( 3, npart_real_half + a )= - pos( 3, a )
+      nu( npart_real_half + a )    =   nu( a )
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+
+      CALL COM( npart_real, pos, nu, & ! input
+                com_x, com_y, com_z, com_d ) ! output
+
+      PRINT *, "** After mirroring particles:"
+      IF( PRESENT(com_star) ) PRINT *, &
+               " * x coordinate of the center of mass of the star, ", &
+               "from LORENE: com_star= ", com_star, "Msun_geo"
+      PRINT *, " * x coordinate of the center of mass of the particle ", &
+               "distribution: com_x= ", com_x, "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the particle ", &
+               "distribution: com_y= ", com_y, "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the particle ", &
+               "distribution: com_z= ", com_z, "Msun_geo"
+      PRINT *, " * Distance of the center of mass of the particle ", &
+               "distribution from the  origin: com_d= ", com_d
+      IF( PRESENT(com_star) ) PRINT *, " * |com_x-com_star/com_star|=", &
+               ABS( com_x-com_star )/ABS( com_star )
+      PRINT *
+
+    ENDIF
+
+  END SUBROUTINE impose_equatorial_plane_symmetry
 
 
   SUBROUTINE get_neighbours_bf(ipart,npart,pos,h,dimensions,nnei,neilist)

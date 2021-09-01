@@ -26,6 +26,7 @@ SPHINCS_LORENE/**/shells*.dat
 SPHINCS_LORENE/**/binns*.dat
 SPHINCS_LORENE/**/negative*.dat
 SPHINCS_LORENE/*analysis.dat
+SPHINCS_LORENE/nu_evolution.dat
 SPHINCS_LORENE/bssn*.dat
 SPHINCS_LORENE/sph*.dat
 SPHINCS_LORENE/err_*.dat
