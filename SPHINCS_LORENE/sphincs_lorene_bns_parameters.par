@@ -83,7 +83,7 @@ placer(1,:)=0                     ! 0: Read particle positions from formatted
 !-----------------------------------------------------!
 ! Choose to export data to binary and formatted files !
 !-----------------------------------------------------!
-export_bin=.FALSE.                ! Export to binary files
+export_bin=.TRUE.                ! Export to binary files
 export_form=.FALSE.               ! Export to formatted files
 export_form_xy=.FALSE.  ! Export only the data on the xy plane to formatted files
 export_form_x=.FALSE.   ! Export only the data on the x axis to formatted files,

@@ -3,7 +3,8 @@
 ! Copyright:    GNU General Public License (GPLv3)
 
 MODULE bns_id
-
+!! This module contains the definition of TYPE bns, and the SUBROUTINES that
+!! bind to the methods
 
   !********************************************************
   !                                                       *
@@ -43,6 +44,7 @@ MODULE bns_id
   !*******************************************************
 
   TYPE:: bns
+  !! TYPE representing a binary sstem of neutron stars (bns)
 
 
     PRIVATE

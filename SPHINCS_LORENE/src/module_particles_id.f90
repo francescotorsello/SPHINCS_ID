@@ -650,4 +650,151 @@ MODULE particles_id
 
   END INTERFACE
 
+
+
+  CONTAINS
+
+
+
+  SUBROUTINE check_particle_positions( npart, pos, debug )
+
+    !*************************************************
+    !                                                *
+    ! Check that the particles do not have the same  *
+    ! positions                                      *
+    !                                                *
+    ! FT 1.9.2021                                    *
+    !                                                *
+    !*************************************************
+
+    USE NR,             ONLY: indexx
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN):: npart
+    LOGICAL, INTENT(IN), OPTIONAL:: debug
+    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+
+    INTEGER:: itr, itr2, x_idx
+    INTEGER, DIMENSION(npart):: x_sort
+    INTEGER, DIMENSION(:), ALLOCATABLE:: x_number
+
+    PRINT *, "** Checking that there are not multiple particles", &
+             " at the same position..."
+    PRINT *
+
+    ALLOCATE( x_number( npart ) )
+
+    ! Sort x coordinates of the particles
+    CALL indexx( npart, pos( 1, : ), x_sort )
+
+    x_number= 1
+    itr2= 1
+    ! Find the number of times each x appears
+    DO itr= 1, npart - 1, 1
+
+      IF( pos( 1, x_sort(itr) ) == &
+          pos( 1, x_sort(itr+1) ) )THEN
+
+        x_number(itr2)= x_number(itr2) + 1
+
+      ELSE
+
+        itr2= itr2 + 1
+
+      ENDIF
+
+    ENDDO
+    x_number= x_number(1:itr2)
+
+    IF( SUM( x_number ) /= npart )THEN
+
+      PRINT *, "** ERROR! The sum of the numbers of particles with the same", &
+               " x is not equal to the particle number."
+      PRINT *, " * SUM( x_number )=", SUM( x_number ), ", ", &
+               "npart=", npart
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+    IF( PRESENT(debug) .AND. debug == .TRUE. )THEN
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, x_sort, x_number ) &
+      !$OMP             PRIVATE( itr, itr2, x_idx )
+      DO itr= 1, SIZE(x_number), 1
+
+        IF( itr == 1 )THEN
+          x_idx= 1
+        ELSE
+          x_idx= SUM(x_number(1:itr-1)) + 1
+        ENDIF
+
+        DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
+
+          ! If they do not have the same x
+          IF( pos( 1, x_sort(itr2) ) /= &
+              pos( 1, x_sort(itr2+1) ) )THEN
+
+            PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
+                     " and", x_sort(itr2+1), &
+                     " do not have the same x, but should!"
+            PRINT *, pos( :, x_sort(itr2) )
+            PRINT *, pos( :, x_sort(itr2+1) )
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
+
+          ENDIF
+
+        ENDDO
+      ENDDO
+      !$OMP END PARALLEL DO
+
+    ENDIF
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, x_sort, x_number ) &
+    !$OMP             PRIVATE( itr, itr2, x_idx )
+    DO itr= 1, SIZE(x_number), 1
+
+      IF( itr == 1 )THEN
+        x_idx= 1
+      ELSE
+        x_idx= SUM(x_number(1:itr-1)) + 1
+      ENDIF
+
+      DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
+
+        ! If they have the same y
+        IF( pos( 2, x_sort(itr2) ) == &
+            pos( 2, x_sort(itr2+1) ) )THEN
+
+          ! If they have the same z
+          IF( pos( 3, x_sort(itr2) ) == &
+              pos( 3, x_sort(itr2+1) ) )THEN
+
+            ! They are the same
+            PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
+                     " and", x_sort(itr2+1), " have the same coordinates!"
+            PRINT *, pos( :, x_sort(itr2) )
+            PRINT *, pos( :, x_sort(itr2+1) )
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
+
+          ENDIF
+        ENDIF
+
+      ENDDO
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    DEALLOCATE( x_number )
+
+  END SUBROUTINE check_particle_positions
+
+
 END MODULE particles_id

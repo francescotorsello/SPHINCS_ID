@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) spherical_shells
+SUBMODULE (particles_id) spherical_surfaces
 
   !************************************************
   !                                               *
@@ -1885,4 +1885,4 @@ SUBMODULE (particles_id) spherical_shells
   END FUNCTION particle_volume
 
 
-END SUBMODULE spherical_shells
+END SUBMODULE spherical_surfaces

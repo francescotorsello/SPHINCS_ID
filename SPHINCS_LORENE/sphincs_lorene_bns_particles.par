@@ -10,7 +10,8 @@ parts_pos_path="pos-archive/"     ! Path to the directory containing the
                                   ! formatted files with the particle positions
 parts_pos=!"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat"  ! positions and, optionally, nu
-          "apm-pos-nu_135135_42km_apr4_500k_hr.dat"
+          "apm-pos-nu_135135_42km_apr4_500k.dat"
+          !"apm-pos-nu_135135_42km_apr4_500k_hr.dat"
           !"apm-pos_1218_45km_pol275_1M.dat"
           !"apm-pos_1218_45km_pol275_2M.dat"
 columns(:)=!2,3,4            ! Columns containing the particle positions;
@@ -86,8 +87,8 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r
 !----------------------------------------------------!
 ! Parameters for the Artifical Pressure Method (APM) !
 !----------------------------------------------------!
-apm_iterate1=.TRUE.    ! If .TRUE. applies the APM to the first star
-apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
+apm_iterate1=.FALSE.    ! If .TRUE. applies the APM to the first star
+apm_iterate2=.FALSE.    ! If .TRUE. applies the APM to the second star
                        ! Note that if reflect_particles_x= .TRUE. and the
                        ! star mass ratio is in [0.995,1.005], the particles
                        ! on the second star will be the reflection about the yz
@@ -102,7 +103,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.4D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.8D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc

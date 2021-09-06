@@ -24,13 +24,14 @@ SUBMODULE (particles_id) particles_apm
 
     !****************************************************
     !                                                   *
-    ! Compute  the particle positions as follows:       *
+    ! Compute the particle positions as follows:        *
     !                                                   *
     !   1. Take initial particle distribution as input  *
     !   2. Assume that the particles have the same mass *
     !   3. Do the APM iteration so that the final       *
-    !      particle number density matches the baryon   *
-    !      density in the star                          *
+    !      SPH kernel estimate of the baryon mass       *
+    !      density matches the baryon density in the    *
+    !      star as given by LORENE                      *
     !   4. Correct the particle masses ONCE in order    *
     !      to match the density even better. Since we   *
     !      don't want a large mass ratio, we impose a   *
@@ -42,10 +43,7 @@ SUBMODULE (particles_id) particles_apm
     ! that kernel-estimate very well the mass density   *
     ! of the star, and has a low mass ratio.            *
     !                                                   *
-    ! This procedure assigns positions and nu. After it *
-    ! is performed, the other SPH quantities are        *
-    ! computed, and then they are printed to a binary   *
-    ! file ready to be used by SPHINCS_BSSN.            *
+    ! This procedure assigns positions and nu.          *
     !                                                   *
     ! FT 04.06.2021                                     *
     !                                                   *
@@ -1115,8 +1113,6 @@ SUBMODULE (particles_id) particles_apm
       IF( err_N_mean > err_mean_old )THEN
         n_inc= n_inc + 1
       ENDIF
-      PRINT *, " * n_inc= ", n_inc
-      PRINT *
       !IF( ABS( err_N_mean - err_mean_old )/ABS( err_mean_old ) < iter_tol &
       !    .AND. &
       !    err_N_max < 10.0D0 &
@@ -1147,12 +1143,14 @@ SUBMODULE (particles_id) particles_apm
       !
       IF( nuratio_des > 0.0D0 )THEN
 
-        IF( nuratio_tmp >= nuratio_des*0.975D0 .AND. &
-            nuratio_tmp <= nuratio_des*1.025D0 .AND. &
-            nuratio_tmp /= nuratio_thres ) EXIT
+        IF( ( nuratio_tmp >= nuratio_des*0.975D0 .AND. &
+              nuratio_tmp <= nuratio_des*1.025D0 .AND. &
+              nuratio_tmp /= nuratio_thres ) .OR. itr == apm_max_it ) EXIT
 
       ELSE
 
+        PRINT *, " * n_inc= ", n_inc
+        PRINT *
         IF( n_inc == max_inc .OR. itr == apm_max_it ) EXIT
 
       ENDIF
@@ -1669,7 +1667,7 @@ SUBMODULE (particles_id) particles_apm
 
     ! get RELATIVE nu's right
     dN_av= 0.0D0
-        dN_max= 0.0D0
+    dN_max= 0.0D0
     DO a= 1, npart_real, 1
       dN=     ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
       dN_max= MAX(dN_max,dN)
@@ -1813,6 +1811,11 @@ SUBMODULE (particles_id) particles_apm
     CALL deallocate_RCB_tree_memory_3D()
     IF( debug ) PRINT *, "6"
     CALL deallocate_SPH_memory()
+
+    !
+    !-- Check that there aren't particles with the same positions
+    !
+    CALL check_particle_positions( npart_real, pos )
 
   END PROCEDURE perform_apm
 
@@ -2171,8 +2174,8 @@ SUBMODULE (particles_id) particles_apm
     r_int2= (2.0D0*h(ipart))**2
 
     nnei= 0
-  !    !$OMP PARALLEL DO SHARED(pos,dimensions,ipart,npart,r_int2,nnei,neilist)&
-  !    !$OMP             PRIVATE(a,diff,d2)
+    !$OMP PARALLEL DO SHARED(pos,dimensions,ipart,npart,r_int2,nnei,neilist)&
+    !$OMP             PRIVATE(a,diff,d2)
     DO a= 1, npart, 1
 
       IF( a /= ipart )THEN
@@ -2189,7 +2192,7 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
     ENDDO
-  !    !$OMP END PARALLEL DO
+    !$OMP END PARALLEL DO
 
   END SUBROUTINE get_neighbours_bf
 
