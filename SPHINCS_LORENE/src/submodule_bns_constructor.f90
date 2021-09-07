@@ -75,10 +75,17 @@ SUBMODULE (bns_id) bns_constructor
 
   MODULE PROCEDURE construct_binary
 
+    !************************************************
+    !                                               *
+    !! Construct the LORENE Bin_NS object           *
+    !                                               *
+    !  FT                                           *
+    !                                               *
+    !************************************************
+
     IMPLICIT NONE
 
     CHARACTER(KIND= C_CHAR, LEN= 7):: default_case
-
     LOGICAL:: exist
 
     !PRINT *, "** Executing the construct_binary subroutine..."
@@ -134,7 +141,7 @@ SUBMODULE (bns_id) bns_constructor
     !************************************************
     !                                               *
     ! Destruct the LORENE Bin_NS object and free    *
-    ! the pointeri pointing to it                   *
+    ! the pointer pointing to it                    *
     !                                               *
     ! FT                                            *
     !                                               *

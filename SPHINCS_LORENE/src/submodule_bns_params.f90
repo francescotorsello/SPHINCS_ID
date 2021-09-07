@@ -183,7 +183,7 @@ SUBMODULE (bns_id) bns_params
     THIS% mOmega= THIS% angular_vel/(c_light*cm2km) &
                   *(THIS% mass_grav1 + THIS% mass_grav2)*Msun_geo
 
-    ! Compute t_mrg
+    ! Compute t_merger
 
     THIS% t_merger= 5.0D0/256.0D0*(THIS% distance**4.0D0) &
                     /( THIS% mass_grav1*THIS% mass_grav2* &

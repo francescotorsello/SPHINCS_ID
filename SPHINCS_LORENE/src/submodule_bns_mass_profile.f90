@@ -4,15 +4,15 @@
 
 SUBMODULE (bns_id) bns_mass_profile
 
-  !*********************************************
-  !                                            *
-  ! Implementation of the method of TYPE bns   *
-  ! that integrates the baryon mass density to *
-  ! extract the radial baryon mass profile.    *
-  !                                            *
-  ! FT 12.07.2021                              *
-  !                                            *
-  !*********************************************
+  !********************************************
+  !
+  !# Implementation of the method of TYPE bns
+  !  that integrates the baryon mass density to
+  !  extract the radial baryon mass profile.
+  !
+  !  FT 12.07.2021
+  !
+  !********************************************
 
 
   IMPLICIT NONE
@@ -29,13 +29,13 @@ SUBMODULE (bns_id) bns_mass_profile
   MODULE PROCEDURE integrate_baryon_mass_density
 
     !************************************************
-    !                                               *
-    ! Perform 3D integration over a spherical grid  *
-    ! of the baryon mass density. Output baryon     *
-    ! mass and radial mass profile.                 *
-    !                                               *
-    ! FT 19.02.2021                                 *
-    !                                               *
+    !
+    !# Perform 3D integration over a spherical grid
+    !  of the baryon mass density. Output baryon
+    !  mass and radial mass profile.
+    !
+    !  FT 19.02.2021
+    !
     !************************************************
 
     !$ USE OMP_LIB
