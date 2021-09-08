@@ -408,146 +408,146 @@ MODULE bns_id
     !PROCEDURE, PUBLIC:: get_bns_ptr
 
     PROCEDURE, PUBLIC:: get_angular_vel
-    !! Returns angular_vel
+    !! Returns [[bns:angular_vel]]
     PROCEDURE, PUBLIC:: get_distance
-    !! Returns distance
+    !! Returns [[bns:distance]]
     PROCEDURE, PUBLIC:: get_distance_com
-    !! Returns distance_com
+    !! Returns [[bns:distance_com]]
     PROCEDURE, PUBLIC:: get_mass1
-    !! Returns mass1
+    !! Returns [[bns:mass1]]
     PROCEDURE, PUBLIC:: get_mass2
-    !! Returns mass2
+    !! Returns [[bns:mass2]]
     PROCEDURE, PUBLIC:: get_grav_mass1
-    !! Returns mass_grav1
+    !! Returns [[bns:mass_grav1]]
     PROCEDURE, PUBLIC:: get_grav_mass2
-    !! Returns mass_grav2
+    !! Returns [[bns:mass_grav2]]
     PROCEDURE, PUBLIC:: get_adm_mass
-    !! Returns adm_mass
+    !! Returns [[bns:adm_mass]]
     PROCEDURE, PUBLIC:: get_angular_momentum
-    !! Returns angular_momentum
+    !! Returns [[bns:angular_momentum]]
     PROCEDURE, PUBLIC:: get_radius1_x_comp
-    !! Returns radius1_x_comp
+    !! Returns [[bns:radius1_x_comp]]
     PROCEDURE, PUBLIC:: get_radius1_y
-    !! Returns radius1_y
+    !! Returns [[bns:radius1_y]]
     PROCEDURE, PUBLIC:: get_radius1_z
-    !! Returns radius1_z
+    !! Returns [[bns:radius1_z]]
     PROCEDURE, PUBLIC:: get_radius1_x_opp
-    !! Returns radius1_x_opp
+    !! Returns [[bns:radius1_x_opp]]
     PROCEDURE, PUBLIC:: get_center1_x
-    !! Returns center1_x
+    !! Returns [[bns:center1_x]]
     PROCEDURE, PUBLIC:: get_barycenter1_x
-    !! Returns barycenter1_x
+    !! Returns [[bns:barycenter1_x]]
     PROCEDURE, PUBLIC:: get_radius2_x_comp
-    !! Returns radius2_x_comp
+    !! Returns [[bns:radius2_x_comp]]
     PROCEDURE, PUBLIC:: get_radius2_y
-    !! Returns radius2_y
+    !! Returns [[bns:radius2_y]]
     PROCEDURE, PUBLIC:: get_radius2_z
-    !! Returns radius2_y
+    !! Returns [[bns:radius2_y]]
     PROCEDURE, PUBLIC:: get_radius2_x_opp
-    !! Returns radius2_x_opp
+    !! Returns [[bns:radius2_x_opp]]
     PROCEDURE, PUBLIC:: get_center2_x
-    !! Returns center2_x
+    !! Returns [[bns:center2_x]]
     PROCEDURE, PUBLIC:: get_barycenter2_x
-    !! Returns barycenter2_x
+    !! Returns [[bns:barycenter2_x]]
     PROCEDURE, PUBLIC:: get_ent_center1
-    !! Returns ent_center1
+    !! Returns [[bns:ent_center1]]
     PROCEDURE, PUBLIC:: get_nbar_center1
-    !! Returns nbar_center1
+    !! Returns [[bns:nbar_center1]]
     PROCEDURE, PUBLIC:: get_rho_center1
-    !! Returns rho_center1
+    !! Returns [[bns:rho_center1]]
     PROCEDURE, PUBLIC:: get_energy_density_center1
-    !! Returns energy_density_center1
+    !! Returns [[bns:energy_density_center1]]
     PROCEDURE, PUBLIC:: get_specific_energy_center1
-    !! Returns specific_energy_center1
+    !! Returns [[bns:specific_energy_center1]]
     PROCEDURE, PUBLIC:: get_pressure_center1
-    !! Returns pressure_center1
+    !! Returns [[bns:pressure_center1]]
     PROCEDURE, PUBLIC:: get_ent_center2
-    !! Returns ent_center2
+    !! Returns [[bns:ent_center2]]
     PROCEDURE, PUBLIC:: get_nbar_center2
-    !! Returns nbar_center2
+    !! Returns [[bns:nbar_center2]]
     PROCEDURE, PUBLIC:: get_rho_center2
-    !! Returns rho_center2
+    !! Returns [[bns:rho_center2]]
     PROCEDURE, PUBLIC:: get_energy_density_center2
-    !! Returns energy_density_center2
+    !! Returns [[bns:energy_density_center2]]
     PROCEDURE, PUBLIC:: get_specific_energy_center2
-    !! Returns specific_energy_center2
+    !! Returns [[bns:specific_energy_center2]]
     PROCEDURE, PUBLIC:: get_pressure_center2
-    !! Returns pressure_center2
+    !! Returns [[bns:pressure_center2]]
     PROCEDURE, PUBLIC:: get_eos1
-    !! Returns ent_eos1
+    !! Returns [[bns:eos1]]
     PROCEDURE, PUBLIC:: get_eos2
-    !! Returns ent_eos2
+    !! Returns [[bns:eos2]]
     PROCEDURE, PUBLIC:: get_eos1_id
-    !! Returns ent_eos1_id
+    !! Returns [[bns:eos1_id]]
     PROCEDURE, PUBLIC:: get_eos2_id
-    !! Returns ent_eos2_id
+    !! Returns [[bns:eos2_id]]
 
     ! PROCEDURES to be used for single polytropic EOS
     PROCEDURE, PUBLIC:: get_gamma_1
-    !! Returns gamma_1
+    !! Returns [[bns:gamma_1]]
     PROCEDURE, PUBLIC:: get_gamma_2
-    !! Returns gamma_2
+    !! Returns [[bns:gamma_2]]
     PROCEDURE, PUBLIC:: get_kappa_1
-    !! Returns kappa_1
+    !! Returns [[bns:kappa_1]]
     PROCEDURE, PUBLIC:: get_kappa_2
-    !! Returns kappa_2
+    !! Returns [[bns:kappa_2]]
 
     ! PROCEDURES to be used for piecewise polytropic EOS
     PROCEDURE, PUBLIC:: get_npeos_1
-    !! Returns npeos_1
+    !! Returns [[bns:npeos_1]]
     PROCEDURE, PUBLIC:: get_gamma0_1
-    !! Returns gamma0_1
+    !! Returns [[bns:gamma0_1]]
     PROCEDURE, PUBLIC:: get_gamma1_1
-    !! Returns gamma1_1
+    !! Returns [[bns:gamma1_1]]
     PROCEDURE, PUBLIC:: get_gamma2_1
-    !! Returns gamma2_1
+    !! Returns [[bns:gamma2_1]]
     PROCEDURE, PUBLIC:: get_gamma3_1
-    !! Returns gamma3_1
+    !! Returns [[bns:gamma3_1]]
     PROCEDURE, PUBLIC:: get_kappa0_1
-    !! Returns kappa0_1
+    !! Returns [[bns:kappa0_1]]
     PROCEDURE, PUBLIC:: get_kappa1_1
-    !! Returns kappa1_1
+    !! Returns [[bns:kappa1_1]]
     PROCEDURE, PUBLIC:: get_kappa2_1
-    !! Returns kappa2_1
+    !! Returns [[bns:kappa2_1]]
     PROCEDURE, PUBLIC:: get_kappa3_1
-    !! Returns kappa3_1
+    !! Returns [[bns:kappa3_1]]
     PROCEDURE, PUBLIC:: get_logP1_1
-    !! Returns logP1_1
+    !! Returns [[bns:logP1_1]]
     PROCEDURE, PUBLIC:: get_logRho0_1
-    !! Returns logRho0_1
+    !! Returns [[bns:logRho0_1]]
     PROCEDURE, PUBLIC:: get_logRho1_1
-    !! Returns logRho1_1
+    !! Returns [[bns:logRho1_1]]
     PROCEDURE, PUBLIC:: get_logRho2_1
-    !! Returns logRho2_1
+    !! Returns [[bns:logRho2_1]]
     PROCEDURE, PUBLIC:: get_npeos_2
-    !! Returns npeos_2
+    !! Returns [[bns:npeos_2]]
     PROCEDURE, PUBLIC:: get_gamma0_2
-    !! Returns gamma0_2
+    !! Returns [[bns:gamma0_2]]
     PROCEDURE, PUBLIC:: get_gamma1_2
-    !! Returns gamma1_2
+    !! Returns [[bns:gamma1_2]]
     PROCEDURE, PUBLIC:: get_gamma2_2
-    !! Returns gamma2_2
+    !! Returns [[bns:gamma2_2]]
     PROCEDURE, PUBLIC:: get_gamma3_2
-    !! Returns gamma3_2
+    !! Returns [[bns:gamma3_2]]
     PROCEDURE, PUBLIC:: get_kappa0_2
-    !! Returns kappa0_2
+    !! Returns [[bns:kappa0_2]]
     PROCEDURE, PUBLIC:: get_kappa1_2
-    !! Returns kappa1_2
+    !! Returns [[bns:kappa1_2]]
     PROCEDURE, PUBLIC:: get_kappa2_2
-    !! Returns kappa2_2
+    !! Returns [[bns:kappa2_2]]
     PROCEDURE, PUBLIC:: get_kappa3_2
-    !! Returns kappa3_2
+    !! Returns [[bns:kappa3_2]]
     PROCEDURE, PUBLIC:: get_logP1_2
-    !! Returns logP1_2
+    !! Returns [[bns:logP1_2]]
     PROCEDURE, PUBLIC:: get_logRho0_2
-    !! Returns logRho0_2
+    !! Returns [[bns:logRho0_2]]
     PROCEDURE, PUBLIC:: get_logRho1_2
-    !! Returns logRho1_2
+    !! Returns [[bns:logRho1_2]]
     PROCEDURE, PUBLIC:: get_logRho2_2
-    !! Returns logRho2_2
+    !! Returns [[bns:logRho2_2]]
 
     FINAL:: destruct_bns
-    !! Finalizer (Destructor)
+    !! Finalizer (Destructor) of [[bns]] object
 
   END TYPE bns
 
@@ -558,7 +558,7 @@ MODULE bns_id
   INTERFACE bns
 
     MODULE PROCEDURE:: construct_bns
-    !! Constructs a bns object
+    !! Constructs a [[bns]] object
 
   END INTERFACE bns
 
@@ -568,20 +568,20 @@ MODULE bns_id
   INTERFACE
 
     MODULE FUNCTION construct_bns( resu_file ) RESULT( bns_obj )
-    !! Constructs a bns object
+    !! Constructs a [[bns]] object
 
       CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: resu_file
       !! LORENE binary file containing the spectral BNS ID
       TYPE(bns):: bns_obj
-      !! Constructed bns object
+      !! Constructed [[bns]] object
 
     END FUNCTION construct_bns
 
-    MODULE SUBROUTINE destruct_bns( THIS )
-    !! Destruct a bns object
+    module SUBROUTINE destruct_bns( THIS )
+    !! Destruct a [[bns]] object
 
       TYPE(bns), INTENT( IN OUT ):: THIS
-      !! bns object to be destructed
+      !! [[bns]] object to be destructed
 
     END SUBROUTINE destruct_bns
 
@@ -593,7 +593,7 @@ MODULE bns_id
   !
  ! INTERFACE
  !
- !   MODULE SUBROUTINE import_id_params( THIS )
+ !   module SUBROUTINE import_id_params( THIS )
  !
  !     CLASS(bns), INTENT( IN OUT ):: THIS
  !
@@ -610,53 +610,60 @@ MODULE bns_id
     !
     !-- SUBROUTINES
     !
-    MODULE SUBROUTINE construct_binary( THIS, resu_file )
+    module SUBROUTINE construct_binary( THIS, resu_file )
     !! Interface of the subroutine that constructs the LORENE Bin_NS object
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT )      :: THIS
       CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
 
     END SUBROUTINE construct_binary
 
-    MODULE SUBROUTINE destruct_binary( THIS )
+    module SUBROUTINE destruct_binary( THIS )
     !! Destructs a LORENE Bin_NS object
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE destruct_binary
 
-    MODULE SUBROUTINE allocate_lorene_id_memory( THIS, d )
+    module SUBROUTINE allocate_lorene_id_memory( THIS, d )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
       INTEGER,    INTENT( IN )    :: d
       !! Dimension of the arrays
 
     END SUBROUTINE allocate_lorene_id_memory
 
-    MODULE SUBROUTINE deallocate_lorene_id_memory( THIS )
+    module SUBROUTINE deallocate_lorene_id_memory( THIS )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE deallocate_lorene_id_memory
 
-    MODULE SUBROUTINE import_id_params( THIS )
+    module SUBROUTINE import_id_params( THIS )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE import_id_params
 
-    MODULE SUBROUTINE print_id_params( THIS )
+    module SUBROUTINE print_id_params( THIS )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE print_id_params
 
-    MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+    module SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
                                                      central_density, &
                                                      dr, dth, dphi, &
                                                      mass, mass_profile, &
                                                      mass_profile_idx )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT )      :: THIS
       INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
       DOUBLE PRECISION, INTENT( IN )    :: center, central_density, radius, &
@@ -667,8 +674,9 @@ MODULE bns_id
 
     END SUBROUTINE integrate_baryon_mass_density
 
-    MODULE SUBROUTINE import_id_int( THIS, n, x, y, z )
+    module SUBROUTINE import_id_int( THIS, n, x, y, z )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT ):: THIS
       INTEGER, INTENT( IN ):: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
@@ -695,7 +703,7 @@ MODULE bns_id
     ! Hence, the intent of allocatable array arguments  has to be IN OUT,
     ! not OUT. The array arguments are not allocatable anymore
 
-    MODULE SUBROUTINE import_id_ext( THIS, n, x, y, z,&
+    module SUBROUTINE import_id_ext( THIS, n, x, y, z,&
                                      lapse, &
                                      shift_x, shift_y, shift_z, &
                                      g_xx, g_xy, g_xz, &
@@ -707,6 +715,7 @@ MODULE bns_id
                                      specific_energy, &
                                      u_euler_x, u_euler_y, u_euler_z )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
@@ -737,13 +746,14 @@ MODULE bns_id
 
     END SUBROUTINE import_id_ext
 
-    MODULE SUBROUTINE import_id_multid_array( THIS, nx, ny, nz, &
+    module SUBROUTINE import_id_multid_array( THIS, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
                                               g, &
                                               ek )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                           INTENT( IN OUT ):: THIS
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
@@ -756,7 +766,7 @@ MODULE bns_id
 
     END SUBROUTINE import_id_multid_array
 
-    MODULE SUBROUTINE import_id_hydro( THIS, nx, ny, nz, &
+    module SUBROUTINE import_id_hydro( THIS, nx, ny, nz, &
                                              pos, &
                                              baryon_density, &
                                              energy_density, &
@@ -764,6 +774,7 @@ MODULE bns_id
                                              pressure, &
                                              u_euler )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                           INTENT( IN OUT ):: THIS
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
@@ -777,7 +788,7 @@ MODULE bns_id
 
     END SUBROUTINE import_id_hydro
 
-    MODULE SUBROUTINE import_id_particles( THIS, n, x, y, z, &
+    module SUBROUTINE import_id_particles( THIS, n, x, y, z, &
                                            lapse, &
                                            shift_x, shift_y, shift_z, &
                                            g_xx, g_xy, g_xz, &
@@ -788,6 +799,7 @@ MODULE bns_id
                                            pressure, &
                                            u_euler_x, u_euler_y, u_euler_z )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: x
@@ -813,11 +825,12 @@ MODULE bns_id
 
     END SUBROUTINE import_id_particles
 
-    MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
+    module SUBROUTINE import_id_mass_b( THIS, x, y, z, &
                                         g_xx, &
                                         baryon_density, &
                                         gamma_euler )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),       INTENT( IN OUT ):: THIS
       REAL(C_DOUBLE),   INTENT( IN )    :: x
       REAL(C_DOUBLE),   INTENT( IN )    :: y
@@ -828,10 +841,11 @@ MODULE bns_id
 
     END SUBROUTINE import_id_mass_b
 
-    MODULE SUBROUTINE import_id_k( THIS, n, x, y, z,&
+    module SUBROUTINE import_id_k( THIS, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
 
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
@@ -851,7 +865,7 @@ MODULE bns_id
     !
     MODULE FUNCTION import_mass_density( THIS, x, y, z ) RESULT( res )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),     INTENT( IN )       :: THIS
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
@@ -863,7 +877,7 @@ MODULE bns_id
 
     MODULE FUNCTION import_spatial_metric( THIS, x, y, z ) RESULT( res )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),     INTENT( IN )       :: THIS
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
@@ -876,7 +890,7 @@ MODULE bns_id
 
     MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),     INTENT( IN )       :: THIS
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
@@ -888,7 +902,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),          INTENT( IN )             :: THIS
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       ! Result
@@ -898,7 +912,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_field_value( THIS, field, n ) RESULT( field_value )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),          INTENT( IN )             :: THIS
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       INTEGER,             INTENT( IN )             :: n
@@ -909,7 +923,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_bns_identifier( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_bns_identifier
@@ -927,7 +941,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma_1
@@ -936,7 +950,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma_2
@@ -945,7 +959,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa_1
@@ -954,7 +968,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa_2
@@ -964,7 +978,7 @@ MODULE bns_id
     MODULE FUNCTION get_angular_vel( THIS )
     !! Returns angular_vel
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_angular_vel
@@ -973,7 +987,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_distance( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_distance
@@ -982,7 +996,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_distance_com( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_distance_com
@@ -991,7 +1005,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_mass1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_mass1
@@ -1000,7 +1014,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_mass2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_mass2
@@ -1009,7 +1023,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_grav_mass1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_grav_mass1
@@ -1018,7 +1032,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_grav_mass2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_grav_mass2
@@ -1027,7 +1041,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_adm_mass( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_adm_mass
@@ -1036,7 +1050,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_angular_momentum( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_angular_momentum
@@ -1045,7 +1059,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_radius1_x_comp( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_radius1_x_comp
@@ -1054,7 +1068,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_radius1_y( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_radius1_y
@@ -1063,7 +1077,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_radius1_z( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_radius1_z
@@ -1072,7 +1086,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_radius1_x_opp( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_radius1_x_opp
@@ -1081,7 +1095,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_center1_x( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_center1_x
@@ -1090,7 +1104,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_barycenter1_x( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_barycenter1_x
@@ -1099,7 +1113,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_radius2_x_comp( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_radius2_x_comp
@@ -1108,7 +1122,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_radius2_y( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_radius2_y
@@ -1117,7 +1131,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_radius2_z( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_radius2_z
@@ -1126,7 +1140,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_radius2_x_opp( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_radius2_x_opp
@@ -1135,7 +1149,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_center2_x( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_center2_x
@@ -1144,7 +1158,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_barycenter2_x( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_barycenter2_x
@@ -1153,7 +1167,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_ent_center1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_ent_center1
@@ -1162,7 +1176,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_nbar_center1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_nbar_center1
@@ -1171,7 +1185,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_rho_center1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_rho_center1
@@ -1180,7 +1194,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_energy_density_center1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_energy_density_center1
@@ -1189,7 +1203,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_specific_energy_center1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_specific_energy_center1
@@ -1198,7 +1212,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_pressure_center1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_pressure_center1
@@ -1207,7 +1221,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_ent_center2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_ent_center2
@@ -1216,7 +1230,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_nbar_center2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_nbar_center2
@@ -1225,7 +1239,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_rho_center2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_rho_center2
@@ -1234,7 +1248,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_energy_density_center2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_energy_density_center2
@@ -1243,7 +1257,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_specific_energy_center2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_specific_energy_center2
@@ -1252,7 +1266,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_pressure_center2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_pressure_center2
@@ -1261,7 +1275,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_eos1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos1
@@ -1270,7 +1284,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_eos2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos2
@@ -1279,7 +1293,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_eos1_id( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       INTEGER:: get_eos1_id
@@ -1288,7 +1302,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_eos2_id( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       INTEGER:: get_eos2_id
@@ -1297,7 +1311,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_npeos_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       INTEGER:: get_npeos_1
@@ -1306,7 +1320,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_npeos_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       INTEGER:: get_npeos_2
@@ -1315,7 +1329,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma0_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma0_1
@@ -1324,7 +1338,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma1_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma1_1
@@ -1333,7 +1347,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma2_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma2_1
@@ -1342,7 +1356,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma3_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma3_1
@@ -1351,7 +1365,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa0_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa0_1
@@ -1360,7 +1374,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa1_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa1_1
@@ -1369,7 +1383,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa2_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa2_1
@@ -1378,7 +1392,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa3_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa3_1
@@ -1387,7 +1401,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_logP1_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_logP1_1
@@ -1396,7 +1410,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_logRho0_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_logRho0_1
@@ -1405,7 +1419,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_logRho1_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_logRho1_1
@@ -1414,7 +1428,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_logRho2_1( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_logRho2_1
@@ -1423,7 +1437,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma0_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma0_2
@@ -1432,7 +1446,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma1_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma1_2
@@ -1441,7 +1455,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma2_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma2_2
@@ -1450,7 +1464,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_gamma3_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_gamma3_2
@@ -1459,7 +1473,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa0_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa0_2
@@ -1468,7 +1482,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa1_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa1_2
@@ -1477,7 +1491,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa2_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa2_2
@@ -1486,7 +1500,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_kappa3_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_kappa3_2
@@ -1495,7 +1509,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_logP1_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_logP1_2
@@ -1504,7 +1518,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_logRho0_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_logRho0_2
@@ -1513,7 +1527,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_logRho1_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_logRho1_2
@@ -1522,7 +1536,7 @@ MODULE bns_id
 
     MODULE FUNCTION get_logRho2_2( THIS )
 
-      !> bns object which this FUNCTION is a member of
+      !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN ):: THIS
       ! Result
       DOUBLE PRECISION:: get_logRho2_2

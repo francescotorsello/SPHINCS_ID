@@ -11,6 +11,7 @@ predocmark: >
 predocmark_alt: &
 source: true
 graph: true
+sort: alpha
 src_dir: ./src
 exclude_dir: ./src/prototypes
 exclude: submodule_bns_bindings.f90
