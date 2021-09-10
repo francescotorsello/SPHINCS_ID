@@ -29,13 +29,13 @@ MODULE bns_id
   IMPLICIT NONE
 
 
-  !******************************************************!
-  !                                                      !
-  !     Definition of TYPE bns (binary neutron star)     !
-  !                                                      !
-  !   This class imports and stores the LORENE BNS ID    !
-  !                                                      !
-  !******************************************************!
+  !*******************************************************
+  !                                                      *
+  !     Definition of TYPE bns (binary neutron star)     *
+  !                                                      *
+  !   This class imports and stores the LORENE BNS ID    *
+  !                                                      *
+  !*******************************************************
 
   TYPE:: bns
   !! TYPE representing a binary system of neutron stars (bns)
@@ -77,6 +77,9 @@ MODULE bns_id
     !  t_\mathrm{merger}=\dfrac{5}{256}
     !  \dfrac{d^4}{M^1_\mathrm{g}M^2_\mathrm{g}(M^1_\mathrm{g}+M^2_\mathrm{g})}
     !  $$
+    !  P. C. Peters, "Gravitational Radiation and the Motion of Two Point
+    !  Masses", Phys. Rev. 136, B1224 (1964)
+    !  http://gravity.psu.edu/numrel/jclub/jc/Peters_PR_136_B1224_1964.pdf
     DOUBLE PRECISION:: t_merger
     !> Angular momentum of the BNS system [G Msun^2/c]
     DOUBLE PRECISION:: angular_momentum= 0.0D0
@@ -91,7 +94,7 @@ MODULE bns_id
     DOUBLE PRECISION:: radius1_y
     !> Radius of star 1, in the z direction [Msun_geo]
     DOUBLE PRECISION:: radius1_z
-    !> Radius of star 1, in the x direction, opposite to the companion [Msun_geo]
+    !> Radius of star 1, in the x direction, opposite to companion [Msun_geo]
     DOUBLE PRECISION:: radius1_x_opp
     !& Stellar center of star 1 (origin of the LORENE chart centered on star 1)
     !  [Msun_geo]
@@ -109,7 +112,7 @@ MODULE bns_id
     DOUBLE PRECISION:: radius2_y
     !> Radius of star 2, in the z direction [Msun_geo]
     DOUBLE PRECISION:: radius2_z
-    !> Radius of star, in the x direction, opposite to the companion [Msun_geo]
+    !> Radius of star 2, in the x direction, opposite to companion [Msun_geo]
     DOUBLE PRECISION:: radius2_x_opp
     !& Stellar center of star 2 (origin of the LORENE chart centered on star 2)
     !  [Msun_geo]
@@ -358,21 +361,22 @@ MODULE bns_id
     !  ways on the gravity grid, on the particles, etc...
 
     PROCEDURE:: import_id_int_ptr          => import_id_int
-    !! Store the ID in the bns arrays
+    !! Store the ID in the [[bns]] member arrays
     PROCEDURE:: import_id_ext_ptr          => import_id_ext
-    !! Store the ID in non-member arrays with the same shape as the bns arrays
+    !# Store the ID in non [[bns]]-member arrays with the same shape as the
+    !   [[bns]] member arrays
     PROCEDURE:: import_id_particles_ptr    => import_id_particles
-    !! Store the hydro ID in the arrays needed for the SPH part of SPHINCS
+    !! Store the hydro ID in the arrays needed to compute the SPH ID
     PROCEDURE:: import_id_mass_b_ptr       => import_id_mass_b
-    !! Store the hydro ID needed to compute the baryon mass in variables
+    !! Store the hydro ID in the arrays needed to compute the baryon mass
     PROCEDURE:: import_id_multid_array_ptr => import_id_multid_array
-    !# Store the spacetime ID in multi-dimensional arrays needed for the
-    !  spacetime part of SPHINCS
+    !# Store the spacetime ID in multi-dimensional arrays needed to computee
+    !  the BSSN variables and constraints
     PROCEDURE:: import_id_hydro_ptr        => import_id_hydro
-    !! Store the hydro ID in the arrays needed for the spacetime part of SPHINCS
+    !# Store the hydro ID in the arrays needed to compute the constraints
+    !  on the refined mesh
     PROCEDURE:: import_id_k_ptr            => import_id_k
-    !# Store the extrinsic curvature in the arrays needed for the SPH part of
-    !  SPHINCS
+    !! Stores the components of the extrinsic curvature in arrays
 
     !-----------------!
     !--  FUNCTIONS  --!
@@ -482,7 +486,9 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: get_eos2_id
     !! Returns [[bns:eos2_id]]
 
-    ! PROCEDURES to be used for single polytropic EOS
+    !
+    !-- PROCEDURES to be used for single polytropic EOS
+    !
     PROCEDURE, PUBLIC:: get_gamma_1
     !! Returns [[bns:gamma_1]]
     PROCEDURE, PUBLIC:: get_gamma_2
@@ -492,7 +498,9 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: get_kappa_2
     !! Returns [[bns:kappa_2]]
 
-    ! PROCEDURES to be used for piecewise polytropic EOS
+    !
+    !-- PROCEDURES to be used for piecewise polytropic EOS
+    !
     PROCEDURE, PUBLIC:: get_npeos_1
     !! Returns [[bns:npeos_1]]
     PROCEDURE, PUBLIC:: get_gamma0_1
@@ -556,6 +564,7 @@ MODULE bns_id
   !-- (see https://dannyvanpoucke.be/oop-fortran-tut4-en/)
   !
   INTERFACE bns
+  !! Interface of [[bns]] TYPE
 
     MODULE PROCEDURE:: construct_bns
     !! Constructs a [[bns]] object
@@ -577,7 +586,7 @@ MODULE bns_id
 
     END FUNCTION construct_bns
 
-    module SUBROUTINE destruct_bns( THIS )
+    MODULE SUBROUTINE destruct_bns( THIS )
     !! Destruct a [[bns]] object
 
       TYPE(bns), INTENT( IN OUT ):: THIS
@@ -588,38 +597,27 @@ MODULE bns_id
   END INTERFACE
 
   !
-  !-- Interfaces of the methods of TYPE bns called by its constructor
-  !-- Their implementations are in submodule_bns_constructor.f90
-  !
- ! INTERFACE
- !
- !   module SUBROUTINE import_id_params( THIS )
- !
- !     CLASS(bns), INTENT( IN OUT ):: THIS
- !
- !   END SUBROUTINE import_id_params
- !
- ! END INTERFACE
-
-  !
   !-- Interfaces of the methods of the TYPE bns
   !-- Their implementations are in submodule_bns_methods.f90
   !
   INTERFACE
 
+
     !
     !-- SUBROUTINES
     !
-    module SUBROUTINE construct_binary( THIS, resu_file )
+    MODULE SUBROUTINE construct_binary( THIS, resu_file )
     !! Interface of the subroutine that constructs the LORENE Bin_NS object
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT )      :: THIS
+      !> LORENE binary file containing the spectral BNS ID
       CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
 
     END SUBROUTINE construct_binary
 
-    module SUBROUTINE destruct_binary( THIS )
+
+    MODULE SUBROUTINE destruct_binary( THIS )
     !! Destructs a LORENE Bin_NS object
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -627,54 +625,77 @@ MODULE bns_id
 
     END SUBROUTINE destruct_binary
 
-    module SUBROUTINE allocate_lorene_id_memory( THIS, d )
+
+    MODULE SUBROUTINE allocate_lorene_id_memory( THIS, d )
+    !! Allocates allocatable arrays member of a [[bns]] object
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
+      !> Dimension of the arrays
       INTEGER,    INTENT( IN )    :: d
-      !! Dimension of the arrays
 
     END SUBROUTINE allocate_lorene_id_memory
 
-    module SUBROUTINE deallocate_lorene_id_memory( THIS )
+
+    MODULE SUBROUTINE deallocate_lorene_id_memory( THIS )
+    !! Deallocates allocatable arrays member of a [[bns]] object
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE deallocate_lorene_id_memory
 
-    module SUBROUTINE import_id_params( THIS )
+
+    MODULE SUBROUTINE import_id_params( THIS )
+    !! Imports the BNS parameters from LORENE
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE import_id_params
 
-    module SUBROUTINE print_id_params( THIS )
+
+    MODULE SUBROUTINE print_id_params( THIS )
+    !! Prints the BNS parameters to the standard output
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE print_id_params
 
-    module SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+
+    MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
                                                      central_density, &
                                                      dr, dth, dphi, &
                                                      mass, mass_profile, &
                                                      mass_profile_idx )
+    !# Integrates the LORENE baryon mass density to compute the radial mass
+    !  profile. TODO: Improve integration algorithm.
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns), INTENT( IN OUT )      :: THIS
+      !& Array to store the indices for array mass_profile, sorted so that
+      !  mass_profile[mass_profile_idx] is in increasing order
       INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
-      DOUBLE PRECISION, INTENT( IN )    :: center, central_density, radius, &
-                                           dr, dth, dphi
+      !> Center of the star
+      DOUBLE PRECISION, INTENT( IN )    :: center
+      !> Central density of the star
+      DOUBLE PRECISION, INTENT( IN )    :: central_density
+      !> Radius of the star
+      DOUBLE PRECISION, INTENT( IN )    :: radius
+      !> Integration steps
+      DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+      !> Integrated mass of the star
       DOUBLE PRECISION, INTENT( IN OUT ):: mass
+      !> Array storing the radialss profile of the star
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
                                        mass_profile
 
     END SUBROUTINE integrate_baryon_mass_density
 
-    module SUBROUTINE import_id_int( THIS, n, x, y, z )
+
+    MODULE SUBROUTINE import_id_int( THIS, n, x, y, z )
+    !! Stores the ID in the [[bns]] member arrays
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT ):: THIS
@@ -703,7 +724,8 @@ MODULE bns_id
     ! Hence, the intent of allocatable array arguments  has to be IN OUT,
     ! not OUT. The array arguments are not allocatable anymore
 
-    module SUBROUTINE import_id_ext( THIS, n, x, y, z,&
+
+    MODULE SUBROUTINE import_id_ext( THIS, n, x, y, z,&
                                      lapse, &
                                      shift_x, shift_y, shift_z, &
                                      g_xx, g_xy, g_xz, &
@@ -714,6 +736,8 @@ MODULE bns_id
                                      energy_density, &
                                      specific_energy, &
                                      u_euler_x, u_euler_y, u_euler_z )
+    !# Stores the ID in non [[bns]]-member arrays with the same shape as the
+    !  [[bns]] member arrays
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT ):: THIS
@@ -746,12 +770,15 @@ MODULE bns_id
 
     END SUBROUTINE import_id_ext
 
-    module SUBROUTINE import_id_multid_array( THIS, nx, ny, nz, &
+
+    MODULE SUBROUTINE import_id_multid_array( THIS, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
                                               g, &
                                               ek )
+    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
+    !  the BSSN variables and constraints
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                           INTENT( IN OUT ):: THIS
@@ -766,13 +793,16 @@ MODULE bns_id
 
     END SUBROUTINE import_id_multid_array
 
-    module SUBROUTINE import_id_hydro( THIS, nx, ny, nz, &
+
+    MODULE SUBROUTINE import_id_hydro( THIS, nx, ny, nz, &
                                              pos, &
                                              baryon_density, &
                                              energy_density, &
                                              specific_energy, &
                                              pressure, &
                                              u_euler )
+    !# Stores the hydro ID in the arrays needed to compute the constraints
+    !  on the refined mesh
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                           INTENT( IN OUT ):: THIS
@@ -788,7 +818,8 @@ MODULE bns_id
 
     END SUBROUTINE import_id_hydro
 
-    module SUBROUTINE import_id_particles( THIS, n, x, y, z, &
+
+    MODULE SUBROUTINE import_id_particles( THIS, n, x, y, z, &
                                            lapse, &
                                            shift_x, shift_y, shift_z, &
                                            g_xx, g_xy, g_xz, &
@@ -798,6 +829,7 @@ MODULE bns_id
                                            specific_energy, &
                                            pressure, &
                                            u_euler_x, u_euler_y, u_euler_z )
+    !! Stores the hydro ID in the arrays needed to compute the SPH ID
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT ):: THIS
@@ -825,10 +857,12 @@ MODULE bns_id
 
     END SUBROUTINE import_id_particles
 
-    module SUBROUTINE import_id_mass_b( THIS, x, y, z, &
+
+    MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
                                         g_xx, &
                                         baryon_density, &
                                         gamma_euler )
+    !! Stores the hydro ID in the arrays needed to compute the baryon mass
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),       INTENT( IN OUT ):: THIS
@@ -841,9 +875,11 @@ MODULE bns_id
 
     END SUBROUTINE import_id_mass_b
 
-    module SUBROUTINE import_id_k( THIS, n, x, y, z,&
+
+    MODULE SUBROUTINE import_id_k( THIS, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
+   !! Stores the components of the extrinsic curvature in arrays
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),                     INTENT( IN OUT ):: THIS
@@ -860,66 +896,91 @@ MODULE bns_id
 
     END SUBROUTINE import_id_k
 
+
     !
     !-- FUNCTIONS
     !
     MODULE FUNCTION import_mass_density( THIS, x, y, z ) RESULT( res )
+    !! Returns the LORENE baryon mass density at a point \((x,y,z)\)
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),     INTENT( IN )       :: THIS
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: z
-      ! Result
+      !> Baryon mass density at \((x,y,z)\)
       REAL(C_DOUBLE):: res
 
     END FUNCTION import_mass_density
 
+
     MODULE FUNCTION import_spatial_metric( THIS, x, y, z ) RESULT( res )
+    !# Returns the LORENE conformally flat spatial metric component
+    !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),     INTENT( IN )       :: THIS
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: z
-      ! Result
+      !> \(g_{xx}=g_{yy}=g_{zz}\) at \((x,y,z)\)
       REAL(C_DOUBLE):: res
 
     END FUNCTION import_spatial_metric
 
 
     MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
+    !# Returns 1 if the energy density or the specific energy or the pressure
+    !  are negative, 0 otherwise
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),     INTENT( IN )       :: THIS
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: z
-      ! Result
+      !& 1 if the energy density or the specific energy or the pressure
+      !  are negative, 0 otherwise
       INTEGER(C_INT):: res
 
     END FUNCTION is_hydro_negative
 
+
     MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
+    !! Returns the [[bns]] member arrays named field
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),          INTENT( IN )             :: THIS
+      !> Name of the desired [[bns]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
-      ! Result
+      !> Desired [[bns]] member array
       DOUBLE PRECISION, DIMENSION(:),    ALLOCATABLE:: field_array
 
     END FUNCTION get_field_array
 
+
     MODULE FUNCTION get_field_value( THIS, field, n ) RESULT( field_value )
+    !! Returns the component n of the [[bns]] member arrays named field
 
       !> [[bns]] object which this FUNCTION is a member of
       CLASS(bns),          INTENT( IN )             :: THIS
+      !> Name of the desired [[bns]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
+      !> Component of the desired [[bns]] member array
       INTEGER,             INTENT( IN )             :: n
-      ! Result
+      !> Component n of the desired [[bns]] member array
       DOUBLE PRECISION                              :: field_value
 
     END FUNCTION get_field_value
+
 
     MODULE FUNCTION get_bns_identifier( THIS )
 
@@ -939,6 +1000,7 @@ MODULE bns_id
     !
     !END FUNCTION get_bns_ptr
 
+
     MODULE FUNCTION get_gamma_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -947,6 +1009,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_gamma_1
 
     END FUNCTION get_gamma_1
+
 
     MODULE FUNCTION get_gamma_2( THIS )
 
@@ -957,6 +1020,7 @@ MODULE bns_id
 
     END FUNCTION get_gamma_2
 
+
     MODULE FUNCTION get_kappa_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -966,6 +1030,7 @@ MODULE bns_id
 
     END FUNCTION get_kappa_1
 
+
     MODULE FUNCTION get_kappa_2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -974,6 +1039,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_kappa_2
 
     END FUNCTION get_kappa_2
+
 
     MODULE FUNCTION get_angular_vel( THIS )
     !! Returns angular_vel
@@ -985,6 +1051,7 @@ MODULE bns_id
 
     END FUNCTION get_angular_vel
 
+
     MODULE FUNCTION get_distance( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -993,6 +1060,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_distance
 
     END FUNCTION get_distance
+
 
     MODULE FUNCTION get_distance_com( THIS )
 
@@ -1003,6 +1071,7 @@ MODULE bns_id
 
     END FUNCTION get_distance_com
 
+
     MODULE FUNCTION get_mass1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1011,6 +1080,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_mass1
 
     END FUNCTION get_mass1
+
 
     MODULE FUNCTION get_mass2( THIS )
 
@@ -1021,6 +1091,7 @@ MODULE bns_id
 
     END FUNCTION get_mass2
 
+
     MODULE FUNCTION get_grav_mass1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1029,6 +1100,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_grav_mass1
 
     END FUNCTION get_grav_mass1
+
 
     MODULE FUNCTION get_grav_mass2( THIS )
 
@@ -1039,6 +1111,7 @@ MODULE bns_id
 
     END FUNCTION get_grav_mass2
 
+
     MODULE FUNCTION get_adm_mass( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1047,6 +1120,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_adm_mass
 
     END FUNCTION get_adm_mass
+
 
     MODULE FUNCTION get_angular_momentum( THIS )
 
@@ -1057,6 +1131,7 @@ MODULE bns_id
 
     END FUNCTION get_angular_momentum
 
+
     MODULE FUNCTION get_radius1_x_comp( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1065,6 +1140,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_radius1_x_comp
 
     END FUNCTION get_radius1_x_comp
+
 
     MODULE FUNCTION get_radius1_y( THIS )
 
@@ -1075,6 +1151,7 @@ MODULE bns_id
 
     END FUNCTION get_radius1_y
 
+
     MODULE FUNCTION get_radius1_z( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1083,6 +1160,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_radius1_z
 
     END FUNCTION get_radius1_z
+
 
     MODULE FUNCTION get_radius1_x_opp( THIS )
 
@@ -1093,6 +1171,7 @@ MODULE bns_id
 
     END FUNCTION get_radius1_x_opp
 
+
     MODULE FUNCTION get_center1_x( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1101,6 +1180,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_center1_x
 
     END FUNCTION get_center1_x
+
 
     MODULE FUNCTION get_barycenter1_x( THIS )
 
@@ -1111,6 +1191,7 @@ MODULE bns_id
 
     END FUNCTION get_barycenter1_x
 
+
     MODULE FUNCTION get_radius2_x_comp( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1119,6 +1200,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_radius2_x_comp
 
     END FUNCTION get_radius2_x_comp
+
 
     MODULE FUNCTION get_radius2_y( THIS )
 
@@ -1129,6 +1211,7 @@ MODULE bns_id
 
     END FUNCTION get_radius2_y
 
+
     MODULE FUNCTION get_radius2_z( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1137,6 +1220,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_radius2_z
 
     END FUNCTION get_radius2_z
+
 
     MODULE FUNCTION get_radius2_x_opp( THIS )
 
@@ -1147,6 +1231,7 @@ MODULE bns_id
 
     END FUNCTION get_radius2_x_opp
 
+
     MODULE FUNCTION get_center2_x( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1155,6 +1240,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_center2_x
 
     END FUNCTION get_center2_x
+
 
     MODULE FUNCTION get_barycenter2_x( THIS )
 
@@ -1165,6 +1251,7 @@ MODULE bns_id
 
     END FUNCTION get_barycenter2_x
 
+
     MODULE FUNCTION get_ent_center1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1173,6 +1260,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_ent_center1
 
     END FUNCTION get_ent_center1
+
 
     MODULE FUNCTION get_nbar_center1( THIS )
 
@@ -1183,6 +1271,7 @@ MODULE bns_id
 
     END FUNCTION get_nbar_center1
 
+
     MODULE FUNCTION get_rho_center1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1191,6 +1280,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_rho_center1
 
     END FUNCTION get_rho_center1
+
 
     MODULE FUNCTION get_energy_density_center1( THIS )
 
@@ -1201,6 +1291,7 @@ MODULE bns_id
 
     END FUNCTION get_energy_density_center1
 
+
     MODULE FUNCTION get_specific_energy_center1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1209,6 +1300,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_specific_energy_center1
 
     END FUNCTION get_specific_energy_center1
+
 
     MODULE FUNCTION get_pressure_center1( THIS )
 
@@ -1219,6 +1311,7 @@ MODULE bns_id
 
     END FUNCTION get_pressure_center1
 
+
     MODULE FUNCTION get_ent_center2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1227,6 +1320,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_ent_center2
 
     END FUNCTION get_ent_center2
+
 
     MODULE FUNCTION get_nbar_center2( THIS )
 
@@ -1237,6 +1331,7 @@ MODULE bns_id
 
     END FUNCTION get_nbar_center2
 
+
     MODULE FUNCTION get_rho_center2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1245,6 +1340,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_rho_center2
 
     END FUNCTION get_rho_center2
+
 
     MODULE FUNCTION get_energy_density_center2( THIS )
 
@@ -1255,6 +1351,7 @@ MODULE bns_id
 
     END FUNCTION get_energy_density_center2
 
+
     MODULE FUNCTION get_specific_energy_center2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1263,6 +1360,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_specific_energy_center2
 
     END FUNCTION get_specific_energy_center2
+
 
     MODULE FUNCTION get_pressure_center2( THIS )
 
@@ -1273,6 +1371,7 @@ MODULE bns_id
 
     END FUNCTION get_pressure_center2
 
+
     MODULE FUNCTION get_eos1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1281,6 +1380,7 @@ MODULE bns_id
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos1
 
     END FUNCTION get_eos1
+
 
     MODULE FUNCTION get_eos2( THIS )
 
@@ -1291,6 +1391,7 @@ MODULE bns_id
 
     END FUNCTION get_eos2
 
+
     MODULE FUNCTION get_eos1_id( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1299,6 +1400,7 @@ MODULE bns_id
       INTEGER:: get_eos1_id
 
     END FUNCTION get_eos1_id
+
 
     MODULE FUNCTION get_eos2_id( THIS )
 
@@ -1309,6 +1411,7 @@ MODULE bns_id
 
     END FUNCTION get_eos2_id
 
+
     MODULE FUNCTION get_npeos_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1317,6 +1420,7 @@ MODULE bns_id
       INTEGER:: get_npeos_1
 
     END FUNCTION get_npeos_1
+
 
     MODULE FUNCTION get_npeos_2( THIS )
 
@@ -1327,6 +1431,7 @@ MODULE bns_id
 
     END FUNCTION get_npeos_2
 
+
     MODULE FUNCTION get_gamma0_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1335,6 +1440,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_gamma0_1
 
     END FUNCTION get_gamma0_1
+
 
     MODULE FUNCTION get_gamma1_1( THIS )
 
@@ -1345,6 +1451,7 @@ MODULE bns_id
 
     END FUNCTION get_gamma1_1
 
+
     MODULE FUNCTION get_gamma2_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1353,6 +1460,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_gamma2_1
 
     END FUNCTION get_gamma2_1
+
 
     MODULE FUNCTION get_gamma3_1( THIS )
 
@@ -1363,6 +1471,7 @@ MODULE bns_id
 
     END FUNCTION get_gamma3_1
 
+
     MODULE FUNCTION get_kappa0_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1371,6 +1480,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_kappa0_1
 
     END FUNCTION get_kappa0_1
+
 
     MODULE FUNCTION get_kappa1_1( THIS )
 
@@ -1381,6 +1491,7 @@ MODULE bns_id
 
     END FUNCTION get_kappa1_1
 
+
     MODULE FUNCTION get_kappa2_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1389,6 +1500,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_kappa2_1
 
     END FUNCTION get_kappa2_1
+
 
     MODULE FUNCTION get_kappa3_1( THIS )
 
@@ -1399,6 +1511,7 @@ MODULE bns_id
 
     END FUNCTION get_kappa3_1
 
+
     MODULE FUNCTION get_logP1_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1407,6 +1520,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_logP1_1
 
     END FUNCTION get_logP1_1
+
 
     MODULE FUNCTION get_logRho0_1( THIS )
 
@@ -1417,6 +1531,7 @@ MODULE bns_id
 
     END FUNCTION get_logRho0_1
 
+
     MODULE FUNCTION get_logRho1_1( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1425,6 +1540,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_logRho1_1
 
     END FUNCTION get_logRho1_1
+
 
     MODULE FUNCTION get_logRho2_1( THIS )
 
@@ -1435,6 +1551,7 @@ MODULE bns_id
 
     END FUNCTION get_logRho2_1
 
+
     MODULE FUNCTION get_gamma0_2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1443,6 +1560,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_gamma0_2
 
     END FUNCTION get_gamma0_2
+
 
     MODULE FUNCTION get_gamma1_2( THIS )
 
@@ -1453,6 +1571,7 @@ MODULE bns_id
 
     END FUNCTION get_gamma1_2
 
+
     MODULE FUNCTION get_gamma2_2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1461,6 +1580,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_gamma2_2
 
     END FUNCTION get_gamma2_2
+
 
     MODULE FUNCTION get_gamma3_2( THIS )
 
@@ -1471,6 +1591,7 @@ MODULE bns_id
 
     END FUNCTION get_gamma3_2
 
+
     MODULE FUNCTION get_kappa0_2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1479,6 +1600,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_kappa0_2
 
     END FUNCTION get_kappa0_2
+
 
     MODULE FUNCTION get_kappa1_2( THIS )
 
@@ -1489,6 +1611,7 @@ MODULE bns_id
 
     END FUNCTION get_kappa1_2
 
+
     MODULE FUNCTION get_kappa2_2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1497,6 +1620,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_kappa2_2
 
     END FUNCTION get_kappa2_2
+
 
     MODULE FUNCTION get_kappa3_2( THIS )
 
@@ -1507,6 +1631,7 @@ MODULE bns_id
 
     END FUNCTION get_kappa3_2
 
+
     MODULE FUNCTION get_logP1_2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1515,6 +1640,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_logP1_2
 
     END FUNCTION get_logP1_2
+
 
     MODULE FUNCTION get_logRho0_2( THIS )
 
@@ -1525,6 +1651,7 @@ MODULE bns_id
 
     END FUNCTION get_logRho0_2
 
+
     MODULE FUNCTION get_logRho1_2( THIS )
 
       !> [[bns]] object which this FUNCTION is a member of
@@ -1533,6 +1660,7 @@ MODULE bns_id
       DOUBLE PRECISION:: get_logRho1_2
 
     END FUNCTION get_logRho1_2
+
 
     MODULE FUNCTION get_logRho2_2( THIS )
 
@@ -1545,9 +1673,17 @@ MODULE bns_id
 
   END INTERFACE
 
-  !----------------------------------------------------------!
-  !--  Interfaces to the methods of LORENE's class Bin_NS  --!
-  !----------------------------------------------------------!
+
+  !------------------------------------------------------------------!
+  !--  PRIVATE interfaces to the methods of LORENE's class Bin_NS  --!
+  !------------------------------------------------------------------!
+
+
+  PRIVATE:: construct_bin_ns, get_lorene_id, get_lorene_id_spacetime, &
+            get_lorene_id_particles, get_lorene_id_mass_b, &
+            get_lorene_id_hydro, get_lorene_id_k, get_lorene_mass_density, &
+            get_lorene_spatial_metric, negative_hydro, get_lorene_id_params, &
+            destruct_bin_ns
 
 
   INTERFACE
@@ -1556,22 +1692,25 @@ MODULE bns_id
     FUNCTION construct_bin_ns( c_resu_file ) RESULT( optr ) &
       BIND(C, NAME= "construct_bin_ns")
 
-      !************************************************
-      !                                               *
-      ! Constructs the LORENE Bin_NS object           *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
+      !***********************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that constructs
+      !  the LORENE Bin_NS object
+      !
+      !  FT
+      !
+      !***********************************************
 
       IMPORT :: C_PTR, C_CHAR
 
       IMPLICIT NONE
 
-      ! Argument list
+      !& C string of the name of the LORENE binary file storing the spectral
+      !  BNS ID
       CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
                                                               c_resu_file
-      ! Function result
+      !> C pointer pointing to the constructed LORENE Bin_NS object
       TYPE(C_PTR) :: optr
 
     END FUNCTION construct_bin_ns
@@ -1590,32 +1729,38 @@ MODULE bns_id
                               v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_lorene_id")
 
-      !************************************************
-      !                                               *
-      ! Import the full LORENE ID at the specified    *
-      ! point. That is, import the metric fields, the *
-      ! components of the extrinsic curvature [c/km], *
-      ! and the hydro fields.                         *
-      !                                               *
-      ! - shift vector [c]                            *
-      ! - baryon mass density [kg m^{-3}]             *
-      ! - energy density [kg c^2 m^{-3}]              *
-      ! - pressure [kg c^2 m^{-3}]                    *
-      ! - specific internal energy [c^2]              *
-      ! - fluid 3-velocity with respect to the        *
-      !   Eulerian observer [c]                       *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
+      !*************************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that reads the full
+      !  LORENE ID at the specified point.
+      !  That is, imports the metric fields, the
+      !  components of the extrinsic curvature [c/km],
+      !  and the hydro fields.
+      !
+      !  - shift vector [c]
+      !  - baryon mass density [kg m^{-3}]
+      !  - energy density [kg c^2 m^{-3}]
+      !  - pressure [kg c^2 m^{-3}]
+      !  - specific internal energy [c^2]
+      !  - fluid 3-velocity with respect to the
+      !    Eulerian observer [c]
+      !
+      !  FT
+      !
+      !*************************************************
 
       IMPORT :: C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       REAL(C_DOUBLE), INTENT(OUT)       :: lapse
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
@@ -1647,24 +1792,29 @@ MODULE bns_id
                                         k_yy, k_yz, k_zz ) &
       BIND(C, NAME= "get_lorene_id_spacetime")
 
-      !************************************************
-      !                                               *
-      ! Import the metric fields and the components   *
-      ! of the extrinsic curvature [c/km] from LORENE,*
-      ! at the specified point                        *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
-
+      !*************************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that reads the
+      !  metric fields and the components
+      !  of the extrinsic curvature [c/km] from LORENE,
+      !  at the specified point
+      !
+      !  FT
+      !
+      !*************************************************
 
       IMPORT :: C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       REAL(C_DOUBLE), INTENT(OUT)       :: lapse
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
@@ -1693,30 +1843,36 @@ MODULE bns_id
                                         v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_lorene_id_particles")
 
-      !************************************************
-      !                                               *
-      ! Import the hydro fields and the metric fields *
-      ! from LORENE, at the specified point           *
-      !                                               *
-      ! - shift vector [c]                            *
-      ! - baryon mass density [kg m^{-3}]             *
-      ! - energy density [kg c^2 m^{-3}]              *
-      ! - pressure [kg c^2 m^{-3}]                    *
-      ! - specific internal energy [c^2]              *
-      ! - fluid 3-velocity with respect to the        *
-      !   Eulerian observer [c]                       *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
+      !**********************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that reads the
+      !  hydro fields and the metric fields *
+      !  from LORENE, at the specified point
+      !
+      !  - shift vector [c]
+      !  - baryon mass density [kg m^{-3}]
+      !  - energy density [kg c^2 m^{-3}]
+      !  - pressure [kg c^2 m^{-3}]
+      !  - specific internal energy [c^2]
+      !  - fluid 3-velocity with respect to the
+      !    Eulerian observer [c]
+      !
+      !  FT
+      !
+      !**********************************************
 
       IMPORT :: C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       REAL(C_DOUBLE), INTENT(OUT)       :: lapse
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
@@ -1742,27 +1898,33 @@ MODULE bns_id
       BIND(C, NAME= "get_lorene_id_mass_b")
 
       !************************************************
-      !                                               *
-      ! Import the hydro fields and the metric fields *
-      ! from LORENE, at the specified point,          *
-      ! needed to compute the baryon mass.             *
-      !                                               *
-      ! - shift vector [c]                            *
-      ! - baryon mass density [kg m^{-3}]             *
-      ! - fluid 3-velocity with respect to the        *
-      !   Eulerian observer [c]                       *
-      !                                               *
-      ! FT                                            *
-      !                                               *
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that reads the
+      !  hydro fields and the metric fields
+      !  from LORENE, at the specified point,
+      !  needed to compute the baryon mass.
+      !
+      !  - shift vector [c]
+      !  - baryon mass density [kg m^{-3}]
+      !  - fluid 3-velocity with respect to the
+      !    Eulerian observer [c]
+      !
+      !  FT
+      !
       !************************************************
 
       IMPORT :: C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
@@ -1780,30 +1942,35 @@ MODULE bns_id
                                     v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_lorene_id_hydro")
 
-      !************************************************
-      !                                               *
-      ! Import the hydro fields from LORENE, at the   *
-      ! specified point                               *
-      !                                               *
-      ! - baryon mass density [kg m^{-3}]             *
-      ! - energy density [kg c^2 m^{-3}]              *
-      ! - pressure [kg c^2 m^{-3}]                    *
-      ! - specific internal energy [c^2]              *
-      ! - fluid 3-velocity with respect to the        *
-      !   Eulerian observer [c]                       *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
+      !***********************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that reads the
+      !  hydro fields from LORENE, at the
+      !  specified point
+      !
+      !  - baryon mass density [kg m^{-3}]
+      !  - energy density [kg c^2 m^{-3}]
+      !  - pressure [kg c^2 m^{-3}]
+      !  - specific internal energy [c^2]
+      !  - fluid 3-velocity with respect to the
+      !    Eulerian observer [c]
+      !
+      !  FT
+      !
+      !***********************************************
 
       IMPORT :: C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
-      ! Argument list
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
@@ -1822,24 +1989,29 @@ MODULE bns_id
                                 k_yy, k_yz, k_zz ) &
       BIND(C, NAME= "get_lorene_id_k")
 
-      !************************************************
-      !                                               *
-      ! Import the components of the extrinsic        *
-      ! curvature [c/km] from LORENE, at the          *
-      ! specified point                               *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
+      !***********************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that reads the
+      !  components of the extrinsic
+      !  curvature [c/km] from LORENE, at the
+      !  specified point
+      !
+      !  FT
+      !
+      !***********************************************
 
       IMPORT :: C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
-      ! Argument list
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xx
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xy
@@ -1854,25 +2026,32 @@ MODULE bns_id
     FUNCTION get_lorene_mass_density( optr, x, y, z ) RESULT( res ) &
       BIND(C, NAME= "get_mass_density")
 
-      !************************************************
-      !                                               *
-      ! Return the baryon mass density [kg m^{-3}]    *
-      ! from LORENE, at the specified point           *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
+      !********************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that returns
+      !  the baryon mass density \([\mathrm{kg}\,
+      !  \mathrm{m}^{-3}]\) from LORENE,
+      !  at the specified point
+      !
+      !  FT
+      !
+      !********************************************
 
       IMPORT :: C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
-      ! Argument list
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
-      ! Function result
+      !& Baryon mass density \([\mathrm{kg}\, \mathrm{m}^{-3}]\) at the desired
+      !  point \((x,y,z)\)
       REAL(C_DOUBLE) :: res
 
     END FUNCTION get_lorene_mass_density
@@ -1882,25 +2061,31 @@ MODULE bns_id
       BIND(C, NAME= "get_lorene_id_g")
 
       !************************************************
-      !                                               *
-      ! Return the diagonal components of the metric, *
-      ! all equal to the LORENE conformal factor to   *
-      ! the 4th power.
-      !                                               *
-      ! FT                                            *
-      !                                               *
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that returns the
+      !  diagonal components of the metric,
+      !  all equal to the LORENE conformal factor to
+      !  the 4th power.
+      !
+      !  FT
+      !
       !************************************************
 
       IMPORT :: C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
-      ! Argument list
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
-      ! Function result
+      !& Spatial metric component
+      !  \(g_{xx}=g_{yy}=g_{zz}\) at the point \((x,y,z)\)
       REAL(C_DOUBLE) :: res
 
     END FUNCTION get_lorene_spatial_metric
@@ -1910,26 +2095,32 @@ MODULE bns_id
       BIND(C, NAME= "negative_hydro")
 
       !************************************************
-      !                                               *
-      ! Return 1 if the energy density is nonpositive,*
-      ! or if the specific energy is nonpositive,     *
-      ! or if the pressure i nonpositive              *
-      ! at the specified point, and 0 otherwise       *
-      !                                               *
-      ! FT 12.03.2021                                 *
-      !                                               *
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that returns 1
+      !  if the energy density is nonpositive,
+      !  or if the specific energy is nonpositive,
+      !  or if the pressure is nonpositive,
+      !  at the specified point; it returns 0 otherwise
+      !
+      !  FT 12.03.2021
+      !
       !************************************************
 
       IMPORT :: C_INT, C_DOUBLE, C_PTR
 
       IMPLICIT NONE
 
-      ! Argument list
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
+      !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
+      !> \(y\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: y
+      !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
-      ! Function result
+      !& 1 if the energy density or the specific energy or the pressure
+      !  are negative, 0 otherwise
       INTEGER(C_INT) :: res
 
     END FUNCTION negative_hydro
@@ -2007,20 +2198,22 @@ MODULE bns_id
                                      logRho2_2 ) &
       BIND(C, NAME= "get_lorene_id_params")
 
-      !************************************************
-      !                                               *
-      ! Import the physical parameters of the binary  *
-      ! system from LORENE                            *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
+      !**********************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that stores
+      !  the physical parameters of the binary
+      !  system from LORENE in the desired variables
+      !
+      !  FT
+      !
+      !**********************************************
 
       IMPORT :: C_INT, C_DOUBLE, C_PTR, C_CHAR
 
       IMPLICIT NONE
 
-      ! Argument list
+      !> C pointer pointing to a LORENE Bin_NS object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_vel
       REAL(C_DOUBLE), INTENT(OUT)       :: distance
@@ -2098,19 +2291,21 @@ MODULE bns_id
     SUBROUTINE destruct_bin_ns( optr ) &
       BIND(C, NAME= "destruct_bin_ns")
 
-      !************************************************
-      !                                               *
-      ! Destructs the LORENE Bin_NS object           *
-      !                                               *
-      ! FT                                            *
-      !                                               *
-      !************************************************
+      !**********************************************
+      !
+      !# Interface to the LORENE method of class
+      !  Bin_NS with the same name, that destructs
+      !  the LORENE Bin_NS object
+      !
+      ! FT
+      !
+      !**********************************************
 
       IMPORT :: C_PTR
 
       IMPLICIT NONE
 
-      ! Argument list
+      !> C pointer pointing to the LORENE Bin_NS object to destruct
       TYPE(C_PTR), INTENT(IN), VALUE :: optr
 
     END SUBROUTINE destruct_bin_ns

@@ -1007,23 +1007,37 @@ SUBMODULE (particles_id) particles_sph_variables
       !            "...allocation error for array lapse_parts" )
     ENDIF
 
-    IF( THIS% compose_eos )THEN
+    assign_ye_on_particles: IF( THIS% compose_eos )THEN
+
+      PRINT *, "Assigning electron fraction using the CompOSE file ", &
+               TRIM(THIS% compose_path)//TRIM(THIS% compose_filename)
+
       compose_namefile= TRIM(THIS% compose_path)//TRIM(THIS% compose_filename)
       CALL THIS% read_compose_composition( compose_namefile )
       CALL THIS% compute_Ye()
-    ENDIF
 
-    assign_ye_on_particles: DO itr= 1, THIS% npart, 1
+      PRINT *, "Electron fraction assigned."
+      PRINT *
 
-      ! Electron fraction
-      IF( THIS% compose_eos )THEN
-        Ye(itr)= THIS% Ye(itr)
-      ELSE
-        Ye(itr)= 0.0D0
-        THIS% Ye(itr)= 0.0D0
-      ENDIF
+    ELSE
 
-    ENDDO assign_ye_on_particles
+      THIS% Ye= 0.0D0
+
+    ENDIF assign_ye_on_particles
+    Ye= THIS% Ye
+
+  !  assign_ye_on_particles: DO itr= 1, THIS% npart, 1
+  !
+  !    ! Electron fraction
+  !    IF( THIS% compose_eos )THEN
+  !      Ye(itr)= THIS% Ye(itr)
+  !    ELSE
+  !      Ye(itr)= 0.0D0
+  !      THIS% Ye(itr)= 0.0D0
+  !    ENDIF
+  !
+  !  ENDDO assign_ye_on_particles
+
     CALL THIS% sph_computer_timer% stop_timer()
 
     !

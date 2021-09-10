@@ -19,7 +19,7 @@ PROGRAM sphincs_lorene_bns
   USE sphincs_lorene
   USE constants,      ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
                             k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
-                            kg2g, m2cm
+                            kg2g, m2cm, m0c2
 
   IMPLICIT NONE
 

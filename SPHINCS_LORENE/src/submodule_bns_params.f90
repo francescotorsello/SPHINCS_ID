@@ -45,9 +45,10 @@ SUBMODULE (bns_id) bns_params
     IMPLICIT NONE
 
     INTEGER:: i, nchars
+    INTEGER, PARAMETER:: str_length= 100
 
-    CHARACTER(KIND= C_CHAR), DIMENSION(100):: eos1_tmp_c
-    CHARACTER(KIND= C_CHAR), DIMENSION(100):: eos2_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos1_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos2_tmp_c
     !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos1_tmp
     !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos2_tmp
 
@@ -192,7 +193,7 @@ SUBMODULE (bns_id) bns_params
     ! Convert C++ strings to FORTRAN strings
     i= 1
     DO
-      IF( eos1_tmp_c(i) == C_NULL_CHAR ) EXIT
+      IF( eos1_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
       i= i + 1
     ENDDO
     nchars = i - 1
@@ -220,7 +221,7 @@ SUBMODULE (bns_id) bns_params
 
     i= 1
     DO
-      IF( eos2_tmp_c(i) == C_NULL_CHAR ) EXIT
+      IF( eos2_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
       i= i + 1
     ENDDO
     nchars = i - 1
