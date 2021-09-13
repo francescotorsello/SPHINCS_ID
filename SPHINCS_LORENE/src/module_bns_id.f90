@@ -361,19 +361,19 @@ MODULE bns_id
     !  ways on the gravity grid, on the particles, etc...
 
     PROCEDURE:: import_id_int_ptr          => import_id_int
-    !! Store the ID in the [[bns]] member arrays
+    !! Stores the ID in the [[bns]] member arrays
     PROCEDURE:: import_id_ext_ptr          => import_id_ext
-    !# Store the ID in non [[bns]]-member arrays with the same shape as the
+    !# Stores the ID in non-[[bns]]-member arrays with the same shape as the
     !   [[bns]] member arrays
     PROCEDURE:: import_id_particles_ptr    => import_id_particles
-    !! Store the hydro ID in the arrays needed to compute the SPH ID
+    !! Stores the hydro ID in the arrays needed to compute the SPH ID
     PROCEDURE:: import_id_mass_b_ptr       => import_id_mass_b
-    !! Store the hydro ID in the arrays needed to compute the baryon mass
+    !! Stores the hydro ID in the arrays needed to compute the baryon mass
     PROCEDURE:: import_id_multid_array_ptr => import_id_multid_array
-    !# Store the spacetime ID in multi-dimensional arrays needed to computee
+    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
     !  the BSSN variables and constraints
     PROCEDURE:: import_id_hydro_ptr        => import_id_hydro
-    !# Store the hydro ID in the arrays needed to compute the constraints
+    !# Stores the hydro ID in the arrays needed to compute the constraints
     !  on the refined mesh
     PROCEDURE:: import_id_k_ptr            => import_id_k
     !! Stores the components of the extrinsic curvature in arrays
@@ -687,7 +687,7 @@ MODULE bns_id
       DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
       !> Integrated mass of the star
       DOUBLE PRECISION, INTENT( IN OUT ):: mass
-      !> Array storing the radialss profile of the star
+      !> Array storing the radial mass profile of the star
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
                                        mass_profile
 

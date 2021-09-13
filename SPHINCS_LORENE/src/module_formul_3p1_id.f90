@@ -402,8 +402,7 @@ MODULE formul_3p1_id
 
     END SUBROUTINE define_allocate_fields_interface
 
-    SUBROUTINE compute_and_export_3p1_variables_interface( THIS, &
-                                                                  namefile )
+    SUBROUTINE compute_and_export_3p1_variables_interface( THIS, namefile )
 
       IMPORT:: formul_3p1
       CLASS(formul_3p1),   INTENT( IN OUT )           :: THIS

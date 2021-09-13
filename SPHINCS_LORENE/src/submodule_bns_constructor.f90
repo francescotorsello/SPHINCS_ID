@@ -4,14 +4,17 @@
 
 SUBMODULE (bns_id) bns_constructor
 
-  !*****************************************************
-  !                                                    *
-  ! Implementation the constructor of TYPE bns and the *
-  ! PROCEDURES it calls                                *
-  !                                                    *
-  ! FT 23.10.2020                                      *
-  !                                                    *
-  !*****************************************************
+  !*********************************************************
+  !
+  !# Implementation of the constructor and
+  !  destructor of TYPE [[bns]], and of the [[bns]]-member
+  !  PROCEDURES that call the C-bound PROCEDURES
+  !  constructig and destructing the LORENE
+  !  Bin_NS object
+  !
+  !  FT 23.10.2020
+  !
+  !*********************************************************
 
 
   IMPLICIT NONE
@@ -24,6 +27,14 @@ SUBMODULE (bns_id) bns_constructor
   !-- Implementation of the constructor of the bns object
   !
   MODULE PROCEDURE construct_bns
+
+    !****************************************************
+    !
+    !# Constructs an object of TYPE [[bns]]
+    !
+    !  FT
+    !
+    !****************************************************
 
     IMPLICIT NONE
 
@@ -62,6 +73,14 @@ SUBMODULE (bns_id) bns_constructor
   !
   MODULE PROCEDURE destruct_bns
 
+    !***********************************************
+    !
+    !# Destructs an object of TYPE [[bns]]
+    !
+    !  FT
+    !
+    !***********************************************
+
     IMPLICIT NONE
 
     !PRINT *, "Inside destructor of bns."
@@ -75,13 +94,13 @@ SUBMODULE (bns_id) bns_constructor
 
   MODULE PROCEDURE construct_binary
 
-    !************************************************
-    !                                               *
-    !! Construct the LORENE Bin_NS object           *
-    !                                               *
-    !  FT                                           *
-    !                                               *
-    !************************************************
+    !***********************************************
+    !
+    !# Construct the LORENE Bin_NS object
+    !
+    !  FT
+    !
+    !***********************************************
 
     IMPLICIT NONE
 
@@ -139,12 +158,12 @@ SUBMODULE (bns_id) bns_constructor
   MODULE PROCEDURE destruct_binary
 
     !************************************************
-    !                                               *
-    ! Destruct the LORENE Bin_NS object and free    *
-    ! the pointer pointing to it                    *
-    !                                               *
-    ! FT                                            *
-    !                                               *
+    !
+    !# Destructs the LORENE Bin_NS object and frees
+    !  the pointer [[bns:bns_ptr]] pointing to it
+    !
+    !  FT
+    !
     !************************************************
 
     IMPLICIT NONE

@@ -4,14 +4,14 @@
 
 SUBMODULE (bns_id) bns_id_memory
 
-  !************************************************
-  !                                               *
-  ! Implementation of the methods of TYPE bns     *
-  ! that (de)allocate memory                      *
-  !                                               *
-  ! FT 9.07.2021                                  *
-  !                                               *
-  !************************************************
+  !***********************************************
+  !
+  !# Implementation of the methods of TYPE bns
+  !  that (de)allocate memory
+  !
+  ! FT 9.07.2021
+  !
+  !***********************************************
 
 
   IMPLICIT NONE
@@ -27,14 +27,14 @@ SUBMODULE (bns_id) bns_id_memory
 
   MODULE PROCEDURE allocate_lorene_id_memory
 
-    !************************************************
-    !                                               *
-    ! Allocate the memory to store the LORENE ID    *
-    ! in the member arrays                          *
-    !                                               *
-    ! FT 17.09.2020                                 *
-    !                                               *
-    !************************************************
+    !***********************************************
+    !
+    !# Allocate the memory to store the LORENE ID
+    !  in the member arrays
+    !
+    !  FT 17.09.2020
+    !
+    !***********************************************
 
     IMPLICIT NONE
 
@@ -297,13 +297,13 @@ SUBMODULE (bns_id) bns_id_memory
 
   MODULE PROCEDURE deallocate_lorene_id_memory
 
-    !************************************************
-    !                                               *
-    ! Deallocate the memory for the member arrays   *
-    !                                               *
-    ! FT 17.09.2020                                 *
-    !                                               *
-    !************************************************
+    !***********************************************
+    !
+    !# Deallocate the memory for the member arrays
+    !
+    !  FT 17.09.2020
+    !
+    !***********************************************
 
     IMPLICIT NONE
 

@@ -4,14 +4,15 @@
 
 SUBMODULE (bns_id) bns_access
 
-  !****************************************************
-  !                                                   *
-  ! Implementation of the methods of TYPE bns         *
-  ! that allow to access PRIVATE members.             *
-  !                                                   *
-  ! FT 12.07.2021                                     *
-  !                                                   *
-  !****************************************************
+  !***************************************************
+  !
+  !# The module contains the implementation of the
+  !  methods of TYPE bns that allow to access PRIVATE
+  !  members.
+  !
+  !  FT 12.07.2021
+  !
+  !***************************************************
 
 
   IMPLICIT NONE
@@ -27,14 +28,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_field_array
 
-    !************************************************
-    !                                               *
-    ! Returns one of the member arrays, selected    *
-    ! with the string input.                        *
-    !                                               *
-    ! FT                                            *
-    !                                               *
-    !************************************************
+    !***********************************************
+    !
+    !# Returns one of the member arrays, selected
+    !  with the string input.
+    !
+    !  FT
+    !
+    !***********************************************
 
     IMPLICIT NONE
 
@@ -140,15 +141,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_field_value
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of one of the member arrays, *
-    ! selected with the string input, at the point   *
-    ! given as argument.                             *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of one of the member arrays,
+    !  selected with the string input, at the point
+    !  given as argument.
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -254,14 +255,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_bns_identifier
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of bns_identifier, the       *
-    ! integer identifier of the bns object           *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[bns_identifier]], the
+    !  integer identifier of the bns object
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -272,25 +273,25 @@ SUBMODULE (bns_id) bns_access
 
   !MODULE PROCEDURE get_bns_ptr
   !
-  !  !*************************************************
-  !  !                                                *
-  !  ! Returns the value of bns_ptr, the C pointer    *
-  !  ! to the LORENE's Bin_NS object                  *
-  !  ! N.B. This variable is global. The pointer      *
-  !  !      to the second LORENE Bin_NS object will   *
-  !  !      overwrite the first one, and so on.       *
-  !  !      This variable stores the pointer to       *
-  !  !      the last defined LORENE Bin_NS object.    *
-  !  !      That's why it is not freed in the         *
-  !  !      destructor of a bns object. Presently, it *
-  !  !      has to be freed by the user at the end of *
-  !  !      the PROGRAM. See the last part of the     *
-  !  !      PROGRAM in setup_lorene_id.f90, for       *
-  !  !      example.                                  *
-  !  !                                                *
-  !  ! FT                                             *
-  !  !                                                *
-  !  !*************************************************
+  !  !************************************************
+  !  !
+  !  !# Returns the value of [[bns_ptr]], the C pointer
+  !  ! to the LORENE's Bin_NS object
+  !  ! N.B. This variable is global. The pointer
+  !  !      to the second LORENE Bin_NS object will
+  !  !      overwrite the first one, and so on.
+  !  !      This variable stores the pointer to
+  !  !      the last defined LORENE Bin_NS object.
+  !  !      That's why it is not freed in the
+  !  !      destructor of a bns object. Presently, it
+  !  !      has to be freed by the user at the end of
+  !  !      the PROGRAM. See the last part of the
+  !  !      PROGRAM in setup_lorene_id.f90, for
+  !  !      example.
+  !  !
+  !  !  FT
+  !  !
+  !  !************************************************
   !
   !  IMPLICIT NONE
   !
@@ -301,15 +302,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma_1, the              *
-    ! polytropic index for NS 1 with polytropic EOS, *
-    ! not piecewise polytropic EOS                   *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma_1]], the
+    !  polytropic index for NS 1 with polytropic EOS,
+    !  not piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -320,15 +321,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma_2, the              *
-    ! polytropic index for NS 2 with polytropic EOS, *
-    ! not piecewise polytropic EOS                   *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma_2]], the
+    !  polytropic index for NS 2 with polytropic EOS,
+    !  not piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -339,15 +340,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa_1, the              *
-    ! polytropic constant for NS 1 with polytropic   *
-    ! EOS, not piecewise polytropic EOS              *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa_1]], the
+    !  polytropic constant for NS 1 with polytropic
+    !  EOS, not piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -358,15 +359,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa_2, the              *
-    ! polytropic constant for NS 2 with polytropic   *
-    ! EOS, not piecewise polytropic EOS              *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa_2]], the
+    !  polytropic constant for NS 2 with polytropic
+    !  EOS, not piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -377,13 +378,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_angular_vel
 
-    !*************************************************
-    !                                                *
-    ! Returns the angular velocity of the system     *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the angular velocity of the system
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -394,13 +395,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_distance
 
-    !*************************************************
-    !                                                *
-    ! Returns the distance between the NSs           *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the distance between the NSs
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -411,14 +412,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_distance_com
 
-    !*************************************************
-    !                                                *
-    ! Returns the distance between the centers of    *
-    ! mass of the NSs                                *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the distance between the centers of
+    !  mass of the NSs
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -429,13 +430,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_mass1
 
-    !*************************************************
-    !                                                *
-    ! Returns the baryon mass of NS 1 [Msun]         *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the baryon mass of NS 1 [\(M_\odot\)]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -446,13 +447,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_mass2
 
-    !*************************************************
-    !                                                *
-    ! Returns the baryon mass of NS 2 [Msun]         *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the baryon mass of NS 2 [\(M_\odot\)]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -463,13 +464,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_grav_mass1
 
-    !*************************************************
-    !                                                *
-    ! Returns the gravitational mass of NS 1 [Msun]  *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the gravitational mass of NS 1 [\(M_\odot\)]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -480,13 +481,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_grav_mass2
 
-    !*************************************************
-    !                                                *
-    ! Returns the gravitational mass of NS 2 [Msun]  *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the gravitational mass of NS 2 [\(M_\odot\)]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -497,13 +498,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_adm_mass
 
-    !*************************************************
-    !                                                *
-    ! Returns the ADM mass of the system             *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the ADM mass of the system
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -514,13 +515,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_angular_momentum
 
-    !*************************************************
-    !                                                *
-    ! Returns the angular momentum of the system     *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the angular momentum of the system
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -531,14 +532,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_radius1_x_comp
 
-    !*************************************************
-    !                                                *
-    ! Returns the radius of NS 1 along the x axis    *
-    ! on the side of the companion                   *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the radius of NS 1 along the x axis
+    !  on the side of the companion
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -549,13 +550,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_radius1_y
 
-    !*************************************************
-    !                                                *
-    ! Returns the radius of NS 1 along the y axis    *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the radius of NS 1 along the y axis
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -566,13 +567,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_radius1_z
 
-    !*************************************************
-    !                                                *
-    ! Returns the radius of NS 1 along the z axis    *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the radius of NS 1 along the z axis
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -583,14 +584,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_radius1_x_opp
 
-    !*************************************************
-    !                                                *
-    ! Returns the radius of NS 1 along the x axis    *
-    ! on the side opposite to the companion          *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the radius of NS 1 along the x axis
+    !  on the side opposite to the companion
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -601,14 +602,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_center1_x
 
-    !*************************************************
-    !                                                *
-    ! Returns the stellar center of NS 1, i.e., the  *
-    ! origin of the LORENE chart centered on NS 1    *
-    !                                                *
-    ! FT 09.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the stellar center of NS 1, i.e., the
+    !  origin of the LORENE chart centered on NS 1
+    !
+    !  FT 09.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -619,13 +620,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_barycenter1_x
 
-    !*************************************************
-    !                                                *
-    ! Returns the barycenter of NS 1                 *
-    !                                                *
-    ! FT 09.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the barycenter of NS 1
+    !
+    !  FT 09.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -636,14 +637,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_radius2_x_comp
 
-    !*************************************************
-    !                                                *
-    ! Returns the radius of NS 2 along the x axis    *
-    ! on the side of the companion                   *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the radius of NS 2 along the x axis
+    !  on the side of the companion
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -654,13 +655,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_radius2_y
 
-    !*************************************************
-    !                                                *
-    ! Returns the radius of NS 2 along the y axis    *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the radius of NS 2 along the y axis
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -671,13 +672,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_radius2_z
 
-    !*************************************************
-    !                                                *
-    ! Returns the radius of NS 2 along the z axis    *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the radius of NS 2 along the z axis
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -688,14 +689,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_radius2_x_opp
 
-    !*************************************************
-    !                                                *
-    ! Returns the radius of NS 2 along the x axis    *
-    ! on the side opposite to the companion          *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the radius of NS 2 along the x axis
+    !  on the side opposite to the companion
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -706,14 +707,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_center2_x
 
-    !*************************************************
-    !                                                *
-    ! Returns the stellar center of NS 2, i.e., the  *
-    ! origin of the LORENE chart centered on NS 2    *
-    !                                                *
-    ! FT 09.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the stellar center of NS 2, i.e., the
+    !  origin of the LORENE chart centered on NS 2
+    !
+    !  FT 09.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -724,13 +725,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_barycenter2_x
 
-    !*************************************************
-    !                                                *
-    ! Returns the barycenter of NS 2                 *
-    !                                                *
-    ! FT 09.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the barycenter of NS 2
+    !
+    !  FT 09.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -741,13 +742,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_ent_center1
 
-    !*************************************************
-    !                                                *
-    ! Returns the central enthalpy of NS 1           *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central enthalpy of NS 1
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -758,14 +759,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_nbar_center1
 
-    !*************************************************
-    !                                                *
-    ! Returns the central baryon number density      *
-    ! of NS 1                                        *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central baryon number density
+    !  of NS 1
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -776,14 +777,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_rho_center1
 
-    !*************************************************
-    !                                                *
-    ! Returns the central baryon mass density        *
-    ! of NS 1                                        *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central baryon mass density
+    !  of NS 1
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -794,13 +795,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_energy_density_center1
 
-    !*************************************************
-    !                                                *
-    ! Returns the central energy density of NS 1     *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central energy density of NS 1
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -811,13 +812,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_specific_energy_center1
 
-    !*************************************************
-    !                                                *
-    ! Returns the central specific energy of NS 1    *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central specific energy of NS 1
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -828,13 +829,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_pressure_center1
 
-    !*************************************************
-    !                                                *
-    ! Returns the central pressure of NS 1           *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central pressure of NS 1
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -845,13 +846,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_ent_center2
 
-    !*************************************************
-    !                                                *
-    ! Returns the central enthalpy of NS 2           *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central enthalpy of NS 2
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -862,14 +863,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_nbar_center2
 
-    !*************************************************
-    !                                                *
-    ! Returns the central baryon number density      *
-    ! of NS 2                                        *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central baryon number density
+    !  of NS 2
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -880,14 +881,14 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_rho_center2
 
-    !*************************************************
-    !                                                *
-    ! Returns the central baryon mass density        *
-    ! of NS 2                                        *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central baryon mass density
+    !  of NS 2
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -898,13 +899,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_energy_density_center2
 
-    !*************************************************
-    !                                                *
-    ! Returns the central energy density of NS 2     *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central energy density of NS 2
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -915,13 +916,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_specific_energy_center2
 
-    !*************************************************
-    !                                                *
-    ! Returns the central specific energy of NS 2    *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central specific energy of NS 2
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -932,13 +933,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_pressure_center2
 
-    !*************************************************
-    !                                                *
-    ! Returns the central pressure of NS 2           *
-    !                                                *
-    ! FT 12.02.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the central pressure of NS 2
+    !
+    !  FT 12.02.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -949,13 +950,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_eos1
 
-    !*************************************************
-    !                                                *
-    ! Returns the name of the EOS for NS 1           *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the name of the EOS for NS 1
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -966,13 +967,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_eos2
 
-    !*************************************************
-    !                                                *
-    ! Returns the name of the EOS for NS 2           *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the name of the EOS for NS 2
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -983,13 +984,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_eos1_id
 
-    !***************************************************
-    !                                                  *
-    ! Returns the LORENE ID-number of the EOS for NS 1 *
-    !                                                  *
-    ! FT                                               *
-    !                                                  *
-    !***************************************************
+    !**************************************************
+    !
+    !# Returns the LORENE ID-number of the EOS for NS 1
+    !
+    !  FT
+    !
+    !**************************************************
 
     IMPLICIT NONE
 
@@ -1000,13 +1001,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_eos2_id
 
-    !***************************************************
-    !                                                  *
-    ! Returns the LORENE ID-number of the EOS for NS 2 *
-    !                                                  *
-    ! FT                                               *
-    !                                                  *
-    !***************************************************
+    !**************************************************
+    !
+    !# Returns the LORENE ID-number of the EOS for NS 2
+    !
+    !  FT
+    !
+    !**************************************************
 
     IMPLICIT NONE
 
@@ -1017,13 +1018,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_npeos_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the identifier of the EOS for NS 1     *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the identifier of the EOS for NS 1
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1034,13 +1035,13 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_npeos_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the identifier of the EOS for NS 2     *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the identifier of the EOS for NS 2
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1051,15 +1052,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma0_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma0_1, the crust's     *
-    ! polytropic index for NS 1 with piecewise       *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma0_1]], the crust's
+    !  polytropic index for NS 1 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1070,15 +1071,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma0_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma0_2, the crust's     *
-    ! polytropic index for NS 2 with piecewise       *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma0_2]], the crust's
+    !  polytropic index for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1089,15 +1090,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma1_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma1_1, the first       *
-    ! polytropic index for NS 1 with piecewise       *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma1_1]], the first
+    !  polytropic index for NS 1 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1108,15 +1109,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma1_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma1_2, the first       *
-    ! polytropic index for NS 2 with piecewise       *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma1_2]], the first
+    !  polytropic index for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1127,15 +1128,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma2_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma2_1, the second      *
-    ! polytropic index for NS 2 with piecewise       *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma2_1]], the second
+    !  polytropic index for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1146,15 +1147,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma2_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma2_2, the second      *
-    ! polytropic index for NS 2 with piecewise       *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma2_2]], the second
+    !  polytropic index for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1165,15 +1166,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma3_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma3_1, the third       *
-    ! polytropic index for NS 1 with piecewise       *
-    ! polytropic EOS (innermost index)               *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma3_1]], the third
+    !  polytropic index for NS 1 with piecewise
+    !  polytropic EOS (innermost index)
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1184,15 +1185,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_gamma3_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of gamma3_2, the third       *
-    ! polytropic index for NS 2 with piecewise       *
-    ! polytropic EOS (innermost index)               *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[gamma3_2]], the third
+    !  polytropic index for NS 2 with piecewise
+    !  polytropic EOS (innermost index)
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1203,15 +1204,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa0_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa0_1, the crust's     *
-    ! polytropic constant for NS 1 with piecewise    *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa0_1]], the crust's
+    !  polytropic constant for NS 1 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1222,15 +1223,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa1_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa1_1, the first       *
-    ! polytropic constant for NS 1 with piecewise    *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa1_1]], the first
+    !  polytropic constant for NS 1 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1241,15 +1242,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa2_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa2_1, the second      *
-    ! polytropic constant for NS 1 with piecewise    *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa2_1]], the second
+    !  polytropic constant for NS 1 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1260,15 +1261,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa3_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa3_1, the third       *
-    ! polytropic constant for NS 1 with piecewise    *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa3_1]], the third
+    !  polytropic constant for NS 1 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1279,15 +1280,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa0_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa0_2, the crust's     *
-    ! polytropic constant for NS 2 with piecewise    *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa0_2]], the crust's
+    !  polytropic constant for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1298,15 +1299,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa1_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa1_2, the first       *
-    ! polytropic constant for NS 2 with piecewise    *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa1_2]], the first
+    !  polytropic constant for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1317,15 +1318,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa2_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa2_2, the second      *
-    ! polytropic constant for NS 2 with piecewise    *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa2_2]], the second
+    !  polytropic constant for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1336,15 +1337,15 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_kappa3_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of kappa3_2, the third       *
-    ! polytropic constant for NS 2 with piecewise    *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[kappa3_2]], the third
+    !  polytropic constant for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1355,16 +1356,16 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_logp1_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of logp1_1, the base 10      *
-    ! logarithm of the pressure where the gamma1_1   *
-    ! polytrope starts, for NS 1 with piecewise      *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[logp1_1]], the base 10
+    !  logarithm of the pressure where the gamma1_1
+    !  polytrope starts, for NS 1 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1375,16 +1376,16 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_logp1_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of logp1_2, the base 10      *
-    ! logarithm of the pressure where the gamma1_2   *
-    ! polytrope starts, for NS 2 with piecewise      *
-    ! polytropic EOS                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[logp1_2]], the base 10
+    !  logarithm of the pressure where the gamma1_2
+    !  polytrope starts, for NS 2 with piecewise
+    !  polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1395,16 +1396,16 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_logRho0_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of logRho0_1, the base 10    *
-    ! logarithm of the mass density where the        *
-    ! gamma1_1 polytrope starts, for NS 1 with       *
-    ! piecewise polytropic EOS                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[logRho0_1]], the base 10
+    !  logarithm of the mass density where the
+    !  gamma1_1 polytrope starts, for NS 1 with
+    !  piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1415,16 +1416,16 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_logRho0_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of logRho0_2, the base 10    *
-    ! logarithm of the mass density where the        *
-    ! gamma1_2 polytrope starts, for NS 2 with       *
-    ! piecewise polytropic EOS                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[logRho0_2]], the base 10
+    !  logarithm of the mass density where the
+    !  gamma1_2 polytrope starts, for NS 2 with
+    !  piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1435,16 +1436,16 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_logRho1_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of logRho1_1, the base 10    *
-    ! logarithm of the mass density where the        *
-    ! gamma2_1 polytrope starts, for NS 1 with       *
-    ! piecewise polytropic EOS                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[logRho1_1]], the base 10
+    !  logarithm of the mass density where the
+    !  gamma2_1 polytrope starts, for NS 1 with
+    !  piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1455,16 +1456,16 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_logRho1_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of logRho1_2, the base 10    *
-    ! logarithm of the mass density where the        *
-    ! gamma2_2 polytrope starts, for NS 2 with       *
-    ! piecewise polytropic EOS                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[logRho1_2]], the base 10
+    !  logarithm of the mass density where the
+    !  gamma2_2 polytrope starts, for NS 2 with
+    !  piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1475,16 +1476,16 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_logRho2_1
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of logRho2_1, the base 10    *
-    ! logarithm of the mass density where the        *
-    ! gamma3_1 polytrope starts, for NS 1 with       *
-    ! piecewise polytropic EOS                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[logRho2_1]], the base 10
+    !  logarithm of the mass density where the
+    !  gamma3_1 polytrope starts, for NS 1 with
+    !  piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -1495,16 +1496,16 @@ SUBMODULE (bns_id) bns_access
 
   MODULE PROCEDURE get_logRho2_2
 
-    !*************************************************
-    !                                                *
-    ! Returns the value of logRho2_2, the base 10    *
-    ! logarithm of the mass density where the        *
-    ! gamma3_2 polytrope starts, for NS 2 with       *
-    ! piecewise polytropic EOS                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the value of [[logRho2_2]]]], the base 10
+    !  logarithm of the mass density where the
+    !  gamma3_2 polytrope starts, for NS 2 with
+    !  piecewise polytropic EOS
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 

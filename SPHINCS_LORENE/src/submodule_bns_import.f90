@@ -4,21 +4,22 @@
 
 SUBMODULE (bns_id) bns_import
 
-  !*****************************************************
-  !                                                    *
-  ! Implementation of the methods of TYPE bns that     *
-  ! import BNS data using LORENE                       *
-  !                                                    *
-  ! FT 23.10.2020                                      *
-  !                                                    *
-  ! Renamed from bns_methods to bns_import upon        *
-  ! improving modularity                               *
-  !                                                    *
-  ! OMP parallelized loops that call LORENE            *
-  !                                                    *
-  ! FT 12.07.2021                                      *
-  !                                                    *
-  !*****************************************************
+  !****************************************************
+  !
+  !# Implementation of the methods of TYPE bns that
+  !  import BNS data using LORENE
+  !
+  !  FT 23.10.2020
+  !
+  !  Renamed from bns_methods to bns_import upon
+  !  improving modularity
+  !
+  !  OMP parallelized loops that call LORENE
+  !  in all MODULE PROCEDURE
+  !
+  !  FT 12.07.2021
+  !
+  !****************************************************
 
 
   IMPLICIT NONE
@@ -34,13 +35,13 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_id_int
 
-    !*****************************************************
-    !                                                    *
-    ! Store the ID in the bns arrays                     *
-    !                                                    *
-    ! FT 5.10.2020                                       *
-    !                                                    *
-    !*****************************************************
+    !**************************************************
+    !
+    !# Stores the ID in the [[bns]] member arrays
+    !
+    !  FT 5.10.2020
+    !
+    !**************************************************
 
     USE constants, ONLY: Msun_geo
 
@@ -171,14 +172,14 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_id_ext
 
-    !*****************************************************
-    !                                                    *
-    ! Store the ID in non-member arrays with             *
-    ! the same shape as the bns arrays                   *
-    !                                                    *
-    ! FT 5.10.2020                                       *
-    !                                                    *
-    !*****************************************************
+    !**************************************************
+    !
+    !# Stores the ID in non-[[bns]]-member arrays
+    !  with the same shape as the [[bns]] member arrays
+    !
+    !  FT 5.10.2020
+    !
+    !**************************************************
 
     USE constants, ONLY: Msun_geo
 
@@ -287,14 +288,14 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_id_multid_array
 
-    !*****************************************************
-    !                                                    *
-    ! Store the spacetime ID in multi-dimensional arrays *
-    ! needed for the spacetime part of SPHINCS           *
-    !                                                    *
-    ! FT 22.11.2020                                      *
-    !                                                    *
-    !*****************************************************
+    !*******************************************************
+    !
+    !# Stores the spacetime ID in multi-dimensional arrays
+    !  needed to compute the BSSN variables and constraints
+    !
+    !  FT 22.11.2020
+    !
+    !*******************************************************
 
     USE constants, ONLY: Msun_geo
 
@@ -440,7 +441,8 @@ SUBMODULE (bns_id) bns_import
 
             ! Print progress on screen
             perc= 100*( nx*ny*(k - 1) + nx*(j - 1) + i )/( nx*ny*nz )
-            !perc2= 100.0*DBLE(nx*ny*(iz - 1) + nx*(iy - 1) + ix)/DBLE( nx*ny*nz )
+            !perc2= 100.0*DBLE(nx*ny*(iz - 1) + nx*(iy - 1) + ix) &
+            !       /DBLE( nx*ny*nz )
             !perc= 100*cnt/( nx*ny*nz )
             IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
               WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
@@ -464,14 +466,14 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_id_hydro
 
-    !*****************************************************
-    !                                                    *
-    ! Store the hydro ID in the arrays needed            *
-    ! for the spacetime part of SPHINCS                  *
-    !                                                    *
-    ! FT 25.11.2020                                      *
-    !                                                    *
-    !*****************************************************
+    !*******************************************************
+    !
+    !# Stores the hydro ID in the arrays needed to compute
+    !  the constraints on the refined mesh
+    !
+    !  FT 25.11.2020
+    !
+    !*******************************************************
 
     USE constants,  ONLY: Msun_geo
     USE tensor,     ONLY: jx, jy, jz
@@ -534,14 +536,14 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_id_particles
 
-    !*****************************************************
-    !                                                    *
-    ! Import the LORENE ID on the particles, ignoring    *
-    ! the extrinsic curvature which is not needed.       *
-    !                                                    *
-    ! FT 19.11.2020                                      *
-    !                                                    *
-    !*****************************************************
+    !****************************************************
+    !
+    !# Stores the hydro ID in the arrays needed to
+    !  compute the SPH ID
+    !
+    !  FT 19.11.2020
+    !
+    !****************************************************
 
     USE constants, ONLY: Msun_geo
 
@@ -657,15 +659,16 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_id_mass_b
 
-    !*****************************************************
-    !                                                    *
-    ! Import the LORENE ID needed to compute the baryon  *
-    ! mass, storing it to variables (not arrays as the   *
-    ! others importing SUBROUTINES).                     *
-    !                                                    *
-    ! FT 15.04.2021                                      *
-    !                                                    *
-    !*****************************************************
+    !****************************************************
+    !
+    !# Stores the hydro ID in the arrays needed to
+    !  compute the baryon mass, storing it to variables
+    !  (not arrays as the others SUBROUTINES in
+    !  the [[bns_import]] SUBMODULE).
+    !
+    !  FT 15.04.2021
+    !
+    !****************************************************
 
     USE constants, ONLY: Msun_geo, lorene2hydrobase
 
@@ -693,15 +696,14 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_id_k
 
-    !*****************************************************
-    !                                                    *
-    ! Store the extrinsic curvature in the               *
-    ! arrays needed for the SPH part of                  *
-    ! SPHINCS                                            *
-    !                                                    *
-    ! FT 25.11.2020                                      *
-    !                                                    *
-    !*****************************************************
+    !****************************************************
+    !
+    !# Stores the components of the extrinsic curvature
+    !  in arrays
+    !
+    !  FT 25.11.2020
+    !
+    !****************************************************
 
     USE constants, ONLY: Msun_geo
 
@@ -778,15 +780,15 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_mass_density
 
-    !************************************************
-    !                                               *
-    ! Returns the LORENE mass density at the point  *
-    ! given as argument, in units of                *
-    ! MSun/(MSun_geo^3).                            *
-    !                                               *
-    ! FT                                            *
-    !                                               *
-    !************************************************
+    !***********************************************
+    !
+    !# Returns the LORENE mass density at the point
+    !  given as argument, in units of
+    !  \(M_\odot/L_\odot^3\).
+    !
+    !  FT
+    !
+    !***********************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
     USE constants,                   ONLY: Msun_geo, lorene2hydrobase
@@ -810,15 +812,15 @@ SUBMODULE (bns_id) bns_import
 
   MODULE PROCEDURE import_spatial_metric
 
-    !************************************************
-    !                                               *
-    ! Returns the LORENE conformal factor to the    *
-    ! 4th power, equal to the diagonal components   *
-    ! of the conformally flat spatial ADM metric.   *
-    !                                               *
-    ! FT 15.04.2021                                 *
-    !                                               *
-    !************************************************
+    !***********************************************
+    !
+    !# Returns the LORENE conformal factor to the
+    !  4th power, equal to the diagonal components
+    !  of the conformally flat spatial ADM metric.
+    !
+    !  FT 15.04.2021
+    !
+    !***********************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
     USE constants,                   ONLY: Msun_geo
@@ -843,14 +845,14 @@ SUBMODULE (bns_id) bns_import
   MODULE PROCEDURE is_hydro_negative
 
     !************************************************
-    !                                               *
-    ! Return 1 if the energy density is nonpositive,*
-    ! or if the specific energy is nonpositive,     *
-    ! or if the pressure is nonpositive             *
-    ! at the specified point                        *
-    !                                               *
-    ! FT 12.03.2021                                 *
-    !                                               *
+    !
+    !# Return 1 if the energy density is nonpositive
+    !  or if the specific energy is nonpositive,
+    !  or if the pressure is nonpositive
+    !  at the specified point
+    !
+    !  FT 12.03.2021
+    !
     !************************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED

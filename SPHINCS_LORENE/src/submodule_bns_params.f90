@@ -4,15 +4,16 @@
 
 SUBMODULE (bns_id) bns_params
 
-  !*********************************************
-  !                                            *
-  ! Implementation of the methods of TYPE bns  *
-  ! that imports from LORENE, and prints, the  *
-  ! parameters of the binary system            *
-  !                                            *
-  ! FT 09.07.2021                              *
-  !                                            *
-  !*********************************************
+  !********************************************
+  !
+  !# Implementation of the methods of TYPE bns
+  !  that import from LORENE the
+  !  parameters of the binary system,
+  !  and print them to the standard output.
+  !
+  !  FT 09.07.2021
+  !
+  !********************************************
 
 
   IMPLICIT NONE
@@ -28,14 +29,14 @@ SUBMODULE (bns_id) bns_params
 
   MODULE PROCEDURE import_id_params
 
-    !*****************************************************
-    !                                                    *
-    ! Store the parameters of the binary neutron         *
-    ! stars' LORENE ID into member variables             *
-    !                                                    *
-    ! FT 5.10.2020                                       *
-    !                                                    *
-    !*****************************************************
+    !***************************************************
+    !
+    !# Store the parameters of the binary neutron
+    !  stars' LORENE ID into member variables
+    !
+    !  FT 5.10.2020
+    !
+    !***************************************************
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR
 
@@ -257,14 +258,14 @@ SUBMODULE (bns_id) bns_params
 
   MODULE PROCEDURE print_id_params
 
-    !*****************************************************
-    !                                                    *
-    ! Print the parameters of the binary neutron         *
-    ! stars' initial data computed by LORENE             *
-    !                                                    *
-    ! FT 8.10.2020                                       *
-    !                                                    *
-    !*****************************************************
+    !****************************************************
+    !
+    !# Print the parameters of the binary neutron
+    !  stars' initial data computed by LORENE
+    !
+    !  FT 8.10.2020
+    !
+    !****************************************************
 
     USE constants, ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
                          lorene2hydrobase, c_light, cm2km
