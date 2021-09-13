@@ -5,20 +5,25 @@
 SUBMODULE (particles_id) particles_redistribute_nu
 
   !***************************************************
-  !                                                  *
-  ! Implementation of the methods of TYPE particles  *
-  ! that reallocate the sph variables and            *
-  ! redistribute nu (baryon number per particle)     *
-  ! on the particles.                                *
-  !                                                  *
-  ! These methods find application when one wants to *
-  ! decrease the particle mass ratio with particles  *
-  ! on lattices.                                     *
-  !                                                  *
-  ! They DON'T HAVE ANYTHING to do with the APM.     *
-  !                                                  *
-  ! FT 12.07.2021                                    *
-  !                                                  *
+  !
+  !# This SUBMODULE contains the implementation of
+  !  the methods of TYPE particles
+  !  that reallocate the sph variables and
+  !  redistribute nu (baryon number per particle)
+  !  on the particles.
+  !
+  !  These methods find application when one wants to
+  !  decrease the particle mass ratio with particles
+  !  on lattices.
+  !
+  !  They DON'T HAVE ANYTHING to do with the APM.
+  !
+  !  TODO: Add other SUBROUTINES to improve
+  !        modularity in SUBMODULE
+  !        particles_sph_variables
+  !
+  !  FT 12.07.2021
+  !
   !***************************************************
 
 
@@ -36,13 +41,13 @@ SUBMODULE (particles_id) particles_redistribute_nu
   MODULE PROCEDURE reshape_sph_field_1d
 
     !************************************************
-    !                                               *
-    ! Read the SPH ID from the binary file output   *
-    ! by write_SPHINCS_dump, and print it to a      *
-    ! formatted file                                *
-    !                                               *
-    ! FT 31.03.2021                                 *
-    !                                               *
+    !
+    !# Read the SPH ID from the binary file output
+    !  by write_SPHINCS_dump, and print it to a
+    !  formatted file
+    !
+    !  FT 31.03.2021
+    !
     !************************************************
 
     IMPLICIT NONE
@@ -103,13 +108,13 @@ SUBMODULE (particles_id) particles_redistribute_nu
   MODULE PROCEDURE reshape_sph_field_2d
 
     !************************************************
-    !                                               *
-    ! Read the SPH ID from the binary file output   *
-    ! by write_SPHINCS_dump, and print it to a      *
-    ! formatted file                                *
-    !                                               *
-    ! FT 31.03.2021                                 *
-    !                                               *
+    !
+    !# Read the SPH ID from the binary file output
+    !  by write_SPHINCS_dump, and print it to a
+    !  formatted file
+    !
+    !  FT 31.03.2021
+    !
     !************************************************
 
     IMPLICIT NONE

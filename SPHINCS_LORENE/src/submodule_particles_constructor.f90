@@ -5,12 +5,13 @@
 SUBMODULE (particles_id) particles_constructor
 
   !************************************************
-  !                                               *
-  ! Implementation of the constructor and the     *
-  ! destructor of TYPE particles.                 *
-  !                                               *
-  ! FT 16.10.2020                                 *
-  !                                               *
+  !
+  !# This SUBMODULE contains the implementation
+  !  of the constructor and the
+  !  destructor of TYPE particles.
+  !
+  !  FT 16.10.2020
+  !
   !************************************************
 
 
@@ -23,11 +24,11 @@ SUBMODULE (particles_id) particles_constructor
   !MODULE PROCEDURE construct_particles_empty
   !
   !    !************************************************
-  !    !                                               *
-  !    ! The constructor of an empty particle object.  *
-  !    !                                               *
-  !    ! FT 02.11.2020                                 *
-  !    !                                               *
+  !    !
+  !    !# The constructor of an empty particle object.
+  !    !
+  !    !  FT 02.11.2020
+  !    !
   !    !************************************************
   !
   !
@@ -43,16 +44,19 @@ SUBMODULE (particles_id) particles_constructor
 
   MODULE PROCEDURE construct_particles
 
-    !************************************************
-    !                                               *
-    ! The constructor performs all the tasks needed *
-    ! to set up the particle distribution with the  *
-    ! LORENE ID on it. It calls all the PROCEDURES  *
-    ! that rely on an object of TYPE bns.           *
-    !                                               *
-    ! FT 17.10.2020                                 *
-    !                                               *
-    !************************************************
+    !**************************************************
+    !
+    !# The constructor performs all the tasks needed
+    !  to set up the particle distribution with the
+    !  LORENE ID on it. It calls all the PROCEDURES
+    !  that rely on an object of TYPE bns.
+    !
+    !  TODO: assign sub-tasks to separate SUBROUTINES
+    !        CONTAINED in this SUBMODULE
+    !
+    !  FT 17.10.2020
+    !
+    !**************************************************
 
     !USE NaNChecker, ONLY: Check_Array_for_NAN
     USE constants,      ONLY: Msun_geo, km2m, amu
@@ -1650,13 +1654,13 @@ SUBMODULE (particles_id) particles_constructor
 
   MODULE PROCEDURE destruct_particles
 
-    !*************************************************
-    !                                                *
-    ! Destructor of a particles object               *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !*********************************************
+    !
+    !# Destructor of a particles object
+    !
+    !  FT
+    !
+    !*********************************************
 
     IMPLICIT NONE
 

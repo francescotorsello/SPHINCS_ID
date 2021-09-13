@@ -5,13 +5,14 @@
 SUBMODULE (particles_id) particles_memory
 
   !***************************************************
-  !                                                  *
-  ! Implementation of the methods of TYPE particles  *
-  ! that place particles on 1 or 2 lattices around   *
-  ! the stars.                                       *
-  !                                                  *
-  ! FT 12.07.2021                                    *
-  !                                                  *
+  !
+  !# This SUBMODULE contains the implementation of
+  !  the methods of TYPE particles
+  !  that place particles on 1 or 2 lattices around
+  !  the stars.
+  !
+  !  FT 12.07.2021
+  !
   !***************************************************
 
 
@@ -29,12 +30,12 @@ SUBMODULE (particles_id) particles_memory
   MODULE PROCEDURE allocate_lorene_id_parts_memory
 
     !************************************************
-    !                                               *
-    ! Allocate memory for the LORENE ID on the      *
-    ! particles                                     *
-    !                                               *
-    ! FT 10.11.2020                                 *
-    !                                               *
+    !
+    !# Allocate memory for the LORENE ID on the
+    !  particles
+    !
+    !  FT 10.11.2020
+    !
     !************************************************
 
     IMPLICIT NONE
@@ -318,15 +319,16 @@ SUBMODULE (particles_id) particles_memory
 
   MODULE PROCEDURE deallocate_lorene_id_parts_memory
 
-    !************************************************
-    !                                               *
-    ! Deallocate memory for the LORENE ID on the    *
-    ! particles                                     *
-    !                                               *
-    ! FT 12.07.2021 (this was part of the           *
-    !                destructor before this date)   *
-    !                                               *
-    !************************************************
+    !*************************************************
+    !
+    !# Deallocate memory for the LORENE ID on the
+    !  particles
+    !
+    !  FT 12.07.2021 (this was part of the destructor
+    !                 of TYPE [[particles]]
+    !                 before this date)
+    !
+    !*************************************************
 
     IMPLICIT NONE
 

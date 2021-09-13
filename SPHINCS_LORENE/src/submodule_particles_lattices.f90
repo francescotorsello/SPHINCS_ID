@@ -5,13 +5,14 @@
 SUBMODULE (particles_id) particles_lattices
 
   !***************************************************
-  !                                                  *
-  ! Implementation of the methods of TYPE particles  *
-  ! that place particles on 1 or 2 lattices around   *
-  ! the stars.                                       *
-  !                                                  *
-  ! FT 12.07.2021                                    *
-  !                                                  *
+  !
+  !# This SUBMODULE contains the implementation of
+  !  the methods of TYPE particles
+  !  that place particles on 1 or 2 lattices around
+  !  the stars.
+  !
+  !  FT 12.07.2021
+  !
   !***************************************************
 
 
@@ -23,13 +24,13 @@ SUBMODULE (particles_id) particles_lattices
 
   MODULE PROCEDURE place_particles_3dlattice
 
-    !*****************************************************
-    !                                                    *
-    ! Compute positions in a 3D lattice around the stars *
-    !                                                    *
-    ! FT 5.10.2020                                       *
-    !                                                    *
-    !*****************************************************
+    !*********************************************************
+    !
+    !# Places paricles on a 3D lattice containing both stars
+    !
+    !  FT 5.10.2020
+    !
+    !*********************************************************
 
     USE constants,    ONLY: Msun_geo
 
@@ -345,14 +346,14 @@ SUBMODULE (particles_id) particles_lattices
 
   MODULE PROCEDURE place_particles_3dlattices
 
-    !*****************************************************
-    !                                                    *
-    ! Compute positions in two 3D lattices each one      *
-    ! around each star                                   *
-    !                                                    *
-    ! FT 19.10.2020                                      *
-    !                                                    *
-    !*****************************************************
+    !****************************************************
+    !
+    !# Places paricles on two 3D lattices, each one
+    !  containing a star
+    !
+    !  FT 19.10.2020
+    !
+    !****************************************************
 
     USE constants, ONLY: Msun_geo
 

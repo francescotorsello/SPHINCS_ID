@@ -4,14 +4,15 @@
 
 SUBMODULE (particles_id) particles_access
 
-  !***************************************************
-  !                                                  *
-  ! Implementation of the methods of TYPE particles  *
-  ! that allow to access PRIVATE members.            *
-  !                                                  *
-  ! FT 12.07.2021                                    *
-  !                                                  *
-  !***************************************************
+  !**************************************************
+  !
+  !# This SUBMODULE contains the implementation of
+  !  the methods of TYPE particles
+  !  that allow to access PRIVATE members.
+  !
+  !  FT 12.07.2021
+  !
+  !**************************************************
 
 
   IMPLICIT NONE
@@ -27,13 +28,13 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_npart
 
-    !*************************************************
-    !                                                *
-    ! Returns the total number of particles          *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the total number of particles
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -44,13 +45,13 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_npart1
 
-    !*************************************************
-    !                                                *
-    ! Returns the number of particles on star 1      *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the number of particles on star 1
+    !
+    !  FT 27.04.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -61,13 +62,13 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_npart2
 
-    !*************************************************
-    !                                                *
-    ! Returns the number of particles on star 2      *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the number of particles on star 2
+    !
+    !  FT 27.04.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -78,13 +79,13 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_nuratio
 
-    !*************************************************
-    !                                                *
-    ! Returns the baryon number ratio on the stars  *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the baryon number ratio on the stars
+    !
+    !  FT 27.04.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -95,13 +96,13 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_nuratio1
 
-    !*************************************************
-    !                                                *
-    ! Returns the baryon number ratio on star 1      *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the baryon number ratio on star 1
+    !
+    !  FT 27.04.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -112,13 +113,13 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_nuratio2
 
-    !*************************************************
-    !                                                *
-    ! Returns the baryon number ratio on star 2      *
-    !                                                *
-    ! FT 27.04.2021                                  *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the baryon number ratio on star 2
+    !
+    !  FT 27.04.2021
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -129,13 +130,13 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_pos
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of particle positions        *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of particle positions
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -146,14 +147,14 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_vel
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of coordinate 3-velocity of  *
-    ! particles                                      *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of coordinate 3-velocity of
+    ! particles
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -164,14 +165,14 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_nlrf
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of baryon density in the     *
-    ! local rest frame                               *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of baryon density in the
+    ! local rest frame
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -182,14 +183,14 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_nu
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of baryon per particle       *
-    ! [baryon (Msun_geo)^{-3}]                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of baryon per particle
+    ! [baryon (Msun_geo)^{-3}]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -200,14 +201,14 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_u
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of specific internal         *
-    ! energy [c^2]                                   *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of specific internal
+    ! energy [c^2]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -218,13 +219,13 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_pressure
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of pressure [kg c^2 m^{-3}]  *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of pressure [kg c^2 m^{-3}]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -235,14 +236,14 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_pressure_cu
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of pressure in code units    *
-    ! [amu*c**2/(Msun_geo**3)]                       *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of pressure in code units
+    ! [amu*c**2/(Msun_geo**3)]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -253,14 +254,14 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_theta
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of generalized Lorentz       *
-    ! factor                                         *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of generalized Lorentz
+    ! factor
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -271,14 +272,14 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE get_h
 
-    !*************************************************
-    !                                                *
-    ! Returns the array of initial guess for the     *
-    ! smoothing length [Msun_geo]                    *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the array of initial guess for the
+    ! smoothing length [Msun_geo]
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
@@ -289,14 +290,14 @@ SUBMODULE (particles_id) particles_access
 
   MODULE PROCEDURE is_empty
 
-    !*************************************************
-    !                                                *
-    ! Returns the variable empty_object              *
-    ! (experimental)                                 *
-    !                                                *
-    ! FT                                             *
-    !                                                *
-    !*************************************************
+    !************************************************
+    !
+    !# Returns the variable empty_object
+    ! (experimental)
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 

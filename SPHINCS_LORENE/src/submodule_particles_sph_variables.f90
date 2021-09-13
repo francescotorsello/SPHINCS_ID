@@ -5,17 +5,18 @@
 SUBMODULE (particles_id) particles_sph_variables
 
   !****************************************************
-  !                                                   *
-  ! Implementation of the methods of TYPE particles   *
-  ! that compute, print and read the SPH variables.   *
-  !                                                   *
-  ! FT 16.10.2020                                     *
-  !                                                   *
-  ! Renamed from particles_methods to                 *
-  ! particles_sph_variables upon improving modularity *
-  !                                                   *
-  ! FT 12.07.2021                                     *
-  !                                                   *
+  !
+  !# THIS SUBMODULE contains the implementation of
+  !  the methods of TYPE particles
+  !  that compute, print and read the SPH variables.
+  !
+  !  FT 16.10.2020
+  !
+  !  Renamed from particles_methods to
+  !  particles_sph_variables upon improving modularity
+  !
+  !  FT 12.07.2021
+  !
   !****************************************************
 
 
@@ -33,13 +34,13 @@ SUBMODULE (particles_id) particles_sph_variables
   MODULE PROCEDURE compute_and_export_SPH_variables
 
     !************************************************
-    !                                               *
-    ! Compute the SPH quantities from the LORENE    *
-    ! ID, and export it to a binary file with       *
-    ! write_SPHINCS_dump, and to a formatted file   *
-    !                                               *
-    ! FT 18.09.2020                                 *
-    !                                               *
+    !
+    !# Compute the SPH quantities from the LORENE
+    !  ID, and export it to a binary file with
+    !  write_SPHINCS_dump, and to a formatted file
+    !
+    !  FT 18.09.2020
+    !
     !************************************************
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
@@ -1219,13 +1220,13 @@ SUBMODULE (particles_id) particles_sph_variables
   MODULE PROCEDURE read_sphincs_dump_print_formatted
 
     !************************************************
-    !                                               *
-    ! Read the SPH ID from the binary file output   *
-    ! by write_SPHINCS_dump, and print it to a      *
-    ! formatted file                                *
-    !                                               *
-    ! FT 12.02.2021                                 *
-    !                                               *
+    !
+    !# Read the SPH ID from the binary file output
+    !  by write_SPHINCS_dump, and print it to a
+    !  formatted file
+    !
+    !  FT 12.02.2021
+    !
     !************************************************
 
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -1455,12 +1456,12 @@ SUBMODULE (particles_id) particles_sph_variables
   MODULE PROCEDURE print_formatted_lorene_id_particles
 
     !************************************************
-    !                                               *
-    ! Print the LORENE ID on the particles in a     *
-    ! formatted file                                *
-    !                                               *
-    ! FT 18.09.2020                                 *
-    !                                               *
+    !
+    !# Print the LORENE ID on the particles in a
+    !  formatted file
+    !
+    !  FT 18.09.2020
+    !
     !************************************************
 
     USE constants, ONLY: c_light2, cm2m, Msun_geo, amu, g2kg, km2m, km2cm
@@ -1673,12 +1674,13 @@ SUBMODULE (particles_id) particles_sph_variables
   MODULE PROCEDURE analyze_hydro
 
     !************************************************
-    !                                               *
-    ! Export the points where some of the hydro     *
-    ! fields are negative to a formatted file       *
-    !                                               *
-    ! FT 5.12.2020                                  *
-    !                                               *
+    !
+    !# Export the points where some of the hydro
+    !  fields are negative to a formatted file
+    !  (deprecated?)
+    !
+    !  FT 5.12.2020
+    !
     !************************************************
 
     IMPLICIT NONE
@@ -1777,14 +1779,14 @@ SUBMODULE (particles_id) particles_sph_variables
  !                                             specific_energy )
  !
  !   !**************************************************
- !   !                                                 *
- !   ! Compute the values of the the baryon density,   *
- !   ! the pressure, the energy density and the        *
- !   ! specific energy, from the value of the enthalpy *
- !   ! for piecewise polytropic EOS                    *
- !   !                                                 *
- !   ! FT 11.08.2021                                   *
- !   !                                                 *
+ !   !
+ !   !# Compute the values of the the baryon density,
+ !   !  the pressure, the energy density and the
+ !   !  specific energy, from the value of the enthalpy
+ !   !  for piecewise polytropic EOS
+ !   !
+ !   !  FT 11.08.2021
+ !   !
  !   !**************************************************
  !
  !   IMPLICIT NONE
@@ -1805,12 +1807,12 @@ SUBMODULE (particles_id) particles_sph_variables
   !MODULE PROCEDURE write_lorene_bns_id_dump
   !
   !    !*************************************************
-  !    !                                                *
-  !    ! Returns the array of initial guess for the     *
-  !    ! smoothing length                               *
-  !    !                                                *
-  !    ! FT                                             *
-  !    !                                                *
+  !    !
+  !    !# Returns the array of initial guess for the
+  !    !  smoothing length
+  !    !
+  !    !  FT
+  !    !
   !    !*************************************************
   !
   !    USE input_output

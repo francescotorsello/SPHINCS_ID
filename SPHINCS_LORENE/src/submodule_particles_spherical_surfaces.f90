@@ -5,12 +5,14 @@
 SUBMODULE (particles_id) spherical_surfaces
 
   !************************************************
-  !                                               *
   !
-  !*
-  !                                               *
-  ! FT 19.04.2021                                 *
-  !                                               *
+  !# This SUBMODULE contains the implementation
+  !  of the method of TYPE particles that places
+  !  particles on spherical surfaces inside
+  !  a star
+  !
+  !  FT 19.04.2021
+  !
   !************************************************
 
 
@@ -30,14 +32,14 @@ SUBMODULE (particles_id) spherical_surfaces
 
   MODULE PROCEDURE place_particles_spherical_shells
 
-    !************************************************
-    !                                               *
-    !     *
-    !     *
-    !                                               *
-    ! FT 19.04.2021                                 *
-    !                                               *
-    !************************************************
+    !**********************************************
+    !
+    !# Places particles on spherical surfaces
+    !  inside a star
+    !
+    !  FT 19.04.2021
+    !
+    !**********************************************
 
     !$ USE OMP_LIB
     USE constants, ONLY: pi, MSun, MSun_geo, km2m, kg2g, lorene2hydrobase, &
@@ -1485,13 +1487,13 @@ SUBMODULE (particles_id) spherical_surfaces
            RESULT( n_shells_tmp )
 
     !************************************************
-    !                                               *
-    ! Compute the number of spherical surfaces      *
-    ! by integrating the linear particle density    *
-    ! along the larger equatorial radius            *
-    !                                               *
-    ! FT 22.07.2021                                 *
-    !                                               *
+    !
+    !# Compute the number of spherical surfaces
+    !  by integrating the linear particle density
+    !  along the larger equatorial radius
+    !
+    !  FT 22.07.2021
+    !
     !************************************************
 
     USE constants, ONLY: third
@@ -1539,11 +1541,11 @@ SUBMODULE (particles_id) spherical_surfaces
   SUBROUTINE reallocate_array_1d( array, new_dim )
 
     !************************************
-    !                                   *
-    ! Reallocate a 1-dimensional array  *
-    !                                   *
-    ! FT 22.07.2021                     *
-    !                                   *
+    !
+    !# Reallocate a 1-dimensional array
+    !
+    !  FT 22.07.2021
+    !
     !************************************
 
     IMPLICIT NONE
@@ -1573,11 +1575,11 @@ SUBMODULE (particles_id) spherical_surfaces
   SUBROUTINE reallocate_array_2d( array, new_dim, new_dim2 )
 
     !************************************
-    !                                   *
-    ! Reallocate a 2-dimensional array  *
-    !                                   *
-    ! FT 22.07.2021                     *
-    !                                   *
+    !
+    !# Reallocate a 2-dimensional array
+    !
+    !  FT 22.07.2021
+    !
     !************************************
 
     IMPLICIT NONE
@@ -1608,13 +1610,13 @@ SUBMODULE (particles_id) spherical_surfaces
                              shell_radii, last_r )
 
     !************************************************
-    !                                               *
-    ! Place the spherical surface, according to     *
-    ! the baryon mass density of the star           *
-    ! along the larger equatorial radius            *
-    !                                               *
-    ! FT 23.07.2021                                 *
-    !                                               *
+    !
+    !# Place the spherical surface, according to
+    !  the baryon mass density of the star
+    !  along the larger equatorial radius
+    !
+    !  FT 23.07.2021
+    !
     !************************************************
 
     USE constants,  ONLY: third
@@ -1654,15 +1656,15 @@ SUBMODULE (particles_id) spherical_surfaces
                                    n_shells, mass_profile_idx, mass_profile, &
                                    mass_star )
 
-    !************************************************
-    !                                               *
-    ! Assign a mass to each spherical surface,      *
-    ! based on the radial mass profile of the star  *
-    ! (computed along the larger equatorial radius) *
-    !                                               *
-    ! FT 23.07.2021                                 *
-    !                                               *
-    !************************************************
+    !*************************************************
+    !
+    !# Assign a mass to each spherical surface,
+    !  based on the radial mass profile of the star
+    !  (computed along the larger equatorial radius)
+    !
+    !  FT 23.07.2021
+    !
+    !*************************************************
 
     USE constants,  ONLY: third
 
@@ -1726,14 +1728,14 @@ SUBMODULE (particles_id) spherical_surfaces
                                                filename_mass_profile, &
                                                filename_shells_radii )
 
-    !************************************************
-    !                                               *
-    ! Print star's radial mass profile and radii of *
-    ! spherical surfaces to different ASCII files   *
-    !                                               *
-    ! FT 23.07.2021                                 *
-    !                                               *
-    !************************************************
+    !*************************************************
+    !
+    !# Print star's radial mass profile and radii of
+    !  spherical surfaces to different ASCII files
+    !
+    !  FT 23.07.2021
+    !
+    !*************************************************
 
     USE constants,  ONLY: third
 
@@ -1833,14 +1835,14 @@ SUBMODULE (particles_id) spherical_surfaces
   FUNCTION particle_volume( rad, col, dr_shells, dth_shells, dphi_shells, th, &
                             colatitudes, npart_equator ) RESULT( pvol )
 
-    !******************************************
-    !                                         *
-    ! Compute the geometrical particle volume *
-    ! not the proper particle volume.         *
-    !                                         *
-    ! FT 23.07.2021                           *
-    !                                         *
-    !******************************************
+    !*******************************************
+    !
+    !# Compute the geometrical particle volume
+    !  not the proper particle volume.
+    !
+    !  FT 23.07.2021
+    !
+    !*******************************************
 
     USE constants,  ONLY: pi
 

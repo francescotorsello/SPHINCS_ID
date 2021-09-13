@@ -4,14 +4,15 @@
 
 SUBMODULE (particles_id) particles_apm
 
-  !****************************************************
-  !                                                   *
-  ! Implementation of the method                      *
-  ! perform_apm of TYPE particles.                    *
-  !                                                   *
-  ! FT 04.06.2021                                     *
-  !                                                   *
-  !****************************************************
+  !***********************************
+  !
+  !# This SUBMODULE contains the
+  !  implementation of the method
+  !  perform_apm of TYPE particles.
+  !
+  !  FT 04.06.2021
+  !
+  !***********************************
 
 
   IMPLICIT NONE
@@ -22,32 +23,32 @@ SUBMODULE (particles_id) particles_apm
 
   MODULE PROCEDURE perform_apm
 
-    !****************************************************
-    !                                                   *
-    ! Compute the particle positions as follows:        *
-    !                                                   *
-    !   1. Take initial particle distribution as input  *
-    !   2. Assume that the particles have the same mass *
-    !   3. Do the APM iteration so that the final       *
-    !      SPH kernel estimate of the baryon mass       *
-    !      density matches the baryon density in the    *
-    !      star as given by LORENE                      *
-    !   4. Correct the particle masses ONCE in order    *
-    !      to match the density even better. Since we   *
-    !      don't want a large mass ratio, we impose a   *
-    !      maximum mass ratio when performing this      *
-    !      correction.                                  *
-    !                                                   *
-    ! After this procedure, the resulting particle      *
-    ! distribution has positions and baryon numbers     *
-    ! that kernel-estimate very well the mass density   *
-    ! of the star, and has a low mass ratio.            *
-    !                                                   *
-    ! This procedure assigns positions and nu.          *
-    !                                                   *
-    ! FT 04.06.2021                                     *
-    !                                                   *
-    !****************************************************
+    !*****************************************************
+    !
+    !#  Compute the particle positions as follows:
+    !
+    !    1. Take initial particle distribution as input
+    !    2. Assume that the particles have the same mass
+    !    3. Do the APM iteration so that the final
+    !       SPH kernel estimate of the baryon mass
+    !       density matches the baryon density in the
+    !       star as given by LORENE
+    !    4. Correct the particle masses ONCE in order
+    !       to match the density even better. Since we
+    !       don't want a large mass ratio, we impose a
+    !       maximum mass ratio when performing this
+    !       correction.
+    !
+    !  After this procedure, the resulting particle
+    !  distribution has positions and baryon numbers
+    !  that kernel-estimate very well the mass density
+    !  of the star, and has a low mass ratio.
+    !
+    !  This procedure assigns positions and nu.
+    !
+    !  FT 04.06.2021
+    !
+    !*****************************************************
 
     USE constants,           ONLY: half, third, Msun, Msun_geo, km2m, g2kg, &
                                    amu, pi
@@ -1826,12 +1827,12 @@ SUBMODULE (particles_id) particles_apm
                               baryon_density, nstar_p )
 
     !**************************************************************
-    !                                                             *
-    ! Compute nstar_p, the proper baryon mass density, given the  *
-    ! LORENE ID                                                   *
-    !                                                             *
-    ! FT 31.08.2021                                               *
-    !                                                             *
+    !
+    !# Compute nstar_p, the proper baryon mass density, given the
+    !  LORENE ID
+    !
+    !  FT 31.08.2021
+    !
     !**************************************************************
 
     USE constants, ONLY: Msun_geo, km2m, amu, g2kg
@@ -1960,13 +1961,13 @@ SUBMODULE (particles_id) particles_apm
                                      verbose )
 
     !***********************************************************
-    !                                                          *
-    ! Translate the particles so that their center of mass     *
-    ! coincides with the center of mass of the star, given by  *
-    ! LORENE                                                   *
-    !                                                          *
-    ! FT 1.09.2021                                             *
-    !                                                          *
+    !
+    !# Translate the particles so that their center of mass
+    !  coincides with the center of mass of the star, given by
+    !  LORENE
+    !
+    !  FT 1.09.2021
+    !
     !***********************************************************
 
     USE analyze, ONLY: COM
@@ -2056,12 +2057,12 @@ SUBMODULE (particles_id) particles_apm
                                                verbose )
 
     !*************************************************************
-    !                                                            *
-    ! Mirror the particle with z>0 with respect to the xy plane, *
-    ! to impose the equatorial-plane symmetry                    *
-    !                                                            *
-    ! FT 1.09.2021                                               *
-    !                                                            *
+    !
+    !# Mirror the particle with z>0 with respect to the xy plane,
+    !  to impose the equatorial-plane symmetry
+    !
+    !  FT 1.09.2021
+    !
     !*************************************************************
 
     USE analyze, ONLY: COM
@@ -2152,14 +2153,14 @@ SUBMODULE (particles_id) particles_apm
   SUBROUTINE get_neighbours_bf(ipart,npart,pos,h,dimensions,nnei,neilist)
 
     !**************************************************************
-    !                                                             *
-    ! just for test purposes: get neighbours of particle ipart in *
-    ! a "brute force" way; ipart is ALSO on the neighbour list;   *
-    ! SKR 8.2.2010                                                *
-    !                                                             *
-    ! Removed ipart from its own neighbors' list                  *
-    ! FT 04.06.2021                                               *
-    !                                                             *
+    !
+    !# just for test purposes: get neighbours of particle ipart in
+    !  a "brute force" way; ipart is ALSO on the neighbour list;
+    !  SKR 8.2.2010
+    !
+    !  Removed ipart from its own neighbors' list
+    !  FT 04.06.2021
+    !
     !**************************************************************
 
     IMPLICIT NONE

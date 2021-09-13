@@ -24,10 +24,10 @@ n_cols=!21                   ! Total number of columns in the file
        4
 header_lines=!4              ! Number of header lines in the file
              0
-!-------------------------------------------------------!
-! Reflect particles with respect to the yz plane if the !
-! stars have masses that differ less than 0.5%          !
-!-------------------------------------------------------!
+!----------------------------------------------------------!
+! Choose to reflect particles with respect to the yz plane !
+! if the stars have masses that differ less than 0.5%      !
+!----------------------------------------------------------!
 reflect_particles_x= .TRUE.
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
@@ -46,33 +46,33 @@ redistribute_nu=.FALSE. ! If .TRUE., nu is reassigned on the particles such that
 nu_ratio=3.0           ! Desired baryon number ratio. Used only when
                        ! redistribute_nu is .TRUE.
 !---------------------------------------------------------------!
-! Parameters needed to place particles on spherical shells      !
+! Parameters needed to place particles on spherical surfaces    !
 !   This method integrates the density over the stars, computes !
-!   the masses of the shells and then the number of particles   !
-!   per shell, trying to minimize the particle mass ratio       !
+!   the masses of the surfaces and then the number of particles !
+!   per surface, trying to minimize the particle mass ratio     !
 !   by iteration.                                               !
 !---------------------------------------------------------------!
-npart_approx= 5.0D+4 ! Usually, the final number of particles on the less
-                   ! massive star is between 1.4*npart_approx and 2*npart_approx
+npart_approx= 5.0D+4 ! The approximate number of particles on the less massive star
                    ! The approximate number of particles on the more massive star
                    ! is npart_approx/mass_ratio
-last_r= 0.99D0     ! The radius of the last spherical shell is last_r*(star radius)
-                   ! The last shell always contains the mass of the last
+last_r= 0.99D0     ! The radius of the last spherical surface is
+                   ! last_r*(star radius)
+                   ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
 upper_bound= 1.025D0  ! Desired upper bound for the differences between particle
-                      ! masses on neighbouring spherical shells
+                      ! masses on neighbouring spherical surfaces
 lower_bound= 0.975D0  ! Desired lower bound for the same differences as above
                       ! It might not be possible to obtain a particle number on
-                      ! a shell such that the above bound are respected.
-                      ! If this happens, usually the particle number on the shell
+                      ! a surface such that the above bounds are respected.
+                      ! If this happens, usually the particle number on the surface
                       ! changes periodically during the iteration and the latter
                       ! never converges. This is mainly due to the fact that while
-                      ! the particle masses and the shell masses are real numbers,
+                      ! the particle masses and the surface masses are real numbers,
                       ! the particle number is an integer. Explicitly, it might be
                       ! that a real number of particles is needed to have a certain
-                      ! particle mass on a shell with a given mass. In the current
-                      ! implementation, the shell mass is kept constant, hence an
-                      ! integer number of particle cannot necessarily converge.
+                      ! particle mass on a surface with a given mass. In the current
+                      ! implementation, the surface mass is kept constant, hence an
+                      ! integer number of particle may not necessarily converge.
                       ! The currently implemented solution is to allow for a small
                       ! change in the bounds above, that can be specified with the
                       ! following parameters.
@@ -81,8 +81,8 @@ max_steps= 100        ! If, after max_steps, the iteration did not converge,
                       ! by lower_factor. max_steps >= 10. 100 is a nice value
 upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
 lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
-randomize_phi=  .TRUE. ! Randomize particle positions in phi
-randomize_theta=.TRUE. ! Randomize particle positions in theta
+randomize_phi=  .TRUE.  ! Randomize particle positions in phi
+randomize_theta=.TRUE.  ! Randomize particle positions in theta
 randomize_r=    .TRUE.  ! Randomize particle positions in r
 !----------------------------------------------------!
 ! Parameters for the Artifical Pressure Method (APM) !
@@ -97,8 +97,8 @@ apm_iterate2=.FALSE.    ! If .TRUE. applies the APM to the second star
 apm_max_it=2         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 1            ! Sets the EXIT condition: If the average over all the
-                        ! particles of the error in the density estimate grows
-                        ! max_inc times, exit the iteration.
+                        ! particles of the relative error in the density estimate
+                        ! grows max_inc times, exit the iteration.
 nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
@@ -119,9 +119,8 @@ nz_gh=250               ! Number of lattice points in the z direction for ghosts
 ! Flag to correct the number of baryons !
 !---------------------------------------!
 correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
-                   ! (increased) to include the total baryonic masses of the
-                   ! stars (in smaller radii). A fraction of the latter is
-                   ! otherwise left out due to the thres parameter
+                   ! to include the total baryonic masses of the
+                   ! stars.
 !--------------------------------------------------------------------------!
 ! Parameters needed to read the electron fraction when using a CompOSE EoS !
 ! CHECK THAT THE EoS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
@@ -131,11 +130,11 @@ compose_eos=.TRUE. ! If .TRUE., reads in the table of Ye (electron fraction)
                    ! as a function of nb (baryon number density) from the .beta
                    ! file computed with the CompOSE software, and linearly
                    ! interpolates Ye on the particles.
- ! compose_path is the path to the directory containing the CompOSE EoS.
- ! compose_filename is the subpath of compose_path to the file
- ! with .beta extension. NOTE: the .beta extension is omitted here, so that
- ! to read the file great_eos.beta in the directory compose_path/GREAT_EoS,
- ! one writes compose_filename="GREAT_EoS/great_eos"
+! compose_path is the path to the directory containing the CompOSE EoS.
+! compose_filename is the subpath of compose_path to the file
+! with .beta extension. NOTE: the .beta extension is omitted here, so that
+! to read the file great_eos.beta in the directory compose_path/GREAT_EoS,
+! one writes compose_filename="GREAT_EoS/great_eos"
 compose_path="../../CompOSE_EOS/"
 compose_filename=!"SFHO_with_electrons/eos"
                  !"SFHX_with_electrons/eos"
