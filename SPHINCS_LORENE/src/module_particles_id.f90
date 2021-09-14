@@ -5,11 +5,11 @@
 MODULE particles_id
 
 
-  !************************************************************
-  !                                                           *
-  !   This module contains the definition of TYPE particles   *
-  !                                                           *
-  !************************************************************
+  !***********************************************************
+  !
+  !# This module contains the definition of TYPE particles
+  !
+  !***********************************************************
 
 
   USE utility, ONLY: itr, ios, err_msg, test_status, &
@@ -19,9 +19,6 @@ MODULE particles_id
 
 
   IMPLICIT NONE
-
-
-  !INTEGER:: max_particles
 
 
   !**********************************************************
@@ -36,63 +33,87 @@ MODULE particles_id
   !**********************************************************
 
   TYPE:: particles
+  !! TYPE representing a particle distribution
 
 
     PRIVATE
 
-    INTEGER:: npart, npart1, npart2, npart_temp, npart1_temp, npart2_temp
-    INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
+    INTEGER:: npart
+    !! Total particle number
+    INTEGER:: npart1
+    !! Particle number for star 1
+    INTEGER:: npart2
+    !! Particle number for star 2
+    INTEGER:: npart_temp, npart1_temp, npart2_temp
+    !! Various particle numbers used internally by the TYPE
+    !INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
     INTEGER:: distribution_id
-    INTEGER:: eos1_id, eos2_id
-    ! The flag call_flag is set different than 0 if the SUBROUTINE
-    ! compute_and_export_SPH_variables is called
+    !! Identification number for the particle distribution
+    INTEGER:: eos1_id
+    !! LORENE identification number for the EOS of star 1
+    INTEGER:: eos2_id
+    !! LORENE identification number for the EOS of star 1
     INTEGER:: call_flag= 0
+    ! Flag that is set different than 0 if the SUBROUTINE
+    ! compute_and_export_SPH_variables is called
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
+    !# Array storing the indices to use with [[particles:baryon_density_parts]]
+    !  to sort the elements of [[particles:baryon_density_parts]] in increasing
+    !  order
 
     !INTEGER, DIMENSION(:), ALLOCATABLE:: filt_pos
 
     !
     !-- Hydro variables on the particles
     !
-    ! 2-D array storing the position of the particles
+    !> 2-D array storing the particle positions
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
-    ! 1-D array storing the position of the particles on the x axis for S 1
+    !> 1-D array storing the position of the particles on the x axis for S 1
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x1
-    ! 1-D array storing the position of the particles on the x axis for NS2
+    !> 1-D array storing the position of the particles on the x axis for NS2
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x2
-    ! 1-D array storing the baryon mass density in the fluid frame
-    ! [kg m^{-3}]
+    !& 1-D array storing the baryon mass density in the fluid frame
+    !  \([\mathrm{kg}\,\mathrm{m}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: baryon_density_parts
-    ! 1-D array storing the energy density [kg c^2 m^{-3}]
+    !> 1-D array storing the energy density
+    !  \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: energy_density_parts
-    ! 1-D array storing the specific internal energy [c^2]
+    !> 1-D array storing the specific internal energy \([c^2]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: specific_energy_parts
-    ! 1-D array storing the specific internal energy computed using formula (9)
-    ! in Read et al., Phys.Rev.D79:124032,2009, arXiv:0812.2163 [c^2]
+    !& 1-D array storing the specific internal energy \([c^2]\) computed using
+    !  formula (9) in Read et al., Phys.Rev.D79:124032,2009,
+    !  [arXiv:0812.2163][https://arxiv.org/abs/0812.2163]{:target="_blank"}
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: u_pwp
-    ! 1-D array storing the pressure [kg c^2 m^{-3}]
+    !> 1-D array storing the pressure \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts
-    ! 1-D array storing the pressure on the x axis [kg c^2 m^{-3}] for NS 1
+    !& 1-D array storing the pressure on the x axis
+    !  \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS 1
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x1
-    ! 1-D array storing the pressure on the x axis [kg c^2 m^{-3}] for NS 2
+    !& 1-D array storing the pressure on the x axis
+    !  \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS 2
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x2
-    ! 1-D array storing the first derivative of the pressure
-    ! along the x axis [kg c^2 m^{-3}] for NS 1
+    !& 1-D array storing the first derivative of the pressure
+    !  along the x axis \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS 1
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x_der1
-    ! 1-D array storing the first derivative of the pressure
-    ! along the x axis [kg c^2 m^{-3}] for NS2
+    !& 1-D array storing the first derivative of the pressure
+    !  along the x axis \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS2
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x_der2
-    ! 1-D array storing the typical length scale for the pressure change
+    !> 1-D array storing the typical length scale for the pressure change
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_length_scale_x1
-    ! 1-D array storing the typical length scale for the pressure change
+    !> 1-D array storing the typical length scale for the pressure change
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_length_scale_x2
-    ! 1-D array storing the pressure in code units [amu c^2/(Msun_geo**3)]
+    !& 1-D array storing the pressure in code units
+    !  \([\mathrm{amu}\,c^2\,\mathrm{L_\odot}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_cu
-    ! 1-D arrays storing the components of the fluid 3-velocity wrt
-    ! the Eulerian observer [c]
+    !& 1-D array storing the x component of the fluid 3-velocity wrt
+    !  the Eulerian observer \([c]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_x
+    !& 1-D array storing the y component of the fluid 3-velocity wrt
+    !  the Eulerian observer \([c]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_y
+    !& 1-D array storing the z component of the fluid 3-velocity wrt
+    !  the Eulerian observer \([c]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_z
 
     !
@@ -100,80 +121,125 @@ MODULE particles_id
     !-- baryon number density for beta-equilibrated EoS at T~0,
     !-- imported from the CompOSE database's and software's files
     !
+
+    !& Array storing the values of the baryon number density in the CompOSE
+    !  table. @todo ADD UNITS
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nb_table
+    !> Array storing the values of the electron fraction in the CompOSE table
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye_table
 
     !
     !-- Spacetime fields
     !
+
+    !> Array storing the values of the lapse function on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
+    !& Array storing the values of the x component of the shift vector
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_parts_x
+    !& Array storing the values of the y component of the shift vector
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_parts_y
+    !& Array storing the values of the z component of the shift vector
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_parts_z
+    !& Array storing the values of the xx component of the spatial metric
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xx_parts
+    !& Array storing the values of the xy component of the spatial metric
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xy_parts
+    !& Array storing the values of the xz component of the spatial metric
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xz_parts
+    !& Array storing the values of the xz component of the spatial metric
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_yy_parts
+    !& Array storing the values of the yz component of the spatial metric
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_yz_parts
+    !& Array storing the values of the zz component of the spatial metric
+    !  on the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_zz_parts
 
     !
     !-- SPH fields
     !
-    ! 1-D array storing baryon density in the local rest frame
-    ! baryon (Msun_geo)^{-3}, computed directlyfrom the LORENE desnity
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf
-    ! 1-D array storing baryon density in the local rest frame
-    ! baryon (Msun_geo)^{-3}, computed from the kernel interpolated nstar_int
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_int
-    ! 1-D array storing the baryon number per particle
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu
-    ! 1-D array storing the SPH estimate of the baryon number density
-    ! in the computing frame (Msun_geo)^{-3}
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar
-    ! 1-D array storing the particle number density (Msun_geo)^{-3}
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density
-    ! 1-D array storing the SPH estimate of the proper mass density
-    ! in the computing frame, from kernel interpolation (Msun_geo)^{-3}
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_int
-    ! 1-D array storing the SPH estimate of the particle number density
-    ! in the computing frame, from kernel interpolation (Msun_geo)^{-3}
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density_int
-    ! 2-D array storing the coordinate fluid 4-velocity [c]
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: v
-    ! 1-D array storing the generalized Lorentz factor
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Theta
-    ! 1-D array storing the electron fraction
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye
-    ! 1-D array storing the smoothing length
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
-    ! 1-D array storing the particle volumes
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
-    ! 1-D array storing the particle masses
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pmass
-    ! Baryonic masses of the neutron stars [Msun]
-    DOUBLE PRECISION:: mass1, mass2, mass_ratio
-    ! Total grid volume
-    DOUBLE PRECISION:: vol, vol1, vol2
-    ! Volume per particle
-    DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
-    ! Ratio between the max and min of the baryon number per particle
-    DOUBLE PRECISION:: nu_ratio
-    ! Total baryon number, and baryon numbers of the stars
-    DOUBLE PRECISION:: nbar_tot, nbar1, nbar2
-    ! Baryon number ratio on both stars, on star 1 and on star 2
-    DOUBLE PRECISION:: nuratio, nuratio1, nuratio2
 
-    CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
-    ! String storing the local path to the directory where the
-    ! LORENE BNS ID files are stored
+    !& 1-D array storing baryon density in the local rest frame
+    !  \([\mathrm{baryon}\, (L_\odot)^{-3}]\), computed directly from
+    !  the LORENE density
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf
+    !& 1-D array storing baryon density in the local rest frame
+    !  \([\mathrm{baryon}\, (L_\odot)^{-3}]\), computed from the kernel
+    !  interpolated proper baryon number density [[particles:nstar_int]]
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_int
+    !> 1-D array storing the baryon number per particle
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu
+    !& 1-D array storing the SPH estimate of the proper baryon number density
+    !  \([\mathrm{baryon}\, (L_\odot)^{-3}]\)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar
+    !& 1-D array storing the particle number density
+    !  \([\mathrm{particle}\, (L_\odot)^{-3}]\)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density
+    !& 1-D array storing the SPH estimate of the proper baryon number density,
+    !  from kernel interpolation \([\mathrm{baryon}\, (L_\odot)^{-3}]\)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_int
+    !& 1-D array storing the SPH estimate of the particle number density, from
+    !  kernel interpolation \([\mathrm{particle}\, (L_\odot)^{-3}]\)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density_int
+    !> 2-D array storing the coordinate fluid 4-velocity \([c]\)
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: v
+    !> 1-D array storing the generalized Lorentz factor
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Theta
+    !> 1-D array storing the electron fraction
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye
+    !> 1-D array storing the smoothing length \(L_\odot\)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h
+    !> 1-D array storing the particle volumes \(L_\odot^3\)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
+    !> 1-D array storing the particle masses \(M_\odot\)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pmass
+    !> Baryonic mass of of star 1 \(M_\odot\)
+    DOUBLE PRECISION:: mass1
+    !> Baryonic mass of of star 2 \(M_\odot\)
+    DOUBLE PRECISION:: mass2
+    !& Ratio of baryonic masses of the stars \(M_\odot\)
+    !  @warning always \(< 1\)
+    DOUBLE PRECISION:: mass_ratio
+    !> Total grid volume
+    !DOUBLE PRECISION:: vol, vol1, vol2
+    !> Volume per particle
+    !DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
+    !> Ratio between the max and min of the baryon number per particle
+    DOUBLE PRECISION:: nu_ratio
+    !> Total baryon number
+    DOUBLE PRECISION:: nbar_tot
+    !> Baryon number on star 1
+    DOUBLE PRECISION:: nbar1
+    !> Baryon number on star 2
+    DOUBLE PRECISION:: nbar2
+    !> Baryon number ratio on both stars
+    DOUBLE PRECISION:: nuratio
+    !> Baryon number ratio on star 1
+    DOUBLE PRECISION:: nuratio1
+    !> Baryon number ratio on star 2
+    DOUBLE PRECISION:: nuratio2
+
+    !CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
+
+    !> String storing the local path to the directory containing the CompOSE EOS
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_path
-    ! Array of strings storing the names of the LORENE BNS ID binary files
+    !> String storing the subpath of compose_path to the CompOSE file with
+    !  .beta extension
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_filename
 
+    !> String containing the LORENE name of the EOS for star 1
     CHARACTER( LEN= : ), ALLOCATABLE:: eos1
+    !> String containing the LORENE name of the EOS for star 2
     CHARACTER( LEN= : ), ALLOCATABLE:: eos2
 
+    !> .TRUE. if the object is empty, .FALSE. if it's not empty
     LOGICAL:: empty_object
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x
@@ -185,6 +251,10 @@ MODULE particles_id
     LOGICAL:: apm_iterate1, apm_iterate2
     LOGICAL:: read_nu
     LOGICAL:: reflect_particles_x
+
+    !
+    !-- Timers
+    !
 
     TYPE(timer), PUBLIC:: placer_timer
     TYPE(timer), PUBLIC:: same_particle_timer

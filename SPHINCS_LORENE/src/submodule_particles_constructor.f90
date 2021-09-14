@@ -51,7 +51,7 @@ SUBMODULE (particles_id) particles_constructor
     !  LORENE ID on it. It calls all the PROCEDURES
     !  that rely on an object of TYPE bns.
     !
-    !  TODO: assign sub-tasks to separate SUBROUTINES
+    !  @todo assign sub-tasks to separate SUBROUTINES
     !        CONTAINED in this SUBMODULE
     !
     !  FT 17.10.2020
