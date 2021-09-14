@@ -18,7 +18,7 @@ MODULE sphincs_lorene
 
     USE utility,        ONLY: date, time, zone, values, run_id, itr, itr3, &
                               itr4, ios, err_msg, file_exists, cnt, &
-                              test_status, show_progress
+                              test_status, show_progress, end_time
     USE timing,         ONLY: timer
     USE bns_id,         ONLY: bns
     USE particles_id,   ONLY: particles

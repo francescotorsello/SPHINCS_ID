@@ -4,14 +4,17 @@
 
 SUBMODULE (bns_id) bns_constructor
 
-  !*****************************************************
-  !                                                    *
-  ! Implementation the constructor of TYPE bns and the *
-  ! PROCEDURES it calls                                *
-  !                                                    *
-  ! FT 23.10.2020                                      *
-  !                                                    *
-  !*****************************************************
+  !*********************************************************
+  !
+  !# Implementation of the constructor and
+  !  destructor of TYPE [[bns]], and of the [[bns]]-member
+  !  PROCEDURES that call the C-bound PROCEDURES
+  !  constructig and destructing the LORENE
+  !  Bin_NS object
+  !
+  !  FT 23.10.2020
+  !
+  !*********************************************************
 
 
   IMPLICIT NONE
@@ -25,11 +28,21 @@ SUBMODULE (bns_id) bns_constructor
   !
   MODULE PROCEDURE construct_bns
 
+    !****************************************************
+    !
+    !# Constructs an object of TYPE [[bns]]
+    !
+    !  FT
+    !
+    !****************************************************
+
     IMPLICIT NONE
 
     INTEGER, SAVE:: bns_counter= 1
 
-    DOUBLE PRECISION:: tmp
+    !DOUBLE PRECISION:: tmp
+
+    bns_obj% binary_construction_timer= timer( "binary_construction_timer" )
 
     ! Construct LORENE Bin_NS object
     IF( PRESENT( resu_file ) )THEN
@@ -54,29 +67,44 @@ SUBMODULE (bns_id) bns_constructor
 
   END PROCEDURE construct_bns
 
+
   !
   !-- Implementation of the destructor of the bns object
   !
   MODULE PROCEDURE destruct_bns
+
+    !***********************************************
+    !
+    !# Destructs an object of TYPE [[bns]]
+    !
+    !  FT
+    !
+    !***********************************************
 
     IMPLICIT NONE
 
     !PRINT *, "Inside destructor of bns."
     !PRINT *
 
-    ! Deallocate memory, if allocated
+    ! Deallocate memory
     CALL THIS% deallocate_lorene_id_memory()
 
   END PROCEDURE destruct_bns
 
+
   MODULE PROCEDURE construct_binary
+
+    !***********************************************
+    !
+    !# Construct the LORENE Bin_NS object
+    !
+    !  FT
+    !
+    !***********************************************
 
     IMPLICIT NONE
 
-    INTEGER:: itr
-
     CHARACTER(KIND= C_CHAR, LEN= 7):: default_case
-
     LOGICAL:: exist
 
     !PRINT *, "** Executing the construct_binary subroutine..."
@@ -99,11 +127,14 @@ SUBMODULE (bns_id) bns_constructor
 
       IF( exist )THEN
 
+        CALL THIS% binary_construction_timer% start_timer()
         THIS% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
+        CALL THIS% binary_construction_timer% stop_timer()
 
       ELSE
 
-        PRINT *, "** ERROR: File ", resu_file, "cannot be found!"
+        PRINT *, "** ERROR in bns SUBROUTINE construct_binary: File ", &
+                 resu_file, "cannot be found!"
         PRINT *
         STOP
 
@@ -112,7 +143,9 @@ SUBMODULE (bns_id) bns_constructor
     ELSE
 
       default_case= "read_it"
+      CALL THIS% binary_construction_timer% start_timer()
       THIS% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
+      CALL THIS% binary_construction_timer% stop_timer()
 
     ENDIF
 
@@ -121,146 +154,33 @@ SUBMODULE (bns_id) bns_constructor
 
   END PROCEDURE construct_binary
 
-  MODULE PROCEDURE import_id_params
 
-    !*****************************************************
-    !                                                    *
-    ! Store the parameters of the binary neutron         *
-    ! stars' LORENE ID into member variables             *
-    !                                                    *
-    ! FT 5.10.2020                                       *
-    !                                                    *
-    !*****************************************************
+  MODULE PROCEDURE destruct_binary
 
-    USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase
+    !************************************************
+    !
+    !# Destructs the LORENE Bin_NS object and frees
+    !  the pointer [[bns:bns_ptr]] pointing to it
+    !
+    !  FT
+    !
+    !************************************************
 
     IMPLICIT NONE
 
-    PRINT *, "** Executing the import_lorene_id_params subroutine..."
+    !PRINT *, "** Executing the destruct_binary subroutine."
 
-    CALL get_lorene_id_params( THIS% bns_ptr, &
-                               THIS% angular_vel, &
-                               THIS% distance, &
-                               THIS% distance_com, &
-                               THIS% mass1, &
-                               THIS% mass2, &
-                               THIS% adm_mass, &
-                               THIS% angular_momentum, &
-                               THIS% radius1_x_comp, &
-                               THIS% radius1_y, &
-                               THIS% radius1_z, &
-                               THIS% radius1_x_opp, &
-                               THIS% center1_x, &
-                               THIS% barycenter1_x, &
-                               THIS% radius2_x_comp, &
-                               THIS% radius2_y, &
-                               THIS% radius2_z, &
-                               THIS% radius2_x_opp, &
-                               THIS% center2_x, &
-                               THIS% barycenter2_x, &
-                               THIS% ent_center1, &
-                               THIS% nbar_center1, &
-                               THIS% rho_center1, &
-                               THIS% energy_density_center1, &
-                               THIS% specific_energy_center1, &
-                               THIS% pressure_center1, &
-                               THIS% ent_center2, &
-                               THIS% nbar_center2, &
-                               THIS% rho_center2, &
-                               THIS% energy_density_center2, &
-                               THIS% specific_energy_center2, &
-                               THIS% pressure_center2, &
-                               THIS% eos1, &
-                               THIS% eos2, &
-                               THIS% gamma_1, &
-                               THIS% kappa_1, &
-                               THIS% gamma_2, &
-                               THIS% kappa_2, &
-                               THIS% npeos_1, &
-                               THIS% gamma0_1, &
-                               THIS% gamma1_1, &
-                               THIS% gamma2_1, &
-                               THIS% gamma3_1, &
-                               THIS% kappa0_1, &
-                               THIS% kappa1_1, &
-                               THIS% kappa2_1, &
-                               THIS% kappa3_1, &
-                               THIS% logP1_1,  &
-                               THIS% logRho0_1,&
-                               THIS% logRho1_1,&
-                               THIS% logRho2_1,&
-                               THIS% npeos_2,  &
-                               THIS% gamma0_2, &
-                               THIS% gamma1_2, &
-                               THIS% gamma2_2, &
-                               THIS% gamma3_2, &
-                               THIS% kappa0_2, &
-                               THIS% kappa1_2, &
-                               THIS% kappa2_2, &
-                               THIS% kappa3_2, &
-                               THIS% logP1_2,  &
-                               THIS% logRho0_2,&
-                               THIS% logRho1_2,&
-                               THIS% logRho2_2)
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 
-    ! Convert distances from LORENE units (km) to SPHINCS units (Msun_geo)
-    ! See MODULE constants for the definition of Msun_geo
-    THIS% distance      = THIS% distance/Msun_geo
-    THIS% distance_com  = THIS% distance_com/Msun_geo
-    THIS% radius1_x_comp= THIS% radius1_x_comp/Msun_geo
-    THIS% radius1_y     = THIS% radius1_y/Msun_geo
-    THIS% radius1_z     = THIS% radius1_z/Msun_geo
-    THIS% radius1_x_opp = THIS% radius1_x_opp/Msun_geo
-    THIS% center1_x     = THIS% center1_x/Msun_geo
-    THIS% barycenter1_x = THIS% barycenter1_x/Msun_geo
-    THIS% radius2_x_comp= THIS% radius2_x_comp/Msun_geo
-    THIS% radius2_y     = THIS% radius2_y/Msun_geo
-    THIS% radius2_z     = THIS% radius2_z/Msun_geo
-    THIS% radius2_x_opp = THIS% radius2_x_opp/Msun_geo
-    THIS% center2_x     = THIS% center2_x/Msun_geo
-    THIS% barycenter2_x = THIS% barycenter2_x/Msun_geo
-
-    ! Convert hydro quantities from LORENE units to SPHINCS units
-    THIS% nbar_center1           = THIS% nbar_center1*(MSun_geo*km2m)**3
-    THIS% rho_center1            = THIS% rho_center1*lorene2hydrobase
-    THIS% energy_density_center1 = THIS% energy_density_center1*lorene2hydrobase
-    THIS% pressure_center1       = THIS% pressure_center1*lorene2hydrobase
-    THIS% nbar_center2           = THIS% nbar_center2*(MSun_geo*km2m)**3
-    THIS% rho_center2            = THIS% rho_center2*lorene2hydrobase
-    THIS% energy_density_center2 = THIS% energy_density_center2*lorene2hydrobase
-    THIS% pressure_center2       = THIS% pressure_center2*lorene2hydrobase
-
-
-    ! Convert polytropic constants from LORENE units to SPHINCS units
-    IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
-
-      THIS% kappa_1= THIS% kappa_1*k_lorene2hydrobase( THIS% gamma_1 )
-      THIS% kappa_2= THIS% kappa_2*k_lorene2hydrobase( THIS% gamma_2 )
-
-    ELSEIF( THIS% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
-
-      THIS% kappa0_1= THIS% kappa0_1*k_lorene2hydrobase( THIS% gamma0_1 )
-      THIS% kappa1_1= THIS% kappa1_2*k_lorene2hydrobase( THIS% gamma1_1 )
-      THIS% kappa2_1= THIS% kappa2_1*k_lorene2hydrobase( THIS% gamma2_1 )
-      THIS% kappa3_1= THIS% kappa3_2*k_lorene2hydrobase( THIS% gamma3_1 )
-      THIS% kappa0_2= THIS% kappa0_1*k_lorene2hydrobase( THIS% gamma0_2 )
-      THIS% kappa1_2= THIS% kappa1_2*k_lorene2hydrobase( THIS% gamma1_2 )
-      THIS% kappa2_2= THIS% kappa2_1*k_lorene2hydrobase( THIS% gamma2_2 )
-      THIS% kappa3_2= THIS% kappa3_2*k_lorene2hydrobase( THIS% gamma3_2 )
-
-    ELSE
-
-      PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-               " The equation of state is unknown!"
-      STOP
+      CALL destruct_bin_ns( THIS% bns_ptr )
+      THIS% bns_ptr = C_NULL_PTR
 
     ENDIF
 
-    CALL print_id_params( THIS )
+    !PRINT *, "** Subroutine destruct_binary executed."
+    !PRINT *
 
-    PRINT *, "** Subroutine import_lorene_id_params executed."
-    PRINT *
+  END PROCEDURE destruct_binary
 
-  END PROCEDURE import_id_params
 
 END SUBMODULE bns_constructor

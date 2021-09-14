@@ -26,6 +26,8 @@ PROGRAM convergence_test
   ! Loop limits for BSSN objects (for debugging; 3 is for production)
   INTEGER, PARAMETER:: min_bssn= 1
   INTEGER, PARAMETER:: max_bssn= 3
+  ! Refinement level over which to compute contraints (make input parameter)
+  INTEGER:: ref_lev
   ! Number of binary systems of neutron stars (BNS) to import
   INTEGER:: n_bns
   ! Export the constraints every constraints_step-th step
@@ -54,15 +56,14 @@ PROGRAM convergence_test
   ! LORENE BNS ID files are stored
   CHARACTER( LEN= max_length ):: common_path
 
-  LOGICAL, PARAMETER:: debug= .FALSE.
-  ! Logical variable to check if files exist
-  LOGICAL:: exist
+  LOGICAL, PARAMETER:: debug= .TRUE.
+
   ! Logical variables to steer the execution
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
             compute_constraints, export_constraints_xy, &
             export_constraints_x, export_constraints, &
             export_constraints_details, compute_parts_constraints, &
-            one_lapse, zero_shift
+            one_lapse, zero_shift, run_sph, run_spacetime
 
   TYPE( timer ):: execution_timer
 
@@ -83,8 +84,9 @@ PROGRAM convergence_test
                             export_constraints_x, compute_constraints, &
                             export_constraints, export_constraints_details, &
                             constraints_step, compute_parts_constraints, &
-                            numerator_ratio_dx, denominator_ratio_dx, &
-                            one_lapse, zero_shift, show_progress
+                            numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
+                            one_lapse, zero_shift, show_progress, &
+                            run_sph, run_spacetime
 
   !---------------------------!
   !--  End of declarations  --!
@@ -136,6 +138,7 @@ PROGRAM convergence_test
   !-- Construct the particles object from the bns object
   !
   IF( compute_parts_constraints )THEN
+
     PRINT *, "===================================================" &
              // "==============="
     PRINT *, " Placing particles"
@@ -169,6 +172,7 @@ PROGRAM convergence_test
       particles_dist% export_form_x = export_form_x
       CALL particles_dist% print_formatted_lorene_id_particles( namefile_parts )
     ENDIF
+
   ENDIF
 
   !
@@ -185,37 +189,55 @@ PROGRAM convergence_test
 
     IF( itr3 == 1 )THEN
 
-      bssn_forms( itr3 )= BSSN_id( binary )
-      original_dx= bssn_forms( itr3 )% get_x_spacing()
+      bssn_forms( itr3 )= bssn_id( binary )
+      original_dx= bssn_forms( itr3 )% get_dx(ref_lev)
 
     ELSE
       IF( itr3 == min_bssn )THEN
 
-        bssn_forms( 1 )= BSSN_id( binary )
-        original_dx= bssn_forms( 1 )% get_x_spacing()
+        bssn_forms( 1 )= bssn_id( binary )
+        original_dx= bssn_forms( 1 )% get_dx(ref_lev)
 
       ENDIF
-      bssn_forms( itr3 )= BSSN_id( binary, &
-                                    original_dx/( ratio_dx**( itr3 - 1 ) ), &
-                                    original_dx/( ratio_dx**( itr3 - 1 ) ), &
-                                    original_dx/( ratio_dx**( itr3 - 1 ) ) )
+      bssn_forms( itr3 )= bssn_id( binary, &
+                                   original_dx/( ratio_dx**( itr3 - 1 ) ), &
+                                   original_dx/( ratio_dx**( itr3 - 1 ) ), &
+                                   original_dx/( ratio_dx**( itr3 - 1 ) ) )
 
-      IF( bssn_forms( itr3 )% get_x_spacing() /= &
+      IF( bssn_forms( itr3 )% get_dx(ref_lev) /= &
           original_dx/( ratio_dx**( itr3 - 1 ) ) )THEN
         PRINT *, " ** ERROR! The grid spacing #", itr3, ",", &
-                 bssn_forms( itr3 )% get_x_spacing(), &
-                 " is not equal to dx/4, with dx=", &
-                 original_dx
+                 bssn_forms( itr3 )% get_dx(ref_lev), &
+                 " is not equal to dx/", ratio_dx**( itr3 - 1 ), "= ", &
+                 original_dx/( ratio_dx**( itr3 - 1 ) )
         STOP
       ENDIF
     ENDIF
 
-    PRINT *, "** The grid spacing is dx=", bssn_forms( itr3 )% get_x_spacing()
+    PRINT *, "** The grid spacing is dx=", bssn_forms( itr3 )% get_dx(ref_lev)
     PRINT *, "** The number of grid points for dx is:", &
-                              bssn_forms( itr3 )% get_ngrid_x(), "**3"
+                            bssn_forms( itr3 )% get_ngrid_x(ref_lev), "**3"
     PRINT *
 
   ENDDO construct_bssn_loop
+
+  IF( debug )THEN
+    PRINT *, "bssn_forms( 1 )% get_ngrid_x=", bssn_forms( 1 )% get_ngrid_x(ref_lev)
+    PRINT *, "bssn_forms( 1 )% get_ngrid_y=", bssn_forms( 1 )% get_ngrid_y(ref_lev)
+    PRINT *, "bssn_forms( 1 )% get_ngrid_z=", bssn_forms( 1 )% get_ngrid_z(ref_lev)
+    PRINT *, "bssn_forms( 2 )% get_ngrid_x=", bssn_forms( 2 )% get_ngrid_x(ref_lev)
+    PRINT *, "bssn_forms( 2 )% get_ngrid_y=", bssn_forms( 2 )% get_ngrid_y(ref_lev)
+    PRINT *, "bssn_forms( 2 )% get_ngrid_z=", bssn_forms( 2 )% get_ngrid_z(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_ngrid_x=", bssn_forms( 3 )% get_ngrid_x(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_ngrid_y=", bssn_forms( 3 )% get_ngrid_y(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_ngrid_z=", bssn_forms( 3 )% get_ngrid_z(ref_lev)
+    PRINT *
+    PRINT *, "bssn_forms( 1 )% get_dx ", bssn_forms( 1 )% get_dx(ref_lev)
+    PRINT *, "bssn_forms( 2 )% get_dy ", bssn_forms( 2 )% get_dx(ref_lev)
+    PRINT *, "bssn_forms( 3 )% get_dz ", bssn_forms( 3 )% get_dx(ref_lev)
+    PRINT *
+    !STOP
+  ENDIF
 
   !
   !-- Compute the BSSN variables
@@ -249,6 +271,9 @@ PROGRAM convergence_test
     ENDDO export_bssn_loop
   ENDIF
 
+! There doesn't seem to be a bug until here
+!STOP
+
   !
   !-- Compute the BSSN constraints
   !
@@ -272,7 +297,7 @@ PROGRAM convergence_test
 
       WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, ".dat"
       WRITE( name_logfile, "(A28,I1,A4)" ) &
-                          "bssn-constraints-statistics-", itr3, ".log"
+                          "bssn-constraints-statistics-", itr3
 
       CALL bssn_forms( itr3 )% &
                   compute_and_export_3p1_constraints( binary, &
@@ -280,6 +305,7 @@ PROGRAM convergence_test
                                                       name_logfile )
 
     ENDIF
+
     IF( compute_parts_constraints )THEN
 
       PRINT *, "===================================================" &
@@ -299,36 +325,39 @@ PROGRAM convergence_test
       CALL bssn_forms( itr3 )% &
                   compute_and_export_3p1_constraints( particles_dist, &
                                                       namefile_bssn, &
-                                                      namefile_sph, &
                                                       name_logfile )
 
     ENDIF
 
   ENDDO compute_export_bssn_constraints_loop
 
+! Here the bug appears. Since I am only computing the constraints with particles
+! it must be in there
+!STOP
+
   !
   !-- The BSSN formulations on grids with different resolutions are ready
   !-- to be used in a convergence test
   !
-  IF( debug )THEN
-    PRINT *, bssn_forms( 1 )% get_grid_point( 1 + 1, 1 + 2, 1 + 1 )
-    PRINT *, bssn_forms( 2 )% get_grid_point( 1 + 2, 1 + 4, 1 + 2 )
-    PRINT *, bssn_forms( 3 )% get_grid_point( 1 + 4, 1 + 8, 1 + 4 )
+  IF( debug .AND. .FALSE. )THEN
+    PRINT *, bssn_forms( 1 )% get_grid_point( 1 + 1, 1 + 2, 1 + 1, ref_lev )
+    PRINT *, bssn_forms( 2 )% get_grid_point( 1 + 2, 1 + 4, 1 + 2, ref_lev )
+    PRINT *, bssn_forms( 3 )% get_grid_point( 1 + 4, 1 + 8, 1 + 4, ref_lev )
     PRINT *
 
-    PRINT *, bssn_forms( 1 )% get_grid_point( 1 + 2, 1 + 1, 1 + 2 )
-    PRINT *, bssn_forms( 2 )% get_grid_point( 1 + 4, 1 + 2, 1 + 4 )
-    PRINT *, bssn_forms( 3 )% get_grid_point( 1 + 8, 1 + 4, 1 + 8 )
+    PRINT *, bssn_forms( 1 )% get_grid_point( 1 + 2, 1 + 1, 1 + 2, ref_lev )
+    PRINT *, bssn_forms( 2 )% get_grid_point( 1 + 4, 1 + 2, 1 + 4, ref_lev )
+    PRINT *, bssn_forms( 3 )% get_grid_point( 1 + 8, 1 + 4, 1 + 8, ref_lev )
     PRINT *
 
-    PRINT *, ABS(bssn_forms( 1 )% get_HC( 1 + 30,   1 + 25,   1 + 17 ))
-    PRINT *, ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17 ))
-    PRINT *, ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17 ))
+    PRINT *, ABS(bssn_forms( 1 )% get_HC( 1 + 30,   1 + 25,   1 + 17, ref_lev ))
+    PRINT *, ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev ))
+    PRINT *, ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17, ref_lev ))
     PRINT *
-    PRINT *, ABS(bssn_forms( 1 )% get_HC( 1 + 30,   1 + 25,   1 + 17 )) &
-             - ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17 ))
-    PRINT *, ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17 )) &
-             - ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17 ))
+    PRINT *, ABS(bssn_forms( 1 )% get_HC( 1 + 30,   1 + 25,   1 + 17, ref_lev )) &
+           - ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev ))
+    PRINT *, ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev )) &
+           - ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17, ref_lev ))
     STOP
   ENDIF
 
@@ -340,19 +369,24 @@ PROGRAM convergence_test
              "without particle data."
     PRINT *
     CALL cauchy_convergence_test_unknown( bssn_forms(1), bssn_forms(2), &
-                                          bssn_forms(3), 1 )
-    CALL cauchy_convergence_test_known( bssn_forms(2), bssn_forms(3), 1 )
+                                          bssn_forms(3), 1, ref_lev )
+    CALL cauchy_convergence_test_known( bssn_forms(2), bssn_forms(3), 1, ref_lev )
   ENDIF
   IF( compute_parts_constraints )THEN
     PRINT *, "** Performing convergence test with constraints computed ", &
              "with particle data."
     PRINT *
     CALL cauchy_convergence_test_unknown( bssn_forms(1), bssn_forms(2), &
-                                          bssn_forms(3), 2 )
-    CALL cauchy_convergence_test_known( bssn_forms(2), bssn_forms(3), 2 )
+                                          bssn_forms(3), 2, ref_lev )
+    CALL cauchy_convergence_test_known( bssn_forms(2), bssn_forms(3), 2, ref_lev )
   ENDIF
 
   CALL execution_timer% stop_timer()
+
+  CALL DATE_AND_TIME( date, time, zone, values )
+  end_time= date // "-" // time
+
+!STOP
 
   !
   !-- Print the timers
@@ -360,19 +394,28 @@ PROGRAM convergence_test
   PRINT *, "** Timing."
   PRINT *
   PRINT *
-  PRINT *, " * BSSN formulation with spacing:", bssn_forms( 1 )% get_x_spacing()
+  PRINT *, " * BSSN formulation with uniform resolution:", &
+           bssn_forms( 1 )% get_dx(ref_lev)
+  PRINT *, "    and number of points:", bssn_forms( 1 )% get_ngrid_x(ref_lev), &
+           "**3"
   !original_dx
   CALL bssn_forms( 1 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 1 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 1 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
-  PRINT *, " * BSSN formulation with spacing:", bssn_forms( 2 )% get_x_spacing()
+  PRINT *, " * BSSN formulation with uniform resolution:", &
+           bssn_forms( 2 )% get_dx(ref_lev)
+  PRINT *, "    and number of points:", bssn_forms( 2 )% get_ngrid_x(ref_lev), &
+           "**3"
   !original_dx/2
   CALL bssn_forms( 2 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 2 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 2 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
-  PRINT *, " * BSSN formulation with spacing:", bssn_forms( 3 )% get_x_spacing()
+  PRINT *, " * BSSN formulation with uniform resolution:", &
+           bssn_forms( 3 )% get_dx(ref_lev)
+  PRINT *, "    and number of points:", bssn_forms( 3 )% get_ngrid_x(ref_lev), &
+           "**3"
   !original_dx/4
   CALL bssn_forms( 3 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 3 )% importer_timer% print_timer( 2 )
@@ -380,6 +423,10 @@ PROGRAM convergence_test
   PRINT *
   PRINT *, " * Total:"
   CALL execution_timer% print_timer( 2 )
+  PRINT *
+
+  PRINT *
+  PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 
   !
@@ -396,12 +443,12 @@ PROGRAM convergence_test
 
 
   SUBROUTINE cauchy_convergence_test_known( formul_dx, formul_dx2, &
-                                            use_constraints )
+                                            use_constraints, ref_lev )
 
     IMPLICIT NONE
 
     CLASS(formul_3p1), INTENT( IN OUT ):: formul_dx, formul_dx2
-    INTEGER:: use_constraints
+    INTEGER:: use_constraints, ref_lev
 
     INTEGER:: ix, iy, iz, nx, ny, nz, unit_cauchy_ct, unit_cauchy_parts_ct, &
               min_ix_y, min_iy_y, min_iz_y, &
@@ -413,17 +460,18 @@ PROGRAM convergence_test
     DOUBLE PRECISION, PARAMETER:: tiny_real= 1D-30
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid_dx
     DOUBLE PRECISION, DIMENSION(3):: point_dx2
-    DOUBLE PRECISION, DIMENSION(formul_dx% ngrid_x, &
-                                formul_dx% ngrid_y, &
-                                formul_dx% ngrid_z):: convergence_factor
+    DOUBLE PRECISION, DIMENSION(formul_dx% get_ngrid_x(ref_lev), &
+                                formul_dx% get_ngrid_y(ref_lev), &
+                                formul_dx% get_ngrid_z(ref_lev)):: &
+                                                            convergence_factor
 
     CHARACTER( LEN=: ), ALLOCATABLE:: name_cauchy_ct, name_cauchy_parts_ct
 
     LOGICAL:: exist
 
-    nx= formul_dx% get_ngrid_x()
-    ny= formul_dx% get_ngrid_y()
-    nz= formul_dx% get_ngrid_z()
+    nx= formul_dx% get_ngrid_x(ref_lev)
+    ny= formul_dx% get_ngrid_y(ref_lev)
+    nz= formul_dx% get_ngrid_z(ref_lev)
 
     nx= FLOOR( DBLE( nx - 1 )/denominator_ratio_dx ) + 1
     ny= FLOOR( DBLE( ny - 1 )/denominator_ratio_dx ) + 1
@@ -443,14 +491,14 @@ PROGRAM convergence_test
           DO ix= 0, nx - 1, 1
 
             grid_dx( :, 1 + ix, 1 + iy, 1 + iz ) = &
-                        formul_dx%  get_grid_point(  &
-                                      1 + INT(denominator_ratio_dx)*ix, &
-                                      1 + INT(denominator_ratio_dx)*iy, &
-                                      1 + INT(denominator_ratio_dx)*iz   )
+                        formul_dx% get_grid_point(  &
+                                    1 + INT(denominator_ratio_dx)*ix, &
+                                    1 + INT(denominator_ratio_dx)*iy, &
+                                    1 + INT(denominator_ratio_dx)*iz, ref_lev )
                         point_dx2= formul_dx2% get_grid_point( &
-                                      1 + INT(numerator_ratio_dx)*ix, &
-                                      1 + INT(numerator_ratio_dx)*iy, &
-                                      1 + INT(numerator_ratio_dx)*iz )
+                                    1 + INT(numerator_ratio_dx)*ix, &
+                                    1 + INT(numerator_ratio_dx)*iy, &
+                                    1 + INT(numerator_ratio_dx)*iz, ref_lev )
 
             IF(ABS(grid_dx( 1, 1 + ix, 1 + iy, 1 + iz )-point_dx2(1)) > 1D-10 &
           .OR. ABS(grid_dx( 2, 1 + ix, 1 + iy, 1 + iz )-point_dx2(2)) > 1D-10 &
@@ -475,10 +523,10 @@ PROGRAM convergence_test
              ABS( &
              ( formul_dx%  get_HC( 1 + INT(denominator_ratio_dx)*ix, &
                                    1 + INT(denominator_ratio_dx)*iy, &
-                                   1 + INT(denominator_ratio_dx)*iz ))&
+                                   1 + INT(denominator_ratio_dx)*iz, ref_lev ))&
             /( formul_dx2% get_HC( 1 + INT(numerator_ratio_dx)*ix, &
                                    1 + INT(numerator_ratio_dx)*iy, &
-                                   1 + INT(numerator_ratio_dx)*iz ) &
+                                   1 + INT(numerator_ratio_dx)*iz, ref_lev ) &
              + 0*tiny_real ) &
              ) )/LOG(ratio_dx)
 
@@ -502,8 +550,13 @@ PROGRAM convergence_test
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(name_cauchy_ct) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(name_cauchy_ct), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_cauchy_ct) )
 
       WRITE( UNIT = unit_cauchy_ct, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -569,8 +622,14 @@ PROGRAM convergence_test
                 grid_dx( 2, ix, iy, iz ), &
                 grid_dx( 3, ix, iy, iz ), &
                 convergence_factor( ix, iy, iz )
-            CALL test_status( ios, err_msg, "...error in writing " &
-                        // "the arrays in " // TRIM(name_cauchy_ct) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing he arrays in ", &
+                       TRIM(name_cauchy_ct), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, "...error in writing " &
+            !            // "the arrays in " // TRIM(name_cauchy_ct) )
           ENDDO
         ENDDO
       ENDDO
@@ -591,11 +650,11 @@ PROGRAM convergence_test
                         formul_dx%  get_grid_point(  &
                                       1 + INT(denominator_ratio_dx)*ix, &
                                       1 + INT(denominator_ratio_dx)*iy, &
-                                      1 + INT(denominator_ratio_dx)*iz   )
+                                      1 + INT(denominator_ratio_dx)*iz, ref_lev )
                         point_dx2= formul_dx2% get_grid_point( &
                                       1 + INT(numerator_ratio_dx)*ix, &
                                       1 + INT(numerator_ratio_dx)*iy, &
-                                      1 + INT(numerator_ratio_dx)*iz )
+                                      1 + INT(numerator_ratio_dx)*iz, ref_lev )
 
             IF(ABS(grid_dx( 1, 1 + ix, 1 + iy, 1 + iz )-point_dx2(1)) > 1D-10 &
           .OR. ABS(grid_dx( 2, 1 + ix, 1 + iy, 1 + iz )-point_dx2(2)) > 1D-10 &
@@ -619,10 +678,10 @@ PROGRAM convergence_test
              LOG( ABS( &
                formul_dx%  get_HC_parts( 1 + INT(denominator_ratio_dx)*ix, &
                                          1 + INT(denominator_ratio_dx)*iy, &
-                                         1 + INT(denominator_ratio_dx)*iz )&
+                                         1 + INT(denominator_ratio_dx)*iz, ref_lev )&
             /( formul_dx2% get_HC_parts( 1 + INT(numerator_ratio_dx)*ix, &
                                          1 + INT(numerator_ratio_dx)*iy, &
-                                         1 + INT(numerator_ratio_dx)*iz )  &
+                                         1 + INT(numerator_ratio_dx)*iz, ref_lev )  &
              + 0*tiny_real ) &
              ) )/LOG(ratio_dx)
 
@@ -646,8 +705,13 @@ PROGRAM convergence_test
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(name_cauchy_parts_ct) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(name_cauchy_parts_ct), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_cauchy_parts_ct) )
 
       WRITE( UNIT = unit_cauchy_parts_ct, IOSTAT = ios, IOMSG = err_msg, &
              FMT = * ) &
@@ -716,8 +780,14 @@ PROGRAM convergence_test
                 grid_dx( 2, ix, iy, iz ), &
                 grid_dx( 3, ix, iy, iz ), &
                 convergence_factor( ix, iy, iz )
-            CALL test_status( ios, err_msg, "...error in writing " &
-                        // "the arrays in " // TRIM(name_cauchy_parts_ct) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing e arrays in ", &
+                       TRIM(name_cauchy_parts_ct), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, "...error in writing " &
+            !            // "the arrays in " // TRIM(name_cauchy_parts_ct) )
           ENDDO
         ENDDO
       ENDDO
@@ -743,12 +813,13 @@ PROGRAM convergence_test
 
 
   SUBROUTINE cauchy_convergence_test_unknown( formul_dx, formul_dx2, &
-                                              formul_dx4, use_constraints )
+                                              formul_dx4, use_constraints, &
+                                              ref_lev )
 
     IMPLICIT NONE
 
     CLASS(formul_3p1), INTENT( IN OUT ):: formul_dx, formul_dx2, formul_dx4
-    INTEGER:: use_constraints
+    INTEGER:: use_constraints, ref_lev
 
     INTEGER:: ix, iy, iz, nx, ny, nz, unit_cauchy_ct, unit_cauchy_parts_ct, &
               min_ix_y, min_iy_y, min_iz_y, &
@@ -761,17 +832,18 @@ PROGRAM convergence_test
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid_dx
     DOUBLE PRECISION, DIMENSION(3):: point_dx2
     DOUBLE PRECISION, DIMENSION(3):: point_dx4
-    DOUBLE PRECISION, DIMENSION(formul_dx% ngrid_x, &
-                                formul_dx% ngrid_y, &
-                                formul_dx% ngrid_z):: convergence_factor
+    DOUBLE PRECISION, DIMENSION(formul_dx% get_ngrid_x(ref_lev), &
+                                formul_dx% get_ngrid_y(ref_lev), &
+                                formul_dx% get_ngrid_z(ref_lev)):: &
+                                                            convergence_factor
 
     CHARACTER( LEN=: ), ALLOCATABLE:: name_cauchy_ct, name_cauchy_parts_ct
 
     LOGICAL:: exist
 
-    nx= formul_dx% get_ngrid_x()
-    ny= formul_dx% get_ngrid_y()
-    nz= formul_dx% get_ngrid_z()
+    nx= formul_dx% get_ngrid_x(ref_lev)
+    ny= formul_dx% get_ngrid_y(ref_lev)
+    nz= formul_dx% get_ngrid_z(ref_lev)
 
     nx= FLOOR( DBLE( nx - 1 )/denominator_ratio_dx**2 ) + 1
     ny= FLOOR( DBLE( ny - 1 )/denominator_ratio_dx**2 ) + 1
@@ -781,6 +853,24 @@ PROGRAM convergence_test
     ALLOCATE( abs_grid( 3, nx, ny, nz ) )
 
     PRINT *, "** Computing convergence factor..."
+
+    IF( debug )THEN
+      PRINT *, "formul_dx%  get_ngrid_x=", formul_dx%  get_ngrid_x(ref_lev)
+      PRINT *, "formul_dx%  get_ngrid_y=", formul_dx%  get_ngrid_y(ref_lev)
+      PRINT *, "formul_dx%  get_ngrid_z=", formul_dx%  get_ngrid_z(ref_lev)
+      PRINT *, "formul_dx2% get_ngrid_x=", formul_dx2% get_ngrid_x(ref_lev)
+      PRINT *, "formul_dx2% get_ngrid_y=", formul_dx2% get_ngrid_y(ref_lev)
+      PRINT *, "formul_dx2% get_ngrid_z=", formul_dx2% get_ngrid_z(ref_lev)
+      PRINT *, "formul_dx4% get_ngrid_x=", formul_dx4% get_ngrid_x(ref_lev)
+      PRINT *, "formul_dx4% get_ngrid_y=", formul_dx4% get_ngrid_y(ref_lev)
+      PRINT *, "formul_dx4% get_ngrid_z=", formul_dx4% get_ngrid_z(ref_lev)
+      PRINT *
+      PRINT *, "formul_dx%  get_dx=", formul_dx %  get_dx(ref_lev)
+      PRINT *, "formul_dx2% get_dy=", formul_dx2%  get_dx(ref_lev)
+      PRINT *, "formul_dx4% get_dz=", formul_dx4%  get_dx(ref_lev)
+      PRINT *
+      !STOP
+    ENDIF
 
     choose_constraints: SELECT CASE( use_constraints )
 
@@ -807,20 +897,20 @@ PROGRAM convergence_test
 
             grid_dx( :, 1 + ix, 1 + iy, 1 + iz ) = &
                        formul_dx%  get_grid_point(  &
-                                      1 + INT(denominator_ratio_dx**2)*ix, &
-                                      1 + INT(denominator_ratio_dx**2)*iy, &
-                                      1 + INT(denominator_ratio_dx**2)*iz   )
+                                1 + INT(denominator_ratio_dx**2)*ix, &
+                                1 + INT(denominator_ratio_dx**2)*iy, &
+                                1 + INT(denominator_ratio_dx**2)*iz, ref_lev )
             point_dx2= formul_dx2% get_grid_point( &
-                                      1 + INT(numerator_ratio_dx* &
-                                          denominator_ratio_dx)*ix, &
-                                      1 + INT(numerator_ratio_dx* &
-                                          denominator_ratio_dx)*iy, &
-                                      1 + INT(numerator_ratio_dx* &
-                                          denominator_ratio_dx)*iz )
+                                1 + INT(numerator_ratio_dx* &
+                                    denominator_ratio_dx)*ix, &
+                                1 + INT(numerator_ratio_dx* &
+                                    denominator_ratio_dx)*iy, &
+                                1 + INT(numerator_ratio_dx* &
+                                    denominator_ratio_dx)*iz, ref_lev )
             point_dx4= formul_dx4% get_grid_point( &
-                                      1 + INT(numerator_ratio_dx**2)*ix, &
-                                      1 + INT(numerator_ratio_dx**2)*iy, &
-                                      1 + INT(numerator_ratio_dx**2)*iz )
+                                1 + INT(numerator_ratio_dx**2)*ix, &
+                                1 + INT(numerator_ratio_dx**2)*iy, &
+                                1 + INT(numerator_ratio_dx**2)*iz, ref_lev )
 
             IF(ABS(grid_dx( 1, 1 + ix, 1 + iy, 1 + iz )-point_dx2(1)) > 1D-10 &
           .OR. ABS(grid_dx( 1, 1 + ix, 1 + iy, 1 + iz )-point_dx4(1)) > 1D-10 &
@@ -861,23 +951,23 @@ PROGRAM convergence_test
              LOG( &
              ABS( &
              ( ABS(formul_dx%  get_HC( 1 + INT(denominator_ratio_dx**2)*ix, &
-                                       1 + INT(denominator_ratio_dx**2)*iy, &
-                                       1 + INT(denominator_ratio_dx**2)*iz )) &
+                               1 + INT(denominator_ratio_dx**2)*iy, &
+                               1 + INT(denominator_ratio_dx**2)*iz, ref_lev )) &
              - ABS(formul_dx2% get_HC( 1 + INT(numerator_ratio_dx* &
                                            denominator_ratio_dx)*ix, &
-                                       1 + INT(numerator_ratio_dx* &
-                                           denominator_ratio_dx)*iy, &
-                                       1 + INT(numerator_ratio_dx* &
-                                           denominator_ratio_dx)*iz )))&
+                                   1 + INT(numerator_ratio_dx* &
+                                       denominator_ratio_dx)*iy, &
+                                   1 + INT(numerator_ratio_dx* &
+                                       denominator_ratio_dx)*iz, ref_lev ))) &
             /( ABS(formul_dx2% get_HC( 1 + INT(numerator_ratio_dx* &
-                                           denominator_ratio_dx)*ix, &
-                                       1 + INT(numerator_ratio_dx* &
-                                           denominator_ratio_dx)*iy, &
-                                       1 + INT(numerator_ratio_dx* &
-                                           denominator_ratio_dx)*iz )) &
+                                       denominator_ratio_dx)*ix, &
+                                   1 + INT(numerator_ratio_dx* &
+                                       denominator_ratio_dx)*iy, &
+                                   1 + INT(numerator_ratio_dx* &
+                                       denominator_ratio_dx)*iz, ref_lev )) &
              - ABS(formul_dx4% get_HC( 1 + INT(numerator_ratio_dx**2)*ix, &
-                                       1 + INT(numerator_ratio_dx**2)*iy, &
-                                       1 + INT(numerator_ratio_dx**2)*iz ) )&
+                               1 + INT(numerator_ratio_dx**2)*iy, &
+                               1 + INT(numerator_ratio_dx**2)*iz, ref_lev ) ) &
              + 0*tiny_real ) &
              ) &
              )/LOG(ratio_dx)
@@ -902,8 +992,13 @@ PROGRAM convergence_test
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(name_cauchy_ct) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(name_cauchy_ct), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_cauchy_ct) )
 
       WRITE( UNIT = unit_cauchy_ct, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -969,8 +1064,14 @@ PROGRAM convergence_test
                 grid_dx( 2, ix, iy, iz ), &
                 grid_dx( 3, ix, iy, iz ), &
                 convergence_factor( ix, iy, iz )
-            CALL test_status( ios, err_msg, "...error in writing " &
-                        // "the arrays in " // TRIM(name_cauchy_ct) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing the arrays in ", &
+                       TRIM(name_cauchy_ct), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, "...error in writing " &
+            !            // "the arrays in " // TRIM(name_cauchy_ct) )
           ENDDO
         ENDDO
       ENDDO
@@ -1004,20 +1105,20 @@ PROGRAM convergence_test
 
           grid_dx( :, 1 + ix, 1 + iy, 1 + iz ) = &
                      formul_dx%  get_grid_point(  &
-                                    1 + INT(denominator_ratio_dx**2)*ix, &
-                                    1 + INT(denominator_ratio_dx**2)*iy, &
-                                    1 + INT(denominator_ratio_dx**2)*iz   )
+                                1 + INT(denominator_ratio_dx**2)*ix, &
+                                1 + INT(denominator_ratio_dx**2)*iy, &
+                                1 + INT(denominator_ratio_dx**2)*iz, ref_lev )
           point_dx2= formul_dx2% get_grid_point( &
-                                    1 + INT(numerator_ratio_dx* &
-                                        denominator_ratio_dx)*ix, &
-                                    1 + INT(numerator_ratio_dx* &
-                                        denominator_ratio_dx)*iy, &
-                                    1 + INT(numerator_ratio_dx* &
-                                        denominator_ratio_dx)*iz )
+                                1 + INT(numerator_ratio_dx* &
+                                    denominator_ratio_dx)*ix, &
+                                1 + INT(numerator_ratio_dx* &
+                                    denominator_ratio_dx)*iy, &
+                                1 + INT(numerator_ratio_dx* &
+                                    denominator_ratio_dx)*iz, ref_lev )
           point_dx4= formul_dx4% get_grid_point( &
-                                    1 + INT(numerator_ratio_dx**2)*ix, &
-                                    1 + INT(numerator_ratio_dx**2)*iy, &
-                                    1 + INT(numerator_ratio_dx**2)*iz )
+                                1 + INT(numerator_ratio_dx**2)*ix, &
+                                1 + INT(numerator_ratio_dx**2)*iy, &
+                                1 + INT(numerator_ratio_dx**2)*iz, ref_lev )
 
           IF(ABS(grid_dx( 1, 1 + ix, 1 + iy, 1 + iz )-point_dx2(1)) > 1D-10 &
         .OR. ABS(grid_dx( 1, 1 + ix, 1 + iy, 1 + iz )-point_dx4(1)) > 1D-10 &
@@ -1049,25 +1150,25 @@ PROGRAM convergence_test
            ( ABS(formul_dx%  get_HC_parts( &
                                 1 + INT(denominator_ratio_dx**2)*ix, &
                                 1 + INT(denominator_ratio_dx**2)*iy, &
-                                1 + INT(denominator_ratio_dx**2)*iz )) &
+                                1 + INT(denominator_ratio_dx**2)*iz, ref_lev )) &
            - ABS(formul_dx2% get_HC_parts( &
                                 1 + INT(numerator_ratio_dx* &
                                         denominator_ratio_dx)*ix, &
                                 1 + INT(numerator_ratio_dx* &
                                         denominator_ratio_dx)*iy, &
                                 1 + INT(numerator_ratio_dx* &
-                                        denominator_ratio_dx)*iz )))&
+                                        denominator_ratio_dx)*iz, ref_lev )))&
           /( ABS(formul_dx2% get_HC_parts( &
                                 1 + INT(numerator_ratio_dx* &
                                         denominator_ratio_dx)*ix, &
                                 1 + INT(numerator_ratio_dx* &
                                         denominator_ratio_dx)*iy, &
                                 1 + INT(numerator_ratio_dx* &
-                                        denominator_ratio_dx)*iz )) &
+                                        denominator_ratio_dx)*iz, ref_lev )) &
            - ABS(formul_dx4% get_HC_parts( &
                                 1 + INT(numerator_ratio_dx**2)*ix, &
                                 1 + INT(numerator_ratio_dx**2)*iy, &
-                                1 + INT(numerator_ratio_dx**2)*iz ) )&
+                                1 + INT(numerator_ratio_dx**2)*iz, ref_lev ) )&
            + 0*tiny_real ) &
            ) &
            )/LOG(ratio_dx)
@@ -1092,8 +1193,13 @@ PROGRAM convergence_test
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      CALL test_status( ios, err_msg, "...error when opening " &
-               // TRIM(name_cauchy_parts_ct) )
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening ", TRIM(name_cauchy_parts_ct), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when opening " &
+      !         // TRIM(name_cauchy_parts_ct) )
 
       WRITE( UNIT = unit_cauchy_parts_ct, IOSTAT = ios, IOMSG = err_msg, &
              FMT = * ) &
@@ -1162,8 +1268,14 @@ PROGRAM convergence_test
                 grid_dx( 2, ix, iy, iz ), &
                 grid_dx( 3, ix, iy, iz ), &
                 convergence_factor( ix, iy, iz )
-            CALL test_status( ios, err_msg, "...error in writing " &
-                        // "the arrays in " // TRIM(name_cauchy_parts_ct) )
+            IF( ios > 0 )THEN
+              PRINT *, "...error when writing the arrays in ", &
+                       TRIM(name_cauchy_parts_ct), &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, "...error in writing " &
+            !            // "the arrays in " // TRIM(name_cauchy_parts_ct) )
           ENDDO
         ENDDO
       ENDDO

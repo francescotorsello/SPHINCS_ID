@@ -11,12 +11,13 @@ MODULE formul_bssn_id
   !***********************************************************
 
 
-  USE utility,       ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
-                           compute_g4, determinant_sym4x4_grid, show_progress
-  USE bns_id,        ONLY: bns
-  USE formul_3p1_id, ONLY: formul_3p1
-  USE particles_id,  ONLY: particles
-  USE timing,        ONLY: timer
+  USE utility,          ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
+                              compute_g4, determinant_sym4x4_grid, show_progress
+  USE bns_id,           ONLY: bns
+  USE formul_3p1_id,    ONLY: formul_3p1
+  USE particles_id,     ONLY: particles
+  USE timing,           ONLY: timer
+  USE mesh_refinement,  ONLY: grid_function_scalar, grid_function
 
 
   IMPLICIT NONE
@@ -46,27 +47,29 @@ MODULE formul_bssn_id
     !-- Arrays storing the BSSN variables for the LORENE ID on the grid
     !
     ! Conformal connection
-    DOUBLE PRECISION, ALLOCATABLE :: Gamma_u(:,:,:,:)
+    TYPE(grid_function):: Gamma_u
     ! Conformal factor
-    DOUBLE PRECISION, ALLOCATABLE :: phi(:,:,:)
+    TYPE(grid_function_scalar):: phi
     ! Trace of extrinsic curvature
-    DOUBLE PRECISION, ALLOCATABLE :: trK(:,:,:)
+    TYPE(grid_function_scalar):: trK
     ! Conformal traceless extrinsic curvature
-    DOUBLE PRECISION, ALLOCATABLE :: A_BSSN3_ll(:,:,:,:)
+    TYPE(grid_function):: A_BSSN3_ll
     ! Conformal metric
-    DOUBLE PRECISION, ALLOCATABLE :: g_BSSN3_ll(:,:,:,:)
+    TYPE(grid_function):: g_BSSN3_ll
 
     !
-    !-- Connection constraints and its l2 norm
+    !-- Connection constraints and its l2 norm and loo norm
     !
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC
-    DOUBLE PRECISION, DIMENSION(3):: GC_l2
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: GC_parts
-    DOUBLE PRECISION, DIMENSION(3):: GC_parts_l2
+    TYPE(grid_function):: GC
+    TYPE(grid_function):: GC_parts
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_l2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_parts_l2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_loo
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_parts_loo
 
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x
-    LOGICAL, PUBLIC:: export_constraints_xy, export_constraints_x
 
     TYPE(timer):: bssn_computer_timer
 
@@ -78,7 +81,7 @@ MODULE formul_bssn_id
     !--  SUBROUTINES  --!
     !-------------------!
 
-    PROCEDURE :: set_up_bssn
+    !PROCEDURE :: set_up_bssn
 
     PROCEDURE :: define_allocate_fields => allocate_bssn_fields
 
@@ -118,7 +121,7 @@ MODULE formul_bssn_id
     ! along each axis
     MODULE PROCEDURE:: construct_bssn_id_bns
     ! Constructs the bssn_id object from the grid spacings
-    MODULE PROCEDURE:: construct_bssn_id_bns_spacings
+    !MODULE PROCEDURE:: construct_bssn_id_bns_spacings
 
   END INTERFACE bssn_id
 
@@ -128,21 +131,23 @@ MODULE formul_bssn_id
   !
   INTERFACE
 
-    MODULE FUNCTION construct_bssn_id_bns( bns_obj ) RESULT ( bssn_obj )
+    MODULE FUNCTION construct_bssn_id_bns( bns_obj, dx, dy, dz ) &
+                    RESULT ( bssn_obj )
 
       CLASS(bns), INTENT( IN OUT ):: bns_obj
       TYPE(bssn_id)               :: bssn_obj
+      DOUBLE PRECISION, OPTIONAL  :: dx, dy, dz
 
     END FUNCTION construct_bssn_id_bns
 
-    MODULE FUNCTION construct_bssn_id_bns_spacings( bns_obj, dx, dy, dz ) &
-                    RESULT ( bssn_obj )
-
-      CLASS(bns), INTENT( IN OUT )  :: bns_obj
-      TYPE(bssn_id)                 :: bssn_obj
-      DOUBLE PRECISION, INTENT( IN ):: dx, dy, dz
-
-    END FUNCTION construct_bssn_id_bns_spacings
+ !   MODULE FUNCTION construct_bssn_id_bns_spacings( bns_obj, dx, dy, dz ) &
+ !                   RESULT ( bssn_obj )
+ !
+ !     CLASS(bns), INTENT( IN OUT )  :: bns_obj
+ !     TYPE(bssn_id)                 :: bssn_obj
+ !     DOUBLE PRECISION, INTENT( IN ):: dx, dy, dz
+ !
+ !   END FUNCTION construct_bssn_id_bns_spacings
 
   END INTERFACE
 
@@ -152,11 +157,11 @@ MODULE formul_bssn_id
   !
   INTERFACE
 
-    MODULE SUBROUTINE set_up_bssn( THIS )
-
-      CLASS(bssn_id), INTENT( IN OUT ):: THIS
-
-    END SUBROUTINE set_up_bssn
+    !MODULE SUBROUTINE set_up_bssn( THIS )
+    !
+    !  CLASS(bssn_id), INTENT( IN OUT ):: THIS
+    !
+    !END SUBROUTINE set_up_bssn
 
     MODULE SUBROUTINE allocate_bssn_fields( THIS )
 
@@ -203,13 +208,11 @@ MODULE formul_bssn_id
     MODULE SUBROUTINE compute_and_export_bssn_constraints_particles( THIS, &
                                                            parts_obj, &
                                                            namefile, &
-                                                           namefile_sph, &
                                                            name_logfile )
 
       CLASS(bssn_id),      INTENT( IN OUT ):: THIS
       CLASS(particles),    INTENT( IN OUT ):: parts_obj
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile_sph
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
     END SUBROUTINE compute_and_export_bssn_constraints_particles

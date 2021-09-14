@@ -36,7 +36,7 @@ MODULE utility
   CHARACTER(10) :: time
   CHARACTER(5)  :: zone
   INTEGER, DIMENSION(8) :: values
-  CHARACTER( LEN= 19 ):: run_id
+  CHARACTER( LEN= 19 ):: run_id, end_time
 
 
   CONTAINS
@@ -145,41 +145,48 @@ MODULE utility
 
     !*****************************************************************
     !                                                                *
-    ! Compute the determinant of a 4x4 matrix field at a given       *
-    ! grid point                                                     *
+    ! Compute the determinant of a 4x4 symmetric matrix field at a   *
+    ! given grid point                                               *
     !                                                                *
     !*****************************************************************
 
-
-    USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
-                          ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                          jyy, jyz, jzz, jx, jy, jz, n_sym3x3, n_sym4x4
+    USE tensor, ONLY: itt, itx, ity, itz, ixx, ixy, ixz, iyy, iyz, izz, n_sym4x4
 
     IMPLICIT NONE
 
     INTEGER:: ix, iy, iz
+    INTEGER, DIMENSION(4):: components
     DOUBLE PRECISION, INTENT(IN):: A(:,:,:,:)
     DOUBLE PRECISION, INTENT(OUT):: det
 
-    det= A(ix,iy,iz,itt)*(A(ix,iy,iz,ixx)*(A(ix,iy,iz,iyy)*A(ix,iy,iz,izz) &
+    components= SHAPE( A )
+
+    IF( components(4) /= n_sym4x4 )THEN
+      PRINT *, "** ERROR in determinant_sym4x4_grid in MODULE utility.", &
+               " This subroutine needs a symmetric matrix with 10 components,",&
+               " and a ", components, "component matrix was given instead."
+      STOP
+    ENDIF
+
+    det=   A(ix,iy,iz,itt)*(A(ix,iy,iz,ixx)*(A(ix,iy,iz,iyy)*A(ix,iy,iz,izz) &
          - A(ix,iy,iz,iyz)*A(ix,iy,iz,iyz)) &
          + A(ix,iy,iz,ixy)*(A(ix,iy,iz,iyz)*A(ix,iy,iz,ixz) &
          - A(ix,iy,iz,ixy)*A(ix,iy,iz,izz)) &
          + A(ix,iy,iz,ixz)*(A(ix,iy,iz,ixy)*A(ix,iy,iz,iyz) &
          - A(ix,iy,iz,iyy)*A(ix,iy,iz,ixz))) &
-         - A(ix,iy,iz,itx)*(A(ix,iy,iz,itx)*(A(ix,iy,iz,iyy)*A(ix,iy,iz,izz)&
+         - A(ix,iy,iz,itx)*(A(ix,iy,iz,itx)*(A(ix,iy,iz,iyy)*A(ix,iy,iz,izz) &
          - A(ix,iy,iz,iyz)*A(ix,iy,iz,iyz)) &
          + A(ix,iy,iz,ixy)*(A(ix,iy,iz,iyz)*A(ix,iy,iz,itz) &
          - A(ix,iy,iz,ity)*A(ix,iy,iz,izz)) &
          + A(ix,iy,iz,ixz)*(A(ix,iy,iz,ity)*A(ix,iy,iz,iyz) &
          - A(ix,iy,iz,iyy)*A(ix,iy,iz,itz))) &
-         + A(ix,iy,iz,ity)*(A(ix,iy,iz,itx)*(A(ix,iy,iz,ixy)*A(ix,iy,iz,izz)&
+         + A(ix,iy,iz,ity)*(A(ix,iy,iz,itx)*(A(ix,iy,iz,ixy)*A(ix,iy,iz,izz) &
          - A(ix,iy,iz,iyz)*A(ix,iy,iz,ixz)) &
          + A(ix,iy,iz,ixx)*(A(ix,iy,iz,iyz)*A(ix,iy,iz,itz) &
          - A(ix,iy,iz,ity)*A(ix,iy,iz,izz)) &
          + A(ix,iy,iz,ixz)*(A(ix,iy,iz,ity)*A(ix,iy,iz,ixz) &
          - A(ix,iy,iz,ixy)*A(ix,iy,iz,itz))) &
-         - A(ix,iy,iz,itz)*(A(ix,iy,iz,itx)*(A(ix,iy,iz,ixy)*A(ix,iy,iz,iyz)&
+         - A(ix,iy,iz,itz)*(A(ix,iy,iz,itx)*(A(ix,iy,iz,ixy)*A(ix,iy,iz,iyz) &
          - A(ix,iy,iz,iyy)*A(ix,iy,iz,ixz)) &
          + A(ix,iy,iz,ixx)*(A(ix,iy,iz,iyy)*A(ix,iy,iz,itz) &
          - A(ix,iy,iz,ity)*A(ix,iy,iz,iyz)) &
@@ -187,6 +194,45 @@ MODULE utility
          - A(ix,iy,iz,ixy)*A(ix,iy,iz,itz)))
 
   END SUBROUTINE determinant_sym4x4_grid
+
+  SUBROUTINE determinant_sym3x3_grid( i, j, k, A, det )
+
+    !*****************************************************************
+    !                                                                *
+    ! Compute the determinant of a 3x3 symmetric matrix field at a   *
+    ! given grid point                                               *
+    !                                                                *
+    ! FT 26.03.2021                                                  *
+    !                                                                *
+    !*****************************************************************
+
+
+    USE tensor, ONLY: jxx, jxy, jxz, jyy, jyz, jzz, n_sym3x3
+
+    IMPLICIT NONE
+
+    INTEGER:: i, j, k
+    INTEGER, DIMENSION(4):: components
+    DOUBLE PRECISION, INTENT(IN):: A(:,:,:,:)
+    DOUBLE PRECISION, INTENT(OUT):: det
+
+    components= SHAPE( A )
+
+    IF( components(4) /= n_sym3x3 )THEN
+      PRINT *, "** ERROR in determinant_sym3x3_grid in MODULE utility.", &
+               " This subroutine needs a symmetric matrix with 6 components,",&
+               " and a ", components, "component matrix was given instead."
+      STOP
+    ENDIF
+
+    det=   A(i,j,k,jxx)*A(i,j,k,jyy)*A(i,j,k,jzz) &
+         + A(i,j,k,jxy)*A(i,j,k,jyz)*A(i,j,k,jxz) &
+         + A(i,j,k,jxz)*A(i,j,k,jxy)*A(i,j,k,jyz) &
+         - A(i,j,k,jxy)*A(i,j,k,jxy)*A(i,j,k,jzz) &
+         - A(i,j,k,jxz)*A(i,j,k,jyy)*A(i,j,k,jxz) &
+         - A(i,j,k,jxx)*A(i,j,k,jyz)*A(i,j,k,jyz)
+
+  END SUBROUTINE determinant_sym3x3_grid
 
 
 END MODULE utility
