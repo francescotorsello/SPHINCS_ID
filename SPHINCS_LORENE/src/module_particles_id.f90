@@ -46,7 +46,7 @@ MODULE particles_id
     !! Particle number for star 2
     INTEGER:: npart_temp, npart1_temp, npart2_temp
     !! Various particle numbers used internally by the TYPE
-    !INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
+    INTEGER:: nx, ny, nz!, nx1, ny1, nz1, nx2, ny2, nz2
     INTEGER:: distribution_id
     !! Identification number for the particle distribution
     INTEGER:: eos1_id
@@ -226,7 +226,7 @@ MODULE particles_id
     !> Baryon number ratio on star 2
     DOUBLE PRECISION:: nuratio2
 
-    !CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
+    CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
 
     !> String storing the local path to the directory containing the CompOSE EOS
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_path

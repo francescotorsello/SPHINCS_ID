@@ -26,12 +26,39 @@ if ARGUMENTS.get('VERBOSE') != '1':
 env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export', 'lorene', 'lorenef77']
 env['LIBPATH'] = ['../../../Lorene/Lib']
 env['F90FILESUFFIXES']=['.f90','.f']
-env['F90']      = 'ifort'
-env['F90FLAGS'] = ['-O3', '-g', '-qopenmp',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin']
-#env['F90FLAGS'] = ['-r8','-g','-qopenmp','-O0', '-ftz', '-align all', '-fno-alias', '-traceback', '-debug', '-nolib-inline', '-fno-inline-functions', '-assume protect_parens,minus0', '-prec-div', '-prec-sqrt', '-check bounds', '-check uninit', '-fp-stack-check', '-warn unused', '-init=snan,arrays', '-traceback', '-assume realloc_lhs', '-fPIC', '-fpe0', '-fp-model source', '-heap-arrays 32', '-assume no old_maxminloc', '-align dcommons', '-debug extended']
-env['FORTRANFLAGS'] = ['-O3', '-g', '-qopenmp',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin']
-env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall']
+
+# Fortran compiler
+env['F90'] = 'ifort'
+
+# C++ compiler
 env['CXX'] = 'icpc'
+
+# F90 flags for production
+env['F90FLAGS'] = ['-O3', '-qopenmp', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback']
+#, '-heap-arrays'
+#, '-qoverride-limits'
+
+# F90 flags for debugging
+#env['F90FLAGS'] = ['-O0', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-CB', '-CS', '-traceback', '-fpe0', '-warn', '-debug extended']
+
+# More F90 flags for debugging
+#env['F90FLAGS'] = ['-r8','-g','-qopenmp','-O0', '-ftz', '-heap-arrays 5000',, '-fno-alias', '-traceback', '-debug', '-debug all', '-nolib-inline','-align all', '-check bounds', '-fno-inline-functions', '-prec-div', '-prec-sqrt', '-fp-stack-check', '-init=snan,arrays', '-traceback', '-fPIC', '-fpe3', '-heap-arrays 32', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-fp-model strict', '-no-wrap-margin', '-ftrapuv', '-mp']
+
+# Do not use FORTRANFLAGS
+#env['FORTRANFLAGS'] = ['-O3', '-g', '-qopenmp',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin']
+#env['FORTRANFLAGS'] = ['-O3', '-g', '-align all', '-check bounds', '-check uninit', '-qopenmp', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-fp-model source', '-no-wrap-margin', '-debug extended']
+
+# C++ flags for production (union of the flags in the SPHINCS SConstruct files
+# and the flags in the file local_settings in the LORENE home directory)
+env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', '-Wconversion', '-Winline', '-Wabi=11', '-Wold-style-cast', '-Woverloaded-virtual']
+#-ip, -ipo, -ipo=n
+# icx compiler: best of icc and best of clang
+# -o prog
+
+# C++ flags for debugging (union of the flags in the SPHINCS SConstruct files
+# and the flags in the file local_settings in the LORENE home directory)
+# See also https://www.nas.nasa.gov/hecc/support/kb/recommended-intel-compiler-debugging-options_92.html
+#env['CXXFLAGS'] = ['-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', '-Wconversion', '-Winline', '-Wabi=11', '-Wold-style-cast', '-Woverloaded-virtual', '-traceback', '-check-uninit', '-ftrapuv', '-debug', '-debug extended', '-fpe3', '-mp', '-fp-model strict','-align all', '-check bounds', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons']
 
 env['F90PATH'] = [ '.', '../../BSSN', '../SPHINCS_fix_metric', "../SPHINCS_BSSN" ]
 env['CPPPATH'] = [ '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/Include/' ]
@@ -90,47 +117,78 @@ lorene_sources_bin_ns = [#'../../../Lorene/Export/BinNS/read_bin_ns.C',
                          '../../../Lorene/Export/C++/Source/bin_ns_aux.C',
                          '../../../Lorene/Export/C++/Source/write_lines.C']
 
-sources = ['src/module_bindings.f90',
-           'src/module_utility.f90',
-           'src/module_SPHINCS_LORENE.f90',
+sources = ['src/module_utility.f90',
            'src/module_bns_id.f90',
            'src/module_particles_id.f90',
            'src/module_formul_3p1_id.f90',
            'src/module_bssn_id.f90',
            'src/submodule_bns_constructor.f90',
-           'src/submodule_bns_methods.f90',
+           'src/submodule_bns_import.f90',
+           'src/submodule_bns_memory.f90',
+           'src/submodule_bns_access.f90',
+           'src/submodule_bns_params.f90',
+           'src/submodule_bns_mass_profile.f90',
            'src/submodule_particles_constructor.f90',
-           'src/submodule_particles_methods.f90',
-           'src/submodule_formul_3p1_methods.f90',
-           'src/submodule_BSSN_id_constructor.f90',
-           'src/submodule_BSSN_id_methods.f90',
-           '../../BSSN/module_ADM.f90',
-           '../../BSSN/module_BSSN.f90',
+           'src/submodule_particles_memory.f90',
+           'src/submodule_particles_lattices.f90',
+           'src/submodule_particles_spherical_surfaces.f90',
+           'src/submodule_particles_sph_variables.f90',
+           'src/submodule_particles_access.f90',
+           'src/submodule_particles_compose.f90',
+           'src/submodule_particles_redistribute_nu.f90',
+           'src/submodule_particles_apm.f90',
+           'src/submodule_formul_3p1_constructor.f90',
+           'src/submodule_formul_3p1_access.f90',
+           'src/submodule_formul_3p1_analysis.f90',
+           'src/submodule_bssn_id_constructor.f90',
+           'src/submodule_bssn_id_variables.f90',
+           'src/submodule_bssn_id_constraints.f90',
+           'src/submodule_bssn_id_memory.f90',
+           'src/module_SPHINCS_LORENE.f90',
+           '../../BSSN/module_mesh_refinement.f90',
+           #'../../BSSN/module_ADM.f90',
+           '../../BSSN/module_ADM_refine.f90',
+           #'../../BSSN/module_BSSN.f90',
+           '../../BSSN/module_BSSN_refine.f90',
            '../../BSSN/module_BSSN_parameters.f90',
-           '../../BSSN/module_GravityAcceleration.f90',
-           '../../BSSN/module_McLachlan.f90',
-           '../../BSSN/module_TOV.f90',
-           '../../BSSN/module_Tmunu.f90',
-           '../../BSSN/module_gravity_grid.f90',
-           '../../BSSN/module_map_metric_2_particles.f90',
+           #'../../BSSN/module_GravityAcceleration.f90',
+           '../../BSSN/module_GravityAcceleration_refine.f90',
+           #'../../BSSN/module_McLachlan.f90',
+           '../../BSSN/module_McLachlan_refine.f90',
+           #'../../BSSN/module_TOV.f90',
+           '../../BSSN/module_TOV_refine.f90',
+           #'../../BSSN/module_Tmunu.f90',
+           '../../BSSN/module_Tmunu_refine.f90',
+           #'../../BSSN/module_gravity_grid.f90',
+           #'../../BSSN/module_map_metric_2_particles.f90',
+           '../../BSSN/module_map_metric_2_particles_refine.f90',
+           '../../BSSN/module_evolution_parameters.f90',
+           '../../BSSN/submodule_prolongation.f90',
+           '../../BSSN/submodule_restriction.f90',
+           '../../BSSN/submodule_utilities.f90',
+           '../../BSSN/submodule_parameter.f90',
+           '../../BSSN/submodule_allocation.f90',
+           '../../BSSN/submodule_output.f90',
            '../../BSSN/module_tensor.f90',
            '../../BSSN/module_Numerics.f90',
+           '../../BSSN/module_Hermite_refine.f90',
            '../../BSSN/Hermite_3D_Weights.f',
            '../../BSSN/Hermite5_3D_Weights.f',
            '../../BSSN/module_WENO.f90',
-           '../../BSSN/module_NaNChecker.f90',
+           #'../../BSSN/module_NaNChecker.f90',
            '../SPHINCS_BSSN/module_CP_distribute.f90',
            '../SPHINCS_BSSN/module_MLS.f90',
            '../SPHINCS_BSSN/module_SelfRegularization.f90',
            '../SPHINCS_BSSN/module_particle_mesh.f90',
            '../SPHINCS_BSSN/module_map_particles_2_grid.f90',
            '../SPHINCS_BSSN/module_integ_hydro_BSSN.f90',
-           '../SPHINCS_BSSN/module_grid_output.f90',
+           #'../SPHINCS_BSSN/module_grid_output.f90',
            '../SPHINCS_BSSN/module_gradient.f90',
            '../SPHINCS_BSSN/module_timing.f90',
            '../SPHINCS_BSSN/module_debug_output.f90',
-           '../SPHINCS_BSSN/module_grav_acc_check.f90',
+           #'../SPHINCS_BSSN/module_grav_acc_check.f90',
            '../SPHINCS_BSSN/module_dyn_metric_on_particles.f90',
+           '../SPHINCS_BSSN/module_alive_flag.f90',
            '../../BSSN/ML_BSSN_NV_EvolutionInteriorSplitBy1.cc',
            '../../BSSN/ML_BSSN_NV_EvolutionInteriorSplitBy2.cc',
            '../../BSSN/ML_BSSN_NV_EvolutionInteriorSplitBy3.cc',
@@ -141,6 +199,8 @@ sources = ['src/module_bindings.f90',
            '../../BSSN/ML_BSSN_NV_ADMDerivativesInterior.cc',
            '../../BSSN/ML_BSSN_NV_ConstraintsInterior.cc',
            '../../BSSN/module_Extract_Mass.f90',
+           '../../BSSN/submodule__Extract_Mass_impl.f90',
+           '../../BSSN/fermi_step_f.f90',
            '../../BSSN/bssn_parameters.cc',
            '../SPHINCS_fix_metric/module_files.f90',
            '../SPHINCS_fix_metric/module_constants.f90',
@@ -164,14 +224,23 @@ sources = ['src/module_bindings.f90',
            '../SPHINCS_fix_metric/module_SPHINCS_logbook.f90',
            '../SPHINCS_fix_metric/module_relativistic_Eigenvalues.f90',
            '../SPHINCS_fix_metric/module_reconstruction.f90',
-           '../SPHINCS_fix_metric/module_deactivate_particles.f90']
+           '../SPHINCS_fix_metric/module_deactivate_particles.f90',
+           '../SPHINCS_fix_metric/module_sorting.f90',
+           '../SPHINCS_fix_metric/module_Artificial_Pressure_Method.f90',
+           '../SPHINCS_fix_metric/module_piecewise_polytrope.f90']
 
 #tov_executable = 'setup_TOV.x'
 #executable = 'sphincs_bssn.x'
-lorene_id_executable = 'setup_lorene_bns_id.x'
+lorene_id_executable = 'sphincs_lorene_bns.x'
+lorene_id_convtest_executable = 'convergence_test.x'
+write_par_eos = 'write_par_eos.x'
+
+#['../SPHINCS_fix_metric/module_Artificial_Pressure_Method.f90']
 
 #Program(tov_executable, sources+['../SPHINCS_BSSN/Setup_TOV_star.f90'])
 #Program(executable, sources+['../SPHINCS_BSSN/SPHINCS_BSSN.f90'])
-Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/setup_lorene_id.f90'])
-
+Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/sphincs_lorene_bns.f90'])
+Program(lorene_id_convtest_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/convergence_test.f90'])
+Program(write_par_eos, lorene_sources_bin_ns + lorene_sources + sources + ['src/write_par_eos.f90'])
+#
 Decider('MD5-timestamp')

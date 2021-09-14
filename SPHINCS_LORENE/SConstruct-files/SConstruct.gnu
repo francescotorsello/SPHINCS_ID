@@ -165,7 +165,7 @@ sources = ['src/module_bindings.f90',
 
 #tov_executable = 'setup_TOV.x'
 #executable = 'sphincs_bssn.x'
-lorene_id_executable = 'setup_lorene_bns_id.x'
+lorene_id_executable = 'gnu-setup_lorene_bns_id.x'
 
 #Program(tov_executable, sources+['../SPHINCS_BSSN/Setup_TOV_star.f90'])
 #Program(executable, sources+['../SPHINCS_BSSN/SPHINCS_BSSN.f90'])
