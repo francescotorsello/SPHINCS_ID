@@ -46,7 +46,7 @@ MODULE particles_id
     !! Particle number for star 2
     INTEGER:: npart_temp, npart1_temp, npart2_temp
     !! Various particle numbers used internally by the TYPE
-    INTEGER:: nx, ny, nz!, nx1, ny1, nz1, nx2, ny2, nz2
+    INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
     INTEGER:: distribution_id
     !! Identification number for the particle distribution
     INTEGER:: eos1_id
@@ -208,9 +208,9 @@ MODULE particles_id
     !  @warning always \(< 1\)
     DOUBLE PRECISION:: mass_ratio
     !> Total grid volume
-    !DOUBLE PRECISION:: vol, vol1, vol2
+    DOUBLE PRECISION:: vol, vol1, vol2
     !> Volume per particle
-    !DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
+    DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
     !> Ratio between the max and min of the baryon number per particle
     DOUBLE PRECISION:: nu_ratio
     !> Total baryon number
