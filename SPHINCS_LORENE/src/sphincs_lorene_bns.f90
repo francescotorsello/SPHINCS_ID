@@ -16,6 +16,7 @@ PROGRAM sphincs_lorene_bns
   !                                                    *
   !*****************************************************
 
+  USE IFPORT,         ONLY: MAKEDIRQQ
   USE sphincs_lorene
   USE constants,      ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
                             k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
@@ -61,6 +62,8 @@ PROGRAM sphincs_lorene_bns
   ! spacetime output is to be saved
   CHARACTER( LEN= max_length ):: spacetime_path
 
+  LOGICAL:: exist
+  LOGICAL(4):: dir_out
   ! Logical variables to steer the execution
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
             compute_constraints, export_constraints_xy, &
@@ -140,6 +143,30 @@ PROGRAM sphincs_lorene_bns
   CALL execution_timer% start_timer()
 
   CALL read_bns_id_parameters()
+
+  !
+  !-- Check that the specified subdirectories exist. If not, create them
+  !-- TODO: this compils with ifort, but not with gfortran
+  !
+  !INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
+  INQUIRE( DIRECTORY= TRIM(sph_path), EXIST= exist )
+  IF( .NOT.exist ) dir_out= MAKEDIRQQ( TRIM(sph_path) )
+  IF( .NOT.dir_out )THEN
+    PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(sph_path)
+    PRINT *, "Stopping..."
+    PRINT *
+    STOP
+  ENDIF
+
+  !INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
+  INQUIRE( DIRECTORY= TRIM(spacetime_path), EXIST= exist )
+  IF( .NOT.exist ) dir_out= MAKEDIRQQ( TRIM(spacetime_path) )
+  IF( .NOT.dir_out )THEN
+    PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(sph_path)
+    PRINT *, "Stopping..."
+    PRINT *
+    STOP
+  ENDIF
 
   ! Allocate needed memory
   ALLOCATE( binaries      ( n_bns ) )

@@ -46,7 +46,7 @@ MODULE particles_id
     !! Particle number for star 2
     INTEGER:: npart_temp, npart1_temp, npart2_temp
     !! Various particle numbers used internally by the TYPE
-    !INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
+    INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
     INTEGER:: distribution_id
     !! Identification number for the particle distribution
     INTEGER:: eos1_id
@@ -208,9 +208,9 @@ MODULE particles_id
     !  @warning always \(< 1\)
     DOUBLE PRECISION:: mass_ratio
     !> Total grid volume
-    !DOUBLE PRECISION:: vol, vol1, vol2
+    DOUBLE PRECISION:: vol, vol1, vol2
     !> Volume per particle
-    !DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
+    DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
     !> Ratio between the max and min of the baryon number per particle
     DOUBLE PRECISION:: nu_ratio
     !> Total baryon number
@@ -226,7 +226,7 @@ MODULE particles_id
     !> Baryon number ratio on star 2
     DOUBLE PRECISION:: nuratio2
 
-    !CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
+    CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
 
     !> String storing the local path to the directory containing the CompOSE EOS
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_path
@@ -234,9 +234,12 @@ MODULE particles_id
     !  .beta extension
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_filename
 
+    !> String containing the LORENE name of the EOS for star 1
     CHARACTER( LEN= : ), ALLOCATABLE:: eos1
+    !> String containing the LORENE name of the EOS for star 2
     CHARACTER( LEN= : ), ALLOCATABLE:: eos2
 
+    !> .TRUE. if the object is empty, .FALSE. if it's not empty
     LOGICAL:: empty_object
     LOGICAL, PUBLIC:: export_bin
     LOGICAL, PUBLIC:: export_form_xy, export_form_x
@@ -248,6 +251,10 @@ MODULE particles_id
     LOGICAL:: apm_iterate1, apm_iterate2
     LOGICAL:: read_nu
     LOGICAL:: reflect_particles_x
+
+    !
+    !-- Timers
+    !
 
     TYPE(timer), PUBLIC:: placer_timer
     TYPE(timer), PUBLIC:: same_particle_timer

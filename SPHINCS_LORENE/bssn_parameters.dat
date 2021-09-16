@@ -1,0 +1,31 @@
+&bssn_pars
+fdorder= 6
+formulation= 0
+conformal_method= 0
+harmonic_n= 1.0d0
+harmonic_f= 2.0d0
+advect_lapse= 0
+advect_shift= 0
+eps_diss= 0.2d0
+eps_diss_max= 1.0
+evolve_a= 0
+evolve_b= 0
+alpha_driver= 0.0d0
+damp_k1= 0.0d0
+damp_k2= 0.0d0
+fix_advection_terms= 0
+gamma_shift= 0.5d0
+use_spatial_beta_driver= 0
+beta_driver= 1.0d0
+spatial_beta_driver_radius= 1.0d12
+use_spatial_shift_gamma_coeff= 0
+shift_gamma_coeff= 0.75d0
+spatial_shift_gamma_coeff_radius= 1.0d12
+shift_formulation=0
+shift_alpha_power= 0.0d0
+minimum_lapse= 0.0
+lapse_threshold= 0.1
+fermi_width= 1.0
+use_spatial_eps= 0
+bssn_cou_fac= 0.35
+/
