@@ -38,15 +38,13 @@ MODULE particles_id
 
     PRIVATE
 
+
     INTEGER:: npart
     !! Total particle number
     INTEGER:: npart1
     !! Particle number for star 1
     INTEGER:: npart2
     !! Particle number for star 2
-    INTEGER:: npart_temp, npart1_temp, npart2_temp
-    !! Various particle numbers used internally by the TYPE
-    INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
     INTEGER:: distribution_id
     !! Identification number for the particle distribution
     INTEGER:: eos1_id
@@ -61,8 +59,6 @@ MODULE particles_id
     !# Array storing the indices to use with [[particles:baryon_density_parts]]
     !  to sort the elements of [[particles:baryon_density_parts]] in increasing
     !  order
-
-    !INTEGER, DIMENSION(:), ALLOCATABLE:: filt_pos
 
     !
     !-- Hydro variables on the particles
@@ -271,9 +267,9 @@ MODULE particles_id
     !--  SUBROUTINES  --!
     !-------------------!
 
-    PROCEDURE:: place_particles_3dlattice
+    PROCEDURE:: place_particles_lattice
 
-    PROCEDURE:: place_particles_3dlattices
+    PROCEDURE:: place_particles_lattices
 
     PROCEDURE:: place_particles_spherical_shells
 
@@ -376,31 +372,35 @@ MODULE particles_id
     !-------------------!
 
 
-    MODULE SUBROUTINE place_particles_3dlattice( THIS, &
+    MODULE SUBROUTINE place_particles_lattice( THIS, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
+                                  nx, ny, nz, &
                                   thres, bns_obj )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      INTEGER,          INTENT( IN )    :: nx, ny, nz
       DOUBLE PRECISION, INTENT( IN )    :: xmin, xmax, ymin, &
                                            ymax, zmin, zmax, thres
 
-    END SUBROUTINE place_particles_3dlattice
+    END SUBROUTINE place_particles_lattice
 
 
-    MODULE SUBROUTINE place_particles_3dlattices( THIS, &
+    MODULE SUBROUTINE place_particles_lattices( THIS, &
                                   xmin1, xmax1, ymin1, ymax1, zmin1, zmax1, &
                                   xmin2, xmax2, ymin2, ymax2, zmin2, zmax2, &
+                                  nx, ny, nz, &
                                   thres, bns_obj )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      INTEGER,          INTENT( IN )    :: nx, ny, nz
       DOUBLE PRECISION, INTENT( IN )    :: xmin1, xmax1, ymin1, &
                                            ymax1, zmin1, zmax1
       DOUBLE PRECISION, INTENT( IN )    :: xmin2, xmax2, ymin2, &
                                            ymax2, zmin2, zmax2, thres
 
-    END SUBROUTINE place_particles_3dlattices
+    END SUBROUTINE place_particles_lattices
 
 
     MODULE SUBROUTINE place_particles_spherical_shells( THIS, &

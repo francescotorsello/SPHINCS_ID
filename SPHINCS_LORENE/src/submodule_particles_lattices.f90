@@ -22,7 +22,7 @@ SUBMODULE (particles_id) particles_lattices
   CONTAINS
 
 
-  MODULE PROCEDURE place_particles_3dlattice
+  MODULE PROCEDURE place_particles_lattice
 
     !*********************************************************
     !
@@ -37,13 +37,14 @@ SUBMODULE (particles_id) particles_lattices
     IMPLICIT NONE
 
     INTEGER:: i, j, k, sgn, npart_half
+    INTEGER:: npart_temp
 
     DOUBLE PRECISION:: dx, dy, dz
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim
     DOUBLE PRECISION:: max_baryon_density, thres_baryon_density
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: pos_tmp
 
-    PRINT *, "** Executing the place_particles_3dlattice " &
+    PRINT *, "** Executing the place_particles_lattice " &
              // "subroutine..."
     PRINT *
 
@@ -59,17 +60,17 @@ SUBMODULE (particles_id) particles_lattices
     !
     !-- Compute lattice steps
     !
-    dx= ABS(xmax - xmin)/DBLE( THIS% nx )
-    dy= ABS(ymax - ymin)/DBLE( THIS% ny )
-    dz= ABS(zlim)/DBLE( THIS% nz/2 )
+    dx= ABS(xmax - xmin)/DBLE( nx )
+    dy= ABS(ymax - ymin)/DBLE( ny )
+    dz= ABS(zlim)/DBLE( nz/2 )
 
     PRINT *, " * dx=", dx,  ", dy=", dx,  ", dz=", dz
-    PRINT *, " * nx=", THIS% nx,  ", ny=", THIS% ny,  ", nz=", THIS% nz
+    PRINT *, " * nx=", nx,  ", ny=", ny,  ", nz=", nz
     PRINT *
 
-    THIS% npart_temp = THIS% nx*THIS% ny*THIS% nz
+    npart_temp = nx*ny*nz
 
-    PRINT *, " * Number of lattice points= nx*ny*nz=", THIS% npart_temp
+    PRINT *, " * Number of lattice points= nx*ny*nz=", npart_temp
     PRINT *
 
     !
@@ -92,7 +93,7 @@ SUBMODULE (particles_id) particles_lattices
     ! Note that after determining npart, the array pos is reshaped into
     ! pos( 3, npart )
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, THIS% npart_temp ), STAT= ios, &
+      ALLOCATE( THIS% pos( 3, npart_temp ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE" &
@@ -108,7 +109,7 @@ SUBMODULE (particles_id) particles_lattices
     THIS% pos= 0.0D0
 
     IF(.NOT.ALLOCATED( pos_tmp ))THEN
-      ALLOCATE( pos_tmp( 3, THIS% nx, THIS% ny, THIS% nz ), STAT= ios, &
+      ALLOCATE( pos_tmp( 3, nx, ny, nz ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos_tmp in SUBROUTINE" &
@@ -147,18 +148,18 @@ SUBMODULE (particles_id) particles_lattices
     !-- Place the first half of the particle (above or below the xy plane)
     !
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( THIS, bns_obj, dx, dy, dz, sgn, &
+    !$OMP             SHARED( nx, ny, nz, bns_obj, dx, dy, dz, sgn, &
     !$OMP                     pos_tmp, thres_baryon_density, xmin, ymin ) &
     !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp )
-    particle_pos_z: DO k= 1, THIS% nz/2, 1
+    particle_pos_z: DO k= 1, nz/2, 1
 
       ztemp= sgn*( dz/2 + ( k - 1 )*dz )
 
-      particle_pos_y: DO j= 1, THIS% ny, 1
+      particle_pos_y: DO j= 1, ny, 1
 
         ytemp= ymin + ( j - 1 )*dy
 
-        particle_pos_x: DO i= 1, THIS% nx, 1
+        particle_pos_x: DO i= 1, nx, 1
 
           xtemp= xmin + dx/2 + ( i - 1 )*dx
 
@@ -187,8 +188,8 @@ SUBMODULE (particles_id) particles_lattices
           ENDIF
 
           ! Print progress on screen, every 10%
-          !perc= 50*( THIS% nx*THIS% ny*k + THIS% nx*j + i )/ &
-          !        ( THIS% nx*THIS% ny*THIS% nz/2 )
+          !perc= 50*( nx*ny*k + nx*j + i )/ &
+          !        ( nx*ny*nz/2 )
           !IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           !  WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
           !         creturn//" ", perc, "%"
@@ -201,11 +202,11 @@ SUBMODULE (particles_id) particles_lattices
     !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
     THIS% npart= 0
-    DO k= 1, THIS% nz, 1
+    DO k= 1, nz, 1
 
-      DO j= 1, THIS% ny, 1
+      DO j= 1, ny, 1
 
-        DO i= 1, THIS% nx, 1
+        DO i= 1, nx, 1
 
           IF( pos_tmp( 1, i, j, k ) < HUGE(0.0D0) )THEN
 
@@ -299,7 +300,7 @@ SUBMODULE (particles_id) particles_lattices
     ENDIF
 
     PRINT *, " * Particles placed. Number of particles=", &
-             THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
+             THIS% npart, "=", DBLE(THIS% npart)/DBLE(npart_temp), &
              " of the points in lattice."
     PRINT *
     PRINT *, " * Number of particles on NS 1=", THIS% npart1
@@ -322,7 +323,7 @@ SUBMODULE (particles_id) particles_lattices
     ENDIF
 
     THIS% vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
-    THIS% vol_a= THIS% vol/THIS% npart_temp
+    THIS% vol_a= THIS% vol/npart_temp
 
     THIS% pvol= THIS% vol_a
 
@@ -341,10 +342,10 @@ SUBMODULE (particles_id) particles_lattices
     PRINT *, "** Subroutine place_particles_3D_lattice executed."
     PRINT *
 
-  END PROCEDURE place_particles_3dlattice
+  END PROCEDURE place_particles_lattice
 
 
-  MODULE PROCEDURE place_particles_3dlattices
+  MODULE PROCEDURE place_particles_lattices
 
     !****************************************************
     !
@@ -360,6 +361,8 @@ SUBMODULE (particles_id) particles_lattices
     IMPLICIT NONE
 
     INTEGER:: i, j, k, sgn, npart_half, npart_half2
+    INTEGER:: npart_temp, npart1_temp, npart2_temp
+    INTEGER:: nx1, ny1, nz1, nx2, ny2, nz2
 
     DOUBLE PRECISION:: dx1, dy1, dz1, dx2, dy2, dz2
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim, zlim2
@@ -371,7 +374,7 @@ SUBMODULE (particles_id) particles_lattices
 
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: pos_tmp
 
-    PRINT *, "** Executing the place_particles_3dlattices " &
+    PRINT *, "** Executing the place_particles_lattices " &
              // "subroutine..."
     PRINT *
 
@@ -399,19 +402,19 @@ SUBMODULE (particles_id) particles_lattices
       !
       !-- Compute lattices' steps
       !
-      THIS% nx2= THIS% nx
-      THIS% ny2= THIS% ny
-      THIS% nz2= THIS% nz
-      dx2= ABS(xmax2 - xmin2)/DBLE( THIS% nx2 )
-      dy2= ABS(ymax2 - ymin2)/DBLE( THIS% ny2 )
-      dz2= ABS(zlim2)/DBLE( THIS% nz2/2 )
+      nx2= nx
+      ny2= ny
+      nz2= nz
+      dx2= ABS(xmax2 - xmin2)/DBLE( nx2 )
+      dy2= ABS(ymax2 - ymin2)/DBLE( ny2 )
+      dz2= ABS(zlim2)/DBLE( nz2/2 )
 
       dx1= dx2*(THIS% mass_ratio**(1.0D0/3.0D0))
       dy1= dy2*(THIS% mass_ratio**(1.0D0/3.0D0))
       dz1= dz2*(THIS% mass_ratio**(1.0D0/3.0D0))
-      THIS% nx1= NINT( ABS(xmax1 - xmin1)/dx1 ) + 1
-      THIS% ny1= NINT( ABS(ymax1 - ymin1)/dy1 ) + 1
-      THIS% nz1= NINT( 2*ABS(zlim)/dz1 ) + 1
+      nx1= NINT( ABS(xmax1 - xmin1)/dx1 ) + 1
+      ny1= NINT( ABS(ymax1 - ymin1)/dy1 ) + 1
+      nz1= NINT( 2*ABS(zlim)/dz1 ) + 1
 
     ELSE
 
@@ -420,32 +423,32 @@ SUBMODULE (particles_id) particles_lattices
       !
       !-- Compute lattices' steps
       !
-      THIS% nx1= THIS% nx
-      THIS% ny1= THIS% ny
-      THIS% nz1= THIS% nz
-      dx1= ABS(xmax1 - xmin1)/DBLE( THIS% nx1 )
-      dy1= ABS(ymax1 - ymin1)/DBLE( THIS% ny1 )
-      dz1= ABS(zlim)/DBLE( THIS% nz1/2 )
+      nx1= nx
+      ny1= ny
+      nz1= nz
+      dx1= ABS(xmax1 - xmin1)/DBLE( nx1 )
+      dy1= ABS(ymax1 - ymin1)/DBLE( ny1 )
+      dz1= ABS(zlim)/DBLE( nz1/2 )
 
       dx2= dx1*(THIS% mass_ratio**(1.0D0/3.0D0))
       dy2= dy1*(THIS% mass_ratio**(1.0D0/3.0D0))
       dz2= dz1*(THIS% mass_ratio**(1.0D0/3.0D0))
-      THIS% nx2= NINT( ABS(xmax2 - xmin2)/dx2 ) + 1
-      THIS% ny2= NINT( ABS(ymax2 - ymin2)/dy2 ) + 1
-      THIS% nz2= NINT( 2*ABS(zlim2)/dz2 ) + 1
+      nx2= NINT( ABS(xmax2 - xmin2)/dx2 ) + 1
+      ny2= NINT( ABS(ymax2 - ymin2)/dy2 ) + 1
+      nz2= NINT( 2*ABS(zlim2)/dz2 ) + 1
 
     ENDIF
 
     ! Set the number of particles in the z direction to an even number
     ! since half of the particles are above the xy plane, and half below it
-    IF( MOD( THIS% nz2, 2 ) /= 0 )THEN
-      THIS% nz2= THIS% nz2 - 1
+    IF( MOD( nz2, 2 ) /= 0 )THEN
+      nz2= nz2 - 1
     ENDIF
 
     PRINT *, " * dx1=", dx1,  ", dy1=", dx1,  ", dz1=", dz1
     PRINT *, " * dx2=", dx2,  ", dy2=", dx2,  ", dz2=", dz2
-    PRINT *, " * nx1=", THIS% nx1, ", ny1=", THIS% ny1, ", nz1=", THIS% nz1
-    PRINT *, " * nx2=", THIS% nx2, ", ny2=", THIS% ny2, ", nz2=", THIS% nz2
+    PRINT *, " * nx1=", nx1, ", ny1=", ny1, ", nz1=", nz1
+    PRINT *, " * nx2=", nx2, ", ny2=", ny2, ", nz2=", nz2
     PRINT *
 
     !PRINT *, " * xmin1=", xmin1, ", xmax1=", xmax1
@@ -454,14 +457,14 @@ SUBMODULE (particles_id) particles_lattices
     !STOP
 
     ! Compute number of lattice points (temporary particle number)
-    THIS% npart1_temp = THIS% nx*THIS% ny*THIS% nz !+ THIS% nx*THIS% ny
-    THIS% npart2_temp = THIS% nx2*THIS% ny2*THIS% nz2 !+ nx2*ny2
-    THIS% npart_temp  = THIS% npart1_temp + THIS% npart2_temp
+    npart1_temp = nx*ny*nz !+ nx*ny
+    npart2_temp = nx2*ny2*nz2 !+ nx2*ny2
+    npart_temp  = npart1_temp + npart2_temp
 
     PRINT *, " * Number of points for lattice 1= nx1*ny1*nz1=", &
-             THIS% npart1_temp
+             npart1_temp
     PRINT *, " * Number of points for lattice 2= nx2*ny2*nz2=", &
-             THIS% npart2_temp
+             npart2_temp
     PRINT *
 
     !
@@ -494,7 +497,7 @@ SUBMODULE (particles_id) particles_lattices
     ! Note that after determining npart, the array pos is reshaped into
     ! pos( 3, npart )
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, THIS% npart_temp ), STAT= ios, &
+      ALLOCATE( THIS% pos( 3, npart_temp ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE" &
@@ -508,7 +511,7 @@ SUBMODULE (particles_id) particles_lattices
     ENDIF
 
     IF(.NOT.ALLOCATED( pos_tmp ))THEN
-      ALLOCATE( pos_tmp( 3, THIS% nx, THIS% ny, THIS% nz ), STAT= ios, &
+      ALLOCATE( pos_tmp( 3, nx, ny, nz ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos_tmp in SUBROUTINE" &
@@ -547,18 +550,18 @@ SUBMODULE (particles_id) particles_lattices
     !-- Place the first half of the particle (above or below the xy plane)
     !
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( THIS, bns_obj, dx1, dy1, dz1, sgn, &
+    !$OMP             SHARED( nx, ny, nz, bns_obj, dx1, dy1, dz1, sgn, &
     !$OMP                     pos_tmp, thres_baryon_density1, xmin1, ymin1 ) &
     !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp )
-    particle_pos_z1: DO k= 1, THIS% nz/2, 1
+    particle_pos_z1: DO k= 1, nz/2, 1
 
       ztemp= sgn*( dz1/2 + ( k - 1 )*dz1 )
 
-      particle_pos_y1: DO j= 1, THIS% ny, 1
+      particle_pos_y1: DO j= 1, ny, 1
 
         ytemp= ymin1 + dy1/2 + ( j - 1 )*dy1
 
-        particle_pos_x1: DO i= 1, THIS% nx, 1
+        particle_pos_x1: DO i= 1, nx, 1
 
           xtemp= xmin1 + dx1/2 + ( i - 1 )*dx1
 
@@ -583,8 +586,8 @@ SUBMODULE (particles_id) particles_lattices
           ENDIF
 
           ! Print progress on screen, every 10%
-          !perc= 50*( THIS% nx*THIS% ny*k + THIS% nx*j + i )/ &
-          !        ( THIS% nx*THIS% ny*THIS% nz/2 )
+          !perc= 50*( nx*ny*k + nx*j + i )/ &
+          !        ( nx*ny*nz/2 )
           !IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           !  WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
           !         creturn//" ", perc, "%"
@@ -596,11 +599,11 @@ SUBMODULE (particles_id) particles_lattices
     !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
 
-    DO k= 1, THIS% nz, 1
+    DO k= 1, nz, 1
 
-      DO j= 1, THIS% ny, 1
+      DO j= 1, ny, 1
 
-        DO i= 1, THIS% nx, 1
+        DO i= 1, nx, 1
 
           IF( pos_tmp( 1, i, j, k ) < HUGE(0.0D0) )THEN
 
@@ -660,11 +663,11 @@ SUBMODULE (particles_id) particles_lattices
     !
     !ztemp= 0.0D0
     !
-    !particle_pos_y1_xy: DO j= 1, THIS% ny, 1
+    !particle_pos_y1_xy: DO j= 1, ny, 1
     !
     !  ytemp= ymin1 + dy/2 + ( j - 1 )*dy
     !
-    !  particle_pos_x1_xy: DO i= 1, THIS% nx, 1
+    !  particle_pos_x1_xy: DO i= 1, nx, 1
     !
     !    xtemp= xmin1 + dx/2 + ( i - 1 )*dx
     !
@@ -684,8 +687,8 @@ SUBMODULE (particles_id) particles_lattices
     !    ENDIF
     !
     !    ! Print progress on screen, every 10%
-    !    perc= 50*( THIS% nx*THIS% ny*k + THIS% nx*j + i )/ &
-    !            ( THIS% nx*THIS% ny*THIS% nz/2 )
+    !    perc= 50*( nx*ny*k + nx*j + i )/ &
+    !            ( nx*ny*nz/2 )
     !    IF( MOD( perc, 10 ) == 0 )THEN
     !      WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
     !             creturn//" ", perc, "%"
@@ -695,7 +698,7 @@ SUBMODULE (particles_id) particles_lattices
     !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
     IF(.NOT.ALLOCATED( pos_tmp ))THEN
-      ALLOCATE( pos_tmp( 3, THIS% nx2, THIS% ny2, THIS% nz2 ), STAT= ios, &
+      ALLOCATE( pos_tmp( 3, nx2, ny2, nz2 ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos_tmp in SUBROUTINE" &
@@ -722,18 +725,18 @@ SUBMODULE (particles_id) particles_lattices
       sgn= 1
     ENDIF
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( THIS, bns_obj, dx2, dy2, dz2, sgn, &
+    !$OMP             SHARED( nx2, ny2, nz2, bns_obj, dx2, dy2, dz2, sgn, &
     !$OMP                     pos_tmp, thres_baryon_density2, xmin2, ymin2 ) &
     !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp )
-    particle_pos_z2: DO k= 1, THIS% nz2/2, 1
+    particle_pos_z2: DO k= 1, nz2/2, 1
 
       ztemp= sgn*( dz2/2 + ( k - 1 )*dz2 )
 
-      particle_pos_y2: DO j= 1, THIS% ny2, 1
+      particle_pos_y2: DO j= 1, ny2, 1
 
         ytemp= ymin2 + dy2/2 + ( j - 1 )*dy2
 
-        particle_pos_x2: DO i= 1, THIS% nx2, 1
+        particle_pos_x2: DO i= 1, nx2, 1
 
           xtemp= xmin2 + dx2/2 + ( i - 1 )*dx2
 
@@ -754,8 +757,8 @@ SUBMODULE (particles_id) particles_lattices
           ENDIF
 
           ! Print progress on screen, every 10%
-          !perc= 50*( THIS% nx2*THIS% ny2*( k - 1 ) + THIS% nx2*( j - 1 ) &
-          !      + i )/( THIS% nx2*THIS% ny2*THIS% nz2/2 )
+          !perc= 50*( nx2*ny2*( k - 1 ) + nx2*( j - 1 ) &
+          !      + i )/( nx2*ny2*nz2/2 )
           !IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
           !  WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
           !         creturn//" ", perc, "%"
@@ -766,11 +769,11 @@ SUBMODULE (particles_id) particles_lattices
     !$OMP END PARALLEL DO
     !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-    DO k= 1, THIS% nz2, 1
+    DO k= 1, nz2, 1
 
-      DO j= 1, THIS% ny2, 1
+      DO j= 1, ny2, 1
 
-        DO i= 1, THIS% nx2, 1
+        DO i= 1, nx2, 1
 
           IF( pos_tmp( 1, i, j, k ) < HUGE(0.0D0) )THEN
 
@@ -902,14 +905,14 @@ SUBMODULE (particles_id) particles_lattices
     !-- Printouts
     !
     PRINT *, " * Particles placed. Number of particles=", &
-             THIS% npart, "=", DBLE(THIS% npart)/DBLE(THIS% npart_temp), &
+             THIS% npart, "=", DBLE(THIS% npart)/DBLE(npart_temp), &
              " of the points in lattices."
     PRINT *
     PRINT *, " * Number of particles on NS 1=", THIS% npart1, "=", &
-             DBLE(THIS% npart1)/DBLE(THIS% npart1_temp), &
+             DBLE(THIS% npart1)/DBLE(npart1_temp), &
              " of the points in the first lattice."
     PRINT *, " * Number of particles on NS 2=", THIS% npart2, "=", &
-             DBLE(THIS% npart2)/DBLE(THIS% npart2_temp), &
+             DBLE(THIS% npart2)/DBLE(npart2_temp), &
              " of the points in the second lattice."
     PRINT *
 
@@ -930,16 +933,16 @@ SUBMODULE (particles_id) particles_lattices
 
     THIS% vol1_a= dx1*dy1*dz1
     THIS% vol1 = (xmax1 - xmin1)*(ymax1 - ymin1)*2*ABS(zlim)
-    !THIS% vol2 = THIS% npart2_temp * THIS% vol_a
+    !THIS% vol2 = npart2_temp * THIS% vol_a
     !THIS% vol  = THIS% vol1 + THIS% vol2
-    vol_a_alt1  = THIS% vol1/THIS% npart1_temp
+    vol_a_alt1  = THIS% vol1/npart1_temp
 
     THIS% vol2_a= dx2*dy2*dz2
-    THIS% vol2 =  dx2*THIS% nx2*dy2*THIS% ny2*dz2*THIS% nz2
+    THIS% vol2 =  dx2*nx2*dy2*ny2*dz2*nz2
     !THIS% vol2 = (xmax2 - xmin2)*(ymax2 - ymin2)*2*ABS(zlim2)
-    !THIS% vol2 = THIS% npart2_temp * THIS% vol_a2
+    !THIS% vol2 = npart2_temp * THIS% vol_a2
     !THIS% vol  = THIS% vol1 + THIS% vol2
-    vol_a_alt2  = THIS% vol2/THIS% npart2_temp
+    vol_a_alt2  = THIS% vol2/npart2_temp
 
     THIS% pvol( 1:THIS% npart1 )              = THIS% vol1_a
     THIS% pvol( THIS% npart1 + 1:THIS% npart )= THIS% vol2_a
@@ -966,11 +969,11 @@ SUBMODULE (particles_id) particles_lattices
     PRINT *, " * Particle volume on NS 2=", THIS% vol2_a, "Msun_geo^3"
     PRINT *
 
-    PRINT *, "** Subroutine place_particles_3dlattices " &
+    PRINT *, "** Subroutine place_particles_lattices " &
              // "executed."
     PRINT *
 
-  END PROCEDURE place_particles_3dlattices
+  END PROCEDURE place_particles_lattices
 
 
 END SUBMODULE particles_lattices
