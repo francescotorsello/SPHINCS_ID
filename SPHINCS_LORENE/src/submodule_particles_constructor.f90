@@ -176,6 +176,11 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% eos1_id= bns_obj% get_eos1_id()
     parts_obj% eos2_id= bns_obj% get_eos2_id()
 
+    parts_obj% gamma_sp1= bns_obj% get_gamma_1()
+    parts_obj% kappa_sp1= bns_obj% get_kappa_1()
+    parts_obj% gamma_sp2= bns_obj% get_gamma_2()
+    parts_obj% kappa_sp2= bns_obj% get_kappa_2()
+
     !
     !-- Read the parameters of the particle distributions
     !

@@ -221,6 +221,11 @@ MODULE particles_id
     DOUBLE PRECISION:: nuratio1
     !> Baryon number ratio on star 2
     DOUBLE PRECISION:: nuratio2
+    !> Polytropic index for single polytropic EOS
+    DOUBLE PRECISION:: gamma_sp1= 0.0D0
+    DOUBLE PRECISION:: kappa_sp1= 0.0D0
+    DOUBLE PRECISION:: gamma_sp2= 0.0D0
+    DOUBLE PRECISION:: kappa_sp2= 0.0D0
 
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
 
@@ -237,8 +242,15 @@ MODULE particles_id
 
     !> .TRUE. if the object is empty, .FALSE. if it's not empty
     LOGICAL:: empty_object
+    !& .TRUE. if the binary files for SPHINCS_BSSN are to be exported,
+    !  .FALSE. otherwise
     LOGICAL, PUBLIC:: export_bin
-    LOGICAL, PUBLIC:: export_form_xy, export_form_x
+    !& .TRUE. if the ID in the formatted files is to be on the xy plane only,
+    !  .FALSE. otherwise
+    LOGICAL, PUBLIC:: export_form_xy
+    !& .TRUE. if the ID in the formatted files is to be on the x axis only,
+    !  .FALSE. otherwise
+    LOGICAL, PUBLIC:: export_form_x
     LOGICAL:: use_thres
     LOGICAL:: redistribute_nu
     LOGICAL:: correct_nu

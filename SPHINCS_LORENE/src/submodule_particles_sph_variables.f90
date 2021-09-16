@@ -44,7 +44,7 @@ SUBMODULE (particles_id) particles_sph_variables
     !************************************************
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
-                                   third, kg2g, Msun
+                                   third, kg2g, Msun, k_lorene2hydrobase
     USE units,               ONLY: set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -874,6 +874,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
     PRINT *, " * Computing neighbours..."
     PRINT *
+    cnt1= 0
     DO
 
       few_ncand= .FALSE.
@@ -909,7 +910,9 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ENDDO
 
-      IF( .NOT.few_ncand )THEN
+      cnt1= cnt1 + 1
+
+      IF( .NOT.few_ncand .OR. cnt1 >= 10 )THEN
         PRINT *, " * Smoothing lengths assigned and tree is built."
         EXIT
       ENDIF
@@ -973,10 +976,39 @@ SUBMODULE (particles_id) particles_sph_variables
     nlrf= THIS% nlrf_int
 
     !-----------------------------------------------------------------------!
-    ! For piecewise polytropes, do not use the LORENE pressure and specific !
+    ! For single and piecewise polytropes, do not use the LORENE pressure   !
+    ! and specific                                                          !
     ! internal energy. Compute them using the exact formulas for piecewise  !
     ! polytropic instead, starting from the kernel interpolated density     !
     !-----------------------------------------------------------------------!
+
+    IF( THIS% eos1_id == 1 .AND. THIS% eos2_id == 1 )THEN
+
+      PRINT *, " * Computing pressure and specific internal energy from", &
+               " the baryon mass density, using the exact formulas for", &
+               " single polytropic EOS..."
+      PRINT *
+
+      ! Formulas from Read et al. (2009)
+
+      Pr(1:THIS% npart1)= THIS% kappa_sp1 &
+                  *( THIS% nlrf_int(1:THIS% npart1)*m0c2_cu )**THIS% gamma_sp1
+
+      Pr(THIS% npart1+1:THIS% npart)= THIS% kappa_sp2 &
+       *( THIS% nlrf_int(THIS% npart1+1:THIS% npart)*m0c2_cu )**THIS% gamma_sp2
+
+      u(1:THIS% npart1)= ( Pr(1:THIS% npart1) &
+        /(THIS% nlrf_int(1:THIS% npart1)*m0c2_cu*( THIS% gamma_sp1 - 1.0D0 ) ) )
+
+      u(THIS% npart1+1:THIS% npart)= ( Pr(THIS% npart1+1:THIS% npart) &
+        /(THIS% nlrf_int(THIS% npart1+1:THIS% npart)*m0c2_cu &
+              *( THIS% gamma_sp2 - 1.0D0 ) ) )
+
+      Pr= Pr/m0c2_cu
+      THIS% pressure_parts_cu= Pr
+      THIS% u_pwp= u
+
+    ENDIF
 
     IF( THIS% eos1_id == 110 .AND. THIS% eos2_id == 110 )THEN
 

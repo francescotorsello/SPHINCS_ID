@@ -66,7 +66,7 @@ filenames(1)=!"mpa1_1.6-2_45km_1e-9.bin"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.FALSE.
+run_sph=.TRUE.
 run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
@@ -89,7 +89,7 @@ placer(1,:)=2                     ! 0: Read particle positions from formatted
 !-----------------------------------------------------!
 export_bin=.TRUE.                ! Export ID to binary files
 export_form=.TRUE.               ! Export ID to formatted files
-export_form_xy=.FALSE.  ! Export only the ID on the xy plane to formatted files
+export_form_xy=.TRUE.  ! Export only the ID on the xy plane to formatted files
 export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
                         ! irrespectively on the value of export_form_xy
 !----------------------------------------------!

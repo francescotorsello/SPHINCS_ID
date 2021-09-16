@@ -150,7 +150,11 @@ PROGRAM sphincs_lorene_bns
   !
   !INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
   INQUIRE( DIRECTORY= TRIM(sph_path), EXIST= exist )
-  IF( .NOT.exist ) dir_out= MAKEDIRQQ( TRIM(sph_path) )
+  IF( .NOT.exist )THEN
+    dir_out= MAKEDIRQQ( TRIM(sph_path) )
+  ELSE
+    dir_out= .TRUE.
+  ENDIF
   IF( .NOT.dir_out )THEN
     PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(sph_path)
     PRINT *, "Stopping..."
@@ -160,7 +164,11 @@ PROGRAM sphincs_lorene_bns
 
   !INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
   INQUIRE( DIRECTORY= TRIM(spacetime_path), EXIST= exist )
-  IF( .NOT.exist ) dir_out= MAKEDIRQQ( TRIM(spacetime_path) )
+  IF( .NOT.exist )THEN
+    dir_out= MAKEDIRQQ( TRIM(spacetime_path) )
+  ELSE
+    dir_out= .TRUE.
+  ENDIF
   IF( .NOT.dir_out )THEN
     PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(sph_path)
     PRINT *, "Stopping..."

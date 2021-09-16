@@ -33,9 +33,9 @@ reflect_particles_x= .TRUE.
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
 stretch=1.2     ! Factor by which the lattices around the stars are stretched
-nx=76           ! Number of particles in the x direction for each lattice
-ny=76           ! Number of particles in the y direction for each lattice
-nz=76           ! EVEN number of particles in the z direction for each lattice
+nx=100           ! Number of particles in the x direction for each lattice
+ny=100           ! Number of particles in the y direction for each lattice
+nz=100           ! EVEN number of particles in the z direction for each lattice
 use_thres=.TRUE.
 thres=1.0D+60      ! (~rho_max)/thres is the minimum mass density considered
                 ! when placing particles. Used only when redistribute_nu is
@@ -126,7 +126,7 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
 ! CHECK THAT THE EoS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
 ! FILE lorene_bns_id_parameters.par MATCH!                                 !
 !--------------------------------------------------------------------------!
-compose_eos=.TRUE. ! If .TRUE., reads in the table of Ye (electron fraction)
+compose_eos=.FALSE. ! If .TRUE., reads in the table of Ye (electron fraction)
                    ! as a function of nb (baryon number density) from the .beta
                    ! file computed with the CompOSE software, and linearly
                    ! interpolates Ye on the particles.
