@@ -112,8 +112,7 @@ Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order_r2/*.C'),
 Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_vorton/*.C')
 ]
 
-lorene_sources_bin_ns = [#'../../../Lorene/Export/BinNS/read_bin_ns.C',
-                         '../../../Lorene/Export/C++/Source/bin_ns.C',
+lorene_sources_bin_ns = ['../../../Lorene/Export/C++/Source/bin_ns.C',
                          '../../../Lorene/Export/C++/Source/bin_ns_aux.C',
                          '../../../Lorene/Export/C++/Source/write_lines.C']
 
@@ -229,8 +228,6 @@ sources = ['src/module_utility.f90',
            '../SPHINCS_fix_metric/module_Artificial_Pressure_Method.f90',
            '../SPHINCS_fix_metric/module_piecewise_polytrope.f90']
 
-#tov_executable = 'setup_TOV.x'
-#executable = 'sphincs_bssn.x'
 lorene_id_executable = 'sphincs_lorene_bns.x'
 lorene_id_convtest_executable = 'convergence_test.x'
 write_par_eos = 'write_par_eos.x'
