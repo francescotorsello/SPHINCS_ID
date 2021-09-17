@@ -300,6 +300,7 @@ MODULE particles_id
     !& `.TRUE.` if the particles on star 2 should be the reflection of the
     !  particles on star 1 with respect to the \(yz\) plane, only if the baryon
     !  masses of the stars differe less than \(0.2\%\); `.FALSE.` otherwise
+    !  |lorene|
     LOGICAL:: reflect_particles_x
 
     !
@@ -340,13 +341,15 @@ MODULE particles_id
     !! Places particles on spherical surfaces on one star
 
     PROCEDURE:: perform_apm
+    !! Performs the Artificial Pressure Method (APM) on one star's particles
 
     GENERIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
                                    reshape_sph_field_2d_ptr
-    PROCEDURE:: reshape_sph_field_1d_ptr => reshape_sph_field_1d
-    PROCEDURE:: reshape_sph_field_2d_ptr => reshape_sph_field_2d
     !# GENERIC PROCEDURE, overloded to reallocate 1d and 2d arrays
-
+    PROCEDURE:: reshape_sph_field_1d_ptr => reshape_sph_field_1d
+    !! Reallocates a 1d array
+    PROCEDURE:: reshape_sph_field_2d_ptr => reshape_sph_field_2d
+    !! Reallocates a 2d array
 
     PROCEDURE:: allocate_lorene_id_parts_memory
     !! Allocates memory for the [[particles]] member arrays
@@ -362,8 +365,8 @@ MODULE particles_id
     !  densities; that is, assigns \(Y_e\) at the particle positions
 
     PROCEDURE, PUBLIC:: analyze_hydro
-    !# Scans the hydro fields taken from \(\texttt{LORENE}\) to look for
-    !  negative or zero values
+    !# Scans the hydro fields taken from \(\texttt{LORENE}\) to look
+    !  for negative or zero values
 
     PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
     !# Computes the SPH variables at the particle positions, and optionally
@@ -373,11 +376,11 @@ MODULE particles_id
     !  [[particles:print_formatted_lorene_id_particles]]
 
     PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
-    !! Reads the binary ID file printed by
+    !# Reads the binary ID file printed by
     !  [[particles:compute_and_export_SPH_variables]]
 
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
-    !! Prints the ID to a formatted file
+    !! Prints the SPH ID to a formatted file
 
     PROCEDURE, PUBLIC:: is_empty
     !# Returns `.TRUE` if the [[particles]] object is empty, `.FALSE` otherwise
@@ -432,8 +435,10 @@ MODULE particles_id
   !-- distinguishable arguments)
   !
   INTERFACE particles
+  !! Interface of TYPE [[particles]]
 
     MODULE PROCEDURE construct_particles
+    !! Constructs a [[particles]] object
 
   END INTERFACE particles
 
@@ -444,9 +449,27 @@ MODULE particles_id
   INTERFACE
 
     MODULE FUNCTION construct_particles( bns_obj, dist ) RESULT ( parts_obj )
+    !! Constructs a [[particles]] object
+
         CLASS(bns), INTENT( IN OUT ):: bns_obj
+        !# [[bns]] object representing the BNS for which we want to place
+        !  particles
         INTEGER,    INTENT( IN )    :: dist
+        !# Identifier of the desired particle distribution:
+        !
+        !  - 0: Read particle positions (and optionally the baryon number per
+        !     particle \(\nu\)) from a formatted file
+        !
+        !  - 1: Place particles on a single lattice that surrounds both stars
+        !
+        !  - 2: Place particles on two lattices, each one surrounding a star
+        !
+        !  - 3: Place particles on spherical surfaces inside the stars
+        !
+        !  @warning Method 1 is almost deprecated, since method 2 is effectively
+        !           an improvement of method 1
         TYPE(particles)             :: parts_obj
+        !! Constructed [[particles]] object
 
     END FUNCTION construct_particles
 
@@ -475,7 +498,9 @@ MODULE particles_id
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
                                   nx, ny, nz, &
                                   thres, bns_obj )
+    !! Places particles on a single lattice that surrounds both stars
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
       INTEGER,          INTENT( IN )    :: nx, ny, nz
@@ -490,7 +515,9 @@ MODULE particles_id
                                   xmin2, xmax2, ymin2, ymax2, zmin2, zmax2, &
                                   nx, ny, nz, &
                                   thres, bns_obj )
+    !! Places particles on two lattices, each one surrounding one star
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
       INTEGER,          INTENT( IN )    :: nx, ny, nz
@@ -509,7 +536,9 @@ MODULE particles_id
                                   upper_factor, lower_factor, max_steps, &
                                   filename_mass_profile, filename_shells_radii,&
                                   filename_shells_pos )
+    !! Places particles on spherical surfaces on one star
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
       INTEGER,          INTENT( IN )    :: npart_approx, max_steps
@@ -530,7 +559,9 @@ MODULE particles_id
 
     MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
                                             index_array )
+    !! Reallocates a 1d array
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN ):: new_size1
       INTEGER,                        INTENT( IN ):: new_size2
@@ -542,7 +573,9 @@ MODULE particles_id
 
     MODULE SUBROUTINE reshape_sph_field_2d( THIS, field, new_size1, new_size2, &
                                             index_array )
+    !! Reallocates a 2d array
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN ):: new_size1
       INTEGER,                        INTENT( IN ):: new_size2
@@ -553,14 +586,18 @@ MODULE particles_id
 
 
     MODULE SUBROUTINE allocate_lorene_id_parts_memory( THIS )
+    !! Allocates allocatable arrays member of a [[particles]] object
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE allocate_lorene_id_parts_memory
 
 
     MODULE SUBROUTINE deallocate_lorene_id_parts_memory( THIS )
+    !! Deallocates allocatable arrays member of a [[particles]] object
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE deallocate_lorene_id_parts_memory
@@ -575,14 +612,23 @@ MODULE particles_id
   INTERFACE
 
     MODULE SUBROUTINE analyze_hydro( THIS, namefile )
+    !# Scans the hydro fields taken from \(\texttt{LORENE}\) to look
+    !  for negative or zero values
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT ):: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE analyze_hydro
 
     MODULE SUBROUTINE compute_and_export_SPH_variables( THIS, namefile )
+    !# Computes the SPH variables at the particle positions, and optionally
+    !  prints them to a binary file to be read by \(\texttt{SPHINCS_BSSN}\)
+    !  and \(\texttt{splash}\), and to a formatted file to be read by
+    !  \(\texttt{gnuplot}\), by calling
+    !  [[particles:print_formatted_lorene_id_particles]]
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT ):: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
@@ -601,7 +647,9 @@ MODULE particles_id
                                    nx_gh, ny_gh, nz_gh, &
                                    namefile_pos_id, namefile_pos, &
                                    namefile_results )
+    !! Performs the Artificial Pressure Method (APM) on one star's particles
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),                 INTENT( INOUT ):: THIS
       CLASS(bns),                       INTENT( INOUT ):: binary
       DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
@@ -629,7 +677,10 @@ MODULE particles_id
 
     MODULE SUBROUTINE read_sphincs_dump_print_formatted( THIS, namefile_bin, &
                                                                namefile )
+    !# Reads the binary ID file printed by
+    !  [[particles:compute_and_export_SPH_variables]]
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT )           :: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
@@ -637,21 +688,28 @@ MODULE particles_id
     END SUBROUTINE read_sphincs_dump_print_formatted
 
     MODULE SUBROUTINE print_formatted_lorene_id_particles( THIS, namefile )
+    !! Prints the SPH ID to a formatted file
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT )           :: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE print_formatted_lorene_id_particles
 
     MODULE SUBROUTINE read_compose_composition( THIS, namefile )
+    !! Reads the \(Y_e(n_b)\) table in the CompOSE file with extension .beta
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT )           :: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE read_compose_composition
 
     MODULE SUBROUTINE compute_Ye( THIS )!, nlrf, Ye )
+    !# Interpates linearly the electron fraction \(Y_e\) at the particle
+    !  densities; that is, assigns \(Y_e\) at the particle positions
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT )           :: THIS
       !DOUBLE PRECISION, DIMENSION( : ), INTENT( IN ):: nlrf
       !DOUBLE PRECISION, DIMENSION( : ), INTENT( OUT ):: Ye
@@ -659,7 +717,9 @@ MODULE particles_id
     END SUBROUTINE compute_Ye
 
     MODULE SUBROUTINE destruct_particles( THIS )
+    !> Finalizer (Destructor) of [[particles]] object
 
+      !> [[particles]] object which this PROCEDURE is a member of
       TYPE(particles), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE destruct_particles
@@ -669,7 +729,10 @@ MODULE particles_id
     !-----------------!
 
     MODULE FUNCTION is_empty( THIS ) RESULT( answer )
+    !# Returns `.TRUE` if the [[particles]] object is empty, `.FALSE` otherwise
+    !  @warning experimental, not actively used in the code yet
 
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN ):: THIS
       LOGICAL:: answer
 
@@ -683,8 +746,9 @@ MODULE particles_id
    !END SUBROUTINE write_lorene_bns_id_dump
 
     MODULE FUNCTION get_npart( THIS ) RESULT( n_part )
+    !! Returns [[particles:npart]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       INTEGER:: n_part
@@ -692,8 +756,9 @@ MODULE particles_id
     END FUNCTION get_npart
 
     MODULE FUNCTION get_npart1( THIS ) RESULT( n_part )
+    !! Returns [[particles:npart1]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       INTEGER:: n_part
@@ -701,8 +766,9 @@ MODULE particles_id
     END FUNCTION get_npart1
 
     MODULE FUNCTION get_npart2( THIS ) RESULT( n_part )
+    !! Returns [[particles:npart2]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       INTEGER:: n_part
@@ -710,8 +776,9 @@ MODULE particles_id
     END FUNCTION get_npart2
 
     MODULE FUNCTION get_nuratio( THIS ) RESULT( nuratio )
+    !! Returns [[particles:nuratio]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION:: nuratio
@@ -719,8 +786,9 @@ MODULE particles_id
     END FUNCTION get_nuratio
 
     MODULE FUNCTION get_nuratio1( THIS ) RESULT( nuratio1 )
+    !! Returns [[particles:nuratio1]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION:: nuratio1
@@ -728,8 +796,9 @@ MODULE particles_id
     END FUNCTION get_nuratio1
 
     MODULE FUNCTION get_nuratio2( THIS ) RESULT( nuratio2 )
+    !! Returns [[particles:nuratio2]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION:: nuratio2
@@ -737,8 +806,9 @@ MODULE particles_id
     END FUNCTION get_nuratio2
 
     MODULE FUNCTION get_pos( THIS ) RESULT( pos_u )
+    !! Returns [[particles:pos]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_u
@@ -746,8 +816,9 @@ MODULE particles_id
     END FUNCTION get_pos
 
     MODULE FUNCTION get_vel( THIS ) RESULT( vel )
+    !! Returns [[particles:v]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
@@ -755,8 +826,9 @@ MODULE particles_id
     END FUNCTION get_vel
 
     MODULE FUNCTION get_nlrf( THIS ) RESULT( nlrf )
+    !! Returns [[particles:nlrf]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nlrf
@@ -764,8 +836,9 @@ MODULE particles_id
     END FUNCTION get_nlrf
 
     MODULE FUNCTION get_nu( THIS ) RESULT( nu )
+    !! Returns [[particles:nu]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nu
@@ -773,8 +846,9 @@ MODULE particles_id
     END FUNCTION get_nu
 
     MODULE FUNCTION get_u( THIS ) RESULT( u )
+    !! Returns [[particles:specific_energy_parts]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u
@@ -782,8 +856,9 @@ MODULE particles_id
     END FUNCTION get_u
 
     MODULE FUNCTION get_pressure( THIS ) RESULT( pressure )
+    !! Returns [[particles:pressure_parts]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
@@ -791,8 +866,9 @@ MODULE particles_id
     END FUNCTION get_pressure
 
     MODULE FUNCTION get_pressure_cu( THIS ) RESULT( pressure_cu )
+    !! Returns [[particles:pressure_parts_cu]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure_cu
@@ -800,8 +876,9 @@ MODULE particles_id
     END FUNCTION get_pressure_cu
 
     MODULE FUNCTION get_theta( THIS ) RESULT( theta )
+    !! Returns [[particles:theta]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: theta
@@ -809,8 +886,9 @@ MODULE particles_id
     END FUNCTION get_theta
 
     MODULE FUNCTION get_h( THIS ) RESULT( h )
+    !! Returns [[particles:h]]
 
-      ! Arguments
+      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: h
@@ -828,12 +906,12 @@ MODULE particles_id
   SUBROUTINE check_particle_positions( npart, pos, debug )
 
     !*************************************************
-    !                                                *
-    ! Check that the particles do not have the same  *
-    ! positions                                      *
-    !                                                *
-    ! FT 1.9.2021                                    *
-    !                                                *
+    !
+    !# Check that the particles are not at the same
+    !  positions
+    !
+    !  FT 1.9.2021
+    !
     !*************************************************
 
     USE NR,             ONLY: indexx
