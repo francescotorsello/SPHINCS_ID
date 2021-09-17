@@ -176,6 +176,11 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% eos1_id= bns_obj% get_eos1_id()
     parts_obj% eos2_id= bns_obj% get_eos2_id()
 
+    parts_obj% gamma_sp1= bns_obj% get_gamma_1()
+    parts_obj% kappa_sp1= bns_obj% get_kappa_1()
+    parts_obj% gamma_sp2= bns_obj% get_gamma_2()
+    parts_obj% kappa_sp2= bns_obj% get_kappa_2()
+
     !
     !-- Read the parameters of the particle distributions
     !
@@ -716,9 +721,9 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *, " * Placing particles on one lattice around the stars."
       PRINT *
 
-      parts_obj% nx= nx
-      parts_obj% ny= ny
-      parts_obj% nz= nz
+      !parts_obj% nx= nx
+      !parts_obj% ny= ny
+      !parts_obj% nz= nz
 
       !
       !-- Determine boundaries of the single lattice around the stars (Msun_geo)
@@ -736,9 +741,10 @@ SUBMODULE (particles_id) particles_constructor
 
       ! Place particles, and time the process
       CALL parts_obj% placer_timer% start_timer()
-      CALL parts_obj% place_particles_3dlattice( xmin, xmax, ymin, &
-                                                 ymax, zmin, zmax, thres, &
-                                                 bns_obj )
+      CALL parts_obj% place_particles_lattice( xmin, xmax, ymin, &
+                                               ymax, zmin, zmax, &
+                                               nx, ny, nz, &
+                                               thres, bns_obj )
       CALL parts_obj% placer_timer% stop_timer()
 
     CASE(2)
@@ -747,9 +753,9 @@ SUBMODULE (particles_id) particles_constructor
                // "one around each star."
       PRINT *
 
-      parts_obj% nx= nx
-      parts_obj% ny= ny
-      parts_obj% nz= nz
+      !parts_obj% nx= nx
+      !parts_obj% ny= ny
+      !parts_obj% nz= nz
 
       !
       !-- Determine boundaries of the two lattices around the stars (Msun_geo)
@@ -778,11 +784,12 @@ SUBMODULE (particles_id) particles_constructor
 
       ! Place particles, and time the process
       CALL parts_obj% placer_timer% start_timer()
-      CALL parts_obj% place_particles_3dlattices( xmin1, xmax1, ymin1, &
+      CALL parts_obj% place_particles_lattices( xmin1, xmax1, ymin1, &
                                                   ymax1, zmin1, zmax1, &
                                                   xmin2, xmax2, ymin2, &
-                                                  ymax2, zmin2, zmax2, thres, &
-                                                  bns_obj )
+                                                  ymax2, zmin2, zmax2, &
+                                                  nx, ny, nz, &
+                                                  thres, bns_obj )
       CALL parts_obj% placer_timer% stop_timer()
 
     CASE(3)

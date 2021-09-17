@@ -334,10 +334,10 @@ MODULE bns_id
     !! Destructs the LORENE Bin_NS object
 
     PROCEDURE:: allocate_lorene_id_memory
-    !! Allocates memory for the bns member arrays
+    !! Allocates memory for the [[bns]] member arrays
 
     PROCEDURE:: deallocate_lorene_id_memory
-    !! Deallocates memory for the bns member arrays
+    !! Deallocates memory for the [[bns]] member arrays
 
     PROCEDURE:: import_id_params
     !! Imports the parameters of the BNS from LORENE

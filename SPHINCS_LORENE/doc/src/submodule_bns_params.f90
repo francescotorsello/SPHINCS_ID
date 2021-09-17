@@ -41,7 +41,7 @@ SUBMODULE (bns_id) bns_params
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR
 
     USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         c_light, cm2km
+                         c_light, cm2km, k_lorene2hydrobase_piecewisepolytrope
 
     IMPLICIT NONE
 
@@ -156,21 +156,29 @@ SUBMODULE (bns_id) bns_params
     THIS% pressure_center2       = THIS% pressure_center2*lorene2hydrobase
 
     ! Convert polytropic constants from LORENE units to SPHINCS units
-    IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
+    IF( THIS% eos1_id == 1 )THEN ! If the EOS is polytropic
 
       THIS% kappa_1= THIS% kappa_1*k_lorene2hydrobase( THIS% gamma_1 )
       THIS% kappa_2= THIS% kappa_2*k_lorene2hydrobase( THIS% gamma_2 )
 
     ELSEIF( THIS% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
 
-      THIS% kappa0_1= THIS% kappa0_1*k_lorene2hydrobase( THIS% gamma0_1 )
-      THIS% kappa1_1= THIS% kappa1_2*k_lorene2hydrobase( THIS% gamma1_1 )
-      THIS% kappa2_1= THIS% kappa2_1*k_lorene2hydrobase( THIS% gamma2_1 )
-      THIS% kappa3_1= THIS% kappa3_2*k_lorene2hydrobase( THIS% gamma3_1 )
-      THIS% kappa0_2= THIS% kappa0_1*k_lorene2hydrobase( THIS% gamma0_2 )
-      THIS% kappa1_2= THIS% kappa1_2*k_lorene2hydrobase( THIS% gamma1_2 )
-      THIS% kappa2_2= THIS% kappa2_1*k_lorene2hydrobase( THIS% gamma2_2 )
-      THIS% kappa3_2= THIS% kappa3_2*k_lorene2hydrobase( THIS% gamma3_2 )
+      THIS% kappa0_1= THIS% kappa0_1 &
+                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma0_1 )
+      THIS% kappa1_1= THIS% kappa1_2 &
+                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma1_1 )
+      THIS% kappa2_1= THIS% kappa2_1 &
+                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma2_1 )
+      THIS% kappa3_1= THIS% kappa3_2 &
+                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3_1 )
+      THIS% kappa0_2= THIS% kappa0_1 &
+                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma0_2 )
+      THIS% kappa1_2= THIS% kappa1_2 &
+                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma1_2 )
+      THIS% kappa2_2= THIS% kappa2_1 &
+                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma2_2 )
+      THIS% kappa3_2= THIS% kappa3_2 &
+                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3_2 )
 
     ELSE
 

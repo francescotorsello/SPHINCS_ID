@@ -133,8 +133,8 @@ SUBMODULE (bns_id) bns_constructor
 
       ELSE
 
-        PRINT *, "** ERROR in bns SUBROUTINE construct_binary: File ", &
-                 resu_file, "cannot be found!"
+        PRINT *, "** ERROR in SUBROUTINE construct_binary: file ", &
+                 resu_file, " cannot be found!"
         PRINT *
         STOP
 

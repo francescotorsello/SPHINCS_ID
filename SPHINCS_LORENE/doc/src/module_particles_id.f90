@@ -38,15 +38,13 @@ MODULE particles_id
 
     PRIVATE
 
+
     INTEGER:: npart
     !! Total particle number
     INTEGER:: npart1
     !! Particle number for star 1
     INTEGER:: npart2
     !! Particle number for star 2
-    INTEGER:: npart_temp, npart1_temp, npart2_temp
-    !! Various particle numbers used internally by the TYPE
-    INTEGER:: nx, ny, nz, nx1, ny1, nz1, nx2, ny2, nz2
     INTEGER:: distribution_id
     !! Identification number for the particle distribution
     INTEGER:: eos1_id
@@ -62,11 +60,10 @@ MODULE particles_id
     !  to sort the elements of [[particles:baryon_density_parts]] in increasing
     !  order
 
-    !INTEGER, DIMENSION(:), ALLOCATABLE:: filt_pos
-
     !
     !-- Hydro variables on the particles
     !
+
     !> 2-D array storing the particle positions
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     !> 1-D array storing the position of the particles on the x axis for S 1
@@ -225,7 +222,20 @@ MODULE particles_id
     DOUBLE PRECISION:: nuratio1
     !> Baryon number ratio on star 2
     DOUBLE PRECISION:: nuratio2
+    !> Polytropic index for single polytropic EOS for star 1
+    DOUBLE PRECISION:: gamma_sp1= 0.0D0
+    !> Polytropic constant for single polytropic EOS for star 1 @todo add units
+    DOUBLE PRECISION:: kappa_sp1= 0.0D0
+    !> Polytropic index for single polytropic EOS for star 2
+    DOUBLE PRECISION:: gamma_sp2= 0.0D0
+    !> Polytropic constant for single polytropic EOS for star 2 @todo add units
+    DOUBLE PRECISION:: kappa_sp2= 0.0D0
 
+    !
+    !-- Strings
+    !
+
+    !> String containing the name of the particles parameter file
     CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
 
     !> String storing the local path to the directory containing the CompOSE EOS
@@ -239,28 +249,77 @@ MODULE particles_id
     !> String containing the LORENE name of the EOS for star 2
     CHARACTER( LEN= : ), ALLOCATABLE:: eos2
 
-    !> .TRUE. if the object is empty, .FALSE. if it's not empty
+    !
+    !-- Steering variables
+    !
+
+    !> `.TRUE.` if the object is empty, `.FALSE.` if it's not empty
     LOGICAL:: empty_object
+    !& `.TRUE.` if the binary files for SPHINCS_BSSN are to be exported,
+    !  `.FALSE.` otherwise
     LOGICAL, PUBLIC:: export_bin
-    LOGICAL, PUBLIC:: export_form_xy, export_form_x
+    !& `.TRUE.` if the ID in the formatted files is to be on the xy plane only,
+    !  `.FALSE.` otherwise
+    LOGICAL, PUBLIC:: export_form_xy
+    !& `.TRUE.` if the ID in the formatted files is to be on the x axis only,
+    !  `.FALSE.` otherwise
+    LOGICAL, PUBLIC:: export_form_x
+    !& `.TRUE.` if the threshold on the baryon mass density should e applied
+    !  when placing particles on lattices, `.FALSE.` otherwise
     LOGICAL:: use_thres
+    !& `.TRUE.` if the baryon number per particle should be reassigned, trying
+    !  to obtain a baryon number ratio no larger than nu_ratio,
+    !  when placing particles on lattices; `.FALSE.` otherwise
     LOGICAL:: redistribute_nu
+    !& `.TRUE.` if the baryon number per particle should be corrected to account
+    !  for the total baryon masses of the stars, `.FALSE.` otherwise
     LOGICAL:: correct_nu
+    !& `.TRUE.` if the electron fraction \(Y_e\) should be read from the CompOSE
+    !  table with extension.beta, `.FALSE.` otherwise
+    !  @todo Chamge name of this variable to assign_Ye_compose. Check that
+    !        the used EOS is indeed the one used to read \(Y_e\)
     LOGICAL:: compose_eos
-    LOGICAL:: randomize_phi, randomize_theta, randomize_r
-    LOGICAL:: apm_iterate1, apm_iterate2
+    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !  in the \(\phi\) direction, `.FALSE.` otherwise
+    LOGICAL:: randomize_phi
+    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !  in the \(\theta\) direction, `.FALSE.` otherwise
+    LOGICAL:: randomize_theta
+    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !  in the \(r\) direction, `.FALSE.` otherwise
+    LOGICAL:: randomize_r
+    !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
+    !  particles on star 1, `.FALSE.` otherwise
+    LOGICAL:: apm_iterate1
+    !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
+    !  particles on star 2, `.FALSE.` otherwise
+    LOGICAL:: apm_iterate2
+    !& `.TRUE.` if the baryon number per particle \(\nu\) has to be read from the
+    !  formatted file containing the particle positions, `.FALSE.` otherwise
     LOGICAL:: read_nu
+    !& `.TRUE.` if the particles on star 2 should be the reflection of the
+    !  particles on star 1 with respect to the \(yz\) plane, only if the baryon
+    !  masses of the stars differe less than \(0.2\%\); `.FALSE.` otherwise
     LOGICAL:: reflect_particles_x
 
     !
     !-- Timers
     !
 
+    !> Timer that times how long it takes to place particles on the stars
     TYPE(timer), PUBLIC:: placer_timer
+    !& Timer that times how long it takes to check if there are multiple
+    !  particles at the same positions
     TYPE(timer), PUBLIC:: same_particle_timer
+    !> Timer that times how long it takes to perform the APM on star 1
     TYPE(timer), PUBLIC:: apm1_timer
+    !> Timer that times how long it takes to perform the APM on star 2
     TYPE(timer), PUBLIC:: apm2_timer
+    !& Timer that times how long it takes to import the \(\texttt{LORENE}\) ID
+    !  at the particle positions
     TYPE(timer), PUBLIC:: importer_timer
+    !& Timer that times how long it takes to compute the SPH variables at the
+    !  particle pitions
     TYPE(timer), PUBLIC:: sph_computer_timer
 
 
@@ -271,37 +330,58 @@ MODULE particles_id
     !--  SUBROUTINES  --!
     !-------------------!
 
-    PROCEDURE:: place_particles_3dlattice
+    PROCEDURE:: place_particles_lattice
+    !! Places particles on a single lattice that surrounds both stars
 
-    PROCEDURE:: place_particles_3dlattices
+    PROCEDURE:: place_particles_lattices
+    !! Places particles on two lattices, each one surrounding one star
 
     PROCEDURE:: place_particles_spherical_shells
+    !! Places particles on spherical surfaces on one star
 
     PROCEDURE:: perform_apm
 
-    GENERIC, PUBLIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
-                                           reshape_sph_field_2d_ptr
+    GENERIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
+                                   reshape_sph_field_2d_ptr
     PROCEDURE:: reshape_sph_field_1d_ptr => reshape_sph_field_1d
     PROCEDURE:: reshape_sph_field_2d_ptr => reshape_sph_field_2d
+    !# GENERIC PROCEDURE, overloded to reallocate 1d and 2d arrays
 
 
     PROCEDURE:: allocate_lorene_id_parts_memory
+    !! Allocates memory for the [[particles]] member arrays
 
     PROCEDURE:: deallocate_lorene_id_parts_memory
+    !! Deallocates memory for the [[particles]] member arrays
 
     PROCEDURE:: read_compose_composition
+    !! Reads the \(Y_e(n_b)\) table in the CompOSE file with extension .beta
 
     PROCEDURE:: compute_Ye
+    !# Interpates linearly the electron fraction \(Y_e\) at the particle
+    !  densities; that is, assigns \(Y_e\) at the particle positions
 
     PROCEDURE, PUBLIC:: analyze_hydro
+    !# Scans the hydro fields taken from \(\texttt{LORENE}\) to look for
+    !  negative or zero values
 
     PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
+    !# Computes the SPH variables at the particle positions, and optionally
+    !  prints them to a binary file to be read by \(\texttt{SPHINCS_BSSN}\)
+    !  and \(\texttt{splash}\), and to a formatted file to be read by
+    !  \(\texttt{gnuplot}\), by calling
+    !  [[particles:print_formatted_lorene_id_particles]]
 
     PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
+    !! Reads the binary ID file printed by
+    !  [[particles:compute_and_export_SPH_variables]]
 
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
+    !! Prints the ID to a formatted file
 
     PROCEDURE, PUBLIC:: is_empty
+    !# Returns `.TRUE` if the [[particles]] object is empty, `.FALSE` otherwise
+    !  @warning experimental, not actively used in the code yet
 
     !PROCEDURE, PUBLIC:: write_lorene_bns_id_dump
 
@@ -310,22 +390,37 @@ MODULE particles_id
     !-----------------!
 
     PROCEDURE, PUBLIC:: get_npart
+    !! Returns [[particles:npart]]
     PROCEDURE, PUBLIC:: get_npart1
+    !! Returns [[particles:npart1]]
     PROCEDURE, PUBLIC:: get_npart2
+    !! Returns [[particles:npart2]]
     PROCEDURE, PUBLIC:: get_nuratio
+    !! Returns [[particles:nuratio]]
     PROCEDURE, PUBLIC:: get_nuratio1
+    !! Returns [[particles:nuratio1]]
     PROCEDURE, PUBLIC:: get_nuratio2
+    !! Returns [[particles:nuratio2]]
     PROCEDURE, PUBLIC:: get_pos
+    !! Returns [[particles:pos]]
     PROCEDURE, PUBLIC:: get_vel
+    !! Returns [[particles:v]]
     PROCEDURE, PUBLIC:: get_nlrf
+    !! Returns [[particles:nlrf]]
     PROCEDURE, PUBLIC:: get_nu
+    !! Returns [[particles:nu]]
     PROCEDURE, PUBLIC:: get_u
+    !! Returns [[particles:specific_energy_parts]]
     PROCEDURE, PUBLIC:: get_pressure
+    !! Returns [[particles:pressure_parts]]
     PROCEDURE, PUBLIC:: get_pressure_cu
+    !! Returns [[particles:pressure_parts_cu]]
     PROCEDURE, PUBLIC:: get_theta
+    !! Returns [[particles:theta]]
     PROCEDURE, PUBLIC:: get_h
+    !! Returns [[particles:h]]
 
-    ! Destructor
+    !> Finalizer (Destructor) of [[particles]] object
     FINAL:: destruct_particles
 
   END TYPE particles
@@ -376,31 +471,35 @@ MODULE particles_id
     !-------------------!
 
 
-    MODULE SUBROUTINE place_particles_3dlattice( THIS, &
+    MODULE SUBROUTINE place_particles_lattice( THIS, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
+                                  nx, ny, nz, &
                                   thres, bns_obj )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      INTEGER,          INTENT( IN )    :: nx, ny, nz
       DOUBLE PRECISION, INTENT( IN )    :: xmin, xmax, ymin, &
                                            ymax, zmin, zmax, thres
 
-    END SUBROUTINE place_particles_3dlattice
+    END SUBROUTINE place_particles_lattice
 
 
-    MODULE SUBROUTINE place_particles_3dlattices( THIS, &
+    MODULE SUBROUTINE place_particles_lattices( THIS, &
                                   xmin1, xmax1, ymin1, ymax1, zmin1, zmax1, &
                                   xmin2, xmax2, ymin2, ymax2, zmin2, zmax2, &
+                                  nx, ny, nz, &
                                   thres, bns_obj )
 
       CLASS(particles), INTENT( IN OUT ):: THIS
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      INTEGER,          INTENT( IN )    :: nx, ny, nz
       DOUBLE PRECISION, INTENT( IN )    :: xmin1, xmax1, ymin1, &
                                            ymax1, zmin1, zmax1
       DOUBLE PRECISION, INTENT( IN )    :: xmin2, xmax2, ymin2, &
                                            ymax2, zmin2, zmax2, thres
 
-    END SUBROUTINE place_particles_3dlattices
+    END SUBROUTINE place_particles_lattices
 
 
     MODULE SUBROUTINE place_particles_spherical_shells( THIS, &

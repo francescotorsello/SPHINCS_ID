@@ -293,7 +293,8 @@ SUBMODULE (particles_id) particles_access
     !************************************************
     !
     !# Returns the variable empty_object
-    ! (experimental)
+    !  @warning experimental, not actively used in
+    !          the code yet
     !
     !  FT
     !
