@@ -1131,7 +1131,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Star 1
       CALL parts_obj% apm1_timer% start_timer()
       CALL parts_obj% perform_apm( &
-                  bns_obj, &
+                  bns_obj, import_density, &
                   parts_obj% pos(:,1:parts_obj% npart1), &
                   parts_obj% pvol(1:parts_obj% npart1), &
                   parts_obj% h(1:parts_obj% npart1), &
@@ -1217,7 +1217,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Star 2
       CALL parts_obj% apm2_timer% start_timer()
       CALL parts_obj% perform_apm( &
-                bns_obj, &
+                bns_obj, import_density, &
                 parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
                 parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
                 parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
@@ -1655,6 +1655,24 @@ SUBMODULE (particles_id) particles_constructor
  !     CLOSE( UNIT= 2 )
  !
  !   ENDIF
+
+
+    CONTAINS
+
+
+    FUNCTION import_density( x, y, z ) RESULT( density )
+
+      IMPLICIT NONE
+
+      DOUBLE PRECISION, INTENT(IN):: x
+      DOUBLE PRECISION, INTENT(IN):: y
+      DOUBLE PRECISION, INTENT(IN):: z
+      DOUBLE PRECISION:: density
+
+      density= bns_obj% import_mass_density( x, y, z )
+
+    END FUNCTION
+
 
   END PROCEDURE construct_particles
 

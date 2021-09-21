@@ -386,7 +386,7 @@ SUBMODULE (particles_id) particles_apm
               SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
                     + z_ell**2.0D0 ) &
               .AND. &
-              binary% import_mass_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
+              get_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
           )THEN
 
             !itr= itr + 1
@@ -668,7 +668,7 @@ SUBMODULE (particles_id) particles_apm
     !----------------------------------------------------!
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                 nu(1:npart_real), binary, com_star, &
+                                 nu(1:npart_real), binary, get_density, com_star, &
                                  verbose= .TRUE. )
 
     !-----------------------------------------------------------------------!
@@ -710,7 +710,7 @@ SUBMODULE (particles_id) particles_apm
     ENDDO
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                 nu(1:npart_real), binary, com_star, &
+                                 nu(1:npart_real), binary, get_density, com_star, &
                                  verbose= .TRUE. )
 
     IF(.NOT.ALLOCATED( dNstar ))THEN
@@ -794,7 +794,7 @@ SUBMODULE (particles_id) particles_apm
       IF( debug ) PRINT *, "enforcing center of mass..."
 
       CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                   nu(1:npart_real), binary, com_star )
+                                   nu(1:npart_real), binary, get_density, com_star )
 
       IF( debug ) PRINT *, "mirroring particles..."
 
@@ -1216,7 +1216,7 @@ SUBMODULE (particles_id) particles_apm
 
         ENDIF
 
-        IF( binary% import_mass_density( &
+        IF( get_density( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
             .AND. &
             nstar_p(a) > 0.0D0 &
@@ -1291,7 +1291,7 @@ SUBMODULE (particles_id) particles_apm
     !----------------------------!
 
     CALL correct_center_of_mass( npart_real, pos, &
-                                 nu(1:npart_real), binary, com_star, &
+                                 nu(1:npart_real), binary, get_density, com_star, &
                                  verbose= .TRUE. )
 
     !-----------------------------------------------------------------------!
@@ -1628,7 +1628,7 @@ SUBMODULE (particles_id) particles_apm
     !----------------------------!
 
     CALL correct_center_of_mass( npart_real, pos, &
-                                 nu(1:npart_real), binary, com_star, &
+                                 nu(1:npart_real), binary, get_density, com_star, &
                                  verbose= .TRUE. )
 
     !-----------------------------------------------------------------------!
@@ -1957,8 +1957,8 @@ SUBMODULE (particles_id) particles_apm
   END SUBROUTINE compute_nstar_p
 
 
-  SUBROUTINE correct_center_of_mass( npart_real, pos, nu, binary, com_star, &
-                                     verbose )
+  SUBROUTINE correct_center_of_mass( npart_real, pos, nu, binary, get_density, &
+                                     com_star, verbose )
 
     !***********************************************************
     !
@@ -1978,6 +1978,14 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, INTENT(IN):: com_star
     LOGICAL, INTENT(IN), OPTIONAL:: verbose
     TYPE(bns), INTENT(IN):: binary
+    INTERFACE
+      FUNCTION get_density( x, y, z ) RESULT( density )
+        DOUBLE PRECISION, INTENT(IN):: x
+        DOUBLE PRECISION, INTENT(IN):: y
+        DOUBLE PRECISION, INTENT(IN):: z
+        DOUBLE PRECISION:: density
+      END FUNCTION
+    END INTERFACE
 
     DOUBLE PRECISION, DIMENSION(3,npart_real), INTENT(INOUT):: pos
     DOUBLE PRECISION, DIMENSION(npart_real),   INTENT(INOUT):: nu
@@ -2016,7 +2024,7 @@ SUBMODULE (particles_id) particles_apm
       pos_corr_tmp(2)= pos(2,a) - com_y
       pos_corr_tmp(3)= pos(3,a) - com_z
 
-      IF( binary% import_mass_density( &
+      IF( get_density( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
           .AND. &
           binary% is_hydro_negative( &

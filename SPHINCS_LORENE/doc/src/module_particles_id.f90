@@ -663,9 +663,9 @@ MODULE particles_id
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
       DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
-      !> Center of the star (point of highest density), computed by LORENE
+      !& Center of the star (point of highest density), computed by LORENE
       !  @todo why are you passing both the star parameters and the [[bns]]
-      !   object? Try to get rid of the object, if possible
+      !        object? Try to get rid of the object, if possible
       DOUBLE PRECISION,                 INTENT( IN )   :: center
       !> Center of mass of the star, computed by LORENE
       DOUBLE PRECISION,                 INTENT( IN )   :: com_star

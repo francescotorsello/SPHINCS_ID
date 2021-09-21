@@ -636,6 +636,7 @@ MODULE particles_id
 
     MODULE SUBROUTINE perform_apm( THIS, &
                                    binary, &
+                                   get_density, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
                                    center, &
@@ -653,6 +654,14 @@ MODULE particles_id
       CLASS(particles),                 INTENT( INOUT ):: THIS
       !> [[bns]] object containing the appropriate BNS system
       CLASS(bns),                       INTENT( INOUT ):: binary
+      INTERFACE
+        FUNCTION get_density( x, y, z ) RESULT( density )
+          DOUBLE PRECISION, INTENT(IN):: x
+          DOUBLE PRECISION, INTENT(IN):: y
+          DOUBLE PRECISION, INTENT(IN):: z
+          DOUBLE PRECISION:: density
+        END FUNCTION
+      END INTERFACE
       !> Initial particle positions
       DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
       !> Initial particle volume
@@ -663,9 +672,9 @@ MODULE particles_id
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
       DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
-      !> Center of the star (point of highest density), computed by LORENE
+      !& Center of the star (point of highest density), computed by LORENE
       !  @todo why are you passing both the star parameters and the [[bns]]
-      !   object? Try to get rid of the object, if possible
+      !        object? Try to get rid of the object, if possible
       DOUBLE PRECISION,                 INTENT( IN )   :: center
       !> Center of mass of the star, computed by LORENE
       DOUBLE PRECISION,                 INTENT( IN )   :: com_star
