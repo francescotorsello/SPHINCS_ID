@@ -651,27 +651,72 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),                 INTENT( INOUT ):: THIS
+      !> [[bns]] object containing the appropriate BNS system
       CLASS(bns),                       INTENT( INOUT ):: binary
+      !> Initial particle positions
       DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
+      !> Initial particle volume
       DOUBLE PRECISION, DIMENSION(:),   INTENT( INOUT ):: pvol
+      !& Array to store the smoothing lengths computed at the end of the
+      !  APM iteration
       DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: h_output
+      !& Array to store the baryon number per particle computed at the end of
+      !  the APM iteration
       DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
+      !> Center of the star (point of highest density), computed by LORENE
+      !  @todo why are you passing both the star parameters and the [[bns]]
+      !   object? Try to get rid of the object, if possible
       DOUBLE PRECISION,                 INTENT( IN )   :: center
+      !> Center of mass of the star, computed by LORENE
       DOUBLE PRECISION,                 INTENT( IN )   :: com_star
+      !> Mass of the star
       DOUBLE PRECISION,                 INTENT( IN )   :: mass
+      !> Maximum number of APM iterations, irrespective of the EXIT condition
       INTEGER,                          INTENT( IN )   :: apm_max_it
+      !& Sets the EXIT condition: If the average over all the
+      !  particles of the relative error in the density estimate
+      !  grows max_inc times, exit the iteration.
       INTEGER,                          INTENT( IN )   :: max_inc
+      !& If .TRUE. performs a second iteration after the APM one, without moving
+      !  the particles, changing their mass in order to better match
+      !  the star density. The mass ratio grows very fast in all the tried
+      !  experiments, hence the suggested value is .FALSE.
       LOGICAL,                          INTENT( IN )   :: mass_it
+      !& If .TRUE., the baryon number per particle nu is corrected
+      !  to include the total baryonic masses of the
+      !  stars.
       LOGICAL,                          INTENT( IN )   :: correct_nu
+      !& Maximum mass ratio (equivalently baryon number ratio)
+      !  to be used in the one-time-only final correction
+      !  of the particle masses to match the star density even
+      !  better (without moving the particles)
       DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_thres
+      !& Sets the EXIT condition: If the baryon number ratio
+      !  is within 2.5% of nuratio_des, exit the iteration
+      !  Set nuratio_des to 0 to deactivate and exit the APM
+      !  iteration using max_inc
       DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_des
-      INTEGER,                          INTENT( IN )   :: nx_gh, ny_gh, nz_gh
+      !> Number of lattice points in the x direction for ghosts
+      INTEGER,                          INTENT( IN )   :: nx_gh
+      !> Number of lattice points in the y direction for ghosts
+      INTEGER,                          INTENT( IN )   :: ny_gh
+      !> Number of lattice points in the z direction for ghosts
+      INTEGER,                          INTENT( IN )   :: nz_gh
+      !> Name for the formatted file where the initial particle positions
+      !  and the ghost positions will be printed
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
                                                             namefile_pos_id
+      !> Name for the formatted file where the particle positions
+      !  and the ghost positions will be printed every 15 iterations
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
                                                             namefile_pos
+      !> Name for the formatted file where various quantities related
+      !  to the particle distribution, the baryon number particle and the
+      !  kernel estimate of the density will be printed at the end of
+      !  the APM iteration
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
                                                             namefile_results
+
 
     END SUBROUTINE perform_apm
 
@@ -679,10 +724,13 @@ MODULE particles_id
                                                                namefile )
     !# Reads the binary ID file printed by
     !  [[particles:compute_and_export_SPH_variables]]
+    !   and prints the data stored in it to a formatted file
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT )           :: THIS
+      !> Name of the binary file to be read
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
+      !> Name of the formatted file to be printed
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE read_sphincs_dump_print_formatted
@@ -692,6 +740,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT )           :: THIS
+      !> Name of the formatted output file
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE print_formatted_lorene_id_particles
@@ -701,6 +750,8 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT )           :: THIS
+      !& To read the file great_eos.beta in directory compose_path/GREAT_EoS,
+      !  namefile="GREAT_EoS/great_eos"
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE read_compose_composition
@@ -734,6 +785,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN ):: THIS
+      !> `.TRUE` if the [[particles]] object is empty, `.FALSE` otherwise
       LOGICAL:: answer
 
     END FUNCTION is_empty
@@ -750,7 +802,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:npart]]
       INTEGER:: n_part
 
     END FUNCTION get_npart
@@ -760,7 +812,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:npart1]]
       INTEGER:: n_part
 
     END FUNCTION get_npart1
@@ -770,7 +822,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:npart2]]
       INTEGER:: n_part
 
     END FUNCTION get_npart2
@@ -780,7 +832,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:nuratio]]
       DOUBLE PRECISION:: nuratio
 
     END FUNCTION get_nuratio
@@ -790,7 +842,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:nuratio1]]
       DOUBLE PRECISION:: nuratio1
 
     END FUNCTION get_nuratio1
@@ -800,7 +852,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:nuratio2]]
       DOUBLE PRECISION:: nuratio2
 
     END FUNCTION get_nuratio2
@@ -810,7 +862,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:pos]]
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_u
 
     END FUNCTION get_pos
@@ -820,7 +872,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:v]]
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
 
     END FUNCTION get_vel
@@ -830,7 +882,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:nlrf]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nlrf
 
     END FUNCTION get_nlrf
@@ -840,7 +892,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:nu]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nu
 
     END FUNCTION get_nu
@@ -850,7 +902,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:specific_energy_parts]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u
 
     END FUNCTION get_u
@@ -860,7 +912,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:pressure_parts]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
 
     END FUNCTION get_pressure
@@ -870,7 +922,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:pressure_parts_cu]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure_cu
 
     END FUNCTION get_pressure_cu
@@ -880,7 +932,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      ! Result
+      !> [[particles:theta]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: theta
 
     END FUNCTION get_theta

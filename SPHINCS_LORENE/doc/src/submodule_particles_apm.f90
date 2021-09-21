@@ -171,7 +171,7 @@ SUBMODULE (particles_id) particles_apm
 
     h_guess= 0.0D0
     DO a= 1, npart_real, 1
-      h_guess(a)= 9.0D0*(pvol(a)**third)
+      h_guess(a)= 3.0D0*(pvol(a)**third)
       IF( ISNAN( h_guess(a) ) )THEN
         PRINT *, " ** ERROR! h_guess(", a, &
                  ") is a NaN in SUBROUTINE perform_apm!"
