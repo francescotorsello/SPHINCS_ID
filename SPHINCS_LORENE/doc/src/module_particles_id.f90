@@ -636,6 +636,7 @@ MODULE particles_id
 
     MODULE SUBROUTINE perform_apm( THIS, &
                                    binary, &
+                                   get_density, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
                                    center, &
@@ -653,6 +654,14 @@ MODULE particles_id
       CLASS(particles),                 INTENT( INOUT ):: THIS
       !> [[bns]] object containing the appropriate BNS system
       CLASS(bns),                       INTENT( INOUT ):: binary
+      INTERFACE
+        FUNCTION get_density( x, y, z ) RESULT( density )
+          DOUBLE PRECISION, INTENT(IN):: x
+          DOUBLE PRECISION, INTENT(IN):: y
+          DOUBLE PRECISION, INTENT(IN):: z
+          DOUBLE PRECISION:: density
+        END FUNCTION
+      END INTERFACE
       !> Initial particle positions
       DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
       !> Initial particle volume

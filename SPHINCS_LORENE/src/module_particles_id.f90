@@ -637,17 +637,21 @@ MODULE particles_id
     MODULE SUBROUTINE perform_apm( THIS, &
                                    binary, &
                                    get_density, &
+                                   get_nstar_p, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
                                    center, &
                                    com_star, &
                                    mass, &
+                                   radx_comp, radx_opp, &
+                                   rady, radz, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
                                    nuratio_des, &
                                    nx_gh, ny_gh, nz_gh, &
                                    namefile_pos_id, namefile_pos, &
-                                   namefile_results )
+                                   namefile_results, &
+                                   validate_position )
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -660,6 +664,22 @@ MODULE particles_id
           DOUBLE PRECISION, INTENT(IN):: y
           DOUBLE PRECISION, INTENT(IN):: z
           DOUBLE PRECISION:: density
+        END FUNCTION
+      END INTERFACE
+      INTERFACE
+        SUBROUTINE get_nstar_p( npart_real, x, y, z, nstar_p )
+          DOUBLE PRECISION, INTENT(IN):: x(npart_real)
+          DOUBLE PRECISION, INTENT(IN):: y(npart_real)
+          DOUBLE PRECISION, INTENT(IN):: z(npart_real)
+          DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
+        END SUBROUTINE
+      END INTERFACE
+      INTERFACE
+        FUNCTION validate_position( x, y, z ) RESULT( answer )
+          DOUBLE PRECISION, INTENT(IN):: x
+          DOUBLE PRECISION, INTENT(IN):: y
+          DOUBLE PRECISION, INTENT(IN):: z
+          INTEGER:: answer
         END FUNCTION
       END INTERFACE
       !> Initial particle positions
@@ -680,6 +700,14 @@ MODULE particles_id
       DOUBLE PRECISION,                 INTENT( IN )   :: com_star
       !> Mass of the star
       DOUBLE PRECISION,                 INTENT( IN )   :: mass
+      !> Radius of the star in the x direction, towards the companion
+      DOUBLE PRECISION,                 INTENT( IN )   :: radx_comp
+      !> Radius of the star in the x direction, opposite to companion
+      DOUBLE PRECISION,                 INTENT( IN )   :: radx_opp
+      !> Radius of the star in the y direction
+      DOUBLE PRECISION,                 INTENT( IN )   :: rady
+      !> Radius of the star in the z direction
+      DOUBLE PRECISION,                 INTENT( IN )   :: radz
       !> Maximum number of APM iterations, irrespective of the EXIT condition
       INTEGER,                          INTENT( IN )   :: apm_max_it
       !& Sets the EXIT condition: If the average over all the

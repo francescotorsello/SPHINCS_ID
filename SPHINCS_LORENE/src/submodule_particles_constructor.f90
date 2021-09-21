@@ -1131,15 +1131,20 @@ SUBMODULE (particles_id) particles_constructor
       ! Star 1
       CALL parts_obj% apm1_timer% start_timer()
       CALL parts_obj% perform_apm( &
-                  bns_obj, import_density, &
+                  bns_obj, import_density, get_nstar_p, &
                   parts_obj% pos(:,1:parts_obj% npart1), &
                   parts_obj% pvol(1:parts_obj% npart1), &
                   parts_obj% h(1:parts_obj% npart1), &
                   parts_obj% nu(1:parts_obj% npart1), &
                   center1, com1, parts_obj% mass1, &
+                  bns_obj% get_radius1_x_comp(), &
+                  bns_obj% get_radius1_x_opp(), &
+                  bns_obj% get_radius1_y(), &
+                  bns_obj% get_radius1_z(), &
                   apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
                   nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
-                  filename_apm_pos_id, filename_apm_pos, filename_apm_results )
+                  filename_apm_pos_id, filename_apm_pos, filename_apm_results, &
+                  check_negative_hydro )
       CALL parts_obj% apm1_timer% stop_timer()
 
       PRINT *, "** Particles placed on star 1 according to the APM."
@@ -1217,15 +1222,20 @@ SUBMODULE (particles_id) particles_constructor
       ! Star 2
       CALL parts_obj% apm2_timer% start_timer()
       CALL parts_obj% perform_apm( &
-                bns_obj, import_density, &
+                bns_obj, import_density, get_nstar_p, &
                 parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
                 parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
                 parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
                 parts_obj% nu(parts_obj% npart1+1:parts_obj% npart), &
                 center2, com2, parts_obj% mass2, &
+                bns_obj% get_radius2_x_comp(), &
+                bns_obj% get_radius2_x_opp(), &
+                bns_obj% get_radius2_y(), &
+                bns_obj% get_radius2_z(), &
                 apm_max_it, max_inc, mass_it, parts_obj% correct_nu, &
                 nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
-                filename_apm_pos_id, filename_apm_pos, filename_apm_results )
+                filename_apm_pos_id, filename_apm_pos, filename_apm_results, &
+                check_negative_hydro )
       CALL parts_obj% apm2_timer% stop_timer()
 
       PRINT *, "** Particles placed on star 2 according to the APM."
@@ -1657,7 +1667,9 @@ SUBMODULE (particles_id) particles_constructor
  !   ENDIF
 
 
+
     CONTAINS
+
 
 
     FUNCTION import_density( x, y, z ) RESULT( density )
@@ -1671,7 +1683,195 @@ SUBMODULE (particles_id) particles_constructor
 
       density= bns_obj% import_mass_density( x, y, z )
 
-    END FUNCTION
+    END FUNCTION import_density
+
+
+    FUNCTION check_negative_hydro( x, y, z ) RESULT( answer )
+
+      IMPLICIT NONE
+
+      DOUBLE PRECISION, INTENT(IN):: x
+      DOUBLE PRECISION, INTENT(IN):: y
+      DOUBLE PRECISION, INTENT(IN):: z
+      INTEGER:: answer
+
+      answer= bns_obj% is_hydro_negative( x, y, z )
+
+    END FUNCTION check_negative_hydro
+
+
+    SUBROUTINE get_nstar_p( npart_real, x, y, z, nstar_p )
+
+      IMPLICIT NONE
+
+      INTEGER:: npart_real
+      DOUBLE PRECISION, INTENT(IN):: x(npart_real)
+      DOUBLE PRECISION, INTENT(IN):: y(npart_real)
+      DOUBLE PRECISION, INTENT(IN):: z(npart_real)
+      DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
+
+      DOUBLE PRECISION, DIMENSION(npart_real):: lapse, &
+                                                shift_x, shift_y, shift_z, &
+                                                g_xx, g_xy, g_xz, &
+                                                g_yy, g_yz, g_zz, &
+                                                baryon_density, &
+                                                energy_density, &
+                                                specific_energy, &
+                                                pressure, &
+                                                v_euler_x, v_euler_y, v_euler_z
+
+      CALL bns_obj% import_id( npart_real, x, y, z, &
+                               lapse, shift_x, shift_y, shift_z, &
+                               g_xx, g_xy, g_xz, &
+                               g_yy, g_yz, g_zz, &
+                               baryon_density, &
+                               energy_density, &
+                               specific_energy, &
+                               pressure, &
+                               v_euler_x, v_euler_y, v_euler_z )
+
+      CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
+                            shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                            g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                            baryon_density, nstar_p )
+
+    END SUBROUTINE get_nstar_p
+
+
+    SUBROUTINE compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
+                                shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                                g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                                baryon_density, nstar_p )
+
+      !**************************************************************
+      !
+      !# Compute nstar_p, the proper baryon mass density, given the
+      !  LORENE ID
+      !
+      !  FT 31.08.2021
+      !
+      !**************************************************************
+
+      USE constants, ONLY: Msun_geo, km2m, amu, g2kg
+      USE matrix,    ONLY: determinant_4x4_matrix
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: npart_real
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: lapse
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_x
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_y
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_z
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_x
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_y
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_z
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xx
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xy
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xz
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yy
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yz
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_zz
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_p
+
+      INTEGER:: a, mus, nus
+      DOUBLE PRECISION:: det, sq_g, Theta_a
+      DOUBLE PRECISION, DIMENSION(0:3,npart_real):: vel
+      DOUBLE PRECISION:: g4(0:3,0:3)
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, lapse, shift_x, shift_y, shift_z, &
+      !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
+      !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+      !$OMP                     baryon_density, vel, nstar_p ) &
+      !$OMP             PRIVATE( a, det, sq_g, Theta_a, g4 )
+      DO a= 1, npart_real, 1
+
+        ! Coordinate velocity of the fluid [c]
+        vel(0,a)= 1.0D0
+        vel(1,a)= lapse(a)*v_euler_x(a)- shift_x(a)
+        vel(2,a)= lapse(a)*v_euler_y(a)- shift_y(a)
+        vel(3,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+
+        !
+        !-- Metric as matrix for easy manipulation
+        !
+        g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
+               + 2*g_xy(a)*shift_x(a)*shift_y(a) &
+               + 2*g_xz(a)*shift_x(a)*shift_z(a) &
+               + g_yy(a)*shift_y(a)*shift_y(a) &
+               + 2*g_yz(a)*shift_y(a)*shift_z(a) &
+               + g_zz(a)*shift_z(a)*shift_z(a)
+        g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+        g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+        g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+
+        g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
+        g4(1,1)= g_xx(a)
+        g4(1,2)= g_xy(a)
+        g4(1,3)= g_xz(a)
+
+        g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
+        g4(2,1)= g_xy(a)
+        g4(2,2)= g_yy(a)
+        g4(2,3)= g_yz(a)
+
+        g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
+        g4(3,1)= g_xz(a)
+        g4(3,2)= g_yz(a)
+        g4(3,3)= g_zz(a)
+
+        ! sqrt(-det(g4))
+        CALL determinant_4x4_matrix(g4,det)
+        IF( ABS(det) < 1D-10 )THEN
+            PRINT *, "The determinant of the spacetime metric is " &
+                     // "effectively 0 at particle ", a
+            STOP
+        ELSEIF( det > 0 )THEN
+            PRINT *, "The determinant of the spacetime metric is " &
+                     // "positive at particle ", a
+            STOP
+        ENDIF
+        sq_g= SQRT(-det)
+
+        !
+        !-- Generalized Lorentz factor
+        !
+        Theta_a= 0.D0
+        DO nus=0,3
+          DO mus=0,3
+            Theta_a= Theta_a &
+                     + g4(mus,nus)*vel(mus,a)*vel(nus,a)
+          ENDDO
+        ENDDO
+        Theta_a= 1.0D0/SQRT(-Theta_a)
+        !Theta(a)= Theta_a
+
+        nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3) &
+                    /(amu*g2kg)
+
+        IF( ISNAN( nstar_p( a ) ) )THEN
+          PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
+                   " Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+        IF( nstar_p( a ) == 0 )THEN
+          PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
+          !PRINT *, " * Particle position: x=", all_pos(1,a), &
+          !         ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+          PRINT *, "   sq_g=", sq_g
+          PRINT *, "   Theta_a=", Theta_a
+          PRINT *, "   baryon_density(", a, ")=", baryon_density(a)
+          PRINT *, " * Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO
+      !$OMP END PARALLEL DO
+
+    END SUBROUTINE compute_nstar_p
 
 
   END PROCEDURE construct_particles
