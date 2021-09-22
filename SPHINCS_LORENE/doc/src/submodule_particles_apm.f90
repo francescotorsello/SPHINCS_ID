@@ -977,9 +977,9 @@ SUBMODULE (particles_id) particles_apm
    !                         g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
    !                         baryon_density, nstar_p )
 
-    CALL get_nstar_p( npart_real, all_pos(1,1:npart_real), &
-                                  all_pos(2,1:npart_real), &
-                                  all_pos(3,1:npart_real), nstar_p )
+      CALL get_nstar_p( npart_real, all_pos(1,1:npart_real), &
+                                    all_pos(2,1:npart_real), &
+                                    all_pos(3,1:npart_real), nstar_p )
 
       art_pr_max= 0.0D0
       err_N_max=  0.0D0

@@ -1926,8 +1926,13 @@ MODULE bns_id
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
       !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
+      !> \(g_{xx}=g_{yy}=g_{zz}\) at \(x,y,z\)
       REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      !> Baryon mass density at \(x,y,z\)
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
+      !& Relative Lorentz factor between the 4-velocity of the fluid
+      !  wrt the Eulerian observer and the 4-velocity of the Eulerian observer
+      !  at \(x,y,z\)
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma_euler
 
     END SUBROUTINE get_lorene_id_mass_b

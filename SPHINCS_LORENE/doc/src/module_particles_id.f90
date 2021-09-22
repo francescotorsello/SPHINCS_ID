@@ -337,10 +337,10 @@ MODULE particles_id
     PROCEDURE:: place_particles_lattices
     !! Places particles on two lattices, each one surrounding one star
 
-    PROCEDURE:: place_particles_spherical_shells
+    PROCEDURE:: place_particles_spherical_surfaces
     !! Places particles on spherical surfaces on one star
 
-    PROCEDURE:: perform_apm
+    PROCEDURE, NOPASS:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
     GENERIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
@@ -502,10 +502,30 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
+      !& [[bns]] object needed to access the BNS data
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
-      INTEGER,          INTENT( IN )    :: nx, ny, nz
-      DOUBLE PRECISION, INTENT( IN )    :: xmin, xmax, ymin, &
-                                           ymax, zmin, zmax, thres
+      !> Number of lattice points in the \(x\) direction
+      INTEGER,          INTENT( IN )    :: nx
+      !> Number of lattice points in the \(y\) direction
+      INTEGER,          INTENT( IN )    :: ny
+      !> Number of lattice points in the \(z\) direction
+      INTEGER,          INTENT( IN )    :: nz
+      !> Left \(x\) boundary of the lattice
+      DOUBLE PRECISION, INTENT( IN )    :: xmin
+      !> Right \(x\) boundary of the lattice
+      DOUBLE PRECISION, INTENT( IN )    :: xmax
+      !> Left \(y\) boundary of the lattice
+      DOUBLE PRECISION, INTENT( IN )    :: ymin
+      !> Right \(y\) boundary of the lattice
+      DOUBLE PRECISION, INTENT( IN )    :: ymax
+      !> Left \(z\) boundary of the lattice
+      DOUBLE PRECISION, INTENT( IN )    :: zmin
+      !> Right \(z\) boundary of the lattice
+      DOUBLE PRECISION, INTENT( IN )    :: zmax
+      !& (~rho_max)/thres is the minimum mass density considered
+      ! when placing particles. Used only when redistribute_nu is
+      ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
+      DOUBLE PRECISION, INTENT( IN )    :: thres
 
     END SUBROUTINE place_particles_lattice
 
@@ -519,17 +539,50 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
+      !& [[bns]] object needed to access the BNS data
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
-      INTEGER,          INTENT( IN )    :: nx, ny, nz
-      DOUBLE PRECISION, INTENT( IN )    :: xmin1, xmax1, ymin1, &
-                                           ymax1, zmin1, zmax1
-      DOUBLE PRECISION, INTENT( IN )    :: xmin2, xmax2, ymin2, &
-                                           ymax2, zmin2, zmax2, thres
+      !& Number of lattice points on the less massive star
+      !  in the \(x\) direction
+      INTEGER,          INTENT( IN )    :: nx
+      !& Number of lattice points on the less massive star
+      !  in the \(y\) direction
+      INTEGER,          INTENT( IN )    :: ny
+      !& Number of lattice points on the less massive star
+      !  in the \(z\) direction
+      INTEGER,          INTENT( IN )    :: nz
+      !> Left \(x\) boundary of the lattice on star 1
+      DOUBLE PRECISION, INTENT( IN )    :: xmin1
+      !> Right \(x\) boundary of the lattice on star 1
+      DOUBLE PRECISION, INTENT( IN )    :: xmax1
+      !> Left \(y\) boundary of the lattice on star 1
+      DOUBLE PRECISION, INTENT( IN )    :: ymin1
+      !> Right \(y\) boundary of the lattice on star 1
+      DOUBLE PRECISION, INTENT( IN )    :: ymax1
+      !> Left \(z\) boundary of the lattice on star 1
+      DOUBLE PRECISION, INTENT( IN )    :: zmin1
+      !> Right \(z\) boundary of the lattice on star 1
+      DOUBLE PRECISION, INTENT( IN )    :: zmax1
+      !> Left \(x\) boundary of the lattice on star 2
+      DOUBLE PRECISION, INTENT( IN )    :: xmin2
+      !> Right \(x\) boundary of the lattice on star 2
+      DOUBLE PRECISION, INTENT( IN )    :: xmax2
+      !> Left \(y\) boundary of the lattice on star 2
+      DOUBLE PRECISION, INTENT( IN )    :: ymin2
+      !> Right \(y\) boundary of the lattice on star 2
+      DOUBLE PRECISION, INTENT( IN )    :: ymax2
+      !> Left \(z\) boundary of the lattice on star 2
+      DOUBLE PRECISION, INTENT( IN )    :: zmin2
+      !> Right \(z\) boundary of the lattice on star 2
+      DOUBLE PRECISION, INTENT( IN )    :: zmax2
+      !& (~rho_max)/thres is the minimum mass density considered
+      ! when placing particles on each star. Used only when redistribute_nu is
+      ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
+      DOUBLE PRECISION, INTENT( IN )    :: thres
 
     END SUBROUTINE place_particles_lattices
 
 
-    MODULE SUBROUTINE place_particles_spherical_shells( THIS, &
+    MODULE SUBROUTINE place_particles_spherical_surfaces( THIS, &
                                   mass_star, radius, center, npart_approx, &
                                   npart_out, pos, pvol, pmass, bns_obj, &
                                   last_r, upper_bound, lower_bound, &
@@ -540,21 +593,56 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
+      !& [[bns]] object needed to access the BNS data
+      !  @TODO Remove the [[bns]] argument as done in SUBROUTINE perform_apm
       CLASS(bns),       INTENT( IN OUT ):: bns_obj
-      INTEGER,          INTENT( IN )    :: npart_approx, max_steps
+      !> Approximate particle number on the star
+      INTEGER,          INTENT( IN )    :: npart_approx
+      !> Final number of particles on the star
       INTEGER,          INTENT( OUT )   :: npart_out
-      DOUBLE PRECISION, INTENT( IN )    :: mass_star, radius, center, &
-                                           last_r
-      DOUBLE PRECISION, INTENT( INOUT ) :: upper_bound, lower_bound
-      DOUBLE PRECISION, INTENT( IN )    :: upper_factor, lower_factor
+      !& If, after max_steps, the iteration did not converge,
+      !  multiply upper_bound by upper_factor, and lower_bound
+      !  by lower_factor. max_steps >= 10. 100 is a nice value
+      INTEGER,          INTENT( IN )    :: max_steps
+      !> Baryonic mass of the star
+      DOUBLE PRECISION, INTENT( IN )    :: mass_star
+      !> Radius of the star in the x direction towards the companion
+      DOUBLE PRECISION, INTENT( IN )    :: radius
+      !& \(x|) coordinate of the center of the star, i.e.,
+      !  of the point of maximum densty
+      DOUBLE PRECISION, INTENT( IN )    :: center
+      !> Radius of the last spherical surface
+      DOUBLE PRECISION, INTENT( IN )    :: last_r
+      !& If, after max_steps, the iteration did not converge,
+      !  multiply upper_bound by upper_factor, and lower_bound
+      !  by lower_factor. upper_factor >= 1, usually an increase of 1% works
+      DOUBLE PRECISION, INTENT( IN )    :: upper_factor
+      !& If, after max_steps, the iteration did not converge,
+      !  multiply upper_bound by upper_factor, and lower_bound
+      !  by lower_factor. lower_factor <= 1, usually a decrease of 1% works
+      DOUBLE PRECISION, INTENT( IN )    :: lower_factor
+      !& Desired upper bound for the differences between particle
+      !  masses on neighbouring spherical surfaces
+      DOUBLE PRECISION, INTENT( INOUT ) :: upper_bound
+      !& Desired lower bound for the differences between particle
+      !  masses on neighbouring spherical surfaces
+      DOUBLE PRECISION, INTENT( INOUT ) :: lower_bound
+      !> Array string the final positions
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
+      !> Array soring the inal particle volumes
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
+      !> Array storing the final particle masses
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pmass
+      !> Name of the file to store the radial mass profile
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_mass_profile
+      !& Name of the file to store the surface radii
+      !  @TODO change name of variable to filename_surfaces_radii
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_radii
+      !& Name of the file to store the final particle positions
+      !  @TODO change name of variable to filename_surfaces_pos
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_pos
 
-    END SUBROUTINE place_particles_spherical_shells
+    END SUBROUTINE place_particles_spherical_surfaces
 
 
     MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
@@ -563,9 +651,13 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
+      !> New particle number on star 1
       INTEGER,                        INTENT( IN ):: new_size1
+      !> New particle number on star 2
       INTEGER,                        INTENT( IN ):: new_size2
+      !> Array to select elements to keep in the reshaped array
       INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
+      !> 1D array to reshape
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: field
 
     END SUBROUTINE reshape_sph_field_1d
@@ -577,9 +669,13 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
+      !> New particle number on star 1
       INTEGER,                        INTENT( IN ):: new_size1
+      !> New particle number on star 2
       INTEGER,                        INTENT( IN ):: new_size2
+      !> Array to select elements to keep in the reshaped array
       INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
+      !> 2D array to reshape
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: field
 
     END SUBROUTINE reshape_sph_field_2d
@@ -617,6 +713,8 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT ):: THIS
+      !& Name of the formatted file where the particle positions at which
+      !  some of the hydro fields are negative or zero are printed to
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE analyze_hydro
@@ -630,11 +728,12 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT ):: THIS
+      !> Name of the formatted file where the SPH ID is printed to
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_export_SPH_variables
 
-    MODULE SUBROUTINE perform_apm( THIS, &
+    MODULE SUBROUTINE perform_apm( &!THIS, &
                                    !binary, &
                                    get_density, &
                                    get_nstar_p, &
@@ -655,7 +754,7 @@ MODULE particles_id
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles),                 INTENT( INOUT ):: THIS
+      !CLASS(particles),                 INTENT( INOUT ):: THIS
       !CLASS(bns),                       INTENT( INOUT ):: binary
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )

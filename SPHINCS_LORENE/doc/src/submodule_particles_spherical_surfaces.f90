@@ -30,7 +30,7 @@ SUBMODULE (particles_id) spherical_surfaces
   CONTAINS
 
 
-  MODULE PROCEDURE place_particles_spherical_shells
+  MODULE PROCEDURE place_particles_spherical_surfaces
 
     !**********************************************
     !
@@ -1475,12 +1475,12 @@ SUBMODULE (particles_id) spherical_surfaces
 
     CLOSE( UNIT= 2 )
 
-    PRINT *, " * SUBROUTINE place_particles_spherical_shells executed."
+    PRINT *, " * SUBROUTINE place_particles_spherical_surfaces executed."
     PRINT *
 
     IF( debug ) PRINT *, "20"
 
-  END PROCEDURE place_particles_spherical_shells
+  END PROCEDURE place_particles_spherical_surfaces
 
 
   FUNCTION number_surfaces( m_p, center, radius, bns_obj ) &

@@ -79,7 +79,7 @@ SUBMODULE (particles_id) particles_constructor
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
     ! APM parameters
-    INTEGER:: apm_max_it, max_inc, n_particles_first_shell
+    INTEGER:: apm_max_it, max_inc!, n_particles_first_shell
     INTEGER, PARAMETER:: unit_pos= 2289
     ! Variable storing the number of column where nu is written
     INTEGER:: column_nu
@@ -805,17 +805,17 @@ SUBMODULE (particles_id) particles_constructor
           parts_obj% redistribute_nu= .FALSE.
       ENDIF
 
+      ! TODO: Change back the inequality from < to > if the IF statement!
+      !       Changed for debugging purposes
       first_star_more_massive: IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 
         filename_mass_profile= "spherical_surfaces_mass_profile2.dat"
         filename_shells_radii= "spherical_surfaces_radii2.dat"
         filename_shells_pos  = "spherical_surfaces_pos2.dat"
 
-        n_particles_first_shell= 4
-
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
-        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
+        CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass2, &
                                                     radius2, center2, &
                                                     npart_approx, &
                                                     parts_obj% npart2, &
@@ -885,9 +885,7 @@ SUBMODULE (particles_id) particles_constructor
           filename_shells_radii= "spherical_surfaces_radii1.dat"
           filename_shells_pos  = "spherical_surfaces_pos1.dat"
 
-          n_particles_first_shell= n_particles_first_shell/parts_obj% mass_ratio
-
-          CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
+          CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass1, &
                                                 radius1, center1, &
                                                 npart2_approx, &
                                                 parts_obj% npart1, &
@@ -913,14 +911,12 @@ SUBMODULE (particles_id) particles_constructor
         filename_shells_radii= "spherical_surfaces_radii1.dat"
         filename_shells_pos  = "spherical_surfaces_pos1.dat"
 
-        n_particles_first_shell= 4
-
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
 
         !DO
 
-        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
+        CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass1, &
                                               radius1, center1, &
                                               npart_approx, &
                                               parts_obj% npart1, &
@@ -994,11 +990,9 @@ SUBMODULE (particles_id) particles_constructor
           filename_shells_radii= "spherical_surfaces_radii2.dat"
           filename_shells_pos  = "spherical_surfaces_pos2.dat"
 
-          n_particles_first_shell= 4!n_particles_first_shell/parts_obj% mass_ratio
-
           IF( debug ) PRINT *, "32"
 
-          CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
+          CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass2, &
                                                 radius2, center2, &
                                                 npart2_approx, &
                                                 parts_obj% npart2, &
@@ -1086,6 +1080,10 @@ SUBMODULE (particles_id) particles_constructor
       STOP
 
     END SELECT choose_particle_placer
+
+    !----------------------------------------------!
+    !--  At this point,the particles are placed  --!
+    !----------------------------------------------!
 
     ! Reshape the arrays pos and pvol by deleting the unnecessary elements
     parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )

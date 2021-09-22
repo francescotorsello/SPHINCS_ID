@@ -815,7 +815,7 @@ SUBMODULE (particles_id) particles_constructor
 
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
-        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
+        CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass2, &
                                                     radius2, center2, &
                                                     npart_approx, &
                                                     parts_obj% npart2, &
@@ -885,7 +885,7 @@ SUBMODULE (particles_id) particles_constructor
           filename_shells_radii= "spherical_surfaces_radii1.dat"
           filename_shells_pos  = "spherical_surfaces_pos1.dat"
 
-          CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
+          CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass1, &
                                                 radius1, center1, &
                                                 npart2_approx, &
                                                 parts_obj% npart1, &
@@ -916,7 +916,7 @@ SUBMODULE (particles_id) particles_constructor
 
         !DO
 
-        CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
+        CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass1, &
                                               radius1, center1, &
                                               npart_approx, &
                                               parts_obj% npart1, &
@@ -992,7 +992,7 @@ SUBMODULE (particles_id) particles_constructor
 
           IF( debug ) PRINT *, "32"
 
-          CALL parts_obj% place_particles_spherical_shells( parts_obj% mass2, &
+          CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass2, &
                                                 radius2, center2, &
                                                 npart2_approx, &
                                                 parts_obj% npart2, &
@@ -1081,7 +1081,9 @@ SUBMODULE (particles_id) particles_constructor
 
     END SELECT choose_particle_placer
 
-
+    !----------------------------------------------!
+    !--  At this point,the particles are placed  --!
+    !----------------------------------------------!
 
     ! Reshape the arrays pos and pvol by deleting the unnecessary elements
     parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )
