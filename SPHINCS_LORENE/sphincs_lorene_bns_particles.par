@@ -52,10 +52,10 @@ nu_ratio=3.0           ! Desired baryon number ratio. Used only when
 !   per surface, trying to minimize the particle mass ratio     !
 !   by iteration.                                               !
 !---------------------------------------------------------------!
-npart_approx= 5.0D+4 ! The approximate number of particles on the less massive star
+npart_approx= 5.01D+5 ! The approximate number of particles on the less massive star
                    ! The approximate number of particles on the more massive star
                    ! is npart_approx/mass_ratio
-last_r= 0.99D0     ! The radius of the last spherical surface is
+last_r= 0.98D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -94,7 +94,7 @@ apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
                        ! on the second star will be the reflection about the yz
                        ! plane of the particles on the first star, irrespectively
                        ! of the value of apm_iterate2
-apm_max_it=5         ! Maximum number of iterations, irrespective of the
+apm_max_it=1500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 1            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
@@ -103,7 +103,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.8D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.675D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
@@ -126,7 +126,7 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
 ! CHECK THAT THE EoS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
 ! FILE lorene_bns_id_parameters.par MATCH!                                 !
 !--------------------------------------------------------------------------!
-compose_eos=.FALSE. ! If .TRUE., reads in the table of Ye (electron fraction)
+compose_eos=.TRUE. ! If .TRUE., reads in the table of Ye (electron fraction)
                    ! as a function of nb (baryon number density) from the .beta
                    ! file computed with the CompOSE software, and linearly
                    ! interpolates Ye on the particles.

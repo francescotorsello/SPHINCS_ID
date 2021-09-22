@@ -79,7 +79,7 @@ SUBMODULE (particles_id) particles_constructor
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
     ! APM parameters
-    INTEGER:: apm_max_it, max_inc, n_particles_first_shell
+    INTEGER:: apm_max_it, max_inc!, n_particles_first_shell
     INTEGER, PARAMETER:: unit_pos= 2289
     ! Variable storing the number of column where nu is written
     INTEGER:: column_nu
@@ -805,13 +805,13 @@ SUBMODULE (particles_id) particles_constructor
           parts_obj% redistribute_nu= .FALSE.
       ENDIF
 
+      ! TODO: Change back the inequality from < to > if the IF statement!
+      !       Changed for debugging purposes
       first_star_more_massive: IF( parts_obj% mass1 > parts_obj% mass2 )THEN
 
         filename_mass_profile= "spherical_surfaces_mass_profile2.dat"
         filename_shells_radii= "spherical_surfaces_radii2.dat"
         filename_shells_pos  = "spherical_surfaces_pos2.dat"
-
-        n_particles_first_shell= 4
 
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
@@ -885,8 +885,6 @@ SUBMODULE (particles_id) particles_constructor
           filename_shells_radii= "spherical_surfaces_radii1.dat"
           filename_shells_pos  = "spherical_surfaces_pos1.dat"
 
-          n_particles_first_shell= n_particles_first_shell/parts_obj% mass_ratio
-
           CALL parts_obj% place_particles_spherical_shells( parts_obj% mass1, &
                                                 radius1, center1, &
                                                 npart2_approx, &
@@ -912,8 +910,6 @@ SUBMODULE (particles_id) particles_constructor
         filename_mass_profile= "spherical_surfaces_mass_profile1.dat"
         filename_shells_radii= "spherical_surfaces_radii1.dat"
         filename_shells_pos  = "spherical_surfaces_pos1.dat"
-
-        n_particles_first_shell= 4
 
         ! Place particles, and time the process
         CALL parts_obj% placer_timer% start_timer()
@@ -993,8 +989,6 @@ SUBMODULE (particles_id) particles_constructor
           filename_mass_profile= "spherical_surfaces_mass_profile2.dat"
           filename_shells_radii= "spherical_surfaces_radii2.dat"
           filename_shells_pos  = "spherical_surfaces_pos2.dat"
-
-          n_particles_first_shell= 4!n_particles_first_shell/parts_obj% mass_ratio
 
           IF( debug ) PRINT *, "32"
 
@@ -1087,6 +1081,8 @@ SUBMODULE (particles_id) particles_constructor
 
     END SELECT choose_particle_placer
 
+
+
     ! Reshape the arrays pos and pvol by deleting the unnecessary elements
     parts_obj% pos = parts_obj% pos( :, 1:parts_obj% npart )
     parts_obj% pvol= parts_obj% pvol( 1:parts_obj% npart )
@@ -1131,7 +1127,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Star 1
       CALL parts_obj% apm1_timer% start_timer()
       CALL parts_obj% perform_apm( &
-                  bns_obj, import_density, get_nstar_p, &
+                  import_density, get_nstar_p, &
                   parts_obj% pos(:,1:parts_obj% npart1), &
                   parts_obj% pvol(1:parts_obj% npart1), &
                   parts_obj% h(1:parts_obj% npart1), &
@@ -1222,7 +1218,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Star 2
       CALL parts_obj% apm2_timer% start_timer()
       CALL parts_obj% perform_apm( &
-                bns_obj, import_density, get_nstar_p, &
+                import_density, get_nstar_p, &
                 parts_obj% pos(:,parts_obj% npart1+1:parts_obj% npart), &
                 parts_obj% pvol(parts_obj% npart1+1:parts_obj% npart), &
                 parts_obj% h(parts_obj% npart1+1:parts_obj% npart), &
@@ -1704,7 +1700,7 @@ SUBMODULE (particles_id) particles_constructor
 
       IMPLICIT NONE
 
-      INTEGER:: npart_real
+      INTEGER, INTENT(IN):: npart_real
       DOUBLE PRECISION, INTENT(IN):: x(npart_real)
       DOUBLE PRECISION, INTENT(IN):: y(npart_real)
       DOUBLE PRECISION, INTENT(IN):: z(npart_real)

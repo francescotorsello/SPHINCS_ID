@@ -38,7 +38,6 @@ SUBMODULE (bns_id) bns_mass_profile
     !
     !************************************************
 
-    !$ USE OMP_LIB
     USE constants, ONLY: pi
     USE NR,        ONLY: indexx
 
@@ -48,6 +47,8 @@ SUBMODULE (bns_id) bns_mass_profile
     DOUBLE PRECISION:: rad_coord, colat, long, mass_element
     DOUBLE PRECISION:: g_xx, sq_g, baryon_density, gamma_euler
     !DOUBLE PRECISION:: rad
+
+    LOGICAL, PARAMETER:: debug= .TRUE.
 
     !rad= 0.0D0
 
@@ -82,9 +83,10 @@ SUBMODULE (bns_id) bns_mass_profile
     mass_profile( 2, 0 )= 4.0D0/3.0D0*pi*dr**3.0D0*central_density
     mass_profile( 3, 0 )= 4.0D0/3.0D0*pi*dr**3.0D0*central_density
 
-    !$OMP PARALLEL DO SHARED(dr,dphi,dth,center)&
+    !$OMP PARALLEL DO DEFAULT(NONE) &
+    !$OMP             SHARED(dr,dphi,dth,center,radius,mass_profile,THIS) &
     !$OMP             PRIVATE(r,th,phi,rad_coord,long,colat,sq_g,gamma_euler, &
-    !$OMP                     baryon_density,mass_element,mass)
+    !$OMP                     g_xx,baryon_density,mass_element,mass)
     radius_loop: DO r= 1, NINT(radius/dr), 1
 
       mass= 0.0D0
@@ -106,6 +108,25 @@ SUBMODULE (bns_id) bns_mass_profile
                    (rad_coord + dr)*SIN(colat)*SIN(long), &
                    (rad_coord + dr)*COS(colat), &
                    g_xx, baryon_density, gamma_euler )
+
+         ! IF( debug )THEN
+         !
+         !   IF( ISNAN( g_xx ) )THEN
+         !     PRINT *, " ** g_xx is NaN"
+         !     STOP
+         !   ENDIF
+         !   IF( ISNAN( baryon_density ) )THEN
+         !     PRINT *, " ** baryon_density is NaN"
+         !     STOP
+         !   ENDIF
+         !   IF( ISNAN( gamma_euler ) )THEN
+         !     PRINT *, " ** gamma_euler is NaN"
+         !     STOP
+         !   ENDIF
+         !
+         ! ENDIF
+          IF( ISNAN( g_xx ) .OR. ISNAN( baryon_density ) .OR. &
+              ISNAN( gamma_euler ) ) CYCLE
 
   !        CALL bns_obj% import_id( &
   !                 center1 + rad_coord*SIN(lat)*COS(long), &
@@ -133,7 +154,7 @@ SUBMODULE (bns_id) bns_mass_profile
   !        !u_euler_y_l= lorentz_factor*v_euler_y_l
   !        !u_euler_z_l= lorentz_factor*v_euler_z_l
   !        !
-  !        !! Compute vector normal to spacelie hypersurface
+  !        !! Compute vector normal to spacelike hypersurface
   !        !! (4-velocity of the Eulerian observer)
   !        !n_t= 1.0D0/lapse
   !        !n_x= - shift_x/lapse
@@ -168,6 +189,16 @@ SUBMODULE (bns_id) bns_mass_profile
     ENDDO
 
     mass= mass_profile( 3, NINT(radius/dr) )
+
+    IF( ISNAN(mass) )THEN
+      PRINT *, "** ERROR! The integrated mass is a NaN!"
+      PRINT *
+      STOP
+    ELSEIF( mass <= 0 )THEN
+      PRINT *, "** ERROR! The integrated mass is mass=", mass, "<= 0!"
+      PRINT *
+      STOP
+    ENDIF
 
     PRINT *, " * Radius covered by the integration of baryon mass density=", &
              MAXVAL( mass_profile( 1, : ), DIM= 1 )

@@ -340,7 +340,7 @@ MODULE particles_id
     PROCEDURE:: place_particles_spherical_shells
     !! Places particles on spherical surfaces on one star
 
-    PROCEDURE:: perform_apm
+    PROCEDURE, NOPASS:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
     GENERIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
@@ -634,8 +634,8 @@ MODULE particles_id
 
     END SUBROUTINE compute_and_export_SPH_variables
 
-    MODULE SUBROUTINE perform_apm( THIS, &
-                                   binary, &
+    MODULE SUBROUTINE perform_apm( &!THIS, &
+                                   !binary, &
                                    get_density, &
                                    get_nstar_p, &
                                    pos_input, &
@@ -655,33 +655,51 @@ MODULE particles_id
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles),                 INTENT( INOUT ):: THIS
-      !> [[bns]] object containing the appropriate BNS system
-      CLASS(bns),                       INTENT( INOUT ):: binary
+      !CLASS(particles),                 INTENT( INOUT ):: THIS
+      !CLASS(bns),                       INTENT( INOUT ):: binary
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
+          !! Returns the baryon mass density at the desired point
           DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
           DOUBLE PRECISION:: density
-        END FUNCTION
+          !> Baryon mass density at \((x,y,z)\)
+        END FUNCTION get_density
       END INTERFACE
       INTERFACE
         SUBROUTINE get_nstar_p( npart_real, x, y, z, nstar_p )
+        !! Computes the proper baryon number density at the particle positions
+          INTEGER, INTENT(IN):: npart_real
+          !! Number of real particles (i.e., no ghost particles included here)
           DOUBLE PRECISION, INTENT(IN):: x(npart_real)
+          !! Array of \(x\) coordinates
           DOUBLE PRECISION, INTENT(IN):: y(npart_real)
+          !! Array of \(y\) coordinates
           DOUBLE PRECISION, INTENT(IN):: z(npart_real)
+          !! Array of \(z\) coordinates
           DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
-        END SUBROUTINE
+          !! Array to store the computed proper baryon number density
+        END SUBROUTINE get_nstar_p
       END INTERFACE
       INTERFACE
-        FUNCTION validate_position( x, y, z ) RESULT( answer )
+        FUNCTION validate_position_int( x, y, z ) RESULT( answer )
+        !! Returns 1 if the position is not valid, 0 otherwise
           DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
           INTEGER:: answer
-        END FUNCTION
+          !! 1 if the position is not valid, 0 otherwise
+        END FUNCTION validate_position_int
       END INTERFACE
+      !> Returns 1 if the position is not valid, 0 otherwise
+      PROCEDURE(validate_position_int), OPTIONAL:: validate_position
       !> Initial particle positions
       DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
       !> Initial particle volume
@@ -692,9 +710,7 @@ MODULE particles_id
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
       DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
-      !& Center of the star (point of highest density), computed by LORENE
-      !  @todo why are you passing both the star parameters and the [[bns]]
-      !        object? Try to get rid of the object, if possible
+      !> Center of the star (point of highest density), computed by LORENE
       DOUBLE PRECISION,                 INTENT( IN )   :: center
       !> Center of mass of the star, computed by LORENE
       DOUBLE PRECISION,                 INTENT( IN )   :: com_star

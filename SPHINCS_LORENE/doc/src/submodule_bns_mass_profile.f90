@@ -169,6 +169,16 @@ SUBMODULE (bns_id) bns_mass_profile
 
     mass= mass_profile( 3, NINT(radius/dr) )
 
+    IF( ISNAN(mass) )THEN
+      PRINT *, "** ERROR! The integrated mass is a NaN!"
+      PRINT *
+      STOP
+    ELSEIF( mass <= 0 )THEN
+      PRINT *, "** ERROR! The integrated mass is mass=", mass, "<= 0!"
+      PRINT *
+      STOP
+    ENDIF
+
     PRINT *, " * Radius covered by the integration of baryon mass density=", &
              MAXVAL( mass_profile( 1, : ), DIM= 1 )
     PRINT *, " * Integrated baryon mass of the star=", mass
