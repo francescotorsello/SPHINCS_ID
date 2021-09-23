@@ -92,6 +92,7 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION:: xmin1, xmax1, ymin1, ymax1, zmin1, zmax1
     DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
     DOUBLE PRECISION:: center1, center2, radius1, radius2, com1, com2
+    DOUBLE PRECISION:: central_density1, central_density2
     DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor, &
                        last_r
     DOUBLE PRECISION:: pvol_tmp
@@ -160,6 +161,8 @@ SUBMODULE (particles_id) particles_constructor
     parts_obj% mass2          = bns_obj% get_mass2()
     center1                   = bns_obj% get_center1_x()
     center2                   = bns_obj% get_center2_x()
+    central_density1          = bns_obj% get_rho_center1()
+    central_density2          = bns_obj% get_rho_center2()
     com1                      = bns_obj% get_barycenter1_x()
     com2                      = bns_obj% get_barycenter2_x()
     radius1                   = bns_obj% get_radius1_x_comp()
@@ -817,17 +820,21 @@ SUBMODULE (particles_id) particles_constructor
         CALL parts_obj% placer_timer% start_timer()
         CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass2, &
                                                     radius2, center2, &
+                                                    central_density2, &
                                                     npart_approx, &
                                                     parts_obj% npart2, &
                                                     pos2, pvol2, pmass2, &
-                                                    bns_obj, &
                                                     last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
                                                     max_steps, &
                                                     filename_mass_profile, &
                                                     filename_shells_radii, &
-                                                    filename_shells_pos )
+                                                    filename_shells_pos, &
+                                                    import_density, &
+                                                    integrate_mass_density, &
+                                                    import_id, &
+                                                    check_negative_hydro )
 
         ! mass_ratio < 1
         parts_obj% mass_ratio= parts_obj% mass2/parts_obj% mass1
@@ -885,19 +892,23 @@ SUBMODULE (particles_id) particles_constructor
           filename_shells_radii= "spherical_surfaces_radii1.dat"
           filename_shells_pos  = "spherical_surfaces_pos1.dat"
 
-          CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass1, &
+          CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass1,&
                                                 radius1, center1, &
+                                                central_density1, &
                                                 npart2_approx, &
                                                 parts_obj% npart1, &
                                                 pos1, pvol1, pmass1, &
-                                                bns_obj, &
                                                 last_r, &
                                                 upper_bound, lower_bound, &
                                                 upper_factor, lower_factor,&
                                                 max_steps, &
                                                 filename_mass_profile, &
                                                 filename_shells_radii, &
-                                                filename_shells_pos )
+                                                filename_shells_pos, &
+                                                import_density, &
+                                                integrate_mass_density, &
+                                                import_id, &
+                                                check_negative_hydro )
 
         ENDIF equal_masses
 
@@ -918,17 +929,21 @@ SUBMODULE (particles_id) particles_constructor
 
         CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass1, &
                                               radius1, center1, &
+                                              central_density1, &
                                               npart_approx, &
                                               parts_obj% npart1, &
                                               pos1, pvol1, pmass1, &
-                                              bns_obj, &
                                               last_r, &
                                               upper_bound, lower_bound, &
                                               upper_factor, lower_factor,&
                                               max_steps, &
                                               filename_mass_profile, &
                                               filename_shells_radii, &
-                                              filename_shells_pos )
+                                              filename_shells_pos, &
+                                              import_density, &
+                                              integrate_mass_density, &
+                                              import_id, &
+                                              check_negative_hydro )
 
         IF( debug ) PRINT *, "30"
 
@@ -992,19 +1007,23 @@ SUBMODULE (particles_id) particles_constructor
 
           IF( debug ) PRINT *, "32"
 
-          CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass2, &
+          CALL parts_obj% place_particles_spherical_surfaces( parts_obj% mass2,&
                                                 radius2, center2, &
+                                                central_density2, &
                                                 npart2_approx, &
                                                 parts_obj% npart2, &
                                                 pos2, pvol2, pmass2, &
-                                                bns_obj, &
                                                 last_r, &
                                                 upper_bound, lower_bound, &
                                                 upper_factor, lower_factor,&
                                                 max_steps, &
                                                 filename_mass_profile, &
                                                 filename_shells_radii, &
-                                                filename_shells_pos )
+                                                filename_shells_pos, &
+                                                import_density, &
+                                                integrate_mass_density, &
+                                                import_id, &
+                                                check_negative_hydro )
 
         ENDIF equal_masses2
 
@@ -1682,6 +1701,62 @@ SUBMODULE (particles_id) particles_constructor
       density= bns_obj% import_mass_density( x, y, z )
 
     END FUNCTION import_density
+
+
+    SUBROUTINE import_id( x, y, z, &
+                          g_xx, &
+                          baryon_density, &
+                          gamma_euler )
+
+      IMPLICIT NONE
+
+      DOUBLE PRECISION,   INTENT( IN )    :: x
+      DOUBLE PRECISION,   INTENT( IN )    :: y
+      DOUBLE PRECISION,   INTENT( IN)     :: z
+      DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
+      DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
+      DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
+
+      CALL bns_obj% import_id( x, y, z, &
+                               g_xx, &
+                               baryon_density, &
+                               gamma_euler  )
+
+    END SUBROUTINE import_id
+
+
+    SUBROUTINE integrate_mass_density( center, radius, &
+                                  central_density, &
+                                  dr, dth, dphi, &
+                                  mass, mass_profile, &
+                                  mass_profile_idx )
+
+      IMPLICIT NONE
+
+      !& Array to store the indices for array mass_profile, sorted so that
+      !  mass_profile[mass_profile_idx] is in increasing order
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+      !> Center of the star
+      DOUBLE PRECISION, INTENT( IN )    :: center
+      !> Central density of the star
+      DOUBLE PRECISION, INTENT( IN )    :: central_density
+      !> Radius of the star
+      DOUBLE PRECISION, INTENT( IN )    :: radius
+      !> Integration steps
+      DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+      !> Integrated mass of the star
+      DOUBLE PRECISION, INTENT( IN OUT ):: mass
+      !> Array storing the radial mass profile of the star
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+                                       mass_profile
+
+      CALL bns_obj% integrate_baryon_mass_density( center, radius, &
+                              central_density, &
+                              dr, dth, dphi, &
+                              mass, mass_profile, &
+                              mass_profile_idx )
+
+    END SUBROUTINE integrate_mass_density
 
 
     FUNCTION check_negative_hydro( x, y, z ) RESULT( answer )

@@ -52,7 +52,7 @@ nu_ratio=3.0           ! Desired baryon number ratio. Used only when
 !   per surface, trying to minimize the particle mass ratio     !
 !   by iteration.                                               !
 !---------------------------------------------------------------!
-npart_approx= 5.01D+5 ! The approximate number of particles on the less massive star
+npart_approx= 3.01D+5 ! The approximate number of particles on the less massive star
                    ! The approximate number of particles on the more massive star
                    ! is npart_approx/mass_ratio
 last_r= 0.98D0     ! The radius of the last spherical surface is
@@ -96,7 +96,7 @@ apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
                        ! of the value of apm_iterate2
 apm_max_it=1500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
-max_inc= 1            ! Sets the EXIT condition: If the average over all the
+max_inc= 150            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
                         ! grows max_inc times, exit the iteration.
 nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
