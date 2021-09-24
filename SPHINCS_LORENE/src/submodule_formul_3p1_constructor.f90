@@ -157,7 +157,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
 
       !PRINT *, f3p1_obj% coords% levels(l)% var
 
-      CALL bns_obj% import_id( f3p1_obj% get_ngrid_x(l), &
+      CALL bns_obj% read_id( f3p1_obj% get_ngrid_x(l), &
                                f3p1_obj% get_ngrid_y(l), &
                                f3p1_obj% get_ngrid_z(l), &
                                f3p1_obj% coords%     levels(l)% var, &

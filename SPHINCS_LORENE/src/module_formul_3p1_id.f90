@@ -13,7 +13,7 @@ MODULE formul_3p1_id
 
   USE utility,          ONLY: ios, err_msg, perc, creturn, run_id, &
                               test_status, show_progress
-  USE bns_id,           ONLY: bns
+  USE bns_base,         ONLY: bnsbase
   USE particles_id,     ONLY: particles
   USE timing,           ONLY: timer
   USE mesh_refinement,  ONLY: grid_function_scalar, grid_function, level
@@ -164,7 +164,7 @@ MODULE formul_3p1_id
 
     MODULE SUBROUTINE construct_formul_3p1_bns( f3p1_obj, bns_obj, dx, dy, dz )
 
-      CLASS(bns),        INTENT( IN OUT ):: bns_obj
+      CLASS(bnsbase),    INTENT( IN OUT ):: bns_obj
       CLASS(formul_3p1), INTENT( IN OUT ):: f3p1_obj
       DOUBLE PRECISION, OPTIONAL         :: dx, dy, dz
 
@@ -425,9 +425,9 @@ MODULE formul_3p1_id
                                                              name_logfile )
 
       IMPORT:: formul_3p1
-      IMPORT:: bns
+      IMPORT:: bnsbase
       CLASS(formul_3p1),   INTENT( IN OUT ):: THIS
-      CLASS(bns),          INTENT( IN OUT ):: bns_obj
+      CLASS(bnsbase),          INTENT( IN OUT ):: bns_obj
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
