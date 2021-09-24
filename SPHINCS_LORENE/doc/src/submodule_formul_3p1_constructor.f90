@@ -80,6 +80,37 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
 
     ENDIF
 
+    PRINT *, ABS(bns_obj% get_center1_x()) + bns_obj% get_radius1_x_opp()
+    PRINT *, ABS(bns_obj% get_center2_x()) + bns_obj% get_radius2_x_opp()
+    PRINT *, ABS(levels(nlevels)% xR)
+
+    !
+    !-- Check that the stars are inside the finest refinement lvel
+    !
+    IF( MAX( ABS(bns_obj% get_center1_x()) + bns_obj% get_radius1_x_opp(), &
+             ABS(bns_obj% get_center2_x()) + bns_obj% get_radius2_x_opp() ) &
+             > ABS(levels(nlevels)% xR) )THEN
+
+      PRINT *
+      PRINT *, "** The innermost, finest refinement level does not contain ", &
+               "the entire system."
+      PRINT *, "   Boundary of the innermost, finest level: ", &
+               ABS(levels(nlevels)% xR), " Msun_geo"
+      PRINT *, "   Size of the system: ", &
+          MAX( ABS(bns_obj% get_center1_x()) + bns_obj% get_radius1_x_opp(), &
+               ABS(bns_obj% get_center2_x()) + bns_obj% get_radius2_x_opp() ), &
+               " Msun_geo"
+      PRINT *, "   Please make the boundary of the innermost, finest level, ", &
+               "larger than ", &
+          MAX( ABS(bns_obj% get_center1_x()) + bns_obj% get_radius1_x_opp(), &
+               ABS(bns_obj% get_center2_x()) + bns_obj% get_radius2_x_opp() ), &
+               " Msun_geo"
+      PRINT *, "   Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
     CALL allocate_grid_function( f3p1_obj% coords,    "coords_id", 3 )
     CALL allocate_grid_function( f3p1_obj% rad_coord, 'rad_coord_id', 1 )
 
