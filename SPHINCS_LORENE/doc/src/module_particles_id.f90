@@ -300,6 +300,7 @@ MODULE particles_id
     !& `.TRUE.` if the particles on star 2 should be the reflection of the
     !  particles on star 1 with respect to the \(yz\) plane, only if the baryon
     !  masses of the stars differe less than \(0.2\%\); `.FALSE.` otherwise
+    !  |lorene|
     LOGICAL:: reflect_particles_x
 
     !

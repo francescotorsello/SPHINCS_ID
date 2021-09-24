@@ -349,6 +349,7 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: print_id_params
     !! Prints the parameters of the BNS to the standard output
 
+
     GENERIC, PUBLIC:: import_id => import_id_int_ptr, &
                                    import_id_ext_ptr, &
                                    import_id_particles_ptr, &
