@@ -583,19 +583,22 @@ MODULE particles_id
 
 
     MODULE SUBROUTINE place_particles_spherical_surfaces( THIS, &
-                                  mass_star, radius, center, npart_approx, &
-                                  npart_out, pos, pvol, pmass, bns_obj, &
+                                  mass_star, radius, center, &
+                                  central_density, npart_approx, &
+                                  npart_out, pos, pvol, pmass, &
                                   last_r, upper_bound, lower_bound, &
                                   upper_factor, lower_factor, max_steps, &
                                   filename_mass_profile, filename_shells_radii,&
-                                  filename_shells_pos )
+                                  filename_shells_pos, &
+                                  get_density, integrate_density, &
+                                  get_id, validate_position )
     !! Places particles on spherical surfaces on one star
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
       !& [[bns]] object needed to access the BNS data
       !  @TODO Remove the [[bns]] argument as done in SUBROUTINE perform_apm
-      CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      !CLASS(bns),       INTENT( IN OUT ):: bns_obj
       !> Approximate particle number on the star
       INTEGER,          INTENT( IN )    :: npart_approx
       !> Final number of particles on the star
@@ -611,6 +614,8 @@ MODULE particles_id
       !& \(x|) coordinate of the center of the star, i.e.,
       !  of the point of maximum densty
       DOUBLE PRECISION, INTENT( IN )    :: center
+      !> Central density of the star, i.e., highest density
+      DOUBLE PRECISION, INTENT( IN )    :: central_density
       !> Radius of the last spherical surface
       DOUBLE PRECISION, INTENT( IN )    :: last_r
       !& If, after max_steps, the iteration did not converge,
@@ -641,6 +646,73 @@ MODULE particles_id
       !& Name of the file to store the final particle positions
       !  @TODO change name of variable to filename_surfaces_pos
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_pos
+      INTERFACE
+        FUNCTION get_density( x, y, z ) RESULT( density )
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION:: density
+          !> Baryon mass density at \((x,y,z)\)
+        END FUNCTION get_density
+      END INTERFACE
+      INTERFACE
+        SUBROUTINE get_id( x, y, z , g_xx, baryon_density, gamma_euler )
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
+          DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
+          DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
+        END SUBROUTINE get_id
+      END INTERFACE
+      INTERFACE
+        SUBROUTINE integrate_density( center, radius, &
+                                      central_density, &
+                                      dr, dth, dphi, &
+                                      mass, mass_profile, &
+                                      mass_profile_idx )
+          !& Array to store the indices for array mass_profile, sorted so that
+          !  mass_profile[mass_profile_idx] is in increasing order
+          INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT )::mass_profile_idx
+          !> Center of the star
+          DOUBLE PRECISION, INTENT( IN )    :: center
+          !> Central density of the star
+          DOUBLE PRECISION, INTENT( IN )    :: central_density
+          !> Radius of the star
+          DOUBLE PRECISION, INTENT( IN )    :: radius
+          !> Integration steps
+          DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+          !> Integrated mass of the star
+          DOUBLE PRECISION, INTENT( IN OUT ):: mass
+          !> Array storing the radial mass profile of the star
+          DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+                                           mass_profile
+        END SUBROUTINE integrate_density
+      END INTERFACE
+      INTERFACE
+        FUNCTION validate_position_int( x, y, z ) RESULT( answer )
+        !! Returns 1 if the position is not valid, 0 otherwise
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          INTEGER:: answer
+          !! 1 if the position is not valid, 0 otherwise
+        END FUNCTION validate_position_int
+      END INTERFACE
+      !> Returns 1 if the position is not valid, 0 otherwise
+      PROCEDURE(validate_position_int), OPTIONAL:: validate_position
+
 
     END SUBROUTINE place_particles_spherical_surfaces
 
@@ -734,7 +806,6 @@ MODULE particles_id
     END SUBROUTINE compute_and_export_SPH_variables
 
     MODULE SUBROUTINE perform_apm( &!THIS, &
-                                   !binary, &
                                    get_density, &
                                    get_nstar_p, &
                                    pos_input, &
@@ -755,7 +826,6 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       !CLASS(particles),                 INTENT( INOUT ):: THIS
-      !CLASS(bns),                       INTENT( INOUT ):: binary
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
           !! Returns the baryon mass density at the desired point
@@ -909,7 +979,7 @@ MODULE particles_id
     END SUBROUTINE read_compose_composition
 
     MODULE SUBROUTINE compute_Ye( THIS )!, nlrf, Ye )
-    !# Interpates linearly the electron fraction \(Y_e\) at the particle
+    !# Interpolates linearly the electron fraction \(Y_e\) at the particle
     !  densities; that is, assigns \(Y_e\) at the particle positions
 
       !> [[particles]] object which this PROCEDURE is a member of

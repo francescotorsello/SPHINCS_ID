@@ -27,13 +27,13 @@ SUBMODULE (particles_id) particles_apm
     !
     !#  Compute the particle positions as follows:
     !
-    !    1. Take initial particle distribution as input
-    !    2. Assume that the particles have the same mass
-    !    3. Do the APM iteration so that the final
+    !    - 1. Take initial particle distribution as input
+    !    - 2. Assume that the particles have the same mass
+    !    - 3. Do the APM iteration so that the final
     !       SPH kernel estimate of the baryon mass
     !       density matches the baryon density in the
     !       star as given by LORENE
-    !    4. Correct the particle masses ONCE in order
+    !    - 4. Correct the particle masses ONCE in order
     !       to match the density even better. Since we
     !       don't want a large mass ratio, we impose a
     !       maximum mass ratio when performing this
@@ -141,10 +141,11 @@ SUBMODULE (particles_id) particles_apm
                                                v_euler_x, v_euler_y, v_euler_z
 
     LOGICAL:: exist
+    LOGICAL:: good_h
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
-    LOGICAL,          PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     IF( debug ) PRINT *, "0"
 
@@ -530,10 +531,32 @@ SUBMODULE (particles_id) particles_apm
 
     PRINT *, " * Assign h..."
     PRINT *
-    CALL assign_h( nn_des, &
-                   npart_all, &
-                   all_pos, h_guess, &
-                   h )
+    good_h= .TRUE.
+    DO itr= 1, 10, 1
+
+      PRINT *, itr
+      PRINT *
+
+      CALL assign_h( nn_des, &
+                     npart_all, &
+                     all_pos, h_guess, &
+                     h )
+
+      DO a= 1, npart_all, 1
+
+        IF( ISNAN( h( a ) ) .OR. h( a ) <= 0.0D0 )THEN
+
+          h_guess= 3.0D0*h_guess
+          good_h= .FALSE.
+          EXIT
+
+        ENDIF
+
+      ENDDO
+
+      IF( good_h ) EXIT
+
+    ENDDO
 
     DO a= 1, npart_all, 1
 
@@ -1849,6 +1872,7 @@ SUBMODULE (particles_id) particles_apm
 
 
     CONTAINS
+
 
 
     FUNCTION validate_position_final( x, y, z ) RESULT( answer )

@@ -58,7 +58,7 @@ SUBMODULE (particles_id) spherical_surfaces
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx, seed
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
 
-    DOUBLE PRECISION:: xtemp, ytemp, ztemp, m_p, central_density, &
+    DOUBLE PRECISION:: xtemp, ytemp, ztemp, m_p, &
                        dr, dth, dphi, phase, phase_th, mass, &
                        dr_shells, dth_shells, dphi_shells, col, rad, &
                        proper_volume, mass_test, mass_test2,&
@@ -129,7 +129,7 @@ SUBMODULE (particles_id) spherical_surfaces
     !-- Compute number of spherical surfaces --!
     !------------------------------------------!
 
-    n_shells= number_surfaces( m_p, center, radius, bns_obj )
+    n_shells= number_surfaces( m_p, center, radius, get_density )
 
     !------------------------------------------------!
     !-- Allocate memory for the spherical surfaces --!
@@ -220,8 +220,8 @@ SUBMODULE (particles_id) spherical_surfaces
     !-- Place surfaces based on mass density a that point --!
     !-------------------------------------------------------!
 
-    CALL place_surfaces( bns_obj, center, radius, m_p, n_shells, &
-                         shell_radii, last_r )
+    CALL place_surfaces( central_density, center, radius, m_p, n_shells, &
+                         shell_radii, last_r, get_density )
 
     ! Printout
     PRINT *, " * Number of the spherical surfaces= ", n_shells
@@ -237,14 +237,14 @@ SUBMODULE (particles_id) spherical_surfaces
     PRINT *, " * Integrating the baryon mass density to get the mass profile..."
     PRINT *
 
-    dr             = radius/500.0D0
+    dr             = radius/400.0D0
     dth            = pi/2.0D0/250.0D0
-    dphi           = 2.0D0*pi/500.0D0
-    CALL bns_obj% integrate_baryon_mass_density( center, radius, &
-                                                 central_density, &
-                                                 dr, dth, dphi, &
-                                                 mass, mass_profile, &
-                                                 mass_profile_idx )
+    dphi           = 2.0D0*pi/250.0D0
+    CALL integrate_density( center, radius, &
+                            central_density, &
+                            dr, dth, dphi, &
+                            mass, mass_profile, &
+                            mass_profile_idx )
 
     mass_profile( 2:3, : )= mass_profile( 2:3, : )*mass_star/mass
 
@@ -378,7 +378,7 @@ SUBMODULE (particles_id) spherical_surfaces
 
 !    !$OMP PARALLEL DEFAULT(NONE), &
 !    !$OMP    SHARED( r, npart_shelleq, center, rad, alpha, &
-!    !$OMP            pos_shells, colatitude_pos, bns_obj, n_shells, &
+!    !$OMP            pos_shells, colatitude_pos, n_shells, &
 !    !$OMP            dr_shells, shell_radii, shell_thickness, THIS, &
 !    !$OMP            g_xx_tmp, bar_density_tmp, gam_euler_tmp, &
 !    !$OMP            pos_shell_tmp, pvol_tmp, dphi_shells, rand_num2, &
@@ -472,7 +472,7 @@ SUBMODULE (particles_id) spherical_surfaces
       !$OMP                      dth_shells, delta_r, &
       !$OMP                      th, phi, rand_num2, phase_th, rel_sign ), &
       !$OMP             SHARED( r, npart_shelleq, center, rad, alpha, &
-      !$OMP                     pos_shells, colatitude_pos, bns_obj, n_shells, &
+      !$OMP                     pos_shells, colatitude_pos, n_shells, &
       !$OMP                     dr_shells, shell_radii, shell_thickness, THIS, &
       !$OMP                     g_xx_tmp, bar_density_tmp, gam_euler_tmp, &
       !$OMP                     pos_shell_tmp, pvol_tmp, dphi_shells, &
@@ -563,7 +563,7 @@ SUBMODULE (particles_id) spherical_surfaces
           ENDIF
 
           ! Import ID needed to compute the particle masses
-          CALL bns_obj% import_id( &
+          CALL get_id( &
                    xtemp, ytemp, ztemp, &
                    g_xx_tmp( th, phi ), &
                    bar_density_tmp( th, phi ), &
@@ -574,7 +574,7 @@ SUBMODULE (particles_id) spherical_surfaces
           IF( bar_density_tmp( th, phi ) > 0.0D0 &
               !pos_shells(r)% baryon_density( itr + 1 ) > 0.0D0 &
               .AND. &
-              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
+              validate_position_final( xtemp, ytemp, ztemp ) == 0 )THEN
 
             !npart_shell_cnt= npart_shell_cnt + 1
             npart_surface_tmp( th, phi )= 1
@@ -1480,10 +1480,50 @@ SUBMODULE (particles_id) spherical_surfaces
 
     IF( debug ) PRINT *, "20"
 
+
+
+    CONTAINS
+
+
+
+    FUNCTION validate_position_final( x, y, z ) RESULT( answer )
+
+      !*******************************************************
+      !
+      !# Returns validate_position( x, y, z ) if the latter
+      !  is present, 0 otherwise
+      !
+      !  FT 22.09.2021
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      DOUBLE PRECISION, INTENT(IN):: x
+      !! \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN):: y
+      !! \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN):: z
+      !! \(z\) coordinate of the desired point
+      INTEGER:: answer
+      !! validate_position( x, y, z ) if the latter is present, 0 otherwise
+
+      IF( PRESENT(validate_position) )THEN
+
+        answer= validate_position( x, y, z )
+
+      ELSE
+
+        answer= 0
+
+      ENDIF
+
+    END FUNCTION validate_position_final
+
   END PROCEDURE place_particles_spherical_surfaces
 
 
-  FUNCTION number_surfaces( m_p, center, radius, bns_obj ) &
+  FUNCTION number_surfaces( m_p, center, radius, get_dens ) &
            RESULT( n_shells_tmp )
 
     !************************************************
@@ -1501,7 +1541,20 @@ SUBMODULE (particles_id) spherical_surfaces
     IMPLICIT NONE
 
     DOUBLE PRECISION, INTENT( IN ):: m_p, center, radius
-    CLASS(bns),       INTENT( IN ):: bns_obj
+    INTERFACE
+      FUNCTION get_dens( x, y, z ) RESULT( density )
+        !! Returns the baryon mass density at the desired point
+        DOUBLE PRECISION, INTENT(IN):: x
+        !! \(x\) coordinate of the desired point
+        DOUBLE PRECISION, INTENT(IN):: y
+        !! \(y\) coordinate of the desired point
+        DOUBLE PRECISION, INTENT(IN):: z
+        !! \(z\) coordinate of the desired point
+        DOUBLE PRECISION:: density
+        !> Baryon mass density at \((x,y,z)\)
+      END FUNCTION get_dens
+    END INTERFACE
+
 
     DOUBLE PRECISION:: n_shells_tmp
 
@@ -1525,7 +1578,7 @@ SUBMODULE (particles_id) spherical_surfaces
     DO r= 1, 500, 1
 
       n_shells_tmp= n_shells_tmp + &
-                      radius/500*( ( bns_obj% import_mass_density( &
+                      radius/500*( ( get_dens( &
                                      center + r*radius/500, 0.0D0, 0.0D0 ) &
                                      )/m_p )**third
       !particle_profile( 1, r )= r*radius/500
@@ -1606,8 +1659,8 @@ SUBMODULE (particles_id) spherical_surfaces
   END SUBROUTINE reallocate_array_2d
 
 
-  SUBROUTINE place_surfaces( bns_obj, center, radius, m_p, n_shells, &
-                             shell_radii, last_r )
+  SUBROUTINE place_surfaces( central_dens, center, radius, m_p, n_shells, &
+                             shell_radii, last_r, get_dens )
 
     !************************************************
     !
@@ -1624,20 +1677,32 @@ SUBMODULE (particles_id) spherical_surfaces
     IMPLICIT NONE
 
     INTEGER,          INTENT( IN ):: n_shells
-    CLASS(bns),       INTENT( IN ):: bns_obj
-    DOUBLE PRECISION, INTENT( IN ):: center, radius, m_p, last_r
+    DOUBLE PRECISION, INTENT( IN ):: central_dens, center, radius, m_p, last_r
     DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN OUT ):: shell_radii
+    INTERFACE
+      FUNCTION get_dens( x, y, z ) RESULT( density )
+        !! Returns the baryon mass density at the desired point
+        DOUBLE PRECISION, INTENT(IN):: x
+        !! \(x\) coordinate of the desired point
+        DOUBLE PRECISION, INTENT(IN):: y
+        !! \(y\) coordinate of the desired point
+        DOUBLE PRECISION, INTENT(IN):: z
+        !! \(z\) coordinate of the desired point
+        DOUBLE PRECISION:: density
+        !> Baryon mass density at \((x,y,z)\)
+      END FUNCTION get_dens
+    END INTERFACE
 
-    DOUBLE PRECISION:: rho_tmp, central_density
+    DOUBLE PRECISION:: rho_tmp
 
-    central_density= bns_obj% get_rho_center1()
+    !central_density= bns_obj% get_rho_center1()
 
     shell_radii= 0.0D0
 
-    shell_radii(1)= ( central_density/m_p )**(-third)
+    shell_radii(1)= ( central_dens/m_p )**(-third)
     DO itr= 2, n_shells, 1
 
-      rho_tmp= bns_obj% import_mass_density( center + shell_radii( itr - 1 ), &
+      rho_tmp= get_dens( center + shell_radii( itr - 1 ), &
                                              0.0D0, 0.0D0 )
 
       IF( rho_tmp == 0 )THEN
