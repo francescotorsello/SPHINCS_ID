@@ -286,7 +286,7 @@ SUBMODULE (bns_id) bns_import
   END PROCEDURE import_id_ext
 
 
-  MODULE PROCEDURE import_id_multid_array
+  MODULE PROCEDURE import_id_spacetime
 
     !*******************************************************
     !
@@ -324,7 +324,7 @@ SUBMODULE (bns_id) bns_import
         ! SHAPE( pos(:,:,:,1) ) /= SHAPE( k(:,:,:,1) ) &
         )THEN
         PRINT *, "** ERROR: Mismatch in array dimensions" &
-                 // "in import_id_multid_array."
+                 // "in import_id_spacetime."
         PRINT *
         STOP
       ENDIF
@@ -461,7 +461,7 @@ SUBMODULE (bns_id) bns_import
 
     ENDIF
 
-  END PROCEDURE import_id_multid_array
+  END PROCEDURE import_id_spacetime
 
 
   MODULE PROCEDURE import_id_hydro

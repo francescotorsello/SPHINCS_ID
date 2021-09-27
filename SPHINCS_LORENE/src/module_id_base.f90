@@ -190,7 +190,7 @@ MODULE id_base
     !  the BSSN variables and constraints
       IMPORT:: idbase
       !> [[bns]] object which this PROCEDURE is a member of
-      CLASS(idbase),                           INTENT( IN OUT ):: THIS
+      CLASS(idbase),                        INTENT( IN OUT ):: THIS
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -214,7 +214,7 @@ MODULE id_base
     !  on the refined mesh
       IMPORT:: idbase
       !> [[bns]] object which this PROCEDURE is a member of
-      CLASS(idbase),                           INTENT( IN OUT ):: THIS
+      CLASS(idbase),                        INTENT( IN OUT ):: THIS
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz

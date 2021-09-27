@@ -231,7 +231,6 @@ MODULE bns_base
 
 
 
-
       !
       !-- Overloaded FUNCTION to access the fields as arrays and as values
       !

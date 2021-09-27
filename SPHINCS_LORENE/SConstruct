@@ -34,7 +34,7 @@ env['F90'] = 'ifort'
 env['CXX'] = 'icpc'
 
 # F90 flags for production
-env['F90FLAGS'] = ['-O3', '-qopenmp', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback']
+env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback']
 #, '-heap-arrays'
 #, '-qoverride-limits'
 
@@ -128,7 +128,7 @@ sources = ['src/module_id_base.f90',
            'src/submodule_bns_constructor.f90',
            'src/submodule_bns_import.f90',
            'src/submodule_bns_memory.f90',
-           #'src/submodule_bns_access.f90',
+           'src/submodule_bns_access.f90',
            'src/submodule_bns_params.f90',
            'src/submodule_bns_mass_profile.f90',
            'src/submodule_particles_constructor.f90',

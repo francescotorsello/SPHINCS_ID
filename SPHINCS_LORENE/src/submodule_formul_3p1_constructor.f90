@@ -157,14 +157,14 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
 
       !PRINT *, f3p1_obj% coords% levels(l)% var
 
-      CALL bns_obj% read_id( f3p1_obj% get_ngrid_x(l), &
-                               f3p1_obj% get_ngrid_y(l), &
-                               f3p1_obj% get_ngrid_z(l), &
-                               f3p1_obj% coords%     levels(l)% var, &
-                               f3p1_obj% lapse%      levels(l)% var, &
-                               f3p1_obj% shift_u%    levels(l)% var, &
-                               f3p1_obj% g_phys3_ll% levels(l)% var, &
-                               f3p1_obj% K_phys3_ll% levels(l)% var )
+      !CALL bns_obj% read_id( f3p1_obj% get_ngrid_x(l), &
+      !                       f3p1_obj% get_ngrid_y(l), &
+      !                       f3p1_obj% get_ngrid_z(l), &
+      !                       f3p1_obj% coords%     levels(l)% var, &
+      !                       f3p1_obj% lapse%      levels(l)% var, &
+      !                       f3p1_obj% shift_u%    levels(l)% var, &
+      !                       f3p1_obj% g_phys3_ll% levels(l)% var, &
+      !                       f3p1_obj% K_phys3_ll% levels(l)% var )
 
     ENDDO ref_levels2
 

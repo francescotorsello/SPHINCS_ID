@@ -354,7 +354,7 @@ MODULE bns_id
  !                                  import_id_ext_ptr, &
  !                                  import_id_particles_ptr, &
  !                                  !import_id_mass_b_ptr, &
- !                                  import_id_multid_array_ptr, &
+ !                                  import_id_spacetime_ptr, &
  !                                  import_id_hydro_ptr, &
  !                                  import_id_k_ptr
  !   !# GENERIC PROCEDURE, overloded to import the LORENE BNS ID in different
@@ -370,7 +370,7 @@ MODULE bns_id
  !   PROCEDURE:: read_id_mass_b             => import_id_mass_b
  !   !PROCEDURE:: import_id_mass_b_ptr       => import_id_mass_b
  !   !! Stores the hydro ID in the arrays needed to compute the baryon mass
- !   PROCEDURE:: import_id_multid_array_ptr => import_id_multid_array
+ !   PROCEDURE:: import_id_spacetime_ptr => import_id_spacetime
  !   !# Stores the spacetime ID in multi-dimensional arrays needed to compute
  !   !  the BSSN variables and constraints
  !   PROCEDURE:: import_id_hydro_ptr        => import_id_hydro
@@ -383,7 +383,7 @@ MODULE bns_id
     !! Stores the ID in the [[bns]] member arrays
 
     PROCEDURE:: read_id_ext       => import_id_ext
-    PROCEDURE:: read_id_spacetime => import_id_multid_array
+    PROCEDURE:: read_id_spacetime => import_id_spacetime
     PROCEDURE:: read_id_particles => import_id_particles
     PROCEDURE:: read_id_hydro     => import_id_hydro
     PROCEDURE:: read_id_mass_b    => import_id_mass_b
@@ -782,7 +782,7 @@ MODULE bns_id
     END SUBROUTINE import_id_ext
 
 
-    MODULE SUBROUTINE import_id_multid_array( THIS, nx, ny, nz, &
+    MODULE SUBROUTINE import_id_spacetime( THIS, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
@@ -802,7 +802,7 @@ MODULE bns_id
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
 
-    END SUBROUTINE import_id_multid_array
+    END SUBROUTINE import_id_spacetime
 
 
     MODULE SUBROUTINE import_id_hydro( THIS, nx, ny, nz, &
