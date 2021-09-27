@@ -1961,7 +1961,7 @@ SUBMODULE (particles_id) particles_apm
     CALL COM( npart_real, pos, nu, & ! input
               com_x, com_y, com_z, com_d ) ! output
 
-    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
       PRINT *, "** Before center of mass correction:"
       PRINT *, " * x coordinate of the center of mass of the star, ", &
                "from LORENE: com_star= ", com_star, "Msun_geo"
@@ -2006,7 +2006,7 @@ SUBMODULE (particles_id) particles_apm
     CALL COM( npart_real, pos, nu, & ! input
               com_x, com_y, com_z, com_d ) ! output
 
-    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
       PRINT *, "** After center of mass correction:"
       PRINT *, " * x coordinate of the center of mass of the star, ", &
                "from LORENE: com_star= ", com_star, "Msun_geo"
@@ -2097,7 +2097,7 @@ SUBMODULE (particles_id) particles_apm
     ENDDO
     !$OMP END PARALLEL DO
 
-    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
 
       CALL COM( npart_real, pos, nu, & ! input
                 com_x, com_y, com_z, com_d ) ! output

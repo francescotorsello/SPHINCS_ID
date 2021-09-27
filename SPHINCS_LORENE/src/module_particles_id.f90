@@ -1239,7 +1239,7 @@ MODULE particles_id
 
     ENDIF
 
-    IF( PRESENT(debug) .AND. debug == .TRUE. )THEN
+    IF( PRESENT(debug) .AND. debug .EQV. .TRUE. )THEN
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( pos, x_sort, x_number ) &

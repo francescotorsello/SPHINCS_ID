@@ -159,7 +159,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
     !PRINT *, "Inside destructor"
     CALL destruct_bssn_id( THIS )
-    CALL destruct_formul_3p1( THIS )
+
+#ifdef __INTEL_COMPILER
+  CALL destruct_formul_3p1( THIS )
+#endif
+
+#ifdef __GFORTRAN__
+  CALL THIS% destruct_formul_3p1
+#endif
 
   END PROCEDURE destructor
 

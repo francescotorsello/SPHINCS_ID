@@ -16,7 +16,9 @@ PROGRAM sphincs_lorene_bns
   !                                                    *
   !*****************************************************
 
+#ifdef __INTEL_COMPILER
   USE IFPORT,         ONLY: MAKEDIRQQ
+#endif
   USE sphincs_lorene
   USE constants,      ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
                             k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
@@ -148,7 +150,9 @@ PROGRAM sphincs_lorene_bns
   !-- Check that the specified subdirectories exist. If not, create them
   !-- TODO: this compils with ifort, but not with gfortran
   !
-  !INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
+
+#ifdef __INTEL_COMPILER
+
   INQUIRE( DIRECTORY= TRIM(sph_path), EXIST= exist )
   IF( .NOT.exist )THEN
     dir_out= MAKEDIRQQ( TRIM(sph_path) )
@@ -162,7 +166,6 @@ PROGRAM sphincs_lorene_bns
     STOP
   ENDIF
 
-  !INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
   INQUIRE( DIRECTORY= TRIM(spacetime_path), EXIST= exist )
   IF( .NOT.exist )THEN
     dir_out= MAKEDIRQQ( TRIM(spacetime_path) )
@@ -175,6 +178,26 @@ PROGRAM sphincs_lorene_bns
     PRINT *
     STOP
   ENDIF
+
+#endif
+
+#ifdef __GFORTRAN__
+
+  INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
+  IF( .NOT.exist )THEN
+    PRINT *, "** ERROR! Directory ", TRIM(sph_path), " does not exist!"
+    PRINT *, "   Please create it and re-run the executable. Stopping..."
+    STOP
+  ENDIF
+
+  INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
+  IF( .NOT.exist )THEN
+    PRINT *, "** ERROR! Directory ", TRIM(spacetime_path), " does not exist!"
+    PRINT *, "   Please create it and re-run the executable. Stopping..."
+    STOP
+  ENDIF
+
+#endif
 
   ! Allocate needed memory
   ALLOCATE( binaries      ( n_bns ) )
