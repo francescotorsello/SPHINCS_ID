@@ -93,8 +93,8 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r
 !----------------------------------------------------!
 ! Parameters for the Artifical Pressure Method (APM) !
 !----------------------------------------------------!
-apm_iterate1=.FALSE.    ! If .TRUE. applies the APM to the first star
-apm_iterate2=.FALSE.    ! If .TRUE. applies the APM to the second star
+apm_iterate1=.TRUE.    ! If .TRUE. applies the APM to the first star
+apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
                        ! Note that if reflect_particles_x= .TRUE. and the
                        ! star mass ratio is in [0.995,1.005], the particles
                        ! on the second star will be the reflection about the yz

@@ -69,7 +69,7 @@ PROGRAM convergence_test
 
   ! Declaration of the bns (binary neutron star) object containing the
   ! LORENE ID
-  TYPE( bns ):: binary
+  TYPE( bnslorene ):: binary
   ! Declaration of the particles object containing the particle distribution
   TYPE( particles ):: particles_dist
   ! Declaration of the 3-component array storing the 3 bssn_id objects,
@@ -128,7 +128,7 @@ PROGRAM convergence_test
   !
   !-- Construct the bns object from the LORENE binary file
   !
-  binary= bns( TRIM(common_path)//"/"//TRIM(filenames( 1 )) )
+  binary= bnslorene( TRIM(common_path)//"/"//TRIM(filenames( 1 )) )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)
   binary% one_lapse = one_lapse

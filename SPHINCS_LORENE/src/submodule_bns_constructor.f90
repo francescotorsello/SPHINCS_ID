@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_id) bns_constructor
+SUBMODULE (bns_lorene) bns_constructor
 
   !*********************************************************
   !
@@ -26,7 +26,7 @@ SUBMODULE (bns_id) bns_constructor
   !
   !-- Implementation of the constructor of the bns object
   !
-  MODULE PROCEDURE construct_bns
+  MODULE PROCEDURE construct_bnslorene
 
     !****************************************************
     !
@@ -65,13 +65,13 @@ SUBMODULE (bns_id) bns_constructor
     !PRINT *, "End of bns constructor."
     !PRINT *
 
-  END PROCEDURE construct_bns
+  END PROCEDURE construct_bnslorene
 
 
   !
   !-- Implementation of the destructor of the bns object
   !
-  MODULE PROCEDURE destruct_bns
+  MODULE PROCEDURE destruct_bnslorene
 
     !***********************************************
     !
@@ -89,7 +89,7 @@ SUBMODULE (bns_id) bns_constructor
     ! Deallocate memory
     CALL THIS% deallocate_lorene_id_memory()
 
-  END PROCEDURE destruct_bns
+  END PROCEDURE destruct_bnslorene
 
 
   MODULE PROCEDURE construct_binary

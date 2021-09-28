@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_id) bns_mass_profile
+SUBMODULE (bns_base) bns_mass_profile
 
   !********************************************
   !

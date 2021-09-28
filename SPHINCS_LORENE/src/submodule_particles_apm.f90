@@ -534,8 +534,8 @@ SUBMODULE (particles_id) particles_apm
     good_h= .TRUE.
     DO itr= 1, 10, 1
 
-      PRINT *, itr
-      PRINT *
+      IF( debug ) PRINT *, itr
+      IF( debug ) PRINT *
 
       CALL assign_h( nn_des, &
                      npart_all, &

@@ -4,16 +4,28 @@
 
 MODULE bns_base
 
-  !*******************************************************
+  !********************************************************
   !
-  !#
+  !# This MODULE contains the definition of TYPE bnsbase,
+  !  which is an ABSTRACT TYPE representing any possible
+  !  type of binary neutron star (BNS) initial data (ID)
+  !  to be set up for SPHINCS_BSSN. That is, BNS ID
+  !  produced with LORENE, with FUKA, etc.
   !
-  !   FT 24.09.2021
+  !  PROCEDURES and variables shared by all the types
+  !  of BNS ID should belong to TYPE bnsbase, as
+  !  they are inherited by its EXTENDED TYPES that
+  !  represent more specific typesof BNS ID.
   !
-  !*******************************************************
+  !  FT 24.09.2021
+  !
+  !********************************************************
 
 
   USE id_base, ONLY: idbase
+  USE utility, ONLY: itr, ios, err_msg, test_status, &
+                     perc, creturn, compute_g4, &
+                     determinant_sym4x4_grid, show_progress
 
 
   IMPLICIT NONE
@@ -28,10 +40,10 @@ MODULE bns_base
   !*******************************************************
 
   TYPE, ABSTRACT, EXTENDS(idbase):: bnsbase
-
-
-    !> LORENE identifiers for the EoS
-    INTEGER:: eos1_id, eos2_id
+  !# Represents a generic BNS ID for SPHINCS_BSSN (produced with LORENE, or with
+  !  FUKA, etc.; or produced with the same tool, but read in different ways,
+  !  for example by linking to the LORENE library, or reading the ID from
+  !  a lattice, etc.)
 
     !
     !-- Parameters of the binary system
@@ -230,170 +242,198 @@ MODULE bns_base
     CONTAINS
 
 
-      !
-      !-- Overloaded FUNCTION to access the fields as arrays and as values
-      !
+    !-------------------!
+    !--  SUBROUTINES  --!
+    !-------------------!
 
- !     GENERIC, PUBLIC:: get_field => get_fa, get_fv
- !     !# GENERIC PROCEDURE, overloded to access the bns member variables as arrays
- !     !  and as values
- !     PROCEDURE::       get_fa    => get_field_array
- !     !! Access the bns member arrays
- !     PROCEDURE::       get_fv    => get_field_value
-      !! Access the components of the bns member arrays
+    PROCEDURE(get_eos_id_int), DEFERRED:: get_eos1_id, get_eos2_id
 
-      !
-      !-- FUNCTIONS that access member variables
-      !
 
-      !PROCEDURE, PUBLIC:: get_bns_identifier
-      !PROCEDURE, PUBLIC:: get_bns_ptr
+    PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
+    !# Integrates the LORENE baryon mass density and computes the
+    !  radial mass profile
 
-      PROCEDURE, PUBLIC:: get_angular_vel
-      !! Returns [[bns:angular_vel]]
-      PROCEDURE, PUBLIC:: get_distance
-      !! Returns [[bns:distance]]
-      PROCEDURE, PUBLIC:: get_distance_com
-      !! Returns [[bns:distance_com]]
-      PROCEDURE, PUBLIC:: get_mass1
-      !! Returns [[bns:mass1]]
-      PROCEDURE, PUBLIC:: get_mass2
-      !! Returns [[bns:mass2]]
-      PROCEDURE, PUBLIC:: get_grav_mass1
-      !! Returns [[bns:mass_grav1]]
-      PROCEDURE, PUBLIC:: get_grav_mass2
-      !! Returns [[bns:mass_grav2]]
-      PROCEDURE, PUBLIC:: get_adm_mass
-      !! Returns [[bns:adm_mass]]
-      PROCEDURE, PUBLIC:: get_angular_momentum
-      !! Returns [[bns:angular_momentum]]
-      PROCEDURE, PUBLIC:: get_radius1_x_comp
-      !! Returns [[bns:radius1_x_comp]]
-      PROCEDURE, PUBLIC:: get_radius1_y
-      !! Returns [[bns:radius1_y]]
-      PROCEDURE, PUBLIC:: get_radius1_z
-      !! Returns [[bns:radius1_z]]
-      PROCEDURE, PUBLIC:: get_radius1_x_opp
-      !! Returns [[bns:radius1_x_opp]]
-      PROCEDURE, PUBLIC:: get_center1_x
-      !! Returns [[bns:center1_x]]
-      PROCEDURE, PUBLIC:: get_barycenter1_x
-      !! Returns [[bns:barycenter1_x]]
-      PROCEDURE, PUBLIC:: get_radius2_x_comp
-      !! Returns [[bns:radius2_x_comp]]
-      PROCEDURE, PUBLIC:: get_radius2_y
-      !! Returns [[bns:radius2_y]]
-      PROCEDURE, PUBLIC:: get_radius2_z
-      !! Returns [[bns:radius2_y]]
-      PROCEDURE, PUBLIC:: get_radius2_x_opp
-      !! Returns [[bns:radius2_x_opp]]
-      PROCEDURE, PUBLIC:: get_center2_x
-      !! Returns [[bns:center2_x]]
-      PROCEDURE, PUBLIC:: get_barycenter2_x
-      !! Returns [[bns:barycenter2_x]]
-      PROCEDURE, PUBLIC:: get_ent_center1
-      !! Returns [[bns:ent_center1]]
-      PROCEDURE, PUBLIC:: get_nbar_center1
-      !! Returns [[bns:nbar_center1]]
-      PROCEDURE, PUBLIC:: get_rho_center1
-      !! Returns [[bns:rho_center1]]
-      PROCEDURE, PUBLIC:: get_energy_density_center1
-      !! Returns [[bns:energy_density_center1]]
-      PROCEDURE, PUBLIC:: get_specific_energy_center1
-      !! Returns [[bns:specific_energy_center1]]
-      PROCEDURE, PUBLIC:: get_pressure_center1
-      !! Returns [[bns:pressure_center1]]
-      PROCEDURE, PUBLIC:: get_ent_center2
-      !! Returns [[bns:ent_center2]]
-      PROCEDURE, PUBLIC:: get_nbar_center2
-      !! Returns [[bns:nbar_center2]]
-      PROCEDURE, PUBLIC:: get_rho_center2
-      !! Returns [[bns:rho_center2]]
-      PROCEDURE, PUBLIC:: get_energy_density_center2
-      !! Returns [[bns:energy_density_center2]]
-      PROCEDURE, PUBLIC:: get_specific_energy_center2
-      !! Returns [[bns:specific_energy_center2]]
-      PROCEDURE, PUBLIC:: get_pressure_center2
-      !! Returns [[bns:pressure_center2]]
-      PROCEDURE, PUBLIC:: get_eos1
-      !! Returns [[bns:eos1]]
-      PROCEDURE, PUBLIC:: get_eos2
-      !! Returns [[bns:eos2]]
-      PROCEDURE, PUBLIC:: get_eos1_id
-      !! Returns [[bns:eos1_id]]
-      PROCEDURE, PUBLIC:: get_eos2_id
-      !! Returns [[bns:eos2_id]]
 
-      !
-      !-- PROCEDURES to be used for single polytropic EOS
-      !
-      PROCEDURE, PUBLIC:: get_gamma_1
-      !! Returns [[bns:gamma_1]]
-      PROCEDURE, PUBLIC:: get_gamma_2
-      !! Returns [[bns:gamma_2]]
-      PROCEDURE, PUBLIC:: get_kappa_1
-      !! Returns [[bns:kappa_1]]
-      PROCEDURE, PUBLIC:: get_kappa_2
-      !! Returns [[bns:kappa_2]]
+    !-----------------!
+    !--  FUNCTIONS  --!
+    !-----------------!
 
-      !
-      !-- PROCEDURES to be used for piecewise polytropic EOS
-      !
-      PROCEDURE, PUBLIC:: get_npeos_1
-      !! Returns [[bns:npeos_1]]
-      PROCEDURE, PUBLIC:: get_gamma0_1
-      !! Returns [[bns:gamma0_1]]
-      PROCEDURE, PUBLIC:: get_gamma1_1
-      !! Returns [[bns:gamma1_1]]
-      PROCEDURE, PUBLIC:: get_gamma2_1
-      !! Returns [[bns:gamma2_1]]
-      PROCEDURE, PUBLIC:: get_gamma3_1
-      !! Returns [[bns:gamma3_1]]
-      PROCEDURE, PUBLIC:: get_kappa0_1
-      !! Returns [[bns:kappa0_1]]
-      PROCEDURE, PUBLIC:: get_kappa1_1
-      !! Returns [[bns:kappa1_1]]
-      PROCEDURE, PUBLIC:: get_kappa2_1
-      !! Returns [[bns:kappa2_1]]
-      PROCEDURE, PUBLIC:: get_kappa3_1
-      !! Returns [[bns:kappa3_1]]
-      PROCEDURE, PUBLIC:: get_logP1_1
-      !! Returns [[bns:logP1_1]]
-      PROCEDURE, PUBLIC:: get_logRho0_1
-      !! Returns [[bns:logRho0_1]]
-      PROCEDURE, PUBLIC:: get_logRho1_1
-      !! Returns [[bns:logRho1_1]]
-      PROCEDURE, PUBLIC:: get_logRho2_1
-      !! Returns [[bns:logRho2_1]]
-      PROCEDURE, PUBLIC:: get_npeos_2
-      !! Returns [[bns:npeos_2]]
-      PROCEDURE, PUBLIC:: get_gamma0_2
-      !! Returns [[bns:gamma0_2]]
-      PROCEDURE, PUBLIC:: get_gamma1_2
-      !! Returns [[bns:gamma1_2]]
-      PROCEDURE, PUBLIC:: get_gamma2_2
-      !! Returns [[bns:gamma2_2]]
-      PROCEDURE, PUBLIC:: get_gamma3_2
-      !! Returns [[bns:gamma3_2]]
-      PROCEDURE, PUBLIC:: get_kappa0_2
-      !! Returns [[bns:kappa0_2]]
-      PROCEDURE, PUBLIC:: get_kappa1_2
-      !! Returns [[bns:kappa1_2]]
-      PROCEDURE, PUBLIC:: get_kappa2_2
-      !! Returns [[bns:kappa2_2]]
-      PROCEDURE, PUBLIC:: get_kappa3_2
-      !! Returns [[bns:kappa3_2]]
-      PROCEDURE, PUBLIC:: get_logP1_2
-      !! Returns [[bns:logP1_2]]
-      PROCEDURE, PUBLIC:: get_logRho0_2
-      !! Returns [[bns:logRho0_2]]
-      PROCEDURE, PUBLIC:: get_logRho1_2
-      !! Returns [[bns:logRho1_2]]
-      PROCEDURE, PUBLIC:: get_logRho2_2
-      !! Returns [[bns:logRho2_2]]
+    !
+    !-- Overloaded FUNCTION to access the fields as arrays and as values
+    !
+
+  !     GENERIC, PUBLIC:: get_field => get_fa, get_fv
+  !     !# GENERIC PROCEDURE, overloded to access the bns member variables as arrays
+  !     !  and as values
+  !     PROCEDURE::       get_fa    => get_field_array
+  !     !! Access the bns member arrays
+  !     PROCEDURE::       get_fv    => get_field_value
+    !! Access the components of the bns member arrays
+
+    !
+    !-- FUNCTIONS that access member variables
+    !
+
+    !PROCEDURE, PUBLIC:: get_bns_identifier
+    !PROCEDURE, PUBLIC:: get_bns_ptr
+
+
+    PROCEDURE, PUBLIC:: get_angular_vel
+    !! Returns [[bns:angular_vel]]
+    PROCEDURE, PUBLIC:: get_distance
+    !! Returns [[bns:distance]]
+    PROCEDURE, PUBLIC:: get_distance_com
+    !! Returns [[bns:distance_com]]
+    PROCEDURE, PUBLIC:: get_mass1
+    !! Returns [[bns:mass1]]
+    PROCEDURE, PUBLIC:: get_mass2
+    !! Returns [[bns:mass2]]
+    PROCEDURE, PUBLIC:: get_grav_mass1
+    !! Returns [[bns:mass_grav1]]
+    PROCEDURE, PUBLIC:: get_grav_mass2
+    !! Returns [[bns:mass_grav2]]
+    PROCEDURE, PUBLIC:: get_adm_mass
+    !! Returns [[bns:adm_mass]]
+    PROCEDURE, PUBLIC:: get_angular_momentum
+    !! Returns [[bns:angular_momentum]]
+    PROCEDURE, PUBLIC:: get_radius1_x_comp
+    !! Returns [[bns:radius1_x_comp]]
+    PROCEDURE, PUBLIC:: get_radius1_y
+    !! Returns [[bns:radius1_y]]
+    PROCEDURE, PUBLIC:: get_radius1_z
+    !! Returns [[bns:radius1_z]]
+    PROCEDURE, PUBLIC:: get_radius1_x_opp
+    !! Returns [[bns:radius1_x_opp]]
+    PROCEDURE, PUBLIC:: get_center1_x
+    !! Returns [[bns:center1_x]]
+    PROCEDURE, PUBLIC:: get_barycenter1_x
+    !! Returns [[bns:barycenter1_x]]
+    PROCEDURE, PUBLIC:: get_radius2_x_comp
+    !! Returns [[bns:radius2_x_comp]]
+    PROCEDURE, PUBLIC:: get_radius2_y
+    !! Returns [[bns:radius2_y]]
+    PROCEDURE, PUBLIC:: get_radius2_z
+    !! Returns [[bns:radius2_y]]
+    PROCEDURE, PUBLIC:: get_radius2_x_opp
+    !! Returns [[bns:radius2_x_opp]]
+    PROCEDURE, PUBLIC:: get_center2_x
+    !! Returns [[bns:center2_x]]
+    PROCEDURE, PUBLIC:: get_barycenter2_x
+    !! Returns [[bns:barycenter2_x]]
+    PROCEDURE, PUBLIC:: get_ent_center1
+    !! Returns [[bns:ent_center1]]
+    PROCEDURE, PUBLIC:: get_nbar_center1
+    !! Returns [[bns:nbar_center1]]
+    PROCEDURE, PUBLIC:: get_rho_center1
+    !! Returns [[bns:rho_center1]]
+    PROCEDURE, PUBLIC:: get_energy_density_center1
+    !! Returns [[bns:energy_density_center1]]
+    PROCEDURE, PUBLIC:: get_specific_energy_center1
+    !! Returns [[bns:specific_energy_center1]]
+    PROCEDURE, PUBLIC:: get_pressure_center1
+    !! Returns [[bns:pressure_center1]]
+    PROCEDURE, PUBLIC:: get_ent_center2
+    !! Returns [[bns:ent_center2]]
+    PROCEDURE, PUBLIC:: get_nbar_center2
+    !! Returns [[bns:nbar_center2]]
+    PROCEDURE, PUBLIC:: get_rho_center2
+    !! Returns [[bns:rho_center2]]
+    PROCEDURE, PUBLIC:: get_energy_density_center2
+    !! Returns [[bns:energy_density_center2]]
+    PROCEDURE, PUBLIC:: get_specific_energy_center2
+    !! Returns [[bns:specific_energy_center2]]
+    PROCEDURE, PUBLIC:: get_pressure_center2
+    !! Returns [[bns:pressure_center2]]
+    PROCEDURE, PUBLIC:: get_eos1
+    !! Returns [[bns:eos1]]
+    PROCEDURE, PUBLIC:: get_eos2
+    !! Returns [[bns:eos2]]
+
+    !
+    !-- PROCEDURES to be used for single polytropic EOS
+    !
+    PROCEDURE, PUBLIC:: get_gamma_1
+    !! Returns [[bns:gamma_1]]
+    PROCEDURE, PUBLIC:: get_gamma_2
+    !! Returns [[bns:gamma_2]]
+    PROCEDURE, PUBLIC:: get_kappa_1
+    !! Returns [[bns:kappa_1]]
+    PROCEDURE, PUBLIC:: get_kappa_2
+    !! Returns [[bns:kappa_2]]
+
+    !
+    !-- PROCEDURES to be used for piecewise polytropic EOS
+    !
+    PROCEDURE, PUBLIC:: get_npeos_1
+    !! Returns [[bns:npeos_1]]
+    PROCEDURE, PUBLIC:: get_gamma0_1
+    !! Returns [[bns:gamma0_1]]
+    PROCEDURE, PUBLIC:: get_gamma1_1
+    !! Returns [[bns:gamma1_1]]
+    PROCEDURE, PUBLIC:: get_gamma2_1
+    !! Returns [[bns:gamma2_1]]
+    PROCEDURE, PUBLIC:: get_gamma3_1
+    !! Returns [[bns:gamma3_1]]
+    PROCEDURE, PUBLIC:: get_kappa0_1
+    !! Returns [[bns:kappa0_1]]
+    PROCEDURE, PUBLIC:: get_kappa1_1
+    !! Returns [[bns:kappa1_1]]
+    PROCEDURE, PUBLIC:: get_kappa2_1
+    !! Returns [[bns:kappa2_1]]
+    PROCEDURE, PUBLIC:: get_kappa3_1
+    !! Returns [[bns:kappa3_1]]
+    PROCEDURE, PUBLIC:: get_logP1_1
+    !! Returns [[bns:logP1_1]]
+    PROCEDURE, PUBLIC:: get_logRho0_1
+    !! Returns [[bns:logRho0_1]]
+    PROCEDURE, PUBLIC:: get_logRho1_1
+    !! Returns [[bns:logRho1_1]]
+    PROCEDURE, PUBLIC:: get_logRho2_1
+    !! Returns [[bns:logRho2_1]]
+    PROCEDURE, PUBLIC:: get_npeos_2
+    !! Returns [[bns:npeos_2]]
+    PROCEDURE, PUBLIC:: get_gamma0_2
+    !! Returns [[bns:gamma0_2]]
+    PROCEDURE, PUBLIC:: get_gamma1_2
+    !! Returns [[bns:gamma1_2]]
+    PROCEDURE, PUBLIC:: get_gamma2_2
+    !! Returns [[bns:gamma2_2]]
+    PROCEDURE, PUBLIC:: get_gamma3_2
+    !! Returns [[bns:gamma3_2]]
+    PROCEDURE, PUBLIC:: get_kappa0_2
+    !! Returns [[bns:kappa0_2]]
+    PROCEDURE, PUBLIC:: get_kappa1_2
+    !! Returns [[bns:kappa1_2]]
+    PROCEDURE, PUBLIC:: get_kappa2_2
+    !! Returns [[bns:kappa2_2]]
+    PROCEDURE, PUBLIC:: get_kappa3_2
+    !! Returns [[bns:kappa3_2]]
+    PROCEDURE, PUBLIC:: get_logP1_2
+    !! Returns [[bns:logP1_2]]
+    PROCEDURE, PUBLIC:: get_logRho0_2
+    !! Returns [[bns:logRho0_2]]
+    PROCEDURE, PUBLIC:: get_logRho1_2
+    !! Returns [[bns:logRho1_2]]
+    PROCEDURE, PUBLIC:: get_logRho2_2
+    !! Returns [[bns:logRho2_2]]
 
 
   END TYPE bnsbase
+
+
+  ABSTRACT INTERFACE
+
+    FUNCTION get_eos_id_int( THIS )
+
+      IMPORT:: bnsbase
+      !> [[bns]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN ):: THIS
+      ! Result
+      INTEGER:: get_eos_id_int
+
+    END FUNCTION get_eos_id_int
+
+  END INTERFACE
 
 
   INTERFACE
@@ -435,27 +475,57 @@ MODULE bns_base
   !
   !  END FUNCTION get_bns_identifier
 
-    SUBROUTINE read_bns_id_spacetime_int( THIS, nx, ny, nz, &
-                                              pos, &
-                                              lapse, &
-                                              shift, &
-                                              g, &
-                                              ek )
-    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
-    !  the BSSN variables and constraints
-      IMPORT:: bnsbase
-      !> [[bns]] object which this PROCEDURE is a member of
-      CLASS(bnsbase),                        INTENT( IN OUT ):: THIS
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: shift
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
+ !   SUBROUTINE read_bns_id_spacetime_int( THIS, nx, ny, nz, &
+ !                                             pos, &
+ !                                             lapse, &
+ !                                             shift, &
+ !                                             g, &
+ !                                             ek )
+ !   !# Stores the spacetime ID in multi-dimensional arrays needed to compute
+ !   !  the BSSN variables and constraints
+ !     IMPORT:: bnsbase
+ !     !> [[bns]] object which this PROCEDURE is a member of
+ !     CLASS(bnsbase),                        INTENT( IN OUT ):: THIS
+ !     INTEGER,                              INTENT( IN )    :: nx
+ !     INTEGER,                              INTENT( IN )    :: ny
+ !     INTEGER,                              INTENT( IN )    :: nz
+ !     DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
+ !     DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: lapse
+ !     DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: shift
+ !     DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
+ !     DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
+ !
+ !   END SUBROUTINE read_bns_id_spacetime_int
 
-    END SUBROUTINE read_bns_id_spacetime_int
+
+    MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+                                                     central_density, &
+                                                     dr, dth, dphi, &
+                                                     mass, mass_profile, &
+                                                     mass_profile_idx )
+    !# Integrates the LORENE baryon mass density to compute the radial mass
+    !  profile. TODO: Improve integration algorithm.
+
+      !> [[bns]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN OUT )      :: THIS
+      !& Array to store the indices for array mass_profile, sorted so that
+      !  mass_profile[mass_profile_idx] is in increasing order
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+      !> Center of the star
+      DOUBLE PRECISION, INTENT( IN )    :: center
+      !> Central density of the star
+      DOUBLE PRECISION, INTENT( IN )    :: central_density
+      !> Radius of the star
+      DOUBLE PRECISION, INTENT( IN )    :: radius
+      !> Integration steps
+      DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+      !> Integrated mass of the star
+      DOUBLE PRECISION, INTENT( IN OUT ):: mass
+      !> Array storing the radial mass profile of the star
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+                                       mass_profile
+
+    END SUBROUTINE integrate_baryon_mass_density
 
 
     MODULE FUNCTION get_gamma_1( THIS )
@@ -847,26 +917,6 @@ MODULE bns_base
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos2
 
     END FUNCTION get_eos2
-
-
-    MODULE FUNCTION get_eos1_id( THIS )
-
-      !> [[bns]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
-      ! Result
-      INTEGER:: get_eos1_id
-
-    END FUNCTION get_eos1_id
-
-
-    MODULE FUNCTION get_eos2_id( THIS )
-
-      !> [[bns]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
-      ! Result
-      INTEGER:: get_eos2_id
-
-    END FUNCTION get_eos2_id
 
 
     MODULE FUNCTION get_npeos_1( THIS )

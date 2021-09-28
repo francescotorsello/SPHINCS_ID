@@ -77,7 +77,7 @@ PROGRAM sphincs_lorene_bns
 
   ! Declaration of the allocatable array storing the bns objects,
   ! containing the LORENE ID for different BNS
-  TYPE( bns ),       DIMENSION(:),   ALLOCATABLE:: binaries
+  TYPE( bnslorene ),       DIMENSION(:),   ALLOCATABLE:: binaries
   ! Declaration of the allocatable array storing the particles objects,
   ! containing the particle distributions for each bns object.
   ! Multiple particle objects can contain different particle distributions
@@ -208,7 +208,7 @@ PROGRAM sphincs_lorene_bns
   !-- Construct the LORENE ID from the LORENE binary files
   !
   build_bns_loop: DO itr= 1, n_bns, 1
-    binaries( itr )= bns( TRIM(common_path)//TRIM(filenames( itr )) )
+    binaries( itr )= bnslorene( TRIM(common_path)//TRIM(filenames( itr )) )
     ! Set the variables to decide on using the geodesic gauge or not
     ! (lapse=1, shift=0)
     binaries( itr )% one_lapse = one_lapse

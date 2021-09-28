@@ -4,15 +4,24 @@
 
 MODULE id_base
 
-  !*******************************************************
+  !***********************************************************
   !
-  !#
+  !# This MODULE contains the definition of TYPE idbase,
+  !  which is an ABSTRACT TYPE representing any possible
+  !  type of initial data (ID) to be set up for SPHINCS_BSSN.
+  !  That is, a binary neutron star system, a rotating
+  !  star, a binary black hole system, etc.
   !
-  !   FT 24.09.2021
+  !  PROCEDURES and variables shared by all these types
+  !  of ID should belong to TYPE idbase, as
+  !  they are inherited by its EXTENDED TYPES that
+  !  represent more specific types of ID.
   !
-  !*******************************************************
+  !  FT 24.09.2021
+  !
+  !***********************************************************
 
-  USE, INTRINSIC:: ISO_C_BINDING
+
   USE utility,  ONLY: itr, ios, err_msg, test_status, &
                       perc, creturn, compute_g4, &
                       determinant_sym4x4_grid, show_progress
@@ -25,7 +34,7 @@ MODULE id_base
   !                                                         *
   !              Definition of TYPE idbase                  *
   !                                                         *
-  !   This abstract class represents a generic ID for       *
+  !   This ABSTRACT TYPE represents a generic ID for        *
   !   SPHINCS_BSSN (binary neutron star, rotating star...). *
   !                                                         *
   !**********************************************************
@@ -38,25 +47,15 @@ MODULE id_base
     CONTAINS
 
 
-    PROCEDURE(read_double_at_pos),  DEFERRED:: read_mass_density
+    PROCEDURE(read_double_at_pos),    DEFERRED:: read_mass_density
     !# Returns the baryon mass density at the given point
 
-    PROCEDURE(read_integer_at_pos), DEFERRED:: test_position
+    PROCEDURE(read_integer_at_pos),   DEFERRED:: test_position
     !# Returns 1 if the position has physically acceptable properties,
     !  0 otherwise
 
-    !GENERIC:: read_id => read_id_mass_b
-  !  GENERIC:: read_id => read_id_ext, &
-  !                       read_id_particles, &
-  !                       read_id_mass_b, &
-  !                       read_id_spacetime, &
-  !                       read_id_hydro, &
-  !                       read_id_k
-    !# GENERIC PROCEDURE, kept GENERIC for possible overloading, if needed
-
     PROCEDURE(read_id_ext_int),       DEFERRED:: read_id_ext
-    !# Stores the ID in non-[[idbase]]-member arrays with the same shape as the
-    !   [[idbase]] member arrays
+    !# Stores the full ID into arrays
     PROCEDURE(read_id_particles_int), DEFERRED:: read_id_particles
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
     PROCEDURE(read_id_mass_b_int),    DEFERRED:: read_id_mass_b
@@ -70,9 +69,10 @@ MODULE id_base
     PROCEDURE(read_id_k_int),         DEFERRED:: read_id_k
     !! Stores the components of the extrinsic curvature in arrays
 
-    PROCEDURE(integrate_field_int), DEFERRED:: integrate_field_on_star
-    !# Integrates the LORENE baryon mass density and computes the
-    !  radial mass profile
+    PROCEDURE(integrate_field_int),   DEFERRED:: integrate_field_on_star
+    !# Integrates a field over the interior of a star in spherical coordinates,
+    !  and computes its radial profile inside the star
+
 
   END TYPE idbase
 
@@ -147,13 +147,13 @@ MODULE id_base
                                      u_euler_x, u_euler_y, u_euler_z )
     !# Stores the ID in non [[bns]]-member arrays with the same shape as the
     !  [[bns]] member arrays
-      IMPORT:: idbase, C_DOUBLE
+      IMPORT:: idbase
       !> [[bns]] object which this PROCEDURE is a member of
       CLASS(idbase),                     INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
-      REAL(C_DOUBLE), DIMENSION(:), INTENT( IN )    :: x
-      REAL(C_DOUBLE), DIMENSION(:), INTENT( IN )    :: y
-      REAL(C_DOUBLE), DIMENSION(:), INTENT( IN )    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
@@ -239,13 +239,13 @@ MODULE id_base
                                       pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
-      IMPORT:: idbase, C_DOUBLE
+      IMPORT:: idbase
       !> [[bns]] object which this PROCEDURE is a member of
       CLASS(idbase),                     INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
-      REAL(C_DOUBLE), DIMENSION(:), INTENT( IN )    :: x
-      REAL(C_DOUBLE), DIMENSION(:), INTENT( IN )    :: y
-      REAL(C_DOUBLE), DIMENSION(:), INTENT( IN )    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
