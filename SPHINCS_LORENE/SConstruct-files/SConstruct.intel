@@ -34,9 +34,14 @@ env['F90'] = 'ifort'
 env['CXX'] = 'icpc'
 
 # F90 flags for production
+<<<<<<< HEAD
 env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback']
+=======
+env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp']
+>>>>>>> ftdev
 #, '-heap-arrays'
 #, '-qoverride-limits'
+#, '-fpp'
 
 # F90 flags for debugging
 #env['F90FLAGS'] = ['-O0', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-CB', '-CS', '-traceback', '-fpe0', '-warn', '-debug extended']

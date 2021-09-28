@@ -25,7 +25,12 @@ PROGRAM write_par_eos
   CHARACTER( LEN= : ), ALLOCATABLE:: err_msg
   CHARACTER( LEN= 4 ):: eos
 
+#ifdef __INTEL_COMPILER
   WRITE(*,'("Please write a 4 character string containing the name of the piecewise polytropic EOS: ",\)')
+#endif
+#ifdef __GFORTRAN__
+  WRITE(*,'("Please write a 4 character string containing the name of the piecewise polytropic EOS: ")')
+#endif
   READ(*,'(A)') eos
 
   CALL select_EOS_parameters(eos)
@@ -103,7 +108,7 @@ PROGRAM write_par_eos
   CLOSE( UNIT= 2 )
 
   PRINT *
-  PRINT *, "Parameter file", namefile," written."
+  PRINT *, "Parameter file ", namefile," written."
   PRINT *
 
 END PROGRAM write_par_eos

@@ -460,10 +460,7 @@ PROGRAM convergence_test
     DOUBLE PRECISION, PARAMETER:: tiny_real= 1D-30
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid_dx
     DOUBLE PRECISION, DIMENSION(3):: point_dx2
-    DOUBLE PRECISION, DIMENSION(formul_dx% get_ngrid_x(ref_lev), &
-                                formul_dx% get_ngrid_y(ref_lev), &
-                                formul_dx% get_ngrid_z(ref_lev)):: &
-                                                            convergence_factor
+    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: convergence_factor
 
     CHARACTER( LEN=: ), ALLOCATABLE:: name_cauchy_ct, name_cauchy_parts_ct
 
@@ -479,6 +476,7 @@ PROGRAM convergence_test
 
     ALLOCATE( grid_dx( 3, nx, ny, nz ) )
     ALLOCATE( abs_grid( 3, nx, ny, nz ) )
+    ALLOCATE( convergence_factor( nx, ny, nz ) )
 
     PRINT *, "** Computing convergence factor..."
 
@@ -832,10 +830,7 @@ PROGRAM convergence_test
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid_dx
     DOUBLE PRECISION, DIMENSION(3):: point_dx2
     DOUBLE PRECISION, DIMENSION(3):: point_dx4
-    DOUBLE PRECISION, DIMENSION(formul_dx% get_ngrid_x(ref_lev), &
-                                formul_dx% get_ngrid_y(ref_lev), &
-                                formul_dx% get_ngrid_z(ref_lev)):: &
-                                                            convergence_factor
+    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: convergence_factor
 
     CHARACTER( LEN=: ), ALLOCATABLE:: name_cauchy_ct, name_cauchy_parts_ct
 
@@ -851,6 +846,7 @@ PROGRAM convergence_test
 
     ALLOCATE( grid_dx( 3, nx, ny, nz ) )
     ALLOCATE( abs_grid( 3, nx, ny, nz ) )
+    ALLOCATE( convergence_factor( nx, ny, nz ) )
 
     PRINT *, "** Computing convergence factor..."
 

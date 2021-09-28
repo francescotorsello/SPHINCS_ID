@@ -804,7 +804,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Here the particle mass is computed using the radial mass profile
       ! of the star, so nu should not be redistributed to achieve a given
       ! particle mass ratio
-      IF( parts_obj% redistribute_nu == .TRUE. )THEN
+      IF( parts_obj% redistribute_nu .EQV. .TRUE. )THEN
           parts_obj% redistribute_nu= .FALSE.
       ENDIF
 

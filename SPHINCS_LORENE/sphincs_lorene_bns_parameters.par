@@ -1,4 +1,8 @@
 &bns_parameters
+!-------------------------------------------------------------------------!
+! gfortran requires the assignment to be on the same line, ifort does not !
+!-------------------------------------------------------------------------!
+
 !----------------------------------------------------------------!
 ! Parameters to specify the number of binary systems of neutron  !
 ! stars, the paths to the LORENE binary files containing the     !
@@ -11,7 +15,7 @@
 n_bns=1                          ! Number of BNS to import
 common_path="lorene-id-files/"   ! Path to the directory containing the LORENE
                                  ! BNS binary files
-filenames(1)=!"mpa1_1.6-2_45km_1e-9.bin"
+filenames(1)="DD2-SF-RDF1.8-wl_1.2-2_45km_1e-9.bin" !"mpa1_1.6-2_45km_1e-9.bin"
              !"apr3_1.4-2_35km.bin"
              !"apr4_1.6-1.73_35km.bin"
              !"apr4_1.2-1.5_60km.bin"
@@ -58,7 +62,7 @@ filenames(1)=!"mpa1_1.6-2_45km_1e-9.bin"
              !"DD2-SF-RDF1.8-wl_1.2-2_45km_2.bin"
              !"DD2-SF-RDF1.8-wl_1.2-2_45km_5e-9.bin"
              !"DD2-SF-RDF1.8-wl_1.2-2_50km_2e-9.bin"
-             "DD2-SF-RDF1.8-wl_1.2-2_45km_1e-9.bin"
+             !"DD2-SF-RDF1.8-wl_1.2-2_45km_1e-9.bin"
              !"DD2-SF-RDF1.8-wl_1.2-2_45km_linint.bin"
              !"DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr.bin"
              !"DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
@@ -79,7 +83,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=3                     ! 0: Read particle positions from formatted
+placer(1,:)=2                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: Single lattice around stars
                                   ! 2: Two lattices, one around each star
@@ -95,7 +99,7 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 !----------------------------------------------!
 ! Choose to compute and export the constraints !
 !----------------------------------------------!
-compute_constraints=.FALSE.        ! Compute constraints on the gravity grid,
+compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
 compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
@@ -114,7 +118,7 @@ export_constraints_details=.FALSE. ! Write a formatted file whose rows contain
                                    ! [1D+3,+oo)
 export_constraints_xy=.TRUE.  ! Export constraints only on the xy plane to
                               ! formatted files
-export_constraints_x=.TRUE.   ! Export constraints only on the x axis to
+export_constraints_x=.FALSE.   ! Export constraints only on the x axis to
                               ! formatted files, irrespectively of the value of
                               ! export_constraints_xy
 constraints_step=1            ! Export the constraints every step-th grid point

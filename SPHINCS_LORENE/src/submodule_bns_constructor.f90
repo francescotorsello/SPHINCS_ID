@@ -109,11 +109,15 @@ SUBMODULE (bns_id) bns_constructor
 
     !PRINT *, "** Executing the construct_binary subroutine..."
 
+#ifdef __INTEL_COMPILER
+
     IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 
       CALL destruct_bin_ns( THIS% bns_ptr )
 
     ENDIF
+
+#endif
 
     !
     !-- If the name of the LORENE binary file resu_file is given as argument to
