@@ -13,8 +13,8 @@ MODULE particles_id
 
 
   USE utility,   ONLY: itr, ios, err_msg, test_status, &
-                     perc, creturn, run_id, show_progress
-  USE bns_id,    ONLY: bns
+                        perc, creturn, run_id, show_progress
+  !USE bns_id,    ONLY: bns
   USE bns_base,  ONLY: bnsbase
   USE timing,    ONLY: timer
 

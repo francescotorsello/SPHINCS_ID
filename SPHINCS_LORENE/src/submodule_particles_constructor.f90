@@ -1275,27 +1275,27 @@ SUBMODULE (particles_id) particles_constructor
     PRINT *, "** Importing the LORENE ID on the particles..."
 
     CALL parts_obj% importer_timer% start_timer()
-    !CALL bns_obj% read_id( parts_obj% npart, &
-    !                       parts_obj% pos( 1, : ), &
-    !                       parts_obj% pos( 2, : ), &
-    !                       parts_obj% pos( 3, : ), &
-    !                       parts_obj% lapse_parts, &
-    !                       parts_obj% shift_parts_x, &
-    !                       parts_obj% shift_parts_y, &
-    !                       parts_obj% shift_parts_z, &
-    !                       parts_obj% g_xx_parts, &
-    !                       parts_obj% g_xy_parts, &
-    !                       parts_obj% g_xz_parts, &
-    !                       parts_obj% g_yy_parts, &
-    !                       parts_obj% g_yz_parts, &
-    !                       parts_obj% g_zz_parts, &
-    !                       parts_obj% baryon_density_parts, &
-    !                       parts_obj% energy_density_parts, &
-    !                       parts_obj% specific_energy_parts, &
-    !                       parts_obj% pressure_parts, &
-    !                       parts_obj% v_euler_parts_x, &
-    !                       parts_obj% v_euler_parts_y, &
-    !                       parts_obj% v_euler_parts_z )
+    CALL bns_obj% read_id_particles( parts_obj% npart, &
+                           parts_obj% pos( 1, : ), &
+                           parts_obj% pos( 2, : ), &
+                           parts_obj% pos( 3, : ), &
+                           parts_obj% lapse_parts, &
+                           parts_obj% shift_parts_x, &
+                           parts_obj% shift_parts_y, &
+                           parts_obj% shift_parts_z, &
+                           parts_obj% g_xx_parts, &
+                           parts_obj% g_xy_parts, &
+                           parts_obj% g_xz_parts, &
+                           parts_obj% g_yy_parts, &
+                           parts_obj% g_yz_parts, &
+                           parts_obj% g_zz_parts, &
+                           parts_obj% baryon_density_parts, &
+                           parts_obj% energy_density_parts, &
+                           parts_obj% specific_energy_parts, &
+                           parts_obj% pressure_parts, &
+                           parts_obj% v_euler_parts_x, &
+                           parts_obj% v_euler_parts_y, &
+                           parts_obj% v_euler_parts_z )
     CALL parts_obj% importer_timer% stop_timer()
 
     IF( debug ) PRINT *, "34"
@@ -1793,15 +1793,15 @@ SUBMODULE (particles_id) particles_constructor
                                                 pressure, &
                                                 v_euler_x, v_euler_y, v_euler_z
 
-      !CALL bns_obj% read_id( npart_real, x, y, z, &
-      !                       lapse, shift_x, shift_y, shift_z, &
-      !                       g_xx, g_xy, g_xz, &
-      !                       g_yy, g_yz, g_zz, &
-      !                       baryon_density, &
-      !                       energy_density, &
-      !                       specific_energy, &
-      !                       pressure, &
-      !                       v_euler_x, v_euler_y, v_euler_z )
+      CALL bns_obj% read_id_particles( npart_real, x, y, z, &
+                             lapse, shift_x, shift_y, shift_z, &
+                             g_xx, g_xy, g_xz, &
+                             g_yy, g_yz, g_zz, &
+                             baryon_density, &
+                             energy_density, &
+                             specific_energy, &
+                             pressure, &
+                             v_euler_x, v_euler_y, v_euler_z )
 
       CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
                             shift_z, v_euler_x, v_euler_y, v_euler_z, &

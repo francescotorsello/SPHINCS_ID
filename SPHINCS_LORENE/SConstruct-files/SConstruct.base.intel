@@ -23,9 +23,8 @@ if ARGUMENTS.get('VERBOSE') != '1':
     env['HDF5COMSTR'] = "Generating $TARGET"
 
 # Build options
-env['LIBS'] = ['stdc++']
-#env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export', 'lorene', 'lorenef77']
-#env['LIBPATH'] = ['../../../Lorene/Lib']
+env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+env['LIBPATH'] = ['../../../Lorene/Lib']
 env['F90FILESUFFIXES']=['.f90','.f']
 
 # Fortran compiler
@@ -62,7 +61,7 @@ env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-repor
 #env['CXXFLAGS'] = ['-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', '-Wconversion', '-Winline', '-Wabi=11', '-Wold-style-cast', '-Woverloaded-virtual', '-traceback', '-check-uninit', '-ftrapuv', '-debug', '-debug extended', '-fpe3', '-mp', '-fp-model strict','-align all', '-check bounds', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons']
 
 env['F90PATH'] = [ '.', '../../BSSN', '../SPHINCS_fix_metric', "../SPHINCS_BSSN" ]
-#env['CPPPATH'] = [ '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/Include/' ]
+env['CPPPATH'] = [ '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/Include/' ]
 Progress('Evaluating $TARGET\n')
 
 sources = ['src/module_id_base.f90',
@@ -183,12 +182,12 @@ sources = ['src/module_id_base.f90',
 
 #lorene_id_executable = 'sphincs_lorene_bns.x'
 #lorene_id_convtest_executable = 'convergence_test.x'
-write_par_eos = 'write_par_eos.x'
+#write_par_eos = 'write_par_eos.x'
 #
 ##['../SPHINCS_fix_metric/module_Artificial_Pressure_Method.f90']
 #
 #Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/sphincs_lorene_bns.f90'])
 #Program(lorene_id_convtest_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/convergence_test.f90'])
-Program(write_par_eos, sources + ['src/write_par_eos.f90'])
+#Program(write_par_eos, lorene_sources_bin_ns + lorene_sources + sources + ['src/write_par_eos.f90'])
 ##
 Decider('MD5-timestamp')

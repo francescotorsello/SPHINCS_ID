@@ -34,7 +34,7 @@ env['F90'] = 'ifort'
 env['CXX'] = 'icpc'
 
 # F90 flags for production
-env['F90FLAGS'] = ['-O3', '-qopenmp', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback']
+env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback']
 #, '-heap-arrays'
 #, '-qoverride-limits'
 
@@ -116,11 +116,15 @@ lorene_sources_bin_ns = ['../../../Lorene/Export/C++/Source/bin_ns.C',
                          '../../../Lorene/Export/C++/Source/bin_ns_aux.C',
                          '../../../Lorene/Export/C++/Source/write_lines.C']
 
-sources = ['src/module_utility.f90',
+sources = ['src/module_id_base.f90',
+           'src/module_bns_base.f90',
+           'src/module_utility.f90',
            'src/module_bns_id.f90',
            'src/module_particles_id.f90',
            'src/module_formul_3p1_id.f90',
            'src/module_bssn_id.f90',
+           #'src/submodule_idbase_mass_profile.f90',
+           'src/submodule_bnsbase_access.f90',
            'src/submodule_bns_constructor.f90',
            'src/submodule_bns_import.f90',
            'src/submodule_bns_memory.f90',

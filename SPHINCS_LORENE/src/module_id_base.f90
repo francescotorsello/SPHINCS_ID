@@ -46,12 +46,12 @@ MODULE id_base
     !  0 otherwise
 
     !GENERIC:: read_id => read_id_mass_b
-    GENERIC:: read_id => read_id_ext, &
-                         read_id_particles, &
-                         read_id_mass_b, &
-                         read_id_spacetime, &
-                         read_id_hydro, &
-                         read_id_k
+  !  GENERIC:: read_id => read_id_ext, &
+  !                       read_id_particles, &
+  !                       read_id_mass_b, &
+  !                       read_id_spacetime, &
+  !                       read_id_hydro, &
+  !                       read_id_k
     !# GENERIC PROCEDURE, kept GENERIC for possible overloading, if needed
 
     PROCEDURE(read_id_ext_int),       DEFERRED:: read_id_ext

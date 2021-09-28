@@ -137,7 +137,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
       PRINT *, " * Importing on refinement level l=", l, "..."
 
-      CALL bns_obj% read_id( THIS% get_ngrid_x(l), &
+      CALL bns_obj% read_id_hydro( THIS% get_ngrid_x(l), &
                              THIS% get_ngrid_y(l), &
                              THIS% get_ngrid_z(l), &
                              THIS% coords% levels(l)% var, &

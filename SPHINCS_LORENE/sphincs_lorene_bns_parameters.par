@@ -66,7 +66,7 @@ filenames(1)=!"mpa1_1.6-2_45km_1e-9.bin"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.FALSE.
+run_sph=.TRUE.
 run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !

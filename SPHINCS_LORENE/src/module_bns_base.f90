@@ -230,7 +230,6 @@ MODULE bns_base
     CONTAINS
 
 
-
       !
       !-- Overloaded FUNCTION to access the fields as arrays and as values
       !
@@ -435,6 +434,28 @@ MODULE bns_base
   !    DOUBLE PRECISION:: get_bns_identifier
   !
   !  END FUNCTION get_bns_identifier
+
+    SUBROUTINE read_bns_id_spacetime_int( THIS, nx, ny, nz, &
+                                              pos, &
+                                              lapse, &
+                                              shift, &
+                                              g, &
+                                              ek )
+    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
+    !  the BSSN variables and constraints
+      IMPORT:: bnsbase
+      !> [[bns]] object which this PROCEDURE is a member of
+      CLASS(bnsbase),                        INTENT( IN OUT ):: THIS
+      INTEGER,                              INTENT( IN )    :: nx
+      INTEGER,                              INTENT( IN )    :: ny
+      INTEGER,                              INTENT( IN )    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: lapse
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: shift
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
+
+    END SUBROUTINE read_bns_id_spacetime_int
 
 
     MODULE FUNCTION get_gamma_1( THIS )
