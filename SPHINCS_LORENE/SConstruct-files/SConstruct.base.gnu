@@ -2,12 +2,10 @@ import sys
 import os
 import glob
 
-env = DefaultEnvironment(ENV = {'PATH' : os.environ['PATH'],
-                                'INTEL_LICENSE_FILE' : os.environ['INTEL_LICENSE_FILE'],
-                                'LD_LIBRARY_PATH' : os.environ['LD_LIBRARY_PATH']},
-                         LINK = 'ifort',
-                         LINKFLAGS = '-g -qopenmp',
-                         TOOLS= ['default', 'ifort'])
+env = DefaultEnvironment(ENV = {'PATH' : os.environ['PATH']},
+                         LINK = 'gfortran',
+                         LINKFLAGS = '-g -fopenmp',
+                         TOOLS= ['default', 'gfortran'])
 
 # pretty output
 if ARGUMENTS.get('VERBOSE') != '1':
@@ -26,38 +24,20 @@ if ARGUMENTS.get('VERBOSE') != '1':
 env['LIBS'] = ['stdc++']
 env['F90FILESUFFIXES']=['.f90','.f']
 
-# Fortran compiler
-env['F90'] = 'ifort'
+env['F90']= 'gfortran'
 
-# C++ compiler
-env['CXX'] = 'icpc'
-
-# F90 flags for production
-env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp']
-#, '-heap-arrays'
-#, '-qoverride-limits'
+env['CXX']= 'g++'
 
 # F90 flags for debugging
-#env['F90FLAGS'] = ['-O0', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-CB', '-CS', '-traceback', '-fpe0', '-warn', '-debug extended', '-fpp']
+#env['F90FLAGS'] = ['-O0', '-g3', '-fopenmp', '-ftree-vectorize','-fopt-info-vec', '-fopt-info-loop', '-fbacktrace', '-ftrapping-math', '-fbounds-check', '-ffpe-trap=zero,overflow,underflow','-Wuninitialized','-W','-Wall', '-cpp', '-ffree-line-length-none', '-ffixed-line-length-none']
 
-# More F90 flags for debugging
-#env['F90FLAGS'] = ['-r8','-g','-qopenmp','-O0', '-ftz', '-heap-arrays 5000',, '-fno-alias', '-traceback', '-debug', '-debug all', '-nolib-inline','-align all', '-check bounds', '-fno-inline-functions', '-prec-div', '-prec-sqrt', '-fp-stack-check', '-init=snan,arrays', '-traceback', '-fPIC', '-fpe3', '-heap-arrays 32', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-fp-model strict', '-no-wrap-margin', '-ftrapuv', '-mp']
-
-# Do not use FORTRANFLAGS
-#env['FORTRANFLAGS'] = ['-O3', '-g', '-qopenmp',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin']
-#env['FORTRANFLAGS'] = ['-O3', '-g', '-align all', '-check bounds', '-check uninit', '-qopenmp', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-fp-model source', '-no-wrap-margin', '-debug extended']
+# F90 flags for production
+env['F90FLAGS'] = ['-O3', '-fopenmp', '-ftree-vectorize','-fopt-info-vec', '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', '-ffree-line-length-none', '-ffixed-line-length-none']
+#, '-cpp', '-ffree-line-length-none', '-ffixed-line-length-none', '-E', '-dM'
 
 # C++ flags for production (union of the flags in the SPHINCS SConstruct files
 # and the flags in the file local_settings in the LORENE home directory)
-env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wconversion', '-Winline', '-Woverloaded-virtual']
-#-ip, -ipo, -ipo=n
-# icx compiler: best of icc and best of clang
-# -o prog
-
-# C++ flags for debugging (union of the flags in the SPHINCS SConstruct files
-# and the flags in the file local_settings in the LORENE home directory)
-# See also https://www.nas.nasa.gov/hecc/support/kb/recommended-intel-compiler-debugging-options_92.html
-#env['CXXFLAGS'] = ['-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', '-Wconversion', '-Winline', '-Wabi=11', '-Wold-style-cast', '-Woverloaded-virtual', '-traceback', '-check-uninit', '-ftrapuv', '-debug', '-debug extended', '-fpe3', '-mp', '-fp-model strict','-align all', '-check bounds', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons']
+env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-fopenmp', '-Wall', '-ftree-vectorize','-fopt-info-vec', '-fopt-info-loop', '-m64', '-DNDEBUG', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', '-Wconversion', '-Winline', '-Wabi=11', '-Wold-style-cast', '-Woverloaded-virtual']
 
 env['F90PATH'] = [ '.', '../../BSSN', '../SPHINCS_fix_metric', "../SPHINCS_BSSN" ]
 Progress('Evaluating $TARGET\n')

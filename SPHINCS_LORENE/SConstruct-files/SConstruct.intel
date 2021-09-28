@@ -34,17 +34,13 @@ env['F90'] = 'ifort'
 env['CXX'] = 'icpc'
 
 # F90 flags for production
-<<<<<<< HEAD
-env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback']
-=======
 env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp']
->>>>>>> ftdev
 #, '-heap-arrays'
 #, '-qoverride-limits'
 #, '-fpp'
 
 # F90 flags for debugging
-#env['F90FLAGS'] = ['-O0', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-CB', '-CS', '-traceback', '-fpe0', '-warn', '-debug extended']
+#env['F90FLAGS'] = ['-O0', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-CB', '-CS', '-traceback', '-fpe0', '-warn', '-debug extended', '-fpp']
 
 # More F90 flags for debugging
 #env['F90FLAGS'] = ['-r8','-g','-qopenmp','-O0', '-ftz', '-heap-arrays 5000',, '-fno-alias', '-traceback', '-debug', '-debug all', '-nolib-inline','-align all', '-check bounds', '-fno-inline-functions', '-prec-div', '-prec-sqrt', '-fp-stack-check', '-init=snan,arrays', '-traceback', '-fPIC', '-fpe3', '-heap-arrays 32', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-fp-model strict', '-no-wrap-margin', '-ftrapuv', '-mp']
@@ -55,7 +51,7 @@ env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arra
 
 # C++ flags for production (union of the flags in the SPHINCS SConstruct files
 # and the flags in the file local_settings in the LORENE home directory)
-env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', '-Wconversion', '-Winline', '-Wabi=11', '-Wold-style-cast', '-Woverloaded-virtual']
+env['CXXFLAGS'] = ['-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', '-W', '-Wundef', '-Wshadow', '-Wcast-qual', '-Wconversion', '-Winline', '-Woverloaded-virtual']
 #-ip, -ipo, -ipo=n
 # icx compiler: best of icc and best of clang
 # -o prog

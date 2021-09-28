@@ -350,7 +350,6 @@ MODULE bns_id
     PROCEDURE, PUBLIC:: print_id_params
     !! Prints the parameters of the BNS to the standard output
 
-<<<<<<< HEAD
  !   GENERIC, PUBLIC:: import_id => import_id_int_ptr, &
  !                                  import_id_ext_ptr, &
  !                                  import_id_particles_ptr, &
@@ -378,35 +377,7 @@ MODULE bns_id
  !   !# Stores the hydro ID in the arrays needed to compute the constraints
  !   !  on the refined mesh
  !   PROCEDURE:: import_id_k_ptr            => import_id_k
-=======
 
-    GENERIC, PUBLIC:: import_id => import_id_int_ptr, &
-                                   import_id_ext_ptr, &
-                                   import_id_particles_ptr, &
-                                   import_id_mass_b_ptr, &
-                                   import_id_multid_array_ptr, &
-                                   import_id_hydro_ptr, &
-                                   import_id_k_ptr
-    !# GENERIC PROCEDURE, overloded to import the LORENE BNS ID in different
-    !  ways on the gravity grid, on the particles, etc...
-
-    PROCEDURE:: import_id_int_ptr          => import_id_int
-    !! Stores the ID in the [[bns]] member arrays
-    PROCEDURE:: import_id_ext_ptr          => import_id_ext
-    !# Stores the ID in non-[[bns]]-member arrays with the same shape as the
-    !   [[bns]] member arrays
-    PROCEDURE:: import_id_particles_ptr    => import_id_particles
-    !! Stores the hydro ID in the arrays needed to compute the SPH ID
-    PROCEDURE:: import_id_mass_b_ptr       => import_id_mass_b
-    !! Stores the hydro ID in the arrays needed to compute the baryon mass
-    PROCEDURE:: import_id_multid_array_ptr => import_id_multid_array
-    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
-    !  the BSSN variables and constraints
-    PROCEDURE:: import_id_hydro_ptr        => import_id_hydro
-    !# Stores the hydro ID in the arrays needed to compute the constraints
-    !  on the refined mesh
-    PROCEDURE:: import_id_k_ptr            => import_id_k
->>>>>>> ftdev
     !! Stores the components of the extrinsic curvature in arrays
 
     PROCEDURE:: import_id_int

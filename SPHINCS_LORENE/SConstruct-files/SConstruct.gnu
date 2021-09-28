@@ -30,7 +30,7 @@ env['F90']= 'gfortran'
 env['CXX']= 'g++'
 
 # F90 flags for debugging
-#env['F90FLAGS'] = ['-O0', '-g3', '-fopenmp', '-ftree-vectorize','-fopt-info-vec', '-fopt-info-loop', '-fbacktrace', '-ftrapping-math', '-fbounds-check', '-ffpe-trap=zero,overflow,underflow','-Wuninitialized','-W','-Wall']
+#env['F90FLAGS'] = ['-O0', '-g3', '-fopenmp', '-ftree-vectorize','-fopt-info-vec', '-fopt-info-loop', '-fbacktrace', '-ftrapping-math', '-fbounds-check', '-ffpe-trap=zero,overflow,underflow','-Wuninitialized','-W','-Wall', '-cpp', '-ffree-line-length-none', '-ffixed-line-length-none']
 
 # F90 flags for production
 env['F90FLAGS'] = ['-O3', '-fopenmp', '-ftree-vectorize','-fopt-info-vec', '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', '-ffree-line-length-none', '-ffixed-line-length-none']
@@ -96,11 +96,15 @@ lorene_sources_bin_ns = ['../../../Lorene/Export/C++/Source/bin_ns.C',
                          '../../../Lorene/Export/C++/Source/bin_ns_aux.C',
                          '../../../Lorene/Export/C++/Source/write_lines.C']
 
-sources = ['src/module_utility.f90',
+sources = ['src/module_id_base.f90',
+          'src/module_bns_base.f90',
+          'src/module_utility.f90',
           'src/module_bns_id.f90',
           'src/module_particles_id.f90',
           'src/module_formul_3p1_id.f90',
           'src/module_bssn_id.f90',
+          #'src/submodule_idbase_mass_profile.f90',
+          'src/submodule_bnsbase_access.f90',
           'src/submodule_bns_constructor.f90',
           'src/submodule_bns_import.f90',
           'src/submodule_bns_memory.f90',
