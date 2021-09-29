@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_base) bns_mass_profile
+SUBMODULE (bns_base) bns_base_mass_profile
 
   !********************************************
   !
@@ -211,4 +211,4 @@ SUBMODULE (bns_base) bns_mass_profile
   END PROCEDURE integrate_baryon_mass_density
 
 
-END SUBMODULE bns_mass_profile
+END SUBMODULE bns_base_mass_profile

@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_base) bns_access
+SUBMODULE (bns_base) bns_base_access
 
   !***************************************************
   !
@@ -1206,4 +1206,4 @@ SUBMODULE (bns_base) bns_access
   END PROCEDURE get_logRho2_2
 
 
-END SUBMODULE bns_access
+END SUBMODULE bns_base_access

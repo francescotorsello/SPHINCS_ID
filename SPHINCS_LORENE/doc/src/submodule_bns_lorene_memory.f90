@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_lorene) bns_id_memory
+SUBMODULE (bns_lorene) bns_lorene_memory
 
   !***********************************************
   !
@@ -545,4 +545,4 @@ SUBMODULE (bns_lorene) bns_id_memory
   END PROCEDURE deallocate_lorene_id_memory
 
 
-END SUBMODULE bns_id_memory
+END SUBMODULE bns_lorene_memory

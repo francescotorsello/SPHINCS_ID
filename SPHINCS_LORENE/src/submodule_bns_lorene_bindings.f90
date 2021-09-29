@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_lorene) bns_bindings
+SUBMODULE (bns_lorene) bns_lorene_bindings
 
         !**********************************************
         !                                             *
@@ -216,7 +216,7 @@ SUBMODULE (bns_lorene) bns_bindings
 
     END INTERFACE
 
-END SUBMODULE bns_bindings
+END SUBMODULE bns_lorene_bindings
 
 !TYPE(C_PTR), SAVE :: bin_ns = C_NULL_PTR
 !

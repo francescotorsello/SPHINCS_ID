@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_lorene) bns_import
+SUBMODULE (bns_lorene) bns_lorene_import
 
   !****************************************************
   !
@@ -875,4 +875,4 @@ SUBMODULE (bns_lorene) bns_import
   END PROCEDURE is_hydro_negative
 
 
-END SUBMODULE bns_import
+END SUBMODULE bns_lorene_import

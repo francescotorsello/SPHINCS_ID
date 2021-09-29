@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_lorene) bns_params
+SUBMODULE (bns_lorene) bns_lorene_params
 
   !********************************************
   !
@@ -499,4 +499,4 @@ SUBMODULE (bns_lorene) bns_params
   END PROCEDURE print_id_params
 
 
-END SUBMODULE bns_params
+END SUBMODULE bns_lorene_params
