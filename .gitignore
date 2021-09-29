@@ -7,6 +7,7 @@
 !*/
 !*.f90
 !SConstruct*
+!**/doc-pages/**/*.md
 !documentation_*.md
 !read_bin_ns.par
 !gravity_grid_parameters.dat

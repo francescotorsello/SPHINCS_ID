@@ -22,11 +22,6 @@ MODULE id_base
   !***********************************************************
 
 
-  USE utility,  ONLY: itr, ios, err_msg, test_status, &
-                      perc, creturn, compute_g4, &
-                      determinant_sym4x4_grid, show_progress
-
-
   IMPLICIT NONE
 
 

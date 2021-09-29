@@ -10,7 +10,7 @@ docmark_alt: #
 predocmark: >
 predocmark_alt: &
 source: true
-graph: false
+graph: true
 sort: alpha
 src_dir: ./src
 exclude_dir: ./src/prototypes
