@@ -93,8 +93,8 @@ SUBMODULE (bns_lorene) bns_params
                                THIS% pressure_center2, &
                                eos1_tmp_c, &
                                eos2_tmp_c, &
-                               THIS% eos1_id, &
-                               THIS% eos2_id, &
+                               THIS% eos1_loreneid, &
+                               THIS% eos2_looeneid, &
                                THIS% gamma_1, &
                                THIS% kappa_1, &
                                THIS% gamma_2, &

@@ -12,10 +12,10 @@ MODULE particles_id
   !***********************************************************
 
 
-  USE utility, ONLY: itr, ios, err_msg, test_status, &
-                     perc, creturn, run_id, show_progress
-  USE bns_id,  ONLY: bns
-  USE timing,  ONLY: timer
+  USE utility,   ONLY: itr, ios, err_msg, test_status, &
+                       perc, creturn, run_id, show_progress
+  USE bns_base,  ONLY: bnsbase
+  USE timing,    ONLY: timer
 
 
   IMPLICIT NONE
@@ -300,7 +300,6 @@ MODULE particles_id
     !& `.TRUE.` if the particles on star 2 should be the reflection of the
     !  particles on star 1 with respect to the \(yz\) plane, only if the baryon
     !  masses of the stars differe less than \(0.2\%\); `.FALSE.` otherwise
-    !  |lorene|
     LOGICAL:: reflect_particles_x
 
     !
@@ -451,8 +450,8 @@ MODULE particles_id
     MODULE FUNCTION construct_particles( bns_obj, dist ) RESULT ( parts_obj )
     !! Constructs a [[particles]] object
 
-        CLASS(bns), INTENT( IN OUT ):: bns_obj
-        !# [[bns]] object representing the BNS for which we want to place
+        CLASS(bnsbase), INTENT( IN OUT ):: bns_obj
+        !# [[bnsbase]] object representing the BNS for which we want to place
         !  particles
         INTEGER,    INTENT( IN )    :: dist
         !# Identifier of the desired particle distribution:
@@ -502,8 +501,8 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bns]] object needed to access the BNS data
-      CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      !& [[bnsbase]] object needed to access the BNS data
+      CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
       !> Number of lattice points in the \(x\) direction
       INTEGER,          INTENT( IN )    :: nx
       !> Number of lattice points in the \(y\) direction
@@ -539,8 +538,8 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bns]] object needed to access the BNS data
-      CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      !& [[bnsbase]] object needed to access the BNS data
+      CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
       !& Number of lattice points on the less massive star
       !  in the \(x\) direction
       INTEGER,          INTENT( IN )    :: nx
@@ -596,9 +595,9 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bns]] object needed to access the BNS data
-      !  @TODO Remove the [[bns]] argument as done in SUBROUTINE perform_apm
-      !CLASS(bns),       INTENT( IN OUT ):: bns_obj
+      !& [[bnsbase]] object needed to access the BNS data
+      !  @TODO Remove the [[bnsbase]] argument as done in SUBROUTINE perform_apm
+      !CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
       !> Approximate particle number on the star
       INTEGER,          INTENT( IN )    :: npart_approx
       !> Final number of particles on the star
@@ -1240,7 +1239,7 @@ MODULE particles_id
 
     ENDIF
 
-    IF( PRESENT(debug) .AND. debug == .TRUE. )THEN
+    IF( PRESENT(debug) .AND. debug .EQV. .TRUE. )THEN
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( pos, x_sort, x_number ) &

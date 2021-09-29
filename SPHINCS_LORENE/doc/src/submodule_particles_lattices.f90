@@ -167,10 +167,10 @@ SUBMODULE (particles_id) particles_lattices
           !-- Promote a lattice point to a particle,
           !-- if the mass density is higher than the threshold
           !
-          IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
+          IF( bns_obj% read_mass_density( xtemp, ytemp, ztemp ) &
                                   > thres_baryon_density &
               .AND. &
-              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
+              bns_obj% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
 
             !THIS% npart= THIS% npart + 1
             !IF( xtemp < 0 )THEN
@@ -569,10 +569,10 @@ SUBMODULE (particles_id) particles_lattices
           !-- Promote a lattice point to a particle,
           !-- if the mass density is higher than the threshold
           !
-          IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
+          IF( bns_obj% read_mass_density( xtemp, ytemp, ztemp ) &
                                 > thres_baryon_density1 &
               .AND. &
-              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
+              bns_obj% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
 
             !THIS% npart = THIS% npart + 1
             !THIS% npart1= THIS% npart1 + 1
@@ -740,10 +740,10 @@ SUBMODULE (particles_id) particles_lattices
 
           xtemp= xmin2 + dx2/2 + ( i - 1 )*dx2
 
-          IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
+          IF( bns_obj% read_mass_density( xtemp, ytemp, ztemp ) &
                                   > thres_baryon_density2 &
               .AND. &
-              bns_obj% is_hydro_negative( xtemp, ytemp, ztemp ) == 0 )THEN
+              bns_obj% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
 
             !THIS% npart = THIS% npart + 1
             !THIS% npart2= THIS% npart2 + 1

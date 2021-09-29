@@ -312,7 +312,7 @@ SUBMODULE (bns_lorene) bns_access
 
     IMPLICIT NONE
 
-    get_eos1_loreneid= THIS% eos1_id
+    get_eos1_loreneid= THIS% eos1_loreneid
 
   END PROCEDURE get_eos1_loreneid
 
@@ -329,7 +329,7 @@ SUBMODULE (bns_lorene) bns_access
 
     IMPLICIT NONE
 
-    get_eos2_loreneid= THIS% eos2_id
+    get_eos2_loreneid= THIS% eos2_loreneid
 
   END PROCEDURE get_eos2_loreneid
 

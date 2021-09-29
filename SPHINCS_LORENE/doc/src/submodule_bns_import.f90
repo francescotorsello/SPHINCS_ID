@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_id) bns_import
+SUBMODULE (bns_lorene) bns_import
 
   !****************************************************
   !
@@ -37,7 +37,7 @@ SUBMODULE (bns_id) bns_import
 
     !**************************************************
     !
-    !# Stores the ID in the [[bns]] member arrays
+    !# Stores the ID in the [[bnslorene]] member arrays
     !
     !  FT 5.10.2020
     !
@@ -174,8 +174,8 @@ SUBMODULE (bns_id) bns_import
 
     !**************************************************
     !
-    !# Stores the ID in non-[[bns]]-member arrays
-    !  with the same shape as the [[bns]] member arrays
+    !# Stores the ID in non-[[bnslorene]]-member arrays
+    !  with the same shape as the [[bnslorene]] member arrays
     !
     !  FT 5.10.2020
     !
@@ -286,7 +286,7 @@ SUBMODULE (bns_id) bns_import
   END PROCEDURE import_id_ext
 
 
-  MODULE PROCEDURE import_id_multid_array
+  MODULE PROCEDURE import_id_spacetime
 
     !*******************************************************
     !
@@ -324,7 +324,7 @@ SUBMODULE (bns_id) bns_import
         ! SHAPE( pos(:,:,:,1) ) /= SHAPE( k(:,:,:,1) ) &
         )THEN
         PRINT *, "** ERROR: Mismatch in array dimensions" &
-                 // "in import_id_multid_array."
+                 // "in import_id_spacetime."
         PRINT *
         STOP
       ENDIF
@@ -461,7 +461,7 @@ SUBMODULE (bns_id) bns_import
 
     ENDIF
 
-  END PROCEDURE import_id_multid_array
+  END PROCEDURE import_id_spacetime
 
 
   MODULE PROCEDURE import_id_hydro

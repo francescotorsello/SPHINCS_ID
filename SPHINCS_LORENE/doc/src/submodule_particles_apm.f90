@@ -534,8 +534,8 @@ SUBMODULE (particles_id) particles_apm
     good_h= .TRUE.
     DO itr= 1, 10, 1
 
-      PRINT *, itr
-      PRINT *
+      IF( debug ) PRINT *, itr
+      IF( debug ) PRINT *
 
       CALL assign_h( nn_des, &
                      npart_all, &
@@ -652,18 +652,6 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "6"
 
-  !  CALL binary% import_id( npart_real, all_pos(1,1:npart_real), &
-  !                          all_pos(2,1:npart_real), &
-  !                          all_pos(3,1:npart_real), &
-  !                          lapse, shift_x, shift_y, shift_z, &
-  !                          g_xx, g_xy, g_xz, &
-  !                          g_yy, g_yz, g_zz, &
-  !                          baryon_density, &
-  !                          energy_density, &
-  !                          specific_energy, &
-  !                          pressure, &
-  !                          v_euler_x, v_euler_y, v_euler_z )
-
     IF( debug ) PRINT *, "7"
 
     max_nu= 0.0D0
@@ -678,11 +666,6 @@ SUBMODULE (particles_id) particles_apm
          STOP
       ENDIF
     ENDIF
-
-   ! CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-   !                       shift_z, v_euler_x, v_euler_y, v_euler_z, &
-   !                       g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-   !                       baryon_density, nstar_p )
 
     IF( debug ) PRINT *, "7"
 
@@ -982,23 +965,6 @@ SUBMODULE (particles_id) particles_apm
         ENDIF
 
       ENDDO find_nan_in_nstar_real
-
-   !   CALL binary% import_id( npart_real, all_pos(1,1:npart_real), &
-   !                           all_pos(2,1:npart_real), &
-   !                           all_pos(3,1:npart_real), &
-   !                           lapse, shift_x, shift_y, shift_z, &
-   !                           g_xx, g_xy, g_xz, &
-   !                           g_yy, g_yz, g_zz, &
-   !                           baryon_density, &
-   !                           energy_density, &
-   !                           specific_energy, &
-   !                           pressure, &
-   !                           v_euler_x, v_euler_y, v_euler_z )
-   !
-   !   CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-   !                         shift_z, v_euler_x, v_euler_y, v_euler_z, &
-   !                         g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-   !                         baryon_density, nstar_p )
 
       CALL get_nstar_p( npart_real, all_pos(1,1:npart_real), &
                                     all_pos(2,1:npart_real), &
@@ -1413,25 +1379,6 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "3"
 
-  !  CALL binary% import_id( npart_real, pos(1,:), &
-  !                          pos(2,:), &
-  !                          pos(3,:), &
-  !                          lapse, shift_x, shift_y, shift_z, &
-  !                          g_xx, g_xy, g_xz, &
-  !                          g_yy, g_yz, g_zz, &
-  !                          baryon_density, &
-  !                          energy_density, &
-  !                          specific_energy, &
-  !                          pressure, &
-  !                          v_euler_x, v_euler_y, v_euler_z )
-  !
-    IF( debug ) PRINT *, "3.5"
-  !
-  !  CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-  !                        shift_z, v_euler_x, v_euler_y, v_euler_z, &
-  !                        g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-  !                        baryon_density, nstar_p )
-
     CALL get_nstar_p( npart_real, pos(1,:), &
                                   pos(2,:), &
                                   pos(3,:), nstar_p )
@@ -1537,24 +1484,7 @@ SUBMODULE (particles_id) particles_apm
                             nu, h, nstar_real )      ! output
 
 
-       !  CALL binary% import_id( npart_real, pos(1,:), &
-       !                          pos(2,:), &
-       !                          pos(3,:), &
-       !                          lapse, shift_x, shift_y, shift_z, &
-       !                          g_xx, g_xy, g_xz, &
-       !                          g_yy, g_yz, g_zz, &
-       !                          baryon_density, &
-       !                          energy_density, &
-       !                          specific_energy, &
-       !                          pressure, &
-       !                          v_euler_x, v_euler_y, v_euler_z )
-       !
-       !  CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-       !                        shift_z, v_euler_x, v_euler_y, v_euler_z, &
-       !                        g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-       !                        baryon_density, nstar_p )
-
-          CALL get_nstar_p( npart_real, pos(1,:), &
+         CALL get_nstar_p( npart_real, pos(1,:), &
                                         pos(2,:), &
                                         pos(3,:), nstar_p )
 
@@ -1580,7 +1510,7 @@ SUBMODULE (particles_id) particles_apm
          dN_av= dN_av/DBLE(npart_real)
 
          ! exit condition
-         IF( dN_av < tol )EXIT
+         IF( dN_av < tol ) EXIT
 
       ENDDO mass_iteration
 
@@ -1693,23 +1623,6 @@ SUBMODULE (particles_id) particles_apm
     ! measure density
     CALL density_loop( npart_real, pos, &    ! input
                        nu, h, nstar_real )      ! output
-
-  !  CALL binary% import_id( npart_real, pos(1,:), &
-  !                          pos(2,:), &
-  !                          pos(3,:), &
-  !                          lapse, shift_x, shift_y, shift_z, &
-  !                          g_xx, g_xy, g_xz, &
-  !                          g_yy, g_yz, g_zz, &
-  !                          baryon_density, &
-  !                          energy_density, &
-  !                          specific_energy, &
-  !                          pressure, &
-  !                          v_euler_x, v_euler_y, v_euler_z )
-  !
-  !  CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-  !                        shift_z, v_euler_x, v_euler_y, v_euler_z, &
-  !                        g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-  !                        baryon_density, nstar_p )
 
     CALL get_nstar_p( npart_real, pos(1,:), &
                                   pos(2,:), &
@@ -1961,7 +1874,7 @@ SUBMODULE (particles_id) particles_apm
     CALL COM( npart_real, pos, nu, & ! input
               com_x, com_y, com_z, com_d ) ! output
 
-    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
       PRINT *, "** Before center of mass correction:"
       PRINT *, " * x coordinate of the center of mass of the star, ", &
                "from LORENE: com_star= ", com_star, "Msun_geo"
@@ -2006,7 +1919,7 @@ SUBMODULE (particles_id) particles_apm
     CALL COM( npart_real, pos, nu, & ! input
               com_x, com_y, com_z, com_d ) ! output
 
-    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
       PRINT *, "** After center of mass correction:"
       PRINT *, " * x coordinate of the center of mass of the star, ", &
                "from LORENE: com_star= ", com_star, "Msun_geo"
@@ -2097,7 +2010,7 @@ SUBMODULE (particles_id) particles_apm
     ENDDO
     !$OMP END PARALLEL DO
 
-    IF( PRESENT(verbose) .AND. verbose == .TRUE. )THEN
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
 
       CALL COM( npart_real, pos, nu, & ! input
                 com_x, com_y, com_z, com_d ) ! output

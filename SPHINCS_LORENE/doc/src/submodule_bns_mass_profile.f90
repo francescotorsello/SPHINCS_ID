@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_id) bns_mass_profile
+SUBMODULE (bns_base) bns_mass_profile
 
   !********************************************
   !
@@ -103,7 +103,7 @@ SUBMODULE (bns_id) bns_mass_profile
           ! The definition of the baryon mass for the LORENE ID is in eq.(69)
           ! of Gourgoulhon et al., PRD 63 064029 (2001)
 
-          CALL THIS% import_id( &
+          CALL THIS% read_id_mass_b( &
                    center + (rad_coord + dr)*SIN(colat)*COS(long), &
                    (rad_coord + dr)*SIN(colat)*SIN(long), &
                    (rad_coord + dr)*COS(colat), &

@@ -2,12 +2,13 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_id) bns_constructor
+SUBMODULE (bns_lorene) bns_constructor
 
   !*********************************************************
   !
   !# Implementation of the constructor and
-  !  destructor of TYPE [[bns]], and of the [[bns]]-member
+  !  destructor of TYPE [[bnslorene]], and of the
+  !  [[bnslorene]]-member
   !  PROCEDURES that call the C-bound PROCEDURES
   !  constructig and destructing the LORENE
   !  Bin_NS object
@@ -26,11 +27,11 @@ SUBMODULE (bns_id) bns_constructor
   !
   !-- Implementation of the constructor of the bns object
   !
-  MODULE PROCEDURE construct_bns
+  MODULE PROCEDURE construct_bnslorene
 
     !****************************************************
     !
-    !# Constructs an object of TYPE [[bns]]
+    !# Constructs an object of TYPE [[bnslorene]]
     !
     !  FT
     !
@@ -65,17 +66,17 @@ SUBMODULE (bns_id) bns_constructor
     !PRINT *, "End of bns constructor."
     !PRINT *
 
-  END PROCEDURE construct_bns
+  END PROCEDURE construct_bnslorene
 
 
   !
   !-- Implementation of the destructor of the bns object
   !
-  MODULE PROCEDURE destruct_bns
+  MODULE PROCEDURE destruct_bnslorene
 
     !***********************************************
     !
-    !# Destructs an object of TYPE [[bns]]
+    !# Destructs an object of TYPE [[bnslorene]]
     !
     !  FT
     !
@@ -89,7 +90,7 @@ SUBMODULE (bns_id) bns_constructor
     ! Deallocate memory
     CALL THIS% deallocate_lorene_id_memory()
 
-  END PROCEDURE destruct_bns
+  END PROCEDURE destruct_bnslorene
 
 
   MODULE PROCEDURE construct_binary
@@ -109,11 +110,15 @@ SUBMODULE (bns_id) bns_constructor
 
     !PRINT *, "** Executing the construct_binary subroutine..."
 
+#ifdef __INTEL_COMPILER
+
     IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 
       CALL destruct_bin_ns( THIS% bns_ptr )
 
     ENDIF
+
+#endif
 
     !
     !-- If the name of the LORENE binary file resu_file is given as argument to

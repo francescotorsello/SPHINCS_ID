@@ -95,7 +95,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     CHARACTER( LEN= 2 ):: n_reflev
 
     LOGICAL:: exist
-    LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .TRUE.
 
     ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -137,15 +137,15 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
       PRINT *, " * Importing on refinement level l=", l, "..."
 
-      CALL bns_obj% import_id( THIS% get_ngrid_x(l), &
-                               THIS% get_ngrid_y(l), &
-                               THIS% get_ngrid_z(l), &
-                               THIS% coords% levels(l)% var, &
-                               baryon_density% levels(l)% var, &
-                               energy_density% levels(l)% var, &
-                               specific_energy% levels(l)% var, &
-                               pressure% levels(l)% var, &
-                               v_euler% levels(l)% var )
+      CALL bns_obj% read_id_hydro( THIS% get_ngrid_x(l), &
+                             THIS% get_ngrid_y(l), &
+                             THIS% get_ngrid_z(l), &
+                             THIS% coords% levels(l)% var, &
+                             baryon_density% levels(l)% var, &
+                             energy_density% levels(l)% var, &
+                             specific_energy% levels(l)% var, &
+                             pressure% levels(l)% var, &
+                             v_euler% levels(l)% var )
 
     ENDDO ref_levels
     PRINT *, " * LORENE hydro ID imported."
@@ -168,18 +168,22 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 !    !$OMP                   perc )
     ref_levels2: DO l= 1, THIS% nlevels
 
-      ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
-                 u_euler_l      => u_euler_l% levels(l)% var, &
-                 v_euler        => v_euler% levels(l)% var, &
-                 lorentz_factor => lorentz_factor% levels(l)% var, &
-                 lapse          => THIS% lapse% levels(l)% var, &
-                 shift_u        => THIS% shift_u% levels(l)% var, &
-                 g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
-                 g4             => g4% levels(l)% var, &
-                 Tmunu_ll       => Tmunu_ll% levels(l)% var, &
-                 energy_density => energy_density% levels(l)% var, &
-                 pressure       => pressure% levels(l)% var &
-      )
+#ifdef __INTEL_COMPILER
+
+  ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
+             u_euler_l      => u_euler_l% levels(l)% var, &
+             v_euler        => v_euler% levels(l)% var, &
+             lorentz_factor => lorentz_factor% levels(l)% var, &
+             lapse          => THIS% lapse% levels(l)% var, &
+             shift_u        => THIS% shift_u% levels(l)% var, &
+             g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
+             g4             => g4% levels(l)% var, &
+             Tmunu_ll       => Tmunu_ll% levels(l)% var, &
+             energy_density => energy_density% levels(l)% var, &
+             pressure       => pressure% levels(l)% var &
+  )
+
+#endif
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
@@ -190,6 +194,23 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
         DO k= 1, THIS% get_ngrid_z(l), 1
           DO j= 1, THIS% get_ngrid_y(l), 1
             DO i= 1, THIS% get_ngrid_x(l), 1
+
+#ifdef __GFORTRAN__
+
+  ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
+             u_euler_l      => u_euler_l% levels(l)% var, &
+             v_euler        => v_euler% levels(l)% var, &
+             lorentz_factor => lorentz_factor% levels(l)% var, &
+             lapse          => THIS% lapse% levels(l)% var, &
+             shift_u        => THIS% shift_u% levels(l)% var, &
+             g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
+             g4             => g4% levels(l)% var, &
+             Tmunu_ll       => Tmunu_ll% levels(l)% var, &
+             energy_density => energy_density% levels(l)% var, &
+             pressure       => pressure% levels(l)% var &
+  )
+
+#endif
 
               !energy_density( i, j, k )= baryon_density( i, j, k ) &
               !                            + ( specific_energy(i,j,k) + 1.0 ) &
@@ -304,6 +325,10 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
               WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) creturn//" ", perc, "%"
             ENDIF
 
+#ifdef __GFORTRAN__
+  END ASSOCIATE
+#endif
+
             ENDDO
           ENDDO
         ENDDO
@@ -324,7 +349,13 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
         !-- Compute the stress-energy tensor
         !
         PRINT *, "** Computing stress-energy tensor..."
-        Tmunu_ll= 0.0
+
+#ifdef __INTEL_COMPILER
+  Tmunu_ll= 0.0
+#endif
+#ifdef __GFORTRAN__
+  Tmunu_ll% levels(l)% var= 0.0
+#endif
 !        !$OMP DO
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
@@ -335,6 +366,23 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
         DO k= 1, THIS% get_ngrid_z(l), 1
           DO j= 1, THIS% get_ngrid_y(l), 1
             DO i= 1, THIS% get_ngrid_x(l), 1
+
+#ifdef __GFORTRAN__
+
+  ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
+             u_euler_l      => u_euler_l% levels(l)% var, &
+             v_euler        => v_euler% levels(l)% var, &
+             lorentz_factor => lorentz_factor% levels(l)% var, &
+             lapse          => THIS% lapse% levels(l)% var, &
+             shift_u        => THIS% shift_u% levels(l)% var, &
+             g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
+             g4             => g4% levels(l)% var, &
+             Tmunu_ll       => Tmunu_ll% levels(l)% var, &
+             energy_density => energy_density% levels(l)% var, &
+             pressure       => pressure% levels(l)% var &
+  )
+
+#endif
 
               Tmunu_ll(i,j,k,itt)= lorene2hydrobase*( &
                       ( energy_density(i,j,k) + pressure(i,j,k) ) &
@@ -406,12 +454,20 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
                       creturn//" ", perc, "%"
             ENDIF
 
+#ifdef __GFORTRAN__
+  END ASSOCIATE
+#endif
+
             ENDDO
           ENDDO
         ENDDO
         !$OMP END PARALLEL DO
 !        !$OMP END DO
-      END ASSOCIATE
+
+#ifdef __INTEL_COMPILER
+  END ASSOCIATE
+#endif
+
     ENDDO ref_levels2
 !    !$OMP END PARALLEL
     WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
@@ -423,31 +479,65 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
       DO l= 1, THIS% nlevels, 1
 
-        ASSOCIATE( HC_rho         => HC_rho% levels(l)%var, &
-                   HC_trK         => HC_trK% levels(l)%var, &
-                   HC_A           => HC_A% levels(l)%var, &
-                   HC_derphi      => HC_derphi% levels(l)%var, &
-                   HC_hand        => HC_hand% levels(l)%var, &
-                   phi            => THIS% phi% levels(l)%var, &
-                   trK            => THIS% trK% levels(l)%var, &
-                   A_BSSN3_ll     => THIS% A_BSSN3_ll% levels(l)%var, &
-                   energy_density => energy_density% levels(l)% var, &
-                   pressure       => pressure% levels(l)% var &
-        )
+#ifdef __INTEL_COMPILER
 
-          HC_rho= 0.0D0
-          HC_trK= 0.0D0
-          HC_A= 0.0D0
-          HC_derphi= 0.0D0
-          HC_hand= 0.0D0
+  ASSOCIATE( HC_rho         => HC_rho% levels(l)%var, &
+             HC_trK         => HC_trK% levels(l)%var, &
+             HC_A           => HC_A% levels(l)%var, &
+             HC_derphi      => HC_derphi% levels(l)%var, &
+             HC_hand        => HC_hand% levels(l)%var, &
+             phi            => THIS% phi% levels(l)%var, &
+             trK            => THIS% trK% levels(l)%var, &
+             A_BSSN3_ll     => THIS% A_BSSN3_ll% levels(l)%var, &
+             energy_density => energy_density% levels(l)% var, &
+             pressure       => pressure% levels(l)% var &
+  )
+
+  HC_rho= 0.0D0
+  HC_trK= 0.0D0
+  HC_A= 0.0D0
+  HC_derphi= 0.0D0
+  HC_hand= 0.0D0
+
+#endif
+
+#ifdef __GFORTRAN__
+
+  HC_rho% levels(l)%var= 0.0D0
+  HC_trK% levels(l)%var= 0.0D0
+  HC_A% levels(l)%var= 0.0D0
+  HC_derphi% levels(l)%var= 0.0D0
+  HC_hand% levels(l)%var= 0.0D0
+
+#endif
           fd_lim= 5
 
           DO k= fd_lim, THIS% get_ngrid_z(l) - fd_lim, 1
             DO j= fd_lim, THIS% get_ngrid_y(l) - fd_lim, 1
               DO i= fd_lim, THIS% get_ngrid_x(l) - fd_lim, 1
 
+#ifdef __GFORTRAN__
+
+  ASSOCIATE( HC_rho         => HC_rho% levels(l)%var, &
+             HC_trK         => HC_trK% levels(l)%var, &
+             HC_A           => HC_A% levels(l)%var, &
+             HC_derphi      => HC_derphi% levels(l)%var, &
+             HC_hand        => HC_hand% levels(l)%var, &
+             phi            => THIS% phi% levels(l)%var, &
+             trK            => THIS% trK% levels(l)%var, &
+             A_BSSN3_ll     => THIS% A_BSSN3_ll% levels(l)%var, &
+             energy_density => energy_density% levels(l)% var, &
+             pressure       => pressure% levels(l)% var &
+  )
+
+#endif
+
+! The following works with both compilers
+!                ASSOCIATE( HC_rho => HC_rho% levels(l)%var( i, j, k ) &
+!                )
+
                 HC_rho( i, j, k )= 2.0D0*pi*EXP(5.0D0*phi( i, j, k )) &
-                                      *lorene2hydrobase*energy_density( i, j, k )
+                                    *lorene2hydrobase*energy_density( i, j, k )
 
                 HC_trK( i, j, k )= - EXP(5.0D0*phi( i, j, k ))/12.0D0 &
                                         *trK( i, j, k )**2
@@ -520,10 +610,18 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
                                     HC_A( i, j, k )   + &
                                     HC_derphi( i, j, k )
 
+#ifdef __GFORTRAN__
+  END ASSOCIATE
+#endif
+
               ENDDO
             ENDDO
           ENDDO
-        END ASSOCIATE
+
+#ifdef __INTEL_COMPILER
+  END ASSOCIATE
+#endif
+
       ENDDO
 
     ENDIF
@@ -533,9 +631,9 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     !-- BSSN_CONSTRAINTS_INTERIOR
     !
     PRINT *, "** Computing contraints..."
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP          SHARED( THIS, Tmunu_ll ) &
-    !$OMP          PRIVATE( l, imin, imax )
+!    !$OMP PARALLEL DO DEFAULT( NONE ) &
+!    !$OMP          SHARED( THIS, Tmunu_ll ) &
+!    !$OMP          PRIVATE( l, imin, imax )
     DO l= 1, THIS% nlevels, 1
 
       ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
@@ -607,7 +705,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
         )
       END ASSOCIATE
     ENDDO
-    !$OMP END PARALLEL DO
+!    !$OMP END PARALLEL DO
     PRINT *, " * Constraints computed."
     PRINT *
 
@@ -1427,7 +1525,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     !  STOP
     !ENDIF
 
-    PRINT *, "6.5"
+    IF( debug ) PRINT *, "6.5"
 
     !IF( counter == 2 ) STOP
 

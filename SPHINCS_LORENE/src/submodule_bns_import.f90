@@ -37,7 +37,7 @@ SUBMODULE (bns_lorene) bns_import
 
     !**************************************************
     !
-    !# Stores the ID in the [[bns]] member arrays
+    !# Stores the ID in the [[bnslorene]] member arrays
     !
     !  FT 5.10.2020
     !
@@ -174,8 +174,8 @@ SUBMODULE (bns_lorene) bns_import
 
     !**************************************************
     !
-    !# Stores the ID in non-[[bns]]-member arrays
-    !  with the same shape as the [[bns]] member arrays
+    !# Stores the ID in non-[[bnslorene]]-member arrays
+    !  with the same shape as the [[bnslorene]] member arrays
     !
     !  FT 5.10.2020
     !

@@ -7,7 +7,8 @@ SUBMODULE (bns_lorene) bns_constructor
   !*********************************************************
   !
   !# Implementation of the constructor and
-  !  destructor of TYPE [[bns]], and of the [[bns]]-member
+  !  destructor of TYPE [[bnslorene]], and of the
+  !  [[bnslorene]]-member
   !  PROCEDURES that call the C-bound PROCEDURES
   !  constructig and destructing the LORENE
   !  Bin_NS object
@@ -30,7 +31,7 @@ SUBMODULE (bns_lorene) bns_constructor
 
     !****************************************************
     !
-    !# Constructs an object of TYPE [[bns]]
+    !# Constructs an object of TYPE [[bnslorene]]
     !
     !  FT
     !
@@ -75,7 +76,7 @@ SUBMODULE (bns_lorene) bns_constructor
 
     !***********************************************
     !
-    !# Destructs an object of TYPE [[bns]]
+    !# Destructs an object of TYPE [[bnslorene]]
     !
     !  FT
     !

@@ -48,7 +48,7 @@ MODULE bns_lorene
     !> Identifier of the bns object
     INTEGER:: bns_identifier= 0
     !> LORENE identifiers for the EoS
-    INTEGER:: eos1_id, eos2_id
+    INTEGER:: eos1_loreneid, eos2_loreneid
 
     !
     !-- Spacetime fields
@@ -201,9 +201,9 @@ MODULE bns_lorene
     PROCEDURE:: get_eos2_id => get_eos2_loreneid
 
     PROCEDURE, PUBLIC:: get_eos1_loreneid
-    !! Returns [[bns:eos1_id]]
+    !! Returns [[bnslorene:eos1_loreneid]]
     PROCEDURE, PUBLIC:: get_eos2_loreneid
-    !! Returns [[bns:eos2_id]]
+    !! Returns [[bnslorene:eos2_loreneid]]
 
     PROCEDURE, PUBLIC:: get_bns_identifier
     !PROCEDURE, PUBLIC:: get_bns_ptr
@@ -648,7 +648,7 @@ MODULE bns_lorene
 
     MODULE FUNCTION get_eos1_loreneid( THIS )
 
-      !> [[bns]] object which this PROCEDURE is a member of
+      !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT( IN ):: THIS
       ! Result
       INTEGER:: get_eos1_loreneid
@@ -658,7 +658,7 @@ MODULE bns_lorene
 
     MODULE FUNCTION get_eos2_loreneid( THIS )
 
-      !> [[bns]] object which this PROCEDURE is a member of
+      !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT( IN ):: THIS
       ! Result
       INTEGER:: get_eos2_loreneid

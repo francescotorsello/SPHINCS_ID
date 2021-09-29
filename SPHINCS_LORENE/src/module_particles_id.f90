@@ -451,7 +451,7 @@ MODULE particles_id
     !! Constructs a [[particles]] object
 
         CLASS(bnsbase), INTENT( IN OUT ):: bns_obj
-        !# [[bns]] object representing the BNS for which we want to place
+        !# [[bnsbase]] object representing the BNS for which we want to place
         !  particles
         INTEGER,    INTENT( IN )    :: dist
         !# Identifier of the desired particle distribution:
@@ -501,7 +501,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bns]] object needed to access the BNS data
+      !& [[bnsbase]] object needed to access the BNS data
       CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
       !> Number of lattice points in the \(x\) direction
       INTEGER,          INTENT( IN )    :: nx
@@ -538,7 +538,7 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bns]] object needed to access the BNS data
+      !& [[bnsbase]] object needed to access the BNS data
       CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
       !& Number of lattice points on the less massive star
       !  in the \(x\) direction
@@ -595,8 +595,8 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bns]] object needed to access the BNS data
-      !  @TODO Remove the [[bns]] argument as done in SUBROUTINE perform_apm
+      !& [[bnsbase]] object needed to access the BNS data
+      !  @TODO Remove the [[bnsbase]] argument as done in SUBROUTINE perform_apm
       !CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
       !> Approximate particle number on the star
       INTEGER,          INTENT( IN )    :: npart_approx

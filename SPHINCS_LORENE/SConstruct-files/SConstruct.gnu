@@ -45,52 +45,52 @@ env['CPPPATH'] = [ '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/In
 Progress('Evaluating $TARGET\n')
 
 #lorene_sources = '../../../Lorene/C++/Source/**/*.C'
-lorene_sources = [
-Glob('../../../Lorene/C++/Source/Binaire/*.C'),
-#Glob('../../../Lorene/C++/Source/Binary_xcts/*.C'),
-#Glob('../../../Lorene/C++/Source/Star/*.C'),
-Glob('../../../Lorene/C++/Source/Tenseur/*.C'),
-Glob('../../../Lorene/C++/Source/Valeur/*.C'),
-Glob('../../../Lorene/C++/Source/Tensor/*.C'),
-Glob('../../../Lorene/C++/Source/Tensor/Scalar/*.C'),
-Glob('../../../Lorene/C++/Source/Metric/*.C'),
-Glob('../../../Lorene/C++/Source/Metrique/*.C'),
-Glob('../../../Lorene/C++/Source/Connection/*.C'),
-Glob('../../../Lorene/C++/Source/Diff/*.C'),
-Glob('../../../Lorene/C++/Source/Itbl/*.C'),
-Glob('../../../Lorene/C++/Source/Tbl/*.C'),
-Glob('../../../Lorene/C++/Source/Mtbl/*.C'),
-Glob('../../../Lorene/C++/Source/Grille3d/*.C'),
-Glob('../../../Lorene/C++/Source/Map/*.C'),
-Glob('../../../Lorene/C++/Source/Mtbl_cf/*.C'),
-Glob('../../../Lorene/C++/Source/Etoile/*.C'),
-Glob('../../../Lorene/C++/Source/Eos/*.C'),
-Glob('../../../Lorene/C++/Source/Map_et/*.C'),
-Glob('../../../Lorene/C++/Source/Mg3d/*.C'),
-Glob('../../../Lorene/C++/Source/Cmp/*.C'),
-Glob('../../../Lorene/C++/Source/Matrice/*.C'),
-Glob('../../../Lorene/C++/Source/Param/*.C'),
-Glob('../../../Lorene/C++/Source/Param_elliptic/*.C'),
-Glob('../../../Lorene/C++/Source/Coord/*.C'),
-Glob('../../../Lorene/C++/Source/Base_val/*.C'),
-Glob('../../../Lorene/C++/Source/Base_vect/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Utilities/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/PDE/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Operators/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Coef/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Coef/FFTW3/*.C'),
-Glob('../../../Lorene/C++/Source/Non_class_members/Graphics/save_profile.C'),
-#Glob('../../../Lorene/C++/Source/Non_class_members/Coef/FFT991/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_helmholtz_minus_2d/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_helmholtz_minus_pseudo_1d/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_poisson_2d/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_poisson_pseudo_1d/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_pois_vect_r/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order_r2/*.C'),
-Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_vorton/*.C')
-]
+#lorene_sources = [
+#Glob('../../../Lorene/C++/Source/Binaire/*.C'),
+##Glob('../../../Lorene/C++/Source/Binary_xcts/*.C'),
+##Glob('../../../Lorene/C++/Source/Star/*.C'),
+#Glob('../../../Lorene/C++/Source/Tenseur/*.C'),
+#Glob('../../../Lorene/C++/Source/Valeur/*.C'),
+#Glob('../../../Lorene/C++/Source/Tensor/*.C'),
+#Glob('../../../Lorene/C++/Source/Tensor/Scalar/*.C'),
+#Glob('../../../Lorene/C++/Source/Metric/*.C'),
+#Glob('../../../Lorene/C++/Source/Metrique/*.C'),
+#Glob('../../../Lorene/C++/Source/Connection/*.C'),
+#Glob('../../../Lorene/C++/Source/Diff/*.C'),
+#Glob('../../../Lorene/C++/Source/Itbl/*.C'),
+#Glob('../../../Lorene/C++/Source/Tbl/*.C'),
+#Glob('../../../Lorene/C++/Source/Mtbl/*.C'),
+#Glob('../../../Lorene/C++/Source/Grille3d/*.C'),
+#Glob('../../../Lorene/C++/Source/Map/*.C'),
+#Glob('../../../Lorene/C++/Source/Mtbl_cf/*.C'),
+#Glob('../../../Lorene/C++/Source/Etoile/*.C'),
+#Glob('../../../Lorene/C++/Source/Eos/*.C'),
+#Glob('../../../Lorene/C++/Source/Map_et/*.C'),
+#Glob('../../../Lorene/C++/Source/Mg3d/*.C'),
+#Glob('../../../Lorene/C++/Source/Cmp/*.C'),
+#Glob('../../../Lorene/C++/Source/Matrice/*.C'),
+#Glob('../../../Lorene/C++/Source/Param/*.C'),
+#Glob('../../../Lorene/C++/Source/Param_elliptic/*.C'),
+#Glob('../../../Lorene/C++/Source/Coord/*.C'),
+#Glob('../../../Lorene/C++/Source/Base_val/*.C'),
+#Glob('../../../Lorene/C++/Source/Base_vect/*.C'),
+#Glob('../../../Lorene/C++/Source/Non_class_members/Utilities/*.C'),
+#Glob('../../../Lorene/C++/Source/Non_class_members/PDE/*.C'),
+#Glob('../../../Lorene/C++/Source/Non_class_members/Operators/*.C'),
+#Glob('../../../Lorene/C++/Source/Non_class_members/Coef/*.C'),
+#Glob('../../../Lorene/C++/Source/Non_class_members/Coef/FFTW3/*.C'),
+#Glob('../../../Lorene/C++/Source/Non_class_members/Graphics/save_profile.C'),
+##Glob('../../../Lorene/C++/Source/Non_class_members/Coef/FFT991/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_helmholtz_minus_2d/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_helmholtz_minus_pseudo_1d/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_poisson_2d/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_poisson_pseudo_1d/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_pois_vect_r/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_sec_order_r2/*.C'),
+#Glob('../../../Lorene/C++/Source/Ope_elementary/Ope_vorton/*.C')
+#]
 
 lorene_sources_bin_ns = ['../../../Lorene/Export/C++/Source/bin_ns.C',
                          '../../../Lorene/Export/C++/Source/bin_ns_aux.C',
@@ -216,8 +216,10 @@ lorene_id_executable = 'sphincs_lorene_bns.x'
 lorene_id_convtest_executable = 'convergence_test.x'
 write_par_eos = 'write_par_eos.x'
 
-Program(lorene_id_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/sphincs_lorene_bns.f90'])
-Program(lorene_id_convtest_executable, lorene_sources_bin_ns + lorene_sources + sources + ['src/convergence_test.f90'])
-Program(write_par_eos, lorene_sources_bin_ns + lorene_sources + sources + ['src/write_par_eos.f90'])
+#+ lorene_sources + lorene_sources_bin_ns
+
+Program(lorene_id_executable, sources + ['src/sphincs_lorene_bns.f90'])
+Program(lorene_id_convtest_executable, sources + ['src/convergence_test.f90'])
+Program(write_par_eos, sources + ['src/write_par_eos.f90'])
 #
 Decider('MD5-timestamp')
