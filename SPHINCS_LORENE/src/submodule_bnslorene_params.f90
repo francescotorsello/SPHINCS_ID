@@ -94,7 +94,7 @@ SUBMODULE (bns_lorene) bns_params
                                eos1_tmp_c, &
                                eos2_tmp_c, &
                                THIS% eos1_loreneid, &
-                               THIS% eos2_looeneid, &
+                               THIS% eos2_loreneid, &
                                THIS% gamma_1, &
                                THIS% kappa_1, &
                                THIS% gamma_2, &
@@ -156,7 +156,7 @@ SUBMODULE (bns_lorene) bns_params
     THIS% pressure_center2       = THIS% pressure_center2*lorene2hydrobase
 
     ! Convert polytropic constants from LORENE units to SPHINCS units
-    IF( THIS% eos1_id == 1 )THEN ! If the EOS is polytropic
+    IF( THIS% eos1_loreneid == 1 )THEN ! If the EOS is polytropic
 
       THIS% kappa_1= THIS% kappa_1*k_lorene2hydrobase( THIS% gamma_1 )
       THIS% kappa_2= THIS% kappa_2*k_lorene2hydrobase( THIS% gamma_2 )
@@ -180,13 +180,13 @@ SUBMODULE (bns_lorene) bns_params
       THIS% kappa3_2= THIS% kappa3_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3_2 )
 
-    ELSEIF( THIS% eos1_id == 17 )THEN ! If the EOS is tabulated
+    ELSEIF( THIS% eos1_loreneid == 17 )THEN ! If the EOS is tabulated
 
     ELSE
 
       PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
                " The equation of state is unknown! LORENE EOS IDs=", &
-               THIS% eos1_id, ", ", THIS% eos2_id
+               THIS% eos1_loreneid, ", ", THIS% eos2_loreneid
       STOP
 
     ENDIF
