@@ -101,7 +101,7 @@ apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
                        ! on the second star will be the reflection about the yz
                        ! plane of the particles on the first star, irrespectively
                        ! of the value of apm_iterate2
-apm_max_it=500         ! Maximum number of iterations, irrespective of the
+apm_max_it=300         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 150            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
