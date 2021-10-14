@@ -15,7 +15,8 @@ parts_pos_path="pos-archive/"     ! Path to the directory containing the
 parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
-          "apm-pos-nu_1216_45km_pol275_500k"
+          !"apm-pos-nu_1216_45km_pol275_500k.dat"
+          "apm-pos-nu_1313_45km_pol2_500k.dat"
           !"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_135135_42km_apr4_500k_hr.dat"
           !"apm-pos_1218_45km_pol275_1M.dat"
@@ -96,7 +97,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 !----------------------------------------------------!
 ! Parameters for the Artifical Pressure Method (APM) !
 !----------------------------------------------------!
-apm_iterate1=.TRUE.    ! If .TRUE. applies the APM to the first star
+apm_iterate1=.FALSE.    ! If .TRUE. applies the APM to the first star
 apm_iterate2=.FALSE.    ! If .TRUE. applies the APM to the second star
                        ! Note that if reflect_particles_x= .TRUE. and the
                        ! star mass ratio is in [0.995,1.005], the particles

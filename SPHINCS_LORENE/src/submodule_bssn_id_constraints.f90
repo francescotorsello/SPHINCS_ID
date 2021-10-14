@@ -1220,7 +1220,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
     USE mesh_refinement,             ONLY: allocate_grid_function, levels, &
                                            rad_coord, nlevels, &
-                                           deallocate_grid_function
+                                           deallocate_grid_function, coords
     USE ADM_refine,                  ONLY: lapse, shift_u, &
                                            g_phys3_ll, &
                                            allocate_ADM, deallocate_ADM
@@ -1272,6 +1272,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     USE particle_mesh,        ONLY: deallocate_all_lists, &
                                     deallocate_flag_nei_cell, &
                                     deallocate_pp_g
+    USE particle_mesh_hash,   ONLY: deallocate_hash_memory
 
     IMPLICIT NONE
 
@@ -1309,6 +1310,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     ENDIF
     nlevels= THIS% nlevels
     levels = THIS% levels
+    coords = THIS% coords
 
     DO l= 1, THIS% nlevels, 1
       levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
@@ -1513,13 +1515,13 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     PRINT *, " * Mapping stress-energy tensor from the particles to the grid..."
     PRINT *
     CALL map_2_grid_hash( npart        , &
-                     nu_loc       , &
-                     pos_loc      , &
-                     vel_loc      , &
-                     u_loc        , &
-                     nlrf_loc     , &
-                     theta_loc    , &
-                     pressure_loc )
+                          nu_loc       , &
+                          pos_loc      , &
+                          vel_loc      , &
+                          u_loc        , &
+                          nlrf_loc     , &
+                          theta_loc    , &
+                          pressure_loc )
 
     !IF( counter == 2 )THEN
     !  STOP
@@ -1538,6 +1540,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     CALL deallocate_flag_nei_cell
     CALL deallocate_pp_g
     CALL deallocate_all_lists
+    CALL deallocate_hash_memory
     CALL deallocate_metric_on_particles
     CALL deallocate_gradient
     DEALLOCATE( alive )

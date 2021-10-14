@@ -62,7 +62,7 @@ PROGRAM convergence_test
   ! spacetime output is to be saved
   CHARACTER( LEN= max_length ):: spacetime_path
 
-  LOGICAL, PARAMETER:: debug= .TRUE.
+  LOGICAL, PARAMETER:: debug= .FALSE.
 
   ! Logical variables to steer the execution
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
@@ -531,7 +531,7 @@ PROGRAM convergence_test
             /( formul_dx2% get_HC( 1 + INT(numerator_ratio_dx)*ix, &
                                    1 + INT(numerator_ratio_dx)*iy, &
                                    1 + INT(numerator_ratio_dx)*iz, ref_lev ) &
-             + 0*tiny_real ) &
+             + tiny_real ) &
              ) )/LOG(ratio_dx)
 
           ENDDO
@@ -686,7 +686,7 @@ PROGRAM convergence_test
             /( formul_dx2% get_HC_parts( 1 + INT(numerator_ratio_dx)*ix, &
                                          1 + INT(numerator_ratio_dx)*iy, &
                                          1 + INT(numerator_ratio_dx)*iz, ref_lev )  &
-             + 0*tiny_real ) &
+             + tiny_real ) &
              ) )/LOG(ratio_dx)
 
           ENDDO
@@ -970,7 +970,7 @@ PROGRAM convergence_test
              - ABS(formul_dx4% get_HC( 1 + INT(numerator_ratio_dx**2)*ix, &
                                1 + INT(numerator_ratio_dx**2)*iy, &
                                1 + INT(numerator_ratio_dx**2)*iz, ref_lev ) ) &
-             + 0*tiny_real ) &
+             + tiny_real ) &
              ) &
              )/LOG(ratio_dx)
 
@@ -1171,7 +1171,7 @@ PROGRAM convergence_test
                                 1 + INT(numerator_ratio_dx**2)*ix, &
                                 1 + INT(numerator_ratio_dx**2)*iy, &
                                 1 + INT(numerator_ratio_dx**2)*iz, ref_lev ) )&
-           + 0*tiny_real ) &
+           + tiny_real ) &
            ) &
            )/LOG(ratio_dx)
 
