@@ -611,7 +611,7 @@ MODULE particles_id
       !> Radius of the star in the x direction towards the companion
       DOUBLE PRECISION, INTENT( IN )    :: radius
       !& \(x|) coordinate of the center of the star, i.e.,
-      !  of the point of maximum densty
+      !  of the point with highest density
       DOUBLE PRECISION, INTENT( IN )    :: center
       !> Central density of the star, i.e., highest density
       DOUBLE PRECISION, INTENT( IN )    :: central_density
@@ -655,7 +655,7 @@ MODULE particles_id
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
           DOUBLE PRECISION:: density
-          !> Baryon mass density at \((x,y,z)\)
+          !! Baryon mass density at \((x,y,z)\)
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
@@ -835,7 +835,7 @@ MODULE particles_id
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
           DOUBLE PRECISION:: density
-          !> Baryon mass density at \((x,y,z)\)
+          !! Baryon mass density at \((x,y,z)\)
         END FUNCTION get_density
       END INTERFACE
       INTERFACE

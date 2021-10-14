@@ -1768,6 +1768,7 @@ SUBMODULE (particles_id) particles_sph_variables
     !        // TRIM(namefile) )
 
     DO itr= 1, THIS% npart, 1
+
       IF( THIS% baryon_density_parts ( itr ) < 0 .OR. &
           THIS% energy_density_parts ( itr ) < 0 .OR. &
           THIS% specific_energy_parts( itr ) < 0 .OR. &
@@ -1777,6 +1778,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
         WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, &
                FMT = * )&
+
             THIS% pos( 1, itr ), &
             THIS% pos( 2, itr ), &
             THIS% pos( 3, itr )
@@ -1789,6 +1791,7 @@ SUBMODULE (particles_id) particles_sph_variables
         !CALL test_status( ios, err_msg, "...error in writing "&
         !                // "the arrays in " // TRIM(namefile) )
       ENDIF
+
     ENDDO
 
     CLOSE( UNIT= 20 )

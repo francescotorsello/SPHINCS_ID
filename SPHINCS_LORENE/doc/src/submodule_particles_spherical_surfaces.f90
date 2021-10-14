@@ -107,7 +107,7 @@ SUBMODULE (particles_id) spherical_surfaces
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    PRINT *, "** Executing the place_particles_shells..."
+    PRINT *, "** Executing the place_particles_spherical_surfaces SUBROUTINE..."
     PRINT *
 
     CALL RANDOM_SEED( SIZE= dim_seed )
@@ -237,9 +237,9 @@ SUBMODULE (particles_id) spherical_surfaces
     PRINT *, " * Integrating the baryon mass density to get the mass profile..."
     PRINT *
 
-    dr             = radius/400.0D0
-    dth            = pi/2.0D0/250.0D0
-    dphi           = 2.0D0*pi/250.0D0
+    dr             = radius/300.0D0
+    dth            = pi/2.0D0/200.0D0
+    dphi           = 2.0D0*pi/200.0D0
     CALL integrate_density( center, radius, &
                             central_density, &
                             dr, dth, dphi, &
@@ -427,24 +427,42 @@ SUBMODULE (particles_id) spherical_surfaces
         DEALLOCATE( colatitude_pos( r )% colatitudes )
       ALLOCATE( colatitude_pos( r )% colatitudes( npart_shelleq( r )/4 ) )
 
-      DO itr2= 1, npart_shelleq( r )/4, 1
+      !DO itr2= 1, npart_shelleq( r )/4, 1
 
-        colatitude_pos( r )% colatitudes( itr2 )= &
-                      ACOS( 2.0D0*DBLE(itr2)/ &
-                            (DBLE(npart_shelleq( r )/2) + 0.625D0 ) - 1.0D0 )
+        IF( shell_radii(r) < 0.95D0*last_r*radius )THEN
+
+          !colatitude_pos( r )% colatitudes( itr2 )= &
+          !            ACOS( 2.0D0*DBLE(itr2)/ &
+          !                  (DBLE(npart_shelleq( r )/2) + 0.625D0 ) - 1.0D0 )
+          CALL compute_colatitudes_uniformly_in( pi/2.0D0, 9.75D0/10.0D0*pi, &
+                                        colatitude_pos( r )% colatitudes( : ) )
+
+        ELSE
+
+          !colatitude_pos( r )% colatitudes( itr2 )= &
+          !ACOS( 2.0D0*( 1.0D0) - 1.0D0 )
+          CALL compute_colatitudes_uniformly_in( pi/2.0D0, 2.0D0/3.0D0*pi, &
+                                        colatitude_pos( r )% colatitudes( : ) )
+
+        ENDIF
+
           !            alpha( r )*1.0D0/2.0D0 + ( itr2 - 1 )*alpha( r )
+
         !  ACOS( 2.0D0*( 1.0D0 - COS( pi/3.0D0*( 2.0D0/3.0D0 + DBLE(itr2 - 1)*DBLE(npart_shelleq( r )/4 + 1.0D0 -(1.0D0/2.0D0)-(2.0D0/3.0D0) )/DBLE(npart_shelleq( r )/4 - 1.0D0 ) ) &
         !                   /DBLE(npart_shelleq( r )/4 + 1.0D0 ) ) ) &
         !      - 1.0D0 )
               !5.0D0/12.0D0
+
         !colatitude_pos( r )% colatitudes( itr2 )= &
         !              colatitude_pos( r )% colatitudes( itr2 ) &
         !              *( 1 + rel_sign*0.05D0*phase_th )
+      DO itr2= 1, npart_shelleq( r )/4, 1
 
-        IF( colatitude_pos( r )% colatitudes( itr2 ) <= pi/2 .OR. &
+        IF( colatitude_pos( r )% colatitudes( itr2 ) <= pi/2.0D0 .OR. &
             colatitude_pos( r )% colatitudes( itr2 ) >= pi &
         )THEN
-          PRINT *, "The colatitudes are not in the interval (pi/2,pi). ", &
+          PRINT *, "** ERROR! ", &
+                   "The colatitudes are not in the OPEN interval (pi/2,pi). ", &
                    "Stopping..."
           STOP
         ENDIF
@@ -563,11 +581,10 @@ SUBMODULE (particles_id) spherical_surfaces
           ENDIF
 
           ! Import ID needed to compute the particle masses
-          CALL get_id( &
-                   xtemp, ytemp, ztemp, &
-                   g_xx_tmp( th, phi ), &
-                   bar_density_tmp( th, phi ), &
-                   gam_euler_tmp( th, phi ) )
+          CALL get_id( xtemp, ytemp, ztemp, &
+                       g_xx_tmp( th, phi ), &
+                       bar_density_tmp( th, phi ), &
+                       gam_euler_tmp( th, phi ) )
 
           ! Place a particle at a given position only if the hydro
           ! computed by LORENE is acceptable
@@ -1950,6 +1967,77 @@ SUBMODULE (particles_id) spherical_surfaces
     pvol= rad**2.0D0*SIN(col)*dr_shells*dth_shells*dphi_shells! &
 
   END FUNCTION particle_volume
+
+
+  SUBROUTINE compute_colatitudes_uniformly_in( alpha, beta, colatitudes )
+
+    !**************************************************
+    !
+    !# Compute the colatitudes according to a
+    !  uniform distribution over a spherical
+    !  surface, between alpha and beta, with
+    !  pi/2 < alpha < beta < pi.
+    !  The values are stored in the array colatitudes
+    !  See https://mathworld.wolfram.com/SpherePointPicking.html
+    !
+    !  FT 6.10.2021
+    !
+    !**************************************************
+
+    USE constants, ONLY: pi
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN):: alpha, beta
+    DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: colatitudes
+
+    INTEGER:: n, size_col, i
+
+    IF( alpha < pi/2 .OR. alpha > pi )THEN
+      PRINT *, "ERROR in SUBROUTINE compute_colatitudes_uniformly_in!", &
+               " Argument alpha should lie in [pi/2,pi]. Stopping..."
+      PRINT *
+      STOP
+    ENDIF
+    IF( beta < pi/2 .OR. beta > pi )THEN
+      PRINT *, "** ERROR in SUBROUTINE compute_colatitudes_uniformly_in!", &
+               " Argument beta should lie in [pi/2,pi]. Stopping..."
+      PRINT *
+      STOP
+    ENDIF
+    IF( alpha > beta )THEN
+      PRINT *, "** ERROR in SUBROUTINE compute_colatitudes_uniformly_in!", &
+               " Argument alpha should be less than argument beta. Stopping..."
+      PRINT *
+      STOP
+    ENDIF
+
+    size_col= SIZE(colatitudes)
+    n= 4*size_col
+
+    DO i= 1, size_col, 1
+
+      colatitudes(i)= ACOS( 2.0D0*( DBLE( i + 1 )*( COS(alpha) + 1.0D0 )/2.0D0 &
+            + ( ( COS(beta) + 1.0D0 )/2.0D0 &
+              - (DBLE(n + 1)/4.0D0 + 1.0D0)*( COS(alpha) + 1.0D0 )/2.0D0 ) &
+                      *4.0D0*DBLE(i)/DBLE(n + 1) ) - 1.0D0 )
+
+      !PRINT *, "colatitudes(", i, ")", colatitudes(i)/pi, "pi"
+
+      IF( ISNAN( colatitudes(i) ) )THEN
+        PRINT *, "** ERROR in SUBROUTINE compute_colatitudes_uniformly_in! ", &
+                 "colatitudes(", i, ") is a NaN! Stopping.."
+        PRINT *, DBLE( i + 1 )*( COS(alpha) + 1.0D0 )/2.0D0
+        PRINT *, ( COS(beta) + 1.0D0 )/2.0D0
+        PRINT *, DBLE(size_col) + 1.0D0
+        PRINT *, DBLE(i)/DBLE(size_col)
+        PRINT *
+        STOP
+      ENDIF
+
+    ENDDO
+
+  END SUBROUTINE
 
 
 END SUBMODULE spherical_surfaces

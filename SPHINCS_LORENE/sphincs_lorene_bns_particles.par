@@ -12,9 +12,10 @@
 !------------------------------------------------------------------------!
 parts_pos_path="pos-archive/"     ! Path to the directory containing the
                                   ! formatted files with the particle positions
-parts_pos="apm-pos-nu_135135_42km_apr4_500k.dat"
+parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
-          !"apm-pos-nu_1218_45km_pol275_500k.dat"  ! positions and, optionally, nu
+          !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
+          "apm-pos-nu_1216_45km_pol275_500k"
           !"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_135135_42km_apr4_500k_hr.dat"
           !"apm-pos_1218_45km_pol275_1M.dat"
@@ -38,9 +39,9 @@ reflect_particles_x= .TRUE.
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
 stretch=1.2     ! Factor by which the lattices around the stars are stretched
-nx=100           ! Number of particles in the x direction for each lattice
-ny=100           ! Number of particles in the y direction for each lattice
-nz=100           ! EVEN number of particles in the z direction for each lattice
+nx=80           ! Number of particles in the x direction for each lattice
+ny=80           ! Number of particles in the y direction for each lattice
+nz=80           ! EVEN number of particles in the z direction for each lattice
 use_thres=.FALSE.
 thres=10      ! (~rho_max)/thres is the minimum mass density considered
                 ! when placing particles. Used only when redistribute_nu is
@@ -59,10 +60,10 @@ nu_ratio=3.0           ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-npart_approx= 300000 ! The approximate number of particles on the less massive star
+npart_approx= 150000 ! The approximate number of particles on the less massive star
                    ! The approximate number of particles on the more massive star
                    ! is npart_approx/mass_ratio
-last_r= 0.98D0     ! The radius of the last spherical surface is
+last_r= 0.99D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -90,18 +91,19 @@ upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
 lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
 randomize_phi=  .TRUE.  ! Randomize particle positions in phi
 randomize_theta=.TRUE.  ! Randomize particle positions in theta
-randomize_r=    .TRUE.  ! Randomize particle positions in r
+randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
+                        ! the outer layers by a little random displacement
 !----------------------------------------------------!
 ! Parameters for the Artifical Pressure Method (APM) !
 !----------------------------------------------------!
 apm_iterate1=.TRUE.    ! If .TRUE. applies the APM to the first star
-apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
+apm_iterate2=.FALSE.    ! If .TRUE. applies the APM to the second star
                        ! Note that if reflect_particles_x= .TRUE. and the
                        ! star mass ratio is in [0.995,1.005], the particles
                        ! on the second star will be the reflection about the yz
                        ! plane of the particles on the first star, irrespectively
                        ! of the value of apm_iterate2
-apm_max_it=300         ! Maximum number of iterations, irrespective of the
+apm_max_it=200         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 150            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
@@ -110,7 +112,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.725D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.825D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
@@ -133,7 +135,7 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
 ! CHECK THAT THE EoS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
 ! FILE lorene_bns_id_parameters.par MATCH!                                 !
 !--------------------------------------------------------------------------!
-compose_eos=.TRUE. ! If .TRUE., reads in the table of Ye (electron fraction)
+compose_eos=.FALSE. ! If .TRUE., reads in the table of Ye (electron fraction)
                    ! as a function of nb (baryon number density) from the .beta
                    ! file computed with the CompOSE software, and linearly
                    ! interpolates Ye on the particles.

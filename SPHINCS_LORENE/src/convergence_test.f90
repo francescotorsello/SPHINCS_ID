@@ -55,6 +55,12 @@ PROGRAM convergence_test
   ! String storing the local path to the directory where the
   ! LORENE BNS ID files are stored
   CHARACTER( LEN= max_length ):: common_path
+  ! String storing the local path to the directory where the
+  ! SPH output is to be saved
+  CHARACTER( LEN= max_length ):: sph_path
+  ! String storing the local path to the directory where the
+  ! spacetime output is to be saved
+  CHARACTER( LEN= max_length ):: spacetime_path
 
   LOGICAL, PARAMETER:: debug= .TRUE.
 
@@ -77,7 +83,7 @@ PROGRAM convergence_test
   TYPE( bssn_id ), DIMENSION(3):: bssn_forms
 
   ! Namelist containing parameters read from lorene_bns_id_parameters.par
-  ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM
+  ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM                           
   NAMELIST /bns_parameters/ n_bns, common_path, filenames, placer, &
                             export_bin, export_form, export_form_xy, &
                             export_form_x, export_constraints_xy, &
@@ -86,7 +92,7 @@ PROGRAM convergence_test
                             constraints_step, compute_parts_constraints, &
                             numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
                             one_lapse, zero_shift, show_progress, &
-                            run_sph, run_spacetime
+                            run_sph, run_spacetime, sph_path, spacetime_path
 
   !---------------------------!
   !--  End of declarations  --!
@@ -1306,7 +1312,7 @@ PROGRAM convergence_test
     CHARACTER( LEN= : ), ALLOCATABLE:: lorene_bns_id_parameters
     CHARACTER( LEN= : ), ALLOCATABLE:: msg
 
-    lorene_bns_id_parameters= 'lorene_bns_id_parameters.par'
+    lorene_bns_id_parameters= 'sphincs_lorene_bns_parameters.par'
 
     INQUIRE( FILE= lorene_bns_id_parameters, EXIST= file_exists )
 

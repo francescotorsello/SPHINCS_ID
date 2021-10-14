@@ -1,5 +1,5 @@
 &bssn_pars
-fdorder= 6
+fdorder= 2
 formulation= 0
 conformal_method= 0
 harmonic_n= 1.0d0
