@@ -454,7 +454,7 @@ PROGRAM convergence_test
     IMPLICIT NONE
 
     CLASS(formul_3p1), INTENT( IN OUT ):: formul_dx, formul_dx2
-    INTEGER:: use_constraints, ref_lev
+    INTEGER, INTENT( IN ):: use_constraints, ref_lev
 
     INTEGER:: ix, iy, iz, nx, ny, nz, unit_cauchy_ct, unit_cauchy_parts_ct, &
               min_ix_y, min_iy_y, min_iz_y, &
@@ -532,7 +532,7 @@ PROGRAM convergence_test
                                    1 + INT(numerator_ratio_dx)*iy, &
                                    1 + INT(numerator_ratio_dx)*iz, ref_lev ) &
              + tiny_real ) &
-             ) )/LOG(ratio_dx)
+             ) + tiny_real)/LOG(ratio_dx)
 
           ENDDO
         ENDDO
@@ -687,7 +687,7 @@ PROGRAM convergence_test
                                          1 + INT(numerator_ratio_dx)*iy, &
                                          1 + INT(numerator_ratio_dx)*iz, ref_lev )  &
              + tiny_real ) &
-             ) )/LOG(ratio_dx)
+             ) + tiny_real )/LOG(ratio_dx)
 
           ENDDO
         ENDDO
@@ -823,7 +823,7 @@ PROGRAM convergence_test
     IMPLICIT NONE
 
     CLASS(formul_3p1), INTENT( IN OUT ):: formul_dx, formul_dx2, formul_dx4
-    INTEGER:: use_constraints, ref_lev
+    INTEGER, INTENT( IN ):: use_constraints, ref_lev
 
     INTEGER:: ix, iy, iz, nx, ny, nz, unit_cauchy_ct, unit_cauchy_parts_ct, &
               min_ix_y, min_iy_y, min_iz_y, &
@@ -971,7 +971,7 @@ PROGRAM convergence_test
                                1 + INT(numerator_ratio_dx**2)*iy, &
                                1 + INT(numerator_ratio_dx**2)*iz, ref_lev ) ) &
              + tiny_real ) &
-             ) &
+             ) + tiny_real&
              )/LOG(ratio_dx)
 
           ENDDO
@@ -1172,7 +1172,7 @@ PROGRAM convergence_test
                                 1 + INT(numerator_ratio_dx**2)*iy, &
                                 1 + INT(numerator_ratio_dx**2)*iz, ref_lev ) )&
            + tiny_real ) &
-           ) &
+           ) + tiny_real &
            )/LOG(ratio_dx)
 
           ENDDO
