@@ -1265,7 +1265,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     USE set_h,                ONLY: exact_nei_tree_update
     USE alive_flag,           ONLY: alive
 
-    USE map_particles_2_grid, ONLY: map_2_grid
+    USE map_particles_2_grid, ONLY: map_2_grid_hash
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
                                     get_metric_on_particles
@@ -1512,7 +1512,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
     PRINT *, " * Mapping stress-energy tensor from the particles to the grid..."
     PRINT *
-    CALL map_2_grid( npart        , &
+    CALL map_2_grid_hash( npart        , &
                      nu_loc       , &
                      pos_loc      , &
                      vel_loc      , &
