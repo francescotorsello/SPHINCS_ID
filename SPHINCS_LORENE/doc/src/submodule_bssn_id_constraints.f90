@@ -95,7 +95,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     CHARACTER( LEN= 2 ):: n_reflev
 
     LOGICAL:: exist
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -138,14 +138,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
       PRINT *, " * Importing on refinement level l=", l, "..."
 
       CALL bns_obj% read_id_hydro( THIS% get_ngrid_x(l), &
-                             THIS% get_ngrid_y(l), &
-                             THIS% get_ngrid_z(l), &
-                             THIS% coords% levels(l)% var, &
-                             baryon_density% levels(l)% var, &
-                             energy_density% levels(l)% var, &
-                             specific_energy% levels(l)% var, &
-                             pressure% levels(l)% var, &
-                             v_euler% levels(l)% var )
+                                   THIS% get_ngrid_y(l), &
+                                   THIS% get_ngrid_z(l), &
+                                   THIS% coords% levels(l)% var, &
+                                   baryon_density% levels(l)% var, &
+                                   energy_density% levels(l)% var, &
+                                   specific_energy% levels(l)% var, &
+                                   pressure% levels(l)% var, &
+                                   v_euler% levels(l)% var )
 
     ENDDO ref_levels
     PRINT *, " * LORENE hydro ID imported."
@@ -1220,7 +1220,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
     USE mesh_refinement,             ONLY: allocate_grid_function, levels, &
                                            rad_coord, nlevels, &
-                                           deallocate_grid_function
+                                           deallocate_grid_function, coords
     USE ADM_refine,                  ONLY: lapse, shift_u, &
                                            g_phys3_ll, &
                                            allocate_ADM, deallocate_ADM
@@ -1265,13 +1265,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     USE set_h,                ONLY: exact_nei_tree_update
     USE alive_flag,           ONLY: alive
 
-    USE map_particles_2_grid, ONLY: map_2_grid
+    USE map_particles_2_grid, ONLY: map_2_grid_hash
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
                                     get_metric_on_particles
     USE particle_mesh,        ONLY: deallocate_all_lists, &
                                     deallocate_flag_nei_cell, &
                                     deallocate_pp_g
+    USE particle_mesh_hash,   ONLY: deallocate_hash_memory
 
     IMPLICIT NONE
 
@@ -1309,6 +1310,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     ENDIF
     nlevels= THIS% nlevels
     levels = THIS% levels
+    coords = THIS% coords
 
     DO l= 1, THIS% nlevels, 1
       levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
@@ -1512,14 +1514,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
 
     PRINT *, " * Mapping stress-energy tensor from the particles to the grid..."
     PRINT *
-    CALL map_2_grid( npart        , &
-                     nu_loc       , &
-                     pos_loc      , &
-                     vel_loc      , &
-                     u_loc        , &
-                     nlrf_loc     , &
-                     theta_loc    , &
-                     pressure_loc )
+    CALL map_2_grid_hash( npart        , &
+                          nu_loc       , &
+                          pos_loc      , &
+                          vel_loc      , &
+                          u_loc        , &
+                          nlrf_loc     , &
+                          theta_loc    , &
+                          pressure_loc )
 
     !IF( counter == 2 )THEN
     !  STOP
@@ -1538,6 +1540,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
     CALL deallocate_flag_nei_cell
     CALL deallocate_pp_g
     CALL deallocate_all_lists
+    CALL deallocate_hash_memory
     CALL deallocate_metric_on_particles
     CALL deallocate_gradient
     DEALLOCATE( alive )

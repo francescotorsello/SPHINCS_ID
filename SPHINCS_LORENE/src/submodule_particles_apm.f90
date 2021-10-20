@@ -32,8 +32,8 @@ SUBMODULE (particles_id) particles_apm
     !    - 3. Do the APM iteration so that the final
     !       SPH kernel estimate of the baryon mass
     !       density matches the baryon density in the
-    !       star as given by LORENE
-    !    - 4. Correct the particle masses ONCE in order
+    !       star as given by |lorene|
+    !    - 4. Correct the particle masses ONCE, in order
     !       to match the density even better. Since we
     !       don't want a large mass ratio, we impose a
     !       maximum mass ratio when performing this
@@ -44,7 +44,23 @@ SUBMODULE (particles_id) particles_apm
     !  that kernel-estimate very well the mass density
     !  of the star, and has a low mass ratio.
     !
-    !  This procedure assigns positions and nu.
+    !  This procedure assigns positions and \(\nu\).
+    !
+    !  @warning
+    !  If the outer layers of a star have a very low density
+    !  compared to the core, it can happen that, irrespective
+    !  of the initial particle distribution and the APM
+    !  parameters, the particle distribution output by the
+    !  APM does not have a smooth surface. In this case,
+    !  the only solution (that has been found as of 20.10.2021)
+    !  is to increase the particle number.
+    !
+    !  As of 20.10.2021, this has only happened with the
+    !  CompOSE tabulated EOS (all of them), but not with
+    !  any piecewise polytropic or polytropic EOS.
+    !
+    !  FT 20.10.2021
+    !  @endwarning
     !
     !  FT 04.06.2021
     !
@@ -77,7 +93,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: m_max_it    = 50
     INTEGER,          PARAMETER:: search_pos= 10
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness = 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist = 0.1D0
+    DOUBLE PRECISION, PARAMETER:: ghost_dist = 0.2D0
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
 
@@ -1344,14 +1360,14 @@ SUBMODULE (particles_id) particles_apm
               .AND. &
               validate_position_final( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-              .AND. &
-              check_particle_position( a - 1, &
-                                       all_pos(:,1:a-1), &
-                                       pos_corr_tmp ) == 0 &
-              .AND. &
-              check_particle_position( npart_real - a, &
-                                       all_pos(:,a+1:npart_real), &
-                                       pos_corr_tmp ) == 0 &
+              !.AND. &
+              !check_particle_position( a - 1, &
+              !                         all_pos(:,1:a-1), &
+              !                         pos_corr_tmp ) == 0 &
+              !.AND. &
+              !check_particle_position( npart_real - a, &
+              !                         all_pos(:,a+1:npart_real), &
+              !                         pos_corr_tmp ) == 0 &
           )THEN
 
             all_pos(:,a)= pos_corr_tmp
@@ -1864,15 +1880,22 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "101"
 
-    CALL exact_nei_tree_update( nn_des, &
-                                npart_real, &
-                                pos, nu )
-
-    !IF( mass == THIS% mass2 ) STOP
-
-    IF( debug ) PRINT *, "102"
-
-    CALL density( npart_real, pos, nstar_int )
+    ! Determine smoothing length so that each particle has exactly
+    ! 300 neighbours inside 2h
+  !  CALL assign_h( nn_des, &
+  !                 npart_real, &
+  !                 pos, h_guess, & ! Input
+  !                 h )             ! Output
+  !
+  !  CALL exact_nei_tree_update( nn_des, &
+  !                              npart_real, &
+  !                              pos, nu )
+  !
+  !  !IF( mass == THIS% mass2 ) STOP
+  !
+  !  IF( debug ) PRINT *, "102"
+  !
+  !  CALL density( npart_real, pos, nstar_int )
     !nstar_int= 0.0D0
 
     IF( debug ) PRINT *, "103"

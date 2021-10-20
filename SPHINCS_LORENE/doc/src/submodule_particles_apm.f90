@@ -32,8 +32,8 @@ SUBMODULE (particles_id) particles_apm
     !    - 3. Do the APM iteration so that the final
     !       SPH kernel estimate of the baryon mass
     !       density matches the baryon density in the
-    !       star as given by LORENE
-    !    - 4. Correct the particle masses ONCE in order
+    !       star as given by |lorene|
+    !    - 4. Correct the particle masses ONCE, in order
     !       to match the density even better. Since we
     !       don't want a large mass ratio, we impose a
     !       maximum mass ratio when performing this
@@ -44,7 +44,23 @@ SUBMODULE (particles_id) particles_apm
     !  that kernel-estimate very well the mass density
     !  of the star, and has a low mass ratio.
     !
-    !  This procedure assigns positions and nu.
+    !  This procedure assigns positions and \(\nu\).
+    !
+    !  @warning
+    !  If the outer layers of a star have a very low density
+    !  compared to the core, it can happen that, irrespective
+    !  of the initial particle distribution and the APM
+    !  parameters, the particle distribution output by the
+    !  APM does not have a smooth surface. In this case,
+    !  the only solution (that has been found as of 20.10.2021)
+    !  is to increase the particle number.
+    !
+    !  As of 20.10.2021, this has only happened with the
+    !  CompOSE tabulated EOS (all of them), but not with
+    !  any piecewise polytropic or polytropic EOS.
+    !
+    !  FT 20.10.2021
+    !  @endwarning
     !
     !  FT 04.06.2021
     !
@@ -75,6 +91,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: max_npart   = 5D+6
     INTEGER,          PARAMETER:: nn_des      = 301
     INTEGER,          PARAMETER:: m_max_it    = 50
+    INTEGER,          PARAMETER:: search_pos= 10
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness = 1.1D0
     DOUBLE PRECISION, PARAMETER:: ghost_dist = 0.2D0
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
@@ -84,6 +101,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
+    INTEGER:: dim_seed, rel_sign
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
     DOUBLE PRECISION:: h_max, h_av, eps, tmp!, delta
@@ -100,9 +118,11 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: art_pr_max
     DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
+    DOUBLE PRECISION:: rand_num, rand_num2
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
+    INTEGER, DIMENSION(:), ALLOCATABLE:: seed
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
@@ -146,9 +166,19 @@ SUBMODULE (particles_id) particles_apm
     LOGICAL:: exist
     LOGICAL:: good_h
 
+    !CHARACTER:: it_n
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
+
+    CALL RANDOM_SEED( SIZE= dim_seed )
+    ALLOCATE( seed( dim_seed ) )
+    seed( 1 )= 2
+    seed( 2 )= 1
+    DO itr= 3, dim_seed
+      seed( itr )= seed( itr - 1 ) + seed( itr - 2 )
+    ENDDO
+    CALL RANDOM_SEED( PUT= seed )
 
     IF( debug ) PRINT *, "0"
 
@@ -723,7 +753,7 @@ SUBMODULE (particles_id) particles_apm
     nu_all= (mass/DBLE(npart_real))*umass/amu
     nu= nu_all
     DO a= 1, npart_all
-      IF( a < npart_real )THEN
+      IF( a <= npart_real )THEN
         freeze(a)= 0
       ELSE
         freeze(a)= 1
@@ -762,10 +792,34 @@ SUBMODULE (particles_id) particles_apm
     err_N_mean_min= HUGE(1.0D0)
     apm_iteration: DO itr= 1, apm_max_it, 1
 
+      !IF( itr == 2 ) EXIT
+
       PRINT *, ' * Starting with APM step #: ', itr
       PRINT *
 
       IF( MOD( itr, 15 ) == 0 )THEN
+
+     !   DO a= 1, npart_real, 1
+     !     IF( check_particle_position( a - 1, &
+     !                                  all_pos(:,1:a-1), &
+     !                                  all_pos(:,a) ) > 0 &
+     !         .AND. &
+     !         check_particle_position( npart_real - a, &
+     !                                  all_pos(:,a+1:npart_real), &
+     !                                  all_pos(:,a) ) > 0 &
+     !     )THEN
+     !
+     !       CALL RANDOM_NUMBER( rand_num )
+     !       CALL RANDOM_NUMBER( rand_num2 )
+     !
+     !       IF( rand_num2 < half )  rel_sign= - 1
+     !       IF( rand_num2 >= half ) rel_sign=   1
+     !
+     !       all_pos(:,a)= all_pos(:,a)*( 1.0D0 + &
+     !                                    DBLE(rel_sign)*rand_num*half*third )
+     !
+     !     ENDIF
+     !   ENDDO
 
         IF( debug ) PRINT *, "printing positions to file..."
 
@@ -774,6 +828,9 @@ SUBMODULE (particles_id) particles_apm
         ELSE
           finalnamefile= "apm_pos.dat"
         ENDIF
+
+        !WRITE(it_n,'(i1)') itr
+        !finalnamefile= "apm_pos-"//it_n//".dat"
 
         INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -1264,7 +1321,8 @@ SUBMODULE (particles_id) particles_apm
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, correction_pos, &
       !$OMP                     dNstar, npart_real, nstar_p ) &
-      !$OMP             PRIVATE( pos_corr_tmp, a, cnt )
+      !$OMP             PRIVATE( pos_corr_tmp, a, cnt, rand_num, rand_num2, &
+      !$OMP                      rel_sign )
       DO a= 1, npart_real, 1
 
         IF( dNstar(a) >= 100.0D0 )THEN
@@ -1281,18 +1339,18 @@ SUBMODULE (particles_id) particles_apm
 
         ENDIF
 
-   !     IF( get_density( &
-   !               pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-   !         .AND. &
-   !         nstar_p(a) > 0.0D0 &
-   !         .AND. &
-   !         validate_position_final( &
-   !               pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-   !     )THEN
-   !
-   !       all_pos(:,a)= pos_corr_tmp
-   !
-   !     ENDIF
+    !    IF( get_density( &
+    !              pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
+    !        .AND. &
+    !        nstar_p(a) > 0.0D0 &
+    !        .AND. &
+    !        validate_position_final( &
+    !              pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+    !    )THEN
+    !
+    !      all_pos(:,a)= pos_corr_tmp
+    !
+    !    ENDIF
 
         cnt= 0
         DO
@@ -1302,19 +1360,67 @@ SUBMODULE (particles_id) particles_apm
               .AND. &
               validate_position_final( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+              !.AND. &
+              !check_particle_position( a - 1, &
+              !                         all_pos(:,1:a-1), &
+              !                         pos_corr_tmp ) == 0 &
+              !.AND. &
+              !check_particle_position( npart_real - a, &
+              !                         all_pos(:,a+1:npart_real), &
+              !                         pos_corr_tmp ) == 0 &
           )THEN
 
             all_pos(:,a)= pos_corr_tmp
             EXIT
 
-          ELSE
+          ELSEIF( cnt <= search_pos )THEN
 
             cnt= cnt + 1
-            pos_corr_tmp= pos_corr_tmp*3.0D0/4.0D0
+          !  pos_corr_tmp= pos_corr_tmp*3.0D0/4.0D0
+
+            CALL RANDOM_NUMBER( rand_num )
+            CALL RANDOM_NUMBER( rand_num2 )
+
+            IF( rand_num2 < half )  rel_sign= - 1
+            IF( rand_num2 >= half ) rel_sign=   1
+
+            pos_corr_tmp(1)= all_pos(1,a) + &
+              correction_pos(1,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
+
+            CALL RANDOM_NUMBER( rand_num )
+            CALL RANDOM_NUMBER( rand_num2 )
+
+            IF( rand_num2 < half )  rel_sign= - 1
+            IF( rand_num2 >= half ) rel_sign=   1
+
+            pos_corr_tmp(2)= all_pos(2,a) + &
+              correction_pos(2,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
+
+            CALL RANDOM_NUMBER( rand_num )
+            CALL RANDOM_NUMBER( rand_num2 )
+
+            IF( rand_num2 < half )  rel_sign= - 1
+            IF( rand_num2 >= half ) rel_sign=   1
+
+            pos_corr_tmp(3)= all_pos(3,a) + &
+              correction_pos(3,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
+
+            !pos_corr_tmp*( 1.0D0 + DBLE(rel_sign)*rand_num*half*third )
+
+          ELSEIF( cnt == search_pos + 1 )THEN
+
+           ! cnt= cnt + 1
+           ! CALL RANDOM_NUMBER( rand_num )
+           ! CALL RANDOM_NUMBER( rand_num2 )
+           !
+           ! IF( rand_num2 < half )  rel_sign= - 1
+           ! IF( rand_num2 >= half ) rel_sign=   1
+           ! all_pos(:,a)= all_pos(:,a)*( 1.0D0 -rand_num*half*third )
+            EXIT
 
           ENDIF
 
-          IF( cnt == 11 ) EXIT
+          !IF( cnt == 11 ) EXIT
 
         ENDDO
 
@@ -1774,16 +1880,23 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "101"
 
-    !CALL exact_nei_tree_update( nn_des, &
-    !                            npart_real, &
-    !                            pos, nu )
-
-    !IF( mass == THIS% mass2 ) STOP
-
-    IF( debug ) PRINT *, "102"
-
-    !CALL density( npart_real, pos, nstar_int )
-    nstar_int= 0.0D0
+    ! Determine smoothing length so that each particle has exactly
+    ! 300 neighbours inside 2h
+  !  CALL assign_h( nn_des, &
+  !                 npart_real, &
+  !                 pos, h_guess, & ! Input
+  !                 h )             ! Output
+  !
+  !  CALL exact_nei_tree_update( nn_des, &
+  !                              npart_real, &
+  !                              pos, nu )
+  !
+  !  !IF( mass == THIS% mass2 ) STOP
+  !
+  !  IF( debug ) PRINT *, "102"
+  !
+  !  CALL density( npart_real, pos, nstar_int )
+    !nstar_int= 0.0D0
 
     IF( debug ) PRINT *, "103"
 

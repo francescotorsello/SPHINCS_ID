@@ -16,7 +16,9 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
           !"apm-pos-nu_1216_45km_pol275_500k.dat"
-          "apm-pos-nu_1313_45km_pol2_500k.dat"
+          !"apm-pos-nu_1313_45km_pol2_500k.dat"
+          "apm-pos-nu_1218_42km_dd2sfrdf18_5M.dat"
+          "apm-pos-nu_1218_42km_dd2sfrdf18_2.6M.dat"
           !"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_135135_42km_apr4_500k_hr.dat"
           !"apm-pos_1218_45km_pol275_1M.dat"
@@ -61,7 +63,7 @@ nu_ratio=3.0           ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-npart_approx= 150000 ! The approximate number of particles on the less massive star
+npart_approx= 1000000 ! The approximate number of particles on the less massive star
                    ! The approximate number of particles on the more massive star
                    ! is npart_approx/mass_ratio
 last_r= 0.99D0     ! The radius of the last spherical surface is
@@ -94,11 +96,22 @@ randomize_phi=  .TRUE.  ! Randomize particle positions in phi
 randomize_theta=.TRUE.  ! Randomize particle positions in theta
 randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
                         ! the outer layers by a little random displacement
-!----------------------------------------------------!
-! Parameters for the Artifical Pressure Method (APM) !
-!----------------------------------------------------!
-apm_iterate1=.FALSE.    ! If .TRUE. applies the APM to the first star
-apm_iterate2=.FALSE.    ! If .TRUE. applies the APM to the second star
+!----------------------------------------------------------!
+! Parameters for the Artifical Pressure Method (APM)       !
+!                                                          !
+! If the outer layers of a star have a very low density    !
+! compared to the core, it can happen that, irrespective   !
+! of the initial particle distribution and the APM         !
+! parameters, the particle distribution output by the      !
+! APM does not have a smooth surface. In this case,        !
+! the only solution (that has been found as of 20.10.2021) !
+! is to increase the particle number.                  !
+! As of 20.10.2021, this has only happened with the        !
+! CompOSE tabulated EOS (all of them), but not with        !
+! any piecewise polytropic or polytropic EOS.              !
+!----------------------------------------------------------!
+apm_iterate1=.TRUE.    ! If .TRUE. applies the APM to the first star
+apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
                        ! Note that if reflect_particles_x= .TRUE. and the
                        ! star mass ratio is in [0.995,1.005], the particles
                        ! on the second star will be the reflection about the yz

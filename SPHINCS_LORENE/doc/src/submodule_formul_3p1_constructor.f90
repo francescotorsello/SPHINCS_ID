@@ -70,6 +70,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
     f3p1_obj% grid_timer    = timer( "grid_timer" )
     f3p1_obj% importer_timer= timer( "importer_timer" )
 
+    CALL f3p1_obj% grid_timer% start_timer()
+
     IF( PRESENT(dx) .AND. PRESENT(dy) .AND. PRESENT(dz) )THEN
 
       CALL initialize_grid( dx, dy, dz )
@@ -134,6 +136,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
     CALL allocate_grid_function( f3p1_obj% shift_u,    "shift_u_id",    3 )
     CALL allocate_grid_function( f3p1_obj% g_phys3_ll, "g_phys3_ll_id", 6 )
     CALL allocate_grid_function( f3p1_obj% K_phys3_ll, "K_phys3_ll_id", 6 )
+
+    CALL f3p1_obj% grid_timer% stop_timer()
 
     !
     !-- Import the LORENE spacetime ID on the refined mesh,

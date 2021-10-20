@@ -60,7 +60,7 @@ SUBMODULE (particles_id) spherical_surfaces
 
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, m_p, &
                        dr, dth, dphi, phase, phase_th, mass, &
-                       dr_shells, dth_shells, dphi_shells, col, rad, &
+                       dr_shells, dth_shells, dphi_shells, col, long, rad, &
                        proper_volume, mass_test, mass_test2,&
                        proper_volume_test, npart_shell_kept, &
                        rand_num, rand_num2, delta_r, shell_thickness, &
@@ -376,19 +376,6 @@ SUBMODULE (particles_id) spherical_surfaces
     PRINT *, " * Assigning first half of particle positions..."
     PRINT *
 
-!    !$OMP PARALLEL DEFAULT(NONE), &
-!    !$OMP    SHARED( r, npart_shelleq, center, rad, alpha, &
-!    !$OMP            pos_shells, colatitude_pos, n_shells, &
-!    !$OMP            dr_shells, shell_radii, shell_thickness, THIS, &
-!    !$OMP            g_xx_tmp, bar_density_tmp, gam_euler_tmp, &
-!    !$OMP            pos_shell_tmp, pvol_tmp, dphi_shells, rand_num2, &
-!    !$OMP            rel_sign, npart_shell, npart_discard, npart_shell_cnt, &
-!    !$OMP            npart_shell_tmp, npart_out, cnt2, m_parts, prev_shell, &
-!    !$OMP            upper_bound_tmp, lower_bound_tmp, upper_bound, &
-!    !$OMP            lower_bound, r_cnt, shell_masses, high_mass, low_mass, &
-!    !$OMP            npart_shell_kept, kept_all, max_steps, upper_factor, &
-!    !$OMP            lower_factor, rand_num, radius, size_pos_shell, ios, &
-!    !$OMP            err_msg, itr )
     place_particles_on_northern_emispheres: DO
 
       ! Correct npart_shelleq to be divisible by 4
@@ -427,24 +414,19 @@ SUBMODULE (particles_id) spherical_surfaces
         DEALLOCATE( colatitude_pos( r )% colatitudes )
       ALLOCATE( colatitude_pos( r )% colatitudes( npart_shelleq( r )/4 ) )
 
-      !DO itr2= 1, npart_shelleq( r )/4, 1
+      IF( shell_radii(r) < 0.95D0*last_r*radius )THEN
 
-        IF( shell_radii(r) < 0.95D0*last_r*radius )THEN
+        CALL compute_colatitudes_uniformly_in( pi/2.0D0, 9.5D0/10.0D0*pi, &
+                                      colatitude_pos( r )% colatitudes( : ) )
 
-          !colatitude_pos( r )% colatitudes( itr2 )= &
-          !            ACOS( 2.0D0*DBLE(itr2)/ &
-          !                  (DBLE(npart_shelleq( r )/2) + 0.625D0 ) - 1.0D0 )
-          CALL compute_colatitudes_uniformly_in( pi/2.0D0, 9.75D0/10.0D0*pi, &
-                                        colatitude_pos( r )% colatitudes( : ) )
+      ELSE
 
-        ELSE
+        CALL compute_colatitudes_uniformly_in( pi/2.0D0, 9.5D0/10.0D0*pi, &
+                                      colatitude_pos( r )% colatitudes( : ) )
+        !CALL compute_colatitudes_uniformly_in( pi/2.0D0, 2.0D0/3.0D0*pi, &
+        !                              colatitude_pos( r )% colatitudes( : ) )
 
-          !colatitude_pos( r )% colatitudes( itr2 )= &
-          !ACOS( 2.0D0*( 1.0D0) - 1.0D0 )
-          CALL compute_colatitudes_uniformly_in( pi/2.0D0, 2.0D0/3.0D0*pi, &
-                                        colatitude_pos( r )% colatitudes( : ) )
-
-        ENDIF
+      ENDIF
 
           !            alpha( r )*1.0D0/2.0D0 + ( itr2 - 1 )*alpha( r )
 
@@ -487,19 +469,14 @@ SUBMODULE (particles_id) spherical_surfaces
 
       !$OMP PARALLEL DO DEFAULT(NONE), &
       !$OMP             PRIVATE( phase, col, col_tmp, xtemp, ytemp, ztemp, &
-      !$OMP                      dth_shells, delta_r, &
+      !$OMP                      dth_shells, delta_r, long, &
       !$OMP                      th, phi, rand_num2, phase_th, rel_sign ), &
       !$OMP             SHARED( r, npart_shelleq, center, rad, alpha, &
       !$OMP                     pos_shells, colatitude_pos, n_shells, &
       !$OMP                     dr_shells, shell_radii, shell_thickness, THIS, &
       !$OMP                     g_xx_tmp, bar_density_tmp, gam_euler_tmp, &
-      !$OMP                     pos_shell_tmp, pvol_tmp, dphi_shells, &
-      !$OMP                     npart_discarded, npart_surface_tmp )!, &
- !     !$OMP             REDUCTION( + : npart_discard, npart_shell_cnt )
- !     !$OMP DO PRIVATE( phase, col, col_tmp, xtemp, ytemp, ztemp, &
- !     !$OMP             dth_shells, delta_r, &
- !     !$OMP             th, phi, rand_num2, phase_th, rel_sign ), &
- !     !$OMP    REDUCTION( + : npart_discard, npart_shell_cnt )
+      !$OMP                     pos_shell_tmp, pvol_tmp, dphi_shells, radius, &
+      !$OMP                     npart_discarded, npart_surface_tmp, last_r )
       DO phi= 1, npart_shelleq( r ), 1
 
         IF( debug ) PRINT *, "Right before loop over phi"
@@ -516,6 +493,18 @@ SUBMODULE (particles_id) spherical_surfaces
             phase= phase*alpha(r)
 
           ENDIF
+
+        !  IF( shell_radii(r) < 0.95D0*last_r*radius )THEN
+        !
+        !    long= phase + phi*alpha(r)
+        !
+        !  ELSE
+        !
+        !    long= phase + phi*alpha(r)/3.0D0 - pi/3.0D0
+        !
+        !  ENDIF
+          long= phase + phi*alpha(r)
+
 
           col= colatitude_pos(r)% colatitudes(th)
           IF( THIS% randomize_theta )THEN
@@ -543,10 +532,11 @@ SUBMODULE (particles_id) spherical_surfaces
             IF( rand_num2 >= half ) rel_sign=  1
             IF( rand_num2 < half )  rel_sign= -1
 
-            IF( r/n_shells < 0.94D0 )THEN
+            IF( r/n_shells < 0.95D0 )THEN
               rad= rad + rel_sign*delta_r*0.35D0*dr_shells
             ELSE
-              rad= rad - 0.5D0*( 1.0D0 + delta_r )*0.35D0*dr_shells
+              !rad= rad - ( 1.0D0 + delta_r )*0.35D0*dr_shells
+              rad= rad + ( - delta_r*0.35D0 - 0.5D0 )*dr_shells
             ENDIF
 
           ENDIF
@@ -560,8 +550,8 @@ SUBMODULE (particles_id) spherical_surfaces
           !
           !-- Compute Cartesian coordinates of the candidate particle positions
           !
-          xtemp= center + rad*COS(phase + phi*alpha(r))*SIN(col)
-          ytemp= rad*SIN(phase + phi*alpha(r))*SIN(col)
+          xtemp= rad*COS(long)*SIN(col) + center
+          ytemp= rad*SIN(long)*SIN(col)
           ztemp= rad*COS(col)
 
           IF( ISNAN( xtemp ) )THEN
@@ -1072,8 +1062,6 @@ SUBMODULE (particles_id) spherical_surfaces
       IF( debug ) PRINT *, "12"
 
     ENDDO place_particles_on_northern_emispheres
-
- !   !$OMP END PARALLEL
 
     !-----------------------------!
     !--  End of main iteration  --!

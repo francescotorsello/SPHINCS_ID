@@ -5,9 +5,9 @@
 MODULE formul_3p1_id
 
   !**********************************************************************
-  !                                                                     *
-  !   This module contains the definition of ABSTRACT TYPE formul_3p1   *
-  !                                                                     *
+  !
+  !#   This module contains the definition of ABSTRACT TYPE formul_3p1
+  !
   !**********************************************************************
 
 
@@ -36,41 +36,118 @@ MODULE formul_3p1_id
   !*******************************************************
 
   TYPE, ABSTRACT:: formul_3p1
+  !# ABSTRACT TYPE representing a generic 3+1 formulation of the Einsten
+  !  equations
 
-    INTEGER, PUBLIC:: cons_step
+    !
+    !-- Mesh variables
+    !
 
     INTEGER:: nlevels
+    !! Number of refinement levels
 
     TYPE(level), DIMENSION(:), ALLOCATABLE :: levels
+    !! Array containing the information on each refinement level
     TYPE(grid_function):: coords
+    !! Grid function storing the Cartesian coordinates
     TYPE(grid_function_scalar):: rad_coord
+    !! Grid scalar function storing the radial coordinates of each grid point
+
+    !
+    !-- ADM fields
+    !
 
     TYPE(grid_function_scalar):: lapse
+    !! Grid scalar function storing the lapse function
     TYPE(grid_function):: shift_u
+    !! Grid function storing the shift vector
     TYPE(grid_function):: g_phys3_ll
+    !! Grid function storing the spatial metric
     TYPE(grid_function):: K_phys3_ll
+    !! Grid function storing the extrinsic curvature
+
+    !
+    !-- Constraint violations
+    !
 
     TYPE(grid_function_scalar):: HC
+    !# Grid scalar function storing the Hamiltonian constraint (violations)
+    !  computed using the full |lorene| ID on the mesh
     TYPE(grid_function_scalar):: HC_parts
+    !# Grid scalar function storing the Hamiltonian constraint (violations)
+    !  computed using the stress-energy tensor mapped from the particles to the
+    !  mesh
     TYPE(grid_function):: MC
+    !# Grid function storing the momentum constraint (violations)
+    !  computed using the full |lorene| ID on the mesh
     TYPE(grid_function):: MC_parts
+    !# Grid function storing the momentum constraint (violations)
+    !  computed using the stress-energy tensor mapped from the particles to the
+    !  mesh
+
+    !
+    !-- Norms of constraint violations
+    !
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_l2
+    !! \(\ell_2\) norm of the Hamiltonian constraint computed on the mesh
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_parts_l2
+    !# \(\ell_2\) norm of the Hamiltonian constraint computed on the mesh, using
+    !  the stress-energy tensor mapped from the particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_loo
+    !# \(\ell_\infty\) norm of the Hamiltonian constraint computed on the mesh
+    !  (i.e., its maximum)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_parts_loo
+    !# \(\ell_\infty\) norm of the Hamiltonian constraint computed on the mesh,
+    !  using the stress-energy tensor mapped from the particles
+    !  (i.e., its maximum)
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_l2
+    !! \(\ell_2\) norm of the momentum constraint computed on the mesh
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_l2
+    !# \(\ell_2\) norm of the Hamiltonian constraint computed on the mesh, using
+    !  the stress-energy tensor mapped from the particles
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_loo
+    !# \(\ell_\infty\) norm of the momentum constraint computed on the mesh
+    !  (i.e., its maximum)
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_loo
+    !# \(\ell_\infty\) norm of the momentum constraint computed on the mesh,
+    !  using the stress-energy tensor mapped from the particles
+    !  (i.e., its maximum)
+
+    !
+    !-- Steering variables
+    !
 
     ! Variables to decide if and how to export the constraints
+
+    INTEGER, PUBLIC:: cons_step
+    !! Constraint violations are printed to file every cons_step-th grid point
+    !  along each Cartesian direction
     LOGICAL, PUBLIC:: export_constraints
+    !# `.TRUE.` if the constraint violations  are to be printed to file,
+    !  `.FALSE.` otherwise
     LOGICAL, PUBLIC:: export_constraints_details
-    LOGICAL, PUBLIC:: export_constraints_xy, export_constraints_x
+    !# `.TRUE.` if the points at which the constraints violations are within the
+    !  intervals \([0,10^{-7}],[10^3,\infty],[10^n,10^m]\), with
+    !  \(n\in\{-7,2\}\) and \(m=n+1\), are to be printed to file;
+    !  `.FALSE.` otherwise
+    LOGICAL, PUBLIC:: export_constraints_xy
+    !! `.TRUE.` if only the constrain violations on the \(xy\) plane are to be
+    !  printed to file, `.FALSE.` otherwise
+    LOGICAL, PUBLIC:: export_constraints_x
+    !! `.TRUE.` if only the constrain violations on the \(x\) axis are to be
+    !  printed to file, `.FALSE.` otherwise
+
+    !
+    !-- Timers
+    !
 
     TYPE(timer):: grid_timer
+    !# Timer that times how long it takes to set up the grid and allocate
+    !  the grid functions
     TYPE(timer):: importer_timer
+    !# Timer that times how long it takes to import the |lorene| ID
+    !  on the mesh
 
 
     CONTAINS

@@ -1317,4 +1317,81 @@ MODULE particles_id
   END SUBROUTINE check_particle_positions
 
 
+  FUNCTION check_particle_position( npart, pos, pos_a ) RESULT( cnt )
+
+    !*****************************************************
+    !
+    !# Return the number of times that pos_a appears
+    !  in the array pos
+    !
+    !  FT 13.10.2021
+    !
+    !*****************************************************
+
+    !USE NR,             ONLY: indexx
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN):: npart
+    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+    DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: pos_a
+    INTEGER:: cnt
+
+    INTEGER:: itr, itr2, size_x!, cnt
+    INTEGER, DIMENSION(npart):: x_sort, cnts
+    INTEGER, DIMENSION(npart):: x_number
+    INTEGER, DIMENSION(:), ALLOCATABLE:: x_number_filt
+
+    ! Sort x coordinates of the particles
+    !CALL indexx( npart, pos( 1, : ), x_sort )
+
+    x_number= 0
+    itr2= 0
+    ! Find the number of times that the x coordinate of pos_a appears in pos
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, pos_a, x_sort, x_number, npart ) &
+    !$OMP             PRIVATE( itr )
+    DO itr= 1, npart, 1
+
+      IF( pos( 1, itr ) == pos_a( 1 ) )THEN
+
+        !itr2= itr2 + 1
+        x_number(itr)= itr
+
+      !ELSEIF( pos( 1, x_sort(itr) ) > pos_a( 1 ) )THEN
+      !
+      !  EXIT
+
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+    x_number_filt= PACK( x_number, x_number /= 0 )
+    size_x= SIZE(x_number_filt)
+
+    cnts= 0
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, pos_a, x_sort, x_number_filt, size_x, cnts )&
+    !$OMP             PRIVATE( itr )
+    DO itr= 1, size_x, 1
+
+      ! If they have the same y
+      IF( pos( 2, x_number_filt(itr) ) == pos_a( 2 ) )THEN
+
+        ! If they have the same z
+        IF( pos( 3, x_number_filt(itr) ) == pos_a( 3 ) )THEN
+
+          cnts(itr)= cnts(itr) + 1
+
+        ENDIF
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    cnt= SUM( cnts )
+
+  END FUNCTION check_particle_position
+
+
 END MODULE particles_id
