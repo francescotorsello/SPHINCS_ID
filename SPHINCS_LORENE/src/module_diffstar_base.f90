@@ -9,8 +9,8 @@ MODULE diffstar_base
   !# This MODULE contains the definition of TYPE diffstarbase,
   !  which is an ABSTRACT TYPE representing any possible
   !  type of initial data (ID) for a differentially rotating
-  !  star (DRS) to be set up for SPHINCS_BSSN. That is, DRS ID
-  !  produced with |lorene|, with FUKA, etc.
+  !  star (DRS) to be set up for |sphincsbssn|. That is, DRS ID
+  !  produced with |lorene|, with |fuka|, etc.
   !
   !  PROCEDURES and variables shared by all the types
   !  of DRS ID should belong to TYPE diffstarbase, as
@@ -29,24 +29,25 @@ MODULE diffstar_base
   IMPLICIT NONE
 
 
-  !*******************************************************
-  !                                                      *
-  !           Definition of TYPE diffstarbase            *
-  !           (differentially rotating star)             *
-  !                                                      *
-  !   This class imports and stores the |lorene| BNS ID    *
-  !                                                      *
-  !*******************************************************
+  !********************************************************
+  !                                                       *
+  !           Definition of TYPE diffstarbase             *
+  !           (differentially rotating star)              *
+  !                                                       *
+  !   This class imports and stores the |lorene| BNS ID   *
+  !                                                       *
+  !********************************************************
 
   TYPE, ABSTRACT, EXTENDS(idbase):: diffstarbase
-  !# Represents a generic DRS ID for SPHINCS_BSSN (produced with |lorene|, or with
-  !  FUKA, etc.; or produced with the same tool, but read in different ways,
+  !# Base TYPE for DRS ID for |sphincsbssn| (produced with |lorene|, or with
+  !  |fuka|, etc.; or produced with the same tool, but read in different ways,
   !  for example by linking to the |lorene| library, or reading the ID from
   !  a lattice, etc.)
 
-    !
-    !-- Parameters of the DRS
-    !
+
+    !-----------------------------!
+    !--  Parameters of the DRS  --!
+    !-----------------------------!
 
     DOUBLE PRECISION:: omega_c
     !! Central angular velocity \([{\rm rad/s}]\)
@@ -123,11 +124,11 @@ MODULE diffstar_base
     DOUBLE PRECISION:: surface_area
     !# Surface area
 
-    !& Areal (or circumferential) radius of DRS [Msun_geo]
+    DOUBLE PRECISION:: area_radius
+    !# Areal (or circumferential) radius of DRS [Msun_geo]
     !  Note that these is the areal radius of the star in the binary system,
     !  which is different than that of an isolated star. The latter is used
     !  in the mass-radius diagrams, together with the gravitatonal mass
-    DOUBLE PRECISION:: area_radius
 
     DOUBLE PRECISION:: ent_center
     !! Central enthalpy \([c^2]\)
@@ -222,12 +223,12 @@ MODULE diffstar_base
     !--  SUBROUTINES  --!
     !-------------------!
 
-    PROCEDURE(get_eos_id_int), DEFERRED:: get_eos1_id, get_eos2_id
-
+    PROCEDURE(get_eos_id_int), DEFERRED:: get_eos_id
+    !! Returns an integer that identifies the equation of state
 
     PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
-    !# Integrates the |lorene| baryon mass density and computes the
-    !  radial mass profile
+    !# Integrates the baryon mass density over the starand computes the radial
+    !  mass profile
 
 
     !-----------------!
@@ -814,6 +815,7 @@ MODULE diffstar_base
     END FUNCTION get_logRho2
 
   END INTERFACE
+
 
 END MODULE diffstar_base
 

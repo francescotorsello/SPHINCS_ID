@@ -1,4 +1,4 @@
-! File:         submodule_bns_access.f90
+! File:         submodule_bns_base_access.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
@@ -7,8 +7,8 @@ SUBMODULE (bns_base) bns_base_access
   !***************************************************
   !
   !# The module contains the implementation of the
-  !  methods of TYPE bns that allow to access PRIVATE
-  !  members.
+  !  methods of TYPE bnsbase that allow to access
+  !  PRIVATE members.
   !
   !  FT 12.07.2021
   !

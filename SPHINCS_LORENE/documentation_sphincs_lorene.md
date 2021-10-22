@@ -25,6 +25,7 @@ github: https://github.com/francescotorsello
 linkedin: https://www.linkedin.com/in/francescotorsello
 alias: lorene = \(\texttt{LORENE}\)
        sphincsbssn = \(\texttt{SPHINCS_BSSN}\)
+       fuka = \(\texttt{FUKA}\)
 
 SPHINCS_LORENE is a modular, object-oriented, OMP parallelized FORTRAN 2018 code to produce binary neutron stars initial data to be evolved in time with the FORTRAN 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), using the C++ code LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"}).
 

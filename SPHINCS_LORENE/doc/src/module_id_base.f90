@@ -8,7 +8,7 @@ MODULE id_base
   !
   !# This MODULE contains the definition of TYPE idbase,
   !  which is an ABSTRACT TYPE representing any possible
-  !  type of initial data (ID) to be set up for SPHINCS_BSSN.
+  !  type of initial data (ID) to be set up for |sphincsbssn|.
   !  That is, a binary neutron star system, a rotating
   !  star, a binary black hole system, etc.
   !
@@ -30,12 +30,12 @@ MODULE id_base
   !              Definition of TYPE idbase                  *
   !                                                         *
   !   This ABSTRACT TYPE represents a generic ID for        *
-  !   SPHINCS_BSSN (binary neutron star, rotating star...). *
+  !   |sphincsbssn| (binary neutron star, rotating star...). *
   !                                                         *
   !**********************************************************
 
   TYPE, ABSTRACT:: idbase
-  !# Represents a generic ID for SPHINCS_BSSN (binary neutron star, rotating
+  !# Represents a generic ID for |sphincsbssn| (binary neutron star, rotating
   !  star...)
 
 

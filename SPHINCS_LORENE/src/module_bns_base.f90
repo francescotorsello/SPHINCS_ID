@@ -9,8 +9,8 @@ MODULE bns_base
   !# This MODULE contains the definition of TYPE bnsbase,
   !  which is an ABSTRACT TYPE representing any possible
   !  type of binary neutron star (BNS) initial data (ID)
-  !  to be set up for SPHINCS_BSSN. That is, BNS ID
-  !  produced with LORENE, with FUKA, etc.
+  !  to be set up for |sphincsbssn|. That is, BNS ID
+  !  produced with LORENE, with |fuka|, etc.
   !
   !  PROCEDURES and variables shared by all the types
   !  of BNS ID should belong to TYPE bnsbase, as
@@ -38,8 +38,8 @@ MODULE bns_base
   !*******************************************************
 
   TYPE, ABSTRACT, EXTENDS(idbase):: bnsbase
-  !# Represents a generic BNS ID for SPHINCS_BSSN (produced with LORENE, or with
-  !  FUKA, etc.; or produced with the same tool, but read in different ways,
+  !# Represents a generic BNS ID for |sphincsbssn| (produced with LORENE, or with
+  !  |fuka|, etc.; or produced with the same tool, but read in different ways,
   !  for example by linking to the LORENE library, or reading the ID from
   !  a lattice, etc.)
 
