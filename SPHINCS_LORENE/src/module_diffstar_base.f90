@@ -29,14 +29,11 @@ MODULE diffstar_base
   IMPLICIT NONE
 
 
-  !********************************************************
-  !                                                       *
-  !           Definition of TYPE diffstarbase             *
-  !           (differentially rotating star)              *
-  !                                                       *
-  !   This class imports and stores the |lorene| BNS ID   *
-  !                                                       *
-  !********************************************************
+  !********************************************************************
+  !                                                                   *
+  !  Definition of TYPE diffstarbase  (differentially rotating star)  *
+  !                                                                   *
+  !********************************************************************
 
   TYPE, ABSTRACT, EXTENDS(idbase):: diffstarbase
   !# Base TYPE for DRS ID for |sphincsbssn| (produced with |lorene|, or with
@@ -149,7 +146,7 @@ MODULE diffstar_base
     !! Central pressure \([M_\odot c^2 L_\odot^{-3}]\)
 
     CHARACTER( LEN=: ), ALLOCATABLE:: eos
-    !! |lorene| name of the equation of state (EoS) of star 1
+    !! Name of the equation of state (EoS) of star 1
 
 
     !

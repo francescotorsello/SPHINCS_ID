@@ -33,8 +33,6 @@ MODULE bns_base
   !                                                      *
   !   Definition of TYPE bnsbase (binary neutron star)   *
   !                                                      *
-  !   This class imports and stores the LORENE BNS ID    *
-  !                                                      *
   !*******************************************************
 
   TYPE, ABSTRACT, EXTENDS(idbase):: bnsbase
@@ -43,103 +41,147 @@ MODULE bns_base
   !  for example by linking to the LORENE library, or reading the ID from
   !  a lattice, etc.)
 
-    !
-    !-- Parameters of the binary system
-    !
 
-    !> Angular velocity [rad/s]
+    !-----------------------------!
+    !--  Parameters of the BNS  --!
+    !-----------------------------!
+
+    !> Angular velocity \([{\rm rad/s}]\)
     DOUBLE PRECISION:: angular_vel
-    !> Distance \(d\) between the points of maximum baryon density [km]
+
+    !> Distance \(d\) between the points of maximum baryon density \([{\rm km}]\)
     DOUBLE PRECISION:: distance
-    !> Distance between the centers of mass [MSun_geo(=1.47662503825040km)]
+
+    !> Distance between the centers of mass \([L_\odot(=1.47662503825040{\rm km})]\)
     DOUBLE PRECISION:: distance_com
-    !> Baryonic mass of star 1 [MSun]
+
+    !> Baryonic mass of star 1 \([M_\odot]\)
     DOUBLE PRECISION:: mass1
-    !> Baryonic mass of star 2 [MSun]
+
+    !> Baryonic mass of star 2 \([M_\odot]\)
     DOUBLE PRECISION:: mass2
-    !> Gravitational mass of star 1 [MSun]
+
+    !> Gravitational mass of star 1 \([M_\odot]\)
     DOUBLE PRECISION:: mass_grav1
-    !> Gravitational mass of star 2 [MSun]
+
+    !> Gravitational mass of star 2 \([M_\odot]\)
     DOUBLE PRECISION:: mass_grav2
-    !> ADM mass of the BNS [Msun]
+
+    !> ADM mass of the BNS \([M_\odot]\)
     DOUBLE PRECISION:: adm_mass
-    !& mOmega= ( angular_vel[km^{-1}] )*( mass_grav1[km] + mass_grav2[km] )
-    !  [pure number]
+
+    !& mOmega= ( [[bnsbase:angular_vel]]\([{\rm km^{-1}}]\) )
+    !  \(\times\) ( [[bnsbase:mass_grav1]]\([{\rm km}]\)
+    !      + [[bnsbase:mass_grav2]]\([{\rm km}]\) ) [pure number]
+    !
+    !  Constant used in [K. Hotokezaka et al, Phys. Rev. D 87, 024001](https://arxiv.org/abs/1212.0905){:target="_blank"} (see Sec. IIB) to determine when
+    !  the BNS is at approximately 3-4 quasicircular orbits from merger. For the
+    ! EOS APR4 and ALF2, this requirement is approximately satisfied for
+    ! mOmega \(=0.026\); for the EOS H4 and MS1, for mOmega \(=0.025\).
     DOUBLE PRECISION:: mOmega
-    !& Estimated time of the merger [MSun]
+
+    !& Estimated time of the merger \([M_\odot]\)
     !  $$
     !  t_\mathrm{merger}=\dfrac{5}{256}
     !  \dfrac{d^4}{M^1_\mathrm{g}M^2_\mathrm{g}(M^1_\mathrm{g}+M^2_\mathrm{g})}
     !  $$
-    !  P. C. Peters, "Gravitational Radiation and the Motion of Two Point
-    !  Masses", Phys. Rev. 136, B1224 (1964)
-    !  http://gravity.psu.edu/numrel/jclub/jc/Peters_PR_136_B1224_1964.pdf
+    !  [P. C. Peters, "Gravitational Radiation and the Motion of Two Point
+    !  Masses", Phys. Rev. 136, B1224 (1964)](http://gravity.psu.edu/numrel/jclub/jc/Peters_PR_136_B1224_1964.pdf){:target="_blank"}
     DOUBLE PRECISION:: t_merger
-    !> Angular momentum of the BNS system [G Msun^2/c]
+
+    !> Angular momentum of the BNS system \([G M_\odot^2/c]\)
     DOUBLE PRECISION:: angular_momentum= 0.0D0
-    !& Areal (or circumferential) radius of star 1 [Msun_geo]
+
+    !& Areal (or circumferential) radius of star 1 \([L_\odot]\)
     ! Note that these is the areal radius of the star in the binary system,
     ! which is different than that of an isolated star. The latter is used
     ! in the mass-radius diagrams, together with the gravitatonal mass
     DOUBLE PRECISION:: area_radius1
-    !> Radius of star 1, in the x direction, towards the companion [Msun_geo]
+
+    !> Radius of star 1, in the x direction, towards the companion \([L_\odot]\)
     DOUBLE PRECISION:: radius1_x_comp
-    !> Radius of star 1, in the y direction [Msun_geo]
+
+    !> Radius of star 1, in the y direction \([L_\odot]\)
     DOUBLE PRECISION:: radius1_y
-    !> Radius of star 1, in the z direction [Msun_geo]
+
+    !> Radius of star 1, in the z direction \([L_\odot]\)
     DOUBLE PRECISION:: radius1_z
-    !> Radius of star 1, in the x direction, opposite to companion [Msun_geo]
+
+    !> Radius of star 1, in the x direction, opposite to companion \([L_\odot]\)
     DOUBLE PRECISION:: radius1_x_opp
+
     !& Stellar center of star 1 (origin of the LORENE chart centered on star 1)
-    !  [Msun_geo]
+    !  \([L_\odot]\)
     DOUBLE PRECISION:: center1_x
-    !> Barycenter of star 1 [Msun_geo]
+
+    !> Barycenter of star 1 \([L_\odot]\)
     DOUBLE PRECISION:: barycenter1_x
-    !& Areal (or circumferential) radius of star 2 [Msun_geo]
+
+    !& Areal (or circumferential) radius of star 2 \([L_\odot]\)
     ! Note that these is the areal radius of the star in the binary system,
     ! which is different than that of an isolated star. The latter is used
     ! in the mass-radius diagrams, together with the gravitatonal mass
     DOUBLE PRECISION:: area_radius2
-    !> Radius of star 2, in the x direction, towards the companion [Msun_geo]
+
+    !> Radius of star 2, in the x direction, towards the companion \([L_\odot]\)
     DOUBLE PRECISION:: radius2_x_comp
-    !> Radius of star 2, in the y direction [Msun_geo]
+
+    !> Radius of star 2, in the y direction \([L_\odot]\)
     DOUBLE PRECISION:: radius2_y
-    !> Radius of star 2, in the z direction [Msun_geo]
+
+    !> Radius of star 2, in the z direction \([L_\odot]\)
     DOUBLE PRECISION:: radius2_z
-    !> Radius of star 2, in the x direction, opposite to companion [Msun_geo]
+
+    !> Radius of star 2, in the x direction, opposite to companion \([L_\odot]\)
     DOUBLE PRECISION:: radius2_x_opp
+
     !& Stellar center of star 2 (origin of the LORENE chart centered on star 2)
-    !  [Msun_geo]
+    !  \([L_\odot]\)
     DOUBLE PRECISION:: center2_x
-    !> Barycenter of star 2 [Msun_geo]
+
+    !> Barycenter of star 2 \([L_\odot]\)
     DOUBLE PRECISION:: barycenter2_x
-    !> Central enthalpy for star 1 [c^2]
-    DOUBLE PRECISION:: ent_center1 ;
-    !> Central baryon number density for star 1 [Msun_geo^-3]
-    DOUBLE PRECISION:: nbar_center1 ;
-    !> Central baryon mass density for star 1 [Msun Msun_geo^-3]
-    DOUBLE PRECISION:: rho_center1 ;
-    !> Central energy density for star 1 [Msun c^2 Msun_geo^-3]
-    DOUBLE PRECISION:: energy_density_center1 ;
-    !> Central specific energy for star 1 [c^2]
-    DOUBLE PRECISION:: specific_energy_center1 ;
-    !> Central pressure for star 1 [Msun c^2 Msun_geo^-3]
-    DOUBLE PRECISION:: pressure_center1 ;
-    !> Central enthalpy for star 2 [c^2]
-    DOUBLE PRECISION:: ent_center2 ;
-    !> Central baryon number density for star 2 [Msun_geo^-3]
-    DOUBLE PRECISION:: nbar_center2 ;
-    !> Central baryon mass density for star 2 [Msun Msun_geo^-3]
-    DOUBLE PRECISION:: rho_center2 ;
-    !> Central energy density for star 2 [Msun c^2 Msun_geo^-3]
-    DOUBLE PRECISION:: energy_density_center2 ;
-    !> Central specific energy for star 2 [c^2]
-    DOUBLE PRECISION:: specific_energy_center2 ;
-    !> Central pressure for star 2 [Msun c^2 Msun_geo^-3]
-    DOUBLE PRECISION:: pressure_center2 ;
-    !> LORENE name of the equation of state (EoS) of star 1
+
+    !> Central enthalpy for star 1 \([c^2]\)
+    DOUBLE PRECISION:: ent_center1
+
+    !> Central baryon number density for star 1 \([L_\odot^{-3}]\)
+    DOUBLE PRECISION:: nbar_center1
+
+    !> Central baryon mass density for star 1 \([M_\odot L_\odot^{-3}]\)
+    DOUBLE PRECISION:: rho_center1
+
+    !> Central energy density for star 1 \([M_\odot c^2 L_\odot^{-3}]\)
+    DOUBLE PRECISION:: energy_density_center1
+
+    !> Central specific energy for star 1 \([c^2]\)
+    DOUBLE PRECISION:: specific_energy_center1
+
+    !> Central pressure for star 1 \([M_\odot c^2 L_\odot^{-3}]\)
+    DOUBLE PRECISION:: pressure_center1
+
+    !> Central enthalpy for star 2 \([c^2]\)
+    DOUBLE PRECISION:: ent_center2
+
+    !> Central baryon number density for star 2 \([L_\odot^{-3}]\)
+    DOUBLE PRECISION:: nbar_center2
+
+    !> Central baryon mass density for star 2 \([M_\odot L_\odot^{-3}]\)
+    DOUBLE PRECISION:: rho_center2
+
+    !> Central energy density for star 2 \([M_\odot c^2 L_\odot^{-3}]\)
+    DOUBLE PRECISION:: energy_density_center2
+
+    !> Central specific energy for star 2 \([c^2]\)
+    DOUBLE PRECISION:: specific_energy_center2
+
+    !> Central pressure for star 2 \([M_\odot c^2 L_\odot^{-3}]\)
+    DOUBLE PRECISION:: pressure_center2
+
+    !> Name of the equation of state (EoS) of star 1
     CHARACTER( LEN=: ), ALLOCATABLE:: eos1
-    !> LORENE name of the equation of state (EoS) of star 2
+
+    !> Name of the equation of state (EoS) of star 2
     CHARACTER( LEN=: ), ALLOCATABLE:: eos2
 
     !
@@ -148,10 +190,13 @@ MODULE bns_base
 
     !> Single polytrope: polytropic index for star 1
     DOUBLE PRECISION:: gamma_1
+
     !> Single polytrope: polytropic index for star 2
     DOUBLE PRECISION:: gamma_2
+
     !> Single polytrope: polytropic constant for star 1 [pure number]
     DOUBLE PRECISION:: kappa_1
+
     !> Single polytrope: polytropic constant for star 2 [pure number]
     DOUBLE PRECISION:: kappa_2
 
@@ -161,38 +206,50 @@ MODULE bns_base
 
     !> Piecewise polytrope: Number of polytropic pieces for star 1
     INTEGER:: npeos_1
+
     !> Piecewise polytrope: polytropic index \(\gamma_0\) for star 1
     DOUBLE PRECISION:: gamma0_1
+
     !> Piecewise polytrope: polytropic index \(\gamma_1\) for star 1
     DOUBLE PRECISION:: gamma1_1
+
     !> Piecewise polytrope: polytropic index \(\gamma_2\) for star 1
     DOUBLE PRECISION:: gamma2_1
+
     !> Piecewise polytrope: polytropic index \(\gamma_3\) for star 1
     DOUBLE PRECISION:: gamma3_1
+
     !& Piecewise polytrope: polytropic constant \(\kappa_0\) for star 1
     !  [pure number]
     DOUBLE PRECISION:: kappa0_1
+
     !& Piecewise polytrope: polytropic constant \(\kappa_1\) for star 1
     !  [pure number]
     DOUBLE PRECISION:: kappa1_1
+
     !& Piecewise polytrope: polytropic constant \(\kappa_2\) for star 1
     !  [pure number]
     DOUBLE PRECISION:: kappa2_1
+
     !& Piecewise polytrope: polytropic constant \(\kappa_3\) for star 1
     !  [pure number]
     DOUBLE PRECISION:: kappa3_1
+
     !& Piecewise polytrope: Base 10 exponent of the pressure at the first
-    !  fiducial density (between \(\gamma_0\) and \(\gamma_1\)) [dyne/cm^2]
+    !  fiducial density (between \(\gamma_0\) and \(\gamma_1\)) \([{\rm dyne/cm^2}]\)
     !  for star 1
     DOUBLE PRECISION:: logP1_1
+
     !& Piecewise polytrope: Base 10 exponent of the first fiducial density
-    !  (between \(\gamma_0\) and \(\gamma_1\)) [g/cm^3] for star 1
+    !  (between \(\gamma_0\) and \(\gamma_1\)) \([{\rm g/cm^3}]\) for star 1
     DOUBLE PRECISION:: logRho0_1
+
     !& Piecewise polytrope: Base 10 exponent of the second fiducial density
-    !  (between \(\gamma_1\) and \(\gamma_2\)) [g/cm^3] for star 1
+    !  (between \(\gamma_1\) and \(\gamma_2\)) \([{\rm g/cm^3}]\) for star 1
     DOUBLE PRECISION:: logRho1_1
+
     !& Piecewise polytrope: Base 10 exponent of the third fiducial density
-    !  (between \(\gamma_2\) and \(\gamma_3\)) [g/cm^3] for star 1
+    !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\) for star 1
     DOUBLE PRECISION:: logRho2_1
 
     !
@@ -201,38 +258,50 @@ MODULE bns_base
 
     !> Piecewise polytrope: Number of polytropic pieces for star 2
     INTEGER:: npeos_2
+
     !> Piecewise polytrope: polytropic index \(\gamma_0\) for star 2
     DOUBLE PRECISION:: gamma0_2
+
     !> Piecewise polytrope: polytropic index \(\gamma_1\) for star 2
     DOUBLE PRECISION:: gamma1_2
+
     !> Piecewise polytrope: polytropic index \(\gamma_2\) for star 2
     DOUBLE PRECISION:: gamma2_2
+
     !> Piecewise polytrope: polytropic index \(\gamma_3\) for star 2
     DOUBLE PRECISION:: gamma3_2
+
     !& Piecewise polytrope: polytropic constant \(\kappa_0\) for star 2
     !  [pure number]
     DOUBLE PRECISION:: kappa0_2
+
     !& Piecewise polytrope: polytropic constant \(\kappa_1\) for star 2
     !  [pure number]
     DOUBLE PRECISION:: kappa1_2
+
     !& Piecewise polytrope: polytropic constant \(\kappa_2\) for star 2
     !  [pure number]
     DOUBLE PRECISION:: kappa2_2
+
     !& Piecewise polytrope: polytropic constant \(\kappa_3\) for star 2
     !  [pure number]
     DOUBLE PRECISION:: kappa3_2
+
     !& Piecewise polytrope: Base 10 exponent of the pressure at the first
-    !  fiducial density (between \(\gamma_0\) and \(\gamma_1\)) [dyne/cm^2]
+    !  fiducial density (between \(\gamma_0\) and \(\gamma_1\)) \([{\rm dyne/cm^2}]\)
     !  for star 2
     DOUBLE PRECISION:: logP1_2
+
     !& Piecewise polytrope: Base 10 exponent of the second fiducial density
-    !  (between \(\gamma_1\) and \(\gamma_2\)) [g/cm^3] for star 2
+    !  (between \(\gamma_1\) and \(\gamma_2\)) \([{\rm g/cm^3}]\) for star 2
     DOUBLE PRECISION:: logRho0_2
+
     !& Piecewise polytrope: Base 10 exponent of the second fiducial density
-    !  (between \(\gamma_1\) and \(\gamma_2\)) [g/cm^3] for star 2
+    !  (between \(\gamma_1\) and \(\gamma_2\)) \([{\rm g/cm^3}]\) for star 2
     DOUBLE PRECISION:: logRho1_2
+
     !& Piecewise polytrope: Base 10 exponent of the third fiducial density
-    !  (between \(\gamma_2\) and \(\gamma_3\)) [g/cm^3] for star 2
+    !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\) for star 2
     DOUBLE PRECISION:: logRho2_2
 
 
@@ -244,7 +313,11 @@ MODULE bns_base
     !--  SUBROUTINES  --!
     !-------------------!
 
-    PROCEDURE(get_eos_id_int), DEFERRED:: get_eos1_id, get_eos2_id
+    PROCEDURE(get_eos_id_int), DEFERRED:: get_eos1_id
+    !! Returns an integer that identifies the equation of state of star 1
+
+    PROCEDURE(get_eos_id_int), DEFERRED:: get_eos1_id
+    !! Returns an integer that identifies the equation of state of star 2
 
 
     PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
