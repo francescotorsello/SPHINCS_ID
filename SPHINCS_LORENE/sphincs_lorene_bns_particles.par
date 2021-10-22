@@ -17,7 +17,7 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
           !"apm-pos-nu_1216_45km_pol275_500k.dat"
           !"apm-pos-nu_1313_45km_pol2_500k.dat"
-          "apm-pos-nu_1218_42km_dd2sfrdf18_5M.dat"
+          !"apm-pos-nu_1218_42km_dd2sfrdf18_5M.dat"
           "apm-pos-nu_1218_42km_dd2sfrdf18_2.6M.dat"
           !"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_135135_42km_apr4_500k_hr.dat"
@@ -105,10 +105,14 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! parameters, the particle distribution output by the      !
 ! APM does not have a smooth surface. In this case,        !
 ! the only solution (that has been found as of 20.10.2021) !
-! is to increase the particle number.                  !
+! is to increase the particle number.                      !
 ! As of 20.10.2021, this has only happened with the        !
 ! CompOSE tabulated EOS (all of them), but not with        !
 ! any piecewise polytropic or polytropic EOS.              !
+! This problem can manifest itself with error messages     !
+! concerning particles occupying the sameposition,         !
+! or some smoothing lengths being 0, or a matrix not being !
+! invertible.                                              !
 !----------------------------------------------------------!
 apm_iterate1=.TRUE.    ! If .TRUE. applies the APM to the first star
 apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
@@ -117,7 +121,7 @@ apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
                        ! on the second star will be the reflection about the yz
                        ! plane of the particles on the first star, irrespectively
                        ! of the value of apm_iterate2
-apm_max_it=200         ! Maximum number of iterations, irrespective of the
+apm_max_it=1         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 150            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate

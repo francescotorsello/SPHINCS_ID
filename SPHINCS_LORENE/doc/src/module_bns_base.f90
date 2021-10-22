@@ -31,7 +31,7 @@ MODULE bns_base
 
   !*******************************************************
   !                                                      *
-  !     Definition of TYPE bns (binary neutron star)     *
+  !   Definition of TYPE bnsbase (binary neutron star)   *
   !                                                      *
   !   This class imports and stores the LORENE BNS ID    *
   !                                                      *

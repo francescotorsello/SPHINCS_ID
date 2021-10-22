@@ -50,19 +50,19 @@ MODULE id_base
     !  0 otherwise
 
     PROCEDURE(read_id_ext_int),       DEFERRED:: read_id_ext
-    !# Stores the full ID into arrays
+    !# Reads the full ID
     PROCEDURE(read_id_particles_int), DEFERRED:: read_id_particles
-    !! Stores the hydro ID in the arrays needed to compute the SPH ID
+    !! Reads the hydro ID needed to compute the SPH ID
     PROCEDURE(read_id_mass_b_int),    DEFERRED:: read_id_mass_b
-    !! Stores the hydro ID in the arrays needed to compute the baryon mass
+    !! Reads the hydro ID needed to compute the baryon mass
     PROCEDURE(read_id_spacetime_int), DEFERRED:: read_id_spacetime
-    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
+    !# Reads the spacetime ID needed to compute
     !  the BSSN variables and constraints
     PROCEDURE(read_id_hydro_int),     DEFERRED:: read_id_hydro
-    !# Stores the hydro ID in the arrays needed to compute the constraints
+    !# Reads the hydro ID needed to compute the constraints
     !  on the refined mesh
     PROCEDURE(read_id_k_int),         DEFERRED:: read_id_k
-    !! Stores the components of the extrinsic curvature in arrays
+    !! Reads the components of the extrinsic curvature
 
     PROCEDURE(integrate_field_int),   DEFERRED:: integrate_field_on_star
     !# Integrates a field over the interior of a star in spherical coordinates,
@@ -75,7 +75,8 @@ MODULE id_base
   ABSTRACT INTERFACE
 
     FUNCTION read_double_at_pos( THIS, x, y, z ) RESULT( res )
-    !#
+    !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION at a given
+    !  position
 
       IMPORT:: idbase
       CLASS(idbase), INTENT( IN )          :: THIS
@@ -93,7 +94,7 @@ MODULE id_base
 
 
     FUNCTION read_integer_at_pos( THIS, x, y, z ) RESULT( res )
-    !#
+    !# INTERFACE for a PROCEDURE that returns an INTEGER at a given position
 
       IMPORT:: idbase
       CLASS(idbase), INTENT( IN )          :: THIS
@@ -114,7 +115,8 @@ MODULE id_base
                                    g_xx, &
                                    baryon_density, &
                                    gamma_euler )
-      !#
+      !# INTERFACE or the SUBROUTINE reading the hydro ID needed to compute the
+      !  baryon mass
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
@@ -129,22 +131,22 @@ MODULE id_base
     END SUBROUTINE read_id_mass_b_int
 
 
-    SUBROUTINE read_id_ext_int( THIS, n, x, y, z,&
-                                     lapse, &
-                                     shift_x, shift_y, shift_z, &
-                                     g_xx, g_xy, g_xz, &
-                                     g_yy, g_yz, g_zz, &
-                                     k_xx, k_xy, k_xz, &
-                                     k_yy, k_yz, k_zz, &
-                                     baryon_density, &
-                                     energy_density, &
-                                     specific_energy, &
-                                     u_euler_x, u_euler_y, u_euler_z )
-    !# Stores the ID in non [[idbase]]-member arrays with the same shape as the
-    !  [[idbase]] member arrays
+    SUBROUTINE read_id_ext_int( THIS, n, x, y, z, &
+                                      lapse, &
+                                      shift_x, shift_y, shift_z, &
+                                      g_xx, g_xy, g_xz, &
+                                      g_yy, g_yz, g_zz, &
+                                      k_xx, k_xy, k_xz, &
+                                      k_yy, k_yz, k_zz, &
+                                      baryon_density, &
+                                      energy_density, &
+                                      specific_energy, &
+                                      u_euler_x, u_euler_y, u_euler_z )
+     !# INTERFACE or the SUBROUTINE reading the full ID
+
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
-      CLASS(idbase),                     INTENT( IN OUT ):: THIS
+      CLASS(idbase),                  INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -181,8 +183,8 @@ MODULE id_base
                                               shift, &
                                               g, &
                                               ek )
-    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
-    !  the BSSN variables and constraints
+     !# INTERFACE or the SUBROUTINE reading the spacetime ID
+
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
       CLASS(idbase),                        INTENT( IN OUT ):: THIS
@@ -205,8 +207,9 @@ MODULE id_base
                                              specific_energy, &
                                              pressure, &
                                              u_euler )
-    !# Stores the hydro ID in the arrays needed to compute the constraints
-    !  on the refined mesh
+    !# INTERFACE or the SUBROUTINE reading the the hydro ID needed to compute
+    !  the constraints on the refined mesh
+
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
       CLASS(idbase),                        INTENT( IN OUT ):: THIS
@@ -233,7 +236,9 @@ MODULE id_base
                                       specific_energy, &
                                       pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
-    !! Stores the hydro ID in the arrays needed to compute the SPH ID
+    !# INTERFACE or the SUBROUTINE reading the hydro ID needed to compute the
+    !  SPH ID
+
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
       CLASS(idbase),                     INTENT( IN OUT ):: THIS
@@ -265,7 +270,9 @@ MODULE id_base
     SUBROUTINE read_id_k_int( THIS, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
-    !! Stores the components of the extrinsic curvature in arrays
+    !# INTERFACE or the SUBROUTINE reading the components of the extrinsic
+    !  curvature
+
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
       CLASS(idbase),                     INTENT( IN OUT ):: THIS
@@ -288,8 +295,8 @@ MODULE id_base
                                                   dr, dth, dphi, &
                                                   mass, mass_profile, &
                                                   mass_profile_idx )
-    !# Integrates the baryon mass density to compute the radial mass
-    !  profile of a single star. TODO: Improve integration algorithm.
+    !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
+    !  compute the radial mass profile of a single star.
 
       IMPORT:: idbase
       !> Object of class [[idbase]] which this PROCEDURE is a member of

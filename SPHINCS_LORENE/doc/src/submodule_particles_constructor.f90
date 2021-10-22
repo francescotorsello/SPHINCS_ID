@@ -478,40 +478,40 @@ SUBMODULE (particles_id) particles_constructor
       ENDIF
 
       ! Star 2
-      IF( MINVAL( ABS( tmp_pos2(1,npart1_tmp:npart_tmp) ) ) < ABS(center2) - &
+      IF( MINVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) < ABS(center2) - &
                                            bns_obj% get_radius2_x_comp() &
           .OR. &
-          MAXVAL( ABS( tmp_pos2(1,npart1_tmp:npart_tmp) ) ) > ABS(center2) + &
+          MAXVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) > ABS(center2) + &
                                            bns_obj% get_radius2_x_opp() &
           .OR. &
-          ABS( MINVAL( tmp_pos2(2,npart1_tmp:npart_tmp) ) ) > &
+          ABS( MINVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) > &
                       bns_obj% get_radius2_y() &
           .OR. &
-          ABS( MAXVAL( tmp_pos2(2,npart1_tmp:npart_tmp) ) ) > &
+          ABS( MAXVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) > &
                       bns_obj% get_radius2_y() &
           .OR. &
-          ABS( MINVAL( tmp_pos2(3,npart1_tmp:npart_tmp) ) ) > &
+          ABS( MINVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) > &
                       bns_obj% get_radius2_z() &
           .OR. &
-          ABS( MAXVAL( tmp_pos2(3,npart1_tmp:npart_tmp) ) ) > &
+          ABS( MAXVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) > &
                       bns_obj% get_radius2_z() &
           .OR. &
-          MINVAL( ABS( tmp_pos2(1,npart1_tmp:npart_tmp) ) ) > ABS(center2) - &
+          MINVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) > ABS(center2) - &
                                            0.95*bns_obj% get_radius2_x_comp() &
           .OR. &
-          MAXVAL( ABS( tmp_pos2(1,npart1_tmp:npart_tmp) ) ) < ABS(center2) + &
+          MAXVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) < ABS(center2) + &
                                            0.95*bns_obj% get_radius2_x_opp() &
           .OR. &
-          ABS( MINVAL( tmp_pos2(2,npart1_tmp:npart_tmp) ) ) < &
+          ABS( MINVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) < &
                       0.95*bns_obj% get_radius2_y() &
           .OR. &
-          ABS( MAXVAL( tmp_pos2(2,npart1_tmp:npart_tmp) ) ) < &
+          ABS( MAXVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) < &
                       0.95*bns_obj% get_radius2_y() &
           .OR. &
-          ABS( MINVAL( tmp_pos2(3,npart1_tmp:npart_tmp) ) ) < &
+          ABS( MINVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) < &
                       0.95*bns_obj% get_radius2_z() &
           .OR. &
-          ABS( MAXVAL( tmp_pos2(3,npart1_tmp:npart_tmp) ) ) < &
+          ABS( MAXVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) < &
                       0.95*bns_obj% get_radius2_z() &
 
       )THEN

@@ -59,6 +59,11 @@ SUBMODULE (particles_id) particles_apm
     !  CompOSE tabulated EOS (all of them), but not with
     !  any piecewise polytropic or polytropic EOS.
     !
+    !  This problem can manifest itself with error messages
+    !  concerning particles occupying the sameposition,
+    !  or some smoothing lengths being 0, or a matrix not being
+    !  invertible.
+    !
     !  FT 20.10.2021
     !  @endwarning
     !
@@ -1882,20 +1887,20 @@ SUBMODULE (particles_id) particles_apm
 
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
-  !  CALL assign_h( nn_des, &
-  !                 npart_real, &
-  !                 pos, h_guess, & ! Input
-  !                 h )             ! Output
-  !
-  !  CALL exact_nei_tree_update( nn_des, &
-  !                              npart_real, &
-  !                              pos, nu )
-  !
-  !  !IF( mass == THIS% mass2 ) STOP
-  !
-  !  IF( debug ) PRINT *, "102"
-  !
-  !  CALL density( npart_real, pos, nstar_int )
+    CALL assign_h( nn_des, &
+                   npart_real, &
+                   pos, h_guess, & ! Input
+                   h )             ! Output
+
+    CALL exact_nei_tree_update( nn_des, &
+                                npart_real, &
+                                pos, nu )
+
+    !IF( mass == THIS% mass2 ) STOP
+
+    IF( debug ) PRINT *, "102"
+
+    CALL density( npart_real, pos, nstar_int )
     !nstar_int= 0.0D0
 
     IF( debug ) PRINT *, "103"
