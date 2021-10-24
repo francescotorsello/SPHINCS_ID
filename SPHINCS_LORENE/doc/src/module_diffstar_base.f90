@@ -145,6 +145,15 @@ MODULE diffstar_base
     DOUBLE PRECISION:: pressure_center
     !! Central pressure \([M_\odot c^2 L_\odot^{-3}]\)
 
+    DOUBLE PRECISION:: redshift_eqf
+    !! Forward redshift factor at equator
+
+    DOUBLE PRECISION:: redshift_eqb
+    !! Backward redshift factor at equator
+
+    DOUBLE PRECISION:: redshift_pole
+    !! Redshift factor at North pole
+
     CHARACTER( LEN=: ), ALLOCATABLE:: eos
     !! Name of the equation of state (EoS) of star 1
 
@@ -157,7 +166,7 @@ MODULE diffstar_base
     !! Single polytrope: polytropic index
 
     DOUBLE PRECISION:: kappa
-    !! Single polytrope: polytropic constant  [pure number]
+    !! Single polytrope: polytropic constant [pure number]
 
     !
     !-- Parameters of the piecewise polytropic equation of state for NS 1

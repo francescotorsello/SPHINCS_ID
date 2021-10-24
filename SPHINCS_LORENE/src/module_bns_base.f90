@@ -316,7 +316,7 @@ MODULE bns_base
     PROCEDURE(get_eos_id_int), DEFERRED:: get_eos1_id
     !! Returns an integer that identifies the equation of state of star 1
 
-    PROCEDURE(get_eos_id_int), DEFERRED:: get_eos1_id
+    PROCEDURE(get_eos_id_int), DEFERRED:: get_eos2_id
     !! Returns an integer that identifies the equation of state of star 2
 
 

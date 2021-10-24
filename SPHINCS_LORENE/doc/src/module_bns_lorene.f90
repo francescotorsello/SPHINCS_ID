@@ -1,4 +1,4 @@
-! File:         module_bns_id.f90
+! File:         module_bns_lorene.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
@@ -8,11 +8,10 @@ MODULE bns_lorene
   !
   !#  This module contains the definition of TYPE bnslorene,
   !   and the SUBROUTINES that bind to the methods
-  !   of LORENE's class Bin_NS, defined in
+  !   of |lorene|'s class |binns|, defined in
   !   Lorene/Export/BinNS
   !
-  !   LORENE official repository:
-  !   https://lorene.obspm.fr/index.html
+  !   [|lorene| official repository](https://lorene.obspm.fr/index.html){:target="_blank"}
   !
   !***********************************************************
 
@@ -32,9 +31,9 @@ MODULE bns_lorene
 
   !*******************************************************
   !                                                      *
-  !     Definition of TYPE bns (binary neutron star)     *
+  !            Definition of TYPE bnslorene              *
   !                                                      *
-  !   This class imports and stores the LORENE BNS ID    *
+  !   This class imports and stores the |lorene| BNS ID    *
   !                                                      *
   !*******************************************************
 
@@ -45,9 +44,9 @@ MODULE bns_lorene
     PRIVATE
 
 
-    !> Identifier of the bns object
+    !> Identifier of the bnslorene object
     INTEGER:: bns_identifier= 0
-    !> LORENE identifiers for the EoS
+    !> |lorene| identifiers for the EoS
     INTEGER:: eos1_loreneid, eos2_loreneid
 
     !
@@ -113,10 +112,10 @@ MODULE bns_lorene
     !  the Eulerian observer [c]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_z
 
-    !& C pointer to the LORENE's Bin_NS object
-    ! N.B. This variable is global. The pointer to the second LORENE Bin_NS
+    !& C pointer to the |lorene|'s |binns| object
+    ! N.B. This variable is global. The pointer to the second |lorene| |binns|
     !      object will overwrite the first one, and so on.
-    !      This variable stores the pointer to the last defined LORENE Bin_NS
+    !      This variable stores the pointer to the last defined |lorene| |binns|
     !      object. That's why it is not freed in the destructor of a bns object.
     !      Presently, it has to be freed by the user at the end of the PROGRAM.
     !      See the last part of the PROGRAM in setup_lorene_id.f90, for example.
@@ -125,7 +124,7 @@ MODULE bns_lorene
     !> Logical variables to set the geodesic gauge (lapse=1, shift=0)
     LOGICAL, PUBLIC:: one_lapse, zero_shift
 
-    !> Timer that times the construction of the LORENE Bin_NS object
+    !> Timer that times the construction of the |lorene| |binns| object
     TYPE(timer), PUBLIC:: binary_construction_timer
 
 
@@ -137,10 +136,10 @@ MODULE bns_lorene
     !-------------------!
 
     PROCEDURE:: construct_binary
-    !! Constructs the LORENE Bin_NS object
+    !! Constructs the |lorene| |binns| object
 
     PROCEDURE:: destruct_binary
-    !! Destructs the LORENE Bin_NS object
+    !! Destructs the |lorene| |binns| object
 
     PROCEDURE:: allocate_lorene_id_memory
     !! Allocates memory for the [[bnslorene]] member arrays
@@ -149,10 +148,10 @@ MODULE bns_lorene
     !! Deallocates memory for the [[bnslorene]] member arrays
 
     PROCEDURE:: import_id_params
-    !! Imports the parameters of the BNS from LORENE
+    !! Imports the parameters of the BNS from |lorene|
 
     !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
-    !# Integrates the LORENE baryon mass density and computes the
+    !# Integrates the |lorene| baryon mass density and computes the
     !  radial mass profile
 
     PROCEDURE, PUBLIC:: print_id_params
@@ -172,10 +171,10 @@ MODULE bns_lorene
     !--  FUNCTIONS  --!
     !-----------------!
 
-    !> Returns the LORENE's mass density at the given point
+    !> Returns the |lorene|'s mass density at the given point
     PROCEDURE:: read_mass_density => import_mass_density
 
-    !> Returns the LORENE's conformally flat spatial ADM metric
+    !> Returns the |lorene|'s conformally flat spatial ADM metric
     PROCEDURE:: import_spatial_metric
 
     !& Returns 1 if the energy density or the specific energy or the pressure
@@ -198,7 +197,9 @@ MODULE bns_lorene
     !-- FUNCTIONS that access member variables
     !
     PROCEDURE:: get_eos1_id => get_eos1_loreneid
+    !! Returns the |lorene| identifier for the EOS of star 1
     PROCEDURE:: get_eos2_id => get_eos2_loreneid
+    !! Returns the |lorene| identifier for the EOS of star 2
 
     PROCEDURE, PUBLIC:: get_eos1_loreneid
     !! Returns [[bnslorene:eos1_loreneid]]
@@ -206,10 +207,12 @@ MODULE bns_lorene
     !! Returns [[bnslorene:eos2_loreneid]]
 
     PROCEDURE, PUBLIC:: get_bns_identifier
+    !! Returns [[bnslorene:bns_identifier]]
+
     !PROCEDURE, PUBLIC:: get_bns_ptr
 
     FINAL:: destruct_bnslorene
-    !! Finalizer (Destructor) of [[bnslorene]] object
+    !! Finalizer (Destructor) of a [[bnslorene]] object
 
   END TYPE bnslorene
 
@@ -234,7 +237,7 @@ MODULE bns_lorene
     !! Constructs a [[bnslorene]] object
 
       CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: resu_file
-      !! LORENE binary file containing the spectral BNS ID
+      !! |lorene| binary file containing the spectral BNS ID
       TYPE(bnslorene):: bns_obj
       !! Constructed [[bnslorene]] object
 
@@ -261,18 +264,18 @@ MODULE bns_lorene
     !-- SUBROUTINES
     !
     MODULE SUBROUTINE construct_binary( THIS, resu_file )
-    !! Interface of the subroutine that constructs the LORENE Bin_NS object
+    !! Interface of the subroutine that constructs the |lorene| |binns| object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene),                     INTENT( IN OUT )      :: THIS
-      !> LORENE binary file containing the spectral BNS ID
+      !> |lorene| binary file containing the spectral BNS ID
       CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
 
     END SUBROUTINE construct_binary
 
 
     MODULE SUBROUTINE destruct_binary( THIS )
-    !! Destructs a LORENE Bin_NS object
+    !! Destructs a |lorene| |binns| object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT( IN OUT ):: THIS
@@ -301,7 +304,7 @@ MODULE bns_lorene
 
 
     MODULE SUBROUTINE import_id_params( THIS )
-    !! Imports the BNS parameters from LORENE
+    !! Imports the BNS parameters from |lorene|
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT( IN OUT ):: THIS
@@ -323,7 +326,7 @@ MODULE bns_lorene
   !                                                   dr, dth, dphi, &
   !                                                   mass, mass_profile, &
   !                                                   mass_profile_idx )
-  !  !# Integrates the LORENE baryon mass density to compute the radial mass
+  !  !# Integrates the |lorene| baryon mass density to compute the radial mass
   !  !  profile. TODO: Improve integration algorithm.
   !
   !    !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -555,7 +558,7 @@ MODULE bns_lorene
     !-- FUNCTIONS
     !
     MODULE FUNCTION import_mass_density( THIS, x, y, z ) RESULT( res )
-    !! Returns the LORENE baryon mass density at a point \((x,y,z)\)
+    !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene),     INTENT( IN )         :: THIS
@@ -572,7 +575,7 @@ MODULE bns_lorene
 
 
     MODULE FUNCTION import_spatial_metric( THIS, x, y, z ) RESULT( res )
-    !# Returns the LORENE conformally flat spatial metric component
+    !# Returns the |lorene| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -680,7 +683,7 @@ MODULE bns_lorene
 
 
   !------------------------------------------------------------------!
-  !--  PRIVATE interfaces to the methods of LORENE's class Bin_NS  --!
+  !--  PRIVATE interfaces to the methods of |lorene|'s class |binns|  --!
   !------------------------------------------------------------------!
 
 
@@ -699,9 +702,9 @@ MODULE bns_lorene
 
       !***********************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that constructs
-      !  the LORENE Bin_NS object
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that constructs
+      !  the |lorene| |binns| object
       !
       !  FT
       !
@@ -711,11 +714,11 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !& C string of the name of the LORENE binary file storing the spectral
+      !& C string of the name of the |lorene| binary file storing the spectral
       !  BNS ID
       CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
                                                               c_resu_file
-      !> C pointer pointing to the constructed LORENE Bin_NS object
+      !> C pointer pointing to the constructed |lorene| |binns| object
       TYPE(C_PTR) :: optr
 
     END FUNCTION construct_bin_ns
@@ -736,9 +739,9 @@ MODULE bns_lorene
 
       !*************************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that reads the full
-      !  LORENE ID at the specified point.
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that reads the full
+      !  |lorene| ID at the specified point.
       !  That is, imports the metric fields, the
       !  components of the extrinsic curvature [c/km],
       !  and the hydro fields.
@@ -759,7 +762,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
@@ -799,10 +802,10 @@ MODULE bns_lorene
 
       !*************************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that reads the
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that reads the
       !  metric fields and the components
-      !  of the extrinsic curvature [c/km] from LORENE,
+      !  of the extrinsic curvature [c/km] from |lorene|,
       !  at the specified point
       !
       !  FT
@@ -813,7 +816,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
@@ -850,10 +853,10 @@ MODULE bns_lorene
 
       !**********************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that reads the
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that reads the
       !  hydro fields and the metric fields *
-      !  from LORENE, at the specified point
+      !  from |lorene|, at the specified point
       !
       !  - shift vector [c]
       !  - baryon mass density [kg m^{-3}]
@@ -871,7 +874,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
@@ -904,10 +907,10 @@ MODULE bns_lorene
 
       !************************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that reads the
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that reads the
       !  hydro fields and the metric fields
-      !  from LORENE, at the specified point,
+      !  from |lorene|, at the specified point,
       !  needed to compute the baryon mass.
       !
       !  - shift vector [c]
@@ -923,7 +926,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
@@ -954,9 +957,9 @@ MODULE bns_lorene
 
       !***********************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that reads the
-      !  hydro fields from LORENE, at the
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that reads the
+      !  hydro fields from |lorene|, at the
       !  specified point
       !
       !  - baryon mass density [kg m^{-3}]
@@ -974,7 +977,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
@@ -1001,10 +1004,10 @@ MODULE bns_lorene
 
       !***********************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that reads the
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that reads the
       !  components of the extrinsic
-      !  curvature [c/km] from LORENE, at the
+      !  curvature [c/km] from |lorene|, at the
       !  specified point
       !
       !  FT
@@ -1015,7 +1018,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: x
@@ -1038,10 +1041,10 @@ MODULE bns_lorene
 
       !********************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that returns
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that returns
       !  the baryon mass density \([\mathrm{kg}\,
-      !  \mathrm{m}^{-3}]\) from LORENE,
+      !  \mathrm{m}^{-3}]\) from |lorene|,
       !  at the specified point
       !
       !  FT
@@ -1052,7 +1055,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
@@ -1072,10 +1075,10 @@ MODULE bns_lorene
 
       !************************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that returns the
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that returns the
       !  diagonal components of the metric,
-      !  all equal to the LORENE conformal factor to
+      !  all equal to the |lorene| conformal factor to
       !  the 4th power.
       !
       !  FT
@@ -1086,7 +1089,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
@@ -1106,8 +1109,8 @@ MODULE bns_lorene
 
       !************************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that returns 1
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that returns 1
       !  if the energy density is nonpositive,
       !  or if the specific energy is nonpositive,
       !  or if the pressure is nonpositive,
@@ -1121,7 +1124,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
@@ -1210,10 +1213,10 @@ MODULE bns_lorene
 
       !**********************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that stores
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that stores
       !  the physical parameters of the binary
-      !  system from LORENE in the desired variables
+      !  system from |lorene| in the desired variables
       !
       !  FT
       !
@@ -1223,7 +1226,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a LORENE Bin_NS object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_vel
       REAL(C_DOUBLE), INTENT(OUT)       :: distance
@@ -1303,9 +1306,9 @@ MODULE bns_lorene
 
       !**********************************************
       !
-      !# Interface to the LORENE method of class
-      !  Bin_NS with the same name, that destructs
-      !  the LORENE Bin_NS object
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that destructs
+      !  the |lorene| |binns| object
       !
       ! FT
       !
@@ -1315,7 +1318,7 @@ MODULE bns_lorene
 
       IMPLICIT NONE
 
-      !> C pointer pointing to the LORENE Bin_NS object to destruct
+      !> C pointer pointing to the |lorene| |binns| object to destruct
       TYPE(C_PTR), INTENT(IN), VALUE :: optr
 
     END SUBROUTINE destruct_bin_ns
