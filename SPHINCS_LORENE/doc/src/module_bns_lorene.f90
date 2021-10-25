@@ -16,13 +16,12 @@ MODULE bns_lorene
   !***********************************************************
 
 
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT, C_DOUBLE, &
-                                         C_CHAR, C_NULL_CHAR, &
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT, C_DOUBLE, C_CHAR, C_NULL_CHAR, &
                                          C_PTR, C_NULL_PTR, C_ASSOCIATED
   USE bns_base,                    ONLY: bnsbase
   USE utility,                     ONLY: itr, ios, err_msg, test_status, &
                                          perc, creturn, compute_g4, &
-                                         determinant_sym4x4_grid, show_progress                                        
+                                         determinant_sym4x4_grid, show_progress
   USE timing,                      ONLY: timer
 
 
@@ -33,7 +32,7 @@ MODULE bns_lorene
   !                                                      *
   !            Definition of TYPE bnslorene              *
   !                                                      *
-  !   This class imports and stores the |lorene| BNS ID    *
+  !   This class imports and stores the |lorene| BNS ID  *
   !                                                      *
   !*******************************************************
 

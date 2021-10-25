@@ -18,6 +18,9 @@ MODULE diffstar_lorene
 
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT, C_DOUBLE, C_CHAR, C_PTR
   USE diffstar_base,               ONLY: diffstarbase
+  USE utility,                     ONLY: itr, ios, err_msg, test_status, &
+                                         perc, creturn, compute_g4, &
+                                         determinant_sym4x4_grid, show_progress
   USE timing,                      ONLY: timer
 
 
