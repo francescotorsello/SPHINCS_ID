@@ -7,11 +7,11 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_bindings
         !***********************************************
         !                                              *
         !# Define SUBROUTINES that create and destroy  *
-        !  a Lorene::|etdiffrot| object from LORENE,     *
+        !  a |etdiffrot| object from |lorene|,         *
         !  and call its member methods                 *
-        !  that extracts the LORENE initial data       *
+        !  that extracts the |lorene| initial data     *
         !  from the spectral data saved in the 'resu'  *
-        !  binary files produced by LORENE             *
+        !  binary files produced by |lorene|           *
         !                                              *
         !  For more information on how to link C
         !  functions to Fortran,
@@ -28,9 +28,9 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_bindings
     IMPLICIT NONE
 
 
-    !---------------------------------------------------------------!
+    !-----------------------------------------------------------------!
     !--  Interfaces to the methods of |lorene|'s class |etdiffrot|  --!
-    !---------------------------------------------------------------!
+    !-----------------------------------------------------------------!
 
 
     INTERFACE

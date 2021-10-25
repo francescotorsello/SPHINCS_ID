@@ -1,4 +1,4 @@
-! File:         submodule_particles_apm.f90
+!& File:         submodule_particles_apm.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 

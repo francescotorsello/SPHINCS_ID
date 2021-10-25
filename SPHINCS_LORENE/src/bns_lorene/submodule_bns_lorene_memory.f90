@@ -1,4 +1,4 @@
-! File:         submodule_bns_memory.f90
+! File:         submodule_bns_lorene_memory.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 

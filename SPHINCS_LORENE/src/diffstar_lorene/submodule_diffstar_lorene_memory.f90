@@ -1,15 +1,15 @@
-! File:         submodule_bns_lorene_memory.f90
+! File:         submodule_diffstar_lorene_memory.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_lorene) bns_lorene_memory
+SUBMODULE (diffstar_lorene) diffstar_lorene_memory
 
   !***********************************************
   !
-  !# Implementation of the methods of TYPE bns
+  !# Implementation of the methods of TYPE diffstar
   !  that (de)allocate memory
   !
-  ! FT 9.07.2021
+  ! FT 25.10.2021
   !
   !***********************************************
 
@@ -25,20 +25,20 @@ SUBMODULE (bns_lorene) bns_lorene_memory
   !-------------------!
 
 
-  MODULE PROCEDURE allocate_lorene_id_memory
+  MODULE PROCEDURE allocate_diffstar_memory
 
     !***********************************************
     !
     !# Allocate the memory to store the LORENE ID
     !  in the member arrays
     !
-    !  FT 17.09.2020
+    !  FT 25.10.2021
     !
     !***********************************************
 
     IMPLICIT NONE
 
-    PRINT *, "** Executing the allocate_lorene_id_memory subroutine..."
+    PRINT *, "** Executing the allocate_diffstar_memory subroutine..."
 
     IF(.NOT.ALLOCATED( THIS% lapse ))THEN
       ALLOCATE( THIS% lapse( d ), STAT= ios, &
@@ -286,28 +286,28 @@ SUBMODULE (bns_lorene) bns_lorene_memory
     ENDIF
 
     IF( SIZE( THIS% lapse ) /= d )THEN
-      PRINT *, "** ERROR in memory allocation in allocate_lorene_id_memory"
+      PRINT *, "** ERROR in memory allocation in allocate_diffstar_memory"
     ENDIF
 
-    PRINT *, "** Subroutine allocate_lorene_id_memory executed."
+    PRINT *, "** Subroutine allocate_diffstar_memory executed."
     PRINT *
 
-  END PROCEDURE allocate_lorene_id_memory
+  END PROCEDURE allocate_diffstar_memory
 
 
-  MODULE PROCEDURE deallocate_lorene_id_memory
+  MODULE PROCEDURE deallocate_diffstar_memory
 
     !***********************************************
     !
     !# Deallocate the memory for the member arrays
     !
-    !  FT 17.09.2020
+    !  FT 25.10.2021
     !
     !***********************************************
 
     IMPLICIT NONE
 
-    PRINT *, "** Executing the deallocate_lorene_id_memory subroutine..."
+    PRINT *, "** Executing the deallocate_diffstar_memory subroutine..."
 
     IF(ALLOCATED( THIS% lapse ))THEN
       DEALLOCATE( THIS% lapse, STAT= ios, ERRMSG= err_msg )
@@ -539,10 +539,10 @@ SUBMODULE (bns_lorene) bns_lorene_memory
       !                "...deallocation error for array v_euler_z" )
     ENDIF
 
-    PRINT *, "** Subroutine deallocate_lorene_id_memory executed."
+    PRINT *, "** Subroutine deallocate_diffstar_memory executed."
     PRINT *
 
-  END PROCEDURE deallocate_lorene_id_memory
+  END PROCEDURE deallocate_diffstar_memory
 
 
-END SUBMODULE bns_lorene_memory
+END SUBMODULE diffstar_lorene_memory

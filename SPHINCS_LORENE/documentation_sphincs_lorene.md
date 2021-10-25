@@ -15,6 +15,7 @@ sort: alpha
 src_dir: ./src
 exclude_dir: ./src/prototypes
 exclude: submodule_bns_lorene_bindings.f90
+         submodule_diffstar_lorene_bindings.f90
 output_dir: ./doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S

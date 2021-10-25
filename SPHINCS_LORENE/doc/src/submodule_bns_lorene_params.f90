@@ -7,7 +7,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
   !********************************************
   !
   !# Implementation of the methods of TYPE bns
-  !  that import from LORENE the
+  !  that import from |lorene| the
   !  parameters of the binary system,
   !  and print them to the standard output.
   !
@@ -32,7 +32,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
     !***************************************************
     !
     !# Store the parameters of the binary neutron
-    !  stars' LORENE ID into member variables
+    !  stars' |lorene| ID into member variables
     !
     !  FT 5.10.2020
     !
@@ -126,7 +126,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
                                THIS% logRho1_2,&
                                THIS% logRho2_2)
 
-    ! Convert distances from LORENE units (km) to SPHINCS units (Msun_geo)
+    ! Convert distances from |lorene| units (km) to SPHINCS units (Msun_geo)
     ! See MODULE constants for the definition of Msun_geo
     THIS% distance      = THIS% distance/Msun_geo
     THIS% distance_com  = THIS% distance_com/Msun_geo
@@ -145,7 +145,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
     THIS% center2_x     = THIS% center2_x/Msun_geo
     THIS% barycenter2_x = THIS% barycenter2_x/Msun_geo
 
-    ! Convert hydro quantities from LORENE units to SPHINCS units
+    ! Convert hydro quantities from |lorene| units to SPHINCS units
     THIS% nbar_center1           = THIS% nbar_center1*(MSun_geo*km2m)**3
     THIS% rho_center1            = THIS% rho_center1*lorene2hydrobase
     THIS% energy_density_center1 = THIS% energy_density_center1*lorene2hydrobase
@@ -155,7 +155,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
     THIS% energy_density_center2 = THIS% energy_density_center2*lorene2hydrobase
     THIS% pressure_center2       = THIS% pressure_center2*lorene2hydrobase
 
-    ! Convert polytropic constants from LORENE units to SPHINCS units
+    ! Convert polytropic constants from |lorene| units to SPHINCS units
     IF( THIS% eos1_loreneid == 1 )THEN ! If the EOS is polytropic
 
       THIS% kappa_1= THIS% kappa_1*k_lorene2hydrobase( THIS% gamma_1 )
@@ -165,17 +165,17 @@ SUBMODULE (bns_lorene) bns_lorene_params
 
       THIS% kappa0_1= THIS% kappa0_1 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma0_1 )
-      THIS% kappa1_1= THIS% kappa1_2 &
+      THIS% kappa1_1= THIS% kappa1_1 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma1_1 )
       THIS% kappa2_1= THIS% kappa2_1 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma2_1 )
-      THIS% kappa3_1= THIS% kappa3_2 &
+      THIS% kappa3_1= THIS% kappa3_1 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3_1 )
-      THIS% kappa0_2= THIS% kappa0_1 &
+      THIS% kappa0_2= THIS% kappa0_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma0_2 )
       THIS% kappa1_2= THIS% kappa1_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma1_2 )
-      THIS% kappa2_2= THIS% kappa2_1 &
+      THIS% kappa2_2= THIS% kappa2_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma2_2 )
       THIS% kappa3_2= THIS% kappa3_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3_2 )
@@ -185,7 +185,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
     ELSE
 
       PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-               " The equation of state is unknown! LORENE EOS IDs=", &
+               " The equation of state is unknown! |lorene| EOS IDs=", &
                THIS% eos1_loreneid, ", ", THIS% eos2_loreneid
       STOP
 
@@ -272,7 +272,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
     !****************************************************
     !
     !# Print the parameters of the binary neutron
-    !  stars' initial data computed by LORENE
+    !  stars' initial data computed by |lorene|
     !
     !  FT 8.10.2020
     !
@@ -403,7 +403,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
         PRINT *, " Equations of state for star 2 (EOS2) = ", TRIM(THIS% eos2)
       !IF( show_progress ) PRINT *
 
-      IF( THIS% gamma0_1 == 0 )THEN ! If the EOS is polytropic
+      IF( THIS% eos1_loreneid == 1 )THEN ! If the EOS is polytropic
 
         PRINT *, " Parameters for EOS1: "
         PRINT *, "  Polytopic index gamma_1 = ", THIS% gamma_1
@@ -485,6 +485,9 @@ SUBMODULE (bns_lorene) bns_lorene_params
         PRINT *, "  Base 10 exponent of third fiducial density (g/cm^3) = ", &
                  THIS% logRho2_2
         PRINT *
+
+      ELSEIF( THIS% eos1_loreneid == 17 .OR. THIS% eos1_loreneid == 20 )THEN
+      ! If the EOS is tabulated
 
       ELSE
 
