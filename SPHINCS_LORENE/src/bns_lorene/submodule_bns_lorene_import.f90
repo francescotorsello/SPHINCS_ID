@@ -7,14 +7,14 @@ SUBMODULE (bns_lorene) bns_lorene_import
   !****************************************************
   !
   !# Implementation of the methods of TYPE bns that
-  !  import BNS data using LORENE
+  !  import BNS data using |lorene|
   !
   !  FT 23.10.2020
   !
   !  Renamed from bns_methods to bns_import upon
   !  improving modularity
   !
-  !  OMP parallelized loops that call LORENE
+  !  OMP parallelized loops that call |lorene|
   !  in all MODULE PROCEDURE
   !
   !  FT 12.07.2021
@@ -81,7 +81,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
         import_id_loop: DO itr= 1, n, 1
 
           ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-          ! to LORENE units (km). See MODULE constants for the definition of
+          ! to |lorene| units (km). See MODULE constants for the definition of
           ! Msun_geo
           CALL get_lorene_id( THIS% bns_ptr, &
                               x( itr )*Msun_geo, &
@@ -112,7 +112,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
 
           !
           !-- The following follows from the assumption of conformal
-          !-- flatness in LORENE
+          !-- flatness in |lorene|
           !
           THIS% g_yy( itr )= THIS% g_xx( itr )
           THIS% g_zz( itr )= THIS% g_xx( itr )
@@ -133,7 +133,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
           ENDIF
 
           !
-          !-- Convert the extrinsic curvature from LORENE units to
+          !-- Convert the extrinsic curvature from |lorene| units to
           !-- SPHINCS units
           !
           THIS% k_xx( itr )= THIS% k_xx( itr )*Msun_geo
@@ -206,7 +206,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
       import_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-        ! to LORENE units (km). See MODULE constants for the definition of
+        ! to |lorene| units (km). See MODULE constants for the definition of
         ! Msun_geo
         CALL get_lorene_id( THIS% bns_ptr, &
                             x( itr )*Msun_geo, &
@@ -237,7 +237,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
 
         !
         !-- The following follows from the assumption of conformal
-        !-- flatness in LORENE
+        !-- flatness in |lorene|
         !
         g_yy( itr )= g_xx( itr )
         g_zz( itr )= g_xx( itr )
@@ -258,7 +258,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
         ENDIF
 
         !
-        !-- Convert the extrinsic curvature from LORENE units to
+        !-- Convert the extrinsic curvature from |lorene| units to
         !-- SPHINCS units
         !
         k_xx( itr )= k_xx( itr )*Msun_geo
@@ -338,7 +338,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
           coords_x: DO i= 1, nx, 1
 
             ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-            ! to LORENE units (km). See MODULE constants for the definition of
+            ! to |lorene| units (km). See MODULE constants for the definition of
             ! Msun_geo
             CALL get_lorene_id_spacetime( THIS% bns_ptr, &
                                 pos( i, j, k, jx )*Msun_geo, &
@@ -367,7 +367,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
 
             !
             !-- The following follows from the assumption of
-            !-- conformal flatness in LORENE
+            !-- conformal flatness in |lorene|
             !
             g( i, j, k, jyy )= g( i, j, k, jxx )
             g( i, j, k, jzz )= g( i, j, k, jxx )
@@ -388,7 +388,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
             ENDIF
 
             !
-            !-- Convert the extrinsic curvature from LORENE units to
+            !-- Convert the extrinsic curvature from |lorene| units to
             !-- SPHINCS units
             !
             ek( i, j, k, jxx )= ek( i, j, k, jxx )*Msun_geo
@@ -494,7 +494,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
           coords_x: DO ix= 1, nx, 1
 
             ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-            ! to LORENE units (km). See MODULE constants for the definition of
+            ! to |lorene| units (km). See MODULE constants for the definition of
             ! Msun_geo
             CALL get_lorene_id_hydro( THIS% bns_ptr, &
                               pos( ix, iy, iz, jx )*Msun_geo, &
@@ -574,7 +574,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
       import_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-        ! to LORENE units (km). See MODULE constants for the definition of
+        ! to |lorene| units (km). See MODULE constants for the definition of
         ! Msun_geo
         CALL get_lorene_id_particles( THIS% bns_ptr, &
                                       x( itr )*Msun_geo, &
@@ -600,7 +600,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
 
         !
         !-- The following follows from the assumption of conformal
-        !-- flatness in LORENE
+        !-- flatness in |lorene|
         !
         g_yy( itr )= g_xx( itr )
         g_zz( itr )= g_xx( itr )
@@ -677,7 +677,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
     IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 
       ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-      ! to LORENE units (km). See MODULE constants for the definition of
+      ! to |lorene| units (km). See MODULE constants for the definition of
       ! Msun_geo
       CALL get_lorene_id_mass_b( THIS% bns_ptr, &
                                     x*Msun_geo, &
@@ -726,7 +726,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
       import_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-        ! to LORENE units (km). See MODULE constants for the definition of
+        ! to |lorene| units (km). See MODULE constants for the definition of
         ! Msun_geo
         CALL get_lorene_id_k( THIS% bns_ptr, &
                               x( itr )*Msun_geo, &
@@ -745,7 +745,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
       DO itr= 1, n, 1
 
         !
-        !-- Convert the extrinsic curvature from LORENE units to
+        !-- Convert the extrinsic curvature from |lorene| units to
         !-- SPHINCS units
         !
         k_xx( itr )= k_xx( itr )*Msun_geo
@@ -782,7 +782,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
 
     !***********************************************
     !
-    !# Returns the LORENE mass density at the point
+    !# Returns the |lorene| mass density at the point
     !  given as argument, in units of
     !  \(M_\odot/L_\odot^3\).
     !
@@ -798,7 +798,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
     IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-      ! to LORENE units (km). See MODULE constants for the definition of
+      ! to |lorene| units (km). See MODULE constants for the definition of
       ! Msun_geo
       res= get_lorene_mass_density( THIS% bns_ptr, &
                                     x*Msun_geo, &
@@ -814,7 +814,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
 
     !***********************************************
     !
-    !# Returns the LORENE conformal factor to the
+    !# Returns the |lorene| conformal factor to the
     !  4th power, equal to the diagonal components
     !  of the conformally flat spatial ADM metric.
     !
@@ -830,7 +830,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
     IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-      ! to LORENE units (km). See MODULE constants for the definition of
+      ! to |lorene| units (km). See MODULE constants for the definition of
       ! Msun_geo
       res= get_lorene_spatial_metric( THIS% bns_ptr, &
                                       x*Msun_geo, &
@@ -863,7 +863,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
     IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-      ! to LORENE units (km). See MODULE constants for the definition of
+      ! to |lorene| units (km). See MODULE constants for the definition of
       ! Msun_geo
       res= negative_hydro( THIS% bns_ptr, &
                                     x*Msun_geo, &

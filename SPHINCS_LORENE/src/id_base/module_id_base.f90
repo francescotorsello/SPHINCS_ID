@@ -39,32 +39,42 @@ MODULE id_base
   !  star...)
 
 
+    DOUBLE PRECISION, DIMENSION(6):: spatial_extent
+    !# 6-dimensional array containing the coordinates
+    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+    !  of a box containing the physical system.
+
+
     CONTAINS
 
 
-    PROCEDURE(read_double_at_pos),    DEFERRED:: read_mass_density
+    PROCEDURE(read_double_at_pos),        DEFERRED:: read_mass_density
     !# Returns the baryon mass density at the given point
 
-    PROCEDURE(read_integer_at_pos),   DEFERRED:: test_position
+    PROCEDURE(read_integer_at_pos),       DEFERRED:: test_position
     !# Returns 1 if the position has physically acceptable properties,
     !  0 otherwise
 
-    PROCEDURE(read_id_ext_int),       DEFERRED:: read_id_ext
+    PROCEDURE(read_id_ext_int),           DEFERRED:: read_id_ext
     !# Reads the full ID
-    PROCEDURE(read_id_particles_int), DEFERRED:: read_id_particles
+    PROCEDURE(read_id_particles_int),     DEFERRED:: read_id_particles
     !! Reads the hydro ID needed to compute the SPH ID
-    PROCEDURE(read_id_mass_b_int),    DEFERRED:: read_id_mass_b
+    PROCEDURE(read_id_mass_b_int),        DEFERRED:: read_id_mass_b
     !! Reads the hydro ID needed to compute the baryon mass
-    PROCEDURE(read_id_spacetime_int), DEFERRED:: read_id_spacetime
+    PROCEDURE(read_id_spacetime_int),     DEFERRED:: read_id_spacetime
     !# Reads the spacetime ID needed to compute
     !  the BSSN variables and constraints
-    PROCEDURE(read_id_hydro_int),     DEFERRED:: read_id_hydro
+    PROCEDURE(read_id_hydro_int),         DEFERRED:: read_id_hydro
     !# Reads the hydro ID needed to compute the constraints
     !  on the refined mesh
-    PROCEDURE(read_id_k_int),         DEFERRED:: read_id_k
+    PROCEDURE(read_id_k_int),             DEFERRED:: read_id_k
     !! Reads the components of the extrinsic curvature
 
-    PROCEDURE(integrate_field_int),   DEFERRED:: integrate_field_on_star
+ !   PROCEDURE(detect_spatial_extent_int), DEFERRED:: detect_spatial_extent
+ !   !# Detects the spatial extent of the physical system considered,
+ !   !  returning an array of 6 numbers
+
+    PROCEDURE:: integrate_baryon_mass_density
     !# Integrates a field over the interior of a star in spherical coordinates,
     !  and computes its radial profile inside the star
 
@@ -291,10 +301,10 @@ MODULE id_base
 
 
     SUBROUTINE integrate_field_int( THIS, center, radius, &
-                                                  central_density, &
-                                                  dr, dth, dphi, &
-                                                  mass, mass_profile, &
-                                                  mass_profile_idx )
+                                    central_density, &
+                                    dr, dth, dphi, &
+                                    mass, mass_profile, &
+                                    mass_profile_idx )
     !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
     !  compute the radial mass profile of a single star.
 
@@ -320,6 +330,58 @@ MODULE id_base
 
     END SUBROUTINE integrate_field_int
 
+
+  !  FUNCTION detect_spatial_extent_int( THIS ) RESULT( box )
+  !  !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
+  !  !  physical system considered, and returns a 6-dimensional array
+  !  !  containing the coordinates
+  !  !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+  !  !  of a box containing the system.
+  !
+  !    IMPORT:: idbase
+  !    CLASS(idbase), INTENT( IN OUT )      :: THIS
+  !    !! Object of class [[idbase]] which this PROCEDURE is a member of
+  !    DOUBLE PRECISION, DIMENSION(6):: box
+  !    !# 6-dimensional array containing the coordinates
+  !    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+  !    !  of a box containing the physical system.
+  !
+  !  END FUNCTION detect_spatial_extent_int
+
+
+  END INTERFACE
+
+
+  INTERFACE
+
+    MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+                                                     central_density, &
+                                                     dr, dth, dphi, &
+                                                     mass, mass_profile, &
+                                                     mass_profile_idx )
+    !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
+    !  compute the radial mass profile of a single star.
+
+      !> Object of class [[idbase]] which this PROCEDURE is a member of
+      CLASS(idbase), INTENT( IN OUT )      :: THIS
+      !& Array to store the indices for array mass_profile, sorted so that
+      !  mass_profile[mass_profile_idx] is in increasing order
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+      !> Center of the star
+      DOUBLE PRECISION, INTENT( IN )    :: center
+      !> Central density of the star
+      DOUBLE PRECISION, INTENT( IN )    :: central_density
+      !> Radius of the star
+      DOUBLE PRECISION, INTENT( IN )    :: radius
+      !> Integration steps
+      DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+      !> Integrated mass of the star
+      DOUBLE PRECISION, INTENT( IN OUT ):: mass
+      !> Array storing the radial mass profile of the star
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+                                       mass_profile
+
+    END SUBROUTINE integrate_baryon_mass_density
 
   END INTERFACE
 

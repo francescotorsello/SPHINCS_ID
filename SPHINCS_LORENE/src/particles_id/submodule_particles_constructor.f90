@@ -1750,7 +1750,7 @@ SUBMODULE (particles_id) particles_constructor
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
                                        mass_profile
 
-      CALL bns_obj% integrate_field_on_star( center, radius, &
+      CALL bns_obj% integrate_baryon_mass_density( center, radius, &
                               central_density, &
                               dr, dth, dphi, &
                               mass, mass_profile, &

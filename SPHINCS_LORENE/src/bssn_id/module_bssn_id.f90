@@ -11,9 +11,9 @@ MODULE formul_bssn_id
   !***********************************************************
 
 
-  USE utility,          ONLY: ios, err_msg, perc, creturn, run_id, test_status, &
+  USE utility,          ONLY: ios, err_msg, perc, creturn, run_id, test_status,&
                               compute_g4, determinant_sym4x4_grid, show_progress
-  USE bns_base,         ONLY: bnsbase
+  USE id_base,          ONLY: idbase
   USE formul_3p1_id,    ONLY: formul_3p1
   USE particles_id,     ONLY: particles
   USE timing,           ONLY: timer
@@ -134,7 +134,7 @@ MODULE formul_bssn_id
     MODULE FUNCTION construct_bssn_id_bns( bns_obj, dx, dy, dz ) &
                     RESULT ( bssn_obj )
 
-      CLASS(bnsbase), INTENT( IN OUT ):: bns_obj
+      CLASS(idbase), INTENT( IN OUT ):: bns_obj
       TYPE(bssn_id)               :: bssn_obj
       DOUBLE PRECISION, OPTIONAL  :: dx, dy, dz
 
@@ -143,7 +143,7 @@ MODULE formul_bssn_id
  !   MODULE FUNCTION construct_bssn_id_bns_spacings( bns_obj, dx, dy, dz ) &
  !                   RESULT ( bssn_obj )
  !
- !     CLASS(bnsbase), INTENT( IN OUT )  :: bns_obj
+ !     CLASS(idbase), INTENT( IN OUT )  :: bns_obj
  !     TYPE(bssn_id)                 :: bssn_obj
  !     DOUBLE PRECISION, INTENT( IN ):: dx, dy, dz
  !
@@ -199,7 +199,7 @@ MODULE formul_bssn_id
                                                            name_logfile )
 
       CLASS(bssn_id),      INTENT( IN OUT ):: THIS
-      CLASS(bnsbase),      INTENT( IN OUT ):: bns_obj
+      CLASS(idbase),      INTENT( IN OUT ):: bns_obj
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 

@@ -24,12 +24,16 @@ proc_internals: true
 license: gfdl
 github: https://github.com/francescotorsello
 linkedin: https://www.linkedin.com/in/francescotorsello
-alias: lorene = \(\texttt{LORENE}\)
+alias: sphincslorene = \(\texttt{SPHINCS_LORENE}\)
+       lorene = \(\texttt{LORENE}\)
        sphincsbssn = \(\texttt{SPHINCS_BSSN}\)
        fuka = \(\texttt{FUKA}\)
        binns = \(\texttt{Bin_NS}\)
        etrotdiff = \(\texttt{Et_rot_diff}\)
        etdiffrot = \(\texttt{Et_diffrot}\)
+
+#### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; Interface to **LORENE**
+___
 
 SPHINCS_LORENE is a modular, object-oriented, OMP parallelized FORTRAN 2018 code to produce binary neutron stars initial data to be evolved in time with the FORTRAN 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), using the C++ code LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"}).
 
@@ -38,3 +42,4 @@ SPHINCS_LORENE acts as an interface between LORENE and SPHINCS_BSSN; it reads th
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://lorene.obspm.fr/>
 [3]: <https://arxiv.org/abs/gr-qc/0007028>
+___

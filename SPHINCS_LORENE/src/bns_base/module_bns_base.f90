@@ -320,7 +320,7 @@ MODULE bns_base
     !! Returns an integer that identifies the equation of state of star 2
 
 
-    PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
+    !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
     !# Integrates the LORENE baryon mass density and computes the
     !  radial mass profile
 
@@ -569,34 +569,34 @@ MODULE bns_base
  !   END SUBROUTINE read_bns_id_spacetime_int
 
 
-    MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
-                                                     central_density, &
-                                                     dr, dth, dphi, &
-                                                     mass, mass_profile, &
-                                                     mass_profile_idx )
-    !# Integrates the LORENE baryon mass density to compute the radial mass
-    !  profile. TODO: Improve integration algorithm.
-
-      !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN OUT )      :: THIS
-      !& Array to store the indices for array mass_profile, sorted so that
-      !  mass_profile[mass_profile_idx] is in increasing order
-      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
-      !> Center of the star
-      DOUBLE PRECISION, INTENT( IN )    :: center
-      !> Central density of the star
-      DOUBLE PRECISION, INTENT( IN )    :: central_density
-      !> Radius of the star
-      DOUBLE PRECISION, INTENT( IN )    :: radius
-      !> Integration steps
-      DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
-      !> Integrated mass of the star
-      DOUBLE PRECISION, INTENT( IN OUT ):: mass
-      !> Array storing the radial mass profile of the star
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
-                                       mass_profile
-
-    END SUBROUTINE integrate_baryon_mass_density
+ !   MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+ !                                                    central_density, &
+ !                                                    dr, dth, dphi, &
+ !                                                    mass, mass_profile, &
+ !                                                    mass_profile_idx )
+ !   !# Integrates the LORENE baryon mass density to compute the radial mass
+ !   !  profile. TODO: Improve integration algorithm.
+ !
+ !     !> [[bnsbase]] object which this PROCEDURE is a member of
+ !     CLASS(bnsbase), INTENT( IN OUT )      :: THIS
+ !     !& Array to store the indices for array mass_profile, sorted so that
+ !     !  mass_profile[mass_profile_idx] is in increasing order
+ !     INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+ !     !> Center of the star
+ !     DOUBLE PRECISION, INTENT( IN )    :: center
+ !     !> Central density of the star
+ !     DOUBLE PRECISION, INTENT( IN )    :: central_density
+ !     !> Radius of the star
+ !     DOUBLE PRECISION, INTENT( IN )    :: radius
+ !     !> Integration steps
+ !     DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+ !     !> Integrated mass of the star
+ !     DOUBLE PRECISION, INTENT( IN OUT ):: mass
+ !     !> Array storing the radial mass profile of the star
+ !     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+ !                                      mass_profile
+ !
+ !   END SUBROUTINE integrate_baryon_mass_density
 
 
     MODULE FUNCTION get_gamma_1( THIS )

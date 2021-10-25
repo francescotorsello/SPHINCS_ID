@@ -10,8 +10,8 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
   !  destructor of TYPE [[bnslorene]], and of the
   !  [[bnslorene]]-member
   !  PROCEDURES that call the C-bound PROCEDURES
-  !  constructig and destructing the LORENE
-  !  Bin_NS object
+  !  constructig and destructing the |lorene|
+  !  |binns| object
   !
   !  FT 23.10.2020
   !
@@ -45,7 +45,7 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
 
     bns_obj% binary_construction_timer= timer( "binary_construction_timer" )
 
-    ! Construct LORENE Bin_NS object
+    ! Construct |lorene| |binns| object
     IF( PRESENT( resu_file ) )THEN
         CALL bns_obj% construct_binary( resu_file )
     ELSE
@@ -62,6 +62,17 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
     ! Do not use the geodesic gauge by default
     bns_obj% one_lapse = .FALSE.
     bns_obj% zero_shift= .FALSE.
+
+    bns_obj% spatial_extent(1)= bns_obj% get_center1_x() &
+                                - bns_obj% get_radius1_x_opp()
+    bns_obj% spatial_extent(2)= bns_obj% get_center2_x() &
+                                + bns_obj% get_radius2_x_opp()
+    bns_obj% spatial_extent(3)= - MAX( bns_obj% get_radius1_y(), &
+                                       bns_obj% get_radius2_y() )
+    bns_obj% spatial_extent(4)= - bns_obj% spatial_extent(3)
+    bns_obj% spatial_extent(5)= - MAX( bns_obj% get_radius1_z(), &
+                                       bns_obj% get_radius2_z() )
+    bns_obj% spatial_extent(6)= - bns_obj% spatial_extent(5)
 
     !PRINT *, "End of bns constructor."
     !PRINT *
@@ -97,7 +108,7 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
 
     !***********************************************
     !
-    !# Construct the LORENE Bin_NS object
+    !# Construct the |lorene| |binns| object
     !
     !  FT
     !
@@ -121,9 +132,9 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
 #endif
 
     !
-    !-- If the name of the LORENE binary file resu_file is given as argument to
+    !-- If the name of the |lorene| binary file resu_file is given as argument to
     !-- construct_binary, use it. Otherwise, give the string "read_it"
-    !-- to construct_bin_ns as argument, which makes LORENE read the name of
+    !-- to construct_bin_ns as argument, which makes |lorene| read the name of
     !-- the file from the parameter file read_bin_ns.par
     !
     IF( PRESENT( resu_file ) )THEN
@@ -164,7 +175,7 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
 
     !************************************************
     !
-    !# Destructs the LORENE Bin_NS object and frees
+    !# Destructs the |lorene| |binns| object and frees
     !  the pointer [[bns:bns_ptr]] pointing to it
     !
     !  FT

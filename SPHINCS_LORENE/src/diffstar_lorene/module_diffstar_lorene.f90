@@ -123,7 +123,7 @@ MODULE diffstar_lorene
     LOGICAL, PUBLIC:: one_lapse, zero_shift
 
     !> Timer that times the construction of the |lorene| Etdiffrot object
-    TYPE(timer), PUBLIC:: diffstar_construction_timer
+    TYPE(timer), PUBLIC:: drs_construction_timer
 
 
     CONTAINS
@@ -197,7 +197,7 @@ MODULE diffstar_lorene
     PROCEDURE, PUBLIC:: get_eos_loreneid
     !! Returns [[diffstarlorene:eos_loreneid]]
 
-    PROCEDURE, PUBLIC:: get_bns_identifier
+    PROCEDURE, PUBLIC:: get_diffstar_identifier
     !! Returns [[diffstarlorene:diffstar_identifier]]]
 
     !PROCEDURE, PUBLIC:: get_diffstar_ptr
@@ -582,14 +582,14 @@ MODULE diffstar_lorene
     END FUNCTION get_field_value
 
 
-    MODULE FUNCTION get_bns_identifier( THIS )
+    MODULE FUNCTION get_diffstar_identifier( THIS )
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
       CLASS(diffstarlorene), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_bns_identifier
+      DOUBLE PRECISION:: get_diffstar_identifier
 
-    END FUNCTION get_bns_identifier
+    END FUNCTION get_diffstar_identifier
 
 
     MODULE FUNCTION get_eos_loreneid( THIS )
@@ -617,8 +617,8 @@ MODULE diffstar_lorene
 
   PRIVATE:: construct_etdiffrot, get_diffstar_full, get_diffstar_spacetime, &
             get_diffstar_particles, get_diffstar_mass_b, &
-            get_diffstar_hydro, get_lorene_mass_density, &
-            get_lorene_spatial_metric, negative_hydro, get_diffstar_params, &
+            get_diffstar_hydro, get_diffstar_mass_density, &
+            get_diffstar_spatial_metric, negative_hydro, get_diffstar_params, &
             destruct_etdiffrot
 
   !-----------------------------------------------------------------!
@@ -928,8 +928,8 @@ MODULE diffstar_lorene
     END SUBROUTINE get_diffstar_hydro
 
 
-    FUNCTION get_lorene_mass_density( optr, x, y, z ) RESULT( res ) &
-      BIND(C, NAME= "get_mass_density")
+    FUNCTION get_diffstar_mass_density( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "get_rotdiff_mass_density")
 
       !********************************************
       !
@@ -959,10 +959,10 @@ MODULE diffstar_lorene
       !  point \((x,y,z)\)
       REAL(C_DOUBLE) :: res
 
-    END FUNCTION get_lorene_mass_density
+    END FUNCTION get_diffstar_mass_density
 
 
-    FUNCTION get_lorene_spatial_metric( optr, x, y, z ) RESULT( res ) &
+    FUNCTION get_diffstar_spatial_metric( optr, x, y, z ) RESULT( res ) &
       BIND(C, NAME= "get_g_diag")
 
       !************************************************
@@ -993,7 +993,7 @@ MODULE diffstar_lorene
       !  \(g_{xx}=g_{yy}=g_{zz}\) at the point \((x,y,z)\)
       REAL(C_DOUBLE) :: res
 
-    END FUNCTION get_lorene_spatial_metric
+    END FUNCTION get_diffstar_spatial_metric
 
 
     FUNCTION negative_hydro( optr, x, y, z ) RESULT( res ) &

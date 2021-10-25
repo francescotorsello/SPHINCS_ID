@@ -1,4 +1,4 @@
-! File:         submodule_bns_access.f90
+! File:         submodule_bnslorene_access.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
@@ -276,12 +276,12 @@ SUBMODULE (bns_lorene) bns_lorene_access
   !  !************************************************
   !  !
   !  !# Returns the value of [[bns_ptr]], the C pointer
-  !  ! to the LORENE's Bin_NS object
+  !  ! to the |lorene|'s Bin_NS object
   !  ! N.B. This variable is global. The pointer
-  !  !      to the second LORENE Bin_NS object will
+  !  !      to the second |lorene| Bin_NS object will
   !  !      overwrite the first one, and so on.
   !  !      This variable stores the pointer to
-  !  !      the last defined LORENE Bin_NS object.
+  !  !      the last defined |lorene| Bin_NS object.
   !  !      That's why it is not freed in the
   !  !      destructor of a bns object. Presently, it
   !  !      has to be freed by the user at the end of
@@ -304,7 +304,7 @@ SUBMODULE (bns_lorene) bns_lorene_access
 
     !**************************************************
     !
-    !# Returns the LORENE ID-number of the EOS for NS 1
+    !# Returns the |lorene| ID-number of the EOS for NS 1
     !
     !  FT
     !
@@ -321,7 +321,7 @@ SUBMODULE (bns_lorene) bns_lorene_access
 
     !**************************************************
     !
-    !# Returns the LORENE ID-number of the EOS for NS 2
+    !# Returns the |lorene| ID-number of the EOS for NS 2
     !
     !  FT
     !
