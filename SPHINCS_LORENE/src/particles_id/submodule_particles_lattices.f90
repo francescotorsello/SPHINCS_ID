@@ -32,16 +32,16 @@ SUBMODULE (particles_id) particles_lattices
     !
     !*********************************************************
 
-    USE constants,    ONLY: Msun_geo
+    USE constants,    ONLY: Msun_geo, pi, third
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k, sgn, npart_half
-    INTEGER:: npart_temp
+    INTEGER:: i, j, k, sgn, nx, ny, nz, npart_half
+    INTEGER:: npart_tmp
 
     DOUBLE PRECISION:: dx, dy, dz
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim
-    DOUBLE PRECISION:: max_baryon_density, thres_baryon_density
+    DOUBLE PRECISION:: thres_baryon_density
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: pos_tmp
 
     PRINT *, "** Executing the place_particles_lattice " &
@@ -58,6 +58,15 @@ SUBMODULE (particles_id) particles_lattices
     ENDIF
 
     !
+    !-- Compute number of lattice points (for now, equal in each direction)
+    !
+    nx= CEILING(stretch*(6.0D0*npart_des/pi)**third)
+    ny= nx
+    nz= nx
+    PRINT *, " * nx= ny= nz=", nx
+    PRINT *
+
+    !
     !-- Compute lattice steps
     !
     dx= ABS(xmax - xmin)/DBLE( nx )
@@ -65,35 +74,28 @@ SUBMODULE (particles_id) particles_lattices
     dz= ABS(zlim)/DBLE( nz/2 )
 
     PRINT *, " * dx=", dx,  ", dy=", dx,  ", dz=", dz
-    PRINT *, " * nx=", nx,  ", ny=", ny,  ", nz=", nz
     PRINT *
 
-    npart_temp = nx*ny*nz
+    npart_tmp = nx*ny*nz
 
-    PRINT *, " * Number of lattice points= nx*ny*nz=", npart_temp
+    PRINT *, " * Number of lattice points= nx*ny*nz=", npart_tmp
     PRINT *
-
-    !
-    !-- Compute the mass density at the center of the stars
-    !
-    max_baryon_density= MAX( bns_obj% get_rho_center1(), &
-                             bns_obj% get_rho_center2() )
 
     !
     !-- Set the threshold above which a lattice point is
     !-- promoted to a particle
     !
     IF( THIS% use_thres )THEN
-      thres_baryon_density= max_baryon_density/thres
+      thres_baryon_density= central_density/thres
     ELSE
       thres_baryon_density= 0.0D0
     ENDIF
 
-    ! Allocating the memory for the array pos( 3, npart_temp )
+    ! Allocating the memory for the array pos( 3, npart_tmp )
     ! Note that after determining npart, the array pos is reshaped into
     ! pos( 3, npart )
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, npart_temp ), STAT= ios, &
+      ALLOCATE( THIS% pos( 3, npart_tmp ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE" &
@@ -129,7 +131,7 @@ SUBMODULE (particles_id) particles_lattices
     !--  symmetrically w.r.t. the xy plane                  --!
     !---------------------------------------------------------!
 
-    PRINT *, " * Placing particles around NSs..."
+    PRINT *, " * Placing particles on the lattice..."
     PRINT *
 
     THIS% npart= 0
@@ -145,10 +147,11 @@ SUBMODULE (particles_id) particles_lattices
     ENDIF
 
     !
-    !-- Place the first half of the particle (above or below the xy plane)
+    !-- Place the first half of the particle (above or below the xy plane,
+    !-- depending on the variable sgn)
     !
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( nx, ny, nz, bns_obj, dx, dy, dz, sgn, &
+    !$OMP             SHARED( nx, ny, nz, dx, dy, dz, sgn, &
     !$OMP                     pos_tmp, thres_baryon_density, xmin, ymin ) &
     !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp )
     particle_pos_z: DO k= 1, nz/2, 1
@@ -167,41 +170,23 @@ SUBMODULE (particles_id) particles_lattices
           !-- Promote a lattice point to a particle,
           !-- if the mass density is higher than the threshold
           !
-          IF( bns_obj% read_mass_density( xtemp, ytemp, ztemp ) &
+          IF( get_density( xtemp, ytemp, ztemp ) &
                                   > thres_baryon_density &
               .AND. &
-              bns_obj% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
+              validate_position( xtemp, ytemp, ztemp ) == 0 )THEN
 
-            !THIS% npart= THIS% npart + 1
-            !IF( xtemp < 0 )THEN
-            !  THIS% npart1= THIS% npart1 + 1
-            !ELSEIF( xtemp > 0 )THEN
-            !  THIS% npart2= THIS% npart2 + 1
-            !ENDIF
-            !THIS% pos( 1, THIS% npart )= xtemp
-            !THIS% pos( 2, THIS% npart )= ytemp
-            !THIS% pos( 3, THIS% npart )= ztemp
             pos_tmp( 1, i, j, k )= xtemp
             pos_tmp( 2, i, j, k )= ytemp
             pos_tmp( 3, i, j, k )= ztemp
 
           ENDIF
 
-          ! Print progress on screen, every 10%
-          !perc= 50*( nx*ny*k + nx*j + i )/ &
-          !        ( nx*ny*nz/2 )
-          !IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-          !  WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
-          !         creturn//" ", perc, "%"
-          !ENDIF
-
          ENDDO particle_pos_x
       ENDDO particle_pos_y
     ENDDO particle_pos_z
     !$OMP END PARALLEL DO
-    !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-    THIS% npart= 0
+    npart_out= 0
     DO k= 1, nz, 1
 
       DO j= 1, ny, 1
@@ -210,12 +195,8 @@ SUBMODULE (particles_id) particles_lattices
 
           IF( pos_tmp( 1, i, j, k ) < HUGE(0.0D0) )THEN
 
-            THIS% npart= THIS% npart + 1
-            IF( pos_tmp( 1, i, j, k ) < 0 )THEN
-              THIS% npart1= THIS% npart1 + 1
-            ELSEIF( pos_tmp( 1, i, j, k ) > 0 )THEN
-              THIS% npart2= THIS% npart2 + 1
-            ENDIF
+            npart_out= npart_out + 1
+
             THIS% pos( 1, THIS% npart )= pos_tmp( 1, i, j, k )
             THIS% pos( 2, THIS% npart )= pos_tmp( 2, i, j, k )
             THIS% pos( 3, THIS% npart )= pos_tmp( 3, i, j, k )
@@ -225,7 +206,7 @@ SUBMODULE (particles_id) particles_lattices
          ENDDO
       ENDDO
     ENDDO
-    npart_half= THIS% npart
+    npart_half= npart_out
     IF( npart_half == 0 )THEN
       PRINT *, "** There are no particles! Execution stopped..."
       PRINT *
@@ -244,16 +225,7 @@ SUBMODULE (particles_id) particles_lattices
       ytemp=   THIS% pos( 2, k )
       ztemp= - THIS% pos( 3, k )
 
-      ! TODO: is this check needed?
-      !IF( import_mass_density( xtemp, ytemp, ztemp ) &
-      !                               > thres_baryon_density )THEN
-
-      THIS% npart= THIS% npart + 1
-      IF( xtemp < 0 )THEN
-        THIS% npart1= THIS% npart1 + 1
-      ELSEIF( xtemp > 0 )THEN
-        THIS% npart2= THIS% npart2 + 1
-      ENDIF
+      npart_out= npart_out + 1
       THIS% pos( 1, THIS% npart )= xtemp
       THIS% pos( 2, THIS% npart )= ytemp
       THIS% pos( 3, THIS% npart )= ztemp
@@ -261,20 +233,20 @@ SUBMODULE (particles_id) particles_lattices
       !ENDIF
 
       ! Print progress on screen, every 10%
-      perc= 50 + 50*k/( npart_half )
-      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-         WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
-                 creturn//" ", perc, "%"
-      ENDIF
+      !perc= 50 + 50*k/( npart_half )
+      !IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+      !   WRITE( *, "(A2,I3,A1)", ADVANCE= "NO" ) &
+      !           creturn//" ", perc, "%"
+      !ENDIF
     ENDDO particle_pos_z_mirror
-    WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+    !WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
     !
     !-- Consistency checks
     !
-    IF( THIS% npart /= 2*npart_half )THEN
+    IF( npart_out /= 2*npart_half )THEN
       PRINT *
-      PRINT *, "** ERROR: The number of particles ", THIS% npart, &
+      PRINT *, "** ERROR: The number of particles ", npart_out, &
                " is not the expected value ", 2*npart_half
       PRINT *
       STOP
@@ -290,28 +262,16 @@ SUBMODULE (particles_id) particles_lattices
       ENDIF
     ENDDO
 
-    IF( THIS% npart1 + THIS% npart2 /= THIS% npart )THEN
-      PRINT *, "** ERROR: npart1 + npart2 /= npart"
-      PRINT *, " * npart1=", THIS% npart1
-      PRINT *, " * npart2=", THIS% npart2
-      PRINT *, " * npart1 + npart2=", THIS% npart1 + THIS% npart2
-      PRINT *, " * npart=", THIS% npart
-      STOP
-    ENDIF
-
     PRINT *, " * Particles placed. Number of particles=", &
-             THIS% npart, "=", DBLE(THIS% npart)/DBLE(npart_temp), &
+             npart_out, "=", DBLE(npart_out)/DBLE(npart_tmp), &
              " of the points in lattice."
-    PRINT *
-    PRINT *, " * Number of particles on NS 1=", THIS% npart1
-    PRINT *, " * Number of particles on NS 2=", THIS% npart2
     PRINT *
 
     !
     !-- Computing total volume and volume per particle
     !
-    IF(.NOT.ALLOCATED( THIS% pvol ))THEN
-      ALLOCATE( THIS% pvol( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( pvol ))THEN
+      ALLOCATE( pvol( npart_out ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array pvol ", &
@@ -323,12 +283,12 @@ SUBMODULE (particles_id) particles_lattices
     ENDIF
 
     THIS% vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
-    THIS% vol_a= THIS% vol/npart_temp
+    THIS% vol_a= THIS% vol/npart_tmp
 
-    THIS% pvol= THIS% vol_a
+    pvol= THIS% vol_a
 
     ! Consistency check for the particle volume
-    IF( ABS( THIS% vol_a - dx*dy*dz ) > 1D-9 )THEN
+    IF( ABS( THIS% vol_a - dx*dy*dz ) > 1.0D-9 )THEN
       PRINT *, " * The particle volume vol_a=", THIS% vol_a, "Msun_geo^3"
       PRINT *, " is not equal to dx*dy*dz=", dx*dy*dz, "Msun_geo^3."
       PRINT *
@@ -361,7 +321,7 @@ SUBMODULE (particles_id) particles_lattices
     IMPLICIT NONE
 
     INTEGER:: i, j, k, sgn, npart_half, npart_half2
-    INTEGER:: npart_temp, npart1_temp, npart2_temp
+    INTEGER:: npart_tmp, npart1_temp, npart2_temp
     INTEGER:: nx1, ny1, nz1, nx2, ny2, nz2
 
     DOUBLE PRECISION:: dx1, dy1, dz1, dx2, dy2, dz2
@@ -392,8 +352,8 @@ SUBMODULE (particles_id) particles_lattices
       zlim2= zmin2
     ENDIF
 
-    THIS% mass1= bns_obj% get_mass1()
-    THIS% mass2= bns_obj% get_mass2()
+    THIS% mass1= bnsb% get_mass1()
+    THIS% mass2= bnsb% get_mass2()
 
     IF( THIS% mass1 > THIS% mass2 )THEN
 
@@ -459,7 +419,7 @@ SUBMODULE (particles_id) particles_lattices
     ! Compute number of lattice points (temporary particle number)
     npart1_temp = nx*ny*nz !+ nx*ny
     npart2_temp = nx2*ny2*nz2 !+ nx2*ny2
-    npart_temp  = npart1_temp + npart2_temp
+    npart_tmp  = npart1_temp + npart2_temp
 
     PRINT *, " * Number of points for lattice 1= nx1*ny1*nz1=", &
              npart1_temp
@@ -471,15 +431,9 @@ SUBMODULE (particles_id) particles_lattices
     !-- Compute the mass density at the center of the stars
     !
 
-    ! N.B. The following two densities are in LORENE units [kg m^{-3}]
-    !max_baryon_density1= bns_obj% import_mass_density( &
-    !                                 bns_obj% get_center1_x(), 0.0D0, 0.0D0 )
-    !max_baryon_density2= bns_obj% import_mass_density( &
-    !                                 bns_obj% get_center2_x(), 0.0D0, 0.0D0 )
-
     ! The following two density ar in SPHINCS units [Msun Msun_geo^{-3}]
-    max_baryon_density1= bns_obj% get_rho_center1()
-    max_baryon_density2= bns_obj% get_rho_center2()
+    max_baryon_density1= bnsb% get_rho_center1()
+    max_baryon_density2= bnsb% get_rho_center2()
 
     !
     !-- Set the thresholds above which a lattice point is
@@ -493,11 +447,11 @@ SUBMODULE (particles_id) particles_lattices
       thres_baryon_density2= 0.0D0
     ENDIF
 
-    ! Allocating the memory for the array pos( 3, npart_temp )
+    ! Allocating the memory for the array pos( 3, npart_tmp )
     ! Note that after determining npart, the array pos is reshaped into
     ! pos( 3, npart )
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, npart_temp ), STAT= ios, &
+      ALLOCATE( THIS% pos( 3, npart_tmp ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE" &
@@ -550,7 +504,7 @@ SUBMODULE (particles_id) particles_lattices
     !-- Place the first half of the particle (above or below the xy plane)
     !
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( nx, ny, nz, bns_obj, dx1, dy1, dz1, sgn, &
+    !$OMP             SHARED( nx, ny, nz, bnsb, dx1, dy1, dz1, sgn, &
     !$OMP                     pos_tmp, thres_baryon_density1, xmin1, ymin1 ) &
     !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp )
     particle_pos_z1: DO k= 1, nz/2, 1
@@ -569,10 +523,10 @@ SUBMODULE (particles_id) particles_lattices
           !-- Promote a lattice point to a particle,
           !-- if the mass density is higher than the threshold
           !
-          IF( bns_obj% read_mass_density( xtemp, ytemp, ztemp ) &
+          IF( bnsb% read_mass_density( xtemp, ytemp, ztemp ) &
                                 > thres_baryon_density1 &
               .AND. &
-              bns_obj% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
+              bnsb% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
 
             !THIS% npart = THIS% npart + 1
             !THIS% npart1= THIS% npart1 + 1
@@ -675,7 +629,7 @@ SUBMODULE (particles_id) particles_lattices
     !    !-- Promote a lattice point to a particle,
     !    !-- if the mass density is higher than the threshold
     !    !
-    !    IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
+    !    IF( bnsb% import_mass_density( xtemp, ytemp, ztemp ) &
     !                          > thres_baryon_density1 )THEN
     !
     !      THIS% npart = THIS% npart + 1
@@ -725,7 +679,7 @@ SUBMODULE (particles_id) particles_lattices
       sgn= 1
     ENDIF
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( nx2, ny2, nz2, bns_obj, dx2, dy2, dz2, sgn, &
+    !$OMP             SHARED( nx2, ny2, nz2, bnsb, dx2, dy2, dz2, sgn, &
     !$OMP                     pos_tmp, thres_baryon_density2, xmin2, ymin2 ) &
     !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp )
     particle_pos_z2: DO k= 1, nz2/2, 1
@@ -740,10 +694,10 @@ SUBMODULE (particles_id) particles_lattices
 
           xtemp= xmin2 + dx2/2 + ( i - 1 )*dx2
 
-          IF( bns_obj% read_mass_density( xtemp, ytemp, ztemp ) &
+          IF( bnsb% read_mass_density( xtemp, ytemp, ztemp ) &
                                   > thres_baryon_density2 &
               .AND. &
-              bns_obj% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
+              bnsb% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
 
             !THIS% npart = THIS% npart + 1
             !THIS% npart2= THIS% npart2 + 1
@@ -838,7 +792,7 @@ SUBMODULE (particles_id) particles_lattices
     !
     !    xtemp= xmin2 + dx/2 + ( i - 1 )*dx
     !
-    !    IF( bns_obj% import_mass_density( xtemp, ytemp, ztemp ) &
+    !    IF( bnsb% import_mass_density( xtemp, ytemp, ztemp ) &
     !                            > thres_baryon_density2 )THEN
     !
     !      THIS% npart = THIS% npart + 1
@@ -905,7 +859,7 @@ SUBMODULE (particles_id) particles_lattices
     !-- Printouts
     !
     PRINT *, " * Particles placed. Number of particles=", &
-             THIS% npart, "=", DBLE(THIS% npart)/DBLE(npart_temp), &
+             THIS% npart, "=", DBLE(THIS% npart)/DBLE(npart_tmp), &
              " of the points in lattices."
     PRINT *
     PRINT *, " * Number of particles on NS 1=", THIS% npart1, "=", &

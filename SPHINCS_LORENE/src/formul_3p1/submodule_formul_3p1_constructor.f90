@@ -67,10 +67,10 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
     !
     !-- Initialize timers
     !
-    f3p1_obj% grid_timer    = timer( "grid_timer" )
-    f3p1_obj% importer_timer= timer( "importer_timer" )
+    f3p1% grid_timer    = timer( "grid_timer" )
+    f3p1% importer_timer= timer( "importer_timer" )
 
-    CALL f3p1_obj% grid_timer% start_timer()
+    CALL f3p1% grid_timer% start_timer()
 
     IF( PRESENT(dx) .AND. PRESENT(dy) .AND. PRESENT(dz) )THEN
 
@@ -82,18 +82,18 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
 
     ENDIF
 
-    !PRINT *, ABS(bns_obj% get_center1_x()) + bns_obj% get_radius1_x_opp()
-    !PRINT *, ABS(bns_obj% get_center2_x()) + bns_obj% get_radius2_x_opp()
+    !PRINT *, ABS(id% get_center1_x()) + id% get_radius1_x_opp()
+    !PRINT *, ABS(id% get_center2_x()) + id% get_radius2_x_opp()
     !PRINT *, ABS(levels(nlevels)% xR)
 
     !
     !-- Check that the stars are inside the finest refinement lvel
     !
-  !  IF( MAX( ABS(bns_obj% get_center1_x()) + bns_obj% get_radius1_x_opp(), &
-  !           ABS(bns_obj% get_center2_x()) + bns_obj% get_radius2_x_opp() ) &
+  !  IF( MAX( ABS(id% get_center1_x()) + id% get_radius1_x_opp(), &
+  !           ABS(id% get_center2_x()) + id% get_radius2_x_opp() ) &
   !           > ABS(levels(nlevels)% xR) )THEN
 
-    IF( MAXVAL( ABS(bns_obj% spatial_extent) ) > ABS(levels(nlevels)% xR) )THEN
+    IF( MAXVAL( ABS(id% total_spatial_extent) ) > ABS(levels(nlevels)% xR) )THEN
 
       PRINT *
       PRINT *, "** The innermost, finest refinement level does not contain ", &
@@ -101,11 +101,11 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
       PRINT *, "   Boundary of the innermost, finest level: ", &
                ABS(levels(nlevels)% xR), " Msun_geo"
       PRINT *, "   Size of the system: ", &
-            MAXVAL( ABS(bns_obj% spatial_extent) ) > ABS(levels(nlevels)% xR), &
+            MAXVAL( ABS(id% total_spatial_extent) ) > ABS(levels(nlevels)% xR), &
                " Msun_geo"
       PRINT *, "   Please make the boundary of the innermost, finest level, ", &
                "larger than ", &
-            MAXVAL( ABS(bns_obj% spatial_extent) ) > ABS(levels(nlevels)% xR), &
+            MAXVAL( ABS(id% total_spatial_extent) ) > ABS(levels(nlevels)% xR), &
                " Msun_geo"
       PRINT *, "   Stopping..."
       PRINT *
@@ -113,16 +113,16 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
 
     ENDIF
 
-    CALL allocate_grid_function( f3p1_obj% coords,    "coords_id", 3 )
-    CALL allocate_grid_function( f3p1_obj% rad_coord, 'rad_coord_id', 1 )
+    CALL allocate_grid_function( f3p1% coords,    "coords_id", 3 )
+    CALL allocate_grid_function( f3p1% rad_coord, 'rad_coord_id', 1 )
 
-    f3p1_obj% nlevels= nlevels
-    f3p1_obj% levels = levels
+    f3p1% nlevels= nlevels
+    f3p1% levels = levels
 
-    ref_levels: DO l= 1, f3p1_obj% nlevels
+    ref_levels: DO l= 1, f3p1% nlevels
 
-      f3p1_obj% coords%    levels(l)% var= coords%    levels(l)% var
-      f3p1_obj% rad_coord% levels(l)% var= rad_coord% levels(l)% var
+      f3p1% coords%    levels(l)% var= coords%    levels(l)% var
+      f3p1% rad_coord% levels(l)% var= rad_coord% levels(l)% var
 
     ENDDO ref_levels
     CALL deallocate_grid_function ( coords, 'coords' )
@@ -132,12 +132,12 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
     !-- Allocating the memory for the grid functions
     !-- storing the LORENE spacetime ID at the grid points
     !
-    CALL allocate_grid_function( f3p1_obj% lapse,      "lapse_id",      1 )
-    CALL allocate_grid_function( f3p1_obj% shift_u,    "shift_u_id",    3 )
-    CALL allocate_grid_function( f3p1_obj% g_phys3_ll, "g_phys3_ll_id", 6 )
-    CALL allocate_grid_function( f3p1_obj% K_phys3_ll, "K_phys3_ll_id", 6 )
+    CALL allocate_grid_function( f3p1% lapse,      "lapse_id",      1 )
+    CALL allocate_grid_function( f3p1% shift_u,    "shift_u_id",    3 )
+    CALL allocate_grid_function( f3p1% g_phys3_ll, "g_phys3_ll_id", 6 )
+    CALL allocate_grid_function( f3p1% K_phys3_ll, "K_phys3_ll_id", 6 )
 
-    CALL f3p1_obj% grid_timer% stop_timer()
+    CALL f3p1% grid_timer% stop_timer()
 
     !
     !-- Import the LORENE spacetime ID on the refined mesh,
@@ -146,82 +146,82 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
     PRINT *
     PRINT *, "** Importing the LORENE spacetime ID on the refined mesh..."
     PRINT *
-    CALL f3p1_obj% importer_timer% start_timer()
+    CALL f3p1% importer_timer% start_timer()
 
-    !PRINT *, "nlevels=", f3p1_obj% nlevels
+    !PRINT *, "nlevels=", f3p1% nlevels
 
-    ref_levels2: DO l= 1, f3p1_obj% nlevels, 1
+    ref_levels2: DO l= 1, f3p1% nlevels, 1
 
       PRINT *, " * Importing on refinement level l=", l, "..."
 
-      !PRINT *, "get_ngrid_x=", f3p1_obj% get_ngrid_x(l)
-      !PRINT *, "get_ngrid_y=", f3p1_obj% get_ngrid_y(l)
-      !PRINT *, "get_ngrid_z=", f3p1_obj% get_ngrid_z(l)
+      !PRINT *, "get_ngrid_x=", f3p1% get_ngrid_x(l)
+      !PRINT *, "get_ngrid_y=", f3p1% get_ngrid_y(l)
+      !PRINT *, "get_ngrid_z=", f3p1% get_ngrid_z(l)
       !PRINT *
 
-      !PRINT *, f3p1_obj% coords% levels(l)% var
+      !PRINT *, f3p1% coords% levels(l)% var
 
-      CALL bns_obj% read_id_spacetime( f3p1_obj% get_ngrid_x(l), &
-                             f3p1_obj% get_ngrid_y(l), &
-                             f3p1_obj% get_ngrid_z(l), &
-                             f3p1_obj% coords%     levels(l)% var, &
-                             f3p1_obj% lapse%      levels(l)% var, &
-                             f3p1_obj% shift_u%    levels(l)% var, &
-                             f3p1_obj% g_phys3_ll% levels(l)% var, &
-                             f3p1_obj% K_phys3_ll% levels(l)% var )
+      CALL id% read_id_spacetime( f3p1% get_ngrid_x(l), &
+                             f3p1% get_ngrid_y(l), &
+                             f3p1% get_ngrid_z(l), &
+                             f3p1% coords%     levels(l)% var, &
+                             f3p1% lapse%      levels(l)% var, &
+                             f3p1% shift_u%    levels(l)% var, &
+                             f3p1% g_phys3_ll% levels(l)% var, &
+                             f3p1% K_phys3_ll% levels(l)% var )
 
     ENDDO ref_levels2
 
-    CALL f3p1_obj% importer_timer% stop_timer()
+    CALL f3p1% importer_timer% stop_timer()
 
     PRINT *, " * LORENE spacetime ID imported on the gravity grid."
 
     !
     !-- Check that the imported ID does not contain NaNs
     !
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% lapse, "lapse" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jx), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% lapse, "lapse" )
+    !CALL Check_Grid_Function_for_NAN( f3p1% shift_u(:,:,:,jx), &
     !                                                    "shift_u_x" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jy), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% shift_u(:,:,:,jy), &
     !                                                    "shift_u_y" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% shift_u(:,:,:,jz), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% shift_u(:,:,:,jz), &
     !                                                    "shift_u_z" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxx), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% g_phys3_ll(:,:,:,jxx), &
     !                                                    "g_phys3_ll_jxx" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxy), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% g_phys3_ll(:,:,:,jxy), &
     !                                                    "g_phys3_ll_jxy" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jxz), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% g_phys3_ll(:,:,:,jxz), &
     !                                                    "g_phys3_ll_jxz" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyy), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% g_phys3_ll(:,:,:,jyy), &
     !                                                    "g_phys3_ll_jyy" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jyz), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% g_phys3_ll(:,:,:,jyz), &
     !                                                    "g_phys3_ll_jyz" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% g_phys3_ll(:,:,:,jzz), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% g_phys3_ll(:,:,:,jzz), &
     !                                                    "g_phys3_ll_jzz" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxx), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% K_phys3_ll(:,:,:,jxx), &
     !                                                    "K_phys3_ll_jxx" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxy), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% K_phys3_ll(:,:,:,jxy), &
     !                                                    "K_phys3_ll_jxy" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jxz), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% K_phys3_ll(:,:,:,jxz), &
     !                                                    "K_phys3_ll_jxz" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyy), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% K_phys3_ll(:,:,:,jyy), &
     !                                                    "K_phys3_ll_jyy" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jyz), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% K_phys3_ll(:,:,:,jyz), &
     !                                                    "K_phys3_ll_jyz" )
-    !CALL Check_Grid_Function_for_NAN( f3p1_obj% K_phys3_ll(:,:,:,jzz), &
+    !CALL Check_Grid_Function_for_NAN( f3p1% K_phys3_ll(:,:,:,jzz), &
     !                                                    "K_phys3_ll_jzz" )
 
     !
     !-- Check that the determinant of the spatial metric is
     !-- strictly positive
     !
-    DO l= 1, f3p1_obj% nlevels, 1
-      DO k= 1, f3p1_obj% get_ngrid_z(l), 1
-        DO j= 1, f3p1_obj% get_ngrid_y(l), 1
-          DO i= 1, f3p1_obj% get_ngrid_x(l), 1
+    DO l= 1, f3p1% nlevels, 1
+      DO k= 1, f3p1% get_ngrid_z(l), 1
+        DO j= 1, f3p1% get_ngrid_y(l), 1
+          DO i= 1, f3p1% get_ngrid_x(l), 1
 
             CALL determinant_sym3x3_grid( i, j, k, &
-                                     f3p1_obj% g_phys3_ll% levels(l)% var, &
+                                     f3p1% g_phys3_ll% levels(l)% var, &
                                      detg )
 
             IF( detg < 1D-10 )THEN
@@ -231,21 +231,21 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
                        // "effectively 0 at the grid point " &
                        // "(ix,iy,iz)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
-                       f3p1_obj% coords% levels(l)% var( i, j, k, 1 ), ",", &
-                       f3p1_obj% coords% levels(l)% var( i, j, k, 2 ), ",", &
-                       f3p1_obj% coords% levels(l)% var( i, j, k, 3 ), ")."
+                       f3p1% coords% levels(l)% var( i, j, k, 1 ), ",", &
+                       f3p1% coords% levels(l)% var( i, j, k, 2 ), ",", &
+                       f3p1% coords% levels(l)% var( i, j, k, 3 ), ")."
               PRINT *
-              PRINT *, f3p1_obj% get_ngrid_x(l), f3p1_obj% get_ngrid_y(l), &
-                       f3p1_obj% get_ngrid_z(l)
+              PRINT *, f3p1% get_ngrid_x(l), f3p1% get_ngrid_y(l), &
+                       f3p1% get_ngrid_z(l)
               PRINT *
               PRINT *, "detg=", detg
               PRINT *
-              PRINT *, "g_xx=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jxx)
-              PRINT *, "g_xy=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jxy)
-              PRINT *, "g_xz=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jxz)
-              PRINT *, "g_yy=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jyy)
-              PRINT *, "g_yz=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jyz)
-              PRINT *, "g_zz=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jzz)
+              PRINT *, "g_xx=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jxx)
+              PRINT *, "g_xy=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jxy)
+              PRINT *, "g_xz=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jxz)
+              PRINT *, "g_yy=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jyy)
+              PRINT *, "g_yz=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jyz)
+              PRINT *, "g_zz=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jzz)
               STOP
 
             ELSEIF( detg < 0 )THEN
@@ -255,21 +255,21 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
                        // "negative at the grid point " &
                        // "(ix,iy,iz)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
-                       f3p1_obj% coords% levels(l)% var( i, j, k, 1 ), ",", &
-                       f3p1_obj% coords% levels(l)% var( i, j, k, 2 ), ",", &
-                       f3p1_obj% coords% levels(l)% var( i, j, k, 3 ), ")."
+                       f3p1% coords% levels(l)% var( i, j, k, 1 ), ",", &
+                       f3p1% coords% levels(l)% var( i, j, k, 2 ), ",", &
+                       f3p1% coords% levels(l)% var( i, j, k, 3 ), ")."
               PRINT *
-              PRINT *, f3p1_obj% get_ngrid_x(l), f3p1_obj% get_ngrid_y(l), &
-                       f3p1_obj% get_ngrid_z(l)
+              PRINT *, f3p1% get_ngrid_x(l), f3p1% get_ngrid_y(l), &
+                       f3p1% get_ngrid_z(l)
               PRINT *
               PRINT *, "detg=", detg
               PRINT *
-              PRINT *, "g_xx=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jxx)
-              PRINT *, "g_xy=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jxy)
-              PRINT *, "g_xz=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jxz)
-              PRINT *, "g_yy=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jyy)
-              PRINT *, "g_yz=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jyz)
-              PRINT *, "g_zz=", f3p1_obj% g_phys3_ll% levels(l)% var(i,j,k,jzz)
+              PRINT *, "g_xx=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jxx)
+              PRINT *, "g_xy=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jxy)
+              PRINT *, "g_xz=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jxz)
+              PRINT *, "g_yy=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jyy)
+              PRINT *, "g_yz=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jyz)
+              PRINT *, "g_zz=", f3p1% g_phys3_ll% levels(l)% var(i,j,k,jzz)
               STOP
 
             ENDIF
@@ -302,44 +302,44 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
 
     IMPLICIT NONE
 
-    IF( ALLOCATED( f3p1_obj% coords% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% coords, "coords_id" )
+    IF( ALLOCATED( f3p1% coords% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% coords, "coords_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% rad_coord% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% rad_coord, "rad_coord_id" )
+    IF( ALLOCATED( f3p1% rad_coord% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% rad_coord, "rad_coord_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% lapse% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% lapse, "lapse_id" )
+    IF( ALLOCATED( f3p1% lapse% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% lapse, "lapse_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% shift_u% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% shift_u, "shift_u_id" )
+    IF( ALLOCATED( f3p1% shift_u% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% shift_u, "shift_u_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% g_phys3_ll% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% g_phys3_ll, "g_phys3_ll_id" )
+    IF( ALLOCATED( f3p1% g_phys3_ll% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% g_phys3_ll, "g_phys3_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% K_phys3_ll% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% K_phys3_ll, "K_phys3_ll_id" )
+    IF( ALLOCATED( f3p1% K_phys3_ll% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% K_phys3_ll, "K_phys3_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% HC% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% HC, "HC_id" )
+    IF( ALLOCATED( f3p1% HC% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% HC, "HC_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% HC_parts% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% HC_parts, "HC_parts_id" )
+    IF( ALLOCATED( f3p1% HC_parts% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% HC_parts, "HC_parts_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% MC% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% MC, "MC_id" )
+    IF( ALLOCATED( f3p1% MC% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% MC, "MC_id" )
     ENDIF
 
-    IF( ALLOCATED( f3p1_obj% MC_parts% levels ) )THEN
-      CALL deallocate_grid_function( f3p1_obj% MC_parts, "MC_parts_id" )
+    IF( ALLOCATED( f3p1% MC_parts% levels ) )THEN
+      CALL deallocate_grid_function( f3p1% MC_parts, "MC_parts_id" )
     ENDIF
 
   END PROCEDURE destruct_formul_3p1

@@ -239,26 +239,26 @@ MODULE formul_3p1_id
   !
   INTERFACE
 
-    MODULE SUBROUTINE construct_formul_3p1_bns( f3p1_obj, bns_obj, dx, dy, dz )
+    MODULE SUBROUTINE construct_formul_3p1_bns( f3p1, id, dx, dy, dz )
 
-      CLASS(idbase),    INTENT( IN OUT ):: bns_obj
-      CLASS(formul_3p1), INTENT( IN OUT ):: f3p1_obj
+      CLASS(idbase),    INTENT( IN OUT ):: id
+      CLASS(formul_3p1), INTENT( IN OUT ):: f3p1
       DOUBLE PRECISION, OPTIONAL         :: dx, dy, dz
 
     END SUBROUTINE construct_formul_3p1_bns
 
- !   MODULE SUBROUTINE construct_formul_3p1_bns_spacings( f3p1_obj, bns_obj, &
+ !   MODULE SUBROUTINE construct_formul_3p1_bns_spacings( f3p1, id, &
  !                                                        dx, dy, dz )
  !
- !     CLASS(bns),        INTENT( IN OUT ):: bns_obj
- !     CLASS(formul_3p1), INTENT( IN OUT ):: f3p1_obj
+ !     CLASS(bns),        INTENT( IN OUT ):: id
+ !     CLASS(formul_3p1), INTENT( IN OUT ):: f3p1
  !     DOUBLE PRECISION,  INTENT( IN )    :: dx, dy, dz
  !
  !   END SUBROUTINE construct_formul_3p1_bns_spacings
 
-    MODULE SUBROUTINE destruct_formul_3p1( f3p1_obj )
+    MODULE SUBROUTINE destruct_formul_3p1( f3p1 )
 
-      CLASS(formul_3p1), INTENT( IN OUT ):: f3p1_obj
+      CLASS(formul_3p1), INTENT( IN OUT ):: f3p1
 
     END SUBROUTINE destruct_formul_3p1
 
@@ -497,14 +497,14 @@ MODULE formul_3p1_id
     END SUBROUTINE print_formatted_lorene_id_3p1_variables_interface
 
     SUBROUTINE compute_and_export_3p1_constraints_grid_interface( THIS, &
-                                                             bns_obj, &
+                                                             id, &
                                                              namefile, &
                                                              name_logfile )
 
       IMPORT:: formul_3p1
       IMPORT:: idbase
       CLASS(formul_3p1),   INTENT( IN OUT ):: THIS
-      CLASS(idbase),          INTENT( IN OUT ):: bns_obj
+      CLASS(idbase),          INTENT( IN OUT ):: id
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 

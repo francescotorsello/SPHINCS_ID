@@ -36,10 +36,27 @@ MODULE id_base
 
   TYPE, ABSTRACT:: idbase
   !# Represents a generic ID for |sphincsbssn| (binary neutron star, rotating
-  !  star...)
+  !  star, etc.)
 
 
-    DOUBLE PRECISION, DIMENSION(6):: spatial_extent
+    INTEGER:: n_matter
+    !# Number of matter objects belonging the physical system.
+    !  For example, n_objects= 2 for a binary system of stars, and n_objects= 1
+    !  for a single star or for a binary system of a black hole and a star.
+
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: masses
+    !# Masses of the matter objects.
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: centers
+    !# Centers of the matter objects. The first index runs over the matter
+    !  objects, the second index over \((x,y,z)\).
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: spatial_extents
+    !# (n_matter,6)-dimensional array containing the coordinates
+    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+    !  of n_matter boxes, each containing a physical object.
+
+    DOUBLE PRECISION, DIMENSION(6):: total_spatial_extent
     !# 6-dimensional array containing the coordinates
     !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
     !  of a box containing the physical system.

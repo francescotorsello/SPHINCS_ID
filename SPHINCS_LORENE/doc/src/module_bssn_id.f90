@@ -39,27 +39,34 @@ MODULE formul_bssn_id
 
   TYPE, EXTENDS( formul_3p1 ):: bssn_id
 
-    ! The flag call_flag is set different than 0 if the SUBROUTINE
-    ! compute_and_export_bssn_variables is called
+
     INTEGER:: call_flag= 0
+    ! Flag set to a value different than 0 if the SUBROUTINE
+    ! compute_and_export_bssn_variables is called
 
     !
     !-- Arrays storing the BSSN variables for the LORENE ID on the grid
     !
-    ! Conformal connection
+
     TYPE(grid_function):: Gamma_u
-    ! Conformal factor
+    !! Conformal connection
+
     TYPE(grid_function_scalar):: phi
-    ! Trace of extrinsic curvature
+    !! Conformal factor
+
     TYPE(grid_function_scalar):: trK
-    ! Conformal traceless extrinsic curvature
+    !! Trace of extrinsic curvature
+
     TYPE(grid_function):: A_BSSN3_ll
-    ! Conformal metric
+    !! Conformal traceless extrinsic curvature
+
     TYPE(grid_function):: g_BSSN3_ll
+    !! Conformal spatial metric
 
     !
     !-- Connection constraints and its l2 norm and loo norm
     !
+
     TYPE(grid_function):: GC
     TYPE(grid_function):: GC_parts
 
@@ -81,7 +88,6 @@ MODULE formul_bssn_id
     !--  SUBROUTINES  --!
     !-------------------!
 
-    !PROCEDURE :: set_up_bssn
 
     PROCEDURE :: define_allocate_fields => allocate_bssn_fields
 
@@ -101,13 +107,14 @@ MODULE formul_bssn_id
 
     PROCEDURE :: deallocate_fields => deallocate_bssn_fields
 
-    ! Finalizer for members of the extended class bssn_id, not the
-    ! primitive class formul_3p1
-    PROCEDURE :: destruct_bssn_id
 
-    ! Destructor; finalizes members from both CLASSES formul_3p1, and bssn_id,
-    ! by calling destruct_formul_3p1 and destruct_bssn_id
+    PROCEDURE :: destruct_bssn_id
+    !# Finalizer for members of the extended class bssn_id, not the
+    !  primitive class formul_3p1
+
     FINAL     :: destructor
+    !# Destructor; finalizes members from both CLASSES formul_3p1, and bssn_id,
+    !  by calling destruct_formul_3p1 and destruct_bssn_id
 
   END TYPE bssn_id
 
@@ -117,37 +124,27 @@ MODULE formul_bssn_id
   !
   INTERFACE bssn_id
 
-    ! Constructs the bssn_id object from the number of grid points
-    ! along each axis
-    MODULE PROCEDURE:: construct_bssn_id_bns
-    ! Constructs the bssn_id object from the grid spacings
-    !MODULE PROCEDURE:: construct_bssn_id_bns_spacings
+    MODULE PROCEDURE:: construct_bssn_id
+    !# Constructs the bssn_id object from the number of grid points
+    !  along each axis
 
   END INTERFACE bssn_id
 
   !
-  !-- Interface of the overloaded constructor of TYPE bssn_id
+  !-- Interface of the constructor of TYPE bssn_id
   !-- Its implementation is in submodule_BSSN_id_constructor.f90
   !
   INTERFACE
 
-    MODULE FUNCTION construct_bssn_id_bns( bns_obj, dx, dy, dz ) &
-                    RESULT ( bssn_obj )
+    MODULE FUNCTION construct_bssn_id( id, dx, dy, dz ) RESULT ( bssnid )
+    !# Constructs the bssn_id object from the number of grid points
+    !  along each axis
 
-      CLASS(idbase), INTENT( IN OUT ):: bns_obj
-      TYPE(bssn_id)               :: bssn_obj
-      DOUBLE PRECISION, OPTIONAL  :: dx, dy, dz
+      CLASS(idbase), INTENT( IN OUT ):: id
+      TYPE(bssn_id)                  :: bssnid
+      DOUBLE PRECISION, OPTIONAL     :: dx, dy, dz
 
-    END FUNCTION construct_bssn_id_bns
-
- !   MODULE FUNCTION construct_bssn_id_bns_spacings( bns_obj, dx, dy, dz ) &
- !                   RESULT ( bssn_obj )
- !
- !     CLASS(idbase), INTENT( IN OUT )  :: bns_obj
- !     TYPE(bssn_id)                 :: bssn_obj
- !     DOUBLE PRECISION, INTENT( IN ):: dx, dy, dz
- !
- !   END FUNCTION construct_bssn_id_bns_spacings
+    END FUNCTION construct_bssn_id
 
   END INTERFACE
 
@@ -156,12 +153,6 @@ MODULE formul_bssn_id
   !-- Their implementations are in submodule_BSSN_id_methods.f90
   !
   INTERFACE
-
-    !MODULE SUBROUTINE set_up_bssn( THIS )
-    !
-    !  CLASS(bssn_id), INTENT( IN OUT ):: THIS
-    !
-    !END SUBROUTINE set_up_bssn
 
     MODULE SUBROUTINE allocate_bssn_fields( THIS )
 
@@ -194,12 +185,12 @@ MODULE formul_bssn_id
     END SUBROUTINE print_formatted_lorene_id_bssn_variables
 
     MODULE SUBROUTINE compute_and_export_bssn_constraints_grid( THIS, &
-                                                           bns_obj, &
+                                                           id, &
                                                            namefile, &
                                                            name_logfile )
 
       CLASS(bssn_id),      INTENT( IN OUT ):: THIS
-      CLASS(idbase),      INTENT( IN OUT ):: bns_obj
+      CLASS(idbase),      INTENT( IN OUT ):: id
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
