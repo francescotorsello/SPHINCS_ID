@@ -1,8 +1,8 @@
-! File:         submodule_formul_3p1_methods.f90
+! File:         submodule_formul_3p1_standard3p1_variables.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (formul_3p1_id) formul_3p1_constructor
+SUBMODULE (formul_3p1_id) formul_3p1_standard3p1_variables
 
   !****************************************************
   !                                                   *
@@ -26,7 +26,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
   !-------------------!
 
 
-  MODULE PROCEDURE construct_formul_3p1_bns
+  MODULE PROCEDURE setup_standard3p1_variables
 
     !*************************************************
     !                                                *
@@ -64,6 +64,8 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
     ! Determinant of the standard 3+1 spatial metric
     DOUBLE PRECISION:: detg
 
+    DOUBLE PRECISION, DIMENSION(6):: system_size
+
     !
     !-- Initialize timers
     !
@@ -89,23 +91,20 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
     !
     !-- Check that the stars are inside the finest refinement lvel
     !
-  !  IF( MAX( ABS(id% get_center1_x()) + id% get_radius1_x_opp(), &
-  !           ABS(id% get_center2_x()) + id% get_radius2_x_opp() ) &
-  !           > ABS(levels(nlevels)% xR) )THEN
 
-    IF( MAXVAL( ABS(id% total_spatial_extent) ) > ABS(levels(nlevels)% xR) )THEN
+    system_size= id% get_total_spatial_extent()
+
+    IF( MAXVAL( ABS(system_size) ) > ABS(levels(nlevels)% xR) )THEN
 
       PRINT *
       PRINT *, "** The innermost, finest refinement level does not contain ", &
                "the entire system."
       PRINT *, "   Boundary of the innermost, finest level: ", &
                ABS(levels(nlevels)% xR), " Msun_geo"
-      PRINT *, "   Size of the system: ", &
-            MAXVAL( ABS(id% total_spatial_extent) ) > ABS(levels(nlevels)% xR), &
+      PRINT *, "   Size of the system: ", MAXVAL( ABS(system_size) ), &
                " Msun_geo"
       PRINT *, "   Please make the boundary of the innermost, finest level, ", &
-               "larger than ", &
-            MAXVAL( ABS(id% total_spatial_extent) ) > ABS(levels(nlevels)% xR), &
+               "larger than ", MAXVAL( ABS(system_size) ), &
                " Msun_geo"
       PRINT *, "   Stopping..."
       PRINT *
@@ -283,10 +282,10 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
              " strictly positive."
     PRINT *
 
-  END PROCEDURE construct_formul_3p1_bns
+  END PROCEDURE setup_standard3p1_variables
 
 
-  MODULE PROCEDURE destruct_formul_3p1
+  MODULE PROCEDURE deallocate_standard3p1_variables
 
     !***************************************************
     !                                                  *
@@ -342,7 +341,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_constructor
       CALL deallocate_grid_function( f3p1% MC_parts, "MC_parts_id" )
     ENDIF
 
-  END PROCEDURE destruct_formul_3p1
+  END PROCEDURE deallocate_standard3p1_variables
 
 
-END SUBMODULE formul_3p1_constructor
+END SUBMODULE formul_3p1_standard3p1_variables

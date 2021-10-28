@@ -157,12 +157,12 @@ MODULE formul_3p1_id
     !--  SUBROUTINES  --!
     !-------------------!
 
-    GENERIC, PUBLIC:: construct_formul_3p1 => &
-                                        construct_formul_3p1_bns_ptr!, &
-                                        !construct_formul_3p1_bns_spacings_ptr
+    !GENERIC, PUBLIC:: construct_formul_3p1 => &
+    !                                    construct_formul_3p1_bns_ptr!, &
+    !                                    !construct_formul_3p1_bns_spacings_ptr
 
-    PROCEDURE::       construct_formul_3p1_bns_ptr => &
-                                        construct_formul_3p1_bns
+    !PROCEDURE::       construct_formul_3p1_bns_ptr => &
+    PROCEDURE:: setup_standard3p1_variables
 
     !PROCEDURE::       construct_formul_3p1_bns_spacings_ptr => &
     !                                    construct_formul_3p1_bns_spacings
@@ -190,7 +190,7 @@ MODULE formul_3p1_id
 
     PROCEDURE(deallocate_fields_interface), DEFERRED:: deallocate_fields
 
-    PROCEDURE:: destruct_formul_3p1
+    PROCEDURE:: deallocate_standard3p1_variables
 
     !-----------------!
     !--  FUNCTIONS  --!
@@ -239,13 +239,13 @@ MODULE formul_3p1_id
   !
   INTERFACE
 
-    MODULE SUBROUTINE construct_formul_3p1_bns( f3p1, id, dx, dy, dz )
+    MODULE SUBROUTINE setup_standard3p1_variables( f3p1, id, dx, dy, dz )
 
       CLASS(idbase),    INTENT( IN OUT ):: id
       CLASS(formul_3p1), INTENT( IN OUT ):: f3p1
       DOUBLE PRECISION, OPTIONAL         :: dx, dy, dz
 
-    END SUBROUTINE construct_formul_3p1_bns
+    END SUBROUTINE setup_standard3p1_variables
 
  !   MODULE SUBROUTINE construct_formul_3p1_bns_spacings( f3p1, id, &
  !                                                        dx, dy, dz )
@@ -256,11 +256,11 @@ MODULE formul_3p1_id
  !
  !   END SUBROUTINE construct_formul_3p1_bns_spacings
 
-    MODULE SUBROUTINE destruct_formul_3p1( f3p1 )
+    MODULE SUBROUTINE deallocate_standard3p1_variables( f3p1 )
 
       CLASS(formul_3p1), INTENT( IN OUT ):: f3p1
 
-    END SUBROUTINE destruct_formul_3p1
+    END SUBROUTINE deallocate_standard3p1_variables
 
   END INTERFACE
 

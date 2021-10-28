@@ -12,13 +12,23 @@ MODULE particles_id
   !***********************************************************
 
 
-  USE utility,   ONLY: itr, ios, err_msg, test_status, &
-                       perc, creturn, run_id, show_progress
-  USE bns_base,  ONLY: bnsbase
-  USE timing,    ONLY: timer
+  USE utility,        ONLY: itr, ios, err_msg, test_status, &
+                            perc, creturn, run_id, show_progress
+  USE id_base,        ONLY: idbase
+  USE timing,         ONLY: timer
 
 
   IMPLICIT NONE
+
+
+  TYPE eos
+  !! Data structure representingan |eos|
+    CHARACTER( LEN= : ), ALLOCATABLE:: eos_name
+    !! The |eos| name
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: eos_parameters
+    !# The |eos| parameters, in the following order:
+    !  @todo complete the list
+  END TYPE
 
 
   !**********************************************************
@@ -26,7 +36,7 @@ MODULE particles_id
   !              Definition of TYPE particles               *
   !                                                         *
   ! This class places the SPH particles, imports            *
-  ! the LORENE BNS ID on the particle positions, stores     *
+  ! the |lorene| BNS ID on the particle positions, stores     *
   ! it, computes the relevant SPH fields and exports it to  *
   ! both a formatted, and a binary file for evolution       *
   !                                                         *
@@ -44,13 +54,17 @@ MODULE particles_id
     INTEGER:: npart1
     !! Particle number for star 1
     INTEGER:: npart2
+    !! Particle number for star 1
+    INTEGER:: n_matter
+    !! Particle number for star 1
+    INTEGER, DIMENSION(:), ALLOCATABLE:: npart_i
     !! Particle number for star 2
     INTEGER:: distribution_id
     !! Identification number for the particle distribution
-    INTEGER:: eos1_id
-    !! LORENE identification number for the EOS of star 1
-    INTEGER:: eos2_id
-    !! LORENE identification number for the EOS of star 1
+  !  INTEGER:: eos1_id
+    !! |lorene| identification number for the EOS of star 1
+  !  INTEGER:: eos2_id
+    !! |lorene| identification number for the EOS of star 1
     INTEGER:: call_flag= 0
     ! Flag that is set different than 0 if the SUBROUTINE
     ! compute_and_export_SPH_variables is called
@@ -165,7 +179,7 @@ MODULE particles_id
 
     !& 1-D array storing baryon density in the local rest frame
     !  \([\mathrm{baryon}\, (L_\odot)^{-3}]\), computed directly from
-    !  the LORENE density
+    !  the |lorene| density
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf
     !& 1-D array storing baryon density in the local rest frame
     !  \([\mathrm{baryon}\, (L_\odot)^{-3}]\), computed from the kernel
@@ -197,13 +211,12 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
     !> 1-D array storing the particle masses \(M_\odot\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pmass
-    !> Baryonic mass of of star 1 \(M_\odot\)
-    DOUBLE PRECISION:: mass1
-    !> Baryonic mass of of star 2 \(M_\odot\)
-    DOUBLE PRECISION:: mass2
+    !> Baryonic masses of the matter objects \(M_\odot\)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
     !& Ratio of baryonic masses of the stars \(M_\odot\)
     !  @warning always \(< 1\)
-    DOUBLE PRECISION:: mass_ratio
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: mass_ratios
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: mass_fractions
     !> Total grid volume
     DOUBLE PRECISION:: vol, vol1, vol2
     !> Volume per particle
@@ -214,6 +227,7 @@ MODULE particles_id
     DOUBLE PRECISION:: nbar_tot
     !> Baryon number on star 1
     DOUBLE PRECISION:: nbar1
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nbar
     !> Baryon number on star 2
     DOUBLE PRECISION:: nbar2
     !> Baryon number ratio on both stars
@@ -244,10 +258,12 @@ MODULE particles_id
     !  .beta extension
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_filename
 
-    !> String containing the LORENE name of the EOS for star 1
-    CHARACTER( LEN= : ), ALLOCATABLE:: eos1
-    !> String containing the LORENE name of the EOS for star 2
-    CHARACTER( LEN= : ), ALLOCATABLE:: eos2
+    !> String containing the |lorene| name of the EOS for star 1
+ !   CHARACTER( LEN= : ), ALLOCATABLE:: eos1
+    !> String containing the |lorene| name of the EOS for star 2
+ !   CHARACTER( LEN= : ), ALLOCATABLE:: eos2
+
+    TYPE(eos), DIMENSION(:), ALLOCATABLE:: all_eos
 
     !
     !-- Steering variables
@@ -290,10 +306,7 @@ MODULE particles_id
     LOGICAL:: randomize_r
     !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
     !  particles on star 1, `.FALSE.` otherwise
-    LOGICAL:: apm_iterate1
-    !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
-    !  particles on star 2, `.FALSE.` otherwise
-    LOGICAL:: apm_iterate2
+    LOGICAL, DIMENSION(2):: apm_iterate
     !& `.TRUE.` if the baryon number per particle \(\nu\) has to be read from the
     !  formatted file containing the particle positions, `.FALSE.` otherwise
     LOGICAL:: read_nu
@@ -311,11 +324,10 @@ MODULE particles_id
     !& Timer that times how long it takes to check if there are multiple
     !  particles at the same positions
     TYPE(timer), PUBLIC:: same_particle_timer
-    !> Timer that times how long it takes to perform the APM on star 1
-    TYPE(timer), PUBLIC:: apm1_timer
-    !> Timer that times how long it takes to perform the APM on star 2
-    TYPE(timer), PUBLIC:: apm2_timer
-    !& Timer that times how long it takes to import the \(\texttt{LORENE}\) ID
+    !& Timer that times how long it takes to perform the APM on the matter
+    !  objects
+    TYPE(timer), DIMENSION(:), ALLOCATABLE, PUBLIC:: apm_timers
+    !& Timer that times how long it takes to import the \(\texttt{|lorene|}\) ID
     !  at the particle positions
     TYPE(timer), PUBLIC:: importer_timer
     !& Timer that times how long it takes to compute the SPH variables at the
@@ -333,7 +345,7 @@ MODULE particles_id
     PROCEDURE:: place_particles_lattice
     !! Places particles on a single lattice that surrounds both stars
 
-    PROCEDURE:: place_particles_lattices
+  !  PROCEDURE:: place_particles_lattices
     !! Places particles on two lattices, each one surrounding one star
 
     PROCEDURE:: place_particles_spherical_surfaces
@@ -364,7 +376,7 @@ MODULE particles_id
     !  densities; that is, assigns \(Y_e\) at the particle positions
 
     PROCEDURE, PUBLIC:: analyze_hydro
-    !# Scans the hydro fields taken from \(\texttt{LORENE}\) to look
+    !# Scans the hydro fields taken from \(\texttt{|lorene|}\) to look
     !  for negative or zero values
 
     PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
@@ -422,8 +434,8 @@ MODULE particles_id
     PROCEDURE, PUBLIC:: get_h
     !! Returns [[particles:h]]
 
-    !> Finalizer (Destructor) of [[particles]] object
     FINAL:: destruct_particles
+    !! Finalizer (Destructor) of [[particles]] object
 
   END TYPE particles
 
@@ -447,11 +459,11 @@ MODULE particles_id
   !
   INTERFACE
 
-    MODULE FUNCTION construct_particles( bns_obj, dist ) RESULT ( parts_obj )
+    MODULE FUNCTION construct_particles( id, dist ) RESULT ( parts )
     !! Constructs a [[particles]] object
 
-        CLASS(bnsbase), INTENT( IN OUT ):: bns_obj
-        !# [[bnsbase]] object representing the BNS for which we want to place
+        CLASS(idbase), INTENT( IN OUT ):: id
+        !# [[idbase]] object representing the BNS for which we want to place
         !  particles
         INTEGER,    INTENT( IN )    :: dist
         !# Identifier of the desired particle distribution:
@@ -467,7 +479,7 @@ MODULE particles_id
         !
         !  @warning Method 1 is almost deprecated, since method 2 is effectively
         !           an improvement of method 1
-        TYPE(particles)             :: parts_obj
+        TYPE(particles)             :: parts
         !! Constructed [[particles]] object
 
     END FUNCTION construct_particles
@@ -494,91 +506,123 @@ MODULE particles_id
 
 
     MODULE SUBROUTINE place_particles_lattice( THIS, &
+                                  central_density, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
-                                  nx, ny, nz, &
-                                  thres, bns_obj )
-    !! Places particles on a single lattice that surrounds both stars
+                                  npart_des, npart_out, stretch, &
+                                  thres, pvol, &
+                                  get_density, validate_position )
+    !! Places particles on a lattice containing a physical object
 
-      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bnsbase]] object needed to access the BNS data
-      CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
-      !> Number of lattice points in the \(x\) direction
-      INTEGER,          INTENT( IN )    :: nx
-      !> Number of lattice points in the \(y\) direction
-      INTEGER,          INTENT( IN )    :: ny
-      !> Number of lattice points in the \(z\) direction
-      INTEGER,          INTENT( IN )    :: nz
-      !> Left \(x\) boundary of the lattice
+      !! [[particles]] object which this PROCEDURE is a member of
+      DOUBLE PRECISION, INTENT( IN )    :: central_density
+      !! Maximum baryon mass density of the system
+      INTEGER,          INTENT( IN )    :: npart_des
+      !! Desired particle number
       DOUBLE PRECISION, INTENT( IN )    :: xmin
-      !> Right \(x\) boundary of the lattice
+      !! Left \(x\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: xmax
-      !> Left \(y\) boundary of the lattice
+      !! Right \(x\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: ymin
-      !> Right \(y\) boundary of the lattice
+      !! Left \(y\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: ymax
-      !> Left \(z\) boundary of the lattice
+      !! Right \(y\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: zmin
-      !> Right \(z\) boundary of the lattice
+      !! Left \(z\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: zmax
-      !& (~rho_max)/thres is the minimum mass density considered
+      !! Right \(z\) boundary of the lattice
+      DOUBLE PRECISION, INTENT( IN )    :: stretch
+      !! Stretching factor fo the lattice. `xmin` to `zmax` are multiplied by it
+      DOUBLE PRECISION, INTENT( IN )    :: thres
+      !# (~rho_max)/thres is the minimum mass density considered
       ! when placing particles. Used only when redistribute_nu is
       ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
-      DOUBLE PRECISION, INTENT( IN )    :: thres
+      INTEGER,          INTENT( OUT )    :: npart_out
+      !! Real, output particle number
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
+      !! Array storing the final particle volumes
+      INTERFACE
+        FUNCTION get_density( x, y, z ) RESULT( density )
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION:: density
+          !! Baryon mass density at \((x,y,z)\)
+        END FUNCTION get_density
+      END INTERFACE
+      INTERFACE
+        FUNCTION validate_position_int( x, y, z ) RESULT( answer )
+        !! Returns 1 if the position is not valid, 0 otherwise
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          INTEGER:: answer
+          !! 1 if the position is not valid, 0 otherwise
+        END FUNCTION validate_position_int
+      END INTERFACE
+      !> Returns 1 if the position is not valid, 0 otherwise
+      PROCEDURE(validate_position_int), OPTIONAL:: validate_position
 
     END SUBROUTINE place_particles_lattice
 
 
-    MODULE SUBROUTINE place_particles_lattices( THIS, &
-                                  xmin1, xmax1, ymin1, ymax1, zmin1, zmax1, &
-                                  xmin2, xmax2, ymin2, ymax2, zmin2, zmax2, &
-                                  nx, ny, nz, &
-                                  thres, bns_obj )
-    !! Places particles on two lattices, each one surrounding one star
-
-      !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bnsbase]] object needed to access the BNS data
-      CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
-      !& Number of lattice points on the less massive star
-      !  in the \(x\) direction
-      INTEGER,          INTENT( IN )    :: nx
-      !& Number of lattice points on the less massive star
-      !  in the \(y\) direction
-      INTEGER,          INTENT( IN )    :: ny
-      !& Number of lattice points on the less massive star
-      !  in the \(z\) direction
-      INTEGER,          INTENT( IN )    :: nz
-      !> Left \(x\) boundary of the lattice on star 1
-      DOUBLE PRECISION, INTENT( IN )    :: xmin1
-      !> Right \(x\) boundary of the lattice on star 1
-      DOUBLE PRECISION, INTENT( IN )    :: xmax1
-      !> Left \(y\) boundary of the lattice on star 1
-      DOUBLE PRECISION, INTENT( IN )    :: ymin1
-      !> Right \(y\) boundary of the lattice on star 1
-      DOUBLE PRECISION, INTENT( IN )    :: ymax1
-      !> Left \(z\) boundary of the lattice on star 1
-      DOUBLE PRECISION, INTENT( IN )    :: zmin1
-      !> Right \(z\) boundary of the lattice on star 1
-      DOUBLE PRECISION, INTENT( IN )    :: zmax1
-      !> Left \(x\) boundary of the lattice on star 2
-      DOUBLE PRECISION, INTENT( IN )    :: xmin2
-      !> Right \(x\) boundary of the lattice on star 2
-      DOUBLE PRECISION, INTENT( IN )    :: xmax2
-      !> Left \(y\) boundary of the lattice on star 2
-      DOUBLE PRECISION, INTENT( IN )    :: ymin2
-      !> Right \(y\) boundary of the lattice on star 2
-      DOUBLE PRECISION, INTENT( IN )    :: ymax2
-      !> Left \(z\) boundary of the lattice on star 2
-      DOUBLE PRECISION, INTENT( IN )    :: zmin2
-      !> Right \(z\) boundary of the lattice on star 2
-      DOUBLE PRECISION, INTENT( IN )    :: zmax2
-      !& (~rho_max)/thres is the minimum mass density considered
-      ! when placing particles on each star. Used only when redistribute_nu is
-      ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
-      DOUBLE PRECISION, INTENT( IN )    :: thres
-
-    END SUBROUTINE place_particles_lattices
+  !  MODULE SUBROUTINE place_particles_lattices( THIS, &
+  !                                xmin1, xmax1, ymin1, ymax1, zmin1, zmax1, &
+  !                                xmin2, xmax2, ymin2, ymax2, zmin2, zmax2, &
+  !                                nx, ny, nz, &
+  !                                thres, id )
+  !  !! Places particles on two lattices, each one surrounding one star
+  !
+  !    !> [[particles]] object which this PROCEDURE is a member of
+  !    CLASS(particles), INTENT( IN OUT ):: THIS
+  !    !& [[idbase]] object needed to access the BNS data
+  !    CLASS(idbase),       INTENT( IN OUT ):: id
+  !    !& Number of lattice points on the less massive star
+  !    !  in the \(x\) direction
+  !    INTEGER,          INTENT( IN )    :: nx
+  !    !& Number of lattice points on the less massive star
+  !    !  in the \(y\) direction
+  !    INTEGER,          INTENT( IN )    :: ny
+  !    !& Number of lattice points on the less massive star
+  !    !  in the \(z\) direction
+  !    INTEGER,          INTENT( IN )    :: nz
+  !    !> Left \(x\) boundary of the lattice on star 1
+  !    DOUBLE PRECISION, INTENT( IN )    :: xmin1
+  !    !> Right \(x\) boundary of the lattice on star 1
+  !    DOUBLE PRECISION, INTENT( IN )    :: xmax1
+  !    !> Left \(y\) boundary of the lattice on star 1
+  !    DOUBLE PRECISION, INTENT( IN )    :: ymin1
+  !    !> Right \(y\) boundary of the lattice on star 1
+  !    DOUBLE PRECISION, INTENT( IN )    :: ymax1
+  !    !> Left \(z\) boundary of the lattice on star 1
+  !    DOUBLE PRECISION, INTENT( IN )    :: zmin1
+  !    !> Right \(z\) boundary of the lattice on star 1
+  !    DOUBLE PRECISION, INTENT( IN )    :: zmax1
+  !    !> Left \(x\) boundary of the lattice on star 2
+  !    DOUBLE PRECISION, INTENT( IN )    :: xmin2
+  !    !> Right \(x\) boundary of the lattice on star 2
+  !    DOUBLE PRECISION, INTENT( IN )    :: xmax2
+  !    !> Left \(y\) boundary of the lattice on star 2
+  !    DOUBLE PRECISION, INTENT( IN )    :: ymin2
+  !    !> Right \(y\) boundary of the lattice on star 2
+  !    DOUBLE PRECISION, INTENT( IN )    :: ymax2
+  !    !> Left \(z\) boundary of the lattice on star 2
+  !    DOUBLE PRECISION, INTENT( IN )    :: zmin2
+  !    !> Right \(z\) boundary of the lattice on star 2
+  !    DOUBLE PRECISION, INTENT( IN )    :: zmax2
+  !    !& (~rho_max)/thres is the minimum mass density considered
+  !    ! when placing particles on each star. Used only when redistribute_nu is
+  !    ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
+  !    DOUBLE PRECISION, INTENT( IN )    :: thres
+  !
+  !  END SUBROUTINE place_particles_lattices
 
 
     MODULE SUBROUTINE place_particles_spherical_surfaces( THIS, &
@@ -595,9 +639,9 @@ MODULE particles_id
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !& [[bnsbase]] object needed to access the BNS data
-      !  @TODO Remove the [[bnsbase]] argument as done in SUBROUTINE perform_apm
-      !CLASS(bnsbase),       INTENT( IN OUT ):: bns_obj
+      !& [[idbase]] object needed to access the BNS data
+      !  @TODO Remove the [[idbase]] argument as done in SUBROUTINE perform_apm
+      !CLASS(idbase),       INTENT( IN OUT ):: id
       !> Approximate particle number on the star
       INTEGER,          INTENT( IN )    :: npart_approx
       !> Final number of particles on the star
@@ -779,7 +823,7 @@ MODULE particles_id
   INTERFACE
 
     MODULE SUBROUTINE analyze_hydro( THIS, namefile )
-    !# Scans the hydro fields taken from \(\texttt{LORENE}\) to look
+    !# Scans the hydro fields taken from \(\texttt{|lorene|}\) to look
     !  for negative or zero values
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -804,8 +848,7 @@ MODULE particles_id
 
     END SUBROUTINE compute_and_export_SPH_variables
 
-    MODULE SUBROUTINE perform_apm( &!THIS, &
-                                   get_density, &
+    MODULE SUBROUTINE perform_apm( get_density, &
                                    get_nstar_p, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
@@ -878,9 +921,9 @@ MODULE particles_id
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
       DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
-      !> Center of the star (point of highest density), computed by LORENE
+      !> Center of the star (point of highest density), computed by |lorene|
       DOUBLE PRECISION,                 INTENT( IN )   :: center
-      !> Center of mass of the star, computed by LORENE
+      !> Center of mass of the star, computed by |lorene|
       DOUBLE PRECISION,                 INTENT( IN )   :: com_star
       !> Mass of the star
       DOUBLE PRECISION,                 INTENT( IN )   :: mass

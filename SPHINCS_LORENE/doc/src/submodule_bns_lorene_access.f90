@@ -334,4 +334,77 @@ SUBMODULE (bns_lorene) bns_lorene_access
   END PROCEDURE get_eos2_loreneid
 
 
+  MODULE PROCEDURE get_eos_parameters
+
+    !**************************************************
+    !
+    !# Returns the |eos| parameters of the
+    !  `i_matter`-s star
+    !
+    !  FT
+    !
+    !**************************************************
+
+    IMPLICIT NONE
+
+    IF( i_matter == 1 )THEN
+
+      IF( THIS% eos1_loreneid == 1 )THEN
+
+        eos_params= [ DBLE(THIS% eos1_loreneid), THIS% gamma_1, THIS% kappa_1 ]
+
+      ELSEIF( THIS% eos1_loreneid == 110 )THEN
+
+        eos_params= [ DBLE(THIS% eos1_loreneid), DBLE(THIS% npeos_1), &
+              THIS% gamma0_1, THIS% gamma1_1, THIS% gamma2_1, THIS% gamma3_1, &
+              THIS% kappa0_1, THIS% kappa1_1, THIS% kappa2_1, THIS% kappa3_1, &
+              THIS% logP1_1, &
+              THIS% logRho0_1, THIS% logRho1_1, THIS% logRho2_1 ]
+
+      ELSEIF( THIS% eos1_loreneid == 17 .OR. THIS% eos1_loreneid == 20 )THEN
+
+        eos_params= [ DBLE(THIS% eos1_loreneid) ]
+
+      ELSE
+
+        PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+                 " The EOS on star 1 is unknown! |lorene| EOS ID=", &
+                 THIS% eos1_loreneid
+        STOP
+
+      ENDIF
+
+    ELSEIF( i_matter == 2 )THEN
+
+      IF( THIS% eos2_loreneid == 1 )THEN
+
+        eos_params= [ DBLE(THIS% eos2_loreneid), THIS% gamma_2, THIS% kappa_2 ]
+
+      ELSEIF( THIS% eos2_loreneid == 110 )THEN
+
+        eos_params= [ DBLE(THIS% eos2_loreneid), DBLE(THIS% npeos_2), &
+              THIS% gamma0_2, THIS% gamma1_2, THIS% gamma2_2, THIS% gamma3_2, &
+              THIS% kappa0_2, THIS% kappa1_2, THIS% kappa2_2, THIS% kappa3_2, &
+              THIS% logP1_2, &
+              THIS% logRho0_2, THIS% logRho1_2, THIS% logRho2_2 ]
+
+      ELSEIF( THIS% eos2_loreneid == 17 .OR. THIS% eos2_loreneid == 20 )THEN
+
+        eos_params= [ DBLE(THIS% eos2_loreneid) ]
+
+      ELSE
+
+        PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+                 " The EOS on star 2 is unknown! |lorene| EOS ID=", &
+                 THIS% eos2_loreneid
+        STOP
+
+      ENDIF
+
+    ENDIF
+
+  END PROCEDURE get_eos_parameters
+
+
+
 END SUBMODULE bns_lorene_access

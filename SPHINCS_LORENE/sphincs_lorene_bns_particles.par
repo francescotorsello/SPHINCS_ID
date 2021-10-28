@@ -38,13 +38,20 @@ header_lines=0 !4              ! Number of header lines in the file
 ! if the stars have masses that differ less than 0.5%      !
 !----------------------------------------------------------!
 reflect_particles_x= .TRUE.
+!----------------------------------------------------------------------------!
+! Desired total particle number                                              !
+! The particle number on each matter object is determined by the mass ratios !
+!----------------------------------------------------------------------------!
+! gfortran cannot read scientific notation for integers;
+! e.g., npart_des= 3.0D+5 does not work
+npart_des= 100000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
 stretch=1.2     ! Factor by which the lattices around the stars are stretched
-nx=80           ! Number of particles in the x direction for each lattice
-ny=80           ! Number of particles in the y direction for each lattice
-nz=80           ! EVEN number of particles in the z direction for each lattice
+!nx=80           ! Number of particles in the x direction for each lattice
+!ny=80           ! Number of particles in the y direction for each lattice
+!nz=80           ! EVEN number of particles in the z direction for each lattice
 use_thres=.FALSE.
 thres=10      ! (~rho_max)/thres is the minimum mass density considered
                 ! when placing particles. Used only when redistribute_nu is
@@ -63,9 +70,6 @@ nu_ratio=3.0           ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-npart_approx= 1000000 ! The approximate number of particles on the less massive star
-                   ! The approximate number of particles on the more massive star
-                   ! is npart_approx/mass_ratio
 last_r= 0.99D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
@@ -110,17 +114,17 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! CompOSE tabulated EOS (all of them), but not with        !
 ! any piecewise polytropic or polytropic EOS.              !
 ! This problem can manifest itself with error messages     !
-! concerning particles occupying the sameposition,         !
+! concerning particles occupying the same position,        !
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate1=.TRUE.    ! If .TRUE. applies the APM to the first star
-apm_iterate2=.TRUE.    ! If .TRUE. applies the APM to the second star
-                       ! Note that if reflect_particles_x= .TRUE. and the
-                       ! star mass ratio is in [0.995,1.005], the particles
-                       ! on the second star will be the reflection about the yz
-                       ! plane of the particles on the first star, irrespectively
-                       ! of the value of apm_iterate2
+apm_iterate=.FALSE. ! If .TRUE. applies the APM to the first star
+                    ! If .TRUE. applies the APM to the second star
+                    ! Note that if reflect_particles_x= .TRUE. and the
+                    ! star mass ratio is in [0.995,1.005], the particles
+                    ! on the second star will be the reflection about the yz
+                    ! plane of the particles on the first star, irrespectively
+                    ! of the value of apm_iterate2
 apm_max_it=1         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 150            ! Sets the EXIT condition: If the average over all the

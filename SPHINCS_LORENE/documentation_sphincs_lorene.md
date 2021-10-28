@@ -31,6 +31,7 @@ alias: sphincslorene = \(\texttt{SPHINCS_LORENE}\)
        binns = \(\texttt{Bin_NS}\)
        etrotdiff = \(\texttt{Et_rot_diff}\)
        etdiffrot = \(\texttt{Et_diffrot}\)
+       eos = EoS
 
 #### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; Interface to **LORENE**
 ___

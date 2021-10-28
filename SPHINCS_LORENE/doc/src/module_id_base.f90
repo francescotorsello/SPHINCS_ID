@@ -36,17 +36,28 @@ MODULE id_base
 
   TYPE, ABSTRACT:: idbase
   !# Represents a generic ID for |sphincsbssn| (binary neutron star, rotating
-  !  star...)
+  !  star, etc.)
 
 
-    DOUBLE PRECISION, DIMENSION(6):: spatial_extent
-    !# 6-dimensional array containing the coordinates
-    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
-    !  of a box containing the physical system.
+    PRIVATE
+
+
+    INTEGER:: n_matter= 0
+    !# Number of matter objects belonging the physical system.
+    !  For example, n_objects= 2 for a binary system of stars, and n_objects= 1
+    !  for a single star or for a binary system of a black hole and a star.
 
 
     CONTAINS
 
+
+    !---------------------------!
+    !--  DEFERRED PROCEDURES  --!
+    !---------------------------!
+
+    !
+    !-- PROCEDURES to read the value of a field at a point
+    !
 
     PROCEDURE(read_double_at_pos),        DEFERRED:: read_mass_density
     !# Returns the baryon mass density at the given point
@@ -55,28 +66,89 @@ MODULE id_base
     !# Returns 1 if the position has physically acceptable properties,
     !  0 otherwise
 
-    PROCEDURE(read_id_ext_int),           DEFERRED:: read_id_ext
+    !
+    !-- PROCEDURES to read the value of several fields at several points
+    !
+
+    PROCEDURE(read_id_full_int),          DEFERRED:: read_id_full
     !# Reads the full ID
+
     PROCEDURE(read_id_particles_int),     DEFERRED:: read_id_particles
     !! Reads the hydro ID needed to compute the SPH ID
+
     PROCEDURE(read_id_mass_b_int),        DEFERRED:: read_id_mass_b
     !! Reads the hydro ID needed to compute the baryon mass
+
     PROCEDURE(read_id_spacetime_int),     DEFERRED:: read_id_spacetime
     !# Reads the spacetime ID needed to compute
     !  the BSSN variables and constraints
+
     PROCEDURE(read_id_hydro_int),         DEFERRED:: read_id_hydro
-    !# Reads the hydro ID needed to compute the constraints
-    !  on the refined mesh
+    !# Reads the hydro ID needed to compute the constraints on the refined mesh
+
     PROCEDURE(read_id_k_int),             DEFERRED:: read_id_k
     !! Reads the components of the extrinsic curvature
 
- !   PROCEDURE(detect_spatial_extent_int), DEFERRED:: detect_spatial_extent
- !   !# Detects the spatial extent of the physical system considered,
- !   !  returning an array of 6 numbers
+    !
+    !-- PROCEDURES returning the values of some parameters of a matter object
+    !
+
+    PROCEDURE(return_spatial_extent_int), DEFERRED:: return_spatial_extent
+    !# Returns the spatial extent of the matter objects,
+    !  returning the array of 6 numbers
+    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+
+    PROCEDURE(return_double_parameter),   DEFERRED:: return_mass
+    !! Returns the masses of the matter objects.
+
+    PROCEDURE(return_position),           DEFERRED:: return_center
+    !! Returns the centers of the matter objects.
+
+    PROCEDURE(return_position),           DEFERRED:: return_barycenter
+    !! Returns the barycenters (centers of mass) of the matter objects.
+
+    PROCEDURE(return_eos_parameters_int), DEFERRED:: return_eos_parameters
+    !# Returns the identification number of the |eos| of the matter objects.
+    !  @todo Set up a convention for the identification number
+
+    PROCEDURE(return_string_parameter),   DEFERRED:: return_eos_name
+    !! Returns the name of the |eos| of the matter objects.
+
+    !
+    !-- PROCEDURES returning the values of some parameters of the entire system
+    !
+
+ !   PROCEDURE(return_total_spatial_extent_int), DEFERRED:: &
+ !                                                   return_total_spatial_extent
+    !# Returns the spatial extent of the physical system considered,
+    !  as the array of 6 numbers
+    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+
+
+    !-------------------------------!
+    !--  NON-DEFERRED PROCEDURES  --!
+    !-------------------------------!
+
+
+    PROCEDURE:: get_total_spatial_extent
+    !# Returns the spatial extent of the physical system considered,
+    !  as the array of 6 numbers
+    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+
+
+    PROCEDURE:: set_n_matter
+    !# Sets [[idbase:n_matter]], the number of matter objects in the
+    !  physical system, to a value
+
+
+    PROCEDURE:: get_n_matter
+    !# Returns [[idbase:n_matter]], the number of matter objects in the
+    !  physical system
+
 
     PROCEDURE:: integrate_baryon_mass_density
-    !# Integrates a field over the interior of a star in spherical coordinates,
-    !  and computes its radial profile inside the star
+    !# Integrates the baryon mass density over a matter object, using spherical
+    !  coordinates, and computes its radial profile inside the star
 
 
   END TYPE idbase
@@ -92,13 +164,13 @@ MODULE id_base
       CLASS(idbase), INTENT( IN )          :: THIS
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
-      !> \(x\) coordinate of the desired point
+      !! \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: y
-      !> \(y\) coordinate of the desired point
+      !! \(y\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: z
-      !> \(z\) coordinate of the desired point
+      !! \(z\) coordinate of the desired point
       DOUBLE PRECISION:: res
-      !> Real number at \((x,y,z)\)
+      !! Real number at \((x,y,z)\)
 
     END FUNCTION read_double_at_pos
 
@@ -110,15 +182,83 @@ MODULE id_base
       CLASS(idbase), INTENT( IN )          :: THIS
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
-      !> \(x\) coordinate of the desired point
+      !! \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: y
-      !> \(y\) coordinate of the desired point
+      !! \(y\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: z
-      !> \(z\) coordinate of the desired point
+      !! \(z\) coordinate of the desired point
       INTEGER:: res
-      !> Integer at \((x,y,z)\)
+      !! Integer at \((x,y,z)\)
 
     END FUNCTION read_integer_at_pos
+
+
+    FUNCTION return_double_parameter( THIS, i_matter ) RESULT( res )
+    !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION:: res
+      !! Real number. Parameter of the `i_matter`-th matter object
+
+    END FUNCTION return_double_parameter
+
+
+    FUNCTION return_position( THIS, i_matter ) RESULT( res )
+    !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(3):: res
+      !# Centers of the matter objects. The first index runs over the matter
+      !  objects, the second index over \((x,y,z)\).
+
+    END FUNCTION return_position
+
+
+    FUNCTION return_integer_parameter( THIS, i_matter ) RESULT( res )
+    !# INTERFACE for a PROCEDURE that returns an INTEGER
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      INTEGER:: res
+      !! Real number. Parameter of the `i_matter`-th matter object
+
+    END FUNCTION return_integer_parameter
+
+
+    SUBROUTINE return_eos_parameters_int( THIS, i_matter, eos_params )
+    !# INTERFACE for a PROCEDURE that returns an array containing the
+    !  parametersf the |eos| for the matter objects
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
+      !# Array containing the parameters of the |eos| for the `i_matter`-th
+      !  matter object
+
+    END SUBROUTINE return_eos_parameters_int
+
+
+    FUNCTION return_string_parameter( THIS, i_matter ) RESULT( string )
+    !# INTERFACE for a PROCEDURE that returns a CHARACTER( LEN= : )
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN ):: THIS
+      !! [[idbase]] object which this PROCEDURE is a member of
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose string is to return
+      CHARACTER( LEN= : ), ALLOCATABLE:: string
+
+    END FUNCTION return_string_parameter
 
 
     SUBROUTINE read_id_mass_b_int( THIS, x, y, z, &
@@ -129,8 +269,8 @@ MODULE id_base
       !  baryon mass
 
       IMPORT:: idbase
-      !> [[idbase]] object which this PROCEDURE is a member of
       CLASS(idbase),    INTENT( IN OUT ):: THIS
+      !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
       DOUBLE PRECISION, INTENT( IN)     :: z
@@ -141,7 +281,7 @@ MODULE id_base
     END SUBROUTINE read_id_mass_b_int
 
 
-    SUBROUTINE read_id_ext_int( THIS, n, x, y, z, &
+    SUBROUTINE read_id_full_int( THIS, n, x, y, z, &
                                       lapse, &
                                       shift_x, shift_y, shift_z, &
                                       g_xx, g_xy, g_xz, &
@@ -184,7 +324,7 @@ MODULE id_base
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
 
-    END SUBROUTINE read_id_ext_int
+    END SUBROUTINE read_id_full_int
 
 
     SUBROUTINE read_id_spacetime_int( THIS, nx, ny, nz, &
@@ -331,23 +471,46 @@ MODULE id_base
     END SUBROUTINE integrate_field_int
 
 
-  !  FUNCTION detect_spatial_extent_int( THIS ) RESULT( box )
-  !  !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
-  !  !  physical system considered, and returns a 6-dimensional array
-  !  !  containing the coordinates
-  !  !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
-  !  !  of a box containing the system.
-  !
-  !    IMPORT:: idbase
-  !    CLASS(idbase), INTENT( IN OUT )      :: THIS
-  !    !! Object of class [[idbase]] which this PROCEDURE is a member of
-  !    DOUBLE PRECISION, DIMENSION(6):: box
-  !    !# 6-dimensional array containing the coordinates
-  !    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
-  !    !  of a box containing the physical system.
-  !
-  !  END FUNCTION detect_spatial_extent_int
+    FUNCTION return_spatial_extent_int( THIS, i_matter ) RESULT( box )
+    !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
+    !  matter objects, and returns a 6-dimensional array
+    !  containing the coordinates
+    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+    !  of a box **centered at the center of the object** and containing the
+    !  system.
 
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN )   :: THIS
+      !! Object of class [[idbase]] which this PROCEDURE is a member of
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose string is to return
+      DOUBLE PRECISION, DIMENSION(6):: box
+      !# 6-dimensional array containing the coordinates
+      !  \(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},
+      !    z_{\rm min},z_{\rm max}\)
+      !  of a box containing the physical system.
+
+    END FUNCTION return_spatial_extent_int
+
+
+    FUNCTION return_total_spatial_extent_int( THIS ) RESULT( box )
+    !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
+    !  physical system considered, and returns a 6-dimensional array
+    !  containing the coordinates
+    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+    !  of a box **centered at the center of the object** and containing the
+    !  system.
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN )   :: THIS
+      !! Object of class [[idbase]] which this PROCEDURE is a member of
+      DOUBLE PRECISION, DIMENSION(6):: box
+      !# 6-dimensional array containing the coordinates
+      !  \(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},
+      !    z_{\rm min},z_{\rm max}\)
+      !  of a box containing the physical system.
+
+    END FUNCTION return_total_spatial_extent_int
 
   END INTERFACE
 
@@ -382,6 +545,48 @@ MODULE id_base
                                        mass_profile
 
     END SUBROUTINE integrate_baryon_mass_density
+
+
+    MODULE FUNCTION get_n_matter( THIS )
+    !# Returns [[idbase:n_matter]], the number of matter objects in the
+    !  physical system
+
+      CLASS(idbase), INTENT( IN ):: THIS
+      DOUBLE PRECISION:: get_n_matter
+      !! [[idbase:n_matter]], the number of matter objects in the
+      !  physical system
+
+    END FUNCTION get_n_matter
+
+
+    MODULE SUBROUTINE set_n_matter( THIS, value )
+    !# Sets [[idbase:n_matter]], the number of matter objects in the
+    !  physical system, to the given value
+
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: value
+      !! Value to set [[idbase:n_matter]] to
+
+    END SUBROUTINE set_n_matter
+
+
+    MODULE FUNCTION get_total_spatial_extent( THIS ) RESULT( box )
+    !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
+    !  physical system considered, and returns a 6-dimensional array
+    !  containing the coordinates
+    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+    !  of a box **centered at the center of the object** and containing the
+    !  system.
+
+      CLASS(idbase), INTENT( IN )   :: THIS
+      !! Object of class [[idbase]] which this PROCEDURE is a member of
+      DOUBLE PRECISION, DIMENSION(6):: box
+      !# 6-dimensional array containing the coordinates
+      !  \(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},
+      !    z_{\rm min},z_{\rm max}\)
+      !  of a box containing the physical system.
+
+    END FUNCTION get_total_spatial_extent
 
   END INTERFACE
 

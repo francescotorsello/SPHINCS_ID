@@ -159,7 +159,7 @@ MODULE bns_lorene
     PROCEDURE:: import_id_int
     !! Stores the ID in the [[bnslorene]] member arrays
 
-    PROCEDURE:: read_id_ext       => import_id_ext
+    PROCEDURE:: read_id_full      => import_id_full
     PROCEDURE:: read_id_spacetime => import_id_spacetime
     PROCEDURE:: read_id_particles => import_id_particles
     PROCEDURE:: read_id_hydro     => import_id_hydro
@@ -199,6 +199,8 @@ MODULE bns_lorene
     !! Returns the |lorene| identifier for the EOS of star 1
     PROCEDURE:: get_eos2_id => get_eos2_loreneid
     !! Returns the |lorene| identifier for the EOS of star 2
+
+    PROCEDURE:: return_eos_parameters => get_eos_parameters
 
     PROCEDURE, PUBLIC:: get_eos1_loreneid
     !! Returns [[bnslorene:eos1_loreneid]]
@@ -381,7 +383,7 @@ MODULE bns_lorene
     ! not OUT. The array arguments are not allocatable anymore
 
 
-    MODULE SUBROUTINE import_id_ext( THIS, n, x, y, z,&
+    MODULE SUBROUTINE import_id_full( THIS, n, x, y, z,&
                                      lapse, &
                                      shift_x, shift_y, shift_z, &
                                      g_xx, g_xy, g_xz, &
@@ -424,7 +426,7 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
 
-    END SUBROUTINE import_id_ext
+    END SUBROUTINE import_id_full
 
 
     MODULE SUBROUTINE import_id_spacetime( THIS, nx, ny, nz, &
@@ -666,6 +668,19 @@ MODULE bns_lorene
       INTEGER:: get_eos2_loreneid
 
     END FUNCTION get_eos2_loreneid
+
+
+    MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
+
+      !> [[bnslorene]] object which this PROCEDURE is a member of
+      CLASS(bnslorene), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
+      !# Array containingthe parameters of the |eos| for the `i_matter`-th
+      !  matter object
+
+    END SUBROUTINE get_eos_parameters
 
 
     !MODULE FUNCTION get_bns_ptr( THIS )

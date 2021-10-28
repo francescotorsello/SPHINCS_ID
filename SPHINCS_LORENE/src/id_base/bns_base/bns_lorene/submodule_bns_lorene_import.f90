@@ -170,7 +170,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
   END PROCEDURE import_id_int
 
 
-  MODULE PROCEDURE import_id_ext
+  MODULE PROCEDURE import_id_full
 
     !**************************************************
     !
@@ -283,7 +283,7 @@ SUBMODULE (bns_lorene) bns_lorene_import
 
     ENDIF
 
-  END PROCEDURE import_id_ext
+  END PROCEDURE import_id_full
 
 
   MODULE PROCEDURE import_id_spacetime

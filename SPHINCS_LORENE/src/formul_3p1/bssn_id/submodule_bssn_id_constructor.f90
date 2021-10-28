@@ -50,11 +50,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     ! in standard 3+1 formulation
     IF( PRESENT(dx) .AND. PRESENT(dy) .AND. PRESENT(dz) )THEN
 
-      CALL bssnid% construct_formul_3p1( id, dx, dy, dz )
+      CALL bssnid% setup_standard3p1_variables( id, dx, dy, dz )
 
     ELSE
 
-      CALL bssnid% construct_formul_3p1( id )
+      CALL bssnid% setup_standard3p1_variables( id )
 
     ENDIF
 
@@ -117,11 +117,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     CALL destruct_bssn_id( THIS )
 
 #ifdef __INTEL_COMPILER
-  CALL destruct_formul_3p1( THIS )
+  CALL deallocate_standard3p1_variables( THIS )
 #endif
 
 #ifdef __GFORTRAN__
-  CALL THIS% destruct_formul_3p1
+  CALL THIS% deallocate_standard3p1_variables
 #endif
 
   END PROCEDURE destructor

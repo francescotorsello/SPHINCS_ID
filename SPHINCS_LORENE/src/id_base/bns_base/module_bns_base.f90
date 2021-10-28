@@ -55,11 +55,17 @@ MODULE bns_base
     !> Distance between the centers of mass \([L_\odot(=1.47662503825040{\rm km})]\)
     DOUBLE PRECISION:: distance_com
 
+    DOUBLE PRECISION, DIMENSION(2):: mass
+    !! Array containing the baryonic masses \([M_\odot]\)
+
     !> Baryonic mass of star 1 \([M_\odot]\)
     DOUBLE PRECISION:: mass1
 
     !> Baryonic mass of star 2 \([M_\odot]\)
     DOUBLE PRECISION:: mass2
+
+    DOUBLE PRECISION, DIMENSION(2):: mass_grav
+    !! Array containing the gravitatil masses \([M_\odot]\)
 
     !> Gravitational mass of star 1 \([M_\odot]\)
     DOUBLE PRECISION:: mass_grav1
@@ -98,6 +104,10 @@ MODULE bns_base
     ! in the mass-radius diagrams, together with the gravitatonal mass
     DOUBLE PRECISION:: area_radius1
 
+    DOUBLE PRECISION, DIMENSION(2,6):: radii
+    !# Array containing the **signed** radii of the stars
+    !  @todo add details
+
     !> Radius of star 1, in the x direction, towards the companion \([L_\odot]\)
     DOUBLE PRECISION:: radius1_x_comp
 
@@ -113,6 +123,14 @@ MODULE bns_base
     !& Stellar center of star 1 (origin of the LORENE chart centered on star 1)
     !  \([L_\odot]\)
     DOUBLE PRECISION:: center1_x
+
+    DOUBLE PRECISION, DIMENSION(2,3):: center
+    !# Array containing the centers of the stars
+    !  @todo add details
+
+    DOUBLE PRECISION, DIMENSION(2,3):: barycenter
+    !# Array containing the barycenters of the stars
+    !  @todo add details
 
     !> Barycenter of star 1 \([L_\odot]\)
     DOUBLE PRECISION:: barycenter1_x
@@ -178,10 +196,10 @@ MODULE bns_base
     !> Central pressure for star 2 \([M_\odot c^2 L_\odot^{-3}]\)
     DOUBLE PRECISION:: pressure_center2
 
-    !> Name of the equation of state (EoS) of star 1
+    !> Name of the equation of state (|eos|) of star 1
     CHARACTER( LEN=: ), ALLOCATABLE:: eos1
 
-    !> Name of the equation of state (EoS) of star 2
+    !> Name of the equation of state (|eos|) of star 2
     CHARACTER( LEN=: ), ALLOCATABLE:: eos2
 
     !
@@ -347,7 +365,12 @@ MODULE bns_base
 
     !PROCEDURE, PUBLIC:: get_bns_identifier
     !PROCEDURE, PUBLIC:: get_bns_ptr
-
+    PROCEDURE:: return_mass                 => get_mass
+    PROCEDURE:: return_center               => get_center
+    PROCEDURE:: return_barycenter           => get_barycenter
+    PROCEDURE:: return_eos_name             => get_eos
+    PROCEDURE:: return_spatial_extent       => get_radii
+    !PROCEDURE:: return_total_spatial_extent => get_bounding_box
 
     PROCEDURE, PUBLIC:: get_angular_vel
     !! Returns [[bnsbase:angular_vel]]
@@ -670,6 +693,17 @@ MODULE bns_base
     END FUNCTION get_distance_com
 
 
+    MODULE FUNCTION get_mass( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      ! Result
+      DOUBLE PRECISION:: get_mass
+
+    END FUNCTION get_mass
+
+
     MODULE FUNCTION get_mass1( THIS )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
@@ -730,6 +764,36 @@ MODULE bns_base
     END FUNCTION get_angular_momentum
 
 
+ !   MODULE FUNCTION get_bounding_box( THIS ) RESULT( box )
+ !   !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
+ !   !  physical system considered, and returns a 6-dimensional array
+ !   !  containing the coordinates
+ !   !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+ !   !  of a box **centered at the center of the object** and containing the
+ !   !  system.
+ !
+ !     CLASS(bnsbase), INTENT( IN )  :: THIS
+ !     !! Object of class [[bnsbase]] which this PROCEDURE is a member of
+ !     DOUBLE PRECISION, DIMENSION(6):: box
+ !     !# 6-dimensional array containing the coordinates
+ !     !  \(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},
+ !     !    z_{\rm min},z_{\rm max}\)
+ !     !  of a box containing the physical system.
+ !
+ !   END FUNCTION get_bounding_box
+
+
+    MODULE FUNCTION get_radii( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose string is to return
+      DOUBLE PRECISION, DIMENSION(6):: get_radii
+
+    END FUNCTION get_radii
+
+
     MODULE FUNCTION get_radius1_x_comp( THIS )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
@@ -768,6 +832,28 @@ MODULE bns_base
       DOUBLE PRECISION:: get_radius1_x_opp
 
     END FUNCTION get_radius1_x_opp
+
+
+    MODULE FUNCTION get_center( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(3):: get_center
+
+    END FUNCTION get_center
+
+
+    MODULE FUNCTION get_barycenter( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(3):: get_barycenter
+
+    END FUNCTION get_barycenter
 
 
     MODULE FUNCTION get_center1_x( THIS )
@@ -968,6 +1054,17 @@ MODULE bns_base
       DOUBLE PRECISION:: get_pressure_center2
 
     END FUNCTION get_pressure_center2
+
+
+    MODULE FUNCTION get_eos( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose string is to return
+      CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
+
+    END FUNCTION get_eos
 
 
     MODULE FUNCTION get_eos1( THIS )

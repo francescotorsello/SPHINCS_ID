@@ -1,4 +1,4 @@
-! File:         submodule_id_mass_profile.f90
+! File:         submodule_id_base_mass_profile.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
@@ -6,7 +6,7 @@ SUBMODULE (id_base) id_base_mass_profile
 
   !********************************************
   !
-  !# Implementation of the method of TYPE bns
+  !# Implementation of the method of TYPE idbase
   !  that integrates the baryon mass density to
   !  extract the radial baryon mass profile.
   !

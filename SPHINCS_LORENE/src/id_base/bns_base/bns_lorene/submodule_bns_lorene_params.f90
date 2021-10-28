@@ -124,7 +124,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
                                THIS% logP1_2,  &
                                THIS% logRho0_2,&
                                THIS% logRho1_2,&
-                               THIS% logRho2_2)
+                               THIS% logRho2_2 )
 
     ! Convert distances from |lorene| units (km) to SPHINCS units (Msun_geo)
     ! See MODULE constants for the definition of Msun_geo
@@ -144,6 +144,22 @@ SUBMODULE (bns_lorene) bns_lorene_params
     THIS% radius2_x_opp = THIS% radius2_x_opp/Msun_geo
     THIS% center2_x     = THIS% center2_x/Msun_geo
     THIS% barycenter2_x = THIS% barycenter2_x/Msun_geo
+
+    THIS% mass(1)= THIS% mass1
+    THIS% mass(2)= THIS% mass2
+
+    THIS% radii(1,:)= [THIS% radius1_x_opp, THIS% radius1_x_comp, &
+                          THIS% radius1_y,THIS% radius1_y, &
+                          THIS% radius1_z,THIS% radius1_z]
+    THIS% radii(2,:)= [THIS% radius2_x_opp, THIS% radius2_x_comp, &
+                          THIS% radius2_y,THIS% radius2_y, &
+                          THIS% radius2_z,THIS% radius2_z]
+
+    THIS% center(1,:)= [THIS% center1_x, 0.0D0, 0.0D0]
+    THIS% center(2,:)= [THIS% center2_x, 0.0D0, 0.0D0]
+
+    THIS% barycenter(1,:)= [THIS% barycenter1_x, 0.0D0, 0.0D0]
+    THIS% barycenter(2,:)= [THIS% barycenter2_x, 0.0D0, 0.0D0]
 
     ! Convert hydro quantities from |lorene| units to SPHINCS units
     THIS% nbar_center1           = THIS% nbar_center1*(MSun_geo*km2m)**3
@@ -180,7 +196,8 @@ SUBMODULE (bns_lorene) bns_lorene_params
       THIS% kappa3_2= THIS% kappa3_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3_2 )
 
-    ELSEIF( THIS% eos1_loreneid == 17 )THEN ! If the EOS is tabulated
+    ELSEIF( THIS% eos1_loreneid == 17 .OR. THIS% eos1_loreneid == 20 )THEN
+    ! If the EOS is tabulated
 
     ELSE
 
