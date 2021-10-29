@@ -77,7 +77,7 @@ SUBMODULE (particles_id) particles_constructor
               !npart_approx, npart2_approx,
               max_steps, &
               nlines, header_lines, n_cols, npart_tmp, npart1_tmp, npart2_tmp, &
-              nx_gh, ny_gh, nz_gh
+              nx_gh, ny_gh, nz_gh, i_matter
 
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
@@ -128,7 +128,7 @@ SUBMODULE (particles_id) particles_constructor
     CHARACTER( LEN= max_length ):: parts_pos
     ! Final name for the file containing the particle positions
     CHARACTER( LEN= : ), ALLOCATABLE:: parts_pos_namefile
-    CHARACTER( LEN= 3 ):: i_matter
+    CHARACTER( LEN= 3 ):: str_i
     ! String storing the local path to the directory where the
     ! |lorene| BNS ID files are stored
     CHARACTER( LEN= max_length ):: compose_path
@@ -178,12 +178,12 @@ SUBMODULE (particles_id) particles_constructor
     parts% sph_computer_timer = timer( "sph_computer_timer" )
     parts% same_particle_timer= timer( "same_particle_timer" )
     DO itr= 1, parts% n_matter, 1
-      IF( parts% n_matter <= 9 ) WRITE( i_matter, "(I1)" ), itr
+      IF( parts% n_matter <= 9 ) WRITE( str_i, "(I1)" ), itr
       IF( parts% n_matter >= 10 .AND. parts% n_matter <= 99 ) &
-                                                WRITE( i_matter, "(I2)" ), itr
+                                                WRITE( str_i, "(I2)" ), itr
       IF( parts% n_matter >= 100 .AND. parts% n_matter <= 999 ) &
-                                                WRITE( i_matter, "(I3)" ), itr
-      parts% apm_timers(itr)  = timer( "apm_timer"//TRIM(i_matter) )
+                                                WRITE( str_i, "(I3)" ), itr
+      parts% apm_timers(itr)  = timer( "apm_timer"//TRIM(str_i) )
     ENDDO
 
     ! Declare this object as non-empty (experimental)
@@ -966,30 +966,30 @@ SUBMODULE (particles_id) particles_constructor
   !    IF( parts% redistribute_nu .EQV. .TRUE. )THEN
   !        parts% redistribute_nu= .FALSE.
   !    ENDIF
+      CALL parts% placer_timer% start_timer()
+      DO i_matter= 1, parts% n_matter, 1
 
-      DO itr= 1, parts% n_matter, 1
+        IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
+        IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) WRITE( str_i, '(I2)' ), i_matter
+        IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
+                                                 WRITE( str_i, '(I3)' ), i_matter
 
-        IF( itr <= 9 ) WRITE( i_matter, '(I1)' ), itr
-        IF( itr >= 10 .AND. parts% n_matter <= 99 ) WRITE( i_matter, '(I2)' ), itr
-        IF( itr >= 100 .AND. parts% n_matter <= 999 ) &
-                                                 WRITE( i_matter, '(I3)' ), itr
-
-        filename_mass_profile= "spherical_surfaces_mass_profile"//TRIM(i_matter)//&
+        filename_mass_profile= "spherical_surfaces_mass_profile"//TRIM(str_i)//&
                                ".dat"
-        filename_shells_radii= "spherical_surfaces_radii"//TRIM(i_matter)//".dat"
-        filename_shells_pos  = "spherical_surfaces_pos"//TRIM(i_matter)//".dat"
+        filename_shells_radii= "spherical_surfaces_radii"//TRIM(str_i)//".dat"
+        filename_shells_pos  = "spherical_surfaces_pos"//TRIM(str_i)//".dat"
 
         ! Place particles, and time the process
-        CALL parts% placer_timer% start_timer()
-        CALL parts% place_particles_spherical_surfaces( parts% masses(itr), &
-                                                    MAXVAL(sizes(itr, 1:2)), &
-                                                    center(itr,1), &
-                                                    central_density(itr), &
-                                                    npart_des_i(itr), &
-                                                    parts% npart_i(itr), &
-                                                    parts_all(itr)% pos_i, &
-                                                    parts_all(itr)% pvol_i, &
-                                                    parts_all(itr)% pmass_i, &
+
+        CALL parts% place_particles_spherical_surfaces( parts% masses(i_matter), &
+                                                    MAXVAL(sizes(i_matter, 1:2)), &
+                                                    center(i_matter,1), &
+                                                    central_density(i_matter), &
+                                                    npart_des_i(i_matter), &
+                                                    parts% npart_i(i_matter), &
+                                                    parts_all(i_matter)% pos_i, &
+                                                    parts_all(i_matter)% pvol_i, &
+                                                    parts_all(i_matter)% pmass_i, &
                                                     last_r, &
                                                     upper_bound, lower_bound, &
                                                     upper_factor, lower_factor,&
@@ -1005,7 +1005,7 @@ SUBMODULE (particles_id) particles_constructor
         ! mass_ratio < 1
     !    parts% mass_ratio= parts% masses(2)/parts% masses(1)
 
-        equal_masses: IF( itr == 1 .AND. parts% n_matter == 2 .AND. &
+        equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 .AND. &
                           ABS(parts% mass_ratios(1) - parts% mass_ratios(2)) &
                           /parts% mass_ratios(2) <= 0.005 .AND. &
                           !parts% mass_ratios(1) >= 0.995 .AND. &
@@ -1049,6 +1049,8 @@ SUBMODULE (particles_id) particles_constructor
           parts_all(2)% pmass_i   =   parts_all(1)% pmass_i
           parts% npart_i(2)= parts% npart_i(1)
 
+          EXIT
+
     !   ELSE
     !
     !     IF( parts% mass_ratio >= 0.95 .AND. &
@@ -1084,10 +1086,10 @@ SUBMODULE (particles_id) particles_constructor
 
         CALL parts% placer_timer% stop_timer()
 
-        parts_all(itr)% pos_i = &
-                          parts_all(itr)% pos_i( :, 1:parts% npart_i(itr) )
-        parts_all(itr)% pvol_i = &
-                          parts_all(itr)% pvol_i( 1:parts% npart_i(itr) )
+        parts_all(i_matter)% pos_i = &
+                        parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% pvol_i = &
+                        parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
 
   !   ELSE
   !
@@ -1207,6 +1209,7 @@ SUBMODULE (particles_id) particles_constructor
   !   ENDIF first_star_more_massive
 
       ENDDO
+      CALL parts% placer_timer% stop_timer()
 
       parts% npart= SUM( parts% npart_i )
 
@@ -1230,8 +1233,9 @@ SUBMODULE (particles_id) particles_constructor
       !parts% pos( :, 1:parts% npart1 )= pos1
       !parts% pos( :, parts% npart1 + 1:parts% npart )= pos2
       DO itr= 1, parts% n_matter, 1
-        parts% pos( :, parts% npart_i(itr-1) + 1:parts% npart_i(itr) )= &
-                                                      parts_all(itr)% pos_i
+        parts% pos( :, parts% npart_i(itr-1) + 1: &
+                       parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                       parts_all(itr)% pos_i
       ENDDO
 
       IF(.NOT.ALLOCATED( parts% pvol ))THEN
@@ -1250,8 +1254,9 @@ SUBMODULE (particles_id) particles_constructor
       !parts% pvol( 1:parts% npart1 )= pvol1
       !parts% pvol( parts% npart1 + 1:parts% npart )= pvol2
       DO itr= 1, parts% n_matter, 1
-        parts% pvol( parts% npart_i(itr-1) + 1:parts% npart_i(itr) )= &
-                                                      parts_all(itr)% pvol_i
+        parts% pvol( parts% npart_i(itr-1) + 1: &
+                     parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                     parts_all(itr)% pvol_i
       ENDDO
 
       IF(.NOT.ALLOCATED( parts% pmass ))THEN
@@ -1270,8 +1275,9 @@ SUBMODULE (particles_id) particles_constructor
       !parts% pmass( 1:parts% npart1 )= pmass1
       !parts% pmass( parts% npart1 + 1:parts% npart )= pmass2
       DO itr= 1, parts% n_matter, 1
-        parts% pmass( parts% npart_i(itr-1) + 1:parts% npart_i(itr) )= &
-                                                      parts_all(itr)% pmass_i
+        parts% pmass( parts% npart_i(itr-1) + 1: &
+                      parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                      parts_all(itr)% pmass_i
       ENDDO
 
       PRINT *, " * Particles placed. Number of particles=", parts% npart
@@ -1339,14 +1345,14 @@ SUBMODULE (particles_id) particles_constructor
         PRINT *, "** Placing particles on star 1 using the APM..."
         PRINT *
 
-        IF( itr <= 9 ) WRITE( i_matter, '(I1)' ), itr
-        IF( itr >= 10 .AND. parts% n_matter <= 99 ) WRITE( i_matter, '(I2)' ), itr
+        IF( itr <= 9 ) WRITE( str_i, '(I1)' ), itr
+        IF( itr >= 10 .AND. parts% n_matter <= 99 ) WRITE( str_i, '(I2)' ), itr
         IF( itr >= 100 .AND. parts% n_matter <= 999 ) &
-                                                 WRITE( i_matter, '(I3)' ), itr
+                                                 WRITE( str_i, '(I3)' ), itr
 
-        filename_apm_pos_id = "apm_pos_id"//TRIM(i_matter)//".dat"
-        filename_apm_pos    = "apm_pos"//TRIM(i_matter)//".dat"
-        filename_apm_results= "apm_results"//TRIM(i_matter)//".dat"
+        filename_apm_pos_id = "apm_pos_id"//TRIM(str_i)//".dat"
+        filename_apm_pos    = "apm_pos"//TRIM(str_i)//".dat"
+        filename_apm_results= "apm_results"//TRIM(str_i)//".dat"
 
         ! Matter object 1
         CALL parts% apm_timers(itr)% start_timer()
