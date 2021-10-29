@@ -74,8 +74,8 @@ filenames(1)=!"apr4_1.35-1.35_42km-hr-109outlay.bin"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.FALSE.
-run_spacetime=.TRUE.
+run_sph=.TRUE.
+run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !

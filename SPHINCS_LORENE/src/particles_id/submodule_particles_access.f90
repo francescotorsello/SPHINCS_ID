@@ -55,7 +55,7 @@ SUBMODULE (particles_id) particles_access
 
     IMPLICIT NONE
 
-    n_part= THIS% npart1
+    n_part= THIS% npart_i(1)
 
   END PROCEDURE get_npart1
 
@@ -72,7 +72,7 @@ SUBMODULE (particles_id) particles_access
 
     IMPLICIT NONE
 
-    n_part= THIS% npart2
+    n_part= THIS% npart_i(2)
 
   END PROCEDURE get_npart2
 
@@ -106,7 +106,7 @@ SUBMODULE (particles_id) particles_access
 
     IMPLICIT NONE
 
-    nuratio1= THIS% nuratio1
+    nuratio1= THIS% nuratio_i(1)
 
   END PROCEDURE get_nuratio1
 
@@ -123,7 +123,7 @@ SUBMODULE (particles_id) particles_access
 
     IMPLICIT NONE
 
-    nuratio2= THIS% nuratio2
+    nuratio2= THIS% nuratio_i(2)
 
   END PROCEDURE get_nuratio2
 

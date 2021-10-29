@@ -122,8 +122,8 @@ SUBMODULE (particles_id) particles_sph_variables
     !-- (used by write_SPHINCS_dump)
     !
     npart= THIS% npart
-    n1= THIS% npart1
-    n2= THIS% npart2
+    n1= THIS% npart_i(1)
+    IF( THIS% n_matter == 2 ) n2= THIS% npart_i(2)
 
     CALL set_units('NSM')
     CALL read_options
@@ -323,7 +323,7 @@ SUBMODULE (particles_id) particles_sph_variables
       Pr(itr)= THIS% pressure_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% pressure_parts_cu(itr)= Pr(itr)
 
-      IF( debug )THEN
+      IF( .FALSE. .AND. debug )THEN
         IF( itr >= THIS% npart/10 - 200 .AND. itr <= THIS% npart/10 )THEN
           PRINT "(A15,E15.4)", "det=", det
           PRINT "(A15,E15.4)", "sq_g=", sq_g
@@ -340,7 +340,7 @@ SUBMODULE (particles_id) particles_sph_variables
           PRINT *
           PRINT "(A15,E15.4)", "theta(a)=", THIS% Theta(itr)
           PRINT "(A15,E15.4)", "sq_det_g4(a)=", sq_det_g4(itr)
-          PRINT "(A15,E15.4)", "vol_a=", THIS% vol_a
+          !PRINT "(A15,E15.4)", "vol_a=", THIS% vol_a
           PRINT *
           PRINT *
         ENDIF
@@ -357,6 +357,9 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ENDDO compute_SPH_variables_on_particles
     !$OMP END PARALLEL DO
+
+
+    IF( debug ) PRINT *, "3"
 
 
     ! Compute nstar (proper baryon number density) from LORENE
@@ -381,6 +384,8 @@ SUBMODULE (particles_id) particles_sph_variables
     ! Compute particle number density from LORENE
     THIS% particle_density= ( THIS% nstar )/( THIS% pmass )
 
+    IF( debug ) PRINT *, "4"
+
     !
     !-- Compute the first guess for the smoothing length, if the APM was not
     !-- used
@@ -389,7 +394,8 @@ SUBMODULE (particles_id) particles_sph_variables
 
       IF( .NOT.THIS% apm_iterate(i_matter) )THEN
 
-        IF( debug ) PRINT *, "Compute first guess for h for object,", itr,"..."
+        IF( debug ) PRINT *, "Compute first guess for the smoothing length ", &
+                             "h, for particles on matter object", itr,"..."
 
         compute_h: DO itr= THIS% npart_i(i_matter-1) + 1, &
                            THIS% npart_i(i_matter), 1
@@ -408,6 +414,8 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ENDIF
     ENDDO
+
+    IF( debug ) PRINT *, "5"
 
  !   IF( .NOT.THIS% apm_iterate2 )THEN
  !
@@ -678,9 +686,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
                  npart_fin  => THIS% npart_i(i_matter-1) +    &
-                               THIS% npart_i(i_matter),       &
-                 npart_next => THIS% npart_i(i_matter) +      &
-                               THIS% npart_i(i_matter+1) )
+                               THIS% npart_i(i_matter) )
 
         IF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
 
@@ -689,16 +695,16 @@ SUBMODULE (particles_id) particles_sph_variables
           ! Do nothing, nu is already read from file
           nu( npart_in : npart_fin )= &
             THIS% nu( npart_in : npart_fin )
-          THIS% nbar(i_matter)= SUM( THIS% nu( npart_in : npart_fin ), DIM=1 )
+          THIS% nbar_i(i_matter)= SUM( THIS% nu( npart_in : npart_fin ), DIM=1 )
 
-        ELSEIF( THIS% apm_iterate(itr) )THEN
+        ELSEIF( THIS% apm_iterate(i_matter) )THEN
 
           ! If the APM was used for star 1...
 
           ! Do nothing, nu is already computed and reflected in the constructor
           nu( npart_in : npart_fin )= &
             THIS% nu( npart_in : npart_fin )
-          THIS% nbar(i_matter)= SUM( THIS% nu( npart_in : npart_fin ), DIM=1 )
+          THIS% nbar_i(i_matter)= SUM( THIS% nu( npart_in : npart_fin ), DIM=1 )
 
         ELSEIF( THIS% distribution_id == 3 )THEN
         !ELSE
@@ -710,7 +716,7 @@ SUBMODULE (particles_id) particles_sph_variables
           DO itr= npart_in, npart_fin, 1
             nu(itr)= THIS% pmass(itr)*MSun/amu
             THIS% nu(itr)= nu(i_matter)
-            THIS% nbar(i_matter)= THIS% nbar(i_matter) + nu(itr)
+            THIS% nbar_i(i_matter)= THIS% nbar_i(i_matter) + nu(itr)
           ENDDO
 
         ELSE
@@ -721,40 +727,45 @@ SUBMODULE (particles_id) particles_sph_variables
           DO itr= npart_in, npart_fin, 1
             nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
             THIS% nu(itr)= nu(itr)
-            THIS% nbar(i_matter)= THIS% nbar(i_matter) + nu(itr)
+            THIS% nbar_i(i_matter)= THIS% nbar_i(i_matter) + nu(itr)
           ENDDO
 
         ENDIF
-        THIS% nbar_tot= THIS% nbar_tot + THIS% nbar(i_matter)
+        THIS% nbar_tot= THIS% nbar_tot + THIS% nbar_i(i_matter)
 
         equal_mass_binary: &
         IF( i_matter == 1 .AND. THIS% n_matter == 2 .AND. &
             ABS(THIS% mass_ratios(1) - THIS% mass_ratios(2)) &
-            /THIS% mass_ratios(2) <= 0.005 .AND. THIS% reflect_particles_x )THEN
+            /THIS% mass_ratios(2) <= 0.005 .AND. THIS% reflect_particles_x .AND. &
+            THIS% distribution_id /= 1 )THEN
 
           ! Consistency check
-          IF( npart_next /= THIS% npart )THEN
+          IF( THIS% npart_i(i_matter) +      &
+          THIS% npart_i(i_matter+1) /= THIS% npart )THEN
             PRINT *, "** ERROR! npart_next /= THIS% npart! "
-            PRINT *, "   npart_next=", npart_next
+            PRINT *, "   npart_next=", THIS% npart_i(i_matter) +      &
+            THIS% npart_i(i_matter+1)
             PRINT *, "   THIS% npart=", THIS% npart
             PRINT *, "   Stopping..."
             PRINT *
             STOP
           ENDIF
 
-          nu( npart_fin + 1:npart_next )= nu( npart_in : npart_fin )
-          THIS% nu( npart_fin + 1:npart_next )= nu( npart_in : npart_fin )
-          THIS% nbar(i_matter + 1)= THIS% nbar(i_matter)
+          nu( npart_fin + 1:THIS% npart_i(i_matter) +      &
+          THIS% npart_i(i_matter+1) )= nu( npart_in : npart_fin )
+          THIS% nu( npart_fin + 1:THIS% npart_i(i_matter) +      &
+          THIS% npart_i(i_matter+1) )= nu( npart_in : npart_fin )
+          THIS% nbar_i(i_matter + 1)= THIS% nbar_i(i_matter)
 
-          THIS% nbar_tot= THIS% nbar_tot + THIS% nbar(i_matter + 1)
+          THIS% nbar_tot= THIS% nbar_tot + THIS% nbar_i(i_matter + 1)
 
           ! Consistency check
-          IF( THIS% nbar_tot /= 2*THIS% nbar(i_matter + 1) )THEN
+          IF( THIS% nbar_tot /= 2*THIS% nbar_i(i_matter + 1) )THEN
             PRINT *, "** ERROR! THIS% nbar_tot /= 2*THIS% nbar(i_matter + 1) ",&
                      "   when reflecting particles or a binary system"
             PRINT *, "   THIS% nbar_tot=", THIS% nbar_tot
             PRINT *, "   2*THIS% nbar(", i_matter + 1, ")=", &
-                         2*THIS% nbar(i_matter + 1)
+                         2*THIS% nbar_i(i_matter + 1)
             PRINT *, "   Stopping..."
             PRINT *
             STOP
@@ -1094,18 +1105,18 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ! Formulas from Read et al. (2009)
 
-      Pr(1:THIS% npart1)= THIS% kappa_sp1 &
-                  *( THIS% nlrf_int(1:THIS% npart1)*m0c2_cu )**THIS% gamma_sp1
+      Pr(1:THIS% npart_i(1))= THIS% all_eos(1)% eos_parameters(3) &
+                  *( THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu )**THIS% all_eos(1)% eos_parameters(2)
 
-      Pr(THIS% npart1+1:THIS% npart)= THIS% kappa_sp2 &
-       *( THIS% nlrf_int(THIS% npart1+1:THIS% npart)*m0c2_cu )**THIS% gamma_sp2
+      Pr(THIS% npart_i(1)+1:THIS% npart)= THIS% all_eos(2)% eos_parameters(3) &
+       *( THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu )**THIS% all_eos(2)% eos_parameters(2)
 
-      u(1:THIS% npart1)= ( Pr(1:THIS% npart1) &
-        /(THIS% nlrf_int(1:THIS% npart1)*m0c2_cu*( THIS% gamma_sp1 - 1.0D0 ) ) )
+      u(1:THIS% npart_i(1))= ( Pr(1:THIS% npart_i(1)) &
+        /(THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu*( THIS% all_eos(1)% eos_parameters(2) - 1.0D0 ) ) )
 
-      u(THIS% npart1+1:THIS% npart)= ( Pr(THIS% npart1+1:THIS% npart) &
-        /(THIS% nlrf_int(THIS% npart1+1:THIS% npart)*m0c2_cu &
-              *( THIS% gamma_sp2 - 1.0D0 ) ) )
+      u(THIS% npart_i(1)+1:THIS% npart)= ( Pr(THIS% npart_i(1)+1:THIS% npart) &
+        /(THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu &
+              *( THIS% all_eos(2)% eos_parameters(3) - 1.0D0 ) ) )
 
       Pr= Pr/m0c2_cu
       THIS% pressure_parts_cu= Pr
@@ -1184,75 +1195,75 @@ SUBMODULE (particles_id) particles_sph_variables
     !
     !"(A28,E15.8,A10)"
     PRINT *, " * Maximum baryon density on star 1= ", &
-              MAXVAL( THIS% baryon_density_parts(1:THIS% npart1), DIM= 1 ) &
+              MAXVAL( THIS% baryon_density_parts(1:THIS% npart_i(1)), DIM= 1 ) &
               *kg2g/(m2cm**3), " g cm^{-3}"
     PRINT *, " * Minimum baryon density= on star 1 ", &
-              MINVAL( THIS% baryon_density_parts(1:THIS% npart1), DIM= 1 ) &
+              MINVAL( THIS% baryon_density_parts(1:THIS% npart_i(1)), DIM= 1 ) &
               *kg2g/(m2cm**3), " g cm^{-3}"
     PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% baryon_density_parts(1:THIS% npart1), DIM= 1 )/ &
-             MINVAL( THIS% baryon_density_parts(1:THIS% npart1), DIM= 1 )
+             MAXVAL( THIS% baryon_density_parts(1:THIS% npart_i(1)), DIM= 1 )/ &
+             MINVAL( THIS% baryon_density_parts(1:THIS% npart_i(1)), DIM= 1 )
     PRINT *
     PRINT *, " * Maximum baryon density on star 2= ", &
-     MAXVAL( THIS% baryon_density_parts(THIS% npart1+1:THIS% npart), DIM= 1 ) &
+     MAXVAL( THIS% baryon_density_parts(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ) &
      *kg2g/(m2cm**3), " g cm^{-3}"
     PRINT *, " * Minimum baryon density on star 2= ", &
-     MINVAL( THIS% baryon_density_parts(THIS% npart1+1:THIS% npart), DIM= 1 ) &
+     MINVAL( THIS% baryon_density_parts(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ) &
      *kg2g/(m2cm**3), " g cm^{-3}"
     PRINT *, " * Ratio between the two=", &
-     MAXVAL( THIS% baryon_density_parts(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
-     MINVAL( THIS% baryon_density_parts(THIS% npart1+1:THIS% npart), DIM= 1 )
+     MAXVAL( THIS% baryon_density_parts(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )/ &
+     MINVAL( THIS% baryon_density_parts(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
     PRINT *
 
     PRINT *, " * Maximum nlrf on star 1=", &
-             MAXVAL( THIS% nlrf(1:THIS% npart1), DIM= 1 ), &
+             MAXVAL( THIS% nlrf(1:THIS% npart_i(1)), DIM= 1 ), &
              "baryon Msun_geo^{-3}"
     PRINT *, " * Minimum nlrf on star 1=", &
-             MINVAL( THIS% nlrf(1:THIS% npart1), DIM= 1 ), &
+             MINVAL( THIS% nlrf(1:THIS% npart_i(1)), DIM= 1 ), &
              "baryon Msun_geo^{-3}"
     PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% nlrf(1:THIS% npart1), DIM= 1 )/ &
-             MINVAL( THIS% nlrf(1:THIS% npart1), DIM= 1 )
+             MAXVAL( THIS% nlrf(1:THIS% npart_i(1)), DIM= 1 )/ &
+             MINVAL( THIS% nlrf(1:THIS% npart_i(1)), DIM= 1 )
     PRINT *
     PRINT *, " * Maximum nlrf on star 2=", &
-             MAXVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 ), &
+             MAXVAL( THIS% nlrf(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ), &
              "baryon Msun_geo^{-3}"
     PRINT *, " * Minimum nlrf on star 2=", &
-             MINVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 ), &
+             MINVAL( THIS% nlrf(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ), &
              "baryon Msun_geo^{-3}"
     PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 )/ &
-             MINVAL( THIS% nlrf(THIS% npart1+1:THIS% npart), DIM= 1 )
+             MAXVAL( THIS% nlrf(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )/ &
+             MINVAL( THIS% nlrf(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
     PRINT *
 
-    THIS% nuratio1= MAXVAL( THIS% nu(1:THIS% npart1), DIM= 1 )/ &
-                    MINVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
+    THIS% nuratio_i(1)= MAXVAL( THIS% nu(1:THIS% npart_i(1)), DIM= 1 )/ &
+                    MINVAL( THIS% nu(1:THIS% npart_i(1)), DIM= 1 )
     PRINT *, " * Maximum n. baryon per particle on star 1 (nu)=", &
-             MAXVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
+             MAXVAL( THIS% nu(1:THIS% npart_i(1)), DIM= 1 )
     PRINT *, " * Minimum n. baryon per particle on star 1 (nu)=", &
-             MINVAL( THIS% nu(1:THIS% npart1), DIM= 1 )
-    PRINT *, " * Ratio between the two=", THIS% nuratio1
+             MINVAL( THIS% nu(1:THIS% npart_i(1)), DIM= 1 )
+    PRINT *, " * Ratio between the two=", THIS% nuratio_i(1)
     PRINT *
-    THIS% nuratio2= MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 ) &
-                    /MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+    THIS% nuratio_i(2)= MAXVAL( THIS% nu(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ) &
+                    /MINVAL( THIS% nu(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
     PRINT *, " * Maximum n. baryon per particle on star 2 (nu)=", &
-             MAXVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
+             MAXVAL( THIS% nu(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
     PRINT *, " * Minimum n. baryon per particle on star 2 (nu)=", &
-             MINVAL( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
-    PRINT *, " * Ratio between the two=", THIS% nuratio2
+             MINVAL( THIS% nu(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
+    PRINT *, " * Ratio between the two=", THIS% nuratio_i(2)
     PRINT *
     THIS% nuratio= MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
     PRINT *, " * Baryon number ratio across the stars=", THIS% nuratio
     PRINT *
-    PRINT *, " * Number of baryons on star 1=", THIS% nbar1
+    PRINT *, " * Number of baryons on star 1=", THIS% nbar_i(1)
     PRINT *, " * Total mass of the baryons on star 1=", &
-             THIS% nbar1*amu/Msun, "Msun =", &
-             THIS% nbar1*amu/Msun/THIS% masses(1), &
+             THIS% nbar_i(1)*amu/Msun, "Msun =", &
+             THIS% nbar_i(1)*amu/Msun/THIS% masses(1), &
              "of the LORENE baryon mass of star 1."
-    PRINT *, " * Number of baryons on star 2=", THIS% nbar2
+    PRINT *, " * Number of baryons on star 2=", THIS% nbar_i(2)
     PRINT *, " * Total mass of the baryons on star 2=", &
-             THIS% nbar2*amu/Msun, "Msun =", &
-             THIS% nbar2*amu/Msun/THIS% masses(2), &
+             THIS% nbar_i(2)*amu/Msun, "Msun =", &
+             THIS% nbar_i(2)*amu/Msun/THIS% masses(2), &
              "of the LORENE baryon mass of star 2."
     PRINT *, " * Total number of baryons=", THIS% nbar_tot
     PRINT *, " * Total mass of the baryons=", &
@@ -1278,30 +1289,30 @@ SUBMODULE (particles_id) particles_sph_variables
       !nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)))
       !THIS% nbar_tot= &
       !    THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)))
-      THIS% nu( 1:THIS% npart1 )= &
-                THIS% nu( 1:THIS% npart1 )/(THIS% nbar1*amu/Msun/THIS% masses(1))
-      nu( 1:THIS% npart1 )= &
-                nu( 1:THIS% npart1 )/(THIS% nbar1*amu/Msun/THIS% masses(1))
-      THIS% nbar1= THIS% nbar1/(THIS% nbar1*amu/Msun/THIS% masses(1))
+      THIS% nu( 1:THIS% npart_i(1) )= &
+                THIS% nu( 1:THIS% npart_i(1) )/(THIS% nbar_i(1)*amu/Msun/THIS% masses(1))
+      nu( 1:THIS% npart_i(1) )= &
+                nu( 1:THIS% npart_i(1) )/(THIS% nbar_i(1)*amu/Msun/THIS% masses(1))
+      THIS% nbar_i(1)= THIS% nbar_i(1)/(THIS% nbar_i(1)*amu/Msun/THIS% masses(1))
 
-      THIS% nu( THIS% npart1 + 1:THIS% npart )= &
-                THIS% nu( THIS% npart1 + 1:THIS% npart ) &
-                /(THIS% nbar2*amu/Msun/THIS% masses(2))
-      nu( THIS% npart1 + 1:THIS% npart )= &
-                nu( THIS% npart1 + 1:THIS% npart ) &
-                /(THIS% nbar2*amu/Msun/THIS% masses(2))
-      THIS% nbar2= THIS% nbar2/(THIS% nbar2*amu/Msun/THIS% masses(2))
-      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
+      THIS% nu( THIS% npart_i(1) + 1:THIS% npart )= &
+                THIS% nu( THIS% npart_i(1) + 1:THIS% npart ) &
+                /(THIS% nbar_i(2)*amu/Msun/THIS% masses(2))
+      nu( THIS% npart_i(1) + 1:THIS% npart )= &
+                nu( THIS% npart_i(1) + 1:THIS% npart ) &
+                /(THIS% nbar_i(2)*amu/Msun/THIS% masses(2))
+      THIS% nbar_i(2)= THIS% nbar_i(2)/(THIS% nbar_i(2)*amu/Msun/THIS% masses(2))
+      THIS% nbar_tot= THIS% nbar_i(1) + THIS% nbar_i(2)
 
-      PRINT *, " * Number of corrected baryons on star 1=", THIS% nbar1
+      PRINT *, " * Number of corrected baryons on star 1=", THIS% nbar_i(1)
       PRINT *, " * Total mass of the corrected baryons on star 1=", &
-               THIS% nbar1*amu/Msun, "Msun =", &
-               THIS% nbar1*amu/Msun/THIS% masses(1), &
+               THIS% nbar_i(1)*amu/Msun, "Msun =", &
+               THIS% nbar_i(1)*amu/Msun/THIS% masses(1), &
                "of the LORENE baryon mass of star 1."
-      PRINT *, " * Number of corrected baryons on star 2=", THIS% nbar2
+      PRINT *, " * Number of corrected baryons on star 2=", THIS% nbar_i(2)
       PRINT *, " * Total mass of the corrected baryons on star 2=", &
-               THIS% nbar2*amu/Msun, "Msun =", &
-               THIS% nbar2*amu/Msun/THIS% masses(2), &
+               THIS% nbar_i(2)*amu/Msun, "Msun =", &
+               THIS% nbar_i(2)*amu/Msun/THIS% masses(2), &
                "of the LORENE baryon mass of star 2."
       PRINT *, " * Total number of corrected baryons=", THIS% nbar_tot
       PRINT *, " * Total mass of the corrected baryons=", &
@@ -1521,8 +1532,8 @@ SUBMODULE (particles_id) particles_sph_variables
       ENDIF
     ENDDO
 
-    min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart1 ) )
-    min_abs_z2= MINVAL( abs_pos( 3, THIS% npart1+1:THIS% npart ) )
+    min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart_i(1) ) )
+    min_abs_z2= MINVAL( abs_pos( 3, THIS% npart_i(1)+1:THIS% npart ) )
 
     write_data_loop: DO itr = 1, THIS% npart, 1
 

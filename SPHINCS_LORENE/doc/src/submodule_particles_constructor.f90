@@ -110,7 +110,7 @@ SUBMODULE (particles_id) particles_constructor
 
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos2
-    DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol_tmp2
+    !DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol_tmp2
     DOUBLE PRECISION:: nuratio_thres, nuratio_des
 
     TYPE parts_i
@@ -127,7 +127,8 @@ SUBMODULE (particles_id) particles_constructor
     ! String storing the name of the file containing the particle positions
     CHARACTER( LEN= max_length ):: parts_pos
     ! Final name for the file containing the particle positions
-    CHARACTER( LEN= : ), ALLOCATABLE:: parts_pos_namefile, i_matter
+    CHARACTER( LEN= : ), ALLOCATABLE:: parts_pos_namefile
+    CHARACTER( LEN= 3 ):: i_matter
     ! String storing the local path to the directory where the
     ! |lorene| BNS ID files are stored
     CHARACTER( LEN= max_length ):: compose_path
@@ -165,6 +166,8 @@ SUBMODULE (particles_id) particles_constructor
     ! Get the number of matter objects in the physical system
     parts% n_matter= id% get_n_matter()
 
+    ALLOCATE( parts% apm_timers(parts% n_matter) )
+
     !
     !-- Initialize the timers
     !
@@ -175,12 +178,12 @@ SUBMODULE (particles_id) particles_constructor
     parts% sph_computer_timer = timer( "sph_computer_timer" )
     parts% same_particle_timer= timer( "same_particle_timer" )
     DO itr= 1, parts% n_matter, 1
-      IF( parts% n_matter <= 9 ) WRITE( i_matter, '(I1)' ), itr
+      IF( parts% n_matter <= 9 ) WRITE( i_matter, "(I1)" ), itr
       IF( parts% n_matter >= 10 .AND. parts% n_matter <= 99 ) &
-                                                WRITE( i_matter, '(I2)' ), itr
+                                                WRITE( i_matter, "(I2)" ), itr
       IF( parts% n_matter >= 100 .AND. parts% n_matter <= 999 ) &
-                                                WRITE( i_matter, '(I3)' ), itr
-      parts% apm_timers(itr)  = timer( "apm_timer"//i_matter )
+                                                WRITE( i_matter, "(I3)" ), itr
+      parts% apm_timers(itr)  = timer( "apm_timer"//TRIM(i_matter) )
     ENDDO
 
     ! Declare this object as non-empty (experimental)
@@ -199,8 +202,8 @@ SUBMODULE (particles_id) particles_constructor
   !  radius1               = id% get_radius1_x_comp()
   !  radius2               = id% get_radius2_x_comp()
     parts% nbar_tot       = 0.0D0
-    parts% nbar1          = 0.0D0
-    parts% nbar2          = 0.0D0
+    !parts% nbar1          = 0.0D0
+    !parts% nbar2          = 0.0D0
     parts% npart          = 0.0D0
     parts% distribution_id= dist
 
@@ -216,13 +219,16 @@ SUBMODULE (particles_id) particles_constructor
   !  parts% kappa_sp2= id% get_kappa_2()
 
     ALLOCATE( parts% masses (parts% n_matter) )
-    ALLOCATE( parts% masses (parts% n_matter) )
+    !ALLOCATE( parts% masses (parts% n_matter) )
     ALLOCATE( parts% all_eos(parts% n_matter) )
     ALLOCATE( parts% npart_i(0:parts% n_matter) )
+    ALLOCATE( parts% nbar_i(parts% n_matter) )
+    ALLOCATE( parts% nuratio_i(parts% n_matter) )
     ALLOCATE( parts% mass_ratios (parts% n_matter) )
     ALLOCATE( parts% mass_fractions (parts% n_matter) )
-    ALLOCATE( parts% nbar (parts% n_matter) )
-    parts% npart_i(0)=0
+    parts% npart_i(0)= 0
+    parts% nbar_i    = 0.0D0
+    parts% nuratio_i = 0.0D0
 
     DO itr= 1, parts% n_matter, 1
 
@@ -271,6 +277,7 @@ SUBMODULE (particles_id) particles_constructor
     parts% randomize_theta    = randomize_theta
     parts% randomize_r        = randomize_r
     ! APM parameters
+    ALLOCATE( parts% apm_iterate( parts% n_matter) )
     parts% apm_iterate   = apm_iterate
     parts% read_nu       = read_nu
 
@@ -481,7 +488,7 @@ SUBMODULE (particles_id) particles_constructor
       ENDDO
 
       IF( npart1_tmp + npart2_tmp /= npart_tmp )THEN
-        PRINT *, "** ERROR! parts% npart1 + parts% npart2 /= npart_tmp"
+        PRINT *, "** ERROR! npart1_tmp + npart2_tmp /= npart_tmp"
         PRINT *
         PRINT *, "   npart1_tmp= ", npart1_tmp
         PRINT *, "   npart2_tmp= ", npart2_tmp
@@ -606,62 +613,62 @@ SUBMODULE (particles_id) particles_constructor
       tmp_pos(columns(3),:)= tmp_pos2(3,:)
       IF( read_nu ) tmp_pos(column_nu,:) = tmp_pos2(4,:)
 
-      parts% npart1= 0
+      parts% npart_i(1)= 0
       DO itr= 1, npart1_tmp, 1
 
         IF( tmp_pos(columns(3),itr) > 0 )THEN
 
-          parts% npart1= parts% npart1 + 1
-          tmp_pos2(1,parts% npart1)= tmp_pos(columns(1),itr)
-          tmp_pos2(2,parts% npart1)= tmp_pos(columns(2),itr)
-          tmp_pos2(3,parts% npart1)= tmp_pos(columns(3),itr)
-          IF( read_nu ) tmp_pos2(4,parts% npart1)= tmp_pos(column_nu,itr)
+          parts% npart_i(1)= parts% npart_i(1) + 1
+          tmp_pos2(1,parts% npart_i(1))= tmp_pos(columns(1),itr)
+          tmp_pos2(2,parts% npart_i(1))= tmp_pos(columns(2),itr)
+          tmp_pos2(3,parts% npart_i(1))= tmp_pos(columns(3),itr)
+          IF( read_nu ) tmp_pos2(4,parts% npart_i(1))= tmp_pos(column_nu,itr)
 
         ENDIF
 
       ENDDO
 
-      DO itr= 1, parts% npart1, 1
+      DO itr= 1, parts% npart_i(1), 1
 
-        tmp_pos2(1,parts% npart1+itr)=   tmp_pos2(1,itr)
-        tmp_pos2(2,parts% npart1+itr)=   tmp_pos2(2,itr)
-        tmp_pos2(3,parts% npart1+itr)= - tmp_pos2(3,itr)
-        IF( read_nu ) tmp_pos2(4,parts% npart1+itr)= tmp_pos2(4,itr)
+        tmp_pos2(1,parts% npart_i(1)+itr)=   tmp_pos2(1,itr)
+        tmp_pos2(2,parts% npart_i(1)+itr)=   tmp_pos2(2,itr)
+        tmp_pos2(3,parts% npart_i(1)+itr)= - tmp_pos2(3,itr)
+        IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+itr)= tmp_pos2(4,itr)
 
       ENDDO
 
-      parts% npart1= 2*parts% npart1
+      parts% npart_i(1)= 2*parts% npart_i(1)
 
-      parts% npart2= 0
+      parts% npart_i(2)= 0
       DO itr= npart1_tmp + 1, npart_tmp, 1
 
         IF( tmp_pos(columns(3),itr) > 0 )THEN
 
-          parts% npart2= parts% npart2 + 1
-          tmp_pos2(1,parts% npart1+parts% npart2)= tmp_pos(columns(1),itr)
-          tmp_pos2(2,parts% npart1+parts% npart2)= tmp_pos(columns(2),itr)
-          tmp_pos2(3,parts% npart1+parts% npart2)= tmp_pos(columns(3),itr)
-          IF( read_nu ) tmp_pos2(4,parts% npart1+parts% npart2)= tmp_pos(column_nu,itr)
+          parts% npart_i(2)= parts% npart_i(2) + 1
+          tmp_pos2(1,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(1),itr)
+          tmp_pos2(2,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(2),itr)
+          tmp_pos2(3,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(3),itr)
+          IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(column_nu,itr)
 
         ENDIF
 
       ENDDO
 
-      DO itr= 1, parts% npart2, 1
+      DO itr= 1, parts% npart_i(2), 1
 
-        tmp_pos2(1,parts% npart1+parts% npart2+itr)=   &
-                                            tmp_pos2(1,parts% npart1+itr)
-        tmp_pos2(2,parts% npart1+parts% npart2+itr)=   &
-                                            tmp_pos2(2,parts% npart1+itr)
-        tmp_pos2(3,parts% npart1+parts% npart2+itr)= &
-                                          - tmp_pos2(3,parts% npart1+itr)
-        IF( read_nu ) tmp_pos2(4,parts% npart1+parts% npart2+itr)= &
-                                            tmp_pos2(4,parts% npart1+itr)
+        tmp_pos2(1,parts% npart_i(1)+parts% npart_i(2)+itr)=   &
+                                            tmp_pos2(1,parts% npart_i(1)+itr)
+        tmp_pos2(2,parts% npart_i(1)+parts% npart_i(2)+itr)=   &
+                                            tmp_pos2(2,parts% npart_i(1)+itr)
+        tmp_pos2(3,parts% npart_i(1)+parts% npart_i(2)+itr)= &
+                                          - tmp_pos2(3,parts% npart_i(1)+itr)
+        IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+parts% npart_i(2)+itr)= &
+                                            tmp_pos2(4,parts% npart_i(1)+itr)
 
       ENDDO
 
-      parts% npart2= 2*parts% npart2
-      parts% npart = parts% npart1 + parts% npart2
+      parts% npart_i(2)= 2*parts% npart_i(2)
+      parts% npart = parts% npart_i(1) + parts% npart_i(2)
 
       !PRINT *, tmp_pos(:,1)
       ! Allocating the memory for the array pos( 3, npart )
@@ -741,8 +748,8 @@ SUBMODULE (particles_id) particles_constructor
       PRINT *, " * Particle positions read. Number of particles=", &
                parts% npart
       PRINT *
-      PRINT *, " * Number of particles on NS 1=", parts% npart1
-      PRINT *, " * Number of particles on NS 2=", parts% npart2
+      PRINT *, " * Number of particles on NS 1=", parts% npart_i(1)
+      PRINT *, " * Number of particles on NS 2=", parts% npart_i(2)
       PRINT *
 
       !
@@ -815,26 +822,92 @@ SUBMODULE (particles_id) particles_constructor
       DO itr= 1, parts% n_matter, 1
 
         xmin= center(itr, 1) - stretch*sizes(itr, 1)
-        xmax= center(itr, 1) - stretch*sizes(itr, 2)
+        xmax= center(itr, 1) + stretch*sizes(itr, 2)
         ymin= center(itr, 2) - stretch*sizes(itr, 3)
-        ymax= center(itr, 2) - stretch*sizes(itr, 4)
+        ymax= center(itr, 2) + stretch*sizes(itr, 4)
         zmin= center(itr, 3) - stretch*sizes(itr, 5)
-        zmax= center(itr, 3) - stretch*sizes(itr, 6)
+        zmax= center(itr, 3) + stretch*sizes(itr, 6)
         central_density(itr)= id% read_mass_density( center(itr, 1), &
-                                                  center(itr, 2), &
-                                                  center(itr, 3) )
+                                                     center(itr, 2), &
+                                                     center(itr, 3) )
+
+     !   PRINT *, xmin
+     !   PRINT *, xmax
+     !   PRINT *, ymin
+     !   PRINT *, ymax
+     !   PRINT *, zmin
+     !   PRINT *, zmax
+     !   PRINT *, central_density(itr)
+     !   STOP
 
         CALL parts% place_particles_lattice( central_density(itr), &
                                              xmin, xmax, ymin, &
                                              ymax, zmin, zmax, &
                                              npart_des_i(itr), &
                                              parts% npart_i(itr), &
-                                             stretch, thres, pvol_tmp2, &
+                                             stretch, thres, &
+                                             parts_all(itr)% pos_i, &
+                                             parts_all(itr)% pvol_i, &
                                              import_density, &
                                              check_negative_hydro )
 
+        parts_all(itr)% pos_i = &
+                          parts_all(itr)% pos_i( :, 1:parts% npart_i(itr) )
+        parts_all(itr)% pvol_i = &
+                          parts_all(itr)% pvol_i( 1:parts% npart_i(itr) )
+
       ENDDO
       CALL parts% placer_timer% stop_timer()
+
+      parts% npart= SUM( parts% npart_i )
+
+      IF( debug ) PRINT *, "10"
+
+      !
+      !-- Assign TYPE member variables
+      !
+
+      IF(.NOT.ALLOCATED( parts% pos ))THEN
+        ALLOCATE( parts% pos( 3, parts% npart ), &
+                  STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                    // "place_particles_. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !                "...allocation error for array pos in SUBROUTINE" &
+        !                // "place_particles_3D_lattice." )
+      ENDIF
+      !parts% pos( :, 1:parts% npart1 )= pos1
+      !parts% pos( :, parts% npart1 + 1:parts% npart )= pos2
+      DO itr= 1, parts% n_matter, 1
+        parts% pos( :, parts% npart_i(itr-1) + 1: &
+                       parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                       parts_all(itr)% pos_i
+      ENDDO
+
+      IF(.NOT.ALLOCATED( parts% pvol ))THEN
+        ALLOCATE( parts% pvol( parts% npart ), &
+                  STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pvol in SUBROUTINE" &
+                    // "place_particles_. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !                "...allocation error for array pos in SUBROUTINE" &
+        !                // "place_particles_3D_lattice." )
+      ENDIF
+      !parts% pvol( 1:parts% npart1 )= pvol1
+      !parts% pvol( parts% npart1 + 1:parts% npart )= pvol2
+      DO itr= 1, parts% n_matter, 1
+        parts% pvol( parts% npart_i(itr-1) + 1: &
+                     parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                     parts_all(itr)% pvol_i
+      ENDDO
 
     CASE(2)
 
@@ -901,10 +974,10 @@ SUBMODULE (particles_id) particles_constructor
         IF( itr >= 100 .AND. parts% n_matter <= 999 ) &
                                                  WRITE( i_matter, '(I3)' ), itr
 
-        filename_mass_profile= "spherical_surfaces_mass_profile"//i_matter//&
+        filename_mass_profile= "spherical_surfaces_mass_profile"//TRIM(i_matter)//&
                                ".dat"
-        filename_shells_radii= "spherical_surfaces_radii"//i_matter//".dat"
-        filename_shells_pos  = "spherical_surfaces_pos"//i_matter//".dat"
+        filename_shells_radii= "spherical_surfaces_radii"//TRIM(i_matter)//".dat"
+        filename_shells_pos  = "spherical_surfaces_pos"//TRIM(i_matter)//".dat"
 
         ! Place particles, and time the process
         CALL parts% placer_timer% start_timer()
@@ -972,8 +1045,8 @@ SUBMODULE (particles_id) particles_constructor
           parts_all(2)% pos_i(1,:)= - parts_all(1)% pos_i(1,:)
           parts_all(2)% pos_i(2,:)=   parts_all(1)% pos_i(2,:)
           parts_all(2)% pos_i(3,:)=   parts_all(1)% pos_i(3,:)
-          parts_all(2)% pvol_i    = - parts_all(1)% pvol_i
-          parts_all(2)% pmass_i   = - parts_all(1)% pmass_i
+          parts_all(2)% pvol_i    =   parts_all(1)% pvol_i
+          parts_all(2)% pmass_i   =   parts_all(1)% pmass_i
           parts% npart_i(2)= parts% npart_i(1)
 
     !   ELSE
@@ -1011,7 +1084,10 @@ SUBMODULE (particles_id) particles_constructor
 
         CALL parts% placer_timer% stop_timer()
 
-        parts% npart= SUM( parts% npart_i )
+        parts_all(itr)% pos_i = &
+                          parts_all(itr)% pos_i( :, 1:parts% npart_i(itr) )
+        parts_all(itr)% pvol_i = &
+                          parts_all(itr)% pvol_i( 1:parts% npart_i(itr) )
 
   !   ELSE
   !
@@ -1132,6 +1208,8 @@ SUBMODULE (particles_id) particles_constructor
 
       ENDDO
 
+      parts% npart= SUM( parts% npart_i )
+
       !
       !-- Assign TYPE member variables
       !
@@ -1231,7 +1309,6 @@ SUBMODULE (particles_id) particles_constructor
     !
     !-- APM iteration
     !
-    ALLOCATE( parts% apm_timers(parts% n_matter) )
     matter_objects_loop: DO itr= 1, parts% n_matter, 1
 
       IF( apm_iterate(itr) )THEN
@@ -1267,9 +1344,9 @@ SUBMODULE (particles_id) particles_constructor
         IF( itr >= 100 .AND. parts% n_matter <= 999 ) &
                                                  WRITE( i_matter, '(I3)' ), itr
 
-        filename_apm_pos_id = "apm_pos_id"//i_matter//".dat"
-        filename_apm_pos    = "apm_pos"//i_matter//".dat"
-        filename_apm_results= "apm_results"//i_matter//".dat"
+        filename_apm_pos_id = "apm_pos_id"//TRIM(i_matter)//".dat"
+        filename_apm_pos    = "apm_pos"//TRIM(i_matter)//".dat"
+        filename_apm_results= "apm_results"//TRIM(i_matter)//".dat"
 
         ! Matter object 1
         CALL parts% apm_timers(itr)% start_timer()
@@ -1313,7 +1390,7 @@ SUBMODULE (particles_id) particles_constructor
           parts% h(parts% npart_i(1)+1:parts% npart)= &
                                       parts% h(1:parts% npart_i(1))
 
-          parts% npart2= parts% npart_i(1)
+          parts% npart_i(2)= parts% npart_i(1)
           parts% npart= parts% npart_i(1) + parts% npart_i(1)
 
           PRINT *, "** Particles placed on star 1 according to the APM", &

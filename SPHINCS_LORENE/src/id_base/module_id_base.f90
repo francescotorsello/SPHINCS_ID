@@ -130,18 +130,18 @@ MODULE id_base
     !-------------------------------!
 
 
-    PROCEDURE:: get_total_spatial_extent
+    PROCEDURE, NON_OVERRIDABLE:: get_total_spatial_extent
     !# Returns the spatial extent of the physical system considered,
     !  as the array of 6 numbers
     !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
 
 
-    PROCEDURE:: set_n_matter
+    PROCEDURE, NON_OVERRIDABLE:: set_n_matter
     !# Sets [[idbase:n_matter]], the number of matter objects in the
     !  physical system, to a value
 
 
-    PROCEDURE:: get_n_matter
+    PROCEDURE, NON_OVERRIDABLE:: get_n_matter
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
@@ -152,6 +152,22 @@ MODULE id_base
 
 
   END TYPE idbase
+
+
+  INTERFACE idbase
+
+    PROCEDURE cons
+
+  END INTERFACE idbase
+
+
+!  INTERFACE
+!
+!    SUBROUTINE cons
+!
+!    END SUBROUTINE cons
+!
+!  END INTERFACE
 
 
   ABSTRACT INTERFACE
@@ -589,6 +605,18 @@ MODULE id_base
     END FUNCTION get_total_spatial_extent
 
   END INTERFACE
+
+
+  CONTAINS
+
+
+  SUBROUTINE cons
+
+    PRINT *, "I am the INTERFACE of idbase!"
+    PRINT *
+    STOP
+
+  END SUBROUTINE cons
 
 
 END MODULE id_base

@@ -162,12 +162,12 @@ MODULE formul_3p1_id
     !                                    !construct_formul_3p1_bns_spacings_ptr
 
     !PROCEDURE::       construct_formul_3p1_bns_ptr => &
-    PROCEDURE:: setup_standard3p1_variables
+    PROCEDURE, NON_OVERRIDABLE:: setup_standard3p1_variables
 
     !PROCEDURE::       construct_formul_3p1_bns_spacings_ptr => &
     !                                    construct_formul_3p1_bns_spacings
 
-    PROCEDURE:: analyze_constraint
+    PROCEDURE, NON_OVERRIDABLE:: analyze_constraint
 
     PROCEDURE(define_allocate_fields_interface), DEFERRED:: &
                             define_allocate_fields
@@ -190,7 +190,7 @@ MODULE formul_3p1_id
 
     PROCEDURE(deallocate_fields_interface), DEFERRED:: deallocate_fields
 
-    PROCEDURE:: deallocate_standard3p1_variables
+    PROCEDURE, NON_OVERRIDABLE:: deallocate_standard3p1_variables
 
     !-----------------!
     !--  FUNCTIONS  --!

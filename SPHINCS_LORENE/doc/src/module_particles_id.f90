@@ -51,9 +51,9 @@ MODULE particles_id
 
     INTEGER:: npart
     !! Total particle number
-    INTEGER:: npart1
+    !INTEGER:: npart1
     !! Particle number for star 1
-    INTEGER:: npart2
+    !INTEGER:: npart2
     !! Particle number for star 1
     INTEGER:: n_matter
     !! Particle number for star 1
@@ -218,32 +218,33 @@ MODULE particles_id
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: mass_ratios
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: mass_fractions
     !> Total grid volume
-    DOUBLE PRECISION:: vol, vol1, vol2
+    !DOUBLE PRECISION:: vol, vol1, vol2
     !> Volume per particle
-    DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
+    !DOUBLE PRECISION:: vol_a, vol1_a, vol2_a
     !> Ratio between the max and min of the baryon number per particle
     DOUBLE PRECISION:: nu_ratio
     !> Total baryon number
     DOUBLE PRECISION:: nbar_tot
     !> Baryon number on star 1
-    DOUBLE PRECISION:: nbar1
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nbar
+    !DOUBLE PRECISION:: nbar1
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nbar_i
     !> Baryon number on star 2
-    DOUBLE PRECISION:: nbar2
+    !DOUBLE PRECISION:: nbar2
     !> Baryon number ratio on both stars
     DOUBLE PRECISION:: nuratio
     !> Baryon number ratio on star 1
-    DOUBLE PRECISION:: nuratio1
+    !DOUBLE PRECISION:: nuratio1
     !> Baryon number ratio on star 2
-    DOUBLE PRECISION:: nuratio2
+    !DOUBLE PRECISION:: nuratio2
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nuratio_i
     !> Polytropic index for single polytropic EOS for star 1
-    DOUBLE PRECISION:: gamma_sp1= 0.0D0
+    !DOUBLE PRECISION:: gamma_sp1= 0.0D0
     !> Polytropic constant for single polytropic EOS for star 1 @todo add units
-    DOUBLE PRECISION:: kappa_sp1= 0.0D0
+    !DOUBLE PRECISION:: kappa_sp1= 0.0D0
     !> Polytropic index for single polytropic EOS for star 2
-    DOUBLE PRECISION:: gamma_sp2= 0.0D0
+    !DOUBLE PRECISION:: gamma_sp2= 0.0D0
     !> Polytropic constant for single polytropic EOS for star 2 @todo add units
-    DOUBLE PRECISION:: kappa_sp2= 0.0D0
+    !DOUBLE PRECISION:: kappa_sp2= 0.0D0
 
     !
     !-- Strings
@@ -306,7 +307,7 @@ MODULE particles_id
     LOGICAL:: randomize_r
     !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
     !  particles on star 1, `.FALSE.` otherwise
-    LOGICAL, DIMENSION(2):: apm_iterate
+    LOGICAL, DIMENSION(:), ALLOCATABLE:: apm_iterate
     !& `.TRUE.` if the baryon number per particle \(\nu\) has to be read from the
     !  formatted file containing the particle positions, `.FALSE.` otherwise
     LOGICAL:: read_nu
@@ -354,13 +355,13 @@ MODULE particles_id
     PROCEDURE, NOPASS:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
-    GENERIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
-                                   reshape_sph_field_2d_ptr
-    !# GENERIC PROCEDURE, overloded to reallocate 1d and 2d arrays
-    PROCEDURE:: reshape_sph_field_1d_ptr => reshape_sph_field_1d
-    !! Reallocates a 1d array
-    PROCEDURE:: reshape_sph_field_2d_ptr => reshape_sph_field_2d
-    !! Reallocates a 2d array
+  !  GENERIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
+  !                                 reshape_sph_field_2d_ptr
+  !  !# GENERIC PROCEDURE, overloded to reallocate 1d and 2d arrays
+  !  PROCEDURE:: reshape_sph_field_1d_ptr => reshape_sph_field_1d
+  !  !! Reallocates a 1d array
+  !  PROCEDURE:: reshape_sph_field_2d_ptr => reshape_sph_field_2d
+  !  !! Reallocates a 2d array
 
     PROCEDURE:: allocate_lorene_id_parts_memory
     !! Allocates memory for the [[particles]] member arrays
@@ -509,7 +510,7 @@ MODULE particles_id
                                   central_density, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
                                   npart_des, npart_out, stretch, &
-                                  thres, pvol, &
+                                  thres, pos, pvol, &
                                   get_density, validate_position )
     !! Places particles on a lattice containing a physical object
 
@@ -539,7 +540,9 @@ MODULE particles_id
       ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
       INTEGER,          INTENT( OUT )    :: npart_out
       !! Real, output particle number
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
+      !> Array soring the inal particle volumes
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pvol
       !! Array storing the final particle volumes
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
@@ -760,40 +763,40 @@ MODULE particles_id
     END SUBROUTINE place_particles_spherical_surfaces
 
 
-    MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
-                                            index_array )
-    !! Reallocates a 1d array
-
-      !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
-      !> New particle number on star 1
-      INTEGER,                        INTENT( IN ):: new_size1
-      !> New particle number on star 2
-      INTEGER,                        INTENT( IN ):: new_size2
-      !> Array to select elements to keep in the reshaped array
-      INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
-      !> 1D array to reshape
-      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: field
-
-    END SUBROUTINE reshape_sph_field_1d
-
-
-    MODULE SUBROUTINE reshape_sph_field_2d( THIS, field, new_size1, new_size2, &
-                                            index_array )
-    !! Reallocates a 2d array
-
-      !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
-      !> New particle number on star 1
-      INTEGER,                        INTENT( IN ):: new_size1
-      !> New particle number on star 2
-      INTEGER,                        INTENT( IN ):: new_size2
-      !> Array to select elements to keep in the reshaped array
-      INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
-      !> 2D array to reshape
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: field
-
-    END SUBROUTINE reshape_sph_field_2d
+!    MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
+!                                            index_array )
+!    !! Reallocates a 1d array
+!
+!      !> [[particles]] object which this PROCEDURE is a member of
+!      CLASS(particles), INTENT( IN OUT ):: THIS
+!      !> New particle number on star 1
+!      INTEGER,                        INTENT( IN ):: new_size1
+!      !> New particle number on star 2
+!      INTEGER,                        INTENT( IN ):: new_size2
+!      !> Array to select elements to keep in the reshaped array
+!      INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
+!      !> 1D array to reshape
+!      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: field
+!
+!    END SUBROUTINE reshape_sph_field_1d
+!
+!
+!    MODULE SUBROUTINE reshape_sph_field_2d( THIS, field, new_size1, new_size2, &
+!                                            index_array )
+!    !! Reallocates a 2d array
+!
+!      !> [[particles]] object which this PROCEDURE is a member of
+!      CLASS(particles), INTENT( IN OUT ):: THIS
+!      !> New particle number on star 1
+!      INTEGER,                        INTENT( IN ):: new_size1
+!      !> New particle number on star 2
+!      INTEGER,                        INTENT( IN ):: new_size2
+!      !> Array to select elements to keep in the reshaped array
+!      INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
+!      !> 2D array to reshape
+!      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: field
+!
+!    END SUBROUTINE reshape_sph_field_2d
 
 
     MODULE SUBROUTINE allocate_lorene_id_parts_memory( THIS )

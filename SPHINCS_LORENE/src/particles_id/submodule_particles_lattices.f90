@@ -39,7 +39,7 @@ SUBMODULE (particles_id) particles_lattices
     INTEGER:: i, j, k, sgn, nx, ny, nz, npart_half
     INTEGER:: npart_tmp
 
-    DOUBLE PRECISION:: dx, dy, dz
+    DOUBLE PRECISION:: dx, dy, dz, vol, vol_a
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim
     DOUBLE PRECISION:: thres_baryon_density
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: pos_tmp
@@ -61,7 +61,7 @@ SUBMODULE (particles_id) particles_lattices
     !-- Compute number of lattice points (for now, equal in each direction)
     !
     nx= CEILING(stretch*(6.0D0*npart_des/pi)**third)
-    IF( MOD( nz, 2 ) /= 0 ) nx= nx + 1
+    IF( MOD( nx, 2 ) /= 0 ) nx= nx + 1
     ny= nx
     nz= nx
 
@@ -113,8 +113,8 @@ SUBMODULE (particles_id) particles_lattices
     ! Allocating the memory for the array pos( 3, npart_tmp )
     ! Note that after determining npart, the array pos is reshaped into
     ! pos( 3, npart )
-    IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, npart_tmp ), STAT= ios, &
+    IF(.NOT.ALLOCATED( pos ))THEN
+      ALLOCATE( pos( 3, npart_tmp ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE" &
@@ -153,9 +153,6 @@ SUBMODULE (particles_id) particles_lattices
     PRINT *, " * Placing particles on the lattice..."
     PRINT *
 
-    THIS% npart= 0
-    THIS% npart1= 0
-    THIS% npart2= 0
     !
     !-- Choose the larger value for the boundary in z
     !
@@ -216,9 +213,9 @@ SUBMODULE (particles_id) particles_lattices
 
             npart_out= npart_out + 1
 
-            THIS% pos( 1, THIS% npart )= pos_tmp( 1, i, j, k )
-            THIS% pos( 2, THIS% npart )= pos_tmp( 2, i, j, k )
-            THIS% pos( 3, THIS% npart )= pos_tmp( 3, i, j, k )
+            pos( 1, npart_out )= pos_tmp( 1, i, j, k )
+            pos( 2, npart_out )= pos_tmp( 2, i, j, k )
+            pos( 3, npart_out )= pos_tmp( 3, i, j, k )
 
           ENDIF
 
@@ -240,14 +237,14 @@ SUBMODULE (particles_id) particles_lattices
     !
     particle_pos_z_mirror: DO k= 1, npart_half, 1
 
-      xtemp=   THIS% pos( 1, k )
-      ytemp=   THIS% pos( 2, k )
-      ztemp= - THIS% pos( 3, k )
+      xtemp=   pos( 1, k )
+      ytemp=   pos( 2, k )
+      ztemp= - pos( 3, k )
 
       npart_out= npart_out + 1
-      THIS% pos( 1, THIS% npart )= xtemp
-      THIS% pos( 2, THIS% npart )= ytemp
-      THIS% pos( 3, THIS% npart )= ztemp
+      pos( 1, npart_out )= xtemp
+      pos( 2, npart_out )= ytemp
+      pos( 3, npart_out )= ztemp
 
       !ENDIF
 
@@ -272,7 +269,7 @@ SUBMODULE (particles_id) particles_lattices
     ENDIF
 
     DO k= 1, npart_half, 1
-      IF( THIS% pos( 3, k ) /= - THIS% pos( 3, npart_half + k ) )THEN
+      IF( pos( 3, k ) /= - pos( 3, npart_half + k ) )THEN
         PRINT *
         PRINT *, "** ERROR: The lattice is not mirrored " &
                  // "by the xy plane."
@@ -301,21 +298,21 @@ SUBMODULE (particles_id) particles_lattices
       !        "...allocation error for array v_euler_parts_z" )
     ENDIF
 
-    THIS% vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
-    THIS% vol_a= THIS% vol/npart_tmp
+    vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
+    vol_a= vol/npart_tmp
 
-    pvol= THIS% vol_a
+    pvol= vol_a
 
     ! Consistency check for the particle volume
-    IF( ABS( THIS% vol_a - dx*dy*dz ) > 1.0D-9 )THEN
-      PRINT *, " * The particle volume vol_a=", THIS% vol_a, "Msun_geo^3"
+    IF( ABS( vol_a - dx*dy*dz ) > 1.0D-9 )THEN
+      PRINT *, " * The particle volume vol_a=", vol_a, "Msun_geo^3"
       PRINT *, " is not equal to dx*dy*dz=", dx*dy*dz, "Msun_geo^3."
       PRINT *
       STOP
     ENDIF
 
-    PRINT *, " * Total volume of the lattices=", THIS% vol, "Msun_geo^3"
-    PRINT *, " * Particle volume=", THIS% vol_a, "Msun_geo^3"
+    PRINT *, " * Total volume of the lattices=", vol, "Msun_geo^3"
+    PRINT *, " * Particle volume=", vol_a, "Msun_geo^3"
     PRINT *
 
     PRINT *, "** Subroutine place_particles_3D_lattice executed."
