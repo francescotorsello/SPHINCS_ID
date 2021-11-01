@@ -125,9 +125,21 @@ MODULE id_base
     !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
 
 
+    !PROCEDURE(derived_type_constructor_int), NOPASS, DEFERRED:: derived_type_constructor
+    !#
+
+
     !-------------------------------!
     !--  NON-DEFERRED PROCEDURES  --!
     !-------------------------------!
+
+
+    !PROCEDURE, NON_OVERRIDABLE:: sanity_check
+    !#
+
+
+    !PROCEDURE, NON_OVERRIDABLE:: initialize
+    !#
 
 
     PROCEDURE, NON_OVERRIDABLE:: get_total_spatial_extent
@@ -171,6 +183,16 @@ MODULE id_base
 
 
   ABSTRACT INTERFACE
+
+
+   ! FUNCTION derived_type_constructor_int() RESULT( derived_type )
+   ! !#
+   !
+   !   IMPORT:: idbase
+   !   CLASS(idbase), POINTER:: derived_type
+   !
+   ! END FUNCTION derived_type_constructor_int
+
 
     FUNCTION read_double_at_pos( THIS, x, y, z ) RESULT( res )
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION at a given

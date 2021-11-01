@@ -98,14 +98,16 @@ SUBMODULE (particles_id) particles_sph_variables
     ! compute_and_export_SPH_variables is called
     INTEGER, SAVE:: call_flag= 0
 
+    INTEGER, PARAMETER:: max_it_h= 1
+
     ! Spacetime indices \mu and \nu
-    INTEGER:: nus, mus, cnt1, a, i_matter!, cnt2
+    INTEGER:: nus, mus, cnt1, a, i_matter, itr2!, cnt2
 
     DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION:: det,sq_g, Theta_a!, &!nu_max1, nu_max2, &
                        !nu_tmp, nu_thres1, nu_thres2
 
-    LOGICAL:: few_ncand
+    LOGICAL:: few_ncand, good_h
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -398,7 +400,8 @@ SUBMODULE (particles_id) particles_sph_variables
                              "h, for particles on matter object", itr,"..."
 
         compute_h: DO itr= THIS% npart_i(i_matter-1) + 1, &
-                           THIS% npart_i(i_matter), 1
+                           THIS% npart_i(i_matter-1) + THIS% npart_i(i_matter),&
+                           1
 
           THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
           h(itr)= THIS% h(itr)
@@ -980,10 +983,50 @@ SUBMODULE (particles_id) particles_sph_variables
     PRINT *
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
-    CALL assign_h( ndes, &
-                   THIS% npart, &
-                   THIS% pos, THIS% h, &
-                   h )
+    DO itr2= 1, max_it_h, 1
+
+      good_h= .TRUE.
+
+      CALL assign_h( ndes, &
+                     THIS% npart, &
+                     THIS% pos, THIS% h, &
+                     h )
+
+      DO a= 1, THIS% npart, 1
+
+        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+
+          IF( a > THIS% npart/2 )THEN
+            DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
+              IF( h(itr) > 0.25D0 )THEN
+                h(a) = h(itr)
+                EXIT
+              ENDIF
+            ENDDO
+          ELSE
+            !h(a) = h(a - 1)
+            DO itr= a + 1, THIS% npart, 1
+              IF( h(itr) > 0.25D0 )THEN
+                h(a) = h(itr)
+                EXIT
+              ENDIF
+            ENDDO
+          ENDIF
+          !THIS% h(a)= 3.0D0*THIS% h(a)
+          !THIS% h= h
+          good_h= .FALSE.
+
+        ENDIF
+
+      ENDDO
+
+      IF( good_h )THEN
+        EXIT
+      ELSE
+        THIS% h= h
+      ENDIF
+
+    ENDDO
 
     PRINT *, " * Computing neighbours..."
     PRINT *
@@ -1032,29 +1075,65 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ENDDO
 
-    ! Update the member variables storing smoothing length and particle volume
-    THIS% h= h
-    THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
-
     !
     !-- Check that the smoothing length is acceptable
     !
-    check_h: DO itr= 1, THIS% npart, 1
+    check_h: DO a= 1, THIS% npart, 1
 
-      IF( ISNAN( THIS% h(itr) ) )THEN
-        PRINT *, "** ERROR! h(", itr, ") is a NaN"
-        PRINT *, "Stopping..."
-        PRINT *
-        STOP
+      IF( ISNAN( h(a) ) )THEN
+        PRINT *, "** ERROR! h(", a, ") is a NaN"
+        !PRINT *, "Stopping..."
+       ! PRINT *
+        !STOP
+        IF( a > THIS% npart/2 )THEN
+          DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
+            IF( h(itr) > 0.25D0 )THEN
+              h(a) = h(itr)
+              EXIT
+            ENDIF
+          ENDDO
+        ELSE
+          !h(a) = h(a - 1)
+          DO itr= a + 1, THIS% npart, 1
+            IF( h(itr) > 0.25D0 )THEN
+              h(a) = h(itr)
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+        !PRINT *, "** ERROR! h(", a, ")=", h(a)
+        !PRINT *
       ENDIF
-      IF( THIS% h(itr) <= 0.0D0 )THEN
-        PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
-        PRINT *, "Stopping..."
-        PRINT *
-        STOP
+      IF( h(a) <= 0.0D0 )THEN
+        PRINT *, "** ERROR! h(", a, ")=", h(a)
+        !PRINT *, "Stopping..."
+        !PRINT *
+        !STOP
+        IF( a > THIS% npart/2 )THEN
+          DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
+            IF( h(itr) > 0.25D0 )THEN
+              h(a) = h(itr)
+              EXIT
+            ENDIF
+          ENDDO
+        ELSE
+          !h(a) = h(a - 1)
+          DO itr= a + 1, THIS% npart, 1
+            IF( h(itr) > 0.25D0 )THEN
+              h(a) = h(itr)
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+        !PRINT *, "** ERROR! h(", a, ")=", h(a)
+        !PRINT *
       ENDIF
 
     ENDDO check_h
+
+    ! Update the member variables storing smoothing length and particle volume
+    THIS% h= h
+    THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
 
     !
     !-- Compute the proper baryon number density with kernel interpolation

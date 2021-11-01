@@ -24,6 +24,25 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
   CONTAINS
 
 
+ ! MODULE PROCEDURE construct_bnslorene2
+ !
+ !   !****************************************************
+ !   !
+ !   !# Constructs an object of TYPE [[bnslorene]]
+ !   !
+ !   !  FT
+ !   !
+ !   !****************************************************
+ !
+ !   IMPLICIT NONE
+ !
+ !   CHARACTER(LEN=10) :: resu_file
+ !
+ !   derived_type => construct_bnslorene( resu_file )
+ !
+ ! END PROCEDURE construct_bnslorene2
+
+
   !
   !-- Implementation of the constructor of the bns object
   !

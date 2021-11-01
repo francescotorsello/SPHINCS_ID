@@ -19,6 +19,7 @@ MODULE bns_lorene
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT, C_DOUBLE, C_CHAR, C_NULL_CHAR, &
                                          C_PTR, C_NULL_PTR, C_ASSOCIATED
   USE bns_base,                    ONLY: bnsbase
+  USE id_base,                     ONLY: idbase
   USE utility,                     ONLY: itr, ios, err_msg, test_status, &
                                          perc, creturn, compute_g4, &
                                          determinant_sym4x4_grid, show_progress
@@ -180,6 +181,8 @@ MODULE bns_lorene
     !  are negative
     PROCEDURE:: test_position => is_hydro_negative
 
+    !PROCEDURE, NOPASS:: derived_type_constructor => construct_bnslorene2
+
     !
     !-- Overloaded FUNCTION to access the fields as arrays and as values
     !
@@ -233,6 +236,14 @@ MODULE bns_lorene
   !-- Interfaces of the constructor and destructor of the TYPE bnslorene
   !
   INTERFACE
+
+   ! MODULE SUBROUTINE construct_bnslorene2( this )
+   ! !! Constructs a [[bnslorene]] object
+   !
+   !   TYPE(bnslorene), INTENT( IN OUT ):: this
+   !   !! Constructed [[bnslorene]] object
+   !
+   ! END SUBROUTINE construct_bnslorene2
 
     MODULE FUNCTION construct_bnslorene( resu_file ) RESULT( bns_obj )
     !! Constructs a [[bnslorene]] object

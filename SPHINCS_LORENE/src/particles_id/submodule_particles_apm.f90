@@ -582,9 +582,9 @@ SUBMODULE (particles_id) particles_apm
 
       DO a= 1, npart_all, 1
 
-        IF( ISNAN( h( a ) ) .OR. h( a ) <= 0.0D0 )THEN
+        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
 
-          h_guess= 3.0D0*h_guess
+          h_guess(a)= 3.0D0*h_guess(a)
           good_h= .FALSE.
           EXIT
 
