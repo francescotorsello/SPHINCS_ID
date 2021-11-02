@@ -1372,6 +1372,10 @@ SUBMODULE (particles_id) particles_constructor
     !
     matter_objects_loop: DO i_matter= 1, parts% n_matter, 1
 
+      ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
+                 npart_fin  => parts% npart_i(i_matter-1) +    &
+                               parts% npart_i(i_matter) )
+
       IF( apm_iterate(i_matter) )THEN
 
         IF(.NOT.ALLOCATED( parts% h ))THEN
@@ -1413,11 +1417,12 @@ SUBMODULE (particles_id) particles_constructor
         CALL parts% apm_timers(i_matter)% start_timer()
         CALL parts% perform_apm( &
                     import_density, get_nstar_p, &
-                    parts% pos(:,1:parts% npart_i(i_matter)), &
-                    parts% pvol(1:parts% npart_i(i_matter)), &
-                    parts% h(1:parts% npart_i(i_matter)), &
-                    parts% nu(1:parts% npart_i(i_matter)), &
-                    center(i_matter,1), barycenter(i_matter,1), parts% masses(i_matter), &
+                    parts% pos(:,npart_in:npart_fin), &
+                    parts% pvol(npart_in:npart_fin), &
+                    parts% h(npart_in:npart_fin), &
+                    parts% nu(npart_in:npart_fin), &
+                    center(i_matter,1), barycenter(i_matter,1), &
+                    parts% masses(i_matter), &
                     sizes(i_matter, 1), &
                     sizes(i_matter, 2), &
                     sizes(i_matter, 3), &
@@ -1518,6 +1523,8 @@ SUBMODULE (particles_id) particles_constructor
   !      PRINT *
   !
   !    ENDIF
+
+      END ASSOCIATE
 
     ENDDO matter_objects_loop
 

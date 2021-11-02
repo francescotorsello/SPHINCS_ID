@@ -478,8 +478,9 @@ PROGRAM sphincs_lorene_bns
     PRINT *, " * SPH:"
     CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
     CALL particles_dist( 1, 1 )% same_particle_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% apm1_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% apm2_timer% print_timer( 2 )
+    DO itr= 1, binaries( 1 )% get_n_matter(), 1
+      CALL particles_dist( 1, 1 )% apm_timers(itr)% print_timer( 2 )
+    ENDDO
     CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
     CALL particles_dist( 1, 1 )% sph_computer_timer% print_timer( 2 )
     PRINT *

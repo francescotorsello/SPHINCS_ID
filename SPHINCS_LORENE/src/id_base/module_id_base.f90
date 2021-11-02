@@ -166,22 +166,6 @@ MODULE id_base
   END TYPE idbase
 
 
-  INTERFACE idbase
-
-    PROCEDURE cons
-
-  END INTERFACE idbase
-
-
-!  INTERFACE
-!
-!    SUBROUTINE cons
-!
-!    END SUBROUTINE cons
-!
-!  END INTERFACE
-
-
   ABSTRACT INTERFACE
 
 
@@ -627,18 +611,6 @@ MODULE id_base
     END FUNCTION get_total_spatial_extent
 
   END INTERFACE
-
-
-  CONTAINS
-
-
-  SUBROUTINE cons
-
-    PRINT *, "I am the INTERFACE of idbase!"
-    PRINT *
-    STOP
-
-  END SUBROUTINE cons
 
 
 END MODULE id_base
