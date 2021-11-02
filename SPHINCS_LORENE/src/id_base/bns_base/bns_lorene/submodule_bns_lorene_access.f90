@@ -347,6 +347,8 @@ SUBMODULE (bns_lorene) bns_lorene_access
 
     IMPLICIT NONE
 
+    CALL THIS% check_i_matter(i_matter)
+
     IF( i_matter == 1 )THEN
 
       IF( THIS% eos1_loreneid == 1 )THEN
@@ -367,8 +369,8 @@ SUBMODULE (bns_lorene) bns_lorene_access
 
       ELSE
 
-        PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-                 " The EOS on star 1 is unknown! |lorene| EOS ID=", &
+        PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+                 " The EOS on star 1 is unknown! LORENE EOS ID=", &
                  THIS% eos1_loreneid
         STOP
 
@@ -394,8 +396,8 @@ SUBMODULE (bns_lorene) bns_lorene_access
 
       ELSE
 
-        PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-                 " The EOS on star 2 is unknown! |lorene| EOS ID=", &
+        PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+                 " The EOS on star 2 is unknown! LORENE EOS ID=", &
                  THIS% eos2_loreneid
         STOP
 
@@ -404,7 +406,6 @@ SUBMODULE (bns_lorene) bns_lorene_access
     ENDIF
 
   END PROCEDURE get_eos_parameters
-
 
 
 END SUBMODULE bns_lorene_access

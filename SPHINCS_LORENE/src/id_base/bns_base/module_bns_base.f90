@@ -622,6 +622,70 @@ MODULE bns_base
  !   END SUBROUTINE integrate_baryon_mass_density
 
 
+    !----------------------------!
+    !--  OVERRIDING FUNCTIONS  --!
+    !----------------------------!
+
+
+    MODULE FUNCTION get_mass( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      ! Result
+      DOUBLE PRECISION:: get_mass
+
+    END FUNCTION get_mass
+
+
+    MODULE FUNCTION get_radii( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose string is to return
+      DOUBLE PRECISION, DIMENSION(6):: get_radii
+
+    END FUNCTION get_radii
+
+    MODULE FUNCTION get_center( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(3):: get_center
+
+    END FUNCTION get_center
+
+
+    MODULE FUNCTION get_barycenter( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(3):: get_barycenter
+
+    END FUNCTION get_barycenter
+
+
+    MODULE FUNCTION get_eos( THIS, i_matter )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose string is to return
+      CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
+
+    END FUNCTION get_eos
+
+
+    !-----------------!
+    !--  FUNCTIONS  --!
+    !-----------------!
+
+
     MODULE FUNCTION get_gamma_1( THIS )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
@@ -693,17 +757,6 @@ MODULE bns_base
     END FUNCTION get_distance_com
 
 
-    MODULE FUNCTION get_mass( THIS, i_matter )
-
-      !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
-      INTEGER, INTENT( IN ):: i_matter
-      ! Result
-      DOUBLE PRECISION:: get_mass
-
-    END FUNCTION get_mass
-
-
     MODULE FUNCTION get_mass1( THIS )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
@@ -764,36 +817,6 @@ MODULE bns_base
     END FUNCTION get_angular_momentum
 
 
- !   MODULE FUNCTION get_bounding_box( THIS ) RESULT( box )
- !   !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
- !   !  physical system considered, and returns a 6-dimensional array
- !   !  containing the coordinates
- !   !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
- !   !  of a box **centered at the center of the object** and containing the
- !   !  system.
- !
- !     CLASS(bnsbase), INTENT( IN )  :: THIS
- !     !! Object of class [[bnsbase]] which this PROCEDURE is a member of
- !     DOUBLE PRECISION, DIMENSION(6):: box
- !     !# 6-dimensional array containing the coordinates
- !     !  \(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},
- !     !    z_{\rm min},z_{\rm max}\)
- !     !  of a box containing the physical system.
- !
- !   END FUNCTION get_bounding_box
-
-
-    MODULE FUNCTION get_radii( THIS, i_matter )
-
-      !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
-      INTEGER, INTENT( IN ):: i_matter
-      !! Index of the matter object whose string is to return
-      DOUBLE PRECISION, DIMENSION(6):: get_radii
-
-    END FUNCTION get_radii
-
-
     MODULE FUNCTION get_radius1_x_comp( THIS )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
@@ -832,28 +855,6 @@ MODULE bns_base
       DOUBLE PRECISION:: get_radius1_x_opp
 
     END FUNCTION get_radius1_x_opp
-
-
-    MODULE FUNCTION get_center( THIS, i_matter )
-
-      !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
-      INTEGER, INTENT( IN ):: i_matter
-      !! Index of the matter object whose parameter is to return
-      DOUBLE PRECISION, DIMENSION(3):: get_center
-
-    END FUNCTION get_center
-
-
-    MODULE FUNCTION get_barycenter( THIS, i_matter )
-
-      !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
-      INTEGER, INTENT( IN ):: i_matter
-      !! Index of the matter object whose parameter is to return
-      DOUBLE PRECISION, DIMENSION(3):: get_barycenter
-
-    END FUNCTION get_barycenter
 
 
     MODULE FUNCTION get_center1_x( THIS )
@@ -1054,17 +1055,6 @@ MODULE bns_base
       DOUBLE PRECISION:: get_pressure_center2
 
     END FUNCTION get_pressure_center2
-
-
-    MODULE FUNCTION get_eos( THIS, i_matter )
-
-      !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
-      INTEGER, INTENT( IN ):: i_matter
-      !! Index of the matter object whose string is to return
-      CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
-
-    END FUNCTION get_eos
 
 
     MODULE FUNCTION get_eos1( THIS )

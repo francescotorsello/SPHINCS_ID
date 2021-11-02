@@ -44,6 +44,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_constructor
 
     INTEGER, SAVE:: diffstar_counter= 1
 
+    CALL drs% set_n_matter(1)
+
     drs% drs_construction_timer= timer( "drs_construction_timer" )
 
     ! Construct |lorene| |etdiffrot| object

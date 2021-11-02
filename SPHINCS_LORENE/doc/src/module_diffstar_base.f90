@@ -80,6 +80,16 @@ MODULE diffstar_base
     !  by Eq. (43) of [Gourgoulhon and Bonazzola, Class. Quantum Grav. 11, 443 (1994)](https://iopscience.iop.org/article/10.1088/0264-9381/11/2/015?pageTitle=IOPscience){:target="_blank"}
     !  divided by the integral of the matter terms.
 
+    DOUBLE PRECISION, DIMENSION(3):: center
+    !# Array containing the centers of the stars
+    !  @todo add details
+
+    DOUBLE PRECISION, DIMENSION(3):: barycenter
+    !# Array containing the barycenters of the stars
+    !  @todo add details
+
+    DOUBLE PRECISION, DIMENSION(6):: radii
+
     DOUBLE PRECISION:: r_circ
     !# Circumferential radius
 
@@ -241,10 +251,16 @@ MODULE diffstar_base
     !--  FUNCTIONS  --!
     !-----------------!
 
+    PROCEDURE:: return_mass                 => get_mass
+    PROCEDURE:: return_center               => get_center
+    PROCEDURE:: return_barycenter           => get_barycenter
+    PROCEDURE:: return_eos_name             => get_eos
+    PROCEDURE:: return_spatial_extent       => get_radii
+
 
     PROCEDURE, PUBLIC:: get_omega_c
     !! Returns [[diffstarbase:omega_c]]
-    PROCEDURE, PUBLIC:: get_mass
+    !PROCEDURE, PUBLIC:: get_mass
     !! Returns [[diffstarbase:mass]]
     PROCEDURE, PUBLIC:: get_mass_grav
     !! Returns [[diffstarbase:mass_grav]]
@@ -296,7 +312,7 @@ MODULE diffstar_base
     !! Returns [[diffstarbase:specific_energy_center]]
     PROCEDURE, PUBLIC:: get_pressure_center
     !! Returns [[diffstarbase:pressure_center]]
-    PROCEDURE, PUBLIC:: get_eos
+    !PROCEDURE, PUBLIC:: get_eos
     !! Returns [[diffstarbase:eos]]
 
     !
@@ -389,6 +405,72 @@ MODULE diffstar_base
  !   END SUBROUTINE integrate_baryon_mass_density
 
 
+    !----------------------------!
+    !--  OVERRIDING FUNCTIONS  --!
+    !----------------------------!
+
+
+    MODULE FUNCTION get_mass( THIS, i_matter )
+    !! Returns [[diffstarbase:mass]]
+
+      !> [[diffstarbase]] object which this PROCEDURE is a member of
+      CLASS(diffstarbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      ! Result
+      DOUBLE PRECISION:: get_mass
+
+    END FUNCTION get_mass
+
+
+    MODULE FUNCTION get_center( THIS, i_matter )
+
+      !> [[diffstarbase]] object which this PROCEDURE is a member of
+      CLASS(diffstarbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(3):: get_center
+
+    END FUNCTION get_center
+
+
+    MODULE FUNCTION get_barycenter( THIS, i_matter )
+
+      !> [[diffstarbase]] object which this PROCEDURE is a member of
+      CLASS(diffstarbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(3):: get_barycenter
+
+    END FUNCTION get_barycenter
+
+
+    MODULE FUNCTION get_radii( THIS, i_matter )
+
+      !> [[diffstarbase]] object which this PROCEDURE is a member of
+      CLASS(diffstarbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose string is to return
+      DOUBLE PRECISION, DIMENSION(6):: get_radii
+
+    END FUNCTION get_radii
+
+
+    MODULE FUNCTION get_eos( THIS, i_matter )
+
+      !> [[diffstarbase]] object which this PROCEDURE is a member of
+      CLASS(diffstarbase), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose string is to return
+      CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
+
+    END FUNCTION get_eos
+
+
+    !-----------------!
+    !--  FUNCTIONS  --!
+    !-----------------!
+
+
     MODULE FUNCTION get_gamma( THIS )
 
       !> [[diffstarbase]] object which this PROCEDURE is a member of
@@ -418,17 +500,6 @@ MODULE diffstar_base
       DOUBLE PRECISION:: get_omega_c
 
     END FUNCTION get_omega_c
-
-
-    MODULE FUNCTION get_mass( THIS )
-    !! Returns [[diffstarbase:mass]]
-
-      !> [[diffstarbase]] object which this PROCEDURE is a member of
-      CLASS(diffstarbase), INTENT( IN ):: THIS
-      ! Result
-      DOUBLE PRECISION:: get_mass
-
-    END FUNCTION get_mass
 
 
     MODULE FUNCTION get_mass_grav( THIS )
@@ -679,16 +750,6 @@ MODULE diffstar_base
       DOUBLE PRECISION:: get_pressure_center
 
     END FUNCTION get_pressure_center
-
-
-    MODULE FUNCTION get_eos( THIS )
-
-      !> [[diffstarbase]] object which this PROCEDURE is a member of
-      CLASS(diffstarbase), INTENT( IN ):: THIS
-      ! Result
-      CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
-
-    END FUNCTION get_eos
 
 
     MODULE FUNCTION get_npeos( THIS )

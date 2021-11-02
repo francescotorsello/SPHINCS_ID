@@ -21,6 +21,106 @@ SUBMODULE (diffstar_base) diffstar_base_access
   CONTAINS
 
 
+  !----------------------------!
+  !--  OVERRIDING FUNCTIONS  --!
+  !----------------------------!
+
+
+  MODULE PROCEDURE get_mass
+
+    !************************************************
+    !
+    !# Returns the baryon mass of the DRS [\(M_\odot\)]
+    !
+    !  FT 2.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_mass= THIS% mass
+
+  END PROCEDURE get_mass
+
+
+  MODULE PROCEDURE get_radii
+
+    !************************************************
+    !
+    !# Returns the radii of the DRS [\(L_\odot\)]
+    !
+    !  FT 2.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_radii= THIS% radii(:)
+
+  END PROCEDURE get_radii
+
+
+  MODULE PROCEDURE get_center
+
+    !************************************************
+    !
+    !# Returns the center of the DRS [\(L_\odot\)]
+    !
+    !  FT 2.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_center= THIS% center(:)
+
+  END PROCEDURE get_center
+
+
+  MODULE PROCEDURE get_barycenter
+
+    !************************************************
+    !
+    !# Returns the barycenter of the DRS [\(L_\odot\)]
+    !
+    !  FT 2.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_barycenter= THIS% barycenter(:)
+
+  END PROCEDURE get_barycenter
+
+
+  MODULE PROCEDURE get_eos
+
+    !************************************************
+    !
+    !# Returns the |eos| name of the DRS
+    !
+    !  FT 2.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_eos= THIS% eos
+
+  END PROCEDURE get_eos
+
+
   !-----------------!
   !--  FUNCTIONS  --!
   !-----------------!
@@ -80,23 +180,6 @@ SUBMODULE (diffstar_base) diffstar_base_access
     get_omega_c= THIS% omega_c
 
   END PROCEDURE get_omega_c
-
-
-  MODULE PROCEDURE get_mass
-
-    !************************************************
-    !
-    !# Returns the baryon mass of the DRS [\(M_\odot\)]
-    !
-    !  FT 22.10.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    get_mass= THIS% mass
-
-  END PROCEDURE get_mass
 
 
   MODULE PROCEDURE get_mass_grav
@@ -544,23 +627,6 @@ SUBMODULE (diffstar_base) diffstar_base_access
     get_pressure_center= THIS% pressure_center
 
   END PROCEDURE get_pressure_center
-
-
-  MODULE PROCEDURE get_eos
-
-    !************************************************
-    !
-    !# Returns the name of the EOS for the DRS
-    !
-    !  FT 22.10.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    get_eos= THIS% eos
-
-  END PROCEDURE get_eos
 
 
   MODULE PROCEDURE get_npeos

@@ -158,6 +158,11 @@ MODULE id_base
     !  physical system
 
 
+    PROCEDURE, NON_OVERRIDABLE:: check_i_matter
+    !# Checks that the given index is between 1 and [[idbase:n_matter]],
+    !  included. If not, it stops the execution of the program.
+
+
     PROCEDURE:: integrate_baryon_mass_density
     !# Integrates the baryon mass density over a matter object, using spherical
     !  coordinates, and computes its radial profile inside the star
@@ -219,7 +224,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: THIS
+      CLASS(idbase), INTENT( IN OUT ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION:: res
@@ -232,7 +237,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: THIS
+      CLASS(idbase), INTENT( IN OUT ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: res
@@ -246,7 +251,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns an INTEGER
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: THIS
+      CLASS(idbase), INTENT( IN OUT ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       INTEGER:: res
@@ -260,7 +265,7 @@ MODULE id_base
     !  parametersf the |eos| for the matter objects
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: THIS
+      CLASS(idbase), INTENT( IN OUT ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
@@ -274,7 +279,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns a CHARACTER( LEN= : )
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: THIS
+      CLASS(idbase), INTENT( IN OUT ):: THIS
       !! [[idbase]] object which this PROCEDURE is a member of
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose string is to return
@@ -295,7 +300,7 @@ MODULE id_base
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN)     :: z
+      DOUBLE PRECISION, INTENT( IN )    :: z
       DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
       DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
       DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
@@ -440,8 +445,8 @@ MODULE id_base
 
 
     SUBROUTINE read_id_k_int( THIS, n, x, y, z,&
-                                         k_xx, k_xy, k_xz, &
-                                         k_yy, k_yz, k_zz )
+                              k_xx, k_xy, k_xz, &
+                              k_yy, k_yz, k_zz )
     !# INTERFACE or the SUBROUTINE reading the components of the extrinsic
     !  curvature
 
@@ -502,7 +507,7 @@ MODULE id_base
     !  system.
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN )   :: THIS
+      CLASS(idbase), INTENT( IN OUT )   :: THIS
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose string is to return
@@ -592,6 +597,18 @@ MODULE id_base
     END SUBROUTINE set_n_matter
 
 
+    MODULE SUBROUTINE check_i_matter( THIS, i_matter )
+    !# Checks that the given index `i_matter` is between 1 and
+    !  [[idbase:n_matter]], included. If not, it stops the execution of the
+    !  program.
+
+      CLASS(idbase), INTENT( IN ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Value to be checked
+
+    END SUBROUTINE check_i_matter
+
+
     MODULE FUNCTION get_total_spatial_extent( THIS ) RESULT( box )
     !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
     !  physical system considered, and returns a 6-dimensional array
@@ -600,7 +617,7 @@ MODULE id_base
     !  of a box **centered at the center of the object** and containing the
     !  system.
 
-      CLASS(idbase), INTENT( IN )   :: THIS
+      CLASS(idbase), INTENT( IN OUT )   :: THIS
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, DIMENSION(6):: box
       !# 6-dimensional array containing the coordinates

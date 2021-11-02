@@ -317,5 +317,46 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_access
   END PROCEDURE get_eos_loreneid
 
 
+  MODULE PROCEDURE get_eos_parameters
+
+    !**************************************************
+    !
+    !# Returns the |eos| parameters of the DRS
+    !
+    !  FT 2.11.2021
+    !
+    !**************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    IF( THIS% eos_loreneid == 1 )THEN
+
+      eos_params= [ DBLE(THIS% eos_loreneid), THIS% gamma, THIS% kappa ]
+
+    ELSEIF( THIS% eos_loreneid == 110 )THEN
+
+      eos_params= [ DBLE(THIS% eos_loreneid), DBLE(THIS% npeos), &
+            THIS% gamma0, THIS% gamma1, THIS% gamma2, THIS% gamma3, &
+            THIS% kappa0, THIS% kappa1, THIS% kappa2, THIS% kappa3, &
+            THIS% logP1, &
+            THIS% logRho0, THIS% logRho1, THIS% logRho2 ]
+
+    ELSEIF( THIS% eos_loreneid == 17 .OR. THIS% eos_loreneid == 20 )THEN
+
+      eos_params= [ DBLE(THIS% eos_loreneid) ]
+
+    ELSE
+
+      PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+               " The EOS on the DRS is unknown! LORENE EOS ID=", &
+               THIS% eos_loreneid
+      STOP
+
+    ENDIF
+
+  END PROCEDURE get_eos_parameters
+
 
 END SUBMODULE diffstar_lorene_access

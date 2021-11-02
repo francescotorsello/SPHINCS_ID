@@ -21,6 +21,112 @@ SUBMODULE (bns_base) bns_base_access
   CONTAINS
 
 
+  !----------------------------!
+  !--  OVERRIDING FUNCTIONS  --!
+  !----------------------------!
+
+
+  MODULE PROCEDURE get_mass
+
+    !************************************************
+    !
+    !# Returns the baryon mass of NS `i_matter`-th star
+    !  [\(M_\odot\)]
+    !
+    !  FT 27.10.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_mass= THIS% mass(i_matter)
+
+  END PROCEDURE get_mass
+
+
+  MODULE PROCEDURE get_radii
+
+    !************************************************
+    !
+    !# Returns the radii of the `i_matter`-th star
+    !  [\(L_\odot\)]
+    !
+    !  FT 27.10.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_radii= THIS% radii(i_matter,:)
+
+  END PROCEDURE get_radii
+
+
+  MODULE PROCEDURE get_center
+
+    !************************************************
+    !
+    !# Returns the center of the `i_matter`-th star
+    !  [\(L_\odot\)]
+    !
+    !  FT 27.10.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_center= THIS% center(i_matter,:)
+
+  END PROCEDURE get_center
+
+
+  MODULE PROCEDURE get_barycenter
+
+    !************************************************
+    !
+    !# Returns the barycenter of the `i_matter`-th star
+    !  [\(L_\odot\)]
+    !
+    !  FT 27.10.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    get_barycenter= THIS% barycenter(i_matter,:)
+
+  END PROCEDURE get_barycenter
+
+
+  MODULE PROCEDURE get_eos
+
+    !************************************************
+    !
+    !# Returns the |eos| name of the `i_matter`-th star
+    !  [\(L_\odot\)]
+    !
+    !  FT 27.10.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL THIS% check_i_matter(i_matter)
+
+    IF( i_matter == 1 ) get_eos= THIS% eos1
+    IF( i_matter == 2 ) get_eos= THIS% eos2
+
+  END PROCEDURE get_eos
+
+
   !-----------------!
   !--  FUNCTIONS  --!
   !-----------------!
@@ -154,24 +260,6 @@ SUBMODULE (bns_base) bns_base_access
   END PROCEDURE get_distance_com
 
 
-  MODULE PROCEDURE get_mass
-
-    !************************************************
-    !
-    !# Returns the baryon mass of NS `i_matter`-th star
-    !  [\(M_\odot\)]
-    !
-    !  FT 27.10.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    get_mass= THIS% mass(i_matter)
-
-  END PROCEDURE get_mass
-
-
   MODULE PROCEDURE get_mass1
 
     !************************************************
@@ -274,24 +362,6 @@ SUBMODULE (bns_base) bns_base_access
   END PROCEDURE get_angular_momentum
 
 
-  MODULE PROCEDURE get_radii
-
-    !************************************************
-    !
-    !# Returns the radii of the `i_matter`-th star
-    !  [\(L_\odot\)]
-    !
-    !  FT 27.10.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    get_radii= THIS% radii(i_matter,:)
-
-  END PROCEDURE get_radii
-
-
   MODULE PROCEDURE get_radius1_x_comp
 
     !************************************************
@@ -360,84 +430,6 @@ SUBMODULE (bns_base) bns_base_access
     get_radius1_x_opp= THIS% radius1_x_opp
 
   END PROCEDURE get_radius1_x_opp
-
-
-  MODULE PROCEDURE get_center
-
-    !************************************************
-    !
-    !# Returns the center of the `i_matter`-th star
-    !  [\(L_\odot\)]
-    !
-    !  FT 27.10.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    get_center= THIS% center(i_matter,:)
-
-  END PROCEDURE get_center
-
-
- ! MODULE PROCEDURE get_bounding_box
- !
- !   !************************************************
- !   !
- !   !# Return the coordinates
- !   !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
- !   !  of a box containing the entire physical system
- !   !
- !   !  FT 28.10.2021
- !   !
- !   !************************************************
- !
- !   IMPLICIT NONE
- !
- !   INTEGER:: i_matter
- !   DOUBLE PRECISION, DIMENSION(3):: center_matter
- !   DOUBLE PRECISION, DIMENSION(6):: size_matter
- !
- !   box(1)=   HUGE(1.0D0)
- !   box(3)=   HUGE(1.0D0)
- !   box(5)=   HUGE(1.0D0)
- !   box(2)= - HUGE(1.0D0)
- !   box(4)= - HUGE(1.0D0)
- !   box(6)= - HUGE(1.0D0)
- !
- !   DO i_matter= 1, 2, 1
- !
- !     size_matter  = THIS% return_spatial_extent( i_matter )
- !     center_matter= THIS% return_center( i_matter )
- !
- !     IF( size_matter(1) < box(1) ) box(1) = center_matter(1) - size_matter(1)
- !     IF( size_matter(2) > box(2) ) box(2) = center_matter(1) + size_matter(2)
- !     IF( size_matter(3) < box(3) ) box(3) = center_matter(2) - size_matter(3)
- !     IF( size_matter(4) > box(4) ) box(4) = center_matter(2) + size_matter(4)
- !     IF( size_matter(5) < box(5) ) box(5) = center_matter(3) - size_matter(5)
- !     IF( size_matter(6) > box(6) ) box(6) = center_matter(3) + size_matter(6)
- !
- !   ENDDO
- !
- ! END PROCEDURE get_bounding_box
-
-
-  MODULE PROCEDURE get_barycenter
-
-    !************************************************
-    !
-    !# Returns the barycenter of the `i_matter`-th star
-    !  [\(L_\odot\)]
-    !
-    !  FT 27.10.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    get_barycenter= THIS% barycenter(i_matter,:)
-
-  END PROCEDURE get_barycenter
 
 
   MODULE PROCEDURE get_center1_x
@@ -786,25 +778,6 @@ SUBMODULE (bns_base) bns_base_access
     get_pressure_center2= THIS% pressure_center2
 
   END PROCEDURE get_pressure_center2
-
-
-  MODULE PROCEDURE get_eos
-
-    !************************************************
-    !
-    !# Returns the |eos| name of the `i_matter`-th star
-    !  [\(L_\odot\)]
-    !
-    !  FT 27.10.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    IF( i_matter == 1 ) get_eos= THIS% eos1
-    IF( i_matter == 2 ) get_eos= THIS% eos2
-
-  END PROCEDURE get_eos
 
 
   MODULE PROCEDURE get_eos1

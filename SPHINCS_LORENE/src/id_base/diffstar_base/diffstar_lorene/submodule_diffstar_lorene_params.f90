@@ -51,7 +51,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_params
 
     PRINT *, "** Executing the import_diffstar_params subroutine..."
 
-    CALL get_diffstar_params( THIS% diffstar_ptr, &
+    CALL get_diffstar_params( THIS% diffstar_ptr,                   &
                               THIS% omega_c,                        &
                               THIS% mass,                           &
                               THIS% mass_grav,                      &

@@ -22,7 +22,7 @@ MODULE particles_id
 
 
   TYPE eos
-  !! Data structure representingan |eos|
+  !! Data structure representing an |eos|
     CHARACTER( LEN= : ), ALLOCATABLE:: eos_name
     !! The |eos| name
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: eos_parameters

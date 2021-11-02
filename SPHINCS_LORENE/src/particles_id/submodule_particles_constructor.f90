@@ -1404,9 +1404,9 @@ SUBMODULE (particles_id) particles_constructor
         PRINT *, "** Placing particles on star 1 using the APM..."
         PRINT *
 
-        IF( itr <= 9 ) WRITE( str_i, '(I1)' ), i_matter
-        IF( itr >= 10 .AND. parts% n_matter <= 99 ) WRITE( str_i, '(I2)' ), i_matter
-        IF( itr >= 100 .AND. parts% n_matter <= 999 ) &
+        IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
+        IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) WRITE( str_i, '(I2)' ), i_matter
+        IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
                                                  WRITE( str_i, '(I3)' ), i_matter
 
         filename_apm_pos_id = "apm_pos_id"//TRIM(str_i)//".dat"

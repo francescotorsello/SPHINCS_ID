@@ -68,9 +68,10 @@ filenames(1)=!"apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"DD2-SF-RDF1.8-wl_1.2-2_45km_1e-9.bin"
              !"DD2-SF-RDF1.8-wl_1.2-2_45km_linint.bin"
              !"DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr.bin"
-             "DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr-new.bin"
+             !"DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr-new.bin"
              !"DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
              !"DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
+             "apr4_diffstar.bin"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!

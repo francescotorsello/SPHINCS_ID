@@ -154,7 +154,7 @@ MODULE diffstar_lorene
     PROCEDURE:: import_id_int
     !! Stores the ID in the [[diffstarlorene]] member arrays
 
-    PROCEDURE:: read_id_ext       => import_id_full
+    PROCEDURE:: read_id_full      => import_id_full
     PROCEDURE:: read_id_spacetime => import_id_spacetime
     PROCEDURE:: read_id_particles => import_id_particles
     PROCEDURE:: read_id_hydro     => import_id_hydro
@@ -193,6 +193,8 @@ MODULE diffstar_lorene
 
     PROCEDURE:: get_eos_id => get_eos_loreneid
     !! Returns the |lorene| identifier for the EOS
+
+    PROCEDURE:: return_eos_parameters => get_eos_parameters
 
     PROCEDURE, PUBLIC:: get_eos_loreneid
     !! Returns [[diffstarlorene:eos_loreneid]]
@@ -600,6 +602,18 @@ MODULE diffstar_lorene
       INTEGER:: get_eos_loreneid
 
     END FUNCTION get_eos_loreneid
+
+
+    MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
+
+      !> [[diffstarlorene]] object which this PROCEDURE is a member of
+      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object whose parameter is to return
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
+      !# Array containing the parameters of the |eos| for the DRS
+
+    END SUBROUTINE get_eos_parameters
 
 
     !MODULE FUNCTION get_diffstar_ptr( THIS )

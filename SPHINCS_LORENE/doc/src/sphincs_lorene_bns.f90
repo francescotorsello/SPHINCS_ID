@@ -78,6 +78,9 @@ PROGRAM sphincs_lorene_bns
   ! Declaration of the allocatable array storing the bns objects,
   ! containing the LORENE ID for different BNS
   TYPE( bnslorene ),       DIMENSION(:),   ALLOCATABLE:: binaries
+  ! Declaration of the allocatable array storing the bns objects,
+  ! containing the LORENE ID for different BNS
+  TYPE( diffstarlorene ),       DIMENSION(:),   ALLOCATABLE:: diffrotstars
   ! Declaration of the allocatable array storing the particles objects,
   ! containing the particle distributions for each bns object.
   ! Multiple particle objects can contain different particle distributions
@@ -201,19 +204,30 @@ PROGRAM sphincs_lorene_bns
 
   ! Allocate needed memory
   ALLOCATE( binaries      ( n_bns ) )
+  ALLOCATE( diffrotstars  ( n_bns ) )
   ALLOCATE( particles_dist( n_bns, max_n_parts ) )
   ALLOCATE( bssn_forms    ( n_bns ) )
 
   !
   !-- Construct the LORENE ID from the LORENE binary files
   !
-  build_bns_loop: DO itr= 1, n_bns, 1
-    binaries( itr )= bnslorene( TRIM(common_path)//TRIM(filenames( itr )) )
+ ! build_bns_loop: DO itr= 1, n_bns, 1
+ !   binaries( itr )= bnslorene( TRIM(common_path)//TRIM(filenames( itr )) )
+ !   ! Set the variables to decide on using the geodesic gauge or not
+ !   ! (lapse=1, shift=0)
+ !   binaries( itr )% one_lapse = one_lapse
+ !   binaries( itr )% zero_shift= zero_shift
+ ! ENDDO build_bns_loop
+
+  build_drs_loop: DO itr= 1, n_bns, 1
+    diffrotstars( itr )= diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
     ! Set the variables to decide on using the geodesic gauge or not
     ! (lapse=1, shift=0)
-    binaries( itr )% one_lapse = one_lapse
-    binaries( itr )% zero_shift= zero_shift
-  ENDDO build_bns_loop
+    diffrotstars( itr )% one_lapse = one_lapse
+    diffrotstars( itr )% zero_shift= zero_shift
+  ENDDO build_drs_loop
+
+  STOP
 
   IF( run_sph )THEN
 

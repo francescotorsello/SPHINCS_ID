@@ -16,14 +16,15 @@ MODULE sphincs_lorene
     !**********************************************
 
 
-    USE utility,        ONLY: date, time, zone, values, run_id, itr, itr3, &
-                              itr4, ios, err_msg, file_exists, cnt, &
-                              test_status, show_progress, end_time
-    USE timing,         ONLY: timer
-    USE bns_lorene,     ONLY: bnslorene
-    USE particles_id,   ONLY: particles
-    USE formul_3p1_id,  ONLY: formul_3p1
-    USE formul_bssn_id, ONLY: bssn_id
+    USE utility,         ONLY: date, time, zone, values, run_id, itr, itr3, &
+                               itr4, ios, err_msg, file_exists, cnt, &
+                               test_status, show_progress, end_time
+    USE timing,          ONLY: timer
+    USE bns_lorene,      ONLY: bnslorene
+    USE diffstar_lorene, ONLY: diffstarlorene
+    USE particles_id,    ONLY: particles
+    USE formul_3p1_id,   ONLY: formul_3p1
+    USE formul_bssn_id,  ONLY: bssn_id
 
 
     IMPLICIT NONE

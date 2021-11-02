@@ -55,6 +55,44 @@ SUBMODULE (id_base) id_base_access
   END PROCEDURE get_n_matter
 
 
+  MODULE PROCEDURE check_i_matter
+
+    !************************************************
+    !
+    !# Checks that the given index `i_matter` is
+    !  between 1 and [[idbase:n_matter]], included.
+    !  If not, it stops the execution of the program.
+    !
+    !  FT 2.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    IF( i_matter < 1 )THEN
+
+      PRINT *, "** ERROR! The index of the matter object is lower than 1. "
+      PRINT *, "   It should be between 1 and n_matter= ", THIS% n_matter
+      PRINT *, "   The index is ", i_matter
+      PRINT *, "   Stopping..."
+      PRINT *
+      STOP
+
+    ELSEIF( i_matter > THIS% n_matter )THEN
+
+      PRINT *, "** ERROR! The index of the matter object is larger than ", &
+               THIS% n_matter
+      PRINT *, "   It should be between 1 and n_matter= ", THIS% n_matter
+      PRINT *, "   The index is ", i_matter
+      PRINT *, "   Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+  END PROCEDURE check_i_matter
+
+
   MODULE PROCEDURE get_total_spatial_extent
 
     !************************************************
