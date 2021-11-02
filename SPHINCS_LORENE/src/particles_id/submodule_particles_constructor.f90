@@ -277,7 +277,7 @@ SUBMODULE (particles_id) particles_constructor
     parts% randomize_theta    = randomize_theta
     parts% randomize_r        = randomize_r
     ! APM parameters
-    ALLOCATE( parts% apm_iterate( parts% n_matter) )
+    ALLOCATE( parts% apm_iterate( parts% n_matter ) )
     parts% apm_iterate   = apm_iterate
     parts% read_nu       = read_nu
 

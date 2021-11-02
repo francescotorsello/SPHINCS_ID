@@ -227,7 +227,7 @@ PROGRAM sphincs_lorene_bns
     diffrotstars( itr )% zero_shift= zero_shift
   ENDDO build_drs_loop
 
-  STOP
+  !STOP
 
   IF( run_sph )THEN
 
@@ -247,12 +247,14 @@ PROGRAM sphincs_lorene_bns
           PRINT *, "===================================================" &
                    // "==============="
           PRINT *
-          particles_dist( itr3, itr4 )= particles( binaries( itr3 ), &
+          particles_dist( itr3, itr4 )= particles( diffrotstars( itr3 ), &
                                                    placer( itr3, itr4 ) )
 
         ENDIF
       ENDDO part_distribution_loop
     ENDDO place_hydro_id_loops
+
+    !STOP
 
     compute_export_sph_loops: DO itr3= 1, n_bns, 1
       part_distribution_loop2: DO itr4= 1, max_n_parts, 1

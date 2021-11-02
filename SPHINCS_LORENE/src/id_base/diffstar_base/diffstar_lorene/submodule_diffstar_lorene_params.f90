@@ -49,6 +49,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_params
 
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_tmp_c
 
+    PRINT *
     PRINT *, "** Executing the import_diffstar_params subroutine..."
 
     CALL get_diffstar_params( THIS% diffstar_ptr,                   &
@@ -82,8 +83,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_params
                               THIS% redshift_eqf,                   &
                               THIS% redshift_eqb,                   &
                               THIS% redshift_pole,                  &
-                              THIS% eos,                            &
-                              THIS% eos_loreneid,                         &
+                              eos_tmp_c,                            &
+                              THIS% eos_loreneid,                   &
                               THIS% gamma,                          &
                               THIS% kappa,                          &
                               THIS% npeos,                          &
@@ -97,7 +98,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_params
                               THIS% kappa3,                         &
                               THIS% logP1,                          &
                               THIS% logRho0,                        &
-                              THIS% logRho1 )
+                              THIS% logRho1,                        &
+                              THIS% logRho2 )
 
     ! Convert distances from |lorene| units (km) to SPHINCS units (Msun_geo)
     ! See MODULE constants for the definition of Msun_geo
@@ -111,6 +113,14 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_params
     THIS% r_pole      = THIS% r_pole/Msun_geo
     THIS% r_isco      = THIS% r_isco/Msun_geo
     THIS% surface_area= THIS% surface_area/(Msun_geo**2.0D0)
+
+    THIS% radii(:)= [THIS% r_eq_pi, THIS% r_eq, &
+                     THIS% r_eq_pi2, THIS% r_eq_pi2, &
+                     THIS% r_pole, THIS% r_pole]
+
+    THIS% center(:)= [0.0D0, 0.0D0, 0.0D0]
+
+    THIS% barycenter(:)= [0.0D0, 0.0D0, 0.0D0]
 
     ! Convert hydro quantities from |lorene| units to SPHINCS units
     THIS% nbar_center           = THIS% nbar_center*(MSun_geo*km2m)**3
@@ -140,7 +150,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_params
     ELSE
 
       PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-               " The equation of state is unknown! |lorene| EOS IDs=", &
+               " The equation of state is unknown! LORENE EOS IDs=", &
                THIS% eos_loreneid, ", ", THIS% eos_loreneid
       STOP
 

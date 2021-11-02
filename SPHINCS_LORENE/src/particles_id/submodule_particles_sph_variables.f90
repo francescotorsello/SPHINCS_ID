@@ -737,44 +737,47 @@ SUBMODULE (particles_id) particles_sph_variables
         THIS% nbar_tot= THIS% nbar_tot + THIS% nbar_i(i_matter)
 
         equal_mass_binary: &
-        IF( i_matter == 1 .AND. THIS% n_matter == 2 .AND. &
-            ABS(THIS% mass_ratios(1) - THIS% mass_ratios(2)) &
+        IF( i_matter == 1 .AND. THIS% n_matter == 2 )THEN
+
+          IF( ABS(THIS% mass_ratios(1) - THIS% mass_ratios(2)) &
             /THIS% mass_ratios(2) <= 0.005 .AND. THIS% reflect_particles_x .AND. &
             THIS% distribution_id /= 1 )THEN
 
-          ! Consistency check
-          IF( THIS% npart_i(i_matter) +      &
-          THIS% npart_i(i_matter+1) /= THIS% npart )THEN
-            PRINT *, "** ERROR! npart_next /= THIS% npart! "
-            PRINT *, "   npart_next=", THIS% npart_i(i_matter) +      &
-            THIS% npart_i(i_matter+1)
-            PRINT *, "   THIS% npart=", THIS% npart
-            PRINT *, "   Stopping..."
-            PRINT *
-            STOP
+            ! Consistency check
+            IF( THIS% npart_i(i_matter) +      &
+            THIS% npart_i(i_matter+1) /= THIS% npart )THEN
+              PRINT *, "** ERROR! npart_next /= THIS% npart! "
+              PRINT *, "   npart_next=", THIS% npart_i(i_matter) +      &
+              THIS% npart_i(i_matter+1)
+              PRINT *, "   THIS% npart=", THIS% npart
+              PRINT *, "   Stopping..."
+              PRINT *
+              STOP
+            ENDIF
+
+            nu( npart_fin + 1:THIS% npart_i(i_matter) +      &
+            THIS% npart_i(i_matter+1) )= nu( npart_in : npart_fin )
+            THIS% nu( npart_fin + 1:THIS% npart_i(i_matter) +      &
+            THIS% npart_i(i_matter+1) )= nu( npart_in : npart_fin )
+            THIS% nbar_i(i_matter + 1)= THIS% nbar_i(i_matter)
+
+            THIS% nbar_tot= THIS% nbar_tot + THIS% nbar_i(i_matter + 1)
+
+            ! Consistency check
+            IF( THIS% nbar_tot /= 2*THIS% nbar_i(i_matter + 1) )THEN
+              PRINT *, "** ERROR! THIS% nbar_tot /= 2*THIS% nbar(i_matter + 1) ",&
+                       "   when reflecting particles or a binary system"
+              PRINT *, "   THIS% nbar_tot=", THIS% nbar_tot
+              PRINT *, "   2*THIS% nbar(", i_matter + 1, ")=", &
+                           2*THIS% nbar_i(i_matter + 1)
+              PRINT *, "   Stopping..."
+              PRINT *
+              STOP
+            ENDIF
+
+            EXIT
+
           ENDIF
-
-          nu( npart_fin + 1:THIS% npart_i(i_matter) +      &
-          THIS% npart_i(i_matter+1) )= nu( npart_in : npart_fin )
-          THIS% nu( npart_fin + 1:THIS% npart_i(i_matter) +      &
-          THIS% npart_i(i_matter+1) )= nu( npart_in : npart_fin )
-          THIS% nbar_i(i_matter + 1)= THIS% nbar_i(i_matter)
-
-          THIS% nbar_tot= THIS% nbar_tot + THIS% nbar_i(i_matter + 1)
-
-          ! Consistency check
-          IF( THIS% nbar_tot /= 2*THIS% nbar_i(i_matter + 1) )THEN
-            PRINT *, "** ERROR! THIS% nbar_tot /= 2*THIS% nbar(i_matter + 1) ",&
-                     "   when reflecting particles or a binary system"
-            PRINT *, "   THIS% nbar_tot=", THIS% nbar_tot
-            PRINT *, "   2*THIS% nbar(", i_matter + 1, ")=", &
-                         2*THIS% nbar_i(i_matter + 1)
-            PRINT *, "   Stopping..."
-            PRINT *
-            STOP
-          ENDIF
-
-          EXIT
 
         ENDIF equal_mass_binary
 

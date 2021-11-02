@@ -1091,7 +1091,8 @@ MODULE diffstar_lorene
                                     kappa3,                         &
                                     logP1,                          &
                                     logRho0,                        &
-                                    logRho1 )                       &
+                                    logRho1,                        &
+                                    logRho2 )                      &
       BIND(C, NAME= "get_rotdiff_params")
 
       !**********************************************
@@ -1157,6 +1158,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: logP1
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho0
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho1
+      REAL(C_DOUBLE), INTENT(OUT)       :: logRho2
 
     END SUBROUTINE get_diffstar_params
 

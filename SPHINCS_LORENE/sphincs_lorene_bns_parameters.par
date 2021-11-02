@@ -76,7 +76,7 @@ filenames(1)=!"apr4_1.35-1.35_42km-hr-109outlay.bin"
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.TRUE.
+run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -88,7 +88,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=0                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: Single lattice around stars
                                   ! 2: Two lattices, one around each star
