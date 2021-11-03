@@ -27,6 +27,7 @@ linkedin: https://www.linkedin.com/in/francescotorsello
 alias: sphincslorene = \(\texttt{SPHINCS_LORENE}\)
        lorene = \(\texttt{LORENE}\)
        sphincsbssn = \(\texttt{SPHINCS_BSSN}\)
+       sphincs = \(\texttt{SPHINCS}\)
        fuka = \(\texttt{FUKA}\)
        binns = \(\texttt{Bin_NS}\)
        etrotdiff = \(\texttt{Et_rot_diff}\)

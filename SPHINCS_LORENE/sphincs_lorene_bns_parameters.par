@@ -3,6 +3,17 @@
 ! gfortran requires the assignment to be on the same line, ifort does not !
 !-------------------------------------------------------------------------!
 
+!------------------------------------------------------------!
+! Type of physical system                                    !
+!                                                            !
+! BNS: Binary system of Neutron Stars                        !
+! DRS: Differentially Rotating Star                          !
+!                                                            !
+! N.B. CHECK THAT THE FILE CONTAINING THE ID, CHOSEN BELOW,  !
+!      IS CONSISTENT WITH THE NAME SPECIFIED HERE!           !
+!------------------------------------------------------------!
+system= !"BNS"
+        "DRS"
 !----------------------------------------------------------------!
 ! Parameters to specify the number of binary systems of neutron  !
 ! stars, the paths to the LORENE binary files containing the     !
@@ -75,8 +86,8 @@ filenames(1)=!"apr4_1.35-1.35_42km-hr-109outlay.bin"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_sph=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -88,7 +99,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=2                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object
@@ -106,14 +117,14 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping
                                    ! it to the grid
-export_constraints=.TRUE.         ! Export constraints and stress-energy tensor
+export_constraints=.FALSE.         ! Export constraints and stress-energy tensor
                                    ! to a formatted file
-export_constraints_details=.TRUE. ! Write a formatted file whose rows contain
+export_constraints_details=.FALSE. ! Write a formatted file whose rows contain
                                    ! the points at which the constraints
                                    ! have values within (-oo,1D-7], [1D-7,1D-6],
                                    ! [1D-6,1D-5], [1D-5,1D-4], [1D-4,1D-3],

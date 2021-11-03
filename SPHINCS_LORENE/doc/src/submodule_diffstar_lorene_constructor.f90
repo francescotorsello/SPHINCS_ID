@@ -46,7 +46,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_constructor
 
     CALL drs% set_n_matter(1)
 
-    drs% drs_construction_timer= timer( "drs_construction_timer" )
+    drs% construction_timer= timer( "drs_construction_timer" )
 
     ! Construct |lorene| |etdiffrot| object
     IF( PRESENT( resu_file ) )THEN
@@ -63,8 +63,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_constructor
     diffstar_counter= diffstar_counter + 1
 
     ! Do not use the geodesic gauge by default
-    drs% one_lapse = .FALSE.
-    drs% zero_shift= .FALSE.
+    CALL drs% set_one_lapse ( .FALSE. )
+    CALL drs% set_zero_shift( .FALSE. )
 
 
   END PROCEDURE construct_diffstarlorene
@@ -130,9 +130,9 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_constructor
 
       IF( exist )THEN
 
-        CALL THIS% drs_construction_timer% start_timer()
+        CALL THIS% construction_timer% start_timer()
         THIS% diffstar_ptr = construct_etdiffrot( resu_file//C_NULL_CHAR )
-        CALL THIS% drs_construction_timer% stop_timer()
+        CALL THIS% construction_timer% stop_timer()
 
       ELSE
 
@@ -146,9 +146,9 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_constructor
     ELSE
 
       default_case= "read_it"
-      CALL THIS% drs_construction_timer% start_timer()
+      CALL THIS% construction_timer% start_timer()
       THIS% diffstar_ptr = construct_etdiffrot( default_case//C_NULL_CHAR )
-      CALL THIS% drs_construction_timer% stop_timer()
+      CALL THIS% construction_timer% stop_timer()
 
     ENDIF
 

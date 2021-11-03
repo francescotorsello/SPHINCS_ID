@@ -121,12 +121,6 @@ MODULE bns_lorene
     !      See the last part of the PROGRAM in setup_lorene_id.f90, for example.
     TYPE(C_PTR):: bns_ptr
 
-    !> Logical variables to set the geodesic gauge (lapse=1, shift=0)
-    LOGICAL, PUBLIC:: one_lapse, zero_shift
-
-    !> Timer that times the construction of the |lorene| |binns| object
-    TYPE(timer), PUBLIC:: binary_construction_timer
-
 
     CONTAINS
 

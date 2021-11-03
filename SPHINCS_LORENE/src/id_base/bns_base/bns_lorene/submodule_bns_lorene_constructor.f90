@@ -64,7 +64,7 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
 
     CALL bns_obj% set_n_matter(2)
 
-    bns_obj% binary_construction_timer= timer( "binary_construction_timer" )
+    bns_obj% construction_timer= timer( "binary_construction_timer" )
 
     ! Construct |lorene| |binns| object
     IF( PRESENT( resu_file ) )THEN
@@ -81,8 +81,8 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
     bns_counter= bns_counter + 1
 
     ! Do not use the geodesic gauge by default
-    bns_obj% one_lapse = .FALSE.
-    bns_obj% zero_shift= .FALSE.
+    CALL bns_obj% set_one_lapse ( .FALSE. )
+    CALL bns_obj% set_zero_shift( .FALSE. )
 
  !   bns_obj% total_spatial_extent(1)= bns_obj% get_center1_x() &
  !                               - bns_obj% get_radius1_x_opp()
@@ -164,9 +164,9 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
 
       IF( exist )THEN
 
-        CALL THIS% binary_construction_timer% start_timer()
+        CALL THIS% construction_timer% start_timer()
         THIS% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
-        CALL THIS% binary_construction_timer% stop_timer()
+        CALL THIS% construction_timer% stop_timer()
 
       ELSE
 
@@ -180,9 +180,9 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
     ELSE
 
       default_case= "read_it"
-      CALL THIS% binary_construction_timer% start_timer()
+      CALL THIS% construction_timer% start_timer()
       THIS% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
-      CALL THIS% binary_construction_timer% stop_timer()
+      CALL THIS% construction_timer% stop_timer()
 
     ENDIF
 

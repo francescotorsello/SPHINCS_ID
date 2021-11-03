@@ -119,12 +119,6 @@ MODULE diffstar_lorene
     !      See the last part of the PROGRAM in setup_diffstar.f90, for example.
     TYPE(C_PTR):: diffstar_ptr
 
-    !> Logical variables to set the geodesic gauge (lapse=1, shift=0)
-    LOGICAL, PUBLIC:: one_lapse, zero_shift
-
-    !> Timer that times the construction of the |lorene| Etdiffrot object
-    TYPE(timer), PUBLIC:: drs_construction_timer
-
 
     CONTAINS
 
@@ -1091,7 +1085,8 @@ MODULE diffstar_lorene
                                     kappa3,                         &
                                     logP1,                          &
                                     logRho0,                        &
-                                    logRho1 )                       &
+                                    logRho1,                        &
+                                    logRho2 )                      &
       BIND(C, NAME= "get_rotdiff_params")
 
       !**********************************************
@@ -1157,6 +1152,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: logP1
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho0
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho1
+      REAL(C_DOUBLE), INTENT(OUT)       :: logRho2
 
     END SUBROUTINE get_diffstar_params
 

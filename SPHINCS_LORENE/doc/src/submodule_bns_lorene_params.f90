@@ -149,11 +149,11 @@ SUBMODULE (bns_lorene) bns_lorene_params
     THIS% mass(2)= THIS% mass2
 
     THIS% radii(1,:)= [THIS% radius1_x_opp, THIS% radius1_x_comp, &
-                          THIS% radius1_y,THIS% radius1_y, &
-                          THIS% radius1_z,THIS% radius1_z]
+                       THIS% radius1_y, THIS% radius1_y, &
+                       THIS% radius1_z, THIS% radius1_z]
     THIS% radii(2,:)= [THIS% radius2_x_opp, THIS% radius2_x_comp, &
-                          THIS% radius2_y,THIS% radius2_y, &
-                          THIS% radius2_z,THIS% radius2_z]
+                       THIS% radius2_y, THIS% radius2_y, &
+                       THIS% radius2_z, THIS% radius2_z]
 
     THIS% center(1,:)= [THIS% center1_x, 0.0D0, 0.0D0]
     THIS% center(2,:)= [THIS% center2_x, 0.0D0, 0.0D0]
@@ -202,7 +202,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
     ELSE
 
       PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-               " The equation of state is unknown! |lorene| EOS IDs=", &
+               " The equation of state is unknown! LORENE EOS IDs=", &
                THIS% eos1_loreneid, ", ", THIS% eos2_loreneid
       STOP
 

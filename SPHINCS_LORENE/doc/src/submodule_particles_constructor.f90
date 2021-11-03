@@ -277,7 +277,7 @@ SUBMODULE (particles_id) particles_constructor
     parts% randomize_theta    = randomize_theta
     parts% randomize_r        = randomize_r
     ! APM parameters
-    ALLOCATE( parts% apm_iterate( parts% n_matter) )
+    ALLOCATE( parts% apm_iterate( parts% n_matter ) )
     parts% apm_iterate   = apm_iterate
     parts% read_nu       = read_nu
 
@@ -964,7 +964,7 @@ SUBMODULE (particles_id) particles_constructor
                      parts_all(itr)% pvol_i
       ENDDO
 
-    CASE(2)
+    !CASE(2)
 
   !    PRINT *, " * Placing particles on two lattices, " &
   !             // "one around each star."
@@ -1009,7 +1009,7 @@ SUBMODULE (particles_id) particles_constructor
    !                                               thres, id )
    !   CALL parts% placer_timer% stop_timer()
 
-    CASE(3)
+    CASE(2)
 
       PRINT *, "** Placing equal-mass particles on spherical surfaces, " &
                // "taking into account the mass profile of the stars."
@@ -1060,51 +1060,52 @@ SUBMODULE (particles_id) particles_constructor
         ! mass_ratio < 1
     !    parts% mass_ratio= parts% masses(2)/parts% masses(1)
 
-        equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 .AND. &
-                          ABS(parts% mass_ratios(1) - parts% mass_ratios(2)) &
-                          /parts% mass_ratios(2) <= 0.005 .AND. &
-                          !parts% mass_ratios(1) >= 0.995 .AND. &
-                          !parts% mass_ratios <= 1.005 .AND. &
-                          reflect_particles_x )THEN
+        equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
 
-          IF(.NOT.ALLOCATED( parts_all(2)% pos_i ))THEN
-            ALLOCATE( parts_all(2)% pos_i( 3, parts% npart_i(1) ), &
-                      STAT= ios, ERRMSG= err_msg )
-            IF( ios > 0 )THEN
-               PRINT *, "...allocation error for array pos in SUBROUTINE" &
-                        // "place_particles_. ", &
-                        "The error message is", err_msg
-               STOP
-            ENDIF
-          ENDIF
-          IF(.NOT.ALLOCATED( parts_all(2)% pvol_i ))THEN
-            ALLOCATE( parts_all(2)% pvol_i( parts% npart_i(1) ), &
-                      STAT= ios, ERRMSG= err_msg )
-            IF( ios > 0 )THEN
-               PRINT *, "...allocation error for array pvol in SUBROUTINE" &
-                        // "place_particles_. ", &
-                        "The error message is", err_msg
-               STOP
-            ENDIF
-          ENDIF
-          IF(.NOT.ALLOCATED( parts_all(2)% pmass_i ))THEN
-            ALLOCATE( parts_all(2)% pmass_i( parts% npart_i(1) ), &
-                      STAT= ios, ERRMSG= err_msg )
-            IF( ios > 0 )THEN
-               PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                        // "place_particles_. ", &
-                        "The error message is", err_msg
-               STOP
-            ENDIF
-          ENDIF
-          parts_all(2)% pos_i(1,:)= - parts_all(1)% pos_i(1,:)
-          parts_all(2)% pos_i(2,:)=   parts_all(1)% pos_i(2,:)
-          parts_all(2)% pos_i(3,:)=   parts_all(1)% pos_i(3,:)
-          parts_all(2)% pvol_i    =   parts_all(1)% pvol_i
-          parts_all(2)% pmass_i   =   parts_all(1)% pmass_i
-          parts% npart_i(2)= parts% npart_i(1)
+          IF( ABS(parts% mass_ratios(1) - parts% mass_ratios(2)) &
+              /parts% mass_ratios(2) <= 0.005 .AND. &
+              !parts% mass_ratios(1) >= 0.995 .AND. &
+              !parts% mass_ratios <= 1.005 .AND. &
+              reflect_particles_x )THEN
 
-          EXIT
+            IF(.NOT.ALLOCATED( parts_all(2)% pos_i ))THEN
+              ALLOCATE( parts_all(2)% pos_i( 3, parts% npart_i(1) ), &
+                        STAT= ios, ERRMSG= err_msg )
+              IF( ios > 0 )THEN
+                 PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                          // "place_particles_. ", &
+                          "The error message is", err_msg
+                 STOP
+              ENDIF
+            ENDIF
+            IF(.NOT.ALLOCATED( parts_all(2)% pvol_i ))THEN
+              ALLOCATE( parts_all(2)% pvol_i( parts% npart_i(1) ), &
+                        STAT= ios, ERRMSG= err_msg )
+              IF( ios > 0 )THEN
+                 PRINT *, "...allocation error for array pvol in SUBROUTINE" &
+                          // "place_particles_. ", &
+                          "The error message is", err_msg
+                 STOP
+              ENDIF
+            ENDIF
+            IF(.NOT.ALLOCATED( parts_all(2)% pmass_i ))THEN
+              ALLOCATE( parts_all(2)% pmass_i( parts% npart_i(1) ), &
+                        STAT= ios, ERRMSG= err_msg )
+              IF( ios > 0 )THEN
+                 PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                          // "place_particles_. ", &
+                          "The error message is", err_msg
+                 STOP
+              ENDIF
+            ENDIF
+            parts_all(2)% pos_i(1,:)= - parts_all(1)% pos_i(1,:)
+            parts_all(2)% pos_i(2,:)=   parts_all(1)% pos_i(2,:)
+            parts_all(2)% pos_i(3,:)=   parts_all(1)% pos_i(3,:)
+            parts_all(2)% pvol_i    =   parts_all(1)% pvol_i
+            parts_all(2)% pmass_i   =   parts_all(1)% pmass_i
+            parts% npart_i(2)= parts% npart_i(1)
+
+            EXIT
 
     !   ELSE
     !
@@ -1137,14 +1138,16 @@ SUBMODULE (particles_id) particles_constructor
     !                                           import_id, &
     !                                           check_negative_hydro )
 
+          ENDIF
+
         ENDIF equal_masses
 
         CALL parts% placer_timer% stop_timer()
 
         parts_all(i_matter)% pos_i = &
-                        parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
+                    parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
         parts_all(i_matter)% pvol_i = &
-                        parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
+                    parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
 
   !   ELSE
   !
@@ -1264,7 +1267,6 @@ SUBMODULE (particles_id) particles_constructor
   !   ENDIF first_star_more_massive
 
       ENDDO
-      CALL parts% placer_timer% stop_timer()
 
       parts% npart= SUM( parts% npart_i )
 
@@ -1436,36 +1438,40 @@ SUBMODULE (particles_id) particles_constructor
         PRINT *, "** Particles placed on star 1 according to the APM."
         PRINT *
 
-        equal_masses_apm: IF( i_matter == 1 .AND. parts% n_matter == 2 .AND. &
-                          ABS(parts% mass_ratios(1) - parts% mass_ratios(2)) &
+        equal_masses_apm: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
+
+          IF( ABS(parts% mass_ratios(1) - parts% mass_ratios(2) ) &
                           /parts% mass_ratios(2) <= 0.005 .AND. &
                           !parts% mass_ratios(1) >= 0.995 .AND. &
                           !parts% mass_ratios <= 1.005 .AND. &
                           reflect_particles_x )THEN
 
-          parts% pos(1,parts% npart_i(1)+1:parts% npart)= &
-                                    - parts% pos(1,1:parts% npart_i(1))
-          parts% pos(2,parts% npart_i(1)+1:parts% npart)= &
-                                      parts% pos(2,1:parts% npart_i(1))
-          parts% pos(3,parts% npart_i(1)+1:parts% npart)= &
-                                      parts% pos(3,1:parts% npart_i(1))
+            parts% pos(1,parts% npart_i(1)+1:parts% npart)= &
+                                      - parts% pos(1,1:parts% npart_i(1))
+            parts% pos(2,parts% npart_i(1)+1:parts% npart)= &
+                                        parts% pos(2,1:parts% npart_i(1))
+            parts% pos(3,parts% npart_i(1)+1:parts% npart)= &
+                                        parts% pos(3,1:parts% npart_i(1))
 
-          parts% nu(parts% npart_i(1)+1:parts% npart)= &
-                                      parts% nu(1:parts% npart_i(1))
+            parts% nu(parts% npart_i(1)+1:parts% npart)= &
+                                        parts% nu(1:parts% npart_i(1))
 
-          parts% h(parts% npart_i(1)+1:parts% npart)= &
-                                      parts% h(1:parts% npart_i(1))
+            parts% h(parts% npart_i(1)+1:parts% npart)= &
+                                        parts% h(1:parts% npart_i(1))
 
-          parts% npart_i(2)= parts% npart_i(1)
-          parts% npart= parts% npart_i(1) + parts% npart_i(1)
+            parts% npart_i(2)= parts% npart_i(1)
+            parts% npart= parts% npart_i(1) + parts% npart_i(1)
 
-          PRINT *, "** Particles placed on star 1 according to the APM", &
-                   " reflected about the yz plane onto star 2."
-          PRINT *
+            PRINT *, "** Particles placed on star 1 according to the APM", &
+                     " reflected about the yz plane onto star 2."
+            PRINT *
 
-          EXIT
+            EXIT
+
+          ENDIF
 
         ENDIF equal_masses_apm
+
       ENDIF
   !    IF( apm_iterate2 .AND. .NOT.(parts% mass_ratio >= 0.995 .AND. &
   !        parts% mass_ratio <= 1.005 .AND. reflect_particles_x) )THEN

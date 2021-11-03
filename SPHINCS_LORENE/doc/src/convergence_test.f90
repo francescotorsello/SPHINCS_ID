@@ -137,8 +137,8 @@ PROGRAM convergence_test
   binary= bnslorene( TRIM(common_path)//"/"//TRIM(filenames( 1 )) )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)
-  binary% one_lapse = one_lapse
-  binary% zero_shift= zero_shift
+  CALL binary% set_one_lapse ( one_lapse )
+  CALL binary% set_zero_shift( zero_shift )
 
   !
   !-- Construct the particles object from the bns object

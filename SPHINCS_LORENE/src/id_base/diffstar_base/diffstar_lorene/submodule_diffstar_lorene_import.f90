@@ -75,8 +75,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
         !$OMP             PRIVATE( itr )
         import_id_loop: DO itr= 1, n, 1
 
-          ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-          ! to |lorene| units (km). See MODULE constants for the definition of
+          ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+          ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
           ! Msun_geo
           CALL get_diffstar_full( THIS% diffstar_ptr, &
                                   x( itr )*Msun_geo, &
@@ -118,10 +118,10 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
           !
           !- Set/unset the geodesic gauge
           !
-          IF( THIS% one_lapse )THEN
+          IF( THIS% get_one_lapse() )THEN
             THIS% lapse( itr )= 1.0D0
           ENDIF
-          IF( THIS% zero_shift )THEN
+          IF( THIS% get_zero_shift() )THEN
             THIS% shift_x( itr )= 0.0D0
             THIS% shift_y( itr )= 0.0D0
             THIS% shift_z( itr )= 0.0D0
@@ -129,7 +129,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
 
           !
           !-- Convert the extrinsic curvature from |lorene| units to
-          !-- SPHINCS units
+          !-- |sphincs| units
           !
           THIS% k_xx( itr )= THIS% k_xx( itr )*Msun_geo
           THIS% k_xy( itr )= THIS% k_xy( itr )*Msun_geo
@@ -200,8 +200,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
       !$OMP             PRIVATE( itr )
       import_id_loop: DO itr= 1, n, 1
 
-        ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-        ! to |lorene| units (km). See MODULE constants for the definition of
+        ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+        ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
         ! Msun_geo
         CALL get_diffstar_full( THIS% diffstar_ptr, &
                                 x( itr )*Msun_geo, &
@@ -243,10 +243,10 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
         !
         !- Set/unset the geodesic gauge
         !
-        IF( THIS% one_lapse )THEN
+        IF( THIS% get_one_lapse() )THEN
           lapse( itr )= 1.0D0
         ENDIF
-        IF( THIS% zero_shift )THEN
+        IF( THIS% get_zero_shift() )THEN
           shift_x( itr )= 0.0D0
           shift_y( itr )= 0.0D0
           shift_z( itr )= 0.0D0
@@ -254,7 +254,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
 
         !
         !-- Convert the extrinsic curvature from |lorene| units to
-        !-- SPHINCS units
+        !-- |sphincs| units
         !
         k_xx( itr )= k_xx( itr )*Msun_geo
         k_xy( itr )= k_xy( itr )*Msun_geo
@@ -332,8 +332,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
         coords_y: DO j= 1, ny, 1
           coords_x: DO i= 1, nx, 1
 
-            ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-            ! to |lorene| units (km). See MODULE constants for the definition of
+            ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+            ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
             ! Msun_geo
             CALL get_diffstar_spacetime( THIS% diffstar_ptr, &
                                          pos( i, j, k, jx )*Msun_geo, &
@@ -373,10 +373,10 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
             !
             !- Set/unset the geodesic gauge
             !
-            IF( THIS% one_lapse )THEN
+            IF( THIS% get_one_lapse() )THEN
               lapse( i, j, k )= 1.0D0
             ENDIF
-            IF( THIS% zero_shift )THEN
+            IF( THIS% get_zero_shift() )THEN
               shift( i, j, k, jx )= 0.0D0
               shift( i, j, k, jy )= 0.0D0
               shift( i, j, k, jz )= 0.0D0
@@ -384,7 +384,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
 
             !
             !-- Convert the extrinsic curvature from |lorene| units to
-            !-- SPHINCS units
+            !-- |sphincs| units
             !
             ek( i, j, k, jxx )= ek( i, j, k, jxx )*Msun_geo
             ek( i, j, k, jxy )= ek( i, j, k, jxy )*Msun_geo
@@ -488,8 +488,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
         coords_y: DO iy= 1, ny, 1
           coords_x: DO ix= 1, nx, 1
 
-            ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-            ! to |lorene| units (km). See MODULE constants for the definition of
+            ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+            ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
             ! Msun_geo
             CALL get_diffstar_hydro( THIS% diffstar_ptr, &
                                      pos( ix, iy, iz, jx )*Msun_geo, &
@@ -568,8 +568,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
       !$OMP             PRIVATE( itr )
       import_id_loop: DO itr= 1, n, 1
 
-        ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-        ! to |lorene| units (km). See MODULE constants for the definition of
+        ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+        ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
         ! Msun_geo
         CALL get_diffstar_particles( THIS% diffstar_ptr, &
                                      x( itr )*Msun_geo, &
@@ -606,10 +606,10 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
         !
         !- Set/unset the geodesic gauge
         !
-        IF( THIS% one_lapse )THEN
+        IF( THIS% get_one_lapse() )THEN
           lapse( itr )= 1.0D0
         ENDIF
-        IF( THIS% zero_shift )THEN
+        IF( THIS% get_zero_shift() )THEN
           shift_x( itr )= 0.0D0
           shift_y( itr )= 0.0D0
           shift_z( itr )= 0.0D0
@@ -671,8 +671,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
 
     IF ( C_ASSOCIATED( THIS% diffstar_ptr ) ) THEN
 
-      ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-      ! to |lorene| units (km). See MODULE constants for the definition of
+      ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
       ! Msun_geo
       CALL get_diffstar_mass_b( THIS% diffstar_ptr, &
                                 x*Msun_geo, &
@@ -730,8 +730,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
 
     IF ( C_ASSOCIATED( THIS% diffstar_ptr ) )THEN
 
-      ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-      ! to |lorene| units (km). See MODULE constants for the definition of
+      ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
       ! Msun_geo
       res= get_diffstar_mass_density( THIS% diffstar_ptr, &
                                       x*Msun_geo, &
@@ -762,8 +762,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
 
     IF ( C_ASSOCIATED( THIS% diffstar_ptr ) )THEN
 
-      ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-      ! to |lorene| units (km). See MODULE constants for the definition of
+      ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
       ! Msun_geo
       res= get_diffstar_spatial_metric( THIS% diffstar_ptr, &
                                         x*Msun_geo, &
@@ -795,8 +795,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
 
     IF ( C_ASSOCIATED( THIS% diffstar_ptr ) )THEN
 
-      ! The coordinates need to be converted from SPHINCS units (Msun_geo)
-      ! to |lorene| units (km). See MODULE constants for the definition of
+      ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
       ! Msun_geo
       res= negative_hydro( THIS% diffstar_ptr, &
                            x*Msun_geo, &

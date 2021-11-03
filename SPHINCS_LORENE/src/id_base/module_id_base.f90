@@ -22,17 +22,20 @@ MODULE id_base
   !***********************************************************
 
 
+  USE timing,                      ONLY: timer
+
+
   IMPLICIT NONE
 
 
-  !**********************************************************
-  !                                                         *
-  !              Definition of TYPE idbase                  *
-  !                                                         *
-  !   This ABSTRACT TYPE represents a generic ID for        *
-  !   |sphincsbssn| (binary neutron star, rotating star...). *
-  !                                                         *
-  !**********************************************************
+  !*************************************************************
+  !                                                            *
+  !              Definition of TYPE idbase                     *
+  !                                                            *
+  !   This ABSTRACT TYPE represents a generic ID for           *
+  !   |sphincsbssn| (binary neutron star, rotating star...).   *
+  !                                                            *
+  !*************************************************************
 
   TYPE, ABSTRACT:: idbase
   !# Represents a generic ID for |sphincsbssn| (binary neutron star, rotating
@@ -46,6 +49,17 @@ MODULE id_base
     !# Number of matter objects belonging the physical system.
     !  For example, n_objects= 2 for a binary system of stars, and n_objects= 1
     !  for a single star or for a binary system of a black hole and a star.
+
+
+    LOGICAL:: one_lapse
+    !! Logical variable that determines if the lapse function \(\alpha=1\),
+    !  i.e., if the geodesic gauge is to be used
+    LOGICAL:: zero_shift
+    !! Logical variable that determines if the shift \(\beta^i=0\)
+
+
+    TYPE(timer), PUBLIC:: construction_timer
+    !! Timer that times the construction of the appropriate object
 
 
     CONTAINS
@@ -156,6 +170,26 @@ MODULE id_base
     PROCEDURE, NON_OVERRIDABLE:: get_n_matter
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
+
+
+    PROCEDURE, NON_OVERRIDABLE:: set_one_lapse
+    !# Sets [[idbase:one_lapse]], the logical variable that determines if
+    !  the lapse \(\alpha=1\), i.e., if the geodesic gauge is to be used
+
+
+    PROCEDURE, NON_OVERRIDABLE:: get_one_lapse
+    !# Returns [[idbase:one_lapse]], the logical variable that determines if
+    ! the lapse function \(\alpha=1\), i.e., if the geodesic gauge is to be used
+
+
+    PROCEDURE, NON_OVERRIDABLE:: set_zero_shift
+    !# Sets [[idbase:zero_shift]], the logical variable that determines if
+    !  the shift \(\beta^i=0\)
+
+
+    PROCEDURE, NON_OVERRIDABLE:: get_zero_shift
+    !# Returns [[idbase:zero_shift]], the logical variable that determines if
+    !  the shift \(\beta^i=0\)
 
 
     PROCEDURE, NON_OVERRIDABLE:: check_i_matter
@@ -626,6 +660,53 @@ MODULE id_base
       !  of a box containing the physical system.
 
     END FUNCTION get_total_spatial_extent
+
+
+    MODULE FUNCTION get_one_lapse( THIS )
+    !# Returns [[idbase:n_matter]], the number of matter objects in the
+    !  physical system
+
+      CLASS(idbase), INTENT( IN ):: THIS
+      LOGICAL:: get_one_lapse
+      !! [[idbase:n_matter]], the number of matter objects in the
+      !  physical system
+
+    END FUNCTION get_one_lapse
+
+
+    MODULE SUBROUTINE set_one_lapse( THIS, logic )
+    !# Sets [[idbase:n_matter]], the number of matter objects in the
+    !  physical system, to the given value
+
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      LOGICAL, INTENT( IN ):: logic
+      !! Value to set [[idbase:n_matter]] to
+
+    END SUBROUTINE set_one_lapse
+
+
+    MODULE FUNCTION get_zero_shift( THIS )
+    !# Returns [[idbase:n_matter]], the number of matter objects in the
+    !  physical system
+
+      CLASS(idbase), INTENT( IN ):: THIS
+      LOGICAL:: get_zero_shift
+      !! [[idbase:n_matter]], the number of matter objects in the
+      !  physical system
+
+    END FUNCTION get_zero_shift
+
+
+    MODULE SUBROUTINE set_zero_shift( THIS, logic )
+    !# Sets [[idbase:n_matter]], the number of matter objects in the
+    !  physical system, to the given value
+
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      LOGICAL, INTENT( IN ):: logic
+      !! Value to set [[idbase:n_matter]] to
+
+    END SUBROUTINE set_zero_shift
+
 
   END INTERFACE
 

@@ -55,6 +55,74 @@ SUBMODULE (id_base) id_base_access
   END PROCEDURE get_n_matter
 
 
+  MODULE PROCEDURE set_one_lapse
+
+    !************************************************
+    !
+    !# Sets [[idbase:one_lapse]] to the given value
+    !
+    !  FT 3.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    THIS% one_lapse= logic
+
+  END PROCEDURE set_one_lapse
+
+
+  MODULE PROCEDURE get_one_lapse
+
+    !************************************************
+    !
+    !# Returns [[idbase:one_lapse]]
+    !
+    !  FT 3.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    get_one_lapse= THIS% one_lapse
+
+  END PROCEDURE get_one_lapse
+
+
+  MODULE PROCEDURE set_zero_shift
+
+    !************************************************
+    !
+    !# Sets [[idbase:zero_shift]] to the given value
+    !
+    !  FT 3.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    THIS% zero_shift= logic
+
+  END PROCEDURE set_zero_shift
+
+
+  MODULE PROCEDURE get_zero_shift
+
+    !************************************************
+    !
+    !# Returns [[idbase:zero_shift]]
+    !
+    !  FT 3.11.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    get_zero_shift= THIS% zero_shift
+
+  END PROCEDURE get_zero_shift
+
+
   MODULE PROCEDURE check_i_matter
 
     !************************************************

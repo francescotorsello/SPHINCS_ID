@@ -1,4 +1,4 @@
-! File:         module_SPHINCS_LORENE.f90
+! File:         module_sphincs_lorene.f90
 ! Author:       Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
@@ -20,6 +20,7 @@ MODULE sphincs_lorene
                                itr4, ios, err_msg, file_exists, cnt, &
                                test_status, show_progress, end_time
     USE timing,          ONLY: timer
+    USE id_base,         ONLY: idbase
     USE bns_lorene,      ONLY: bnslorene
     USE diffstar_lorene, ONLY: diffstarlorene
     USE particles_id,    ONLY: particles

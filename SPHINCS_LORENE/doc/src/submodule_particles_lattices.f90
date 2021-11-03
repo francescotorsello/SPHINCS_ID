@@ -60,7 +60,7 @@ SUBMODULE (particles_id) particles_lattices
     !
     !-- Compute number of lattice points (for now, equal in each direction)
     !
-    nx= CEILING(stretch*(6.0D0*npart_des/pi)**third)
+    nx= FLOOR(stretch*(6.0D0*DBLE(npart_des)/pi)**third)
     IF( MOD( nx, 2 ) /= 0 ) nx= nx + 1
     ny= nx
     nz= nx

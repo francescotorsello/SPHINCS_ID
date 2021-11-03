@@ -22,8 +22,13 @@ if ARGUMENTS.get('VERBOSE') != '1':
     env['LINKCOMSTR'] = "Linking $TARGET"
     env['HDF5COMSTR'] = "Generating $TARGET"
 
-# Build options
+# Build options (e.g., libraries to use)
+
+# Production
 env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+# Debugging in LORENE
+#env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+
 env['LIBPATH'] = ['../../../Lorene/Lib']
 env['F90FILESUFFIXES']=['.f90','.f']
 

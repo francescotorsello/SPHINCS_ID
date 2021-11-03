@@ -33,7 +33,7 @@ PROGRAM sphincs_lorene_bns
   ! Maximum number of particle distributions
   INTEGER, PARAMETER:: max_n_parts= 250
   ! Number of binary systems of neutron stars (BNS) to import
-  INTEGER:: n_bns, ref_lev
+  INTEGER:: n_bns, ref_lev, i_matter
   ! Export the constraints every constraints_step-th step
   INTEGER:: constraints_step, last_level
 
@@ -49,6 +49,8 @@ PROGRAM sphincs_lorene_bns
   DOUBLE PRECISION:: numerator_ratio_dx
   DOUBLE PRECISION:: denominator_ratio_dx
 
+  ! String storing the name of the phyical system
+  CHARACTER( LEN= max_length ):: system
   ! Strings storing different names for output files
   CHARACTER( LEN= 500 ):: namefile_parts, namefile_parts_bin, namefile_sph
   CHARACTER( LEN= 500 ):: namefile_bssn, namefile_bssn_bin, name_logfile
@@ -77,10 +79,8 @@ PROGRAM sphincs_lorene_bns
 
   ! Declaration of the allocatable array storing the bns objects,
   ! containing the LORENE ID for different BNS
-  TYPE( bnslorene ),       DIMENSION(:),   ALLOCATABLE:: binaries
-  ! Declaration of the allocatable array storing the bns objects,
-  ! containing the LORENE ID for different BNS
-  TYPE( diffstarlorene ),       DIMENSION(:),   ALLOCATABLE:: diffrotstars
+  TYPE( bnslorene ), DIMENSION(:), ALLOCATABLE:: binaries
+  CLASS( idbase ),   DIMENSION(:), ALLOCATABLE:: idata
   ! Declaration of the allocatable array storing the particles objects,
   ! containing the particle distributions for each bns object.
   ! Multiple particle objects can contain different particle distributions
@@ -92,7 +92,7 @@ PROGRAM sphincs_lorene_bns
 
   ! Namelist containing parameters read from lorene_bns_id_parameters.par
   ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM
-  NAMELIST /bns_parameters/ n_bns, common_path, filenames, placer, &
+  NAMELIST /bns_parameters/ system, n_bns, common_path, filenames, placer, &
                             export_bin, export_form, export_form_xy, &
                             export_form_x, export_constraints_xy, &
                             export_constraints_x, compute_constraints, &
@@ -203,8 +203,20 @@ PROGRAM sphincs_lorene_bns
 #endif
 
   ! Allocate needed memory
-  ALLOCATE( binaries      ( n_bns ) )
-  ALLOCATE( diffrotstars  ( n_bns ) )
+  !ALLOCATE( binaries      ( n_bns ) )
+  !ALLOCATE( diffrotstars  ( n_bns ) )
+  IF( TRIM(system) == "BNS" )THEN
+    ALLOCATE( bnslorene:: idata( n_bns ) )
+  ELSEIF( TRIM(system) == "DRS" )THEN
+    ALLOCATE( diffstarlorene:: idata( n_bns ) )
+  ELSE
+    PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(system)
+    PRINT *, "   Set the variable 'system' in the parameter file ", &
+             "sphincs_lorene_parameters.par to one of the values listed there."
+    PRINT *, "   Stopping..."
+    PRINT *
+    STOP
+  ENDIF
   ALLOCATE( particles_dist( n_bns, max_n_parts ) )
   ALLOCATE( bssn_forms    ( n_bns ) )
 
@@ -220,11 +232,11 @@ PROGRAM sphincs_lorene_bns
  ! ENDDO build_bns_loop
 
   build_drs_loop: DO itr= 1, n_bns, 1
-    diffrotstars( itr )= diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
+    idata( itr )= diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
     ! Set the variables to decide on using the geodesic gauge or not
     ! (lapse=1, shift=0)
-    diffrotstars( itr )% one_lapse = one_lapse
-    diffrotstars( itr )% zero_shift= zero_shift
+    CALL idata( itr )% set_one_lapse( one_lapse )
+    CALL idata( itr )% set_zero_shift( zero_shift )
   ENDDO build_drs_loop
 
   !STOP
@@ -242,12 +254,12 @@ PROGRAM sphincs_lorene_bns
 
           PRINT *, "===================================================" &
                    // "==============="
-          PRINT *, " Placing particles for BNS", itr3, &
+          PRINT *, " Placing particles for "//TRIM(system), itr3, &
                    ", distribution", itr4
           PRINT *, "===================================================" &
                    // "==============="
           PRINT *
-          particles_dist( itr3, itr4 )= particles( diffrotstars( itr3 ), &
+          particles_dist( itr3, itr4 )= particles( idata( itr3 ), &
                                                    placer( itr3, itr4 ) )
 
         ENDIF
@@ -266,7 +278,7 @@ PROGRAM sphincs_lorene_bns
 
           PRINT *, "===================================================" &
                    // "====================="
-          PRINT *, " Computing SPH variables for BNS", itr3, &
+          PRINT *, " Computing SPH variables for "//TRIM(system), itr3, &
                    ", distribution", itr4
           PRINT *, "===================================================" &
                    // "====================="
@@ -274,7 +286,8 @@ PROGRAM sphincs_lorene_bns
           !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
           !                            "l", &
           !                            itr3, "-", itr4, "."
-          WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
+          IF( TRIM(system)=="BNS" ) WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
+          IF( TRIM(system)=="DRS" ) WRITE( namefile_parts_bin, "(A5)" ) "DRSx."
           namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
 
           particles_dist( itr3, itr4 )% export_bin= export_bin
@@ -334,8 +347,6 @@ PROGRAM sphincs_lorene_bns
 
   ENDIF
 
-  STOP
-
   IF( run_spacetime )THEN
 
     !
@@ -344,11 +355,11 @@ PROGRAM sphincs_lorene_bns
     place_spacetime_id_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
                // "==============="
-      PRINT *, " Setting up BSSN object for BNS", itr3
+      PRINT *, " Setting up BSSN object for "//TRIM(system), itr3
       PRINT *, "===================================================" &
                // "==============="
       PRINT *
-      bssn_forms( itr3 )= bssn_id( binaries( itr3 ) )
+      bssn_forms( itr3 )= bssn_id( idata( itr3 ) )
     ENDDO place_spacetime_id_loop
 
     !
@@ -359,7 +370,7 @@ PROGRAM sphincs_lorene_bns
     compute_export_bssn_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
                // "==============="
-      PRINT *, " Computing BSSN variables for BNS", itr3
+      PRINT *, " Computing BSSN variables for "//TRIM(system), itr3
       PRINT *, "===================================================" &
                // "==============="
       PRINT *
@@ -424,7 +435,7 @@ PROGRAM sphincs_lorene_bns
           name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
           CALL bssn_forms( itr3 )% &
-                      compute_and_export_3p1_constraints( binaries( itr3 ), &
+                      compute_and_export_3p1_constraints( idata( itr3 ), &
                                                           namefile_bssn, &
                                                           name_logfile )
 
@@ -490,7 +501,7 @@ PROGRAM sphincs_lorene_bns
            // "================================================"
   PRINT *
   PRINT *, " * LORENE:"
-  CALL binaries( 1 )% binary_construction_timer% print_timer( 2 )
+  CALL idata( 1 )% construction_timer% print_timer( 2 )
   PRINT *
   IF( run_sph )THEN
     PRINT *, " * SPH:"
@@ -528,50 +539,48 @@ PROGRAM sphincs_lorene_bns
   PRINT *, "   Used binary file produced by LORENE: " &
            // TRIM(common_path)//TRIM(filenames( 1 ))
   PRINT *
-  PRINT *, "   Baryon mass of neutron star 1= ", binaries( 1 )% get_mass1(), &
-           "Msun"
-  PRINT *, "   Baryon mass of neutron star 2= ", binaries( 1 )% get_mass1(), &
-           "Msun"
-  PRINT *, "   Gravitational mass of neutron star 1= ", &
-           binaries( 1 )% get_grav_mass1(), "Msun"
-  PRINT *, "   Gravitational mass of neutron star 2= ", &
-           binaries( 1 )% get_grav_mass1(), "Msun"
+  DO i_matter= 1, idata(1)% get_n_matter(), 1
+    PRINT *, "   Baryon mass of matter object ", i_matter, "=", &
+             idata( 1 )% return_mass(i_matter), "Msun"
+    !PRINT *, "   Gravitational mass of object ", i_matter, "=", &
+    !         idata( 1 )% get_grav_mass(i_matter), "Msun"
+  ENDDO
   PRINT *
-  PRINT *, "   Equatorial (not areal) radius of neutron star 1 towards " &
-           // "companion= ", &
-               binaries( 1 )% get_radius1_x_comp(), "Msun_geo"
-  PRINT *, "   Equatorial (not areal) radius of neutron star 2 towards " &
-           // "companion= ", &
-               binaries( 1 )% get_radius2_x_comp(), "Msun_geo"
-  PRINT *, "   Equatorial (not areal) radius of neutron star 1 opposite to " &
-           // "companion= ", &
-               binaries( 1 )% get_radius1_x_opp(), "Msun_geo"
-  PRINT *, "   Equatorial (not areal) radius of neutron star 2 opposite to " &
-           // "companion= ", &
-               binaries( 1 )% get_radius2_x_opp(), "Msun_geo"
-  PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
-               binaries( 1 )% get_radius1_y(), "Msun_geo"
-  PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
-               binaries( 1 )% get_radius2_y(), "Msun_geo"
-  PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
-               binaries( 1 )% get_radius1_z(), "Msun_geo"
-  PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
-               binaries( 1 )% get_radius2_z(), "Msun_geo"
-  PRINT *
-  PRINT *, "   EOS for neutron star 1= ", &
-               binaries( 1 )% get_eos1()
-  PRINT *, "   EOS for neutron star 2= ", &
-               binaries( 1 )% get_eos2()
-  PRINT *
-  PRINT *, "   Central baryon mass density for star 1= ", &
-               binaries( 1 )% get_rho_center1(), "Msun/Msun_geo**3= ", &
-               binaries( 1 )% get_rho_center1() &
-               /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
-  PRINT *, "   Central baryon mass density for star 2= ", &
-               binaries( 1 )% get_rho_center2(), "Msun/Msun_geo**3= ", &
-               binaries( 1 )% get_rho_center2() &
-               /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
-  PRINT *
+  !PRINT *, "   Equatorial (not areal) radius of neutron star 1 towards " &
+  !         // "companion= ", &
+  !             binaries( 1 )% get_radius1_x_comp(), "Msun_geo"
+  !PRINT *, "   Equatorial (not areal) radius of neutron star 2 towards " &
+  !         // "companion= ", &
+  !             binaries( 1 )% get_radius2_x_comp(), "Msun_geo"
+  !PRINT *, "   Equatorial (not areal) radius of neutron star 1 opposite to " &
+  !         // "companion= ", &
+  !             binaries( 1 )% get_radius1_x_opp(), "Msun_geo"
+  !PRINT *, "   Equatorial (not areal) radius of neutron star 2 opposite to " &
+  !         // "companion= ", &
+  !             binaries( 1 )% get_radius2_x_opp(), "Msun_geo"
+  !PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
+  !             binaries( 1 )% get_radius1_y(), "Msun_geo"
+  !PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
+  !             binaries( 1 )% get_radius2_y(), "Msun_geo"
+  !PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
+  !             binaries( 1 )% get_radius1_z(), "Msun_geo"
+  !PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
+  !             binaries( 1 )% get_radius2_z(), "Msun_geo"
+  !PRINT *
+  !PRINT *, "   EOS for neutron star 1= ", &
+  !             binaries( 1 )% get_eos1()
+  !PRINT *, "   EOS for neutron star 2= ", &
+  !             binaries( 1 )% get_eos2()
+  !PRINT *
+  !PRINT *, "   Central baryon mass density for star 1= ", &
+  !             binaries( 1 )% get_rho_center1(), "Msun/Msun_geo**3= ", &
+  !             binaries( 1 )% get_rho_center1() &
+  !             /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+  !PRINT *, "   Central baryon mass density for star 2= ", &
+  !             binaries( 1 )% get_rho_center2(), "Msun/Msun_geo**3= ", &
+  !             binaries( 1 )% get_rho_center2() &
+  !             /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+  !PRINT *
   IF( run_sph )THEN
     PRINT *, " * SPH:"
     PRINT *
@@ -621,15 +630,15 @@ PROGRAM sphincs_lorene_bns
     ENDDO
     PRINT *
     last_level= bssn_forms( 1 )% get_nlevels()
-    PRINT *, "   Number of grid points across the x-axis-diameter of star 1=", &
-             FLOOR( ( binaries( 1 )% get_radius1_x_comp() + &
-             binaries( 1 )% get_radius1_x_opp() ) &
-             /bssn_forms( 1 )% get_dx( last_level ) )
-    PRINT *, "   Number of grid points across the x-axis-diameter of star 2=", &
-             FLOOR( ( binaries( 1 )% get_radius2_x_comp() + &
-            binaries( 1 )% get_radius2_x_opp() ) &
-            /bssn_forms( 1 )% get_dx( last_level ) )
-    PRINT *
+    !PRINT *, "   Number of grid points across the x-axis-diameter of star 1=", &
+    !         FLOOR( ( binaries( 1 )% get_radius1_x_comp() + &
+    !         binaries( 1 )% get_radius1_x_opp() ) &
+    !         /bssn_forms( 1 )% get_dx( last_level ) )
+    !PRINT *, "   Number of grid points across the x-axis-diameter of star 2=", &
+    !         FLOOR( ( binaries( 1 )% get_radius2_x_comp() + &
+    !        binaries( 1 )% get_radius2_x_opp() ) &
+    !        /bssn_forms( 1 )% get_dx( last_level ) )
+    !PRINT *
   ENDIF
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
@@ -645,10 +654,13 @@ PROGRAM sphincs_lorene_bns
     !-- to problems...
     !-- TODO: fix this
     !
-    CALL binaries( itr )% destruct_binary()
+    !CALL binaries( itr )% destruct_binary()
   ENDDO
   IF( ALLOCATED( binaries ) )THEN
     DEALLOCATE( binaries )
+  ENDIF
+  IF( ALLOCATED( idata ) )THEN
+    DEALLOCATE( idata )
   ENDIF
   IF( ALLOCATED( particles_dist ) )THEN
     DEALLOCATE( particles_dist )
