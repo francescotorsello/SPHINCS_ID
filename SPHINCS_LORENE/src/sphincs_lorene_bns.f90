@@ -334,6 +334,8 @@ PROGRAM sphincs_lorene_bns
 
   ENDIF
 
+  STOP
+
   IF( run_spacetime )THEN
 
     !

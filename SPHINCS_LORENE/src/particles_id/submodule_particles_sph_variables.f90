@@ -83,14 +83,13 @@ SUBMODULE (particles_id) particles_sph_variables
     USE options,             ONLY: ndes
     USE set_h,               ONLY: exact_nei_tree_update
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE sphincs_sph,         ONLY: density!, flag_dead_ll_cells
+    USE sphincs_sph,         ONLY: density, ncand!, flag_dead_ll_cells
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
                                    get_u_pwp, shorten_eos_name
     USE constants,           ONLY: m0c2, kg2g, m2cm
     USE units,               ONLY: m0c2_cu
-    USE sphincs_sph,         ONLY: ncand
 
     IMPLICIT NONE
 
@@ -1177,52 +1176,105 @@ SUBMODULE (particles_id) particles_sph_variables
     ! polytropic instead, starting from the kernel interpolated density     !
     !-----------------------------------------------------------------------!
 
-    IF( THIS% all_eos(1)% eos_parameters(1) == 1 &
-        .AND. THIS% all_eos(2)% eos_parameters(1) == 1 )THEN
+    DO i_matter= 1, THIS% n_matter, 1
 
-      PRINT *, " * Computing pressure and specific internal energy from", &
-               " the baryon mass density, using the exact formulas for", &
-               " single polytropic EOS..."
-      PRINT *
+      ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
+                 npart_fin  => THIS% npart_i(i_matter-1) +    &
+                               THIS% npart_i(i_matter) )
 
-      ! Formulas from Read et al. (2009)
+      IF( THIS% all_eos(i_matter)% eos_parameters(1) == 1 )THEN
+      ! If the |eos| is polytropic
 
-      Pr(1:THIS% npart_i(1))= THIS% all_eos(1)% eos_parameters(3) &
-                  *( THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu )**THIS% all_eos(1)% eos_parameters(2)
+        PRINT *, " * Computing pressure and specific internal energy from", &
+                 " the baryon mass density, using the exact formulas for", &
+                 " single polytropic EOS..."
+        PRINT *
 
-      Pr(THIS% npart_i(1)+1:THIS% npart)= THIS% all_eos(2)% eos_parameters(3) &
-       *( THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu )**THIS% all_eos(2)% eos_parameters(2)
+        ! Formulas from Read et al. (2009)
 
-      u(1:THIS% npart_i(1))= ( Pr(1:THIS% npart_i(1)) &
-        /(THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu*( THIS% all_eos(1)% eos_parameters(2) - 1.0D0 ) ) )
+        Pr(npart_in:npart_fin)= THIS% all_eos(i_matter)% eos_parameters(3) &
+                             *( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
+                              **THIS% all_eos(i_matter)% eos_parameters(2)
 
-      u(THIS% npart_i(1)+1:THIS% npart)= ( Pr(THIS% npart_i(1)+1:THIS% npart) &
-        /(THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu &
-              *( THIS% all_eos(2)% eos_parameters(3) - 1.0D0 ) ) )
+        u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
+                  /(THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu &
+                  *( THIS% all_eos(i_matter)% eos_parameters(2) - 1.0D0 ) ) )
 
-      Pr= Pr/m0c2_cu
-      THIS% pressure_parts_cu= Pr
-      THIS% u_pwp= u
+        Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+        THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+        THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
 
-    ENDIF
+      ELSEIF( THIS% all_eos(i_matter)% eos_parameters(1) == 110 )THEN
+      ! If the |eos| is piecewise polytropic
 
-    IF( THIS% all_eos(1)% eos_parameters(1) == 110 &
-       .AND. THIS% all_eos(2)% eos_parameters(1) == 110 )THEN
+        PRINT *, " * Computing pressure and specific internal energy from", &
+                 " the baryon mass density, using the exact formulas for", &
+                 " piecewise polytropic EOS..."
+        PRINT *
 
-      PRINT *, " * Computing pressure and specific internal energy from", &
-               " the baryon mass density, using the exact formulas for", &
-               " piecewise polytropic EOS..."
-      PRINT *
+        CALL select_EOS_parameters( &
+                shorten_eos_name(THIS% all_eos(i_matter)% eos_name) )
 
-      CALL select_EOS_parameters( &
-              shorten_eos_name(THIS% all_eos(1)% eos_name) &
-           )
-      CALL gen_pwp_eos_all( THIS% npart, THIS% nlrf_int*m0c2_cu, u )
-      THIS% pressure_parts_cu= Pr
-      THIS% u_pwp= get_u_pwp()
-      u= get_u_pwp()
+        CALL gen_pwp_eos_all( THIS% npart_i(i_matter), &
+                              THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu, &
+                              u(npart_in:npart_fin) )
 
-    ENDIF
+        THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+        THIS% u_pwp(npart_in:npart_fin)= get_u_pwp()
+        u(npart_in:npart_fin)= get_u_pwp()
+
+      ENDIF
+
+      END ASSOCIATE
+
+    ENDDO
+
+  !  IF( THIS% all_eos(1)% eos_parameters(1) == 1 &
+  !      .AND. THIS% all_eos(2)% eos_parameters(1) == 1 )THEN
+  !
+  !    PRINT *, " * Computing pressure and specific internal energy from", &
+  !             " the baryon mass density, using the exact formulas for", &
+  !             " single polytropic EOS..."
+  !    PRINT *
+  !
+  !    ! Formulas from Read et al. (2009)
+  !
+  !    Pr(1:THIS% npart_i(1))= THIS% all_eos(1)% eos_parameters(3) &
+  !                *( THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu )**THIS% all_eos(1)% eos_parameters(2)
+  !
+  !    Pr(THIS% npart_i(1)+1:THIS% npart)= THIS% all_eos(2)% eos_parameters(3) &
+  !     *( THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu )**THIS% all_eos(2)% eos_parameters(2)
+  !
+  !    u(1:THIS% npart_i(1))= ( Pr(1:THIS% npart_i(1)) &
+  !      /(THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu*( THIS% all_eos(1)% eos_parameters(2) - 1.0D0 ) ) )
+  !
+  !    u(THIS% npart_i(1)+1:THIS% npart)= ( Pr(THIS% npart_i(1)+1:THIS% npart) &
+  !      /(THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu &
+  !            *( THIS% all_eos(2)% eos_parameters(3) - 1.0D0 ) ) )
+  !
+  !    Pr= Pr/m0c2_cu
+  !    THIS% pressure_parts_cu= Pr
+  !    THIS% u_pwp= u
+  !
+  !  ENDIF
+  !
+  !  IF( THIS% all_eos(1)% eos_parameters(1) == 110 &
+  !     .AND. THIS% all_eos(2)% eos_parameters(1) == 110 )THEN
+  !
+  !    PRINT *, " * Computing pressure and specific internal energy from", &
+  !             " the baryon mass density, using the exact formulas for", &
+  !             " piecewise polytropic EOS..."
+  !    PRINT *
+  !
+  !    CALL select_EOS_parameters( &
+  !            shorten_eos_name(THIS% all_eos(1)% eos_name) &
+  !         )
+  !    CALL gen_pwp_eos_all( THIS% npart, THIS% nlrf_int*m0c2_cu, u )
+  !    THIS% pressure_parts_cu= Pr
+  !    THIS% u_pwp= get_u_pwp()
+  !    u= get_u_pwp()
+  !
+  !  ENDIF
 
     !-------------------!
     ! Assignment of Ye  !
@@ -1276,82 +1328,62 @@ SUBMODULE (particles_id) particles_sph_variables
     !-- Printouts
     !
     !"(A28,E15.8,A10)"
-    PRINT *, " * Maximum baryon density on star 1= ", &
-              MAXVAL( THIS% baryon_density_parts(1:THIS% npart_i(1)), DIM= 1 ) &
-              *kg2g/(m2cm**3), " g cm^{-3}"
-    PRINT *, " * Minimum baryon density= on star 1 ", &
-              MINVAL( THIS% baryon_density_parts(1:THIS% npart_i(1)), DIM= 1 ) &
-              *kg2g/(m2cm**3), " g cm^{-3}"
-    PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% baryon_density_parts(1:THIS% npart_i(1)), DIM= 1 )/ &
-             MINVAL( THIS% baryon_density_parts(1:THIS% npart_i(1)), DIM= 1 )
-    PRINT *
-    PRINT *, " * Maximum baryon density on star 2= ", &
-     MAXVAL( THIS% baryon_density_parts(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ) &
-     *kg2g/(m2cm**3), " g cm^{-3}"
-    PRINT *, " * Minimum baryon density on star 2= ", &
-     MINVAL( THIS% baryon_density_parts(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ) &
-     *kg2g/(m2cm**3), " g cm^{-3}"
-    PRINT *, " * Ratio between the two=", &
-     MAXVAL( THIS% baryon_density_parts(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )/ &
-     MINVAL( THIS% baryon_density_parts(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
-    PRINT *
+    DO i_matter= 1, THIS% n_matter, 1
 
-    PRINT *, " * Maximum nlrf on star 1=", &
-             MAXVAL( THIS% nlrf(1:THIS% npart_i(1)), DIM= 1 ), &
-             "baryon Msun_geo^{-3}"
-    PRINT *, " * Minimum nlrf on star 1=", &
-             MINVAL( THIS% nlrf(1:THIS% npart_i(1)), DIM= 1 ), &
-             "baryon Msun_geo^{-3}"
-    PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% nlrf(1:THIS% npart_i(1)), DIM= 1 )/ &
-             MINVAL( THIS% nlrf(1:THIS% npart_i(1)), DIM= 1 )
-    PRINT *
-    PRINT *, " * Maximum nlrf on star 2=", &
-             MAXVAL( THIS% nlrf(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ), &
-             "baryon Msun_geo^{-3}"
-    PRINT *, " * Minimum nlrf on star 2=", &
-             MINVAL( THIS% nlrf(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ), &
-             "baryon Msun_geo^{-3}"
-    PRINT *, " * Ratio between the two=", &
-             MAXVAL( THIS% nlrf(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )/ &
-             MINVAL( THIS% nlrf(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
-    PRINT *
+      ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
+                 npart_fin  => THIS% npart_i(i_matter-1) +    &
+                               THIS% npart_i(i_matter) )
 
-    THIS% nuratio_i(1)= MAXVAL( THIS% nu(1:THIS% npart_i(1)), DIM= 1 )/ &
-                    MINVAL( THIS% nu(1:THIS% npart_i(1)), DIM= 1 )
-    PRINT *, " * Maximum n. baryon per particle on star 1 (nu)=", &
-             MAXVAL( THIS% nu(1:THIS% npart_i(1)), DIM= 1 )
-    PRINT *, " * Minimum n. baryon per particle on star 1 (nu)=", &
-             MINVAL( THIS% nu(1:THIS% npart_i(1)), DIM= 1 )
-    PRINT *, " * Ratio between the two=", THIS% nuratio_i(1)
-    PRINT *
-    THIS% nuratio_i(2)= MAXVAL( THIS% nu(THIS% npart_i(1)+1:THIS% npart), DIM= 1 ) &
-                    /MINVAL( THIS% nu(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
-    PRINT *, " * Maximum n. baryon per particle on star 2 (nu)=", &
-             MAXVAL( THIS% nu(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
-    PRINT *, " * Minimum n. baryon per particle on star 2 (nu)=", &
-             MINVAL( THIS% nu(THIS% npart_i(1)+1:THIS% npart), DIM= 1 )
-    PRINT *, " * Ratio between the two=", THIS% nuratio_i(2)
-    PRINT *
+      PRINT *, " * Maximum baryon density on object", i_matter, "=", &
+                MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
+                *kg2g/(m2cm**3), " g cm^{-3}"
+      PRINT *, " * Minimum baryon density on object", i_matter, "=", &
+                MINVAL( THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
+                *kg2g/(m2cm**3), " g cm^{-3}"
+      PRINT *, " * Ratio between the two=", &
+               MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM= 1)/ &
+               MINVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM= 1)
+      PRINT *
+
+      PRINT *, " * Maximum nlrf on object", i_matter, "=", &
+               MAXVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 ), &
+               "baryon Msun_geo^{-3}"
+      PRINT *, " * Minimum nlrf on object", i_matter, "=", &
+               MINVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 ), &
+               "baryon Msun_geo^{-3}"
+      PRINT *, " * Ratio between the two=", &
+               MAXVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 )
+      PRINT *
+
+      THIS% nuratio_i(i_matter)= MAXVAL( THIS% nu(npart_in:npart_fin), DIM= 1 )&
+                                /MINVAL( THIS% nu(npart_in:npart_fin), DIM= 1 )
+      PRINT *, " * Maximum n. baryon per particle (nu) on object", i_matter, &
+                          "=", MAXVAL( THIS% nu(npart_in:npart_fin), DIM= 1 )
+      PRINT *, " * Minimum n. baryon per particle (nu) on object", i_matter, &
+                          "=", MINVAL( THIS% nu(npart_in:npart_fin), DIM= 1 )
+      PRINT *, " * Ratio between the two=", THIS% nuratio_i(i_matter)
+      PRINT *
+
+      PRINT *, " * Number of baryons on object", i_matter, "=", &
+               THIS% nbar_i(i_matter)
+      PRINT *, " * Total mass of the baryons on object", i_matter, "=", &
+               THIS% nbar_i(i_matter)*amu/Msun, "Msun =", &
+               THIS% nbar_i(i_matter)*amu/Msun/THIS% masses(i_matter), &
+               "of the baryon mass of object", i_matter, "."
+      PRINT *
+
+      END ASSOCIATE
+
+    ENDDO
+
     THIS% nuratio= MAXVAL( THIS% nu, DIM= 1 )/MINVAL( THIS% nu, DIM= 1 )
     PRINT *, " * Baryon number ratio across the stars=", THIS% nuratio
     PRINT *
-    PRINT *, " * Number of baryons on star 1=", THIS% nbar_i(1)
-    PRINT *, " * Total mass of the baryons on star 1=", &
-             THIS% nbar_i(1)*amu/Msun, "Msun =", &
-             THIS% nbar_i(1)*amu/Msun/THIS% masses(1), &
-             "of the LORENE baryon mass of star 1."
-    PRINT *, " * Number of baryons on star 2=", THIS% nbar_i(2)
-    PRINT *, " * Total mass of the baryons on star 2=", &
-             THIS% nbar_i(2)*amu/Msun, "Msun =", &
-             THIS% nbar_i(2)*amu/Msun/THIS% masses(2), &
-             "of the LORENE baryon mass of star 2."
-    PRINT *, " * Total number of baryons=", THIS% nbar_tot
     PRINT *, " * Total mass of the baryons=", &
              THIS% nbar_tot*amu/Msun, "Msun =", &
-             THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)), &
-             "of the total LORENE baryon mass."
+             THIS% nbar_tot*amu/Msun/(SUM(THIS% masses, DIM=1)), &
+             "of the total baryon mass."
     PRINT *
 
     !
@@ -1364,44 +1396,41 @@ SUBMODULE (particles_id) particles_sph_variables
     !--   (ii) it is anyway immediately recomputed in SPHINCS_BSSN
     !
     IF( THIS% correct_nu )THEN
-      !THIS% nlrf=
-      !        THIS% nlrf/(THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)))
-      !nlrf= nlrf/(THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)))
-      !THIS% nu= THIS% nu/(THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)))
-      !nu= nu/(THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)))
-      !THIS% nbar_tot= &
-      !    THIS% nbar_tot/(THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)))
-      THIS% nu( 1:THIS% npart_i(1) )= &
-                THIS% nu( 1:THIS% npart_i(1) )/(THIS% nbar_i(1)*amu/Msun/THIS% masses(1))
-      nu( 1:THIS% npart_i(1) )= &
-                nu( 1:THIS% npart_i(1) )/(THIS% nbar_i(1)*amu/Msun/THIS% masses(1))
-      THIS% nbar_i(1)= THIS% nbar_i(1)/(THIS% nbar_i(1)*amu/Msun/THIS% masses(1))
 
-      THIS% nu( THIS% npart_i(1) + 1:THIS% npart )= &
-                THIS% nu( THIS% npart_i(1) + 1:THIS% npart ) &
-                /(THIS% nbar_i(2)*amu/Msun/THIS% masses(2))
-      nu( THIS% npart_i(1) + 1:THIS% npart )= &
-                nu( THIS% npart_i(1) + 1:THIS% npart ) &
-                /(THIS% nbar_i(2)*amu/Msun/THIS% masses(2))
-      THIS% nbar_i(2)= THIS% nbar_i(2)/(THIS% nbar_i(2)*amu/Msun/THIS% masses(2))
-      THIS% nbar_tot= THIS% nbar_i(1) + THIS% nbar_i(2)
+      THIS% nbar_tot= 0.0D0
+      DO i_matter= 1, THIS% n_matter, 1
 
-      PRINT *, " * Number of corrected baryons on star 1=", THIS% nbar_i(1)
-      PRINT *, " * Total mass of the corrected baryons on star 1=", &
-               THIS% nbar_i(1)*amu/Msun, "Msun =", &
-               THIS% nbar_i(1)*amu/Msun/THIS% masses(1), &
-               "of the LORENE baryon mass of star 1."
-      PRINT *, " * Number of corrected baryons on star 2=", THIS% nbar_i(2)
-      PRINT *, " * Total mass of the corrected baryons on star 2=", &
-               THIS% nbar_i(2)*amu/Msun, "Msun =", &
-               THIS% nbar_i(2)*amu/Msun/THIS% masses(2), &
-               "of the LORENE baryon mass of star 2."
+        ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
+                   npart_fin  => THIS% npart_i(i_matter-1) +    &
+                                 THIS% npart_i(i_matter) )
+
+        THIS% nu( npart_in:npart_fin )= THIS% nu( npart_in:npart_fin ) &
+                      /(THIS% nbar_i(i_matter)*amu/Msun/THIS% masses(i_matter))
+        nu( npart_in:npart_fin )= THIS% nu( npart_in:npart_fin )
+
+        THIS% nbar_i(i_matter)= THIS% nbar_i(i_matter) &
+                      /(THIS% nbar_i(i_matter)*amu/Msun/THIS% masses(i_matter))
+
+        THIS% nbar_tot= THIS% nbar_tot + THIS% nbar_i(i_matter)
+
+        PRINT *, " * Number of corrected baryons on object", i_matter, "=", &
+                 THIS% nbar_i(i_matter)
+        PRINT *, " * Total mass of the corrected baryons object", i_matter, &
+                 "=", THIS% nbar_i(i_matter)*amu/Msun, "Msun =", &
+                 THIS% nbar_i(i_matter)*amu/Msun/THIS% masses(i_matter), &
+                 "of the baryon mass of object", i_matter, "."
+
+        END ASSOCIATE
+
+      ENDDO
+
       PRINT *, " * Total number of corrected baryons=", THIS% nbar_tot
       PRINT *, " * Total mass of the corrected baryons=", &
                THIS% nbar_tot*amu/Msun, "Msun =", &
-               THIS% nbar_tot*amu/Msun/(THIS% masses(1) + THIS% masses(2)), &
-               "of the total LORENE baryon mass."
+               THIS% nbar_tot*amu/Msun/(SUM(THIS% masses, DIM=1)), &
+               "of the total baryon mass."
       PRINT *
+
     ENDIF
 
     !

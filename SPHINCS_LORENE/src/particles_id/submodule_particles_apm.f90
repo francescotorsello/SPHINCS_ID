@@ -89,7 +89,7 @@ SUBMODULE (particles_id) particles_apm
     USE analyze,             ONLY: COM
     USE matrix,              ONLY: determinant_4x4_matrix
 
-    USE sphincs_sph,         ONLY: density
+    USE sphincs_sph,         ONLY: density, ncand
 
     IMPLICIT NONE
 
@@ -102,7 +102,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
 
-    INTEGER:: a, a2, itr, itr2, n_inc         ! iterators
+    INTEGER:: a, a2, itr, itr2, n_inc, cnt1         ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
@@ -175,6 +175,7 @@ SUBMODULE (particles_id) particles_apm
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL:: few_ncand
 
     CALL RANDOM_SEED( SIZE= dim_seed )
     ALLOCATE( seed( dim_seed ) )
@@ -908,7 +909,7 @@ SUBMODULE (particles_id) particles_apm
         PRINT *, " * Distance of the center of mass of the particle ", &
                  "distribution from the  origin: com_d= ", com_d
         PRINT *, " * |com_x-com_star/com_star|=", &
-                 ABS( com_x-com_star )/ABS( com_star )
+                 ABS( com_x-com_star )/ABS( com_star + 1 )
         PRINT *
 
         finalnamefile= "dbg-pos.dat"
@@ -1892,11 +1893,108 @@ SUBMODULE (particles_id) particles_apm
                    pos, h_guess, & ! Input
                    h )             ! Output
 
-    CALL exact_nei_tree_update( nn_des, &
-                                npart_real, &
-                                pos, nu )
+    IF( debug ) PRINT *, "101.5"
 
+    cnt1= 0
+    DO
+
+      few_ncand= .FALSE.
+
+      ! Redo the previous step slightly different (it's built-in;
+      ! exact_nei_tree_update does not work if I don't call assign_h first),
+      ! then update the neighbour-tree and fill the neighbour-data
+      CALL exact_nei_tree_update( nn_des, &
+                                  npart_real, &
+                                  pos, nu )
+
+      !
+      !-- Check that the number of candidate neighbours is larger than
+      !-- or equal to ndes - 1
+      !
+      DO itr= 1, SIZE(ncand), 1
+
+        ! If there are too few candidate neighbors
+        IF( ncand(itr) < nn_des - 1 )THEN
+
+          ! Increase the smoothing length and rebuild the tree
+          few_ncand= .TRUE.
+          h= 3.0D0*h
+
+          EXIT
+
+        ELSE
+
+          few_ncand= .FALSE.
+
+        ENDIF
+
+      ENDDO
+
+      cnt1= cnt1 + 1
+
+      IF( .NOT.few_ncand .OR. cnt1 >= 10 )THEN
+        PRINT *, " * Smoothing lengths assigned and tree is built."
+        EXIT
+      ENDIF
+
+    ENDDO
     !IF( mass == THIS% mass2 ) STOP
+
+    !
+    !-- Check that the smoothing length is acceptable
+    !
+    check_h: DO a= 1, npart_real, 1
+
+      IF( ISNAN( h(a) ) )THEN
+        PRINT *, "** ERROR! h(", a, ") is a NaN"
+        !PRINT *, "Stopping..."
+       ! PRINT *
+        !STOP
+        IF( a > npart_real/2 )THEN
+          DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
+            IF( h(itr) > 0.25D0 )THEN
+              h(a) = h(itr)
+              EXIT
+            ENDIF
+          ENDDO
+        ELSE
+          !h(a) = h(a - 1)
+          DO itr= a + 1, npart_real, 1
+            IF( h(itr) > 0.25D0 )THEN
+              h(a) = h(itr)
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+        !PRINT *, "** ERROR! h(", a, ")=", h(a)
+        !PRINT *
+      ENDIF
+      IF( h(a) <= 0.0D0 )THEN
+        PRINT *, "** ERROR! h(", a, ")=", h(a)
+        !PRINT *, "Stopping..."
+        !PRINT *
+        !STOP
+        IF( a > npart_real/2 )THEN
+          DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
+            IF( h(itr) > 0.25D0 )THEN
+              h(a) = h(itr)
+              EXIT
+            ENDIF
+          ENDDO
+        ELSE
+          !h(a) = h(a - 1)
+          DO itr= a + 1, npart_real, 1
+            IF( h(itr) > 0.25D0 )THEN
+              h(a) = h(itr)
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+        !PRINT *, "** ERROR! h(", a, ")=", h(a)
+        !PRINT *
+      ENDIF
+
+    ENDDO check_h
 
     IF( debug ) PRINT *, "102"
 
@@ -2134,7 +2232,7 @@ SUBMODULE (particles_id) particles_apm
       PRINT *, " * Distance of the center of mass of the particle ", &
                "distribution from the  origin: com_d= ", com_d
       PRINT *, " * |com_x-com_star/com_star|=", &
-               ABS( com_x-com_star )/ABS( com_star )
+               ABS( com_x-com_star )/ABS( com_star + 1 )
       PRINT *
     ENDIF
 
@@ -2179,7 +2277,7 @@ SUBMODULE (particles_id) particles_apm
       PRINT *, " * Distance of the center of mass of the particle ", &
                "distribution from the  origin: com_d= ", com_d
       PRINT *, " * |com_x-com_star/com_star|=", &
-               ABS( com_x-com_star )/ABS( com_star )
+               ABS( com_x-com_star )/ABS( com_star + 1 )
       PRINT *
     ENDIF
 
@@ -2275,7 +2373,7 @@ SUBMODULE (particles_id) particles_apm
       PRINT *, " * Distance of the center of mass of the particle ", &
                "distribution from the  origin: com_d= ", com_d
       IF( PRESENT(com_star) ) PRINT *, " * |com_x-com_star/com_star|=", &
-               ABS( com_x-com_star )/ABS( com_star )
+               ABS( com_x-com_star )/ABS( com_star + 1 )
       PRINT *
 
     ENDIF
