@@ -86,7 +86,7 @@ filenames(1)=!"apr4_1.35-1.35_42km-hr-109outlay.bin"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.FALSE.
+run_sph=.TRUE.
 run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
@@ -106,8 +106,8 @@ placer(1,:)=1                     ! 0: Read particle positions from formatted
 !-----------------------------------------------------!
 ! Choose to export data to binary and formatted files !
 !-----------------------------------------------------!
-export_bin=.TRUE.                ! Export ID to binary files
-export_form=.TRUE.               ! Export ID to formatted files
+export_bin=.FALSE.                ! Export ID to binary files
+export_form=.FALSE.               ! Export ID to formatted files
 export_form_xy=.TRUE.  ! Export only the ID on the xy plane to formatted files
 export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
                         ! irrespectively on the value of export_form_xy
@@ -117,7 +117,7 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping
