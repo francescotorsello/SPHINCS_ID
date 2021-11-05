@@ -35,7 +35,7 @@ PROGRAM sphincs_lorene_bns
   ! Number of binary systems of neutron stars (BNS) to import
   INTEGER:: n_bns, ref_lev, i_matter
   ! Export the constraints every constraints_step-th step
-  INTEGER:: constraints_step, last_level
+  INTEGER:: constraints_step
 
   ! Matrix storing the information on how to place particles for each bns
   ! object. Row i contains information about the i^th bns object.
@@ -232,7 +232,18 @@ PROGRAM sphincs_lorene_bns
  ! ENDDO build_bns_loop
 
   build_drs_loop: DO itr= 1, n_bns, 1
-    idata( itr )= diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
+    IF( TRIM(system) == "BNS" )THEN
+      idata( itr )= bnslorene( TRIM(common_path)//TRIM(filenames( itr )) )
+    ELSEIF( TRIM(system) == "DRS" )THEN
+      idata( itr )= diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
+    ELSE
+      PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(system)
+      PRINT *, "   Set the variable 'system' in the parameter file ", &
+               "sphincs_lorene_parameters.par to one of the values listed there."
+      PRINT *, "   Stopping..."
+      PRINT *
+      STOP
+    ENDIF
     ! Set the variables to decide on using the geodesic gauge or not
     ! (lapse=1, shift=0)
     CALL idata( itr )% set_one_lapse( one_lapse )
@@ -329,21 +340,6 @@ PROGRAM sphincs_lorene_bns
         ENDDO
       ENDDO export_sph_loops
     ENDIF
-
-    !PRINT *, "===================================================" &
-    !         // "================================================"
-    !PRINT *, " Timing "
-    !PRINT *, "===================================================" &
-    !         // "================================================"
-    !PRINT *
-    !PRINT *
-    !PRINT *, " * SPH:"
-    !CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% apm1_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% apm2_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% sph_computer_timer% print_timer( 2 )
-    !PRINT *
 
   ENDIF
 
@@ -543,64 +539,15 @@ PROGRAM sphincs_lorene_bns
     CALL idata(itr)% print_summary()
 
     IF( run_sph )THEN
-      PRINT *, " * SPH:"
-      PRINT *
-      PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
-     ! PRINT *, "   Particle number on star 1: npart1=", &
-     !                                       particles_dist( 1, 1 )% get_npart1()
-     ! PRINT *, "   Particle number on star 2: npart2=", &
-     !                                       particles_dist( 1, 1 )% get_npart2()
-     ! PRINT *, "   Particle number ratio: npart1/npart2= ", &
-     !                         DBLE(particles_dist( 1, 1 )% get_npart1()) &
-     !                        /DBLE(particles_dist( 1, 1 )% get_npart2())
-     ! PRINT *, "   Star mass ratio: mass1/mass2= ", &
-     !                        binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
-     ! PRINT *
-     ! PRINT *, "   Baryon number ratio over both stars=", &
-     !          particles_dist( 1, 1 )% get_nuratio()
-     ! PRINT *, "   Baryon number ratio on star 1=", &
-     !          particles_dist( 1, 1 )% get_nuratio1()
-     ! PRINT *, "   Baryon number ratio on star 2=", &
-     !          particles_dist( 1, 1 )% get_nuratio2()
-     ! PRINT *
+
+      CALL particles_dist(itr,1)% print_summary()
+
     ENDIF
 
     IF( run_spacetime )THEN
-      PRINT *, " * Spacetime:"
-      PRINT *
-      PRINT *, "   Number of refinement levels= ", bssn_forms( 1 )% get_nlevels()
-      PRINT *
-      PRINT *, "   Number of grid points on each level= ", &
-               bssn_forms( 1 )% get_ngrid_x( 1 ), "**3"
-      PRINT *
-      !DO itr2= 1, bssn_forms( 1 )% get_nlevels(), 1
-      !  PRINT *, "   Resolution on level ", itr2, "= ", &
-      !           bssn_forms( 1 )% get_dx(itr2)
-      !ENDDO
-      !PRINT *
-      !DO itr= 1, bssn_forms( 1 )% get_nlevels(), 1
-      !  PRINT *, "   x boundary of level ", itr, "= ", &
-      !           bssn_forms( 1 )% get_xR(itr)
-      !  PRINT *, "   y boundary of level ", itr, "= ", &
-      !           bssn_forms( 1 )% get_yR(itr)
-      !  PRINT *, "   z boundary of level ", itr, "= ", &
-      !           bssn_forms( 1 )% get_zR(itr)
-      !           !bssn_forms( 1 )% get_dx(itr)* &
-      !           !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0, "Msun_geo= ", &
-      !           !bssn_forms( 1 )% get_dx(itr)* &
-      !           !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0*Msun_geo, "km "
-      !ENDDO
-      PRINT *
-      last_level= bssn_forms( 1 )% get_nlevels()
-      !PRINT *, "   Number of grid points across the x-axis-diameter of star 1=", &
-      !         FLOOR( ( binaries( 1 )% get_radius1_x_comp() + &
-      !         binaries( 1 )% get_radius1_x_opp() ) &
-      !         /bssn_forms( 1 )% get_dx( last_level ) )
-      !PRINT *, "   Number of grid points across the x-axis-diameter of star 2=", &
-      !         FLOOR( ( binaries( 1 )% get_radius2_x_comp() + &
-      !        binaries( 1 )% get_radius2_x_opp() ) &
-      !        /bssn_forms( 1 )% get_dx( last_level ) )
-      !PRINT *
+
+      CALL bssn_forms(itr)% print_summary()
+
     ENDIF
 
   ENDDO

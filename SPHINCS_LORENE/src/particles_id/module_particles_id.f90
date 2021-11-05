@@ -56,7 +56,7 @@ MODULE particles_id
     !INTEGER:: npart2
     !! Particle number for star 1
     INTEGER:: n_matter
-    !! Particle number for star 1
+    !! Number of matter objects in the physical system
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_i
     !! Particle number for star 2
     INTEGER:: distribution_id
@@ -392,6 +392,9 @@ MODULE particles_id
     !  [[particles:compute_and_export_SPH_variables]]
 
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
+    !! Prints the SPH ID to a formatted file
+
+    PROCEDURE, PUBLIC:: print_summary
     !! Prints the SPH ID to a formatted file
 
     PROCEDURE, PUBLIC:: is_empty
@@ -987,6 +990,7 @@ MODULE particles_id
 
     END SUBROUTINE perform_apm
 
+
     MODULE SUBROUTINE read_sphincs_dump_print_formatted( THIS, namefile_bin, &
                                                                namefile )
     !# Reads the binary ID file printed by
@@ -1002,6 +1006,7 @@ MODULE particles_id
 
     END SUBROUTINE read_sphincs_dump_print_formatted
 
+
     MODULE SUBROUTINE print_formatted_lorene_id_particles( THIS, namefile )
     !! Prints the SPH ID to a formatted file
 
@@ -1011,6 +1016,7 @@ MODULE particles_id
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE print_formatted_lorene_id_particles
+
 
     MODULE SUBROUTINE read_compose_composition( THIS, namefile )
     !! Reads the \(Y_e(n_b)\) table in the CompOSE file with extension .beta
@@ -1023,6 +1029,7 @@ MODULE particles_id
 
     END SUBROUTINE read_compose_composition
 
+
     MODULE SUBROUTINE compute_Ye( THIS )!, nlrf, Ye )
     !# Interpolates linearly the electron fraction \(Y_e\) at the particle
     !  densities; that is, assigns \(Y_e\) at the particle positions
@@ -1033,6 +1040,20 @@ MODULE particles_id
       !DOUBLE PRECISION, DIMENSION( : ), INTENT( OUT ):: Ye
 
     END SUBROUTINE compute_Ye
+
+
+    MODULE SUBROUTINE print_summary( THIS, filename )
+    !# Prints a summary of the properties of the |sph| particle
+    !  distribution, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
+
+    END SUBROUTINE print_summary
+
 
     MODULE SUBROUTINE destruct_particles( THIS )
     !> Finalizer (Destructor) of [[particles]] object
