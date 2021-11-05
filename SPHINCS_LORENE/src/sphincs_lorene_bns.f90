@@ -490,36 +490,41 @@ PROGRAM sphincs_lorene_bns
   !
   !-- Print the timers
   !
-  PRINT *, "===================================================" &
-           // "================================================"
-  PRINT *, " Timing "
-  PRINT *, "===================================================" &
-           // "================================================"
-  PRINT *
-  PRINT *, " * LORENE:"
-  CALL idata( 1 )% construction_timer% print_timer( 2 )
-  PRINT *
-  IF( run_sph )THEN
-    PRINT *, " * SPH:"
-    CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
-    CALL particles_dist( 1, 1 )% same_particle_timer% print_timer( 2 )
-    DO i_matter= 1, idata( 1 )% get_n_matter(), 1
-      CALL particles_dist( 1, 1 )% apm_timers(i_matter)% print_timer( 2 )
-    ENDDO
-    CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
-    CALL particles_dist( 1, 1 )% sph_computer_timer% print_timer( 2 )
+
+  DO itr= 1, n_bns, 1
+
+    PRINT *, "===================================================" &
+             // "================================================"
+    PRINT *, " Timing for physical system ", itr
+    PRINT *, "===================================================" &
+             // "================================================"
     PRINT *
-  ENDIF
-  IF( run_spacetime )THEN
-    PRINT *, " * Spacetime:"
-    CALL bssn_forms( 1 )% grid_timer% print_timer( 2 )
-    CALL bssn_forms( 1 )% importer_timer% print_timer( 2 )
-    CALL bssn_forms( 1 )% bssn_computer_timer% print_timer( 2 )
+    PRINT *, " * ID:"
+    CALL idata(itr)% construction_timer% print_timer( 2 )
     PRINT *
-  ENDIF
-  PRINT *, " * Total:"
-  CALL execution_timer% print_timer( 2 )
-  PRINT *
+    IF( run_sph )THEN
+      PRINT *, " * SPH:"
+      CALL particles_dist(itr,1)% placer_timer% print_timer( 2 )
+      CALL particles_dist(itr,1)% same_particle_timer% print_timer( 2 )
+      DO i_matter= 1, idata(itr)% get_n_matter(), 1
+        CALL particles_dist(itr,1)% apm_timers(i_matter)% print_timer( 2 )
+      ENDDO
+      CALL particles_dist(itr,1)% importer_timer% print_timer( 2 )
+      CALL particles_dist(itr,1)% sph_computer_timer% print_timer( 2 )
+      PRINT *
+    ENDIF
+    IF( run_spacetime )THEN
+      PRINT *, " * Spacetime:"
+      CALL bssn_forms(itr)% grid_timer% print_timer( 2 )
+      CALL bssn_forms(itr)% importer_timer% print_timer( 2 )
+      CALL bssn_forms(itr)% bssn_computer_timer% print_timer( 2 )
+      PRINT *
+    ENDIF
+    PRINT *, " * Total:"
+    CALL execution_timer% print_timer( 2 )
+    PRINT *
+
+  ENDDO
 
   !
   !-- Print a summary
