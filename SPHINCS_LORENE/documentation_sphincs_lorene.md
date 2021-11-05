@@ -1,7 +1,7 @@
-Project: SPHINCS_LORENE
-Version: 2.0
+Project: SPHINCS_ID
+Version: 1.0
 Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src
-Summary: Documentation of the FORTRAN 2018 code SPHINCS_LORENE
+Summary: Documentation of the FORTRAN 2018 code SPHINCS_ID
 Author: Francesco Torsello
 display: private
          protected
@@ -16,7 +16,8 @@ src_dir: ./src
 exclude_dir: ./src/prototypes
 exclude: submodule_bns_lorene_bindings.f90
          submodule_diffstar_lorene_bindings.f90
-output_dir: ./doc
+         submodule_particles_redistribute_nu.f90
+output_dir: ../../SPHINCS_ID-doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S
 print_creation_date: true
@@ -24,7 +25,8 @@ proc_internals: true
 license: gfdl
 github: https://github.com/francescotorsello
 linkedin: https://www.linkedin.com/in/francescotorsello
-alias: sphincslorene = \(\texttt{SPHINCS_LORENE}\)
+alias: sphincsid = \(\texttt{SPHINCS_ID}\)
+       sphincslorene = \(\texttt{SPHINCS_LORENE}\)
        lorene = \(\texttt{LORENE}\)
        sphincsbssn = \(\texttt{SPHINCS_BSSN}\)
        sphincs = \(\texttt{SPHINCS}\)
@@ -32,14 +34,14 @@ alias: sphincslorene = \(\texttt{SPHINCS_LORENE}\)
        binns = \(\texttt{Bin_NS}\)
        etrotdiff = \(\texttt{Et_rot_diff}\)
        etdiffrot = \(\texttt{Et_diffrot}\)
-       eos = EoS
+       eos = \(\mathrm{EOS}\)
 
-#### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; Interface to **LORENE**
+#### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___
 
-SPHINCS_LORENE is a modular, object-oriented, OMP parallelized FORTRAN 2018 code to produce binary neutron stars initial data to be evolved in time with the FORTRAN 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), using the C++ code LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"}).
+SPHINCS_ID is a modular, object-oriented, OMP parallelized FORTRAN 2018 code to produce initial data to be evolved in time with the FORTRAN 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}). Currently, it produces initial data for binary neutron star mergers and differentially rotating stars, using the data provided by the solvers within the C++ library LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"}).
 
-SPHINCS_LORENE acts as an interface between LORENE and SPHINCS_BSSN; it reads the spectral ID produced by LORENE and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN.
+SPHINCS_ID acts as an interface between an initial data solver and SPHINCS_BSSN; it reads the data produced by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN.
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://lorene.obspm.fr/>

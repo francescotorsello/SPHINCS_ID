@@ -370,7 +370,7 @@ MODULE bns_base
     PROCEDURE:: return_barycenter           => get_barycenter
     PROCEDURE:: return_eos_name             => get_eos
     PROCEDURE:: return_spatial_extent       => get_radii
-    !PROCEDURE:: return_total_spatial_extent => get_bounding_box
+    PROCEDURE:: print_summary               => print_summary_bns
 
     PROCEDURE, PUBLIC:: get_angular_vel
     !! Returns [[bnsbase:angular_vel]]
@@ -620,6 +620,23 @@ MODULE bns_base
  !                                      mass_profile
  !
  !   END SUBROUTINE integrate_baryon_mass_density
+
+    !------------------------------!
+    !--  OVERRIDING SUBROUTINES  --!
+    !------------------------------!
+
+
+    MODULE SUBROUTINE print_summary_bns( THIS, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+
+      CLASS(bnsbase), INTENT( IN OUT ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
+
+    END SUBROUTINE print_summary_bns
 
 
     !----------------------------!

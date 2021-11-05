@@ -528,118 +528,82 @@ PROGRAM sphincs_lorene_bns
   !
   !-- Print a summary
   !
-  PRINT *, "===================================================" &
-           // "================================================"
-  PRINT *, " Summary "
-  PRINT *, "===================================================" &
-           // "================================================"
-  PRINT *
-  PRINT *, " * Binary system of neutron stars:"
-  PRINT *
-  PRINT *, "   Used binary file produced by LORENE: " &
-           // TRIM(common_path)//TRIM(filenames( 1 ))
-  PRINT *
-  !DO i_matter= 1, idata(1)% get_n_matter(), 1
-  !  PRINT *, "   Baryon mass of matter object ", i_matter, "=", &
-  !           idata( 1 )% return_mass(i_matter), "Msun"
-  !  !PRINT *, "   Gravitational mass of object ", i_matter, "=", &
-  !  !         idata( 1 )% get_grav_mass(i_matter), "Msun"
-  !ENDDO
-  !PRINT *
-  !PRINT *, "   Equatorial (not areal) radius of neutron star 1 towards " &
-  !         // "companion= ", &
-  !             binaries( 1 )% get_radius1_x_comp(), "Msun_geo"
-  !PRINT *, "   Equatorial (not areal) radius of neutron star 2 towards " &
-  !         // "companion= ", &
-  !             binaries( 1 )% get_radius2_x_comp(), "Msun_geo"
-  !PRINT *, "   Equatorial (not areal) radius of neutron star 1 opposite to " &
-  !         // "companion= ", &
-  !             binaries( 1 )% get_radius1_x_opp(), "Msun_geo"
-  !PRINT *, "   Equatorial (not areal) radius of neutron star 2 opposite to " &
-  !         // "companion= ", &
-  !             binaries( 1 )% get_radius2_x_opp(), "Msun_geo"
-  !PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
-  !             binaries( 1 )% get_radius1_y(), "Msun_geo"
-  !PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
-  !             binaries( 1 )% get_radius2_y(), "Msun_geo"
-  !PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
-  !             binaries( 1 )% get_radius1_z(), "Msun_geo"
-  !PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
-  !             binaries( 1 )% get_radius2_z(), "Msun_geo"
-  !PRINT *
-  !PRINT *, "   EOS for neutron star 1= ", &
-  !             binaries( 1 )% get_eos1()
-  !PRINT *, "   EOS for neutron star 2= ", &
-  !             binaries( 1 )% get_eos2()
-  !PRINT *
-  !PRINT *, "   Central baryon mass density for star 1= ", &
-  !             binaries( 1 )% get_rho_center1(), "Msun/Msun_geo**3= ", &
-  !             binaries( 1 )% get_rho_center1() &
-  !             /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
-  !PRINT *, "   Central baryon mass density for star 2= ", &
-  !             binaries( 1 )% get_rho_center2(), "Msun/Msun_geo**3= ", &
-  !             binaries( 1 )% get_rho_center2() &
-  !             /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
-  !PRINT *
-  IF( run_sph )THEN
-    PRINT *, " * SPH:"
+  DO itr= 1, n_bns, 1
+
+    PRINT *, "===================================================" &
+             // "================================================"
+    PRINT *, " Summary for physical system ", itr
+    PRINT *, "===================================================" &
+             // "================================================"
     PRINT *
-    PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
-   ! PRINT *, "   Particle number on star 1: npart1=", &
-   !                                       particles_dist( 1, 1 )% get_npart1()
-   ! PRINT *, "   Particle number on star 2: npart2=", &
-   !                                       particles_dist( 1, 1 )% get_npart2()
-   ! PRINT *, "   Particle number ratio: npart1/npart2= ", &
-   !                         DBLE(particles_dist( 1, 1 )% get_npart1()) &
-   !                        /DBLE(particles_dist( 1, 1 )% get_npart2())
-   ! PRINT *, "   Star mass ratio: mass1/mass2= ", &
-   !                        binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
-   ! PRINT *
-   ! PRINT *, "   Baryon number ratio over both stars=", &
-   !          particles_dist( 1, 1 )% get_nuratio()
-   ! PRINT *, "   Baryon number ratio on star 1=", &
-   !          particles_dist( 1, 1 )% get_nuratio1()
-   ! PRINT *, "   Baryon number ratio on star 2=", &
-   !          particles_dist( 1, 1 )% get_nuratio2()
-   ! PRINT *
-  ENDIF
-  IF( run_spacetime )THEN
-    PRINT *, " * Spacetime:"
+    PRINT *, "   Used ID data file: " &
+             // TRIM(common_path)//TRIM(filenames(itr))
     PRINT *
-    PRINT *, "   Number of refinement levels= ", bssn_forms( 1 )% get_nlevels()
-    PRINT *
-    PRINT *, "   Number of grid points on each level= ", &
-             bssn_forms( 1 )% get_ngrid_x( 1 ), "**3"
-    PRINT *
-    DO itr= 1, bssn_forms( 1 )% get_nlevels(), 1
-      PRINT *, "   Resolution on level ", itr, "= ", &
-               bssn_forms( 1 )% get_dx(itr)
-    ENDDO
-    PRINT *
-    DO itr= 1, bssn_forms( 1 )% get_nlevels(), 1
-      PRINT *, "   x boundary of level ", itr, "= ", &
-               bssn_forms( 1 )% get_xR(itr)
-      PRINT *, "   y boundary of level ", itr, "= ", &
-               bssn_forms( 1 )% get_yR(itr)
-      PRINT *, "   z boundary of level ", itr, "= ", &
-               bssn_forms( 1 )% get_zR(itr)
-               !bssn_forms( 1 )% get_dx(itr)* &
-               !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0, "Msun_geo= ", &
-               !bssn_forms( 1 )% get_dx(itr)* &
-               !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0*Msun_geo, "km "
-    ENDDO
-    PRINT *
-    last_level= bssn_forms( 1 )% get_nlevels()
-    !PRINT *, "   Number of grid points across the x-axis-diameter of star 1=", &
-    !         FLOOR( ( binaries( 1 )% get_radius1_x_comp() + &
-    !         binaries( 1 )% get_radius1_x_opp() ) &
-    !         /bssn_forms( 1 )% get_dx( last_level ) )
-    !PRINT *, "   Number of grid points across the x-axis-diameter of star 2=", &
-    !         FLOOR( ( binaries( 1 )% get_radius2_x_comp() + &
-    !        binaries( 1 )% get_radius2_x_opp() ) &
-    !        /bssn_forms( 1 )% get_dx( last_level ) )
-    !PRINT *
-  ENDIF
+
+    CALL idata(itr)% print_summary()
+
+    IF( run_sph )THEN
+      PRINT *, " * SPH:"
+      PRINT *
+      PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
+     ! PRINT *, "   Particle number on star 1: npart1=", &
+     !                                       particles_dist( 1, 1 )% get_npart1()
+     ! PRINT *, "   Particle number on star 2: npart2=", &
+     !                                       particles_dist( 1, 1 )% get_npart2()
+     ! PRINT *, "   Particle number ratio: npart1/npart2= ", &
+     !                         DBLE(particles_dist( 1, 1 )% get_npart1()) &
+     !                        /DBLE(particles_dist( 1, 1 )% get_npart2())
+     ! PRINT *, "   Star mass ratio: mass1/mass2= ", &
+     !                        binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
+     ! PRINT *
+     ! PRINT *, "   Baryon number ratio over both stars=", &
+     !          particles_dist( 1, 1 )% get_nuratio()
+     ! PRINT *, "   Baryon number ratio on star 1=", &
+     !          particles_dist( 1, 1 )% get_nuratio1()
+     ! PRINT *, "   Baryon number ratio on star 2=", &
+     !          particles_dist( 1, 1 )% get_nuratio2()
+     ! PRINT *
+    ENDIF
+
+    IF( run_spacetime )THEN
+      PRINT *, " * Spacetime:"
+      PRINT *
+      PRINT *, "   Number of refinement levels= ", bssn_forms( 1 )% get_nlevels()
+      PRINT *
+      PRINT *, "   Number of grid points on each level= ", &
+               bssn_forms( 1 )% get_ngrid_x( 1 ), "**3"
+      PRINT *
+      !DO itr2= 1, bssn_forms( 1 )% get_nlevels(), 1
+      !  PRINT *, "   Resolution on level ", itr2, "= ", &
+      !           bssn_forms( 1 )% get_dx(itr2)
+      !ENDDO
+      !PRINT *
+      !DO itr= 1, bssn_forms( 1 )% get_nlevels(), 1
+      !  PRINT *, "   x boundary of level ", itr, "= ", &
+      !           bssn_forms( 1 )% get_xR(itr)
+      !  PRINT *, "   y boundary of level ", itr, "= ", &
+      !           bssn_forms( 1 )% get_yR(itr)
+      !  PRINT *, "   z boundary of level ", itr, "= ", &
+      !           bssn_forms( 1 )% get_zR(itr)
+      !           !bssn_forms( 1 )% get_dx(itr)* &
+      !           !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0, "Msun_geo= ", &
+      !           !bssn_forms( 1 )% get_dx(itr)* &
+      !           !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0*Msun_geo, "km "
+      !ENDDO
+      PRINT *
+      last_level= bssn_forms( 1 )% get_nlevels()
+      !PRINT *, "   Number of grid points across the x-axis-diameter of star 1=", &
+      !         FLOOR( ( binaries( 1 )% get_radius1_x_comp() + &
+      !         binaries( 1 )% get_radius1_x_opp() ) &
+      !         /bssn_forms( 1 )% get_dx( last_level ) )
+      !PRINT *, "   Number of grid points across the x-axis-diameter of star 2=", &
+      !         FLOOR( ( binaries( 1 )% get_radius2_x_comp() + &
+      !        binaries( 1 )% get_radius2_x_opp() ) &
+      !        /bssn_forms( 1 )% get_dx( last_level ) )
+      !PRINT *
+    ENDIF
+
+  ENDDO
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 

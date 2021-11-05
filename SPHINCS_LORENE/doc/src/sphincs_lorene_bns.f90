@@ -507,8 +507,8 @@ PROGRAM sphincs_lorene_bns
     PRINT *, " * SPH:"
     CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
     CALL particles_dist( 1, 1 )% same_particle_timer% print_timer( 2 )
-    DO itr= 1, binaries( 1 )% get_n_matter(), 1
-      CALL particles_dist( 1, 1 )% apm_timers(itr)% print_timer( 2 )
+    DO i_matter= 1, idata( 1 )% get_n_matter(), 1
+      CALL particles_dist( 1, 1 )% apm_timers(i_matter)% print_timer( 2 )
     ENDDO
     CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
     CALL particles_dist( 1, 1 )% sph_computer_timer% print_timer( 2 )
@@ -539,13 +539,13 @@ PROGRAM sphincs_lorene_bns
   PRINT *, "   Used binary file produced by LORENE: " &
            // TRIM(common_path)//TRIM(filenames( 1 ))
   PRINT *
-  DO i_matter= 1, idata(1)% get_n_matter(), 1
-    PRINT *, "   Baryon mass of matter object ", i_matter, "=", &
-             idata( 1 )% return_mass(i_matter), "Msun"
-    !PRINT *, "   Gravitational mass of object ", i_matter, "=", &
-    !         idata( 1 )% get_grav_mass(i_matter), "Msun"
-  ENDDO
-  PRINT *
+  !DO i_matter= 1, idata(1)% get_n_matter(), 1
+  !  PRINT *, "   Baryon mass of matter object ", i_matter, "=", &
+  !           idata( 1 )% return_mass(i_matter), "Msun"
+  !  !PRINT *, "   Gravitational mass of object ", i_matter, "=", &
+  !  !         idata( 1 )% get_grav_mass(i_matter), "Msun"
+  !ENDDO
+  !PRINT *
   !PRINT *, "   Equatorial (not areal) radius of neutron star 1 towards " &
   !         // "companion= ", &
   !             binaries( 1 )% get_radius1_x_comp(), "Msun_geo"
@@ -585,23 +585,23 @@ PROGRAM sphincs_lorene_bns
     PRINT *, " * SPH:"
     PRINT *
     PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
-    PRINT *, "   Particle number on star 1: npart1=", &
-                                          particles_dist( 1, 1 )% get_npart1()
-    PRINT *, "   Particle number on star 2: npart2=", &
-                                          particles_dist( 1, 1 )% get_npart2()
-    PRINT *, "   Particle number ratio: npart1/npart2= ", &
-                            DBLE(particles_dist( 1, 1 )% get_npart1()) &
-                           /DBLE(particles_dist( 1, 1 )% get_npart2())
-    PRINT *, "   Star mass ratio: mass1/mass2= ", &
-                           binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
-    PRINT *
-    PRINT *, "   Baryon number ratio over both stars=", &
-             particles_dist( 1, 1 )% get_nuratio()
-    PRINT *, "   Baryon number ratio on star 1=", &
-             particles_dist( 1, 1 )% get_nuratio1()
-    PRINT *, "   Baryon number ratio on star 2=", &
-             particles_dist( 1, 1 )% get_nuratio2()
-    PRINT *
+   ! PRINT *, "   Particle number on star 1: npart1=", &
+   !                                       particles_dist( 1, 1 )% get_npart1()
+   ! PRINT *, "   Particle number on star 2: npart2=", &
+   !                                       particles_dist( 1, 1 )% get_npart2()
+   ! PRINT *, "   Particle number ratio: npart1/npart2= ", &
+   !                         DBLE(particles_dist( 1, 1 )% get_npart1()) &
+   !                        /DBLE(particles_dist( 1, 1 )% get_npart2())
+   ! PRINT *, "   Star mass ratio: mass1/mass2= ", &
+   !                        binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
+   ! PRINT *
+   ! PRINT *, "   Baryon number ratio over both stars=", &
+   !          particles_dist( 1, 1 )% get_nuratio()
+   ! PRINT *, "   Baryon number ratio on star 1=", &
+   !          particles_dist( 1, 1 )% get_nuratio1()
+   ! PRINT *, "   Baryon number ratio on star 2=", &
+   !          particles_dist( 1, 1 )% get_nuratio2()
+   ! PRINT *
   ENDIF
   IF( run_spacetime )THEN
     PRINT *, " * Spacetime:"

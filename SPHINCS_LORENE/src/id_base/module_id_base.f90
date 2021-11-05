@@ -129,15 +129,18 @@ MODULE id_base
     !! Returns the name of the |eos| of the matter objects.
 
     !
-    !-- PROCEDURES returning the values of some parameters of the entire system
+    !-- PROCEDURE that prints a summary of the physical properties the system
+    !-- to the standard output and, optionally, to a formatted file
     !
 
- !   PROCEDURE(return_total_spatial_extent_int), DEFERRED:: &
- !                                                   return_total_spatial_extent
-    !# Returns the spatial extent of the physical system considered,
-    !  as the array of 6 numbers
-    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+    PROCEDURE(print_summary_int),         DEFERRED:: print_summary
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as optional argument
 
+    !
+    !-- PROCEDURES returning the values of some parameters of the entire system
+    !
 
     !PROCEDURE(derived_type_constructor_int), NOPASS, DEFERRED:: derived_type_constructor
     !#
@@ -573,10 +576,26 @@ MODULE id_base
 
     END FUNCTION return_total_spatial_extent_int
 
+
+    SUBROUTINE print_summary_int( THIS, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
+
+    END SUBROUTINE print_summary_int
+
+
   END INTERFACE
 
 
   INTERFACE
+
 
     MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
                                                      central_density, &
