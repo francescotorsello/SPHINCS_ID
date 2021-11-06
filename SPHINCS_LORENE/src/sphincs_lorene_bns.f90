@@ -50,7 +50,7 @@ PROGRAM sphincs_lorene_bns
   DOUBLE PRECISION:: denominator_ratio_dx
 
   ! String storing the name of the phyical system
-  CHARACTER( LEN= max_length ):: system
+  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems
   ! Strings storing different names for output files
   CHARACTER( LEN= 500 ):: namefile_parts, namefile_parts_bin, namefile_sph
   CHARACTER( LEN= 500 ):: namefile_bssn, namefile_bssn_bin, name_logfile
@@ -92,7 +92,7 @@ PROGRAM sphincs_lorene_bns
 
   ! Namelist containing parameters read from lorene_bns_id_parameters.par
   ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM
-  NAMELIST /bns_parameters/ system, n_bns, common_path, filenames, placer, &
+  NAMELIST /bns_parameters/ n_bns, common_path, filenames, placer, &
                             export_bin, export_form, export_form_xy, &
                             export_form_x, export_constraints_xy, &
                             export_constraints_x, compute_constraints, &
@@ -202,15 +202,37 @@ PROGRAM sphincs_lorene_bns
 
 #endif
 
+  ALLOCATE( CHARACTER(5):: systems(n_bns) )
+
+  DO itr= 1, n_bns, 1
+    systems(itr)= filenames(itr)(1:5)
+    IF( systems(itr) /= "BNSLO" .AND. systems(itr) /= "DRSLO" )THEN
+      PRINT *, "** ERROR! Unrecognized physical system ", systems(itr), ",",&
+               " system number", itr, "."
+      PRINT *
+      PRINT *, "   Please specify the type of physical system in the first 5",&
+               " characters of the name of the file containing the initial", &
+               " data."
+      PRINT *
+      PRINT *, "   The 5-character names, and associated physical systems,", &
+               " supported by this version of SPHINCS_ID are:"
+      PRINT *
+      PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
+      PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
+      PRINT *
+      STOP
+    ENDIF
+  ENDDO
+
   ! Allocate needed memory
   !ALLOCATE( binaries      ( n_bns ) )
   !ALLOCATE( diffrotstars  ( n_bns ) )
-  IF( TRIM(system) == "BNS" )THEN
+  IF( TRIM(systems(1)) == "BNS" )THEN
     ALLOCATE( bnslorene:: idata( n_bns ) )
-  ELSEIF( TRIM(system) == "DRS" )THEN
+  ELSEIF( TRIM(systems(1)) == "DRS" )THEN
     ALLOCATE( diffstarlorene:: idata( n_bns ) )
   ELSE
-    PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(system)
+    PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(systems(1))
     PRINT *, "   Set the variable 'system' in the parameter file ", &
              "sphincs_lorene_parameters.par to one of the values listed there."
     PRINT *, "   Stopping..."
@@ -232,12 +254,12 @@ PROGRAM sphincs_lorene_bns
  ! ENDDO build_bns_loop
 
   build_drs_loop: DO itr= 1, n_bns, 1
-    IF( TRIM(system) == "BNS" )THEN
+    IF( TRIM(systems(1)) == "BNS" )THEN
       idata( itr )= bnslorene( TRIM(common_path)//TRIM(filenames( itr )) )
-    ELSEIF( TRIM(system) == "DRS" )THEN
+    ELSEIF( TRIM(systems(1)) == "DRS" )THEN
       idata( itr )= diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
     ELSE
-      PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(system)
+      PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(systems(1))
       PRINT *, "   Set the variable 'system' in the parameter file ", &
                "sphincs_lorene_parameters.par to one of the values listed there."
       PRINT *, "   Stopping..."
@@ -265,7 +287,7 @@ PROGRAM sphincs_lorene_bns
 
           PRINT *, "===================================================" &
                    // "==============="
-          PRINT *, " Placing particles for "//TRIM(system), itr3, &
+          PRINT *, " Placing particles for "//systems(itr), itr3, &
                    ", distribution", itr4
           PRINT *, "===================================================" &
                    // "==============="
@@ -289,7 +311,7 @@ PROGRAM sphincs_lorene_bns
 
           PRINT *, "===================================================" &
                    // "====================="
-          PRINT *, " Computing SPH variables for "//TRIM(system), itr3, &
+          PRINT *, " Computing SPH variables for "//systems(itr), itr3, &
                    ", distribution", itr4
           PRINT *, "===================================================" &
                    // "====================="
@@ -297,8 +319,8 @@ PROGRAM sphincs_lorene_bns
           !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
           !                            "l", &
           !                            itr3, "-", itr4, "."
-          IF( TRIM(system)=="BNS" ) WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
-          IF( TRIM(system)=="DRS" ) WRITE( namefile_parts_bin, "(A5)" ) "DRSx."
+          IF( systems(itr)=="BNS" ) WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
+          IF( systems(itr)=="DRS" ) WRITE( namefile_parts_bin, "(A5)" ) "DRSx."
           namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
 
           particles_dist( itr3, itr4 )% export_bin= export_bin
@@ -351,7 +373,7 @@ PROGRAM sphincs_lorene_bns
     place_spacetime_id_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
                // "==============="
-      PRINT *, " Setting up BSSN object for "//TRIM(system), itr3
+      PRINT *, " Setting up BSSN object for "//systems(itr), itr3
       PRINT *, "===================================================" &
                // "==============="
       PRINT *
@@ -366,7 +388,7 @@ PROGRAM sphincs_lorene_bns
     compute_export_bssn_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
                // "==============="
-      PRINT *, " Computing BSSN variables for "//TRIM(system), itr3
+      PRINT *, " Computing BSSN variables for "//systems(itr), itr3
       PRINT *, "===================================================" &
                // "==============="
       PRINT *
