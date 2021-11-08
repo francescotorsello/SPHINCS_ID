@@ -123,6 +123,7 @@ lorene_sources_bin_ns = ['../../../Lorene/Export/C++/Source/bin_ns.C',
 
 sources = ['src/utility/module_utility.f90',
            'src/id_base/module_id_base.f90',
+           'src/id_base/submodule_id_base_initialization.f90',
            'src/id_base/submodule_id_base_access.f90',
            'src/id_base/submodule_id_base_mass_profile.f90',
            'src/id_base/bns_base/module_bns_base.f90',
@@ -267,7 +268,7 @@ write_par_eos = 'write_par_eos.x'
 #lorene_sources + lorene_sources_bin_ns
 
 Program(lorene_id_executable, sources + sources_sphincs_bssn + ['src/sphincs_lorene_bns.f90'])
-Program(lorene_id_convtest_executable, sources + sources_sphincs_bssn + ['src/convergence_test.f90'])
+#Program(lorene_id_convtest_executable, sources + sources_sphincs_bssn + ['src/convergence_test.f90'])
 Program(write_par_eos, sources + sources_sphincs_bssn + ['src/write_par_eos.f90'])
 #
 Decider('MD5-timestamp')

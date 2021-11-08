@@ -127,6 +127,8 @@ MODULE diffstar_lorene
     !--  SUBROUTINES  --!
     !-------------------!
 
+    PROCEDURE:: derived_type_constructor => construct_diffstarlorene
+
     PROCEDURE:: construct_drs
     !! Constructs the |lorene| Etdiffrot object
 
@@ -198,6 +200,8 @@ MODULE diffstar_lorene
 
     !PROCEDURE, PUBLIC:: get_diffstar_ptr
 
+    !PROCEDURE:: derived_type_destructor => destruct_diffstarlorene
+
     FINAL:: destruct_diffstarlorene
     !! Finalizer (Destructor) of a [[diffstarlorene]] object
 
@@ -207,28 +211,28 @@ MODULE diffstar_lorene
   !-- Interface of the TYPE diffstarlorene
   !-- (i.e., declaration of the constructor)
   !
-  INTERFACE diffstarlorene
-  !! Interface of TYPE [[diffstarlorene]]
-
-    MODULE PROCEDURE:: construct_diffstarlorene
-    !! Constructs a [[diffstarlorene]] object
-
-  END INTERFACE diffstarlorene
+ ! INTERFACE diffstarlorene
+ ! !! Interface of TYPE [[diffstarlorene]]
+ !
+ !   MODULE PROCEDURE:: construct_diffstarlorene
+ !   !! Constructs a [[diffstarlorene]] object
+ !
+ ! END INTERFACE diffstarlorene
 
   !
   !-- Interfaces of the constructor and destructor of the TYPE diffstarlorene
   !
   INTERFACE
 
-    MODULE FUNCTION construct_diffstarlorene( resu_file ) RESULT( drs )
-    !! Constructs a [[diffstarlorene]] object
-
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: resu_file
-      !! |lorene| binary file containing the spectral DRS ID
-      TYPE(diffstarlorene):: drs
-      !! Constructed [[diffstarlorene]] object
-
-    END FUNCTION construct_diffstarlorene
+   ! MODULE FUNCTION construct_diffstarlorene( resu_file ) RESULT( drs )
+   ! !! Constructs a [[diffstarlorene]] object
+   !
+   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: resu_file
+   !   !! |lorene| binary file containing the spectral DRS ID
+   !   TYPE(diffstarlorene):: drs
+   !   !! Constructed [[diffstarlorene]] object
+   !
+   ! END FUNCTION construct_diffstarlorene
 
     MODULE SUBROUTINE destruct_diffstarlorene( THIS )
     !! Destruct a [[diffstarlorene]] object
@@ -250,6 +254,20 @@ MODULE diffstar_lorene
     !
     !-- SUBROUTINES
     !
+
+    MODULE SUBROUTINE construct_diffstarlorene( derived_type, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral DRS ID
+      CLASS(diffstarlorene), INTENT( OUT ):: derived_type
+      !! Constructed [[diffstarlorene]] object
+
+    END SUBROUTINE construct_diffstarlorene
+
+
     MODULE SUBROUTINE construct_drs( THIS, resu_file )
     !! Interface of the subroutine that constructs the |lorene| Etdiffrot object
 

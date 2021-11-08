@@ -38,6 +38,13 @@ MODULE utility
   INTEGER, DIMENSION(8) :: values
   CHARACTER( LEN= 19 ):: run_id, end_time
 
+  CHARACTER( LEN= 5 ), PARAMETER:: bnslo= "BNSLO"
+  !# String that identifies a binary system of neutron stars computed
+  !  with LORENE
+  CHARACTER( LEN= 5 ), PARAMETER:: drslo= "DRSLO"
+  !# String that identifies a differentially rotating star computed
+  !  with LORENE
+
 
   CONTAINS
 

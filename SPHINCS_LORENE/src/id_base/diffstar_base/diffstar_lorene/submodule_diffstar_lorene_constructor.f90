@@ -44,28 +44,27 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_constructor
 
     INTEGER, SAVE:: diffstar_counter= 1
 
-    CALL drs% set_n_matter(1)
+    CALL derived_type% set_n_matter(1)
 
-    drs% construction_timer= timer( "drs_construction_timer" )
+    derived_type% construction_timer= timer( "drs_construction_timer" )
 
     ! Construct |lorene| |etdiffrot| object
-    IF( PRESENT( resu_file ) )THEN
-        CALL drs% construct_drs( resu_file )
+    IF( PRESENT( filename ) )THEN
+        CALL derived_type% construct_drs( filename )
     ELSE
-        CALL drs% construct_drs()
+        CALL derived_type% construct_drs()
     ENDIF
 
     ! Import the parameters of the binary system
-    CALL import_diffstar_params( drs )
+    CALL import_diffstar_params( derived_type )
 
     ! Assign a unique identifier to the bns object
-    drs% diffstar_identifier= diffstar_counter
+    derived_type% diffstar_identifier= diffstar_counter
     diffstar_counter= diffstar_counter + 1
 
     ! Do not use the geodesic gauge by default
-    CALL drs% set_one_lapse ( .FALSE. )
-    CALL drs% set_zero_shift( .FALSE. )
-
+    CALL derived_type% set_one_lapse ( .FALSE. )
+    CALL derived_type% set_zero_shift( .FALSE. )
 
   END PROCEDURE construct_diffstarlorene
 

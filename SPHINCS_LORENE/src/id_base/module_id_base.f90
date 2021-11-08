@@ -139,10 +139,13 @@ MODULE id_base
     !  is given as optional argument
 
     !
-    !-- PROCEDURES returning the values of some parameters of the entire system
+    !-- Constructors and destructors of derived types
     !
 
-    !PROCEDURE(derived_type_constructor_int), NOPASS, DEFERRED:: derived_type_constructor
+    PROCEDURE(derived_type_constructor_int), DEFERRED:: derived_type_constructor
+    !#
+
+    !PROCEDURE(derived_type_destructor_int), DEFERRED:: derived_type_destructor
     !#
 
 
@@ -151,12 +154,18 @@ MODULE id_base
     !-------------------------------!
 
 
-    !PROCEDURE, NON_OVERRIDABLE:: sanity_check
-    !#
+    PROCEDURE, NON_OVERRIDABLE:: sanity_check
+    !# Checks that [[idbase:n_matter]] and the sizes returned by
+    ![[idbase:return_spatial_extent]] and [[idbase:return_total_spatial_extent]]
+    !  are acceptable. It is called by initialize, after the constructor of the
+    !  derived type.
 
 
     !PROCEDURE, NON_OVERRIDABLE:: initialize
-    !#
+    !# This PROCEDURE calls the constructor of the [[idbase]]-extended type
+    !  and the SUBROUTINE [[idbase:sanity_check]] afterwards. It is recommended
+    !  to use this SUBROUTINE to construct objects of [[idbase]]-extended type
+    !  since the sanity check is performed automatically.
 
 
     PROCEDURE, NON_OVERRIDABLE:: get_total_spatial_extent
@@ -218,6 +227,21 @@ MODULE id_base
    !   CLASS(idbase), POINTER:: derived_type
    !
    ! END FUNCTION derived_type_constructor_int
+
+
+    SUBROUTINE derived_type_constructor_int( derived_type, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+      IMPORT:: idbase
+      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral DRS ID
+      CLASS(idbase), INTENT( OUT ):: derived_type
+      !! Constructed [[diffstarlorene]] object
+
+
+    END SUBROUTINE derived_type_constructor_int
 
 
     FUNCTION read_double_at_pos( THIS, x, y, z ) RESULT( res )
@@ -582,7 +606,6 @@ MODULE id_base
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-
       IMPORT:: idbase
       CLASS(idbase), INTENT( IN OUT ):: THIS
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
@@ -595,6 +618,32 @@ MODULE id_base
 
 
   INTERFACE
+
+
+    MODULE SUBROUTINE sanity_check( derived_type )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT( IN OUT ):: derived_type
+
+    END SUBROUTINE sanity_check
+
+
+    MODULE SUBROUTINE initialize_idbase( derived_type, path, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+      IMPORT:: idbase
+      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: path
+      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral DRS ID
+      CLASS(idbase), INTENT( OUT ), ALLOCATABLE:: derived_type
+      !! Constructed [[diffstarlorene]] object
+
+    END SUBROUTINE initialize_idbase
 
 
     MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &

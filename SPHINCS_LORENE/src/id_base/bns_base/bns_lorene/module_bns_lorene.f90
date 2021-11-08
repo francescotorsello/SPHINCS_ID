@@ -129,6 +129,8 @@ MODULE bns_lorene
     !--  SUBROUTINES  --!
     !-------------------!
 
+    PROCEDURE:: derived_type_constructor => construct_bnslorene
+
     PROCEDURE:: construct_binary
     !! Constructs the |lorene| |binns| object
 
@@ -210,6 +212,8 @@ MODULE bns_lorene
 
     !PROCEDURE, PUBLIC:: get_bns_ptr
 
+    !PROCEDURE:: derived_type_destructor => destruct_bnslorene
+
     FINAL:: destruct_bnslorene
     !! Finalizer (Destructor) of a [[bnslorene]] object
 
@@ -219,36 +223,43 @@ MODULE bns_lorene
   !-- Interface of the TYPE bnslorene (i.e., declaration of the constructor)
   !-- (see https://dannyvanpoucke.be/oop-fortran-tut4-en/)
   !
-  INTERFACE bnslorene
-  !! Interface of TYPE [[bnslorene]]
-
-    MODULE PROCEDURE:: construct_bnslorene
-    !! Constructs a [[bnslorene]] object
-
-  END INTERFACE bnslorene
+  !INTERFACE bnslorene
+  !!! Interface of TYPE [[bnslorene]]
+  !
+  !  MODULE PROCEDURE:: construct_bnslorene
+  !  !! Constructs a [[bnslorene]] object
+  !
+  !END INTERFACE bnslorene
 
   !
   !-- Interfaces of the constructor and destructor of the TYPE bnslorene
   !
   INTERFACE
 
-   ! MODULE SUBROUTINE construct_bnslorene2( this )
+
+   ! MODULE FUNCTION construct_bnslorene( resu_file ) RESULT( bns_obj )
    ! !! Constructs a [[bnslorene]] object
    !
-   !   TYPE(bnslorene), INTENT( IN OUT ):: this
+   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: resu_file
+   !   !! |lorene| binary file containing the spectral BNS ID
+   !   TYPE(bnslorene):: bns_obj
    !   !! Constructed [[bnslorene]] object
    !
-   ! END SUBROUTINE construct_bnslorene2
+   ! END FUNCTION construct_bnslorene
 
-    MODULE FUNCTION construct_bnslorene( resu_file ) RESULT( bns_obj )
-    !! Constructs a [[bnslorene]] object
 
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: resu_file
-      !! |lorene| binary file containing the spectral BNS ID
-      TYPE(bnslorene):: bns_obj
-      !! Constructed [[bnslorene]] object
+    MODULE SUBROUTINE construct_bnslorene( derived_type, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
 
-    END FUNCTION construct_bnslorene
+      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral DRS ID
+      CLASS(bnslorene), INTENT( OUT ):: derived_type
+      !! Constructed [[diffstarlorene]] object
+
+    END SUBROUTINE construct_bnslorene
+
 
     MODULE SUBROUTINE destruct_bnslorene( THIS )
     !! Destruct a [[bnslorene]] object
