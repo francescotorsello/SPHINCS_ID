@@ -8,14 +8,14 @@ MODULE id_base
   !
   !# This MODULE contains the definition of TYPE idbase,
   !  which is an ABSTRACT TYPE representing any possible
-  !  type of initial data (ID) to be set up for |sphincsbssn|.
+  !  type of initial data (|id|) to be set up for |sphincsbssn|.
   !  That is, a binary neutron star system, a rotating
   !  star, a binary black hole system, etc.
   !
   !  PROCEDURES and variables shared by all these types
-  !  of ID should belong to TYPE idbase, as
+  !  of |id| should belong to TYPE idbase, as
   !  they are inherited by its EXTENDED TYPES that
-  !  represent more specific types of ID.
+  !  represent more specific types of |id|.
   !
   !  FT 24.09.2021
   !
@@ -32,13 +32,13 @@ MODULE id_base
   !                                                            *
   !              Definition of TYPE idbase                     *
   !                                                            *
-  !   This ABSTRACT TYPE represents a generic ID for           *
+  !   This ABSTRACT TYPE represents a generic |id| for           *
   !   |sphincsbssn| (binary neutron star, rotating star...).   *
   !                                                            *
   !*************************************************************
 
   TYPE, ABSTRACT:: idbase
-  !# Represents a generic ID for |sphincsbssn| (binary neutron star, rotating
+  !# Represents a generic |id| for |sphincsbssn| (binary neutron star, rotating
   !  star, etc.)
 
 
@@ -85,20 +85,20 @@ MODULE id_base
     !
 
     PROCEDURE(read_id_full_int),          DEFERRED:: read_id_full
-    !# Reads the full ID
+    !# Reads the full |id|
 
     PROCEDURE(read_id_particles_int),     DEFERRED:: read_id_particles
-    !! Reads the hydro ID needed to compute the SPH ID
+    !! Reads the hydro |id| needed to compute the SPH |id|
 
     PROCEDURE(read_id_mass_b_int),        DEFERRED:: read_id_mass_b
-    !! Reads the hydro ID needed to compute the baryon mass
+    !! Reads the hydro |id| needed to compute the baryon mass
 
     PROCEDURE(read_id_spacetime_int),     DEFERRED:: read_id_spacetime
-    !# Reads the spacetime ID needed to compute
+    !# Reads the spacetime |id| needed to compute
     !  the BSSN variables and constraints
 
     PROCEDURE(read_id_hydro_int),         DEFERRED:: read_id_hydro
-    !# Reads the hydro ID needed to compute the constraints on the refined mesh
+    !# Reads the hydro |id| needed to compute the constraints on the refined mesh
 
     PROCEDURE(read_id_k_int),             DEFERRED:: read_id_k
     !! Reads the components of the extrinsic curvature
@@ -129,17 +129,23 @@ MODULE id_base
     !! Returns the name of the |eos| of the matter objects.
 
     !
-    !-- PROCEDURES returning the values of some parameters of the entire system
+    !-- PROCEDURE that prints a summary of the physical properties the system
+    !-- to the standard output and, optionally, to a formatted file
     !
 
- !   PROCEDURE(return_total_spatial_extent_int), DEFERRED:: &
- !                                                   return_total_spatial_extent
-    !# Returns the spatial extent of the physical system considered,
-    !  as the array of 6 numbers
-    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+    PROCEDURE(print_summary_int),         DEFERRED:: print_summary
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as optional argument
 
+    !
+    !-- Constructors and destructors of derived types
+    !
 
-    !PROCEDURE(derived_type_constructor_int), NOPASS, DEFERRED:: derived_type_constructor
+    PROCEDURE(derived_type_constructor_int), DEFERRED:: derived_type_constructor
+    !#
+
+    !PROCEDURE(derived_type_destructor_int), DEFERRED:: derived_type_destructor
     !#
 
 
@@ -148,12 +154,18 @@ MODULE id_base
     !-------------------------------!
 
 
-    !PROCEDURE, NON_OVERRIDABLE:: sanity_check
-    !#
+    PROCEDURE, NON_OVERRIDABLE:: sanity_check
+    !# Checks that [[idbase:n_matter]] and the sizes returned by
+    ![[idbase:return_spatial_extent]] and [[idbase:get_total_spatial_extent]]
+    !  are acceptable. It is called by initialize, after the constructor of the
+    !  derived type.
 
 
-    !PROCEDURE, NON_OVERRIDABLE:: initialize
-    !#
+    PROCEDURE, NON_OVERRIDABLE:: initialize
+    !# This PROCEDURE calls the constructor of the [[idbase]]-extended type
+    !  and the SUBROUTINE [[idbase:sanity_check]] afterwards. It is recommended
+    !  to use this SUBROUTINE to construct objects of [[idbase]]-extended type
+    !  since the sanity check is performed automatically.
 
 
     PROCEDURE, NON_OVERRIDABLE:: get_total_spatial_extent
@@ -208,13 +220,31 @@ MODULE id_base
   ABSTRACT INTERFACE
 
 
-   ! FUNCTION derived_type_constructor_int() RESULT( derived_type )
+   ! FUNCTION derived_type_constructor_int( &!derived_type,
+   ! filename ) RESULT( foo )
    ! !#
    !
    !   IMPORT:: idbase
-   !   CLASS(idbase), POINTER:: derived_type
+   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+   !   !CLASS(idbase):: derived_type
+   !   CLASS(idbase), ALLOCATABLE:: foo
    !
    ! END FUNCTION derived_type_constructor_int
+
+
+    SUBROUTINE derived_type_constructor_int( derived_type, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+      IMPORT:: idbase
+      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral DRS |id|
+      CLASS(idbase), INTENT( OUT ):: derived_type
+      !! Constructed [[diffstarlorene]] object
+
+
+    END SUBROUTINE derived_type_constructor_int
 
 
     FUNCTION read_double_at_pos( THIS, x, y, z ) RESULT( res )
@@ -326,8 +356,8 @@ MODULE id_base
                                    g_xx, &
                                    baryon_density, &
                                    gamma_euler )
-      !# INTERFACE or the SUBROUTINE reading the hydro ID needed to compute the
-      !  baryon mass
+      !# INTERFACE or the SUBROUTINE reading the hydro |id| needed to compute
+      !  the baryon mass
 
       IMPORT:: idbase
       CLASS(idbase),    INTENT( IN OUT ):: THIS
@@ -353,7 +383,7 @@ MODULE id_base
                                       energy_density, &
                                       specific_energy, &
                                       u_euler_x, u_euler_y, u_euler_z )
-     !# INTERFACE or the SUBROUTINE reading the full ID
+     !# INTERFACE or the SUBROUTINE reading the full |id|
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
@@ -394,7 +424,7 @@ MODULE id_base
                                               shift, &
                                               g, &
                                               ek )
-     !# INTERFACE or the SUBROUTINE reading the spacetime ID
+     !# INTERFACE or the SUBROUTINE reading the spacetime |id|
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
@@ -418,7 +448,7 @@ MODULE id_base
                                              specific_energy, &
                                              pressure, &
                                              u_euler )
-    !# INTERFACE or the SUBROUTINE reading the the hydro ID needed to compute
+    !# INTERFACE or the SUBROUTINE reading the the hydro |id| needed to compute
     !  the constraints on the refined mesh
 
       IMPORT:: idbase
@@ -447,8 +477,8 @@ MODULE id_base
                                       specific_energy, &
                                       pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
-    !# INTERFACE or the SUBROUTINE reading the hydro ID needed to compute the
-    !  SPH ID
+    !# INTERFACE or the SUBROUTINE reading the hydro |id| needed to compute the
+    !  SPH |id|
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
@@ -554,29 +584,69 @@ MODULE id_base
     END FUNCTION return_spatial_extent_int
 
 
-    FUNCTION return_total_spatial_extent_int( THIS ) RESULT( box )
-    !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
-    !  physical system considered, and returns a 6-dimensional array
-    !  containing the coordinates
-    !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
-    !  of a box **centered at the center of the object** and containing the
-    !  system.
+  !  FUNCTION return_total_spatial_extent_int( THIS ) RESULT( box )
+  !  !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
+  !  !  physical system considered, and returns a 6-dimensional array
+  !  !  containing the coordinates
+  !  !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
+  !  !  of a box **centered at the center of the object** and containing the
+  !  !  system.
+  !
+  !    IMPORT:: idbase
+  !    CLASS(idbase), INTENT( IN )   :: THIS
+  !    !! Object of class [[idbase]] which this PROCEDURE is a member of
+  !    DOUBLE PRECISION, DIMENSION(6):: box
+  !    !# 6-dimensional array containing the coordinates
+  !    !  \(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},
+  !    !    z_{\rm min},z_{\rm max}\)
+  !    !  of a box containing the physical system.
+  !
+  !  END FUNCTION return_total_spatial_extent_int
+
+
+    SUBROUTINE print_summary_int( THIS, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN )   :: THIS
-      !! Object of class [[idbase]] which this PROCEDURE is a member of
-      DOUBLE PRECISION, DIMENSION(6):: box
-      !# 6-dimensional array containing the coordinates
-      !  \(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},
-      !    z_{\rm min},z_{\rm max}\)
-      !  of a box containing the physical system.
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
 
-    END FUNCTION return_total_spatial_extent_int
+    END SUBROUTINE print_summary_int
+
 
   END INTERFACE
 
 
   INTERFACE
+
+
+    MODULE SUBROUTINE sanity_check( derived_type )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+      !IMPORT:: idbase
+      CLASS(idbase), INTENT( IN OUT ):: derived_type
+
+    END SUBROUTINE sanity_check
+
+
+    MODULE SUBROUTINE initialize( derived_type, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+      IMPORT:: idbase
+      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral DRS ID
+      CLASS(idbase), INTENT( OUT ):: derived_type
+      !! Constructed [[diffstarlorene]] object
+
+    END SUBROUTINE initialize
+
 
     MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
                                                      central_density, &

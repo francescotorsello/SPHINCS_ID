@@ -18,6 +18,7 @@ MODULE diffstar_lorene
 
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT, C_DOUBLE, C_CHAR, C_PTR
   USE diffstar_base,               ONLY: diffstarbase
+  USE id_base,                     ONLY: idbase
   USE utility,                     ONLY: itr, ios, err_msg, test_status, &
                                          perc, creturn, compute_g4, &
                                          determinant_sym4x4_grid, show_progress
@@ -211,25 +212,27 @@ MODULE diffstar_lorene
   !-- Interface of the TYPE diffstarlorene
   !-- (i.e., declaration of the constructor)
   !
- ! INTERFACE diffstarlorene
- ! !! Interface of TYPE [[diffstarlorene]]
- !
- !   MODULE PROCEDURE:: construct_diffstarlorene
- !   !! Constructs a [[diffstarlorene]] object
- !
- ! END INTERFACE diffstarlorene
+  !INTERFACE diffstarlorene
+  !!! Interface of TYPE [[diffstarlorene]]
+  !
+  !  MODULE PROCEDURE:: construct_diffstarlorene
+  !  !! Constructs a [[diffstarlorene]] object
+  !
+  !END INTERFACE diffstarlorene
 
   !
   !-- Interfaces of the constructor and destructor of the TYPE diffstarlorene
   !
   INTERFACE
 
-   ! MODULE FUNCTION construct_diffstarlorene( resu_file ) RESULT( drs )
+   ! MODULE FUNCTION construct_diffstarlorene( &!derived_type,
+   ! filename ) RESULT( foo )
    ! !! Constructs a [[diffstarlorene]] object
    !
-   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: resu_file
+   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
    !   !! |lorene| binary file containing the spectral DRS ID
-   !   TYPE(diffstarlorene):: drs
+   !   !CLASS(diffstarlorene):: derived_type
+   !   CLASS(idbase), ALLOCATABLE:: foo
    !   !! Constructed [[diffstarlorene]] object
    !
    ! END FUNCTION construct_diffstarlorene

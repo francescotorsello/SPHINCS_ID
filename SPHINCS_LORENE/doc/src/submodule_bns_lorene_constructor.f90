@@ -62,41 +62,29 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
 
     !DOUBLE PRECISION:: tmp
 
-    CALL bns_obj% set_n_matter(2)
+    CALL derived_type% set_n_matter(2)
 
-    bns_obj% construction_timer= timer( "binary_construction_timer" )
+    derived_type% construction_timer= timer( "binary_construction_timer" )
 
     ! Construct |lorene| |binns| object
-    IF( PRESENT( resu_file ) )THEN
-        CALL bns_obj% construct_binary( resu_file )
+    IF( PRESENT( filename ) )THEN
+        CALL derived_type% construct_binary( filename )
     ELSE
-        CALL bns_obj% construct_binary()
+        CALL derived_type% construct_binary()
     ENDIF
 
     ! Import the parameters of the binary system
-    CALL import_id_params( bns_obj )
+    CALL import_id_params( derived_type )
 
     ! Assign a unique identifier to the bns object
-    bns_obj% bns_identifier= bns_counter
+    derived_type% bns_identifier= bns_counter
     bns_counter= bns_counter + 1
 
     ! Do not use the geodesic gauge by default
-    CALL bns_obj% set_one_lapse ( .FALSE. )
-    CALL bns_obj% set_zero_shift( .FALSE. )
+    CALL derived_type% set_one_lapse ( .FALSE. )
+    CALL derived_type% set_zero_shift( .FALSE. )
 
- !   bns_obj% total_spatial_extent(1)= bns_obj% get_center1_x() &
- !                               - bns_obj% get_radius1_x_opp()
- !   bns_obj% total_spatial_extent(2)= bns_obj% get_center2_x() &
- !                               + bns_obj% get_radius2_x_opp()
- !   bns_obj% total_spatial_extent(3)= - MAX( bns_obj% get_radius1_y(), &
- !                                      bns_obj% get_radius2_y() )
- !   bns_obj% total_spatial_extent(4)= - bns_obj% total_spatial_extent(3)
- !   bns_obj% total_spatial_extent(5)= - MAX( bns_obj% get_radius1_z(), &
- !                                      bns_obj% get_radius2_z() )
- !   bns_obj% total_spatial_extent(6)= - bns_obj% total_spatial_extent(5)
-
-    !PRINT *, "End of bns constructor."
-    !PRINT *
+    !foo= derived_type
 
   END PROCEDURE construct_bnslorene
 

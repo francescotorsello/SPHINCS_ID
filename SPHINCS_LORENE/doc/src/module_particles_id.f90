@@ -56,7 +56,7 @@ MODULE particles_id
     !INTEGER:: npart2
     !! Particle number for star 1
     INTEGER:: n_matter
-    !! Particle number for star 1
+    !! Number of matter objects in the physical system
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_i
     !! Particle number for star 2
     INTEGER:: distribution_id
@@ -352,6 +352,10 @@ MODULE particles_id
     PROCEDURE:: place_particles_spherical_surfaces
     !! Places particles on spherical surfaces on one star
 
+    PROCEDURE, NOPASS:: impose_equatorial_plane_symmetry
+    !# Reflects the positions of the particles on a matter object with respect
+    !  to the \(xy\) plane
+
     PROCEDURE, NOPASS:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
@@ -394,6 +398,9 @@ MODULE particles_id
     PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
     !! Prints the SPH ID to a formatted file
 
+    PROCEDURE, PUBLIC:: print_summary
+    !! Prints the SPH ID to a formatted file
+
     PROCEDURE, PUBLIC:: is_empty
     !# Returns `.TRUE` if the [[particles]] object is empty, `.FALSE` otherwise
     !  @warning experimental, not actively used in the code yet
@@ -407,15 +414,15 @@ MODULE particles_id
     PROCEDURE, PUBLIC:: get_npart
     !! Returns [[particles:npart]]
     PROCEDURE, PUBLIC:: get_npart1
-    !! Returns [[particles:npart1]]
+    !! Returns
     PROCEDURE, PUBLIC:: get_npart2
-    !! Returns [[particles:npart2]]
+    !! Returns
     PROCEDURE, PUBLIC:: get_nuratio
     !! Returns [[particles:nuratio]]
     PROCEDURE, PUBLIC:: get_nuratio1
-    !! Returns [[particles:nuratio1]]
+    !! Returns
     PROCEDURE, PUBLIC:: get_nuratio2
-    !! Returns [[particles:nuratio2]]
+    !! Returns
     PROCEDURE, PUBLIC:: get_pos
     !! Returns [[particles:pos]]
     PROCEDURE, PUBLIC:: get_vel
@@ -763,6 +770,22 @@ MODULE particles_id
     END SUBROUTINE place_particles_spherical_surfaces
 
 
+    MODULE SUBROUTINE impose_equatorial_plane_symmetry( npart, pos, &
+                                                 nu, com_star, verbose )
+    !# Mirror the particle with z>0 with respect to the xy plane,
+    !  to impose the equatorial-plane symmetry
+
+      !CLASS(particles), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT(INOUT):: npart
+      DOUBLE PRECISION, INTENT(IN), OPTIONAL:: com_star
+      LOGICAL, INTENT(IN), OPTIONAL:: verbose
+
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT), OPTIONAL:: nu
+
+    END SUBROUTINE impose_equatorial_plane_symmetry
+
+
 !    MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
 !                                            index_array )
 !    !! Reallocates a 1d array
@@ -987,6 +1010,7 @@ MODULE particles_id
 
     END SUBROUTINE perform_apm
 
+
     MODULE SUBROUTINE read_sphincs_dump_print_formatted( THIS, namefile_bin, &
                                                                namefile )
     !# Reads the binary ID file printed by
@@ -1002,6 +1026,7 @@ MODULE particles_id
 
     END SUBROUTINE read_sphincs_dump_print_formatted
 
+
     MODULE SUBROUTINE print_formatted_lorene_id_particles( THIS, namefile )
     !! Prints the SPH ID to a formatted file
 
@@ -1011,6 +1036,7 @@ MODULE particles_id
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
     END SUBROUTINE print_formatted_lorene_id_particles
+
 
     MODULE SUBROUTINE read_compose_composition( THIS, namefile )
     !! Reads the \(Y_e(n_b)\) table in the CompOSE file with extension .beta
@@ -1023,6 +1049,7 @@ MODULE particles_id
 
     END SUBROUTINE read_compose_composition
 
+
     MODULE SUBROUTINE compute_Ye( THIS )!, nlrf, Ye )
     !# Interpolates linearly the electron fraction \(Y_e\) at the particle
     !  densities; that is, assigns \(Y_e\) at the particle positions
@@ -1033,6 +1060,20 @@ MODULE particles_id
       !DOUBLE PRECISION, DIMENSION( : ), INTENT( OUT ):: Ye
 
     END SUBROUTINE compute_Ye
+
+
+    MODULE SUBROUTINE print_summary( THIS, filename )
+    !# Prints a summary of the properties of the |sph| particle
+    !  distribution, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+
+      CLASS(particles), INTENT( IN OUT ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
+
+    END SUBROUTINE print_summary
+
 
     MODULE SUBROUTINE destruct_particles( THIS )
     !> Finalizer (Destructor) of [[particles]] object
@@ -1075,21 +1116,21 @@ MODULE particles_id
     END FUNCTION get_npart
 
     MODULE FUNCTION get_npart1( THIS ) RESULT( n_part )
-    !! Returns [[particles:npart1]]
+    !! Returns
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !> [[particles:npart1]]
+      !>
       INTEGER:: n_part
 
     END FUNCTION get_npart1
 
     MODULE FUNCTION get_npart2( THIS ) RESULT( n_part )
-    !! Returns [[particles:npart2]]
+    !! Returns
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !> [[particles:npart2]]
+      !>
       INTEGER:: n_part
 
     END FUNCTION get_npart2
@@ -1105,21 +1146,21 @@ MODULE particles_id
     END FUNCTION get_nuratio
 
     MODULE FUNCTION get_nuratio1( THIS ) RESULT( nuratio1 )
-    !! Returns [[particles:nuratio1]]
+    !! Returns
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !> [[particles:nuratio1]]
+      !>
       DOUBLE PRECISION:: nuratio1
 
     END FUNCTION get_nuratio1
 
     MODULE FUNCTION get_nuratio2( THIS ) RESULT( nuratio2 )
-    !! Returns [[particles:nuratio2]]
+    !! Returns
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !> [[particles:nuratio2]]
+      !>
       DOUBLE PRECISION:: nuratio2
 
     END FUNCTION get_nuratio2

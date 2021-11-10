@@ -1877,38 +1877,38 @@ SUBMODULE (particles_id) particles_sph_variables
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        itr, &
-        THIS% pos( 1, itr ), &
-        THIS% pos( 2, itr ), &
-        THIS% pos( 3, itr ), &
-        THIS% lapse_parts( itr ), &
-        THIS% shift_parts_x( itr ), &
-        THIS% shift_parts_y( itr ), &
-        THIS% shift_parts_z( itr ), &
-        THIS% baryon_density_parts( itr ), &
-        THIS% energy_density_parts( itr ), &
-        THIS% specific_energy_parts( itr ), &
-        THIS% pressure_parts( itr )*((Msun_geo*km2m)**3)/(amu*g2kg), &
-        THIS% pressure_parts_cu( itr ), &
-        THIS% v_euler_parts_x( itr ), &
-        THIS% v_euler_parts_y( itr ), &
-        THIS% v_euler_parts_z( itr ), &
-        THIS% v( 1, itr ), &
-        THIS% v( 2, itr ), &
-        THIS% v( 3, itr ), &
-        THIS% nu( itr ), &
-        THIS% nlrf( itr ), &
-        THIS% Ye( itr ), &
-        THIS% Theta( itr ), &
-        THIS% nstar( itr ), &
-        THIS% nstar_int( itr ), &
-        THIS% h( itr ), &
-        THIS% particle_density( itr ), &
-        THIS% particle_density_int( itr ), &
-        THIS% pvol( itr ), &
-        THIS% pmass( itr ), &
-        THIS% u_pwp( itr ), &
-        THIS% nlrf_int( itr )
+        itr, &                                                             ! 1
+        THIS% pos( 1, itr ), &                                             ! 2
+        THIS% pos( 2, itr ), &                                             ! 3
+        THIS% pos( 3, itr ), &                                             ! 4
+        THIS% lapse_parts( itr ), &                                        ! 5
+        THIS% shift_parts_x( itr ), &                                      ! 6
+        THIS% shift_parts_y( itr ), &                                      ! 7
+        THIS% shift_parts_z( itr ), &                                      ! 8
+        THIS% baryon_density_parts( itr ), &                               ! 9
+        THIS% energy_density_parts( itr ), &                               ! 10
+        THIS% specific_energy_parts( itr ), &                              ! 11
+        THIS% pressure_parts( itr )*((Msun_geo*km2m)**3.0D0)/(amu*g2kg), & ! 12
+        THIS% pressure_parts_cu( itr ), &                                  ! 13
+        THIS% v_euler_parts_x( itr ), &                                    ! 14
+        THIS% v_euler_parts_y( itr ), &                                    ! 15
+        THIS% v_euler_parts_z( itr ), &                                    ! 16
+        THIS% v( 1, itr ), &                                               ! 17
+        THIS% v( 2, itr ), &                                               ! 18
+        THIS% v( 3, itr ), &                                               ! 19
+        THIS% nu( itr ), &                                                 ! 20
+        THIS% nlrf( itr ), &                                               ! 21
+        THIS% Ye( itr ), &                                                 ! 22
+        THIS% Theta( itr ), &                                              ! 23
+        THIS% nstar( itr ), &                                              ! 24
+        THIS% nstar_int( itr ), &                                          ! 25
+        THIS% h( itr ), &                                                  ! 26
+        THIS% particle_density( itr ), &                                   ! 27
+        THIS% particle_density_int( itr ), &                               ! 28
+        THIS% pvol( itr ), &                                               ! 29
+        THIS% pmass( itr ), &                                              ! 30
+        THIS% u_pwp( itr ), &                                              ! 31
+        THIS% nlrf_int( itr )                                              ! 32
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &

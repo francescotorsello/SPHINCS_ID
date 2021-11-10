@@ -59,12 +59,16 @@ SUBMODULE (formul_3p1_id) formul_3p1_standard3p1_variables
     ! Index running over the refinement levels
     INTEGER:: l
     ! Indices running over the grids
-    INTEGER:: i, j, k
+    INTEGER:: i, j, k, i_matter
 
     ! Determinant of the standard 3+1 spatial metric
     DOUBLE PRECISION:: detg
 
     DOUBLE PRECISION, DIMENSION(6):: system_size
+    DOUBLE PRECISION, DIMENSION(id% get_n_matter(),6):: sizes
+
+    ! Get the number of matter objects in the physical system
+    f3p1% n_matter= id% get_n_matter()
 
     !
     !-- Initialize timers
@@ -117,6 +121,18 @@ SUBMODULE (formul_3p1_id) formul_3p1_standard3p1_variables
 
     f3p1% nlevels= nlevels
     f3p1% levels = levels
+
+    ALLOCATE( f3p1% npoints_xaxis( f3p1% n_matter ) )
+
+    DO i_matter= 1, f3p1% n_matter, 1
+
+      sizes(i_matter,:)= id% return_spatial_extent(i_matter)
+
+      f3p1% npoints_xaxis(i_matter)= FLOOR( ( sizes(i_matter,1) &
+                                            + sizes(i_matter,2) ) &
+                                              /f3p1% get_dx( f3p1% nlevels ) )
+
+    ENDDO
 
     ref_levels: DO l= 1, f3p1% nlevels
 

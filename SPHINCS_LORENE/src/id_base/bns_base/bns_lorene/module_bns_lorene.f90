@@ -226,6 +226,7 @@ MODULE bns_lorene
   !INTERFACE bnslorene
   !!! Interface of TYPE [[bnslorene]]
   !
+  !  !MODULE PROCEDURE:: construct_bnslorene
   !  MODULE PROCEDURE:: construct_bnslorene
   !  !! Constructs a [[bnslorene]] object
   !
@@ -237,13 +238,15 @@ MODULE bns_lorene
   INTERFACE
 
 
-   ! MODULE FUNCTION construct_bnslorene( resu_file ) RESULT( bns_obj )
+   ! MODULE FUNCTION construct_bnslorene( &!derived_type,
+   ! filename ) RESULT( foo )
    ! !! Constructs a [[bnslorene]] object
    !
-   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: resu_file
+   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
    !   !! |lorene| binary file containing the spectral BNS ID
-   !   TYPE(bnslorene):: bns_obj
+   !   !CLASS(bnslorene):: derived_type
    !   !! Constructed [[bnslorene]] object
+   !   CLASS(idbase), ALLOCATABLE:: foo
    !
    ! END FUNCTION construct_bnslorene
 
@@ -254,9 +257,9 @@ MODULE bns_lorene
     !  is given as the optional argument `filename`
 
       CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral DRS ID
+      !! |lorene| binary file containing the spectral BNS ID
       CLASS(bnslorene), INTENT( OUT ):: derived_type
-      !! Constructed [[diffstarlorene]] object
+      !! Constructed [[bnslorene]] object
 
     END SUBROUTINE construct_bnslorene
 

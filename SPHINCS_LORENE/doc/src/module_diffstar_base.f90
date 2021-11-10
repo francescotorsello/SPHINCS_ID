@@ -256,6 +256,7 @@ MODULE diffstar_base
     PROCEDURE:: return_barycenter           => get_barycenter
     PROCEDURE:: return_eos_name             => get_eos
     PROCEDURE:: return_spatial_extent       => get_radii
+    PROCEDURE:: print_summary               => print_summary_drs
 
 
     PROCEDURE, PUBLIC:: get_omega_c
@@ -403,6 +404,24 @@ MODULE diffstar_base
  !                                      mass_profile
  !
  !   END SUBROUTINE integrate_baryon_mass_density
+
+
+    !------------------------------!
+    !--  OVERRIDING SUBROUTINES  --!
+    !------------------------------!
+
+
+    MODULE SUBROUTINE print_summary_drs( THIS, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+
+      CLASS(diffstarbase), INTENT( IN OUT ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
+
+    END SUBROUTINE print_summary_drs
 
 
     !----------------------------!

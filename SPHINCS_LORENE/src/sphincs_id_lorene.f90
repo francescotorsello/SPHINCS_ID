@@ -2,69 +2,101 @@
 ! Author:       Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-PROGRAM sphincs_lorene_bns
+PROGRAM sphincs_id_lorene
 
   !*****************************************************
-  !                                                    *
-  ! Use the MODULE sphincs_lorene to export binary     *
-  ! files containing the initial data (ID) required    *
-  ! by the evolution code in SPHINCS, and built using  *
-  ! the binary files produced by LORENE and containing *
-  ! the binary neutron stars (BNS) ID.                 *
-  !                                                    *
-  ! FT 28.10.2020                                      *
-  !                                                    *
+  !
+  !# Use the MODULE sphincs_lorene to export binary
+  !  files containing the initial data (|id|) required
+  !  by the evolution code in SPHINCS, and built using
+  !  the binary files produced by LORENE and containing
+  !  the binary neutron stars (BNS) |id|.
+  !
+  !  FT 28.10.2020
+  !
   !*****************************************************
 
 #ifdef __INTEL_COMPILER
-  USE IFPORT,         ONLY: MAKEDIRQQ
+  USE IFPORT,          ONLY: MAKEDIRQQ
 #endif
-  USE sphincs_lorene
-  USE constants,      ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
-                            k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
-                            kg2g, m2cm, m0c2
+  USE sphincs_lorene,  ONLY: allocate_idbase, bnslo, drslo
+  USE utility,         ONLY: date, time, zone, values, run_id, itr, itr3, &
+                             itr4, file_exists, cnt, &
+                             test_status, show_progress, end_time
+  USE timing,          ONLY: timer
+  USE id_base,         ONLY: idbase, initialize
+  USE particles_id,    ONLY: particles
+  USE formul_bssn_id,  ONLY: bssn_id
+  USE constants,       ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
+                             k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
+                             kg2g, m2cm, m0c2
 
   IMPLICIT NONE
 
-  ! Maximum length for strings, and for the number of imported binaries
-  INTEGER, PARAMETER:: max_length= 50
-  ! Maximum number of binary systems
-  INTEGER, PARAMETER:: max_n_bns= 50
-  ! Maximum number of particle distributions
-  INTEGER, PARAMETER:: max_n_parts= 250
-  ! Number of binary systems of neutron stars (BNS) to import
-  INTEGER:: n_bns, ref_lev, i_matter
-  ! Export the constraints every constraints_step-th step
-  INTEGER:: constraints_step, last_level
 
-  ! Matrix storing the information on how to place particles for each bns
-  ! object. Row i contains information about the i^th bns object.
+  INTEGER, PARAMETER:: max_length= 50
+  !! Maximum length for strings
+  INTEGER, PARAMETER:: max_n_bns= 50
+  ! Maximum number of physical systems
+  INTEGER, PARAMETER:: max_n_parts= 250
+  !! Maximum number of particle distributions
+
   INTEGER, PARAMETER:: test_int= - 112
   INTEGER, DIMENSION( max_n_bns, max_n_parts ):: placer= test_int
+  !# Matrix storing the information on how to place particles for each bns
+  !  object. Row i contains information about the i^th bns object.
 
-  ! Rational ratio between the large grid spacing and the medium one,
-  ! equal to the ratio between the medium grid spacing nd the small one
-  ! Not used in this PROGRAM, but needed since the PROGRAM reads the same
-  ! parameter ile as the convergence_test PROGRAM
+  INTEGER:: n_bns
+  !! Number of physical systems to set up
+  INTEGER:: i_matter
+  !! Index running over the number of physical systems
+  INTEGER:: ref_lev
+  !! Number of refinement levels
+  INTEGER:: constraints_step
+  !! Export the constraints every constraints_step-th step
+
+
   DOUBLE PRECISION:: numerator_ratio_dx
+  !# Numerator of the rational ratio between the large grid spacing and the
+  !  medium one,equal to the ratio between the medium grid spacing nd the small
+  !  one. Not used in this PROGRAM, but needed since the PROGRAM reads the same
+  !  parameter file as the convergence_test PROGRAM
   DOUBLE PRECISION:: denominator_ratio_dx
+  !# Denominator of the rational ratio between the large grid spacing and the
+  !  medium one,equal to the ratio between the medium grid spacing nd the small
+  !  one. Not used in this PROGRAM, but needed since the PROGRAM reads the same
+  !  parameter file as the convergence_test PROGRAM
 
-  ! String storing the name of the phyical system
-  CHARACTER( LEN= max_length ):: system
-  ! Strings storing different names for output files
-  CHARACTER( LEN= 500 ):: namefile_parts, namefile_parts_bin, namefile_sph
-  CHARACTER( LEN= 500 ):: namefile_bssn, namefile_bssn_bin, name_logfile
-  ! Array of strings storing the names of the LORENE BNS ID binary files
+
+  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems
+  !! String storing the name of the phyical systems
+  CHARACTER( LEN= 500 ):: namefile_parts
+  !# String storing the name for the formatted file containing the |sph|
+  !  particle |id|
+  CHARACTER( LEN= 500 ):: namefile_parts_bin
+  !# String storing the name for the binary file containing the |sph|
+  !  particle |id|
+  CHARACTER( LEN= 500 ):: namefile_sph
+  !# String storing the name for ??
+  !
+  CHARACTER( LEN= 500 ):: namefile_bssn
+  !# String storing the name for the formatted file containing the |bssn| |id|
+  CHARACTER( LEN= 500 ):: namefile_bssn_bin
+  !# String storing the name for the binary file containing the |bssn| |id|
+  CHARACTER( LEN= 500 ):: name_logfile
+  !# String storing the name for the formatted file containing a summary about
+  !  the |bssn| constraints violations
   CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
-  ! String storing the local path to the directory where the
-  ! LORENE BNS ID files are stored
+  ! Array of strings storing the names of the |id| files
   CHARACTER( LEN= max_length ):: common_path
-  ! String storing the local path to the directory where the
-  ! SPH output is to be saved
+  !# String storing the local path to the directory where the |id| files
+  !  are stored
   CHARACTER( LEN= max_length ):: sph_path
-  ! String storing the local path to the directory where the
-  ! spacetime output is to be saved
+  !# String storing the local path to the directory where the
+  !  SPH output is to be saved
   CHARACTER( LEN= max_length ):: spacetime_path
+  !# String storing the local path to the directory where the
+  !  spacetime output is to be saved
 
   LOGICAL:: exist
   LOGICAL(4):: dir_out
@@ -78,9 +110,15 @@ PROGRAM sphincs_lorene_bns
   TYPE( timer ):: execution_timer
 
   ! Declaration of the allocatable array storing the bns objects,
-  ! containing the LORENE ID for different BNS
-  TYPE( bnslorene ), DIMENSION(:), ALLOCATABLE:: binaries
-  CLASS( idbase ),   DIMENSION(:), ALLOCATABLE:: idata
+  ! containing the LORENE |id| for different BNS
+  !TYPE( bnslorene ), DIMENSION(:), ALLOCATABLE:: binaries
+
+  TYPE id
+    CLASS( idbase ), ALLOCATABLE:: idata
+  END TYPE id
+  TYPE( id ), DIMENSION(:), ALLOCATABLE:: ids
+  !CLASS(idbase), POINTER:: foo
+  !CLASS( idbase ), DIMENSION(:), ALLOCATABLE:: ids
   ! Declaration of the allocatable array storing the particles objects,
   ! containing the particle distributions for each bns object.
   ! Multiple particle objects can contain different particle distributions
@@ -92,7 +130,7 @@ PROGRAM sphincs_lorene_bns
 
   ! Namelist containing parameters read from lorene_bns_id_parameters.par
   ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM
-  NAMELIST /bns_parameters/ system, n_bns, common_path, filenames, placer, &
+  NAMELIST /bns_parameters/ n_bns, common_path, filenames, placer, &
                             export_bin, export_form, export_form_xy, &
                             export_form_x, export_constraints_xy, &
                             export_constraints_x, compute_constraints, &
@@ -202,26 +240,49 @@ PROGRAM sphincs_lorene_bns
 
 #endif
 
+  ALLOCATE( CHARACTER(5):: systems(n_bns) )
+
+  DO itr= 1, n_bns, 1
+    systems(itr)= filenames(itr)(1:5)
+    IF( systems(itr) /= bnslo .AND. systems(itr) /= drslo )THEN
+      PRINT *, "** ERROR! Unrecognized physical system ", systems(itr), ",",&
+               " system number", itr, "."
+      PRINT *
+      PRINT *, "   Please specify the type of physical system in the first 5",&
+               " characters of the name of the file containing the initial", &
+               " data."
+      PRINT *
+      PRINT *, "   The 5-character names, and associated physical systems,", &
+               " supported by this version of SPHINCS_ID are:"
+      PRINT *
+      PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
+      PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
+      PRINT *
+      STOP
+    ENDIF
+  ENDDO
+
   ! Allocate needed memory
   !ALLOCATE( binaries      ( n_bns ) )
   !ALLOCATE( diffrotstars  ( n_bns ) )
-  IF( TRIM(system) == "BNS" )THEN
-    ALLOCATE( bnslorene:: idata( n_bns ) )
-  ELSEIF( TRIM(system) == "DRS" )THEN
-    ALLOCATE( diffstarlorene:: idata( n_bns ) )
-  ELSE
-    PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(system)
-    PRINT *, "   Set the variable 'system' in the parameter file ", &
-             "sphincs_lorene_parameters.par to one of the values listed there."
-    PRINT *, "   Stopping..."
-    PRINT *
-    STOP
-  ENDIF
+  !IF( TRIM(systems(1)) == bnslo )THEN
+  !  ALLOCATE( bnslorene:: idata( n_bns ) )
+  !ELSEIF( TRIM(systems(1)) == drslo )THEN
+  !  ALLOCATE( diffstarlorene:: idata( n_bns ) )
+  !ELSE
+  !  PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(systems(1))
+  !  PRINT *, "   Set the variable 'system' in the parameter file ", &
+  !           "sphincs_lorene_parameters.par to one of the values listed there."
+  !  PRINT *, "   Stopping..."
+  !  PRINT *
+  !  STOP
+  !ENDIF
+  ALLOCATE( ids( n_bns ) )
   ALLOCATE( particles_dist( n_bns, max_n_parts ) )
   ALLOCATE( bssn_forms    ( n_bns ) )
 
   !
-  !-- Construct the LORENE ID from the LORENE binary files
+  !-- Construct the LORENE |id| from the LORENE binary files
   !
  ! build_bns_loop: DO itr= 1, n_bns, 1
  !   binaries( itr )= bnslorene( TRIM(common_path)//TRIM(filenames( itr )) )
@@ -231,12 +292,38 @@ PROGRAM sphincs_lorene_bns
  !   binaries( itr )% zero_shift= zero_shift
  ! ENDDO build_bns_loop
 
+  !ALLOCATE(foo, source = bnslorene( TRIM(common_path)//TRIM(filenames( 1 ))) )
+
   build_drs_loop: DO itr= 1, n_bns, 1
-    idata( itr )= diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
+   ! IF( systems(itr) == bnslo )THEN
+   !   !idata( itr )=
+   !   !ALLOCATE(foo, source = bnslorene( TRIM(common_path)//TRIM(filenames( 1 ))) )
+   !   ALLOCATE( bnslorene:: ids(itr)% idata )
+   !   !CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)))
+   ! ELSEIF( systems(itr) == drslo )THEN
+   !   !idata( itr )=
+   !   ALLOCATE( diffstarlorene:: ids(itr)% idata )
+   !   !CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)))
+   !   !ids(itr)% idata = diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
+   ! ELSE
+   !   PRINT *, "** ERROR! Unknown name for the physical system: ", systems(itr)
+   !   PRINT *, "   Set the variable 'system' in the parameter file ", &
+   !            "sphincs_lorene_parameters.par to one of the values listed there."
+   !   PRINT *, "   Stopping..."
+   !   PRINT *
+   !   STOP
+   ! ENDIF
+    CALL allocate_idbase( ids(itr)% idata, TRIM(filenames(itr)) )
+    CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)) )
+
+    !ids(itr)% idata= initialize( ids(itr)% idata, TRIM(common_path)//TRIM(filenames(itr)) )
+    !ids(itr)% idata= derived_type_constructor( file )
     ! Set the variables to decide on using the geodesic gauge or not
     ! (lapse=1, shift=0)
-    CALL idata( itr )% set_one_lapse( one_lapse )
-    CALL idata( itr )% set_zero_shift( zero_shift )
+    !CALL idata( itr )% set_one_lapse( one_lapse )
+    !CALL idata( itr )% set_zero_shift( zero_shift )
+    CALL ids(itr)% idata% set_one_lapse( one_lapse )
+    CALL ids(itr)% idata% set_zero_shift( zero_shift )
   ENDDO build_drs_loop
 
   !STOP
@@ -254,12 +341,12 @@ PROGRAM sphincs_lorene_bns
 
           PRINT *, "===================================================" &
                    // "==============="
-          PRINT *, " Placing particles for "//TRIM(system), itr3, &
+          PRINT *, " Placing particles for "//systems(itr3), itr3, &
                    ", distribution", itr4
           PRINT *, "===================================================" &
                    // "==============="
           PRINT *
-          particles_dist( itr3, itr4 )= particles( idata( itr3 ), &
+          particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
                                                    placer( itr3, itr4 ) )
 
         ENDIF
@@ -278,7 +365,7 @@ PROGRAM sphincs_lorene_bns
 
           PRINT *, "===================================================" &
                    // "====================="
-          PRINT *, " Computing SPH variables for "//TRIM(system), itr3, &
+          PRINT *, " Computing SPH variables for "//systems(itr3), itr3, &
                    ", distribution", itr4
           PRINT *, "===================================================" &
                    // "====================="
@@ -286,8 +373,8 @@ PROGRAM sphincs_lorene_bns
           !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
           !                            "l", &
           !                            itr3, "-", itr4, "."
-          IF( TRIM(system)=="BNS" ) WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
-          IF( TRIM(system)=="DRS" ) WRITE( namefile_parts_bin, "(A5)" ) "DRSx."
+          IF( systems(itr3)==bnslo ) WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
+          IF( systems(itr3)==drslo ) WRITE( namefile_parts_bin, "(A5)" ) "DRSx."
           namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
 
           particles_dist( itr3, itr4 )% export_bin= export_bin
@@ -330,21 +417,6 @@ PROGRAM sphincs_lorene_bns
       ENDDO export_sph_loops
     ENDIF
 
-    !PRINT *, "===================================================" &
-    !         // "================================================"
-    !PRINT *, " Timing "
-    !PRINT *, "===================================================" &
-    !         // "================================================"
-    !PRINT *
-    !PRINT *
-    !PRINT *, " * SPH:"
-    !CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% apm1_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% apm2_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
-    !CALL particles_dist( 1, 1 )% sph_computer_timer% print_timer( 2 )
-    !PRINT *
-
   ENDIF
 
   IF( run_spacetime )THEN
@@ -355,11 +427,11 @@ PROGRAM sphincs_lorene_bns
     place_spacetime_id_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
                // "==============="
-      PRINT *, " Setting up BSSN object for "//TRIM(system), itr3
+      PRINT *, " Setting up BSSN object for "//systems(itr3), itr3
       PRINT *, "===================================================" &
                // "==============="
       PRINT *
-      bssn_forms( itr3 )= bssn_id( idata( itr3 ) )
+      bssn_forms( itr3 )= bssn_id( ids(itr3)% idata )
     ENDDO place_spacetime_id_loop
 
     !
@@ -370,7 +442,7 @@ PROGRAM sphincs_lorene_bns
     compute_export_bssn_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
                // "==============="
-      PRINT *, " Computing BSSN variables for "//TRIM(system), itr3
+      PRINT *, " Computing BSSN variables for "//systems(itr3), itr3
       PRINT *, "===================================================" &
                // "==============="
       PRINT *
@@ -435,7 +507,7 @@ PROGRAM sphincs_lorene_bns
           name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
           CALL bssn_forms( itr3 )% &
-                      compute_and_export_3p1_constraints( idata( itr3 ), &
+                      compute_and_export_3p1_constraints( ids(itr3)% idata, &
                                                           namefile_bssn, &
                                                           name_logfile )
 
@@ -494,152 +566,72 @@ PROGRAM sphincs_lorene_bns
   !
   !-- Print the timers
   !
-  PRINT *, "===================================================" &
-           // "================================================"
-  PRINT *, " Timing "
-  PRINT *, "===================================================" &
-           // "================================================"
-  PRINT *
-  PRINT *, " * LORENE:"
-  CALL idata( 1 )% construction_timer% print_timer( 2 )
-  PRINT *
-  IF( run_sph )THEN
-    PRINT *, " * SPH:"
-    CALL particles_dist( 1, 1 )% placer_timer% print_timer( 2 )
-    CALL particles_dist( 1, 1 )% same_particle_timer% print_timer( 2 )
-    DO i_matter= 1, idata( 1 )% get_n_matter(), 1
-      CALL particles_dist( 1, 1 )% apm_timers(i_matter)% print_timer( 2 )
-    ENDDO
-    CALL particles_dist( 1, 1 )% importer_timer% print_timer( 2 )
-    CALL particles_dist( 1, 1 )% sph_computer_timer% print_timer( 2 )
+
+  DO itr= 1, n_bns, 1
+
+    PRINT *, "===================================================" &
+             // "================================================"
+    PRINT *, " Timing for physical system ", itr
+    PRINT *, "===================================================" &
+             // "================================================"
     PRINT *
-  ENDIF
-  IF( run_spacetime )THEN
-    PRINT *, " * Spacetime:"
-    CALL bssn_forms( 1 )% grid_timer% print_timer( 2 )
-    CALL bssn_forms( 1 )% importer_timer% print_timer( 2 )
-    CALL bssn_forms( 1 )% bssn_computer_timer% print_timer( 2 )
+    PRINT *, " * ID:"
+    CALL ids(itr)% idata% construction_timer% print_timer( 2 )
     PRINT *
-  ENDIF
-  PRINT *, " * Total:"
-  CALL execution_timer% print_timer( 2 )
-  PRINT *
+    IF( run_sph )THEN
+      PRINT *, " * SPH:"
+      CALL particles_dist(itr,1)% placer_timer% print_timer( 2 )
+      CALL particles_dist(itr,1)% same_particle_timer% print_timer( 2 )
+      DO i_matter= 1, ids(itr)% idata% get_n_matter(), 1
+        CALL particles_dist(itr,1)% apm_timers(i_matter)% print_timer( 2 )
+      ENDDO
+      CALL particles_dist(itr,1)% importer_timer% print_timer( 2 )
+      CALL particles_dist(itr,1)% sph_computer_timer% print_timer( 2 )
+      PRINT *
+    ENDIF
+    IF( run_spacetime )THEN
+      PRINT *, " * Spacetime:"
+      CALL bssn_forms(itr)% grid_timer% print_timer( 2 )
+      CALL bssn_forms(itr)% importer_timer% print_timer( 2 )
+      CALL bssn_forms(itr)% bssn_computer_timer% print_timer( 2 )
+      PRINT *
+    ENDIF
+    PRINT *, " * Total:"
+    CALL execution_timer% print_timer( 2 )
+    PRINT *
+
+  ENDDO
 
   !
   !-- Print a summary
   !
-  PRINT *, "===================================================" &
-           // "================================================"
-  PRINT *, " Summary "
-  PRINT *, "===================================================" &
-           // "================================================"
-  PRINT *
-  PRINT *, " * Binary system of neutron stars:"
-  PRINT *
-  PRINT *, "   Used binary file produced by LORENE: " &
-           // TRIM(common_path)//TRIM(filenames( 1 ))
-  PRINT *
-  !DO i_matter= 1, idata(1)% get_n_matter(), 1
-  !  PRINT *, "   Baryon mass of matter object ", i_matter, "=", &
-  !           idata( 1 )% return_mass(i_matter), "Msun"
-  !  !PRINT *, "   Gravitational mass of object ", i_matter, "=", &
-  !  !         idata( 1 )% get_grav_mass(i_matter), "Msun"
-  !ENDDO
-  !PRINT *
-  !PRINT *, "   Equatorial (not areal) radius of neutron star 1 towards " &
-  !         // "companion= ", &
-  !             binaries( 1 )% get_radius1_x_comp(), "Msun_geo"
-  !PRINT *, "   Equatorial (not areal) radius of neutron star 2 towards " &
-  !         // "companion= ", &
-  !             binaries( 1 )% get_radius2_x_comp(), "Msun_geo"
-  !PRINT *, "   Equatorial (not areal) radius of neutron star 1 opposite to " &
-  !         // "companion= ", &
-  !             binaries( 1 )% get_radius1_x_opp(), "Msun_geo"
-  !PRINT *, "   Equatorial (not areal) radius of neutron star 2 opposite to " &
-  !         // "companion= ", &
-  !             binaries( 1 )% get_radius2_x_opp(), "Msun_geo"
-  !PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
-  !             binaries( 1 )% get_radius1_y(), "Msun_geo"
-  !PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
-  !             binaries( 1 )% get_radius2_y(), "Msun_geo"
-  !PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
-  !             binaries( 1 )% get_radius1_z(), "Msun_geo"
-  !PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
-  !             binaries( 1 )% get_radius2_z(), "Msun_geo"
-  !PRINT *
-  !PRINT *, "   EOS for neutron star 1= ", &
-  !             binaries( 1 )% get_eos1()
-  !PRINT *, "   EOS for neutron star 2= ", &
-  !             binaries( 1 )% get_eos2()
-  !PRINT *
-  !PRINT *, "   Central baryon mass density for star 1= ", &
-  !             binaries( 1 )% get_rho_center1(), "Msun/Msun_geo**3= ", &
-  !             binaries( 1 )% get_rho_center1() &
-  !             /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
-  !PRINT *, "   Central baryon mass density for star 2= ", &
-  !             binaries( 1 )% get_rho_center2(), "Msun/Msun_geo**3= ", &
-  !             binaries( 1 )% get_rho_center2() &
-  !             /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
-  !PRINT *
-  IF( run_sph )THEN
-    PRINT *, " * SPH:"
+  DO itr= 1, n_bns, 1
+
+    PRINT *, "===================================================" &
+             // "================================================"
+    PRINT *, " Summary for physical system ", itr
+    PRINT *, "===================================================" &
+             // "================================================"
     PRINT *
-    PRINT *, "   Total particle number= ", particles_dist( 1, 1 )% get_npart()
-   ! PRINT *, "   Particle number on star 1: npart1=", &
-   !                                       particles_dist( 1, 1 )% get_npart1()
-   ! PRINT *, "   Particle number on star 2: npart2=", &
-   !                                       particles_dist( 1, 1 )% get_npart2()
-   ! PRINT *, "   Particle number ratio: npart1/npart2= ", &
-   !                         DBLE(particles_dist( 1, 1 )% get_npart1()) &
-   !                        /DBLE(particles_dist( 1, 1 )% get_npart2())
-   ! PRINT *, "   Star mass ratio: mass1/mass2= ", &
-   !                        binaries( 1 )% get_mass1()/binaries( 1 )% get_mass2()
-   ! PRINT *
-   ! PRINT *, "   Baryon number ratio over both stars=", &
-   !          particles_dist( 1, 1 )% get_nuratio()
-   ! PRINT *, "   Baryon number ratio on star 1=", &
-   !          particles_dist( 1, 1 )% get_nuratio1()
-   ! PRINT *, "   Baryon number ratio on star 2=", &
-   !          particles_dist( 1, 1 )% get_nuratio2()
-   ! PRINT *
-  ENDIF
-  IF( run_spacetime )THEN
-    PRINT *, " * Spacetime:"
+    PRINT *, "   Used ID data file: " &
+             // TRIM(common_path)//TRIM(filenames(itr))
     PRINT *
-    PRINT *, "   Number of refinement levels= ", bssn_forms( 1 )% get_nlevels()
-    PRINT *
-    PRINT *, "   Number of grid points on each level= ", &
-             bssn_forms( 1 )% get_ngrid_x( 1 ), "**3"
-    PRINT *
-    DO itr= 1, bssn_forms( 1 )% get_nlevels(), 1
-      PRINT *, "   Resolution on level ", itr, "= ", &
-               bssn_forms( 1 )% get_dx(itr)
-    ENDDO
-    PRINT *
-    DO itr= 1, bssn_forms( 1 )% get_nlevels(), 1
-      PRINT *, "   x boundary of level ", itr, "= ", &
-               bssn_forms( 1 )% get_xR(itr)
-      PRINT *, "   y boundary of level ", itr, "= ", &
-               bssn_forms( 1 )% get_yR(itr)
-      PRINT *, "   z boundary of level ", itr, "= ", &
-               bssn_forms( 1 )% get_zR(itr)
-               !bssn_forms( 1 )% get_dx(itr)* &
-               !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0, "Msun_geo= ", &
-               !bssn_forms( 1 )% get_dx(itr)* &
-               !(bssn_forms( 1 )% get_ngrid_x(itr)-2.0D0)/2.0D0*Msun_geo, "km "
-    ENDDO
-    PRINT *
-    last_level= bssn_forms( 1 )% get_nlevels()
-    !PRINT *, "   Number of grid points across the x-axis-diameter of star 1=", &
-    !         FLOOR( ( binaries( 1 )% get_radius1_x_comp() + &
-    !         binaries( 1 )% get_radius1_x_opp() ) &
-    !         /bssn_forms( 1 )% get_dx( last_level ) )
-    !PRINT *, "   Number of grid points across the x-axis-diameter of star 2=", &
-    !         FLOOR( ( binaries( 1 )% get_radius2_x_comp() + &
-    !        binaries( 1 )% get_radius2_x_opp() ) &
-    !        /bssn_forms( 1 )% get_dx( last_level ) )
-    !PRINT *
-  ENDIF
+
+    CALL ids(itr)% idata% print_summary()
+
+    IF( run_sph )THEN
+
+      CALL particles_dist(itr,1)% print_summary()
+
+    ENDIF
+
+    IF( run_spacetime )THEN
+
+      CALL bssn_forms(itr)% print_summary()
+
+    ENDIF
+
+  ENDDO
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 
@@ -656,11 +648,14 @@ PROGRAM sphincs_lorene_bns
     !
     !CALL binaries( itr )% destruct_binary()
   ENDDO
-  IF( ALLOCATED( binaries ) )THEN
-    DEALLOCATE( binaries )
-  ENDIF
-  IF( ALLOCATED( idata ) )THEN
-    DEALLOCATE( idata )
+  !IF( ALLOCATED( binaries ) )THEN
+  !  DEALLOCATE( binaries )
+  !ENDIF
+  !IF( ALLOCATED( idata ) )THEN
+  !  DEALLOCATE( idata )
+  !ENDIF
+  IF( ALLOCATED( ids ) )THEN
+    DEALLOCATE( ids )
   ENDIF
   IF( ALLOCATED( particles_dist ) )THEN
     DEALLOCATE( particles_dist )
@@ -731,4 +726,4 @@ PROGRAM sphincs_lorene_bns
 
   END SUBROUTINE
 
-END PROGRAM sphincs_lorene_bns
+END PROGRAM sphincs_id_lorene

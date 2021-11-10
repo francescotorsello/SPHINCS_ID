@@ -84,6 +84,8 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
     CALL derived_type% set_one_lapse ( .FALSE. )
     CALL derived_type% set_zero_shift( .FALSE. )
 
+    !foo= derived_type
+
   END PROCEDURE construct_bnslorene
 
 

@@ -73,7 +73,7 @@ SUBMODULE (particles_id) particles_constructor
     ! The variable counter counts how many times the PROCEDURE
     ! construct_particles_idase is called
     INTEGER, SAVE:: counter= 1
-    INTEGER:: npart_des, &!nx, ny, nz, npart_des_l, npart_des_ss, &
+    INTEGER:: npart_des, a, &!nx, ny, nz, npart_des_l, npart_des_ss, &
               !npart_approx, npart2_approx,
               max_steps, &
               nlines, header_lines, n_cols, npart_tmp, npart1_tmp, npart2_tmp, &
@@ -85,11 +85,12 @@ SUBMODULE (particles_id) particles_constructor
     INTEGER:: apm_max_it, max_inc!, n_particles_first_shell
     INTEGER, PARAMETER:: unit_pos= 2289
     ! Variable storing the number of column where nu is written
-    INTEGER:: column_nu
+    INTEGER:: column_nu, n_matter_tmp
     ! Array storing the columns of the file parts_pos (defined below) that
     ! contain the particle positions
     INTEGER, DIMENSION(3):: columns
     INTEGER, DIMENSION(id% get_n_matter()):: npart_des_i
+    INTEGER, DIMENSION(id% get_n_matter()):: npart_i_tmp
 
     DOUBLE PRECISION:: thres, nu_ratio
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
@@ -177,13 +178,13 @@ SUBMODULE (particles_id) particles_constructor
     parts% importer_timer     = timer( "importer_timer" )
     parts% sph_computer_timer = timer( "sph_computer_timer" )
     parts% same_particle_timer= timer( "same_particle_timer" )
-    DO itr= 1, parts% n_matter, 1
-      IF( parts% n_matter <= 9 ) WRITE( str_i, "(I1)" ), itr
+    DO i_matter= 1, parts% n_matter, 1
+      IF( parts% n_matter <= 9 ) WRITE( str_i, "(I1)" ), i_matter
       IF( parts% n_matter >= 10 .AND. parts% n_matter <= 99 ) &
-                                                WRITE( str_i, "(I2)" ), itr
+                                                WRITE( str_i, "(I2)" ), i_matter
       IF( parts% n_matter >= 100 .AND. parts% n_matter <= 999 ) &
-                                                WRITE( str_i, "(I3)" ), itr
-      parts% apm_timers(itr)  = timer( "apm_timer"//TRIM(str_i) )
+                                                WRITE( str_i, "(I3)" ), i_matter
+      parts% apm_timers(i_matter)  = timer( "apm_timer"//TRIM(str_i) )
     ENDDO
 
     ! Declare this object as non-empty (experimental)
@@ -230,19 +231,19 @@ SUBMODULE (particles_id) particles_constructor
     parts% nbar_i    = 0.0D0
     parts% nuratio_i = 0.0D0
 
-    DO itr= 1, parts% n_matter, 1
+    DO i_matter= 1, parts% n_matter, 1
 
-      parts% masses(itr)  = id% return_mass(itr)
-      center(itr,:)       = id% return_center(itr)
-      central_density(itr)= id% read_mass_density( center(itr,1), &
-                                                   center(itr,2), &
-                                                   center(itr,3) )
-      barycenter(itr,:)= id% return_barycenter(itr)
-      sizes(itr, :)    = id% return_spatial_extent(itr)
+      parts% masses(i_matter)  = id% return_mass(i_matter)
+      center(i_matter,:)       = id% return_center(i_matter)
+      central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
+                                                   center(i_matter,2), &
+                                                   center(i_matter,3) )
+      barycenter(i_matter,:)= id% return_barycenter(i_matter)
+      sizes(i_matter, :)    = id% return_spatial_extent(i_matter)
 
-      parts% all_eos(itr)% eos_name= id% return_eos_name(itr)
-      CALL id% return_eos_parameters( itr, &
-                                        parts% all_eos(itr)% eos_parameters )
+      parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
+      CALL id% return_eos_parameters( i_matter, &
+                                      parts% all_eos(i_matter)% eos_parameters )
 
     ENDDO
 
@@ -286,10 +287,10 @@ SUBMODULE (particles_id) particles_constructor
     ! Compute desired particle numbers based on mass ratios
     max_mass= MAXVAL( parts% masses )
     total_mass= SUM( parts% masses )
-    DO itr= 1, parts% n_matter, 1
-      parts% mass_ratios(itr)   = parts% masses(itr)/max_mass
-      parts% mass_fractions(itr)= parts% masses(itr)/total_mass
-      npart_des_i(itr)          = parts% mass_fractions(itr)*npart_des
+    DO i_matter= 1, parts% n_matter, 1
+      parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
+      parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
+      npart_des_i(i_matter)          = parts% mass_fractions(i_matter)*npart_des
     ENDDO
 
  !   IF( parts% redistribute_nu )THEN
@@ -381,6 +382,312 @@ SUBMODULE (particles_id) particles_constructor
     choose_particle_placer: SELECT CASE( dist )
 
     CASE(0)
+    ! Read particles from formatted file
+
+      PRINT *, " * Reading particle positions from formatted file " &
+               // TRIM(parts_pos_namefile)
+      PRINT *
+
+      INQUIRE( FILE= TRIM(parts_pos_namefile), EXIST= exist )
+
+      IF( exist )THEN
+        OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
+              FORM= "FORMATTED", ACTION= "READ", IOSTAT= ios, &
+              IOMSG= err_msg )
+        IF( ios > 0 )THEN
+          PRINT *, "...error when opening " // TRIM(parts_pos_namefile), &
+                  ". The error message is", err_msg
+          STOP
+        ENDIF
+      ELSE
+        PRINT *, "** ERROR! Unable to find file " // TRIM(parts_pos_namefile)
+        STOP
+      ENDIF
+
+      ! Get total number of lines in the file
+      nlines = 0
+      DO
+        READ( unit_pos, * , IOSTAT= ios )
+        IF ( ios /= 0 ) EXIT
+        nlines = nlines + 1
+      ENDDO
+
+      CLOSE( UNIT= unit_pos )
+
+      ! Set the total number of particles to the number of lines in the file,
+      ! minus the number of header lines, minus the line containing the number
+      ! of particles on each objects
+      npart_tmp= nlines - header_lines - 1
+
+      ! Read all particle positions, and nu, if present
+      OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
+            FORM= "FORMATTED", ACTION= "READ" )
+
+      ! Skip header
+      DO itr= 1, header_lines, 1
+        READ( unit_pos, * )
+      ENDDO
+
+      ! Allocate the temporary array to store data
+      ALLOCATE( tmp_pos( n_cols, 2*npart_tmp ) )
+      tmp_pos= 0.0D0
+
+      ! Read the number of matter objects and theparticle numbers on each
+      ! matter object
+      READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+              n_matter_tmp, npart_i_tmp
+
+      IF( ios > 0 )THEN
+        PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
+                " at particle ", itr,". The status variable is ", ios, &
+                ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      ! Check that the numbers of matter objects is consistent
+      IF( n_matter_tmp /= parts% n_matter )THEN
+        PRINT *, "** ERROR! The numbers of matter objects", &
+                 " in file ", TRIM(parts_pos_namefile), ", equal to ", &
+                 n_matter_tmp, ", is not consistent", &
+                 " with the one corresponding to ID file, equal to", &
+                 parts% n_matter
+        PRINT *, "   Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+      ! Check that the numbers of particles are consistent
+      IF( npart_tmp /= SUM(npart_i_tmp) )THEN
+        PRINT *, "** ERROR! The numbers of particles on each matter object", &
+                 " do not add up to the total number of particles, in file", &
+                 TRIM(parts_pos_namefile)
+        PRINT *, "   Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+      ! Read the data into the temporary array
+      DO itr= 1, npart_tmp, 1
+
+        READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+          tmp_pos( :, itr )
+
+        IF( ios > 0 )THEN
+          PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
+                  " at particle ", itr,". The status variable is ", ios, &
+                  ". The error message is", err_msg
+          STOP
+        ENDIF
+
+      ENDDO
+
+      CLOSE( UNIT= unit_pos )
+
+      ! Allocate the temporary array to store data
+    !  IF( read_nu )THEN
+    !    ALLOCATE( tmp_pos2( 4, 2*npart_tmp ) )
+    !  ELSE
+    !    ALLOCATE( tmp_pos2( 3, 2*npart_tmp ) )
+    !  ENDIF
+    !  tmp_pos2= 0.0D0
+
+
+      ! Check that the positions are within the stars read from the |lorene|
+      ! binary file. This checks that the positions read from the formatted
+      ! file are compatible with the binary file read
+      DO itr= 1, parts% n_matter, 1
+
+        ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
+                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+
+         ! PRINT *, MINVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) , &
+         !         ABS(center(itr,1)) - sizes(itr, 1)
+         ! PRINT *, MAXVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) , &
+         !         ABS(center(itr,1)) + sizes(itr, 2)
+         ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) , &
+         !         ABS(center(itr,2)) + sizes(itr, 3)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) , &
+         !         ABS(center(itr,2)) + sizes(itr, 4)
+         ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) , &
+         !         ABS(center(itr,3)) + sizes(itr, 5)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) , &
+         !         ABS(center(itr,3)) + sizes(itr, 6)
+         !
+         ! PRINT *, MINVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) < &
+         !           ABS(center(itr,1)) - sizes(itr, 1)
+         ! PRINT *, MAXVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,1)) + sizes(itr, 2)
+         ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,2)) + sizes(itr, 3)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,2)) + sizes(itr, 4)
+         ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,3)) + sizes(itr, 5)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,3)) + sizes(itr, 6)
+
+          IF( ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+                      ABS(center(itr,1)) + sizes(itr, 1) &
+              .OR. &
+              ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+                      ABS(center(itr,1)) + sizes(itr, 2) &
+              .OR. &
+              !MINVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) < &
+              !        ABS(center(itr,1)) - sizes(itr, 1) &
+              !.OR. &
+              !MAXVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) > &
+              !        ABS(center(itr,1)) + sizes(itr, 2) &
+              !.OR. &
+              ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+                      ABS(center(itr,2)) + sizes(itr, 3) &
+              .OR. &
+              ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+                      ABS(center(itr,2)) + sizes(itr, 4) &
+              .OR. &
+              ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+                      ABS(center(itr,3)) + sizes(itr, 5) &
+              .OR. &
+              ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+                      ABS(center(itr,3)) + sizes(itr, 6) &
+
+          )THEN
+
+            PRINT *, "** ERROR! The positions of the particles on object ", &
+                     itr, ", read from file "// TRIM(parts_pos_namefile), &
+                     " are not compatible with the ", &
+                     "physical system read from file. Stopping..."
+            PRINT *
+            STOP
+
+          ENDIF
+
+        END ASSOCIATE
+
+      ENDDO
+
+      ! Impose equatorial plane symmetry on each object @TODO: make this optional
+      DO itr= 1, parts% n_matter, 1
+
+        ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
+                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+
+          IF( read_nu )THEN
+
+            CALL impose_equatorial_plane_symmetry( npart_i_tmp(itr), &
+                                            tmp_pos(1:3,npart_in:npart_fin), &
+                                            tmp_pos(4,npart_in:npart_fin) )
+
+          ELSE
+
+            CALL impose_equatorial_plane_symmetry( npart_i_tmp(itr), &
+                                            tmp_pos(1:3,npart_in:npart_fin) )
+
+          ENDIF
+
+          parts% npart_i(itr)= 2*parts% npart_i(itr)
+
+        END ASSOCIATE
+
+      ENDDO
+      parts% npart_i(1:parts% n_matter)= npart_i_tmp(1:parts% n_matter)
+      parts% npart = SUM(parts% npart_i)
+
+      ! Allocating the memory for the array pos( 3, npart )
+      IF(.NOT.ALLOCATED( parts% pos ))THEN
+        ALLOCATE( parts% pos( 3, parts% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                    // ". ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !                "...allocation error for array pos in SUBROUTINE" &
+        !                // "place_particles_3D_lattice." )
+      ENDIF
+      IF( read_nu .AND. .NOT.ALLOCATED( parts% nu ))THEN
+        ALLOCATE( parts% nu( parts% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nu in SUBROUTINE" &
+                    // ". ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !                "...allocation error for array pos in SUBROUTINE" &
+        !                // "place_particles_3D_lattice." )
+      ENDIF
+      IF( read_nu .AND. .NOT.ALLOCATED( parts% pmass ))THEN
+        ALLOCATE( parts% pmass( parts% npart ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                    // ". ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !                "...allocation error for array pos in SUBROUTINE" &
+        !                // "place_particles_3D_lattice." )
+      ENDIF
+
+      parts% pos= tmp_pos(1:3,1:parts% npart)
+      IF( read_nu ) parts% nu= tmp_pos(4,1:parts% npart)
+
+      PRINT *, " * Particle positions read. Number of particles=", &
+               parts% npart
+      PRINT *
+      DO itr= 1, parts% n_matter, 1
+        PRINT *, " * Number of particles on matter object ", itr, "=", &
+                 parts% npart_i(itr)
+      ENDDO
+      PRINT *
+
+      !
+      !-- Computing volume per particle
+      !
+      IF(.NOT.ALLOCATED( parts% pvol ))THEN
+        ALLOCATE( parts% pvol( parts% npart ), STAT= ios, &
+                ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+          PRINT *, "...allocation error for array pvol ", &
+                   ". The error message is", err_msg
+          STOP
+        ENDIF
+        !CALL test_status( ios, err_msg, &
+        !        "...allocation error for array v_euler_parts_z" )
+      ENDIF
+
+      ! First guess of the particle volume (it will be computed exactly later,
+      ! as the cube of the exact smoothing length). This guess determines the
+      ! first guess for the smoothing length
+
+      DO itr= 1, parts% n_matter, 1
+
+        ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
+                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1)-1)
+
+          pvol_tmp= 0.0D0
+          DO a= npart_in, npart_fin, 1
+
+            pvol_tmp= pvol_tmp + ABS( parts% pos(3,a + 1) &
+                                    - parts% pos(3,a) )
+
+          ENDDO
+          pvol_tmp= pvol_tmp/( npart_i_tmp(itr) - 1 )
+
+          parts% pvol(npart_in:npart_fin)= 2.0D0*pvol_tmp**3.0D0
+
+          IF( read_nu ) parts% pmass(npart_in:npart_fin)= &
+                        parts% nu(npart_in:npart_fin)*amu
+
+        END ASSOCIATE
+
+      ENDDO
+
+    CASE(5)
 
       PRINT *, " * Reading particle positions from formatted file " &
                // TRIM(parts_pos_namefile)
@@ -507,56 +814,6 @@ SUBMODULE (particles_id) particles_constructor
 
         ASSOCIATE( npart_in   => npart1_tmp*(itr-1) + 1, &
                    npart_fin  => npart1_tmp + npart2_tmp*(itr-1) )
-
-         ! PRINT *, MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) - &
-         !                                  sizes(itr, 1)
-         ! PRINT *, MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) > ABS(center(itr,1)) + &
-         !                                  sizes(itr, 2)
-         ! PRINT *, ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ) > ABS(center(itr,2)) + &
-         !                                  sizes(itr, 3)
-         ! PRINT *, ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ) > ABS(center(itr,2)) + &
-         !                                  sizes(itr, 4)
-         ! PRINT *, ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ) > ABS(center(itr,3)) + &
-         ! sizes(itr, 5)
-         ! PRINT *, ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ) > ABS(center(itr,3)) + &
-         ! sizes(itr, 6)
-         ! PRINT *, MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) > ABS(center(itr,1)) - &
-         !                                  0.95*sizes(itr, 1)
-         ! PRINT *, MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) + &
-         !                                  0.95*sizes(itr, 2)
-         ! PRINT *, ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ) < ABS(center(itr,2)) - &
-         !             0.95*sizes(itr, 3)
-         ! PRINT *, ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ) < ABS(center(itr,2)) + &
-         !             0.95*sizes(itr, 4)
-         ! PRINT *, ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ) < ABS(center(itr,3)) - &
-         !             0.95*sizes(itr, 5)
-         ! PRINT *, ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ) < ABS(center(itr,3)) + &
-         !             0.95*sizes(itr, 6)
-         !
-         ! PRINT *, MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ), ABS(center(itr,1)) - &
-         !                                sizes(itr, 1)
-         ! PRINT *, MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ), ABS(center(itr,1)) + &
-         !                                sizes(itr, 2)
-         ! PRINT *, ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ), ABS(center(itr,2)) + &
-         !                                sizes(itr, 3)
-         ! PRINT *, ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ), ABS(center(itr,2)) + &
-         !                                sizes(itr, 4)
-         ! PRINT *, ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ), ABS(center(itr,3)) + &
-         ! sizes(itr, 5)
-         ! PRINT *, ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ), ABS(center(itr,3)) + &
-         ! sizes(itr, 6)
-         ! PRINT *, MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ), ABS(center(itr,1)) - &
-         !                                0.95*sizes(itr, 1)
-         ! PRINT *, MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ), ABS(center(itr,1)) + &
-         !                                0.95*sizes(itr, 2)
-         ! PRINT *, ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ), ABS(center(itr,2)) + &
-         !           0.95*sizes(itr, 3)
-         ! PRINT *, ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ), ABS(center(itr,2)) + &
-         !           0.95*sizes(itr, 4)
-         ! PRINT *, ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ), ABS(center(itr,3)) + &
-         !           0.95*sizes(itr, 5)
-         ! PRINT *, ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ), ABS(center(itr,3)) + &
-         !           0.95*sizes(itr, 6)
 
           IF( MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) - &
                                                sizes(itr, 1) &

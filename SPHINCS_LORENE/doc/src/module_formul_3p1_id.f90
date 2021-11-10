@@ -39,6 +39,13 @@ MODULE formul_3p1_id
   !# ABSTRACT TYPE representing a generic 3+1 formulation of the Einsten
   !  equations
 
+    INTEGER:: n_matter
+    !! Number of matter objects in the physical system
+
+    INTEGER, DIMENSION(:), ALLOCATABLE:: npoints_xaxis
+    !# Array containing the number of mesh points of the highest-resolution
+    !  refinement level across the x-axis-size of the matter objects
+
     !
     !-- Mesh variables
     !
@@ -169,6 +176,8 @@ MODULE formul_3p1_id
 
     PROCEDURE, NON_OVERRIDABLE:: analyze_constraint
 
+    PROCEDURE:: print_summary
+
     PROCEDURE(define_allocate_fields_interface), DEFERRED:: &
                             define_allocate_fields
 
@@ -270,6 +279,7 @@ MODULE formul_3p1_id
   !
   INTERFACE
 
+
     MODULE SUBROUTINE analyze_constraint( THIS, &
                                           l, &
                                           constraint, &
@@ -290,6 +300,20 @@ MODULE formul_3p1_id
 
     END SUBROUTINE analyze_constraint
 
+
+    MODULE SUBROUTINE print_summary( THIS, filename )
+    !# Prints a summary of the properties of the refined mesh,
+    !  and optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+
+      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
+
+    END SUBROUTINE print_summary
+
+
     MODULE SUBROUTINE abs_values_in( THIS, lower_bound, upper_bound, &
                                      constraint, l, &
                                      export, unit_analysis, cnt )
@@ -305,6 +329,7 @@ MODULE formul_3p1_id
 
     END SUBROUTINE abs_values_in
 
+
     MODULE FUNCTION get_grid_point( THIS, i, j, k, l ) RESULT( grid_point )
 
       ! Arguments
@@ -315,6 +340,7 @@ MODULE formul_3p1_id
 
     END FUNCTION get_grid_point
 
+
     MODULE FUNCTION get_nlevels( THIS ) RESULT( nlevels )
 
       ! Arguments
@@ -323,6 +349,7 @@ MODULE formul_3p1_id
       DOUBLE PRECISION:: nlevels
 
     END FUNCTION get_nlevels
+
 
     MODULE FUNCTION get_levels( THIS, l ) RESULT( levels )
 
@@ -334,6 +361,7 @@ MODULE formul_3p1_id
 
     END FUNCTION get_levels
 
+
     MODULE FUNCTION get_dx( THIS, l ) RESULT( dx )
 
       ! Arguments
@@ -343,6 +371,7 @@ MODULE formul_3p1_id
       DOUBLE PRECISION:: dx
 
     END FUNCTION get_dx
+
 
     MODULE FUNCTION get_dy( THIS, l ) RESULT( dy )
 
@@ -354,6 +383,7 @@ MODULE formul_3p1_id
 
     END FUNCTION get_dy
 
+
     MODULE FUNCTION get_dz( THIS, l ) RESULT( dz )
 
       ! Arguments
@@ -363,6 +393,7 @@ MODULE formul_3p1_id
       DOUBLE PRECISION:: dz
 
     END FUNCTION get_dz
+
 
     MODULE FUNCTION get_ngrid_x( THIS, l ) RESULT( ngrid_x )
 
@@ -374,6 +405,7 @@ MODULE formul_3p1_id
 
     END FUNCTION get_ngrid_x
 
+
     MODULE FUNCTION get_ngrid_y( THIS, l ) RESULT( ngrid_y )
 
       ! Arguments
@@ -383,6 +415,7 @@ MODULE formul_3p1_id
       INTEGER:: ngrid_y
 
     END FUNCTION get_ngrid_y
+
 
     MODULE FUNCTION get_ngrid_z( THIS, l ) RESULT( ngrid_z )
 
@@ -394,6 +427,7 @@ MODULE formul_3p1_id
 
     END FUNCTION get_ngrid_z
 
+
     MODULE FUNCTION get_xR( THIS, l ) RESULT( xR )
 
       ! Arguments
@@ -403,6 +437,7 @@ MODULE formul_3p1_id
       INTEGER:: xR
 
     END FUNCTION get_xR
+
 
     MODULE FUNCTION get_yR( THIS, l ) RESULT( yR )
 
@@ -414,6 +449,7 @@ MODULE formul_3p1_id
 
     END FUNCTION get_yR
 
+
     MODULE FUNCTION get_zR( THIS, l ) RESULT( zR )
 
       ! Arguments
@@ -423,6 +459,7 @@ MODULE formul_3p1_id
       INTEGER:: zR
 
     END FUNCTION get_zR
+
 
     MODULE FUNCTION get_HC( THIS, i, j, k, l ) RESULT( HC_value )
 
@@ -434,6 +471,7 @@ MODULE formul_3p1_id
 
     END FUNCTION get_HC
 
+
     MODULE FUNCTION get_MC( THIS, i, j, k, l ) RESULT( MC_value )
 
       ! Arguments
@@ -443,6 +481,7 @@ MODULE formul_3p1_id
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 
     END FUNCTION get_MC
+
 
     MODULE FUNCTION get_HC_parts( THIS, i, j, k, l ) RESULT( HC_value )
 
@@ -454,6 +493,7 @@ MODULE formul_3p1_id
 
     END FUNCTION get_HC_parts
 
+
     MODULE FUNCTION get_MC_parts( THIS, i, j, k, l ) RESULT( MC_value )
 
       ! Arguments
@@ -463,6 +503,7 @@ MODULE formul_3p1_id
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 
     END FUNCTION get_MC_parts
+
 
   END INTERFACE
 

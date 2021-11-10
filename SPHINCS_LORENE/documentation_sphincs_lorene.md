@@ -17,7 +17,7 @@ exclude_dir: ./src/prototypes
 exclude: submodule_bns_lorene_bindings.f90
          submodule_diffstar_lorene_bindings.f90
          submodule_particles_redistribute_nu.f90
-output_dir: ../../SPHINCS_ID-doc
+output_dir: ./doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S
 print_creation_date: true
@@ -31,6 +31,7 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        sphincsbssn = \(\texttt{SPHINCS_BSSN}\)
        sphincs = \(\texttt{SPHINCS}\)
        sph = \(\mathrm{SPH}\)
+       id = \(\mathrm{ID}\)
        bssnok = \(\mathrm{BSSNOK}\)
        fuka = \(\texttt{FUKA}\)
        binns = \(\texttt{Bin_NS}\)

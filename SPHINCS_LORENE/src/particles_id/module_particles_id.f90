@@ -352,6 +352,10 @@ MODULE particles_id
     PROCEDURE:: place_particles_spherical_surfaces
     !! Places particles on spherical surfaces on one star
 
+    PROCEDURE, NOPASS:: impose_equatorial_plane_symmetry
+    !# Reflects the positions of the particles on a matter object with respect
+    !  to the \(xy\) plane
+
     PROCEDURE, NOPASS:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
@@ -410,15 +414,15 @@ MODULE particles_id
     PROCEDURE, PUBLIC:: get_npart
     !! Returns [[particles:npart]]
     PROCEDURE, PUBLIC:: get_npart1
-    !! Returns [[particles:npart1]]
+    !! Returns
     PROCEDURE, PUBLIC:: get_npart2
-    !! Returns [[particles:npart2]]
+    !! Returns
     PROCEDURE, PUBLIC:: get_nuratio
     !! Returns [[particles:nuratio]]
     PROCEDURE, PUBLIC:: get_nuratio1
-    !! Returns [[particles:nuratio1]]
+    !! Returns
     PROCEDURE, PUBLIC:: get_nuratio2
-    !! Returns [[particles:nuratio2]]
+    !! Returns
     PROCEDURE, PUBLIC:: get_pos
     !! Returns [[particles:pos]]
     PROCEDURE, PUBLIC:: get_vel
@@ -766,6 +770,22 @@ MODULE particles_id
     END SUBROUTINE place_particles_spherical_surfaces
 
 
+    MODULE SUBROUTINE impose_equatorial_plane_symmetry( npart, pos, &
+                                                 nu, com_star, verbose )
+    !# Mirror the particle with z>0 with respect to the xy plane,
+    !  to impose the equatorial-plane symmetry
+
+      !CLASS(particles), INTENT( IN OUT ):: THIS
+      INTEGER, INTENT(INOUT):: npart
+      DOUBLE PRECISION, INTENT(IN), OPTIONAL:: com_star
+      LOGICAL, INTENT(IN), OPTIONAL:: verbose
+
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT), OPTIONAL:: nu
+
+    END SUBROUTINE impose_equatorial_plane_symmetry
+
+
 !    MODULE SUBROUTINE reshape_sph_field_1d( THIS, field, new_size1, new_size2, &
 !                                            index_array )
 !    !! Reallocates a 1d array
@@ -1096,21 +1116,21 @@ MODULE particles_id
     END FUNCTION get_npart
 
     MODULE FUNCTION get_npart1( THIS ) RESULT( n_part )
-    !! Returns [[particles:npart1]]
+    !! Returns
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !> [[particles:npart1]]
+      !>
       INTEGER:: n_part
 
     END FUNCTION get_npart1
 
     MODULE FUNCTION get_npart2( THIS ) RESULT( n_part )
-    !! Returns [[particles:npart2]]
+    !! Returns
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !> [[particles:npart2]]
+      !>
       INTEGER:: n_part
 
     END FUNCTION get_npart2
@@ -1126,21 +1146,21 @@ MODULE particles_id
     END FUNCTION get_nuratio
 
     MODULE FUNCTION get_nuratio1( THIS ) RESULT( nuratio1 )
-    !! Returns [[particles:nuratio1]]
+    !! Returns
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !> [[particles:nuratio1]]
+      !>
       DOUBLE PRECISION:: nuratio1
 
     END FUNCTION get_nuratio1
 
     MODULE FUNCTION get_nuratio2( THIS ) RESULT( nuratio2 )
-    !! Returns [[particles:nuratio2]]
+    !! Returns
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !> [[particles:nuratio2]]
+      !>
       DOUBLE PRECISION:: nuratio2
 
     END FUNCTION get_nuratio2

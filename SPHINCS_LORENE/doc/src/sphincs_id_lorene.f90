@@ -2,69 +2,101 @@
 ! Author:       Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-PROGRAM sphincs_lorene_bns
+PROGRAM sphincs_id_lorene
 
   !*****************************************************
-  !                                                    *
-  ! Use the MODULE sphincs_lorene to export binary     *
-  ! files containing the initial data (ID) required    *
-  ! by the evolution code in SPHINCS, and built using  *
-  ! the binary files produced by LORENE and containing *
-  ! the binary neutron stars (BNS) ID.                 *
-  !                                                    *
-  ! FT 28.10.2020                                      *
-  !                                                    *
+  !
+  !# Use the MODULE sphincs_lorene to export binary
+  !  files containing the initial data (|id|) required
+  !  by the evolution code in SPHINCS, and built using
+  !  the binary files produced by LORENE and containing
+  !  the binary neutron stars (BNS) |id|.
+  !
+  !  FT 28.10.2020
+  !
   !*****************************************************
 
 #ifdef __INTEL_COMPILER
-  USE IFPORT,         ONLY: MAKEDIRQQ
+  USE IFPORT,          ONLY: MAKEDIRQQ
 #endif
-  USE sphincs_lorene
-  USE constants,      ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
-                            k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
-                            kg2g, m2cm, m0c2
+  USE sphincs_lorene,  ONLY: allocate_idbase, bnslo, drslo
+  USE utility,         ONLY: date, time, zone, values, run_id, itr, itr3, &
+                             itr4, file_exists, cnt, &
+                             test_status, show_progress, end_time
+  USE timing,          ONLY: timer
+  USE id_base,         ONLY: idbase, initialize
+  USE particles_id,    ONLY: particles
+  USE formul_bssn_id,  ONLY: bssn_id
+  USE constants,       ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
+                             k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
+                             kg2g, m2cm, m0c2
 
   IMPLICIT NONE
 
-  ! Maximum length for strings, and for the number of imported binaries
-  INTEGER, PARAMETER:: max_length= 50
-  ! Maximum number of binary systems
-  INTEGER, PARAMETER:: max_n_bns= 50
-  ! Maximum number of particle distributions
-  INTEGER, PARAMETER:: max_n_parts= 250
-  ! Number of binary systems of neutron stars (BNS) to import
-  INTEGER:: n_bns, ref_lev, i_matter
-  ! Export the constraints every constraints_step-th step
-  INTEGER:: constraints_step
 
-  ! Matrix storing the information on how to place particles for each bns
-  ! object. Row i contains information about the i^th bns object.
+  INTEGER, PARAMETER:: max_length= 50
+  !! Maximum length for strings
+  INTEGER, PARAMETER:: max_n_bns= 50
+  ! Maximum number of physical systems
+  INTEGER, PARAMETER:: max_n_parts= 250
+  !! Maximum number of particle distributions
+
   INTEGER, PARAMETER:: test_int= - 112
   INTEGER, DIMENSION( max_n_bns, max_n_parts ):: placer= test_int
+  !# Matrix storing the information on how to place particles for each bns
+  !  object. Row i contains information about the i^th bns object.
 
-  ! Rational ratio between the large grid spacing and the medium one,
-  ! equal to the ratio between the medium grid spacing nd the small one
-  ! Not used in this PROGRAM, but needed since the PROGRAM reads the same
-  ! parameter ile as the convergence_test PROGRAM
+  INTEGER:: n_bns
+  !! Number of physical systems to set up
+  INTEGER:: i_matter
+  !! Index running over the number of physical systems
+  INTEGER:: ref_lev
+  !! Number of refinement levels
+  INTEGER:: constraints_step
+  !! Export the constraints every constraints_step-th step
+
+
   DOUBLE PRECISION:: numerator_ratio_dx
+  !# Numerator of the rational ratio between the large grid spacing and the
+  !  medium one,equal to the ratio between the medium grid spacing nd the small
+  !  one. Not used in this PROGRAM, but needed since the PROGRAM reads the same
+  !  parameter file as the convergence_test PROGRAM
   DOUBLE PRECISION:: denominator_ratio_dx
+  !# Denominator of the rational ratio between the large grid spacing and the
+  !  medium one,equal to the ratio between the medium grid spacing nd the small
+  !  one. Not used in this PROGRAM, but needed since the PROGRAM reads the same
+  !  parameter file as the convergence_test PROGRAM
 
-  ! String storing the name of the phyical system
+
   CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems
-  ! Strings storing different names for output files
-  CHARACTER( LEN= 500 ):: namefile_parts, namefile_parts_bin, namefile_sph
-  CHARACTER( LEN= 500 ):: namefile_bssn, namefile_bssn_bin, name_logfile
-  ! Array of strings storing the names of the LORENE BNS ID binary files
+  !! String storing the name of the phyical systems
+  CHARACTER( LEN= 500 ):: namefile_parts
+  !# String storing the name for the formatted file containing the |sph|
+  !  particle |id|
+  CHARACTER( LEN= 500 ):: namefile_parts_bin
+  !# String storing the name for the binary file containing the |sph|
+  !  particle |id|
+  CHARACTER( LEN= 500 ):: namefile_sph
+  !# String storing the name for ??
+  !
+  CHARACTER( LEN= 500 ):: namefile_bssn
+  !# String storing the name for the formatted file containing the |bssn| |id|
+  CHARACTER( LEN= 500 ):: namefile_bssn_bin
+  !# String storing the name for the binary file containing the |bssn| |id|
+  CHARACTER( LEN= 500 ):: name_logfile
+  !# String storing the name for the formatted file containing a summary about
+  !  the |bssn| constraints violations
   CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
-  ! String storing the local path to the directory where the
-  ! LORENE BNS ID files are stored
+  ! Array of strings storing the names of the |id| files
   CHARACTER( LEN= max_length ):: common_path
-  ! String storing the local path to the directory where the
-  ! SPH output is to be saved
+  !# String storing the local path to the directory where the |id| files
+  !  are stored
   CHARACTER( LEN= max_length ):: sph_path
-  ! String storing the local path to the directory where the
-  ! spacetime output is to be saved
+  !# String storing the local path to the directory where the
+  !  SPH output is to be saved
   CHARACTER( LEN= max_length ):: spacetime_path
+  !# String storing the local path to the directory where the
+  !  spacetime output is to be saved
 
   LOGICAL:: exist
   LOGICAL(4):: dir_out
@@ -78,7 +110,7 @@ PROGRAM sphincs_lorene_bns
   TYPE( timer ):: execution_timer
 
   ! Declaration of the allocatable array storing the bns objects,
-  ! containing the LORENE ID for different BNS
+  ! containing the LORENE |id| for different BNS
   !TYPE( bnslorene ), DIMENSION(:), ALLOCATABLE:: binaries
 
   TYPE id
@@ -250,7 +282,7 @@ PROGRAM sphincs_lorene_bns
   ALLOCATE( bssn_forms    ( n_bns ) )
 
   !
-  !-- Construct the LORENE ID from the LORENE binary files
+  !-- Construct the LORENE |id| from the LORENE binary files
   !
  ! build_bns_loop: DO itr= 1, n_bns, 1
  !   binaries( itr )= bnslorene( TRIM(common_path)//TRIM(filenames( itr )) )
@@ -263,26 +295,29 @@ PROGRAM sphincs_lorene_bns
   !ALLOCATE(foo, source = bnslorene( TRIM(common_path)//TRIM(filenames( 1 ))) )
 
   build_drs_loop: DO itr= 1, n_bns, 1
-    !IF( systems(itr) == bnslo )THEN
-    !  !idata( itr )=
-    !  !ALLOCATE(foo, source = bnslorene( TRIM(common_path)//TRIM(filenames( 1 ))) )
-    !  !ALLOCATE( bnslorene:: ids(itr)% idata )
-    !  !CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)))
-    !ELSEIF( systems(itr) == drslo )THEN
-    !  !idata( itr )=
-    !  !ALLOCATE( diffstarlorene:: ids(itr)% idata )
-    !  !CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)))
-    !  !ids(itr)% idata = diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
-    !ELSE
-    !  PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(systems(itr))
-    !  PRINT *, "   Set the variable 'system' in the parameter file ", &
-    !           "sphincs_lorene_parameters.par to one of the values listed there."
-    !  PRINT *, "   Stopping..."
-    !  PRINT *
-    !  STOP
-    !ENDIF
-    CALL initialize_idbase( ids(itr)% idata, &
-                            TRIM(common_path), TRIM(filenames(itr)) )
+   ! IF( systems(itr) == bnslo )THEN
+   !   !idata( itr )=
+   !   !ALLOCATE(foo, source = bnslorene( TRIM(common_path)//TRIM(filenames( 1 ))) )
+   !   ALLOCATE( bnslorene:: ids(itr)% idata )
+   !   !CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)))
+   ! ELSEIF( systems(itr) == drslo )THEN
+   !   !idata( itr )=
+   !   ALLOCATE( diffstarlorene:: ids(itr)% idata )
+   !   !CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)))
+   !   !ids(itr)% idata = diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
+   ! ELSE
+   !   PRINT *, "** ERROR! Unknown name for the physical system: ", systems(itr)
+   !   PRINT *, "   Set the variable 'system' in the parameter file ", &
+   !            "sphincs_lorene_parameters.par to one of the values listed there."
+   !   PRINT *, "   Stopping..."
+   !   PRINT *
+   !   STOP
+   ! ENDIF
+    CALL allocate_idbase( ids(itr)% idata, TRIM(filenames(itr)) )
+    CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)) )
+
+    !ids(itr)% idata= initialize( ids(itr)% idata, TRIM(common_path)//TRIM(filenames(itr)) )
+    !ids(itr)% idata= derived_type_constructor( file )
     ! Set the variables to decide on using the geodesic gauge or not
     ! (lapse=1, shift=0)
     !CALL idata( itr )% set_one_lapse( one_lapse )
@@ -691,4 +726,4 @@ PROGRAM sphincs_lorene_bns
 
   END SUBROUTINE
 
-END PROGRAM sphincs_lorene_bns
+END PROGRAM sphincs_id_lorene
