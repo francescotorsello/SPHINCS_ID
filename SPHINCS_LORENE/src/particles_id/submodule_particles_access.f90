@@ -141,38 +141,22 @@ SUBMODULE (particles_id) particles_access
   END PROCEDURE get_npart
 
 
-  MODULE PROCEDURE get_npart1
+  MODULE PROCEDURE get_npart_i
 
     !************************************************
     !
-    !# Returns the number of particles on star 1
+    !# Returns the number of particles on the
+    !  \(i^{th}\) matter object
     !
-    !  FT 27.04.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    n_part= THIS% npart_i(1)
-
-  END PROCEDURE get_npart1
-
-
-  MODULE PROCEDURE get_npart2
-
-    !************************************************
-    !
-    !# Returns the number of particles on star 2
-    !
-    !  FT 27.04.2021
+    !  FT 10.11.2021
     !
     !************************************************
 
     IMPLICIT NONE
 
-    n_part= THIS% npart_i(2)
+    n_part= THIS% npart_i(i_matter)
 
-  END PROCEDURE get_npart2
+  END PROCEDURE get_npart_i
 
 
   MODULE PROCEDURE get_nuratio
@@ -192,38 +176,22 @@ SUBMODULE (particles_id) particles_access
   END PROCEDURE get_nuratio
 
 
-  MODULE PROCEDURE get_nuratio1
+  MODULE PROCEDURE get_nuratio_i
 
     !************************************************
     !
-    !# Returns the baryon number ratio on star 1
+    !# Returns the baryon number ratio on the
+    !  \(i^{th}\) matter object
     !
-    !  FT 27.04.2021
-    !
-    !************************************************
-
-    IMPLICIT NONE
-
-    nuratio1= THIS% nuratio_i(1)
-
-  END PROCEDURE get_nuratio1
-
-
-  MODULE PROCEDURE get_nuratio2
-
-    !************************************************
-    !
-    !# Returns the baryon number ratio on star 2
-    !
-    !  FT 27.04.2021
+    !  FT 10.11.2021
     !
     !************************************************
 
     IMPLICIT NONE
 
-    nuratio2= THIS% nuratio_i(2)
+    nuratio= THIS% nuratio_i(i_matter)
 
-  END PROCEDURE get_nuratio2
+  END PROCEDURE get_nuratio_i
 
 
   MODULE PROCEDURE get_pos

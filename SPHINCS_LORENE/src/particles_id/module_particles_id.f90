@@ -413,16 +413,12 @@ MODULE particles_id
 
     PROCEDURE, PUBLIC:: get_npart
     !! Returns [[particles:npart]]
-    PROCEDURE, PUBLIC:: get_npart1
-    !! Returns
-    PROCEDURE, PUBLIC:: get_npart2
-    !! Returns
+    PROCEDURE, PUBLIC:: get_npart_i
+    !! Returns the number of particles on the object `i_matter`
     PROCEDURE, PUBLIC:: get_nuratio
     !! Returns [[particles:nuratio]]
-    PROCEDURE, PUBLIC:: get_nuratio1
-    !! Returns
-    PROCEDURE, PUBLIC:: get_nuratio2
-    !! Returns
+    PROCEDURE, PUBLIC:: get_nuratio_i
+    !! Returns the baryon number ratio on the object `i_matter`
     PROCEDURE, PUBLIC:: get_pos
     !! Returns [[particles:pos]]
     PROCEDURE, PUBLIC:: get_vel
@@ -1115,25 +1111,18 @@ MODULE particles_id
 
     END FUNCTION get_npart
 
-    MODULE FUNCTION get_npart1( THIS ) RESULT( n_part )
-    !! Returns
+    MODULE FUNCTION get_npart_i( THIS, i_matter ) RESULT( n_part )
+    !! Returns the number of particles on the object `i_matter`
 
-      !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !>
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object
       INTEGER:: n_part
+      !! Number of particles on the object `i_matter`
 
-    END FUNCTION get_npart1
+    END FUNCTION get_npart_i
 
-    MODULE FUNCTION get_npart2( THIS ) RESULT( n_part )
-    !! Returns
-
-      !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
-      !>
-      INTEGER:: n_part
-
-    END FUNCTION get_npart2
 
     MODULE FUNCTION get_nuratio( THIS ) RESULT( nuratio )
     !! Returns [[particles:nuratio]]
@@ -1145,25 +1134,19 @@ MODULE particles_id
 
     END FUNCTION get_nuratio
 
-    MODULE FUNCTION get_nuratio1( THIS ) RESULT( nuratio1 )
-    !! Returns
 
-      !> [[particles]] object which this PROCEDURE is a member of
+    MODULE FUNCTION get_nuratio_i( THIS, i_matter ) RESULT( nuratio )
+    !! Returns the baryon number ratio on the object `i_matter`
+
       CLASS(particles), INTENT( IN OUT ):: THIS
-      !>
-      DOUBLE PRECISION:: nuratio1
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER, INTENT( IN ):: i_matter
+      !! Index of the matter object
+      INTEGER:: nuratio
+      !! Baryon number ratio on the object `i_matter`
 
-    END FUNCTION get_nuratio1
+    END FUNCTION get_nuratio_i
 
-    MODULE FUNCTION get_nuratio2( THIS ) RESULT( nuratio2 )
-    !! Returns
-
-      !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
-      !>
-      DOUBLE PRECISION:: nuratio2
-
-    END FUNCTION get_nuratio2
 
     MODULE FUNCTION get_pos( THIS ) RESULT( pos_u )
     !! Returns [[particles:pos]]
