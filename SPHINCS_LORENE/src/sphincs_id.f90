@@ -1,8 +1,8 @@
-! File:         setup_lorene_id.f90
+! File:         sphincs_id.f90
 ! Author:       Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-PROGRAM sphincs_id_lorene
+PROGRAM sphincs_id
 
   !*****************************************************
   !
@@ -19,7 +19,11 @@ PROGRAM sphincs_id_lorene
 #ifdef __INTEL_COMPILER
   USE IFPORT,          ONLY: MAKEDIRQQ
 #endif
+
+#if flavour == 1
   USE sphincs_lorene,  ONLY: allocate_idbase, bnslo, drslo
+#endif
+
   USE utility,         ONLY: date, time, zone, values, run_id, itr, itr3, &
                              itr4, file_exists, cnt, &
                              test_status, show_progress, end_time
@@ -726,4 +730,4 @@ PROGRAM sphincs_id_lorene
 
   END SUBROUTINE
 
-END PROGRAM sphincs_id_lorene
+END PROGRAM sphincs_id

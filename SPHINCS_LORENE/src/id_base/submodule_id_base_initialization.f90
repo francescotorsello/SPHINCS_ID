@@ -37,6 +37,98 @@ SUBMODULE (id_base) id_base_initialization
 
     IMPLICIT NONE
 
+    INTEGER:: i_matter, itr
+    DOUBLE PRECISION, DIMENSION(derived_type% n_matter,6):: sizes
+    DOUBLE PRECISION, DIMENSION(6):: total_sizes
+    DOUBLE PRECISION, DIMENSION(derived_type% n_matter,3):: centers
+
+
+    ! Check that n_matter is strictly positive
+    IF( derived_type% n_matter <= 0 )THEN
+
+      PRINT *, "** ERROR! n_matter, the number of matter objects in the", &
+               " physical system, is nonpositive: n_matter= ", &
+               derived_type% n_matter
+      PRINT *, "   Please assign the appropriate strictly positive value", &
+               " in the constructor of the TYPE that extends idbase."
+      PRINT *, "   Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+
+    ! Check that the sizes of each matter object are strictly positive
+    DO i_matter= 1, derived_type% n_matter, 1
+
+      sizes(i_matter,:)  = derived_type% return_spatial_extent(i_matter)
+      centers(i_matter,:)= derived_type% return_center(i_matter)
+
+      DO itr= 1, 6, 1
+
+        IF( sizes(i_matter,itr) <= 0 )THEN
+
+          PRINT *, "** ERROR! The size n., ", itr, " of matter objects ", &
+                   i_matter, " is nonpositive: sizes(", itr, ")=", &
+                   sizes(i_matter,itr)
+          PRINT *, "   Please assign the appropriate strictly positive value", &
+                   " in the constructor of the TYPE that extends idbase."
+          PRINT *, "   Stopping..."
+          PRINT *
+          STOP
+
+        ENDIF
+
+      ENDDO
+
+    ENDDO
+
+    ! Check that the sizes of the physical system are strictly positive
+    total_sizes= derived_type% get_total_spatial_extent()
+
+    DO itr= 1, 6, 2
+
+      IF( total_sizes(itr+1) <= total_sizes(itr) )THEN
+
+        PRINT *, "** ERROR! The size n. ", itr, " of the physical system ", &
+                 " is larger than the size n.", itr+1
+        PRINT *, "   Please assign the appropriate strictly positive value", &
+                 " in the constructor of the TYPE that extends idbase."
+        PRINT *, "   Stopping..."
+        PRINT *
+        STOP
+
+      ENDIF
+
+    ENDDO
+
+
+    ! Check that the sizes of the matter objects are within the sizes of the
+    ! physical system
+
+    DO itr= 1, 6, 2
+
+      IF( MINVAL( centers(:,CEILING(DBLE(itr)/DBLE(2))) - sizes(:,itr) ) &
+          < total_sizes(itr) &
+          .OR. &
+          MAXVAL( centers(:,CEILING(DBLE(itr+1)/DBLE(2))) + sizes(:,itr+1) ) &
+                    > total_sizes(itr+1))THEN
+
+
+        PRINT *, "** ERROR! A matter object", &
+                 " is not contained within the given size of the", &
+                 " physical system."
+        PRINT *, "   Please assign the appropriate sizes", &
+                 " in the constructor of the TYPE that extends idbase."
+        PRINT *, "   Stopping..."
+        PRINT *
+        STOP
+
+      ENDIF
+
+    ENDDO
+
+
   END PROCEDURE sanity_check
 
 
@@ -62,8 +154,6 @@ SUBMODULE (id_base) id_base_initialization
     CALL derived_type% derived_type_constructor( filename )
 
     CALL derived_type% sanity_check()
-
-    !foo= derived_type
 
 
   END PROCEDURE initialize

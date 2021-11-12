@@ -22,7 +22,7 @@ MODULE id_base
   !***********************************************************
 
 
-  USE timing,                      ONLY: timer
+  USE timing, ONLY: timer
 
 
   IMPLICIT NONE
@@ -743,7 +743,7 @@ MODULE id_base
     END FUNCTION get_total_spatial_extent
 
 
-    MODULE FUNCTION get_one_lapse( THIS )
+    MODULE PURE FUNCTION get_one_lapse( THIS )
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
@@ -766,7 +766,7 @@ MODULE id_base
     END SUBROUTINE set_one_lapse
 
 
-    MODULE FUNCTION get_zero_shift( THIS )
+    MODULE PURE FUNCTION get_zero_shift( THIS )
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
