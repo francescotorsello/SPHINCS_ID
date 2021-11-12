@@ -1,7 +1,7 @@
 Project: SPHINCS_ID
 Version: 1.0
 Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src
-Summary: Documentation of the FORTRAN 2018 code SPHINCS_ID
+Summary: ![SPHINCS_ID](|media|/binary.png){: style="text-align: center", width=100%} blah blah blah
 Author: Francesco Torsello
 display: private
          protected
@@ -13,6 +13,7 @@ source: true
 graph: true
 sort: alpha
 src_dir: ./src
+media_dir: ./media
 exclude_dir: ./src/prototypes
 exclude: submodule_bns_lorene_bindings.f90
          submodule_diffstar_lorene_bindings.f90
