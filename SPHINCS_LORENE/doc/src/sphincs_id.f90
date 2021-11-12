@@ -1,8 +1,8 @@
-! File:         setup_lorene_id.f90
+! File:         sphincs_id.f90
 ! Author:       Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-PROGRAM sphincs_id_lorene
+PROGRAM sphincs_id
 
   !*****************************************************
   !
@@ -19,7 +19,11 @@ PROGRAM sphincs_id_lorene
 #ifdef __INTEL_COMPILER
   USE IFPORT,          ONLY: MAKEDIRQQ
 #endif
-  USE sphincs_lorene,  ONLY: allocate_idbase, bnslo, drslo
+
+#if flavour == 1
+  USE sphincs_lorene,  ONLY: allocate_idbase
+#endif
+
   USE utility,         ONLY: date, time, zone, values, run_id, itr, itr3, &
                              itr4, file_exists, cnt, &
                              test_status, show_progress, end_time
@@ -68,7 +72,7 @@ PROGRAM sphincs_id_lorene
   !  parameter file as the convergence_test PROGRAM
 
 
-  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems
+  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
   CHARACTER( LEN= 500 ):: namefile_parts
   !# String storing the name for the formatted file containing the |sph|
@@ -241,26 +245,27 @@ PROGRAM sphincs_id_lorene
 #endif
 
   ALLOCATE( CHARACTER(5):: systems(n_bns) )
+  ALLOCATE( CHARACTER(5):: systems_name(n_bns) )
 
-  DO itr= 1, n_bns, 1
-    systems(itr)= filenames(itr)(1:5)
-    IF( systems(itr) /= bnslo .AND. systems(itr) /= drslo )THEN
-      PRINT *, "** ERROR! Unrecognized physical system ", systems(itr), ",",&
-               " system number", itr, "."
-      PRINT *
-      PRINT *, "   Please specify the type of physical system in the first 5",&
-               " characters of the name of the file containing the initial", &
-               " data."
-      PRINT *
-      PRINT *, "   The 5-character names, and associated physical systems,", &
-               " supported by this version of SPHINCS_ID are:"
-      PRINT *
-      PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
-      PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
-      PRINT *
-      STOP
-    ENDIF
-  ENDDO
+  !DO itr= 1, n_bns, 1
+  !  systems(itr)= filenames(itr)(1:5)
+  !  IF( systems(itr) /= bnslo .AND. systems(itr) /= drslo )THEN
+  !    PRINT *, "** ERROR! Unrecognized physical system ", systems(itr), ",",&
+  !             " system number", itr, "."
+  !    PRINT *
+  !    PRINT *, "   Please specify the type of physical system in the first 5",&
+  !             " characters of the name of the file containing the initial", &
+  !             " data."
+  !    PRINT *
+  !    PRINT *, "   The 5-character names, and associated physical systems,", &
+  !             " supported by this version of SPHINCS_ID are:"
+  !    PRINT *
+  !    PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
+  !    PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
+  !    PRINT *
+  !    STOP
+  !  ENDIF
+  !ENDDO
 
   ! Allocate needed memory
   !ALLOCATE( binaries      ( n_bns ) )
@@ -313,7 +318,8 @@ PROGRAM sphincs_id_lorene
    !   PRINT *
    !   STOP
    ! ENDIF
-    CALL allocate_idbase( ids(itr)% idata, TRIM(filenames(itr)) )
+    CALL allocate_idbase( ids(itr)% idata, TRIM(filenames(itr)), &
+                          systems(itr), systems_name(itr) )
     CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)) )
 
     !ids(itr)% idata= initialize( ids(itr)% idata, TRIM(common_path)//TRIM(filenames(itr)) )
@@ -373,11 +379,10 @@ PROGRAM sphincs_id_lorene
           !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
           !                            "l", &
           !                            itr3, "-", itr4, "."
-          IF( systems(itr3)==bnslo ) WRITE( namefile_parts_bin, "(A5)" ) "NSNS."
-          IF( systems(itr3)==drslo ) WRITE( namefile_parts_bin, "(A5)" ) "DRSx."
+          WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
           namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
 
-          particles_dist( itr3, itr4 )% export_bin= export_bin
+          particles_dist( itr3, itr4 )% export_bin    = export_bin
           particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
           particles_dist( itr3, itr4 )% export_form_x = export_form_x
 
@@ -726,4 +731,4 @@ PROGRAM sphincs_id_lorene
 
   END SUBROUTINE
 
-END PROGRAM sphincs_id_lorene
+END PROGRAM sphincs_id

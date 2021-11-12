@@ -151,7 +151,7 @@ SUBMODULE (bns_lorene) bns_lorene_params
     THIS% radii(1,:)= [THIS% radius1_x_opp, THIS% radius1_x_comp, &
                        THIS% radius1_y, THIS% radius1_y, &
                        THIS% radius1_z, THIS% radius1_z]
-    THIS% radii(2,:)= [THIS% radius2_x_opp, THIS% radius2_x_comp, &
+    THIS% radii(2,:)= [THIS% radius2_x_comp, THIS% radius2_x_opp, &
                        THIS% radius2_y, THIS% radius2_y, &
                        THIS% radius2_z, THIS% radius2_z]
 

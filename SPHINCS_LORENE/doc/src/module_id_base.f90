@@ -22,7 +22,7 @@ MODULE id_base
   !***********************************************************
 
 
-  USE timing,                      ONLY: timer
+  USE timing, ONLY: timer
 
 
   IMPLICIT NONE
@@ -243,8 +243,19 @@ MODULE id_base
       CLASS(idbase), INTENT( OUT ):: derived_type
       !! Constructed [[diffstarlorene]] object
 
-
     END SUBROUTINE derived_type_constructor_int
+
+
+   ! SUBROUTINE derived_type_destructor_int( derived_type )
+   ! !# Prints a summary of the physical properties the system
+   ! !  to the standard output and, optionally, to a formatted file whose name
+   ! !  is given as the optional argument `filename`
+   !
+   !   IMPORT:: idbase
+   !   CLASS(idbase), INTENT( IN OUT ):: derived_type
+   !   !! Constructed [[diffstarlorene]] object
+   !
+   ! END SUBROUTINE derived_type_destructor_int
 
 
     FUNCTION read_double_at_pos( THIS, x, y, z ) RESULT( res )
@@ -732,7 +743,7 @@ MODULE id_base
     END FUNCTION get_total_spatial_extent
 
 
-    MODULE FUNCTION get_one_lapse( THIS )
+    MODULE PURE FUNCTION get_one_lapse( THIS )
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
@@ -755,7 +766,7 @@ MODULE id_base
     END SUBROUTINE set_one_lapse
 
 
-    MODULE FUNCTION get_zero_shift( THIS )
+    MODULE PURE FUNCTION get_zero_shift( THIS )
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 

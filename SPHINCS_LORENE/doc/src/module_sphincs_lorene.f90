@@ -9,7 +9,7 @@ MODULE sphincs_lorene
   !
   !# This module contains data and PROCEDURES
   !  needed to set up the |lorene| |id| in
-  !  PROGRAM [[sphincs_id_lorene]]
+  !  PROGRAM [[sphincs_id]]
   !
   !  FT 23.10.2020
   !
@@ -35,7 +35,7 @@ MODULE sphincs_lorene
   CONTAINS
 
 
-  SUBROUTINE allocate_idbase( id, filename )
+  SUBROUTINE allocate_idbase( id, filename, system, system_name )
 
     !*********************************************
     !
@@ -52,6 +52,8 @@ MODULE sphincs_lorene
 
     CLASS( idbase ), ALLOCATABLE, INTENT( IN OUT ):: id
     CHARACTER(LEN=*), INTENT( IN ) :: filename
+    CHARACTER(LEN=5), INTENT( IN OUT ):: system
+    CHARACTER(LEN=5), INTENT( IN OUT ):: system_name
 
     IF( ALLOCATED(id) )THEN
 
@@ -69,18 +71,28 @@ MODULE sphincs_lorene
     IF( filename(1:5) == bnslo )THEN
 
       ALLOCATE( bnslorene:: id )
+      system= bnslo
+      system_name= "NSNS."
 
     ELSEIF( filename(1:5) == drslo )THEN
 
       ALLOCATE( diffstarlorene:: id )
+      system= drslo
+      system_name= "DRSx."
 
     ELSE
 
-      PRINT *, "** ERROR! Unknown name for the physical system: ", filename(1:5)
-      PRINT *, "   Set the variable 'system' in the parameter file ", &
-               "sphincs_lorene_parameters.par to one of the values ", &
-               "listed there."
-      PRINT *, "   Stopping..."
+      PRINT *, "** ERROR! Unrecognized physical system ", system
+      PRINT *
+      PRINT *, "   Please specify the type of physical system in the first 5",&
+               " characters of the name of the file containing the initial", &
+               " data."
+      PRINT *
+      PRINT *, "   The 5-character names, and associated physical systems,", &
+              " supported by this version of SPHINCS_ID, with flavour = 1, are:"
+      PRINT *
+      PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
+      PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
       PRINT *
       STOP
 

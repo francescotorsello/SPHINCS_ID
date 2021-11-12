@@ -116,7 +116,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_params
 
     THIS% radii(:)= [THIS% r_eq_pi, THIS% r_eq, &
                      THIS% r_eq_pi2, THIS% r_eq_pi2, &
-                     THIS% r_eq, THIS% r_eq]
+                     THIS% r_pole, THIS% r_pole]
 
     THIS% center(:)= [0.0D0, 0.0D0, 0.0D0]
 

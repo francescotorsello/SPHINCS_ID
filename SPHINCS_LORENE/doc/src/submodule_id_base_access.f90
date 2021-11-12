@@ -191,12 +191,18 @@ SUBMODULE (id_base) id_base_access
       size_matter  = THIS% return_spatial_extent( i_matter )
       center_matter= THIS% return_center( i_matter )
 
-      IF( size_matter(1) < box(1) ) box(1) = center_matter(1) - size_matter(1)
-      IF( size_matter(2) > box(2) ) box(2) = center_matter(1) + size_matter(2)
-      IF( size_matter(3) < box(3) ) box(3) = center_matter(2) - size_matter(3)
-      IF( size_matter(4) > box(4) ) box(4) = center_matter(2) + size_matter(4)
-      IF( size_matter(5) < box(5) ) box(5) = center_matter(3) - size_matter(5)
-      IF( size_matter(6) > box(6) ) box(6) = center_matter(3) + size_matter(6)
+      IF( center_matter(1) - size_matter(1) < box(1) ) &
+                          box(1) = center_matter(1) - size_matter(1)
+      IF( center_matter(1) + size_matter(2) > box(2) ) &
+                          box(2) = center_matter(1) + size_matter(2)
+      IF( center_matter(2) - size_matter(3) < box(3) ) &
+                          box(3) = center_matter(2) - size_matter(3)
+      IF( center_matter(2) + size_matter(4) > box(4) ) &
+                          box(4) = center_matter(2) + size_matter(4)
+      IF( center_matter(3) - size_matter(5) < box(5) ) &
+                          box(5) = center_matter(3) - size_matter(5)
+      IF( center_matter(3) + size_matter(6) > box(6) ) &
+                          box(6) = center_matter(3) + size_matter(6)
 
     ENDDO
 

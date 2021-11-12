@@ -16,7 +16,11 @@ PROGRAM convergence_test
 #ifdef __INTEL_COMPILER
   USE IFPORT,          ONLY: MAKEDIRQQ
 #endif
-  USE sphincs_lorene,  ONLY: allocate_idbase, bnslo, drslo
+
+#if flavour == 1
+  USE sphincs_lorene,  ONLY: allocate_idbase
+#endif
+
   USE utility,         ONLY: date, time, zone, values, run_id, itr, itr3, &
                              file_exists, cnt, ios, err_msg, &
                              test_status, show_progress, end_time
@@ -58,10 +62,13 @@ PROGRAM convergence_test
   DOUBLE PRECISION:: denominator_ratio_dx
   DOUBLE PRECISION:: ratio_dx
 
-  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems
+  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
   CHARACTER( LEN= 500 ):: namefile_parts
   !# String storing the name for the formatted file containing the |sph|
+  !  particle |id|
+  CHARACTER( LEN= 500 ):: namefile_parts_bin
+  !# String storing the name for the binary file containing the |sph|
   !  particle |id|
   CHARACTER( LEN= 500 ):: namefile_sph
   !# String storing the name for ??
@@ -205,33 +212,34 @@ PROGRAM convergence_test
 
 #endif
 
-  ALLOCATE( CHARACTER(5):: systems(n_bns) )
+  ALLOCATE( CHARACTER(5):: systems(1) )
+  ALLOCATE( CHARACTER(5):: systems_name(1) )
 
   !DO itr= 1, n_bns, 1
-    systems(1)= filenames(1)(1:5)
-    IF( systems(1) /= bnslo .AND. systems(1) /= drslo )THEN
-      PRINT *, "** ERROR! Unrecognized physical system ", systems(1), ",",&
-               " system number", 1, "."
-      PRINT *
-      PRINT *, "   Please specify the type of physical system in the first 5",&
-               " characters of the name of the file containing the initial", &
-               " data."
-      PRINT *
-      PRINT *, "   The 5-character names, and associated physical systems,", &
-               " supported by this version of SPHINCS_ID are:"
-      PRINT *
-      PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
-      PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
-      PRINT *
-      STOP
-    ENDIF
+  !  systems(1)= filenames(1)(1:5)
+  !  IF( systems(1) /= bnslo .AND. systems(1) /= drslo )THEN
+  !    PRINT *, "** ERROR! Unrecognized physical system ", systems(1), ",",&
+  !             " system number", 1, "."
+  !    PRINT *
+  !    PRINT *, "   Please specify the type of physical system in the first 5",&
+  !             " characters of the name of the file containing the initial", &
+  !             " data."
+  !    PRINT *
+  !    PRINT *, "   The 5-character names, and associated physical systems,", &
+  !             " supported by this version of SPHINCS_ID are:"
+  !    PRINT *
+  !    PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
+  !    PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
+  !    PRINT *
+  !    STOP
+  !  ENDIF
   !ENDDO
 
   !
   !-- Construct the bns object from the LORENE binary file
   !
   !binary= bnslorene( TRIM(common_path)//"/"//TRIM(filenames( 1 )) )
-  CALL allocate_idbase( idata, TRIM(filenames(1)) )
+  CALL allocate_idbase( idata, TRIM(filenames(1)), systems(1), systems_name(1) )
   CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)) )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)
@@ -263,7 +271,12 @@ PROGRAM convergence_test
     WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
                                 "l", &
                                 1, "-", 1, "."
-    particles_dist% export_bin= export_bin
+    WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
+    namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
+
+    particles_dist% export_bin    = export_bin
+    particles_dist% export_form_xy= export_form_xy
+    particles_dist% export_form_x = export_form_x
     CALL particles_dist% compute_and_export_SPH_variables( namefile_parts )
 
     !
@@ -272,8 +285,7 @@ PROGRAM convergence_test
     IF( export_form )THEN
       WRITE( namefile_parts, "(A34)" ) &
                              "lorene-bns-id-particles-form_1.dat"
-      particles_dist% export_form_xy= export_form_xy
-      particles_dist% export_form_x = export_form_x
+      namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
       CALL particles_dist% print_formatted_lorene_id_particles( namefile_parts )
     ENDIF
 

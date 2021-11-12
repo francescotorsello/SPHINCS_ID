@@ -214,6 +214,7 @@ MODULE bns_lorene
 
     !PROCEDURE:: derived_type_destructor => destruct_bnslorene
 
+    !PROCEDURE:: derived_type_destructor => destruct_bnslorene
     FINAL:: destruct_bnslorene
     !! Finalizer (Destructor) of a [[bnslorene]] object
 

@@ -13,7 +13,22 @@ PROGRAM convergence_test
   !                                                    *
   !*****************************************************
 
-  USE sphincs_lorene
+#ifdef __INTEL_COMPILER
+  USE IFPORT,          ONLY: MAKEDIRQQ
+#endif
+
+#if flavour == 1
+  USE sphincs_lorene,  ONLY: allocate_idbase
+#endif
+
+  USE utility,         ONLY: date, time, zone, values, run_id, itr, itr3, &
+                             file_exists, cnt, ios, err_msg, &
+                             test_status, show_progress, end_time
+  USE timing,          ONLY: timer
+  USE id_base,         ONLY: idbase, initialize
+  USE particles_id,    ONLY: particles
+  USE formul_bssn_id,  ONLY: bssn_id
+  USE formul_3p1_id,   ONLY: formul_3p1
 
   IMPLICIT NONE
 
@@ -47,22 +62,39 @@ PROGRAM convergence_test
   DOUBLE PRECISION:: denominator_ratio_dx
   DOUBLE PRECISION:: ratio_dx
 
-  ! Strings storing different names for output files
-  CHARACTER( LEN= 500 ):: namefile_parts, namefile_sph
-  CHARACTER( LEN= 500 ):: namefile_bssn, name_logfile
-  ! Array of strings storing the names of the LORENE BNS ID binary files
+  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
+  !! String storing the name of the phyical systems
+  CHARACTER( LEN= 500 ):: namefile_parts
+  !# String storing the name for the formatted file containing the |sph|
+  !  particle |id|
+  CHARACTER( LEN= 500 ):: namefile_parts_bin
+  !# String storing the name for the binary file containing the |sph|
+  !  particle |id|
+  CHARACTER( LEN= 500 ):: namefile_sph
+  !# String storing the name for ??
+  !
+  CHARACTER( LEN= 500 ):: namefile_bssn
+  !# String storing the name for the formatted file containing the |bssn| |id|
+  CHARACTER( LEN= 500 ):: namefile_bssn_bin
+  !# String storing the name for the binary file containing the |bssn| |id|
+  CHARACTER( LEN= 500 ):: name_logfile
+  !# String storing the name for the formatted file containing a summary about
+  !  the |bssn| constraints violations
   CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
-  ! String storing the local path to the directory where the
-  ! LORENE BNS ID files are stored
+  ! Array of strings storing the names of the |id| files
   CHARACTER( LEN= max_length ):: common_path
-  ! String storing the local path to the directory where the
-  ! SPH output is to be saved
+  !# String storing the local path to the directory where the |id| files
+  !  are stored
   CHARACTER( LEN= max_length ):: sph_path
-  ! String storing the local path to the directory where the
-  ! spacetime output is to be saved
+  !# String storing the local path to the directory where the
+  !  SPH output is to be saved
   CHARACTER( LEN= max_length ):: spacetime_path
+  !# String storing the local path to the directory where the
+  !  spacetime output is to be saved
 
   LOGICAL, PARAMETER:: debug= .FALSE.
+  LOGICAL:: exist
+  LOGICAL(4):: dir_out
 
   ! Logical variables to steer the execution
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
@@ -75,7 +107,8 @@ PROGRAM convergence_test
 
   ! Declaration of the bns (binary neutron star) object containing the
   ! LORENE ID
-  TYPE( bnslorene ):: binary
+  !TYPE( bnslorene ):: binary
+  CLASS( idbase ), ALLOCATABLE:: idata
   ! Declaration of the particles object containing the particle distribution
   TYPE( particles ):: particles_dist
   ! Declaration of the 3-component array storing the 3 bssn_id objects,
@@ -131,14 +164,87 @@ PROGRAM convergence_test
     STOP
   ENDIF
 
+#ifdef __INTEL_COMPILER
+
+  INQUIRE( DIRECTORY= TRIM(sph_path), EXIST= exist )
+  IF( .NOT.exist )THEN
+    dir_out= MAKEDIRQQ( TRIM(sph_path) )
+  ELSE
+    dir_out= .TRUE.
+  ENDIF
+  IF( .NOT.dir_out )THEN
+    PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(sph_path)
+    PRINT *, "Stopping..."
+    PRINT *
+    STOP
+  ENDIF
+
+  INQUIRE( DIRECTORY= TRIM(spacetime_path), EXIST= exist )
+  IF( .NOT.exist )THEN
+    dir_out= MAKEDIRQQ( TRIM(spacetime_path) )
+  ELSE
+    dir_out= .TRUE.
+  ENDIF
+  IF( .NOT.dir_out )THEN
+    PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(sph_path)
+    PRINT *, "Stopping..."
+    PRINT *
+    STOP
+  ENDIF
+
+#endif
+
+#ifdef __GFORTRAN__
+
+  INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
+  IF( .NOT.exist )THEN
+    PRINT *, "** ERROR! Directory ", TRIM(sph_path), " does not exist!"
+    PRINT *, "   Please create it and re-run the executable. Stopping..."
+    STOP
+  ENDIF
+
+  INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
+  IF( .NOT.exist )THEN
+    PRINT *, "** ERROR! Directory ", TRIM(spacetime_path), " does not exist!"
+    PRINT *, "   Please create it and re-run the executable. Stopping..."
+    STOP
+  ENDIF
+
+#endif
+
+  ALLOCATE( CHARACTER(5):: systems(1) )
+  ALLOCATE( CHARACTER(5):: systems_name(1) )
+
+  !DO itr= 1, n_bns, 1
+  !  systems(1)= filenames(1)(1:5)
+  !  IF( systems(1) /= bnslo .AND. systems(1) /= drslo )THEN
+  !    PRINT *, "** ERROR! Unrecognized physical system ", systems(1), ",",&
+  !             " system number", 1, "."
+  !    PRINT *
+  !    PRINT *, "   Please specify the type of physical system in the first 5",&
+  !             " characters of the name of the file containing the initial", &
+  !             " data."
+  !    PRINT *
+  !    PRINT *, "   The 5-character names, and associated physical systems,", &
+  !             " supported by this version of SPHINCS_ID are:"
+  !    PRINT *
+  !    PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
+  !    PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
+  !    PRINT *
+  !    STOP
+  !  ENDIF
+  !ENDDO
+
   !
   !-- Construct the bns object from the LORENE binary file
   !
-  binary= bnslorene( TRIM(common_path)//"/"//TRIM(filenames( 1 )) )
+  !binary= bnslorene( TRIM(common_path)//"/"//TRIM(filenames( 1 )) )
+  CALL allocate_idbase( idata, TRIM(filenames(1)), systems(1), systems_name(1) )
+  CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)) )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)
-  CALL binary% set_one_lapse ( one_lapse )
-  CALL binary% set_zero_shift( zero_shift )
+  CALL idata% set_one_lapse ( one_lapse )
+  CALL idata% set_zero_shift( zero_shift )
 
   !
   !-- Construct the particles object from the bns object
@@ -151,7 +257,7 @@ PROGRAM convergence_test
     PRINT *, "===================================================" &
              // "==============="
     PRINT *
-    particles_dist= particles( binary, placer( 1, 1 ) )
+    particles_dist= particles( idata, placer( 1, 1 ) )
 
     !
     !-- Compute the SPH variables
@@ -165,7 +271,12 @@ PROGRAM convergence_test
     WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
                                 "l", &
                                 1, "-", 1, "."
-    particles_dist% export_bin= export_bin
+    WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
+    namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
+
+    particles_dist% export_bin    = export_bin
+    particles_dist% export_form_xy= export_form_xy
+    particles_dist% export_form_x = export_form_x
     CALL particles_dist% compute_and_export_SPH_variables( namefile_parts )
 
     !
@@ -174,8 +285,7 @@ PROGRAM convergence_test
     IF( export_form )THEN
       WRITE( namefile_parts, "(A34)" ) &
                              "lorene-bns-id-particles-form_1.dat"
-      particles_dist% export_form_xy= export_form_xy
-      particles_dist% export_form_x = export_form_x
+      namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
       CALL particles_dist% print_formatted_lorene_id_particles( namefile_parts )
     ENDIF
 
@@ -195,17 +305,17 @@ PROGRAM convergence_test
 
     IF( itr3 == 1 )THEN
 
-      bssn_forms( itr3 )= bssn_id( binary )
+      bssn_forms( itr3 )= bssn_id( idata )
       original_dx= bssn_forms( itr3 )% get_dx(ref_lev)
 
     ELSE
       IF( itr3 == min_bssn )THEN
 
-        bssn_forms( 1 )= bssn_id( binary )
+        bssn_forms( 1 )= bssn_id( idata )
         original_dx= bssn_forms( 1 )% get_dx(ref_lev)
 
       ENDIF
-      bssn_forms( itr3 )= bssn_id( binary, &
+      bssn_forms( itr3 )= bssn_id( idata, &
                                    original_dx/( ratio_dx**( itr3 - 1 ) ), &
                                    original_dx/( ratio_dx**( itr3 - 1 ) ), &
                                    original_dx/( ratio_dx**( itr3 - 1 ) ) )
@@ -255,12 +365,14 @@ PROGRAM convergence_test
     PRINT *, "===================================================" &
              // "==============="
     PRINT *
-    WRITE( namefile_bssn, "(A6,I1,A4)" ) "BSSN_l", itr3, ".bin"
+    WRITE( namefile_bssn_bin, "(A6,I1,A4)" ) "BSSN_l", itr3, ".bin"
+    namefile_bssn_bin= TRIM( spacetime_path ) // TRIM( namefile_bssn_bin )
+
     bssn_forms( itr3 )% export_bin= export_bin
     bssn_forms( itr3 )% export_form_xy= export_form_xy
     bssn_forms( itr3 )% export_form_x = export_form_x
     CALL bssn_forms( itr3 )% &
-                        compute_and_export_3p1_variables( namefile_bssn )
+                        compute_and_export_3p1_variables( namefile_bssn_bin )
   ENDDO compute_export_bssn_loop
 
   !
@@ -270,8 +382,8 @@ PROGRAM convergence_test
     export_bssn_loop: DO itr3 = min_bssn, max_bssn, 1
       WRITE( namefile_bssn, "(A24,I1,A4)" ) &
                             "lorene-bns-id-bssn-form_", itr3, ".dat"
-      bssn_forms( itr3 )% export_form_xy= export_form_xy
-      bssn_forms( itr3 )% export_form_x = export_form_x
+      namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+
       CALL bssn_forms( itr3 )% &
                   print_formatted_lorene_id_3p1_variables( namefile_bssn )
     ENDDO export_bssn_loop
@@ -305,8 +417,11 @@ PROGRAM convergence_test
       WRITE( name_logfile, "(A28,I1,A4)" ) &
                           "bssn-constraints-statistics-", itr3
 
+      namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+      name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
+
       CALL bssn_forms( itr3 )% &
-                  compute_and_export_3p1_constraints( binary, &
+                  compute_and_export_3p1_constraints( idata, &
                                                       namefile_bssn, &
                                                       name_logfile )
 
@@ -327,6 +442,10 @@ PROGRAM convergence_test
       WRITE( namefile_sph, "(A12,I1,A4)" ) "sph-density-", itr3, ".dat"
       WRITE( name_logfile, "(A34,I1,A4)" ) &
                            "bssn-constraints-parts-statistics-", itr3, ".log"
+
+      namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+      namefile_sph = TRIM( sph_path ) // TRIM( namefile_sph )
+      name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
       CALL bssn_forms( itr3 )% &
                   compute_and_export_3p1_constraints( particles_dist, &
@@ -371,20 +490,25 @@ PROGRAM convergence_test
   !-- Perform the convergence test with the appropriate constraints
   !
   IF( compute_constraints )THEN
+
     PRINT *, "** Performing convergence test with constraints computed ", &
              "without particle data."
     PRINT *
     CALL cauchy_convergence_test_unknown( bssn_forms(1), bssn_forms(2), &
                                           bssn_forms(3), 1, ref_lev )
     CALL cauchy_convergence_test_known( bssn_forms(2), bssn_forms(3), 1, ref_lev )
+
   ENDIF
+
   IF( compute_parts_constraints )THEN
+
     PRINT *, "** Performing convergence test with constraints computed ", &
              "with particle data."
     PRINT *
     CALL cauchy_convergence_test_unknown( bssn_forms(1), bssn_forms(2), &
                                           bssn_forms(3), 2, ref_lev )
     CALL cauchy_convergence_test_known( bssn_forms(2), bssn_forms(3), 2, ref_lev )
+
   ENDIF
 
   CALL execution_timer% stop_timer()
@@ -397,32 +521,40 @@ PROGRAM convergence_test
   !
   !-- Print the timers
   !
-  PRINT *, "** Timing."
+  PRINT *, "===================================================" &
+           // "================================================"
+  PRINT *, " Timing and summaries"
+  PRINT *, "===================================================" &
+           // "================================================"
   PRINT *
   PRINT *
-  PRINT *, " * BSSN formulation with uniform resolution:", &
-           bssn_forms( 1 )% get_dx(ref_lev)
-  PRINT *, "    and number of points:", bssn_forms( 1 )% get_ngrid_x(ref_lev), &
-           "**3"
+  CALL idata% print_summary()
+  !PRINT *, " * BSSN formulation with uniform resolution:", &
+  !         bssn_forms( 1 )% get_dx(ref_lev)
+  !PRINT *, "    and number of points:", bssn_forms( 1 )% get_ngrid_x(ref_lev), &
+  !         "**3"
   !original_dx
+  CALL bssn_forms( 1 )% print_summary()
   CALL bssn_forms( 1 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 1 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 1 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
-  PRINT *, " * BSSN formulation with uniform resolution:", &
-           bssn_forms( 2 )% get_dx(ref_lev)
-  PRINT *, "    and number of points:", bssn_forms( 2 )% get_ngrid_x(ref_lev), &
-           "**3"
+  !PRINT *, " * BSSN formulation with uniform resolution:", &
+  !         bssn_forms( 2 )% get_dx(ref_lev)
+  !PRINT *, "    and number of points:", bssn_forms( 2 )% get_ngrid_x(ref_lev), &
+  !         "**3"
   !original_dx/2
+  CALL bssn_forms( 2 )% print_summary()
   CALL bssn_forms( 2 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 2 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 2 )% bssn_computer_timer% print_timer( 2 )
   PRINT *
-  PRINT *, " * BSSN formulation with uniform resolution:", &
-           bssn_forms( 3 )% get_dx(ref_lev)
-  PRINT *, "    and number of points:", bssn_forms( 3 )% get_ngrid_x(ref_lev), &
-           "**3"
+  !PRINT *, " * BSSN formulation with uniform resolution:", &
+  !         bssn_forms( 3 )% get_dx(ref_lev)
+  !PRINT *, "    and number of points:", bssn_forms( 3 )% get_ngrid_x(ref_lev), &
+  !         "**3"
   !original_dx/4
+  CALL bssn_forms( 3 )% print_summary()
   CALL bssn_forms( 3 )% grid_timer% print_timer( 2 )
   CALL bssn_forms( 3 )% importer_timer% print_timer( 2 )
   CALL bssn_forms( 3 )% bssn_computer_timer% print_timer( 2 )
@@ -442,7 +574,7 @@ PROGRAM convergence_test
   !-- to problems...
   !-- TODO: fix this
   !
-  CALL binary% destruct_binary()
+  !CALL binary% destruct_binary()
 
 
   CONTAINS
@@ -541,7 +673,7 @@ PROGRAM convergence_test
       PRINT *
 
       unit_cauchy_ct= 3109
-      name_cauchy_ct= "cauchy_convergence_test_known.dat"
+      name_cauchy_ct= TRIM(spacetime_path)//"cauchy_convergence_test_known.dat"
 
       INQUIRE( FILE= TRIM(name_cauchy_ct), EXIST= exist )
 
@@ -696,7 +828,8 @@ PROGRAM convergence_test
       PRINT *
 
       unit_cauchy_parts_ct= 3111
-      name_cauchy_parts_ct= "cauchy_convergence_test_known_parts.dat"
+      name_cauchy_parts_ct= TRIM(spacetime_path) &
+                            // "cauchy_convergence_test_known_parts.dat"
 
       INQUIRE( FILE= TRIM(name_cauchy_parts_ct), EXIST= exist )
 
@@ -981,7 +1114,8 @@ PROGRAM convergence_test
       PRINT *
 
       unit_cauchy_ct= 3108
-      name_cauchy_ct= "cauchy_convergence_test_unknown.dat"
+      name_cauchy_ct= TRIM(spacetime_path) &
+                      //"cauchy_convergence_test_unknown.dat"
 
       INQUIRE( FILE= TRIM(name_cauchy_ct), EXIST= exist )
 
@@ -1182,7 +1316,8 @@ PROGRAM convergence_test
       PRINT *
 
       unit_cauchy_parts_ct= 3110
-      name_cauchy_parts_ct= "cauchy_convergence_test_unknown_parts.dat"
+      name_cauchy_parts_ct= TRIM(spacetime_path) &
+                            //"cauchy_convergence_test_unknown_parts.dat"
 
       INQUIRE( FILE= TRIM(name_cauchy_parts_ct), EXIST= exist )
 
