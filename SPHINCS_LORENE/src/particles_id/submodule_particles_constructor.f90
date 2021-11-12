@@ -76,7 +76,7 @@ SUBMODULE (particles_id) particles_constructor
     INTEGER:: npart_des, a, &!nx, ny, nz, npart_des_l, npart_des_ss, &
               !npart_approx, npart2_approx,
               max_steps, &
-              nlines, header_lines, n_cols, npart_tmp, npart1_tmp, npart2_tmp, &
+              nlines, header_lines, n_cols, npart_tmp, &!npart1_tmp, npart2_tmp, &
               nx_gh, ny_gh, nz_gh, i_matter
 
     ! Maximum length for strings, and for the number of imported binaries
@@ -110,7 +110,7 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),6):: sizes
 
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos
-    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos2
+    !DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos2
     !DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol_tmp2
     DOUBLE PRECISION:: nuratio_thres, nuratio_des
 
@@ -545,10 +545,10 @@ SUBMODULE (particles_id) particles_constructor
                       ABS(center(itr,2)) + sizes(itr, 4) &
               .OR. &
               ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,3)) + sizes(itr, 5) &
+                      ABS(center(itr,3)) + sizes(itr, 1) &
               .OR. &
               ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,3)) + sizes(itr, 6) &
+                      ABS(center(itr,3)) + sizes(itr, 2) &
 
           )THEN
 
@@ -667,10 +667,10 @@ SUBMODULE (particles_id) particles_constructor
       DO itr= 1, parts% n_matter, 1
 
         ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
-                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1)-1)
+                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
 
           pvol_tmp= 0.0D0
-          DO a= npart_in, npart_fin, 1
+          DO a= npart_in, npart_fin - 1, 1
 
             pvol_tmp= pvol_tmp + ABS( parts% pos(3,a + 1) &
                                     - parts% pos(3,a) )
@@ -687,426 +687,426 @@ SUBMODULE (particles_id) particles_constructor
 
       ENDDO
 
-    CASE(5)
-
-      PRINT *, " * Reading particle positions from formatted file " &
-               // TRIM(parts_pos_namefile)
-      PRINT *
-
-      INQUIRE( FILE= TRIM(parts_pos_namefile), EXIST= exist )
-
-      IF( exist )THEN
-        OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
-              FORM= "FORMATTED", ACTION= "READ", IOSTAT= ios, &
-              IOMSG= err_msg )
-        IF( ios > 0 )THEN
-          PRINT *, "...error when opening " // TRIM(parts_pos_namefile), &
-                  ". The error message is", err_msg
-          STOP
-        ENDIF
-      ELSE
-        PRINT *, "** ERROR! Unable to find file " // TRIM(parts_pos_namefile)
-        STOP
-      ENDIF
-
-      nlines = 0
-      DO
-        READ( unit_pos, * , IOSTAT= ios )
-        IF ( ios /= 0 ) EXIT
-        nlines = nlines + 1
-      ENDDO
-
-      CLOSE( UNIT= unit_pos )
-
-      npart_tmp= nlines - header_lines
-
-      !PRINT *, "nlines=", nlines
-      !PRINT *, "header_lines=", header_lines
-      !PRINT *, "npart_tmp=", npart_tmp
-      !PRINT *
-
-      OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
-            FORM= "FORMATTED", ACTION= "READ" )
-
-      ! Skip header
-      DO itr= 1, header_lines, 1
-        READ( unit_pos, * )
-      ENDDO
-
-      ! Allocate the temporary array to store data
-      ALLOCATE( tmp_pos( n_cols, 2*npart_tmp ) )
-      tmp_pos= 0.0D0
-
-      ! Read the data into the temporary array
-      DO itr= 1, npart_tmp, 1
-
-        READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
-          tmp_pos( :, itr )
-
-        IF( ios > 0 )THEN
-          PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
-                  " at particle ", itr,". The status variable is ", ios, &
-                  ". The error message is", err_msg
-          STOP
-        ENDIF
-
-      ENDDO
-
-      CLOSE( UNIT= unit_pos )
-
-      ! Allocate the temporary array to store data
-      IF( read_nu )THEN
-        ALLOCATE( tmp_pos2( 4, 2*npart_tmp ) )
-      ELSE
-        ALLOCATE( tmp_pos2( 3, 2*npart_tmp ) )
-      ENDIF
-      tmp_pos2= 0.0D0
-
-      ! Separate particle positions on star 1 and star 2,
-      ! and compute the temporary npart1 and npart2 (before mirroring)
-      npart1_tmp= 0
-      DO itr= 1, npart_tmp, 1
-
-        IF( tmp_pos(columns(1),itr) < 0.0D0 )THEN
-
-          npart1_tmp= npart1_tmp + 1
-          tmp_pos2(1,npart1_tmp)= tmp_pos(columns(1),itr)
-          tmp_pos2(2,npart1_tmp)= tmp_pos(columns(2),itr)
-          tmp_pos2(3,npart1_tmp)= tmp_pos(columns(3),itr)
-          IF( read_nu ) tmp_pos2(4,npart1_tmp)= tmp_pos(column_nu,itr)
-
-        ENDIF
-
-      ENDDO
-
-      npart2_tmp= 0
-      DO itr= 1, npart_tmp, 1
-
-        IF( tmp_pos(columns(1),itr) > 0.0D0 )THEN
-
-          npart2_tmp= npart2_tmp + 1
-          tmp_pos2(1,npart1_tmp+npart2_tmp)= tmp_pos(columns(1),itr)
-          tmp_pos2(2,npart1_tmp+npart2_tmp)= tmp_pos(columns(2),itr)
-          tmp_pos2(3,npart1_tmp+npart2_tmp)= tmp_pos(columns(3),itr)
-          IF( read_nu ) tmp_pos2(4,npart1_tmp+npart2_tmp)=tmp_pos(column_nu,itr)
-
-        ENDIF
-
-      ENDDO
-
-      IF( npart1_tmp + npart2_tmp /= npart_tmp )THEN
-        PRINT *, "** ERROR! npart1_tmp + npart2_tmp /= npart_tmp"
-        PRINT *
-        PRINT *, "   npart1_tmp= ", npart1_tmp
-        PRINT *, "   npart2_tmp= ", npart2_tmp
-        PRINT *, "   npart1_tmp + npart2_tmp= ", npart1_tmp + npart2_tmp
-        PRINT *, "   npart_tmp= ", npart_tmp
-        PRINT *
-        STOP
-      ENDIF
-
-      ! Check that the positions are within the stars read from the |lorene|
-      ! binary file. This checks that the positions read from the formatted
-      ! file are compatible with the binary file read
-
-      ! Star 1
-      DO itr= 1, parts% n_matter, 1
-
-        ASSOCIATE( npart_in   => npart1_tmp*(itr-1) + 1, &
-                   npart_fin  => npart1_tmp + npart2_tmp*(itr-1) )
-
-          IF( MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) - &
-                                               sizes(itr, 1) &
-              .OR. &
-              MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) > ABS(center(itr,1)) + &
-                                               sizes(itr, 2) &
-              .OR. &
-              ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ) > ABS(center(itr,2)) + &
-                                               sizes(itr, 3) &
-              .OR. &
-              ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ) > ABS(center(itr,2)) + &
-                                               sizes(itr, 4) &
-              .OR. &
-              ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ) > ABS(center(itr,3)) + &
-              sizes(itr, 5) &
-              .OR. &
-              ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ) > ABS(center(itr,3)) + &
-              sizes(itr, 6) &
-              .OR. &
-              MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) > ABS(center(itr,1)) - &
-                                               0.95*sizes(itr, 1) &
-              .OR. &
-              MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) + &
-                                               0.95*sizes(itr, 2) &
-              .OR. &
-              ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ) < ABS(center(itr,2)) + &
-                          0.95*sizes(itr, 3) &
-              .OR. &
-              ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ) < ABS(center(itr,2)) + &
-                          0.95*sizes(itr, 4) &
-              .OR. &
-              ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ) < ABS(center(itr,3)) + &
-                          0.95*sizes(itr, 5) &
-              .OR. &
-              ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ) < ABS(center(itr,3)) + &
-                          0.95*sizes(itr, 6) &
-
-          )THEN
-
-            PRINT *, "** ERROR! The positions of the particles on object ", itr, &
-                     ", read from file " &
-                     // TRIM(parts_pos_namefile), " are not compatible with the ", &
-                     "physical system read from file. Stopping..."
-            PRINT *
-            STOP
-
-          ENDIF
-
-        END ASSOCIATE
-
-      ENDDO
-
-      ! Star 2
-!      IF( MINVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) < ABS(center2) - &
-!                                           id% get_radius2_x_comp() &
-!          .OR. &
-!          MAXVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) > ABS(center2) + &
-!                                           id% get_radius2_x_opp() &
-!          .OR. &
-!          ABS( MINVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) > &
-!                      id% get_radius2_y() &
-!          .OR. &
-!          ABS( MAXVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) > &
-!                      id% get_radius2_y() &
-!          .OR. &
-!          ABS( MINVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) > &
-!                      id% get_radius2_z() &
-!          .OR. &
-!          ABS( MAXVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) > &
-!                      id% get_radius2_z() &
-!          .OR. &
-!          MINVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) > ABS(center2) - &
-!                                           0.95*id% get_radius2_x_comp() &
-!          .OR. &
-!          MAXVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) < ABS(center2) + &
-!                                           0.95*id% get_radius2_x_opp() &
-!          .OR. &
-!          ABS( MINVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) < &
-!                      0.95*id% get_radius2_y() &
-!          .OR. &
-!          ABS( MAXVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) < &
-!                      0.95*id% get_radius2_y() &
-!          .OR. &
-!          ABS( MINVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) < &
-!                      0.95*id% get_radius2_z() &
-!          .OR. &
-!          ABS( MAXVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) < &
-!                      0.95*id% get_radius2_z() &
+!    CASE(5)
 !
-!      )THEN
+!      PRINT *, " * Reading particle positions from formatted file " &
+!               // TRIM(parts_pos_namefile)
+!      PRINT *
 !
-!        PRINT *, "** ERROR! The positions of the particles on star 2, ", &
-!                 "read from file " &
-!                 // TRIM(parts_pos_namefile), " are not compatible with the ", &
-!                 "binary system read from the |lorene| binary file. Stopping..."
+!      INQUIRE( FILE= TRIM(parts_pos_namefile), EXIST= exist )
+!
+!      IF( exist )THEN
+!        OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
+!              FORM= "FORMATTED", ACTION= "READ", IOSTAT= ios, &
+!              IOMSG= err_msg )
+!        IF( ios > 0 )THEN
+!          PRINT *, "...error when opening " // TRIM(parts_pos_namefile), &
+!                  ". The error message is", err_msg
+!          STOP
+!        ENDIF
+!      ELSE
+!        PRINT *, "** ERROR! Unable to find file " // TRIM(parts_pos_namefile)
+!        STOP
+!      ENDIF
+!
+!      nlines = 0
+!      DO
+!        READ( unit_pos, * , IOSTAT= ios )
+!        IF ( ios /= 0 ) EXIT
+!        nlines = nlines + 1
+!      ENDDO
+!
+!      CLOSE( UNIT= unit_pos )
+!
+!      npart_tmp= nlines - header_lines
+!
+!      !PRINT *, "nlines=", nlines
+!      !PRINT *, "header_lines=", header_lines
+!      !PRINT *, "npart_tmp=", npart_tmp
+!      !PRINT *
+!
+!      OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
+!            FORM= "FORMATTED", ACTION= "READ" )
+!
+!      ! Skip header
+!      DO itr= 1, header_lines, 1
+!        READ( unit_pos, * )
+!      ENDDO
+!
+!      ! Allocate the temporary array to store data
+!      ALLOCATE( tmp_pos( n_cols, 2*npart_tmp ) )
+!      tmp_pos= 0.0D0
+!
+!      ! Read the data into the temporary array
+!      DO itr= 1, npart_tmp, 1
+!
+!        READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+!          tmp_pos( :, itr )
+!
+!        IF( ios > 0 )THEN
+!          PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
+!                  " at particle ", itr,". The status variable is ", ios, &
+!                  ". The error message is", err_msg
+!          STOP
+!        ENDIF
+!
+!      ENDDO
+!
+!      CLOSE( UNIT= unit_pos )
+!
+!      ! Allocate the temporary array to store data
+!      IF( read_nu )THEN
+!        ALLOCATE( tmp_pos2( 4, 2*npart_tmp ) )
+!      ELSE
+!        ALLOCATE( tmp_pos2( 3, 2*npart_tmp ) )
+!      ENDIF
+!      tmp_pos2= 0.0D0
+!
+!      ! Separate particle positions on star 1 and star 2,
+!      ! and compute the temporary npart1 and npart2 (before mirroring)
+!      npart1_tmp= 0
+!      DO itr= 1, npart_tmp, 1
+!
+!        IF( tmp_pos(columns(1),itr) < 0.0D0 )THEN
+!
+!          npart1_tmp= npart1_tmp + 1
+!          tmp_pos2(1,npart1_tmp)= tmp_pos(columns(1),itr)
+!          tmp_pos2(2,npart1_tmp)= tmp_pos(columns(2),itr)
+!          tmp_pos2(3,npart1_tmp)= tmp_pos(columns(3),itr)
+!          IF( read_nu ) tmp_pos2(4,npart1_tmp)= tmp_pos(column_nu,itr)
+!
+!        ENDIF
+!
+!      ENDDO
+!
+!      npart2_tmp= 0
+!      DO itr= 1, npart_tmp, 1
+!
+!        IF( tmp_pos(columns(1),itr) > 0.0D0 )THEN
+!
+!          npart2_tmp= npart2_tmp + 1
+!          tmp_pos2(1,npart1_tmp+npart2_tmp)= tmp_pos(columns(1),itr)
+!          tmp_pos2(2,npart1_tmp+npart2_tmp)= tmp_pos(columns(2),itr)
+!          tmp_pos2(3,npart1_tmp+npart2_tmp)= tmp_pos(columns(3),itr)
+!          IF( read_nu ) tmp_pos2(4,npart1_tmp+npart2_tmp)=tmp_pos(column_nu,itr)
+!
+!        ENDIF
+!
+!      ENDDO
+!
+!      IF( npart1_tmp + npart2_tmp /= npart_tmp )THEN
+!        PRINT *, "** ERROR! npart1_tmp + npart2_tmp /= npart_tmp"
+!        PRINT *
+!        PRINT *, "   npart1_tmp= ", npart1_tmp
+!        PRINT *, "   npart2_tmp= ", npart2_tmp
+!        PRINT *, "   npart1_tmp + npart2_tmp= ", npart1_tmp + npart2_tmp
+!        PRINT *, "   npart_tmp= ", npart_tmp
 !        PRINT *
 !        STOP
-!
 !      ENDIF
-
-      !DO itr= 1, npart1_tmp, 1
-      !  IF( tmp_pos2(1,itr) <  )
-      !ENDDO
-
-      ! Mirror the particles on star 1
-
-      tmp_pos(columns(1),:)= tmp_pos2(1,:)
-      tmp_pos(columns(2),:)= tmp_pos2(2,:)
-      tmp_pos(columns(3),:)= tmp_pos2(3,:)
-      IF( read_nu ) tmp_pos(column_nu,:) = tmp_pos2(4,:)
-
-      parts% npart_i(1)= 0
-      DO itr= 1, npart1_tmp, 1
-
-        IF( tmp_pos(columns(3),itr) > 0 )THEN
-
-          parts% npart_i(1)= parts% npart_i(1) + 1
-          tmp_pos2(1,parts% npart_i(1))= tmp_pos(columns(1),itr)
-          tmp_pos2(2,parts% npart_i(1))= tmp_pos(columns(2),itr)
-          tmp_pos2(3,parts% npart_i(1))= tmp_pos(columns(3),itr)
-          IF( read_nu ) tmp_pos2(4,parts% npart_i(1))= tmp_pos(column_nu,itr)
-
-        ENDIF
-
-      ENDDO
-
-      DO itr= 1, parts% npart_i(1), 1
-
-        tmp_pos2(1,parts% npart_i(1)+itr)=   tmp_pos2(1,itr)
-        tmp_pos2(2,parts% npart_i(1)+itr)=   tmp_pos2(2,itr)
-        tmp_pos2(3,parts% npart_i(1)+itr)= - tmp_pos2(3,itr)
-        IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+itr)= tmp_pos2(4,itr)
-
-      ENDDO
-
-      parts% npart_i(1)= 2*parts% npart_i(1)
-
-      parts% npart_i(2)= 0
-      DO itr= npart1_tmp + 1, npart_tmp, 1
-
-        IF( tmp_pos(columns(3),itr) > 0 )THEN
-
-          parts% npart_i(2)= parts% npart_i(2) + 1
-          tmp_pos2(1,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(1),itr)
-          tmp_pos2(2,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(2),itr)
-          tmp_pos2(3,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(3),itr)
-          IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(column_nu,itr)
-
-        ENDIF
-
-      ENDDO
-
-      DO itr= 1, parts% npart_i(2), 1
-
-        tmp_pos2(1,parts% npart_i(1)+parts% npart_i(2)+itr)=   &
-                                            tmp_pos2(1,parts% npart_i(1)+itr)
-        tmp_pos2(2,parts% npart_i(1)+parts% npart_i(2)+itr)=   &
-                                            tmp_pos2(2,parts% npart_i(1)+itr)
-        tmp_pos2(3,parts% npart_i(1)+parts% npart_i(2)+itr)= &
-                                          - tmp_pos2(3,parts% npart_i(1)+itr)
-        IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+parts% npart_i(2)+itr)= &
-                                            tmp_pos2(4,parts% npart_i(1)+itr)
-
-      ENDDO
-
-      parts% npart_i(2)= 2*parts% npart_i(2)
-      parts% npart = parts% npart_i(1) + parts% npart_i(2)
-
-      !PRINT *, tmp_pos(:,1)
-      ! Allocating the memory for the array pos( 3, npart )
-      IF(.NOT.ALLOCATED( parts% pos ))THEN
-        ALLOCATE( parts% pos( 3, parts% npart ), STAT= ios, &
-                  ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array pos in SUBROUTINE" &
-                    // ". ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...allocation error for array pos in SUBROUTINE" &
-        !                // "place_particles_3D_lattice." )
-      ENDIF
-      IF( read_nu .AND. .NOT.ALLOCATED( parts% nu ))THEN
-        ALLOCATE( parts% nu( parts% npart ), STAT= ios, &
-                  ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array nu in SUBROUTINE" &
-                    // ". ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...allocation error for array pos in SUBROUTINE" &
-        !                // "place_particles_3D_lattice." )
-      ENDIF
-      IF( read_nu .AND. .NOT.ALLOCATED( parts% pmass ))THEN
-        ALLOCATE( parts% pmass( parts% npart ), STAT= ios, &
-                  ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                    // ". ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-        !CALL test_status( ios, err_msg, &
-        !                "...allocation error for array pos in SUBROUTINE" &
-        !                // "place_particles_3D_lattice." )
-      ENDIF
-
-      !---------------------------------------------------------!
-      !--  Storing the particle positions into the array pos  --!
-      !--  symmetrically w.r.t. the xy plane                  --!
-      !---------------------------------------------------------!
-
-  !    ! Particles with z > 0 for star 1
-  !    parts% pos(:,1:parts% npart1/2)= &
-  !                                  tmp_pos2(:,1:parts% npart1/2)
-  !
-  !    ! Particles with z < 0 for star 1
-  !    parts% pos(1:2,parts% npart1/2+1:parts% npart1)= &
-  !                                  tmp_pos2(1:2,1:parts% npart1/2)
-  !
-  !    parts% pos(3,parts% npart1/2+1:parts% npart1)= &
-  !                                - tmp_pos2(3,1:parts% npart1/2)
-  !
-  !    ! Particles with z > 0 for star 2
-  !    parts% pos(:,parts% npart1+1: &
-  !                     parts% npart1+parts% npart2/2)= &
-  !    tmp_pos2(:,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
-  !
-  !    ! Particles with z < 0 for star 2
-  !    parts% pos(1:2,parts% npart1+parts% npart2/2+1: &
-  !                     parts% npart)= &
-  !    tmp_pos2(1:2,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
-  !
-  !    parts% pos(3,parts% npart1+parts% npart2/2+1: &
-  !                     parts% npart)= &
-  !    tmp_pos2(3,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
-
-      parts% pos= tmp_pos2(1:3,1:parts% npart)
-      IF( read_nu ) parts% nu= tmp_pos2(4,1:parts% npart)
-
-      PRINT *, " * Particle positions read. Number of particles=", &
-               parts% npart
-      PRINT *
-      PRINT *, " * Number of particles on NS 1=", parts% npart_i(1)
-      PRINT *, " * Number of particles on NS 2=", parts% npart_i(2)
-      PRINT *
-
-      !
-      !-- Computing volume per particle
-      !
-      IF(.NOT.ALLOCATED( parts% pvol ))THEN
-        ALLOCATE( parts% pvol( parts% npart ), STAT= ios, &
-                ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-          PRINT *, "...allocation error for array pvol ", &
-                   ". The error message is", err_msg
-          STOP
-        ENDIF
-        !CALL test_status( ios, err_msg, &
-        !        "...allocation error for array v_euler_parts_z" )
-      ENDIF
-
-      ! First guess of the particle volume (it will be computed exactly later)
-
-      pvol_tmp= 0.0D0
-      DO itr= 1, parts% npart - 1, 1
-
-        pvol_tmp= pvol_tmp + ABS( parts% pos(3,itr + 1) &
-                                - parts% pos(3,itr) )
-
-      ENDDO
-      pvol_tmp= pvol_tmp/( parts% npart - 1 )
-
-      parts% pvol= 2.0D0*pvol_tmp**3.0D0
-
-   !   IF( parts% masses(1) > parts% masses(2) )THEN
-   !
-   !     ! mass_ratio < 1
-   !     parts% mass_ratio= parts% masses(2)/parts% masses(1)
-   !
-   !   ELSE
-   !
-   !     ! mass_ratio < 1
-   !     parts% mass_ratio= parts% masses(1)/parts% masses(2)
-   !
-   !   ENDIF
-
-      parts% pmass= parts% nu * amu
-
-      !STOP
+!
+!      ! Check that the positions are within the stars read from the |lorene|
+!      ! binary file. This checks that the positions read from the formatted
+!      ! file are compatible with the binary file read
+!
+!      ! Star 1
+!      DO itr= 1, parts% n_matter, 1
+!
+!        ASSOCIATE( npart_in   => npart1_tmp*(itr-1) + 1, &
+!                   npart_fin  => npart1_tmp + npart2_tmp*(itr-1) )
+!
+!          IF( MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) - &
+!                                               sizes(itr, 1) &
+!              .OR. &
+!              MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) > ABS(center(itr,1)) + &
+!                                               sizes(itr, 2) &
+!              .OR. &
+!              ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ) > ABS(center(itr,2)) + &
+!                                               sizes(itr, 3) &
+!              .OR. &
+!              ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ) > ABS(center(itr,2)) + &
+!                                               sizes(itr, 4) &
+!              .OR. &
+!              ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ) > ABS(center(itr,3)) + &
+!              sizes(itr, 5) &
+!              .OR. &
+!              ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ) > ABS(center(itr,3)) + &
+!              sizes(itr, 6) &
+!              .OR. &
+!              MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) > ABS(center(itr,1)) - &
+!                                               0.95*sizes(itr, 1) &
+!              .OR. &
+!              MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) + &
+!                                               0.95*sizes(itr, 2) &
+!              .OR. &
+!              ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ) < ABS(center(itr,2)) + &
+!                          0.95*sizes(itr, 3) &
+!              .OR. &
+!              ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ) < ABS(center(itr,2)) + &
+!                          0.95*sizes(itr, 4) &
+!              .OR. &
+!              ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ) < ABS(center(itr,3)) + &
+!                          0.95*sizes(itr, 5) &
+!              .OR. &
+!              ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ) < ABS(center(itr,3)) + &
+!                          0.95*sizes(itr, 6) &
+!
+!          )THEN
+!
+!            PRINT *, "** ERROR! The positions of the particles on object ", itr, &
+!                     ", read from file " &
+!                     // TRIM(parts_pos_namefile), " are not compatible with the ", &
+!                     "physical system read from file. Stopping..."
+!            PRINT *
+!            STOP
+!
+!          ENDIF
+!
+!        END ASSOCIATE
+!
+!      ENDDO
+!
+!      ! Star 2
+!!      IF( MINVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) < ABS(center2) - &
+!!                                           id% get_radius2_x_comp() &
+!!          .OR. &
+!!          MAXVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) > ABS(center2) + &
+!!                                           id% get_radius2_x_opp() &
+!!          .OR. &
+!!          ABS( MINVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) > &
+!!                      id% get_radius2_y() &
+!!          .OR. &
+!!          ABS( MAXVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) > &
+!!                      id% get_radius2_y() &
+!!          .OR. &
+!!          ABS( MINVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) > &
+!!                      id% get_radius2_z() &
+!!          .OR. &
+!!          ABS( MAXVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) > &
+!!                      id% get_radius2_z() &
+!!          .OR. &
+!!          MINVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) > ABS(center2) - &
+!!                                           0.95*id% get_radius2_x_comp() &
+!!          .OR. &
+!!          MAXVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) < ABS(center2) + &
+!!                                           0.95*id% get_radius2_x_opp() &
+!!          .OR. &
+!!          ABS( MINVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) < &
+!!                      0.95*id% get_radius2_y() &
+!!          .OR. &
+!!          ABS( MAXVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) < &
+!!                      0.95*id% get_radius2_y() &
+!!          .OR. &
+!!          ABS( MINVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) < &
+!!                      0.95*id% get_radius2_z() &
+!!          .OR. &
+!!          ABS( MAXVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) < &
+!!                      0.95*id% get_radius2_z() &
+!!
+!!      )THEN
+!!
+!!        PRINT *, "** ERROR! The positions of the particles on star 2, ", &
+!!                 "read from file " &
+!!                 // TRIM(parts_pos_namefile), " are not compatible with the ", &
+!!                 "binary system read from the |lorene| binary file. Stopping..."
+!!        PRINT *
+!!        STOP
+!!
+!!      ENDIF
+!
+!      !DO itr= 1, npart1_tmp, 1
+!      !  IF( tmp_pos2(1,itr) <  )
+!      !ENDDO
+!
+!      ! Mirror the particles on star 1
+!
+!      tmp_pos(columns(1),:)= tmp_pos2(1,:)
+!      tmp_pos(columns(2),:)= tmp_pos2(2,:)
+!      tmp_pos(columns(3),:)= tmp_pos2(3,:)
+!      IF( read_nu ) tmp_pos(column_nu,:) = tmp_pos2(4,:)
+!
+!      parts% npart_i(1)= 0
+!      DO itr= 1, npart1_tmp, 1
+!
+!        IF( tmp_pos(columns(3),itr) > 0 )THEN
+!
+!          parts% npart_i(1)= parts% npart_i(1) + 1
+!          tmp_pos2(1,parts% npart_i(1))= tmp_pos(columns(1),itr)
+!          tmp_pos2(2,parts% npart_i(1))= tmp_pos(columns(2),itr)
+!          tmp_pos2(3,parts% npart_i(1))= tmp_pos(columns(3),itr)
+!          IF( read_nu ) tmp_pos2(4,parts% npart_i(1))= tmp_pos(column_nu,itr)
+!
+!        ENDIF
+!
+!      ENDDO
+!
+!      DO itr= 1, parts% npart_i(1), 1
+!
+!        tmp_pos2(1,parts% npart_i(1)+itr)=   tmp_pos2(1,itr)
+!        tmp_pos2(2,parts% npart_i(1)+itr)=   tmp_pos2(2,itr)
+!        tmp_pos2(3,parts% npart_i(1)+itr)= - tmp_pos2(3,itr)
+!        IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+itr)= tmp_pos2(4,itr)
+!
+!      ENDDO
+!
+!      parts% npart_i(1)= 2*parts% npart_i(1)
+!
+!      parts% npart_i(2)= 0
+!      DO itr= npart1_tmp + 1, npart_tmp, 1
+!
+!        IF( tmp_pos(columns(3),itr) > 0 )THEN
+!
+!          parts% npart_i(2)= parts% npart_i(2) + 1
+!          tmp_pos2(1,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(1),itr)
+!          tmp_pos2(2,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(2),itr)
+!          tmp_pos2(3,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(3),itr)
+!          IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(column_nu,itr)
+!
+!        ENDIF
+!
+!      ENDDO
+!
+!      DO itr= 1, parts% npart_i(2), 1
+!
+!        tmp_pos2(1,parts% npart_i(1)+parts% npart_i(2)+itr)=   &
+!                                            tmp_pos2(1,parts% npart_i(1)+itr)
+!        tmp_pos2(2,parts% npart_i(1)+parts% npart_i(2)+itr)=   &
+!                                            tmp_pos2(2,parts% npart_i(1)+itr)
+!        tmp_pos2(3,parts% npart_i(1)+parts% npart_i(2)+itr)= &
+!                                          - tmp_pos2(3,parts% npart_i(1)+itr)
+!        IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+parts% npart_i(2)+itr)= &
+!                                            tmp_pos2(4,parts% npart_i(1)+itr)
+!
+!      ENDDO
+!
+!      parts% npart_i(2)= 2*parts% npart_i(2)
+!      parts% npart = parts% npart_i(1) + parts% npart_i(2)
+!
+!      !PRINT *, tmp_pos(:,1)
+!      ! Allocating the memory for the array pos( 3, npart )
+!      IF(.NOT.ALLOCATED( parts% pos ))THEN
+!        ALLOCATE( parts% pos( 3, parts% npart ), STAT= ios, &
+!                  ERRMSG= err_msg )
+!        IF( ios > 0 )THEN
+!           PRINT *, "...allocation error for array pos in SUBROUTINE" &
+!                    // ". ", &
+!                    "The error message is", err_msg
+!           STOP
+!        ENDIF
+!        !CALL test_status( ios, err_msg, &
+!        !                "...allocation error for array pos in SUBROUTINE" &
+!        !                // "place_particles_3D_lattice." )
+!      ENDIF
+!      IF( read_nu .AND. .NOT.ALLOCATED( parts% nu ))THEN
+!        ALLOCATE( parts% nu( parts% npart ), STAT= ios, &
+!                  ERRMSG= err_msg )
+!        IF( ios > 0 )THEN
+!           PRINT *, "...allocation error for array nu in SUBROUTINE" &
+!                    // ". ", &
+!                    "The error message is", err_msg
+!           STOP
+!        ENDIF
+!        !CALL test_status( ios, err_msg, &
+!        !                "...allocation error for array pos in SUBROUTINE" &
+!        !                // "place_particles_3D_lattice." )
+!      ENDIF
+!      IF( read_nu .AND. .NOT.ALLOCATED( parts% pmass ))THEN
+!        ALLOCATE( parts% pmass( parts% npart ), STAT= ios, &
+!                  ERRMSG= err_msg )
+!        IF( ios > 0 )THEN
+!           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+!                    // ". ", &
+!                    "The error message is", err_msg
+!           STOP
+!        ENDIF
+!        !CALL test_status( ios, err_msg, &
+!        !                "...allocation error for array pos in SUBROUTINE" &
+!        !                // "place_particles_3D_lattice." )
+!      ENDIF
+!
+!      !---------------------------------------------------------!
+!      !--  Storing the particle positions into the array pos  --!
+!      !--  symmetrically w.r.t. the xy plane                  --!
+!      !---------------------------------------------------------!
+!
+!  !    ! Particles with z > 0 for star 1
+!  !    parts% pos(:,1:parts% npart1/2)= &
+!  !                                  tmp_pos2(:,1:parts% npart1/2)
+!  !
+!  !    ! Particles with z < 0 for star 1
+!  !    parts% pos(1:2,parts% npart1/2+1:parts% npart1)= &
+!  !                                  tmp_pos2(1:2,1:parts% npart1/2)
+!  !
+!  !    parts% pos(3,parts% npart1/2+1:parts% npart1)= &
+!  !                                - tmp_pos2(3,1:parts% npart1/2)
+!  !
+!  !    ! Particles with z > 0 for star 2
+!  !    parts% pos(:,parts% npart1+1: &
+!  !                     parts% npart1+parts% npart2/2)= &
+!  !    tmp_pos2(:,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
+!  !
+!  !    ! Particles with z < 0 for star 2
+!  !    parts% pos(1:2,parts% npart1+parts% npart2/2+1: &
+!  !                     parts% npart)= &
+!  !    tmp_pos2(1:2,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
+!  !
+!  !    parts% pos(3,parts% npart1+parts% npart2/2+1: &
+!  !                     parts% npart)= &
+!  !    tmp_pos2(3,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
+!
+!      parts% pos= tmp_pos2(1:3,1:parts% npart)
+!      IF( read_nu ) parts% nu= tmp_pos2(4,1:parts% npart)
+!
+!      PRINT *, " * Particle positions read. Number of particles=", &
+!               parts% npart
+!      PRINT *
+!      PRINT *, " * Number of particles on NS 1=", parts% npart_i(1)
+!      PRINT *, " * Number of particles on NS 2=", parts% npart_i(2)
+!      PRINT *
+!
+!      !
+!      !-- Computing volume per particle
+!      !
+!      IF(.NOT.ALLOCATED( parts% pvol ))THEN
+!        ALLOCATE( parts% pvol( parts% npart ), STAT= ios, &
+!                ERRMSG= err_msg )
+!        IF( ios > 0 )THEN
+!          PRINT *, "...allocation error for array pvol ", &
+!                   ". The error message is", err_msg
+!          STOP
+!        ENDIF
+!        !CALL test_status( ios, err_msg, &
+!        !        "...allocation error for array v_euler_parts_z" )
+!      ENDIF
+!
+!      ! First guess of the particle volume (it will be computed exactly later)
+!
+!      pvol_tmp= 0.0D0
+!      DO itr= 1, parts% npart - 1, 1
+!
+!        pvol_tmp= pvol_tmp + ABS( parts% pos(3,itr + 1) &
+!                                - parts% pos(3,itr) )
+!
+!      ENDDO
+!      pvol_tmp= pvol_tmp/( parts% npart - 1 )
+!
+!      parts% pvol= 2.0D0*pvol_tmp**3.0D0
+!
+!   !   IF( parts% masses(1) > parts% masses(2) )THEN
+!   !
+!   !     ! mass_ratio < 1
+!   !     parts% mass_ratio= parts% masses(2)/parts% masses(1)
+!   !
+!   !   ELSE
+!   !
+!   !     ! mass_ratio < 1
+!   !     parts% mass_ratio= parts% masses(1)/parts% masses(2)
+!   !
+!   !   ENDIF
+!
+!      parts% pmass= parts% nu * amu
+!
+!      !STOP
 
     CASE(1)
 

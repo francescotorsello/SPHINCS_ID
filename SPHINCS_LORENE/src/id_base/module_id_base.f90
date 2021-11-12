@@ -243,8 +243,19 @@ MODULE id_base
       CLASS(idbase), INTENT( OUT ):: derived_type
       !! Constructed [[diffstarlorene]] object
 
-
     END SUBROUTINE derived_type_constructor_int
+
+
+   ! SUBROUTINE derived_type_destructor_int( derived_type )
+   ! !# Prints a summary of the physical properties the system
+   ! !  to the standard output and, optionally, to a formatted file whose name
+   ! !  is given as the optional argument `filename`
+   !
+   !   IMPORT:: idbase
+   !   CLASS(idbase), INTENT( IN OUT ):: derived_type
+   !   !! Constructed [[diffstarlorene]] object
+   !
+   ! END SUBROUTINE derived_type_destructor_int
 
 
     FUNCTION read_double_at_pos( THIS, x, y, z ) RESULT( res )

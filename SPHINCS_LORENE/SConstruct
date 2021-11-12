@@ -268,7 +268,7 @@ write_par_eos = 'write_par_eos.x'
 #lorene_sources + lorene_sources_bin_ns
 
 Program(lorene_id_executable, sources + sources_sphincs_bssn + ['src/sphincs_id_lorene.f90'])
-#Program(lorene_id_convtest_executable, sources + sources_sphincs_bssn + ['src/convergence_test.f90'])
+Program(lorene_id_convtest_executable, sources + sources_sphincs_bssn + ['src/convergence_test.f90'])
 Program(write_par_eos, sources + sources_sphincs_bssn + ['src/write_par_eos.f90'])
 #
 Decider('MD5-timestamp')

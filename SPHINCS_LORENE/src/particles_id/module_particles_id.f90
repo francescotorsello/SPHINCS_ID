@@ -1101,20 +1101,20 @@ MODULE particles_id
    !
    !END SUBROUTINE write_lorene_bns_id_dump
 
-    MODULE FUNCTION get_npart( THIS ) RESULT( n_part )
+    MODULE PURE FUNCTION get_npart( THIS ) RESULT( n_part )
     !! Returns [[particles:npart]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:npart]]
       INTEGER:: n_part
 
     END FUNCTION get_npart
 
-    MODULE FUNCTION get_npart_i( THIS, i_matter ) RESULT( n_part )
+    MODULE PURE FUNCTION get_npart_i( THIS, i_matter ) RESULT( n_part )
     !! Returns the number of particles on the object `i_matter`
 
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !! [[particles]] object which this PROCEDURE is a member of
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object
@@ -1124,21 +1124,21 @@ MODULE particles_id
     END FUNCTION get_npart_i
 
 
-    MODULE FUNCTION get_nuratio( THIS ) RESULT( nuratio )
+    MODULE PURE FUNCTION get_nuratio( THIS ) RESULT( nuratio )
     !! Returns [[particles:nuratio]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:nuratio]]
       DOUBLE PRECISION:: nuratio
 
     END FUNCTION get_nuratio
 
 
-    MODULE FUNCTION get_nuratio_i( THIS, i_matter ) RESULT( nuratio )
+    MODULE PURE FUNCTION get_nuratio_i( THIS, i_matter ) RESULT( nuratio )
     !! Returns the baryon number ratio on the object `i_matter`
 
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !! [[particles]] object which this PROCEDURE is a member of
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object
@@ -1148,91 +1148,91 @@ MODULE particles_id
     END FUNCTION get_nuratio_i
 
 
-    MODULE FUNCTION get_pos( THIS ) RESULT( pos_u )
+    MODULE PURE FUNCTION get_pos( THIS ) RESULT( pos_u )
     !! Returns [[particles:pos]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:pos]]
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_u
 
     END FUNCTION get_pos
 
-    MODULE FUNCTION get_vel( THIS ) RESULT( vel )
+    MODULE PURE FUNCTION get_vel( THIS ) RESULT( vel )
     !! Returns [[particles:v]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:v]]
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
 
     END FUNCTION get_vel
 
-    MODULE FUNCTION get_nlrf( THIS ) RESULT( nlrf )
+    MODULE PURE FUNCTION get_nlrf( THIS ) RESULT( nlrf )
     !! Returns [[particles:nlrf]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:nlrf]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nlrf
 
     END FUNCTION get_nlrf
 
-    MODULE FUNCTION get_nu( THIS ) RESULT( nu )
+    MODULE PURE FUNCTION get_nu( THIS ) RESULT( nu )
     !! Returns [[particles:nu]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:nu]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nu
 
     END FUNCTION get_nu
 
-    MODULE FUNCTION get_u( THIS ) RESULT( u )
+    MODULE PURE FUNCTION get_u( THIS ) RESULT( u )
     !! Returns [[particles:specific_energy_parts]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:specific_energy_parts]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u
 
     END FUNCTION get_u
 
-    MODULE FUNCTION get_pressure( THIS ) RESULT( pressure )
+    MODULE PURE FUNCTION get_pressure( THIS ) RESULT( pressure )
     !! Returns [[particles:pressure_parts]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:pressure_parts]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
 
     END FUNCTION get_pressure
 
-    MODULE FUNCTION get_pressure_cu( THIS ) RESULT( pressure_cu )
+    MODULE PURE FUNCTION get_pressure_cu( THIS ) RESULT( pressure_cu )
     !! Returns [[particles:pressure_parts_cu]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:pressure_parts_cu]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure_cu
 
     END FUNCTION get_pressure_cu
 
-    MODULE FUNCTION get_theta( THIS ) RESULT( theta )
+    MODULE PURE FUNCTION get_theta( THIS ) RESULT( theta )
     !! Returns [[particles:theta]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:theta]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: theta
 
     END FUNCTION get_theta
 
-    MODULE FUNCTION get_h( THIS ) RESULT( h )
+    MODULE PURE FUNCTION get_h( THIS ) RESULT( h )
     !! Returns [[particles:h]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: THIS
+      CLASS(particles), INTENT( IN ):: THIS
       !> [[particles:h]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: h
 

@@ -98,7 +98,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: m_max_it    = 50
     INTEGER,          PARAMETER:: search_pos= 10
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness = 1.25D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist = 0.2D0
+    DOUBLE PRECISION, PARAMETER:: ghost_dist = 0.25D0
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
 
