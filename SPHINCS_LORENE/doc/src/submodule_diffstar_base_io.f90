@@ -68,10 +68,15 @@ SUBMODULE (diffstar_base) diffstar_base_io
              "the gravitational binding energy: ", THIS% tsw
     PRINT *, "   For axisymmetric configurations as this one, the ", &
              "threshold for dynamical instability is T/|W|~0.25 ", &
-             " [Manca et al., Classical and Quantum Gravity, 24, 171, ", &
-             "https://arxiv.org/abs/0705.1826].", &
-             "See also [Galeazzi et al., Astron Astrophys 541:A156, ", &
-             "arXiv:1101.2664], Sec.3.3."
+             " [Masaru Shibata et al 2000 ApJ 542 453, ", &
+             "https://arxiv.org/pdf/astro-ph/0005378.pdf]. See also ", &
+             "[Manca et al., Classical and Quantum Gravity, 24, 171, ", &
+             "https://arxiv.org/abs/0705.1826], ", &
+             "Sec.3.3 in [Galeazzi et al., Astron Astrophys 541:A156, ", &
+             "arXiv:1101.2664], and Sec.5.1.3 in ", &
+             "[Paschalidis, V., Stergioulas, N., Rotating stars in ", &
+             "relativity. Living Rev Relativ 20, 7 (2017), ", &
+             "https://link.springer.com/article/10.1007%2Fs41114-017-0008-x]."
     PRINT *
 
 

@@ -15,7 +15,7 @@ MODULE diffstar_base
   !  PROCEDURES and variables shared by all the types
   !  of DRS ID should belong to TYPE diffstarbase, as
   !  they are inherited by its EXTENDED TYPES that
-  !  represent more specific typesof DRS ID.
+  !  represent more specific types of DRS ID.
   !
   !  FT 22.10.2021
   !
@@ -245,17 +245,19 @@ MODULE diffstar_base
     !--  SUBROUTINES  --!
     !-------------------!
 
+
     PROCEDURE(get_eos_id_int), DEFERRED:: get_eos_id
     !! Returns an integer that identifies the equation of state
-
-    !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
-    !# Integrates the baryon mass density over the starand computes the radial
-    !  mass profile
 
 
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
+
+
+    !
+    !-- FUNCTIONS that access PRIVATE member variables
+    !
 
     PROCEDURE:: return_mass                 => get_mass
     PROCEDURE:: return_center               => get_center
@@ -380,36 +382,6 @@ MODULE diffstar_base
 
 
   INTERFACE
-
-
- !   MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
- !                                                    central_density, &
- !                                                    dr, dth, dphi, &
- !                                                    mass, mass_profile, &
- !                                                    mass_profile_idx )
- !   !# Integrates the |lorene| baryon mass density to compute the radial mass
- !   !  profile. TODO: Improve integration algorithm.
- !
- !     !> [[diffstarbase]] object which this PROCEDURE is a member of
- !     CLASS(diffstarbase), INTENT( IN OUT )      :: THIS
- !     !& Array to store the indices for array mass_profile, sorted so that
- !     !  mass_profile[mass_profile_idx] is in increasing order
- !     INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
- !     !> Center of the star
- !     DOUBLE PRECISION, INTENT( IN )    :: center
- !     !> Central density of the star
- !     DOUBLE PRECISION, INTENT( IN )    :: central_density
- !     !> Radius of the star
- !     DOUBLE PRECISION, INTENT( IN )    :: radius
- !     !> Integration steps
- !     DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
- !     !> Integrated mass of the star
- !     DOUBLE PRECISION, INTENT( IN OUT ):: mass
- !     !> Array storing the radial mass profile of the star
- !     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
- !                                      mass_profile
- !
- !   END SUBROUTINE integrate_baryon_mass_density
 
 
     !------------------------------!

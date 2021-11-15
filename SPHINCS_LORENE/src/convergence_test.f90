@@ -271,7 +271,7 @@ PROGRAM convergence_test
     WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
                                 "l", &
                                 1, "-", 1, "."
-    WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
+    WRITE( namefile_parts_bin, "(A5)" ) systems_name(1)
     namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
 
     particles_dist% export_bin    = export_bin

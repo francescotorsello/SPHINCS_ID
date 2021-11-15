@@ -10,12 +10,12 @@ MODULE bns_base
   !  which is an ABSTRACT TYPE representing any possible
   !  type of binary neutron star (BNS) initial data (ID)
   !  to be set up for |sphincsbssn|. That is, BNS ID
-  !  produced with LORENE, with |fuka|, etc.
+  !  produced with |lorene|, with |fuka|, etc.
   !
   !  PROCEDURES and variables shared by all the types
   !  of BNS ID should belong to TYPE bnsbase, as
   !  they are inherited by its EXTENDED TYPES that
-  !  represent more specific typesof BNS ID.
+  !  represent more specific types of BNS ID.
   !
   !  FT 24.09.2021
   !
@@ -36,7 +36,7 @@ MODULE bns_base
   !*******************************************************
 
   TYPE, ABSTRACT, EXTENDS(idbase):: bnsbase
-  !# Represents a generic BNS ID for |sphincsbssn| (produced with LORENE, or with
+  !# Base TYPE for BNS ID for |sphincsbssn| (produced with |lorene|, or with
   !  |fuka|, etc.; or produced with the same tool, but read in different ways,
   !  for example by linking to the LORENE library, or reading the ID from
   !  a lattice, etc.)
@@ -338,29 +338,13 @@ MODULE bns_base
     !! Returns an integer that identifies the equation of state of star 2
 
 
-    !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
-    !# Integrates the LORENE baryon mass density and computes the
-    !  radial mass profile
-
-
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
 
-    !
-    !-- Overloaded FUNCTION to access the fields as arrays and as values
-    !
-
-  !     GENERIC, PUBLIC:: get_field => get_fa, get_fv
-  !     !# GENERIC PROCEDURE, overloded to access the bns member variables as arrays
-  !     !  and as values
-  !     PROCEDURE::       get_fa    => get_field_array
-  !     !! Access the bns member arrays
-  !     PROCEDURE::       get_fv    => get_field_value
-    !! Access the components of the bns member arrays
 
     !
-    !-- FUNCTIONS that access member variables
+    !-- FUNCTIONS that access PRIVATE member variables
     !
 
     !PROCEDURE, PUBLIC:: get_bns_identifier
