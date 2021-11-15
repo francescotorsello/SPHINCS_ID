@@ -73,16 +73,13 @@ SUBMODULE (particles_id) particles_constructor
     ! The variable counter counts how many times the PROCEDURE
     ! construct_particles_idase is called
     INTEGER, SAVE:: counter= 1
-    INTEGER:: npart_des, a, &!nx, ny, nz, npart_des_l, npart_des_ss, &
-              !npart_approx, npart2_approx,
-              max_steps, &
-              nlines, header_lines, n_cols, npart_tmp, &!npart1_tmp, npart2_tmp, &
-              nx_gh, ny_gh, nz_gh, i_matter
+    INTEGER:: npart_des, a, max_steps, nlines, header_lines, n_cols, &
+              npart_tmp, nx_gh, ny_gh, nz_gh, i_matter
 
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
     ! APM parameters
-    INTEGER:: apm_max_it, max_inc!, n_particles_first_shell
+    INTEGER:: apm_max_it, max_inc
     INTEGER, PARAMETER:: unit_pos= 2289
     ! Variable storing the number of column where nu is written
     INTEGER:: column_nu, n_matter_tmp
@@ -92,26 +89,19 @@ SUBMODULE (particles_id) particles_constructor
     INTEGER, DIMENSION(id% get_n_matter()):: npart_des_i
     INTEGER, DIMENSION(id% get_n_matter()):: npart_i_tmp
 
-    DOUBLE PRECISION:: thres, nu_ratio
+    DOUBLE PRECISION:: thres, nu_ratio_des
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
-    !DOUBLE PRECISION:: xmin1, xmax1, ymin1, ymax1, zmin1, zmax1
-    !DOUBLE PRECISION:: xmin2, xmax2, ymin2, ymax2, zmin2, zmax2
-    !DOUBLE PRECISION:: center1, center2, radius1, radius2!, com1, com2
-    !DOUBLE PRECISION:: central_density1, central_density2
     DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor, &
                        last_r
     DOUBLE PRECISION:: pvol_tmp
     DOUBLE PRECISION:: max_mass, total_mass
 
-    !DOUBLE PRECISION, DIMENSION(id% get_n_matter()):: mass
     DOUBLE PRECISION, DIMENSION(id% get_n_matter())  :: central_density
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),3):: center
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),3):: barycenter
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),6):: sizes
 
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos
-    !DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos2
-    !DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol_tmp2
     DOUBLE PRECISION:: nuratio_thres, nuratio_des
 
     TYPE parts_i
@@ -155,7 +145,7 @@ SUBMODULE (particles_id) particles_constructor
               parts_pos_path, parts_pos, columns, header_lines, n_cols, &
               read_nu, column_nu, &
               stretch, &
-              use_thres, thres, nu_ratio, redistribute_nu, correct_nu, &
+              use_thres, thres, nu_ratio_des, redistribute_nu, correct_nu, &
               compose_eos, compose_path, compose_filename, &
               npart_des, last_r, upper_bound, lower_bound, &
               upper_factor, lower_factor, max_steps, &
@@ -173,8 +163,6 @@ SUBMODULE (particles_id) particles_constructor
     !-- Initialize the timers
     !
     parts% placer_timer       = timer( "placer_timer" )
-    !parts% apm1_timer         = timer( "apm_star1_timer" )
-    !parts% apm2_timer         = timer( "apm_star2_timer" )
     parts% importer_timer     = timer( "importer_timer" )
     parts% sph_computer_timer = timer( "sph_computer_timer" )
     parts% same_particle_timer= timer( "same_particle_timer" )
@@ -194,33 +182,11 @@ SUBMODULE (particles_id) particles_constructor
     !-- Read needed data from the idbase object
     !
 
-  !  center1               = id% get_center1_x()
-  !  center2               = id% get_center2_x()
-  !  central_density1      = id% get_rho_center1()
-  !  central_density2      = id% get_rho_center2()
-  !  com1                  = id% get_barycenter1_x()
-  !  com2                  = id% get_barycenter2_x()
-  !  radius1               = id% get_radius1_x_comp()
-  !  radius2               = id% get_radius2_x_comp()
     parts% nbar_tot       = 0.0D0
-    !parts% nbar1          = 0.0D0
-    !parts% nbar2          = 0.0D0
     parts% npart          = 0.0D0
     parts% distribution_id= dist
 
-  !  parts% eos1= id% get_eos1()
-  !  parts% eos2= id% get_eos2()
-  !
-  !  parts% eos1_id= id% get_eos1_id()
-  !  parts% eos2_id= id% get_eos2_id()
-  !
-  !  parts% gamma_sp1= id% get_gamma_1()
-  !  parts% kappa_sp1= id% get_kappa_1()
-  !  parts% gamma_sp2= id% get_gamma_2()
-  !  parts% kappa_sp2= id% get_kappa_2()
-
     ALLOCATE( parts% masses (parts% n_matter) )
-    !ALLOCATE( parts% masses (parts% n_matter) )
     ALLOCATE( parts% all_eos(parts% n_matter) )
     ALLOCATE( parts% npart_i(0:parts% n_matter) )
     ALLOCATE( parts% nbar_i(parts% n_matter) )
@@ -272,7 +238,7 @@ SUBMODULE (particles_id) particles_constructor
     parts% compose_path       = compose_path
     parts% compose_filename   = compose_filename
     parts% redistribute_nu    = redistribute_nu
-    parts% nu_ratio           = nu_ratio
+    parts% nu_ratio_des       = nu_ratio_des
     parts% reflect_particles_x= reflect_particles_x
     parts% randomize_phi      = randomize_phi
     parts% randomize_theta    = randomize_theta
@@ -363,22 +329,10 @@ SUBMODULE (particles_id) particles_constructor
     ! TODO: Add check that the number of rows in placer is the same as the
     !       number of bns objects, and that all bns have a value for placer
 
-  !  DO itr= 1, id% get_n_matter(), 1
-  !    IF(.NOT.ALLOCATED( pvol_i(id% get_n_matter(), ) ))THEN
-  !      ALLOCATE( pvol_i( parts% npart2 ), &
-  !                STAT= ios, ERRMSG= err_msg )
-  !      IF( ios > 0 )THEN
-  !         PRINT *, "...allocation error for array pvol in SUBROUTINE" &
-  !                  // "place_particles_. ", &
-  !                  "The error message is", err_msg
-  !         STOP
-  !      ENDIF
-  !    ENDIF
-  !  ENDDO
-
     !
     !-- Choose particle placer
     !
+
     choose_particle_placer: SELECT CASE( dist )
 
     CASE(0)
@@ -483,14 +437,6 @@ SUBMODULE (particles_id) particles_constructor
 
       CLOSE( UNIT= unit_pos )
 
-      ! Allocate the temporary array to store data
-    !  IF( read_nu )THEN
-    !    ALLOCATE( tmp_pos2( 4, 2*npart_tmp ) )
-    !  ELSE
-    !    ALLOCATE( tmp_pos2( 3, 2*npart_tmp ) )
-    !  ENDIF
-    !  tmp_pos2= 0.0D0
-
 
       ! Check that the positions are within the stars read from the |lorene|
       ! binary file. This checks that the positions read from the formatted
@@ -500,44 +446,12 @@ SUBMODULE (particles_id) particles_constructor
         ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
                    npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
 
-         ! PRINT *, MINVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) , &
-         !         ABS(center(itr,1)) - sizes(itr, 1)
-         ! PRINT *, MAXVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) , &
-         !         ABS(center(itr,1)) + sizes(itr, 2)
-         ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) , &
-         !         ABS(center(itr,2)) + sizes(itr, 3)
-         ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) , &
-         !         ABS(center(itr,2)) + sizes(itr, 4)
-         ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) , &
-         !         ABS(center(itr,3)) + sizes(itr, 5)
-         ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) , &
-         !         ABS(center(itr,3)) + sizes(itr, 6)
-         !
-         ! PRINT *, MINVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) < &
-         !           ABS(center(itr,1)) - sizes(itr, 1)
-         ! PRINT *, MAXVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) > &
-         !         ABS(center(itr,1)) + sizes(itr, 2)
-         ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-         !         ABS(center(itr,2)) + sizes(itr, 3)
-         ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-         !         ABS(center(itr,2)) + sizes(itr, 4)
-         ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-         !         ABS(center(itr,3)) + sizes(itr, 5)
-         ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-         !         ABS(center(itr,3)) + sizes(itr, 6)
-
           IF( ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
                       ABS(center(itr,1)) + sizes(itr, 1) &
               .OR. &
               ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
                       ABS(center(itr,1)) + sizes(itr, 2) &
               .OR. &
-              !MINVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) < &
-              !        ABS(center(itr,1)) - sizes(itr, 1) &
-              !.OR. &
-              !MAXVAL( ABS( tmp_pos(1,npart_in:npart_fin) ) ) > &
-              !        ABS(center(itr,1)) + sizes(itr, 2) &
-              !.OR. &
               ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
                       ABS(center(itr,2)) + sizes(itr, 3) &
               .OR. &
@@ -687,428 +601,9 @@ SUBMODULE (particles_id) particles_constructor
 
       ENDDO
 
-!    CASE(5)
-!
-!      PRINT *, " * Reading particle positions from formatted file " &
-!               // TRIM(parts_pos_namefile)
-!      PRINT *
-!
-!      INQUIRE( FILE= TRIM(parts_pos_namefile), EXIST= exist )
-!
-!      IF( exist )THEN
-!        OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
-!              FORM= "FORMATTED", ACTION= "READ", IOSTAT= ios, &
-!              IOMSG= err_msg )
-!        IF( ios > 0 )THEN
-!          PRINT *, "...error when opening " // TRIM(parts_pos_namefile), &
-!                  ". The error message is", err_msg
-!          STOP
-!        ENDIF
-!      ELSE
-!        PRINT *, "** ERROR! Unable to find file " // TRIM(parts_pos_namefile)
-!        STOP
-!      ENDIF
-!
-!      nlines = 0
-!      DO
-!        READ( unit_pos, * , IOSTAT= ios )
-!        IF ( ios /= 0 ) EXIT
-!        nlines = nlines + 1
-!      ENDDO
-!
-!      CLOSE( UNIT= unit_pos )
-!
-!      npart_tmp= nlines - header_lines
-!
-!      !PRINT *, "nlines=", nlines
-!      !PRINT *, "header_lines=", header_lines
-!      !PRINT *, "npart_tmp=", npart_tmp
-!      !PRINT *
-!
-!      OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
-!            FORM= "FORMATTED", ACTION= "READ" )
-!
-!      ! Skip header
-!      DO itr= 1, header_lines, 1
-!        READ( unit_pos, * )
-!      ENDDO
-!
-!      ! Allocate the temporary array to store data
-!      ALLOCATE( tmp_pos( n_cols, 2*npart_tmp ) )
-!      tmp_pos= 0.0D0
-!
-!      ! Read the data into the temporary array
-!      DO itr= 1, npart_tmp, 1
-!
-!        READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
-!          tmp_pos( :, itr )
-!
-!        IF( ios > 0 )THEN
-!          PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
-!                  " at particle ", itr,". The status variable is ", ios, &
-!                  ". The error message is", err_msg
-!          STOP
-!        ENDIF
-!
-!      ENDDO
-!
-!      CLOSE( UNIT= unit_pos )
-!
-!      ! Allocate the temporary array to store data
-!      IF( read_nu )THEN
-!        ALLOCATE( tmp_pos2( 4, 2*npart_tmp ) )
-!      ELSE
-!        ALLOCATE( tmp_pos2( 3, 2*npart_tmp ) )
-!      ENDIF
-!      tmp_pos2= 0.0D0
-!
-!      ! Separate particle positions on star 1 and star 2,
-!      ! and compute the temporary npart1 and npart2 (before mirroring)
-!      npart1_tmp= 0
-!      DO itr= 1, npart_tmp, 1
-!
-!        IF( tmp_pos(columns(1),itr) < 0.0D0 )THEN
-!
-!          npart1_tmp= npart1_tmp + 1
-!          tmp_pos2(1,npart1_tmp)= tmp_pos(columns(1),itr)
-!          tmp_pos2(2,npart1_tmp)= tmp_pos(columns(2),itr)
-!          tmp_pos2(3,npart1_tmp)= tmp_pos(columns(3),itr)
-!          IF( read_nu ) tmp_pos2(4,npart1_tmp)= tmp_pos(column_nu,itr)
-!
-!        ENDIF
-!
-!      ENDDO
-!
-!      npart2_tmp= 0
-!      DO itr= 1, npart_tmp, 1
-!
-!        IF( tmp_pos(columns(1),itr) > 0.0D0 )THEN
-!
-!          npart2_tmp= npart2_tmp + 1
-!          tmp_pos2(1,npart1_tmp+npart2_tmp)= tmp_pos(columns(1),itr)
-!          tmp_pos2(2,npart1_tmp+npart2_tmp)= tmp_pos(columns(2),itr)
-!          tmp_pos2(3,npart1_tmp+npart2_tmp)= tmp_pos(columns(3),itr)
-!          IF( read_nu ) tmp_pos2(4,npart1_tmp+npart2_tmp)=tmp_pos(column_nu,itr)
-!
-!        ENDIF
-!
-!      ENDDO
-!
-!      IF( npart1_tmp + npart2_tmp /= npart_tmp )THEN
-!        PRINT *, "** ERROR! npart1_tmp + npart2_tmp /= npart_tmp"
-!        PRINT *
-!        PRINT *, "   npart1_tmp= ", npart1_tmp
-!        PRINT *, "   npart2_tmp= ", npart2_tmp
-!        PRINT *, "   npart1_tmp + npart2_tmp= ", npart1_tmp + npart2_tmp
-!        PRINT *, "   npart_tmp= ", npart_tmp
-!        PRINT *
-!        STOP
-!      ENDIF
-!
-!      ! Check that the positions are within the stars read from the |lorene|
-!      ! binary file. This checks that the positions read from the formatted
-!      ! file are compatible with the binary file read
-!
-!      ! Star 1
-!      DO itr= 1, parts% n_matter, 1
-!
-!        ASSOCIATE( npart_in   => npart1_tmp*(itr-1) + 1, &
-!                   npart_fin  => npart1_tmp + npart2_tmp*(itr-1) )
-!
-!          IF( MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) - &
-!                                               sizes(itr, 1) &
-!              .OR. &
-!              MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) > ABS(center(itr,1)) + &
-!                                               sizes(itr, 2) &
-!              .OR. &
-!              ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ) > ABS(center(itr,2)) + &
-!                                               sizes(itr, 3) &
-!              .OR. &
-!              ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ) > ABS(center(itr,2)) + &
-!                                               sizes(itr, 4) &
-!              .OR. &
-!              ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ) > ABS(center(itr,3)) + &
-!              sizes(itr, 5) &
-!              .OR. &
-!              ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ) > ABS(center(itr,3)) + &
-!              sizes(itr, 6) &
-!              .OR. &
-!              MINVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) > ABS(center(itr,1)) - &
-!                                               0.95*sizes(itr, 1) &
-!              .OR. &
-!              MAXVAL( ABS( tmp_pos2(1,npart_in:npart_fin) ) ) < ABS(center(itr,1)) + &
-!                                               0.95*sizes(itr, 2) &
-!              .OR. &
-!              ABS( MINVAL( tmp_pos2(2,npart_in:npart_fin) ) ) < ABS(center(itr,2)) + &
-!                          0.95*sizes(itr, 3) &
-!              .OR. &
-!              ABS( MAXVAL( tmp_pos2(2,npart_in:npart_fin) ) ) < ABS(center(itr,2)) + &
-!                          0.95*sizes(itr, 4) &
-!              .OR. &
-!              ABS( MINVAL( tmp_pos2(3,npart_in:npart_fin) ) ) < ABS(center(itr,3)) + &
-!                          0.95*sizes(itr, 5) &
-!              .OR. &
-!              ABS( MAXVAL( tmp_pos2(3,npart_in:npart_fin) ) ) < ABS(center(itr,3)) + &
-!                          0.95*sizes(itr, 6) &
-!
-!          )THEN
-!
-!            PRINT *, "** ERROR! The positions of the particles on object ", itr, &
-!                     ", read from file " &
-!                     // TRIM(parts_pos_namefile), " are not compatible with the ", &
-!                     "physical system read from file. Stopping..."
-!            PRINT *
-!            STOP
-!
-!          ENDIF
-!
-!        END ASSOCIATE
-!
-!      ENDDO
-!
-!      ! Star 2
-!!      IF( MINVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) < ABS(center2) - &
-!!                                           id% get_radius2_x_comp() &
-!!          .OR. &
-!!          MAXVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) > ABS(center2) + &
-!!                                           id% get_radius2_x_opp() &
-!!          .OR. &
-!!          ABS( MINVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) > &
-!!                      id% get_radius2_y() &
-!!          .OR. &
-!!          ABS( MAXVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) > &
-!!                      id% get_radius2_y() &
-!!          .OR. &
-!!          ABS( MINVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) > &
-!!                      id% get_radius2_z() &
-!!          .OR. &
-!!          ABS( MAXVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) > &
-!!                      id% get_radius2_z() &
-!!          .OR. &
-!!          MINVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) > ABS(center2) - &
-!!                                           0.95*id% get_radius2_x_comp() &
-!!          .OR. &
-!!          MAXVAL( ABS( tmp_pos2(1,npart1_tmp+1:npart_tmp) ) ) < ABS(center2) + &
-!!                                           0.95*id% get_radius2_x_opp() &
-!!          .OR. &
-!!          ABS( MINVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) < &
-!!                      0.95*id% get_radius2_y() &
-!!          .OR. &
-!!          ABS( MAXVAL( tmp_pos2(2,npart1_tmp+1:npart_tmp) ) ) < &
-!!                      0.95*id% get_radius2_y() &
-!!          .OR. &
-!!          ABS( MINVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) < &
-!!                      0.95*id% get_radius2_z() &
-!!          .OR. &
-!!          ABS( MAXVAL( tmp_pos2(3,npart1_tmp+1:npart_tmp) ) ) < &
-!!                      0.95*id% get_radius2_z() &
-!!
-!!      )THEN
-!!
-!!        PRINT *, "** ERROR! The positions of the particles on star 2, ", &
-!!                 "read from file " &
-!!                 // TRIM(parts_pos_namefile), " are not compatible with the ", &
-!!                 "binary system read from the |lorene| binary file. Stopping..."
-!!        PRINT *
-!!        STOP
-!!
-!!      ENDIF
-!
-!      !DO itr= 1, npart1_tmp, 1
-!      !  IF( tmp_pos2(1,itr) <  )
-!      !ENDDO
-!
-!      ! Mirror the particles on star 1
-!
-!      tmp_pos(columns(1),:)= tmp_pos2(1,:)
-!      tmp_pos(columns(2),:)= tmp_pos2(2,:)
-!      tmp_pos(columns(3),:)= tmp_pos2(3,:)
-!      IF( read_nu ) tmp_pos(column_nu,:) = tmp_pos2(4,:)
-!
-!      parts% npart_i(1)= 0
-!      DO itr= 1, npart1_tmp, 1
-!
-!        IF( tmp_pos(columns(3),itr) > 0 )THEN
-!
-!          parts% npart_i(1)= parts% npart_i(1) + 1
-!          tmp_pos2(1,parts% npart_i(1))= tmp_pos(columns(1),itr)
-!          tmp_pos2(2,parts% npart_i(1))= tmp_pos(columns(2),itr)
-!          tmp_pos2(3,parts% npart_i(1))= tmp_pos(columns(3),itr)
-!          IF( read_nu ) tmp_pos2(4,parts% npart_i(1))= tmp_pos(column_nu,itr)
-!
-!        ENDIF
-!
-!      ENDDO
-!
-!      DO itr= 1, parts% npart_i(1), 1
-!
-!        tmp_pos2(1,parts% npart_i(1)+itr)=   tmp_pos2(1,itr)
-!        tmp_pos2(2,parts% npart_i(1)+itr)=   tmp_pos2(2,itr)
-!        tmp_pos2(3,parts% npart_i(1)+itr)= - tmp_pos2(3,itr)
-!        IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+itr)= tmp_pos2(4,itr)
-!
-!      ENDDO
-!
-!      parts% npart_i(1)= 2*parts% npart_i(1)
-!
-!      parts% npart_i(2)= 0
-!      DO itr= npart1_tmp + 1, npart_tmp, 1
-!
-!        IF( tmp_pos(columns(3),itr) > 0 )THEN
-!
-!          parts% npart_i(2)= parts% npart_i(2) + 1
-!          tmp_pos2(1,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(1),itr)
-!          tmp_pos2(2,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(2),itr)
-!          tmp_pos2(3,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(columns(3),itr)
-!          IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+parts% npart_i(2))= tmp_pos(column_nu,itr)
-!
-!        ENDIF
-!
-!      ENDDO
-!
-!      DO itr= 1, parts% npart_i(2), 1
-!
-!        tmp_pos2(1,parts% npart_i(1)+parts% npart_i(2)+itr)=   &
-!                                            tmp_pos2(1,parts% npart_i(1)+itr)
-!        tmp_pos2(2,parts% npart_i(1)+parts% npart_i(2)+itr)=   &
-!                                            tmp_pos2(2,parts% npart_i(1)+itr)
-!        tmp_pos2(3,parts% npart_i(1)+parts% npart_i(2)+itr)= &
-!                                          - tmp_pos2(3,parts% npart_i(1)+itr)
-!        IF( read_nu ) tmp_pos2(4,parts% npart_i(1)+parts% npart_i(2)+itr)= &
-!                                            tmp_pos2(4,parts% npart_i(1)+itr)
-!
-!      ENDDO
-!
-!      parts% npart_i(2)= 2*parts% npart_i(2)
-!      parts% npart = parts% npart_i(1) + parts% npart_i(2)
-!
-!      !PRINT *, tmp_pos(:,1)
-!      ! Allocating the memory for the array pos( 3, npart )
-!      IF(.NOT.ALLOCATED( parts% pos ))THEN
-!        ALLOCATE( parts% pos( 3, parts% npart ), STAT= ios, &
-!                  ERRMSG= err_msg )
-!        IF( ios > 0 )THEN
-!           PRINT *, "...allocation error for array pos in SUBROUTINE" &
-!                    // ". ", &
-!                    "The error message is", err_msg
-!           STOP
-!        ENDIF
-!        !CALL test_status( ios, err_msg, &
-!        !                "...allocation error for array pos in SUBROUTINE" &
-!        !                // "place_particles_3D_lattice." )
-!      ENDIF
-!      IF( read_nu .AND. .NOT.ALLOCATED( parts% nu ))THEN
-!        ALLOCATE( parts% nu( parts% npart ), STAT= ios, &
-!                  ERRMSG= err_msg )
-!        IF( ios > 0 )THEN
-!           PRINT *, "...allocation error for array nu in SUBROUTINE" &
-!                    // ". ", &
-!                    "The error message is", err_msg
-!           STOP
-!        ENDIF
-!        !CALL test_status( ios, err_msg, &
-!        !                "...allocation error for array pos in SUBROUTINE" &
-!        !                // "place_particles_3D_lattice." )
-!      ENDIF
-!      IF( read_nu .AND. .NOT.ALLOCATED( parts% pmass ))THEN
-!        ALLOCATE( parts% pmass( parts% npart ), STAT= ios, &
-!                  ERRMSG= err_msg )
-!        IF( ios > 0 )THEN
-!           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-!                    // ". ", &
-!                    "The error message is", err_msg
-!           STOP
-!        ENDIF
-!        !CALL test_status( ios, err_msg, &
-!        !                "...allocation error for array pos in SUBROUTINE" &
-!        !                // "place_particles_3D_lattice." )
-!      ENDIF
-!
-!      !---------------------------------------------------------!
-!      !--  Storing the particle positions into the array pos  --!
-!      !--  symmetrically w.r.t. the xy plane                  --!
-!      !---------------------------------------------------------!
-!
-!  !    ! Particles with z > 0 for star 1
-!  !    parts% pos(:,1:parts% npart1/2)= &
-!  !                                  tmp_pos2(:,1:parts% npart1/2)
-!  !
-!  !    ! Particles with z < 0 for star 1
-!  !    parts% pos(1:2,parts% npart1/2+1:parts% npart1)= &
-!  !                                  tmp_pos2(1:2,1:parts% npart1/2)
-!  !
-!  !    parts% pos(3,parts% npart1/2+1:parts% npart1)= &
-!  !                                - tmp_pos2(3,1:parts% npart1/2)
-!  !
-!  !    ! Particles with z > 0 for star 2
-!  !    parts% pos(:,parts% npart1+1: &
-!  !                     parts% npart1+parts% npart2/2)= &
-!  !    tmp_pos2(:,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
-!  !
-!  !    ! Particles with z < 0 for star 2
-!  !    parts% pos(1:2,parts% npart1+parts% npart2/2+1: &
-!  !                     parts% npart)= &
-!  !    tmp_pos2(1:2,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
-!  !
-!  !    parts% pos(3,parts% npart1+parts% npart2/2+1: &
-!  !                     parts% npart)= &
-!  !    tmp_pos2(3,parts% npart1/2+1:parts% npart1/2+parts% npart2/2)
-!
-!      parts% pos= tmp_pos2(1:3,1:parts% npart)
-!      IF( read_nu ) parts% nu= tmp_pos2(4,1:parts% npart)
-!
-!      PRINT *, " * Particle positions read. Number of particles=", &
-!               parts% npart
-!      PRINT *
-!      PRINT *, " * Number of particles on NS 1=", parts% npart_i(1)
-!      PRINT *, " * Number of particles on NS 2=", parts% npart_i(2)
-!      PRINT *
-!
-!      !
-!      !-- Computing volume per particle
-!      !
-!      IF(.NOT.ALLOCATED( parts% pvol ))THEN
-!        ALLOCATE( parts% pvol( parts% npart ), STAT= ios, &
-!                ERRMSG= err_msg )
-!        IF( ios > 0 )THEN
-!          PRINT *, "...allocation error for array pvol ", &
-!                   ". The error message is", err_msg
-!          STOP
-!        ENDIF
-!        !CALL test_status( ios, err_msg, &
-!        !        "...allocation error for array v_euler_parts_z" )
-!      ENDIF
-!
-!      ! First guess of the particle volume (it will be computed exactly later)
-!
-!      pvol_tmp= 0.0D0
-!      DO itr= 1, parts% npart - 1, 1
-!
-!        pvol_tmp= pvol_tmp + ABS( parts% pos(3,itr + 1) &
-!                                - parts% pos(3,itr) )
-!
-!      ENDDO
-!      pvol_tmp= pvol_tmp/( parts% npart - 1 )
-!
-!      parts% pvol= 2.0D0*pvol_tmp**3.0D0
-!
-!   !   IF( parts% masses(1) > parts% masses(2) )THEN
-!   !
-!   !     ! mass_ratio < 1
-!   !     parts% mass_ratio= parts% masses(2)/parts% masses(1)
-!   !
-!   !   ELSE
-!   !
-!   !     ! mass_ratio < 1
-!   !     parts% mass_ratio= parts% masses(1)/parts% masses(2)
-!   !
-!   !   ENDIF
-!
-!      parts% pmass= parts% nu * amu
-!
-!      !STOP
 
     CASE(1)
+
 
       PRINT *, " * Placing particles on lattices, ", &
                "one around each matter object."
@@ -1117,16 +612,6 @@ SUBMODULE (particles_id) particles_constructor
       !
       !-- Determine boundaries of the single lattice around the stars (Msun_geo)
       !
-    !  xmin=   id% get_center1_x() - &
-    !                            stretch*MAX( id% get_radius1_x_comp(), &
-    !                                         id% get_radius1_x_opp() )
-    !  xmax=   id% get_center2_x() + &
-    !                            stretch*MAX( id% get_radius2_x_comp(), &
-    !                                         id% get_radius2_x_opp() )
-    !  ymin= - stretch*id% get_radius1_y()
-    !  ymax=   stretch*id% get_radius2_y()
-    !  zmin= - stretch*id% get_radius1_z()
-    !  zmax=   stretch*id% get_radius2_z()
 
       ! Place particles, and time the proces
 
@@ -1142,15 +627,6 @@ SUBMODULE (particles_id) particles_constructor
         central_density(itr)= id% read_mass_density( center(itr, 1), &
                                                      center(itr, 2), &
                                                      center(itr, 3) )
-
-     !   PRINT *, xmin
-     !   PRINT *, xmax
-     !   PRINT *, ymin
-     !   PRINT *, ymax
-     !   PRINT *, zmin
-     !   PRINT *, zmax
-     !   PRINT *, central_density(itr)
-     !   STOP
 
         CALL parts% place_particles_lattice( central_density(itr), &
                                              xmin, xmax, ymin, &
@@ -1221,52 +697,9 @@ SUBMODULE (particles_id) particles_constructor
                      parts_all(itr)% pvol_i
       ENDDO
 
-    !CASE(2)
-
-  !    PRINT *, " * Placing particles on two lattices, " &
-  !             // "one around each star."
-  !    PRINT *
-
-      !parts% nx= nx
-      !parts% ny= ny
-      !parts% nz= nz
-
-      !
-      !-- Determine boundaries of the two lattices around the stars (Msun_geo)
-      !
-   !   xmin1=   id% get_center1_x() - &
-   !                             stretch*MAX( id% get_radius1_x_comp(), &
-   !                                          id% get_radius1_x_opp() )
-   !   xmax1=   id% get_center1_x() + &
-   !                             stretch*MAX( id% get_radius1_x_comp(), &
-   !                                          id% get_radius1_x_opp() )
-   !   ymin1= - stretch*id% get_radius1_y()
-   !   ymax1=   stretch*id% get_radius1_y()
-   !   zmin1= - stretch*id% get_radius1_z()
-   !   zmax1=   stretch*id% get_radius1_z()
-   !
-   !   xmin2=   id% get_center2_x() - &
-   !                             stretch*MAX( id% get_radius2_x_comp(), &
-   !                                          id% get_radius2_x_opp() )
-   !   xmax2=   id% get_center2_x() + &
-   !                             stretch*MAX( id% get_radius2_x_comp(), &
-   !                                          id% get_radius2_x_opp() )
-   !   ymin2= - stretch*id% get_radius2_y()
-   !   ymax2=   stretch*id% get_radius2_y()
-   !   zmin2= - stretch*id% get_radius2_z()
-   !   zmax2=   stretch*id% get_radius2_z()
-   !
-   !   ! Place particles, and time the process
-   !   CALL parts% placer_timer% start_timer()
-   !   CALL parts% place_particles_lattices( xmin1, xmax1, ymin1, &
-   !                                               ymax1, zmin1, zmax1, &
-   !                                               xmin2, xmax2, ymin2, &
-   !                                               ymax2, zmin2, zmax2, &
-   !                                               nx, ny, nz, &
-   !                                               thres, id )
-   !   CALL parts% placer_timer% stop_timer()
 
     CASE(2)
+
 
       PRINT *, "** Placing equal-mass particles on spherical surfaces, " &
                // "taking into account the mass profile of the stars."
@@ -1293,36 +726,32 @@ SUBMODULE (particles_id) particles_constructor
 
         ! Place particles, and time the process
 
-        CALL parts% place_particles_spherical_surfaces( parts% masses(i_matter), &
-                                                    MAXVAL(sizes(i_matter, 1:2)), &
-                                                    center(i_matter,1), &
-                                                    central_density(i_matter), &
-                                                    npart_des_i(i_matter), &
-                                                    parts% npart_i(i_matter), &
-                                                    parts_all(i_matter)% pos_i, &
-                                                    parts_all(i_matter)% pvol_i, &
-                                                    parts_all(i_matter)% pmass_i, &
-                                                    last_r, &
-                                                    upper_bound, lower_bound, &
-                                                    upper_factor, lower_factor,&
-                                                    max_steps, &
-                                                    filename_mass_profile, &
-                                                    filename_shells_radii, &
-                                                    filename_shells_pos, &
-                                                    import_density, &
-                                                    integrate_mass_density, &
-                                                    import_id, &
-                                                    check_negative_hydro )
-
-        ! mass_ratio < 1
-    !    parts% mass_ratio= parts% masses(2)/parts% masses(1)
+        CALL parts% place_particles_spherical_surfaces( &
+                                              parts% masses(i_matter), &
+                                              MAXVAL(sizes(i_matter, 1:2)), &
+                                              center(i_matter,1), &
+                                              central_density(i_matter), &
+                                              npart_des_i(i_matter), &
+                                              parts% npart_i(i_matter), &
+                                              parts_all(i_matter)% pos_i, &
+                                              parts_all(i_matter)% pvol_i, &
+                                              parts_all(i_matter)% pmass_i, &
+                                              last_r, &
+                                              upper_bound, lower_bound, &
+                                              upper_factor, lower_factor,&
+                                              max_steps, &
+                                              filename_mass_profile, &
+                                              filename_shells_radii, &
+                                              filename_shells_pos, &
+                                              import_density, &
+                                              integrate_mass_density, &
+                                              import_id, &
+                                              check_negative_hydro )
 
         equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
 
           IF( ABS(parts% mass_ratios(1) - parts% mass_ratios(2)) &
               /parts% mass_ratios(2) <= 0.005 .AND. &
-              !parts% mass_ratios(1) >= 0.995 .AND. &
-              !parts% mass_ratios <= 1.005 .AND. &
               reflect_particles_x )THEN
 
             IF(.NOT.ALLOCATED( parts_all(2)% pos_i ))THEN
@@ -1364,37 +793,6 @@ SUBMODULE (particles_id) particles_constructor
 
             EXIT
 
-    !   ELSE
-    !
-    !     IF( parts% mass_ratio >= 0.95 .AND. &
-    !         parts% mass_ratio <= 1.05 )THEN
-    !       npart2_approx= npart_approx/parts% mass_ratio
-    !     ELSE
-    !       npart2_approx= parts% npart1/parts% mass_ratio
-    !     ENDIF
-    !
-    !     filename_mass_profile= "spherical_surfaces_mass_profile1.dat"
-    !     filename_shells_radii= "spherical_surfaces_radii1.dat"
-    !     filename_shells_pos  = "spherical_surfaces_pos1.dat"
-    !
-    !     CALL parts% place_particles_spherical_surfaces( parts% masses(1),&
-    !                                           radius1, center1, &
-    !                                           central_density1, &
-    !                                           npart2_approx, &
-    !                                           parts% npart1, &
-    !                                           pos1, pvol1, pmass1, &
-    !                                           last_r, &
-    !                                           upper_bound, lower_bound, &
-    !                                           upper_factor, lower_factor,&
-    !                                           max_steps, &
-    !                                           filename_mass_profile, &
-    !                                           filename_shells_radii, &
-    !                                           filename_shells_pos, &
-    !                                           import_density, &
-    !                                           integrate_mass_density, &
-    !                                           import_id, &
-    !                                           check_negative_hydro )
-
           ENDIF
 
         ENDIF equal_masses
@@ -1405,123 +803,6 @@ SUBMODULE (particles_id) particles_constructor
                     parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
         parts_all(i_matter)% pvol_i = &
                     parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
-
-  !   ELSE
-  !
-  !     filename_mass_profile= "spherical_surfaces_mass_profile1.dat"
-  !     filename_shells_radii= "spherical_surfaces_radii1.dat"
-  !     filename_shells_pos  = "spherical_surfaces_pos1.dat"
-  !
-  !     ! Place particles, and time the process
-  !     CALL parts% placer_timer% start_timer()
-  !
-  !     !DO
-  !
-  !     CALL parts% place_particles_spherical_surfaces( parts% masses(1), &
-  !                                           radius1, center1, &
-  !                                           central_density1, &
-  !                                           npart_approx, &
-  !                                           parts% npart1, &
-  !                                           pos1, pvol1, pmass1, &
-  !                                           last_r, &
-  !                                           upper_bound, lower_bound, &
-  !                                           upper_factor, lower_factor,&
-  !                                           max_steps, &
-  !                                           filename_mass_profile, &
-  !                                           filename_shells_radii, &
-  !                                           filename_shells_pos, &
-  !                                           import_density, &
-  !                                           integrate_mass_density, &
-  !                                           import_id, &
-  !                                           check_negative_hydro )
-  !
-  !     IF( debug ) PRINT *, "30"
-  !
-  !     ! mass_ratio < 1
-  !     parts% mass_ratio= parts% masses(1)/parts% masses(2)
-  !
-  !     IF( debug ) PRINT *, "31"
-  !
-  !     equal_masses2: IF( parts% mass_ratio >= 0.995 .AND. &
-  !         parts% mass_ratio <= 1.005 .AND. reflect_particles_x )THEN
-  !
-  !       IF(.NOT.ALLOCATED( pos2 ))THEN
-  !         ALLOCATE( pos2( 3, parts% npart1 ), &
-  !                   STAT= ios, ERRMSG= err_msg )
-  !         IF( ios > 0 )THEN
-  !            PRINT *, "...allocation error for array pos in SUBROUTINE" &
-  !                     // "place_particles_. ", &
-  !                     "The error message is", err_msg
-  !            STOP
-  !         ENDIF
-  !       ENDIF
-  !       IF(.NOT.ALLOCATED( pvol2 ))THEN
-  !         ALLOCATE( pvol2( parts% npart1 ), &
-  !                   STAT= ios, ERRMSG= err_msg )
-  !         IF( ios > 0 )THEN
-  !            PRINT *, "...allocation error for array pvol in SUBROUTINE" &
-  !                     // "place_particles_. ", &
-  !                     "The error message is", err_msg
-  !            STOP
-  !         ENDIF
-  !       ENDIF
-  !       IF(.NOT.ALLOCATED( pmass2 ))THEN
-  !         ALLOCATE( pmass2( parts% npart1 ), &
-  !                   STAT= ios, ERRMSG= err_msg )
-  !         IF( ios > 0 )THEN
-  !            PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-  !                     // "place_particles_. ", &
-  !                     "The error message is", err_msg
-  !            STOP
-  !         ENDIF
-  !       ENDIF
-  !       pos2(1,:)= - pos1(1,:)
-  !       pos2(2,:)=   pos1(2,:)
-  !       pos2(3,:)=   pos1(3,:)
-  !       pvol2 = pvol1
-  !       pmass2= pmass1
-  !       parts% npart2= parts% npart1
-  !
-  !     ELSE
-  !
-  !       IF( parts% mass_ratio >= 0.95 .AND. &
-  !           parts% mass_ratio <= 1.05 )THEN
-  !         npart2_approx= npart_approx/parts% mass_ratio
-  !       ELSE
-  !         npart2_approx= parts% npart1/parts% mass_ratio
-  !       ENDIF
-  !
-  !       filename_mass_profile= "spherical_surfaces_mass_profile2.dat"
-  !       filename_shells_radii= "spherical_surfaces_radii2.dat"
-  !       filename_shells_pos  = "spherical_surfaces_pos2.dat"
-  !
-  !       IF( debug ) PRINT *, "32"
-  !
-  !       CALL parts% place_particles_spherical_surfaces( parts% masses(2),&
-  !                                             radius2, center2, &
-  !                                             central_density2, &
-  !                                             npart2_approx, &
-  !                                             parts% npart2, &
-  !                                             pos2, pvol2, pmass2, &
-  !                                             last_r, &
-  !                                             upper_bound, lower_bound, &
-  !                                             upper_factor, lower_factor,&
-  !                                             max_steps, &
-  !                                             filename_mass_profile, &
-  !                                             filename_shells_radii, &
-  !                                             filename_shells_pos, &
-  !                                             import_density, &
-  !                                             integrate_mass_density, &
-  !                                             import_id, &
-  !                                             check_negative_hydro )
-  !
-  !     ENDIF equal_masses2
-  !
-  !     CALL parts% placer_timer% stop_timer()
-  !
-  !     parts% npart= parts% npart1 + parts% npart2
-  !
-  !   ENDIF first_star_more_massive
 
       ENDDO
 
@@ -1664,9 +945,10 @@ SUBMODULE (particles_id) particles_constructor
         PRINT *
 
         IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
-        IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) WRITE( str_i, '(I2)' ), i_matter
+        IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) &
+                                              WRITE( str_i, '(I2)' ), i_matter
         IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
-                                                 WRITE( str_i, '(I3)' ), i_matter
+                                              WRITE( str_i, '(I3)' ), i_matter
 
         filename_apm_pos_id = "apm_pos_id"//TRIM(str_i)//".dat"
         filename_apm_pos    = "apm_pos"//TRIM(str_i)//".dat"
@@ -1699,8 +981,6 @@ SUBMODULE (particles_id) particles_constructor
 
           IF( ABS(parts% mass_ratios(1) - parts% mass_ratios(2) ) &
                           /parts% mass_ratios(2) <= 0.005 .AND. &
-                          !parts% mass_ratios(1) >= 0.995 .AND. &
-                          !parts% mass_ratios <= 1.005 .AND. &
                           reflect_particles_x )THEN
 
             parts% pos(1,parts% npart_i(1)+1:parts% npart)= &
@@ -1730,62 +1010,6 @@ SUBMODULE (particles_id) particles_constructor
         ENDIF equal_masses_apm
 
       ENDIF
-  !    IF( apm_iterate2 .AND. .NOT.(parts% mass_ratio >= 0.995 .AND. &
-  !        parts% mass_ratio <= 1.005 .AND. reflect_particles_x) )THEN
-  !
-  !      PRINT *
-  !      PRINT *, "** Placing particles on star 2 using the APM..."
-  !      PRINT *
-  !
-  !      IF(.NOT.ALLOCATED( parts% h ))THEN
-  !        ALLOCATE( parts% h( parts% npart ), STAT= ios, &
-  !                  ERRMSG= err_msg )
-  !        IF( ios > 0 )THEN
-  !           PRINT *, "...allocation error for array h in SUBROUTINE ", &
-  !                    "construct_particles_idase. The error message is",&
-  !                    err_msg
-  !           STOP
-  !        ENDIF
-  !      ENDIF
-  !
-  !      IF(.NOT.ALLOCATED( parts% nu ))THEN
-  !        ALLOCATE( parts% nu( parts% npart ), STAT= ios, &
-  !                  ERRMSG= err_msg )
-  !        IF( ios > 0 )THEN
-  !           PRINT *, "...allocation error for array nu in SUBROUTINE ", &
-  !                    "construct_particles_idase. The error message is",&
-  !                    err_msg
-  !           STOP
-  !        ENDIF
-  !      ENDIF
-  !
-  !      filename_apm_pos_id = "apm_pos_id2.dat"
-  !      filename_apm_pos    = "apm_pos2.dat"
-  !      filename_apm_results= "apm_results2.dat"
-  !
-  !      ! Star 2
-  !      CALL parts% apm2_timer% start_timer()
-  !      CALL parts% perform_apm( &
-  !                import_density, get_nstar_p, &
-  !                parts% pos(:,parts% npart1+1:parts% npart), &
-  !                parts% pvol(parts% npart1+1:parts% npart), &
-  !                parts% h(parts% npart1+1:parts% npart), &
-  !                parts% nu(parts% npart1+1:parts% npart), &
-  !                center2, com2, parts% masses(2), &
-  !                id% get_radius2_x_comp(), &
-  !                id% get_radius2_x_opp(), &
-  !                id% get_radius2_y(), &
-  !                id% get_radius2_z(), &
-  !                apm_max_it, max_inc, mass_it, parts% correct_nu, &
-  !                nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
-  !                filename_apm_pos_id, filename_apm_pos, filename_apm_results, &
-  !                check_negative_hydro )
-  !      CALL parts% apm2_timer% stop_timer()
-  !
-  !      PRINT *, "** Particles placed on star 2 according to the APM."
-  !      PRINT *
-  !
-  !    ENDIF
 
       END ASSOCIATE
 

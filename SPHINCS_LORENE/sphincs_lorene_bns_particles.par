@@ -16,14 +16,14 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
           !"apm-pos-nu_1216_45km_pol275_500k.dat"
-          "apm-pos-nu_1313_45km_pol2_500k.dat"
+          !"apm-pos-nu_1313_45km_pol2_500k.dat"
           !"apm-pos-nu_1218_42km_dd2sfrdf18_5M.dat"
           !"apm-pos-nu_1218_42km_dd2sfrdf18_2.6M.dat"
           !"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_135135_42km_apr4_500k_hr.dat"
           !"apm-pos_1218_45km_pol275_1M.dat"
           !"apm-pos_1218_45km_pol275_2M.dat"
-          !"apm-pos-nu_DRSLO_4_pol2_1M_bt.dat"
+          "apm-pos-nu_DRSLO_4_pol2_1M_bt.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -60,7 +60,7 @@ thres=10      ! (~rho_max)/thres is the minimum mass density considered
 redistribute_nu=.FALSE. ! If .TRUE., nu is reassigned on the particles such that
                        ! the baryon number ratio does not exceed nu_ratio on
                        ! each star
-nu_ratio=3.0           ! Desired baryon number ratio. Used only when
+nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
                        ! redistribute_nu is .TRUE.
 !---------------------------------------------------------------!
 ! Parameters needed to place particles on spherical surfaces    !

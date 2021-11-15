@@ -299,7 +299,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN OUT ):: THIS
+      CLASS(idbase), INTENT( IN ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION:: res
@@ -312,7 +312,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN OUT ):: THIS
+      CLASS(idbase), INTENT( IN ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: res
@@ -326,7 +326,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns an INTEGER
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN OUT ):: THIS
+      CLASS(idbase), INTENT( IN ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       INTEGER:: res
@@ -340,7 +340,7 @@ MODULE id_base
     !  parametersf the |eos| for the matter objects
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN OUT ):: THIS
+      CLASS(idbase), INTENT( IN ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
@@ -354,7 +354,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns a CHARACTER( LEN= : )
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN OUT ):: THIS
+      CLASS(idbase), INTENT( IN ):: THIS
       !! [[idbase]] object which this PROCEDURE is a member of
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose string is to return
@@ -582,7 +582,7 @@ MODULE id_base
     !  system.
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN OUT )   :: THIS
+      CLASS(idbase), INTENT( IN )   :: THIS
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose string is to return
@@ -595,33 +595,13 @@ MODULE id_base
     END FUNCTION return_spatial_extent_int
 
 
-  !  FUNCTION return_total_spatial_extent_int( THIS ) RESULT( box )
-  !  !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
-  !  !  physical system considered, and returns a 6-dimensional array
-  !  !  containing the coordinates
-  !  !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
-  !  !  of a box **centered at the center of the object** and containing the
-  !  !  system.
-  !
-  !    IMPORT:: idbase
-  !    CLASS(idbase), INTENT( IN )   :: THIS
-  !    !! Object of class [[idbase]] which this PROCEDURE is a member of
-  !    DOUBLE PRECISION, DIMENSION(6):: box
-  !    !# 6-dimensional array containing the coordinates
-  !    !  \(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},
-  !    !    z_{\rm min},z_{\rm max}\)
-  !    !  of a box containing the physical system.
-  !
-  !  END FUNCTION return_total_spatial_extent_int
-
-
     SUBROUTINE print_summary_int( THIS, filename )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN OUT ):: THIS
+      CLASS(idbase), INTENT( IN ):: THIS
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -640,7 +620,7 @@ MODULE id_base
     !  is given as the optional argument `filename`
 
       !IMPORT:: idbase
-      CLASS(idbase), INTENT( IN OUT ):: derived_type
+      CLASS(idbase), INTENT( IN ):: derived_type
 
     END SUBROUTINE sanity_check
 
@@ -732,7 +712,7 @@ MODULE id_base
     !  of a box **centered at the center of the object** and containing the
     !  system.
 
-      CLASS(idbase), INTENT( IN OUT )   :: THIS
+      CLASS(idbase), INTENT( IN )   :: THIS
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, DIMENSION(6):: box
       !# 6-dimensional array containing the coordinates

@@ -694,7 +694,7 @@ MODULE bns_lorene
     MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: THIS
+      CLASS(bnslorene), INTENT( IN ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params

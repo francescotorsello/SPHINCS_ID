@@ -259,6 +259,7 @@ MODULE diffstar_lorene
     !
 
     MODULE SUBROUTINE construct_diffstarlorene( derived_type, filename )
+    !! Constructs a [[diffstarlorene]] object
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
@@ -622,7 +623,7 @@ MODULE diffstar_lorene
     MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT( IN ):: THIS
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params

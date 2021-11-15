@@ -107,6 +107,16 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_io
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
                THIS% pressure_center/lorene2hydrobase*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
+      PRINT *
+      PRINT *, " Ratio T/|W| between the rotaional kinetic energy and ", &
+               "the gravitational binding energy: ", THIS% tsw
+      PRINT *, "  For axisymmetric configurations as this one, the ", &
+               "threshold for dynamical instability is T/|W|~0.25 ", &
+               " [Manca et al., Classical and Quantum Gravity, 24, 171], ", &
+               "https://arxiv.org/abs/0705.1826].", &
+               "See also [Galeazzi et al., Astron Astrophys 541:A156, ", &
+               "arXiv:1101.2664], Sec.3.3."
+      PRINT *
 
       PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(THIS% eos)
 
