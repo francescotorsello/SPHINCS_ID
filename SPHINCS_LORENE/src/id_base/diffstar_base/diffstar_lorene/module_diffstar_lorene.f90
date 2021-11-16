@@ -477,7 +477,7 @@ MODULE diffstar_lorene
 
 
     MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
-                                        g_xx, &
+                                        g, &
                                         baryon_density, &
                                         gamma_euler )
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
@@ -487,9 +487,9 @@ MODULE diffstar_lorene
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
       DOUBLE PRECISION, INTENT( IN)     :: z
-      DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
+      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
+      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
+      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
 
     END SUBROUTINE import_id_mass_b
 
@@ -651,6 +651,7 @@ MODULE diffstar_lorene
             get_diffstar_spatial_metric, negative_hydro, get_diffstar_params, &
             destruct_etdiffrot
 
+
   !-----------------------------------------------------------------!
   !--  Interfaces to the methods of |lorene|'s class |etdiffrot|  --!
   !-----------------------------------------------------------------!
@@ -690,7 +691,7 @@ MODULE diffstar_lorene
                                   x, y, z, &
                                   lapse, &
                                   shift_x, shift_y, shift_z, &
-                                  g_diag, &
+                                  g_rr, g_tt, g_pp, &
                                   k_xx, k_xy, k_xz, &
                                   k_yy, k_yz, k_zz, &
                                   baryon_density, &
@@ -736,7 +737,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: g_rr, g_tt, g_pp
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xx
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xy
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xz
@@ -757,7 +758,7 @@ MODULE diffstar_lorene
                                        x, y, z, &
                                        lapse, &
                                        shift_x, shift_y, shift_z, &
-                                       g_diag, &
+                                       g_rr, g_tt, g_pp, &
                                        k_xx, k_xy, k_xz, &
                                        k_yy, k_yz, k_zz ) &
       BIND(C, NAME= "get_rotdiff_spacetime")
@@ -790,7 +791,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: g_rr, g_tt, g_pp
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xx
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xy
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xz
@@ -805,7 +806,7 @@ MODULE diffstar_lorene
                                        x, y, z, &
                                        lapse, &
                                        shift_x, shift_y, shift_z, &
-                                       g_diag, &
+                                       g_rr, g_tt, g_pp, &
                                        baryon_density, &
                                        energy_density, &
                                        specific_energy, &
@@ -848,7 +849,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: g_rr, g_tt, g_pp
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
       REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
@@ -862,7 +863,7 @@ MODULE diffstar_lorene
 
     SUBROUTINE get_diffstar_mass_b( optr, &
                                     x, y, z, &
-                                    g_diag, &
+                                    g_rr, g_tt, g_pp, &
                                     baryon_density, &
                                     gamma_euler ) &
       BIND(C, NAME= "get_rotdiff_mass_b")
@@ -897,7 +898,7 @@ MODULE diffstar_lorene
       !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       !> \(g_{xx}=g_{yy}=g_{zz}\) at \(x,y,z\)
-      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: g_rr, g_tt, g_pp
       !> Baryon mass density at \(x,y,z\)
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       !& Relative Lorentz factor between the 4-velocity of the fluid
@@ -993,7 +994,7 @@ MODULE diffstar_lorene
 
 
     FUNCTION get_diffstar_spatial_metric( optr, x, y, z ) RESULT( res ) &
-      BIND(C, NAME= "get_g_diag")
+      BIND(C, NAME= "get_g_rr")
 
       !************************************************
       !

@@ -1886,6 +1886,9 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "101"
 
+    PRINT *, "** Assigning final smoothing length..."
+    PRINT *
+
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
     CALL assign_h( nn_des, &
@@ -2054,6 +2057,9 @@ SUBMODULE (particles_id) particles_apm
       finalnamefile= "apm_results.dat"
     ENDIF
 
+    PRINT *, "** Printing results to file ", namefile_results, "..."
+    PRINT *
+
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
     IF( exist )THEN
@@ -2124,6 +2130,9 @@ SUBMODULE (particles_id) particles_apm
     !
     !IF( debug ) finalnamefile= "negative_hydro.dat"
     !IF( debug ) CALL THIS% analyze_hydro( finalnamefile )
+
+    PRINT *, "** Checking that there aren't particles with the same position..."
+    PRINT *
 
     CALL check_particle_positions( npart_real, pos )
 

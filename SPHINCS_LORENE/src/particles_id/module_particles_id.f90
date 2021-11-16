@@ -646,7 +646,7 @@ MODULE particles_id
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
-        SUBROUTINE get_id( x, y, z , g_xx, baryon_density, gamma_euler )
+        SUBROUTINE get_id( x, y, z , sqdetg, baryon_density, gamma_euler )
           !! Returns the baryon mass density at the desired point
           DOUBLE PRECISION, INTENT(IN):: x
           !! \(x\) coordinate of the desired point
@@ -654,9 +654,9 @@ MODULE particles_id
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
-          DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
-          DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
+          DOUBLE PRECISION, INTENT( OUT ):: sqdetg
+          DOUBLE PRECISION, INTENT( OUT ):: baryon_density
+          DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
         END SUBROUTINE get_id
       END INTERFACE
       INTERFACE

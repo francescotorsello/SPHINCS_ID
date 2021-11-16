@@ -538,7 +538,7 @@ MODULE bns_lorene
 
 
     MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
-                                        g_xx, &
+                                        g, &
                                         baryon_density, &
                                         gamma_euler )
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
@@ -547,10 +547,10 @@ MODULE bns_lorene
       CLASS(bnslorene),       INTENT( IN OUT ):: THIS
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN)     :: z
-      DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
+      DOUBLE PRECISION, INTENT( IN )    :: z
+      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
+      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
+      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
 
     END SUBROUTINE import_id_mass_b
 

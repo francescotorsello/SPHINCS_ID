@@ -389,9 +389,6 @@ PROGRAM convergence_test
     ENDDO export_bssn_loop
   ENDIF
 
-! There doesn't seem to be a bug until here
-!STOP
-
   !
   !-- Compute the BSSN constraints
   !
