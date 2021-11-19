@@ -334,7 +334,9 @@ PROGRAM sphincs_id
     CALL ids(itr)% idata% set_zero_shift( zero_shift )
   ENDDO build_drs_loop
 
-  !STOP
+  PRINT *, ids(1)% idata% read_mass_density( 2.0D0, 3.0D0, 5.0D0 )
+
+  STOP
 
   IF( run_sph )THEN
 

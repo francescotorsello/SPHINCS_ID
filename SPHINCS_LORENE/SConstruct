@@ -153,27 +153,27 @@ sources = ['src/utility/module_utility.f90',
            'src/id_base/ejecta_generic/submodule_ejecta_generic_memory.f90',
            'src/id_base/ejecta_generic/submodule_ejecta_generic_io.f90',
            'src/id_base/ejecta_generic/submodule_ejecta_generic_interpolate.f90',
-          # 'src/particles_id/module_particles_id.f90',
-          # 'src/particles_id/submodule_particles_constructor.f90',
-          # 'src/particles_id/submodule_particles_memory.f90',
-          # 'src/particles_id/submodule_particles_lattices.f90',
-          # 'src/particles_id/submodule_particles_spherical_surfaces.f90',
-          # 'src/particles_id/submodule_particles_sph_variables.f90',
-          # 'src/particles_id/submodule_particles_access.f90',
-          # 'src/particles_id/submodule_particles_io.f90',
-          # 'src/particles_id/submodule_particles_compose.f90',
-          # #'src/particles_id/submodule_particles_redistribute_nu.f90',
-          # 'src/particles_id/submodule_particles_apm.f90',
-          # 'src/formul_3p1/module_formul_3p1_id.f90',
-          # 'src/formul_3p1/submodule_formul_3p1_standard3p1_variables.f90',
-          # 'src/formul_3p1/submodule_formul_3p1_access.f90',
-          # 'src/formul_3p1/submodule_formul_3p1_io.f90',
-          # 'src/formul_3p1/submodule_formul_3p1_analysis.f90',
-          # 'src/formul_3p1/bssn_id/module_bssn_id.f90',
-          # 'src/formul_3p1/bssn_id/submodule_bssn_id_constructor.f90',
-          # 'src/formul_3p1/bssn_id/submodule_bssn_id_variables.f90',
-          # 'src/formul_3p1/bssn_id/submodule_bssn_id_constraints.f90',
-          # 'src/formul_3p1/bssn_id/submodule_bssn_id_memory.f90',
+           'src/particles_id/module_particles_id.f90',
+           'src/particles_id/submodule_particles_constructor.f90',
+           'src/particles_id/submodule_particles_memory.f90',
+           'src/particles_id/submodule_particles_lattices.f90',
+           'src/particles_id/submodule_particles_spherical_surfaces.f90',
+           'src/particles_id/submodule_particles_sph_variables.f90',
+           'src/particles_id/submodule_particles_access.f90',
+           'src/particles_id/submodule_particles_io.f90',
+           'src/particles_id/submodule_particles_compose.f90',
+           #'src/particles_id/submodule_particles_redistribute_nu.f90',
+           'src/particles_id/submodule_particles_apm.f90',
+           'src/formul_3p1/module_formul_3p1_id.f90',
+           'src/formul_3p1/submodule_formul_3p1_standard3p1_variables.f90',
+           'src/formul_3p1/submodule_formul_3p1_access.f90',
+           'src/formul_3p1/submodule_formul_3p1_io.f90',
+           'src/formul_3p1/submodule_formul_3p1_analysis.f90',
+           'src/formul_3p1/bssn_id/module_bssn_id.f90',
+           'src/formul_3p1/bssn_id/submodule_bssn_id_constructor.f90',
+           'src/formul_3p1/bssn_id/submodule_bssn_id_variables.f90',
+           'src/formul_3p1/bssn_id/submodule_bssn_id_constraints.f90',
+           'src/formul_3p1/bssn_id/submodule_bssn_id_memory.f90',
           # 'src/sphincs_id_lorene/module_sphincs_id_lorene.f90',
            'src/sphincs_id_interpolate/module_sphincs_id_interpolate.f90'
           ]
@@ -274,7 +274,7 @@ write_par_eos = 'write_par_eos.x'
 
 #lorene_sources + lorene_sources_bin_ns
 
-#Program(lorene_id_executable, sources + sources_sphincs_bssn + ['src/sphincs_id.f90'])
+Program(lorene_id_executable, sources + sources_sphincs_bssn + ['src/sphincs_id.f90'])
 #Program(lorene_id_convtest_executable, sources + sources_sphincs_bssn + ['src/convergence_test.f90'])
 Program(write_par_eos, sources + sources_sphincs_bssn + ['src/write_par_eos.f90'])
 #

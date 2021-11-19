@@ -143,8 +143,51 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !***********************************************
 
     USE Hermite_refine, ONLY: H5_interpolate
+    USE numerics,       ONLY: gf_pointer, pa_pointer
+
 
     IMPLICIT NONE
+
+
+    INTEGER, PARAMETER:: np= 1
+    INTEGER, PARAMETER:: nvars= 1
+    INTEGER, PARAMETER:: nghost= 0
+
+    DOUBLE PRECISION, DIMENSION(np):: xp, yp, zp
+    DOUBLE PRECISION, DIMENSION(1), TARGET:: dens
+
+    TYPE(gf_pointer), DIMENSION(nvars):: density_grid
+    TYPE(pa_pointer), DIMENSION(nvars):: density_point
+
+    xp(1)= x
+    yp(1)= y
+    zp(1)= z
+
+    density_point(1)% p => dens
+    density_grid(1)% p  => THIS% baryon_mass_density
+
+    CALL H5_interpolate( &
+          np,            &  ! The number of particle positions
+          xp, yp, zp,    &  ! The x,y,z arrays of the interpolation points
+          THIS% nx_grid, &  ! The dimensions of the grid function
+          THIS% xL_grid, &  ! The lower coordinate values of the grid function
+          THIS% dx_grid, &  ! The grid spacings
+          nghost,        &  ! Number of ghost cells
+          THIS% ny_grid, &
+          THIS% yL_grid, &
+          THIS% dy_grid, &
+          nghost,        &
+          THIS% nz_grid, &
+          THIS% zL_grid, &
+          THIS% dz_grid, &
+          nghost,        &
+          nvars,         &  ! Number of functions to be interpolated
+          density_grid,  &  ! Array of pointers to grid functions of the data
+          density_point  &  ! Array of pointers to the point array with
+                            ! interpolated data
+         )
+
+    res= dens(1)
 
   END PROCEDURE interpolate_mass_density
 

@@ -8,14 +8,14 @@ MODULE ejecta_generic
   !
   !# This MODULE contains the definition of TYPE ejecta,
   !  which is an ABSTRACT TYPE representing any possible
-  !  type of initial data (ID) for a differentially rotating
-  !  star (DRS) to be set up for |sphincsbssn|. That is, DRS ID
+  !  type of initial data (|id|) for a differentially rotating
+  !  star (DRS) to be set up for |sphincsbssn|. That is, DRS |id|
   !  produced with |lorene|, with |fuka|, etc.
   !
   !  PROCEDURES and variables shared by all the types
-  !  of DRS ID should belong to TYPE ejecta, as
+  !  of DRS |id| should belong to TYPE ejecta, as
   !  they are inherited by its EXTENDED TYPES that
-  !  represent more specific types of DRS ID.
+  !  represent more specific types of DRS |id|.
   !
   !  FT 22.10.2021
   !
@@ -31,13 +31,50 @@ MODULE ejecta_generic
 
   !********************************************************************
   !                                                                   *
-  !  Definition of TYPE ejecta  (differentially rotating star)  *
+  !  Definition of TYPE ejecta  *
   !                                                                   *
   !********************************************************************
 
   TYPE, EXTENDS(idbase):: ejecta
-  !# TYPE for ejecta ID for |sphincsbssn| prepared on a grid
+  !# TYPE for ejecta |id| for |sphincsbssn| prepared on a grid
 
+    INTEGER:: nx_grid
+    !! Number of grid points in the \(x\) direction for the grid containing the |id|
+
+    INTEGER:: ny_grid
+    !! Number of grid points in the \(y\) direction for the grid containing the |id|
+
+    INTEGER:: nz_grid
+    !! Number of grid points in the \(z\) direction for the grid containing the |id|
+
+    INTEGER:: n_gridpoints
+    !! Total number of grid points for the grid containing the |id|
+
+    DOUBLE PRECISION:: xL_grid
+    !! Minimum \(x\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION:: yL_grid
+    !! Minimum \(y\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION:: zL_grid
+    !! Minimum \(z\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION:: dx_grid
+    !! Spacing on the \(x\)-axis for the grid containing the |id|
+
+    DOUBLE PRECISION:: dy_grid
+    !! Spacing on the \(y\)-axis for the grid containing the |id|
+
+    DOUBLE PRECISION:: dz_grid
+    !! Spacing on the \(z\)-axis for the grid containing the |id|
+
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid
+    DOUBLE PRECISION, DIMENSION(:,:,:), POINTER:: baryon_mass_density
+
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sizes
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: centers
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: barycenters
 
     !--------------------------------!
     !--  Parameters of the ejecta  --!

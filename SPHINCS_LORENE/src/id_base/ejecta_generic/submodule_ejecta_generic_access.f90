@@ -40,6 +40,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     CALL THIS% check_i_matter(i_matter)
 
+    get_mass= THIS% masses(i_matter)
+
   END PROCEDURE get_mass
 
 
@@ -56,6 +58,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     IMPLICIT NONE
 
     CALL THIS% check_i_matter(i_matter)
+
+    get_radii= THIS% sizes(i_matter,:)
 
   END PROCEDURE get_radii
 
@@ -74,6 +78,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     CALL THIS% check_i_matter(i_matter)
 
+    get_center= THIS% centers(i_matter,:)
+
   END PROCEDURE get_center
 
 
@@ -90,6 +96,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     IMPLICIT NONE
 
     CALL THIS% check_i_matter(i_matter)
+
+    get_barycenter= THIS% barycenters(i_matter,:)
 
   END PROCEDURE get_barycenter
 

@@ -1194,7 +1194,7 @@ MODULE particles_id
     !
     !*************************************************
 
-    USE NR,             ONLY: indexx
+    USE NR, ONLY: indexx
 
     IMPLICIT NONE
 
