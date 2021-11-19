@@ -39,7 +39,7 @@ env['F90'] = 'ifort'
 env['CXX'] = 'icpc'
 
 # F90 flags for production
-env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', '-Dflavour=1']
+env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', '-Dflavour=2']
 #, '-heap-arrays'
 #, '-qoverride-limits'
 #, '-fpp'
@@ -126,49 +126,56 @@ sources = ['src/utility/module_utility.f90',
            'src/id_base/submodule_id_base_initialization.f90',
            'src/id_base/submodule_id_base_access.f90',
            'src/id_base/submodule_id_base_mass_profile.f90',
-           'src/id_base/bns_base/module_bns_base.f90',
-           'src/id_base/bns_base/submodule_bns_base_access.f90',
-           'src/id_base/bns_base/submodule_bns_base_io.f90',
-           #'src/bns_base/submodule_bns_base_mass_profile.f90',
-           'src/id_base/bns_base/bns_lorene/module_bns_lorene.f90',
-           'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_constructor.f90',
-           'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_import.f90',
-           'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_memory.f90',
-           'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_access.f90',
-           'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_params.f90',
-           'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_io.f90',
-           'src/id_base/diffstar_base/module_diffstar_base.f90',
-           'src/id_base/diffstar_base/submodule_diffstar_base_access.f90',
-           'src/id_base/diffstar_base/submodule_diffstar_base_io.f90',
-           'src/id_base/diffstar_base/diffstar_lorene/module_diffstar_lorene.f90',
-           'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_constructor.f90',
-           'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_import.f90',
-           'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_memory.f90',
-           'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_access.f90',
-           'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_params.f90',
-           'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_io.f90',
-           'src/particles_id/module_particles_id.f90',
-           'src/particles_id/submodule_particles_constructor.f90',
-           'src/particles_id/submodule_particles_memory.f90',
-           'src/particles_id/submodule_particles_lattices.f90',
-           'src/particles_id/submodule_particles_spherical_surfaces.f90',
-           'src/particles_id/submodule_particles_sph_variables.f90',
-           'src/particles_id/submodule_particles_access.f90',
-           'src/particles_id/submodule_particles_io.f90',
-           'src/particles_id/submodule_particles_compose.f90',
-           #'src/particles_id/submodule_particles_redistribute_nu.f90',
-           'src/particles_id/submodule_particles_apm.f90',
-           'src/formul_3p1/module_formul_3p1_id.f90',
-           'src/formul_3p1/submodule_formul_3p1_standard3p1_variables.f90',
-           'src/formul_3p1/submodule_formul_3p1_access.f90',
-           'src/formul_3p1/submodule_formul_3p1_io.f90',
-           'src/formul_3p1/submodule_formul_3p1_analysis.f90',
-           'src/formul_3p1/bssn_id/module_bssn_id.f90',
-           'src/formul_3p1/bssn_id/submodule_bssn_id_constructor.f90',
-           'src/formul_3p1/bssn_id/submodule_bssn_id_variables.f90',
-           'src/formul_3p1/bssn_id/submodule_bssn_id_constraints.f90',
-           'src/formul_3p1/bssn_id/submodule_bssn_id_memory.f90',
-           'src/sphincs_lorene/module_sphincs_lorene.f90'
+          # 'src/id_base/bns_base/module_bns_base.f90',
+          # 'src/id_base/bns_base/submodule_bns_base_access.f90',
+          # 'src/id_base/bns_base/submodule_bns_base_io.f90',
+          # #'src/bns_base/submodule_bns_base_mass_profile.f90',
+          # 'src/id_base/bns_base/bns_lorene/module_bns_lorene.f90',
+          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_constructor.f90',
+          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_import.f90',
+          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_memory.f90',
+          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_access.f90',
+          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_params.f90',
+          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_io.f90',
+          # 'src/id_base/diffstar_base/module_diffstar_base.f90',
+          # 'src/id_base/diffstar_base/submodule_diffstar_base_access.f90',
+          # 'src/id_base/diffstar_base/submodule_diffstar_base_io.f90',
+          # 'src/id_base/diffstar_base/diffstar_lorene/module_diffstar_lorene.f90',
+          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_constructor.f90',
+          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_import.f90',
+          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_memory.f90',
+          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_access.f90',
+          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_params.f90',
+          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_io.f90',
+           'src/id_base/ejecta_generic/module_ejecta_generic.f90',
+           'src/id_base/ejecta_generic/submodule_ejecta_generic_constructor.f90',
+           'src/id_base/ejecta_generic/submodule_ejecta_generic_access.f90',
+           'src/id_base/ejecta_generic/submodule_ejecta_generic_memory.f90',
+           'src/id_base/ejecta_generic/submodule_ejecta_generic_io.f90',
+           'src/id_base/ejecta_generic/submodule_ejecta_generic_interpolate.f90',
+          # 'src/particles_id/module_particles_id.f90',
+          # 'src/particles_id/submodule_particles_constructor.f90',
+          # 'src/particles_id/submodule_particles_memory.f90',
+          # 'src/particles_id/submodule_particles_lattices.f90',
+          # 'src/particles_id/submodule_particles_spherical_surfaces.f90',
+          # 'src/particles_id/submodule_particles_sph_variables.f90',
+          # 'src/particles_id/submodule_particles_access.f90',
+          # 'src/particles_id/submodule_particles_io.f90',
+          # 'src/particles_id/submodule_particles_compose.f90',
+          # #'src/particles_id/submodule_particles_redistribute_nu.f90',
+          # 'src/particles_id/submodule_particles_apm.f90',
+          # 'src/formul_3p1/module_formul_3p1_id.f90',
+          # 'src/formul_3p1/submodule_formul_3p1_standard3p1_variables.f90',
+          # 'src/formul_3p1/submodule_formul_3p1_access.f90',
+          # 'src/formul_3p1/submodule_formul_3p1_io.f90',
+          # 'src/formul_3p1/submodule_formul_3p1_analysis.f90',
+          # 'src/formul_3p1/bssn_id/module_bssn_id.f90',
+          # 'src/formul_3p1/bssn_id/submodule_bssn_id_constructor.f90',
+          # 'src/formul_3p1/bssn_id/submodule_bssn_id_variables.f90',
+          # 'src/formul_3p1/bssn_id/submodule_bssn_id_constraints.f90',
+          # 'src/formul_3p1/bssn_id/submodule_bssn_id_memory.f90',
+          # 'src/sphincs_id_lorene/module_sphincs_id_lorene.f90',
+           'src/sphincs_id_interpolate/module_sphincs_id_interpolate.f90'
           ]
 
 sources_sphincs_bssn = [
@@ -267,8 +274,8 @@ write_par_eos = 'write_par_eos.x'
 
 #lorene_sources + lorene_sources_bin_ns
 
-Program(lorene_id_executable, sources + sources_sphincs_bssn + ['src/sphincs_id.f90'])
-Program(lorene_id_convtest_executable, sources + sources_sphincs_bssn + ['src/convergence_test.f90'])
+#Program(lorene_id_executable, sources + sources_sphincs_bssn + ['src/sphincs_id.f90'])
+#Program(lorene_id_convtest_executable, sources + sources_sphincs_bssn + ['src/convergence_test.f90'])
 Program(write_par_eos, sources + sources_sphincs_bssn + ['src/write_par_eos.f90'])
 #
 Decider('MD5-timestamp')

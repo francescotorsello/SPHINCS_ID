@@ -1,8 +1,8 @@
-! File:         module_sphincs_lorene.f90
+! File:         module_sphincs_id_lorene.f90
 ! Author:       Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-MODULE sphincs_lorene
+MODULE sphincs_id_lorene
 
 
   !*********************************************
@@ -101,4 +101,4 @@ MODULE sphincs_lorene
   END SUBROUTINE allocate_idbase
 
 
-END MODULE sphincs_lorene
+END MODULE sphincs_id_lorene

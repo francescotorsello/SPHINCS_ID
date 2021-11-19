@@ -13,8 +13,9 @@
 !----------------------------------------------------------------!
 ! n_bns and the number of specified components of filenames must be the same
 n_bns=1                          ! Number of BNS to import
-common_path="lorene-id-files/"   ! Path to the directory containing the LORENE
+common_path=!"lorene-id-files/"   ! Path to the directory containing the LORENE
                                  ! BNS binary files
+            "eccentric-ejecta-files/"
 filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_mpa1_1.6-2_45km_1e-9.bin"
              !"BNSLO_apr3_1.4-2_35km.bin"
@@ -71,7 +72,8 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr-new.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
-             "DRSLO_apr4.bin"
+             !"DRSLO_apr4.bin"
+             "EJECT_ejecta_apr4_2516.dat"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
