@@ -244,7 +244,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_standard3p1_variables
               PRINT *, "** ERROR! construct_formul_3p1_bns: The " &
                        // "determinant of the spatial metric is " &
                        // "effectively 0 at the grid point " &
-                       // "(ix,iy,iz)= (", i, ",", j,",",k, "), " &
+                       // "(i,j,k)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
                        f3p1% coords% levels(l)% var( i, j, k, 1 ), ",", &
                        f3p1% coords% levels(l)% var( i, j, k, 2 ), ",", &
@@ -268,7 +268,7 @@ SUBMODULE (formul_3p1_id) formul_3p1_standard3p1_variables
               PRINT *, "** ERROR! construct_formul_3p1_bns: The " &
                        // "determinant of the spatial metric is " &
                        // "negative at the grid point " &
-                       // "(ix,iy,iz)= (", i, ",", j,",",k, "), " &
+                       // "(i,j,k)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
                        f3p1% coords% levels(l)% var( i, j, k, 1 ), ",", &
                        f3p1% coords% levels(l)% var( i, j, k, 2 ), ",", &

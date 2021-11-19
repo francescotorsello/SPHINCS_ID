@@ -16,7 +16,7 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
           !"apm-pos-nu_1216_45km_pol275_500k.dat"
-          "apm-pos-nu_1313_45km_pol2_500k.dat"
+          !"apm-pos-nu_1313_45km_pol2_500k.dat"
           !"apm-pos-nu_1218_42km_dd2sfrdf18_5M.dat"
           !"apm-pos-nu_1218_42km_dd2sfrdf18_2.6M.dat"
           !"apm-pos-nu_135135_42km_apr4_500k.dat"
@@ -24,6 +24,7 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos_1218_45km_pol275_1M.dat"
           !"apm-pos_1218_45km_pol275_2M.dat"
           !"apm-pos-nu_DRSLO_4_pol2_1M_bt.dat"
+          "apm-pos-nu_DRSLO_4_pol2_1M_hr.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -119,23 +120,23 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.  ! If .TRUE. applies the APM to the first star
+apm_iterate=.FALSE.  ! If .TRUE. applies the APM to the first star
                     ! If .TRUE. applies the APM to the second star
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate2
-apm_max_it=1         ! Maximum number of iterations, irrespective of the
+apm_max_it= 300         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
-max_inc= 150            ! Sets the EXIT condition: If the average over all the
+max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
                         ! grows max_inc times, exit the iteration.
 nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.325D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc

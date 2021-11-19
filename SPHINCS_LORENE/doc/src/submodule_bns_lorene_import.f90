@@ -671,21 +671,28 @@ SUBMODULE (bns_lorene) bns_lorene_import
     !****************************************************
 
     USE constants, ONLY: Msun_geo, lorene2hydrobase
+    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
 
     IMPLICIT NONE
 
     IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-      ! Msun_geo
+      ! to |lorene| units (\(\mathrm{km}\)).
+      ! See MODULE constants for the definition of Msun_geo
       CALL get_lorene_id_mass_b( THIS% bns_ptr, &
                                     x*Msun_geo, &
                                     y*Msun_geo, &
                                     z*Msun_geo, &
-                                    g_xx, &
+                                    g(jxx), &
                                     baryon_density, &
                                     gamma_euler )
+
+      g(jxy)= 0.0D0
+      g(jxz)= 0.0D0
+      g(jyy)= g(jxx)
+      g(jyz)= 0.0D0
+      g(jzz)= g(jxx)
 
       baryon_density= baryon_density*lorene2hydrobase
 

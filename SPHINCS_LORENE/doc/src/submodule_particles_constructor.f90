@@ -712,6 +712,7 @@ SUBMODULE (particles_id) particles_constructor
   !        parts% redistribute_nu= .FALSE.
   !    ENDIF
       CALL parts% placer_timer% start_timer()
+
       DO i_matter= 1, parts% n_matter, 1
 
         IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
@@ -797,14 +798,13 @@ SUBMODULE (particles_id) particles_constructor
 
         ENDIF equal_masses
 
-        CALL parts% placer_timer% stop_timer()
-
         parts_all(i_matter)% pos_i = &
                     parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
         parts_all(i_matter)% pvol_i = &
                     parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
 
       ENDDO
+      CALL parts% placer_timer% stop_timer()
 
       parts% npart= SUM( parts% npart_i )
 
@@ -1459,23 +1459,30 @@ SUBMODULE (particles_id) particles_constructor
 
 
     SUBROUTINE import_id( x, y, z, &
-                          g_xx, &
+                          sqdetg, &
                           baryon_density, &
                           gamma_euler )
 
+      USE matrix, ONLY: determinant_3x3_sym_matrix
+
       IMPLICIT NONE
 
-      DOUBLE PRECISION,   INTENT( IN )    :: x
-      DOUBLE PRECISION,   INTENT( IN )    :: y
-      DOUBLE PRECISION,   INTENT( IN)     :: z
-      DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
+      DOUBLE PRECISION, INTENT( IN ) :: x
+      DOUBLE PRECISION, INTENT( IN ) :: y
+      DOUBLE PRECISION, INTENT( IN ) :: z
+      DOUBLE PRECISION, INTENT( OUT ):: sqdetg
+      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
+      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+
+      DOUBLE PRECISION, DIMENSION(6) :: g
 
       CALL id% read_id_mass_b( x, y, z, &
-                               g_xx, &
+                               g, &
                                baryon_density, &
-                               gamma_euler  )
+                               gamma_euler )
+
+      CALL determinant_3x3_sym_matrix(g,sqdetg)
+      sqdetg= SQRT(sqdetg)
 
     END SUBROUTINE import_id
 

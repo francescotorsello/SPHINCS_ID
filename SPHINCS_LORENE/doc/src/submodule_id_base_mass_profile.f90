@@ -41,13 +41,15 @@ SUBMODULE (id_base) id_base_mass_profile
     USE utility,   ONLY: ios, err_msg
     USE constants, ONLY: pi
     USE NR,        ONLY: indexx
+    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
+    USe matrix,    ONLY: determinant_3x3_sym_matrix
 
     IMPLICIT NONE
 
     INTEGER:: r, th, phi
     DOUBLE PRECISION:: rad_coord, colat, long, mass_element
-    DOUBLE PRECISION:: g_xx, sq_g, baryon_density, gamma_euler
-    !DOUBLE PRECISION:: rad
+    DOUBLE PRECISION:: sq_g, baryon_density, gamma_euler
+    DOUBLE PRECISION, DIMENSION(6):: g
 
     LOGICAL, PARAMETER:: debug= .TRUE.
 
@@ -62,9 +64,6 @@ SUBMODULE (id_base) id_base_mass_profile
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     IF(.NOT.ALLOCATED( mass_profile_idx ))THEN
       ALLOCATE( mass_profile_idx( 0:NINT(radius/dr) ), STAT= ios, &
@@ -75,9 +74,6 @@ SUBMODULE (id_base) id_base_mass_profile
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
 
     mass_profile( 1, 0 )= 0.0D0
@@ -87,7 +83,7 @@ SUBMODULE (id_base) id_base_mass_profile
     !$OMP PARALLEL DO DEFAULT(NONE) &
     !$OMP             SHARED(dr,dphi,dth,center,radius,mass_profile,THIS) &
     !$OMP             PRIVATE(r,th,phi,rad_coord,long,colat,sq_g,gamma_euler, &
-    !$OMP                     g_xx,baryon_density,mass_element,mass)
+    !$OMP                     g,baryon_density,mass_element,mass)
     radius_loop: DO r= 1, NINT(radius/dr), 1
 
       mass= 0.0D0
@@ -108,26 +104,11 @@ SUBMODULE (id_base) id_base_mass_profile
                    center + (rad_coord + dr)*SIN(colat)*COS(long), &
                    (rad_coord + dr)*SIN(colat)*SIN(long), &
                    (rad_coord + dr)*COS(colat), &
-                   g_xx, baryon_density, gamma_euler )
+                   g, baryon_density, gamma_euler )
 
-         ! IF( debug )THEN
-         !
-         !   IF( ISNAN( g_xx ) )THEN
-         !     PRINT *, " ** g_xx is NaN"
-         !     STOP
-         !   ENDIF
-         !   IF( ISNAN( baryon_density ) )THEN
-         !     PRINT *, " ** baryon_density is NaN"
-         !     STOP
-         !   ENDIF
-         !   IF( ISNAN( gamma_euler ) )THEN
-         !     PRINT *, " ** gamma_euler is NaN"
-         !     STOP
-         !   ENDIF
-         !
-         ! ENDIF
-          IF( ISNAN( g_xx ) .OR. ISNAN( baryon_density ) .OR. &
-              ISNAN( gamma_euler ) ) CYCLE
+          IF( ISNAN( g(jxx) ) .OR. ISNAN( g(jxy) ) .OR. ISNAN( g(jxz) ) &
+              .OR. ISNAN( g(jyy) ) .OR. ISNAN( g(jyz) ) .OR. ISNAN( g(jzz) ) &
+              .OR. ISNAN( baryon_density ) .OR. ISNAN( gamma_euler ) ) CYCLE
 
   !        CALL bns_obj% import_id( &
   !                 center1 + rad_coord*SIN(lat)*COS(long), &
@@ -168,7 +149,8 @@ SUBMODULE (id_base) id_base_mass_profile
   !        !                      + n_y*u_euler_y_l + n_z*u_euler_z_l )
 
           ! Compute square root of the determinant of the spatial metric
-          sq_g= g_xx*SQRT( g_xx )
+          CALL determinant_3x3_sym_matrix( g, sq_g )
+          sq_g= SQRT(sq_g)
 
           mass_element= (rad_coord**2.0D0)*SIN(colat)*dr*dth*dphi &
                         *sq_g*gamma_euler*baryon_density

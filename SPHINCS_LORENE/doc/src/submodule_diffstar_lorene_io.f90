@@ -111,7 +111,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_io
       PRINT *, " Ratio T/|W| between the rotaional kinetic energy and ", &
                "the gravitational binding energy: ", THIS% tsw
       PRINT *, "   For axisymmetric configurations as this one, the ", &
-               "threshold for dynamical instability is T/|W|~0.25 ", &
+               "threshold for dynamical bar-mode instability is T/|W|~0.25 ", &
                " [Masaru Shibata et al 2000 ApJ 542 453, ", &
                "https://arxiv.org/pdf/astro-ph/0005378.pdf]. See also ", &
                "[Manca et al., Classical and Quantum Gravity, 24, 171, ", &

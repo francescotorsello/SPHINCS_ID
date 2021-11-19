@@ -66,7 +66,7 @@ MODULE diffstar_base
     !  [Gourgoulhon et al, Astron.Astrophys.349:851,1999](https://arxiv.org/abs/astro-ph/9907225v1){:target="_blank"}
     !
     !  For axisymmetric configurations as those considered here, the
-    !  threshold for dynamical instability is \(T/|W|\sim 0.25\)
+    !  threshold for dynamical bar-mode instability is \(T/|W|\sim 0.25\)
     !  [[Masaru Shibata et al 2000 ApJ 542 453](https://arxiv.org/pdf/astro-ph/0005378.pdf){:target="_blank"}].
     !  See also [Manca et al., Classical and Quantum Gravity, 24, 171](https://arxiv.org/abs/0705.1826){:target="_blank"}, Sec.3.3 in [Galeazzi et al., Astron Astrophys 541:A156](https://arxiv.org/abs/1101.2664){:target="_blank"}, and Sec.5.1.3 in [Paschalidis, V., Stergioulas, N., _Rotating stars in relativity_. Living Rev Relativ 20, 7 (2017)](https://link.springer.com/article/10.1007%2Fs41114-017-0008-x){:target="_blank"}.
 

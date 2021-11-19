@@ -364,7 +364,7 @@ MODULE id_base
 
 
     SUBROUTINE read_id_mass_b_int( THIS, x, y, z, &
-                                   g_xx, &
+                                   g, &
                                    baryon_density, &
                                    gamma_euler )
       !# INTERFACE or the SUBROUTINE reading the hydro |id| needed to compute
@@ -376,9 +376,9 @@ MODULE id_base
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
       DOUBLE PRECISION, INTENT( IN )    :: z
-      DOUBLE PRECISION, INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( IN OUT ):: gamma_euler
+      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
+      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
+      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
 
     END SUBROUTINE read_id_mass_b_int
 

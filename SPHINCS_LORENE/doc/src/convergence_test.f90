@@ -271,7 +271,7 @@ PROGRAM convergence_test
     WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
                                 "l", &
                                 1, "-", 1, "."
-    WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
+    WRITE( namefile_parts_bin, "(A5)" ) systems_name(1)
     namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
 
     particles_dist% export_bin    = export_bin
@@ -388,9 +388,6 @@ PROGRAM convergence_test
                   print_formatted_lorene_id_3p1_variables( namefile_bssn )
     ENDDO export_bssn_loop
   ENDIF
-
-! There doesn't seem to be a bug until here
-!STOP
 
   !
   !-- Compute the BSSN constraints

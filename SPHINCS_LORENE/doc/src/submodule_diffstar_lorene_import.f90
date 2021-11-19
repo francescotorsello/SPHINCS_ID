@@ -87,6 +87,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
                                   THIS% shift_y( itr ), &
                                   THIS% shift_z( itr ), &
                                   THIS% g_xx( itr ), &
+                                  THIS% g_yy( itr ), &
+                                  THIS% g_zz( itr ), &
                                   THIS% k_xx( itr ), &
                                   THIS% k_xy( itr ), &
                                   THIS% k_xz( itr ), &
@@ -109,8 +111,6 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
           !-- The following follows from the assumption of conformal
           !-- flatness in |lorene|
           !
-          THIS% g_yy( itr )= THIS% g_xx( itr )
-          THIS% g_zz( itr )= THIS% g_xx( itr )
           THIS% g_xy( itr )= 0.0D0
           THIS% g_xz( itr )= 0.0D0
           THIS% g_yz( itr )= 0.0D0
@@ -193,7 +193,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( n, THIS, x, y, z, lapse, &
       !$OMP                     shift_x, shift_y, shift_z, &
-      !$OMP                     g_xx, k_xx, k_xy, k_xz, k_yy, k_yz, k_zz, &
+      !$OMP                     g_xx, g_yy, g_zz, &
+      !$OMP                     k_xx, k_xy, k_xz, k_yy, k_yz, k_zz, &
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
@@ -212,6 +213,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
                                 shift_y( itr ), &
                                 shift_z( itr ), &
                                 g_xx( itr ), &
+                                g_yy( itr ), &
+                                g_zz( itr ), &
                                 k_xx( itr ), &
                                 k_xy( itr ), &
                                 k_xz( itr ), &
@@ -231,11 +234,9 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
       DO itr= 1, n, 1
 
         !
-        !-- The following follows from the assumption of conformal
-        !-- flatness in |lorene|
+        !-- The following follows from the maximal-slicing-quasi-isotropic
+        !-- coordinates used in |lorene|
         !
-        g_yy( itr )= g_xx( itr )
-        g_zz( itr )= g_xx( itr )
         g_xy( itr )= 0.0D0
         g_xz( itr )= 0.0D0
         g_yz( itr )= 0.0D0
@@ -344,6 +345,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
                                          shift( i, j, k, jy ), &
                                          shift( i, j, k, jz ), &
                                          g( i, j, k, jxx ), &
+                                         g( i, j, k, jyy ), &
+                                         g( i, j, k, jzz ), &
                                          ek( i, j, k, jxx ), &
                                          ek( i, j, k, jxy ), &
                                          ek( i, j, k, jxz ), &
@@ -364,8 +367,6 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
             !-- The following follows from the assumption of
             !-- conformal flatness in |lorene|
             !
-            g( i, j, k, jyy )= g( i, j, k, jxx )
-            g( i, j, k, jzz )= g( i, j, k, jxx )
             g( i, j, k, jxy )= 0.0D0
             g( i, j, k, jxz )= 0.0D0
             g( i, j, k, jyz )= 0.0D0
@@ -399,18 +400,40 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
                   - g(i,j,k,jxx)*g(i,j,k,jyz)**2
 
             IF( ABS( detg ) < 1D-10 )THEN
-              PRINT *, "The determinant of the spatial metric " &
+              PRINT *, "** ERROR! import_id_spacetime: ", &
+                       "The determinant of the spatial metric " &
                        // "is effectively 0 at the grid point " &
-                       // "(ix,iy,iz)= (", i, ",", j,",", k, ")."
+                       // "(i,j,k)= (", i, ",", j,",", k, "), " &
+                       // "(x,y,z)= ", "(", &
+                       pos( i, j, k, jx ),  ",", &
+                       pos( i, j, k, jy ),  ",", &
+                       pos( i, j, k, jz ), ")."
               PRINT *, "detg=", detg
               PRINT *
+              PRINT *, "g_xx=", g(i,j,k,jxx)
+              PRINT *, "g_xy=", g(i,j,k,jxy)
+              PRINT *, "g_xz=", g(i,j,k,jxz)
+              PRINT *, "g_yy=", g(i,j,k,jyy)
+              PRINT *, "g_yz=", g(i,j,k,jyz)
+              PRINT *, "g_zz=", g(i,j,k,jzz)
               STOP
             ELSEIF( detg < 0 )THEN
-              PRINT *, "The determinant of the spatial metric " &
+              PRINT *, "** ERROR! import_id_spacetime: ", &
+                       "The determinant of the spatial metric " &
                        // "is negative at the grid point " &
-                       // "(ix,iy,iz)= (", i, ",", j,",", k, ")."
+                       // "(i,j,k)= (", i, ",", j,",", k, "), " &
+                       // "(x,y,z)= ", "(", &
+                       pos( i, j, k, jx ),  ",", &
+                       pos( i, j, k, jy ),  ",", &
+                       pos( i, j, k, jz ), ")."
               PRINT *, "detg=", detg
               PRINT *
+              PRINT *, "g_xx=", g(i,j,k,jxx)
+              PRINT *, "g_xy=", g(i,j,k,jxy)
+              PRINT *, "g_xz=", g(i,j,k,jxz)
+              PRINT *, "g_yy=", g(i,j,k,jyy)
+              PRINT *, "g_yz=", g(i,j,k,jyz)
+              PRINT *, "g_zz=", g(i,j,k,jzz)
               STOP
             ENDIF
 
@@ -419,16 +442,26 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
             CALL determinant_sym4x4_grid( i, j, k, g4, detg4 )
 
             IF( ABS( detg4 ) < 1D-10 )THEN
-              PRINT *, "The determinant of the spacetime metric "&
+              PRINT *, "** ERROR! import_id_spacetime: ", &
+                       "The determinant of the spacetime metric "&
                        // "is effectively 0 at the grid point " &
-                       // "(ix,iy,iz)= (", i, ",", j,",", k, ")."
+                       // "(i,j,k)= (", i, ",", j,",", k, "), " &
+                       // "(x,y,z)= ", "(", &
+                       pos( i, j, k, jx ),  ",", &
+                       pos( i, j, k, jy ),  ",", &
+                       pos( i, j, k, jz ), ")."
               PRINT *, "detg4=", detg4
               PRINT *
               STOP
             ELSEIF( detg4 > 0 )THEN
-              PRINT *, "The determinant of the spacetime metric "&
+              PRINT *, "** ERROR! import_id_spacetime: ", &
+                       "The determinant of the spacetime metric "&
                        // "is positive at the grid point " &
-                       // "(ix,iy,iz)= (", i, ",", j,",", k, ")."
+                       // "(i,j,k)= (", i, ",", j,",", k, "), " &
+                       // "(x,y,z)= ", "(", &
+                       pos( i, j, k, jx ),  ",", &
+                       pos( i, j, k, jy ),  ",", &
+                       pos( i, j, k, jz ), ")."
               PRINT *, "detg4=", detg4
               PRINT *
               STOP
@@ -561,7 +594,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( n, THIS, x, y, z, lapse, &
       !$OMP                     shift_x, shift_y, shift_z, &
-      !$OMP                     g_xx, &
+      !$OMP                     g_xx, g_yy, g_zz, &
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
@@ -580,6 +613,8 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
                                      shift_y( itr ), &
                                      shift_z( itr ), &
                                      g_xx( itr ), &
+                                     g_yy( itr ), &
+                                     g_zz( itr ), &
                                      baryon_density( itr ), &
                                      energy_density( itr ), &
                                      specific_energy( itr ), &
@@ -597,8 +632,6 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
         !-- The following follows from the assumption of conformal
         !-- flatness in |lorene|
         !
-        g_yy( itr )= g_xx( itr )
-        g_zz( itr )= g_xx( itr )
         g_xy( itr )= 0.0D0
         g_xz( itr )= 0.0D0
         g_yz( itr )= 0.0D0
@@ -666,21 +699,28 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
     !****************************************************
 
     USE constants, ONLY: Msun_geo, lorene2hydrobase
+    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
 
     IMPLICIT NONE
 
     IF ( C_ASSOCIATED( THIS% diffstar_ptr ) ) THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-      ! Msun_geo
+      ! to |lorene| units (\(\mathrm{km}\)).
+      ! See MODULE constants for the definition of Msun_geo
       CALL get_diffstar_mass_b( THIS% diffstar_ptr, &
                                 x*Msun_geo, &
                                 y*Msun_geo, &
                                 z*Msun_geo, &
-                                g_xx, &
+                                g(jxx), &
+                                g(jyy), &
+                                g(jzz), &
                                 baryon_density, &
                                 gamma_euler )
+
+      g(jxy)= 0.0D0
+      g(jxz)= 0.0D0
+      g(jyz)= 0.0D0
 
       baryon_density= baryon_density*lorene2hydrobase
 
