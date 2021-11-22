@@ -142,7 +142,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !
     !***********************************************
 
-    USE Hermite_refine, ONLY: H5_interpolate
+    USE Hermite_refine, ONLY: H3_interpolate
     USE numerics,       ONLY: gf_pointer, pa_pointer
 
 
@@ -164,9 +164,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     zp(1)= z
 
     density_point(1)% p => dens
-    density_grid(1)% p  => THIS% baryon_mass_density
+    density_grid(1)%  p => THIS% baryon_mass_density
 
-    CALL H5_interpolate( &
+    CALL H3_interpolate( &
           np,            &  ! The number of particle positions
           xp, yp, zp,    &  ! The x,y,z arrays of the interpolation points
           THIS% nx_grid, &  ! The dimensions of the grid function

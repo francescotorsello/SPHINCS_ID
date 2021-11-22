@@ -475,16 +475,16 @@ MODULE ejecta_generic
 
 
     MODULE SUBROUTINE interpolate_id_mass_b( THIS, x, y, z, &
-                                        g, &
-                                        baryon_density, &
-                                        gamma_euler )
+                                             g, &
+                                             baryon_density, &
+                                             gamma_euler )
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),       INTENT( IN OUT ):: THIS
+      CLASS(ejecta),    INTENT( IN OUT ):: THIS
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN)     :: z
+      DOUBLE PRECISION, INTENT( IN )    :: z
       DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
       DOUBLE PRECISION, INTENT( OUT ):: baryon_density
       DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
@@ -520,7 +520,7 @@ MODULE ejecta_generic
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),     INTENT( IN )         :: THIS
+      CLASS(ejecta),    INTENT( IN ):: THIS
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point

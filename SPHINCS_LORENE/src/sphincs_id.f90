@@ -325,7 +325,7 @@ PROGRAM sphincs_id
     CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)) )
 
     !ids(itr)% idata= initialize( ids(itr)% idata, TRIM(common_path)//TRIM(filenames(itr)) )
-    !ids(itr)% idata= derived_type_constructor( file )
+    !ids(itr)% idata= ids(1)% idata_constructor( file )
     ! Set the variables to decide on using the geodesic gauge or not
     ! (lapse=1, shift=0)
     !CALL idata( itr )% set_one_lapse( one_lapse )
