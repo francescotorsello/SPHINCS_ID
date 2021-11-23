@@ -102,7 +102,20 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !
     !****************************************************
 
+    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
+
     IMPLICIT NONE
+
+    baryon_density= THIS% read_mass_density( x, y, z )
+
+    g(jxx)= 1.0D0
+    g(jyy)= 1.0D0
+    g(jzz)= 1.0D0
+    g(jxy)= 0.0D0
+    g(jxz)= 0.0D0
+    g(jyz)= 0.0D0
+
+    gamma_euler= 1.0D0
 
   END PROCEDURE interpolate_id_mass_b
 
@@ -142,52 +155,154 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !
     !***********************************************
 
-    USE Hermite_refine, ONLY: H3_interpolate
-    USE numerics,       ONLY: gf_pointer, pa_pointer
+    USE Hermite_refine, ONLY: find_indices
+    !USE numerics,       ONLY: gf_pointer, pa_pointer
 
 
     IMPLICIT NONE
 
 
-    INTEGER, PARAMETER:: np= 1
-    INTEGER, PARAMETER:: nvars= 1
-    INTEGER, PARAMETER:: nghost= 0
+    INTEGER, PARAMETER:: nghost= 1
+    INTEGER:: i, j, k, ierr, sgn_z
 
-    DOUBLE PRECISION, DIMENSION(np):: xp, yp, zp
-    DOUBLE PRECISION, DIMENSION(1), TARGET:: dens
+    DOUBLE PRECISION:: x0, y0, z0, x1, y1, z1, xd, yd, zd, &
+                       c000, c001, c010, c100, c011, c110, c101, c111, &
+                       c00, c01, c10, c11, c0, c1, zp
 
-    TYPE(gf_pointer), DIMENSION(nvars):: density_grid
-    TYPE(pa_pointer), DIMENSION(nvars):: density_point
+    sgn_z= SIGN(1.0D0,z)
+    zp= ABS(z)
 
-    xp(1)= x
-    yp(1)= y
-    zp(1)= z
+    CALL find_indices( x, y, zp, &
+                       THIS% nx_grid, THIS% xL_grid, THIS% dx_grid, nghost, &
+                       THIS% ny_grid, THIS% yL_grid, THIS% dy_grid, nghost, &
+                       THIS% nz_grid, THIS% zL_grid, THIS% dz_grid, nghost, &
+                       nghost, i, j, k, ierr )
 
-    density_point(1)% p => dens
-    density_grid(1)%  p => THIS% baryon_mass_density
+   ! PRINT *, THIS% xL_grid, THIS% yL_grid, THIS% zL_grid
+   ! PRINT *, x, y, z
+   ! PRINT *, i, j, k
+   ! PRINT *
+   !
+   ! PRINT *, THIS% grid(i,j,k,1), THIS% grid(i+1,j,k,1)
 
-    CALL H3_interpolate( &
-          np,            &  ! The number of particle positions
-          xp, yp, zp,    &  ! The x,y,z arrays of the interpolation points
-          THIS% nx_grid, &  ! The dimensions of the grid function
-          THIS% xL_grid, &  ! The lower coordinate values of the grid function
-          THIS% dx_grid, &  ! The grid spacings
-          nghost,        &  ! Number of ghost cells
-          THIS% ny_grid, &
-          THIS% yL_grid, &
-          THIS% dy_grid, &
-          nghost,        &
-          THIS% nz_grid, &
-          THIS% zL_grid, &
-          THIS% dz_grid, &
-          nghost,        &
-          nvars,         &  ! Number of functions to be interpolated
-          density_grid,  &  ! Array of pointers to grid functions of the data
-          density_point  &  ! Array of pointers to the point array with
-                            ! interpolated data
-         )
+    IF( i >= THIS% nx_grid )THEN
+      i= THIS% nx_grid - 1
+    ENDIF
+    IF( j >= THIS% ny_grid )THEN
+      j= THIS% ny_grid - 1
+    ENDIF
+    IF( k >= THIS% nz_grid )THEN
+      k= THIS% nz_grid - 1
+    ENDIF
 
-    res= dens(1)
+    !PRINT *, i, j, k
+    !PRINT *, THIS% nx_grid, THIS% ny_grid, THIS% nz_grid
+
+    IF( k <= 0 )THEN
+      k= 1
+    ENDIF
+    IF( i <= 0 )THEN
+      i= 1
+    ENDIF
+    IF( j <= 0 )THEN
+      j= 1
+    ENDIF
+
+    x0= THIS% grid(i,j,k,1)
+    x1= THIS% grid(i+1,j,k,1) !+ THIS% dx_grid
+    y0= THIS% grid(i,j,k,2)
+    y1= THIS% grid(i,j+1,k,2) !+ THIS% dy_grid
+    z0= THIS% grid(i,j,k,3)
+    z1= THIS% grid(i,j,k+1,3) !+ THIS% dz_grid
+
+    xd= ( x - x0 )/( x1 - x0 )
+    yd= ( y - y0 )/( y1 - y0 )
+    zd= ( z - z0 )/( z1 - z0 )
+
+  !  PRINT *, x, y, z
+  !  PRINT *
+  !
+  !  PRINT *, xd, yd, zd
+  !  PRINT *
+
+    IF( k == 0 )THEN
+      c001= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j,k)
+      c101= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j,k)
+      c011= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j+1,k)
+      c111= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j+1,k)
+    ENDIF
+
+    c000= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j,k)
+    c100= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j,k)
+    c001= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j,k+1)
+    c101= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j,k+1)
+    c010= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j+1,k)
+    c110= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j+1,k)
+    c011= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j+1,k+1)
+    c111= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j+1,k+1)
+
+    c00= c000*( 1.0D0 - xd ) + c100*xd
+
+    c01= c001*( 1.0D0 - xd ) + c101*xd
+
+    c10= c010*( 1.0D0 - xd ) + c110*xd
+
+    c11= c011*( 1.0D0 - xd ) + c111*xd
+
+    c0= c00*( 1.0D0 - yd ) + c10*yd
+    c1= c01*( 1.0D0 - yd ) + c11*yd
+
+    res= c0*( 1.0D0 - zd ) + c1*zd
+
+   ! PRINT *, c000, &
+   !          c100, &
+   !          c001, &
+   !          c101, &
+   !          c010, &
+   !          c110, &
+   !          c011, &
+   !          c111, &
+   !          res
+
+  !  INTEGER, PARAMETER:: np= 1
+  !  INTEGER, PARAMETER:: nvars= 1
+  !  INTEGER, PARAMETER:: nghost= 0
+  !
+  !  DOUBLE PRECISION, DIMENSION(np):: xp, yp, zp
+  !  DOUBLE PRECISION, DIMENSION(1), TARGET:: dens
+  !
+  !  TYPE(gf_pointer), DIMENSION(nvars):: density_grid
+  !  TYPE(pa_pointer), DIMENSION(nvars):: density_point
+  !
+  !  xp(1)= x
+  !  yp(1)= y
+  !  zp(1)= z
+  !
+  !  density_point(1)% p => dens
+  !  density_grid(1)%  p => THIS% baryon_mass_density
+  !
+  !  CALL H3_interpolate( &
+  !        np,            &  ! The number of particle positions
+  !        xp, yp, zp,    &  ! The x,y,z arrays of the interpolation points
+  !        THIS% nx_grid, &  ! The dimensions of the grid function
+  !        THIS% xL_grid, &  ! The lower coordinate values of the grid function
+  !        THIS% dx_grid, &  ! The grid spacings
+  !        nghost,        &  ! Number of ghost cells
+  !        THIS% ny_grid, &
+  !        THIS% yL_grid, &
+  !        THIS% dy_grid, &
+  !        nghost,        &
+  !        THIS% nz_grid, &
+  !        THIS% zL_grid, &
+  !        THIS% dz_grid, &
+  !        nghost,        &
+  !        nvars,         &  ! Number of functions to be interpolated
+  !        density_grid,  &  ! Array of pointers to grid functions of the data
+  !        density_point  &  ! Array of pointers to the point array with
+  !                          ! interpolated data
+  !       )
+  !
+  !  res= dens(1)
 
   END PROCEDURE interpolate_mass_density
 
@@ -223,6 +338,12 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !************************************************
 
     IMPLICIT NONE
+
+    IF( THIS% read_mass_density( x, y, z ) <= 1.0D-13 )THEN
+      res= 1
+    ELSE
+      res= 0
+    ENDIF
 
   END PROCEDURE is_hydro_negative
 

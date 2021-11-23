@@ -69,7 +69,9 @@ MODULE ejecta_generic
     !! Spacing on the \(z\)-axis for the grid containing the |id|
 
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid
-    DOUBLE PRECISION, DIMENSION(:,:,:), POINTER:: baryon_mass_density
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: baryon_mass_density
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: specific_energy
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: vel
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sizes
@@ -146,6 +148,8 @@ MODULE ejecta_generic
     !# Piecewise polytrope: Base 10 exponent of the third fiducial density
     !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\)
 
+
+    INTEGER:: eos_ejectaid
 
 
     CONTAINS
@@ -498,7 +502,7 @@ MODULE ejecta_generic
     !! Stores the components of the extrinsic curvature in arrays
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                     INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                  INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y

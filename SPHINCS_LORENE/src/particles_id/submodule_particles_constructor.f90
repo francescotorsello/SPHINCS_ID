@@ -806,6 +806,8 @@ SUBMODULE (particles_id) particles_constructor
       ENDDO
       CALL parts% placer_timer% stop_timer()
 
+      STOP
+
       parts% npart= SUM( parts% npart_i )
 
       !
@@ -1488,10 +1490,10 @@ SUBMODULE (particles_id) particles_constructor
 
 
     SUBROUTINE integrate_mass_density( center, radius, &
-                                  central_density, &
-                                  dr, dth, dphi, &
-                                  mass, mass_profile, &
-                                  mass_profile_idx )
+                                       central_density, &
+                                       dr, dth, dphi, &
+                                       mass, mass_profile, &
+                                       mass_profile_idx )
 
       IMPLICIT NONE
 

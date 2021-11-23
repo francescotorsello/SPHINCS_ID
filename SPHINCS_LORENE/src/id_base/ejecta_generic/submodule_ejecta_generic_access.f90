@@ -116,6 +116,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     CALL THIS% check_i_matter(i_matter)
 
+    get_eos= "APR4"
+
   END PROCEDURE get_eos
 
 
@@ -424,6 +426,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     IMPLICIT NONE
 
+    get_eos_ejectaid= 110
+
   END PROCEDURE get_eos_ejectaid
 
 
@@ -438,6 +442,12 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !**************************************************
 
     IMPLICIT NONE
+
+    eos_params= [ DBLE(THIS% eos_ejectaid), DBLE(THIS% npeos), &
+          THIS% gamma0, THIS% gamma1, THIS% gamma2, THIS% gamma3, &
+          THIS% kappa0, THIS% kappa1, THIS% kappa2, THIS% kappa3, &
+          THIS% logP1, &
+          THIS% logRho0, THIS% logRho1, THIS% logRho2 ]
 
   END PROCEDURE get_eos_parameters
 
