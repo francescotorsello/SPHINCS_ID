@@ -93,11 +93,11 @@ SUBMODULE (particles_id) particles_apm
 
     IMPLICIT NONE
 
-    INTEGER,          PARAMETER:: max_npart   = 5D+6
+    INTEGER,          PARAMETER:: max_npart   = 7D+6
     INTEGER,          PARAMETER:: nn_des      = 301
     INTEGER,          PARAMETER:: m_max_it    = 50
     INTEGER,          PARAMETER:: search_pos= 10
-    DOUBLE PRECISION, PARAMETER:: ellipse_thickness = 1.25D0
+    DOUBLE PRECISION, PARAMETER:: ellipse_thickness = 1.1D0!1.25D0
     DOUBLE PRECISION, PARAMETER:: ghost_dist = 0.25D0
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
