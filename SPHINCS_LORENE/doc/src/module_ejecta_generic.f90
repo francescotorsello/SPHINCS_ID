@@ -8,14 +8,14 @@ MODULE ejecta_generic
   !
   !# This MODULE contains the definition of TYPE ejecta,
   !  which is an ABSTRACT TYPE representing any possible
-  !  type of initial data (ID) for a differentially rotating
-  !  star (DRS) to be set up for |sphincsbssn|. That is, DRS ID
+  !  type of initial data (|id|) for a differentially rotating
+  !  star (DRS) to be set up for |sphincsbssn|. That is, DRS |id|
   !  produced with |lorene|, with |fuka|, etc.
   !
   !  PROCEDURES and variables shared by all the types
-  !  of DRS ID should belong to TYPE ejecta, as
+  !  of DRS |id| should belong to TYPE ejecta, as
   !  they are inherited by its EXTENDED TYPES that
-  !  represent more specific types of DRS ID.
+  !  represent more specific types of DRS |id|.
   !
   !  FT 22.10.2021
   !
@@ -31,13 +31,52 @@ MODULE ejecta_generic
 
   !********************************************************************
   !                                                                   *
-  !  Definition of TYPE ejecta  (differentially rotating star)  *
+  !  Definition of TYPE ejecta  *
   !                                                                   *
   !********************************************************************
 
   TYPE, EXTENDS(idbase):: ejecta
-  !# TYPE for ejecta ID for |sphincsbssn| prepared on a grid
+  !# TYPE for ejecta |id| for |sphincsbssn| prepared on a grid
 
+    INTEGER:: nx_grid
+    !! Number of grid points in the \(x\) direction for the grid containing the |id|
+
+    INTEGER:: ny_grid
+    !! Number of grid points in the \(y\) direction for the grid containing the |id|
+
+    INTEGER:: nz_grid
+    !! Number of grid points in the \(z\) direction for the grid containing the |id|
+
+    INTEGER:: n_gridpoints
+    !! Total number of grid points for the grid containing the |id|
+
+    DOUBLE PRECISION:: xL_grid
+    !! Minimum \(x\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION:: yL_grid
+    !! Minimum \(y\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION:: zL_grid
+    !! Minimum \(z\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION:: dx_grid
+    !! Spacing on the \(x\)-axis for the grid containing the |id|
+
+    DOUBLE PRECISION:: dy_grid
+    !! Spacing on the \(y\)-axis for the grid containing the |id|
+
+    DOUBLE PRECISION:: dz_grid
+    !! Spacing on the \(z\)-axis for the grid containing the |id|
+
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: baryon_mass_density
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: specific_energy
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: vel
+
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sizes
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: centers
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: barycenters
 
     !--------------------------------!
     !--  Parameters of the ejecta  --!
@@ -109,6 +148,8 @@ MODULE ejecta_generic
     !# Piecewise polytrope: Base 10 exponent of the third fiducial density
     !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\)
 
+
+    INTEGER:: eos_ejectaid
 
 
     CONTAINS
@@ -411,11 +452,11 @@ MODULE ejecta_generic
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                     INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                  INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION,   DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION,   DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION,   DIMENSION(:), INTENT( IN )    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
@@ -438,16 +479,16 @@ MODULE ejecta_generic
 
 
     MODULE SUBROUTINE interpolate_id_mass_b( THIS, x, y, z, &
-                                        g, &
-                                        baryon_density, &
-                                        gamma_euler )
+                                             g, &
+                                             baryon_density, &
+                                             gamma_euler )
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),       INTENT( IN OUT ):: THIS
+      CLASS(ejecta),    INTENT( IN OUT ):: THIS
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN)     :: z
+      DOUBLE PRECISION, INTENT( IN )    :: z
       DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
       DOUBLE PRECISION, INTENT( OUT ):: baryon_density
       DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
@@ -461,7 +502,7 @@ MODULE ejecta_generic
     !! Stores the components of the extrinsic curvature in arrays
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                     INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                  INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -483,7 +524,7 @@ MODULE ejecta_generic
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),     INTENT( IN )         :: THIS
+      CLASS(ejecta),    INTENT( IN ):: THIS
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point

@@ -1558,14 +1558,14 @@ SUBMODULE (particles_id) particles_constructor
                                                 v_euler_x, v_euler_y, v_euler_z
 
       CALL id% read_id_particles( npart_real, x, y, z, &
-                             lapse, shift_x, shift_y, shift_z, &
-                             g_xx, g_xy, g_xz, &
-                             g_yy, g_yz, g_zz, &
-                             baryon_density, &
-                             energy_density, &
-                             specific_energy, &
-                             pressure, &
-                             v_euler_x, v_euler_y, v_euler_z )
+                                  lapse, shift_x, shift_y, shift_z, &
+                                  g_xx, g_xy, g_xz, &
+                                  g_yy, g_yz, g_zz, &
+                                  baryon_density, &
+                                  energy_density, &
+                                  specific_energy, &
+                                  pressure, &
+                                  v_euler_x, v_euler_y, v_euler_z )
 
       CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
                             shift_z, v_euler_x, v_euler_y, v_euler_z, &

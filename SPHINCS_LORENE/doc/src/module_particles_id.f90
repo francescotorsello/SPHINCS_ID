@@ -883,7 +883,7 @@ MODULE particles_id
       !> Center of the star (point of highest density), computed by |lorene|
       DOUBLE PRECISION,                 INTENT( IN )   :: center
       !> Center of mass of the star, computed by |lorene|
-      DOUBLE PRECISION,                 INTENT( IN )   :: com_star
+      DOUBLE PRECISION,                 INTENT( INOUT ):: com_star
       !> Mass of the star
       DOUBLE PRECISION,                 INTENT( IN )   :: mass
       !> Radius of the star in the x direction, towards the companion
@@ -1194,7 +1194,7 @@ MODULE particles_id
     !
     !*************************************************
 
-    USE NR,             ONLY: indexx
+    USE NR, ONLY: indexx
 
     IMPLICIT NONE
 

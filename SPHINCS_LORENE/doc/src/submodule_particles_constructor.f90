@@ -1015,6 +1015,8 @@ SUBMODULE (particles_id) particles_constructor
 
     ENDDO matter_objects_loop
 
+    STOP
+
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts )
 
@@ -1488,10 +1490,10 @@ SUBMODULE (particles_id) particles_constructor
 
 
     SUBROUTINE integrate_mass_density( center, radius, &
-                                  central_density, &
-                                  dr, dth, dphi, &
-                                  mass, mass_profile, &
-                                  mass_profile_idx )
+                                       central_density, &
+                                       dr, dth, dphi, &
+                                       mass, mass_profile, &
+                                       mass_profile_idx )
 
       IMPLICIT NONE
 
@@ -1556,14 +1558,14 @@ SUBMODULE (particles_id) particles_constructor
                                                 v_euler_x, v_euler_y, v_euler_z
 
       CALL id% read_id_particles( npart_real, x, y, z, &
-                             lapse, shift_x, shift_y, shift_z, &
-                             g_xx, g_xy, g_xz, &
-                             g_yy, g_yz, g_zz, &
-                             baryon_density, &
-                             energy_density, &
-                             specific_energy, &
-                             pressure, &
-                             v_euler_x, v_euler_y, v_euler_z )
+                                  lapse, shift_x, shift_y, shift_z, &
+                                  g_xx, g_xy, g_xz, &
+                                  g_yy, g_yz, g_zz, &
+                                  baryon_density, &
+                                  energy_density, &
+                                  specific_energy, &
+                                  pressure, &
+                                  v_euler_x, v_euler_y, v_euler_z )
 
       CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
                             shift_z, v_euler_x, v_euler_y, v_euler_z, &

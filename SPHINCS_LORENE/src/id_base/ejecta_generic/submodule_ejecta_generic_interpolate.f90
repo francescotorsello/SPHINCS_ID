@@ -89,7 +89,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     INTEGER:: i
 
     DO i= 1, n, 1
-      baryon_density(n) = THIS% read_mass_density( x(i), y(i), z(i) )
+      baryon_density(i) = THIS% read_mass_density( x(i), y(i), z(i) )
     ENDDO
 
     energy_density = 0.0D0

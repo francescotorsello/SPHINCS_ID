@@ -1669,7 +1669,7 @@ SUBMODULE (particles_id) spherical_surfaces
     !
     !************************************************
 
-    USE constants,  ONLY: third
+    USE constants,  ONLY: third, pi
 
     IMPLICIT NONE
 
@@ -1690,17 +1690,56 @@ SUBMODULE (particles_id) spherical_surfaces
       END FUNCTION get_dens
     END INTERFACE
 
-    DOUBLE PRECISION:: rho_tmp
+    INTEGER:: i, th, phi
+    DOUBLE PRECISION:: rho_tmp, long, lat, rad
 
     !central_density= bns_obj% get_rho_center1()
 
     shell_radii= 0.0D0
 
-    shell_radii(1)= ( central_dens/m_p )**(-third)
+    IF( central_dens > 0.0D0 )THEN
+      shell_radii(1)= ( central_dens/m_p )**(-third)
+    ELSE
+      DO i= 1, 1000, 1
+        IF( get_dens( center + radius*i/1000.0D0, 0.0D0, 0.0D0 ) > 1.0D-13 )THEN
+          shell_radii(1)= &
+              ( get_dens( center + radius*i/1000.0D0, 0.0D0, 0.0D0 )/m_p )**(-third)
+          EXIT
+        ENDIF
+      ENDDO
+    ENDIF
+
     DO itr= 2, n_shells, 1
 
-      rho_tmp= get_dens( center + shell_radii( itr - 1 ), &
-                                             0.0D0, 0.0D0 )
+      rho_tmp= get_dens( center + shell_radii( itr - 1 ), 0.0D0, 0.0D0 )
+
+      IF( rho_tmp <= 1.0D-13 )THEN
+
+        rad_loop: DO i= 1, 1000, 1
+          DO th= 0, 10, 1
+            DO phi= 0, 20, 1
+
+              long= phi/20.0D0*(2.0D0*pi)
+              lat = th/10.0D0*pi
+              rad = (center + shell_radii( itr - 1 ) + radius*i/1000.0D0)
+
+              IF( get_dens( rad*SIN(lat)*COS(long),&
+                            rad*SIN(lat)*SIN(long), &
+                            rad*COS(lat) ) > 1.0D-13 )THEN
+
+                rho_tmp= get_dens( rad*SIN(lat)*COS(long),&
+                                   rad*SIN(lat)*SIN(long), &
+                                   rad*COS(lat) )
+
+                EXIT rad_loop
+
+              ENDIF
+
+            ENDDO
+          ENDDO
+        ENDDO rad_loop
+
+      ENDIF
 
       IF( rho_tmp == 0 )THEN
         shell_radii= shell_radii*itr/n_shells

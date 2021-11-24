@@ -44,11 +44,14 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
 #### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___
 
-SPHINCS_ID is a modular, object-oriented, OMP parallelized FORTRAN 2018 code to produce initial data to be evolved in time with the FORTRAN 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}). Currently, it produces initial data for binary neutron star mergers and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"}).
+SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([4][4]{:target="_blank"}).
 
-Currently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN.
+Currently, it produces initial data for binary neutron star mergers and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"}).
+
+Presently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN or MAGMA2. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN or MAGMA2.
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://lorene.obspm.fr/>
 [3]: <https://arxiv.org/abs/gr-qc/0007028>
+[4]: <https://academic.oup.com/mnras/article/498/3/4230/5897370>
 ___
