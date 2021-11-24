@@ -86,6 +86,31 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     IMPLICIT NONE
 
+    INTEGER:: i
+
+    DO i= 1, n, 1
+      baryon_density(n) = THIS% read_mass_density( x(i), y(i), z(i) )
+    ENDDO
+
+    energy_density = 0.0D0
+    specific_energy= 0.0D0
+    pressure       = 0.0D0
+    u_euler_x      = 0.0D0
+    u_euler_y      = 0.0D0
+    u_euler_z      = 0.0D0
+
+    g_xx= 1.0D0
+    g_yy= 1.0D0
+    g_zz= 1.0D0
+    g_xy= 0.0D0
+    g_xz= 0.0D0
+    g_yz= 0.0D0
+
+    lapse= 1.0D0
+    shift_x= 0.0D0
+    shift_y= 0.0D0
+    shift_z= 0.0D0
+
   END PROCEDURE interpolate_id_particles
 
 

@@ -452,11 +452,11 @@ MODULE ejecta_generic
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                     INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                  INTENT( IN OUT ):: THIS
       INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION,   DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION,   DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION,   DIMENSION(:), INTENT( IN )    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y

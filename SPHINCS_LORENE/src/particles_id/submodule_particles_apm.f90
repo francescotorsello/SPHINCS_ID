@@ -93,11 +93,11 @@ SUBMODULE (particles_id) particles_apm
 
     IMPLICIT NONE
 
-    INTEGER,          PARAMETER:: max_npart   = 5D+6
+    INTEGER,          PARAMETER:: max_npart   = 10D+6
     INTEGER,          PARAMETER:: nn_des      = 301
     INTEGER,          PARAMETER:: m_max_it    = 50
     INTEGER,          PARAMETER:: search_pos= 10
-    DOUBLE PRECISION, PARAMETER:: ellipse_thickness = 1.25D0
+    DOUBLE PRECISION, PARAMETER:: ellipse_thickness = 550.0D0!1.25D0
     DOUBLE PRECISION, PARAMETER:: ghost_dist = 0.25D0
     DOUBLE PRECISION, PARAMETER:: tol= 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol= 2.0D-2
@@ -174,7 +174,7 @@ SUBMODULE (particles_id) particles_apm
     !CHARACTER:: it_n
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
-    LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .TRUE.
     LOGICAL:: few_ncand
 
     CALL RANDOM_SEED( SIZE= dim_seed )
@@ -352,12 +352,12 @@ SUBMODULE (particles_id) particles_apm
     ny= ny_gh
     nz= nz_gh
     eps= 5.0D-1
-    xmin= center - larger_radius*( 1.0D0 + eps )
-    xmax= center + larger_radius*( 1.0D0 + eps )
-    ymin= - radius_y*( 1.0D0 + eps )
-    ymax=   radius_y*( 1.0D0 + eps )
-    zmin= - radius_z*( 1.0D0 + eps )
-    zmax=   radius_z*( 1.0D0 + eps )
+    xmin= -600.0D0!center - larger_radius*( 1.0D0 + eps )
+    xmax= 600.0D0!center + larger_radius*( 1.0D0 + eps )
+    ymin= -600.0D0!- radius_y*( 1.0D0 + eps )
+    ymax= 600.0D0!  radius_y*( 1.0D0 + eps )
+    zmin= -600.0D0!- radius_z*( 1.0D0 + eps )
+    zmax= 600.0D0!  radius_z*( 1.0D0 + eps )
     dx= ABS( xmax - xmin )/DBLE( nx )
     dy= ABS( ymax - ymin )/DBLE( ny )
     dz= ABS( zmax - zmin )/DBLE( nz )
@@ -373,9 +373,9 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
     ENDIF
 
-    rad_x= larger_radius + ghost_dist !+ h_av/7.0D0
-    rad_y= radius_y      + ghost_dist !+ h_av/7.0D0
-    rad_z= radius_z      + ghost_dist !+ h_av/7.0D0
+    rad_x= 1.0D0 !larger_radius + ghost_dist !+ h_av/7.0D0
+    rad_y= 1.0D0 !radius_y      + ghost_dist !+ h_av/7.0D0
+    rad_z= 1.0D0 !radius_z      + ghost_dist !+ h_av/7.0D0
 
     IF( debug ) PRINT *, "larger_radius= ", larger_radius
     IF( debug ) PRINT *, "radius_y= ", radius_y
@@ -416,17 +416,27 @@ SUBMODULE (particles_id) particles_apm
           z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 &
                                    + ytemp**2.0D0 + ztemp**2.0D0 ) )
 
-          IF( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-                    + ztemp**2.0D0 ) <= &
-                    ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
-                                + y_ell**2.0D0 + z_ell**2.0D0 ) &
+          IF( ( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+                    + ztemp**2.0D0 ) <= 500.0D0 & !
+                    !ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
+                    !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
               .AND. &
               SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
                     + ztemp**2.0D0 ) >= &
               SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
                     + z_ell**2.0D0 ) &
               .AND. &
-              get_density( xtemp, ytemp, ztemp ) <= 0.0D0 &
+              get_density( xtemp, ytemp, ztemp ) <= 1.0D-13 ) &
+              .OR. &
+              ( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+              + ztemp**2.0D0 ) <= &
+              ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
+                          + y_ell**2.0D0 + z_ell**2.0D0 ) &
+              .AND. &
+              SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+                    + ztemp**2.0D0 ) >= 500.0D0 ) & !
+              !SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
+              !      + z_ell**2.0D0 ) )
           )THEN
 
             !itr= itr + 1

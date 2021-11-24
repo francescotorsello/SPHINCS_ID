@@ -806,8 +806,6 @@ SUBMODULE (particles_id) particles_constructor
       ENDDO
       CALL parts% placer_timer% stop_timer()
 
-      STOP
-
       parts% npart= SUM( parts% npart_i )
 
       !
@@ -1016,6 +1014,8 @@ SUBMODULE (particles_id) particles_constructor
       END ASSOCIATE
 
     ENDDO matter_objects_loop
+
+    STOP
 
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts )
