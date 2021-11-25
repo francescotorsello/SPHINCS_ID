@@ -9,6 +9,75 @@ env = DefaultEnvironment(ENV = {'PATH' : os.environ['PATH'],
                          LINKFLAGS = '-g -qopenmp',
                          TOOLS= ['default', 'ifort'])
 
+default_flavour = '2'
+
+###############################################################################
+# CUSTOM OPTIONS
+###############################################################################
+
+flavour = ARGUMENTS.get('flavour')
+if flavour is None: flavour = default_flavour
+
+###############################################################################
+
+###############################################################################
+# FLAVOUR= 1. Link to LORENE library
+
+if flavour == '1': #
+
+  build_flavour= '-Dflavour=1'
+
+  env['LIBPATH'] = ['../../../Lorene/Lib']
+
+  env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+  # Debugging in LORENE
+  #env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+
+  sources_flavour = [
+    'src/id_base/bns_base/module_bns_base.f90',
+    'src/id_base/bns_base/submodule_bns_base_access.f90',
+    'src/id_base/bns_base/submodule_bns_base_io.f90',
+    'src/id_base/bns_base/bns_lorene/module_bns_lorene.f90',
+    'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_constructor.f90',
+    'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_import.f90',
+    'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_memory.f90',
+    'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_access.f90',
+    'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_params.f90',
+    'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_io.f90',
+    'src/id_base/diffstar_base/module_diffstar_base.f90',
+    'src/id_base/diffstar_base/submodule_diffstar_base_access.f90',
+    'src/id_base/diffstar_base/submodule_diffstar_base_io.f90',
+    'src/id_base/diffstar_base/diffstar_lorene/module_diffstar_lorene.f90',
+    'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_constructor.f90',
+    'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_import.f90',
+    'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_memory.f90',
+    'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_access.f90',
+    'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_params.f90',
+    'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_io.f90',
+    'src/sphincs_id_lorene/module_sphincs_id_lorene.f90'
+  ]
+
+###############################################################################
+# FLAVOUR= 2. Interpolate data from a grid. Do not link to LORENE library
+
+if flavour == '2': #
+
+  build_flavour= '-Dflavour=2'
+
+  env['LIBS'] = ['stdc++']
+
+  sources_flavour = [
+    'src/id_base/ejecta_generic/module_ejecta_generic.f90',
+    'src/id_base/ejecta_generic/submodule_ejecta_generic_constructor.f90',
+    'src/id_base/ejecta_generic/submodule_ejecta_generic_access.f90',
+    'src/id_base/ejecta_generic/submodule_ejecta_generic_memory.f90',
+    'src/id_base/ejecta_generic/submodule_ejecta_generic_io.f90',
+    'src/id_base/ejecta_generic/submodule_ejecta_generic_interpolate.f90',
+    'src/sphincs_id_interpolate/module_sphincs_id_interpolate.f90'
+  ]
+
+###############################################################################
+
 # pretty output
 if ARGUMENTS.get('VERBOSE') != '1':
   if sys.stdout.isatty():
@@ -24,12 +93,6 @@ if ARGUMENTS.get('VERBOSE') != '1':
 
 # Build options (e.g., libraries to use)
 
-# Production
-env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export', 'lorene', 'lorenef77']
-# Debugging in LORENE
-#env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
-
-env['LIBPATH'] = ['../../../Lorene/Lib']
 env['F90FILESUFFIXES']=['.f90','.f']
 
 # Fortran compiler
@@ -39,13 +102,13 @@ env['F90'] = 'ifort'
 env['CXX'] = 'icpc'
 
 # F90 flags for production
-env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', '-Dflavour=2']
+env['F90FLAGS'] = ['-O3', '-qopenmp', '-qoverride-limits', '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', build_flavour]
 #, '-heap-arrays'
 #, '-qoverride-limits'
 #, '-fpp'
 
 # F90 flags for debugging
-#env['F90FLAGS'] = ['-O0', '-g', '-qopenmp',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-CB', '-CS', '-traceback', '-fpe0', '-warn', '-debug extended', '-fpp']
+#env['F90FLAGS'] = ['-O0', '-g', '-qopenmp', '-qoverride-limits',  '-xHOST', '-heap-arrays', '-qopt-report', '-qopt-report-phase=vec,openmp', '-no-wrap-margin', '-CB', '-CS', '-traceback', '-fpe0', '-warn', '-debug extended', '-fpp', build_flavour]
 
 # More F90 flags for debugging
 #env['F90FLAGS'] = ['-r8','-g','-qopenmp','-O0', '-ftz', '-heap-arrays 5000',, '-fno-alias', '-traceback', '-debug', '-debug all', '-nolib-inline','-align all', '-check bounds', '-fno-inline-functions', '-prec-div', '-prec-sqrt', '-fp-stack-check', '-init=snan,arrays', '-traceback', '-fPIC', '-fpe3', '-heap-arrays 32', '-assume realloc_lhs', '-assume protect_parens,minus0', '-assume no old_maxminloc', '-warn unused', '-align dcommons',  '-xHOST', '-qopt-report', '-qopt-report-phase=vec,openmp', '-fp-model strict', '-no-wrap-margin', '-ftrapuv', '-mp']
@@ -121,62 +184,34 @@ lorene_sources_bin_ns = ['../../../Lorene/Export/C++/Source/bin_ns.C',
                          '../../../Lorene/Export/C++/Source/bin_ns_aux.C',
                          '../../../Lorene/Export/C++/Source/write_lines.C']
 
-sources = ['src/utility/module_utility.f90',
-           'src/id_base/module_id_base.f90',
-           'src/id_base/submodule_id_base_initialization.f90',
-           'src/id_base/submodule_id_base_access.f90',
-           'src/id_base/submodule_id_base_mass_profile.f90',
-          # 'src/id_base/bns_base/module_bns_base.f90',
-          # 'src/id_base/bns_base/submodule_bns_base_access.f90',
-          # 'src/id_base/bns_base/submodule_bns_base_io.f90',
-          # #'src/bns_base/submodule_bns_base_mass_profile.f90',
-          # 'src/id_base/bns_base/bns_lorene/module_bns_lorene.f90',
-          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_constructor.f90',
-          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_import.f90',
-          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_memory.f90',
-          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_access.f90',
-          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_params.f90',
-          # 'src/id_base/bns_base/bns_lorene/submodule_bns_lorene_io.f90',
-          # 'src/id_base/diffstar_base/module_diffstar_base.f90',
-          # 'src/id_base/diffstar_base/submodule_diffstar_base_access.f90',
-          # 'src/id_base/diffstar_base/submodule_diffstar_base_io.f90',
-          # 'src/id_base/diffstar_base/diffstar_lorene/module_diffstar_lorene.f90',
-          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_constructor.f90',
-          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_import.f90',
-          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_memory.f90',
-          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_access.f90',
-          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_params.f90',
-          # 'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_io.f90',
-           'src/id_base/ejecta_generic/module_ejecta_generic.f90',
-           'src/id_base/ejecta_generic/submodule_ejecta_generic_constructor.f90',
-           'src/id_base/ejecta_generic/submodule_ejecta_generic_access.f90',
-           'src/id_base/ejecta_generic/submodule_ejecta_generic_memory.f90',
-           'src/id_base/ejecta_generic/submodule_ejecta_generic_io.f90',
-           'src/id_base/ejecta_generic/submodule_ejecta_generic_interpolate.f90',
-           'src/particles_id/module_particles_id.f90',
-           'src/particles_id/submodule_particles_constructor.f90',
-           'src/particles_id/submodule_particles_memory.f90',
-           'src/particles_id/submodule_particles_lattices.f90',
-           'src/particles_id/submodule_particles_spherical_surfaces.f90',
-           'src/particles_id/submodule_particles_sph_variables.f90',
-           'src/particles_id/submodule_particles_access.f90',
-           'src/particles_id/submodule_particles_io.f90',
-           'src/particles_id/submodule_particles_compose.f90',
-           #'src/particles_id/submodule_particles_redistribute_nu.f90',
-           'src/particles_id/submodule_particles_apm.f90',
-           'src/formul_3p1/module_formul_3p1_id.f90',
-           'src/formul_3p1/submodule_formul_3p1_standard3p1_variables.f90',
-           'src/formul_3p1/submodule_formul_3p1_access.f90',
-           'src/formul_3p1/submodule_formul_3p1_io.f90',
-           'src/formul_3p1/submodule_formul_3p1_analysis.f90',
-           'src/formul_3p1/bssn_id/module_bssn_id.f90',
-           'src/formul_3p1/bssn_id/submodule_bssn_id_constructor.f90',
-           'src/formul_3p1/bssn_id/submodule_bssn_id_variables.f90',
-           'src/formul_3p1/bssn_id/submodule_bssn_id_constraints.f90',
-           'src/formul_3p1/bssn_id/submodule_bssn_id_memory.f90',
-          # 'src/sphincs_id_lorene/module_sphincs_id_lorene.f90',
-           'src/sphincs_id_interpolate/module_sphincs_id_interpolate.f90'
-          ]
+sources = [
+  'src/utility/module_utility.f90',
+  'src/id_base/module_id_base.f90',
+  'src/id_base/submodule_id_base_initialization.f90',
+  'src/id_base/submodule_id_base_access.f90',
+  'src/id_base/submodule_id_base_mass_profile.f90',
+  'src/particles_id/module_particles_id.f90',
+  'src/particles_id/submodule_particles_constructor.f90',
+  'src/particles_id/submodule_particles_memory.f90',
+  'src/particles_id/submodule_particles_lattices.f90',
+  'src/particles_id/submodule_particles_spherical_surfaces.f90',
+  'src/particles_id/submodule_particles_sph_variables.f90',
+  'src/particles_id/submodule_particles_access.f90',
+  'src/particles_id/submodule_particles_io.f90',
+  'src/particles_id/submodule_particles_compose.f90',
+  #'src/particles_id/submodule_particles_redistribute_nu.f90',
+  'src/particles_id/submodule_particles_apm.f90',
+  'src/formul_3p1/module_formul_3p1_id.f90',
+  'src/formul_3p1/submodule_formul_3p1_standard3p1_variables.f90',
+  'src/formul_3p1/submodule_formul_3p1_access.f90',
+  'src/formul_3p1/submodule_formul_3p1_io.f90',
+  'src/formul_3p1/submodule_formul_3p1_analysis.f90',
+  'src/formul_3p1/bssn_id/module_bssn_id.f90',
+  'src/formul_3p1/bssn_id/submodule_bssn_id_constructor.f90',
+  'src/formul_3p1/bssn_id/submodule_bssn_id_variables.f90',
+  'src/formul_3p1/bssn_id/submodule_bssn_id_constraints.f90',
+  'src/formul_3p1/bssn_id/submodule_bssn_id_memory.f90'
+]
 
 sources_sphincs_bssn = [
            '../../BSSN/module_mesh_refinement.f90',
@@ -274,8 +309,8 @@ write_par_eos = 'write_par_eos.x'
 
 #lorene_sources + lorene_sources_bin_ns
 
-Program(lorene_id_executable, sources + sources_sphincs_bssn + ['src/sphincs_id.f90'])
-#Program(lorene_id_convtest_executable, sources + sources_sphincs_bssn + ['src/convergence_test.f90'])
-Program(write_par_eos, sources + sources_sphincs_bssn + ['src/write_par_eos.f90'])
+Program(lorene_id_executable, sources + sources_flavour + sources_sphincs_bssn + ['src/sphincs_id.f90'])
+#Program(lorene_id_convtest_executable, sources + sources_flavour + sources_sphincs_bssn + ['src/convergence_test.f90'])
+Program(write_par_eos, sources + sources_flavour + sources_sphincs_bssn + ['src/write_par_eos.f90'])
 #
 Decider('MD5-timestamp')

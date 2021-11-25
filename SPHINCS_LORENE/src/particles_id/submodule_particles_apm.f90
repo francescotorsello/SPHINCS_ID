@@ -93,10 +93,11 @@ SUBMODULE (particles_id) particles_apm
 
     IMPLICIT NONE
 
-    INTEGER,          PARAMETER:: max_npart        = 10D+6
+    INTEGER,          PARAMETER:: max_npart        = 5D+6
     INTEGER,          PARAMETER:: nn_des           = 301
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
+    INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 550.0D0!1.25D0
     DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
@@ -177,7 +178,7 @@ SUBMODULE (particles_id) particles_apm
     !CHARACTER:: it_n
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
     LOGICAL:: few_ncand
 
     TYPE(timer):: find_h_bruteforce_timer
@@ -423,22 +424,22 @@ SUBMODULE (particles_id) particles_apm
           z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 &
                                    + ytemp**2.0D0 + ztemp**2.0D0 ) )
 
-          IF( ( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-                    + ztemp**2.0D0 ) <= 500.0D0 & !
-                    !ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
-                    !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
-              .AND. &
-              SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-                    + ztemp**2.0D0 ) >= &
-              SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
-                    + z_ell**2.0D0 ) &
-              .AND. &
-              get_density( xtemp, ytemp, ztemp ) <= 1.0D-13 ) &
-              .OR. &
+          IF( &!( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+              !      + ztemp**2.0D0 ) <= 500.0D0 & !
+              !      !ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
+              !      !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
+              !.AND. &
+              !SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+              !      + ztemp**2.0D0 ) >= &
+              !SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
+              !      + z_ell**2.0D0 ) &
+              !.AND. &
+              !get_density( xtemp, ytemp, ztemp ) <= 1.0D-13 ) &
+              !.OR. &
               ( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-              + ztemp**2.0D0 ) <= &
-              ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
-                          + y_ell**2.0D0 + z_ell**2.0D0 ) &
+              + ztemp**2.0D0 ) <= 550.0D0&
+              !ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
+              !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
               .AND. &
               SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
                     + ztemp**2.0D0 ) >= 500.0D0 ) & !
@@ -621,7 +622,7 @@ SUBMODULE (particles_id) particles_apm
       IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
 
         n_problematic_h= n_problematic_h + 1
-        h(a)= find_h_backup( a, npart_real, pos, nn_des )
+        h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
         PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
@@ -853,7 +854,7 @@ SUBMODULE (particles_id) particles_apm
       PRINT *, ' * Starting with APM step #: ', itr
       PRINT *
 
-      IF( MOD( itr, 15 ) == 0 )THEN
+      IF( MOD( itr, print_step ) == 0 )THEN
 
      !   DO a= 1, npart_real, 1
      !     IF( check_particle_position( a - 1, &
@@ -1172,17 +1173,24 @@ SUBMODULE (particles_id) particles_apm
 
         DO itr2= 1, 10, 1
 
-          IF( SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
+          IF(&!SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
+              !      + all_pos(3,a)**2.0D0 ) <= &
+              !( 1.0D0 + ( ellipse_thickness - 1.0D0 )*DBLE(itr)/10.0D0 ) &
+              !     *SQRT( ( x_ell - center )**2.0D0 &
+              !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
+              !.AND. &
+              !SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
+              !      + all_pos(3,a)**2.0D0 ) >= &
+              !( 1.0D0 + ( ellipse_thickness - 1.0D0 )*DBLE(itr - 1)/10.0D0 ) &
+              !     *SQRT( ( x_ell - center )**2.0D0 &
+              !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
+              SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
                     + all_pos(3,a)**2.0D0 ) <= &
-              ( 1.0D0 + ( ellipse_thickness - 1.0D0 )*DBLE(itr)/10.0D0 ) &
-                   *SQRT( ( x_ell - center )**2.0D0 &
-                          + y_ell**2.0D0 + z_ell**2.0D0 ) &
+                    ( 500.0D0 + 50.0D0*DBLE(itr)/10.0D0 ) &
               .AND. &
               SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
-                    + all_pos(3,a)**2.0D0 ) >= &
-              ( 1.0D0 + ( ellipse_thickness - 1.0D0 )*DBLE(itr - 1)/10.0D0 ) &
-                   *SQRT( ( x_ell - center )**2.0D0 &
-                          + y_ell**2.0D0 + z_ell**2.0D0 ) &
+                    + all_pos(3,a)**2.0D0 ) > &
+                    ( 500.0D0 + 50.0D0*DBLE(itr-1)/10.0D0 ) &
           )THEN
 
             art_pr( a )= DBLE(3*itr)*art_pr_max
@@ -1383,15 +1391,15 @@ SUBMODULE (particles_id) particles_apm
 
         IF( dNstar(a) >= 100.0D0 )THEN
 
-          pos_corr_tmp= all_pos(:,a) + 10.0D0*correction_pos(:,a)
+          pos_corr_tmp= all_pos(:,a) + 0.1D0*correction_pos(:,a) ! 10
 
         ELSEIF( dNstar(a) >= 10.0D0 )THEN
 
-          pos_corr_tmp= all_pos(:,a) + 3.0D0*correction_pos(:,a)
+          pos_corr_tmp= all_pos(:,a) + 0.1D0*correction_pos(:,a) ! 3
 
         ELSE
 
-          pos_corr_tmp= all_pos(:,a) + correction_pos(:,a)
+          pos_corr_tmp= all_pos(:,a) + 0.1D0*correction_pos(:,a)
 
         ENDIF
 
@@ -2449,7 +2457,7 @@ SUBMODULE (particles_id) particles_apm
 
       IF( a /= b )THEN
 
-        dist= pos(:,b) - pos(:,a)
+        dist(:)= pos(:,b) - pos(:,a)
         dist2(b)= DOT_PRODUCT(dist,dist)
 
       ENDIF

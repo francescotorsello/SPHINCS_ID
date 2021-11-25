@@ -256,6 +256,24 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       c011= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j+1,k)
       c111= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j+1,k)
     ENDIF
+    IF( i >= THIS% nx_grid .OR. i == 0 )THEN
+      c001= 0.0D0
+      c101= 0.0D0
+      c011= 0.0D0
+      c111= 0.0D0
+    ENDIF
+    IF( j >= THIS% ny_grid .OR. j == 0 )THEN
+      c001= 0.0D0
+      c101= 0.0D0
+      c011= 0.0D0
+      c111= 0.0D0
+    ENDIF
+    IF( k >= THIS% nz_grid )THEN
+      c001= 0.0D0
+      c101= 0.0D0
+      c011= 0.0D0
+      c111= 0.0D0
+    ENDIF
 
     c000= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j,k)
     c100= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j,k)
@@ -278,6 +296,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     c1= c01*( 1.0D0 - yd ) + c11*yd
 
     res= c0*( 1.0D0 - zd ) + c1*zd
+
+    !IF( res < 1.0D-13 ) res= 0.0D0
 
    ! PRINT *, c000, &
    !          c100, &
@@ -364,7 +384,14 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     IMPLICIT NONE
 
-    IF( THIS% read_mass_density( x, y, z ) <= 1.0D-13 )THEN
+    DOUBLE PRECISION, DIMENSION(3):: center
+
+    center= THIS% return_center(1)
+
+    IF( THIS% read_mass_density( x, y, z ) <= 2.0D-13 &
+        .OR. &
+        SQRT( ( x - center(1) )**2 + ( y - center(2) )**2 &
+            + ( z - center(3) )**2  ) > 500.0D0 )THEN
       res= 1
     ELSE
       res= 0
