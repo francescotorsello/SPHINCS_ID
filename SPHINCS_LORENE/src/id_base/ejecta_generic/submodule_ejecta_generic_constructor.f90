@@ -47,6 +47,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
 
 
     INTEGER, PARAMETER:: unit_pos= 2589
+    DOUBLE PRECISION, PARAMETER:: atmosphere_density= 1.0D-13
 
     INTEGER:: header_lines= 2 ! TODO: give this as input
     INTEGER:: nlines, ntmp
@@ -335,11 +336,50 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
       ENDDO
     ENDDO
 
+    ! Get rid of the athmosphere
+    DO i= 1, derived_type% nx_grid, 1
+      DO j= 1, derived_type% ny_grid, 1
+        DO k= 1, derived_type% nz_grid, 1
+
+          IF( derived_type% baryon_mass_density( i, j, k ) &
+              <= atmosphere_density )THEN
+
+            derived_type% baryon_mass_density( i, j, k )= 0.0D0
+
+            derived_type% specific_energy( i, j, k )= 0.0D0
+
+            derived_type% vel( i, j, k, : )= 0.0D0
+
+          ENDIF
+
+        ENDDO
+      ENDDO
+    ENDDO
+
     PRINT *, derived_type% grid( 1, 1, 1, : )
     PRINT *, derived_type% grid( 2, 1, 1, : )
     PRINT *, derived_type% grid( 1, 2, 1, : )
     PRINT *, derived_type% grid( 1, 1, 2, : )
     PRINT *
+
+    ALLOCATE( derived_type% masses(n_matter_loc) )
+    ALLOCATE( derived_type% sizes(n_matter_loc,6) )
+    ALLOCATE( derived_type% centers(n_matter_loc,3) )
+    ALLOCATE( derived_type% barycenters(n_matter_loc,3) )
+
+    DO i_matter= 1, n_matter_loc, 1
+
+      !derived_type% masses(i_matter)= 0.0D0
+      derived_type% centers(i_matter,:)= 0.0D0
+      derived_type% barycenters(i_matter,:)= 0.0D0
+      derived_type% sizes(i_matter,:)= [ ABS(derived_type% xL_grid), &
+                                         ABS(MAXVAL(grid_tmp( :, 1 ))), &
+                                         ABS(derived_type% yL_grid), &
+                                         ABS(MAXVAL(grid_tmp( :, 2 ))), &
+                                         ABS(derived_type% zL_grid), &
+                                         ABS(MAXVAL(grid_tmp( :, 3 ))) ]
+
+    ENDDO
 
     finalnamefile= "pos_ejecta.dat"
 
@@ -380,25 +420,6 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
     ENDDO
 
     CLOSE( UNIT= 2 )
-
-    ALLOCATE( derived_type% masses(n_matter_loc) )
-    ALLOCATE( derived_type% sizes(n_matter_loc,6) )
-    ALLOCATE( derived_type% centers(n_matter_loc,3) )
-    ALLOCATE( derived_type% barycenters(n_matter_loc,3) )
-
-    DO i_matter= 1, n_matter_loc, 1
-
-      !derived_type% masses(i_matter)= 0.0D0
-      derived_type% centers(i_matter,:)= 0.0D0
-      derived_type% barycenters(i_matter,:)= 0.0D0
-      derived_type% sizes(i_matter,:)= [ ABS(derived_type% xL_grid), &
-                                         ABS(MAXVAL(grid_tmp( :, 1 ))), &
-                                         ABS(derived_type% yL_grid), &
-                                         ABS(MAXVAL(grid_tmp( :, 2 ))), &
-                                         ABS(derived_type% zL_grid), &
-                                         ABS(MAXVAL(grid_tmp( :, 3 ))) ]
-
-    ENDDO
 
     dr             = derived_type% dx_grid/2.0D0
     dth            = pi/2.0D0/50.0D0

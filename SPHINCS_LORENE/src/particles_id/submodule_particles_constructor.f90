@@ -907,6 +907,9 @@ SUBMODULE (particles_id) particles_constructor
     CALL check_particle_positions( parts% npart, parts% pos )
     CALL parts% same_particle_timer% stop_timer()
 
+    ! TODO: make the following an idbase type-bound procedure
+
+
     !
     !-- APM iteration
     !
@@ -1015,7 +1018,7 @@ SUBMODULE (particles_id) particles_constructor
 
     ENDDO matter_objects_loop
 
-    STOP
+    !STOP
 
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts )
@@ -1695,8 +1698,6 @@ SUBMODULE (particles_id) particles_constructor
         ENDIF
         IF( nstar_p( a ) == 0 )THEN
           PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
-          !PRINT *, " * Particle position: x=", all_pos(1,a), &
-          !         ", y=", all_pos(2,a), ", z=", all_pos(3,a)
           PRINT *, "   sq_g=", sq_g
           PRINT *, "   Theta_a=", Theta_a
           PRINT *, "   baryon_density(", a, ")=", baryon_density(a)

@@ -93,7 +93,7 @@ SUBMODULE (particles_id) particles_apm
 
     IMPLICIT NONE
 
-    INTEGER,          PARAMETER:: max_npart        = 5D+6
+    INTEGER,          PARAMETER:: max_npart        = 10D+6
     INTEGER,          PARAMETER:: nn_des           = 301
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
@@ -641,32 +641,32 @@ SUBMODULE (particles_id) particles_apm
              n_problematic_h, " particles."
     PRINT *
 
-    DO a= 1, npart_all, 1
-
-      IF( ISNAN( h( a ) ) )THEN
-        PRINT *, "** ERROR! h(", a, ") is a NaN!"
-        PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-        PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-        PRINT *, " Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-      IF( h( a ) <= 0.0D0 )THEN
-       ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
-       ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-       ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-       ! PRINT *, " * h(", a, ")= ", h(a)
-       ! PRINT *, " Stopping..."
-       ! PRINT *
-       ! STOP
-        IF( a == 1 )THEN
-          h(a) = h(a + 1)
-        ELSE
-          h(a) = h(a - 1)
-        ENDIF
-      ENDIF
-
-    ENDDO
+   ! DO a= 1, npart_all, 1
+   !
+   !   IF( ISNAN( h( a ) ) )THEN
+   !     PRINT *, "** ERROR! h(", a, ") is a NaN!"
+   !     PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+   !     PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+   !     PRINT *, " Stopping..."
+   !     PRINT *
+   !     STOP
+   !   ENDIF
+   !   IF( h( a ) <= 0.0D0 )THEN
+   !    ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
+   !    ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+   !    ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+   !    ! PRINT *, " * h(", a, ")= ", h(a)
+   !    ! PRINT *, " Stopping..."
+   !    ! PRINT *
+   !    ! STOP
+   !     IF( a == 1 )THEN
+   !       h(a) = h(a + 1)
+   !     ELSE
+   !       h(a) = h(a - 1)
+   !     ENDIF
+   !   ENDIF
+   !
+   ! ENDDO
 
     PRINT *, " * Measure SPH particle number density..."
     PRINT *
@@ -1391,11 +1391,11 @@ SUBMODULE (particles_id) particles_apm
 
         IF( dNstar(a) >= 100.0D0 )THEN
 
-          pos_corr_tmp= all_pos(:,a) + 0.1D0*correction_pos(:,a) ! 10
+          pos_corr_tmp= all_pos(:,a) + 10.0D0*correction_pos(:,a) ! 10
 
         ELSEIF( dNstar(a) >= 10.0D0 )THEN
 
-          pos_corr_tmp= all_pos(:,a) + 0.1D0*correction_pos(:,a) ! 3
+          pos_corr_tmp= all_pos(:,a) + 3.0D0*correction_pos(:,a) ! 3
 
         ELSE
 

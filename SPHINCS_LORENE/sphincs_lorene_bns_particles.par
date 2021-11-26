@@ -24,7 +24,8 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos_1218_45km_pol275_1M.dat"
           !"apm-pos_1218_45km_pol275_2M.dat"
           !"apm-pos-nu_DRSLO_4_pol2_1M_bt.dat"
-          "apm-pos-nu_DRSLO_4_pol2_1M_hr.dat"
+          !"apm-pos-nu_DRSLO_4_pol2_1M_hr.dat"
+          "apm-pos-nu_EJECT_1e-3_apr4_200k.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -46,7 +47,7 @@ reflect_particles_x= .TRUE.
 !----------------------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers;
 ! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 5000000
+npart_des= 200000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
@@ -127,7 +128,7 @@ apm_iterate=.TRUE.  ! If .TRUE. applies the APM to the first star
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate2
-apm_max_it= 100         ! Maximum number of iterations, irrespective of the
+apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
