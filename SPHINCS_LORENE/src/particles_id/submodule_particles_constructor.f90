@@ -751,9 +751,8 @@ SUBMODULE (particles_id) particles_constructor
 
         equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
 
-          IF( ABS(parts% mass_ratios(1) - parts% mass_ratios(2)) &
-              /parts% mass_ratios(2) <= 0.005 .AND. &
-              reflect_particles_x )THEN
+          IF( ABS(parts% masses(1) - parts% masses(2)) &
+              /parts% masses(2) <= 0.005 .AND. reflect_particles_x )THEN
 
             IF(.NOT.ALLOCATED( parts_all(2)% pos_i ))THEN
               ALLOCATE( parts_all(2)% pos_i( 3, parts% npart_i(1) ), &
