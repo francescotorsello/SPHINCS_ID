@@ -413,7 +413,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Check that the numbers of particles are consistent
       IF( npart_tmp /= SUM(npart_i_tmp) )THEN
         PRINT *, "** ERROR! The numbers of particles on each matter object", &
-                 " do not add up to the total number of particles, in file", &
+                 " do not add up to the total number of particles, in file ", &
                  TRIM(parts_pos_namefile)
         PRINT *, "   Stopping..."
         PRINT *
@@ -875,16 +875,6 @@ SUBMODULE (particles_id) particles_constructor
                       parts_all(itr)% pmass_i
       ENDDO
 
-      PRINT *, " * Particles placed. Number of particles=", parts% npart
-      !PRINT *, " * Number of particles on NS 1=", parts% npart1
-      !PRINT *, " * Number of particles on NS 2=", parts% npart2
-      DO itr= 1, parts% n_matter, 1
-        PRINT *, " * Number of particles on object ", itr, "=", &
-                 parts% npart_i(itr)
-      ENDDO
-      PRINT *
-      !STOP
-
     CASE DEFAULT
 
       PRINT *, "** There is no implemented particle placer " &
@@ -894,9 +884,16 @@ SUBMODULE (particles_id) particles_constructor
 
     END SELECT choose_particle_placer
 
-    !----------------------------------------------!
-    !--  At this point,the particles are placed  --!
-    !----------------------------------------------!
+    !-----------------------------------------------!
+    !--  At this point, the particles are placed  --!
+    !-----------------------------------------------!
+
+    PRINT *, " * Particles placed. Number of particles=", parts% npart
+    DO itr= 1, parts% n_matter, 1
+      PRINT *, " * Number of particles on object ", itr, "=", &
+               parts% npart_i(itr)
+    ENDDO
+    PRINT *
 
     ! Reshape the arrays pos and pvol by deleting the unnecessary elements
     parts% pos = parts% pos( :, 1:parts% npart )
@@ -941,7 +938,8 @@ SUBMODULE (particles_id) particles_constructor
         ENDIF
 
         PRINT *
-        PRINT *, "** Placing particles on star 1 using the APM..."
+        PRINT *, "** Placing particles on matter object", i_matter, &
+                 " using the APM..."
         PRINT *
 
         IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
@@ -974,7 +972,8 @@ SUBMODULE (particles_id) particles_constructor
                     check_negative_hydro )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
-        PRINT *, "** Particles placed on star 1 according to the APM."
+        PRINT *, "** Particles placed on on matter object", i_matter, &
+                 " according to the APM."
         PRINT *
 
         equal_masses_apm: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN

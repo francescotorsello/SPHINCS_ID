@@ -107,6 +107,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
     INTEGER:: dim_seed, rel_sign
+    INTEGER:: n_problematic_h
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
     DOUBLE PRECISION:: h_max, h_av, eps, tmp!, delta
@@ -571,7 +572,7 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * Assign h..."
     PRINT *
     good_h= .TRUE.
-    DO itr= 1, 10, 1
+    DO itr= 1, 1, 1
 
       IF( debug ) PRINT *, itr
       IF( debug ) PRINT *
@@ -597,32 +598,55 @@ SUBMODULE (particles_id) particles_apm
 
     ENDDO
 
-    DO a= 1, npart_all, 1
+    n_problematic_h= 0
+    check_h_0: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h( a ) ) )THEN
-        PRINT *, "** ERROR! h(", a, ") is a NaN!"
-        PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-        PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-        PRINT *, " Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-      IF( h( a ) <= 0.0D0 )THEN
-       ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
-       ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-       ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-       ! PRINT *, " * h(", a, ")= ", h(a)
-       ! PRINT *, " Stopping..."
-       ! PRINT *
-       ! STOP
-        IF( a == 1 )THEN
-          h(a) = h(a + 1)
-        ELSE
-          h(a) = h(a - 1)
+      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+
+        n_problematic_h= n_problematic_h + 1
+        h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
+        PRINT *, h(a)
+        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", pos(:,a)
+          STOP
         ENDIF
+
       ENDIF
 
-    ENDDO
+    ENDDO check_h_0
+
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
+
+ !  DO a= 1, npart_all, 1
+ !
+ !    IF( ISNAN( h( a ) ) )THEN
+ !      PRINT *, "** ERROR! h(", a, ") is a NaN!"
+ !      PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+ !      PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+ !      PRINT *, " Stopping..."
+ !      PRINT *
+ !      STOP
+ !    ENDIF
+ !    IF( h( a ) <= 0.0D0 )THEN
+ !     ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
+ !     ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+ !     ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+ !     ! PRINT *, " * h(", a, ")= ", h(a)
+ !     ! PRINT *, " Stopping..."
+ !     ! PRINT *
+ !     ! STOP
+ !      IF( a == 1 )THEN
+ !        h(a) = h(a + 1)
+ !      ELSE
+ !        h(a) = h(a - 1)
+ !      ENDIF
+ !    ENDIF
+ !
+ !  ENDDO
 
     PRINT *, " * Measure SPH particle number density..."
     PRINT *
@@ -1935,7 +1959,7 @@ SUBMODULE (particles_id) particles_apm
 
       cnt1= cnt1 + 1
 
-      IF( .NOT.few_ncand .OR. cnt1 >= 10 )THEN
+      IF( .NOT.few_ncand .OR. cnt1 >= 1 )THEN
         PRINT *, " * Smoothing lengths assigned and tree is built."
         EXIT
       ENDIF
@@ -1943,61 +1967,85 @@ SUBMODULE (particles_id) particles_apm
     ENDDO
     !IF( mass == THIS% mass2 ) STOP
 
-    !
-    !-- Check that the smoothing length is acceptable
-    !
+    n_problematic_h= 0
     check_h: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h(a) ) )THEN
-        PRINT *, "** ERROR! h(", a, ") is a NaN"
-        !PRINT *, "Stopping..."
-       ! PRINT *
-        !STOP
-        IF( a > npart_real/2 )THEN
-          DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
-            IF( h(itr) > 0.25D0 )THEN
-              h(a) = h(itr)
-              EXIT
-            ENDIF
-          ENDDO
-        ELSE
-          !h(a) = h(a - 1)
-          DO itr= a + 1, npart_real, 1
-            IF( h(itr) > 0.25D0 )THEN
-              h(a) = h(itr)
-              EXIT
-            ENDIF
-          ENDDO
+      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+
+        n_problematic_h= n_problematic_h + 1
+        h(a)= find_h_backup( a, npart_real, pos, nn_des )
+        PRINT *, h(a)
+        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", pos(:,a)
+          STOP
         ENDIF
-        !PRINT *, "** ERROR! h(", a, ")=", h(a)
-        !PRINT *
-      ENDIF
-      IF( h(a) <= 0.0D0 )THEN
-        PRINT *, "** ERROR! h(", a, ")=", h(a)
-        !PRINT *, "Stopping..."
-        !PRINT *
-        !STOP
-        IF( a > npart_real/2 )THEN
-          DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
-            IF( h(itr) > 0.25D0 )THEN
-              h(a) = h(itr)
-              EXIT
-            ENDIF
-          ENDDO
-        ELSE
-          !h(a) = h(a - 1)
-          DO itr= a + 1, npart_real, 1
-            IF( h(itr) > 0.25D0 )THEN
-              h(a) = h(itr)
-              EXIT
-            ENDIF
-          ENDDO
-        ENDIF
-        !PRINT *, "** ERROR! h(", a, ")=", h(a)
-        !PRINT *
+
       ENDIF
 
     ENDDO check_h
+
+    PRINT *, " * Smoothing lengths assigned and tree is built."
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
+
+    !
+    !-- Check that the smoothing length is acceptable
+    !
+  !  check_h: DO a= 1, npart_real, 1
+  !
+  !    IF( ISNAN( h(a) ) )THEN
+  !      PRINT *, "** ERROR! h(", a, ") is a NaN"
+  !      !PRINT *, "Stopping..."
+  !     ! PRINT *
+  !      !STOP
+  !      IF( a > npart_real/2 )THEN
+  !        DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
+  !          IF( h(itr) > 0.25D0 )THEN
+  !            h(a) = h(itr)
+  !            EXIT
+  !          ENDIF
+  !        ENDDO
+  !      ELSE
+  !        !h(a) = h(a - 1)
+  !        DO itr= a + 1, npart_real, 1
+  !          IF( h(itr) > 0.25D0 )THEN
+  !            h(a) = h(itr)
+  !            EXIT
+  !          ENDIF
+  !        ENDDO
+  !      ENDIF
+  !      !PRINT *, "** ERROR! h(", a, ")=", h(a)
+  !      !PRINT *
+  !    ENDIF
+  !    IF( h(a) <= 0.0D0 )THEN
+  !      PRINT *, "** ERROR! h(", a, ")=", h(a)
+  !      !PRINT *, "Stopping..."
+  !      !PRINT *
+  !      !STOP
+  !      IF( a > npart_real/2 )THEN
+  !        DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
+  !          IF( h(itr) > 0.25D0 )THEN
+  !            h(a) = h(itr)
+  !            EXIT
+  !          ENDIF
+  !        ENDDO
+  !      ELSE
+  !        !h(a) = h(a - 1)
+  !        DO itr= a + 1, npart_real, 1
+  !          IF( h(itr) > 0.25D0 )THEN
+  !            h(a) = h(itr)
+  !            EXIT
+  !          ENDIF
+  !        ENDDO
+  !      ENDIF
+  !      !PRINT *, "** ERROR! h(", a, ")=", h(a)
+  !      !PRINT *
+  !    ENDIF
+  !
+  !  ENDDO check_h
 
     IF( debug ) PRINT *, "102"
 
@@ -2339,6 +2387,50 @@ SUBMODULE (particles_id) particles_apm
     !$OMP END PARALLEL DO
 
   END SUBROUTINE get_neighbours_bf
+
+
+  FUNCTION find_h_backup( a, npart, pos, ndes ) RESULT( h )
+
+    !**************************************************************
+    !
+    !# Backup method to find the smoothing length via brute force
+    !  if the optimized method gives 0
+    !
+    !  FT 24.11.2021
+    !
+    !**************************************************************
+
+    USE NR, ONLY: select
+
+    IMPLICIT NONE
+
+    INTEGER,          INTENT(IN):: a, npart, ndes
+    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+
+    DOUBLE PRECISION:: h
+
+    INTEGER:: b
+    DOUBLE PRECISION, DIMENSION(npart):: dist2
+    DOUBLE PRECISION, DIMENSION(3):: dist
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, a, npart, dist2 ) &
+    !$OMP             PRIVATE( b, dist )
+    DO b= 1, npart, 1
+
+      IF( a /= b )THEN
+
+        dist(:)= pos(:,b) - pos(:,a)
+        dist2(b)= DOT_PRODUCT(dist,dist)
+
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    h= 0.5D0*SQRT( select(ndes, npart, dist2) )
+
+  END FUNCTION find_h_backup
 
 
 END SUBMODULE particles_apm
