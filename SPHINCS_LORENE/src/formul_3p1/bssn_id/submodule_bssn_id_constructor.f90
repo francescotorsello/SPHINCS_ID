@@ -65,7 +65,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     ! The construct_formul_3p1 SUBROUTINE constructs the grid,
     ! hence the dimensions of the arrays imported from the module BSSN
     ! are know and the arrays can be allocated
-    CALL allocate_bssn_fields( bssnid )
+    !CALL allocate_bssn_fields( bssnid )
 
     DEALLOCATE( levels )
 

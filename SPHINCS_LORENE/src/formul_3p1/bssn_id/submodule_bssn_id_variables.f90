@@ -228,9 +228,14 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
     !CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jy), "Gamma_u_y" )
     !CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jz), "Gamma_u_z" )
 
+    CALL deallocate_Ztmp()
+    CALL deallocate_Tmunu()
+    CALL deallocate_GravityAcceleration()
+
     !
     !-- Setting the TYPE variables equal to the MODULE variables
     !
+    CALL allocate_bssn_fields( THIS )
     ref_levels2: DO l= 1, THIS% nlevels
 
       THIS% Gamma_u% levels(l)% var   = Gamma_u% levels(l)% var
@@ -256,9 +261,9 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
     !-- Deallocate MODULE variables
     !
     CALL deallocate_ADM()
-    CALL deallocate_Ztmp()
-    CALL deallocate_Tmunu()
-    CALL deallocate_GravityAcceleration()
+    !CALL deallocate_Ztmp()
+    !CALL deallocate_Tmunu()
+    !CALL deallocate_GravityAcceleration()
     CALL deallocate_BSSN()
     CALL deallocate_grid_function( rad_coord, 'rad_coord' )
     !CALL deallocate_gravity_grid()
