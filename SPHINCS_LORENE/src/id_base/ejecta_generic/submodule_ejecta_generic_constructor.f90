@@ -341,10 +341,22 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
       DO j= 1, derived_type% ny_grid, 1
         DO k= 1, derived_type% nz_grid, 1
 
-          IF( derived_type% baryon_mass_density( i, j, k ) &
-              <= atmosphere_density )THEN
+          !IF( derived_type% baryon_mass_density( i, j, k ) &
+          !    <= atmosphere_density )THEN
+          !
+          !  derived_type% baryon_mass_density( i, j, k )= 0.0D0
+          !
+          !  derived_type% specific_energy( i, j, k )= 0.0D0
+          !
+          !  derived_type% vel( i, j, k, : )= 0.0D0
+          !
+          !ENDIF
 
-            derived_type% baryon_mass_density( i, j, k )= 0.0D0
+          derived_type% baryon_mass_density( i, j, k )= &
+            MAX( 0.0D0, &
+            derived_type% baryon_mass_density( i, j, k ) - atmosphere_density )
+
+          IF( derived_type% baryon_mass_density( i, j, k ) == 0.0D0 )THEN
 
             derived_type% specific_energy( i, j, k )= 0.0D0
 

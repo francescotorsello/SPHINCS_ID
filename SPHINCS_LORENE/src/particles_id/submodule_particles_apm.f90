@@ -1978,7 +1978,6 @@ SUBMODULE (particles_id) particles_apm
     CALL find_h_bruteforce_timer% stop_timer()
     CALL find_h_bruteforce_timer% print_timer( 2 )
 
-    PRINT *, " * Smoothing lengths assigned and tree is built."
     PRINT *, " * The smoothing length was found brute-force for ", &
              n_problematic_h, " particles."
     PRINT *
@@ -2027,6 +2026,9 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
     ENDDO
+
+    PRINT *, " * Smoothing lengths assigned and tree is built."
+    PRINT *
 
     !
     !-- Check that the smoothing length is acceptable
@@ -2424,50 +2426,6 @@ SUBMODULE (particles_id) particles_apm
     !$OMP END PARALLEL DO
 
   END SUBROUTINE get_neighbours_bf
-
-
-  FUNCTION find_h_backup( a, npart, pos, ndes ) RESULT( h )
-
-    !**************************************************************
-    !
-    !# Backup method to find the smoothing length via brute force
-    !  if the optimized method gives 0
-    !
-    !  FT 24.11.2021
-    !
-    !**************************************************************
-
-    USE NR, ONLY: select
-
-    IMPLICIT NONE
-
-    INTEGER,          INTENT(IN):: a, npart, ndes
-    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
-
-    DOUBLE PRECISION:: h
-
-    INTEGER:: b
-    DOUBLE PRECISION, DIMENSION(npart):: dist2
-    DOUBLE PRECISION, DIMENSION(3):: dist
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, a, npart, dist2 ) &
-    !$OMP             PRIVATE( b, dist )
-    DO b= 1, npart, 1
-
-      IF( a /= b )THEN
-
-        dist(:)= pos(:,b) - pos(:,a)
-        dist2(b)= DOT_PRODUCT(dist,dist)
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    h= 0.5D0*SQRT( select(ndes, npart, dist2) )
-
-  END FUNCTION find_h_backup
 
 
 END SUBMODULE particles_apm

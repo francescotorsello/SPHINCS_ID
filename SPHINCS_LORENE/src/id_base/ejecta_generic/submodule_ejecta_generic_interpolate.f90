@@ -298,10 +298,10 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     res= c0*( 1.0D0 - zd ) + c1*zd
 
     !IF( res < 1.0D-13 ) res= 0.0D0
-    IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
-              + ( y - THIS% centers(1,2) )**2.0D0 &
-              + ( zp - THIS% centers(1,3) )**2.0D0 ) > 475.0D0 ) res= 0.0D0
-
+    !IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+    !          + ( y - THIS% centers(1,2) )**2.0D0 &
+    !          + ( zp - THIS% centers(1,3) )**2.0D0 ) > 500.0D0 ) res= 0.0D0
+    IF( ABS(x) > 500.0D0 .OR. ABS(y) > 500.0D0 .OR. zp > 500.0D0 ) res= 0.0D0
    ! PRINT *, c000, &
    !          c100, &
    !          c001, &

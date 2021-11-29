@@ -204,7 +204,7 @@ module_utility = [
 ################################################################################
 
 ################################################################################
-# SOURCE FILES
+# SOURCE FILES FROM SPHINCS_BSSN
 ################################################################################
 
 env['F90PATH'] = [
@@ -215,8 +215,9 @@ env['F90PATH'] = [
 #  '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/Include'
 #]
 
-sources_base = module_id_base + module_particles_id \
-              + module_formul_3p1_id + module_bssn_id + module_utility
+sources_base = module_id_base + module_bns_base + module_diffstar_base \
+               + module_particles_id + module_formul_3p1_id + module_bssn_id \
+               + module_utility
 
 sources_mesh = [
   '../../BSSN/module_mesh_refinement.f90',
@@ -373,16 +374,17 @@ if flavour == '1': #
 
   if debug == 'FALSE': #
 
-    env['LIBS'] = ['stdc++', 'lorene_export', 'lorene', 'lorenef77']
-    #, 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran',
+    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                   'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+    #, 'm'
 
   if debug == 'TRUE': #
 
-    env['LIBS'] = ['stdc++', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
-    #, 'm', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', 'gfortran',
+    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                   'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+    #, 'm'
 
-  sources_flavour = module_bns_base + module_diffstar_base \
-                    + module_bns_lorene + module_diffstar_lorene \
+  sources_flavour = module_bns_lorene + module_diffstar_lorene \
                     + module_sphincs_id_lorene
 
 ################################################################################
@@ -394,8 +396,7 @@ if flavour == '2': #
 
   env['LIBS'] = ['stdc++']
 
-  sources_flavour = module_bns_base + module_diffstar_base \
-                    + module_ejecta_generic + module_sphincs_id_interpolate
+  sources_flavour = module_ejecta_generic + module_sphincs_id_interpolate
 
 ################################################################################
 
