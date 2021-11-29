@@ -266,7 +266,8 @@ sources_mesh = [
   #'../../BSSN/module_NaNChecker.f90'
 ]
 
-sources_sphincs_bssn = ['../SPHINCS_BSSN/module_CP_distribute.f90',
+sources_sphincs_bssn = [
+  '../SPHINCS_BSSN/module_CP_distribute.f90',
   '../SPHINCS_BSSN/module_MLS.f90',
   '../SPHINCS_BSSN/module_SelfRegularization.f90',
   '../SPHINCS_BSSN/module_particle_mesh.f90',
@@ -283,7 +284,8 @@ sources_sphincs_bssn = ['../SPHINCS_BSSN/module_CP_distribute.f90',
   '../SPHINCS_BSSN/module_quadrup_GW_extraction.f90'
 ]
 
-sources_sphincs_fm = ['../SPHINCS_fix_metric/module_files.f90',
+sources_sphincs_fm = [
+  '../SPHINCS_fix_metric/module_files.f90',
   '../SPHINCS_fix_metric/module_constants.f90',
   '../SPHINCS_fix_metric/module_units.f90',
   '../SPHINCS_fix_metric/module_SPHINCS_options.f90',
@@ -476,13 +478,13 @@ if debug == 'TRUE': #
 # PROGRAMS
 ################################################################################
 
-sphincs_id = 'sphincs_id.x'
+sphincs_id       = 'sphincs_id.x'
 convergence_test = 'convergence_test.x'
-write_par_eos = 'write_par_eos.x'
+write_par_eos    = 'write_par_eos.x'
 
-program_sphincs_id = ['src/sphincs_id.f90']
+program_sphincs_id       = ['src/sphincs_id.f90']
 program_convergence_test = ['src/convergence_test.f90']
-program_write_par_eos = ['src/write_par_eos.f90']
+program_write_par_eos    = ['src/write_par_eos.f90']
 
 ################################################################################
 

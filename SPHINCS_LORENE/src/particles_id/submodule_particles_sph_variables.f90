@@ -94,6 +94,8 @@ SUBMODULE (particles_id) particles_sph_variables
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
+    USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
+                                   W_no_norm,n_tab_entry
 
     IMPLICIT NONE
 
@@ -104,7 +106,7 @@ SUBMODULE (particles_id) particles_sph_variables
     INTEGER, PARAMETER:: max_it_h= 1
 
     ! Spacetime indices \mu and \nu
-    INTEGER:: nus, mus, cnt1, a, i_matter, itr2!, cnt2
+    INTEGER:: nus, mus, cnt1, cnt2, a, i_matter, itr2, inde, index1!, cnt2
     INTEGER:: n_problematic_h
     INTEGER:: itot, l, b, k, ill
 
@@ -113,9 +115,10 @@ SUBMODULE (particles_id) particles_sph_variables
                        !nu_tmp, nu_thres1, nu_thres2          
     DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
     DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
-    DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, dx, dy, dz
+    DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, dx, dy, dz, Wab, &
+                       Wab_ha, Wi, Wi1, dvv
 
-    LOGICAL:: few_ncand, good_h
+    LOGICAL:: few_ncand, good_h, invertible_matrix
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -1117,7 +1120,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
       cnt1= cnt1 + 1
 
-      IF( .NOT.few_ncand .OR. cnt1 >= 10 )THEN
+      IF( .NOT.few_ncand .OR. cnt1 >= 1 )THEN
         PRINT *, " * Smoothing lengths assigned and tree is built."
         EXIT
       ENDIF
@@ -1184,6 +1187,8 @@ SUBMODULE (particles_id) particles_sph_variables
     THIS% h= h
     THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
 
+    PRINT *
+    PRINT *, "nfinal= ", nfinal
     ll_cell_loop: DO ill= 1, nfinal
 
       itot= nprev + ill
@@ -1209,9 +1214,19 @@ SUBMODULE (particles_id) particles_sph_variables
         mat_yz=    0.D0
         mat_zz=    0.D0
 
+        cnt1= 0
+        cnt2= 0
         cand_loop: DO k= 1, ncand(ill)
 
           b=      all_clists(ill)%list(k)
+
+          IF( b == a )THEN
+            cnt1= cnt1 + 1
+          ENDIF
+          IF( xa == pos_u(1,b) .AND. ya == pos_u(2,b) .AND. za == pos_u(3,b) &
+          )THEN
+            cnt2= cnt2 + 1
+          ENDIF
 
           ! Distances (ATTENTION: flatspace version !!!)
           dx=     xa - pos_u(1,b)
@@ -1233,6 +1248,29 @@ SUBMODULE (particles_id) particles_sph_variables
           !  STOP
           !ENDIF
 
+          ! get interpolation indices
+          inde=  MIN(INT(va*dv_table_1),n_tab_entry)
+          index1= MIN(inde + 1,n_tab_entry)
+
+          ! get tabulated values
+          Wi=     W_no_norm(inde)
+          Wi1=    W_no_norm(index1)
+
+          ! interpolate
+          dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
+          Wab_ha= Wi + (Wi1 - Wi)*dvv
+
+          ! "correction matrix" for derivs
+          Wdx=    Wab_ha*dx
+          Wdy=    Wab_ha*dy
+          Wdz=    Wab_ha*dz
+          mat_xx= mat_xx + Wdx*dx
+          mat_xy= mat_xy + Wdx*dy
+          mat_xz= mat_xz + Wdx*dz
+          mat_yy= mat_yy + Wdy*dy
+          mat_yz= mat_yz + Wdy*dz
+          mat_zz= mat_zz + Wdz*dz
+
         ENDDO cand_loop
 
         ! correction matrix
@@ -1249,7 +1287,21 @@ SUBMODULE (particles_id) particles_sph_variables
         mat(3,3)= mat_zz
 
         ! invert it
-        CALL invert_3x3_matrix(mat,mat_1)
+        CALL invert_3x3_matrix(mat,mat_1,invertible_matrix)
+
+        IF( .NOT.invertible_matrix )THEN
+          PRINT *, "a= ", a
+          PRINT *, "h(a)= ", h(a)
+          PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
+          PRINT *, "nprev= ", nprev
+          PRINT *, "ill= ", ill
+          PRINT *, "itot= ", itot
+          PRINT *, "ncand(ill)= ", ncand(ill)
+          PRINT *, "cnt1= ", cnt1
+          PRINT *, "cnt2= ", cnt2
+          PRINT *
+          STOP
+        ENDIF
 
       ENDDO particle_loop
 

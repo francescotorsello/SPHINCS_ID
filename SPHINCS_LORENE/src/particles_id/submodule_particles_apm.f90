@@ -81,15 +81,21 @@ SUBMODULE (particles_id) particles_apm
                                    deallocate_metric_on_particles
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
     USE set_h,               ONLY: exact_nei_tree_update, posmash
-    USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
-                                   deallocate_RCB_tree_memory_3D
+    !USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
+    !                               deallocate_RCB_tree_memory_3D
     USE units,               ONLY: umass
 
     USE APM,                 ONLY: density_loop, position_correction, assign_h
     USE analyze,             ONLY: COM
     USE matrix,              ONLY: determinant_4x4_matrix
 
-    USE sphincs_sph,         ONLY: density, ncand
+    USE sphincs_sph,         ONLY: density, ncand, all_clists
+    USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
+                                   rpart, allocate_RCB_tree_memory_3D, &
+                                   deallocate_RCB_tree_memory_3D
+    USE matrix,              ONLY: invert_3x3_matrix
+    USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
+                                   W_no_norm,n_tab_entry
 
     IMPLICIT NONE
 
@@ -105,12 +111,12 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, PARAMETER:: max_it_tree      = 1
     DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
 
-    INTEGER:: a, a2, itr, itr2, n_inc, cnt1         ! iterators
+    INTEGER:: a, a2, itr, itr2, n_inc, cnt1, cnt2, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
     INTEGER:: dim_seed, rel_sign
-    INTEGER:: n_problematic_h
+    INTEGER:: n_problematic_h, b, ill, l, itot
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
     DOUBLE PRECISION:: h_max, h_av, eps, tmp!, delta
@@ -132,6 +138,11 @@ SUBMODULE (particles_id) particles_apm
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
     INTEGER, DIMENSION(:), ALLOCATABLE:: seed
+
+    DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
+    DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
+    DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
+                       Wab_ha, Wi, Wi1, dvv
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
@@ -179,7 +190,7 @@ SUBMODULE (particles_id) particles_apm
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
-    LOGICAL:: few_ncand
+    LOGICAL:: few_ncand, invertible_matrix
 
     TYPE(timer):: find_h_bruteforce_timer
 
@@ -2027,6 +2038,32 @@ SUBMODULE (particles_id) particles_apm
 
     ENDDO
 
+    CALL find_h_bruteforce_timer% start_timer()
+    n_problematic_h= 0
+    check_h2: DO a= 1, npart_real, 1
+
+      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+
+        n_problematic_h= n_problematic_h + 1
+        h(a)= find_h_backup( a, npart_real, pos, nn_des )
+        PRINT *, h(a)
+        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", pos(:,a)
+          STOP
+        ENDIF
+
+      ENDIF
+
+    ENDDO check_h2
+    CALL find_h_bruteforce_timer% stop_timer()
+    CALL find_h_bruteforce_timer% print_timer( 2 )
+
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
+
     PRINT *, " * Smoothing lengths assigned and tree is built."
     PRINT *
 
@@ -2085,6 +2122,127 @@ SUBMODULE (particles_id) particles_apm
    !   ENDIF
    !
    ! ENDDO check_h
+
+    PRINT *
+    PRINT *, "nfinal= ", nfinal
+    ll_cell_loop: DO ill= 1, nfinal
+
+      itot= nprev + ill
+      IF( nic(itot) == 0 ) CYCLE
+
+      particle_loop: DO l= lpart(itot), rpart(itot)
+
+        a=         iorig(l)
+
+        ha=        h(a)
+        ha_1=      1.0D0/ha
+        ha_3=      ha_1*ha_1*ha_1
+
+        xa=        pos(1,a)
+        ya=        pos(2,a)
+        za=        pos(3,a)
+
+        ! initialize correction matrix
+        mat_xx=    0.D0
+        mat_xy=    0.D0
+        mat_xz=    0.D0
+        mat_yy=    0.D0
+        mat_yz=    0.D0
+        mat_zz=    0.D0
+
+        cnt1= 0
+        cnt2= 0
+        cand_loop: DO k= 1, ncand(ill)
+
+          b=      all_clists(ill)%list(k)
+
+          IF( b == a )THEN
+            cnt1= cnt1 + 1
+          ENDIF
+          IF( xa == pos(1,b) .AND. ya == pos(2,b) .AND. za == pos(3,b) &
+          )THEN
+            cnt2= cnt2 + 1
+          ENDIF
+
+          ! Distances (ATTENTION: flatspace version !!!)
+          ddx=     xa - pos(1,b)
+          ddy=     ya - pos(2,b)
+          ddz=     za - pos(3,b)
+          va=     SQRT(dx*dx + dy*dy + dz*dz)*ha_1
+
+          !IF( dx == 0 .AND. dy == 0 .AND. dz == 0 )THEN
+          !  PRINT *, "va=", va
+          !  PRINT *, "dz=", dx
+          !  PRINT *, "dy=", dy
+          !  PRINT *, "dz=", dz
+          !  PRINT *, "xa=", xa
+          !  PRINT *, "ya=", ya
+          !  PRINT *, "za=", za
+          !  PRINT *, "pos_u(1,b)", pos_u(1,b)
+          !  PRINT *, "pos_u(2,b)", pos_u(2,b)
+          !  PRINT *, "pos_u(3,b)", pos_u(3,b)
+          !  STOP
+          !ENDIF
+
+          ! get interpolation indices
+          inde=  MIN(INT(va*dv_table_1),n_tab_entry)
+          index1= MIN(inde + 1,n_tab_entry)
+
+          ! get tabulated values
+          Wi=     W_no_norm(inde)
+          Wi1=    W_no_norm(index1)
+
+          ! interpolate
+          dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
+          Wab_ha= Wi + (Wi1 - Wi)*dvv
+
+          ! "correction matrix" for derivs
+          Wdx=    Wab_ha*dx
+          Wdy=    Wab_ha*dy
+          Wdz=    Wab_ha*dz
+          mat_xx= mat_xx + Wdx*dx
+          mat_xy= mat_xy + Wdx*dy
+          mat_xz= mat_xz + Wdx*dz
+          mat_yy= mat_yy + Wdy*dy
+          mat_yz= mat_yz + Wdy*dz
+          mat_zz= mat_zz + Wdz*dz
+
+        ENDDO cand_loop
+
+        ! correction matrix
+        mat(1,1)= mat_xx
+        mat(2,1)= mat_xy
+        mat(3,1)= mat_xz
+
+        mat(1,2)= mat_xy
+        mat(2,2)= mat_yy
+        mat(3,2)= mat_yz
+
+        mat(1,3)= mat_xz
+        mat(2,3)= mat_yz
+        mat(3,3)= mat_zz
+
+        ! invert it
+        CALL invert_3x3_matrix( mat, mat_1, invertible_matrix )
+        PRINT *, invertible_matrix
+
+        IF( .NOT.invertible_matrix )THEN
+          PRINT *, "a= ", a
+          PRINT *, "h(a)= ", h(a)
+          PRINT *, "pos_u= ", pos(1,b), pos(2,b), pos(3,b)
+          PRINT *, "nprev= ", nprev
+          PRINT *, "ill= ", ill
+          PRINT *, "itot= ", itot
+          PRINT *, "ncand(ill)= ", ncand(ill)
+          PRINT *, "cnt1= ", cnt1
+          PRINT *, "cnt2= ", cnt2
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO particle_loop
+
+    ENDDO ll_cell_loop
 
     IF( debug ) PRINT *, "102"
 
