@@ -185,6 +185,9 @@ PROGRAM sphincs_id
   ! 1.4-1.4 systems for both ; 1.6-1.6 ; 1.2-1.8 GRAVIATIONAL masses
   !STOP
 
+  CALL DATE_AND_TIME( date, time, zone, values )
+  run_id= date // "-" // time
+
   PRINT *, "       ____________  ________  __________    __ ___    "
   PRINT *, "      / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \   "
   PRINT *, "     (__  ) ___/ __  / / / / / /__(__  )___/ / /_/ /   "
@@ -197,9 +200,9 @@ PROGRAM sphincs_id
   PRINT *, "  Copyright:    GNU General Public License (GPLv3)     "
   PRINT *, "  ___________________________________________________  "
   PRINT *
-
-  CALL DATE_AND_TIME( date, time, zone, values )
-  run_id= date // "-" // time
+  PRINT *, "  Run id: ", run_id
+  PRINT *, "  ___________________________________________________  "
+  PRINT *
 
   execution_timer= timer( "execution_timer" )
   CALL execution_timer% start_timer()

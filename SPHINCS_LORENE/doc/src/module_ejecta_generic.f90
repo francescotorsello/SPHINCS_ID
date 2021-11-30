@@ -274,7 +274,7 @@ MODULE ejecta_generic
 
 
     MODULE FUNCTION get_mass( THIS, i_matter )
-    !! Returns [[ejecta:mass]]
+    !! Returns [[ejecta:masses]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS

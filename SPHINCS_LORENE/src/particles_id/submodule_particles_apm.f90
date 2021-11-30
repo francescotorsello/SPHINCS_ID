@@ -1402,11 +1402,11 @@ SUBMODULE (particles_id) particles_apm
 
         IF( dNstar(a) >= 100.0D0 )THEN
 
-          pos_corr_tmp= all_pos(:,a) + 10.0D0*correction_pos(:,a) ! 10
+          pos_corr_tmp= all_pos(:,a) + 1.0D0*correction_pos(:,a) ! 10
 
         ELSEIF( dNstar(a) >= 10.0D0 )THEN
 
-          pos_corr_tmp= all_pos(:,a) + 3.0D0*correction_pos(:,a) ! 3
+          pos_corr_tmp= all_pos(:,a) + 1.0D0*correction_pos(:,a) ! 3
 
         ELSE
 

@@ -324,7 +324,7 @@ MODULE particles_id
     !  at the particle positions
     TYPE(timer), PUBLIC:: importer_timer
     !& Timer that times how long it takes to compute the SPH variables at the
-    !  particle pitions
+    !  particle positions
     TYPE(timer), PUBLIC:: sph_computer_timer
 
 
