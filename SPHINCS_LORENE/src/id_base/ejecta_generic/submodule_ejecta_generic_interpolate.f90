@@ -84,12 +84,16 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !
     !****************************************************
 
+    USE constants, ONLY: MSun, amu
+
     IMPLICIT NONE
 
     INTEGER:: i
 
+    ! The density has to be converted in units of the atomic mass unit
+    ! TODO: CHECK THAT EVERYTHING ELSE IS CONSISTENT WITH THIS!!
     DO i= 1, n, 1
-      baryon_density(i) = THIS% read_mass_density( x(i), y(i), z(i) )
+      baryon_density(i) = THIS% read_mass_density( x(i), y(i), z(i) )*MSun/amu
     ENDDO
 
     energy_density = 0.0D0

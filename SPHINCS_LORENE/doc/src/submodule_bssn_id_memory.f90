@@ -5,12 +5,12 @@
 SUBMODULE (formul_bssn_id) bssn_id_memory
 
   !************************************************
-  !                                               *
-  ! Implementation of the methods of TYPE bssn_id *
-  ! that (de)allocate memory                      *
-  !                                               *
-  ! FT 9.07.2021                                  *
-  !                                               *
+  !
+  !# Implementation of the methods of TYPE bssn_id
+  !  that (de)allocate memory
+  !
+  !  FT 9.07.2021
+  !
   !************************************************
 
 
@@ -28,15 +28,15 @@ SUBMODULE (formul_bssn_id) bssn_id_memory
   MODULE PROCEDURE allocate_bssn_fields
 
     !***********************************************
-    !                                              *
-    ! Allocate memory for the BSSN variables.      *
-    !                                              *
-    ! FT 23.10.2020                                *
-    !                                              *
-    ! Updated to mesh refinement                   *
-    !                                              *
-    ! FT 26.03.2021                                *
-    !                                              *
+    !
+    !# Allocate memory for the BSSN variables.
+    !
+    !  FT 23.10.2020
+    !
+    !  Updated to support mesh refinement
+    !
+    !  FT 26.03.2021
+    !
     !***********************************************
 
     USE mesh_refinement,  ONLY: allocate_grid_function
@@ -69,11 +69,11 @@ SUBMODULE (formul_bssn_id) bssn_id_memory
   MODULE PROCEDURE deallocate_bssn_fields
 
     !**************************************************
-    !                                                 *
-    ! Deallocate BSSN memory                          *
-    !                                                 *
-    ! FT                                              *
-    !                                                 *
+    !
+    !# Deallocate BSSN memory
+    !
+    !  FT
+    !
     !**************************************************
 
     USE mesh_refinement, ONLY: deallocate_grid_function

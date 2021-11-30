@@ -1,20 +1,20 @@
-! File:         submodule_BSSN_id_constructor.f90
+! File:         submodule_bssn_id_constructor.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
 SUBMODULE (formul_bssn_id) bssn_id_constructor
 
   !************************************************
-  !                                               *
-  !# Implementation of the constructor and        *
-  !  destructor of TYPE bssn_id                   *
-  !                                               *
-  !  FT 23.10.2020                                *
-  !                                               *
-  !  Updated to mesh refinement                   *
-  !                                               *
-  !  FT 26.03.2021                                *
-  !                                               *
+  !
+  !# Implementation of the constructor and
+  !  destructor of TYPE bssn_id
+  !
+  !  FT 23.10.2020
+  !
+  !  Updated to support mesh refinement
+  !
+  !  FT 26.03.2021
+  !
   !************************************************
 
 
@@ -27,14 +27,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
   MODULE PROCEDURE construct_bssn_id
 
     !****************************************************
-    !                                                   *
-    !# This constructor of TYPE bssn_id calls the       *
-    !  SUBROUTINES that rely on an bns object, and      *
-    !  allocates memory. It constructs the grid         *
-    !  using the number of grid points along each axis. *
-    !                                                   *
-    !  FT 23.10.2020                                    *
-    !                                                   *
+    !
+    !# This constructor of TYPE bssn_id calls the
+    !  SUBROUTINES that rely on an bns object, and
+    !  allocates memory. It constructs the grid
+    !  using the number of grid points along each axis.
+    !
+    !  FT 23.10.2020
+    !
     !****************************************************
 
     USE McLachlan_refine, ONLY: initialize_BSSN, deallocate_BSSN
@@ -65,7 +65,7 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     ! The construct_formul_3p1 SUBROUTINE constructs the grid,
     ! hence the dimensions of the arrays imported from the module BSSN
     ! are know and the arrays can be allocated
-    CALL allocate_bssn_fields( bssnid )
+    !CALL allocate_bssn_fields( bssnid )
 
     DEALLOCATE( levels )
 
@@ -87,12 +87,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
   MODULE PROCEDURE destruct_bssn_id
 
     !**************************************************
-    !                                                 *
-    ! Finalizer for members of the extended class     *
-    ! bssn_id, not the primitive class formul_3p1     *
-    !                                                 *
-    ! FT                                              *
-    !                                                 *
+    !
+    !# Destructor of the EXTENDED TYPE bssn_id
+    !
+    !  FT
+    !
     !**************************************************
 
     IMPLICIT NONE
@@ -105,11 +104,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
   MODULE PROCEDURE destructor
 
     !**************************************************
-    !                                                 *
-    ! Destructor of TYPE bssn_id                      *
-    !                                                 *
-    ! FT                                              *
-    !                                                 *
+    !
+    !# Destructor of EXTENDED TYPE bssn_id
+    !
+    !  FT
+    !
     !**************************************************
 
     IMPLICIT NONE

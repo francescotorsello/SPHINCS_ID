@@ -1,26 +1,25 @@
-! File:         submodule_BSSN_id_variables.f90
+! File:         submodule_bssn_id_variables.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
 SUBMODULE (formul_bssn_id) bssn_id_variables
 
   !************************************************
-  !                                               *
-  ! Implementation of the methods of TYPE bssn_id *
-  ! that compute, print and read the BSSN         *
-  ! variables                                     *
-  !                                               *
-  ! FT 23.10.2020                                 *
-  !                                               *
-  ! Updated to mesh refinement                    *
-  !                                               *
-  ! FT 26.03.2021                                 *
-  !                                               *
-  ! Renamed from bssn_id_methods to               *
-  ! bssn_id_variables upon improving modularity   *
-  !                                               *
-  ! FT 12.07.2021                                 *
-  !                                               *
+  !
+  !# Implementation of the methods of TYPE bssn_id
+  !  that compute the BSSN variables
+  !
+  !  FT 23.10.2020
+  !
+  !  Updated to support mesh refinement
+  !
+  !  FT 26.03.2021
+  !
+  !  Renamed from bssn_id_methods to
+  !  bssn_id_variables upon improving modularity
+  !
+  !  FT 12.07.2021
+  !
   !************************************************
 
 
@@ -38,13 +37,13 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
   MODULE PROCEDURE compute_and_export_bssn_variables
 
     !************************************************
-    !                                               *
-    ! Compute, stores and export the BSSN variables *
-    ! to a binary file to be read by the evolution  *
-    ! code in SPHINCS                               *
-    !                                               *
-    ! FT 23.10.2020                                 *
-    !                                               *
+    !
+    !# Compute, stores and prints the BSSN variables
+    !  to a binary file to be read by the evolution
+    !  code SPHINCS_BSSN
+    !
+    !  FT 23.10.2020
+    !
     !************************************************
 
     !USE NaNChecker,          ONLY: Check_Grid_Function_for_NAN
@@ -283,13 +282,13 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
   MODULE PROCEDURE read_bssn_dump_print_formatted
 
     !************************************************
-    !                                               *
-    ! Read the BSSN ID from the binary file output  *
-    ! by write_BSSN_dump, and print it to a         *
-    ! formatted file                                *
-    !                                               *
-    ! FT 08.02.2021                                 *
-    !                                               *
+    !
+    !# Read the BSSN ID from the binary file output
+    !  by write_BSSN_dump, and print it to a
+    !  formatted file
+    !
+    !  FT 08.02.2021
+    !
     !************************************************
 
     USE mesh_refinement,  ONLY: levels, nlevels
@@ -534,12 +533,12 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
   MODULE PROCEDURE print_formatted_lorene_id_bssn_variables
 
     !************************************************
-    !                                               *
-    ! Print the BSSN ID, computed on the gravity    *
-    ! grid from the LORENE ID, in a formatted file  *
-    !                                               *
-    ! FT 26.10.2020                                 *
-    !                                               *
+    !
+    !# Print the BSSN ID, computed on the gravity
+    !  grid, to a formatted file
+    !
+    !  FT 26.10.2020
+    !
     !************************************************
 
     USE tensor,              ONLY: itt, itx, ity, itz, ixx, ixy, &

@@ -5,12 +5,12 @@
 SUBMODULE (formul_bssn_id) bssn_id_constraints
 
   !************************************************
-  !                                               *
-  ! Implementation of the methods of TYPE bssn_id *
-  ! that compute the constraints                  *
-  !                                               *
-  ! FT 9.07.2021                                  *
-  !                                               *
+  !
+  !# Implementation of the methods of TYPE bssn_id
+  !  that compute the constraints
+  !
+  !  FT 9.07.2021
+  !
   !************************************************
 
 
@@ -28,15 +28,15 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
   MODULE PROCEDURE compute_and_export_bssn_constraints_grid
 
     !***************************************************
-    !                                                  *
-    ! Compute, store, analyze and export the BSSN      *
-    ! constraints to a formatted file. The computation *
-    ! is done by importing the LORENE hydro ID on the  *
-    ! gravity grid, without any information on the     *
-    ! particles.                                       *
-    !                                                  *
-    ! FT 1.02.2021                                     *
-    !                                                  *
+    !
+    !# Compute, store, analyze and print the BSSN
+    !  constraints to a formatted file. The computation
+    !  is done by importing the LORENE hydro ID on the
+    !  gravity grid, without any information on the
+    !  particles.
+    !
+    !  FT 1.02.2021
+    !
     !***************************************************
 
     USE constants,         ONLY: c_light2, cm2m, MSun, g2kg, m2cm, &
@@ -1196,19 +1196,19 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
   MODULE PROCEDURE compute_and_export_bssn_constraints_particles
 
     !**************************************************
-    !                                                 *
-    ! Compute, store and export the BSSN constraints  *
-    ! to a formatted file. The computaton is done     *
-    ! mapping the physical metric from the gravity    *
-    ! to the particles, computing e stress-energy     *
-    ! tensor on the particles, and mapping it to the  *
-    ! gravity grid.                                   *
-    ! TODO: use the SPH density to compute the        *
-    !       stress-energy tensor, rather than the     *
-    !       LORENE density                            *
-    !                                                 *
-    ! FT 1.02.2021                                    *
-    !                                                 *
+    !
+    !# Compute, store and print the BSSN constraints
+    !  to a formatted file. The computaton is done
+    !  mapping the physical metric from the gravity
+    !  to the particles, computing e stress-energy
+    !  tensor on the particles, and mapping it to the
+    !  gravity grid.
+    !  @todo use the SPH density to compute the
+    !       stress-energy tensor, rather than the
+    !       LORENE density
+    !
+    !  FT 1.02.2021
+    !
     !**************************************************
 
     USE constants,            ONLY: c_light2, cm2m, MSun, g2kg, m2cm, Msun_geo

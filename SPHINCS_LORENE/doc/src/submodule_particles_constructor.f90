@@ -751,9 +751,8 @@ SUBMODULE (particles_id) particles_constructor
 
         equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
 
-          IF( ABS(parts% mass_ratios(1) - parts% mass_ratios(2)) &
-              /parts% mass_ratios(2) <= 0.005 .AND. &
-              reflect_particles_x )THEN
+          IF( ABS(parts% masses(1) - parts% masses(2)) &
+              /parts% masses(2) <= 0.005 .AND. reflect_particles_x )THEN
 
             IF(.NOT.ALLOCATED( parts_all(2)% pos_i ))THEN
               ALLOCATE( parts_all(2)% pos_i( 3, parts% npart_i(1) ), &
@@ -907,6 +906,9 @@ SUBMODULE (particles_id) particles_constructor
     CALL check_particle_positions( parts% npart, parts% pos )
     CALL parts% same_particle_timer% stop_timer()
 
+    ! TODO: make the following an idbase type-bound procedure
+
+
     !
     !-- APM iteration
     !
@@ -970,8 +972,8 @@ SUBMODULE (particles_id) particles_constructor
                     sizes(i_matter, 5), &
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
-                    filename_apm_pos_id, filename_apm_pos, filename_apm_results, &
-                    check_negative_hydro )
+                    filename_apm_pos_id, filename_apm_pos, &
+                    filename_apm_results, check_negative_hydro )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
         PRINT *, "** Particles placed on star 1 according to the APM."
@@ -1015,7 +1017,7 @@ SUBMODULE (particles_id) particles_constructor
 
     ENDDO matter_objects_loop
 
-    STOP
+    !STOP
 
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts )
@@ -1589,7 +1591,7 @@ SUBMODULE (particles_id) particles_constructor
       !
       !**************************************************************
 
-      USE constants, ONLY: Msun_geo, km2m, amu, g2kg
+      !USE constants, ONLY: MSun, Msun_geo, km2m, amu, g2kg
       USE matrix,    ONLY: determinant_4x4_matrix
 
       IMPLICIT NONE
@@ -1684,8 +1686,8 @@ SUBMODULE (particles_id) particles_constructor
         Theta_a= 1.0D0/SQRT(-Theta_a)
         !Theta(a)= Theta_a
 
-        nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3) &
-                    /(amu*g2kg)
+        nstar_p(a)= sq_g*Theta_a*baryon_density(a)
+                    !*((Msun_geo*km2m)**3)/(amu*g2kg)
 
         IF( ISNAN( nstar_p( a ) ) )THEN
           PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
@@ -1695,8 +1697,6 @@ SUBMODULE (particles_id) particles_constructor
         ENDIF
         IF( nstar_p( a ) == 0 )THEN
           PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
-          !PRINT *, " * Particle position: x=", all_pos(1,a), &
-          !         ", y=", all_pos(2,a), ", z=", all_pos(3,a)
           PRINT *, "   sq_g=", sq_g
           PRINT *, "   Theta_a=", Theta_a
           PRINT *, "   baryon_density(", a, ")=", baryon_density(a)

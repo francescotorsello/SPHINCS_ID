@@ -84,12 +84,16 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !
     !****************************************************
 
+    USE constants, ONLY: MSun, amu
+
     IMPLICIT NONE
 
     INTEGER:: i
 
+    ! The density has to be converted in units of the atomic mass unit
+    ! TODO: CHECK THAT EVERYTHING ELSE IS CONSISTENT WITH THIS!!
     DO i= 1, n, 1
-      baryon_density(i) = THIS% read_mass_density( x(i), y(i), z(i) )
+      baryon_density(i) = THIS% read_mass_density( x(i), y(i), z(i) )*MSun/amu
     ENDDO
 
     energy_density = 0.0D0
@@ -256,6 +260,24 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       c011= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j+1,k)
       c111= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j+1,k)
     ENDIF
+    IF( i >= THIS% nx_grid .OR. i == 0 )THEN
+      c001= 0.0D0
+      c101= 0.0D0
+      c011= 0.0D0
+      c111= 0.0D0
+    ENDIF
+    IF( j >= THIS% ny_grid .OR. j == 0 )THEN
+      c001= 0.0D0
+      c101= 0.0D0
+      c011= 0.0D0
+      c111= 0.0D0
+    ENDIF
+    IF( k >= THIS% nz_grid )THEN
+      c001= 0.0D0
+      c101= 0.0D0
+      c011= 0.0D0
+      c111= 0.0D0
+    ENDIF
 
     c000= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j,k)
     c100= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j,k)
@@ -279,6 +301,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     res= c0*( 1.0D0 - zd ) + c1*zd
 
+    !IF( res < 1.0D-13 ) res= 0.0D0
+    !IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+    !          + ( y - THIS% centers(1,2) )**2.0D0 &
+    !          + ( zp - THIS% centers(1,3) )**2.0D0 ) > 500.0D0 ) res= 0.0D0
+    IF( ABS(x) > 500.0D0 .OR. ABS(y) > 500.0D0 .OR. zp > 500.0D0 ) res= 0.0D0
    ! PRINT *, c000, &
    !          c100, &
    !          c001, &
@@ -364,7 +391,14 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     IMPLICIT NONE
 
-    IF( THIS% read_mass_density( x, y, z ) <= 1.0D-13 )THEN
+    DOUBLE PRECISION, DIMENSION(3):: center
+
+    center= THIS% return_center(1)
+
+    IF( THIS% read_mass_density( x, y, z ) <= 2.0D-13 &
+        .OR. &
+        SQRT( ( x - center(1) )**2 + ( y - center(2) )**2 &
+            + ( z - center(3) )**2  ) > 500.0D0 )THEN
       res= 1
     ELSE
       res= 0

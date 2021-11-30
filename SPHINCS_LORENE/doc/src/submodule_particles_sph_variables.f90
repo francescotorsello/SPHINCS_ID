@@ -76,20 +76,26 @@ SUBMODULE (particles_id) particles_sph_variables
     USE input_output,        ONLY: dcount, write_SPHINCS_dump, read_options
     USE NR,                  ONLY: indexx
 
-    USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D,&
-                                   deallocate_RCB_tree_memory_3D, iorig
+    !USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D,&
+    !                               deallocate_RCB_tree_memory_3D, iorig
     USE APM,                 ONLY: density_loop
     USE kernel_table,        ONLY: ktable
     USE options,             ONLY: ndes
     USE set_h,               ONLY: exact_nei_tree_update
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE sphincs_sph,         ONLY: density, ncand!, flag_dead_ll_cells
+    USE sphincs_sph,         ONLY: density, ncand, all_clists!, flag_dead_ll_cells
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
                                    get_u_pwp, shorten_eos_name
     USE constants,           ONLY: m0c2, kg2g, m2cm
     USE units,               ONLY: m0c2_cu
+    USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
+                                   rpart, allocate_RCB_tree_memory_3D, &
+                                   deallocate_RCB_tree_memory_3D
+    USE matrix,              ONLY: invert_3x3_matrix
+    USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
+                                   W_no_norm,n_tab_entry
 
     IMPLICIT NONE
 
@@ -100,19 +106,28 @@ SUBMODULE (particles_id) particles_sph_variables
     INTEGER, PARAMETER:: max_it_h= 1
 
     ! Spacetime indices \mu and \nu
-    INTEGER:: nus, mus, cnt1, a, i_matter, itr2!, cnt2
+    INTEGER:: nus, mus, cnt1, cnt2, a, i_matter, itr2, inde, index1!, cnt2
+    INTEGER:: n_problematic_h
+    INTEGER:: itot, l, b, k, ill
 
     DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION:: det,sq_g, Theta_a!, &!nu_max1, nu_max2, &
-                       !nu_tmp, nu_thres1, nu_thres2
+                       !nu_tmp, nu_thres1, nu_thres2          
+    DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
+    DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
+    DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, dx, dy, dz, Wab, &
+                       Wab_ha, Wi, Wi1, dvv
 
-    LOGICAL:: few_ncand, good_h
+    LOGICAL:: few_ncand, good_h, invertible_matrix
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
+    TYPE(timer):: find_h_bruteforce_timer
+
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
 
     PRINT *, "** Executing the compute_and_export_SPH_variables " &
              // "subroutine..."
@@ -983,52 +998,87 @@ SUBMODULE (particles_id) particles_sph_variables
 
     PRINT *, " * Assigning h..."
     PRINT *
+    !! Determine smoothing length so that each particle has exactly
+    !! 300 neighbours inside 2h
+    !DO itr2= 1, max_it_h, 1
+    !
+    !  good_h= .TRUE.
+    !
+    !  CALL assign_h( ndes, &
+    !                 THIS% npart, &
+    !                 THIS% pos, THIS% h, &
+    !                 h )
+    !
+    !  DO a= 1, THIS% npart, 1
+    !
+    !    IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+    !
+    !      IF( a > THIS% npart/2 )THEN
+    !        DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
+    !          IF( h(itr) > 0.25D0 )THEN
+    !            h(a) = h(itr)
+    !            EXIT
+    !          ENDIF
+    !        ENDDO
+    !      ELSE
+    !        !h(a) = h(a - 1)
+    !        DO itr= a + 1, THIS% npart, 1
+    !          IF( h(itr) > 0.25D0 )THEN
+    !            h(a) = h(itr)
+    !            EXIT
+    !          ENDIF
+    !        ENDDO
+    !      ENDIF
+    !      !THIS% h(a)= 3.0D0*THIS% h(a)
+    !      !THIS% h= h
+    !      good_h= .FALSE.
+    !
+    !    ENDIF
+    !
+    !  ENDDO
+    !
+    !  IF( good_h )THEN
+    !    EXIT
+    !  ELSE
+    !    THIS% h= h
+    !  ENDIF
+    !
+    !ENDDO
+
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
-    DO itr2= 1, max_it_h, 1
+    CALL assign_h( ndes, &
+                   THIS% npart, &
+                   THIS% pos, THIS% h, & ! Input
+                   h )             ! Output
 
-      good_h= .TRUE.
+    IF( debug ) PRINT *, "101.5"
 
-      CALL assign_h( ndes, &
-                     THIS% npart, &
-                     THIS% pos, THIS% h, &
-                     h )
+    CALL find_h_bruteforce_timer% start_timer()
+    n_problematic_h= 0
+    check_h: DO a= 1, THIS% npart, 1
 
-      DO a= 1, THIS% npart, 1
+      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
 
+        n_problematic_h= n_problematic_h + 1
+        h(a)= find_h_backup( a, THIS% npart, THIS% pos, ndes )
+        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
-
-          IF( a > THIS% npart/2 )THEN
-            DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
-              IF( h(itr) > 0.25D0 )THEN
-                h(a) = h(itr)
-                EXIT
-              ENDIF
-            ENDDO
-          ELSE
-            !h(a) = h(a - 1)
-            DO itr= a + 1, THIS% npart, 1
-              IF( h(itr) > 0.25D0 )THEN
-                h(a) = h(itr)
-                EXIT
-              ENDIF
-            ENDDO
-          ENDIF
-          !THIS% h(a)= 3.0D0*THIS% h(a)
-          !THIS% h= h
-          good_h= .FALSE.
-
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", THIS% pos(:,a)
+          STOP
         ENDIF
 
-      ENDDO
-
-      IF( good_h )THEN
-        EXIT
-      ELSE
-        THIS% h= h
       ENDIF
 
-    ENDDO
+    ENDDO check_h
+    CALL find_h_bruteforce_timer% stop_timer()
+    CALL find_h_bruteforce_timer% print_timer( 2 )
+
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
 
     PRINT *, " * Computing neighbours..."
     PRINT *
@@ -1070,7 +1120,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
       cnt1= cnt1 + 1
 
-      IF( .NOT.few_ncand .OR. cnt1 >= 10 )THEN
+      IF( .NOT.few_ncand .OR. cnt1 >= 1 )THEN
         PRINT *, " * Smoothing lengths assigned and tree is built."
         EXIT
       ENDIF
@@ -1080,62 +1130,182 @@ SUBMODULE (particles_id) particles_sph_variables
     !
     !-- Check that the smoothing length is acceptable
     !
-    check_h: DO a= 1, THIS% npart, 1
-
-      IF( ISNAN( h(a) ) )THEN
-        PRINT *, "** ERROR! h(", a, ") is a NaN"
-        !PRINT *, "Stopping..."
-       ! PRINT *
-        !STOP
-        IF( a > THIS% npart/2 )THEN
-          DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
-            IF( h(itr) > 0.25D0 )THEN
-              h(a) = h(itr)
-              EXIT
-            ENDIF
-          ENDDO
-        ELSE
-          !h(a) = h(a - 1)
-          DO itr= a + 1, THIS% npart, 1
-            IF( h(itr) > 0.25D0 )THEN
-              h(a) = h(itr)
-              EXIT
-            ENDIF
-          ENDDO
-        ENDIF
-        !PRINT *, "** ERROR! h(", a, ")=", h(a)
-        !PRINT *
-      ENDIF
-      IF( h(a) <= 0.0D0 )THEN
-        PRINT *, "** ERROR! h(", a, ")=", h(a)
-        !PRINT *, "Stopping..."
-        !PRINT *
-        !STOP
-        IF( a > THIS% npart/2 )THEN
-          DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
-            IF( h(itr) > 0.25D0 )THEN
-              h(a) = h(itr)
-              EXIT
-            ENDIF
-          ENDDO
-        ELSE
-          !h(a) = h(a - 1)
-          DO itr= a + 1, THIS% npart, 1
-            IF( h(itr) > 0.25D0 )THEN
-              h(a) = h(itr)
-              EXIT
-            ENDIF
-          ENDDO
-        ENDIF
-        !PRINT *, "** ERROR! h(", a, ")=", h(a)
-        !PRINT *
-      ENDIF
-
-    ENDDO check_h
+!    check_h: DO a= 1, THIS% npart, 1
+!
+!      IF( ISNAN( h(a) ) )THEN
+!        PRINT *, "** ERROR! h(", a, ") is a NaN"
+!        !PRINT *, "Stopping..."
+!       ! PRINT *
+!        !STOP
+!        IF( a > THIS% npart/2 )THEN
+!          DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
+!            IF( h(itr) > 0.25D0 )THEN
+!              h(a) = h(itr)
+!              EXIT
+!            ENDIF
+!          ENDDO
+!        ELSE
+!          !h(a) = h(a - 1)
+!          DO itr= a + 1, THIS% npart, 1
+!            IF( h(itr) > 0.25D0 )THEN
+!              h(a) = h(itr)
+!              EXIT
+!            ENDIF
+!          ENDDO
+!        ENDIF
+!        !PRINT *, "** ERROR! h(", a, ")=", h(a)
+!        !PRINT *
+!      ENDIF
+!      IF( h(a) <= 0.0D0 )THEN
+!        PRINT *, "** ERROR! h(", a, ")=", h(a)
+!        !PRINT *, "Stopping..."
+!        !PRINT *
+!        !STOP
+!        IF( a > THIS% npart/2 )THEN
+!          DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
+!            IF( h(itr) > 0.25D0 )THEN
+!              h(a) = h(itr)
+!              EXIT
+!            ENDIF
+!          ENDDO
+!        ELSE
+!          !h(a) = h(a - 1)
+!          DO itr= a + 1, THIS% npart, 1
+!            IF( h(itr) > 0.25D0 )THEN
+!              h(a) = h(itr)
+!              EXIT
+!            ENDIF
+!          ENDDO
+!        ENDIF
+!        !PRINT *, "** ERROR! h(", a, ")=", h(a)
+!        !PRINT *
+!      ENDIF
+!
+!    ENDDO check_h
 
     ! Update the member variables storing smoothing length and particle volume
     THIS% h= h
     THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
+
+    PRINT *
+    PRINT *, "nfinal= ", nfinal
+    ll_cell_loop: DO ill= 1, nfinal
+
+      itot= nprev + ill
+      IF( nic(itot) == 0 ) CYCLE
+
+      particle_loop: DO l= lpart(itot), rpart(itot)
+
+        a=         iorig(l)
+
+        ha=        h(a)
+        ha_1=      1.0D0/ha
+        ha_3=      ha_1*ha_1*ha_1
+
+        xa=        pos_u(1,a)
+        ya=        pos_u(2,a)
+        za=        pos_u(3,a)
+
+        ! initialize correction matrix
+        mat_xx=    0.D0
+        mat_xy=    0.D0
+        mat_xz=    0.D0
+        mat_yy=    0.D0
+        mat_yz=    0.D0
+        mat_zz=    0.D0
+
+        cnt1= 0
+        cnt2= 0
+        cand_loop: DO k= 1, ncand(ill)
+
+          b=      all_clists(ill)%list(k)
+
+          IF( b == a )THEN
+            cnt1= cnt1 + 1
+          ENDIF
+          IF( xa == pos_u(1,b) .AND. ya == pos_u(2,b) .AND. za == pos_u(3,b) &
+          )THEN
+            cnt2= cnt2 + 1
+          ENDIF
+
+          ! Distances (ATTENTION: flatspace version !!!)
+          dx=     xa - pos_u(1,b)
+          dy=     ya - pos_u(2,b)
+          dz=     za - pos_u(3,b)
+          va=     SQRT(dx*dx + dy*dy + dz*dz)*ha_1
+
+          !IF( dx == 0 .AND. dy == 0 .AND. dz == 0 )THEN
+          !  PRINT *, "va=", va
+          !  PRINT *, "dz=", dx
+          !  PRINT *, "dy=", dy
+          !  PRINT *, "dz=", dz
+          !  PRINT *, "xa=", xa
+          !  PRINT *, "ya=", ya
+          !  PRINT *, "za=", za
+          !  PRINT *, "pos_u(1,b)", pos_u(1,b)
+          !  PRINT *, "pos_u(2,b)", pos_u(2,b)
+          !  PRINT *, "pos_u(3,b)", pos_u(3,b)
+          !  STOP
+          !ENDIF
+
+          ! get interpolation indices
+          inde=  MIN(INT(va*dv_table_1),n_tab_entry)
+          index1= MIN(inde + 1,n_tab_entry)
+
+          ! get tabulated values
+          Wi=     W_no_norm(inde)
+          Wi1=    W_no_norm(index1)
+
+          ! interpolate
+          dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
+          Wab_ha= Wi + (Wi1 - Wi)*dvv
+
+          ! "correction matrix" for derivs
+          Wdx=    Wab_ha*dx
+          Wdy=    Wab_ha*dy
+          Wdz=    Wab_ha*dz
+          mat_xx= mat_xx + Wdx*dx
+          mat_xy= mat_xy + Wdx*dy
+          mat_xz= mat_xz + Wdx*dz
+          mat_yy= mat_yy + Wdy*dy
+          mat_yz= mat_yz + Wdy*dz
+          mat_zz= mat_zz + Wdz*dz
+
+        ENDDO cand_loop
+
+        ! correction matrix
+        mat(1,1)= mat_xx
+        mat(2,1)= mat_xy
+        mat(3,1)= mat_xz
+
+        mat(1,2)= mat_xy
+        mat(2,2)= mat_yy
+        mat(3,2)= mat_yz
+
+        mat(1,3)= mat_xz
+        mat(2,3)= mat_yz
+        mat(3,3)= mat_zz
+
+        ! invert it
+        CALL invert_3x3_matrix(mat,mat_1,invertible_matrix)
+
+        IF( .NOT.invertible_matrix )THEN
+          PRINT *, "a= ", a
+          PRINT *, "h(a)= ", h(a)
+          PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
+          PRINT *, "nprev= ", nprev
+          PRINT *, "ill= ", ill
+          PRINT *, "itot= ", itot
+          PRINT *, "ncand(ill)= ", ncand(ill)
+          PRINT *, "cnt1= ", cnt1
+          PRINT *, "cnt2= ", cnt2
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO particle_loop
+
+    ENDDO ll_cell_loop
 
     !
     !-- Compute the proper baryon number density with kernel interpolation

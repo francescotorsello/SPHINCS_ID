@@ -1255,7 +1255,7 @@ SUBMODULE (particles_id) particles_apm
                                           + pos_maxerr(2)**2.0D0 &
                                           + pos_maxerr(3)**2.0D0 ) &
                                     /smaller_radius
-      PRINT *, "   The LORENE density is   = ", nstar_p_err
+      PRINT *, "   The ID density is   = ", nstar_p_err
       PRINT *, "   The SPH estimate is= ", nstar_real_err
       PRINT *
       PRINT *, " * Minimum relative error between the star density profile", &
@@ -1410,7 +1410,7 @@ SUBMODULE (particles_id) particles_apm
 
         ELSE
 
-          pos_corr_tmp= all_pos(:,a) + 0.1D0*correction_pos(:,a)
+          pos_corr_tmp= all_pos(:,a) + correction_pos(:,a) ! 1
 
         ENDIF
 
@@ -1993,6 +1993,8 @@ SUBMODULE (particles_id) particles_apm
              n_problematic_h, " particles."
     PRINT *
 
+    PRINT *, "** Building neighbors tree..."
+    PRINT *
     cnt1= 0
     DO
 
@@ -2005,20 +2007,22 @@ SUBMODULE (particles_id) particles_apm
                                   npart_real, &
                                   pos, nu )
 
-      !
-      !-- Check that the number of candidate neighbours is larger than
-      !-- or equal to ndes - 1
-      !
-      DO itr= 1, SIZE(ncand), 1
+      ll_cell_loop: DO ill= 1, nfinal
 
-        ! If there are too few candidate neighbors
-        IF( ncand(itr) < nn_des - 1 )THEN
+        itot= nprev + ill
+        IF( nic(itot) == 0 ) CYCLE
 
-          ! Increase the smoothing length and rebuild the tree
+        IF( ncand(ill) < nn_des - 1 )THEN
+
+          ! Increase the smoothing lengths of the paricles inside the cell,
+          ! and rebuild the tree
           few_ncand= .TRUE.
-          h= 3.0D0*h
 
-          EXIT
+          particle_in_cell_loop: DO l= lpart(itot), rpart(itot)
+
+            h(l)= 3.0D0*h(l)
+
+          ENDDO particle_in_cell_loop
 
         ELSE
 
@@ -2026,7 +2030,30 @@ SUBMODULE (particles_id) particles_apm
 
         ENDIF
 
-      ENDDO
+      ENDDO ll_cell_loop
+
+      !
+      !-- Check that the number of candidate neighbours is larger than
+      !-- or equal to ndes - 1
+      !
+      !DO itr= 1, SIZE(ncand), 1
+      !
+      !  ! If there are too few candidate neighbors
+      !  IF( ncand(itr) < nn_des - 1 )THEN
+      !
+      !    ! Increase the smoothing length and rebuild the tree
+      !    few_ncand= .TRUE.
+      !    h= 3.0D0*h
+      !
+      !    EXIT
+      !
+      !  ELSE
+      !
+      !    few_ncand= .FALSE.
+      !
+      !  ENDIF
+      !
+      !ENDDO
 
       cnt1= cnt1 + 1
 
@@ -2123,126 +2150,152 @@ SUBMODULE (particles_id) particles_apm
    !
    ! ENDDO check_h
 
-    PRINT *
-    PRINT *, "nfinal= ", nfinal
-    ll_cell_loop: DO ill= 1, nfinal
-
-      itot= nprev + ill
-      IF( nic(itot) == 0 ) CYCLE
-
-      particle_loop: DO l= lpart(itot), rpart(itot)
-
-        a=         iorig(l)
-
-        ha=        h(a)
-        ha_1=      1.0D0/ha
-        ha_3=      ha_1*ha_1*ha_1
-
-        xa=        pos(1,a)
-        ya=        pos(2,a)
-        za=        pos(3,a)
-
-        ! initialize correction matrix
-        mat_xx=    0.D0
-        mat_xy=    0.D0
-        mat_xz=    0.D0
-        mat_yy=    0.D0
-        mat_yz=    0.D0
-        mat_zz=    0.D0
-
-        cnt1= 0
-        cnt2= 0
-        cand_loop: DO k= 1, ncand(ill)
-
-          b=      all_clists(ill)%list(k)
-
-          IF( b == a )THEN
-            cnt1= cnt1 + 1
-          ENDIF
-          IF( xa == pos(1,b) .AND. ya == pos(2,b) .AND. za == pos(3,b) &
-          )THEN
-            cnt2= cnt2 + 1
-          ENDIF
-
-          ! Distances (ATTENTION: flatspace version !!!)
-          ddx=     xa - pos(1,b)
-          ddy=     ya - pos(2,b)
-          ddz=     za - pos(3,b)
-          va=     SQRT(dx*dx + dy*dy + dz*dz)*ha_1
-
-          !IF( dx == 0 .AND. dy == 0 .AND. dz == 0 )THEN
-          !  PRINT *, "va=", va
-          !  PRINT *, "dz=", dx
-          !  PRINT *, "dy=", dy
-          !  PRINT *, "dz=", dz
-          !  PRINT *, "xa=", xa
-          !  PRINT *, "ya=", ya
-          !  PRINT *, "za=", za
-          !  PRINT *, "pos_u(1,b)", pos_u(1,b)
-          !  PRINT *, "pos_u(2,b)", pos_u(2,b)
-          !  PRINT *, "pos_u(3,b)", pos_u(3,b)
-          !  STOP
-          !ENDIF
-
-          ! get interpolation indices
-          inde=  MIN(INT(va*dv_table_1),n_tab_entry)
-          index1= MIN(inde + 1,n_tab_entry)
-
-          ! get tabulated values
-          Wi=     W_no_norm(inde)
-          Wi1=    W_no_norm(index1)
-
-          ! interpolate
-          dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
-          Wab_ha= Wi + (Wi1 - Wi)*dvv
-
-          ! "correction matrix" for derivs
-          Wdx=    Wab_ha*dx
-          Wdy=    Wab_ha*dy
-          Wdz=    Wab_ha*dz
-          mat_xx= mat_xx + Wdx*dx
-          mat_xy= mat_xy + Wdx*dy
-          mat_xz= mat_xz + Wdx*dz
-          mat_yy= mat_yy + Wdy*dy
-          mat_yz= mat_yz + Wdy*dz
-          mat_zz= mat_zz + Wdz*dz
-
-        ENDDO cand_loop
-
-        ! correction matrix
-        mat(1,1)= mat_xx
-        mat(2,1)= mat_xy
-        mat(3,1)= mat_xz
-
-        mat(1,2)= mat_xy
-        mat(2,2)= mat_yy
-        mat(3,2)= mat_yz
-
-        mat(1,3)= mat_xz
-        mat(2,3)= mat_yz
-        mat(3,3)= mat_zz
-
-        ! invert it
-        CALL invert_3x3_matrix( mat, mat_1, invertible_matrix )
-        PRINT *, invertible_matrix
-
-        IF( .NOT.invertible_matrix )THEN
-          PRINT *, "a= ", a
-          PRINT *, "h(a)= ", h(a)
-          PRINT *, "pos_u= ", pos(1,b), pos(2,b), pos(3,b)
-          PRINT *, "nprev= ", nprev
-          PRINT *, "ill= ", ill
-          PRINT *, "itot= ", itot
-          PRINT *, "ncand(ill)= ", ncand(ill)
-          PRINT *, "cnt1= ", cnt1
-          PRINT *, "cnt2= ", cnt2
-          PRINT *
-          STOP
-        ENDIF
-
-      ENDDO particle_loop
-
-    ENDDO ll_cell_loop
+!    PRINT *
+!    PRINT *, "nfinal= ", nfinal
+!    ll_cell_loop: DO ill= 1, nfinal
+!
+!      itot= nprev + ill
+!      IF( nic(itot) == 0 ) CYCLE
+!
+!      particle_loop: DO l= lpart(itot), rpart(itot)
+!
+!        a=         iorig(l)
+!
+!        ha=        h(a)
+!        ha_1=      1.0D0/ha
+!        ha_3=      ha_1*ha_1*ha_1
+!
+!        xa=        pos(1,a)
+!        ya=        pos(2,a)
+!        za=        pos(3,a)
+!
+!        ! initialize correction matrix
+!        mat_xx=    0.D0
+!        mat_xy=    0.D0
+!        mat_xz=    0.D0
+!        mat_yy=    0.D0
+!        mat_yz=    0.D0
+!        mat_zz=    0.D0
+!
+!        cnt1= 0
+!        cnt2= 0
+!
+!        !finalnamefile= "mat.dat"
+!        !
+!        !INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+!        !
+!        !IF( exist )THEN
+!        !  OPEN( UNIT= 20, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+!        !        FORM= "FORMATTED", &
+!        !        POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+!        !        IOMSG= err_msg )
+!        !ELSE
+!        !  OPEN( UNIT= 20, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+!        !  FORM= "FORMATTED", &
+!        !        ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+!        !ENDIF
+!        !IF( ios > 0 )THEN
+!        !  PRINT *, "...error when opening ", TRIM(finalnamefile), &
+!        !           ". The error message is", err_msg
+!        !  STOP
+!        !ENDIF
+!        cand_loop: DO k= 1, ncand(ill)
+!
+!          b=      all_clists(ill)%list(k)
+!
+!          IF( b == a )THEN
+!            cnt1= cnt1 + 1
+!          ENDIF
+!          IF( xa == pos(1,b) .AND. ya == pos(2,b) .AND. za == pos(3,b) &
+!          )THEN
+!            cnt2= cnt2 + 1
+!          ENDIF
+!
+!          ! Distances (ATTENTION: flatspace version !!!)
+!          ddx=     xa - pos(1,b)
+!          ddy=     ya - pos(2,b)
+!          ddz=     za - pos(3,b)
+!          va=     SQRT(ddx*ddx + ddy*ddy + ddz*ddz)*ha_1
+!
+!          !IF( dx == 0 .AND. dy == 0 .AND. dz == 0 )THEN
+!          !  PRINT *, "va=", va
+!          !  PRINT *, "dz=", dx
+!          !  PRINT *, "dy=", dy
+!          !  PRINT *, "dz=", dz
+!          !  PRINT *, "xa=", xa
+!          !  PRINT *, "ya=", ya
+!          !  PRINT *, "za=", za
+!          !  PRINT *, "pos_u(1,b)", pos_u(1,b)
+!          !  PRINT *, "pos_u(2,b)", pos_u(2,b)
+!          !  PRINT *, "pos_u(3,b)", pos_u(3,b)
+!          !  STOP
+!          !ENDIF
+!
+!          ! get interpolation indices
+!          inde=  MIN(INT(va*dv_table_1),n_tab_entry)
+!          index1= MIN(inde + 1,n_tab_entry)
+!
+!          ! get tabulated values
+!          Wi=     W_no_norm(inde)
+!          Wi1=    W_no_norm(index1)
+!
+!          ! interpolate
+!          dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
+!          Wab_ha= Wi + (Wi1 - Wi)*dvv
+!
+!          ! "correction matrix" for derivs
+!          Wdx=    Wab_ha*ddx
+!          Wdy=    Wab_ha*ddy
+!          Wdz=    Wab_ha*ddz
+!          mat_xx= mat_xx + Wdx*ddx
+!          mat_xy= mat_xy + Wdx*ddy
+!          mat_xz= mat_xz + Wdx*ddz
+!          mat_yy= mat_yy + Wdy*ddy
+!          mat_yz= mat_yz + Wdy*ddz
+!          mat_zz= mat_zz + Wdz*ddz
+!
+!          !WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!          !  mat_xx, mat_xy, mat_xz, mat_yy, mat_yz, mat_zz
+!
+!        ENDDO cand_loop
+!
+!        !CLOSE( UNIT= 20 )
+!
+!        ! correction matrix
+!        mat(1,1)= mat_xx
+!        mat(2,1)= mat_xy
+!        mat(3,1)= mat_xz
+!
+!        mat(1,2)= mat_xy
+!        mat(2,2)= mat_yy
+!        mat(3,2)= mat_yz
+!
+!        mat(1,3)= mat_xz
+!        mat(2,3)= mat_yz
+!        mat(3,3)= mat_zz
+!
+!        ! invert it
+!        CALL invert_3x3_matrix( mat, mat_1, invertible_matrix )
+!        !PRINT *, invertible_matrix
+!
+!        IF( .NOT.invertible_matrix )THEN
+!          PRINT *, "a= ", a
+!          PRINT *, "h(a)= ", h(a)
+!          PRINT *, "pos_u= ", pos(1,b), pos(2,b), pos(3,b)
+!          PRINT *, "nprev= ", nprev
+!          PRINT *, "ill= ", ill
+!          PRINT *, "itot= ", itot
+!          PRINT *, "nfinal= ", nfinal
+!          PRINT *, "ncand(ill)= ", ncand(ill)
+!          PRINT *, "cnt1= ", cnt1
+!          PRINT *, "cnt2= ", cnt2
+!          PRINT *
+!          STOP
+!        ENDIF
+!
+!      ENDDO particle_loop
+!
+!    ENDDO ll_cell_loop
 
     IF( debug ) PRINT *, "102"
 

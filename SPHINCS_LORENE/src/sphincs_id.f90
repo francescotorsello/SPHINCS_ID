@@ -185,6 +185,19 @@ PROGRAM sphincs_id
   ! 1.4-1.4 systems for both ; 1.6-1.6 ; 1.2-1.8 GRAVIATIONAL masses
   !STOP
 
+  PRINT *, "       ____________  ________  __________    __ ___    "
+  PRINT *, "      / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \   "
+  PRINT *, "     (__  ) ___/ __  / / / / / /__(__  )___/ / /_/ /   "
+  PRINT *, "    /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/    "
+  PRINT *
+  PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime  "
+  PRINT *, "  Initial Data builder  "
+  PRINT *
+  PRINT *, "  Author:       Francesco Torsello  "
+  PRINT *, "  Copyright:    GNU General Public License (GPLv3)     "
+  PRINT *, "  ___________________________________________________  "
+  PRINT *
+
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time
 

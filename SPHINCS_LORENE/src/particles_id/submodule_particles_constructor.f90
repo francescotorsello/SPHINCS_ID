@@ -972,8 +972,8 @@ SUBMODULE (particles_id) particles_constructor
                     sizes(i_matter, 5), &
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
-                    filename_apm_pos_id, filename_apm_pos, filename_apm_results, &
-                    check_negative_hydro )
+                    filename_apm_pos_id, filename_apm_pos, &
+                    filename_apm_results, check_negative_hydro )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
         PRINT *, "** Particles placed on star 1 according to the APM."
@@ -1591,7 +1591,7 @@ SUBMODULE (particles_id) particles_constructor
       !
       !**************************************************************
 
-      USE constants, ONLY: Msun_geo, km2m, amu, g2kg
+      !USE constants, ONLY: MSun, Msun_geo, km2m, amu, g2kg
       USE matrix,    ONLY: determinant_4x4_matrix
 
       IMPLICIT NONE
@@ -1686,8 +1686,8 @@ SUBMODULE (particles_id) particles_constructor
         Theta_a= 1.0D0/SQRT(-Theta_a)
         !Theta(a)= Theta_a
 
-        nstar_p(a)= sq_g*Theta_a*baryon_density(a)*((Msun_geo*km2m)**3) &
-                    /(amu*g2kg)
+        nstar_p(a)= sq_g*Theta_a*baryon_density(a)
+                    !*((Msun_geo*km2m)**3)/(amu*g2kg)
 
         IF( ISNAN( nstar_p( a ) ) )THEN
           PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
