@@ -446,6 +446,32 @@ SUBMODULE (particles_id) particles_constructor
         ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
                    npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
 
+         ! PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,1)) + sizes(itr, 1)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,1)) + sizes(itr, 2)
+         ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,2)) + sizes(itr, 3)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,2)) + sizes(itr, 4)
+         ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,3)) + sizes(itr, 5)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,3)) + sizes(itr, 6)
+         !
+         ! PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,1)) + sizes(itr, 1)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,1)) + sizes(itr, 2)
+         ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,2)) + sizes(itr, 3)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,2)) + sizes(itr, 4)
+         ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,3)) + sizes(itr, 5)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
+
           IF( ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
                       ABS(center(itr,1)) + sizes(itr, 1) &
               .OR. &
@@ -459,10 +485,10 @@ SUBMODULE (particles_id) particles_constructor
                       ABS(center(itr,2)) + sizes(itr, 4) &
               .OR. &
               ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,3)) + sizes(itr, 1) &
+                      ABS(center(itr,3)) + sizes(itr, 5) &
               .OR. &
               ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,3)) + sizes(itr, 2) &
+                      ABS(center(itr,3)) + sizes(itr, 6) &
 
           )THEN
 
@@ -964,12 +990,12 @@ SUBMODULE (particles_id) particles_constructor
                     parts% pvol(npart_in:npart_fin), &
                     parts% h(npart_in:npart_fin), &
                     parts% nu(npart_in:npart_fin), &
-                    center(i_matter,1), barycenter(i_matter,1), &
+                    center(i_matter,:), barycenter(i_matter,:), &
                     parts% masses(i_matter), &
-                    sizes(i_matter, 1), &
-                    sizes(i_matter, 2), &
-                    sizes(i_matter, 3), &
-                    sizes(i_matter, 5), &
+                    sizes(i_matter, :), &
+                    !sizes(i_matter, 2), &
+                    !sizes(i_matter, 3), &
+                    !sizes(i_matter, 5), &
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
                     filename_apm_pos_id, filename_apm_pos, &

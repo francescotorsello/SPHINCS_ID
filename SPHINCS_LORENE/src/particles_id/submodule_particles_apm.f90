@@ -104,12 +104,13 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
     INTEGER,          PARAMETER:: print_step       = 15
-    DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 550.0D0!1.25D0
+    DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
+    DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
     DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     DOUBLE PRECISION, PARAMETER:: max_it_tree      = 1
-    DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
+    !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
 
     INTEGER:: a, a2, itr, itr2, n_inc, cnt1, cnt2, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
@@ -119,7 +120,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER:: n_problematic_h, b, ill, l, itot
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
-    DOUBLE PRECISION:: h_max, h_av, eps, tmp!, delta
+    DOUBLE PRECISION:: h_max, h_av, tmp!, delta
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, dx, dy, dz, &
                        rad_x, rad_y, rad_z, com_x, com_y, com_z, com_d
     DOUBLE PRECISION:: max_r_real, r_real, max_z_real
@@ -209,6 +210,8 @@ SUBMODULE (particles_id) particles_apm
 
     npart_real= SIZE( pos_input(1,:) )
 
+    IF( debug ) PRINT *, "npart_real= ", npart_real
+
     !---------------------------------------!
     !-- Allocate, assign and test h_guess --!
     !---------------------------------------!
@@ -275,6 +278,7 @@ SUBMODULE (particles_id) particles_apm
     npart_real= 2*npart_real_half
 
     IF( debug ) PRINT *, "1"
+    IF( debug ) PRINT *, "npart_real= ", npart_real
 
     !--------------------------------------------------------------------!
     !-- Find the maximum and the average smoothing length of the       --!
@@ -307,10 +311,10 @@ SUBMODULE (particles_id) particles_apm
   !    radius_z= binary% get_radius2_z()
   !
   !  ENDIF
-    smaller_radius= MIN( radx_comp, radx_opp )
-    larger_radius = MAX( radx_comp, radx_opp )
-    radius_y= rady
-    radius_z= radz
+    smaller_radius= MIN( sizes(1), sizes(2) )
+    larger_radius = MAX( sizes(1), sizes(2) )
+    radius_y= sizes(3)
+    radius_z= sizes(5)
 
     h_max= 0.0D0
     h_av = 0.0D0
@@ -318,9 +322,10 @@ SUBMODULE (particles_id) particles_apm
     max_z_real= ABS( MAXVAL( pos_input( 3, : ), DIM= 1 ) )
     DO a= 1, npart_real, 1
 
-      IF( SQRT( ( pos_input( 1, a ) - center )**2.0D0 &
-                + pos_input( 2, a )**2.0D0 &
-                + pos_input( 3, a )**2.0D0 ) > 0.99D0*max_z_real )THEN
+      IF( SQRT( ( pos_input( 1, a ) - center(1) )**2.0D0 &
+              + ( pos_input( 2, a ) - center(2) )**2.0D0 &
+              + ( pos_input( 3, a ) - center(3) )**2.0D0 ) &
+                > 0.99D0*max_z_real )THEN
 
         itr= itr + 1
         IF( h_guess(a) > h_max )THEN
@@ -358,11 +363,14 @@ SUBMODULE (particles_id) particles_apm
              "surfaces..."
     PRINT *
 
+    IF( debug ) PRINT *, "npart_real= ", npart_real
+
     max_r_real= 0.0D0
     DO itr= 1, npart_real, 1
 
-      r_real= SQRT( ( pos_input( 1, itr ) - center )**2.0D0 &
-                  + pos_input( 2, itr )**2.0D0 + pos_input( 3, itr )**2.0D0 )
+      r_real= SQRT( ( pos_input( 1, itr ) - center(1) )**2.0D0 &
+                  + ( pos_input( 2, itr ) - center(2) )**2.0D0 &
+                  + ( pos_input( 3, itr ) - center(3) )**2.0D0 )
       IF( r_real > max_r_real ) max_r_real= r_real
 
     ENDDO
@@ -370,13 +378,12 @@ SUBMODULE (particles_id) particles_apm
     nx= nx_gh
     ny= ny_gh
     nz= nz_gh
-    eps= 5.0D-1
-    xmin= -600.0D0!center - larger_radius*( 1.0D0 + eps )
-    xmax= 600.0D0!center + larger_radius*( 1.0D0 + eps )
-    ymin= -600.0D0!- radius_y*( 1.0D0 + eps )
-    ymax= 600.0D0!  radius_y*( 1.0D0 + eps )
-    zmin= -600.0D0!- radius_z*( 1.0D0 + eps )
-    zmax= 600.0D0!  radius_z*( 1.0D0 + eps )
+    xmin= center(1) - sizes(1)*( 1.0D0 + eps )
+    xmax= center(1) + sizes(2)*( 1.0D0 + eps )
+    ymin= center(2) - sizes(3)*( 1.0D0 + eps )
+    ymax= center(2) + sizes(4)*( 1.0D0 + eps )
+    zmin= center(3) - sizes(5)*( 1.0D0 + eps )
+    zmax= center(3) + sizes(6)*( 1.0D0 + eps )
     dx= ABS( xmax - xmin )/DBLE( nx )
     dy= ABS( ymax - ymin )/DBLE( ny )
     dz= ABS( zmax - zmin )/DBLE( nz )
@@ -392,9 +399,9 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
     ENDIF
 
-    rad_x= 1.0D0 !larger_radius + ghost_dist !+ h_av/7.0D0
-    rad_y= 1.0D0 !radius_y      + ghost_dist !+ h_av/7.0D0
-    rad_z= 1.0D0 !radius_z      + ghost_dist !+ h_av/7.0D0
+    rad_x= larger_radius + ghost_dist !+ h_av/7.0D0
+    rad_y= radius_y      + ghost_dist !+ h_av/7.0D0
+    rad_z= radius_z      + ghost_dist !+ h_av/7.0D0
 
     IF( debug ) PRINT *, "larger_radius= ", larger_radius
     IF( debug ) PRINT *, "radius_y= ", radius_y
@@ -424,47 +431,62 @@ SUBMODULE (particles_id) particles_apm
 
           xtemp= xmin + dx/2.0D0 + DBLE( i - 1 )*dx
 
-          x_ell= center + rad_x*COS(ATAN( ytemp/( xtemp - center ) )) &
-                 *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                       + ytemp**2.0D0 + ztemp**2.0D0 )))
+          x_ell= center(1) + rad_x*COS(ATAN( ( ytemp - center(2) )/( xtemp - center(1) ) )) &
+                 *SIN(ACOS(( ztemp - center(3) )/SQRT( ( xtemp - center(1) )**2.0D0 &
+                 + ( ytemp - center(2) )**2.0D0 &
+                 + ( ztemp - center(3) )**2.0D0 )))
 
-          y_ell= rad_y*SIN(ATAN( ytemp/( xtemp - center ) )) &
-                 *SIN(ACOS(ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                       + ytemp**2.0D0 + ztemp**2.0D0 )))
+          y_ell= center(2) + rad_y*SIN(ATAN( ( ytemp - center(2) )/( xtemp - center(1) ) )) &
+                 *SIN(ACOS(( ztemp - center(3) )/SQRT( ( xtemp - center(1) )**2.0D0 &
+                 + ( ytemp - center(2) )**2.0D0 &
+                 + ( ztemp - center(3) )**2.0D0 )))
 
-          z_ell= rad_z*( ztemp/SQRT( ( xtemp - center )**2.0D0 &
-                                   + ytemp**2.0D0 + ztemp**2.0D0 ) )
+          z_ell= center(3) + rad_z*( ( ztemp - center(3) )/SQRT( ( xtemp - center(1) )**2.0D0 &
+                 + ( ytemp - center(2) )**2.0D0 &
+                 + ( ztemp - center(3) )**2.0D0 ))
 
-          IF( &!( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-              !      + ztemp**2.0D0 ) <= 500.0D0 & !
-              !      !ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
-              !      !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
-              !.AND. &
-              !SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-              !      + ztemp**2.0D0 ) >= &
-              !SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
-              !      + z_ell**2.0D0 ) &
-              !.AND. &
-              !get_density( xtemp, ytemp, ztemp ) <= 1.0D-13 ) &
-              !.OR. &
-              ( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-              + ztemp**2.0D0 ) <= 550.0D0&
-              !ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
-              !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
+          IF( ( SQRT( ( xtemp - center(1) )**2.0D0 &
+                    + ( ytemp - center(2) )**2.0D0 &
+                    + ( ztemp - center(3) )**2.0D0 ) <= & !
+                    ellipse_thickness*SQRT( ( x_ell - center(1) )**2.0D0 &
+                            + ( y_ell - center(2) )**2.0D0 &
+                            + ( z_ell - center(3) )**2.0D0 ) &
               .AND. &
-              SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
-                    + ztemp**2.0D0 ) >= 500.0D0 ) & !
-              !SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
-              !      + z_ell**2.0D0 ) )
+              SQRT( ( xtemp - center(1) )**2.0D0 &
+                  + ( ytemp - center(2) )**2.0D0 &
+                  + ( ztemp - center(3) )**2.0D0 ) >= &
+              SQRT( ( x_ell - center(1) )**2.0D0 &
+                  + ( y_ell - center(2) )**2.0D0 &
+                  + ( z_ell - center(3) )**2.0D0 ) &
+              .AND. &
+              get_density( xtemp, ytemp, ztemp ) <= 0.0D0 ) &
+           !   .OR. &
+           !   ( SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+           !   + ztemp**2.0D0 ) <= 550.0D0&
+           !   !ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
+           !   !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
+           !   .AND. &
+           !   SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+           !         + ztemp**2.0D0 ) >= 500.0D0 ) & !
+           !   !SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
+           !   !      + z_ell**2.0D0 ) )
           )THEN
 
-            !itr= itr + 1
-            !ghost_pos( 1, itr )= xtemp
-            !ghost_pos( 2, itr )= ytemp
-            !ghost_pos( 3, itr )= ztemp
             ghost_pos_tmp( 1, i, j, k )= xtemp
             ghost_pos_tmp( 2, i, j, k )= ytemp
             ghost_pos_tmp( 3, i, j, k )= ztemp
+
+        !  ELSE
+        !
+        !    PRINT *, SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+        !    + ztemp**2.0D0 ) <= & !
+        !    ellipse_thickness*SQRT( ( x_ell - center )**2.0D0 &
+        !                + y_ell**2.0D0 + z_ell**2.0D0 )
+        !    PRINT *, SQRT( ( xtemp - center )**2.0D0 + ytemp**2.0D0 &
+        !    + ztemp**2.0D0 ) >= &
+        !    SQRT( ( x_ell - center )**2.0D0 + y_ell**2.0D0 &
+        !    + z_ell**2.0D0 )
+        !    PRINT *, get_density( xtemp, ytemp, ztemp ) <= 0.0D0
 
           ENDIF
 
@@ -778,10 +800,11 @@ SUBMODULE (particles_id) particles_apm
     !-- enforce centre of mass after having changed nu --!
     !----------------------------------------------------!
 
-    IF( com_star == 0.0D0 )THEN
+    IF( com_star(1) == 0.0D0 &
+        .AND. com_star(2) == 0.0D0 .AND. com_star(3) == 0.0D0 )THEN
 
       CALL COM( npart_real, all_pos(:,1:npart_real), nu(1:npart_real), & ! input
-                com_star, com_y, com_z, com_d ) ! output
+                com_star(1), com_star(2), com_star(3), com_d ) ! output
 
     ENDIF
 
@@ -1170,38 +1193,40 @@ SUBMODULE (particles_id) particles_apm
 
       DO a= npart_real + 1, npart_all, 1
 
-        x_ell= center &
-               + rad_x*COS(ATAN( all_pos(2,a)/( all_pos(1,a) - center ) )) &
-                 *SIN(ACOS(all_pos(3,a)/SQRT( ( all_pos(1,a) - center )**2.0D0 &
-               + all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )))
+        x_ell= center(1) &
+               + rad_x*COS(ATAN( ( all_pos(2,a) - center(2) )/( all_pos(1,a) - center(1) ) )) &
+                 *SIN(ACOS(( all_pos(3,a) - center(3) )/SQRT( ( all_pos(1,a) - center(1) )**2.0D0 &
+               + ( all_pos(2,a) - center(2) )**2.0D0 + ( all_pos(3,a) - center(3) )**2.0D0 )))
 
-        y_ell= rad_y*SIN(ATAN( all_pos(2,a)/( all_pos(1,a) - center ) )) &
-                 *SIN(ACOS(all_pos(3,a)/SQRT( ( all_pos(1,a) - center )**2.0D0 &
-               + all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )))
+        y_ell= center(2) &
+               + rad_y*SIN(ATAN( ( all_pos(2,a) - center(2) )/( all_pos(1,a) - center(1) ) )) &
+                 *SIN(ACOS(( all_pos(3,a) - center(3) )/SQRT( ( all_pos(1,a) - center(1) )**2.0D0 &
+               + ( all_pos(2,a) - center(2) )**2.0D0 + ( all_pos(3,a) - center(3) )**2.0D0 )))
 
-        z_ell= rad_z*( all_pos(3,a)/SQRT( ( all_pos(1,a) - center )**2.0D0 &
-                                 + all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 ) )
+        z_ell= center(3) + &
+               rad_z*( ( all_pos(3,a) - center(3) )/SQRT( ( all_pos(1,a) - center(1) )**2.0D0 &
+                                 + ( all_pos(2,a) - center(2) )**2.0D0 + ( all_pos(3,a) - center(3) )**2.0D0 ) )
 
         DO itr2= 1, 10, 1
 
-          IF(&!SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
-              !      + all_pos(3,a)**2.0D0 ) <= &
-              !( 1.0D0 + ( ellipse_thickness - 1.0D0 )*DBLE(itr)/10.0D0 ) &
-              !     *SQRT( ( x_ell - center )**2.0D0 &
-              !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
-              !.AND. &
-              !SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
-              !      + all_pos(3,a)**2.0D0 ) >= &
-              !( 1.0D0 + ( ellipse_thickness - 1.0D0 )*DBLE(itr - 1)/10.0D0 ) &
-              !     *SQRT( ( x_ell - center )**2.0D0 &
-              !            + y_ell**2.0D0 + z_ell**2.0D0 ) &
-              SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
-                    + all_pos(3,a)**2.0D0 ) <= &
-                    ( 500.0D0 + 50.0D0*DBLE(itr)/10.0D0 ) &
+          IF( SQRT( ( all_pos(1,a) - center(1) )**2.0D0 + ( all_pos(2,a) - center(2) )**2.0D0 &
+                    + ( all_pos(3,a) - center(3) )**2.0D0 ) <= &
+              ( 1.0D0 + ( ellipse_thickness - 1.0D0 )*DBLE(itr)/10.0D0 ) &
+                   *SQRT( ( x_ell - center(1) )**2.0D0 &
+                          + ( y_ell - center(2) )**2.0D0 + ( z_ell - center(3) )**2.0D0 ) &
               .AND. &
-              SQRT( ( all_pos(1,a) - center )**2.0D0 + all_pos(2,a)**2.0D0 &
-                    + all_pos(3,a)**2.0D0 ) > &
-                    ( 500.0D0 + 50.0D0*DBLE(itr-1)/10.0D0 ) &
+              SQRT( ( all_pos(1,a) - center(1) )**2.0D0 + ( all_pos(2,a) - center(2) )**2.0D0 &
+                    + ( all_pos(3,a) - center(3) )**2.0D0 ) >= &
+              ( 1.0D0 + ( ellipse_thickness - 1.0D0 )*DBLE(itr - 1)/10.0D0 ) &
+                   *SQRT( ( x_ell - center(1) )**2.0D0 &
+                          + ( y_ell - center(2) )**2.0D0 + ( z_ell - center(3) )**2.0D0 ) &
+              !SQRT( ( all_pos(1,a) - center(1) )**2.0D0 + ( all_pos(2,a) - center(2) )**2.0D0 &
+              !      + ( all_pos(3,a) - center(3) )**2.0D0 ) <= &
+              !      ( 500.0D0 + 50.0D0*DBLE(itr)/10.0D0 ) &
+              !.AND. &
+              !SQRT( ( all_pos(1,a) - center )**2.0D0 + ( all_pos(2,a) - center(2) )**2.0D0 &
+              !      + ( all_pos(3,a) - center(3) )**2.0D0 ) > &
+              !      ( 500.0D0 + 50.0D0*DBLE(itr-1)/10.0D0 ) &
           )THEN
 
             art_pr( a )= DBLE(3*itr)*art_pr_max
@@ -1374,8 +1399,9 @@ SUBMODULE (particles_id) particles_apm
             PRINT *, "** ERROR! correction_pos(", itr2, ",", a, ") is a NaN!"
             PRINT *, " *        Particle position: x=", all_pos(1,a), &
                      ", y=", all_pos(2,a), ", z=", all_pos(3,a)
-            r_tmp= SQRT( ( all_pos(1,a) - center )**2.0D0 + &
-                           all_pos(2,a)**2.0D0 + all_pos(3,a)**2.0D0 )
+            r_tmp= SQRT( ( all_pos(1,a) - center(1) )**2.0D0 + &
+                         ( all_pos(2,a) - center(2) )**2.0D0 + &
+                         ( all_pos(3,a) - center(3) )**2.0D0 )
             PRINT *, " *        Particle radius: r=", r_tmp, &
                      "=", r_tmp/larger_radius*100.0D0, &
                      "% of the larger radius of the star."
@@ -1400,13 +1426,21 @@ SUBMODULE (particles_id) particles_apm
       !$OMP                      rel_sign )
       DO a= 1, npart_real, 1
 
-        IF( dNstar(a) >= 100.0D0 )THEN
+        IF( dNstar(a) >= 100.0D0 &
+            .AND. validate_position_final( &
+                    all_pos(1,a) + 10.0D0*correction_pos(1,a), &
+                    all_pos(2,a) + 10.0D0*correction_pos(2,a), &
+                    all_pos(3,a) + 10.0D0*correction_pos(3,a) ) )THEN
 
-          pos_corr_tmp= all_pos(:,a) + 1.0D0*correction_pos(:,a) ! 10
+          pos_corr_tmp= all_pos(:,a) + 10.0D0*correction_pos(:,a) ! 10
 
-        ELSEIF( dNstar(a) >= 10.0D0 )THEN
+        ELSEIF( dNstar(a) >= 10.0D0 &
+            .AND. validate_position_final( &
+                    all_pos(1,a) + 3.0D0*correction_pos(1,a), &
+                    all_pos(2,a) + 3.0D0*correction_pos(2,a), &
+                    all_pos(3,a) + 3.0D0*correction_pos(3,a) ) )THEN
 
-          pos_corr_tmp= all_pos(:,a) + 1.0D0*correction_pos(:,a) ! 3
+          pos_corr_tmp= all_pos(:,a) + 3.0D0*correction_pos(:,a) ! 3
 
         ELSE
 
@@ -1555,14 +1589,15 @@ SUBMODULE (particles_id) particles_apm
     npart= npart_real
     IF( debug ) PRINT *, npart
 
-    h_guess= h(1:npart_real)
+    h      = h(1:npart_real)
+    h_guess= h_guess(1:npart_real)
+    nu     = nu(1:npart_real)
 
     !----------------------------!
     !-- enforce centre of mass --!
     !----------------------------!
 
-    CALL correct_center_of_mass( npart_real, pos, &
-                                 nu(1:npart_real), get_density, &
+    CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -1570,9 +1605,7 @@ SUBMODULE (particles_id) particles_apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    CALL impose_equatorial_plane_symmetry( npart_real, &
-                                           all_pos(:,1:npart_real), &
-                                           nu(1:npart_real) )
+    CALL impose_equatorial_plane_symmetry( npart_real, pos, nu )
 
     !-----------------------------!
     !-- Print positions to file --!
@@ -1633,46 +1666,64 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "1"
 
-    h      = h(1:npart_real)
-    h_guess= h_guess(1:npart_real)
-    nu     = nu(1:npart_real)
-
     CALL assign_h( nn_des, &           !
                    npart_real, &        !
                    pos, h_guess, & ! Input
                    h )                 ! Output
 
-    find_problem_in_h_2: DO a= 1, npart_real, 1
+    CALL find_h_bruteforce_timer% start_timer()
+    n_problematic_h= 0
+    check_h3: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h( a ) ) )THEN
-        PRINT *, "** ERROR! h(", a, ") is a NaN!"
-        PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-        PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-        PRINT *, " Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-      IF( h( a ) <= 0.0D0 )THEN
-       ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
-       ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-       ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-       ! PRINT *, " * h(", a, ")= ", h(a)
-       ! PRINT *, " Stopping..."
-       ! PRINT *
-       ! STOP
-        IF( a == 1 )THEN
-          DO a2= 2, npart_real, 1
-            IF( h( a2 ) > 0.0D0 )THEN
-              h( a )= h( a2 )
-              EXIT
-            ENDIF
-          ENDDO
-        ELSE
-          h(a) = h(a - 1)
+      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+
+        n_problematic_h= n_problematic_h + 1
+        h(a)= find_h_backup( a, npart_real, pos, nn_des )
+        PRINT *, h(a)
+        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", pos(:,a)
+          STOP
         ENDIF
+
       ENDIF
 
-    ENDDO find_problem_in_h_2
+    ENDDO check_h3
+    CALL find_h_bruteforce_timer% stop_timer()
+    CALL find_h_bruteforce_timer% print_timer( 2 )
+
+   ! find_problem_in_h_2: DO a= 1, npart_real, 1
+   !
+   !   IF( ISNAN( h( a ) ) )THEN
+   !     PRINT *, "** ERROR! h(", a, ") is a NaN!"
+   !     PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+   !     PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+   !     PRINT *, " Stopping..."
+   !     PRINT *
+   !     STOP
+   !   ENDIF
+   !   IF( h( a ) <= 0.0D0 )THEN
+   !    ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
+   !    ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
+   !    ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
+   !    ! PRINT *, " * h(", a, ")= ", h(a)
+   !    ! PRINT *, " Stopping..."
+   !    ! PRINT *
+   !    ! STOP
+   !     IF( a == 1 )THEN
+   !       DO a2= 2, npart_real, 1
+   !         IF( h( a2 ) > 0.0D0 )THEN
+   !           h( a )= h( a2 )
+   !           EXIT
+   !         ENDIF
+   !       ENDDO
+   !     ELSE
+   !       h(a) = h(a - 1)
+   !     ENDIF
+   !   ENDIF
+   !
+   ! ENDDO find_problem_in_h_2
 
     IF( debug ) PRINT *, "2"
 
@@ -1909,8 +1960,7 @@ SUBMODULE (particles_id) particles_apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-    CALL correct_center_of_mass( npart_real, pos, &
-                                 nu(1:npart_real), get_density, &
+    CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -1918,9 +1968,7 @@ SUBMODULE (particles_id) particles_apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    CALL impose_equatorial_plane_symmetry( npart_real, &
-                                           all_pos(:,1:npart_real), &
-                                           nu(1:npart_real) )
+    CALL impose_equatorial_plane_symmetry( npart_real, pos, nu )
 
     !-------------------!
     !-- monitoring... --!
@@ -2496,9 +2544,9 @@ SUBMODULE (particles_id) particles_apm
     IMPLICIT NONE
 
     INTEGER, INTENT(IN):: npart_real
-    DOUBLE PRECISION, INTENT(IN):: com_star
+    DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: com_star
     LOGICAL, INTENT(IN), OPTIONAL:: verbose
-    !TYPE(bns), INTENT(IN):: binary
+
     INTERFACE
       FUNCTION get_density( x, y, z ) RESULT( density )
         DOUBLE PRECISION, INTENT(IN):: x
@@ -2529,7 +2577,11 @@ SUBMODULE (particles_id) particles_apm
     IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
       PRINT *, "** Before center of mass correction:"
       PRINT *, " * x coordinate of the center of mass of the star, ", &
-               "from LORENE: com_star= ", com_star, "Msun_geo"
+               "from the ID: com_star= ", com_star(1), "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(2), "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(3), "Msun_geo"
       PRINT *, " * x coordinate of the center of mass of the particle ", &
                "distribution: com_x= ", com_x, "Msun_geo"
       PRINT *, " * y coordinate of the center of mass of the particle ", &
@@ -2538,8 +2590,8 @@ SUBMODULE (particles_id) particles_apm
                "distribution: com_z= ", com_z, "Msun_geo"
       PRINT *, " * Distance of the center of mass of the particle ", &
                "distribution from the  origin: com_d= ", com_d
-      PRINT *, " * |com_x-com_star/com_star|=", &
-               ABS( com_x-com_star )/ABS( com_star + 1 )
+      PRINT *, " * |com_x-com_star_x/com_star_x|=", &
+               ABS( com_x-com_star(1) )/ABS( com_star(1) + 1 )
       PRINT *
     ENDIF
 
@@ -2549,9 +2601,9 @@ SUBMODULE (particles_id) particles_apm
     !$OMP             PRIVATE( pos_corr_tmp, a )
     DO a= 1, npart_real, 1
 
-      pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star )
-      pos_corr_tmp(2)= pos(2,a) - com_y
-      pos_corr_tmp(3)= pos(3,a) - com_z
+      pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star(1) )
+      pos_corr_tmp(2)= pos(2,a) - ( com_y - com_star(2) )
+      pos_corr_tmp(3)= pos(3,a) - ( com_z - com_star(3) )
 
       IF( get_density( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
@@ -2574,7 +2626,11 @@ SUBMODULE (particles_id) particles_apm
     IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
       PRINT *, "** After center of mass correction:"
       PRINT *, " * x coordinate of the center of mass of the star, ", &
-               "from LORENE: com_star= ", com_star, "Msun_geo"
+               "from the ID: com_star= ", com_star(1), "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(2), "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(3), "Msun_geo"
       PRINT *, " * x coordinate of the center of mass of the particle ", &
                "distribution: com_x= ", com_x, "Msun_geo"
       PRINT *, " * y coordinate of the center of mass of the particle ", &
@@ -2583,8 +2639,8 @@ SUBMODULE (particles_id) particles_apm
                "distribution: com_z= ", com_z, "Msun_geo"
       PRINT *, " * Distance of the center of mass of the particle ", &
                "distribution from the  origin: com_d= ", com_d
-      PRINT *, " * |com_x-com_star/com_star|=", &
-               ABS( com_x-com_star )/ABS( com_star + 1 )
+      PRINT *, " * |com_x-com_star_x/com_star_x|=", &
+               ABS( com_x-com_star(1) )/ABS( com_star(1) + 1 )
       PRINT *
     ENDIF
 

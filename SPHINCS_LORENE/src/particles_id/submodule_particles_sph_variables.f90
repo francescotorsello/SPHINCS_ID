@@ -1289,19 +1289,19 @@ SUBMODULE (particles_id) particles_sph_variables
         ! invert it
         CALL invert_3x3_matrix(mat,mat_1,invertible_matrix)
 
-        IF( .NOT.invertible_matrix )THEN
-          PRINT *, "a= ", a
-          PRINT *, "h(a)= ", h(a)
-          PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
-          PRINT *, "nprev= ", nprev
-          PRINT *, "ill= ", ill
-          PRINT *, "itot= ", itot
-          PRINT *, "ncand(ill)= ", ncand(ill)
-          PRINT *, "cnt1= ", cnt1
-          PRINT *, "cnt2= ", cnt2
-          PRINT *
-          STOP
-        ENDIF
+       ! IF( .NOT.invertible_matrix )THEN
+       !   PRINT *, "a= ", a
+       !   PRINT *, "h(a)= ", h(a)
+       !   PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
+       !   PRINT *, "nprev= ", nprev
+       !   PRINT *, "ill= ", ill
+       !   PRINT *, "itot= ", itot
+       !   PRINT *, "ncand(ill)= ", ncand(ill)
+       !   PRINT *, "cnt1= ", cnt1
+       !   PRINT *, "cnt2= ", cnt2
+       !   PRINT *
+       !   STOP
+       ! ENDIF
 
       ENDDO particle_loop
 

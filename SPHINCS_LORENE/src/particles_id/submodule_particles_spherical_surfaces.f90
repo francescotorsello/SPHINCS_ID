@@ -1521,7 +1521,7 @@ SUBMODULE (particles_id) spherical_surfaces
 
 
   FUNCTION number_surfaces( m_p, center, radius, get_dens ) &
-           RESULT( n_shells_tmp )
+           RESULT( n_shells )
 
     !************************************************
     !
@@ -1553,7 +1553,7 @@ SUBMODULE (particles_id) spherical_surfaces
     END INTERFACE
 
 
-    DOUBLE PRECISION:: n_shells_tmp
+    DOUBLE PRECISION:: n_shells
 
     INTEGER:: r
   !  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: particle_profile
@@ -1569,12 +1569,12 @@ SUBMODULE (particles_id) spherical_surfaces
   !    ENDIF
   !  ENDIF
 
-    n_shells_tmp= 0.0D0
+    n_shells= 0.0D0
   !  particle_profile= 0.0D0
 
     DO r= 1, 500, 1
 
-      n_shells_tmp= n_shells_tmp + &
+      n_shells= n_shells + &
                       radius/500*( ( get_dens( &
                                      center + r*radius/500, 0.0D0, 0.0D0 ) &
                                      )/m_p )**third
@@ -1583,7 +1583,7 @@ SUBMODULE (particles_id) spherical_surfaces
 
     ENDDO
 
-    n_shells_tmp= NINT( n_shells_tmp )
+    n_shells= NINT( n_shells )
 
   END FUNCTION number_surfaces
 

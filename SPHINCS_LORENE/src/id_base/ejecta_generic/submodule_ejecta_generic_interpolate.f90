@@ -196,7 +196,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     DOUBLE PRECISION:: x0, y0, z0, x1, y1, z1, xd, yd, zd, &
                        c000, c001, c010, c100, c011, c110, c101, c111, &
-                       c00, c01, c10, c11, c0, c1, zp
+                       c00, c01, c10, c11, c0, c1, zp, x_ell, y_ell, z_ell
 
     sgn_z= SIGN(1.0D0,z)
     zp= ABS(z)
@@ -305,7 +305,48 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
     !          + ( y - THIS% centers(1,2) )**2.0D0 &
     !          + ( zp - THIS% centers(1,3) )**2.0D0 ) > 500.0D0 ) res= 0.0D0
-    IF( ABS(x) > 500.0D0 .OR. ABS(y) > 500.0D0 .OR. zp > 500.0D0 ) res= 0.0D0
+
+
+  !  x_ell= THIS% centers(1,1) &
+  !         + MAX(THIS% sizes(1,1),THIS% sizes(1,2)) &
+  !  *COS(ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )) &
+  !*SIN(ACOS(( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+  !                                    + ( y - THIS% centers(1,2) )**2.0D0 &
+  !                                    + ( z - THIS% centers(1,3) )**2.0D0 )))
+  !
+  !  y_ell= THIS% centers(1,2) &
+  !         + MAX(THIS% sizes(1,3),THIS% sizes(1,4)) &
+  !  *SIN(ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )) &
+  !*SIN(ACOS(( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+  !                                    + ( y - THIS% centers(1,2) )**2.0D0 &
+  !                                    + ( z - THIS% centers(1,3) )**2.0D0 )))
+  !
+  !  z_ell= THIS% centers(1,3) &
+  !         + MAX(THIS% sizes(1,5),THIS% sizes(1,6)) &
+  !      *( ( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+  !          + ( y - THIS% centers(1,2) )**2.0D0 &
+  !          + ( z - THIS% centers(1,3) )**2.0D0 ))
+  !
+  !  IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+  !          + ( y - THIS% centers(1,2) )**2.0D0 &
+  !          + ( z - THIS% centers(1,3) )**2.0D0 ) >= &
+  !      SQRT( ( x_ell - THIS% centers(1,1) )**2.0D0 &
+  !          + ( y_ell - THIS% centers(1,2) )**2.0D0 &
+  !          + ( z_ell - THIS% centers(1,3) )**2.0D0 ) ) res= 0.0D0
+
+  !  IF(      x > THIS% centers(1,1) + THIS% sizes(1,2) &
+  !      .OR. x < THIS% centers(1,1) - THIS% sizes(1,1) &
+  !      .OR. y > THIS% centers(1,2) + THIS% sizes(1,4) &
+  !      .OR. y < THIS% centers(1,2) - THIS% sizes(1,3) &
+  !      .OR. zp > THIS% centers(1,3) + THIS% sizes(1,6) ) res= 0.0D0
+
+     IF(      x > THIS% xR_grid &
+         .OR. x < THIS% xL_grid &
+         .OR. y > THIS% yR_grid &
+         .OR. y < THIS% yL_grid &
+         .OR. zp > THIS% zR_grid ) res= 0.0D0
+
+
    ! PRINT *, c000, &
    !          c100, &
    !          c001, &
@@ -392,13 +433,22 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     IMPLICIT NONE
 
     DOUBLE PRECISION, DIMENSION(3):: center
+    DOUBLE PRECISION, DIMENSION(6):: sizes
 
     center= THIS% return_center(1)
+    sizes= THIS% return_spatial_extent(1)
 
-    IF( THIS% read_mass_density( x, y, z ) <= 2.0D-13 &
+    IF( THIS% read_mass_density( x, y, z ) <= 0.0D0 &
         .OR. &
-        SQRT( ( x - center(1) )**2 + ( y - center(2) )**2 &
-            + ( z - center(3) )**2  ) > 500.0D0 )THEN
+        !SQRT( ( x - center(1) )**2 + ( y - center(2) )**2 &
+        !    + ( z - center(3) )**2  ) > 500.0D0
+             x > center(1) + sizes(1) &
+        .OR. x < center(1) - sizes(2) &
+        .OR. y > center(2) + sizes(3) &
+        .OR. y < center(2) - sizes(4) &
+        .OR. z > center(3) + sizes(5) &
+        .OR. z < center(3) - sizes(6) &
+    )THEN
       res= 1
     ELSE
       res= 0

@@ -814,8 +814,8 @@ MODULE particles_id
                                    center, &
                                    com_star, &
                                    mass, &
-                                   radx_comp, radx_opp, &
-                                   rady, radz, &
+                                   sizes, &!radx_opp, &
+                                   !rady, radz, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
                                    nuratio_des, &
@@ -881,19 +881,19 @@ MODULE particles_id
       !  the APM iteration
       DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
       !> Center of the star (point of highest density), computed by |lorene|
-      DOUBLE PRECISION,                 INTENT( IN )   :: center
+      DOUBLE PRECISION, DIMENSION(3),   INTENT( IN )   :: center
       !> Center of mass of the star, computed by |lorene|
-      DOUBLE PRECISION,                 INTENT( INOUT ):: com_star
+      DOUBLE PRECISION, DIMENSION(3),   INTENT( INOUT ):: com_star
       !> Mass of the star
       DOUBLE PRECISION,                 INTENT( IN )   :: mass
       !> Radius of the star in the x direction, towards the companion
-      DOUBLE PRECISION,                 INTENT( IN )   :: radx_comp
+      DOUBLE PRECISION, DIMENSION(6),   INTENT( IN )   :: sizes
       !> Radius of the star in the x direction, opposite to companion
-      DOUBLE PRECISION,                 INTENT( IN )   :: radx_opp
+      !DOUBLE PRECISION,                 INTENT( IN )   :: radx_opp
       !> Radius of the star in the y direction
-      DOUBLE PRECISION,                 INTENT( IN )   :: rady
+      !DOUBLE PRECISION,                 INTENT( IN )   :: rady
       !> Radius of the star in the z direction
-      DOUBLE PRECISION,                 INTENT( IN )   :: radz
+      !DOUBLE PRECISION,                 INTENT( IN )   :: radz
       !> Maximum number of APM iterations, irrespective of the EXIT condition
       INTEGER,                          INTENT( IN )   :: apm_max_it
       !& Sets the EXIT condition: If the average over all the
