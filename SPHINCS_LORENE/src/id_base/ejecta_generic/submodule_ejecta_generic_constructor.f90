@@ -391,24 +391,24 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
       derived_type% centers(i_matter,:)= 0.0D0
       derived_type% barycenters(i_matter,:)= 0.0D0
       derived_type% sizes(i_matter,:)= [ &
-                  SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
-                      + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
-                  SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
-                      + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
-                  SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
-                      + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
-                  SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
-                      + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
-                  SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
-                      + ABS(MAXVAL(grid_tmp( :, 3 )))**2.0D0 ), &
-                  SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
-                      + ABS(MAXVAL(grid_tmp( :, 3 )))**2.0D0 ) ]
-                                       ![ ABS(derived_type% xL_grid), &
-                                       !  ABS(MAXVAL(grid_tmp( :, 1 ))), &
-                                       !  ABS(derived_type% yL_grid), &
-                                       !  ABS(MAXVAL(grid_tmp( :, 2 ))), &
-                                       !  ABS(MAXVAL(grid_tmp( :, 3 ))), &
-                                       !  ABS(MAXVAL(grid_tmp( :, 3 ))) ]
+                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !    + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
+                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !    + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
+                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !    + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
+                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !    + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
+                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !    + ABS(MAXVAL(grid_tmp( :, 3 )))**2.0D0 ), &
+                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !    + ABS(MAXVAL(grid_tmp( :, 3 )))**2.0D0 ) ]
+                                         ABS(derived_type% xL_grid), &
+                                         ABS(MAXVAL(grid_tmp( :, 1 ))), &
+                                         ABS(derived_type% yL_grid), &
+                                         ABS(MAXVAL(grid_tmp( :, 2 ))), &
+                                         ABS(MAXVAL(grid_tmp( :, 3 ))), &
+                                         ABS(MAXVAL(grid_tmp( :, 3 ))) ]
 
     ENDDO
 

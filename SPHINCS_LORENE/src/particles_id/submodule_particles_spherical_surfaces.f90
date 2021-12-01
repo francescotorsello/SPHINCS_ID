@@ -456,7 +456,7 @@ SUBMODULE (particles_id) spherical_surfaces
       npart_shell_tmp  = npart_shell( r )
       ! Initialize te  mporary arrays
       pos_shell_tmp    = huge_real
-      sqdetg_tmp         = 0.0D0
+      sqdetg_tmp       = 0.0D0
       bar_density_tmp  = 0.0D0
       gam_euler_tmp    = 0.0D0
       pvol_tmp         = 0.0D0

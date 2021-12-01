@@ -44,7 +44,7 @@ SUBMODULE (particles_id) particles_sph_variables
     !************************************************
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
-                                   third, kg2g, Msun, k_lorene2hydrobase
+                                   third, kg2g, Msun, k_lorene2hydrobase, Msun
     USE units,               ONLY: set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -326,9 +326,9 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
+      nlrf(itr)= THIS% baryon_density_parts(itr)!((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% nlrf(itr)= &
-                 THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
+                 THIS% baryon_density_parts(itr)!((Msun_geo*km2m)**3)/(amu*g2kg)
 
       ! Specific internal energy [c^2]
       u(itr)= THIS% specific_energy_parts(itr)
@@ -1187,8 +1187,8 @@ SUBMODULE (particles_id) particles_sph_variables
     THIS% h= h
     THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
 
-    PRINT *
-    PRINT *, "nfinal= ", nfinal
+    !PRINT *
+    !PRINT *, "nfinal= ", nfinal
     ll_cell_loop: DO ill= 1, nfinal
 
       itot= nprev + ill

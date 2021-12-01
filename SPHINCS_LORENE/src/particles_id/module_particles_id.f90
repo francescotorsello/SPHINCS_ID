@@ -577,7 +577,7 @@ MODULE particles_id
                                   filename_mass_profile, filename_shells_radii,&
                                   filename_shells_pos, &
                                   get_density, integrate_density, &
-                                  get_id, validate_position )
+                                  get_id, validate_position, length_scale )
     !! Places particles on spherical surfaces on one star
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -698,6 +698,7 @@ MODULE particles_id
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
+      DOUBLE PRECISION, INTENT( IN ),   OPTIONAL:: length_scale
 
 
     END SUBROUTINE place_particles_spherical_surfaces
