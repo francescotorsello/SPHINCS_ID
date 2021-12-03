@@ -256,10 +256,10 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
   !  PRINT *
 
     IF( k == 0 )THEN
-      c001= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j,k)
-      c101= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j,k)
-      c011= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j+1,k)
-      c111= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j+1,k)
+      c001= THIS% baryon_mass_density(i,j,k)
+      c101= THIS% baryon_mass_density(i+1,j,k)
+      c011= THIS% baryon_mass_density(i,j+1,k)
+      c111= THIS% baryon_mass_density(i+1,j+1,k)
     ENDIF
     IF( i >= THIS% nx_grid .OR. i == 0 )THEN
       c001= 0.0D0
@@ -280,14 +280,14 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       c111= 0.0D0
     ENDIF
 
-    c000= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j,k)
-    c100= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j,k)
-    c001= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j,k+1)
-    c101= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j,k+1)
-    c010= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j+1,k)
-    c110= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j+1,k)
-    c011= 0.0D0 +1.0D0*THIS% baryon_mass_density(i,j+1,k+1)
-    c111= 0.0D0 +1.0D0*THIS% baryon_mass_density(i+1,j+1,k+1)
+    c000= THIS% baryon_mass_density(i,j,k)
+    c100= THIS% baryon_mass_density(i+1,j,k)
+    c001= THIS% baryon_mass_density(i,j,k+1)
+    c101= THIS% baryon_mass_density(i+1,j,k+1)
+    c010= THIS% baryon_mass_density(i,j+1,k)
+    c110= THIS% baryon_mass_density(i+1,j+1,k)
+    c011= THIS% baryon_mass_density(i,j+1,k+1)
+    c111= THIS% baryon_mass_density(i+1,j+1,k+1)
 
     c00= c000*( 1.0D0 - xd ) + c100*xd
 
@@ -308,32 +308,32 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !          + ( zp - THIS% centers(1,3) )**2.0D0 ) > 500.0D0 ) res= 0.0D0
 
 
- !   x_ell= THIS% centers(1,1) &
- !          + MAX(THIS% sizes(1,1),THIS% sizes(1,2)) &
- !   *COS(ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )) &
- ! *SIN(ACOS(( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
- !                                     + ( y - THIS% centers(1,2) )**2.0D0 &
- !                                     + ( z - THIS% centers(1,3) )**2.0D0 )))
- !
- !   y_ell= THIS% centers(1,2) &
- !          + MAX(THIS% sizes(1,3),THIS% sizes(1,4)) &
- !   *SIN(ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )) &
- ! *SIN(ACOS(( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
- !                                     + ( y - THIS% centers(1,2) )**2.0D0 &
- !                                     + ( z - THIS% centers(1,3) )**2.0D0 )))
- !
- !   z_ell= THIS% centers(1,3) &
- !          + MAX(THIS% sizes(1,5),THIS% sizes(1,6)) &
- !       *( ( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
- !           + ( y - THIS% centers(1,2) )**2.0D0 &
- !           + ( z - THIS% centers(1,3) )**2.0D0 ))
- !
- !   IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
- !           + ( y - THIS% centers(1,2) )**2.0D0 &
- !           + ( z - THIS% centers(1,3) )**2.0D0 ) >= &
- !       SQRT( ( x_ell - THIS% centers(1,1) )**2.0D0 &
- !           + ( y_ell - THIS% centers(1,2) )**2.0D0 &
- !           + ( z_ell - THIS% centers(1,3) )**2.0D0 ) ) res= 0.0D0
+    x_ell= THIS% centers(1,1) &
+           + MAX(THIS% sizes(1,1),THIS% sizes(1,2)) &
+    *COS(ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )) &
+  *SIN(ACOS(( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+                                      + ( y - THIS% centers(1,2) )**2.0D0 &
+                                      + ( z - THIS% centers(1,3) )**2.0D0 )))
+
+    y_ell= THIS% centers(1,2) &
+           + MAX(THIS% sizes(1,3),THIS% sizes(1,4)) &
+    *SIN(ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )) &
+  *SIN(ACOS(( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+                                      + ( y - THIS% centers(1,2) )**2.0D0 &
+                                      + ( z - THIS% centers(1,3) )**2.0D0 )))
+
+    z_ell= THIS% centers(1,3) &
+           + MAX(THIS% sizes(1,5),THIS% sizes(1,6)) &
+        *( ( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+            + ( y - THIS% centers(1,2) )**2.0D0 &
+            + ( z - THIS% centers(1,3) )**2.0D0 ))
+
+    IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+            + ( y - THIS% centers(1,2) )**2.0D0 &
+            + ( z - THIS% centers(1,3) )**2.0D0 ) >= &
+        SQRT( ( x_ell - THIS% centers(1,1) )**2.0D0 &
+            + ( y_ell - THIS% centers(1,2) )**2.0D0 &
+            + ( z_ell - THIS% centers(1,3) )**2.0D0 ) ) res= 0.0D0
 
   !  IF(      x > THIS% centers(1,1) + THIS% sizes(1,2) &
   !      .OR. x < THIS% centers(1,1) - THIS% sizes(1,1) &
@@ -440,14 +440,14 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     sizes = THIS% return_spatial_extent(1)
 
     IF( THIS% read_mass_density( x, y, z ) <= 0.0D0 &
-       ! .OR. &
+        .OR. &
         !SQRT( ( x - center(1) )**2 + ( y - center(2) )**2 &
         !    + ( z - center(3) )**2  ) > 500.0D0
-       !      x > center(1) + sizes(1) &
-       ! .OR. x < center(1) - sizes(2) &
-       ! .OR. y > center(2) + sizes(3) &
-       ! .OR. y < center(2) - sizes(4) &
-       ! .OR. ABS(z) > center(3) + sizes(5) &
+             x > center(1) + sizes(1) &
+        .OR. x < center(1) - sizes(2) &
+        .OR. y > center(2) + sizes(3) &
+        .OR. y < center(2) - sizes(4) &
+        .OR. ABS(z) > center(3) + sizes(5) &
     )THEN
       res= 1
     ELSE
