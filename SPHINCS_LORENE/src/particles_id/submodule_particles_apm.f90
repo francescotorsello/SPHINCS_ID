@@ -106,7 +106,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0
+    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 50.0D0 !0.25D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     DOUBLE PRECISION, PARAMETER:: max_it_tree      = 1
@@ -1842,8 +1842,8 @@ SUBMODULE (particles_id) particles_apm
 
 
          CALL get_nstar_p( npart_real, pos(1,:), &
-                                        pos(2,:), &
-                                        pos(3,:), nstar_p )
+                                       pos(2,:), &
+                                       pos(3,:), nstar_p )
 
          !nstar_p( npart_real+1:npart_all )= 0.0D0
 
@@ -1956,6 +1956,39 @@ SUBMODULE (particles_id) particles_apm
 
     ENDIF
 
+
+    finalnamefile= "dbg_apm_pos1.dat"
+
+    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+             ". The error message is", err_msg
+    STOP
+    ENDIF
+
+    DO a= 1, npart_real, 1
+    tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      a, &
+      pos( 1, a ), &
+      pos( 2, a ), &
+      pos( 3, a ), &
+      tmp
+    ENDDO
+
+    CLOSE( UNIT= 2 )
+
     !----------------------------!
     !-- enforce centre of mass --!
     !----------------------------!
@@ -1968,7 +2001,40 @@ SUBMODULE (particles_id) particles_apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    CALL impose_equatorial_plane_symmetry( npart_real, pos, nu )
+    !CALL impose_equatorial_plane_symmetry( npart_real, pos, nu )
+
+
+    finalnamefile= "dbg_apm_pos2.dat"
+
+    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+             ". The error message is", err_msg
+    STOP
+    ENDIF
+
+    DO a= 1, npart_real, 1
+    tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      a, &
+      pos( 1, a ), &
+      pos( 2, a ), &
+      pos( 3, a ), &
+      tmp
+    ENDDO
+
+    CLOSE( UNIT= 2 )
 
     !-------------------!
     !-- monitoring... --!
@@ -2403,7 +2469,7 @@ SUBMODULE (particles_id) particles_apm
       finalnamefile= "apm_results.dat"
     ENDIF
 
-    PRINT *, "** Printing results to file ", namefile_results, "..."
+    PRINT *, "** Printing results to file ", TRIM(namefile_results), "..."
     PRINT *
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )

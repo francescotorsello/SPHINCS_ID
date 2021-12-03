@@ -59,7 +59,16 @@ MODULE ejecta_generic
     DOUBLE PRECISION:: zL_grid
     !! Minimum \(z\) coordinate on the grid containing the |id|
 
-    DOUBLE PRECISION:: dx_grid
+    DOUBLE PRECISION:: xR_grid
+    !! Maximum \(x\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION:: yR_grid
+    !! Maximum \(y\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION:: zR_grid
+    !! Maximum \(z\) coordinate on the grid containing the |id|
+
+    DOUBLE PRECISION, PUBLIC:: dx_grid
     !! Spacing on the \(x\)-axis for the grid containing the |id|
 
     DOUBLE PRECISION:: dy_grid

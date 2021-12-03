@@ -95,6 +95,7 @@ SUBMODULE (particles_id) particles_constructor
                        last_r
     DOUBLE PRECISION:: pvol_tmp
     DOUBLE PRECISION:: max_mass, total_mass
+    DOUBLE PRECISION:: ratio_npart_des_real, pmass_des
 
     DOUBLE PRECISION, DIMENSION(id% get_n_matter())  :: central_density
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),3):: center
@@ -335,7 +336,7 @@ SUBMODULE (particles_id) particles_constructor
 
     choose_particle_placer: SELECT CASE( dist )
 
-    CASE(0)
+    CASE( id_particles_from_file )
     ! Read particles from formatted file
 
       PRINT *, " * Reading particle positions from formatted file " &
@@ -446,6 +447,32 @@ SUBMODULE (particles_id) particles_constructor
         ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
                    npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
 
+         ! PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,1)) + sizes(itr, 1)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,1)) + sizes(itr, 2)
+         ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,2)) + sizes(itr, 3)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,2)) + sizes(itr, 4)
+         ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,3)) + sizes(itr, 5)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+         !         ABS(center(itr,3)) + sizes(itr, 6)
+         !
+         ! PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,1)) + sizes(itr, 1)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,1)) + sizes(itr, 2)
+         ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,2)) + sizes(itr, 3)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,2)) + sizes(itr, 4)
+         ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,3)) + sizes(itr, 5)
+         ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
+         ! PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
+
           IF( ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
                       ABS(center(itr,1)) + sizes(itr, 1) &
               .OR. &
@@ -459,10 +486,10 @@ SUBMODULE (particles_id) particles_constructor
                       ABS(center(itr,2)) + sizes(itr, 4) &
               .OR. &
               ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,3)) + sizes(itr, 1) &
+                      ABS(center(itr,3)) + sizes(itr, 5) &
               .OR. &
               ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,3)) + sizes(itr, 2) &
+                      ABS(center(itr,3)) + sizes(itr, 6) &
 
           )THEN
 
@@ -602,7 +629,7 @@ SUBMODULE (particles_id) particles_constructor
       ENDDO
 
 
-    CASE(1)
+    CASE( id_particles_on_lattice )
 
 
       PRINT *, " * Placing particles on lattices, ", &
@@ -698,7 +725,7 @@ SUBMODULE (particles_id) particles_constructor
       ENDDO
 
 
-    CASE(2)
+    CASE( id_particles_on_spherical_surfaces )
 
 
       PRINT *, "** Placing equal-mass particles on spherical surfaces, " &
@@ -711,6 +738,8 @@ SUBMODULE (particles_id) particles_constructor
   !    IF( parts% redistribute_nu .EQV. .TRUE. )THEN
   !        parts% redistribute_nu= .FALSE.
   !    ENDIF
+
+      ! Place particles, and time the process
       CALL parts% placer_timer% start_timer()
 
       DO i_matter= 1, parts% n_matter, 1
@@ -725,11 +754,9 @@ SUBMODULE (particles_id) particles_constructor
         filename_shells_radii= "spherical_surfaces_radii"//TRIM(str_i)//".dat"
         filename_shells_pos  = "spherical_surfaces_pos"//TRIM(str_i)//".dat"
 
-        ! Place particles, and time the process
-
         CALL parts% place_particles_spherical_surfaces( &
                                               parts% masses(i_matter), &
-                                              MAXVAL(sizes(i_matter, 1:2)), &
+                                              MAXVAL(sizes(i_matter,1:2)), &
                                               center(i_matter,1), &
                                               central_density(i_matter), &
                                               npart_des_i(i_matter), &
@@ -748,6 +775,45 @@ SUBMODULE (particles_id) particles_constructor
                                               integrate_mass_density, &
                                               import_id, &
                                               check_negative_hydro )
+
+      !  DO
+      !
+      !    ratio_npart_des_real= &
+      !          ABS( DBLE(parts% npart_i(i_matter) - npart_des_i(i_matter)) ) &
+      !          /DBLE(npart_des_i(i_matter))
+      !
+      !    IF( ratio_npart_des_real <= 0.15D0 )THEN
+      !      EXIT
+      !    ELSE
+      !      pmass_des= SUM(parts_all(i_matter)% pmass_i) &
+      !                 /SIZE(parts_all(i_matter)% pmass_i) &
+      !                 *parts% npart_i(i_matter)/npart_des_i(i_matter)
+      !    ENDIF
+      !
+      !    CALL parts% place_particles_spherical_surfaces( &
+      !                                          parts% masses(i_matter), &
+      !                                          MAXVAL(sizes(i_matter,1:2)), &
+      !                                          center(i_matter,1), &
+      !                                          central_density(i_matter), &
+      !                                          npart_des_i(i_matter), &
+      !                                          parts% npart_i(i_matter), &
+      !                                          parts_all(i_matter)% pos_i, &
+      !                                          parts_all(i_matter)% pvol_i, &
+      !                                          parts_all(i_matter)% pmass_i, &
+      !                                          last_r, &
+      !                                          upper_bound, lower_bound, &
+      !                                          upper_factor, lower_factor,&
+      !                                          max_steps, &
+      !                                          filename_mass_profile, &
+      !                                          filename_shells_radii, &
+      !                                          filename_shells_pos, &
+      !                                          import_density, &
+      !                                          integrate_mass_density, &
+      !                                          import_id, &
+      !                                          check_negative_hydro, &
+      !                                          pmass_des )
+      !
+      !  ENDDO
 
         equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
 
@@ -801,6 +867,8 @@ SUBMODULE (particles_id) particles_constructor
                     parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
         parts_all(i_matter)% pvol_i = &
                     parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% pmass_i = &
+                    parts_all(i_matter)% pmass_i( 1:parts% npart_i(i_matter) )
 
       ENDDO
       CALL parts% placer_timer% stop_timer()
@@ -826,10 +894,10 @@ SUBMODULE (particles_id) particles_constructor
       ENDIF
       !parts% pos( :, 1:parts% npart1 )= pos1
       !parts% pos( :, parts% npart1 + 1:parts% npart )= pos2
-      DO itr= 1, parts% n_matter, 1
-        parts% pos( :, parts% npart_i(itr-1) + 1: &
-                       parts% npart_i(itr-1) + parts% npart_i(itr) )= &
-                       parts_all(itr)% pos_i
+      DO i_matter= 1, parts% n_matter, 1
+        parts% pos( :, parts% npart_i(i_matter-1) + 1: &
+                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                       parts_all(i_matter)% pos_i
       ENDDO
 
       IF(.NOT.ALLOCATED( parts% pvol ))THEN
@@ -880,9 +948,27 @@ SUBMODULE (particles_id) particles_constructor
       DO itr= 1, parts% n_matter, 1
         PRINT *, " * Number of particles on object ", itr, "=", &
                  parts% npart_i(itr)
+        PRINT *, " * Maximum mass per particle on object", itr, &
+                            "=", MAXVAL( parts% pmass( parts% npart_i(itr-1) + 1: &
+                            parts% npart_i(itr-1) + parts% npart_i(itr) ), DIM= 1 )
+        PRINT *, " * Minimum mass per particle on object", itr, &
+                            "=", MINVAL( parts% pmass( parts% npart_i(itr-1) + 1: &
+                            parts% npart_i(itr-1) + parts% npart_i(itr) ), DIM= 1 )
+        PRINT *, " * Ratio between the two=", MAXVAL( parts% pmass( parts% npart_i(itr-1) + 1: &
+        parts% npart_i(itr-1) + parts% npart_i(itr) ), DIM= 1 )/MINVAL( parts% pmass( parts% npart_i(itr-1) + 1: &
+        parts% npart_i(itr-1) + parts% npart_i(itr) ), DIM= 1 )
+        PRINT *
       ENDDO
       PRINT *
       !STOP
+
+      parts% pmass= parts% pmass( 1:parts% npart )
+      PRINT *, " * Maximum mass per particle on object", itr, &
+                          "=", MAXVAL( parts% pmass, DIM= 1 )
+      PRINT *, " * Minimum mass per particle on object", itr, &
+                          "=", MINVAL( parts% pmass, DIM= 1 )
+      PRINT *, " * Ratio between the two=", MAXVAL( parts% pmass, DIM= 1 )/MINVAL( parts% pmass, DIM= 1 )
+      PRINT *
 
     CASE DEFAULT
 
@@ -964,12 +1050,12 @@ SUBMODULE (particles_id) particles_constructor
                     parts% pvol(npart_in:npart_fin), &
                     parts% h(npart_in:npart_fin), &
                     parts% nu(npart_in:npart_fin), &
-                    center(i_matter,1), barycenter(i_matter,1), &
+                    center(i_matter,:), barycenter(i_matter,:), &
                     parts% masses(i_matter), &
-                    sizes(i_matter, 1), &
-                    sizes(i_matter, 2), &
-                    sizes(i_matter, 3), &
-                    sizes(i_matter, 5), &
+                    sizes(i_matter, :), &
+                    !sizes(i_matter, 2), &
+                    !sizes(i_matter, 3), &
+                    !sizes(i_matter, 5), &
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
                     filename_apm_pos_id, filename_apm_pos, &

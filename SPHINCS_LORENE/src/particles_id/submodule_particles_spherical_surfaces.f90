@@ -123,7 +123,11 @@ SUBMODULE (particles_id) spherical_surfaces
     !-- Compute desired particle mass --!
     !-----------------------------------!
 
-    m_p= mass_star/npart_approx
+    IF( PRESENT(pmass_des) )THEN
+      m_p= pmass_des
+    ELSE
+      m_p= mass_star/npart_des
+    ENDIF
 
     !------------------------------------------!
     !-- Compute number of spherical surfaces --!
@@ -317,14 +321,14 @@ SUBMODULE (particles_id) spherical_surfaces
       IF( ALLOCATED( pos_shells( r )% pos_phi ) ) &
         DEALLOCATE( pos_shells( r )% pos_phi )
 
-      ALLOCATE( pos_shells( r )% pos_shell     ( 3, npart_approx ) )
-      ALLOCATE( pos_shells( r )% pvol_shell    (    npart_approx ) )
-      ALLOCATE( pos_shells( r )% pvol_shell2   (    npart_approx ) )
-      ALLOCATE( pos_shells( r )% sqdetg        (    npart_approx ) )
-      ALLOCATE( pos_shells( r )% baryon_density(    npart_approx ) )
-      ALLOCATE( pos_shells( r )% gamma_euler   (    npart_approx ) )
-      ALLOCATE( pos_shells( r )% pos_th        (    npart_approx ) )
-      ALLOCATE( pos_shells( r )% pos_phi       (    npart_approx ) )
+      ALLOCATE( pos_shells( r )% pos_shell     ( 3, npart_des ) )
+      ALLOCATE( pos_shells( r )% pvol_shell    (    npart_des ) )
+      ALLOCATE( pos_shells( r )% pvol_shell2   (    npart_des ) )
+      ALLOCATE( pos_shells( r )% sqdetg        (    npart_des ) )
+      ALLOCATE( pos_shells( r )% baryon_density(    npart_des ) )
+      ALLOCATE( pos_shells( r )% gamma_euler   (    npart_des ) )
+      ALLOCATE( pos_shells( r )% pos_th        (    npart_des ) )
+      ALLOCATE( pos_shells( r )% pos_phi       (    npart_des ) )
 
       pos_shells(r)% pos_shell= 0.0D0
       pos_shells(r)% pos_phi= -1.0D0
@@ -339,8 +343,21 @@ SUBMODULE (particles_id) spherical_surfaces
 
     ENDDO initialization
 
+    IF( ALLOCATED(pos) )THEN
+      DEALLOCATE(pos)
+      ALLOCATE( pos( 3, npart_des ) )
+    ENDIF
+    IF( ALLOCATED(pvol) )THEN
+      DEALLOCATE(pvol)
+      ALLOCATE( pvol( npart_des ) )
+    ENDIF
+    IF( ALLOCATED(pmass) )THEN
+      DEALLOCATE(pmass)
+      ALLOCATE( pmass( npart_des ) )
+    ENDIF
+
     pos  = 0.0D0
-    pmass = 0.0D0
+    pmass= 0.0D0
     phase= 0.0D0
     proper_volume= 0.0D0
     vol_shell= 0.0D0
@@ -354,20 +371,20 @@ SUBMODULE (particles_id) spherical_surfaces
     r_cnt= 1
 
     ! These array are needed to be able to parallelize the loops on each surface
-    ALLOCATE( pos_shell_tmp  ( 3, 5*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( sqdetg_tmp     (    5*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( bar_density_tmp(    5*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( gam_euler_tmp  (    5*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( pvol_tmp       (    5*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( npart_discarded(    5*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
-    ALLOCATE( npart_surface_tmp(  5*CEILING(SQRT(DBLE(2*npart_approx))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_approx))) ) )
+    ALLOCATE( pos_shell_tmp  ( 3, 5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+    ALLOCATE( sqdetg_tmp     (    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+    ALLOCATE( bar_density_tmp(    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+    ALLOCATE( gam_euler_tmp  (    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+    ALLOCATE( pvol_tmp       (    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+    ALLOCATE( npart_discarded(    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+    ALLOCATE( npart_surface_tmp(  5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
 
     !--------------------------------------------------!
     !--  Main iteration over the spherical surfaces  --!
@@ -578,9 +595,9 @@ SUBMODULE (particles_id) spherical_surfaces
 
           ! Place a particle at a given position only if the hydro
           ! computed by LORENE is acceptable
-          IF( bar_density_tmp( th, phi ) > 0.0D0 &
+          IF( &!bar_density_tmp( th, phi ) > 0.0D0 &
               !pos_shells(r)% baryon_density( itr + 1 ) > 0.0D0 &
-              .AND. &
+              !.AND. &
               validate_position_final( xtemp, ytemp, ztemp ) == 0 )THEN
 
             !npart_shell_cnt= npart_shell_cnt + 1

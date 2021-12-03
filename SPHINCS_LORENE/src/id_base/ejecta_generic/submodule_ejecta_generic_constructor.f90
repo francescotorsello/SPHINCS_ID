@@ -47,7 +47,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
 
 
     INTEGER, PARAMETER:: unit_pos= 2589
-    DOUBLE PRECISION, PARAMETER:: atmosphere_density= 1.0D-13
+    DOUBLE PRECISION, PARAMETER:: atmosphere_density= 1.0439859633622731D-17
 
     INTEGER:: header_lines= 2 ! TODO: give this as input
     INTEGER:: nlines, ntmp
@@ -347,28 +347,28 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
       DO j= 1, derived_type% ny_grid, 1
         DO k= 1, derived_type% nz_grid, 1
 
-          !IF( derived_type% baryon_mass_density( i, j, k ) &
-          !    <= atmosphere_density )THEN
-          !
-          !  derived_type% baryon_mass_density( i, j, k )= 0.0D0
-          !
-          !  derived_type% specific_energy( i, j, k )= 0.0D0
-          !
-          !  derived_type% vel( i, j, k, : )= 0.0D0
-          !
-          !ENDIF
+          IF( derived_type% baryon_mass_density( i, j, k ) &
+              <= atmosphere_density )THEN
 
-          derived_type% baryon_mass_density( i, j, k )= &
-            MAX( 0.0D0, &
-            derived_type% baryon_mass_density( i, j, k ) - atmosphere_density )
-
-          IF( derived_type% baryon_mass_density( i, j, k ) == 0.0D0 )THEN
+            derived_type% baryon_mass_density( i, j, k )= 0.0D0
 
             derived_type% specific_energy( i, j, k )= 0.0D0
 
             derived_type% vel( i, j, k, : )= 0.0D0
 
           ENDIF
+
+          !derived_type% baryon_mass_density( i, j, k )= &
+          !  MAX( 0.0D0, &
+          !  derived_type% baryon_mass_density( i, j, k ) - atmosphere_density )
+          !
+          !IF( derived_type% baryon_mass_density( i, j, k ) == 0.0D0 )THEN
+          !
+          !  derived_type% specific_energy( i, j, k )= 0.0D0
+          !
+          !  derived_type% vel( i, j, k, : )= 0.0D0
+          !
+          !ENDIF
 
         ENDDO
       ENDDO
@@ -391,17 +391,17 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
       derived_type% centers(i_matter,:)= 0.0D0
       derived_type% barycenters(i_matter,:)= 0.0D0
       derived_type% sizes(i_matter,:)= [ &
-                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !1.0D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
                   !    + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
-                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !1.0D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
                   !    + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
-                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !1.0D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
                   !    + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
-                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !1.0D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
                   !    + ABS(MAXVAL(grid_tmp( :, 2 )))**2.0D0 ), &
-                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !1.0D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
                   !    + ABS(MAXVAL(grid_tmp( :, 3 )))**2.0D0 ), &
-                  !1.3D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
+                  !1.0D0*SQRT( ABS(MAXVAL(grid_tmp( :, 1 )))**2.0D0 &
                   !    + ABS(MAXVAL(grid_tmp( :, 3 )))**2.0D0 ) ]
                                          ABS(derived_type% xL_grid), &
                                          ABS(MAXVAL(grid_tmp( :, 1 ))), &

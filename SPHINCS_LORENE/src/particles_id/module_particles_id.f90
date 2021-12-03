@@ -21,6 +21,14 @@ MODULE particles_id
   IMPLICIT NONE
 
 
+  INTEGER, PARAMETER:: id_particles_from_file            = 0
+  !! Identifier for a particle distribution read from formatted file
+  INTEGER, PARAMETER:: id_particles_on_lattice           = 1
+  !! Identifier for a prticle distribution on a lattice
+  INTEGER, PARAMETER:: id_particles_on_spherical_surfaces= 2
+  !! Identifier for particle distribution on spherical surfaces
+
+
   TYPE eos
   !! Data structure representing an |eos|
     CHARACTER( LEN= : ), ALLOCATABLE:: eos_name
@@ -49,7 +57,7 @@ MODULE particles_id
   !              Definition of TYPE particles               *
   !                                                         *
   ! This class places the SPH particles, imports            *
-  ! the |lorene| BNS ID on the particle positions, stores   *
+  ! the |id| on the particle positions, stores              *
   ! it, computes the relevant SPH fields and exports it to  *
   ! both a formatted, and a binary file for evolution       *
   !                                                         *
@@ -570,14 +578,15 @@ MODULE particles_id
 
     MODULE SUBROUTINE place_particles_spherical_surfaces( THIS, &
                                   mass_star, radius, center, &
-                                  central_density, npart_approx, &
+                                  central_density, npart_des, &
                                   npart_out, pos, pvol, pmass, &
                                   last_r, upper_bound, lower_bound, &
                                   upper_factor, lower_factor, max_steps, &
-                                  filename_mass_profile, filename_shells_radii,&
+                                  filename_mass_profile, &
+                                  filename_shells_radii, &
                                   filename_shells_pos, &
                                   get_density, integrate_density, &
-                                  get_id, validate_position, length_scale )
+                                  get_id, validate_position, pmass_des )
     !! Places particles on spherical surfaces on one star
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -586,7 +595,7 @@ MODULE particles_id
       !  @TODO Remove the [[idbase]] argument as done in SUBROUTINE perform_apm
       !CLASS(idbase),       INTENT( IN OUT ):: id
       !> Approximate particle number on the star
-      INTEGER,          INTENT( IN )    :: npart_approx
+      INTEGER,          INTENT( IN )    :: npart_des
       !> Final number of particles on the star
       INTEGER,          INTENT( OUT )   :: npart_out
       !& If, after max_steps, the iteration did not converge,
@@ -619,11 +628,11 @@ MODULE particles_id
       !  masses on neighbouring spherical surfaces
       DOUBLE PRECISION, INTENT( INOUT ) :: lower_bound
       !> Array string the final positions
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos
       !> Array soring the inal particle volumes
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pvol
       !> Array storing the final particle masses
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pmass
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pmass
       !> Name of the file to store the radial mass profile
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_mass_profile
       !& Name of the file to store the surface radii
@@ -698,7 +707,7 @@ MODULE particles_id
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
-      DOUBLE PRECISION, INTENT( IN ),   OPTIONAL:: length_scale
+      DOUBLE PRECISION, INTENT( IN ),   OPTIONAL:: pmass_des
 
 
     END SUBROUTINE place_particles_spherical_surfaces
@@ -808,8 +817,7 @@ MODULE particles_id
 
     END SUBROUTINE compute_and_export_SPH_variables
 
-    MODULE SUBROUTINE perform_apm( get_density, &
-                                   get_nstar_p, &
+    MODULE SUBROUTINE perform_apm( get_density, get_nstar_p, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
                                    center, &

@@ -164,42 +164,60 @@ MODULE formul_3p1_id
     !--  SUBROUTINES  --!
     !-------------------!
 
-    !GENERIC, PUBLIC:: construct_formul_3p1 => &
-    !                                    construct_formul_3p1_bns_ptr!, &
-    !                                    !construct_formul_3p1_bns_spacings_ptr
 
-    !PROCEDURE::       construct_formul_3p1_bns_ptr => &
     PROCEDURE, NON_OVERRIDABLE:: setup_standard3p1_variables
+    !# Set up the refined mesh by reading the `gravity_grid_parameter.dat`
+    !  parameter file, and read the standard 3+1 |id| using the given
+    !  [[idbase]] object, on the refined mesh
 
-    !PROCEDURE::       construct_formul_3p1_bns_spacings_ptr => &
-    !                                    construct_formul_3p1_bns_spacings
+    PROCEDURE, NON_OVERRIDABLE:: deallocate_standard3p1_variables
+    !! Deallocates memory for the standard 3+1 fields
 
     PROCEDURE, NON_OVERRIDABLE:: analyze_constraint
-
-    PROCEDURE:: print_summary
+    !# Analyze a constraint (or an arbitrary scalar grid function) by
+    !  examining its values at the refined mesh. Computes the number of mesh
+    !  points at which the scalar grid function has values lying within
+    !  predefined (hard-coded) intervals
+    !  @todo complete this documentation entries with more details
 
     PROCEDURE(define_allocate_fields_interface), DEFERRED:: &
                             define_allocate_fields
+    !# Allocates memory for the fields specific to the formulation identified
+    !  by an EXTENDED TYPE
+
+    PROCEDURE(deallocate_fields_interface), DEFERRED:: deallocate_fields
+    !# Deallocates memory for the fields specific to the formulation identified
+    !  by an EXTENDED TYPE
 
     PROCEDURE(compute_and_export_3p1_variables_interface), PUBLIC, &
                             DEFERRED:: compute_and_export_3p1_variables
+    !# Compute the fields specific to the formulation identified by an
+    !  EXTENDED TYPE, starting from the standard 3+1 fields
 
     PROCEDURE(print_formatted_lorene_id_3p1_variables_interface), PUBLIC, &
                             DEFERRED:: print_formatted_lorene_id_3p1_variables
+    !! Prints the spacetime |id| to a formatted file
 
     GENERIC, PUBLIC:: compute_and_export_3p1_constraints => &
                       compute_and_export_3p1_constraints_grid, &
                       compute_and_export_3p1_constraints_particles
+    !# Overloaded PROCEDURE to compute the constraints using only the |id|
+    !  on the refined mesh, or the spacetime |id| on the refined mesh and
+    !  the hydrodynamical |id| mapped from the particles to the refined mesh
 
     PROCEDURE(compute_and_export_3p1_constraints_grid_interface), &
               DEFERRED:: compute_and_export_3p1_constraints_grid
+    !# Computes the constraints specific to the formulation identified by an
+    !  EXTENDED TYPE, using the full |id| on the refined mesh
 
     PROCEDURE(compute_and_export_3p1_constraints_particles_interface), &
               DEFERRED:: compute_and_export_3p1_constraints_particles
+    !# Computes the constraints specific to the formulation identified by an
+    !  EXTENDED TYPE, using the |bssn| |id| on the refined
+    !  mesh and the hydrodynamical |id| mapped from the particles to the mesh
 
-    PROCEDURE(deallocate_fields_interface), DEFERRED:: deallocate_fields
-
-    PROCEDURE, NON_OVERRIDABLE:: deallocate_standard3p1_variables
+    PROCEDURE:: print_summary
+    !# Prints a summary about the features of the refined mesh
 
     !-----------------!
     !--  FUNCTIONS  --!
@@ -238,6 +256,7 @@ MODULE formul_3p1_id
     PROCEDURE, PUBLIC:: get_HC_parts
 
     PROCEDURE, PUBLIC:: get_MC_parts
+
 
   END TYPE formul_3p1
 

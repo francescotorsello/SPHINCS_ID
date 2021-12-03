@@ -44,7 +44,7 @@ SUBMODULE (particles_id) particles_sph_variables
     !************************************************
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
-                                   third, kg2g, Msun, k_lorene2hydrobase
+                                   third, kg2g, Msun, k_lorene2hydrobase, Msun
     USE units,               ONLY: set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -326,9 +326,9 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
+      nlrf(itr)= THIS% baryon_density_parts(itr)!((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% nlrf(itr)= &
-                 THIS% baryon_density_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
+                 THIS% baryon_density_parts(itr)!((Msun_geo*km2m)**3)/(amu*g2kg)
 
       ! Specific internal energy [c^2]
       u(itr)= THIS% specific_energy_parts(itr)
@@ -390,8 +390,10 @@ SUBMODULE (particles_id) particles_sph_variables
       PRINT *
       STOP
     ENDIF
-    IF( .NOT.( THIS% distribution_id == 3 .OR. &
-        ( THIS% distribution_id == 0 .AND. THIS% read_nu ) ) )THEN
+    IF( .NOT.( THIS% distribution_id == id_particles_on_spherical_surfaces &
+        .OR. &
+        ( THIS% distribution_id == id_particles_from_file &
+          .AND. THIS% read_nu ) ) )THEN
 
       THIS% pmass= THIS% nstar*THIS% pvol
 
@@ -468,7 +470,7 @@ SUBMODULE (particles_id) particles_sph_variables
 !      !--  baryon mass. This is used only on the lattice, optionally.     --!
 !      !---------------------------------------------------------------------!
 !
-!      IF( THIS% distribution_id == 3 )THEN
+!      IF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
 !        PRINT *, "** ERROR! Particle placer ", THIS% distribution_id, &
 !                 " is not compatible with redistribute_nu= .TRUE."
 !        PRINT *, " * Check the parameter file lorene_bns_id_particles.par. ", &
@@ -705,25 +707,24 @@ SUBMODULE (particles_id) particles_sph_variables
                  npart_fin  => THIS% npart_i(i_matter-1) +    &
                                THIS% npart_i(i_matter) )
 
-        IF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
-
-          ! If the particle positions and nu were read from formatted file...
-
-          ! Do nothing, nu is already read from file
-          nu( npart_in : npart_fin )= &
-            THIS% nu( npart_in : npart_fin )
-          THIS% nbar_i(i_matter)= SUM( THIS% nu( npart_in : npart_fin ), DIM=1 )
-
-        ELSEIF( THIS% apm_iterate(i_matter) )THEN
+        IF( THIS% apm_iterate(i_matter) )THEN
 
           ! If the APM was used for star 1...
 
           ! Do nothing, nu is already computed and reflected in the constructor
-          nu( npart_in : npart_fin )= &
-            THIS% nu( npart_in : npart_fin )
+          nu( npart_in : npart_fin )= THIS% nu( npart_in : npart_fin )
           THIS% nbar_i(i_matter)= SUM( THIS% nu( npart_in : npart_fin ), DIM=1 )
 
-        ELSEIF( THIS% distribution_id == 3 )THEN
+        ELSEIF( THIS% distribution_id == id_particles_from_file &
+                .AND. THIS% read_nu )THEN
+
+          ! If the particle positions and nu were read from formatted file...
+
+          ! Do nothing, nu is already read from file
+          nu( npart_in : npart_fin )= THIS% nu( npart_in : npart_fin )
+          THIS% nbar_i(i_matter)= SUM( THIS% nu( npart_in : npart_fin ), DIM=1 )
+
+        ELSEIF( THIS% distribution_id== id_particles_on_spherical_surfaces )THEN
         !ELSE
 
           ! If the APM was not used for star 1...
@@ -732,7 +733,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
           DO itr= npart_in, npart_fin, 1
             nu(itr)= THIS% pmass(itr)*MSun/amu
-            THIS% nu(itr)= nu(i_matter)
+            THIS% nu(itr)= nu(itr)
             THIS% nbar_i(i_matter)= THIS% nbar_i(i_matter) + nu(itr)
           ENDDO
 
@@ -754,8 +755,9 @@ SUBMODULE (particles_id) particles_sph_variables
         IF( i_matter == 1 .AND. THIS% n_matter == 2 )THEN
 
           IF( ABS(THIS% mass_ratios(1) - THIS% mass_ratios(2)) &
-            /THIS% mass_ratios(2) <= 0.005 .AND. THIS% reflect_particles_x .AND. &
-            THIS% distribution_id /= 1 )THEN
+            /THIS% mass_ratios(2) <= 0.005 .AND. THIS% reflect_particles_x &
+            .AND. &
+            THIS% distribution_id /= id_particles_from_file )THEN
 
             ! Consistency check
             IF( THIS% npart_i(i_matter) +      &
@@ -799,7 +801,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ENDDO
 
-!    IF( THIS% distribution_id == 0 .AND. THIS% read_nu )THEN
+!    IF( THIS% distribution_id == id_particles_from_file .AND. THIS% read_nu )THEN
 !
 !      ! If the particle positions and nu were read from formatted file...
 !
@@ -828,7 +830,7 @@ SUBMODULE (particles_id) particles_sph_variables
 !        THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
 !        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
 !
-!      ELSEIF( THIS% distribution_id == 3 )THEN
+!      ELSEIF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
 !      !ELSE
 !
 !        ! If the APM was not used for star 1...
@@ -894,7 +896,7 @@ SUBMODULE (particles_id) particles_sph_variables
 !
 !      ! Set nu based on the particle mass on star 2...
 !
-!      IF( THIS% distribution_id == 3 )THEN
+!      IF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
 !
 !        DO itr= THIS% npart1 + 1, THIS% npart, 1
 !          nu(itr)= THIS% pmass(itr)*MSun/amu
@@ -922,7 +924,7 @@ SUBMODULE (particles_id) particles_sph_variables
 !
 !      ! Set nu based on the particle mass on star 1...
 !
-!      IF( THIS% distribution_id == 3 )THEN
+!      IF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
 !
 !        DO itr= 1, THIS% npart1, 1
 !          nu(itr)= THIS% pmass(itr)*MSun/amu
@@ -953,7 +955,7 @@ SUBMODULE (particles_id) particles_sph_variables
 !
 !      ! Set nu based on the particle mass on both stars...
 !
-!      IF( THIS% distribution_id == 3 )THEN
+!      IF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
 !
 !        DO itr= 1, THIS% npart1, 1
 !          nu(itr)= THIS% pmass(itr)*MSun/amu
@@ -1187,8 +1189,8 @@ SUBMODULE (particles_id) particles_sph_variables
     THIS% h= h
     THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
 
-    PRINT *
-    PRINT *, "nfinal= ", nfinal
+    !PRINT *
+    !PRINT *, "nfinal= ", nfinal
     ll_cell_loop: DO ill= 1, nfinal
 
       itot= nprev + ill
@@ -1289,19 +1291,19 @@ SUBMODULE (particles_id) particles_sph_variables
         ! invert it
         CALL invert_3x3_matrix(mat,mat_1,invertible_matrix)
 
-        IF( .NOT.invertible_matrix )THEN
-          PRINT *, "a= ", a
-          PRINT *, "h(a)= ", h(a)
-          PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
-          PRINT *, "nprev= ", nprev
-          PRINT *, "ill= ", ill
-          PRINT *, "itot= ", itot
-          PRINT *, "ncand(ill)= ", ncand(ill)
-          PRINT *, "cnt1= ", cnt1
-          PRINT *, "cnt2= ", cnt2
-          PRINT *
-          STOP
-        ENDIF
+       ! IF( .NOT.invertible_matrix )THEN
+       !   PRINT *, "a= ", a
+       !   PRINT *, "h(a)= ", h(a)
+       !   PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
+       !   PRINT *, "nprev= ", nprev
+       !   PRINT *, "ill= ", ill
+       !   PRINT *, "itot= ", itot
+       !   PRINT *, "ncand(ill)= ", ncand(ill)
+       !   PRINT *, "cnt1= ", cnt1
+       !   PRINT *, "cnt2= ", cnt2
+       !   PRINT *
+       !   STOP
+       ! ENDIF
 
       ENDDO particle_loop
 

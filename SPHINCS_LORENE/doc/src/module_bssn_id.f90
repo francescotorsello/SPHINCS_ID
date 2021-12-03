@@ -188,7 +188,7 @@ MODULE formul_bssn_id
     !# Constructs the [[bssn_id]] object from the number of grid points
     !  along each axis
 
-      CLASS(idbase), INTENT( IN ):: id
+      CLASS(idbase), INTENT( INOUT ):: id
       !! [[idbase]] object to use to construct the [[bssn_id]] object
       TYPE(bssn_id)              :: bssnid
       !! [[bssn_id]] object to be constructed
