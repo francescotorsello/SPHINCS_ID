@@ -829,6 +829,7 @@ MODULE particles_id
                                    mass_it, correct_nu, nuratio_thres, &
                                    nuratio_des, &
                                    nx_gh, ny_gh, nz_gh, &
+                                   use_atmosphere, &
                                    namefile_pos_id, namefile_pos, &
                                    namefile_results, &
                                    validate_position )
@@ -934,6 +935,10 @@ MODULE particles_id
       INTEGER,                          INTENT( IN )   :: ny_gh
       !> Number of lattice points in the z direction for ghosts
       INTEGER,                          INTENT( IN )   :: nz_gh
+      !> `.TRUE.` if an atmosphere should be used during the APM, to allow
+      !  the real aprticles more freedom to move around and adjust;
+      !  `.FALSE.` otherwise
+      LOGICAL,                          INTENT( INOUT ):: use_atmosphere
       !> Name for the formatted file where the initial particle positions
       !  and the ghost positions will be printed
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &

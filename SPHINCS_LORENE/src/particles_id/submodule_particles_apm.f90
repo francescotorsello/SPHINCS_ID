@@ -106,7 +106,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 50.0D0 !0.25D0
+    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 20.0D0 !0.25D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     DOUBLE PRECISION, PARAMETER:: max_it_tree      = 1
@@ -118,9 +118,10 @@ SUBMODULE (particles_id) particles_apm
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
     INTEGER:: dim_seed, rel_sign
     INTEGER:: n_problematic_h, b, ill, l, itot
+    INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
-    DOUBLE PRECISION:: h_max, h_av, tmp!, delta
+    DOUBLE PRECISION:: h_max, h_av, tmp, dens_min, atmosphere_density!, delta
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, dx, dy, dz, &
                        rad_x, rad_y, rad_z, com_x, com_y, com_z, com_d
     DOUBLE PRECISION:: max_r_real, r_real, max_z_real
@@ -211,6 +212,28 @@ SUBMODULE (particles_id) particles_apm
     npart_real= SIZE( pos_input(1,:) )
 
     IF( debug ) PRINT *, "npart_real= ", npart_real
+
+    !------------------------------------------------!
+    !-- If desired, compute the atmosphere density --!
+    !------------------------------------------------!
+
+    IF( use_atmosphere )THEN
+
+      dens_min= HUGE(1.0D0)
+      DO a= 1, npart_real, 1
+
+        tmp= get_density( pos_input(1,a), pos_input(2,a), pos_input(3,a) )
+
+        IF( tmp < dens_min )THEN
+
+          dens_min= tmp
+
+        ENDIF
+
+      ENDDO
+      atmosphere_density= dens_min*1.0D-30
+
+    ENDIF
 
     !---------------------------------------!
     !-- Allocate, assign and test h_guess --!
@@ -454,7 +477,7 @@ SUBMODULE (particles_id) particles_apm
               .AND. &
               SQRT( ( xtemp - center(1) )**2.0D0 &
                   + ( ytemp - center(2) )**2.0D0 &
-                  + ( ztemp - center(3) )**2.0D0 ) >= &
+                  + ( ztemp - center(3) )**2.0D0 ) >= &!0.0D0 &
               SQRT( ( x_ell - center(1) )**2.0D0 &
                   + ( y_ell - center(2) )**2.0D0 &
                   + ( z_ell - center(3) )**2.0D0 ) &
@@ -790,9 +813,9 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "7"
 
-    CALL get_nstar_p( npart_real, all_pos(1,1:npart_real), &
+    CALL get_nstar_p_atm( npart_real, all_pos(1,1:npart_real), &
                                   all_pos(2,1:npart_real), &
-                                  all_pos(3,1:npart_real), nstar_p )
+                                  all_pos(3,1:npart_real), nstar_p, use_atmosphere )
 
     IF( debug ) PRINT *, "8"
 
@@ -839,6 +862,8 @@ SUBMODULE (particles_id) particles_apm
     ALLOCATE( correction_pos( 3, npart_all ) )
     ALLOCATE( all_pos_tmp( 3, npart_all ) )
     ALLOCATE( all_pos_tmp2( 3, npart_all ) )
+    ALLOCATE( cnt_move( npart_real ) )
+    cnt_move= 0
 
     ! Set the particles to be equal-mass
     nu_all= (mass/DBLE(npart_real))*umass/amu
@@ -885,7 +910,8 @@ SUBMODULE (particles_id) particles_apm
 
       !IF( itr == 2 ) EXIT
 
-      PRINT *, ' * Starting with APM step #: ', itr
+      PRINT *, "------------------------------------------"
+      PRINT *, " * Starting with APM step #: ", itr
       PRINT *
 
       IF( MOD( itr, print_step ) == 0 )THEN
@@ -948,7 +974,7 @@ SUBMODULE (particles_id) particles_apm
             all_pos( 1, a ), &
             all_pos( 2, a ), &
             all_pos( 3, a ), &
-            tmp
+            tmp, cnt_move(a)
         ENDDO
 
         DO a= npart_real + 1, npart_all, 1
@@ -1136,31 +1162,45 @@ SUBMODULE (particles_id) particles_apm
 
       ENDDO find_nan_in_nstar_real
 
-      CALL get_nstar_p( npart_real, all_pos(1,1:npart_real), &
-                                    all_pos(2,1:npart_real), &
-                                    all_pos(3,1:npart_real), nstar_p )
+      CALL get_nstar_p_atm( npart_real, all_pos(1,1:npart_real), &
+                                        all_pos(2,1:npart_real), &
+                                        all_pos(3,1:npart_real), nstar_p, &
+                                        use_atmosphere  )
 
       art_pr_max= 0.0D0
       err_N_max=  0.0D0
       err_N_min=  1.D30
       err_N_mean= 0.0D0
 
+      ! TODO: parallelize this loop
       DO a= 1, npart_real, 1
 
         dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
         art_pr(a) = MAX( 1.0D0 + dNstar(a), 0.1D0 )
         art_pr_max= MAX( art_pr_max, art_pr(a) )
 
-        IF( ABS(dNstar(a)) > err_N_max )THEN
+        IF( ABS(dNstar(a)) > err_N_max &
+            .AND. &
+            get_density( all_pos(1,a), &
+                         all_pos(2,a), &
+                         all_pos(3,a) ) > 0.0D0 )THEN
+
           err_N_max     = ABS(dNstar(a))
           pos_maxerr    = all_pos(:,a)
           nstar_real_err= nstar_real(a)
           nstar_p_err   = nstar_p(a)
+
         ENDIF
 
         !err_N_max = MAX( err_N_max, ABS(dNstar) )
-        err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
-        err_N_mean= err_N_mean + ABS(dNstar(a))
+        IF( get_density( all_pos(1,a), &
+                         all_pos(2,a), &
+                         all_pos(3,a) ) > 0.0D0 )THEN
+
+          err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
+          err_N_mean= err_N_mean + ABS(dNstar(a))
+
+        ENDIF
 
         IF( ISNAN(dNstar(a)) )THEN
           PRINT *, "dNstar is a NaN at particle ", a
@@ -1230,6 +1270,10 @@ SUBMODULE (particles_id) particles_apm
           )THEN
 
             art_pr( a )= DBLE(3*itr)*art_pr_max
+
+          !ELSE
+          !
+          !  art_pr( a )= art_pr_max
 
           ENDIF
 
@@ -1384,7 +1428,6 @@ SUBMODULE (particles_id) particles_apm
       !-- If the particle distribution is not yet good enough, update it
       !
       PRINT *, " * Updating positions..."
-      PRINT *
 
       all_pos_tmp2= all_pos
 
@@ -1419,9 +1462,10 @@ SUBMODULE (particles_id) particles_apm
 
       IF( debug ) PRINT *, "After calling position_correction"
 
+      cnt_move= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, correction_pos, &
-      !$OMP                     dNstar, npart_real, nstar_p ) &
+      !$OMP                     dNstar, npart_real, nstar_p, cnt_move ) &
       !$OMP             PRIVATE( pos_corr_tmp, a, cnt, rand_num, rand_num2, &
       !$OMP                      rel_sign )
       DO a= 1, npart_real, 1
@@ -1464,11 +1508,11 @@ SUBMODULE (particles_id) particles_apm
         cnt= 0
         DO
 
-          IF( get_density( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-              .AND. &
-              validate_position_final( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+          IF( .TRUE.&!get_density( &
+              !    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
+              !.AND. &
+              !validate_position_final( &
+              !    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
               !.AND. &
               !check_particle_position( a - 1, &
               !                         all_pos(:,1:a-1), &
@@ -1480,6 +1524,7 @@ SUBMODULE (particles_id) particles_apm
           )THEN
 
             all_pos(:,a)= pos_corr_tmp
+            cnt_move(a)= 1
             EXIT
 
           ELSEIF( cnt <= search_pos )THEN
@@ -1518,13 +1563,14 @@ SUBMODULE (particles_id) particles_apm
 
           ELSEIF( cnt == search_pos + 1 )THEN
 
-           ! cnt= cnt + 1
-           ! CALL RANDOM_NUMBER( rand_num )
-           ! CALL RANDOM_NUMBER( rand_num2 )
-           !
-           ! IF( rand_num2 < half )  rel_sign= - 1
-           ! IF( rand_num2 >= half ) rel_sign=   1
-           ! all_pos(:,a)= all_pos(:,a)*( 1.0D0 -rand_num*half*third )
+            ! cnt= cnt + 1
+            ! CALL RANDOM_NUMBER( rand_num )
+            ! CALL RANDOM_NUMBER( rand_num2 )
+            !
+            ! IF( rand_num2 < half )  rel_sign= - 1
+            ! IF( rand_num2 >= half ) rel_sign=   1
+            ! all_pos(:,a)= all_pos(:,a)*( 1.0D0 -rand_num*half*third )
+
             EXIT
 
           ENDIF
@@ -1535,6 +1581,9 @@ SUBMODULE (particles_id) particles_apm
 
       ENDDO
       !$OMP END PARALLEL DO
+      PRINT *, " * The fraction of particles that moved at this step is", &
+               DBLE(SUM(cnt_move))/DBLE(npart_real)
+      PRINT *
 
       find_nan_in_all_pos: DO a= 1, npart_all, 1
 
@@ -1642,7 +1691,7 @@ SUBMODULE (particles_id) particles_apm
         pos( 1, a ), &
         pos( 2, a ), &
         pos( 3, a ), &
-        tmp
+        tmp, cnt_move(a)
     ENDDO
 
     DO a= npart_real + 1, npart_all, 1
@@ -1734,9 +1783,9 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "3"
 
-    CALL get_nstar_p( npart_real, pos(1,:), &
+    CALL get_nstar_p_atm( npart_real, pos(1,:), &
                                   pos(2,:), &
-                                  pos(3,:), nstar_p )
+                                  pos(3,:), nstar_p, use_atmosphere  )
 
     nu= nu_all
     PRINT *, " * Baryon number on all particles before correction nu_all= ", &
@@ -1841,9 +1890,9 @@ SUBMODULE (particles_id) particles_apm
                             nu, h, nstar_real )      ! output
 
 
-         CALL get_nstar_p( npart_real, pos(1,:), &
+         CALL get_nstar_p_atm( npart_real, pos(1,:), &
                                        pos(2,:), &
-                                       pos(3,:), nstar_p )
+                                       pos(3,:), nstar_p, use_atmosphere  )
 
          !nstar_p( npart_real+1:npart_all )= 0.0D0
 
@@ -2044,9 +2093,9 @@ SUBMODULE (particles_id) particles_apm
     CALL density_loop( npart_real, pos, &    ! input
                        nu, h, nstar_real )      ! output
 
-    CALL get_nstar_p( npart_real, pos(1,:), &
+    CALL get_nstar_p_atm( npart_real, pos(1,:), &
                                   pos(2,:), &
-                                  pos(3,:), nstar_p )
+                                  pos(3,:), nstar_p, use_atmosphere  )
 
     !nstar_p( npart_real+1:npart_all )= 0.0D0
 
@@ -2587,6 +2636,118 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
 
     END FUNCTION validate_position_final
+
+
+  !  FUNCTION get_density_atm( x, y, z, use_atmosphere ) RESULT( res )
+  !
+  !    !*******************************************************
+  !    !
+  !    !#
+  !    !
+  !    !
+  !    !  FT 5.12.2021
+  !    !
+  !    !*******************************************************
+  !
+  !    IMPLICIT NONE
+  !
+  !    DOUBLE PRECISION, INTENT(IN):: x
+  !    !! \(x\) coordinate of the desired point
+  !    DOUBLE PRECISION, INTENT(IN):: y
+  !    !! \(y\) coordinate of the desired point
+  !    DOUBLE PRECISION, INTENT(IN):: z
+  !    !! \(z\) coordinate of the desired point
+  !    INTEGER:: res
+  !    !# Equal to get_density( x, y, z ) if use_atmosphere is `.FALSE.`;
+  !    !  equal to atmosphere_density if use_atmosphere is `.TRUE.`
+  !
+  !    IF( use_atmosphere == .TRUE. )THEN
+  !
+  !      res= get_density( x, y, z )
+  !      IF( res == 0.0D0 )THEN
+  !        res= atmosphere_density
+  !      ENDIF
+  !
+  !    ELSE
+  !
+  !      res= get_density( x, y, z )
+  !
+  !    ENDIF
+  !
+  !  END FUNCTION get_density_atm
+
+
+    SUBROUTINE get_nstar_p_atm( npart_real, x, y, z, nstar_p, use_atmosphere )
+
+      !*******************************************************
+      !
+      !#
+      !
+      !
+      !  FT 5.12.2021
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: npart_real
+      !! Number of real particles (i.e., no ghost particles included here)
+      DOUBLE PRECISION, INTENT(IN):: x(npart_real)
+      !! Array of \(x\) coordinates
+      DOUBLE PRECISION, INTENT(IN):: y(npart_real)
+      !! Array of \(y\) coordinates
+      DOUBLE PRECISION, INTENT(IN):: z(npart_real)
+      !! Array of \(z\) coordinates
+      DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
+      !! Array to store the computed proper baryon number density
+      LOGICAL,  INTENT( IN ):: use_atmosphere
+      !# `.TRUE.` if an atmosphere should be used during the APM, to allow
+      !  the real aprticles more freedom to move around and adjust;
+      !  `.FALSE.` otherwise
+
+      CALL get_nstar_p( npart_real, x, y, z, nstar_p )
+
+      IF( use_atmosphere == .TRUE. )THEN
+
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( npart_real, nstar_p, atmosphere_density ) &
+        !$OMP             PRIVATE( a )
+        DO a= 1, npart_real, 1
+          IF( nstar_p(a) == 0.0D0 )THEN
+            nstar_p(a)= atmosphere_density
+          ENDIF
+        ENDDO
+        !$OMP END PARALLEL DO
+
+      ELSE
+
+          !$OMP PARALLEL DO DEFAULT( NONE ) &
+          !$OMP             SHARED( npart_real, nstar_p ) &
+          !$OMP             PRIVATE( a )
+          DO a= 1, npart_real, 1
+
+            IF( ISNAN( nstar_p( a ) ) )THEN
+              PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
+                       " Stopping.."
+              PRINT *
+              STOP
+            ENDIF
+            IF( nstar_p( a ) == 0.0D0 )THEN
+              PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
+              !PRINT *, "   sq_g=", sq_g
+              !PRINT *, "   Theta_a=", Theta_a
+              !PRINT *, "   baryon_density(", a, ")=", baryon_density(a)
+              !PRINT *, " * Stopping.."
+              !PRINT *
+              STOP
+            ENDIF
+
+          ENDDO
+          !$OMP END PARALLEL DO
+
+      ENDIF
+
+    END SUBROUTINE get_nstar_p_atm
 
 
   END PROCEDURE perform_apm

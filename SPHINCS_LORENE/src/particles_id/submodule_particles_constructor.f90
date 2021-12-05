@@ -140,7 +140,7 @@ SUBMODULE (particles_id) particles_constructor
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    LOGICAL, DIMENSION(id% get_n_matter()):: apm_iterate
+    LOGICAL, DIMENSION(id% get_n_matter()):: apm_iterate, use_atmosphere
 
     NAMELIST /bns_particles/ &
               parts_pos_path, parts_pos, columns, header_lines, n_cols, &
@@ -153,7 +153,7 @@ SUBMODULE (particles_id) particles_constructor
               randomize_phi, randomize_theta, randomize_r, &
               apm_iterate, apm_max_it, max_inc, mass_it, &
               nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
-              nuratio_des
+              use_atmosphere, nuratio_des
 
     ! Get the number of matter objects in the physical system
     parts% n_matter= id% get_n_matter()
@@ -205,8 +205,8 @@ SUBMODULE (particles_id) particles_constructor
       central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
                                                    center(i_matter,2), &
                                                    center(i_matter,3) )
-      barycenter(i_matter,:)= id% return_barycenter(i_matter)
-      sizes(i_matter, :)    = id% return_spatial_extent(i_matter)
+      barycenter(i_matter,:)   = id% return_barycenter(i_matter)
+      sizes(i_matter, :)       = id% return_spatial_extent(i_matter)
 
       parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
       CALL id% return_eos_parameters( i_matter, &
@@ -1058,6 +1058,7 @@ SUBMODULE (particles_id) particles_constructor
                     !sizes(i_matter, 5), &
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
+                    use_atmosphere(i_matter), &
                     filename_apm_pos_id, filename_apm_pos, &
                     filename_apm_results, check_negative_hydro )
         CALL parts% apm_timers(i_matter)% stop_timer()
@@ -1774,22 +1775,6 @@ SUBMODULE (particles_id) particles_constructor
 
         nstar_p(a)= sq_g*Theta_a*baryon_density(a)
                     !*((Msun_geo*km2m)**3)/(amu*g2kg)
-
-        IF( ISNAN( nstar_p( a ) ) )THEN
-          PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
-                   " Stopping.."
-          PRINT *
-          STOP
-        ENDIF
-        IF( nstar_p( a ) == 0 )THEN
-          PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
-          PRINT *, "   sq_g=", sq_g
-          PRINT *, "   Theta_a=", Theta_a
-          PRINT *, "   baryon_density(", a, ")=", baryon_density(a)
-          PRINT *, " * Stopping.."
-          PRINT *
-          STOP
-        ENDIF
 
       ENDDO
       !$OMP END PARALLEL DO
