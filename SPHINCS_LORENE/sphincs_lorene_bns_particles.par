@@ -26,7 +26,8 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_DRSLO_4_pol2_1M_bt.dat"
           !"apm-pos-nu_DRSLO_4_pol2_1M_hr.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_800k.dat"
-          "apm-pos-nu_EJECT_1e-3_apr4_200k-apm50.dat"
+          !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm50.dat"
+          "apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -128,7 +129,7 @@ apm_iterate=.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate2
-apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
+apm_max_it= 100         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate

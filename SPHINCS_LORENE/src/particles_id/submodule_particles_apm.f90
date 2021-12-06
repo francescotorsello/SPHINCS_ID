@@ -160,7 +160,9 @@ SUBMODULE (particles_id) particles_apm
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess_tmp
 
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
@@ -1623,24 +1625,110 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, "** APM iteration completed."
     PRINT *
 
-    ! Now get rid of the ghost particles
+
+
+    !--------------------------!
+    !--------------------------!
+    !-- END OF APM ITERATION --!
+    !--------------------------!
+    !--------------------------!
+
+
+
+    !-----------------------------!
+    !-- Discard ghost particles --!
+    !-----------------------------!
+
     IF(.NOT.ALLOCATED( pos ))THEN
       ALLOCATE( pos( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
+                  "perform_apm. The error message is", &
                   err_msg
          STOP
       ENDIF
     ENDIF
 
     pos= all_pos( :, 1:npart_real )
-    npart= npart_real
     IF( debug ) PRINT *, npart
 
     h      = h(1:npart_real)
     h_guess= h_guess(1:npart_real)
     nu     = nu(1:npart_real)
+
+    !------------------------------------!
+    !-- Discard atmosphere, if present --!
+    !------------------------------------!
+
+    IF( use_atmosphere )THEN
+
+      ALLOCATE( rho_tmp( npart_real ) )
+      IF(ALLOCATED(pos_tmp)) DEALLOCATE(pos_tmp)
+      ALLOCATE( pos_tmp( 3, npart_real ) )
+      IF(ALLOCATED(h_tmp)) DEALLOCATE(h_tmp)
+      ALLOCATE( h_tmp( npart_real ) )
+      IF(ALLOCATED(h_guess_tmp)) DEALLOCATE(h_guess_tmp)
+      ALLOCATE( h_guess_tmp( npart_real ) )
+      IF(ALLOCATED(nu_tmp)) DEALLOCATE(nu_tmp)
+      ALLOCATE( nu_tmp( npart_real ) )
+
+      pos_tmp    = HUGE(1.0D0)
+      h_tmp      = HUGE(1.0D0)
+      h_guess_tmp= HUGE(1.0D0)
+      nu_tmp     = HUGE(1.0D0)
+
+      npart= 0
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
+      !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION( +: npart )
+      DO a= 1, npart_real, 1
+        rho_tmp(a)= get_density( pos(1,a), pos(2,a), pos(3,a) )
+        IF( rho_tmp(a) > 0.0D0 )THEN
+          npart= npart + 1
+          pos_tmp(:,a)  = pos(:,a)
+          h_tmp(a)      = h(a)
+          h_guess_tmp(a)= h_guess(a)
+          nu_tmp(a)     = nu(a)
+        ENDIF
+      ENDDO
+      !$OMP END PARALLEL DO
+
+      IF(ALLOCATED(pos)) DEALLOCATE(pos)
+      ALLOCATE( pos( 3, npart ) )
+      IF(ALLOCATED(h)) DEALLOCATE(h)
+      ALLOCATE( h( npart ) )
+      IF(ALLOCATED(h_guess)) DEALLOCATE(h_guess)
+      ALLOCATE( h_guess( npart ) )
+      IF(ALLOCATED(nu)) DEALLOCATE(nu)
+      ALLOCATE( nu( npart ) )
+
+   !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+   !   !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
+   !   !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
+   !   !$OMP             PRIVATE( a )
+      cnt1= 0
+      DO a= 1, npart_real, 1
+        IF( h_tmp(a) < HUGE(1.0D0) )THEN
+          cnt1= cnt1 + 1
+          pos(:,cnt1)  = pos_tmp(:,a)
+          h(cnt1)      = h_tmp(a)
+          h_guess(cnt1)= h_guess_tmp(a)
+          nu(cnt1)     = nu_tmp(a)
+        ENDIF
+      ENDDO
+   !   !$OMP END PARALLEL DO
+
+      npart_real= npart
+
+    ENDIF
+
+    !---------------!
+    !-- Set npart --!
+    !---------------!
+
+    npart= npart_real
 
     !----------------------------!
     !-- enforce centre of mass --!
@@ -2565,15 +2653,23 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "2"
 
-    pos_input= pos
+    IF( ALLOCATED( pos_input ) ) DEALLOCATE( pos_input )
+    ALLOCATE( pos_input( 3, npart_real ) )
+    pos_input(:,1:npart_real)= pos(:,1:npart_real)
 
     IF( debug ) PRINT *, "2.5"
 
-    h_output = h
+    IF( ALLOCATED( h_output ) ) DEALLOCATE( h_output )
+    ALLOCATE( h_output( npart_real ) )
+    h_output(1:npart_real)= h(1:npart_real)
 
     IF( debug ) PRINT *, "2.6"
 
-    nu_output= nu
+    IF( ALLOCATED( nu_output ) ) DEALLOCATE( nu_output )
+    ALLOCATE( nu_output( npart_real ) )
+    nu_output(1:npart_real)= nu(1:npart_real)
+
+    npart_output= npart_real
 
     IF( debug ) PRINT *, "3"
 

@@ -109,6 +109,8 @@ SUBMODULE (particles_id) particles_constructor
       DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos_i
       DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol_i
       DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pmass_i
+      DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: h_i
+      DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: nu_i
     END TYPE
 
     TYPE(parts_i), DIMENSION(id% get_n_matter()):: parts_all
@@ -473,34 +475,34 @@ SUBMODULE (particles_id) particles_constructor
          ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
          ! PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
 
-          IF( ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,1)) + sizes(itr, 1) &
-              .OR. &
-              ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,1)) + sizes(itr, 2) &
-              .OR. &
-              ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,2)) + sizes(itr, 3) &
-              .OR. &
-              ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,2)) + sizes(itr, 4) &
-              .OR. &
-              ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,3)) + sizes(itr, 5) &
-              .OR. &
-              ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-                      ABS(center(itr,3)) + sizes(itr, 6) &
-
-          )THEN
-
-            PRINT *, "** ERROR! The positions of the particles on object ", &
-                     itr, ", read from file "// TRIM(parts_pos_namefile), &
-                     " are not compatible with the ", &
-                     "physical system read from file. Stopping..."
-            PRINT *
-            STOP
-
-          ENDIF
+        !  IF( ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+        !              ABS(center(itr,1)) + sizes(itr, 1) &
+        !      .OR. &
+        !      ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+        !              ABS(center(itr,1)) + sizes(itr, 2) &
+        !      .OR. &
+        !      ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+        !              ABS(center(itr,2)) + sizes(itr, 3) &
+        !      .OR. &
+        !      ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+        !              ABS(center(itr,2)) + sizes(itr, 4) &
+        !      .OR. &
+        !      ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+        !              ABS(center(itr,3)) + sizes(itr, 5) &
+        !      .OR. &
+        !      ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+        !              ABS(center(itr,3)) + sizes(itr, 6) &
+        !
+        !  )THEN
+        !
+        !    PRINT *, "** ERROR! The positions of the particles on object ", &
+        !             itr, ", read from file "// TRIM(parts_pos_namefile), &
+        !             " are not compatible with the ", &
+        !             "physical system read from file. Stopping..."
+        !    PRINT *
+        !    STOP
+        !
+        !  ENDIF
 
         END ASSOCIATE
 
@@ -742,7 +744,7 @@ SUBMODULE (particles_id) particles_constructor
       ! Place particles, and time the process
       CALL parts% placer_timer% start_timer()
 
-      DO i_matter= 1, parts% n_matter, 1
+      matter_objects_sphersurfaces_loop: DO i_matter= 1, parts% n_matter, 1
 
         IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
         IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) WRITE( str_i, '(I2)' ), i_matter
@@ -870,7 +872,7 @@ SUBMODULE (particles_id) particles_constructor
         parts_all(i_matter)% pmass_i = &
                     parts_all(i_matter)% pmass_i( 1:parts% npart_i(i_matter) )
 
-      ENDDO
+      ENDDO matter_objects_sphersurfaces_loop
       CALL parts% placer_timer% stop_timer()
 
       parts% npart= SUM( parts% npart_i )
@@ -948,27 +950,10 @@ SUBMODULE (particles_id) particles_constructor
       DO itr= 1, parts% n_matter, 1
         PRINT *, " * Number of particles on object ", itr, "=", &
                  parts% npart_i(itr)
-        PRINT *, " * Maximum mass per particle on object", itr, &
-                            "=", MAXVAL( parts% pmass( parts% npart_i(itr-1) + 1: &
-                            parts% npart_i(itr-1) + parts% npart_i(itr) ), DIM= 1 )
-        PRINT *, " * Minimum mass per particle on object", itr, &
-                            "=", MINVAL( parts% pmass( parts% npart_i(itr-1) + 1: &
-                            parts% npart_i(itr-1) + parts% npart_i(itr) ), DIM= 1 )
-        PRINT *, " * Ratio between the two=", MAXVAL( parts% pmass( parts% npart_i(itr-1) + 1: &
-        parts% npart_i(itr-1) + parts% npart_i(itr) ), DIM= 1 )/MINVAL( parts% pmass( parts% npart_i(itr-1) + 1: &
-        parts% npart_i(itr-1) + parts% npart_i(itr) ), DIM= 1 )
         PRINT *
       ENDDO
       PRINT *
       !STOP
-
-      parts% pmass= parts% pmass( 1:parts% npart )
-      PRINT *, " * Maximum mass per particle on object", itr, &
-                          "=", MAXVAL( parts% pmass, DIM= 1 )
-      PRINT *, " * Minimum mass per particle on object", itr, &
-                          "=", MINVAL( parts% pmass, DIM= 1 )
-      PRINT *, " * Ratio between the two=", MAXVAL( parts% pmass, DIM= 1 )/MINVAL( parts% pmass, DIM= 1 )
-      PRINT *
 
     CASE DEFAULT
 
@@ -979,9 +964,9 @@ SUBMODULE (particles_id) particles_constructor
 
     END SELECT choose_particle_placer
 
-    !----------------------------------------------!
-    !--  At this point,the particles are placed  --!
-    !----------------------------------------------!
+    !--------------------------------------------------------------!
+    !--  At this point,the particles are placed without the APM  --!
+    !--------------------------------------------------------------!
 
     ! Reshape the arrays pos and pvol by deleting the unnecessary elements
     parts% pos = parts% pos( :, 1:parts% npart )
@@ -998,11 +983,11 @@ SUBMODULE (particles_id) particles_constructor
     !
     !-- APM iteration
     !
-    matter_objects_loop: DO i_matter= 1, parts% n_matter, 1
+    matter_objects_apm_loop: DO i_matter= 1, parts% n_matter, 1
 
-      ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
-                 npart_fin  => parts% npart_i(i_matter-1) +    &
-                               parts% npart_i(i_matter) )
+    !  ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
+    !             npart_fin  => parts% npart_i(i_matter-1) +    &
+    !                           parts% npart_i(i_matter) )
 
       IF( apm_iterate(i_matter) )THEN
 
@@ -1046,16 +1031,19 @@ SUBMODULE (particles_id) particles_constructor
         CALL parts% apm_timers(i_matter)% start_timer()
         CALL parts% perform_apm( &
                     import_density, get_nstar_p, &
-                    parts% pos(:,npart_in:npart_fin), &
-                    parts% pvol(npart_in:npart_fin), &
-                    parts% h(npart_in:npart_fin), &
-                    parts% nu(npart_in:npart_fin), &
+                    parts% npart_i(i_matter), &
+                    !npart_i_tmp(i_matter), &
+                    !parts% pos(:,npart_in:npart_fin), &
+                    !parts% pvol(npart_in:npart_fin), &
+                    !parts% h(npart_in:npart_fin), &
+                    !parts% nu(npart_in:npart_fin), &
+                    parts_all(i_matter)% pos_i, &
+                    parts_all(i_matter)% pvol_i, &
+                    parts_all(i_matter)% h_i, &
+                    parts_all(i_matter)% nu_i, &
                     center(i_matter,:), barycenter(i_matter,:), &
                     parts% masses(i_matter), &
                     sizes(i_matter, :), &
-                    !sizes(i_matter, 2), &
-                    !sizes(i_matter, 3), &
-                    !sizes(i_matter, 5), &
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
                     use_atmosphere(i_matter), &
@@ -1063,8 +1051,19 @@ SUBMODULE (particles_id) particles_constructor
                     filename_apm_results, check_negative_hydro )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
-        PRINT *, "** Particles placed on star 1 according to the APM."
+        PRINT *, "** Particles placed on matter object", i_matter, &
+                 "according to the APM."
         PRINT *
+
+        !DEALLOCATE
+
+      !  parts_all(i_matter)% pos_i = &
+      !            parts% pos(:,npart_in:npart_in + parts% npart_i_tmp(i_matter))
+      !  parts_all(i_matter)% h_i = &
+      !            parts% h(npart_in:npart_in + parts% npart_i_tmp(i_matter))
+      !  parts_all(i_matter)% nu_i = &
+      !            parts% nu(npart_in:npart_in + parts% npart_i_tmp(i_matter))
+
 
         equal_masses_apm: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
 
@@ -1072,21 +1071,42 @@ SUBMODULE (particles_id) particles_constructor
                           /parts% mass_ratios(2) <= 0.005 .AND. &
                           reflect_particles_x )THEN
 
-            parts% pos(1,parts% npart_i(1)+1:parts% npart)= &
-                                      - parts% pos(1,1:parts% npart_i(1))
-            parts% pos(2,parts% npart_i(1)+1:parts% npart)= &
-                                        parts% pos(2,1:parts% npart_i(1))
-            parts% pos(3,parts% npart_i(1)+1:parts% npart)= &
-                                        parts% pos(3,1:parts% npart_i(1))
+            !parts% pos(1,parts% npart_i(1)+1:parts% npart)= &
+            !                          - parts% pos(1,1:parts% npart_i(1))
+            !parts% pos(2,parts% npart_i(1)+1:parts% npart)= &
+            !                            parts% pos(2,1:parts% npart_i(1))
+            !parts% pos(3,parts% npart_i(1)+1:parts% npart)= &
+            !                            parts% pos(3,1:parts% npart_i(1))
+            !
+            !parts% nu(parts% npart_i(1)+1:parts% npart)= &
+            !                            parts% nu(1:parts% npart_i(1))
+            !
+            !parts% h(parts% npart_i(1)+1:parts% npart)= &
+            !                            parts% h(1:parts% npart_i(1))
 
-            parts% nu(parts% npart_i(1)+1:parts% npart)= &
-                                        parts% nu(1:parts% npart_i(1))
+       !     parts% pos(1,parts% npart_i(1)+1:parts% npart(1)+parts% npart_i_tmp(1))= &
+       !                               - parts% pos(1,1:parts% npart_i_tmp(1))
+       !     parts% pos(2,parts% npart_i(1)+1:parts% npart(1)+parts% npart_i_tmp(1))= &
+       !                                 parts% pos(2,1:parts% npart_i_tmp(1))
+       !     parts% pos(3,parts% npart_i(1)+1:parts% npart(1)+parts% npart_i_tmp(1))= &
+       !                                 parts% pos(3,1:parts% npart_i_tmp(1))
+       !
+       !     parts% nu(parts% npart_i(1)+1:parts% npart(1)+parts% npart_i_tmp(1))= &
+       !                                 parts% nu(1:parts% npart_i_tmp(1))
+       !
+       !     parts% h(parts% npart_i(1)+1:parts% npart(1)+parts% npart_i_tmp(1))= &
+       !                                 parts% h(1:parts% npart_i_tmp(1))
 
-            parts% h(parts% npart_i(1)+1:parts% npart)= &
-                                        parts% h(1:parts% npart_i(1))
+            !parts% npart_i(2)= parts% npart_i(1)
+            !parts% npart= parts% npart_i(1) + parts% npart_i(1)
 
+        !    parts% npart_i_tmp(2)= parts% npart_i_tmp(1)
+            parts_all(2)% pos_i(1,:)= - parts_all(1)% pos_i(1,:)
+            parts_all(2)% pos_i(2,:)=   parts_all(1)% pos_i(2,:)
+            parts_all(2)% pos_i(3,:)=   parts_all(1)% pos_i(3,:)
+            parts_all(2)% pvol_i    =   parts_all(1)% pvol_i
+            parts_all(2)% pmass_i   =   parts_all(1)% pmass_i
             parts% npart_i(2)= parts% npart_i(1)
-            parts% npart= parts% npart_i(1) + parts% npart_i(1)
 
             PRINT *, "** Particles placed on star 1 according to the APM", &
                      " reflected about the yz plane onto star 2."
@@ -1098,13 +1118,115 @@ SUBMODULE (particles_id) particles_constructor
 
         ENDIF equal_masses_apm
 
+        parts_all(i_matter)% pmass_i = &
+                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )*amu
+
       ENDIF
 
-      END ASSOCIATE
+   !   END ASSOCIATE
 
-    ENDDO matter_objects_loop
+    ENDDO matter_objects_apm_loop
+
+    parts% npart= SUM( parts% npart_i )
+
+    !
+    !-- Reassign TYPE member variables
+    !
+
+    DEALLOCATE( parts% pos )
+      ALLOCATE( parts% pos( 3, parts% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+
+    DO i_matter= 1, parts% n_matter, 1
+      parts% pos( :, parts% npart_i(i_matter-1) + 1: &
+                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                     parts_all(i_matter)% pos_i
+    ENDDO
+
+    DEALLOCATE( parts% pvol )
+      ALLOCATE( parts% pvol( parts% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pvol in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+
+    DO itr= 1, parts% n_matter, 1
+      parts% pvol( parts% npart_i(itr-1) + 1: &
+                   parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                   parts_all(itr)% pvol_i
+    ENDDO
+
+    DEALLOCATE( parts% pmass )
+      ALLOCATE( parts% pmass( parts% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+
+    DO itr= 1, parts% n_matter, 1
+      parts% pmass( parts% npart_i(itr-1) + 1: &
+                    parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                    parts_all(itr)% pmass_i
+    ENDDO
+
+    IF( ALLOCATED(parts% h) ) DEALLOCATE( parts% h )
+      ALLOCATE( parts% h( parts% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+
+    DO itr= 1, parts% n_matter, 1
+      parts% h( parts% npart_i(itr-1) + 1: &
+                    parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                    parts_all(itr)% h_i
+    ENDDO
+
+    IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
+      ALLOCATE( parts% nu( parts% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+
+    DO itr= 1, parts% n_matter, 1
+      parts% nu( parts% npart_i(itr-1) + 1: &
+                    parts% npart_i(itr-1) + parts% npart_i(itr) )= &
+                    parts_all(itr)% nu_i
+    ENDDO
+
+    PRINT *, " * Particles placed according to the APM. Number of particles=", &
+             parts% npart
+    DO itr= 1, parts% n_matter, 1
+      PRINT *, " * Number of particles on object ", itr, "=", &
+               parts% npart_i(itr)
+      PRINT *
+    ENDDO
+    PRINT *
 
     !STOP
+
+    !-----------------------------------------------------------------------!
+    !--  At this point, the particles are placed with or without the APM  --!
+    !-----------------------------------------------------------------------!
 
     ! Allocate needed memory
     CALL allocate_lorene_id_parts_memory( parts )

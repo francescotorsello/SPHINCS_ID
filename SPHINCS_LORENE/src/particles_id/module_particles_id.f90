@@ -818,6 +818,7 @@ MODULE particles_id
     END SUBROUTINE compute_and_export_SPH_variables
 
     MODULE SUBROUTINE perform_apm( get_density, get_nstar_p, &
+                                   npart_output, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
                                    center, &
@@ -880,16 +881,18 @@ MODULE particles_id
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
+      !> Initial particle number
+      INTEGER,                          INTENT( INOUT ):: npart_output
       !> Initial particle positions
-      DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos_input
       !> Initial particle volume
-      DOUBLE PRECISION, DIMENSION(:),   INTENT( INOUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pvol
       !& Array to store the smoothing lengths computed at the end of the
       !  APM iteration
-      DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: h_output
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT )  :: h_output
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
-      DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT )  :: nu_output
       !> Center of the star (point of highest density), computed by |lorene|
       DOUBLE PRECISION, DIMENSION(3),   INTENT( IN )   :: center
       !> Center of mass of the star, computed by |lorene|
