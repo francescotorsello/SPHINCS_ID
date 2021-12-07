@@ -335,6 +335,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
             + ( y_ell - THIS% centers(1,2) )**2.0D0 &
             + ( z_ell - THIS% centers(1,3) )**2.0D0 ) ) res= 0.0D0
 
+    IF( res < 0.0D0 ) res= 0.0D0
+
   !  IF(      x > THIS% centers(1,1) + THIS% sizes(1,2) &
   !      .OR. x < THIS% centers(1,1) - THIS% sizes(1,1) &
   !      .OR. y > THIS% centers(1,2) + THIS% sizes(1,4) &

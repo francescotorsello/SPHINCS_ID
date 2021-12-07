@@ -106,7 +106,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 20.0D0 !0.25D0
+    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 30.0D0 !0.25D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     DOUBLE PRECISION, PARAMETER:: max_it_tree      = 1
@@ -160,7 +160,9 @@ SUBMODULE (particles_id) particles_apm
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess_tmp
 
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
@@ -231,7 +233,7 @@ SUBMODULE (particles_id) particles_apm
         ENDIF
 
       ENDDO
-      atmosphere_density= dens_min*1.0D-30
+      atmosphere_density= 0.0D0*dens_min*1.0D-30
 
     ENDIF
 
@@ -847,6 +849,9 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * ID set up for the APM iteration."
     PRINT *
 
+
+
+    !-------------------------------------------------!
     !-------------------------------------------------!
     !--               APM iteration                 --!
     !-- Assume equal mass particles, and move them  --!
@@ -854,6 +859,9 @@ SUBMODULE (particles_id) particles_apm
     !-- density matches the star mass density as    --!
     !-- well as reasonably possible.                --!
     !-------------------------------------------------!
+    !-------------------------------------------------!
+
+
 
     PRINT *, " * Performing APM iteration..."
     PRINT *
@@ -907,8 +915,6 @@ SUBMODULE (particles_id) particles_apm
     n_inc= 0
     err_N_mean_min= HUGE(1.0D0)
     apm_iteration: DO itr= 1, apm_max_it, 1
-
-      !IF( itr == 2 ) EXIT
 
       PRINT *, "------------------------------------------"
       PRINT *, " * Starting with APM step #: ", itr
@@ -1175,7 +1181,13 @@ SUBMODULE (particles_id) particles_apm
       ! TODO: parallelize this loop
       DO a= 1, npart_real, 1
 
-        dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+        IF( get_density( all_pos(1,a), &
+                         all_pos(2,a), &
+                         all_pos(3,a) ) <= 0.0D0 )THEN
+          dNstar(a)= 0.0D0
+        ELSE
+          dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+        ENDIF
         art_pr(a) = MAX( 1.0D0 + dNstar(a), 0.1D0 )
         art_pr_max= MAX( art_pr_max, art_pr(a) )
 
@@ -1623,24 +1635,110 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, "** APM iteration completed."
     PRINT *
 
-    ! Now get rid of the ghost particles
+
+
+    !--------------------------!
+    !--------------------------!
+    !-- END OF APM ITERATION --!
+    !--------------------------!
+    !--------------------------!
+
+
+
+    !-----------------------------!
+    !-- Discard ghost particles --!
+    !-----------------------------!
+
     IF(.NOT.ALLOCATED( pos ))THEN
       ALLOCATE( pos( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
+                  "perform_apm. The error message is", &
                   err_msg
          STOP
       ENDIF
     ENDIF
 
     pos= all_pos( :, 1:npart_real )
-    npart= npart_real
     IF( debug ) PRINT *, npart
 
     h      = h(1:npart_real)
     h_guess= h_guess(1:npart_real)
     nu     = nu(1:npart_real)
+
+    !------------------------------------------------!
+    !-- Discard atmosphere, if present and desired --!
+    !------------------------------------------------!
+
+    IF( use_atmosphere .AND. remove_atmosphere )THEN
+
+      ALLOCATE( rho_tmp( npart_real ) )
+      IF(ALLOCATED(pos_tmp)) DEALLOCATE(pos_tmp)
+      ALLOCATE( pos_tmp( 3, npart_real ) )
+      IF(ALLOCATED(h_tmp)) DEALLOCATE(h_tmp)
+      ALLOCATE( h_tmp( npart_real ) )
+      IF(ALLOCATED(h_guess_tmp)) DEALLOCATE(h_guess_tmp)
+      ALLOCATE( h_guess_tmp( npart_real ) )
+      IF(ALLOCATED(nu_tmp)) DEALLOCATE(nu_tmp)
+      ALLOCATE( nu_tmp( npart_real ) )
+
+      pos_tmp    = HUGE(1.0D0)
+      h_tmp      = HUGE(1.0D0)
+      h_guess_tmp= HUGE(1.0D0)
+      nu_tmp     = HUGE(1.0D0)
+
+      npart= 0
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
+      !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION( +: npart )
+      DO a= 1, npart_real, 1
+        rho_tmp(a)= get_density( pos(1,a), pos(2,a), pos(3,a) )
+        IF( rho_tmp(a) > 0.0D0 )THEN
+          npart= npart + 1
+          pos_tmp(:,a)  = pos(:,a)
+          h_tmp(a)      = h(a)
+          h_guess_tmp(a)= h_guess(a)
+          nu_tmp(a)     = nu(a)
+        ENDIF
+      ENDDO
+      !$OMP END PARALLEL DO
+
+      IF(ALLOCATED(pos)) DEALLOCATE(pos)
+      ALLOCATE( pos( 3, npart ) )
+      IF(ALLOCATED(h)) DEALLOCATE(h)
+      ALLOCATE( h( npart ) )
+      IF(ALLOCATED(h_guess)) DEALLOCATE(h_guess)
+      ALLOCATE( h_guess( npart ) )
+      IF(ALLOCATED(nu)) DEALLOCATE(nu)
+      ALLOCATE( nu( npart ) )
+
+   !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+   !   !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
+   !   !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
+   !   !$OMP             PRIVATE( a )
+      cnt1= 0
+      DO a= 1, npart_real, 1
+        IF( h_tmp(a) < HUGE(1.0D0) )THEN
+          cnt1= cnt1 + 1
+          pos(:,cnt1)  = pos_tmp(:,a)
+          h(cnt1)      = h_tmp(a)
+          h_guess(cnt1)= h_guess_tmp(a)
+          nu(cnt1)     = nu_tmp(a)
+        ENDIF
+      ENDDO
+   !   !$OMP END PARALLEL DO
+
+      npart_real= npart
+
+    ENDIF
+
+    !---------------!
+    !-- Set npart --!
+    !---------------!
+
+    npart= npart_real
 
     !----------------------------!
     !-- enforce centre of mass --!
@@ -2097,17 +2195,18 @@ SUBMODULE (particles_id) particles_apm
                                   pos(2,:), &
                                   pos(3,:), nstar_p, use_atmosphere  )
 
-    !nstar_p( npart_real+1:npart_all )= 0.0D0
-
-    ! get RELATIVE nu's right
     dN_av= 0.0D0
     dN_max= 0.0D0
+    cnt1= 0
     DO a= 1, npart_real, 1
-      dN=     ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
-      dN_max= MAX(dN_max,dN)
-      dN_av=  dN_av + dN
+      IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > 0.0D0 )THEN
+        dN= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+        dN_av=  dN_av + dN
+        dN_max= MAX(dN_max,dN)
+        cnt1= cnt1 + 1
+      ENDIF
     ENDDO
-    dN_av= dN_av/DBLE(npart_real)
+    dN_av= dN_av/DBLE(cnt1)
     PRINT *,'...dN_max ', dN_max
     PRINT *,'...dN_av  ', dN_av
     PRINT *
@@ -2138,7 +2237,6 @@ SUBMODULE (particles_id) particles_apm
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
@@ -2565,15 +2663,23 @@ SUBMODULE (particles_id) particles_apm
 
     IF( debug ) PRINT *, "2"
 
-    pos_input= pos
+    IF( ALLOCATED( pos_input ) ) DEALLOCATE( pos_input )
+    ALLOCATE( pos_input( 3, npart_real ) )
+    pos_input(:,1:npart_real)= pos(:,1:npart_real)
 
     IF( debug ) PRINT *, "2.5"
 
-    h_output = h
+    IF( ALLOCATED( h_output ) ) DEALLOCATE( h_output )
+    ALLOCATE( h_output( npart_real ) )
+    h_output(1:npart_real)= h(1:npart_real)
 
     IF( debug ) PRINT *, "2.6"
 
-    nu_output= nu
+    IF( ALLOCATED( nu_output ) ) DEALLOCATE( nu_output )
+    ALLOCATE( nu_output( npart_real ) )
+    nu_output(1:npart_real)= nu(1:npart_real)
+
+    npart_output= npart_real
 
     IF( debug ) PRINT *, "3"
 

@@ -27,7 +27,8 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_DRSLO_4_pol2_1M_hr.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_800k.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm50.dat"
-          "apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
+          !"apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
+          "apm-pos-nu_EJECT_1e-3_apr4_200k-apm1500-atm.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -49,7 +50,7 @@ reflect_particles_x= .TRUE.
 !----------------------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers;
 ! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 500000 !2800000
+npart_des= 1200000 !2800000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
@@ -128,8 +129,8 @@ apm_iterate=.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
-                    ! of the value of apm_iterate2
-apm_max_it= 100         ! Maximum number of iterations, irrespective of the
+                    ! of the value of apm_iterate
+apm_max_it= 500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
@@ -138,7 +139,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.8D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.9D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
@@ -150,7 +151,12 @@ mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
-use_atmosphere=.TRUE.  ! If .TRUE., uses the atmosphere for the i-th object
+use_atmosphere=.TRUE.   ! If .TRUE., allows particles to move where the density
+                        ! is 0, and displace them using only the smoothing term
+                        ! This can be useful when the system has an irregular
+                        ! geometry, as, for example, an ejecta
+remove_atmosphere=.FALSE. ! If .TRUE., removes the particles placed where the
+                          ! density is 0, at the end of the APM iteration
 !---------------------------------------!
 ! Flag to correct the number of baryons !
 !---------------------------------------!

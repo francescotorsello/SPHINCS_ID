@@ -56,9 +56,9 @@ MODULE particles_id
   !                                                         *
   !              Definition of TYPE particles               *
   !                                                         *
-  ! This class places the SPH particles, imports            *
+  ! This class places the |sph| particles, imports            *
   ! the |id| on the particle positions, stores              *
-  ! it, computes the relevant SPH fields and exports it to  *
+  ! it, computes the relevant |sph| fields and exports it to  *
   ! both a formatted, and a binary file for evolution       *
   !                                                         *
   !**********************************************************
@@ -94,9 +94,9 @@ MODULE particles_id
     !> 2-D array storing the particle positions
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     !> 1-D array storing the position of the particles on the x axis for S 1
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x1
+    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x1
     !> 1-D array storing the position of the particles on the x axis for NS2
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x2
+    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x2
     !& 1-D array storing the baryon mass density in the fluid frame
     !  \([\mathrm{kg}\,\mathrm{m}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: baryon_density_parts
@@ -831,6 +831,7 @@ MODULE particles_id
                                    nuratio_des, &
                                    nx_gh, ny_gh, nz_gh, &
                                    use_atmosphere, &
+                                   remove_atmosphere, &
                                    namefile_pos_id, namefile_pos, &
                                    namefile_results, &
                                    validate_position )
@@ -938,10 +939,14 @@ MODULE particles_id
       INTEGER,                          INTENT( IN )   :: ny_gh
       !> Number of lattice points in the z direction for ghosts
       INTEGER,                          INTENT( IN )   :: nz_gh
-      !> `.TRUE.` if an atmosphere should be used during the APM, to allow
-      !  the real aprticles more freedom to move around and adjust;
-      !  `.FALSE.` otherwise
+      !> If .TRUE., allows particles to move where the density
+      !  is 0, and displace them using only the smoothing term.
+      !  This can be useful when the system has an irregular
+      !  geometry, as, for example, an ejecta; `.FALSE.` otherwise
       LOGICAL,                          INTENT( INOUT ):: use_atmosphere
+      !> If .TRUE., removes the particles placed where the density is 0,
+      !  at the end of the APM iteration; `.FALSE.` otherwise
+      LOGICAL,                          INTENT( INOUT ):: remove_atmosphere
       !> Name for the formatted file where the initial particle positions
       !  and the ghost positions will be printed
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &

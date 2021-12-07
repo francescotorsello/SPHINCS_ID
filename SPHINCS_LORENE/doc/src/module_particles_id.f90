@@ -818,6 +818,7 @@ MODULE particles_id
     END SUBROUTINE compute_and_export_SPH_variables
 
     MODULE SUBROUTINE perform_apm( get_density, get_nstar_p, &
+                                   npart_output, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
                                    center, &
@@ -830,6 +831,7 @@ MODULE particles_id
                                    nuratio_des, &
                                    nx_gh, ny_gh, nz_gh, &
                                    use_atmosphere, &
+                                   remove_atmosphere, &
                                    namefile_pos_id, namefile_pos, &
                                    namefile_results, &
                                    validate_position )
@@ -880,16 +882,18 @@ MODULE particles_id
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
+      !> Initial particle number
+      INTEGER,                          INTENT( INOUT ):: npart_output
       !> Initial particle positions
-      DOUBLE PRECISION, DIMENSION(:,:), INTENT( INOUT ):: pos_input
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos_input
       !> Initial particle volume
-      DOUBLE PRECISION, DIMENSION(:),   INTENT( INOUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pvol
       !& Array to store the smoothing lengths computed at the end of the
       !  APM iteration
-      DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: h_output
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT )  :: h_output
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
-      DOUBLE PRECISION, DIMENSION(:),   INTENT( OUT )  :: nu_output
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT )  :: nu_output
       !> Center of the star (point of highest density), computed by |lorene|
       DOUBLE PRECISION, DIMENSION(3),   INTENT( IN )   :: center
       !> Center of mass of the star, computed by |lorene|
@@ -935,10 +939,14 @@ MODULE particles_id
       INTEGER,                          INTENT( IN )   :: ny_gh
       !> Number of lattice points in the z direction for ghosts
       INTEGER,                          INTENT( IN )   :: nz_gh
-      !> `.TRUE.` if an atmosphere should be used during the APM, to allow
-      !  the real aprticles more freedom to move around and adjust;
-      !  `.FALSE.` otherwise
+      !> If .TRUE., allows particles to move where the density
+      !  is 0, and displace them using only the smoothing term.
+      !  This can be useful when the system has an irregular
+      !  geometry, as, for example, an ejecta; `.FALSE.` otherwise
       LOGICAL,                          INTENT( INOUT ):: use_atmosphere
+      !> If .TRUE., removes the particles placed where the density is 0,
+      !  at the end of the APM iteration; `.FALSE.` otherwise
+      LOGICAL,                          INTENT( INOUT ):: remove_atmosphere
       !> Name for the formatted file where the initial particle positions
       !  and the ghost positions will be printed
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &

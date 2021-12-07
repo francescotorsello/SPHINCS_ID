@@ -106,7 +106,7 @@ SUBMODULE (particles_id) particles_apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 20.0D0 !0.25D0
+    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 30.0D0 !0.25D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     DOUBLE PRECISION, PARAMETER:: max_it_tree      = 1
@@ -170,6 +170,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_tmp
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_one
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_int
@@ -233,7 +234,7 @@ SUBMODULE (particles_id) particles_apm
         ENDIF
 
       ENDDO
-      atmosphere_density= dens_min*1.0D-30
+      atmosphere_density= 0.0D0*dens_min*1.0D-30
 
     ENDIF
 
@@ -849,6 +850,9 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * ID set up for the APM iteration."
     PRINT *
 
+
+
+    !-------------------------------------------------!
     !-------------------------------------------------!
     !--               APM iteration                 --!
     !-- Assume equal mass particles, and move them  --!
@@ -856,6 +860,9 @@ SUBMODULE (particles_id) particles_apm
     !-- density matches the star mass density as    --!
     !-- well as reasonably possible.                --!
     !-------------------------------------------------!
+    !-------------------------------------------------!
+
+
 
     PRINT *, " * Performing APM iteration..."
     PRINT *
@@ -909,8 +916,6 @@ SUBMODULE (particles_id) particles_apm
     n_inc= 0
     err_N_mean_min= HUGE(1.0D0)
     apm_iteration: DO itr= 1, apm_max_it, 1
-
-      !IF( itr == 2 ) EXIT
 
       PRINT *, "------------------------------------------"
       PRINT *, " * Starting with APM step #: ", itr
@@ -1177,7 +1182,13 @@ SUBMODULE (particles_id) particles_apm
       ! TODO: parallelize this loop
       DO a= 1, npart_real, 1
 
-        dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+        IF( get_density( all_pos(1,a), &
+                         all_pos(2,a), &
+                         all_pos(3,a) ) <= 0.0D0 )THEN
+          dNstar(a)= 0.0D0
+        ELSE
+          dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+        ENDIF
         art_pr(a) = MAX( 1.0D0 + dNstar(a), 0.1D0 )
         art_pr_max= MAX( art_pr_max, art_pr(a) )
 
@@ -1321,11 +1332,11 @@ SUBMODULE (particles_id) particles_apm
                "   and its SPH estimate: err_N_max= ", err_N_max
       PRINT *, "     at position: x=", pos_maxerr(1), ", y=", pos_maxerr(2), &
                ", z=", pos_maxerr(3)
-      PRINT *, "     with r/r_x_opp= ", SQRT( &
-                                    ( ABS(pos_maxerr(1)) - ABS(center) )**2.0D0 &
-                                          + pos_maxerr(2)**2.0D0 &
-                                          + pos_maxerr(3)**2.0D0 ) &
-                                    /smaller_radius
+      PRINT *, "     with r/(system size)= ", SQRT( &
+                              ( ABS(pos_maxerr(1)) - ABS(center(1)) )**2.0D0 &
+                            + ( ABS(pos_maxerr(2)) - ABS(center(2)) )**2.0D0 &
+                            + ( ABS(pos_maxerr(3)) - ABS(center(3)) )**2.0D0 ) &
+                            /sizes(1)
       PRINT *, "   The ID density is   = ", nstar_p_err
       PRINT *, "   The SPH estimate is= ", nstar_real_err
       PRINT *
@@ -1656,11 +1667,11 @@ SUBMODULE (particles_id) particles_apm
     h_guess= h_guess(1:npart_real)
     nu     = nu(1:npart_real)
 
-    !------------------------------------!
-    !-- Discard atmosphere, if present --!
-    !------------------------------------!
+    !------------------------------------------------!
+    !-- Discard atmosphere, if present and desired --!
+    !------------------------------------------------!
 
-    IF( use_atmosphere )THEN
+    IF( use_atmosphere .AND. remove_atmosphere )THEN
 
       ALLOCATE( rho_tmp( npart_real ) )
       IF(ALLOCATED(pos_tmp)) DEALLOCATE(pos_tmp)
@@ -1680,7 +1691,7 @@ SUBMODULE (particles_id) particles_apm
       npart= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
-      !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
+      !$OMP                 h_guess, h_guess_tmp, nu, nu_tmp, pvol_tmp, pvol ) &
       !$OMP             PRIVATE( a ) &
       !$OMP             REDUCTION( +: npart )
       DO a= 1, npart_real, 1
@@ -1691,6 +1702,7 @@ SUBMODULE (particles_id) particles_apm
           h_tmp(a)      = h(a)
           h_guess_tmp(a)= h_guess(a)
           nu_tmp(a)     = nu(a)
+          !pvol_tmp(a)   = pvol(a)
         ENDIF
       ENDDO
       !$OMP END PARALLEL DO
@@ -1703,6 +1715,8 @@ SUBMODULE (particles_id) particles_apm
       ALLOCATE( h_guess( npart ) )
       IF(ALLOCATED(nu)) DEALLOCATE(nu)
       ALLOCATE( nu( npart ) )
+      !IF(ALLOCATED(pvol)) DEALLOCATE(pvol)
+      !ALLOCATE( pvol( npart ) )
 
    !   !$OMP PARALLEL DO DEFAULT( NONE ) &
    !   !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
@@ -1716,6 +1730,7 @@ SUBMODULE (particles_id) particles_apm
           h(cnt1)      = h_tmp(a)
           h_guess(cnt1)= h_guess_tmp(a)
           nu(cnt1)     = nu_tmp(a)
+          !pvol(cnt1)   = pvol_tmp(a)
         ENDIF
       ENDDO
    !   !$OMP END PARALLEL DO
@@ -2185,17 +2200,18 @@ SUBMODULE (particles_id) particles_apm
                                   pos(2,:), &
                                   pos(3,:), nstar_p, use_atmosphere  )
 
-    !nstar_p( npart_real+1:npart_all )= 0.0D0
-
-    ! get RELATIVE nu's right
     dN_av= 0.0D0
     dN_max= 0.0D0
+    cnt1= 0
     DO a= 1, npart_real, 1
-      dN=     ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
-      dN_max= MAX(dN_max,dN)
-      dN_av=  dN_av + dN
+      IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > 0.0D0 )THEN
+        dN= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+        dN_av=  dN_av + dN
+        dN_max= MAX(dN_max,dN)
+        cnt1= cnt1 + 1
+      ENDIF
     ENDDO
-    dN_av= dN_av/DBLE(npart_real)
+    dN_av= dN_av/DBLE(cnt1)
     PRINT *,'...dN_max ', dN_max
     PRINT *,'...dN_av  ', dN_av
     PRINT *
@@ -2226,7 +2242,6 @@ SUBMODULE (particles_id) particles_apm
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."

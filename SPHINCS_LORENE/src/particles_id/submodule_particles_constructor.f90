@@ -142,7 +142,8 @@ SUBMODULE (particles_id) particles_constructor
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    LOGICAL, DIMENSION(id% get_n_matter()):: apm_iterate, use_atmosphere
+    LOGICAL, DIMENSION(id% get_n_matter()):: apm_iterate, use_atmosphere, &
+                                             remove_atmosphere
 
     NAMELIST /bns_particles/ &
               parts_pos_path, parts_pos, columns, header_lines, n_cols, &
@@ -155,7 +156,7 @@ SUBMODULE (particles_id) particles_constructor
               randomize_phi, randomize_theta, randomize_r, &
               apm_iterate, apm_max_it, max_inc, mass_it, &
               nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
-              use_atmosphere, nuratio_des
+              use_atmosphere, remove_atmosphere, nuratio_des
 
     ! Get the number of matter objects in the physical system
     parts% n_matter= id% get_n_matter()
@@ -630,6 +631,22 @@ SUBMODULE (particles_id) particles_constructor
 
       ENDDO
 
+      DO itr= 1, parts% n_matter, 1
+
+        ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
+                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+
+          parts_all(itr)% pos_i= parts% pos( :, npart_in:npart_fin )
+          parts_all(itr)% pvol_i= parts% pvol( npart_in:npart_fin )
+
+          IF( read_nu )THEN
+            parts_all(itr)% nu_i= parts% nu( npart_in:npart_fin )
+          ENDIF
+
+        END ASSOCIATE
+
+      ENDDO
+
 
     CASE( id_particles_on_lattice )
 
@@ -1047,6 +1064,7 @@ SUBMODULE (particles_id) particles_constructor
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
                     use_atmosphere(i_matter), &
+                    remove_atmosphere(i_matter), &
                     filename_apm_pos_id, filename_apm_pos, &
                     filename_apm_results, check_negative_hydro )
         CALL parts% apm_timers(i_matter)% stop_timer()
@@ -1145,7 +1163,7 @@ SUBMODULE (particles_id) particles_constructor
 
     DO i_matter= 1, parts% n_matter, 1
       parts% pos( :, parts% npart_i(i_matter-1) + 1: &
-                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                     parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
                      parts_all(i_matter)% pos_i
     ENDDO
 
@@ -1159,10 +1177,10 @@ SUBMODULE (particles_id) particles_constructor
          STOP
       ENDIF
 
-    DO itr= 1, parts% n_matter, 1
-      parts% pvol( parts% npart_i(itr-1) + 1: &
-                   parts% npart_i(itr-1) + parts% npart_i(itr) )= &
-                   parts_all(itr)% pvol_i
+    DO i_matter= 1, parts% n_matter, 1
+      parts% pvol( parts% npart_i(i_matter-1) + 1: &
+                   parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                   (parts_all(i_matter)% h_i)**3.0D0
     ENDDO
 
     DEALLOCATE( parts% pmass )
@@ -1175,10 +1193,10 @@ SUBMODULE (particles_id) particles_constructor
          STOP
       ENDIF
 
-    DO itr= 1, parts% n_matter, 1
-      parts% pmass( parts% npart_i(itr-1) + 1: &
-                    parts% npart_i(itr-1) + parts% npart_i(itr) )= &
-                    parts_all(itr)% pmass_i
+    DO i_matter= 1, parts% n_matter, 1
+      parts% pmass( parts% npart_i(i_matter-1) + 1: &
+                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                    parts_all(i_matter)% pmass_i
     ENDDO
 
     IF( ALLOCATED(parts% h) ) DEALLOCATE( parts% h )
@@ -1191,10 +1209,10 @@ SUBMODULE (particles_id) particles_constructor
          STOP
       ENDIF
 
-    DO itr= 1, parts% n_matter, 1
-      parts% h( parts% npart_i(itr-1) + 1: &
-                    parts% npart_i(itr-1) + parts% npart_i(itr) )= &
-                    parts_all(itr)% h_i
+    DO i_matter= 1, parts% n_matter, 1
+      parts% h( parts% npart_i(i_matter-1) + 1: &
+                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                    parts_all(i_matter)% h_i
     ENDDO
 
     IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
@@ -1207,17 +1225,17 @@ SUBMODULE (particles_id) particles_constructor
          STOP
       ENDIF
 
-    DO itr= 1, parts% n_matter, 1
-      parts% nu( parts% npart_i(itr-1) + 1: &
-                    parts% npart_i(itr-1) + parts% npart_i(itr) )= &
-                    parts_all(itr)% nu_i
+    DO i_matter= 1, parts% n_matter, 1
+      parts% nu( parts% npart_i(i_matter-1) + 1: &
+                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                    parts_all(i_matter)% nu_i
     ENDDO
 
     PRINT *, " * Particles placed according to the APM. Number of particles=", &
              parts% npart
-    DO itr= 1, parts% n_matter, 1
-      PRINT *, " * Number of particles on object ", itr, "=", &
-               parts% npart_i(itr)
+    DO i_matter= 1, parts% n_matter, 1
+      PRINT *, " * Number of particles on object ", i_matter, "=", &
+               parts% npart_i(i_matter)
       PRINT *
     ENDDO
     PRINT *
