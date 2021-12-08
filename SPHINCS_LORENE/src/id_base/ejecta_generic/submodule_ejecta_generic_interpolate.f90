@@ -85,23 +85,43 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !****************************************************
 
     USE constants, ONLY: MSun, amu
+    USE numerics,  ONLY: trilinear_interpolation
 
     IMPLICIT NONE
 
     INTEGER:: i
+    DOUBLE PRECISION:: zp
 
     ! The density has to be converted in units of the atomic mass unit
     ! TODO: CHECK THAT EVERYTHING ELSE IS CONSISTENT WITH THIS!!
     DO i= 1, n, 1
+
+      zp= z(i)
+
       baryon_density(i) = THIS% read_mass_density( x(i), y(i), z(i) )*MSun/amu
+
+      u_euler_x(i)      = trilinear_interpolation( x(i), y(i), zp, &
+                                THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+                                THIS% grid, THIS% vel(:,:,:,1), &
+                                equator_symmetry= .TRUE., parity= 1.0D0 )
+      u_euler_y(i)      = trilinear_interpolation( x(i), y(i), zp, &
+                                THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+                                THIS% grid, THIS% vel(:,:,:,2), &
+                                equator_symmetry= .TRUE., parity= 1.0D0 )
+      u_euler_z(i)      = trilinear_interpolation( x(i), y(i), zp, &
+                                THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+                                THIS% grid, THIS% vel(:,:,:,3), &
+                                equator_symmetry= .TRUE., parity= -1.0D0 )
+
+      specific_energy(i)= trilinear_interpolation( x(i), y(i), zp, &
+                                THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+                                THIS% grid, THIS% specific_energy(:,:,:), &
+                                equator_symmetry= .TRUE., parity= 1.0D0 )
+
     ENDDO
 
     energy_density = 0.0D0
-    specific_energy= 0.0D0
     pressure       = 0.0D0
-    u_euler_x      = 0.0D0
-    u_euler_y      = 0.0D0
-    u_euler_z      = 0.0D0
 
     g_xx= 1.0D0
     g_yy= 1.0D0
@@ -177,7 +197,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     !***********************************************
     !
-    !# Returns the |lorene| mass density at the point
+    !# Returns the mass density at the point
     !  given as argument, in units of
     !  \(M_\odot/L_\odot^3\).
     !
@@ -185,8 +205,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !
     !***********************************************
 
-    USE Hermite_refine, ONLY: find_indices
-    !USE numerics,       ONLY: gf_pointer, pa_pointer
+    !USE Hermite_refine, ONLY: find_indices
+    USE constants, ONLY: pi
+    USE numerics,  ONLY: trilinear_interpolation
 
 
     IMPLICIT NONE
@@ -197,136 +218,150 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     DOUBLE PRECISION:: x0, y0, z0, x1, y1, z1, xd, yd, zd, &
                        c000, c001, c010, c100, c011, c110, c101, c111, &
-                       c00, c01, c10, c11, c0, c1, zp, x_ell, y_ell, z_ell
+                       c00, c01, c10, c11, c0, c1, zp, x_ell, y_ell, z_ell, &
+                       theta, phi
 
-    sgn_z= SIGN(1.0D0,z)
-    zp= ABS(z)
+!    sgn_z= SIGN(1.0D0,z)
+!    zp= ABS(z)
+!
+!    CALL find_indices( x, y, zp, &
+!                       THIS% nx_grid, THIS% xL_grid, THIS% dx_grid, nghost, &
+!                       THIS% ny_grid, THIS% yL_grid, THIS% dy_grid, nghost, &
+!                       THIS% nz_grid, THIS% zL_grid, THIS% dz_grid, nghost, &
+!                       nghost, i, j, k, ierr )
+!
+!   ! PRINT *, THIS% xL_grid, THIS% yL_grid, THIS% zL_grid
+!   ! PRINT *, x, y, z
+!   ! PRINT *, i, j, k
+!   ! PRINT *
+!   !
+!   ! PRINT *, THIS% grid(i,j,k,1), THIS% grid(i+1,j,k,1)
+!
+!    IF( i >= THIS% nx_grid )THEN
+!      i= THIS% nx_grid - 1
+!    ENDIF
+!    IF( j >= THIS% ny_grid )THEN
+!      j= THIS% ny_grid - 1
+!    ENDIF
+!    IF( k >= THIS% nz_grid )THEN
+!      k= THIS% nz_grid - 1
+!    ENDIF
+!
+!    !PRINT *, i, j, k
+!    !PRINT *, THIS% nx_grid, THIS% ny_grid, THIS% nz_grid
+!
+!    IF( k <= 0 )THEN
+!      k= 1
+!    ENDIF
+!    IF( i <= 0 )THEN
+!      i= 1
+!    ENDIF
+!    IF( j <= 0 )THEN
+!      j= 1
+!    ENDIF
+!
+!    x0= THIS% grid(i,j,k,1)
+!    x1= THIS% grid(i+1,j,k,1) !+ THIS% dx_grid
+!    y0= THIS% grid(i,j,k,2)
+!    y1= THIS% grid(i,j+1,k,2) !+ THIS% dy_grid
+!    z0= THIS% grid(i,j,k,3)
+!    z1= THIS% grid(i,j,k+1,3) !+ THIS% dz_grid
+!
+!    xd= ( x - x0 )/( x1 - x0 )
+!    yd= ( y - y0 )/( y1 - y0 )
+!    zd= ( z - z0 )/( z1 - z0 )
+!
+!  !  PRINT *, x, y, z
+!  !  PRINT *
+!  !
+!  !  PRINT *, xd, yd, zd
+!  !  PRINT *
+!
+!    IF( k == 0 )THEN
+!      c001= THIS% baryon_mass_density(i,j,k)
+!      c101= THIS% baryon_mass_density(i+1,j,k)
+!      c011= THIS% baryon_mass_density(i,j+1,k)
+!      c111= THIS% baryon_mass_density(i+1,j+1,k)
+!    ENDIF
+!    IF( i >= THIS% nx_grid .OR. i == 0 )THEN
+!      c001= 0.0D0
+!      c101= 0.0D0
+!      c011= 0.0D0
+!      c111= 0.0D0
+!    ENDIF
+!    IF( j >= THIS% ny_grid .OR. j == 0 )THEN
+!      c001= 0.0D0
+!      c101= 0.0D0
+!      c011= 0.0D0
+!      c111= 0.0D0
+!    ENDIF
+!    IF( k >= THIS% nz_grid )THEN
+!      c001= 0.0D0
+!      c101= 0.0D0
+!      c011= 0.0D0
+!      c111= 0.0D0
+!    ENDIF
+!
+!    c000= THIS% baryon_mass_density(i,j,k)
+!    c100= THIS% baryon_mass_density(i+1,j,k)
+!    c001= THIS% baryon_mass_density(i,j,k+1)
+!    c101= THIS% baryon_mass_density(i+1,j,k+1)
+!    c010= THIS% baryon_mass_density(i,j+1,k)
+!    c110= THIS% baryon_mass_density(i+1,j+1,k)
+!    c011= THIS% baryon_mass_density(i,j+1,k+1)
+!    c111= THIS% baryon_mass_density(i+1,j+1,k+1)
+!
+!    c00= c000*( 1.0D0 - xd ) + c100*xd
+!
+!    c01= c001*( 1.0D0 - xd ) + c101*xd
+!
+!    c10= c010*( 1.0D0 - xd ) + c110*xd
+!
+!    c11= c011*( 1.0D0 - xd ) + c111*xd
+!
+!    c0= c00*( 1.0D0 - yd ) + c10*yd
+!    c1= c01*( 1.0D0 - yd ) + c11*yd
+!
+!    res= c0*( 1.0D0 - zd ) + c1*zd
+!
+!    !IF( res < 1.0D-13 ) res= 0.0D0
+!    !IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+!    !          + ( y - THIS% centers(1,2) )**2.0D0 &
+!    !          + ( zp - THIS% centers(1,3) )**2.0D0 ) > 500.0D0 ) res= 0.0D0
+!
+    zp= z
+    res= trilinear_interpolation( x, y, zp, &
+                                  THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+                                  THIS% grid, THIS% baryon_mass_density, &
+                                  equator_symmetry= .TRUE., parity= 1.0D0 )
 
-    CALL find_indices( x, y, zp, &
-                       THIS% nx_grid, THIS% xL_grid, THIS% dx_grid, nghost, &
-                       THIS% ny_grid, THIS% yL_grid, THIS% dy_grid, nghost, &
-                       THIS% nz_grid, THIS% zL_grid, THIS% dz_grid, nghost, &
-                       nghost, i, j, k, ierr )
+    IF( x > 0.0D0 )THEN
 
-   ! PRINT *, THIS% xL_grid, THIS% yL_grid, THIS% zL_grid
-   ! PRINT *, x, y, z
-   ! PRINT *, i, j, k
-   ! PRINT *
-   !
-   ! PRINT *, THIS% grid(i,j,k,1), THIS% grid(i+1,j,k,1)
+      phi= ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )
 
-    IF( i >= THIS% nx_grid )THEN
-      i= THIS% nx_grid - 1
+    ELSEIF( x < 0.0D0 )THEN
+
+      phi= ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) ) + pi
+
+    ELSE
+
+      phi= pi/2.0D0
+
     ENDIF
-    IF( j >= THIS% ny_grid )THEN
-      j= THIS% ny_grid - 1
-    ENDIF
-    IF( k >= THIS% nz_grid )THEN
-      k= THIS% nz_grid - 1
-    ENDIF
 
-    !PRINT *, i, j, k
-    !PRINT *, THIS% nx_grid, THIS% ny_grid, THIS% nz_grid
-
-    IF( k <= 0 )THEN
-      k= 1
-    ENDIF
-    IF( i <= 0 )THEN
-      i= 1
-    ENDIF
-    IF( j <= 0 )THEN
-      j= 1
-    ENDIF
-
-    x0= THIS% grid(i,j,k,1)
-    x1= THIS% grid(i+1,j,k,1) !+ THIS% dx_grid
-    y0= THIS% grid(i,j,k,2)
-    y1= THIS% grid(i,j+1,k,2) !+ THIS% dy_grid
-    z0= THIS% grid(i,j,k,3)
-    z1= THIS% grid(i,j,k+1,3) !+ THIS% dz_grid
-
-    xd= ( x - x0 )/( x1 - x0 )
-    yd= ( y - y0 )/( y1 - y0 )
-    zd= ( z - z0 )/( z1 - z0 )
-
-  !  PRINT *, x, y, z
-  !  PRINT *
-  !
-  !  PRINT *, xd, yd, zd
-  !  PRINT *
-
-    IF( k == 0 )THEN
-      c001= THIS% baryon_mass_density(i,j,k)
-      c101= THIS% baryon_mass_density(i+1,j,k)
-      c011= THIS% baryon_mass_density(i,j+1,k)
-      c111= THIS% baryon_mass_density(i+1,j+1,k)
-    ENDIF
-    IF( i >= THIS% nx_grid .OR. i == 0 )THEN
-      c001= 0.0D0
-      c101= 0.0D0
-      c011= 0.0D0
-      c111= 0.0D0
-    ENDIF
-    IF( j >= THIS% ny_grid .OR. j == 0 )THEN
-      c001= 0.0D0
-      c101= 0.0D0
-      c011= 0.0D0
-      c111= 0.0D0
-    ENDIF
-    IF( k >= THIS% nz_grid )THEN
-      c001= 0.0D0
-      c101= 0.0D0
-      c011= 0.0D0
-      c111= 0.0D0
-    ENDIF
-
-    c000= THIS% baryon_mass_density(i,j,k)
-    c100= THIS% baryon_mass_density(i+1,j,k)
-    c001= THIS% baryon_mass_density(i,j,k+1)
-    c101= THIS% baryon_mass_density(i+1,j,k+1)
-    c010= THIS% baryon_mass_density(i,j+1,k)
-    c110= THIS% baryon_mass_density(i+1,j+1,k)
-    c011= THIS% baryon_mass_density(i,j+1,k+1)
-    c111= THIS% baryon_mass_density(i+1,j+1,k+1)
-
-    c00= c000*( 1.0D0 - xd ) + c100*xd
-
-    c01= c001*( 1.0D0 - xd ) + c101*xd
-
-    c10= c010*( 1.0D0 - xd ) + c110*xd
-
-    c11= c011*( 1.0D0 - xd ) + c111*xd
-
-    c0= c00*( 1.0D0 - yd ) + c10*yd
-    c1= c01*( 1.0D0 - yd ) + c11*yd
-
-    res= c0*( 1.0D0 - zd ) + c1*zd
-
-    !IF( res < 1.0D-13 ) res= 0.0D0
-    !IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
-    !          + ( y - THIS% centers(1,2) )**2.0D0 &
-    !          + ( zp - THIS% centers(1,3) )**2.0D0 ) > 500.0D0 ) res= 0.0D0
-
+    theta= ACOS( ( z - THIS% centers(1,3) ) &
+          /SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
+               + ( y - THIS% centers(1,2) )**2.0D0 &
+               + ( z - THIS% centers(1,3) )**2.0D0 ) )
 
     x_ell= THIS% centers(1,1) &
-           + MAX(THIS% sizes(1,1),THIS% sizes(1,2)) &
-    *COS(ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )) &
-  *SIN(ACOS(( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
-                                      + ( y - THIS% centers(1,2) )**2.0D0 &
-                                      + ( z - THIS% centers(1,3) )**2.0D0 )))
+           + MAX(THIS% sizes(1,1),THIS% sizes(1,2))*COS(phi)*SIN(theta)
 
     y_ell= THIS% centers(1,2) &
-           + MAX(THIS% sizes(1,3),THIS% sizes(1,4)) &
-    *SIN(ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )) &
-  *SIN(ACOS(( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
-                                      + ( y - THIS% centers(1,2) )**2.0D0 &
-                                      + ( z - THIS% centers(1,3) )**2.0D0 )))
+           + MAX(THIS% sizes(1,3),THIS% sizes(1,4))*SIN(phi)*SIN(theta)
 
     z_ell= THIS% centers(1,3) &
-           + MAX(THIS% sizes(1,5),THIS% sizes(1,6)) &
-        *( ( z - THIS% centers(1,3) )/SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
-            + ( y - THIS% centers(1,2) )**2.0D0 &
-            + ( z - THIS% centers(1,3) )**2.0D0 ))
+           + MAX(THIS% sizes(1,5),THIS% sizes(1,6))*COS(theta)
 
     IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
             + ( y - THIS% centers(1,2) )**2.0D0 &

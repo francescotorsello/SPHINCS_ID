@@ -59,7 +59,7 @@ SUBMODULE (particles_id) particles_constructor
     !**************************************************
 
     !USE NaNChecker, ONLY: Check_Array_for_NAN
-    USE constants,      ONLY: Msun_geo, km2m, amu
+    USE constants,      ONLY: Msun_geo, km2m, amu, pi
     USE NR,             ONLY: indexx
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
@@ -1314,16 +1314,34 @@ SUBMODULE (particles_id) particles_constructor
                        + (parts% v_euler_parts_z(npart_in:npart_fin))**2.0D0, &
                         DIM= 1 )
 
+        PRINT *, min_eps
+        PRINT *, min_vel
+
         particle_loop2: DO a= npart_in, npart_fin, 1
 
           IF( parts% baryon_density_parts(a) <= 0.0D0 )THEN
 
-            theta_a= ATAN( &
+            IF( parts% pos(1,a) > 0.0D0 )THEN
+
+              phi_a= ATAN( &
                           ( parts% pos(2,a) - center(i_matter,2) ) &
                          /( parts% pos(1,a) - center(i_matter,1) ) &
                         )
 
-            phi_a= ACOS( &
+            ELSEIF( parts% pos(1,a) < 0.0D0 )THEN
+
+              phi_a= ATAN( &
+                          ( parts% pos(2,a) - center(i_matter,2) ) &
+                         /( parts% pos(1,a) - center(i_matter,1) ) &
+                        ) + pi
+
+            ELSE
+
+              phi_a= pi/2.0D0
+
+            ENDIF
+
+            theta_a= ACOS( &
                         ( parts% pos(3,a) - center(i_matter,3) ) &
                         /SQRT( &
                           ( parts% pos(1,a) - center(i_matter,1) )**2.0D0 &
@@ -1340,7 +1358,7 @@ SUBMODULE (particles_id) particles_constructor
               ( min_vel*SIN(theta_a)*SIN(phi_a) + parts% shift_parts_y(a) ) &
               /parts% lapse_parts(a)
             parts% v_euler_parts_z(a)      = &
-              ( min_vel*COS(phi_a) + parts% shift_parts_z(a) ) &
+              ( min_vel*COS(theta_a) + parts% shift_parts_z(a) ) &
               /parts% lapse_parts(a)
 
           ENDIF
