@@ -96,6 +96,7 @@ SUBMODULE (particles_id) particles_constructor
     DOUBLE PRECISION:: pvol_tmp
     DOUBLE PRECISION:: max_mass, total_mass
     DOUBLE PRECISION:: ratio_npart_des_real, pmass_des
+    DOUBLE PRECISION:: min_eps, min_vel, theta_a, phi_a!, rad_part
 
     DOUBLE PRECISION, DIMENSION(id% get_n_matter())  :: central_density
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),3):: center
@@ -250,6 +251,7 @@ SUBMODULE (particles_id) particles_constructor
     ! APM parameters
     ALLOCATE( parts% apm_iterate( parts% n_matter ) )
     parts% apm_iterate   = apm_iterate
+    parts% use_atmosphere= use_atmosphere
     parts% read_nu       = read_nu
 
     parts_pos_namefile= TRIM(parts_pos_path)//TRIM(parts_pos)
@@ -1167,69 +1169,76 @@ SUBMODULE (particles_id) particles_constructor
                      parts_all(i_matter)% pos_i
     ENDDO
 
-    DEALLOCATE( parts% pvol )
-      ALLOCATE( parts% pvol( parts% npart ), &
-                STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pvol in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
+    particles_from_file_no_apm: &
+    !TODO: fix this to be dependent on each matter object
+    IF( parts% distribution_id /= 0 .AND. .NOT.apm_iterate(1) )THEN
+    ! If the particles were read by file, and the APM was not performed...
 
-    DO i_matter= 1, parts% n_matter, 1
-      parts% pvol( parts% npart_i(i_matter-1) + 1: &
-                   parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                   (parts_all(i_matter)% h_i)**3.0D0
-    ENDDO
+      DEALLOCATE( parts% pvol )
+        ALLOCATE( parts% pvol( parts% npart ), &
+                  STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pvol in SUBROUTINE" &
+                    // "place_particles_. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
 
-    DEALLOCATE( parts% pmass )
-      ALLOCATE( parts% pmass( parts% npart ), &
-                STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
+      DO i_matter= 1, parts% n_matter, 1
+        parts% pvol( parts% npart_i(i_matter-1) + 1: &
+                     parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                     (parts_all(i_matter)% h_i)**3.0D0
+      ENDDO
 
-    DO i_matter= 1, parts% n_matter, 1
-      parts% pmass( parts% npart_i(i_matter-1) + 1: &
-                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                    parts_all(i_matter)% pmass_i
-    ENDDO
+      DEALLOCATE( parts% pmass )
+        ALLOCATE( parts% pmass( parts% npart ), &
+                  STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                    // "place_particles_. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
 
-    IF( ALLOCATED(parts% h) ) DEALLOCATE( parts% h )
-      ALLOCATE( parts% h( parts% npart ), &
-                STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
+      DO i_matter= 1, parts% n_matter, 1
+        parts% pmass( parts% npart_i(i_matter-1) + 1: &
+                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                      parts_all(i_matter)% pmass_i
+      ENDDO
 
-    DO i_matter= 1, parts% n_matter, 1
-      parts% h( parts% npart_i(i_matter-1) + 1: &
-                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                    parts_all(i_matter)% h_i
-    ENDDO
+      IF( ALLOCATED(parts% h) ) DEALLOCATE( parts% h )
+        ALLOCATE( parts% h( parts% npart ), &
+                  STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                    // "place_particles_. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
 
-    IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
-      ALLOCATE( parts% nu( parts% npart ), &
-                STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
+      DO i_matter= 1, parts% n_matter, 1
+        parts% h( parts% npart_i(i_matter-1) + 1: &
+                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                      parts_all(i_matter)% h_i
+      ENDDO
 
-    DO i_matter= 1, parts% n_matter, 1
-      parts% nu( parts% npart_i(i_matter-1) + 1: &
-                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                    parts_all(i_matter)% nu_i
-    ENDDO
+      IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
+        ALLOCATE( parts% nu( parts% npart ), &
+                  STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                    // "place_particles_. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+
+      DO i_matter= 1, parts% n_matter, 1
+        parts% nu( parts% npart_i(i_matter-1) + 1: &
+                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                      parts_all(i_matter)% nu_i
+      ENDDO
+
+    ENDIF particles_from_file_no_apm
 
     PRINT *, " * Particles placed according to the APM. Number of particles=", &
              parts% npart
@@ -1256,9 +1265,9 @@ SUBMODULE (particles_id) particles_constructor
     IF( debug ) PRINT *, "33"
 
     !
-    !-- Import the needed |lorene| ID on the particles, and time the process
+    !-- Import the needed ID on the particles, and time the process
     !
-    PRINT *, "** Importing the LORENE ID on the particles..."
+    PRINT *, "** Assigning the ID to the particles..."
 
     CALL parts% importer_timer% start_timer()
     CALL id% read_id_particles( parts% npart, &
@@ -1285,6 +1294,64 @@ SUBMODULE (particles_id) particles_constructor
     CALL parts% importer_timer% stop_timer()
 
     IF( debug ) PRINT *, "34"
+
+    !-----------------------------------------------------------------------!
+    ! If an atmosphere was used during the APM iteration, and kept, assign  !
+    ! the minimum specific internal energy and the minimum velocity, to it. !
+    !-----------------------------------------------------------------------!
+
+    matter_objects_atmo_loop: DO i_matter= 1, parts% n_matter, 1
+
+    ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
+               npart_fin  => parts% npart_i(i_matter-1) +    &
+                             parts% npart_i(i_matter) )
+
+      IF( use_atmosphere(i_matter) .AND. .NOT.remove_atmosphere(i_matter) )THEN
+
+        min_eps= MINVAL( parts% specific_energy_parts(npart_in:npart_fin), DIM= 1 )
+        min_vel= MINVAL( (parts% v_euler_parts_x(npart_in:npart_fin))**2.0D0 &
+                       + (parts% v_euler_parts_y(npart_in:npart_fin))**2.0D0 &
+                       + (parts% v_euler_parts_z(npart_in:npart_fin))**2.0D0, &
+                        DIM= 1 )
+
+        particle_loop2: DO a= npart_in, npart_fin, 1
+
+          IF( parts% baryon_density_parts(a) <= 0.0D0 )THEN
+
+            theta_a= ATAN( &
+                          ( parts% pos(2,a) - center(i_matter,2) ) &
+                         /( parts% pos(1,a) - center(i_matter,1) ) &
+                        )
+
+            phi_a= ACOS( &
+                        ( parts% pos(3,a) - center(i_matter,3) ) &
+                        /SQRT( &
+                          ( parts% pos(1,a) - center(i_matter,1) )**2.0D0 &
+                        + ( parts% pos(2,a) - center(i_matter,2) )**2.0D0 &
+                        + ( parts% pos(3,a) - center(i_matter,3) )**2.0D0 &
+                        ) &
+                      )
+
+            parts% specific_energy_parts(a)= min_eps
+            parts% v_euler_parts_x(a)      = &
+              ( min_vel*COS(theta_a)*SIN(phi_a) + parts% shift_parts_x(a) ) &
+              /parts% lapse_parts(a)
+            parts% v_euler_parts_y(a)      = &
+              ( min_vel*SIN(theta_a)*SIN(phi_a) + parts% shift_parts_y(a) ) &
+              /parts% lapse_parts(a)
+            parts% v_euler_parts_z(a)      = &
+              ( min_vel*COS(phi_a) + parts% shift_parts_z(a) ) &
+              /parts% lapse_parts(a)
+
+          ENDIF
+
+        ENDDO particle_loop2
+
+      ENDIF
+
+    END ASSOCIATE
+
+    ENDDO matter_objects_atmo_loop
 
     !
     !-- Check that the imported ID does not contain NaNs

@@ -378,7 +378,7 @@ SUBMODULE (particles_id) particles_sph_variables
     IF( debug ) PRINT *, "3"
 
 
-    ! Compute nstar (proper baryon number density) from LORENE
+    ! Compute nstar (proper baryon number density) from the ID
     THIS% nstar= ( THIS% nlrf*THIS% Theta )*sq_det_g4
 
     !
@@ -399,7 +399,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
     ENDIF
 
-    ! Compute particle number density from LORENE
+    ! Compute particle number density from the ID
     THIS% particle_density= ( THIS% nstar )/( THIS% pmass )
 
     IF( debug ) PRINT *, "4"
@@ -709,7 +709,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
         IF( THIS% apm_iterate(i_matter) )THEN
 
-          ! If the APM was used for star 1...
+          ! If the APM was used...
 
           ! Do nothing, nu is already computed and reflected in the constructor
           nu( npart_in : npart_fin )= THIS% nu( npart_in : npart_fin )
@@ -727,7 +727,7 @@ SUBMODULE (particles_id) particles_sph_variables
         ELSEIF( THIS% distribution_id== id_particles_on_spherical_surfaces )THEN
         !ELSE
 
-          ! If the APM was not used for star 1...
+          ! If the APM was not used...
 
           ! Set nu based on the particle mass...
 
@@ -739,8 +739,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
         ELSE
 
-          ! If the APM was not used for star 1 and the particles are on
-          ! lattices...
+          ! If the APM was not used and the particles are on lattices...
 
           DO itr= npart_in, npart_fin, 1
             nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
@@ -1082,7 +1081,7 @@ SUBMODULE (particles_id) particles_sph_variables
              n_problematic_h, " particles."
     PRINT *
 
-    PRINT *, " * Computing neighbours..."
+    PRINT *, " * Computing neighbours' tree..."
     PRINT *
     cnt1= 0
     DO
@@ -1123,7 +1122,7 @@ SUBMODULE (particles_id) particles_sph_variables
       cnt1= cnt1 + 1
 
       IF( .NOT.few_ncand .OR. cnt1 >= 1 )THEN
-        PRINT *, " * Smoothing lengths assigned and tree is built."
+        PRINT *, " * Smoothing lengths assigned and neighbours' tree is built."
         EXIT
       ENDIF
 
@@ -1342,17 +1341,17 @@ SUBMODULE (particles_id) particles_sph_variables
     nlrf= THIS% nlrf_int
 
     !-----------------------------------------------------------------------!
-    ! For single and piecewise polytropes, do not use the LORENE pressure   !
-    ! and specific                                                          !
-    ! internal energy. Compute them using the exact formulas for piecewise  !
+    ! For single and piecewise polytropes, do not use the pressure          !
+    ! and specific internal energy from the ID.                             !
+    ! Compute them using the exact formulas for piecewise                   !
     ! polytropic instead, starting from the kernel interpolated density     !
     !-----------------------------------------------------------------------!
 
-    DO i_matter= 1, THIS% n_matter, 1
+    matter_objects_loop: DO i_matter= 1, THIS% n_matter, 1
 
-      ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
-                 npart_fin  => THIS% npart_i(i_matter-1) +    &
-                               THIS% npart_i(i_matter) )
+      ASSOCIATE( npart_in  => THIS% npart_i(i_matter-1) + 1, &
+                 npart_fin => THIS% npart_i(i_matter-1) +    &
+                              THIS% npart_i(i_matter) )
 
       IF( THIS% all_eos(i_matter)% eos_parameters(1) == 1 )THEN
       ! If the |eos| is polytropic
@@ -1399,7 +1398,7 @@ SUBMODULE (particles_id) particles_sph_variables
 
       END ASSOCIATE
 
-    ENDDO
+    ENDDO matter_objects_loop
 
   !  IF( THIS% all_eos(1)% eos_parameters(1) == 1 &
   !      .AND. THIS% all_eos(2)% eos_parameters(1) == 1 )THEN

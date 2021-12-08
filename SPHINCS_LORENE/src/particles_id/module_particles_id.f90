@@ -306,8 +306,13 @@ MODULE particles_id
     !  in the \(r\) direction, `.FALSE.` otherwise
     LOGICAL:: randomize_r
     !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
-    !  particles on star 1, `.FALSE.` otherwise
+    !  particles, `.FALSE.` otherwise
     LOGICAL, DIMENSION(:), ALLOCATABLE:: apm_iterate
+    !& `.TRUE.` to allow the particles to move where the density is 0 during the
+    !  Artificial Pressure Method (APM) iteration. This can be useful when the
+    !  system has an irregular geometry, as, for example, an ejecta
+    !  `.FALSE.` otherwise
+    LOGICAL, DIMENSION(:), ALLOCATABLE:: use_atmosphere
     !& `.TRUE.` if the baryon number per particle \(\nu\) has to be read from the
     !  formatted file containing the particle positions, `.FALSE.` otherwise
     LOGICAL:: read_nu
