@@ -417,7 +417,7 @@ env['CXX'] = cpp_compiler
 if debug == 'FALSE': #
 
   # F90 flags for production
-  env['F90FLAGS'] = [ '-O0', '-qopenmp', '-qoverride-limits', '-xHOST', \
+  env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
                       '-heap-arrays', '-qopt-report', \
                       '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                       '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \

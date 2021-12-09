@@ -2182,13 +2182,13 @@ SUBMODULE (particles_id) particles_apm
     ENDIF
 
     DO a= 1, npart_real, 1
-    tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      a, &
-      pos( 1, a ), &
-      pos( 2, a ), &
-      pos( 3, a ), &
-      tmp
+      tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        a, &
+        pos( 1, a ), &
+        pos( 2, a ), &
+        pos( 3, a ), &
+        tmp
     ENDDO
 
     CLOSE( UNIT= 2 )

@@ -30,7 +30,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the baryon mass of the DRS [\(M_\odot\)]
+    !# Returns the baryon mass of the system [\(M_\odot\)]
     !
     !  FT 2.11.2021
     !
@@ -49,7 +49,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the radii of the DRS [\(L_\odot\)]
+    !# Returns the radii of the system [\(L_\odot\)]
     !
     !  FT 2.11.2021
     !
@@ -68,7 +68,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the center of the DRS [\(L_\odot\)]
+    !# Returns the center of the system [\(L_\odot\)]
     !
     !  FT 2.11.2021
     !
@@ -87,7 +87,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the barycenter of the DRS [\(L_\odot\)]
+    !# Returns the barycenter of the system [\(L_\odot\)]
     !
     !  FT 2.11.2021
     !
@@ -106,7 +106,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the |eos| name of the DRS
+    !# Returns the |eos| name of the system
     !
     !  FT 2.11.2021
     !
@@ -116,7 +116,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     CALL THIS% check_i_matter(i_matter)
 
-    get_eos= "APR4"
+    get_eos= "Multipolytropic APR4 EOS"
 
   END PROCEDURE get_eos
 
@@ -168,7 +168,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the identifier of the EOS for the DRS
+    !# Returns the identifier of the EOS for the system
     !
     !  FT 22.10.2021
     !
@@ -186,7 +186,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !************************************************
     !
     !# Returns the value of [[gamma0]], the crust's
-    !  polytropic index for the DRS with piecewise
+    !  polytropic index for the system with piecewise
     !  polytropic EOS
     !
     !  FT 22.10.2021
@@ -205,7 +205,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !************************************************
     !
     !# Returns the value of [[gamma1]], the first
-    !  polytropic index for the DRS with piecewise
+    !  polytropic index for the system with piecewise
     !  polytropic EOS
     !
     !  FT 22.10.2021
@@ -243,7 +243,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !************************************************
     !
     !# Returns the value of [[gamma3]], the third
-    !  polytropic index for the DRS with piecewise
+    !  polytropic index for the system with piecewise
     !  polytropic EOS (innermost index)
     !
     !  FT 22.10.2021
@@ -262,7 +262,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !************************************************
     !
     !# Returns the value of [[kappa0]], the crust's
-    !  polytropic constant for the DRS with piecewise
+    !  polytropic constant for the system with piecewise
     !  polytropic EOS
     !
     !  FT 22.10.2021
@@ -281,7 +281,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !************************************************
     !
     !# Returns the value of [[kappa1]], the first
-    !  polytropic constant for the DRS with piecewise
+    !  polytropic constant for the system with piecewise
     !  polytropic EOS
     !
     !  FT 22.10.2021
@@ -300,7 +300,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !************************************************
     !
     !# Returns the value of [[kappa2]], the second
-    !  polytropic constant for the DRS with piecewise
+    !  polytropic constant for the system with piecewise
     !  polytropic EOS
     !
     !  FT 22.10.2021
@@ -319,7 +319,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !************************************************
     !
     !# Returns the value of [[kappa3]], the third
-    !  polytropic constant for the DRS with piecewise
+    !  polytropic constant for the system with piecewise
     !  polytropic EOS
     !
     !  FT 22.10.2021
@@ -339,7 +339,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the value of [[logp1]], the base 10
     !  logarithm of the pressure where the gamma1
-    !  polytrope starts, for the DRS with piecewise
+    !  polytrope starts, for the system with piecewise
     !  polytropic EOS
     !
     !  FT 22.10.2021
@@ -360,7 +360,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the value of [[logRho0]], the base 10
     !  logarithm of the mass density where the
-    !  gamma1 polytrope starts, for the DRS with
+    !  gamma1 polytrope starts, for the system with
     !  piecewise polytropic EOS
     !
     !  FT 22.10.2021
@@ -380,7 +380,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the value of [[logRho1]], the base 10
     !  logarithm of the mass density where the
-    !  gamma2 polytrope starts, for the DRS with
+    !  gamma2 polytrope starts, for the system with
     !  piecewise polytropic EOS
     !
     !  FT 22.10.2021
@@ -400,7 +400,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the value of [[logRho2]], the base 10
     !  logarithm of the mass density where the
-    !  gamma3 polytrope starts, for the DRS with
+    !  gamma3 polytrope starts, for the system with
     !  piecewise polytropic EOS
     !
     !  FT 22.10.2021
@@ -418,7 +418,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !**************************************************
     !
-    !# Returns the |lorene| ID-number of the EOS of the DRS
+    !# Returns the |lorene| ID-number of the EOS of the system
     !
     !  FT 19.11.2021
     !
@@ -426,7 +426,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     IMPLICIT NONE
 
-    get_eos_ejectaid= 110
+    get_eos_ejectaid= THIS% eos_ejectaid
 
   END PROCEDURE get_eos_ejectaid
 
@@ -435,7 +435,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !**************************************************
     !
-    !# Returns the |eos| parameters of the DRS
+    !# Returns the |eos| parameters of the system
     !
     !  FT 19.11.2021
     !

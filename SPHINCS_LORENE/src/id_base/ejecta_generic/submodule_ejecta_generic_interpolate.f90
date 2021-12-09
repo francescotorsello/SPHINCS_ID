@@ -89,16 +89,35 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     IMPLICIT NONE
 
-    INTEGER:: i
-    DOUBLE PRECISION:: zp
+    INTEGER:: i, j, k, i_eps, i_vel
+    DOUBLE PRECISION:: zp, min_eps, min_vel
 
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    LOGICAL:: exist
+
+    DOUBLE PRECISION:: foo(n), &
+                       foo_grid(THIS% nx_grid, THIS% ny_grid, THIS% nz_grid)
+
+    DO i= 1, THIS% nx_grid - 1, 1
+      DO j= 1, THIS% ny_grid - 1, 1
+        DO k= 1, THIS% nz_grid - 1, 1
+
+          foo_grid(i,j,k)= SIN( THIS% grid(i,j,k,1) &
+                           + THIS% grid(i,j,k,2) )
+
+        ENDDO
+      ENDDO
+    ENDDO
+
+    min_eps= HUGE(1.0D0)
+    min_vel= HUGE(1.0D0)
     ! The density has to be converted in units of the atomic mass unit
     ! TODO: CHECK THAT EVERYTHING ELSE IS CONSISTENT WITH THIS!!
     DO i= 1, n, 1
 
       zp= z(i)
 
-      baryon_density(i) = THIS% read_mass_density( x(i), y(i), z(i) )*MSun/amu
+      baryon_density(i) = THIS% read_mass_density( x(i), y(i), zp )*MSun/amu
 
       u_euler_x(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
@@ -113,12 +132,142 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                                 THIS% grid, THIS% vel(:,:,:,3), &
                                 equator_symmetry= .TRUE., parity= -1.0D0 )
 
+    !  IF( u_euler_x(i) == 0 .AND. u_euler_y(i) == 0 &
+    !      .AND. u_euler_z(i) == 0 )THEN
+    !    PRINT *, u_euler_x(i), u_euler_y(i), u_euler_z(i)
+    !    PRINT *, x(i), y(i), zp
+    !    STOP
+    !  ENDIF
+
       specific_energy(i)= trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
-                                THIS% grid, THIS% specific_energy(:,:,:), &
+                                THIS% grid, THIS% specific_energy, &
                                 equator_symmetry= .TRUE., parity= 1.0D0 )
 
+      foo(i)= trilinear_interpolation( x(i), y(i), zp, &
+                    THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+                    THIS% grid, foo_grid, &
+                    equator_symmetry= .TRUE., parity= 1.0D0 )
+
+      IF( baryon_density(i) == 0.0D0 )THEN
+        specific_energy(i)= 0.0D0
+        u_euler_x(i)      = 0.0D0
+        u_euler_y(i)      = 0.0D0
+        u_euler_z(i)      = 0.0D0
+      ENDIF
+
+    !  IF( specific_energy(i) <= 0 )THEN
+    !    PRINT *, specific_energy(i)
+    !    PRINT *, x(i), y(i), zp
+    !    STOP
+    !  ENDIF
+
+      IF( SQRT( u_euler_x(i)**2.0D0 + u_euler_y(i)**2.0D0 &
+              + u_euler_z(i)**2.0D0 ) < min_vel &
+          .AND. baryon_density(i) > 0.0D0 )THEN
+        min_vel= SQRT( u_euler_x(i)**2.0D0 + u_euler_y(i)**2.0D0 &
+                     + u_euler_z(i)**2.0D0 )
+        i_vel= i
+      ENDIF
+      IF( specific_energy(i) < min_eps .AND. baryon_density(i) > 0.0D0 )THEN
+        min_eps= specific_energy(i)
+        i_eps= i
+      ENDIF
+
     ENDDO
+
+    PRINT *
+    PRINT *, MINVAL( specific_energy, DIM= 1, MASK= baryon_density > 0.0D0 ), &
+             min_eps
+    PRINT *, x(i_eps), y(i_eps), z(i_eps)
+
+    PRINT *, MINVAL( SQRT( (u_euler_x)**2.0D0 &
+                   + (u_euler_y)**2.0D0 &
+                   + (u_euler_z)**2.0D0 ), &
+                     DIM= 1, MASK= baryon_density > 0.0D0 ), &
+             min_vel
+    PRINT *, x(i_vel), y(i_vel), z(i_vel)
+
+    PRINT *
+
+    finalnamefile= "dbg_interpolation2.dat"
+
+    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO i= 1, THIS% nx_grid - 1, 1
+      DO j= 1, THIS% ny_grid - 1, 1
+        DO k= 1, THIS% nz_grid - 1, 1
+
+          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+            THIS% grid( i, j, k, 1 ), &
+            THIS% grid( i, j, k, 2 ), &
+            THIS% grid( i, j, k, 3 ), &
+            THIS% baryon_mass_density( i, j, k ), &
+            THIS% read_mass_density( &
+              THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.0D0, &
+              THIS% grid( i, j, k, 2 ), &
+              THIS% grid( i, j, k, 3 ) ), &
+            THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.0D0, &
+            THIS% specific_energy( i, j, k )
+        ENDDO
+      ENDDO
+    ENDDO
+
+    CLOSE( UNIT= 2 )
+
+
+    finalnamefile= "dbg_interpolation.dat"
+
+    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(finalnamefile), &
+             ". The error message is", err_msg
+    STOP
+    ENDIF
+
+    DO i= 1, n, 1
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        i, x(i), y(i), z(i), &
+        baryon_density(i), &
+        u_euler_x(i), &
+        u_euler_y(i), &
+        u_euler_z(i), &
+        specific_energy(i), &
+        foo(i)
+
+    ENDDO
+
+    CLOSE( UNIT= 2 )
+
+    STOP
 
     energy_density = 0.0D0
     pressure       = 0.0D0
@@ -221,114 +370,6 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                        c00, c01, c10, c11, c0, c1, zp, x_ell, y_ell, z_ell, &
                        theta, phi
 
-!    sgn_z= SIGN(1.0D0,z)
-!    zp= ABS(z)
-!
-!    CALL find_indices( x, y, zp, &
-!                       THIS% nx_grid, THIS% xL_grid, THIS% dx_grid, nghost, &
-!                       THIS% ny_grid, THIS% yL_grid, THIS% dy_grid, nghost, &
-!                       THIS% nz_grid, THIS% zL_grid, THIS% dz_grid, nghost, &
-!                       nghost, i, j, k, ierr )
-!
-!   ! PRINT *, THIS% xL_grid, THIS% yL_grid, THIS% zL_grid
-!   ! PRINT *, x, y, z
-!   ! PRINT *, i, j, k
-!   ! PRINT *
-!   !
-!   ! PRINT *, THIS% grid(i,j,k,1), THIS% grid(i+1,j,k,1)
-!
-!    IF( i >= THIS% nx_grid )THEN
-!      i= THIS% nx_grid - 1
-!    ENDIF
-!    IF( j >= THIS% ny_grid )THEN
-!      j= THIS% ny_grid - 1
-!    ENDIF
-!    IF( k >= THIS% nz_grid )THEN
-!      k= THIS% nz_grid - 1
-!    ENDIF
-!
-!    !PRINT *, i, j, k
-!    !PRINT *, THIS% nx_grid, THIS% ny_grid, THIS% nz_grid
-!
-!    IF( k <= 0 )THEN
-!      k= 1
-!    ENDIF
-!    IF( i <= 0 )THEN
-!      i= 1
-!    ENDIF
-!    IF( j <= 0 )THEN
-!      j= 1
-!    ENDIF
-!
-!    x0= THIS% grid(i,j,k,1)
-!    x1= THIS% grid(i+1,j,k,1) !+ THIS% dx_grid
-!    y0= THIS% grid(i,j,k,2)
-!    y1= THIS% grid(i,j+1,k,2) !+ THIS% dy_grid
-!    z0= THIS% grid(i,j,k,3)
-!    z1= THIS% grid(i,j,k+1,3) !+ THIS% dz_grid
-!
-!    xd= ( x - x0 )/( x1 - x0 )
-!    yd= ( y - y0 )/( y1 - y0 )
-!    zd= ( z - z0 )/( z1 - z0 )
-!
-!  !  PRINT *, x, y, z
-!  !  PRINT *
-!  !
-!  !  PRINT *, xd, yd, zd
-!  !  PRINT *
-!
-!    IF( k == 0 )THEN
-!      c001= THIS% baryon_mass_density(i,j,k)
-!      c101= THIS% baryon_mass_density(i+1,j,k)
-!      c011= THIS% baryon_mass_density(i,j+1,k)
-!      c111= THIS% baryon_mass_density(i+1,j+1,k)
-!    ENDIF
-!    IF( i >= THIS% nx_grid .OR. i == 0 )THEN
-!      c001= 0.0D0
-!      c101= 0.0D0
-!      c011= 0.0D0
-!      c111= 0.0D0
-!    ENDIF
-!    IF( j >= THIS% ny_grid .OR. j == 0 )THEN
-!      c001= 0.0D0
-!      c101= 0.0D0
-!      c011= 0.0D0
-!      c111= 0.0D0
-!    ENDIF
-!    IF( k >= THIS% nz_grid )THEN
-!      c001= 0.0D0
-!      c101= 0.0D0
-!      c011= 0.0D0
-!      c111= 0.0D0
-!    ENDIF
-!
-!    c000= THIS% baryon_mass_density(i,j,k)
-!    c100= THIS% baryon_mass_density(i+1,j,k)
-!    c001= THIS% baryon_mass_density(i,j,k+1)
-!    c101= THIS% baryon_mass_density(i+1,j,k+1)
-!    c010= THIS% baryon_mass_density(i,j+1,k)
-!    c110= THIS% baryon_mass_density(i+1,j+1,k)
-!    c011= THIS% baryon_mass_density(i,j+1,k+1)
-!    c111= THIS% baryon_mass_density(i+1,j+1,k+1)
-!
-!    c00= c000*( 1.0D0 - xd ) + c100*xd
-!
-!    c01= c001*( 1.0D0 - xd ) + c101*xd
-!
-!    c10= c010*( 1.0D0 - xd ) + c110*xd
-!
-!    c11= c011*( 1.0D0 - xd ) + c111*xd
-!
-!    c0= c00*( 1.0D0 - yd ) + c10*yd
-!    c1= c01*( 1.0D0 - yd ) + c11*yd
-!
-!    res= c0*( 1.0D0 - zd ) + c1*zd
-!
-!    !IF( res < 1.0D-13 ) res= 0.0D0
-!    !IF( SQRT( ( x - THIS% centers(1,1) )**2.0D0 &
-!    !          + ( y - THIS% centers(1,2) )**2.0D0 &
-!    !          + ( zp - THIS% centers(1,3) )**2.0D0 ) > 500.0D0 ) res= 0.0D0
-!
     zp= z
     res= trilinear_interpolation( x, y, zp, &
                                   THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &

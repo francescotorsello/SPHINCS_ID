@@ -1171,8 +1171,8 @@ SUBMODULE (particles_id) particles_constructor
 
     particles_from_file_no_apm: &
     !TODO: fix this to be dependent on each matter object
-    IF( parts% distribution_id /= 0 .AND. .NOT.apm_iterate(1) )THEN
-    ! If the particles were read by file, and the APM was not performed...
+    IF( parts% distribution_id == 0 .AND. .NOT.apm_iterate(1) )THEN
+    ! If the particles were read from file, and the APM was not performed...
 
       DEALLOCATE( parts% pvol )
         ALLOCATE( parts% pvol( parts% npart ), &
@@ -1308,11 +1308,15 @@ SUBMODULE (particles_id) particles_constructor
 
       IF( use_atmosphere(i_matter) .AND. .NOT.remove_atmosphere(i_matter) )THEN
 
-        min_eps= MINVAL( parts% specific_energy_parts(npart_in:npart_fin), DIM= 1 )
-        min_vel= MINVAL( (parts% v_euler_parts_x(npart_in:npart_fin))**2.0D0 &
-                       + (parts% v_euler_parts_y(npart_in:npart_fin))**2.0D0 &
-                       + (parts% v_euler_parts_z(npart_in:npart_fin))**2.0D0, &
-                        DIM= 1 )
+        min_eps= MINVAL( parts% specific_energy_parts(npart_in:npart_fin), &
+                         DIM= 1, &
+                MASK= parts% baryon_density_parts(npart_in:npart_fin) > 0.0D0 )
+        min_vel= MINVAL( SQRT( &
+                       (parts% v_euler_parts_x(npart_in:npart_fin))**2.0D0 &
+                     + (parts% v_euler_parts_y(npart_in:npart_fin))**2.0D0 &
+                     + (parts% v_euler_parts_z(npart_in:npart_fin))**2.0D0 ), &
+                         DIM= 1, &
+                MASK= parts% baryon_density_parts(npart_in:npart_fin) > 0.0D0 )
 
         PRINT *, min_eps
         PRINT *, min_vel

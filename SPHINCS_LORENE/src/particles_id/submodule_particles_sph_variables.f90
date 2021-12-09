@@ -1353,7 +1353,7 @@ SUBMODULE (particles_id) particles_sph_variables
                  npart_fin => THIS% npart_i(i_matter-1) +    &
                               THIS% npart_i(i_matter) )
 
-      IF( THIS% all_eos(i_matter)% eos_parameters(1) == 1 )THEN
+      IF( THIS% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
       ! If the |eos| is polytropic
 
         PRINT *, " * Computing pressure and specific internal energy from", &
@@ -1375,7 +1375,7 @@ SUBMODULE (particles_id) particles_sph_variables
         THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
         THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
 
-      ELSEIF( THIS% all_eos(i_matter)% eos_parameters(1) == 110 )THEN
+      ELSEIF( THIS% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
       ! If the |eos| is piecewise polytropic
 
         PRINT *, " * Computing pressure and specific internal energy from", &
@@ -1391,8 +1391,13 @@ SUBMODULE (particles_id) particles_sph_variables
                               u(npart_in:npart_fin) )
 
         THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-        THIS% u_pwp(npart_in:npart_fin)= get_u_pwp()
-        u(npart_in:npart_fin)= get_u_pwp()
+
+        IF( .FALSE. )THEN
+          ! If the system is cold, get the specific energy computed
+          ! exactly using the piecewise polytropic EOS
+          THIS% u_pwp(npart_in:npart_fin)= get_u_pwp()
+          u(npart_in:npart_fin)= get_u_pwp()
+        ENDIF
 
       ENDIF
 
