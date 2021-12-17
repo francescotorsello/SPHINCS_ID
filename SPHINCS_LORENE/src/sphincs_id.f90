@@ -201,6 +201,7 @@ PROGRAM sphincs_id
   PRINT *, "  Copyright:    GNU General Public License (GPLv3)     "
   PRINT *, "  ___________________________________________________  "
   PRINT *
+  !They are distributed in the hope that they wil be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU GPL for more details.
   PRINT *, "  Run id: ", run_id
   PRINT *, "  ___________________________________________________  "
   PRINT *

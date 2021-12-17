@@ -90,23 +90,52 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     IMPLICIT NONE
 
     INTEGER:: i, j, k, i_eps, i_vel
-    DOUBLE PRECISION:: zp, min_eps, min_vel
+    DOUBLE PRECISION:: zp, min_eps, min_vel, xtmp, ytmp, ztmp, xsgn, ysgn, zsgn
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
     LOGICAL:: exist
 
-    DOUBLE PRECISION:: foo(n), &
-                       foo_grid(THIS% nx_grid, THIS% ny_grid, THIS% nz_grid)
+    DOUBLE PRECISION:: foo(n), foo_exact(n), &
+                       foo_grid(THIS% nx_grid, THIS% ny_grid, THIS% nz_grid), &
+                       grid_coords(THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, 3), &
+                       coords(n,3)
 
     DO i= 1, THIS% nx_grid - 1, 1
       DO j= 1, THIS% ny_grid - 1, 1
         DO k= 1, THIS% nz_grid - 1, 1
 
-          foo_grid(i,j,k)= SIN( THIS% grid(i,j,k,1) &
-                           + THIS% grid(i,j,k,2) )
+          grid_coords(i,j,k,1)= DBLE(i) - DBLE(THIS% nx_grid)/2.0D0
+          grid_coords(i,j,k,2)= DBLE(j) - DBLE(THIS% ny_grid)/2.0D0
+          grid_coords(i,j,k,3)= DBLE(k)/2.0D0! - DBLE(THIS% nz_grid)/2.0D0
+          foo_grid(i,j,k)= (grid_coords(i,j,k,3)  )**0.0D0
 
         ENDDO
       ENDDO
+    ENDDO
+
+    DO i= 1, n, 1
+
+      !CALL RANDOM_NUMBER( xsgn )
+      !CALL RANDOM_NUMBER( ysgn )
+      !CALL RANDOM_NUMBER( zsgn )
+      CALL RANDOM_NUMBER( xtmp )
+      CALL RANDOM_NUMBER( ytmp )
+      CALL RANDOM_NUMBER( ztmp )
+
+      coords(i,1)= xtmp*DBLE(THIS% nx_grid - 2) - DBLE(THIS% nx_grid)/2.0D0 + 2.0D0
+      coords(i,2)= ytmp*DBLE(THIS% ny_grid - 2) - DBLE(THIS% ny_grid)/2.0D0 + 2.0D0
+      coords(i,3)= (- DBLE(THIS% nz_grid)/2.0D0 + 1.0D0)*(1.0D0-ztmp) + (DBLE(THIS% nz_grid)/2.0D0 - 1.0D0)*ztmp
+
+     ! IF( coords(i,3) < 0 )THEN
+     !   PRINT *, coords(i,3)
+     !   STOP
+     ! ENDIF
+
+      foo(i)= trilinear_interpolation( coords(i,1), coords(i,2), coords(i,3), &
+                    THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+                    grid_coords, foo_grid, &
+                    equator_symmetry= .TRUE., parity= 1.0D0 )
+      foo_exact(i)= (coords(i,3) )**0.0D0
     ENDDO
 
     min_eps= HUGE(1.0D0)
@@ -142,12 +171,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       specific_energy(i)= trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% specific_energy, &
-                                equator_symmetry= .TRUE., parity= 1.0D0 )
-
-      foo(i)= trilinear_interpolation( x(i), y(i), zp, &
-                    THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
-                    THIS% grid, foo_grid, &
-                    equator_symmetry= .TRUE., parity= 1.0D0 )
+                                equator_symmetry= .TRUE., parity= 1.0D0, &
+                                debug=.TRUE. )
 
       IF( baryon_density(i) == 0.0D0 )THEN
         specific_energy(i)= 0.0D0
@@ -218,7 +243,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
             THIS% grid( i, j, k, 1 ), &
             THIS% grid( i, j, k, 2 ), &
             THIS% grid( i, j, k, 3 ), &
-            THIS% baryon_mass_density( i, j, k ), &
+            THIS% baryon_mass_density( i, j, k )*Msun/amu, &
             THIS% read_mass_density( &
               THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.0D0, &
               THIS% grid( i, j, k, 2 ), &
@@ -254,6 +279,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     DO i= 1, n, 1
 
+      ! IF( coords(i,3) < 0 )THEN
+      !   PRINT *, coords(i,3)
+      !   STOP
+      ! ENDIF
+
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         i, x(i), y(i), z(i), &
         baryon_density(i), &
@@ -261,7 +291,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
         u_euler_y(i), &
         u_euler_z(i), &
         specific_energy(i), &
-        foo(i)
+        coords(i,1), coords(i,2), coords(i,3), &
+        foo(i), foo_exact(i)
 
     ENDDO
 
