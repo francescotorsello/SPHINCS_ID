@@ -51,6 +51,8 @@ Currently, it produces initial data for binary neutron star mergers and differen
 
 Presently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN or MAGMA2. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN or MAGMA2.
 
+SPHINCS_ID is distributed **WITHOUT ANY WARRANTY**; even without the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See GNU GPLv3 for more details.
+
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://lorene.obspm.fr/>
 [3]: <https://arxiv.org/abs/gr-qc/0007028>

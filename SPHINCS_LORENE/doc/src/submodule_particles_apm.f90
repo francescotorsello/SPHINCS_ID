@@ -135,6 +135,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: art_pr_max
     DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
+    DOUBLE PRECISION:: variance_dN, stddev_dN
     DOUBLE PRECISION:: rand_num, rand_num2
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
@@ -170,6 +171,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_tmp
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_one
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_int
@@ -1183,7 +1185,8 @@ SUBMODULE (particles_id) particles_apm
 
         IF( get_density( all_pos(1,a), &
                          all_pos(2,a), &
-                         all_pos(3,a) ) <= 0.0D0 )THEN
+                         all_pos(3,a) ) <= 0.0D0 &
+        )THEN
           dNstar(a)= 0.0D0
         ELSE
           dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
@@ -1275,8 +1278,7 @@ SUBMODULE (particles_id) particles_apm
               !SQRT( ( all_pos(1,a) - center(1) )**2.0D0 + ( all_pos(2,a) - center(2) )**2.0D0 &
               !      + ( all_pos(3,a) - center(3) )**2.0D0 ) <= &
               !      ( 500.0D0 + 50.0D0*DBLE(itr)/10.0D0 ) &
-              !.AND. &
-              !SQRT( ( all_pos(1,a) - center )**2.0D0 + ( all_pos(2,a) - center(2) )**2.0D0 &
+              !.AND. &              !SQRT( ( all_pos(1,a) - center )**2.0D0 + ( all_pos(2,a) - center(2) )**2.0D0 &
               !      + ( all_pos(3,a) - center(3) )**2.0D0 ) > &
               !      ( 500.0D0 + 50.0D0*DBLE(itr-1)/10.0D0 ) &
           )THEN
@@ -1331,11 +1333,11 @@ SUBMODULE (particles_id) particles_apm
                "   and its SPH estimate: err_N_max= ", err_N_max
       PRINT *, "     at position: x=", pos_maxerr(1), ", y=", pos_maxerr(2), &
                ", z=", pos_maxerr(3)
-      PRINT *, "     with r/r_x_opp= ", SQRT( &
-                                    ( ABS(pos_maxerr(1)) - ABS(center) )**2.0D0 &
-                                          + pos_maxerr(2)**2.0D0 &
-                                          + pos_maxerr(3)**2.0D0 ) &
-                                    /smaller_radius
+      PRINT *, "     with r/(system size)= ", SQRT( &
+                              ( ABS(pos_maxerr(1)) - ABS(center(1)) )**2.0D0 &
+                            + ( ABS(pos_maxerr(2)) - ABS(center(2)) )**2.0D0 &
+                            + ( ABS(pos_maxerr(3)) - ABS(center(3)) )**2.0D0 ) &
+                            /sizes(1)
       PRINT *, "   The ID density is   = ", nstar_p_err
       PRINT *, "   The SPH estimate is= ", nstar_real_err
       PRINT *
@@ -1476,12 +1478,13 @@ SUBMODULE (particles_id) particles_apm
 
       cnt_move= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, correction_pos, &
+      !$OMP             SHARED( use_atmosphere, all_pos, correction_pos, &
       !$OMP                     dNstar, npart_real, nstar_p, cnt_move ) &
       !$OMP             PRIVATE( pos_corr_tmp, a, cnt, rand_num, rand_num2, &
       !$OMP                      rel_sign )
-      DO a= 1, npart_real, 1
+      particle_loop: DO a= 1, npart_real, 1
 
+        adapt_displacement_to_error: &
         IF( dNstar(a) >= 100.0D0 &
             .AND. validate_position_final( &
                     all_pos(1,a) + 10.0D0*correction_pos(1,a), &
@@ -1502,96 +1505,100 @@ SUBMODULE (particles_id) particles_apm
 
           pos_corr_tmp= all_pos(:,a) + correction_pos(:,a) ! 1
 
-        ENDIF
+        ENDIF adapt_displacement_to_error
 
-    !    IF( get_density( &
-    !              pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-    !        .AND. &
-    !        nstar_p(a) > 0.0D0 &
-    !        .AND. &
-    !        validate_position_final( &
-    !              pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-    !    )THEN
-    !
-    !      all_pos(:,a)= pos_corr_tmp
-    !
-    !    ENDIF
+        if_atmosphere: IF( use_atmosphere )THEN
+        ! If the atmosphere is used...
 
-        cnt= 0
-        DO
+          all_pos(:,a)= pos_corr_tmp
+          cnt_move(a)= 1
+          !...move the particle without any validation, and exit the loop
 
-          IF( .TRUE.&!get_density( &
-              !    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
-              !.AND. &
-              !validate_position_final( &
-              !    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-              !.AND. &
-              !check_particle_position( a - 1, &
-              !                         all_pos(:,1:a-1), &
-              !                         pos_corr_tmp ) == 0 &
-              !.AND. &
-              !check_particle_position( npart_real - a, &
-              !                         all_pos(:,a+1:npart_real), &
-              !                         pos_corr_tmp ) == 0 &
-          )THEN
+        ELSE
 
-            all_pos(:,a)= pos_corr_tmp
-            cnt_move(a)= 1
-            EXIT
+          cnt= 0
+          determine_new_position: DO
 
-          ELSEIF( cnt <= search_pos )THEN
+            test_position: IF( get_density( &
+                pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > 0.0D0 &
+                .AND. &
+                validate_position_final( &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+                !.AND. &
+                !check_particle_position( a - 1, &
+                !                         all_pos(:,1:a-1), &
+                !                         pos_corr_tmp ) == 0 &
+                !.AND. &
+                !check_particle_position( npart_real - a, &
+                !                         all_pos(:,a+1:npart_real), &
+                !                         pos_corr_tmp ) == 0 &
+            )THEN
+            ! If the new position is valid...
 
-            cnt= cnt + 1
-          !  pos_corr_tmp= pos_corr_tmp*3.0D0/4.0D0
+              all_pos(:,a)= pos_corr_tmp
+              cnt_move(a)= 1
+              EXIT
+              !...move the particle, and exit the loop
 
-            CALL RANDOM_NUMBER( rand_num )
-            CALL RANDOM_NUMBER( rand_num2 )
+            ELSEIF( cnt <= search_pos )THEN
+            ! ...else if the new position is invalid,
+            ! and the current iteration is lower than search_pos
 
-            IF( rand_num2 < half )  rel_sign= - 1
-            IF( rand_num2 >= half ) rel_sign=   1
+              cnt= cnt + 1
 
-            pos_corr_tmp(1)= all_pos(1,a) + &
-              correction_pos(1,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
+              CALL RANDOM_NUMBER( rand_num )
+              CALL RANDOM_NUMBER( rand_num2 )
 
-            CALL RANDOM_NUMBER( rand_num )
-            CALL RANDOM_NUMBER( rand_num2 )
+              IF( rand_num2 < half )  rel_sign= - 1
+              IF( rand_num2 >= half ) rel_sign=   1
 
-            IF( rand_num2 < half )  rel_sign= - 1
-            IF( rand_num2 >= half ) rel_sign=   1
+              pos_corr_tmp(1)= all_pos(1,a) + &
+                correction_pos(1,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
 
-            pos_corr_tmp(2)= all_pos(2,a) + &
-              correction_pos(2,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
+              CALL RANDOM_NUMBER( rand_num )
+              CALL RANDOM_NUMBER( rand_num2 )
 
-            CALL RANDOM_NUMBER( rand_num )
-            CALL RANDOM_NUMBER( rand_num2 )
+              IF( rand_num2 < half )  rel_sign= - 1
+              IF( rand_num2 >= half ) rel_sign=   1
 
-            IF( rand_num2 < half )  rel_sign= - 1
-            IF( rand_num2 >= half ) rel_sign=   1
+              pos_corr_tmp(2)= all_pos(2,a) + &
+                correction_pos(2,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
 
-            pos_corr_tmp(3)= all_pos(3,a) + &
-              correction_pos(3,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
+              CALL RANDOM_NUMBER( rand_num )
+              CALL RANDOM_NUMBER( rand_num2 )
 
-            !pos_corr_tmp*( 1.0D0 + DBLE(rel_sign)*rand_num*half*third )
+              IF( rand_num2 < half )  rel_sign= - 1
+              IF( rand_num2 >= half ) rel_sign=   1
 
-          ELSEIF( cnt == search_pos + 1 )THEN
+              pos_corr_tmp(3)= all_pos(3,a) + &
+                correction_pos(3,a)*( 1.0D0 + DBLE(rel_sign)*rand_num*half )
 
-            ! cnt= cnt + 1
-            ! CALL RANDOM_NUMBER( rand_num )
-            ! CALL RANDOM_NUMBER( rand_num2 )
-            !
-            ! IF( rand_num2 < half )  rel_sign= - 1
-            ! IF( rand_num2 >= half ) rel_sign=   1
-            ! all_pos(:,a)= all_pos(:,a)*( 1.0D0 -rand_num*half*third )
+              !pos_corr_tmp*( 1.0D0 + DBLE(rel_sign)*rand_num*half*third )
 
-            EXIT
+              ! ...change the new position randomly, independently in x, y, z,
+              ! and repeat the test
 
-          ENDIF
+            ELSEIF( cnt == search_pos + 1 )THEN
+            ! ...else if the new position was changed randomly search_pos
+            ! times, do not move the particle at this step
 
-          !IF( cnt == 11 ) EXIT
+              ! cnt= cnt + 1
+              ! CALL RANDOM_NUMBER( rand_num )
+              ! CALL RANDOM_NUMBER( rand_num2 )
+              !
+              ! IF( rand_num2 < half )  rel_sign= - 1
+              ! IF( rand_num2 >= half ) rel_sign=   1
+              ! all_pos(:,a)= all_pos(:,a)*( 1.0D0 -rand_num*half*third )
 
-        ENDDO
+              EXIT
 
-      ENDDO
+            ENDIF test_position
+
+          ENDDO determine_new_position
+
+        ENDIF if_atmosphere
+
+      ENDDO particle_loop
       !$OMP END PARALLEL DO
       PRINT *, " * The fraction of particles that moved at this step is", &
                DBLE(SUM(cnt_move))/DBLE(npart_real)
@@ -1690,7 +1697,7 @@ SUBMODULE (particles_id) particles_apm
       npart= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
-      !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
+      !$OMP                 h_guess, h_guess_tmp, nu, nu_tmp, pvol_tmp, pvol ) &
       !$OMP             PRIVATE( a ) &
       !$OMP             REDUCTION( +: npart )
       DO a= 1, npart_real, 1
@@ -1701,6 +1708,7 @@ SUBMODULE (particles_id) particles_apm
           h_tmp(a)      = h(a)
           h_guess_tmp(a)= h_guess(a)
           nu_tmp(a)     = nu(a)
+          !pvol_tmp(a)   = pvol(a)
         ENDIF
       ENDDO
       !$OMP END PARALLEL DO
@@ -1713,6 +1721,8 @@ SUBMODULE (particles_id) particles_apm
       ALLOCATE( h_guess( npart ) )
       IF(ALLOCATED(nu)) DEALLOCATE(nu)
       ALLOCATE( nu( npart ) )
+      !IF(ALLOCATED(pvol)) DEALLOCATE(pvol)
+      !ALLOCATE( pvol( npart ) )
 
    !   !$OMP PARALLEL DO DEFAULT( NONE ) &
    !   !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
@@ -1726,6 +1736,7 @@ SUBMODULE (particles_id) particles_apm
           h(cnt1)      = h_tmp(a)
           h_guess(cnt1)= h_guess_tmp(a)
           nu(cnt1)     = nu_tmp(a)
+          !pvol(cnt1)   = pvol_tmp(a)
         ENDIF
       ENDDO
    !   !$OMP END PARALLEL DO
@@ -2172,13 +2183,13 @@ SUBMODULE (particles_id) particles_apm
     ENDIF
 
     DO a= 1, npart_real, 1
-    tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      a, &
-      pos( 1, a ), &
-      pos( 2, a ), &
-      pos( 3, a ), &
-      tmp
+      tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        a, &
+        pos( 1, a ), &
+        pos( 2, a ), &
+        pos( 3, a ), &
+        tmp
     ENDDO
 
     CLOSE( UNIT= 2 )
@@ -2207,8 +2218,23 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
     ENDDO
     dN_av= dN_av/DBLE(cnt1)
-    PRINT *,'...dN_max ', dN_max
-    PRINT *,'...dN_av  ', dN_av
+
+    variance_dN = 0.0                       ! compute variance
+    DO a = 1, npart_real, 1
+      IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > 0.0D0 )THEN
+        dN= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+        variance_dN = variance_dN + (dN - dN_av)**2.0D0
+        cnt1= cnt1 + 1
+      ENDIF
+    END DO
+    variance_dN = variance_dN / DBLE(cnt1)
+    stddev_dN   = SQRT(variance_dN)            ! compute standard deviation
+
+    PRINT *, "dN_max=", dN_max
+    PRINT *, "dN_av=", dN_av
+    PRINT *, "variance_dN=", variance_dN
+    PRINT *, "stddev_dN=", stddev_dN
+    PRINT *, "stddev_dN/dN_a=", stddev_dN/dN_av
     PRINT *
 
     IF( debug ) PRINT *, "100"
@@ -2326,27 +2352,27 @@ SUBMODULE (particles_id) particles_apm
 
     ENDDO
 
-    CALL find_h_bruteforce_timer% start_timer()
-    n_problematic_h= 0
-    check_h2: DO a= 1, npart_real, 1
-
-      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
-
-        n_problematic_h= n_problematic_h + 1
-        h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        PRINT *, h(a)
-        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
-          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
-                   " force method."
-          PRINT *, "   Particle position: ", pos(:,a)
-          STOP
-        ENDIF
-
-      ENDIF
-
-    ENDDO check_h2
-    CALL find_h_bruteforce_timer% stop_timer()
-    CALL find_h_bruteforce_timer% print_timer( 2 )
+  !  CALL find_h_bruteforce_timer% start_timer()
+  !  n_problematic_h= 0
+  !  check_h2: DO a= 1, npart_real, 1
+  !
+  !    IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+  !
+  !      n_problematic_h= n_problematic_h + 1
+  !      h(a)= find_h_backup( a, npart_real, pos, nn_des )
+  !      PRINT *, h(a)
+  !      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+  !        PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+  !                 " force method."
+  !        PRINT *, "   Particle position: ", pos(:,a)
+  !        STOP
+  !      ENDIF
+  !
+  !    ENDIF
+  !
+  !  ENDDO check_h2
+  !  CALL find_h_bruteforce_timer% stop_timer()
+  !  CALL find_h_bruteforce_timer% print_timer( 2 )
 
     PRINT *, " * The smoothing length was found brute-force for ", &
              n_problematic_h, " particles."
@@ -2827,29 +2853,29 @@ SUBMODULE (particles_id) particles_apm
 
       ELSE
 
-          !$OMP PARALLEL DO DEFAULT( NONE ) &
-          !$OMP             SHARED( npart_real, nstar_p ) &
-          !$OMP             PRIVATE( a )
-          DO a= 1, npart_real, 1
-
-            IF( ISNAN( nstar_p( a ) ) )THEN
-              PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
-                       " Stopping.."
-              PRINT *
-              STOP
-            ENDIF
-            IF( nstar_p( a ) == 0.0D0 )THEN
-              PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
-              !PRINT *, "   sq_g=", sq_g
-              !PRINT *, "   Theta_a=", Theta_a
-              !PRINT *, "   baryon_density(", a, ")=", baryon_density(a)
-              !PRINT *, " * Stopping.."
-              !PRINT *
-              STOP
-            ENDIF
-
-          ENDDO
-          !$OMP END PARALLEL DO
+     !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+     !   !$OMP             SHARED( npart_real, nstar_p ) &
+     !   !$OMP             PRIVATE( a )
+     !   DO a= 1, npart_real, 1
+     !
+     !     IF( ISNAN( nstar_p( a ) ) )THEN
+     !       PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
+     !                " Stopping.."
+     !       PRINT *
+     !       STOP
+     !     ENDIF
+     !     IF( nstar_p( a ) == 0.0D0 )THEN
+     !       PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
+     !       !PRINT *, "   sq_g=", sq_g
+     !       !PRINT *, "   Theta_a=", Theta_a
+     !       !PRINT *, "   baryon_density(", a, ")=", baryon_density(a)
+     !       !PRINT *, " * Stopping.."
+     !       !PRINT *
+     !       STOP
+     !     ENDIF
+     !
+     !   ENDDO
+     !   !$OMP END PARALLEL DO
 
       ENDIF
 

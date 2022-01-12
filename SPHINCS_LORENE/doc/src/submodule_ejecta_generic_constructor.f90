@@ -286,9 +286,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
     ENDIF
 
     ! Store the grid on the member array
-    ALLOCATE( derived_type% grid(derived_type% nx_grid, &
-                                 derived_type% ny_grid, &
-                                 derived_type% nz_grid, 3) )
+    ALLOCATE( derived_type% grid( derived_type% nx_grid, &
+                                  derived_type% ny_grid, &
+                                  derived_type% nz_grid, 3 ) )
     derived_type% grid= 0.0D0
 
     ALLOCATE( derived_type% baryon_mass_density( derived_type% nx_grid, &
@@ -297,13 +297,13 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
     derived_type% baryon_mass_density= 0.0D0
 
     ALLOCATE( derived_type% specific_energy( derived_type% nx_grid, &
-                                                 derived_type% ny_grid, &
-                                                 derived_type% nz_grid ) )
+                                             derived_type% ny_grid, &
+                                             derived_type% nz_grid ) )
     derived_type% specific_energy= 0.0D0
 
     ALLOCATE( derived_type% vel( derived_type% nx_grid, &
-                                                 derived_type% ny_grid, &
-                                                 derived_type% nz_grid, 3 ) )
+                                 derived_type% ny_grid, &
+                                 derived_type% nz_grid, 3 ) )
     derived_type% vel= 0.0D0
 
     DO i= 1, derived_type% nx_grid, 1
@@ -445,16 +445,17 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
               derived_type% grid( i, j, k, 1 ) + derived_type% dx_grid/2.0D0, &
               derived_type% grid( i, j, k, 2 ), &
               derived_type% grid( i, j, k, 3 ) ), &
-            derived_type% grid( i, j, k, 1 ) + derived_type% dx_grid/2.0D0
+            derived_type% grid( i, j, k, 1 ) + derived_type% dx_grid/2.0D0, &
+            derived_type% specific_energy( i, j, k )
         ENDDO
       ENDDO
     ENDDO
 
     CLOSE( UNIT= 2 )
 
-    dr             = derived_type% dx_grid/2.0D0
-    dth            = pi/2.0D0/50.0D0
-    dphi           = 2.0D0*pi/50.0D0
+    dr             = derived_type% dx_grid/4.0D0
+    dth            = pi/2.0D0/100.0D0
+    dphi           = 2.0D0*pi/100.0D0
     CALL derived_type% integrate_baryon_mass_density( &
                             derived_type% centers(1,1), &
                             ABS(MAXVAL(grid_tmp( :, 1 ))), &
@@ -465,6 +466,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
                             dr, dth, dphi, &
                             derived_type% masses(1), mass_profile, &
                             mass_profile_idx )
+
+    derived_type% eos_ejectaid= 110
 
     CALL select_EOS_parameters("APR4")
 

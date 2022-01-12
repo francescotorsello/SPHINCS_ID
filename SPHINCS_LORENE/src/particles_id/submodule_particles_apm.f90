@@ -135,6 +135,7 @@ SUBMODULE (particles_id) particles_apm
     DOUBLE PRECISION:: art_pr_max
     DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
+    DOUBLE PRECISION:: variance_dN, stddev_dN
     DOUBLE PRECISION:: rand_num, rand_num2
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
@@ -2217,8 +2218,23 @@ SUBMODULE (particles_id) particles_apm
       ENDIF
     ENDDO
     dN_av= dN_av/DBLE(cnt1)
-    PRINT *,'...dN_max ', dN_max
-    PRINT *,'...dN_av  ', dN_av
+
+    variance_dN = 0.0                       ! compute variance
+    DO a = 1, npart_real, 1
+      IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > 0.0D0 )THEN
+        dN= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+        variance_dN = variance_dN + (dN - dN_av)**2.0D0
+        cnt1= cnt1 + 1
+      ENDIF
+    END DO
+    variance_dN = variance_dN / DBLE(cnt1)
+    stddev_dN   = SQRT(variance_dN)            ! compute standard deviation
+
+    PRINT *, "dN_max=", dN_max
+    PRINT *, "dN_av=", dN_av
+    PRINT *, "variance_dN=", variance_dN
+    PRINT *, "stddev_dN=", stddev_dN
+    PRINT *, "stddev_dN/dN_a=", stddev_dN/dN_av
     PRINT *
 
     IF( debug ) PRINT *, "100"
@@ -2336,27 +2352,27 @@ SUBMODULE (particles_id) particles_apm
 
     ENDDO
 
-    CALL find_h_bruteforce_timer% start_timer()
-    n_problematic_h= 0
-    check_h2: DO a= 1, npart_real, 1
-
-      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
-
-        n_problematic_h= n_problematic_h + 1
-        h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        PRINT *, h(a)
-        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
-          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
-                   " force method."
-          PRINT *, "   Particle position: ", pos(:,a)
-          STOP
-        ENDIF
-
-      ENDIF
-
-    ENDDO check_h2
-    CALL find_h_bruteforce_timer% stop_timer()
-    CALL find_h_bruteforce_timer% print_timer( 2 )
+  !  CALL find_h_bruteforce_timer% start_timer()
+  !  n_problematic_h= 0
+  !  check_h2: DO a= 1, npart_real, 1
+  !
+  !    IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+  !
+  !      n_problematic_h= n_problematic_h + 1
+  !      h(a)= find_h_backup( a, npart_real, pos, nn_des )
+  !      PRINT *, h(a)
+  !      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+  !        PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+  !                 " force method."
+  !        PRINT *, "   Particle position: ", pos(:,a)
+  !        STOP
+  !      ENDIF
+  !
+  !    ENDIF
+  !
+  !  ENDDO check_h2
+  !  CALL find_h_bruteforce_timer% stop_timer()
+  !  CALL find_h_bruteforce_timer% print_timer( 2 )
 
     PRINT *, " * The smoothing length was found brute-force for ", &
              n_problematic_h, " particles."

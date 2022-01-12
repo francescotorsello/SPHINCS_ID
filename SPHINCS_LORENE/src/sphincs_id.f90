@@ -188,7 +188,7 @@ PROGRAM sphincs_id
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time
 
-  PRINT *, "  ___________________________________________________  "
+  PRINT *, "  ____________________________________________________ "
   PRINT *, "       ____________  ________  __________    __ ___    "
   PRINT *, "      / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \   "
   PRINT *, "     (__  ) ___/ __  / / / / / /__(__  )___/ / /_/ /   "
@@ -199,11 +199,15 @@ PROGRAM sphincs_id
   PRINT *
   PRINT *, "  Author:       Francesco Torsello  "
   PRINT *, "  Copyright:    GNU General Public License (GPLv3)     "
-  PRINT *, "  ___________________________________________________  "
   PRINT *
-  !They are distributed in the hope that they wil be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU GPL for more details.
+  PRINT *, "  SPHINCS_ID is distributed WITHOUT ANY WARRANTY; even "
+  PRINT *, "  without the implied warranty of MERCHANTABILITY      "
+  PRINT *, "  or FITNESS FOR A PARTICULAR PURPOSE. See GNU GPLv3   "
+  PRINT *, "  for more details."
+  PRINT *, "  ____________________________________________________ "
+  PRINT *
   PRINT *, "  Run id: ", run_id
-  PRINT *, "  ___________________________________________________  "
+  PRINT *, "  ____________________________________________________ "
   PRINT *
 
   execution_timer= timer( "execution_timer" )

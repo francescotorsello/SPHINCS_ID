@@ -1046,18 +1046,125 @@ SUBMODULE (particles_id) particles_sph_variables
     !
     !ENDDO
 
-    ! Determine smoothing length so that each particle has exactly
-    ! 300 neighbours inside 2h
-    CALL assign_h( ndes, &
-                   THIS% npart, &
-                   THIS% pos, THIS% h, & ! Input
-                   h )             ! Output
+    !IF( .NOT.THIS% apm_iterate(1) )THEN
 
-    IF( debug ) PRINT *, "101.5"
+      ! Determine smoothing length so that each particle has exactly
+      ! 300 neighbours inside 2h
+      CALL assign_h( ndes, &
+                     THIS% npart, &
+                     THIS% pos, THIS% h, & ! Input
+                     h )             ! Output
+
+      IF( debug ) PRINT *, "101.5"
+
+      CALL find_h_bruteforce_timer% start_timer()
+      n_problematic_h= 0
+      check_h: DO a= 1, THIS% npart, 1
+
+        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+
+          n_problematic_h= n_problematic_h + 1
+          h(a)= find_h_backup( a, THIS% npart, THIS% pos, ndes )
+          !PRINT *, h(a)
+          IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+            PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                     " force method."
+            PRINT *, "   Particle position: ", THIS% pos(:,a)
+            STOP
+          ENDIF
+
+        ENDIF
+
+      ENDDO check_h
+      CALL find_h_bruteforce_timer% stop_timer()
+      CALL find_h_bruteforce_timer% print_timer( 2 )
+
+      PRINT *, " * The smoothing length was found brute-force for ", &
+               n_problematic_h, " particles."
+      PRINT *
+
+    !ENDIF
+
+    PRINT *, " * Computing neighbours' tree..."
+    PRINT *
+    !CALL OMP_SET_NUM_THREADS(80)
+    cnt1= 0
+    !THIS% nu= 1.0D0
+    PRINT *, SUM(THIS% nu, DIM= 1)/SIZE(THIS% nu)
+    DO
+
+      few_ncand= .FALSE.
+
+      ! Redo the previous step slightly different (it's built-in;
+      ! exact_nei_tree_update does not work if I don't call assign_h first),
+      ! then update the neighbour-tree and fill the neighbour-data
+      CALL exact_nei_tree_update( ndes,        &
+                                  THIS% npart, &
+                                  THIS% pos,   &
+                                  THIS% nu )
+
+      EXIT
+
+      ll_cell_loop2: DO ill= 1, nfinal
+
+        itot= nprev + ill
+        IF( nic(itot) == 0 ) CYCLE
+
+        IF( ncand(ill) < ndes - 1 )THEN
+
+          ! Increase the smoothing lengths of the paricles inside the cell,
+          ! and rebuild the tree
+          few_ncand= .TRUE.
+
+          particle_in_cell_loop: DO l= lpart(itot), rpart(itot)
+
+            h(l)= 3.0D0*h(l)
+
+          ENDDO particle_in_cell_loop
+
+        ELSE
+
+          few_ncand= .FALSE.
+
+        ENDIF
+
+      ENDDO ll_cell_loop2
+
+      !
+      !-- Check that the number of candidate neighbours is larger than
+      !-- or equal to ndes - 1
+      !
+   !   DO itr= 1, SIZE(ncand), 1
+   !
+   !     ! If there are too few candidate neighbors
+   !     IF( ncand(itr) < ndes - 1 )THEN
+   !
+   !       ! Increase the smoothing length and rebuild the tree
+   !       few_ncand= .TRUE.
+   !       h= 3.0D0*h
+   !
+   !       EXIT
+   !
+   !     ELSE
+   !
+   !       few_ncand= .FALSE.
+   !
+   !     ENDIF
+   !
+   !   ENDDO
+   !
+      cnt1= cnt1 + 1
+
+      IF( .NOT.few_ncand .OR. cnt1 >= 1 )THEN
+        PRINT *, " * Smoothing lengths assigned and neighbours' tree is built."
+        EXIT
+      ENDIF
+
+    ENDDO
 
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
-    check_h: DO a= 1, THIS% npart, 1
+    check_h2: DO a= 1, THIS% npart, 1
 
       IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
 
@@ -1073,60 +1180,13 @@ SUBMODULE (particles_id) particles_sph_variables
 
       ENDIF
 
-    ENDDO check_h
+    ENDDO check_h2
     CALL find_h_bruteforce_timer% stop_timer()
     CALL find_h_bruteforce_timer% print_timer( 2 )
 
     PRINT *, " * The smoothing length was found brute-force for ", &
              n_problematic_h, " particles."
     PRINT *
-
-    PRINT *, " * Computing neighbours' tree..."
-    PRINT *
-    cnt1= 0
-    DO
-
-      few_ncand= .FALSE.
-
-      ! Redo the previous step slightly different (it's built-in;
-      ! exact_nei_tree_update does not work if I don't call assign_h first),
-      ! then update the neighbour-tree and fill the neighbour-data
-      CALL exact_nei_tree_update( ndes,        &
-                                  THIS% npart, &
-                                  THIS% pos,   &
-                                  THIS% nu )
-
-      !
-      !-- Check that the number of candidate neighbours is larger than
-      !-- or equal to ndes - 1
-      !
-      DO itr= 1, SIZE(ncand), 1
-
-        ! If there are too few candidate neighbors
-        IF( ncand(itr) < ndes - 1 )THEN
-
-          ! Increase the smoothing length and rebuild the tree
-          few_ncand= .TRUE.
-          h= 3.0D0*h
-
-          EXIT
-
-        ELSE
-
-          few_ncand= .FALSE.
-
-        ENDIF
-
-      ENDDO
-
-      cnt1= cnt1 + 1
-
-      IF( .NOT.few_ncand .OR. cnt1 >= 1 )THEN
-        PRINT *, " * Smoothing lengths assigned and neighbours' tree is built."
-        EXIT
-      ENDIF
-
-    ENDDO
 
     !
     !-- Check that the smoothing length is acceptable
@@ -1188,125 +1248,125 @@ SUBMODULE (particles_id) particles_sph_variables
     THIS% h= h
     THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
 
-    !PRINT *
-    !PRINT *, "nfinal= ", nfinal
-    ll_cell_loop: DO ill= 1, nfinal
-
-      itot= nprev + ill
-      IF( nic(itot) == 0 ) CYCLE
-
-      particle_loop: DO l= lpart(itot), rpart(itot)
-
-        a=         iorig(l)
-
-        ha=        h(a)
-        ha_1=      1.0D0/ha
-        ha_3=      ha_1*ha_1*ha_1
-
-        xa=        pos_u(1,a)
-        ya=        pos_u(2,a)
-        za=        pos_u(3,a)
-
-        ! initialize correction matrix
-        mat_xx=    0.D0
-        mat_xy=    0.D0
-        mat_xz=    0.D0
-        mat_yy=    0.D0
-        mat_yz=    0.D0
-        mat_zz=    0.D0
-
-        cnt1= 0
-        cnt2= 0
-        cand_loop: DO k= 1, ncand(ill)
-
-          b=      all_clists(ill)%list(k)
-
-          IF( b == a )THEN
-            cnt1= cnt1 + 1
-          ENDIF
-          IF( xa == pos_u(1,b) .AND. ya == pos_u(2,b) .AND. za == pos_u(3,b) &
-          )THEN
-            cnt2= cnt2 + 1
-          ENDIF
-
-          ! Distances (ATTENTION: flatspace version !!!)
-          dx=     xa - pos_u(1,b)
-          dy=     ya - pos_u(2,b)
-          dz=     za - pos_u(3,b)
-          va=     SQRT(dx*dx + dy*dy + dz*dz)*ha_1
-
-          !IF( dx == 0 .AND. dy == 0 .AND. dz == 0 )THEN
-          !  PRINT *, "va=", va
-          !  PRINT *, "dz=", dx
-          !  PRINT *, "dy=", dy
-          !  PRINT *, "dz=", dz
-          !  PRINT *, "xa=", xa
-          !  PRINT *, "ya=", ya
-          !  PRINT *, "za=", za
-          !  PRINT *, "pos_u(1,b)", pos_u(1,b)
-          !  PRINT *, "pos_u(2,b)", pos_u(2,b)
-          !  PRINT *, "pos_u(3,b)", pos_u(3,b)
-          !  STOP
-          !ENDIF
-
-          ! get interpolation indices
-          inde=  MIN(INT(va*dv_table_1),n_tab_entry)
-          index1= MIN(inde + 1,n_tab_entry)
-
-          ! get tabulated values
-          Wi=     W_no_norm(inde)
-          Wi1=    W_no_norm(index1)
-
-          ! interpolate
-          dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
-          Wab_ha= Wi + (Wi1 - Wi)*dvv
-
-          ! "correction matrix" for derivs
-          Wdx=    Wab_ha*dx
-          Wdy=    Wab_ha*dy
-          Wdz=    Wab_ha*dz
-          mat_xx= mat_xx + Wdx*dx
-          mat_xy= mat_xy + Wdx*dy
-          mat_xz= mat_xz + Wdx*dz
-          mat_yy= mat_yy + Wdy*dy
-          mat_yz= mat_yz + Wdy*dz
-          mat_zz= mat_zz + Wdz*dz
-
-        ENDDO cand_loop
-
-        ! correction matrix
-        mat(1,1)= mat_xx
-        mat(2,1)= mat_xy
-        mat(3,1)= mat_xz
-
-        mat(1,2)= mat_xy
-        mat(2,2)= mat_yy
-        mat(3,2)= mat_yz
-
-        mat(1,3)= mat_xz
-        mat(2,3)= mat_yz
-        mat(3,3)= mat_zz
-
-        ! invert it
-        CALL invert_3x3_matrix(mat,mat_1,invertible_matrix)
-
-       ! IF( .NOT.invertible_matrix )THEN
-       !   PRINT *, "a= ", a
-       !   PRINT *, "h(a)= ", h(a)
-       !   PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
-       !   PRINT *, "nprev= ", nprev
-       !   PRINT *, "ill= ", ill
-       !   PRINT *, "itot= ", itot
-       !   PRINT *, "ncand(ill)= ", ncand(ill)
-       !   PRINT *, "cnt1= ", cnt1
-       !   PRINT *, "cnt2= ", cnt2
-       !   PRINT *
-       !   STOP
-       ! ENDIF
-
-      ENDDO particle_loop
-
-    ENDDO ll_cell_loop
+ !   !PRINT *
+ !   !PRINT *, "nfinal= ", nfinal
+ !   ll_cell_loop: DO ill= 1, nfinal
+ !
+ !     itot= nprev + ill
+ !     IF( nic(itot) == 0 ) CYCLE
+ !
+ !     particle_loop: DO l= lpart(itot), rpart(itot)
+ !
+ !       a=         iorig(l)
+ !
+ !       ha=        h(a)
+ !       ha_1=      1.0D0/ha
+ !       ha_3=      ha_1*ha_1*ha_1
+ !
+ !       xa=        pos_u(1,a)
+ !       ya=        pos_u(2,a)
+ !       za=        pos_u(3,a)
+ !
+ !       ! initialize correction matrix
+ !       mat_xx=    0.D0
+ !       mat_xy=    0.D0
+ !       mat_xz=    0.D0
+ !       mat_yy=    0.D0
+ !       mat_yz=    0.D0
+ !       mat_zz=    0.D0
+ !
+ !       cnt1= 0
+ !       cnt2= 0
+ !       cand_loop: DO k= 1, ncand(ill)
+ !
+ !         b=      all_clists(ill)%list(k)
+ !
+ !         IF( b == a )THEN
+ !           cnt1= cnt1 + 1
+ !         ENDIF
+ !         IF( xa == pos_u(1,b) .AND. ya == pos_u(2,b) .AND. za == pos_u(3,b) &
+ !         )THEN
+ !           cnt2= cnt2 + 1
+ !         ENDIF
+ !
+ !         ! Distances (ATTENTION: flatspace version !!!)
+ !         dx=     xa - pos_u(1,b)
+ !         dy=     ya - pos_u(2,b)
+ !         dz=     za - pos_u(3,b)
+ !         va=     SQRT(dx*dx + dy*dy + dz*dz)*ha_1
+ !
+ !         !IF( dx == 0 .AND. dy == 0 .AND. dz == 0 )THEN
+ !         !  PRINT *, "va=", va
+ !         !  PRINT *, "dz=", dx
+ !         !  PRINT *, "dy=", dy
+ !         !  PRINT *, "dz=", dz
+ !         !  PRINT *, "xa=", xa
+ !         !  PRINT *, "ya=", ya
+ !         !  PRINT *, "za=", za
+ !         !  PRINT *, "pos_u(1,b)", pos_u(1,b)
+ !         !  PRINT *, "pos_u(2,b)", pos_u(2,b)
+ !         !  PRINT *, "pos_u(3,b)", pos_u(3,b)
+ !         !  STOP
+ !         !ENDIF
+ !
+ !         ! get interpolation indices
+ !         inde=  MIN(INT(va*dv_table_1),n_tab_entry)
+ !         index1= MIN(inde + 1,n_tab_entry)
+ !
+ !         ! get tabulated values
+ !         Wi=     W_no_norm(inde)
+ !         Wi1=    W_no_norm(index1)
+ !
+ !         ! interpolate
+ !         dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
+ !         Wab_ha= Wi + (Wi1 - Wi)*dvv
+ !
+ !         ! "correction matrix" for derivs
+ !         Wdx=    Wab_ha*dx
+ !         Wdy=    Wab_ha*dy
+ !         Wdz=    Wab_ha*dz
+ !         mat_xx= mat_xx + Wdx*dx
+ !         mat_xy= mat_xy + Wdx*dy
+ !         mat_xz= mat_xz + Wdx*dz
+ !         mat_yy= mat_yy + Wdy*dy
+ !         mat_yz= mat_yz + Wdy*dz
+ !         mat_zz= mat_zz + Wdz*dz
+ !
+ !       ENDDO cand_loop
+ !
+ !       ! correction matrix
+ !       mat(1,1)= mat_xx
+ !       mat(2,1)= mat_xy
+ !       mat(3,1)= mat_xz
+ !
+ !       mat(1,2)= mat_xy
+ !       mat(2,2)= mat_yy
+ !       mat(3,2)= mat_yz
+ !
+ !       mat(1,3)= mat_xz
+ !       mat(2,3)= mat_yz
+ !       mat(3,3)= mat_zz
+ !
+ !       ! invert it
+ !       CALL invert_3x3_matrix(mat,mat_1,invertible_matrix)
+ !
+ !      ! IF( .NOT.invertible_matrix )THEN
+ !      !   PRINT *, "a= ", a
+ !      !   PRINT *, "h(a)= ", h(a)
+ !      !   PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
+ !      !   PRINT *, "nprev= ", nprev
+ !      !   PRINT *, "ill= ", ill
+ !      !   PRINT *, "itot= ", itot
+ !      !   PRINT *, "ncand(ill)= ", ncand(ill)
+ !      !   PRINT *, "cnt1= ", cnt1
+ !      !   PRINT *, "cnt2= ", cnt2
+ !      !   PRINT *
+ !      !   STOP
+ !      ! ENDIF
+ !
+ !     ENDDO particle_loop
+ !
+ !   ENDDO ll_cell_loop
 
     !
     !-- Compute the proper baryon number density with kernel interpolation

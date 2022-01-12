@@ -56,9 +56,9 @@ MODULE particles_id
   !                                                         *
   !              Definition of TYPE particles               *
   !                                                         *
-  ! This class places the SPH particles, imports            *
+  ! This class places the |sph| particles, imports            *
   ! the |id| on the particle positions, stores              *
-  ! it, computes the relevant SPH fields and exports it to  *
+  ! it, computes the relevant |sph| fields and exports it to  *
   ! both a formatted, and a binary file for evolution       *
   !                                                         *
   !**********************************************************
@@ -94,9 +94,9 @@ MODULE particles_id
     !> 2-D array storing the particle positions
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     !> 1-D array storing the position of the particles on the x axis for S 1
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x1
+    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x1
     !> 1-D array storing the position of the particles on the x axis for NS2
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x2
+    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x2
     !& 1-D array storing the baryon mass density in the fluid frame
     !  \([\mathrm{kg}\,\mathrm{m}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: baryon_density_parts
@@ -306,8 +306,13 @@ MODULE particles_id
     !  in the \(r\) direction, `.FALSE.` otherwise
     LOGICAL:: randomize_r
     !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
-    !  particles on star 1, `.FALSE.` otherwise
+    !  particles, `.FALSE.` otherwise
     LOGICAL, DIMENSION(:), ALLOCATABLE:: apm_iterate
+    !& `.TRUE.` to allow the particles to move where the density is 0 during the
+    !  Artificial Pressure Method (APM) iteration. This can be useful when the
+    !  system has an irregular geometry, as, for example, an ejecta
+    !  `.FALSE.` otherwise
+    LOGICAL, DIMENSION(:), ALLOCATABLE:: use_atmosphere
     !& `.TRUE.` if the baryon number per particle \(\nu\) has to be read from the
     !  formatted file containing the particle positions, `.FALSE.` otherwise
     LOGICAL:: read_nu

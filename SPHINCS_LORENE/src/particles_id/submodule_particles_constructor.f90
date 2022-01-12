@@ -59,7 +59,7 @@ SUBMODULE (particles_id) particles_constructor
     !**************************************************
 
     !USE NaNChecker, ONLY: Check_Array_for_NAN
-    USE constants,      ONLY: Msun_geo, km2m, amu, pi
+    USE constants,      ONLY: Msun_geo, km2m, amu, pi, half
     USE NR,             ONLY: indexx
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
@@ -1071,6 +1071,12 @@ SUBMODULE (particles_id) particles_constructor
                     filename_apm_results, check_negative_hydro )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
+        parts_all(i_matter)% pmass_i = &
+                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )*amu
+
+        PRINT *, "average nu= ", &
+          SUM(parts_all(i_matter)% nu_i, DIM= 1)/SIZE(parts_all(i_matter)% nu_i)
+
         PRINT *, "** Particles placed on matter object", i_matter, &
                  "according to the APM."
         PRINT *
@@ -1125,8 +1131,10 @@ SUBMODULE (particles_id) particles_constructor
             parts_all(2)% pos_i(2,:)=   parts_all(1)% pos_i(2,:)
             parts_all(2)% pos_i(3,:)=   parts_all(1)% pos_i(3,:)
             parts_all(2)% pvol_i    =   parts_all(1)% pvol_i
+            parts_all(2)% h_i       =   parts_all(1)% h_i
             parts_all(2)% pmass_i   =   parts_all(1)% pmass_i
-            parts% npart_i(2)= parts% npart_i(1)
+            parts_all(2)% nu_i      =   parts_all(1)% nu_i
+            parts% npart_i(2)       = parts% npart_i(1)
 
             PRINT *, "** Particles placed on star 1 according to the APM", &
                      " reflected about the yz plane onto star 2."
@@ -1138,9 +1146,6 @@ SUBMODULE (particles_id) particles_constructor
 
         ENDIF equal_masses_apm
 
-        parts_all(i_matter)% pmass_i = &
-                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )*amu
-
       ENDIF
 
    !   END ASSOCIATE
@@ -1150,8 +1155,44 @@ SUBMODULE (particles_id) particles_constructor
     parts% npart= SUM( parts% npart_i )
 
     !
-    !-- Reassign TYPE member variables
+    !-- Reassign TYPE member variables after the APM iteration
     !
+
+    IF( ALLOCATED(parts% h) ) DEALLOCATE( parts% h )
+    ALLOCATE( parts% h( parts% npart ), &
+              STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                // "place_particles_. ", &
+                "The error message is", err_msg
+       STOP
+    ENDIF
+
+    DO i_matter= 1, parts% n_matter, 1
+      IF( apm_iterate(i_matter) )THEN
+        parts% h( parts% npart_i(i_matter-1) + 1: &
+                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                      parts_all(i_matter)% h_i
+      ENDIF
+    ENDDO
+
+    IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
+      ALLOCATE( parts% nu( parts% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+
+    DO i_matter= 1, parts% n_matter, 1
+      IF( apm_iterate(i_matter) )THEN
+        parts% nu( parts% npart_i(i_matter-1) + 1: &
+                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                      parts_all(i_matter)% nu_i
+      ENDIF
+    ENDDO
 
     DEALLOCATE( parts% pos )
       ALLOCATE( parts% pos( 3, parts% npart ), &
@@ -1204,38 +1245,6 @@ SUBMODULE (particles_id) particles_constructor
         parts% pmass( parts% npart_i(i_matter-1) + 1: &
                       parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
                       parts_all(i_matter)% pmass_i
-      ENDDO
-
-      IF( ALLOCATED(parts% h) ) DEALLOCATE( parts% h )
-        ALLOCATE( parts% h( parts% npart ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-
-      DO i_matter= 1, parts% n_matter, 1
-        parts% h( parts% npart_i(i_matter-1) + 1: &
-                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                      parts_all(i_matter)% h_i
-      ENDDO
-
-      IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
-        ALLOCATE( parts% nu( parts% npart ), &
-                  STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                    // "place_particles_. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-
-      DO i_matter= 1, parts% n_matter, 1
-        parts% nu( parts% npart_i(i_matter-1) + 1: &
-                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                      parts_all(i_matter)% nu_i
       ENDDO
 
     ENDIF particles_from_file_no_apm
@@ -1298,6 +1307,8 @@ SUBMODULE (particles_id) particles_constructor
     !-----------------------------------------------------------------------!
     ! If an atmosphere was used during the APM iteration, and kept, assign  !
     ! the minimum specific internal energy and the minimum velocity, to it. !
+    ! N.B. The velocity has an hard-wired direction to reproduce counter-   !
+    !      clockwise rotation.                                              !
     !-----------------------------------------------------------------------!
 
     matter_objects_atmo_loop: DO i_matter= 1, parts% n_matter, 1
@@ -1355,14 +1366,15 @@ SUBMODULE (particles_id) particles_constructor
                       )
 
             parts% specific_energy_parts(a)= min_eps
+
             parts% v_euler_parts_x(a)      = &
-              ( min_vel*COS(theta_a)*SIN(phi_a) + parts% shift_parts_x(a) ) &
+              ( min_vel*SIN(theta_a - pi*half)*COS(phi_a) + parts% shift_parts_x(a) ) &
               /parts% lapse_parts(a)
             parts% v_euler_parts_y(a)      = &
-              ( min_vel*SIN(theta_a)*SIN(phi_a) + parts% shift_parts_y(a) ) &
+              ( min_vel*SIN(theta_a - pi*half)*SIN(phi_a) + parts% shift_parts_y(a) ) &
               /parts% lapse_parts(a)
             parts% v_euler_parts_z(a)      = &
-              ( min_vel*COS(theta_a) + parts% shift_parts_z(a) ) &
+              ( min_vel*COS(theta_a - pi*half) + parts% shift_parts_z(a) ) &
               /parts% lapse_parts(a)
 
           ENDIF

@@ -107,7 +107,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
           grid_coords(i,j,k,1)= DBLE(i) - DBLE(THIS% nx_grid)/2.0D0
           grid_coords(i,j,k,2)= DBLE(j) - DBLE(THIS% ny_grid)/2.0D0
           grid_coords(i,j,k,3)= DBLE(k)/2.0D0! - DBLE(THIS% nz_grid)/2.0D0
-          foo_grid(i,j,k)= (grid_coords(i,j,k,3)  )**0.0D0
+          foo_grid(i,j,k)= 1.0D0!(grid_coords(i,j,k,3)  )**0.0D0
 
         ENDDO
       ENDDO
@@ -135,7 +135,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                     THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                     grid_coords, foo_grid, &
                     equator_symmetry= .TRUE., parity= 1.0D0 )
-      foo_exact(i)= (coords(i,3) )**0.0D0
+      foo_exact(i)= 1.0D0!(coords(i,3) )**0.0D0
     ENDDO
 
     min_eps= HUGE(1.0D0)
@@ -272,9 +272,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
             ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
     IF( ios > 0 )THEN
-    PRINT *, "...error when opening " // TRIM(finalnamefile), &
-             ". The error message is", err_msg
-    STOP
+      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
     ENDIF
 
     DO i= 1, n, 1
@@ -298,7 +298,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     CLOSE( UNIT= 2 )
 
-    STOP
+    !STOP
 
     energy_density = 0.0D0
     pressure       = 0.0D0
