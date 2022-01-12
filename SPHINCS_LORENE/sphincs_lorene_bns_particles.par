@@ -29,7 +29,7 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm50.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm1500-atm.dat"
-          "apm-pos-nu_EJECT_1e-3_apr4_500k-apm500-atm.dat"
+          "apm-pos-nu_EJECT_1e-3_apr4_500k-apm100-atm.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -51,7 +51,7 @@ reflect_particles_x= .TRUE.
 !----------------------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers;
 ! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 1000000 !1200000 !2800000
+npart_des= 500000 !1200000 !2800000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
@@ -125,7 +125,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz

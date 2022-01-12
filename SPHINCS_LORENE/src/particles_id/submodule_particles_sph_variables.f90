@@ -1089,7 +1089,6 @@ SUBMODULE (particles_id) particles_sph_variables
     PRINT *
     !CALL OMP_SET_NUM_THREADS(80)
     cnt1= 0
-    !THIS% nu= 1.0D0
     PRINT *, SUM(THIS% nu, DIM= 1)/SIZE(THIS% nu)
     DO
 
@@ -1577,19 +1576,21 @@ SUBMODULE (particles_id) particles_sph_variables
                 MINVAL( THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
                 *kg2g/(m2cm**3), " g cm^{-3}"
       PRINT *, " * Ratio between the two=", &
-               MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM= 1)/ &
-               MINVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM= 1)
+               MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1)/ &
+               MINVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1)
       PRINT *
 
-      PRINT *, " * Maximum nlrf on object", i_matter, "=", &
-               MAXVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 ), &
-               "baryon Msun_geo^{-3}"
-      PRINT *, " * Minimum nlrf on object", i_matter, "=", &
-               MINVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 ), &
-               "baryon Msun_geo^{-3}"
+      PRINT *, " * Maximum interpolated nlrf on object", i_matter, "=", &
+               MAXVAL( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu, DIM= 1 ), &
+               " m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Minimum interpolated nlrf on object", i_matter, "=", &
+               MINVAL( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu, DIM= 1 ), &
+               " m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
       PRINT *, " * Ratio between the two=", &
-               MAXVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 )/ &
-               MINVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 )
+               MAXVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )
       PRINT *
 
       THIS% nuratio_i(i_matter)= MAXVAL( THIS% nu(npart_in:npart_fin), DIM= 1 )&

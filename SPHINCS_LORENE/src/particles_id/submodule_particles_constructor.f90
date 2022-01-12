@@ -59,7 +59,7 @@ SUBMODULE (particles_id) particles_constructor
     !**************************************************
 
     !USE NaNChecker, ONLY: Check_Array_for_NAN
-    USE constants,      ONLY: Msun_geo, km2m, amu, pi, half
+    USE constants,      ONLY: Msun_geo, km2m, amu, pi, half, third
     USE NR,             ONLY: indexx
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
@@ -615,7 +615,7 @@ SUBMODULE (particles_id) particles_constructor
         ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
                    npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
 
-          pvol_tmp= 0.0D0
+          pvol_tmp= 0.D0
           DO a= npart_in, npart_fin - 1, 1
 
             pvol_tmp= pvol_tmp + ABS( parts% pos(3,a + 1) &
@@ -624,7 +624,7 @@ SUBMODULE (particles_id) particles_constructor
           ENDDO
           pvol_tmp= pvol_tmp/( npart_i_tmp(itr) - 1 )
 
-          parts% pvol(npart_in:npart_fin)= 2.0D0*pvol_tmp**3.0D0
+          parts% pvol(npart_in:npart_fin)= 2.D0*pvol_tmp**3.D0
 
           IF( read_nu ) parts% pmass(npart_in:npart_fin)= &
                         parts% nu(npart_in:npart_fin)*amu
@@ -638,12 +638,25 @@ SUBMODULE (particles_id) particles_constructor
         ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
                    npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
 
-          parts_all(itr)% pos_i= parts% pos( :, npart_in:npart_fin )
+          parts_all(itr)% pos_i = parts% pos( :, npart_in:npart_fin )
           parts_all(itr)% pvol_i= parts% pvol( npart_in:npart_fin )
+          parts_all(itr)% h_i   = (parts_all(itr)% pvol_i)**third
 
           IF( read_nu )THEN
-            parts_all(itr)% nu_i= parts% nu( npart_in:npart_fin )
-          ENDIF
+
+            parts_all(itr)% nu_i   = parts% nu( npart_in:npart_fin )
+            parts_all(itr)% pmass_i= parts% pmass( npart_in:npart_fin )
+
+            PRINT *, " * Maximum n. baryon per particle (nu) on object", itr, &
+                                "=", MAXVAL( parts_all(itr)% nu_i, DIM= 1 )
+            PRINT *, " * Minimum n. baryon per particle (nu) on object", itr, &
+                                "=", MINVAL( parts_all(itr)% nu_i, DIM= 1 )
+            PRINT *, " * Ratio between the two=", &
+                     MAXVAL( parts_all(itr)% nu_i, DIM= 1 )&
+                    /MINVAL( parts_all(itr)% nu_i, DIM= 1 )
+            PRINT *
+
+          ENDIF 
 
         END ASSOCIATE
 
@@ -1134,7 +1147,7 @@ SUBMODULE (particles_id) particles_constructor
             parts_all(2)% h_i       =   parts_all(1)% h_i
             parts_all(2)% pmass_i   =   parts_all(1)% pmass_i
             parts_all(2)% nu_i      =   parts_all(1)% nu_i
-            parts% npart_i(2)       = parts% npart_i(1)
+            parts% npart_i(2)       =   parts% npart_i(1)
 
             PRINT *, "** Particles placed on star 1 according to the APM", &
                      " reflected about the yz plane onto star 2."
@@ -1179,12 +1192,12 @@ SUBMODULE (particles_id) particles_constructor
     IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
       ALLOCATE( parts% nu( parts% npart ), &
                 STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                // "place_particles_. ", &
+                "The error message is", err_msg
+       STOP
+    ENDIF
 
     DO i_matter= 1, parts% n_matter, 1
       IF( apm_iterate(i_matter) )THEN
@@ -1197,12 +1210,12 @@ SUBMODULE (particles_id) particles_constructor
     DEALLOCATE( parts% pos )
       ALLOCATE( parts% pos( 3, parts% npart ), &
                 STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pos in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for array pos in SUBROUTINE" &
+                // "place_particles_. ", &
+                "The error message is", err_msg
+       STOP
+    ENDIF
 
     DO i_matter= 1, parts% n_matter, 1
       parts% pos( :, parts% npart_i(i_matter-1) + 1: &
@@ -1229,6 +1242,22 @@ SUBMODULE (particles_id) particles_constructor
         parts% pvol( parts% npart_i(i_matter-1) + 1: &
                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
                      (parts_all(i_matter)% h_i)**3.0D0
+      ENDDO
+
+      IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
+        ALLOCATE( parts% nu( parts% npart ), &
+                  STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+                  // "place_particles_. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+
+      DO i_matter= 1, parts% n_matter, 1
+          parts% nu( parts% npart_i(i_matter-1) + 1: &
+                        parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                        parts_all(i_matter)% nu_i
       ENDDO
 
       DEALLOCATE( parts% pmass )
