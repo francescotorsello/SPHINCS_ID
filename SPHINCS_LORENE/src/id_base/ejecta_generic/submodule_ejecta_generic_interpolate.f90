@@ -107,7 +107,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
           grid_coords(i,j,k,1)= DBLE(i) - DBLE(THIS% nx_grid)/2.D0
           grid_coords(i,j,k,2)= DBLE(j) - DBLE(THIS% ny_grid)/2.D0
           grid_coords(i,j,k,3)= DBLE(k)/2.D0! - DBLE(THIS% nz_grid)/2.D0
-          foo_grid(i,j,k)= 1.D0!(grid_coords(i,j,k,3)  )**0.D0
+          foo_grid(i,j,k)= (grid_coords(i,j,k,3))**3.D0
 
         ENDDO
       ENDDO
@@ -130,8 +130,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       foo(i)= trilinear_interpolation( coords(i,1), coords(i,2), coords(i,3), &
                     THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                     grid_coords, foo_grid, &
-                    equator_symmetry= .TRUE., parity= 1.D0, debug= .TRUE. )
-      foo_exact(i)= 1.D0!(coords(i,3) )**0.D0
+                    equator_symmetry= .FALSE., parity= -1.D0, debug= .TRUE. )
+      foo_exact(i)= (coords(i,3))**3.D0
     ENDDO
 
     min_eps= HUGE(1.D0)
@@ -147,15 +147,18 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       u_euler_x(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,1), &
-                                equator_symmetry= .TRUE., parity= 1.D0 )
+                                equator_symmetry= .TRUE., parity= 1.D0, &
+                                debug= .TRUE. )
       u_euler_y(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,2), &
-                                equator_symmetry= .TRUE., parity= 1.D0 )
+                                equator_symmetry= .TRUE., parity= 1.D0, &
+                                debug= .TRUE. )
       u_euler_z(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,3), &
-                                equator_symmetry= .TRUE., parity= -1.D0 )
+                                equator_symmetry= .TRUE., parity= -1.D0, &
+                                debug= .TRUE. )
 
     !  IF( u_euler_x(i) == 0 .AND. u_euler_y(i) == 0 &
     !      .AND. u_euler_z(i) == 0 )THEN
@@ -168,7 +171,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% specific_energy, &
                                 equator_symmetry= .TRUE., parity= 1.D0, &
-                                debug= .FALSE. )
+                                debug= .TRUE. )
 
       IF( baryon_density(i) == 0.D0 )THEN
         specific_energy(i)= 0.D0
@@ -294,7 +297,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     CLOSE( UNIT= 2 )
 
-    STOP
+    !STOP
 
     energy_density = 0.D0
     pressure       = 0.D0
@@ -401,7 +404,8 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     res= trilinear_interpolation( x, y, zp, &
                                   THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                   THIS% grid, THIS% baryon_mass_density, &
-                                  equator_symmetry= .TRUE., parity= 1.D0 )
+                                  equator_symmetry= .TRUE., parity= 1.D0, &
+                                  debug= .TRUE. )
 
     IF( x > 0.D0 )THEN
 
