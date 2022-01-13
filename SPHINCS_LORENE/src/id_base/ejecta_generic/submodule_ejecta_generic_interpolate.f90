@@ -130,7 +130,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       foo(i)= trilinear_interpolation( coords(i,1), coords(i,2), coords(i,3), &
                     THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                     grid_coords, foo_grid, &
-                    equator_symmetry= .FALSE., parity= -1.D0, debug= .TRUE. )
+                    equator_symmetry= .FALSE., parity= -1.D0, debug= .FALSE. )
       foo_exact(i)= (coords(i,3))**3.D0
     ENDDO
 
@@ -148,17 +148,17 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,1), &
                                 equator_symmetry= .TRUE., parity= 1.D0, &
-                                debug= .TRUE. )
+                                debug= .FALSE. )
       u_euler_y(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,2), &
                                 equator_symmetry= .TRUE., parity= 1.D0, &
-                                debug= .TRUE. )
+                                debug= .FALSE. )
       u_euler_z(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,3), &
                                 equator_symmetry= .TRUE., parity= -1.D0, &
-                                debug= .TRUE. )
+                                debug= .FALSE. )
 
     !  IF( u_euler_x(i) == 0 .AND. u_euler_y(i) == 0 &
     !      .AND. u_euler_z(i) == 0 )THEN
@@ -171,7 +171,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% specific_energy, &
                                 equator_symmetry= .TRUE., parity= 1.D0, &
-                                debug= .TRUE. )
+                                debug= .FALSE. )
 
       IF( baryon_density(i) == 0.D0 )THEN
         specific_energy(i)= 0.D0
@@ -405,7 +405,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                                   THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                   THIS% grid, THIS% baryon_mass_density, &
                                   equator_symmetry= .TRUE., parity= 1.D0, &
-                                  debug= .TRUE. )
+                                  debug= .FALSE. )
 
     IF( x > 0.D0 )THEN
 
