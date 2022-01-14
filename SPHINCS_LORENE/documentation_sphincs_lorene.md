@@ -10,7 +10,7 @@ docmark_alt: #
 predocmark: >
 predocmark_alt: &
 source: true
-graph: true
+graph: false
 sort: alpha
 src_dir: ./src
 media_dir: ./media
@@ -51,7 +51,11 @@ Currently, it produces initial data for binary neutron star mergers and differen
 
 Presently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN or MAGMA2. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN or MAGMA2.
 
-SPHINCS_ID is distributed **WITHOUT ANY WARRANTY**; even without the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See GNU GPLv3 for more details.
+The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
+
+---
+
+SPHINCS_ID is distributed under the GNU GPLv3 license, and **WITHOUT ANY WARRANTY**; even without the implied warranty of **MERCHANTABILITY** or **FITNESS FOR A PARTICULAR PURPOSE**. See GNU GPLv3 for more details.
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://lorene.obspm.fr/>

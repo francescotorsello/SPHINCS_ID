@@ -27,11 +27,11 @@ MODULE ejecta_generic
   IMPLICIT NONE
 
 
-  !*****************************
-  !                            *
-  !  Definition of TYPE ejecta *
-  !                            *
-  !*****************************
+  !******************************
+  !                             *
+  !  Definition of TYPE ejecta  *
+  !                             *
+  !******************************
 
   TYPE, EXTENDS(idbase):: ejecta
   !# TYPE for |id| for |sphincsbssn| prepared on a Cartesian, uniform grid
@@ -193,8 +193,11 @@ MODULE ejecta_generic
 
     PROCEDURE:: derived_type_constructor => construct_ejecta
 
-    !PROCEDURE(get_eos_id_int), DEFERRED:: get_eos_id
-    !! Returns an integer that identifies the equation of state
+    PROCEDURE:: allocate_gridid_memory
+    !! Allocates memory for the [[ejecta]] member arrays
+
+    PROCEDURE:: deallocate_gridid_memory
+    !! Deallocates memory for the [[ejecta]] member arrays
 
     PROCEDURE:: read_id_full      => interpolate_id_full
     PROCEDURE:: read_id_spacetime => interpolate_id_spacetime
@@ -377,17 +380,37 @@ MODULE ejecta_generic
     END SUBROUTINE destruct_ejecta
 
 
+    MODULE SUBROUTINE allocate_gridid_memory( THIS, n_matter )
+    !! Allocates allocatable arrays member of a [[ejecta]] object
+
+      CLASS(ejecta), INTENT( IN OUT ):: THIS
+      !! [[ejecta]] object which this PROCEDURE is a member of
+      INTEGER, INTENT( IN ):: n_matter
+      !! Number of matter objects
+
+    END SUBROUTINE allocate_gridid_memory
+
+
+    MODULE SUBROUTINE deallocate_gridid_memory( THIS )
+    !! Deallocates allocatable arrays member of a [[ejecta]] object
+
+      CLASS(ejecta), INTENT( IN OUT ):: THIS
+      !! [[ejecta]] object which this PROCEDURE is a member of
+
+    END SUBROUTINE deallocate_gridid_memory
+
+
     MODULE SUBROUTINE interpolate_id_full( THIS, n, x, y, z,&
-                                     lapse, &
-                                     shift_x, shift_y, shift_z, &
-                                     g_xx, g_xy, g_xz, &
-                                     g_yy, g_yz, g_zz, &
-                                     k_xx, k_xy, k_xz, &
-                                     k_yy, k_yz, k_zz, &
-                                     baryon_density, &
-                                     energy_density, &
-                                     specific_energy, &
-                                     u_euler_x, u_euler_y, u_euler_z )
+                                           lapse, &
+                                           shift_x, shift_y, shift_z, &
+                                           g_xx, g_xy, g_xz, &
+                                           g_yy, g_yz, g_zz, &
+                                           k_xx, k_xy, k_xz, &
+                                           k_yy, k_yz, k_zz, &
+                                           baryon_density, &
+                                           energy_density, &
+                                           specific_energy, &
+                                           u_euler_x, u_euler_y, u_euler_z )
     !# Stores the ID in non [[ejecta]]-member arrays with the same
     !  shape as the [[ejecta]] member arrays
 
@@ -612,6 +635,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_gamma( THIS )
+    !! Interface to [[ejecta_generic:get_gamma]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -622,6 +646,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_kappa( THIS )
+    !! Interface to [[ejecta_generic:get_kappa]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -632,6 +657,7 @@ MODULE ejecta_generic
 
 
     MODULE FUNCTION get_eos( THIS, i_matter )
+    !! Interface to [[ejecta_generic:get_eos]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -643,6 +669,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_npeos( THIS )
+    !! Interface to [[ejecta_generic:get_npeos]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -653,6 +680,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_gamma0( THIS )
+    !! Interface to [[ejecta_generic:get_gamma0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -663,6 +691,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_gamma1( THIS )
+    !! Interface to [[ejecta_generic:get_gamma1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -673,6 +702,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_gamma2( THIS )
+    !! Interface to [[ejecta_generic:get_gamma2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -683,6 +713,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_gamma3( THIS )
+    !! Interface to [[ejecta_generic:get_gamma3]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -693,6 +724,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_kappa0( THIS )
+    !! Interface to [[ejecta_generic:get_kappa0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -703,6 +735,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_kappa1( THIS )
+    !! Interface to [[ejecta_generic:get_kappa1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -713,6 +746,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_kappa2( THIS )
+    !! Interface to [[ejecta_generic:get_kappa2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -723,6 +757,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_kappa3( THIS )
+    !! Interface to [[ejecta_generic:get_kappa3]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -733,6 +768,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_logP1( THIS )
+    !! Interface to [[ejecta_generic:get_logP1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -743,6 +779,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_logRho0( THIS )
+    !! Interface to [[ejecta_generic:get_logRho0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -753,6 +790,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_logRho1( THIS )
+    !! Interface to [[ejecta_generic:get_logRho1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -763,6 +801,7 @@ MODULE ejecta_generic
 
 
     MODULE PURE FUNCTION get_logRho2( THIS )
+    !! Interface to [[ejecta_generic:get_logRho2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -773,6 +812,7 @@ MODULE ejecta_generic
 
 
     MODULE FUNCTION get_eos_ejectaid( THIS )
+    !! Interface to [[ejecta_generic:get_eos_ejectaid]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS
@@ -783,6 +823,7 @@ MODULE ejecta_generic
 
 
     MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
+    !! Interface to [[ejecta_generic:get_eos_parameters]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT( IN ):: THIS

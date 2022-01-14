@@ -7,9 +7,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_io
   !***************************************************
   !
   !# This submodule contains the implementation of the
-  !  methods of TYPE diffstarbase that handle I/O (input/output)
+  !  methods of TYPE ejecta that handle I/O (input/output)
   !
-  !  FT 19.11.2021
+  !  FT xx.11.2021
   !
   !***************************************************
 
@@ -32,8 +32,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_io
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted
     !  file whose name is given as the optional argument `filename`
+    !  @todo to be implemented
     !
-    !  FT 19.11.2021
+    !  FT xx.11.2021
     !
     !************************************************
 

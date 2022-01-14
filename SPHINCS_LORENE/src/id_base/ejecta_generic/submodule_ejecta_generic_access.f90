@@ -7,10 +7,10 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
   !***************************************************
   !
   !# The module contains the implementation of the
-  !  methods of TYPE diffstarbase that allow to
+  !  methods of TYPE ejecta that allow to
   !  access PRIVATE members.
   !
-  !  FT 22.10.2021
+  !  FT xx.11.2021
   !
   !***************************************************
 
@@ -32,7 +32,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the baryon mass of the system [\(M_\odot\)]
     !
-    !  FT 2.11.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -51,7 +51,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the radii of the system [\(L_\odot\)]
     !
-    !  FT 2.11.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -70,7 +70,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the center of the system [\(L_\odot\)]
     !
-    !  FT 2.11.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -89,7 +89,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the barycenter of the system [\(L_\odot\)]
     !
-    !  FT 2.11.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -108,7 +108,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the |eos| name of the system
     !
-    !  FT 2.11.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -134,7 +134,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !  polytropic index for polytropic EOS,
     !  not piecewise polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -153,7 +153,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !  polytropic constant for polytropic
     !  EOS, not piecewise polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -170,7 +170,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !
     !# Returns the identifier of the EOS for the system
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -185,11 +185,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[gamma0]], the crust's
+    !# Returns the value of [[ejecta:gamma0]], the crust's
     !  polytropic index for the system with piecewise
     !  polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -204,11 +204,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[gamma1]], the first
+    !# Returns the value of [[ejecta:gamma1]], the first
     !  polytropic index for the system with piecewise
     !  polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -223,11 +223,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[gamma2]], the second
+    !# Returns the value of [[ejecta:gamma2]], the second
     !  polytropic index for NS 2 with piecewise
     !  polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -242,11 +242,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[gamma3]], the third
+    !# Returns the value of [[ejecta:gamma3]], the third
     !  polytropic index for the system with piecewise
     !  polytropic EOS (innermost index)
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -261,11 +261,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[kappa0]], the crust's
+    !# Returns the value of [[ejecta:kappa0]], the crust's
     !  polytropic constant for the system with piecewise
     !  polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -280,11 +280,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[kappa1]], the first
+    !# Returns the value of [[ejecta:kappa1]], the first
     !  polytropic constant for the system with piecewise
     !  polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -299,11 +299,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[kappa2]], the second
+    !# Returns the value of [[ejecta:kappa2]], the second
     !  polytropic constant for the system with piecewise
     !  polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -318,11 +318,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[kappa3]], the third
+    !# Returns the value of [[ejecta:kappa3]], the third
     !  polytropic constant for the system with piecewise
     !  polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -337,12 +337,12 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[logp1]], the base 10
+    !# Returns the value of [[ejecta:logp1]], the base 10
     !  logarithm of the pressure where the gamma1
     !  polytrope starts, for the system with piecewise
     !  polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -358,12 +358,12 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[logRho0]], the base 10
+    !# Returns the value of [[ejecta:logRho0]], the base 10
     !  logarithm of the mass density where the
-    !  gamma1 polytrope starts, for the system with
+    !  \(\gamma_1\) polytrope starts, for the system with
     !  piecewise polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -378,12 +378,12 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[logRho1]], the base 10
+    !# Returns the value of [[ejecta:logRho1]], the base 10
     !  logarithm of the mass density where the
-    !  gamma2 polytrope starts, for the system with
+    !  \(\gamma_2\) polytrope starts, for the system with
     !  piecewise polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -398,12 +398,12 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
 
     !************************************************
     !
-    !# Returns the value of [[logRho2]], the base 10
+    !# Returns the value of [[ejecta:logRho2]], the base 10
     !  logarithm of the mass density where the
-    !  gamma3 polytrope starts, for the system with
+    !  \(\gamma_3\) polytrope starts, for the system with
     !  piecewise polytropic EOS
     !
-    !  FT 22.10.2021
+    !  FT xx.11.2021
     !
     !************************************************
 
@@ -436,6 +436,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
     !**************************************************
     !
     !# Returns the |eos| parameters of the system
+    !  @todo extend to handle single polytropes and tabulated
     !
     !  FT 19.11.2021
     !
