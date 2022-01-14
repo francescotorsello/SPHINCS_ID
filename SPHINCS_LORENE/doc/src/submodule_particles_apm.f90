@@ -27,13 +27,13 @@ SUBMODULE (particles_id) particles_apm
     !
     !# Compute the particle positions as follows:
     !
-    !   - 1. Take initial particle distribution as input
-    !   - 2. Assume that the particles have the same mass
-    !   - 3. Do the APM iteration so that the final
+    !   1. Take initial particle distribution as input
+    !   2. Assume that the particles have the same mass
+    !   3. Do the APM iteration so that the final
     !      SPH kernel estimate of the baryon mass
     !      density matches the baryon density in the
-    !      star as given by |lorene|
-    !   - 4. Correct the particle masses ONCE, in order
+    !      given |id|
+    !   4. Correct the particle masses ONCE, in order
     !      to match the density even better. Since we
     !      don't want a large mass ratio, we impose a
     !      maximum mass ratio when performing this
@@ -44,7 +44,8 @@ SUBMODULE (particles_id) particles_apm
     !  that kernel-estimate very well the mass density
     !  of the star, and has a low mass ratio.
     !
-    !  This procedure assigns positions and \(\nu\).
+    !  This procedure assigns positions, smoothing
+    !  lengths \(h\), and \(\nu\).
     !
     !  @warning
     !  If the outer layers of a star have a very low density

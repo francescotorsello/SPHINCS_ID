@@ -360,7 +360,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !
     !***********************************************
 
-    USE constants, ONLY: pi
+    USE constants, ONLY: pi, two
     USE numerics,  ONLY: trilinear_interpolation
     USE utility,   ONLY: spherical_from_cartesian
 
@@ -382,25 +382,6 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                                   equator_symmetry= .TRUE., parity= one, &
                                   debug= .FALSE. )
 
-  !  IF( x > zero )THEN
-  !
-  !    phi= ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) )
-  !
-  !  ELSEIF( x < zero )THEN
-  !
-  !    phi= ATAN( ( y - THIS% centers(1,2) )/( x - THIS% centers(1,1) ) ) + pi
-  !
-  !  ELSE
-  !
-  !    phi= pi/2.D0
-  !
-  !  ENDIF
-  !
-  !  theta= ACOS( ( z - THIS% centers(1,3) ) &
-  !        /SQRT( ( x - THIS% centers(1,1) )**2.D0 &
-  !             + ( y - THIS% centers(1,2) )**2.D0 &
-  !             + ( z - THIS% centers(1,3) )**2.D0 ) )
-
     CALL spherical_from_cartesian( x, y, z, &
                   THIS% centers(1,1), THIS% centers(1,2), THIS% centers(1,3), &
                                    r, theta, phi )
@@ -414,9 +395,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     z_ell= THIS% centers(1,3) &
            + MAX(THIS% sizes(1,5),THIS% sizes(1,6))*COS(theta)
 
-    IF( r >= SQRT( ( x_ell - THIS% centers(1,1) )**2.D0 &
-                 + ( y_ell - THIS% centers(1,2) )**2.D0 &
-                 + ( z_ell - THIS% centers(1,3) )**2.D0 ) ) res= zero
+    IF( r >= SQRT( ( x_ell - THIS% centers(1,1) )**two &
+                 + ( y_ell - THIS% centers(1,2) )**two &
+                 + ( z_ell - THIS% centers(1,3) )**two ) ) res= zero
 
     IF( res < zero ) res= zero
 
@@ -439,9 +420,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     !***********************************************
     !
-    !# Returns the |lorene| conformal factor to the
-    !  4th power, equal to the diagonal components
-    !  of the conformally flat spatial ADM metric.
+    !# Returns the spatial metric.
     !
     !  FT 19.11.2021
     !

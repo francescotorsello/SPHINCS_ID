@@ -6,7 +6,7 @@ MODULE utility
 
   !***********************************************************************
   !
-  !#  This MODULE contains useful miscellaneous PROCEDURES and variables
+  !# This MODULE contains useful miscellaneous PROCEDURES and variables
   !
   !***********************************************************************
 
@@ -59,7 +59,17 @@ MODULE utility
   CHARACTER(5)  :: zone
   !! Place where the run runs
   INTEGER, DIMENSION(8) :: values
-  !! @todo what are these?
+  !# An integer array of 8 elements described below:
+  !
+  !   1. The year as a 4-digit integer
+  !   2. The month as an integer from 1 to 12
+  !   3. The day of the moneth as an integer from 1 to 31
+  !   4. The time difference, in minutes, with respect to UTC
+  !      (Coordinated Universal Time)
+  !   5. The hour of the day as an integer from 1 to 23
+  !   6. The minutes of the hour as an integer from 1 to 59
+  !   7. The second of the minute as an integer from 0 to 60
+  !   8. The millisecond of the second as an integer from 0 to 999
   CHARACTER( LEN= 19 ):: run_id
   !! Identification string for the run
   CHARACTER( LEN= 19 ):: end_time
