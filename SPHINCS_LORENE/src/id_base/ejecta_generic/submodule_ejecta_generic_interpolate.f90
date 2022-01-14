@@ -14,6 +14,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
   !****************************************************
 
 
+  USE constants, ONLY: one
+
+
   IMPLICIT NONE
 
 
@@ -100,42 +103,42 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
                        grid_coords(THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, 3), &
                        coords(n,3)
 
-    DO i= 1, THIS% nx_grid, 1
-      DO j= 1, THIS% ny_grid, 1
-        DO k= 1, THIS% nz_grid, 1
+!    DO i= 1, THIS% nx_grid, 1
+!      DO j= 1, THIS% ny_grid, 1
+!        DO k= 1, THIS% nz_grid, 1
+!
+!          grid_coords(i,j,k,1)= DBLE(i) - DBLE(THIS% nx_grid)/2.D0
+!          grid_coords(i,j,k,2)= DBLE(j) - DBLE(THIS% ny_grid)/2.D0
+!          grid_coords(i,j,k,3)= DBLE(k)/2.D0! - DBLE(THIS% nz_grid)/2.D0
+!          foo_grid(i,j,k)= (grid_coords(i,j,k,3))**3.D0
+!
+!        ENDDO
+!      ENDDO
+!    ENDDO
+!
+!    foo= 0.D0
+!    DO i= 1, n, 1
+!
+!      !CALL RANDOM_NUMBER( xsgn )
+!      !CALL RANDOM_NUMBER( ysgn )
+!      !CALL RANDOM_NUMBER( zsgn )
+!      CALL RANDOM_NUMBER( xtmp )
+!      CALL RANDOM_NUMBER( ytmp )
+!      CALL RANDOM_NUMBER( ztmp )
+!
+!      coords(i,1)= xtmp*DBLE(THIS% nx_grid - 2) - DBLE(THIS% nx_grid)/2.D0 + 2.D0
+!      coords(i,2)= ytmp*DBLE(THIS% ny_grid - 2) - DBLE(THIS% ny_grid)/2.D0 + 2.D0
+!      coords(i,3)= (- DBLE(THIS% nz_grid)/2.D0 + one)*(one-ztmp) + (DBLE(THIS% nz_grid)/2.D0 - one)*ztmp
+!
+!      foo(i)= trilinear_interpolation( coords(i,1), coords(i,2), coords(i,3), &
+!                    THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+!                    grid_coords, foo_grid, &
+!                    equator_symmetry= .FALSE., parity= -one, debug= .FALSE. )
+!      foo_exact(i)= (coords(i,3))**3.D0
+!    ENDDO
 
-          grid_coords(i,j,k,1)= DBLE(i) - DBLE(THIS% nx_grid)/2.D0
-          grid_coords(i,j,k,2)= DBLE(j) - DBLE(THIS% ny_grid)/2.D0
-          grid_coords(i,j,k,3)= DBLE(k)/2.D0! - DBLE(THIS% nz_grid)/2.D0
-          foo_grid(i,j,k)= (grid_coords(i,j,k,3))**3.D0
-
-        ENDDO
-      ENDDO
-    ENDDO
-
-    foo= 0.D0
-    DO i= 1, n, 1
-
-      !CALL RANDOM_NUMBER( xsgn )
-      !CALL RANDOM_NUMBER( ysgn )
-      !CALL RANDOM_NUMBER( zsgn )
-      CALL RANDOM_NUMBER( xtmp )
-      CALL RANDOM_NUMBER( ytmp )
-      CALL RANDOM_NUMBER( ztmp )
-
-      coords(i,1)= xtmp*DBLE(THIS% nx_grid - 2) - DBLE(THIS% nx_grid)/2.D0 + 2.D0
-      coords(i,2)= ytmp*DBLE(THIS% ny_grid - 2) - DBLE(THIS% ny_grid)/2.D0 + 2.D0
-      coords(i,3)= (- DBLE(THIS% nz_grid)/2.D0 + 1.D0)*(1.D0-ztmp) + (DBLE(THIS% nz_grid)/2.D0 - 1.D0)*ztmp
-
-      foo(i)= trilinear_interpolation( coords(i,1), coords(i,2), coords(i,3), &
-                    THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
-                    grid_coords, foo_grid, &
-                    equator_symmetry= .FALSE., parity= -1.D0, debug= .FALSE. )
-      foo_exact(i)= (coords(i,3))**3.D0
-    ENDDO
-
-    min_eps= HUGE(1.D0)
-    min_vel= HUGE(1.D0)
+ !   min_eps= HUGE(one)
+ !   min_vel= HUGE(one)
     ! The density has to be converted in units of the atomic mass unit
     ! TODO: CHECK THAT EVERYTHING ELSE IS CONSISTENT WITH THIS!!
     DO i= 1, n, 1
@@ -147,17 +150,17 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       u_euler_x(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,1), &
-                                equator_symmetry= .TRUE., parity= 1.D0, &
+                                equator_symmetry= .TRUE., parity= one, &
                                 debug= .FALSE. )
       u_euler_y(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,2), &
-                                equator_symmetry= .TRUE., parity= 1.D0, &
+                                equator_symmetry= .TRUE., parity= one, &
                                 debug= .FALSE. )
       u_euler_z(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% vel(:,:,:,3), &
-                                equator_symmetry= .TRUE., parity= -1.D0, &
+                                equator_symmetry= .TRUE., parity= -one, &
                                 debug= .FALSE. )
 
     !  IF( u_euler_x(i) == 0 .AND. u_euler_y(i) == 0 &
@@ -170,7 +173,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
       specific_energy(i)= trilinear_interpolation( x(i), y(i), zp, &
                                 THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                 THIS% grid, THIS% specific_energy, &
-                                equator_symmetry= .TRUE., parity= 1.D0, &
+                                equator_symmetry= .TRUE., parity= one, &
                                 debug= .FALSE. )
 
       IF( baryon_density(i) == 0.D0 )THEN
@@ -186,130 +189,130 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !    STOP
     !  ENDIF
 
-      IF( SQRT( u_euler_x(i)**2.D0 + u_euler_y(i)**2.D0 &
-              + u_euler_z(i)**2.D0 ) < min_vel &
-          .AND. baryon_density(i) > 0.D0 )THEN
-        min_vel= SQRT( u_euler_x(i)**2.D0 + u_euler_y(i)**2.D0 &
-                     + u_euler_z(i)**2.D0 )
-        i_vel= i
-      ENDIF
-      IF( specific_energy(i) < min_eps .AND. baryon_density(i) > 0.D0 )THEN
-        min_eps= specific_energy(i)
-        i_eps= i
-      ENDIF
+  !    IF( SQRT( u_euler_x(i)**2.D0 + u_euler_y(i)**2.D0 &
+  !            + u_euler_z(i)**2.D0 ) < min_vel &
+  !        .AND. baryon_density(i) > 0.D0 )THEN
+  !      min_vel= SQRT( u_euler_x(i)**2.D0 + u_euler_y(i)**2.D0 &
+  !                   + u_euler_z(i)**2.D0 )
+  !      i_vel= i
+  !    ENDIF
+  !    IF( specific_energy(i) < min_eps .AND. baryon_density(i) > 0.D0 )THEN
+  !      min_eps= specific_energy(i)
+  !      i_eps= i
+  !    ENDIF
 
     ENDDO
 
-    PRINT *
-    PRINT *, MINVAL( specific_energy, DIM= 1, MASK= baryon_density > 0.D0 ), &
-             min_eps
-    PRINT *, x(i_eps), y(i_eps), z(i_eps)
+  !  PRINT *
+  !  PRINT *, MINVAL( specific_energy, DIM= 1, MASK= baryon_density > 0.D0 ), &
+  !           min_eps
+  !  PRINT *, x(i_eps), y(i_eps), z(i_eps)
+  !
+  !  PRINT *, MINVAL( SQRT( (u_euler_x)**2.D0 &
+  !                 + (u_euler_y)**2.D0 &
+  !                 + (u_euler_z)**2.D0 ), &
+  !                   DIM= 1, MASK= baryon_density > 0.D0 ), &
+  !           min_vel
+  !  PRINT *, x(i_vel), y(i_vel), z(i_vel)
+  !
+  !  PRINT *
 
-    PRINT *, MINVAL( SQRT( (u_euler_x)**2.D0 &
-                   + (u_euler_y)**2.D0 &
-                   + (u_euler_z)**2.D0 ), &
-                     DIM= 1, MASK= baryon_density > 0.D0 ), &
-             min_vel
-    PRINT *, x(i_vel), y(i_vel), z(i_vel)
-
-    PRINT *
-
-    finalnamefile= "dbg_interpolation2.dat"
-
-    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-    IF( exist )THEN
-        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO i= 1, THIS% nx_grid - 1, 1
-      DO j= 1, THIS% ny_grid - 1, 1
-        DO k= 1, THIS% nz_grid - 1, 1
-
-          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-            THIS% grid( i, j, k, 1 ), &
-            THIS% grid( i, j, k, 2 ), &
-            THIS% grid( i, j, k, 3 ), &
-            THIS% baryon_mass_density( i, j, k )*Msun/amu, &
-            THIS% read_mass_density( &
-              THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.D0, &
-              THIS% grid( i, j, k, 2 ), &
-              THIS% grid( i, j, k, 3 ) ), &
-            THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.D0, &
-            THIS% specific_energy( i, j, k )
-        ENDDO
-      ENDDO
-    ENDDO
-
-    CLOSE( UNIT= 2 )
-
-
-    finalnamefile= "dbg_interpolation.dat"
-
-    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-    IF( exist )THEN
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-            FORM= "FORMATTED", &
-            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-            IOMSG= err_msg )
-    ELSE
-      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-            FORM= "FORMATTED", &
-            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO i= 1, n, 1
-
-      ! IF( coords(i,3) < 0 )THEN
-      !   PRINT *, coords(i,3)
-      !   STOP
-      ! ENDIF
-
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        i, x(i), y(i), z(i), &
-        baryon_density(i), &
-        u_euler_x(i), &
-        u_euler_y(i), &
-        u_euler_z(i), &
-        specific_energy(i), &
-        coords(i,1), coords(i,2), coords(i,3), &
-        foo(i), foo_exact(i)
-
-    ENDDO
-
-    CLOSE( UNIT= 2 )
+!    finalnamefile= "dbg_interpolation2.dat"
+!
+!    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+!
+!    IF( exist )THEN
+!        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+!              FORM= "FORMATTED", &
+!              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+!              IOMSG= err_msg )
+!    ELSE
+!        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+!              FORM= "FORMATTED", &
+!              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+!    ENDIF
+!    IF( ios > 0 )THEN
+!      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+!               ". The error message is", err_msg
+!      STOP
+!    ENDIF
+!
+!    DO i= 1, THIS% nx_grid - 1, 1
+!      DO j= 1, THIS% ny_grid - 1, 1
+!        DO k= 1, THIS% nz_grid - 1, 1
+!
+!          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!            THIS% grid( i, j, k, 1 ), &
+!            THIS% grid( i, j, k, 2 ), &
+!            THIS% grid( i, j, k, 3 ), &
+!            THIS% baryon_mass_density( i, j, k )*Msun/amu, &
+!            THIS% read_mass_density( &
+!              THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.D0, &
+!              THIS% grid( i, j, k, 2 ), &
+!              THIS% grid( i, j, k, 3 ) ), &
+!            THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.D0, &
+!            THIS% specific_energy( i, j, k )
+!        ENDDO
+!      ENDDO
+!    ENDDO
+!
+!    CLOSE( UNIT= 2 )
+!
+!
+!    finalnamefile= "dbg_interpolation.dat"
+!
+!    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+!
+!    IF( exist )THEN
+!      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+!            FORM= "FORMATTED", &
+!            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+!            IOMSG= err_msg )
+!    ELSE
+!      OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+!            FORM= "FORMATTED", &
+!            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+!    ENDIF
+!    IF( ios > 0 )THEN
+!      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+!               ". The error message is", err_msg
+!      STOP
+!    ENDIF
+!
+!    DO i= 1, n, 1
+!
+!      ! IF( coords(i,3) < 0 )THEN
+!      !   PRINT *, coords(i,3)
+!      !   STOP
+!      ! ENDIF
+!
+!      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+!        i, x(i), y(i), z(i), &
+!        baryon_density(i), &
+!        u_euler_x(i), &
+!        u_euler_y(i), &
+!        u_euler_z(i), &
+!        specific_energy(i), &
+!        coords(i,1), coords(i,2), coords(i,3), &
+!        foo(i), foo_exact(i)
+!
+!    ENDDO
+!
+!    CLOSE( UNIT= 2 )
 
     !STOP
 
     energy_density = 0.D0
     pressure       = 0.D0
 
-    g_xx= 1.D0
-    g_yy= 1.D0
-    g_zz= 1.D0
+    g_xx= one
+    g_yy= one
+    g_zz= one
     g_xy= 0.D0
     g_xz= 0.D0
     g_yz= 0.D0
 
-    lapse= 1.D0
+    lapse= one
     shift_x= 0.D0
     shift_y= 0.D0
     shift_z= 0.D0
@@ -337,14 +340,14 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     baryon_density= THIS% read_mass_density( x, y, z )
 
-    g(jxx)= 1.D0
-    g(jyy)= 1.D0
-    g(jzz)= 1.D0
+    g(jxx)= one
+    g(jyy)= one
+    g(jzz)= one
     g(jxy)= 0.D0
     g(jxz)= 0.D0
     g(jyz)= 0.D0
 
-    gamma_euler= 1.D0
+    gamma_euler= one
 
   END PROCEDURE interpolate_id_mass_b
 
@@ -404,7 +407,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     res= trilinear_interpolation( x, y, zp, &
                                   THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
                                   THIS% grid, THIS% baryon_mass_density, &
-                                  equator_symmetry= .TRUE., parity= 1.D0, &
+                                  equator_symmetry= .TRUE., parity= one, &
                                   debug= .FALSE. )
 
     IF( x > 0.D0 )THEN

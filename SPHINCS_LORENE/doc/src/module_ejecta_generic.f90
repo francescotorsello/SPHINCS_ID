@@ -8,16 +8,14 @@ MODULE ejecta_generic
   !
   !# This MODULE contains the definition of TYPE ejecta,
   !  which is an ABSTRACT TYPE representing any possible
-  !  type of initial data (|id|) for a differentially rotating
-  !  star (DRS) to be set up for |sphincsbssn|. That is, DRS |id|
-  !  produced with |lorene|, with |fuka|, etc.
+  !  type of initial data (|id|) on a Cartesian, uniform grid
+  !  to be set up for |sphincsbssn|.
   !
   !  PROCEDURES and variables shared by all the types
-  !  of DRS |id| should belong to TYPE ejecta, as
-  !  they are inherited by its EXTENDED TYPES that
-  !  represent more specific types of DRS |id|.
+  !  of |id| on a Cartesian uniform grid should belong to
+  !  TYPE ejecta.
   !
-  !  FT 22.10.2021
+  !  FT xx.11.2021
   !
   !********************************************************
 
@@ -29,23 +27,26 @@ MODULE ejecta_generic
   IMPLICIT NONE
 
 
-  !********************************************************************
-  !                                                                   *
-  !  Definition of TYPE ejecta  *
-  !                                                                   *
-  !********************************************************************
+  !*****************************
+  !                            *
+  !  Definition of TYPE ejecta *
+  !                            *
+  !*****************************
 
   TYPE, EXTENDS(idbase):: ejecta
-  !# TYPE for ejecta |id| for |sphincsbssn| prepared on a grid
+  !# TYPE for |id| for |sphincsbssn| prepared on a Cartesian, uniform grid
 
     INTEGER:: nx_grid
-    !! Number of grid points in the \(x\) direction for the grid containing the |id|
+    !# Number of grid points in the \(x\) direction for the grid
+    !  containing the |id|
 
     INTEGER:: ny_grid
-    !! Number of grid points in the \(y\) direction for the grid containing the |id|
+    !# Number of grid points in the \(y\) direction for the grid
+    !  containing the |id|
 
     INTEGER:: nz_grid
-    !! Number of grid points in the \(z\) direction for the grid containing the |id|
+    !# Number of grid points in the \(z\) direction for the grid
+    !  containing the |id|
 
     INTEGER:: n_gridpoints
     !! Total number of grid points for the grid containing the |id|
@@ -78,14 +79,35 @@ MODULE ejecta_generic
     !! Spacing on the \(z\)-axis for the grid containing the |id|
 
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: grid
+    !# Array storing the Cartesian coordinates of the grid points.
+    !  The first three indices specify the grid point; the last index
+    !  specifies the \(x,y,z\) coordinates
+
     DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: baryon_mass_density
+    !# Array storing the baryon mass density at the grid points.
+    !  The indices specify the grid point.
+
     DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: specific_energy
+    !# Array storing the specific energy at the grid points.
+    !  The indices specify the grid point.
+
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: vel
+    !# Array storing the fluid velocity with respect to the Eulerian observer
+    !  at the grid points.
+    !  The first three indices specify the grid point; the last index
+    !  specifies the \(x,y,z\) components of the velocity.
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
+    !! Masses of the matter objects
+
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sizes
+    !! Sizes of the matter objects
+
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: centers
+    !! Centers of the matter objects
+
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: barycenters
+    !! Barycenters of the matter objects
 
     !--------------------------------!
     !--  Parameters of the ejecta  --!
@@ -159,6 +181,7 @@ MODULE ejecta_generic
 
 
     INTEGER:: eos_ejectaid
+    !! Identification number for the |eos|
 
 
     CONTAINS
