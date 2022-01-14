@@ -87,7 +87,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     !
     !****************************************************
 
-    USE constants, ONLY: MSun, amu
+    USE constants, ONLY: MSun, amu, two
     USE numerics,  ONLY: trilinear_interpolation
 
     IMPLICIT NONE
@@ -102,7 +102,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
 
     DOUBLE PRECISION:: foo(n), foo_exact(n), &
                        foo_grid(THIS% nx_grid, THIS% ny_grid, THIS% nz_grid), &
-                       grid_coords(THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, 3), &
+                       grid_coords(THIS%nx_grid,THIS%ny_grid,THIS%nz_grid,3), &
                        coords(n,3)
 
     IF( debug )THEN
@@ -111,9 +111,9 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
         DO j= 1, THIS% ny_grid, 1
           DO k= 1, THIS% nz_grid, 1
 
-            grid_coords(i,j,k,1)= DBLE(i) - DBLE(THIS% nx_grid)/2.D0
-            grid_coords(i,j,k,2)= DBLE(j) - DBLE(THIS% ny_grid)/2.D0
-            grid_coords(i,j,k,3)= DBLE(k)/2.D0! - DBLE(THIS% nz_grid)/2.D0
+            grid_coords(i,j,k,1)= DBLE(i) - DBLE(THIS% nx_grid)/two
+            grid_coords(i,j,k,2)= DBLE(j) - DBLE(THIS% ny_grid)/two
+            grid_coords(i,j,k,3)= DBLE(k)/two! - DBLE(THIS% nz_grid)/two
             foo_grid(i,j,k)= (grid_coords(i,j,k,3))**3.D0
 
           ENDDO
@@ -131,11 +131,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
         CALL RANDOM_NUMBER( ztmp )
 
         coords(i,1)= xtmp*DBLE(THIS% nx_grid - 2) &
-                     - DBLE(THIS% nx_grid)/2.D0 + 2.D0
+                     - DBLE(THIS% nx_grid)/two + two
         coords(i,2)= ytmp*DBLE(THIS% ny_grid - 2) &
-                     - DBLE(THIS% ny_grid)/2.D0 + 2.D0
-        coords(i,3)= (- DBLE(THIS% nz_grid)/2.D0 + one)*(one-ztmp) &
-                      + (DBLE(THIS% nz_grid)/2.D0 - one)*ztmp
+                     - DBLE(THIS% ny_grid)/two + two
+        coords(i,3)= (- DBLE(THIS% nz_grid)/two + one)*(one-ztmp) &
+                      + (DBLE(THIS% nz_grid)/two - one)*ztmp
 
         foo(i)= trilinear_interpolation( coords(i,1), coords(i,2), coords(i,3),&
                       THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
@@ -218,10 +218,10 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
               THIS% grid( i, j, k, 3 ), &
               THIS% baryon_mass_density( i, j, k )*Msun/amu, &
               THIS% read_mass_density( &
-                THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.D0, &
+                THIS% grid( i, j, k, 1 ) + THIS% dx_grid/two, &
                 THIS% grid( i, j, k, 2 ), &
                 THIS% grid( i, j, k, 3 ) ), &
-              THIS% grid( i, j, k, 1 ) + THIS% dx_grid/2.D0, &
+              THIS% grid( i, j, k, 1 ) + THIS% dx_grid/two, &
               THIS% specific_energy( i, j, k )
           ENDDO
         ENDDO

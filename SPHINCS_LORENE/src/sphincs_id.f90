@@ -2,6 +2,23 @@
 ! Author:       Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
+!************************************************************************
+! Copyright (C) 2022 Francesco Torsello                                 *
+!                                                                       *
+! This program is free software: you can redistribute it and/or modify  *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! This program is distributed in the hope that it will be useful,       *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with this program. If not, see <https://www.gnu.org/licenses/>. *
+!************************************************************************
+
 PROGRAM sphincs_id
 
   !*****************************************************
@@ -200,10 +217,23 @@ PROGRAM sphincs_id
   PRINT *, "  Author:       Francesco Torsello  "
   PRINT *, "  Copyright:    GNU General Public License (GPLv3)     "
   PRINT *
-  PRINT *, "  SPHINCS_ID is distributed WITHOUT ANY WARRANTY; even "
-  PRINT *, "  without the implied warranty of MERCHANTABILITY      "
-  PRINT *, "  or FITNESS FOR A PARTICULAR PURPOSE. See GNU GPLv3   "
-  PRINT *, "  for more details."
+  PRINT *, "  SPHINCS_ID  Copyright (C) 2022  Francesco Torsello   "
+  PRINT *
+  PRINT *, "  This program is free software: you can redistribute  "
+  PRINT *, "  it and/or modify it under the terms of the GNU       "
+  PRINT *, "  General Public License as published by the Free      "
+  PRINT *, "  Software Foundation, either version 3 of the License,"
+  PRINT *, "  or (at your option) any later version.               "
+  PRINT *
+  PRINT *, "  This program is distributed in the hope that it will "
+  PRINT *, "  be useful, but WITHOUT ANY WARRANTY; without even   "
+  PRINT *, "  the implied warranty of MERCHANTABILITY or FITNESS   "
+  PRINT *, "  FOR A PARTICULAR PURPOSE. See the GNU General Public "
+  PRINT *, "  License for more details.                            "
+  PRINT *
+  PRINT *, "  You should have received a copy of the GNU General   "
+  PRINT *, "  Public License along with this program. If not, see  "
+  PRINT *, "  https://www.gnu.org/licenses/.  "
   PRINT *, "  ____________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id
