@@ -246,9 +246,11 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
       PRINT *, "          xR_grid=", MAXVAL(grid_tmp( :, 1 ))
       STOP
     ENDIF
+    PRINT *
 
     ! Allocate and initialize member arrays
     CALL derived_type% allocate_gridid_memory( n_matter_loc )
+
     derived_type% grid= 0.0D0
     derived_type% baryon_mass_density= 0.0D0
     derived_type% specific_energy= 0.0D0

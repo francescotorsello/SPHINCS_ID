@@ -9,7 +9,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_memory
   !# Implementation of the methods of TYPE ejecta
   !  that (de)allocate memory
   !
-  ! FT 04.01.2022
+  ! FT 14.01.2022
   !
   !***********************************************
 
@@ -32,7 +32,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_memory
     !# Allocate the memory to store the ID
     !  in the member arrays
     !
-    !  FT 04.01.2022
+    !  FT 14.01.2022
     !
     !***********************************************
 
@@ -123,7 +123,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_memory
     !# Deallocate the memory to store the ID
     !  in the member arrays
     !
-    !  FT 04.01.2022
+    !  FT 14.01.2022
     !
     !***********************************************
 
@@ -203,5 +203,6 @@ SUBMODULE (ejecta_generic) ejecta_generic_memory
     ENDIF
 
   END PROCEDURE deallocate_gridid_memory
+
 
 END SUBMODULE ejecta_generic_memory
