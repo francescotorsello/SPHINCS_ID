@@ -1120,7 +1120,8 @@ SUBMODULE (particles_id) particles_constructor
     ! Check that there aren't particles with the same coordinates
     CALL parts% same_particle_timer% start_timer()
     check_particles_loop: DO i_matter= 1, parts% n_matter, 1
-      CALL check_particle_positions( parts% npart, parts_all(i_matter)% pos_i )
+      CALL check_particle_positions( parts% npart_i(i_matter), &
+                                     parts_all(i_matter)% pos_i )
     ENDDO check_particles_loop
     CALL parts% same_particle_timer% stop_timer()
 
@@ -1161,7 +1162,8 @@ SUBMODULE (particles_id) particles_constructor
       !  ENDIF
 
         PRINT *
-        PRINT *, "** Placing particles on matter object i_matter,  using the APM..."
+        PRINT *, "** Placing particles on matter object", i_matter, &
+                 "using the APM..."
         PRINT *
 
         IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
@@ -1989,10 +1991,10 @@ SUBMODULE (particles_id) particles_constructor
                                        mass_profile
 
       CALL id% integrate_baryon_mass_density( center, radius, &
-                              central_density, &
-                              dr, dth, dphi, &
-                              mass, mass_profile, &
-                              mass_profile_idx )
+                                              central_density, &
+                                              dr, dth, dphi, &
+                                              mass, mass_profile, &
+                                              mass_profile_idx )
 
     END SUBROUTINE integrate_mass_density
 

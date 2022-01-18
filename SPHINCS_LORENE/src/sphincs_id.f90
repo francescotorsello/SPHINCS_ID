@@ -17,6 +17,8 @@
 !                                                                       *
 ! You should have received a copy of the GNU General Public License     *
 ! along with this program. If not, see <https://www.gnu.org/licenses/>. *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
 !************************************************************************
 
 PROGRAM sphincs_id
@@ -38,7 +40,7 @@ PROGRAM sphincs_id
 #endif
 
 #if flavour == 1
-  USE sphincs_id_lorene,  ONLY: allocate_idbase
+  USE sphincs_id_lorene,       ONLY: allocate_idbase
 #elif flavour == 2
   USE sphincs_id_interpolate,  ONLY: allocate_idbase
 #endif

@@ -573,7 +573,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
     !
     !****************************************************
 
-    USE constants, ONLY: Msun_geo
+    USE constants, ONLY: Msun_geo, km2m, g2kg, amu
 
     IMPLICIT NONE
 
@@ -676,6 +676,9 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
 
       ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+
+      ! Convert the baryon density to units of amu (SPH code units)
+      baryon_density= baryon_density*((Msun_geo*km2m)**3)/(amu*g2kg)
 
       PRINT *, "** Subroutine import_id_particles executed."
       PRINT *

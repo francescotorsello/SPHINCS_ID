@@ -1578,10 +1578,10 @@ SUBMODULE (particles_id) particles_sph_variables
 
       PRINT *, " * Maximum baryon density on object", i_matter, "=", &
                 MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
-                *kg2g/(m2cm**3), " g cm^{-3}"
+                *amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
       PRINT *, " * Minimum baryon density on object", i_matter, "=", &
                 MINVAL( THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
-                *kg2g/(m2cm**3), " g cm^{-3}"
+                *amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
       PRINT *, " * Ratio between the two=", &
                MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1)/ &
                MINVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1)
