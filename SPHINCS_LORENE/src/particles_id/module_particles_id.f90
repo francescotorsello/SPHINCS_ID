@@ -52,16 +52,16 @@ MODULE particles_id
   END TYPE
 
 
-  !**********************************************************
-  !                                                         *
-  !              Definition of TYPE particles               *
-  !                                                         *
-  ! This class places the |sph| particles, imports            *
-  ! the |id| on the particle positions, stores              *
-  ! it, computes the relevant |sph| fields and exports it to  *
-  ! both a formatted, and a binary file for evolution       *
-  !                                                         *
-  !**********************************************************
+  !***********************************************************
+  !                                                          *
+  !              Definition of TYPE particles                *
+  !                                                          *
+  ! This class places the |sph| particles, imports           *
+  ! the |id| on the particle positions, stores               *
+  ! it, computes the relevant |sph| fields and exports it to *
+  ! both a formatted, and a binary file for evolution        *
+  !                                                          *
+  !***********************************************************
 
   TYPE:: particles
   !! TYPE representing a |sph| particle distribution
@@ -523,8 +523,6 @@ MODULE particles_id
       !! [[particles]] object which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT( IN )    :: central_density
       !! Maximum baryon mass density of the system
-      INTEGER,          INTENT( IN )    :: npart_des
-      !! Desired particle number
       DOUBLE PRECISION, INTENT( IN )    :: xmin
       !! Left \(x\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: xmax
@@ -537,17 +535,19 @@ MODULE particles_id
       !! Left \(z\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: zmax
       !! Right \(z\) boundary of the lattice
+      INTEGER,          INTENT( IN )    :: npart_des
+      !! Desired particle number
+      INTEGER,          INTENT( OUT )   :: npart_out
+      !! Real, output particle number
       DOUBLE PRECISION, INTENT( IN )    :: stretch
       !! Stretching factor fo the lattice. `xmin` to `zmax` are multiplied by it
       DOUBLE PRECISION, INTENT( IN )    :: thres
       !# (~rho_max)/thres is the minimum mass density considered
       ! when placing particles. Used only when redistribute_nu is
       ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
-      INTEGER,          INTENT( OUT )    :: npart_out
-      !! Real, output particle number
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
       !> Array soring the inal particle volumes
-      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
       !! Array storing the final particle volumes
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )

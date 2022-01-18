@@ -14,6 +14,7 @@ SUBMODULE (particles_id) particles_apm
   !
   !***********************************
 
+  USE constants, ONLY: zero
 
   IMPLICIT NONE
 
@@ -2280,6 +2281,13 @@ SUBMODULE (particles_id) particles_apm
     PRINT *, " * The smoothing length was found brute-force for ", &
              n_problematic_h, " particles."
     PRINT *
+
+    IF( SUM(nu, DIM= 1)/SIZE(nu) == zero )THEN
+      PRINT *, "** ERROR! Average nu= 0. Are you assigning values to the ", &
+               "TYPE member array?"
+      PRINT *, "Stopping..."
+      STOP
+    ENDIF
 
     PRINT *, "** Building neighbors tree..."
     PRINT *

@@ -44,7 +44,8 @@ SUBMODULE (particles_id) particles_sph_variables
     !************************************************
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
-                                   third, kg2g, Msun, k_lorene2hydrobase, Msun
+                                   third, kg2g, Msun, k_lorene2hydrobase, &
+                                   Msun, zero
     USE units,               ONLY: set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -1087,9 +1088,15 @@ SUBMODULE (particles_id) particles_sph_variables
 
     PRINT *, " * Computing neighbours' tree..."
     PRINT *
-    !CALL OMP_SET_NUM_THREADS(80)
+
+    IF( SUM(THIS% nu, DIM= 1)/SIZE(THIS% nu) == zero )THEN
+      PRINT *, "** ERROR! Average nu= 0. Are you assigning values to the ", &
+               "TYPE member array?"
+      PRINT *, "Stopping..."
+      STOP
+    ENDIF
+
     cnt1= 0
-    PRINT *, SUM(THIS% nu, DIM= 1)/SIZE(THIS% nu)
     DO
 
       few_ncand= .FALSE.
