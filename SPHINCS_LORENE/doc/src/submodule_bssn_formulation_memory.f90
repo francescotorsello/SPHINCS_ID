@@ -1,12 +1,12 @@
-! File:         submodule_bssn_id_memory.f90
+! File:         submodule_bssn_formulation_memory.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (formul_bssn_id) bssn_id_memory
+SUBMODULE (bssn_formulation) memory
 
   !************************************************
   !
-  !# Implementation of the methods of TYPE bssn_id
+  !# Implementation of the methods of TYPE bssn
   !  that (de)allocate memory
   !
   !  FT 9.07.2021
@@ -107,4 +107,4 @@ SUBMODULE (formul_bssn_id) bssn_id_memory
   END PROCEDURE deallocate_bssn_fields
 
 
-END SUBMODULE bssn_id_memory
+END SUBMODULE memory

@@ -1,8 +1,8 @@
-! File:         submodule_bns_methods.f90
+! File:         submodule_diffstar_lorene_import.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_lorene) diffstar_lorene_import
+SUBMODULE (diffstar_lorene) import
 
   !****************************************************
   !
@@ -851,4 +851,4 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_import
   END PROCEDURE is_hydro_negative
 
 
-END SUBMODULE diffstar_lorene_import
+END SUBMODULE import

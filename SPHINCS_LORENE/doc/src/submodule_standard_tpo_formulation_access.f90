@@ -1,12 +1,12 @@
-! File:         submodule_formul_3p1_access.f90
+! File:         submodule_standard_tpo_formulation_access.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (formul_3p1_id) formul_3p1_access
+SUBMODULE (standard_tpo_formulation) access
 
   !****************************************************
   !                                                   *
-  ! Implementation of the methods of TYPE formul_3p1  *
+  ! Implementation of the methods of TYPE tpo_formulation  *
   ! that allow to access PRIVATE members.             *
   !                                                   *
   ! FT 12.07.2021                                     *
@@ -414,4 +414,4 @@ SUBMODULE (formul_3p1_id) formul_3p1_access
   END PROCEDURE get_MC_parts
 
 
-END SUBMODULE formul_3p1_access
+END SUBMODULE access

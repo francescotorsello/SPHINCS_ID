@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_base) bns_base_io
+SUBMODULE (bns_base) io
 
   !***************************************************
   !
@@ -88,4 +88,4 @@ SUBMODULE (bns_base) bns_base_io
   END PROCEDURE print_summary_bns
 
 
-END SUBMODULE bns_base_io
+END SUBMODULE io

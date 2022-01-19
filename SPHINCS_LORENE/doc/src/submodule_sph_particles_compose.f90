@@ -1,15 +1,15 @@
-! File:         submodule_particles_compose.f90
+! File:         submodule_sph_particles_compose.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_compose
+SUBMODULE (sph_particles) compose
 
   !***************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE particles
+  !  the methods of TYPE sph_particles
   !  that compute Ye on the particles, using the
-  !  data from the CompOSE database
+  !  data from the |compose| database
   !
   !  https://compose.obspm.fr/
   !
@@ -36,7 +36,7 @@ SUBMODULE (particles_id) particles_compose
     !# Reads the electron fraction Y_e = n_e/n_b,
     !  with n_e electron number density and n_b
     !  baryon number density, from the .compo file
-    !  taken from the CompOSE database of EoS.
+    !  taken from the |compose| database of EoS.
     !  Y_e is given as a function of T, n_b, Y_q on
     !  a grid; the computation of Ye on the stars is
     !  done by the SUBROUTINE compute_Ye_on_stars.
@@ -78,7 +78,7 @@ SUBMODULE (particles_id) particles_compose
     IF( PRESENT(namefile) )THEN
       finalnamefile= TRIM(namefile)//".beta"
     ELSE
-      finalnamefile= "../../CompOSE_EOS/SFHO_with_electrons/eos.beta"
+      finalnamefile= "../../|compose|_EOS/SFHO_with_electrons/eos.beta"
     ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
@@ -227,4 +227,4 @@ SUBMODULE (particles_id) particles_compose
   END PROCEDURE compute_Ye
 
 
-END SUBMODULE particles_compose
+END SUBMODULE compose

@@ -1,13 +1,13 @@
-! File:         submodule_bssn_id_constructor.f90
+! File:         submodule_bssn_formulation_constructor.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (formul_bssn_id) bssn_id_constructor
+SUBMODULE (bssn_formulation) constructor
 
   !************************************************
   !
   !# Implementation of the constructor and
-  !  destructor of TYPE bssn_id
+  !  destructor of TYPE bssn
   !
   !  FT 23.10.2020
   !
@@ -24,11 +24,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
   CONTAINS
 
 
-  MODULE PROCEDURE construct_bssn_id
+  MODULE PROCEDURE construct_bssn
 
     !****************************************************
     !
-    !# This constructor of TYPE bssn_id calls the
+    !# This constructor of TYPE bssn calls the
     !  SUBROUTINES that rely on an bns object, and
     !  allocates memory. It constructs the grid
     !  using the number of grid points along each axis.
@@ -50,11 +50,11 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     ! in standard 3+1 formulation
     IF( PRESENT(dx) .AND. PRESENT(dy) .AND. PRESENT(dz) )THEN
 
-      CALL bssnid% setup_standard3p1_variables( id, dx, dy, dz )
+      CALL bssnid% setup_standard_tpo_variables( id, dx, dy, dz )
 
     ELSE
 
-      CALL bssnid% setup_standard3p1_variables( id )
+      CALL bssnid% setup_standard_tpo_variables( id )
 
     ENDIF
 
@@ -78,17 +78,17 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
     PRINT *, " * Ready to compute BSSN variables."
     PRINT *
 
-  END PROCEDURE construct_bssn_id
+  END PROCEDURE construct_bssn
 
   !
   !-- Keeping the following two SUBROUTINES separate in case it is needed
   !-- to add other PROCEDURES to the destructor (probably superfluous...)
   !
-  MODULE PROCEDURE destruct_bssn_id
+  MODULE PROCEDURE destruct_bssn
 
     !**************************************************
     !
-    !# Destructor of the EXTENDED TYPE bssn_id
+    !# Destructor of the EXTENDED TYPE bssn
     !
     !  FT
     !
@@ -98,14 +98,14 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
     CALL deallocate_bssn_fields( THIS )
 
-  END PROCEDURE destruct_bssn_id
+  END PROCEDURE destruct_bssn
 
 
   MODULE PROCEDURE destructor
 
     !**************************************************
     !
-    !# Destructor of EXTENDED TYPE bssn_id
+    !# Destructor of EXTENDED TYPE bssn
     !
     !  FT
     !
@@ -113,17 +113,17 @@ SUBMODULE (formul_bssn_id) bssn_id_constructor
 
     IMPLICIT NONE
 
-    CALL destruct_bssn_id( THIS )
+    CALL destruct_bssn( THIS )
 
 #ifdef __INTEL_COMPILER
-  CALL deallocate_standard3p1_variables( THIS )
+  CALL deallocate_standard_tpo_variables( THIS )
 #endif
 
 #ifdef __GFORTRAN__
-  CALL THIS% deallocate_standard3p1_variables
+  CALL THIS% deallocate_standard_tpo_variables
 #endif
 
   END PROCEDURE destructor
 
 
-END SUBMODULE bssn_id_constructor
+END SUBMODULE constructor

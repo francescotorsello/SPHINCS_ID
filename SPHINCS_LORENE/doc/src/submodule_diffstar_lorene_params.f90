@@ -1,8 +1,8 @@
-! File:         submodule_diffstar_params.f90
+! File:         submodule_diffstar_lorene_params.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_lorene) diffstar_lorene_params
+SUBMODULE (diffstar_lorene) params
 
   !********************************************
   !
@@ -181,4 +181,4 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_params
   END PROCEDURE import_diffstar_params
 
 
-END SUBMODULE diffstar_lorene_params
+END SUBMODULE params

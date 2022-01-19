@@ -1,13 +1,14 @@
-! File:         module_particles_id.f90
+! File:         module_sph_particles.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-MODULE particles_id
+MODULE sph_particles
 
 
   !***********************************************************
   !
-  !# This module contains the definition of TYPE particles
+  !# This module contains the definition of TYPES,
+  !  PROCEDURES and variables needed to treat |sph| particles
   !
   !***********************************************************
 
@@ -1239,10 +1240,10 @@ MODULE particles_id
     INTEGER:: x_idx
     !# Index at which a new value of the \(x\) coordinate appears,
     !  in the array `pos` sorted so that the \(x\) coordinate does not decrease
-    INTEGER, DIMENSION(npart):: x_sort
+    INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort
     !# Array storing the sorted indices of array `pos`, so that the \(x\)
     !  coordinate of the particles is in nondecreasing order
-    INTEGER, DIMENSION(npart):: x_number
+    INTEGER, DIMENSION(:), ALLOCATABLE:: x_number
     !# Array storing, for each \(x\) coordinate, the number of particles
     !  having that \(x\) coordinate
 
@@ -1250,7 +1251,8 @@ MODULE particles_id
              " at the same position..."
     PRINT *
 
-    !ALLOCATE( x_number( npart ) )
+    ALLOCATE( x_sort( npart ) )
+    ALLOCATE( x_number( npart ) )
 
     ! Sort x coordinates of the particles
     CALL indexx( npart, pos( 1, : ), x_sort )
@@ -1359,7 +1361,8 @@ MODULE particles_id
     ENDDO
     !$OMP END PARALLEL DO
 
-    !DEALLOCATE( x_number )
+    DEALLOCATE( x_sort )
+    DEALLOCATE( x_number )
 
   END SUBROUTINE check_particle_positions
 
@@ -1503,4 +1506,4 @@ MODULE particles_id
   END FUNCTION find_h_backup
 
 
-END MODULE particles_id
+END MODULE sph_particles

@@ -45,16 +45,16 @@ PROGRAM sphincs_id
   USE sphincs_id_interpolate,  ONLY: allocate_idbase
 #endif
 
-  USE utility,         ONLY: date, time, zone, values, run_id, itr, itr3, &
-                             itr4, file_exists, cnt, &
-                             test_status, show_progress, end_time
-  USE timing,          ONLY: timer
-  USE id_base,         ONLY: idbase, initialize
-  USE particles_id,    ONLY: particles
-  USE formul_bssn_id,  ONLY: bssn_id
-  USE constants,       ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
-                             k_lorene2hydrobase_piecewisepolytrope, MSun_geo, &
-                             kg2g, m2cm, m0c2
+  USE id_base,          ONLY: idbase, initialize
+  USE sph_particles,    ONLY: particles
+  USE bssn_formulation, ONLY: bssn
+  USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
+                              k_lorene2hydrobase_piecewisepolytrope, &
+                              MSun_geo, kg2g, m2cm, m0c2
+  USE timing,           ONLY: timer
+  USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
+                              itr4, file_exists, cnt, &
+                              test_status, show_progress, end_time
 
   IMPLICIT NONE
 
@@ -149,9 +149,9 @@ PROGRAM sphincs_id
   ! Multiple particle objects can contain different particle distributions
   ! for the same bns object.
   TYPE( particles ), DIMENSION(:,:), ALLOCATABLE:: particles_dist
-  ! Declaration of the allocatable array storing the bssn_id objects,
+  ! Declaration of the allocatable array storing the bssn objects,
   ! containing the BSSN variables on the gravity grid ofr each bns object
-  TYPE( bssn_id ),   DIMENSION(:),   ALLOCATABLE:: bssn_forms
+  TYPE( bssn ),   DIMENSION(:),   ALLOCATABLE:: bssn_forms
 
   ! Namelist containing parameters read from lorene_bns_id_parameters.par
   ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM
@@ -480,7 +480,7 @@ PROGRAM sphincs_id
   IF( run_spacetime )THEN
 
     !
-    !-- Construct the bssn_id objects from the bns objects
+    !-- Construct the bssn objects from the bns objects
     !
     place_spacetime_id_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
@@ -489,7 +489,7 @@ PROGRAM sphincs_id
       PRINT *, "===================================================" &
                // "==============="
       PRINT *
-      bssn_forms( itr3 )= bssn_id( ids(itr3)% idata )
+      bssn_forms( itr3 )= bssn( ids(itr3)% idata )
     ENDDO place_spacetime_id_loop
 
     !
@@ -512,7 +512,7 @@ PROGRAM sphincs_id
       bssn_forms( itr3 )% export_bin= export_bin
 
       CALL bssn_forms( itr3 )% &
-                          compute_and_export_3p1_variables( namefile_bssn_bin )
+                          compute_and_export_tpo_variables( namefile_bssn_bin )
       !IF( bssn_forms( itr3 )% export_bin )THEN
       !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
       !  CALL bssn_forms( itr3 )% &
@@ -531,7 +531,7 @@ PROGRAM sphincs_id
         namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
 
         CALL bssn_forms( itr3 )% &
-                    print_formatted_lorene_id_3p1_variables( namefile_bssn )
+                    print_formatted_lorene_id_tpo_variables( namefile_bssn )
       ENDDO export_bssn_loop
     ENDIF
 
@@ -565,7 +565,7 @@ PROGRAM sphincs_id
           name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
           CALL bssn_forms( itr3 )% &
-                      compute_and_export_3p1_constraints( ids(itr3)% idata, &
+                      compute_and_export_tpo_constraints( ids(itr3)% idata, &
                                                           namefile_bssn, &
                                                           name_logfile )
 
@@ -603,7 +603,7 @@ PROGRAM sphincs_id
             name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
             CALL bssn_forms( itr3 )% &
-                        compute_and_export_3p1_constraints( &
+                        compute_and_export_tpo_constraints( &
                                                 particles_dist( itr3, itr4 ), &
                                                 namefile_bssn, &
                                                 name_logfile )

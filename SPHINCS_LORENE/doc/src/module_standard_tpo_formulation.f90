@@ -1,22 +1,22 @@
-! File:         module_formul_3p1_id.f90
+! File:         module_standard_tpo_formulation.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-MODULE formul_3p1_id
+MODULE standard_tpo_formulation
 
-  !**********************************************************************
+  !***********************************************************************
   !
-  !#   This module contains the definition of ABSTRACT TYPE formul_3p1
+  !# This module contains the definition of ABSTRACT TYPE tpo
   !
-  !**********************************************************************
+  !***********************************************************************
 
 
+  USE id_base,          ONLY: idbase
+  USE sph_particles,    ONLY: particles
+  USE mesh_refinement,  ONLY: grid_function_scalar, grid_function, level
+  USE timing,           ONLY: timer
   USE utility,          ONLY: ios, err_msg, perc, creturn, run_id, &
                               test_status, show_progress
-  USE id_base,          ONLY: idbase
-  USE particles_id,     ONLY: particles
-  USE timing,           ONLY: timer
-  USE mesh_refinement,  ONLY: grid_function_scalar, grid_function, level
 
 
   IMPLICIT NONE
@@ -24,10 +24,10 @@ MODULE formul_3p1_id
 
   !*******************************************************
   !                                                      *
-  !      Definition of abstract TYPE formul_3p1          *
+  !     Definition of abstract TYPE tpo                  *
   !                                                      *
-  ! Abstract class for a 3+1 formulation of the Einstein *
-  ! equations. It imports the LORENE ID on the gravity   *
+  ! Abstract TYPE for a \(3+1\) formulation of the       *
+  ! Einstein equations. It imports the ID on the gravity *
   ! grid, in the standard 3+1 formulation, and defines   *
   ! DEFERRED PROCEDURES to be implemented in the derived *
   ! TYPES of the actual 3+1 formulations (for example,   *
@@ -35,9 +35,8 @@ MODULE formul_3p1_id
   !                                                      *
   !*******************************************************
 
-  TYPE, ABSTRACT:: formul_3p1
-  !# ABSTRACT TYPE representing a generic 3+1 formulation of the Einsten
-  !  equations
+  TYPE, ABSTRACT:: tpo
+  !! ABSTRACT TYPE representing a generic \(3+1\) formulation of the |ee|
 
     INTEGER:: n_matter
     !! Number of matter objects in the physical system
@@ -165,12 +164,12 @@ MODULE formul_3p1_id
     !-------------------!
 
 
-    PROCEDURE, NON_OVERRIDABLE:: setup_standard3p1_variables
+    PROCEDURE, NON_OVERRIDABLE:: setup_standard_tpo_variables
     !# Set up the refined mesh by reading the `gravity_grid_parameter.dat`
     !  parameter file, and read the standard 3+1 |id| using the given
     !  [[idbase]] object, on the refined mesh
 
-    PROCEDURE, NON_OVERRIDABLE:: deallocate_standard3p1_variables
+    PROCEDURE, NON_OVERRIDABLE:: deallocate_standard_tpo_variables
     !! Deallocates memory for the standard 3+1 fields
 
     PROCEDURE, NON_OVERRIDABLE:: analyze_constraint
@@ -189,29 +188,29 @@ MODULE formul_3p1_id
     !# Deallocates memory for the fields specific to the formulation identified
     !  by an EXTENDED TYPE
 
-    PROCEDURE(compute_and_export_3p1_variables_interface), PUBLIC, &
-                            DEFERRED:: compute_and_export_3p1_variables
+    PROCEDURE(compute_and_export_tpo_variables_interface), PUBLIC, &
+                            DEFERRED:: compute_and_export_tpo_variables
     !# Compute the fields specific to the formulation identified by an
     !  EXTENDED TYPE, starting from the standard 3+1 fields
 
-    PROCEDURE(print_formatted_lorene_id_3p1_variables_interface), PUBLIC, &
-                            DEFERRED:: print_formatted_lorene_id_3p1_variables
+    PROCEDURE(print_formatted_lorene_id_tpo_variables_interface), PUBLIC, &
+                            DEFERRED:: print_formatted_lorene_id_tpo_variables
     !! Prints the spacetime |id| to a formatted file
 
-    GENERIC, PUBLIC:: compute_and_export_3p1_constraints => &
-                      compute_and_export_3p1_constraints_grid, &
-                      compute_and_export_3p1_constraints_particles
+    GENERIC, PUBLIC:: compute_and_export_tpo_constraints => &
+                      compute_and_export_tpo_constraints_grid, &
+                      compute_and_export_tpo_constraints_particles
     !# Overloaded PROCEDURE to compute the constraints using only the |id|
     !  on the refined mesh, or the spacetime |id| on the refined mesh and
     !  the hydrodynamical |id| mapped from the particles to the refined mesh
 
-    PROCEDURE(compute_and_export_3p1_constraints_grid_interface), &
-              DEFERRED:: compute_and_export_3p1_constraints_grid
+    PROCEDURE(compute_and_export_tpo_constraints_grid_interface), &
+              DEFERRED:: compute_and_export_tpo_constraints_grid
     !# Computes the constraints specific to the formulation identified by an
     !  EXTENDED TYPE, using the full |id| on the refined mesh
 
-    PROCEDURE(compute_and_export_3p1_constraints_particles_interface), &
-              DEFERRED:: compute_and_export_3p1_constraints_particles
+    PROCEDURE(compute_and_export_tpo_constraints_particles_interface), &
+              DEFERRED:: compute_and_export_tpo_constraints_particles
     !# Computes the constraints specific to the formulation identified by an
     !  EXTENDED TYPE, using the |bssn| |id| on the refined
     !  mesh and the hydrodynamical |id| mapped from the particles to the mesh
@@ -258,43 +257,43 @@ MODULE formul_3p1_id
     PROCEDURE, PUBLIC:: get_MC_parts
 
 
-  END TYPE formul_3p1
+  END TYPE tpo
 
   !
   !-- Interface of the cores of the constructors and destructos of TYPES
-  !-- derived from formul_3p1
-  !-- Their implementations are in submodule formul_3p1_methods.f90
+  !-- derived from tpo
+  !-- Their implementations are in submodule tpo_methods.f90
   !
   INTERFACE
 
-    MODULE SUBROUTINE setup_standard3p1_variables( f3p1, id, dx, dy, dz )
+    MODULE SUBROUTINE setup_standard_tpo_variables( ftpo, id, dx, dy, dz )
 
       CLASS(idbase),    INTENT( IN OUT ):: id
-      CLASS(formul_3p1), INTENT( IN OUT ):: f3p1
+      CLASS(tpo), INTENT( IN OUT ):: ftpo
       DOUBLE PRECISION, OPTIONAL         :: dx, dy, dz
 
-    END SUBROUTINE setup_standard3p1_variables
+    END SUBROUTINE setup_standard_tpo_variables
 
- !   MODULE SUBROUTINE construct_formul_3p1_bns_spacings( f3p1, id, &
+ !   MODULE SUBROUTINE construct_tpo_bns_spacings( ftpo, id, &
  !                                                        dx, dy, dz )
  !
  !     CLASS(bns),        INTENT( IN OUT ):: id
- !     CLASS(formul_3p1), INTENT( IN OUT ):: f3p1
+ !     CLASS(tpo), INTENT( IN OUT ):: ftpo
  !     DOUBLE PRECISION,  INTENT( IN )    :: dx, dy, dz
  !
- !   END SUBROUTINE construct_formul_3p1_bns_spacings
+ !   END SUBROUTINE construct_tpo_bns_spacings
 
-    MODULE SUBROUTINE deallocate_standard3p1_variables( f3p1 )
+    MODULE SUBROUTINE deallocate_standard_tpo_variables( ftpo )
 
-      CLASS(formul_3p1), INTENT( IN OUT ):: f3p1
+      CLASS(tpo), INTENT( IN OUT ):: ftpo
 
-    END SUBROUTINE deallocate_standard3p1_variables
+    END SUBROUTINE deallocate_standard_tpo_variables
 
   END INTERFACE
 
   !
-  !-- Interface of the methods of TYPES derived from formul_3p1
-  !-- Their implementations are in submodule formul_3p1_methods.f90
+  !-- Interface of the methods of TYPES derived from tpo
+  !-- Their implementations are in submodule tpo_methods.f90
   !
   INTERFACE
 
@@ -308,7 +307,7 @@ MODULE formul_3p1_id
                                           l2_norm, &
                                           loo_norm )
 
-      CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
+      CLASS(tpo),                  INTENT( IN OUT ):: THIS
       INTEGER,                            INTENT( IN )    :: l
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
       CHARACTER( LEN= * ),                INTENT( IN )    :: name_constraint
@@ -326,7 +325,7 @@ MODULE formul_3p1_id
     !  is given as the optional argument `filename`
 
 
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -337,7 +336,7 @@ MODULE formul_3p1_id
                                      constraint, l, &
                                      export, unit_analysis, cnt )
 
-      CLASS(formul_3p1),                  INTENT( IN OUT ):: THIS
+      CLASS(tpo),                  INTENT( IN OUT ):: THIS
       DOUBLE PRECISION                                    :: lower_bound, &
                                                              upper_bound
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
@@ -352,7 +351,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_grid_point( THIS, i, j, k, l ) RESULT( grid_point )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: grid_point
@@ -363,7 +362,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_nlevels( THIS ) RESULT( nlevels )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       ! Result
       DOUBLE PRECISION:: nlevels
 
@@ -373,7 +372,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_levels( THIS, l ) RESULT( levels )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       TYPE(level), DIMENSION(:), ALLOCATABLE:: levels
@@ -384,7 +383,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_dx( THIS, l ) RESULT( dx )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dx
@@ -395,7 +394,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_dy( THIS, l ) RESULT( dy )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dy
@@ -406,7 +405,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_dz( THIS, l ) RESULT( dz )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dz
@@ -417,7 +416,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_ngrid_x( THIS, l ) RESULT( ngrid_x )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_x
@@ -428,7 +427,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_ngrid_y( THIS, l ) RESULT( ngrid_y )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_y
@@ -439,7 +438,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_ngrid_z( THIS, l ) RESULT( ngrid_z )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_z
@@ -450,7 +449,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_xR( THIS, l ) RESULT( xR )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       INTEGER:: xR
@@ -461,7 +460,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_yR( THIS, l ) RESULT( yR )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       INTEGER:: yR
@@ -472,7 +471,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_zR( THIS, l ) RESULT( zR )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: l
       ! Result
       INTEGER:: zR
@@ -483,7 +482,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_HC( THIS, i, j, k, l ) RESULT( HC_value )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
@@ -494,7 +493,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_MC( THIS, i, j, k, l ) RESULT( MC_value )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
@@ -505,7 +504,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_HC_parts( THIS, i, j, k, l ) RESULT( HC_value )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
@@ -516,7 +515,7 @@ MODULE formul_3p1_id
     MODULE FUNCTION get_MC_parts( THIS, i, j, k, l ) RESULT( MC_value )
 
       ! Arguments
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      CLASS(tpo), INTENT( IN OUT ):: THIS
       INTEGER,           INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
@@ -527,71 +526,71 @@ MODULE formul_3p1_id
   END INTERFACE
 
   !
-  !-- Interfaces of the deferred methods of TYPE formul_3p1
+  !-- Interfaces of the deferred methods of TYPE tpo
   !-- Their implementations are deferred to derived TYPES
   !
   ABSTRACT INTERFACE
 
     SUBROUTINE define_allocate_fields_interface( THIS )
 
-      IMPORT:: formul_3p1
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      IMPORT:: tpo
+      CLASS(tpo), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE define_allocate_fields_interface
 
-    SUBROUTINE compute_and_export_3p1_variables_interface( THIS, namefile )
+    SUBROUTINE compute_and_export_tpo_variables_interface( THIS, namefile )
 
-      IMPORT:: formul_3p1
-      CLASS(formul_3p1),   INTENT( IN OUT )           :: THIS
+      IMPORT:: tpo
+      CLASS(tpo),   INTENT( IN OUT )           :: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
-    END SUBROUTINE compute_and_export_3p1_variables_interface
+    END SUBROUTINE compute_and_export_tpo_variables_interface
 
-    SUBROUTINE print_formatted_lorene_id_3p1_variables_interface &
+    SUBROUTINE print_formatted_lorene_id_tpo_variables_interface &
                                                     ( THIS, namefile )
 
-      IMPORT:: formul_3p1
-      CLASS(formul_3p1),   INTENT( IN OUT )           :: THIS
+      IMPORT:: tpo
+      CLASS(tpo),   INTENT( IN OUT )           :: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
-    END SUBROUTINE print_formatted_lorene_id_3p1_variables_interface
+    END SUBROUTINE print_formatted_lorene_id_tpo_variables_interface
 
-    SUBROUTINE compute_and_export_3p1_constraints_grid_interface( THIS, &
+    SUBROUTINE compute_and_export_tpo_constraints_grid_interface( THIS, &
                                                              id, &
                                                              namefile, &
                                                              name_logfile )
 
-      IMPORT:: formul_3p1
+      IMPORT:: tpo
       IMPORT:: idbase
-      CLASS(formul_3p1),   INTENT( IN OUT ):: THIS
+      CLASS(tpo),   INTENT( IN OUT ):: THIS
       CLASS(idbase),          INTENT( IN OUT ):: id
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
-    END SUBROUTINE compute_and_export_3p1_constraints_grid_interface
+    END SUBROUTINE compute_and_export_tpo_constraints_grid_interface
 
-    SUBROUTINE compute_and_export_3p1_constraints_particles_interface( THIS, &
+    SUBROUTINE compute_and_export_tpo_constraints_particles_interface( THIS, &
                                                              parts_obj, &
                                                              namefile, &
                                                              name_logfile )
 
-      IMPORT:: formul_3p1
+      IMPORT:: tpo
       IMPORT:: particles
-      CLASS(formul_3p1),   INTENT( IN OUT ):: THIS
+      CLASS(tpo),   INTENT( IN OUT ):: THIS
       CLASS(particles),    INTENT( IN OUT ):: parts_obj
       CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
       CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
 
-    END SUBROUTINE compute_and_export_3p1_constraints_particles_interface
+    END SUBROUTINE compute_and_export_tpo_constraints_particles_interface
 
     SUBROUTINE deallocate_fields_interface( THIS )
 
-      IMPORT:: formul_3p1
-      CLASS(formul_3p1), INTENT( IN OUT ):: THIS
+      IMPORT:: tpo
+      CLASS(tpo), INTENT( IN OUT ):: THIS
 
     END SUBROUTINE deallocate_fields_interface
 
   END INTERFACE
 
 
-END MODULE formul_3p1_id
+END MODULE standard_tpo_formulation

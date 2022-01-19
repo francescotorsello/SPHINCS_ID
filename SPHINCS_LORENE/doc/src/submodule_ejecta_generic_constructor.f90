@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (ejecta_generic) ejecta_generic_constructor
+SUBMODULE (ejecta_generic) constructor
 
   !*********************************************************
   !
@@ -453,4 +453,4 @@ SUBMODULE (ejecta_generic) ejecta_generic_constructor
   END PROCEDURE destruct_ejecta
 
 
-END SUBMODULE ejecta_generic_constructor
+END SUBMODULE constructor

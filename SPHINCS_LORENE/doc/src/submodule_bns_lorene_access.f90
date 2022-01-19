@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_lorene) bns_lorene_access
+SUBMODULE (bns_lorene) access
 
   !***************************************************
   !
@@ -408,4 +408,4 @@ SUBMODULE (bns_lorene) bns_lorene_access
   END PROCEDURE get_eos_parameters
 
 
-END SUBMODULE bns_lorene_access
+END SUBMODULE access

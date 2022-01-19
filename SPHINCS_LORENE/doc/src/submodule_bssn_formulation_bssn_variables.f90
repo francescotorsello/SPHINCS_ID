@@ -1,24 +1,19 @@
-! File:         submodule_bssn_id_variables.f90
+! File:         submodule_bssn_formulation_bssn_variables.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (formul_bssn_id) bssn_id_variables
+SUBMODULE (bssn_formulation) bssn_variables
 
   !************************************************
   !
-  !# Implementation of the methods of TYPE bssn_id
-  !  that compute the BSSN variables
+  !# Implementation of the methods of TYPE bssn
+  !  that compute the |bssn| variables
   !
   !  FT 23.10.2020
   !
   !  Updated to support mesh refinement
   !
   !  FT 26.03.2021
-  !
-  !  Renamed from bssn_id_methods to
-  !  bssn_id_variables upon improving modularity
-  !
-  !  FT 12.07.2021
   !
   !************************************************
 
@@ -767,4 +762,4 @@ SUBMODULE (formul_bssn_id) bssn_id_variables
   END PROCEDURE print_formatted_lorene_id_bssn_variables
 
 
-END SUBMODULE bssn_id_variables
+END SUBMODULE bssn_variables

@@ -1,14 +1,14 @@
-!& File:         submodule_particles_apm.f90
+!& File:         submodule_sph_particles_apm.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_apm
+SUBMODULE (sph_particles) apm
 
   !***********************************
   !
   !# This SUBMODULE contains the
   !  implementation of the method
-  !  perform_apm of TYPE particles.
+  !  perform_apm of TYPE sph_particles.
   !
   !  FT 04.06.2021
   !
@@ -3116,4 +3116,4 @@ SUBMODULE (particles_id) particles_apm
   END SUBROUTINE get_neighbours_bf
 
 
-END SUBMODULE particles_apm
+END SUBMODULE apm

@@ -1,8 +1,8 @@
-! File:         submodule_diffstar_constructor.f90
+! File:         submodule_diffstar_lorene_constructor.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_lorene) diffstar_lorene_constructor
+SUBMODULE (diffstar_lorene) constructor
 
   !*********************************************************
   !
@@ -177,4 +177,4 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_constructor
   END PROCEDURE destruct_drs
 
 
-END SUBMODULE diffstar_lorene_constructor
+END SUBMODULE constructor

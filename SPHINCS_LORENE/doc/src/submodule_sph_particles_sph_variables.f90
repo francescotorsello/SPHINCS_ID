@@ -1,13 +1,13 @@
-! File:         submodule_particles_sph_variables.f90
+! File:         submodule_sph_particles_sph_variables.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_sph_variables
+SUBMODULE (sph_particles) sph_variables
 
   !****************************************************
   !
   !# THIS SUBMODULE contains the implementation of
-  !  the method of TYPE particles
+  !  the method of TYPE sph_particles
   !  that computes the SPH variables.
   !
   !  FT 16.10.2020
@@ -1721,5 +1721,5 @@ SUBMODULE (particles_id) particles_sph_variables
   END PROCEDURE compute_and_export_SPH_variables
 
 
-END SUBMODULE particles_sph_variables
+END SUBMODULE sph_variables
 

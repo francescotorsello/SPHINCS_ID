@@ -1,13 +1,13 @@
-! File:         submodule_particles_access.f90
+! File:         submodule_sph_particles_access.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_access
+SUBMODULE (sph_particles) access
 
   !**************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE particles
+  !  the methods of TYPE sph_particles
   !  that allow to access PRIVATE members.
   !
   !  FT 12.07.2021
@@ -373,4 +373,4 @@ SUBMODULE (particles_id) particles_access
   END PROCEDURE is_empty
 
 
-END SUBMODULE particles_access
+END SUBMODULE access

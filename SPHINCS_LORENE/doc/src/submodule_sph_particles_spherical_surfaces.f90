@@ -1,13 +1,13 @@
-!& File:         submodule_particles_constructor.f90
+!& File:         submodule_sph_particles_spherical_surfaces.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) spherical_surfaces
+SUBMODULE (sph_particles) spherical_surfaces
 
   !************************************************
   !
   !# This SUBMODULE contains the implementation
-  !  of the method of TYPE particles that places
+  !  of the method of TYPE sph_particles that places
   !  particles on spherical surfaces inside
   !  a star
   !
@@ -22,9 +22,6 @@ SUBMODULE (particles_id) spherical_surfaces
   ! If you call the SUBROUTINES multiple times, they will use the SAME variables
 
   !PRIVATE
-
-
-  !DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii
 
 
   CONTAINS

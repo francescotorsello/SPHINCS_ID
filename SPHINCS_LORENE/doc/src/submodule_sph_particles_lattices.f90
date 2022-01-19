@@ -1,13 +1,13 @@
-! File:         submodule_particles_lattices.f90
+! File:         submodule_sph_particles_lattices.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_lattices
+SUBMODULE (sph_particles) lattices
 
   !***************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE particles
+  !  the methods of TYPE sph_particles
   !  that place particles on 1 or 2 lattices around
   !  the stars.
   !
@@ -943,4 +943,4 @@ SUBMODULE (particles_id) particles_lattices
 !  END PROCEDURE place_particles_lattices
 
 
-END SUBMODULE particles_lattices
+END SUBMODULE lattices

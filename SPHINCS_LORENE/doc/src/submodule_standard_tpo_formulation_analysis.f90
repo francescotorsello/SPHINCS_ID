@@ -1,16 +1,16 @@
-! File:         submodule_formul_3p1_analysis.f90
+! File:         submodule_standard_tpo_formulation_analysis.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (formul_3p1_id) formul_3p1_analysis
+SUBMODULE (standard_tpo_formulation) analysis
 
   !****************************************************
-  !                                                   *
-  ! Implementation of the methods of TYPE formul_3p1  *
-  ! that analyze a grid function.                     *
-  !                                                   *
-  ! FT 12.07.2021                                     *
-  !                                                   *
+  !
+  !# Implementation of the methods of TYPE
+  !  tpo_formulation that analyze a grid function.
+  !
+  !  FT 12.07.2021
+  !
   !****************************************************
 
 
@@ -21,6 +21,14 @@ SUBMODULE (formul_3p1_id) formul_3p1_analysis
 
 
   MODULE PROCEDURE analyze_constraint
+
+    !****************************************************
+    !
+    !#
+    !
+    !  FT
+    !
+    !****************************************************
 
     IMPLICIT NONE
 
@@ -297,4 +305,4 @@ SUBMODULE (formul_3p1_id) formul_3p1_analysis
   END PROCEDURE abs_values_in
 
 
-END SUBMODULE formul_3p1_analysis
+END SUBMODULE analysis

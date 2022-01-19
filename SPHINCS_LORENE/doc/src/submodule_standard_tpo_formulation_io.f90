@@ -1,13 +1,14 @@
-! File:         submodule_formul_3p1_io.f90
+! File:         submodule_standard_tpo_formulation_io.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (formul_3p1_id) formul_3p1_io
+SUBMODULE (standard_tpo_formulation) io
 
   !***************************************************
   !
   !# This submodule contains the implementation of the
-  !  methods of TYPE formul_3p1 that handle I/O (input/output)
+  !  methods of TYPE tpo_formulation that handle I/O
+  !  (input/output)
   !
   !  FT 5.11.2021
   !
@@ -69,4 +70,4 @@ SUBMODULE (formul_3p1_id) formul_3p1_io
   END PROCEDURE print_summary
 
 
-END SUBMODULE formul_3p1_io
+END SUBMODULE io
