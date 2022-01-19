@@ -82,6 +82,10 @@ MODULE sph_particles
     INTEGER:: call_flag= 0
     !# Flag that is set different than 0 if the SUBROUTINE
     !  compute_and_export_SPH_variables is called
+    LOGICAL:: cold_system
+    !# `.TRUE.` if the system is at zero temperature (no thermal component);
+    !  `.FALSE.` otherwise
+
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
     !# Array storing the indices to use with [[particles:baryon_density_parts]]

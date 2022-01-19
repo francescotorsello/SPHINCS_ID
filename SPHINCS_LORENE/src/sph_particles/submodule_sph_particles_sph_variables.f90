@@ -337,7 +337,7 @@ SUBMODULE (sph_particles) sph_variables
       ! Pressure [amu*c**2/(Msun_geo**3)]
       !          dimensions: [(M/L**3)*L**2/T**2]= [M/(L*T**2)], same as
       !                      energy density
-      Pr(itr)= THIS% pressure_parts(itr)*((Msun_geo*km2m)**3)/(amu*g2kg)
+      Pr(itr)= THIS% pressure_parts(itr)!*((Msun_geo*km2m)**3)/(amu*g2kg)
       THIS% pressure_parts_cu(itr)= Pr(itr)
 
       IF( .FALSE. .AND. debug )THEN
@@ -1458,7 +1458,7 @@ SUBMODULE (sph_particles) sph_variables
 
         THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
 
-        IF( .FALSE. )THEN
+        IF( THIS% cold_system )THEN
           ! If the system is cold, get the specific energy computed
           ! exactly using the piecewise polytropic EOS
           THIS% u_pwp(npart_in:npart_fin)= get_u_pwp()

@@ -93,7 +93,7 @@ SUBMODULE (sph_particles) constructor
     INTEGER, DIMENSION(3):: columns
     INTEGER, DIMENSION(id% get_n_matter()):: npart_des_i
     ! Temporary array storing the number of particles on each matter object
-    INTEGER, DIMENSION(id% get_n_matter()):: npart_i_tmp
+    INTEGER, DIMENSION(:), ALLOCATABLE:: npart_i_tmp
 
     DOUBLE PRECISION:: thres, nu_ratio_des
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
@@ -168,6 +168,10 @@ SUBMODULE (sph_particles) constructor
     ! Get the number of matter objects in the physical system
     parts% n_matter= id% get_n_matter()
 
+    ! Get the the logical variable at specifies if the system is cold
+    ! (no thermal component)
+    parts% cold_system= id% get_cold_system()
+
     ALLOCATE( parts% apm_timers(parts% n_matter) )
 
     !
@@ -200,11 +204,13 @@ SUBMODULE (sph_particles) constructor
     ALLOCATE( parts% masses (parts% n_matter) )
     ALLOCATE( parts% all_eos(parts% n_matter) )
     ALLOCATE( parts% npart_i(0:parts% n_matter) )
+    ALLOCATE( npart_i_tmp(0:parts% n_matter) )
     ALLOCATE( parts% nbar_i(parts% n_matter) )
     ALLOCATE( parts% nuratio_i(parts% n_matter) )
     ALLOCATE( parts% mass_ratios (parts% n_matter) )
     ALLOCATE( parts% mass_fractions (parts% n_matter) )
     parts% npart_i(0)= 0
+    npart_i_tmp(0)   = 0
     parts% nbar_i    = 0.0D0
     parts% nuratio_i = 0.0D0
 
@@ -378,12 +384,16 @@ SUBMODULE (sph_particles) constructor
         nlines = nlines + 1
       ENDDO
 
+      IF( debug ) PRINT *, "nlines=", nlines
+
       CLOSE( UNIT= unit_pos )
 
       ! Set the total number of particles to the number of lines in the file,
       ! minus the number of header lines, minus the line containing the number
       ! of particles on each matter object
       npart_tmp= nlines - header_lines - 1
+
+      IF( debug ) PRINT *, "npart_tmp=", npart_tmp
 
       ! Read all particle positions, and nu, if present
       OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
@@ -401,7 +411,7 @@ SUBMODULE (sph_particles) constructor
       ! Read the number of matter objects and the particle numbers on each
       ! matter object
       READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
-              n_matter_tmp, npart_i_tmp
+              n_matter_tmp, npart_i_tmp(1:parts% n_matter)
 
       IF( ios > 0 )THEN
         PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
@@ -521,12 +531,20 @@ SUBMODULE (sph_particles) constructor
         ENDIF
       ENDDO
 
+      IF( debug ) PRINT *, "parts% npart_i_tmp=", npart_i_tmp
+
       ! Impose equatorial plane symmetry on each object
       ! @TODO: make this optional
       DO itr= 1, parts% n_matter, 1
 
-        ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
-                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+        ASSOCIATE( npart_in   => npart_i_tmp(itr-1) + 1, &
+                   npart_fin  => npart_i_tmp(itr-1) + npart_i_tmp(itr) )
+
+          IF( debug )THEN
+            PRINT *, "npart_in=", npart_in
+            PRINT *, "npart_fin=", npart_fin
+            PRINT *
+          ENDIF
 
           IF( read_nu )THEN
 
@@ -552,6 +570,13 @@ SUBMODULE (sph_particles) constructor
       ENDDO
       parts% npart_i(1:parts% n_matter)= npart_i_tmp(1:parts% n_matter)
       parts% npart = SUM(parts% npart_i)
+
+      IF( debug )THEN
+        PRINT *, "parts% npart_i_tmp=", npart_i_tmp
+        PRINT *, "parts% npart_i=", parts% npart_i
+        PRINT *, "parts% npart=", parts% npart
+        PRINT *
+      ENDIF
 
       ! Allocating the memory for the array pos( 3, npart )
   !    IF(.NOT.ALLOCATED( parts% pos ))THEN

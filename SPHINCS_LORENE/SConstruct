@@ -22,7 +22,7 @@ import glob
 # The following flavours are implemented
 #   '1' : Link to the LORENE library to read the ID
 #   '2' : Interpolate from a grid
-default_flavour = '2'
+default_flavour = '1'
 
 # 'TRUE'  : build in DEBUG MODE
 # 'FALSE' : build in PRODUCTION MODE

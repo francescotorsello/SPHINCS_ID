@@ -649,8 +649,9 @@ SUBMODULE (bns_lorene) import
       ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-      ! Convert the baryon density to units of amu (SPH code units)
+      ! Convert the baryon density and pressure to units of amu (SPH code units)
       baryon_density= baryon_density*((Msun_geo*km2m)**3)/(amu*g2kg)
+      pressure      = pressure*((Msun_geo*km2m)**3)/(amu*g2kg)
 
       PRINT *, "** Subroutine import_id_particles executed."
       PRINT *

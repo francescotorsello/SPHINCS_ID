@@ -123,6 +123,54 @@ SUBMODULE (id_base) access
   END PROCEDURE get_zero_shift
 
 
+  MODULE PROCEDURE set_cold_system
+
+    !************************************************
+    !
+    !# Sets [[idbase:cold_system]] to the given value
+    !
+    !  FT 19.01.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    IF( .NOT.(value .EQV. .TRUE.) .AND. .NOT.(value .EQV. .FALSE.) )THEN
+
+      PRINT *, "** ERROR in SUBROUTINE set_cold_system! The LOGICAL ", &
+               "variable cold_system should be .TRUE. or .FALSE. ."
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ELSE
+
+      THIS% cold_system= value
+
+    ENDIF
+
+  END PROCEDURE set_cold_system
+
+
+  MODULE PROCEDURE get_cold_system
+
+    !************************************************
+    !
+    !# Returns [[idbase:cold_system]], the `LOGICAL`
+    !  variable at specifies if the system is cold
+    !  (no thermal component)
+    !
+    !  FT 19.01.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    get_cold_system= THIS% cold_system
+
+  END PROCEDURE get_cold_system
+
+
   MODULE PROCEDURE check_i_matter
 
     !************************************************

@@ -57,6 +57,10 @@ MODULE id_base
     LOGICAL:: zero_shift
     !! Logical variable that determines if the shift \(\beta^i=0\)
 
+    LOGICAL:: cold_system
+    !# `.TRUE.` if the system is at zero temperature (no thermal component);
+    !  `.FALSE.` otherwise
+
 
     TYPE(timer), PUBLIC:: construction_timer
     !! Timer that times the construction of the appropriate object
@@ -185,23 +189,33 @@ MODULE id_base
 
 
     PROCEDURE, NON_OVERRIDABLE:: set_one_lapse
-    !# Sets [[idbase:one_lapse]], the logical variable that determines if
+    !# Sets [[idbase:one_lapse]], the `LOGICAL` variable that determines if
     !  the lapse \(\alpha=1\), i.e., if the geodesic gauge is to be used
 
 
     PROCEDURE, NON_OVERRIDABLE:: get_one_lapse
-    !# Returns [[idbase:one_lapse]], the logical variable that determines if
+    !# Returns [[idbase:one_lapse]], the `LOGICAL` variable that determines if
     ! the lapse function \(\alpha=1\), i.e., if the geodesic gauge is to be used
 
 
     PROCEDURE, NON_OVERRIDABLE:: set_zero_shift
-    !# Sets [[idbase:zero_shift]], the logical variable that determines if
+    !# Sets [[idbase:zero_shift]], the `LOGICAL` variable that determines if
     !  the shift \(\beta^i=0\)
 
 
     PROCEDURE, NON_OVERRIDABLE:: get_zero_shift
-    !# Returns [[idbase:zero_shift]], the logical variable that determines if
+    !# Returns [[idbase:zero_shift]], the `LOGICAL` variable that determines if
     !  the shift \(\beta^i=0\)
+
+
+    PROCEDURE, NON_OVERRIDABLE:: set_cold_system
+    !# Sets [[idbase:cold_system]], the `LOGICAL` variable at specifies if
+    !  the system is cold (no thermal component)
+
+
+    PROCEDURE, NON_OVERRIDABLE:: get_cold_system
+    !# Returns [[idbase:cold_system]], the `LOGICAL` variable at specifies if
+    !  the system is cold (no thermal component)
 
 
     PROCEDURE, NON_OVERRIDABLE:: check_i_matter
@@ -690,6 +704,29 @@ MODULE id_base
       !! Value to set [[idbase:n_matter]] to
 
     END SUBROUTINE set_n_matter
+
+
+    MODULE FUNCTION get_cold_system( THIS )
+    !# Returns [[idbase:cold_system]], the `LOGICAL` variable at specifies if
+    !  the system is cold (no thermal component)
+
+      CLASS(idbase), INTENT( IN ):: THIS
+      LOGICAL:: get_cold_system
+      !! [[idbase:cold_system]], the number of matter objects in the
+      !  physical system
+
+    END FUNCTION get_cold_system
+
+
+    MODULE SUBROUTINE set_cold_system( THIS, value )
+    !# Sets [[idbase:cold_system]], the `LOGICAL` variable at specifies if
+    !  the system is cold (no thermal component)
+
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      LOGICAL, INTENT( IN ):: value
+      !! Value to set [[idbase:cold_system]] to
+
+    END SUBROUTINE set_cold_system
 
 
     MODULE SUBROUTINE check_i_matter( THIS, i_matter )

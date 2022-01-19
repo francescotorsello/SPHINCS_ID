@@ -45,6 +45,7 @@ SUBMODULE (diffstar_lorene) constructor
     INTEGER, SAVE:: diffstar_counter= 1
 
     CALL derived_type% set_n_matter(1)
+    CALL derived_type% set_cold_system(.TRUE.)
 
     derived_type% construction_timer= timer( "drs_construction_timer" )
 

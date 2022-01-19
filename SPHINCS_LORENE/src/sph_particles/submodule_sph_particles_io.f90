@@ -477,7 +477,7 @@ SUBMODULE (sph_particles) io
         THIS% baryon_density_parts( itr ), &                               ! 9
         THIS% energy_density_parts( itr ), &                               ! 10
         THIS% specific_energy_parts( itr ), &                              ! 11
-        THIS% pressure_parts( itr )*((Msun_geo*km2m)**3.0D0)/(amu*g2kg), & ! 12
+        THIS% pressure_parts( itr ), &                                     ! 12
         THIS% pressure_parts_cu( itr ), &                                  ! 13
         THIS% v_euler_parts_x( itr ), &                                    ! 14
         THIS% v_euler_parts_y( itr ), &                                    ! 15
