@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_base) diffstar_base_access
+SUBMODULE (diffstar_base) access
 
   !***************************************************
   !
@@ -879,4 +879,4 @@ SUBMODULE (diffstar_base) diffstar_base_access
   END PROCEDURE get_logRho2
 
 
-END SUBMODULE diffstar_base_access
+END SUBMODULE access

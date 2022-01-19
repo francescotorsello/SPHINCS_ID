@@ -1,13 +1,13 @@
-! File:         submodule_particles_memory.f90
+! File:         submodule_sph_particles_memory.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_memory
+SUBMODULE (sph_particles) memory
 
   !***************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE particles
+  !  the methods of TYPE sph_particles
   !  that place particles on 1 or 2 lattices around
   !  the stars.
   !
@@ -696,4 +696,4 @@ SUBMODULE (particles_id) particles_memory
   END PROCEDURE deallocate_lorene_id_parts_memory
 
 
-END SUBMODULE particles_memory
+END SUBMODULE memory

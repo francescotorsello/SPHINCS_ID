@@ -1,8 +1,8 @@
-! File:         submodule_diffstar_access.f90
+! File:         submodule_diffstar_lorene_access.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_lorene) diffstar_lorene_access
+SUBMODULE (diffstar_lorene) access
 
   !***************************************************
   !
@@ -359,4 +359,4 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_access
   END PROCEDURE get_eos_parameters
 
 
-END SUBMODULE diffstar_lorene_access
+END SUBMODULE access

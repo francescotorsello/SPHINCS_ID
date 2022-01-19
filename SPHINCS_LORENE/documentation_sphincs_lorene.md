@@ -17,7 +17,7 @@ media_dir: ./media
 exclude_dir: ./src/prototypes
 exclude: submodule_bns_lorene_bindings.f90
          submodule_diffstar_lorene_bindings.f90
-         submodule_particles_redistribute_nu.f90
+         submodule_sph_particles_redistribute_nu.f90
 output_dir: ./doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S
@@ -41,6 +41,7 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        etrotdiff = \(\texttt{Et_rot_diff}\)
        etdiffrot = \(\texttt{Et_diffrot}\)
        eos = \(\mathrm{EOS}\)
+       ee = Einstein equations
 
 #### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___
@@ -52,6 +53,8 @@ Currently, it produces initial data for binary neutron star mergers and differen
 Presently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN or MAGMA2. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN or MAGMA2.
 
 The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
+
+SPHINCS_ID needs SPHINCS_BSSN to be compiled.
 
 ---
 

@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (id_base) id_base_access
+SUBMODULE (id_base) access
 
   !********************************************
   !
@@ -210,4 +210,4 @@ SUBMODULE (id_base) id_base_access
 
 
 
-END SUBMODULE id_base_access
+END SUBMODULE access

@@ -1,8 +1,8 @@
-! File:         submodule_bns_bindings.f90
+! File:         submodule_diffstar_lorene_bindings.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_lorene) diffstar_lorene_bindings
+SUBMODULE (diffstar_lorene) bindings
 
         !***********************************************
         !                                              *
@@ -580,4 +580,4 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_bindings
     END INTERFACE
 
 
-END SUBMODULE diffstar_lorene_bindings
+END SUBMODULE bindings

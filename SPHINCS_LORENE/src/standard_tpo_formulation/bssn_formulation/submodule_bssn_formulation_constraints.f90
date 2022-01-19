@@ -1,12 +1,12 @@
-! File:         submodule_bssn_id_constraints.f90
+! File:         submodule_bssn_formulation_constraints.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (formul_bssn_id) bssn_id_constraints
+SUBMODULE (bssn_formulation) constraints
 
   !************************************************
   !
-  !# Implementation of the methods of TYPE bssn_id
+  !# Implementation of the methods of TYPE bssn
   !  that compute the constraints
   !
   !  FT 9.07.2021
@@ -2126,4 +2126,4 @@ SUBMODULE (formul_bssn_id) bssn_id_constraints
   END PROCEDURE compute_and_export_bssn_constraints_particles
 
 
-END SUBMODULE bssn_id_constraints
+END SUBMODULE constraints

@@ -1,8 +1,8 @@
-! File:         submodule_diffstar_io.f90
+! File:         submodule_diffstar_lorene_io.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_lorene) diffstar_lorene_io
+SUBMODULE (diffstar_lorene) io
 
   !********************************************
   !
@@ -108,7 +108,7 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_io
                THIS% pressure_center/lorene2hydrobase*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *
-      PRINT *, " Ratio T/|W| between the rotaional kinetic energy and ", &
+      PRINT *, " Ratio T/|W| between the rotational kinetic energy and ", &
                "the gravitational binding energy: ", THIS% tsw
       PRINT *, "   For axisymmetric configurations as this one, the ", &
                "threshold for dynamical bar-mode instability is T/|W|~0.25 ", &
@@ -186,4 +186,4 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_io
   END PROCEDURE print_diffstar_params
 
 
-END SUBMODULE diffstar_lorene_io
+END SUBMODULE io

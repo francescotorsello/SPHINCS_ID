@@ -1,13 +1,14 @@
-! File:         submodule_particles_io.f90
+! File:         submodule_sph_particles_io.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_io
+SUBMODULE (sph_particles) io
 
   !***************************************************
   !
   !# This submodule contains the implementation of the
-  !  methods of TYPE particles that handle I/O (input/output)
+  !  methods of TYPE sph_particles that handle I/O
+  !  (input/output)
   !
   !  FT 5.11.2021
   !
@@ -726,4 +727,4 @@ SUBMODULE (particles_id) particles_io
   !END PROCEDURE write_lorene_bns_id_dump
 
 
-END SUBMODULE particles_io
+END SUBMODULE io

@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_base) diffstar_base_io
+SUBMODULE (diffstar_base) io
 
   !***************************************************
   !
@@ -83,4 +83,4 @@ SUBMODULE (diffstar_base) diffstar_base_io
   END PROCEDURE print_summary_drs
 
 
-END SUBMODULE diffstar_base_io
+END SUBMODULE io

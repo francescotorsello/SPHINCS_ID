@@ -24,7 +24,7 @@ MODULE particles_id
   INTEGER, PARAMETER:: id_particles_from_file            = 0
   !! Identifier for a particle distribution read from formatted file
   INTEGER, PARAMETER:: id_particles_on_lattice           = 1
-  !! Identifier for a prticle distribution on a lattice
+  !! Identifier for a particle distribution on a lattice
   INTEGER, PARAMETER:: id_particles_on_spherical_surfaces= 2
   !! Identifier for particle distribution on spherical surfaces
 
@@ -52,16 +52,16 @@ MODULE particles_id
   END TYPE
 
 
-  !**********************************************************
-  !                                                         *
-  !              Definition of TYPE particles               *
-  !                                                         *
-  ! This class places the |sph| particles, imports            *
-  ! the |id| on the particle positions, stores              *
-  ! it, computes the relevant |sph| fields and exports it to  *
-  ! both a formatted, and a binary file for evolution       *
-  !                                                         *
-  !**********************************************************
+  !***********************************************************
+  !                                                          *
+  !              Definition of TYPE particles                *
+  !                                                          *
+  ! This class places the |sph| particles, imports           *
+  ! the |id| on the particle positions, stores               *
+  ! it, computes the relevant |sph| fields and exports it to *
+  ! both a formatted, and a binary file for evolution        *
+  !                                                          *
+  !***********************************************************
 
   TYPE:: particles
   !! TYPE representing a |sph| particle distribution
@@ -523,8 +523,6 @@ MODULE particles_id
       !! [[particles]] object which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT( IN )    :: central_density
       !! Maximum baryon mass density of the system
-      INTEGER,          INTENT( IN )    :: npart_des
-      !! Desired particle number
       DOUBLE PRECISION, INTENT( IN )    :: xmin
       !! Left \(x\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: xmax
@@ -537,17 +535,19 @@ MODULE particles_id
       !! Left \(z\) boundary of the lattice
       DOUBLE PRECISION, INTENT( IN )    :: zmax
       !! Right \(z\) boundary of the lattice
+      INTEGER,          INTENT( IN )    :: npart_des
+      !! Desired particle number
+      INTEGER,          INTENT( OUT )   :: npart_out
+      !! Real, output particle number
       DOUBLE PRECISION, INTENT( IN )    :: stretch
       !! Stretching factor fo the lattice. `xmin` to `zmax` are multiplied by it
       DOUBLE PRECISION, INTENT( IN )    :: thres
       !# (~rho_max)/thres is the minimum mass density considered
       ! when placing particles. Used only when redistribute_nu is
       ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
-      INTEGER,          INTENT( OUT )    :: npart_out
-      !! Real, output particle number
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
       !> Array soring the inal particle volumes
-      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( OUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
       !! Array storing the final particle volumes
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
@@ -1226,18 +1226,31 @@ MODULE particles_id
     IMPLICIT NONE
 
     INTEGER, INTENT(IN):: npart
+    !! Number of particles
     LOGICAL, INTENT(IN), OPTIONAL:: debug
+    !! `TRUE` to debug the SUBROUTINE, `FALSE` otherwise
     DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+    !! Array of particle positions
 
-    INTEGER:: itr, itr2, x_idx
+    INTEGER:: itr
+    !! Iterator
+    INTEGER:: itr2
+    !! Iterator
+    INTEGER:: x_idx
+    !# Index at which a new value of the \(x\) coordinate appears,
+    !  in the array `pos` sorted so that the \(x\) coordinate does not decrease
     INTEGER, DIMENSION(npart):: x_sort
-    INTEGER, DIMENSION(:), ALLOCATABLE:: x_number
+    !# Array storing the sorted indices of array `pos`, so that the \(x\)
+    !  coordinate of the particles is in nondecreasing order
+    INTEGER, DIMENSION(npart):: x_number
+    !# Array storing, for each \(x\) coordinate, the number of particles
+    !  having that \(x\) coordinate
 
     PRINT *, "** Checking that there are not multiple particles", &
              " at the same position..."
     PRINT *
 
-    ALLOCATE( x_number( npart ) )
+    !ALLOCATE( x_number( npart ) )
 
     ! Sort x coordinates of the particles
     CALL indexx( npart, pos( 1, : ), x_sort )
@@ -1346,7 +1359,7 @@ MODULE particles_id
     ENDDO
     !$OMP END PARALLEL DO
 
-    DEALLOCATE( x_number )
+    !DEALLOCATE( x_number )
 
   END SUBROUTINE check_particle_positions
 
@@ -1357,6 +1370,9 @@ MODULE particles_id
     !
     !# Return the number of times that pos_a appears
     !  in the array pos
+    !  @todo This algorithm scales as O(npart**2)
+    !        if used in a loop over the particles...
+    !        To be documented, after it's fixed
     !
     !  FT 13.10.2021
     !
@@ -1433,41 +1449,56 @@ MODULE particles_id
     !**************************************************************
     !
     !# Backup method to find the smoothing length via brute force
-    !  if the optimized method gives 0
+    !  if the optimized method gives 0.
+    !  It sets the smoothing lengths to the distance between the
+    !  particle and the ndes-th closest neighbour.
     !
     !  FT 24.11.2021
     !
     !**************************************************************
 
-    USE NR, ONLY: select
+    USE NR,        ONLY: select
+    USE constants, ONLY: half
 
     IMPLICIT NONE
 
-    INTEGER,          INTENT(IN):: a, npart, ndes
+    INTEGER,          INTENT(IN):: a
+    !! Index of the particle whose smoothing length is to be computed
+    INTEGER,          INTENT(IN):: npart
+    !! Number of particles
+    INTEGER,          INTENT(IN):: ndes
+    !! Desired number of neighbours
     DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+    !! Array containing particle positions
 
     DOUBLE PRECISION:: h
+    !! Smoothing length
 
     INTEGER:: b
+    !! Particle index running over all particles, except particle `a`
     DOUBLE PRECISION, DIMENSION(npart):: dist2
+    !! Square norm of the distance vector between the particles `a` and `b`
     DOUBLE PRECISION, DIMENSION(3):: dist
+    !! Distance vector between the particles `a` and `b`
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( pos, a, npart, dist2 ) &
     !$OMP             PRIVATE( b, dist )
     DO b= 1, npart, 1
 
-      IF( a /= b )THEN
+      !IF( a /= b )THEN
 
         dist(:)= pos(:,b) - pos(:,a)
         dist2(b)= DOT_PRODUCT(dist,dist)
 
-      ENDIF
+      !ENDIF
 
     ENDDO
     !$OMP END PARALLEL DO
 
-    h= 0.5D0*SQRT( select(ndes, npart, dist2) )
+    ! ndes+1 is used, rather tan ndes, because the particle itself is included
+    ! in the distance array dist2
+    h= half*SQRT( select(ndes+1, npart, dist2) )
 
   END FUNCTION find_h_backup
 

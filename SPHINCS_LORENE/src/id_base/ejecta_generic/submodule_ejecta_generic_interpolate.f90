@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (ejecta_generic) ejecta_generic_interpolate
+SUBMODULE (ejecta_generic) interpolate
 
   !****************************************************
   !
@@ -471,4 +471,4 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
   END PROCEDURE is_hydro_negative
 
 
-END SUBMODULE ejecta_generic_interpolate
+END SUBMODULE interpolate

@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (ejecta_generic) ejecta_generic_access
+SUBMODULE (ejecta_generic) access
 
   !***************************************************
   !
@@ -453,4 +453,4 @@ SUBMODULE (ejecta_generic) ejecta_generic_access
   END PROCEDURE get_eos_parameters
 
 
-END SUBMODULE ejecta_generic_access
+END SUBMODULE access

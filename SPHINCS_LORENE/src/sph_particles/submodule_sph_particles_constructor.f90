@@ -1,14 +1,14 @@
-! File:         submodule_particles_constructor.f90
+! File:         submodule_sph_particles_constructor.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_constructor
+SUBMODULE (sph_particles) constructor
 
   !************************************************
   !
   !# This SUBMODULE contains the implementation
   !  of the constructor and the
-  !  destructor of TYPE particles.
+  !  destructor of TYPE sph_particles.
   !
   !  FT 16.10.2020
   !
@@ -2190,4 +2190,4 @@ SUBMODULE (particles_id) particles_constructor
   END PROCEDURE destruct_particles
 
 
-END SUBMODULE particles_constructor
+END SUBMODULE constructor

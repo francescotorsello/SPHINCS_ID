@@ -93,6 +93,7 @@ SUBMODULE (ejecta_generic) ejecta_generic_interpolate
     IMPLICIT NONE
 
     LOGICAL, PARAMETER:: debug= .FALSE.
+    !
 
     INTEGER:: i, j, k, i_eps, i_vel
     DOUBLE PRECISION:: zp, min_eps, min_vel, xtmp, ytmp, ztmp, xsgn, ysgn, zsgn

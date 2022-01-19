@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (bns_lorene) bns_lorene_constructor
+SUBMODULE (bns_lorene) constructor
 
   !*********************************************************
   !
@@ -208,4 +208,4 @@ SUBMODULE (bns_lorene) bns_lorene_constructor
   END PROCEDURE destruct_binary
 
 
-END SUBMODULE bns_lorene_constructor
+END SUBMODULE constructor

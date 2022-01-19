@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (id_base) id_base_initialization
+SUBMODULE (id_base) initialization
 
   !********************************************
   !
@@ -159,4 +159,4 @@ SUBMODULE (id_base) id_base_initialization
   END PROCEDURE initialize
 
 
-END SUBMODULE id_base_initialization
+END SUBMODULE initialization

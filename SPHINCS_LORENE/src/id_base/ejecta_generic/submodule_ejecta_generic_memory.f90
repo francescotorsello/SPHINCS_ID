@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (ejecta_generic) ejecta_generic_memory
+SUBMODULE (ejecta_generic) memory
 
   !***********************************************
   !
@@ -205,4 +205,4 @@ SUBMODULE (ejecta_generic) ejecta_generic_memory
   END PROCEDURE deallocate_gridid_memory
 
 
-END SUBMODULE ejecta_generic_memory
+END SUBMODULE memory

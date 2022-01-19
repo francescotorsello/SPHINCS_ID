@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (diffstar_lorene) diffstar_lorene_memory
+SUBMODULE (diffstar_lorene) memory
 
   !***********************************************
   !
@@ -545,4 +545,4 @@ SUBMODULE (diffstar_lorene) diffstar_lorene_memory
   END PROCEDURE deallocate_diffstar_memory
 
 
-END SUBMODULE diffstar_lorene_memory
+END SUBMODULE memory

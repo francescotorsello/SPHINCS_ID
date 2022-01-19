@@ -2,7 +2,7 @@
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (ejecta_generic) ejecta_generic_io
+SUBMODULE (ejecta_generic) io
 
   !***************************************************
   !
@@ -43,4 +43,4 @@ SUBMODULE (ejecta_generic) ejecta_generic_io
   END PROCEDURE print_summary_ejecta
 
 
-END SUBMODULE ejecta_generic_io
+END SUBMODULE io

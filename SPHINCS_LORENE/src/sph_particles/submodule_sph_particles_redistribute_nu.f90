@@ -1,13 +1,13 @@
-! File:         submodule_particles_redistribute_nu.f90
+! File:         submodule_sph_particles_redistribute_nu.f90
 ! Authors:      Francesco Torsello (FT)
 ! Copyright:    GNU General Public License (GPLv3)
 
-SUBMODULE (particles_id) particles_redistribute_nu
+SUBMODULE (sph_particles) redistribute_nu
 
   !***************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE particles
+  !  the methods of TYPE sph_particles
   !  that reallocate the sph variables and
   !  redistribute nu (baryon number per particle)
   !  on the particles.
@@ -184,4 +184,4 @@ SUBMODULE (particles_id) particles_redistribute_nu
   END PROCEDURE reshape_sph_field_2d
 
 
-END SUBMODULE particles_redistribute_nu
+END SUBMODULE redistribute_nu
