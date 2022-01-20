@@ -113,7 +113,6 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0 !3zero
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
-    DOUBLE PRECISION, PARAMETER:: max_it_tree      = 1
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
 
     INTEGER:: a, a2, itr, itr2, n_inc, cnt1, cnt2, inde, index1   ! iterators
@@ -2380,29 +2379,6 @@ SUBMODULE (sph_particles) apm
         ENDIF
 
       ENDDO ll_cell_loop
-
-      !
-      !-- Check that the number of candidate neighbours is larger than
-      !-- or equal to ndes - 1
-      !
-      !DO itr= 1, SIZE(ncand), 1
-      !
-      !  ! If there are too few candidate neighbors
-      !  IF( ncand(itr) < nn_des - 1 )THEN
-      !
-      !    ! Increase the smoothing length and rebuild the tree
-      !    few_ncand= .TRUE.
-      !    h= three*h
-      !
-      !    EXIT
-      !
-      !  ELSE
-      !
-      !    few_ncand= .FALSE.
-      !
-      !  ENDIF
-      !
-      !ENDDO
 
       cnt1= cnt1 + 1
 

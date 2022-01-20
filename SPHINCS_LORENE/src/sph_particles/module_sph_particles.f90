@@ -8,7 +8,7 @@ MODULE sph_particles
   !***********************************************************
   !
   !# This module contains the definition of TYPES,
-  !  PROCEDURES and variables needed to treat |sph| particles
+  !  PROCEDURES and variables needed to set up the |sph| |id|
   !
   !***********************************************************
 
@@ -28,6 +28,21 @@ MODULE sph_particles
   !! Identifier for a particle distribution on a lattice
   INTEGER, PARAMETER:: id_particles_on_spherical_surfaces= 2
   !! Identifier for particle distribution on spherical surfaces
+
+  INTEGER, PARAMETER:: max_it_tree= 1
+  !# When computing the neighbours' tree with the SUBROUTINE
+  !  exact_nei_tree_update, it can happen that some particles do not have
+  !  exactly 300 neighours. If this happens, the smoothing lenghts of the
+  !  particles in the tree-cell are increased by a factor of 3, and used
+  !  as a new guess to recompute the entire tree.
+  !  [[sph_particles:max_it_tree]] specifies how many times the process should
+  !  be iterated, if needed.
+  !
+  !  Note that, at the end of the iteration, the smoothing lengths are checked
+  !  for them being NaNs or 0. For the particles at which this happens,
+  !  the smoothing lengths are computed brute-force using the SUBROUTINE
+  !  [[sph_particles:find_h_backup]], so that such particles have exactly
+  !  300 neighbours.
 
 
   TYPE eos

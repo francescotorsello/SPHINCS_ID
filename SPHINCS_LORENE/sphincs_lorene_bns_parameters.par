@@ -13,9 +13,9 @@
 !----------------------------------------------------------------!
 ! n_bns and the number of specified components of filenames must be the same
 n_bns=1                          ! Number of BNS to import
-common_path=!"lorene-id-files/"   ! Path to the directory containing the LORENE
+common_path="lorene-id-files/"   ! Path to the directory containing the LORENE
                                  ! BNS binary files
-            "eccentric-ejecta-files/"
+            !"eccentric-ejecta-files/"
 filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_mpa1_1.6-2_45km_1e-9.bin"
              !"BNSLO_apr3_1.4-2_35km.bin"
@@ -43,7 +43,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_poly2-75_1.4-1.4_40km.bin"
              !"BNSLO_poly2-75_1.4-1.4_45km.bin"
              !"BNSLO_poly2-75_1.6-1.8_40km.bin"
-             !"BNSLO_poly275_1.2-1.6_45km.bin"
+             "BNSLO_poly275_1.2-1.6_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_48km.bin"
              !"BNSLO_poly2-75_1.2-1.8_50km.bin"
@@ -73,7 +73,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"DRSLO_apr4.bin"
-             "EJECT_ejecta_apr4_2516.dat"
+             !"EJECT_ejecta_apr4_2516.dat"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
@@ -90,7 +90,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=0                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object

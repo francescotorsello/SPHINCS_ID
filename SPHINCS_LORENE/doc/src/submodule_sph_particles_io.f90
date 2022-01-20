@@ -30,8 +30,9 @@ SUBMODULE (sph_particles) io
 
     !************************************************
     !
-    !# Prints a summary of the properties of the |sph| particle
-    !  distribution, optionally, to a formatted file whose name
+    !# Prints a summary of the properties of the
+    !  |sph| particle distribution, optionally, to
+    !  a formatted file whose name
     !  is given as the optional argument `filename`
     !
     !  FT 5.11.2021
@@ -46,21 +47,22 @@ SUBMODULE (sph_particles) io
     PRINT *
     PRINT *, "   Total particle number= ", THIS% npart
     DO i_matter= 1, THIS% n_matter, 1
-      PRINT *, "   Particle number on matter object ", i_matter, "= ", &
+      PRINT *, "   Particle number on matter object    ", i_matter, "=", &
                                             THIS% npart_i(i_matter)
     ENDDO
     PRINT *
     DO i_matter= 1, THIS% n_matter, 1
-      PRINT *, "   Mass fraction of matter object", i_matter, "=", &
+      PRINT *, "   Mass fraction of matter object      ", i_matter, "=", &
                THIS% mass_fractions(i_matter)
-      PRINT *, "   Particle fraction of matter object", i_matter, "=", &
-               THIS% npart_i(i_matter)/THIS% npart
+      PRINT *, "   Particle fraction of matter object  ", i_matter, "=", &
+               DBLE(THIS% npart_i(i_matter))/DBLE(THIS% npart)
       PRINT *, "   Baryon number ratio on matter object", i_matter, "=", &
                THIS% nuratio_i(i_matter)
     ENDDO
     PRINT *
 
-    PRINT *, "   Baryon number ratio across all matter objects=", THIS% nuratio
+    PRINT *, "   Baryon number ratio across all matter objects    =", &
+             THIS% nuratio
     PRINT *
 
   END PROCEDURE print_summary

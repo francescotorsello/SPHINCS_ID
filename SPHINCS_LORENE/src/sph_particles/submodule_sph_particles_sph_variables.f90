@@ -8,7 +8,7 @@ SUBMODULE (sph_particles) sph_variables
   !
   !# THIS SUBMODULE contains the implementation of
   !  the method of TYPE sph_particles
-  !  that computes the SPH variables.
+  !  that computes the |sph| variables.
   !
   !  FT 16.10.2020
   !
@@ -19,7 +19,9 @@ SUBMODULE (sph_particles) sph_variables
   !
   !****************************************************
 
+
   USE constants, ONLY: zero, half, one, two, three
+
 
   IMPLICIT NONE
 
@@ -36,9 +38,9 @@ SUBMODULE (sph_particles) sph_variables
 
     !************************************************
     !
-    !# Compute the SPH quantities from the LORENE
-    !  ID, and export it to a binary file with
-    !  write_SPHINCS_dump, and to a formatted file
+    !# Compute the |sph| variables from the
+    !  |id|, and print them to a binary file to be
+    !  read by |sphincsbssn|, and to a formatted file
     !
     !  FT 18.09.2020
     !
@@ -46,8 +48,8 @@ SUBMODULE (sph_particles) sph_variables
 
     USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
                                    third, kg2g, Msun, k_lorene2hydrobase, &
-                                   Msun, zero
-    USE units,               ONLY: set_units
+                                   Msun, m0c2
+    USE units,               ONLY: m0c2_cu, set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
                                    n1,    &  ! particle number for star 1
@@ -90,8 +92,6 @@ SUBMODULE (sph_particles) sph_variables
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
                                    get_u_pwp, shorten_eos_name, Gamma_th_1
-    USE constants,           ONLY: m0c2, kg2g, m2cm
-    USE units,               ONLY: m0c2_cu
     USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
@@ -309,28 +309,14 @@ SUBMODULE (sph_particles) sph_variables
                    + g4(mus,nus)*THIS% v(mus,itr)*THIS% v(nus,itr)
         ENDDO
       ENDDO
-      Theta_a= one/SQRT(-Theta_a)
-      Theta(itr)= Theta_a
+      Theta_a         = one/SQRT(-Theta_a)
+      Theta(itr)      = Theta_a
       THIS% Theta(itr)= Theta_a
-
-      ! This is a first guess for the smoothing length
-      ! The real smoothing length is such that the kernel sees
-      ! only 300 neighbors, and it is computed in exact_nei_tree_update,
-      ! MODULE set_h.
-      ! N.B. This first guess is very important, as it affects the algorithm in
-      !      exact_tree_nei_update. Here it is set to 3 times the size of a
-      !      particle
-      !IF( itr <= THIS% npart1 )THEN
-      !  THIS% h(itr)= 3.0*(THIS% vol1_a)**third
-      !ELSE
-      !  THIS% h(itr)= 3.0*(THIS% vol2_a)**third
-      !ENDIF
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= THIS% baryon_density_parts(itr)!((Msun_geo*km2m)**3)/(amu*g2kg)
-      THIS% nlrf(itr)= &
-                 THIS% baryon_density_parts(itr)!((Msun_geo*km2m)**3)/(amu*g2kg)
+      nlrf(itr)= THIS% baryon_density_parts(itr)
+      THIS% nlrf(itr)= THIS% baryon_density_parts(itr)
 
       ! Specific internal energy [c^2]
       u(itr)= THIS% specific_energy_parts(itr)
@@ -338,44 +324,20 @@ SUBMODULE (sph_particles) sph_variables
       ! Pressure [amu*c**2/(Msun_geo**3)]
       !          dimensions: [(M/L**3)*L**2/T**2]= [M/(L*T**2)], same as
       !                      energy density
-      Pr(itr)= THIS% pressure_parts(itr)!*((Msun_geo*km2m)**3)/(amu*g2kg)
+      Pr(itr)= THIS% pressure_parts(itr)
       THIS% pressure_parts_cu(itr)= Pr(itr)
-
-      IF( .FALSE. .AND. debug )THEN
-        IF( itr >= THIS% npart/10 - 200 .AND. itr <= THIS% npart/10 )THEN
-          PRINT "(A15,E15.4)", "det=", det
-          PRINT "(A15,E15.4)", "sq_g=", sq_g
-          PRINT "(A15,E15.4)", "sq_det_g4(itr)=", sq_det_g4(itr)
-          PRINT "(A15,E15.4)", "amu=", amu
-          PRINT "(A15,E15.4)", "g2kg=", g2kg
-          PRINT "(A15,E15.4)", "(1477**3)=", (1477.0)**3
-          PRINT *
-          PRINT "(A15,E15.4)", "nbar(a)=", THIS% baryon_density_parts(itr)
-          PRINT "(A25,E15.4)", "THIS% nlrf(a)=", THIS% nlrf(itr)
-          PRINT "(A25,E15.4)", "THIS% nu(a)=", THIS% nu(itr)
-          PRINT "(A25,E15.4)", "THIS% pressure_parts_cu(a)=", &
-                                        THIS% pressure_parts_cu(itr)
-          PRINT *
-          PRINT "(A15,E15.4)", "theta(a)=", THIS% Theta(itr)
-          PRINT "(A15,E15.4)", "sq_det_g4(a)=", sq_det_g4(itr)
-          !PRINT "(A15,E15.4)", "vol_a=", THIS% vol_a
-          PRINT *
-          PRINT *
-        ENDIF
-      ENDIF
-
-      ! Temperature: here dummy
-      temp(itr)=  one
-
-      ! Dissipation parameter
-      av(itr)=    one
-
-      ! Velocity divergence
-      divv(itr)=  zero
 
     ENDDO compute_SPH_variables_on_particles
     !$OMP END PARALLEL DO
 
+    ! Temperature: here dummy
+    temp= zero
+
+    ! Dissipation parameter
+    av= one
+
+    ! Velocity divergence
+    divv= zero
 
     IF( debug ) PRINT *, "3"
 
@@ -417,9 +379,9 @@ SUBMODULE (sph_particles) sph_variables
         IF( debug ) PRINT *, "Compute first guess for the smoothing length ", &
                              "h, for particles on matter object", itr,"..."
 
-        compute_h: DO itr= THIS% npart_i(i_matter-1) + 1, &
-                           THIS% npart_i(i_matter-1) + THIS% npart_i(i_matter),&
-                           1
+        compute_h_guess: &
+        DO itr= THIS% npart_i(i_matter-1) + 1, &
+                THIS% npart_i(i_matter-1) + THIS% npart_i(i_matter), 1
 
           THIS% h(itr)= three*(THIS% pvol(itr))**third
           h(itr)= THIS% h(itr)
@@ -431,32 +393,11 @@ SUBMODULE (sph_particles) sph_variables
             STOP
           ENDIF
 
-        ENDDO compute_h
+        ENDDO compute_h_guess
 
       ENDIF
+
     ENDDO
-
-    IF( debug ) PRINT *, "5"
-
- !   IF( .NOT.THIS% apm_iterate2 )THEN
- !
- !     IF( debug ) PRINT *, "Compute first guess for h for star 2..."
- !
- !     compute_h2: DO itr= THIS% npart1 + 1, THIS% npart, 1
- !
- !       THIS% h(itr)= three*(THIS% pvol(itr))**third
- !       h(itr)= THIS% h(itr)
- !       ! /(Msun_geo**3)
- !       IF( debug .AND. THIS% h(itr) <= zero )THEN
- !         PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
- !         PRINT *, "Stopping..."
- !         PRINT *
- !         STOP
- !       ENDIF
- !
- !     ENDDO compute_h2
- !
- !   ENDIF
 
     IF( debug ) PRINT *, "1"
 
@@ -703,6 +644,12 @@ SUBMODULE (sph_particles) sph_variables
     !--  Assignment of nu on the matter objects. --!
     !----------------------------------------------!
 
+    ! TODO: The code would be much cleaner if nu and h were assigned in the
+    !       constructor for all the particle placers (now only the lattices
+    !       and the particles ad from file without nu don't assign them)
+    !       If that was the case, then this SUBROUTINE could start out by
+    !       estimating the SPH density, and compute everything from there.
+
     DO i_matter= 1, THIS% n_matter, 1
 
       ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
@@ -802,192 +749,6 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDDO
 
-!    IF( THIS% distribution_id == id_particles_from_file .AND. THIS% read_nu )THEN
-!
-!      ! If the particle positions and nu were read from formatted file...
-!
-!      ! Do nothing, nu is already read from file
-!      nu= THIS% nu
-!      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
-!      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
-!      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!    ELSEIF( THIS% n_matter == 2 .AND. &
-!            ABS(THIS% mass_ratios(1) - THIS% mass_ratios(2)) &
-!            /THIS% mass_ratios(2) <= 0.005 .AND. reflect_particles_x  )THEN
-!
-!      ! If there are 2 object with practically the same mass, and the user wants
-!      ! to have the same particles on them, but reflected with respect to
-!      ! the yz plane...
-!
-!      IF( THIS% apm_iterate(1) )THEN
-!
-!        ! If the APM was used for star 1...
-!
-!        ! Do nothing, nu and h are already computed in the APM iteration
-!        nu= THIS% nu
-!        h = THIS% h
-!        THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
-!        THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
-!        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!      ELSEIF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
-!      !ELSE
-!
-!        ! If the APM was not used for star 1...
-!
-!        ! Set nu based on the particle mass...
-!
-!        DO itr= 1, THIS% npart1, 1
-!          nu(itr)= THIS% pmass(itr)*MSun/amu
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar1= THIS% nbar1 + nu(itr)
-!        ENDDO
-!
-!        ! ...and copy this nu to the particles on star 2
-!
-!        nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
-!        THIS% nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
-!        THIS% nbar2= THIS% nbar1
-!
-!        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!      ELSE
-!
-!        ! If the APM was not used for star 1 and the particles are on
-!        ! lattices...
-!
-!        DO itr= 1, THIS% npart1, 1
-!          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar1= THIS% nbar1 + nu(itr)
-!        ENDDO
-!
-!        nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
-!        THIS% nu( THIS% npart1 + 1:THIS% npart )= nu( 1:THIS% npart1 )
-!        THIS% nbar2= THIS% nbar1
-!
-!        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!      ENDIF
-!
-!    ELSEIF( THIS% apm_iterate(1) .AND. THIS% apm_iterate(2) )THEN
-!
-!      ! If the stars do not have the same mass...
-!
-!      ! If the APM was used for both of them...
-!
-!      ! Do nothing, nu and h are already computed in the APM iteration
-!      nu= THIS% nu
-!      h = THIS% h
-!      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
-!      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
-!      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!    ELSEIF( THIS% apm_iterate(1) .AND. .NOT.THIS% apm_iterate(2) )THEN
-!
-!      ! If the stars do not have the same mass...
-!
-!      ! If the APM was used for star 1 only...
-!
-!      ! Do nothing on star 1, nu and h are already computed in the APM iteration
-!      nu(1:THIS% npart1)= THIS% nu(1:THIS% npart1)
-!      h(1:THIS% npart1) = THIS% h(1:THIS% npart1)
-!      THIS% nbar1= SUM( THIS% nu(1:THIS% npart1), DIM= 1 )
-!
-!      ! Set nu based on the particle mass on star 2...
-!
-!      IF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
-!
-!        DO itr= THIS% npart1 + 1, THIS% npart, 1
-!          nu(itr)= THIS% pmass(itr)*MSun/amu
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar2= THIS% nbar2 + nu(itr)
-!        ENDDO
-!
-!      ELSE
-!
-!        DO itr= THIS% npart1 + 1, THIS% npart, 1
-!          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar2= THIS% nbar2 + nu(itr)
-!        ENDDO
-!
-!      ENDIF
-!
-!      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!    ELSEIF( .NOT.THIS% apm_iterate(1) .AND. THIS% apm_iterate(2) )THEN
-!
-!      ! If the stars do not have the same mass...
-!
-!      ! If the APM was used for star 2 only...
-!
-!      ! Set nu based on the particle mass on star 1...
-!
-!      IF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
-!
-!        DO itr= 1, THIS% npart1, 1
-!          nu(itr)= THIS% pmass(itr)*MSun/amu
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar1= THIS% nbar1 + nu(itr)
-!        ENDDO
-!
-!      ELSE
-!
-!        DO itr= 1, THIS% npart1, 1
-!          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar1= THIS% nbar1 + nu(itr)
-!        ENDDO
-!
-!      ENDIF
-!
-!      ! Do nothing on star 2, nu and h are already computed in the APM iteration
-!      nu(THIS% npart1+1:THIS% npart)= THIS% nu(THIS% npart1+1:THIS% npart)
-!      h(THIS% npart1+1:THIS% npart) = THIS% h(THIS% npart1+1:THIS% npart)
-!      THIS% nbar2= SUM( THIS% nu(THIS% npart1+1:THIS% npart), DIM= 1 )
-!
-!      THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!    ELSE
-!
-!      ! If the APM was not used on both stars...
-!
-!      ! Set nu based on the particle mass on both stars...
-!
-!      IF( THIS% distribution_id == id_particles_on_spherical_surfaces )THEN
-!
-!        DO itr= 1, THIS% npart1, 1
-!          nu(itr)= THIS% pmass(itr)*MSun/amu
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar1= THIS% nbar1 + nu(itr)
-!        ENDDO
-!        DO itr= THIS% npart1 + 1, THIS% npart, 1
-!          nu(itr)= THIS% pmass(itr)*MSun/amu
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar2= THIS% nbar2 + nu(itr)
-!        ENDDO
-!        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!      ELSE
-!
-!        DO itr= 1, THIS% npart1, 1
-!          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar1= THIS% nbar1 + nu(itr)
-!        ENDDO
-!        DO itr= THIS% npart1 + 1, THIS% npart, 1
-!          nu(itr)= nlrf(itr)*THIS% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-!          THIS% nu(itr)= nu(itr)
-!          THIS% nbar2= THIS% nbar2 + nu(itr)
-!        ENDDO
-!        THIS% nbar_tot= THIS% nbar1 + THIS% nbar2
-!
-!      ENDIF
-!
-!    ENDIF
-
     !------------------------------------------------------------------------!
     ! Compute SPH density estimate (nu has to be assigned before this step)  !
     !------------------------------------------------------------------------!
@@ -1001,91 +762,42 @@ SUBMODULE (sph_particles) sph_variables
 
     PRINT *, " * Assigning h..."
     PRINT *
-    !! Determine smoothing length so that each particle has exactly
-    !! 300 neighbours inside 2h
-    !DO itr2= 1, max_it_h, 1
-    !
-    !  good_h= .TRUE.
-    !
-    !  CALL assign_h( ndes, &
-    !                 THIS% npart, &
-    !                 THIS% pos, THIS% h, &
-    !                 h )
-    !
-    !  DO a= 1, THIS% npart, 1
-    !
-    !    IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
-    !
-    !      IF( a > THIS% npart/2 )THEN
-    !        DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
-    !          IF( h(itr) > 0.25D0 )THEN
-    !            h(a) = h(itr)
-    !            EXIT
-    !          ENDIF
-    !        ENDDO
-    !      ELSE
-    !        !h(a) = h(a - 1)
-    !        DO itr= a + 1, THIS% npart, 1
-    !          IF( h(itr) > 0.25D0 )THEN
-    !            h(a) = h(itr)
-    !            EXIT
-    !          ENDIF
-    !        ENDDO
-    !      ENDIF
-    !      !THIS% h(a)= three*THIS% h(a)
-    !      !THIS% h= h
-    !      good_h= .FALSE.
-    !
-    !    ENDIF
-    !
-    !  ENDDO
-    !
-    !  IF( good_h )THEN
-    !    EXIT
-    !  ELSE
-    !    THIS% h= h
-    !  ENDIF
-    !
-    !ENDDO
 
-    !IF( .NOT.THIS% apm_iterate(1) )THEN
+    ! Determine smoothing length so that each particle has exactly
+    ! 300 neighbours inside 2h
+    CALL assign_h( ndes, &
+                   THIS% npart, &
+                   THIS% pos, THIS% h, & ! Input
+                   h )             ! Output
 
-      ! Determine smoothing length so that each particle has exactly
-      ! 300 neighbours inside 2h
-      CALL assign_h( ndes, &
-                     THIS% npart, &
-                     THIS% pos, THIS% h, & ! Input
-                     h )             ! Output
+    IF( debug ) PRINT *, "101.5"
 
-      IF( debug ) PRINT *, "101.5"
+    CALL find_h_bruteforce_timer% start_timer()
+    n_problematic_h= 0
+    check_h: DO a= 1, THIS% npart, 1
 
-      CALL find_h_bruteforce_timer% start_timer()
-      n_problematic_h= 0
-      check_h: DO a= 1, THIS% npart, 1
+      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+
+        n_problematic_h= n_problematic_h + 1
+
+        h(a)= find_h_backup( a, THIS% npart, THIS% pos, ndes )
 
         IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
-
-          n_problematic_h= n_problematic_h + 1
-          h(a)= find_h_backup( a, THIS% npart, THIS% pos, ndes )
-          !PRINT *, h(a)
-          IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
-            PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
-                     " force method."
-            PRINT *, "   Particle position: ", THIS% pos(:,a)
-            STOP
-          ENDIF
-
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", THIS% pos(:,a)
+          STOP
         ENDIF
 
-      ENDDO check_h
-      CALL find_h_bruteforce_timer% stop_timer()
-      CALL find_h_bruteforce_timer% print_timer( 2 )
+      ENDIF
 
-      PRINT *, " * The smoothing length was found brute-force for ", &
-               n_problematic_h, " particles."
-      PRINT *
+    ENDDO check_h
+    CALL find_h_bruteforce_timer% stop_timer()
+    CALL find_h_bruteforce_timer% print_timer( 2 )
 
-    !ENDIF
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
 
     PRINT *, " * Computing neighbours' tree..."
     PRINT *
@@ -1137,32 +849,9 @@ SUBMODULE (sph_particles) sph_variables
 
       ENDDO ll_cell_loop2
 
-      !
-      !-- Check that the number of candidate neighbours is larger than
-      !-- or equal to ndes - 1
-      !
-   !   DO itr= 1, SIZE(ncand), 1
-   !
-   !     ! If there are too few candidate neighbors
-   !     IF( ncand(itr) < ndes - 1 )THEN
-   !
-   !       ! Increase the smoothing length and rebuild the tree
-   !       few_ncand= .TRUE.
-   !       h= three*h
-   !
-   !       EXIT
-   !
-   !     ELSE
-   !
-   !       few_ncand= .FALSE.
-   !
-   !     ENDIF
-   !
-   !   ENDDO
-   !
       cnt1= cnt1 + 1
 
-      IF( .NOT.few_ncand .OR. cnt1 >= 1 )THEN
+      IF( .NOT.few_ncand .OR. cnt1 >= max_it_tree )THEN
         PRINT *, " * Smoothing lengths assigned and neighbours' tree is built."
         EXIT
       ENDIF
@@ -1194,62 +883,6 @@ SUBMODULE (sph_particles) sph_variables
     PRINT *, " * The smoothing length was found brute-force for ", &
              n_problematic_h, " particles."
     PRINT *
-
-    !
-    !-- Check that the smoothing length is acceptable
-    !
-!    check_h: DO a= 1, THIS% npart, 1
-!
-!      IF( ISNAN( h(a) ) )THEN
-!        PRINT *, "** ERROR! h(", a, ") is a NaN"
-!        !PRINT *, "Stopping..."
-!       ! PRINT *
-!        !STOP
-!        IF( a > THIS% npart/2 )THEN
-!          DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
-!            IF( h(itr) > 0.25D0 )THEN
-!              h(a) = h(itr)
-!              EXIT
-!            ENDIF
-!          ENDDO
-!        ELSE
-!          !h(a) = h(a - 1)
-!          DO itr= a + 1, THIS% npart, 1
-!            IF( h(itr) > 0.25D0 )THEN
-!              h(a) = h(itr)
-!              EXIT
-!            ENDIF
-!          ENDDO
-!        ENDIF
-!        !PRINT *, "** ERROR! h(", a, ")=", h(a)
-!        !PRINT *
-!      ENDIF
-!      IF( h(a) <= zero )THEN
-!        PRINT *, "** ERROR! h(", a, ")=", h(a)
-!        !PRINT *, "Stopping..."
-!        !PRINT *
-!        !STOP
-!        IF( a > THIS% npart/2 )THEN
-!          DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
-!            IF( h(itr) > 0.25D0 )THEN
-!              h(a) = h(itr)
-!              EXIT
-!            ENDIF
-!          ENDDO
-!        ELSE
-!          !h(a) = h(a - 1)
-!          DO itr= a + 1, THIS% npart, 1
-!            IF( h(itr) > 0.25D0 )THEN
-!              h(a) = h(itr)
-!              EXIT
-!            ENDIF
-!          ENDDO
-!        ENDIF
-!        !PRINT *, "** ERROR! h(", a, ")=", h(a)
-!        !PRINT *
-!      ENDIF
-!
-!    ENDDO check_h
 
     ! Update the member variables storing smoothing length and particle volume
     THIS% h= h
@@ -1428,19 +1061,7 @@ SUBMODULE (sph_particles) sph_variables
                  " single polytropic EOS..."
         PRINT *
 
-        ! Formulas from Read et al. (2009)
-
-      !  Pr(npart_in:npart_fin)= THIS% all_eos(i_matter)% eos_parameters(3) &
-      !                       *( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
-      !                        **THIS% all_eos(i_matter)% eos_parameters(2)
-      !
-      !  u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
-      !            /(THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu &
-      !            *( THIS% all_eos(i_matter)% eos_parameters(2) - one ) ) )
-      !
-      !  Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-      !  THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-      !  THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
+        ! Formulas from Read et al. (2009), https://arxiv.org/abs/0812.2163
 
         IF( THIS% cold_system )THEN
           ! If the system is cold, compute pressure and specific energy
@@ -1512,53 +1133,6 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDDO matter_objects_loop
 
-  !  IF( THIS% all_eos(1)% eos_parameters(1) == 1 &
-  !      .AND. THIS% all_eos(2)% eos_parameters(1) == 1 )THEN
-  !
-  !    PRINT *, " * Computing pressure and specific internal energy from", &
-  !             " the baryon mass density, using the exact formulas for", &
-  !             " single polytropic EOS..."
-  !    PRINT *
-  !
-  !    ! Formulas from Read et al. (2009)
-  !
-  !    Pr(1:THIS% npart_i(1))= THIS% all_eos(1)% eos_parameters(3) &
-  !                *( THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu )**THIS% all_eos(1)% eos_parameters(2)
-  !
-  !    Pr(THIS% npart_i(1)+1:THIS% npart)= THIS% all_eos(2)% eos_parameters(3) &
-  !     *( THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu )**THIS% all_eos(2)% eos_parameters(2)
-  !
-  !    u(1:THIS% npart_i(1))= ( Pr(1:THIS% npart_i(1)) &
-  !      /(THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu*( THIS% all_eos(1)% eos_parameters(2) - one ) ) )
-  !
-  !    u(THIS% npart_i(1)+1:THIS% npart)= ( Pr(THIS% npart_i(1)+1:THIS% npart) &
-  !      /(THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu &
-  !            *( THIS% all_eos(2)% eos_parameters(3) - one ) ) )
-  !
-  !    Pr= Pr/m0c2_cu
-  !    THIS% pressure_parts_cu= Pr
-  !    THIS% u_pwp= u
-  !
-  !  ENDIF
-  !
-  !  IF( THIS% all_eos(1)% eos_parameters(1) == 110 &
-  !     .AND. THIS% all_eos(2)% eos_parameters(1) == 110 )THEN
-  !
-  !    PRINT *, " * Computing pressure and specific internal energy from", &
-  !             " the baryon mass density, using the exact formulas for", &
-  !             " piecewise polytropic EOS..."
-  !    PRINT *
-  !
-  !    CALL select_EOS_parameters( &
-  !            shorten_eos_name(THIS% all_eos(1)% eos_name) &
-  !         )
-  !    CALL gen_pwp_eos_all( THIS% npart, THIS% nlrf_int*m0c2_cu, u )
-  !    THIS% pressure_parts_cu= Pr
-  !    THIS% u_pwp= get_u_pwp()
-  !    u= get_u_pwp()
-  !
-  !  ENDIF
-
     !-------------------!
     ! Assignment of Ye  !
     !-------------------!
@@ -1593,18 +1167,6 @@ SUBMODULE (sph_particles) sph_variables
     ENDIF assign_ye_on_particles
     Ye= THIS% Ye
 
-  !  assign_ye_on_particles: DO itr= 1, THIS% npart, 1
-  !
-  !    ! Electron fraction
-  !    IF( THIS% compose_eos )THEN
-  !      Ye(itr)= THIS% Ye(itr)
-  !    ELSE
-  !      Ye(itr)= zero
-  !      THIS% Ye(itr)= zero
-  !    ENDIF
-  !
-  !  ENDDO assign_ye_on_particles
-
     CALL THIS% sph_computer_timer% stop_timer()
 
     !
@@ -1619,22 +1181,26 @@ SUBMODULE (sph_particles) sph_variables
 
       PRINT *, " * Maximum baryon density on object", i_matter, "=", &
                 MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
-                *amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
+                /((Msun_geo*km2m*m2cm)**3)*(amu), " g cm^{-3}"
+                !*amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
       PRINT *, " * Minimum baryon density on object", i_matter, "=", &
                 MINVAL( THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
-                *amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
+                /((Msun_geo*km2m*m2cm)**3)*(amu), " g cm^{-3}"
+                !*amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
       PRINT *, " * Ratio between the two=", &
                MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1)/ &
                MINVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1)
       PRINT *
 
       PRINT *, " * Maximum interpolated nlrf on object", i_matter, "=", &
-               MAXVAL( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu, DIM= 1 ), &
-               " m0c2_cu (TODO: CHECK UNITS)"!, &
+               MAXVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 ) &
+               /((Msun_geo*km2m*m2cm)**3), " baryon cm^{-3}"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
                !"baryon Msun_geo^{-3}"
       PRINT *, " * Minimum interpolated nlrf on object", i_matter, "=", &
-               MINVAL( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu, DIM= 1 ), &
-               " m0c2_cu (TODO: CHECK UNITS)"!, &
+               MINVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 ) &
+               /((Msun_geo*km2m*m2cm)**3), " baryon cm^{-3}"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
                !"baryon Msun_geo^{-3}"
       PRINT *, " * Ratio between the two=", &
                MAXVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )/ &
