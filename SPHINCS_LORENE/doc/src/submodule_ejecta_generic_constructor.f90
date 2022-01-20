@@ -69,6 +69,8 @@ SUBMODULE (ejecta_generic) constructor
     CALL derived_type% set_n_matter(1) ! TODO: give this as argument
     n_matter_loc= derived_type% get_n_matter()
 
+    CALL derived_type% set_cold_system(.FALSE.)
+
     INQUIRE( FILE= TRIM(filename), EXIST= exist )
 
     IF( exist )THEN

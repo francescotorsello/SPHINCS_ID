@@ -63,6 +63,7 @@ SUBMODULE (bns_lorene) constructor
     !DOUBLE PRECISION:: tmp
 
     CALL derived_type% set_n_matter(2)
+    CALL derived_type% set_cold_system(.TRUE.)
 
     derived_type% construction_timer= timer( "binary_construction_timer" )
 

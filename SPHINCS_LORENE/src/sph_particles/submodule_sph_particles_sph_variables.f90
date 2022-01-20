@@ -19,6 +19,7 @@ SUBMODULE (sph_particles) sph_variables
   !
   !****************************************************
 
+  USE constants, ONLY: zero, half, one, two, three
 
   IMPLICIT NONE
 
@@ -88,7 +89,7 @@ SUBMODULE (sph_particles) sph_variables
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
-                                   get_u_pwp, shorten_eos_name
+                                   get_u_pwp, shorten_eos_name, Gamma_th_1
     USE constants,           ONLY: m0c2, kg2g, m2cm
     USE units,               ONLY: m0c2_cu
     USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
@@ -226,7 +227,7 @@ SUBMODULE (sph_particles) sph_variables
       pos_u(3,itr)= THIS% pos(3,itr)
 
       ! Coordinate velocity of the fluid [c]
-      THIS% v(0,itr)= 1.0D0
+      THIS% v(0,itr)= one
       THIS% v(1,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_x(itr) &
                     - THIS% shift_parts_x(itr)
       THIS% v(2,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_y(itr) &
@@ -301,14 +302,14 @@ SUBMODULE (sph_particles) sph_variables
       !
       !-- Generalized Lorentz factor
       !
-      Theta_a= 0.D0
+      Theta_a= zero
       DO nus=0,3
         DO mus=0,3
           Theta_a= Theta_a &
                    + g4(mus,nus)*THIS% v(mus,itr)*THIS% v(nus,itr)
         ENDDO
       ENDDO
-      Theta_a= 1.0D0/SQRT(-Theta_a)
+      Theta_a= one/SQRT(-Theta_a)
       Theta(itr)= Theta_a
       THIS% Theta(itr)= Theta_a
 
@@ -364,13 +365,13 @@ SUBMODULE (sph_particles) sph_variables
       ENDIF
 
       ! Temperature: here dummy
-      temp(itr)=  1.0D0
+      temp(itr)=  one
 
       ! Dissipation parameter
-      av(itr)=    1.0D0
+      av(itr)=    one
 
       ! Velocity divergence
-      divv(itr)=  0.D0
+      divv(itr)=  zero
 
     ENDDO compute_SPH_variables_on_particles
     !$OMP END PARALLEL DO
@@ -420,10 +421,10 @@ SUBMODULE (sph_particles) sph_variables
                            THIS% npart_i(i_matter-1) + THIS% npart_i(i_matter),&
                            1
 
-          THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
+          THIS% h(itr)= three*(THIS% pvol(itr))**third
           h(itr)= THIS% h(itr)
           ! /(Msun_geo**3)
-          IF( debug .AND. THIS% h(itr) <= 0.0D0 )THEN
+          IF( debug .AND. THIS% h(itr) <= zero )THEN
             PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
             PRINT *, "Stopping..."
             PRINT *
@@ -443,10 +444,10 @@ SUBMODULE (sph_particles) sph_variables
  !
  !     compute_h2: DO itr= THIS% npart1 + 1, THIS% npart, 1
  !
- !       THIS% h(itr)= 3.0D0*(THIS% pvol(itr))**third
+ !       THIS% h(itr)= three*(THIS% pvol(itr))**third
  !       h(itr)= THIS% h(itr)
  !       ! /(Msun_geo**3)
- !       IF( debug .AND. THIS% h(itr) <= 0.0D0 )THEN
+ !       IF( debug .AND. THIS% h(itr) <= zero )THEN
  !         PRINT *, "** ERROR! h(", itr, ")=", THIS% h(itr)
  !         PRINT *, "Stopping..."
  !         PRINT *
@@ -495,11 +496,11 @@ SUBMODULE (sph_particles) sph_variables
 !      ! Reset the total baryon number to 0 (necessary), and nu to an arbitrary
 !      ! value (to make debugging easier)
 !
-!      nu= 1.0D0
-!      THIS% nu= 1.0D0
-!      THIS% nbar_tot= 0.0D0
-!      THIS% nbar1= 0.0D0
-!      THIS% nbar2= 0.0D0
+!      nu= one
+!      THIS% nu= one
+!      THIS% nbar_tot= zero
+!      THIS% nbar1= zero
+!      THIS% nbar2= zero
 !
 !      cnt1= 0
 !      compute_nu_on_particles_star1: DO itr= THIS% npart1, 1, -1
@@ -1013,7 +1014,7 @@ SUBMODULE (sph_particles) sph_variables
     !
     !  DO a= 1, THIS% npart, 1
     !
-    !    IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+    !    IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
     !
     !      IF( a > THIS% npart/2 )THEN
     !        DO itr= CEILING(DBLE(THIS% npart/2)) - 1, 1, -1
@@ -1031,7 +1032,7 @@ SUBMODULE (sph_particles) sph_variables
     !          ENDIF
     !        ENDDO
     !      ENDIF
-    !      !THIS% h(a)= 3.0D0*THIS% h(a)
+    !      !THIS% h(a)= three*THIS% h(a)
     !      !THIS% h= h
     !      good_h= .FALSE.
     !
@@ -1062,12 +1063,12 @@ SUBMODULE (sph_particles) sph_variables
       n_problematic_h= 0
       check_h: DO a= 1, THIS% npart, 1
 
-        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
 
           n_problematic_h= n_problematic_h + 1
           h(a)= find_h_backup( a, THIS% npart, THIS% pos, ndes )
           !PRINT *, h(a)
-          IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+          IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
             PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                      " force method."
             PRINT *, "   Particle position: ", THIS% pos(:,a)
@@ -1124,7 +1125,7 @@ SUBMODULE (sph_particles) sph_variables
 
           particle_in_cell_loop: DO l= lpart(itot), rpart(itot)
 
-            h(l)= 3.0D0*h(l)
+            h(l)= three*h(l)
 
           ENDDO particle_in_cell_loop
 
@@ -1147,7 +1148,7 @@ SUBMODULE (sph_particles) sph_variables
    !
    !       ! Increase the smoothing length and rebuild the tree
    !       few_ncand= .TRUE.
-   !       h= 3.0D0*h
+   !       h= three*h
    !
    !       EXIT
    !
@@ -1172,12 +1173,12 @@ SUBMODULE (sph_particles) sph_variables
     n_problematic_h= 0
     check_h2: DO a= 1, THIS% npart, 1
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, THIS% npart, THIS% pos, ndes )
         PRINT *, h(a)
-        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", THIS% pos(:,a)
@@ -1223,7 +1224,7 @@ SUBMODULE (sph_particles) sph_variables
 !        !PRINT *, "** ERROR! h(", a, ")=", h(a)
 !        !PRINT *
 !      ENDIF
-!      IF( h(a) <= 0.0D0 )THEN
+!      IF( h(a) <= zero )THEN
 !        PRINT *, "** ERROR! h(", a, ")=", h(a)
 !        !PRINT *, "Stopping..."
 !        !PRINT *
@@ -1252,7 +1253,7 @@ SUBMODULE (sph_particles) sph_variables
 
     ! Update the member variables storing smoothing length and particle volume
     THIS% h= h
-    THIS% pvol= ( THIS% h/3.0D0 )**3.0D0
+    THIS% pvol= ( THIS% h/three )**three
 
  !   !PRINT *
  !   !PRINT *, "nfinal= ", nfinal
@@ -1266,7 +1267,7 @@ SUBMODULE (sph_particles) sph_variables
  !       a=         iorig(l)
  !
  !       ha=        h(a)
- !       ha_1=      1.0D0/ha
+ !       ha_1=      one/ha
  !       ha_3=      ha_1*ha_1*ha_1
  !
  !       xa=        pos_u(1,a)
@@ -1274,12 +1275,12 @@ SUBMODULE (sph_particles) sph_variables
  !       za=        pos_u(3,a)
  !
  !       ! initialize correction matrix
- !       mat_xx=    0.D0
- !       mat_xy=    0.D0
- !       mat_xz=    0.D0
- !       mat_yy=    0.D0
- !       mat_yz=    0.D0
- !       mat_zz=    0.D0
+ !       mat_xx=    zero
+ !       mat_xy=    zero
+ !       mat_xz=    zero
+ !       mat_yy=    zero
+ !       mat_yz=    zero
+ !       mat_zz=    zero
  !
  !       cnt1= 0
  !       cnt2= 0
@@ -1429,17 +1430,57 @@ SUBMODULE (sph_particles) sph_variables
 
         ! Formulas from Read et al. (2009)
 
-        Pr(npart_in:npart_fin)= THIS% all_eos(i_matter)% eos_parameters(3) &
-                             *( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
-                              **THIS% all_eos(i_matter)% eos_parameters(2)
+      !  Pr(npart_in:npart_fin)= THIS% all_eos(i_matter)% eos_parameters(3) &
+      !                       *( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
+      !                        **THIS% all_eos(i_matter)% eos_parameters(2)
+      !
+      !  u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
+      !            /(THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu &
+      !            *( THIS% all_eos(i_matter)% eos_parameters(2) - one ) ) )
+      !
+      !  Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+      !  THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+      !  THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
 
-        u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
-                  /(THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu &
-                  *( THIS% all_eos(i_matter)% eos_parameters(2) - 1.0D0 ) ) )
+        IF( THIS% cold_system )THEN
+          ! If the system is cold, compute pressure and specific energy
+          ! exactly using the polytropic EOS
+          Pr(npart_in:npart_fin)= THIS% all_eos(i_matter)% eos_parameters(3) &
+                               *( THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
+                                **THIS% all_eos(i_matter)% eos_parameters(2)
 
-        Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-        THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-        THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
+          u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
+                    /(THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu &
+                    *( THIS% all_eos(i_matter)% eos_parameters(2) - one ) ) )
+
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+          THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
+        ELSE
+          ! If the system is hot, that is, has a thermal component, then
+          ! the density and the specific energy (the latter including both
+          ! cold and thermal part) should be supplied in the ID.
+          ! The pressure is computed using them (see pwp_EOS MODULE).
+          u(npart_in:npart_fin)= THIS% specific_energy_parts(npart_in:npart_fin)
+
+          DO a= npart_in, npart_fin, 1
+
+            Pr(a)= &
+            ! cold pressure
+            THIS% all_eos(i_matter)% eos_parameters(3) &
+              *( THIS% nlrf_int(a)*m0c2_cu ) &
+              **THIS% all_eos(i_matter)% eos_parameters(2) &
+            + &
+            ! thermal pressure
+            Gamma_th_1*( THIS% nlrf_int(a)*m0c2_cu )* &
+              MAX(u(a) - ( Pr(a)/(THIS% nlrf_int(a)*m0c2_cu &
+                *( THIS% all_eos(i_matter)% eos_parameters(2) - one ) ) ), zero)
+
+          ENDDO
+          THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
+
+        ENDIF
 
       ELSEIF( THIS% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
       ! If the |eos| is piecewise polytropic
@@ -1488,11 +1529,11 @@ SUBMODULE (sph_particles) sph_variables
   !     *( THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu )**THIS% all_eos(2)% eos_parameters(2)
   !
   !    u(1:THIS% npart_i(1))= ( Pr(1:THIS% npart_i(1)) &
-  !      /(THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu*( THIS% all_eos(1)% eos_parameters(2) - 1.0D0 ) ) )
+  !      /(THIS% nlrf_int(1:THIS% npart_i(1))*m0c2_cu*( THIS% all_eos(1)% eos_parameters(2) - one ) ) )
   !
   !    u(THIS% npart_i(1)+1:THIS% npart)= ( Pr(THIS% npart_i(1)+1:THIS% npart) &
   !      /(THIS% nlrf_int(THIS% npart_i(1)+1:THIS% npart)*m0c2_cu &
-  !            *( THIS% all_eos(2)% eos_parameters(3) - 1.0D0 ) ) )
+  !            *( THIS% all_eos(2)% eos_parameters(3) - one ) ) )
   !
   !    Pr= Pr/m0c2_cu
   !    THIS% pressure_parts_cu= Pr
@@ -1547,7 +1588,7 @@ SUBMODULE (sph_particles) sph_variables
 
     ELSE
 
-      THIS% Ye= 0.0D0
+      THIS% Ye= zero
 
     ENDIF assign_ye_on_particles
     Ye= THIS% Ye
@@ -1558,8 +1599,8 @@ SUBMODULE (sph_particles) sph_variables
   !    IF( THIS% compose_eos )THEN
   !      Ye(itr)= THIS% Ye(itr)
   !    ELSE
-  !      Ye(itr)= 0.0D0
-  !      THIS% Ye(itr)= 0.0D0
+  !      Ye(itr)= zero
+  !      THIS% Ye(itr)= zero
   !    ENDIF
   !
   !  ENDDO assign_ye_on_particles
@@ -1641,7 +1682,7 @@ SUBMODULE (sph_particles) sph_variables
     !
     IF( THIS% correct_nu )THEN
 
-      THIS% nbar_tot= 0.0D0
+      THIS% nbar_tot= zero
       DO i_matter= 1, THIS% n_matter, 1
 
         ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
@@ -1700,7 +1741,7 @@ SUBMODULE (sph_particles) sph_variables
 
     PRINT *, " * Computing particle number density by kernel interpolation..."
     PRINT *
-    nu= 1.0D0
+    nu= one
     CALL density_loop( THIS% npart, THIS% pos, nu, h, &
                        THIS% particle_density_int )
 
