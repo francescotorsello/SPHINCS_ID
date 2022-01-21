@@ -411,13 +411,13 @@ MODULE sph_particles
     !  prints them to a binary file to be read by \(\texttt{SPHINCS_BSSN}\)
     !  and \(\texttt{splash}\), and to a formatted file to be read by
     !  \(\texttt{gnuplot}\), by calling
-    !  [[particles:print_formatted_lorene_id_particles]]
+    !  [[particles:print_formatted_id_particles]]
 
     PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
     !# Reads the binary ID file printed by
     !  [[particles:compute_and_export_SPH_variables]]
 
-    PROCEDURE, PUBLIC:: print_formatted_lorene_id_particles
+    PROCEDURE, PUBLIC:: print_formatted_id_particles
     !! Prints the SPH ID to a formatted file
 
     PROCEDURE, PUBLIC:: print_summary
@@ -833,7 +833,7 @@ MODULE sph_particles
     !  prints them to a binary file to be read by \(\texttt{SPHINCS_BSSN}\)
     !  and \(\texttt{splash}\), and to a formatted file to be read by
     !  \(\texttt{gnuplot}\), by calling
-    !  [[particles:print_formatted_lorene_id_particles]]
+    !  [[particles:print_formatted_id_particles]]
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT( IN OUT ):: THIS
@@ -1007,7 +1007,7 @@ MODULE sph_particles
     END SUBROUTINE read_sphincs_dump_print_formatted
 
 
-    MODULE SUBROUTINE print_formatted_lorene_id_particles( THIS, namefile )
+    MODULE SUBROUTINE print_formatted_id_particles( THIS, namefile )
     !! Prints the SPH ID to a formatted file
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -1015,7 +1015,7 @@ MODULE sph_particles
       !> Name of the formatted output file
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
-    END SUBROUTINE print_formatted_lorene_id_particles
+    END SUBROUTINE print_formatted_id_particles
 
 
     MODULE SUBROUTINE read_compose_composition( THIS, namefile )

@@ -137,7 +137,7 @@ SUBMODULE (sph_particles) io
     ALLOCATE( abs_pos( 3, THIS% npart ) )
 
     IF( THIS% call_flag == 0 )THEN
-      PRINT *, "** The SUBROUTINE print_formatted_lorene_id_particles must", &
+      PRINT *, "** The SUBROUTINE print_formatted_id_particles must", &
                " be called after compute_and_export_SPH_variables, otherwise", &
                " there are no SPH fields to export to the formatted file."
       PRINT *, "   Aborting."
@@ -304,7 +304,7 @@ SUBMODULE (sph_particles) io
   END PROCEDURE read_sphincs_dump_print_formatted
 
 
-  MODULE PROCEDURE print_formatted_lorene_id_particles
+  MODULE PROCEDURE print_formatted_id_particles
 
     !************************************************
     !
@@ -332,12 +332,12 @@ SUBMODULE (sph_particles) io
     ! size. This results in a segmentation fault.
     ALLOCATE( abs_pos( 3, THIS% npart ) )
 
-    PRINT *, "** Executing the print_formatted_lorene_id_particles " &
+    PRINT *, "** Executing the print_formatted_id_particles " &
              // "subroutine..."
     PRINT *
 
     IF( THIS% call_flag == 0 )THEN
-      PRINT *, "** The SUBROUTINE print_formatted_lorene_id_particles must", &
+      PRINT *, "** The SUBROUTINE print_formatted_id_particles must", &
                " be called after compute_and_export_SPH_variables, otherwise", &
                " there are no SPH fields to export to the formatted file."
       PRINT *, "   Aborting."
@@ -516,10 +516,10 @@ SUBMODULE (sph_particles) io
              TRIM(finalnamefile)
     PRINT *
 
-    PRINT *, "** Subroutine print_formatted_lorene_id_particles executed."
+    PRINT *, "** Subroutine print_formatted_id_particles executed."
     PRINT *
 
-  END PROCEDURE print_formatted_lorene_id_particles
+  END PROCEDURE print_formatted_id_particles
 
 
   MODULE PROCEDURE analyze_hydro

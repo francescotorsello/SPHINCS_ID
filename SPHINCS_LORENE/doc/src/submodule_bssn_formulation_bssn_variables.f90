@@ -328,7 +328,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     CALL read_BSSN_dump( 00000, namefile_bin )
 
     IF( THIS% call_flag == 0 )THEN
-      PRINT *, "** The SUBROUTINE print_formatted_lorene_id_bssn_variables ", &
+      PRINT *, "** The SUBROUTINE print_formatted_id_bssn_variables ", &
         " must be called after compute_and_export_bssn_variables, otherwise", &
         " there are no bssn fields to export to the formatted file."
       PRINT *, "   Aborting."
@@ -525,7 +525,7 @@ SUBMODULE (bssn_formulation) bssn_variables
   END PROCEDURE read_bssn_dump_print_formatted
 
 
-  MODULE PROCEDURE print_formatted_lorene_id_bssn_variables
+  MODULE PROCEDURE print_formatted_id_bssn_variables
 
     !************************************************
     !
@@ -556,11 +556,11 @@ SUBMODULE (bssn_formulation) bssn_variables
     ! size. This results in a segmentation fault.
     !ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
 
-    PRINT *, "** Executing the print_formatted_lorene_id_BSSN_variables " &
+    PRINT *, "** Executing the print_formatted_id_BSSN_variables " &
              // "subroutine..."
 
     IF( THIS% call_flag == 0 )THEN
-      PRINT *, "** The SUBROUTINE print_formatted_lorene_id_bssn_variables ", &
+      PRINT *, "** The SUBROUTINE print_formatted_id_bssn_variables ", &
         " must be called after compute_and_export_bssn_variables, otherwise", &
         " there are no bssn fields to export to the formatted file."
       PRINT *, "   Aborting."
@@ -755,11 +755,11 @@ SUBMODULE (bssn_formulation) bssn_variables
     PRINT *, " * LORENE BSSN ID on the gravity grid saved to formatted " &
              // "file ", TRIM(finalnamefile)
 
-    PRINT *, "** Subroutine print_formatted_lorene_id_BSSN_variables " &
+    PRINT *, "** Subroutine print_formatted_id_BSSN_variables " &
              // "executed."
     PRINT *
 
-  END PROCEDURE print_formatted_lorene_id_bssn_variables
+  END PROCEDURE print_formatted_id_bssn_variables
 
 
 END SUBMODULE bssn_variables

@@ -193,8 +193,8 @@ MODULE standard_tpo_formulation
     !# Compute the fields specific to the formulation identified by an
     !  EXTENDED TYPE, starting from the standard 3+1 fields
 
-    PROCEDURE(print_formatted_lorene_id_tpo_variables_interface), PUBLIC, &
-                            DEFERRED:: print_formatted_lorene_id_tpo_variables
+    PROCEDURE(print_formatted_id_tpo_variables_interface), PUBLIC, &
+                            DEFERRED:: print_formatted_id_tpo_variables
     !! Prints the spacetime |id| to a formatted file
 
     GENERIC, PUBLIC:: compute_and_export_tpo_constraints => &
@@ -546,14 +546,14 @@ MODULE standard_tpo_formulation
 
     END SUBROUTINE compute_and_export_tpo_variables_interface
 
-    SUBROUTINE print_formatted_lorene_id_tpo_variables_interface &
+    SUBROUTINE print_formatted_id_tpo_variables_interface &
                                                     ( THIS, namefile )
 
       IMPORT:: tpo
       CLASS(tpo),   INTENT( IN OUT )           :: THIS
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
-    END SUBROUTINE print_formatted_lorene_id_tpo_variables_interface
+    END SUBROUTINE print_formatted_id_tpo_variables_interface
 
     SUBROUTINE compute_and_export_tpo_constraints_grid_interface( THIS, &
                                                              id, &

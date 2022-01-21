@@ -134,10 +134,6 @@ PROGRAM sphincs_id
 
   TYPE( timer ):: execution_timer
 
-  ! Declaration of the allocatable array storing the bns objects,
-  ! containing the LORENE |id| for different BNS
-  !TYPE( bnslorene ), DIMENSION(:), ALLOCATABLE:: binaries
-
   TYPE id
     CLASS( idbase ), ALLOCATABLE:: idata
   END TYPE id
@@ -300,92 +296,24 @@ PROGRAM sphincs_id
   ALLOCATE( CHARACTER(5):: systems(n_bns) )
   ALLOCATE( CHARACTER(5):: systems_name(n_bns) )
 
-  !DO itr= 1, n_bns, 1
-  !  systems(itr)= filenames(itr)(1:5)
-  !  IF( systems(itr) /= bnslo .AND. systems(itr) /= drslo )THEN
-  !    PRINT *, "** ERROR! Unrecognized physical system ", systems(itr), ",",&
-  !             " system number", itr, "."
-  !    PRINT *
-  !    PRINT *, "   Please specify the type of physical system in the first 5",&
-  !             " characters of the name of the file containing the initial", &
-  !             " data."
-  !    PRINT *
-  !    PRINT *, "   The 5-character names, and associated physical systems,", &
-  !             " supported by this version of SPHINCS_ID are:"
-  !    PRINT *
-  !    PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
-  !    PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
-  !    PRINT *
-  !    STOP
-  !  ENDIF
-  !ENDDO
-
-  ! Allocate needed memory
-  !ALLOCATE( binaries      ( n_bns ) )
-  !ALLOCATE( diffrotstars  ( n_bns ) )
-  !IF( TRIM(systems(1)) == bnslo )THEN
-  !  ALLOCATE( bnslorene:: idata( n_bns ) )
-  !ELSEIF( TRIM(systems(1)) == drslo )THEN
-  !  ALLOCATE( diffstarlorene:: idata( n_bns ) )
-  !ELSE
-  !  PRINT *, "** ERROR! Unknown name for the physical system: ", TRIM(systems(1))
-  !  PRINT *, "   Set the variable 'system' in the parameter file ", &
-  !           "sphincs_lorene_parameters.par to one of the values listed there."
-  !  PRINT *, "   Stopping..."
-  !  PRINT *
-  !  STOP
-  !ENDIF
   ALLOCATE( ids( n_bns ) )
   ALLOCATE( particles_dist( n_bns, max_n_parts ) )
   ALLOCATE( bssn_forms    ( n_bns ) )
 
   !
-  !-- Construct the LORENE |id| from the LORENE binary files
+  !-- Construct the idbase objects
   !
- ! build_bns_loop: DO itr= 1, n_bns, 1
- !   binaries( itr )= bnslorene( TRIM(common_path)//TRIM(filenames( itr )) )
- !   ! Set the variables to decide on using the geodesic gauge or not
- !   ! (lapse=1, shift=0)
- !   binaries( itr )% one_lapse = one_lapse
- !   binaries( itr )% zero_shift= zero_shift
- ! ENDDO build_bns_loop
 
-  !ALLOCATE(foo, source = bnslorene( TRIM(common_path)//TRIM(filenames( 1 ))) )
+  build_idbase_loop: DO itr= 1, n_bns, 1
 
-  build_drs_loop: DO itr= 1, n_bns, 1
-   ! IF( systems(itr) == bnslo )THEN
-   !   !idata( itr )=
-   !   !ALLOCATE(foo, source = bnslorene( TRIM(common_path)//TRIM(filenames( 1 ))) )
-   !   ALLOCATE( bnslorene:: ids(itr)% idata )
-   !   !CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)))
-   ! ELSEIF( systems(itr) == drslo )THEN
-   !   !idata( itr )=
-   !   ALLOCATE( diffstarlorene:: ids(itr)% idata )
-   !   !CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)))
-   !   !ids(itr)% idata = diffstarlorene( TRIM(common_path)//TRIM(filenames( itr )) )
-   ! ELSE
-   !   PRINT *, "** ERROR! Unknown name for the physical system: ", systems(itr)
-   !   PRINT *, "   Set the variable 'system' in the parameter file ", &
-   !            "sphincs_lorene_parameters.par to one of the values listed there."
-   !   PRINT *, "   Stopping..."
-   !   PRINT *
-   !   STOP
-   ! ENDIF
     CALL allocate_idbase( ids(itr)% idata, TRIM(filenames(itr)), &
                           systems(itr), systems_name(itr) )
     CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)) )
 
-    !ids(itr)% idata= initialize( ids(itr)% idata, TRIM(common_path)//TRIM(filenames(itr)) )
-    !ids(itr)% idata= ids(1)% idata_constructor( file )
-    ! Set the variables to decide on using the geodesic gauge or not
-    ! (lapse=1, shift=0)
-    !CALL idata( itr )% set_one_lapse( one_lapse )
-    !CALL idata( itr )% set_zero_shift( zero_shift )
     CALL ids(itr)% idata% set_one_lapse( one_lapse )
     CALL ids(itr)% idata% set_zero_shift( zero_shift )
-  ENDDO build_drs_loop
 
-  !PRINT *, ids(1)% idata% read_mass_density( 2.0D0, 3.0D0, 5.0D0 )
+  ENDDO build_idbase_loop
 
   IF( run_sph )THEN
 
@@ -469,7 +397,7 @@ PROGRAM sphincs_id
                                    itr3, "-", itr4, ".dat"
             namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
             CALL particles_dist( itr3, itr4 )% &
-                 print_formatted_lorene_id_particles( namefile_parts )
+                 print_formatted_id_particles( namefile_parts )
           ENDIF
         ENDDO
       ENDDO export_sph_loops
@@ -531,7 +459,7 @@ PROGRAM sphincs_id
         namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
 
         CALL bssn_forms( itr3 )% &
-                    print_formatted_lorene_id_tpo_variables( namefile_bssn )
+                    print_formatted_id_tpo_variables( namefile_bssn )
       ENDDO export_bssn_loop
     ENDIF
 
@@ -706,12 +634,6 @@ PROGRAM sphincs_id
     !
     !CALL binaries( itr )% destruct_binary()
   ENDDO
-  !IF( ALLOCATED( binaries ) )THEN
-  !  DEALLOCATE( binaries )
-  !ENDIF
-  !IF( ALLOCATED( idata ) )THEN
-  !  DEALLOCATE( idata )
-  !ENDIF
   IF( ALLOCATED( ids ) )THEN
     DEALLOCATE( ids )
   ENDIF

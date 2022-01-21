@@ -500,9 +500,9 @@ Program( sphincs_id, \
          sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
          + sources_sphincs_bssn + program_sphincs_id )
 
-#Program( convergence_test, \
-#         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-#         + sources_sphincs_bssn + program_convergence_test )
+Program( convergence_test, \
+         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
+         + sources_sphincs_bssn + program_convergence_test )
 
 Program( write_par_eos, \
          sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \

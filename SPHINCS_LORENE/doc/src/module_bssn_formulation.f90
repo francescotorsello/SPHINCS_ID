@@ -129,14 +129,14 @@ MODULE bssn_formulation
     !  prints them to a binary file to be read by \(\texttt{SPHINCS_BSSN}\)
     !  and \(\texttt{splash}\), and to a formatted file to be read by
     !  \(\texttt{gnuplot}\), by calling
-    !  [[bssn:print_formatted_lorene_id_tpo_variables]]
+    !  [[bssn:print_formatted_id_tpo_variables]]
 
     PROCEDURE, PUBLIC :: read_bssn_dump_print_formatted
     !# Reads the binary |id| file printed by
     !  [[bssn:compute_and_export_tpo_variables]]
 
-    PROCEDURE :: print_formatted_lorene_id_tpo_variables &
-                    => print_formatted_lorene_id_bssn_variables
+    PROCEDURE :: print_formatted_id_tpo_variables &
+                    => print_formatted_id_bssn_variables
     !! Prints the |bssn| |id| to a formatted file
 
     PROCEDURE :: compute_and_export_tpo_constraints_grid &
@@ -237,15 +237,15 @@ MODULE bssn_formulation
     END SUBROUTINE read_bssn_dump_print_formatted
 
 
-    MODULE SUBROUTINE print_formatted_lorene_id_bssn_variables( THIS, &
+    MODULE SUBROUTINE print_formatted_id_bssn_variables( THIS, &
                                                                 namefile )
-    !! Interface to [[bssn:print_formatted_lorene_id_tpo_variables]]
+    !! Interface to [[bssn:print_formatted_id_tpo_variables]]
 
       CLASS(bssn),      INTENT( IN OUT )           :: THIS
       !! [[bssn]] object to which this PROCEDURE is bound
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
-    END SUBROUTINE print_formatted_lorene_id_bssn_variables
+    END SUBROUTINE print_formatted_id_bssn_variables
 
 
     MODULE SUBROUTINE compute_and_export_bssn_constraints_grid( THIS, &

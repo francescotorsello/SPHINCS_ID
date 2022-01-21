@@ -10,7 +10,7 @@ docmark_alt: #
 predocmark: >
 predocmark_alt: &
 source: true
-graph: true
+graph: false
 sort: alpha
 src_dir: ./src
 media_dir: ./media
