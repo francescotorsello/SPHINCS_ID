@@ -49,9 +49,8 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                                 deallocate_grid_function, &
                                 coords, rad_coord
     !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
-    USE tensor,           ONLY: itt, itx, ity, itz, ixx, ixy, &
-                                ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                jyy, jyz, jzz, jx, jy, jz, n_sym3x3
+    USE tensor,           ONLY: jxx, jxy, jxz, &
+                                jyy, jyz, jzz, n_sym3x3
     USE utility,          ONLY: determinant_sym3x3_grid
 
     IMPLICIT NONE

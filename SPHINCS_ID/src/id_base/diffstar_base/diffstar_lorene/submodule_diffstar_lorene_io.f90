@@ -37,11 +37,11 @@ SUBMODULE (diffstar_lorene) io
     !****************************************************
 
     USE constants, ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                         lorene2hydrobase, c_light, cm2km
+                         lorene2hydrobase, zero
 
     IMPLICIT NONE
 
-    IF( THIS% angular_momentum == 0.0D0 )THEN
+    IF( THIS% angular_momentum == zero )THEN
 
       PRINT *
       PRINT *, " ** The parameters have not ben read yet. ", &

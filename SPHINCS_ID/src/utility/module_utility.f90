@@ -128,7 +128,7 @@ MODULE utility
     USE constants,  ONLY: two
     USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                          jyy, jyz, jzz, jx, jy, jz, n_sym3x3, n_sym4x4
+                          jyy, jyz, jzz, jx, jy, jz
 
     IMPLICIT NONE
 

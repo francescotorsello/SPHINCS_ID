@@ -39,13 +39,12 @@ SUBMODULE (bssn_formulation) constraints
     !
     !***************************************************
 
-    USE constants,         ONLY: c_light2, cm2m, MSun, g2kg, m2cm, &
-                                 lorene2hydrobase, MSun_geo, pi
+    USE constants,         ONLY: lorene2hydrobase, pi
     USE matrix,            ONLY: invert_4x4_matrix
     USE tensor,            ONLY: itt, itx, ity, itz, ixx, ixy, &
                                  ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                  jyy, jyz, jzz, jx, jy, jz, &
-                                 it, ix, iy, iz, n_sym3x3, n_sym4x4
+                                 it, ix, iy, iz, n_sym4x4
     USE mesh_refinement,   ONLY: allocate_grid_function, &
                                  levels, nlevels
     USE McLachlan_refine,  ONLY: BSSN_CONSTRAINTS_INTERIOR
@@ -1211,12 +1210,10 @@ SUBMODULE (bssn_formulation) constraints
     !
     !**************************************************
 
-    USE constants,            ONLY: c_light2, cm2m, MSun, g2kg, m2cm, Msun_geo
     USE units,                ONLY: set_units
     USE tensor,               ONLY: itt, itx, ity, itz, ixx, ixy, &
                                     ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                    jyy, jyz, jzz, jx, jy, jz, &
-                                    n_sym3x3, n_sym4x4
+                                    jyy, jyz, jzz, jx, jy, jz
 
     USE mesh_refinement,             ONLY: allocate_grid_function, levels, &
                                            rad_coord, nlevels, &

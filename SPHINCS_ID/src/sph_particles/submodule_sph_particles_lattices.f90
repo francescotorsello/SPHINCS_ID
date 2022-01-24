@@ -32,7 +32,7 @@ SUBMODULE (sph_particles) lattices
     !
     !*********************************************************
 
-    USE constants,    ONLY: Msun_geo, pi, third
+    USE constants,    ONLY: pi, third
 
     IMPLICIT NONE
 
@@ -109,25 +109,6 @@ SUBMODULE (sph_particles) lattices
     ELSE
       thres_baryon_density= 0.0D0
     ENDIF
-
-    ! Allocating the memory for the array pos( 3, npart_tmp )
-    ! Note that after determining npart, the array pos is reshaped into
-    ! pos( 3, npart )
-    IF(.NOT.ALLOCATED( pos ))THEN
-      ALLOCATE( pos( 3, npart_tmp ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pos in SUBROUTINE" &
-                  // "place_particles_3D_lattice. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
-    ENDIF
-    ! Initializing the array pos to 0
-    THIS% pos= 0.0D0
 
     IF(.NOT.ALLOCATED( pos_tmp ))THEN
       ALLOCATE( pos_tmp( 3, nx, ny, nz ), STAT= ios, &

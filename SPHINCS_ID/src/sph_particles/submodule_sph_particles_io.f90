@@ -315,8 +315,6 @@ SUBMODULE (sph_particles) io
     !
     !************************************************
 
-    USE constants, ONLY: c_light2, cm2m, Msun_geo, amu, g2kg, km2m, km2cm
-
     IMPLICIT NONE
 
     INTEGER:: itr

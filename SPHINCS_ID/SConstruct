@@ -31,12 +31,15 @@ default_debug = 'FALSE'
 # Which compilers to use
 #   Fortran : 'gfortran', 'ifort'
 #   C++     : 'g++', 'gcc' or 'icpc'
-default_fortran_compiler = 'ifort'
-default_cpp_compiler     = 'icpc'
+default_fortran_compiler = 'gfortran'
+default_cpp_compiler     = 'g++'
 
 # 'TRUE'  : enables verbose output
 # 'FALSE' : disables verbose output
 default_verbose = 'FALSE'
+
+# Version of SPHINCS_ID
+version = '_v1.0'
 
 ################################################################################
 
@@ -417,61 +420,113 @@ env['CXX'] = cpp_compiler
 
 if debug == 'FALSE': #
 
-  # F90 flags for production
-  env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
-                      '-heap-arrays', '-qopt-report', \
-                      '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                      '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \
-                      build_flavour ]
+  ##############################################################################
+  # FORTRAN PRODUCTION BUILD OPTIONS
+  ##############################################################################
+  if fortran_compiler == 'ifort':
 
-  # C++ flags for production (union of the flags in the SPHINCS SConstruct files
-  # and the flags in the file local_settings in the LORENE home directory)
-  env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
-                      '-qopt-report', '-qopt-report-phase=vec,openmp', \
-                      '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
-                      '-W', '-Wundef', '-Wshadow', '-Wcast-qual', \
-                      '-Wconversion', '-Winline', '-Woverloaded-virtual' ]
-  #-ip, -ipo, -ipo=n
-  # icx compiler: best of icc and best of clang
-  # -o prog
+    env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
+                        '-heap-arrays', '-qopt-report', \
+                        '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
+                        '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \
+                        build_flavour ]
+
+  if fortran_compiler == 'gfortran':
+
+    env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize','-fopt-info-vec',\
+                        '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
+                        '-ffree-line-length-none', '-ffixed-line-length-none', \
+                        '-Wall', '-Wextra', build_flavour ]
+
+  ##############################################################################
+  # C++ PRODUCTION BUILD OPTIONS
+  ##############################################################################
+  if cpp_compiler == 'icpc':
+
+    env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
+                        '-qopt-report', '-qopt-report-phase=vec,openmp', \
+                        '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
+                        '-W', '-Wundef', '-Wshadow', '-Wcast-qual', \
+                        '-Wconversion', '-Winline', '-Woverloaded-virtual' ]
+    #-ip, -ipo, -ipo=n
+    # icx compiler: best of icc and best of clang
+    # -o prog
+
+  if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
+
+    env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-fopenmp', '-Wall', \
+                        '-ftree-vectorize','-fopt-info-vec', '-fopt-info-loop',\
+                        '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
+                        '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', \
+                        '-Wconversion', '-Winline', '-Wabi=11', \
+                        '-Wold-style-cast', '-Woverloaded-virtual', \
+                        '-Wfatal-errors' ]
 
 if debug == 'TRUE': #
 
-  # F90 flags for debugging
-  env['F90FLAGS'] = [ '-O0', '-g', '-qopenmp', '-qoverride-limits', \
-                      '-xHOST', '-heap-arrays', '-qopt-report', \
-                      '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                      '-CB', '-CS', '-traceback', '-fpe0', '-warn', \
-                      '-debug extended', '-fpp', build_flavour ]
+  ##############################################################################
+  # FORTRAN DEBUG BUILD OPTIONS
+  ##############################################################################
+  if fortran_compiler == 'ifort':
 
-  # More F90 flags for debugging
-  #env['F90FLAGS'] = [ '-r8','-g','-qopenmp','-O0', '-ftz', \
-  #                    '-heap-arrays 5000', '-fno-alias', '-traceback', \
-  #                    '-debug', '-debug all', '-nolib-inline','-align all', \
-  #                    '-check bounds', '-fno-inline-functions', '-prec-div', \
-  #                    '-prec-sqrt', '-fp-stack-check', '-init=snan,arrays', \
-  #                    '-traceback', '-fPIC', '-fpe3', '-heap-arrays 32', \
-  #                    '-assume realloc_lhs', '-assume protect_parens,minus0', \
-  #                    '-assume no old_maxminloc', '-warn unused', \
-  #                    '-align dcommons',  '-xHOST', '-qopt-report', \
-  #                    '-qopt-report-phase=vec,openmp', '-fp-model strict', \
-  #                    '-no-wrap-margin', '-ftrapuv', '-mp' ]
+    env['F90FLAGS'] = [ '-O0', '-g', '-qopenmp', '-qoverride-limits', \
+                        '-xHOST', '-heap-arrays', '-qopt-report', \
+                        '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
+                        '-CB', '-CS', '-traceback', '-fpe0', '-warn', \
+                        '-debug extended', '-fpp', build_flavour ]
 
-  # C++ flags for debugging (union of the flags in the SPHINCS SConstruct files
-  # and the flags in the file local_settings in the LORENE home directory)
-  # See also https://www.nas.nasa.gov/hecc/support/kb/recommended-intel-compiler-debugging-options_92.html
-  env['CXXFLAGS'] = [ '-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
-                      '-qopt-report', '-qopt-report-phase=vec,openmp', \
-                      '-Wall', '-m64', '-pedantic', '-Wall', '-W', '-Wundef', \
-                      '-Wshadow', '-Wcast-qual', '-Wcast-align', \
-                      '-Wconversion', '-Winline', '-Wabi=11', \
-                      '-Wold-style-cast', '-Woverloaded-virtual', \
-                      '-traceback', '-check-uninit', '-ftrapuv', '-debug', \
-                      '-debug extended', '-fpe3', '-mp', '-fp-model strict', \
-                      '-align all', '-check bounds', '-assume realloc_lhs', \
-                      '-assume protect_parens,minus0', \
-                      '-assume no old_maxminloc', '-warn unused', \
-                      '-align dcommons' ]
+    # More F90 flags for debugging
+    #env['F90FLAGS'] = [ '-r8','-g','-qopenmp','-O0', '-ftz', \
+    #                    '-heap-arrays 5000', '-fno-alias', '-traceback', \
+    #                    '-debug', '-debug all', '-nolib-inline','-align all',\
+    #                    '-check bounds', '-fno-inline-functions', '-prec-div',\
+    #                    '-prec-sqrt', '-fp-stack-check', '-init=snan,arrays', \
+    #                    '-traceback', '-fPIC', '-fpe3', '-heap-arrays 32', \
+    #                    '-assume realloc_lhs','-assume protect_parens,minus0',\
+    #                    '-assume no old_maxminloc', '-warn unused', \
+    #                    '-align dcommons',  '-xHOST', '-qopt-report', \
+    #                    '-qopt-report-phase=vec,openmp', '-fp-model strict', \
+    #                    '-no-wrap-margin', '-ftrapuv', '-mp' ]
+
+  if fortran_compiler == 'gfortran':
+
+    env['F90FLAGS'] = [ '-O0', '-g3', '-fopenmp', '-ftree-vectorize', \
+                        '-fopt-info-vec', '-fopt-info-loop', '-fbacktrace', \
+                        '-ftrapping-math', '-fbounds-check', \
+                        '-ffpe-trap=zero,overflow,underflow', \
+                        '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
+                        '-ffree-line-length-none', '-ffixed-line-length-none', \
+                        build_flavour ]
+
+  ##############################################################################
+  # C++ DEBUG BUILD OPTIONS
+  ##############################################################################
+  if cpp_compiler == 'icpc':
+
+    # C++ flags for debugging
+    # See also https://www.nas.nasa.gov/hecc/support/kb/recommended-intel-compiler-debugging-options_92.html
+    env['CXXFLAGS'] = [ '-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
+                        '-qopt-report', '-qopt-report-phase=vec,openmp', \
+                        '-Wall', '-m64', '-pedantic', '-Wall', '-Wundef',\
+                        '-Wshadow', '-Wcast-qual', '-Wcast-align', \
+                        '-Wconversion', '-Winline', '-Wabi=11', \
+                        '-Wold-style-cast', '-Woverloaded-virtual', \
+                        '-traceback', '-check-uninit', '-ftrapuv', '-debug', \
+                        '-debug extended', '-fpe3', '-mp', '-fp-model strict', \
+                        '-align all', '-check bounds', '-assume realloc_lhs', \
+                        '-assume protect_parens,minus0', \
+                        '-assume no old_maxminloc', '-warn unused', \
+                        '-align dcommons' ]
+
+  if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
+
+    env['CXXFLAGS'] = [ '-O0', '-g3', '-std=c++11', '-fopenmp', '-Wall', \
+                        '-ftree-vectorize','-fopt-info-vec', '-fopt-info-loop',\
+                        '-m64', '-pedantic', '-Wall', \
+                        '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align', \
+                        '-Wconversion', '-Winline', '-Wabi=11', \
+                        '-Wold-style-cast', '-Woverloaded-virtual', \
+                        '-Wfatal-errors' ]
 
 ################################################################################
 
@@ -479,9 +534,9 @@ if debug == 'TRUE': #
 # PROGRAMS
 ################################################################################
 
-sphincs_id       = 'sphincs_id.x'
-convergence_test = 'convergence_test.x'
-write_par_eos    = 'write_par_eos.x'
+sphincs_id       = 'sphincs_id'       + version + '.x'
+convergence_test = 'convergence_test' + version + '.x'
+write_par_eos    = 'write_par_eos'    + version + '.x'
 
 program_sphincs_id       = ['src/sphincs_id.f90']
 program_convergence_test = ['src/convergence_test.f90']

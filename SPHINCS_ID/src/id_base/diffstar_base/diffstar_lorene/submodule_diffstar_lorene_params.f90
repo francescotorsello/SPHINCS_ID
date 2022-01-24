@@ -40,7 +40,7 @@ SUBMODULE (diffstar_lorene) params
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR, C_NULL_CHAR
     USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         c_light, cm2km, k_lorene2hydrobase_piecewisepolytrope
+                         k_lorene2hydrobase_piecewisepolytrope
 
     IMPLICIT NONE
 

@@ -270,21 +270,23 @@ MODULE sph_particles
     !-- Strings
     !
 
-    !> String containing the name of the particles parameter file
-    CHARACTER( LEN= 50 ):: lorene_bns_id_parfile
+    CHARACTER( LEN= 50 ):: sphincs_id_particles
+    !! String containing the name of the particles parameter file
 
-    !& String storing the local path to the directory containing the
-    !  CompOSE |eos|
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_path
-    !> String storing the subpath of compose_path to the CompOSE file with
-    !  .beta extension
+    !# String storing the local path to the directory containing the
+    !  CompOSE |eos|
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_filename
+    !# String storing the subpath of compose_path to the CompOSE file with
+    !  .beta extension
 
     !
     !-- Equations of state
     !
 
     TYPE(eos), DIMENSION(:), ALLOCATABLE:: all_eos
+    !# Array of TYPE [[eos]] containinghe |eos| information for all the matter
+    !  objects
 
     !
     !-- Steering variables
@@ -565,9 +567,9 @@ MODULE sph_particles
       !# (~rho_max)/thres is the minimum mass density considered
       ! when placing particles. Used only when redistribute_nu is
       ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( OUT ):: pos
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos
       !> Array soring the inal particle volumes
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pvol
       !! Array storing the final particle volumes
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )

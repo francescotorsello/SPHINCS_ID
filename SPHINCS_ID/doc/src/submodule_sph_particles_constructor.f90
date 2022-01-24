@@ -87,7 +87,7 @@ SUBMODULE (sph_particles) constructor
     ! Variable storing the number of column where nu is written
     INTEGER:: column_nu
     ! Temporary number of matter objects
-    INTEGER:: n_matter_tmp
+    INTEGER:: n_matter_tmp, tmp
     ! Array storing the columns of the file parts_pos (defined below) that
     ! contain the particle positions
     INTEGER, DIMENSION(3):: columns
@@ -233,14 +233,14 @@ SUBMODULE (sph_particles) constructor
     !
     !-- Read the parameters of the particle distributions
     !
-    parts% lorene_bns_id_parfile= 'sphincs_lorene_bns_particles.par'
+    parts% sphincs_id_particles= 'sphincs_id_particles.dat'
 
-    INQUIRE( FILE= parts% lorene_bns_id_parfile, EXIST= file_exists )
+    INQUIRE( FILE= parts% sphincs_id_particles, EXIST= file_exists )
     IF( file_exists )THEN
-     OPEN( 10, FILE= parts% lorene_bns_id_parfile, STATUS= 'OLD' )
+     OPEN( 10, FILE= parts% sphincs_id_particles, STATUS= 'OLD' )
     ELSE
      PRINT *
-     PRINT *, "** ERROR: ", parts% lorene_bns_id_parfile, &
+     PRINT *, "** ERROR: ", parts% sphincs_id_particles, &
               " file not found!"
      PRINT *
      STOP
@@ -275,6 +275,12 @@ SUBMODULE (sph_particles) constructor
       parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
       parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
       npart_des_i(i_matter)          = parts% mass_fractions(i_matter)*npart_des
+      tmp= 2*npart_des_i(i_matter)
+      ALLOCATE( parts_all(i_matter)% pos_i  ( 3, tmp ) )
+      ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
+      ALLOCATE( parts_all(i_matter)% pmass_i( tmp ) )
+      ALLOCATE( parts_all(i_matter)% h_i    ( tmp ) )
+      ALLOCATE( parts_all(i_matter)% nu_i   ( tmp ) )
     ENDDO
 
  !   IF( parts% redistribute_nu )THEN
@@ -2000,7 +2006,7 @@ SUBMODULE (sph_particles) constructor
 
       !& Array to store the indices for array mass_profile, sorted so that
       !  mass_profile[mass_profile_idx] is in increasing order
-      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
       !> Center of the star
       DOUBLE PRECISION, INTENT( IN )    :: center
       !> Central density of the star
@@ -2012,7 +2018,7 @@ SUBMODULE (sph_particles) constructor
       !> Integrated mass of the star
       DOUBLE PRECISION, INTENT( IN OUT ):: mass
       !> Array storing the radial mass profile of the star
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
                                        mass_profile
 
       CALL id% integrate_baryon_mass_density( center, radius, &

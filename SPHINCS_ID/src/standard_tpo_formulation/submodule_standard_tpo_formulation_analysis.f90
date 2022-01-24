@@ -39,7 +39,7 @@ SUBMODULE (standard_tpo_formulation) analysis
     DOUBLE PRECISION:: tmp, total
 
     LOGICAL:: exist
-    LOGICAL, PARAMETER:: DEBUG= .FALSE.
+    !LOGICAL, PARAMETER:: DEBUG= .FALSE.
 
     IF( THIS% export_constraints_details )THEN
       !

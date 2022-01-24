@@ -566,10 +566,10 @@ MODULE id_base
 
       IMPORT:: idbase
       !> Object of class [[idbase]] which this PROCEDURE is a member of
-      CLASS(idbase), INTENT( IN OUT )      :: THIS
+      CLASS(idbase), INTENT( IN OUT )   :: THIS
       !& Array to store the indices for array mass_profile, sorted so that
       !  mass_profile[mass_profile_idx] is in increasing order
-      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
       !> Center of the star
       DOUBLE PRECISION, INTENT( IN )    :: center
       !> Central density of the star
@@ -581,7 +581,7 @@ MODULE id_base
       !> Integrated mass of the star
       DOUBLE PRECISION, INTENT( IN OUT ):: mass
       !> Array storing the radial mass profile of the star
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
                                        mass_profile
 
     END SUBROUTINE integrate_field_int
@@ -644,7 +644,6 @@ MODULE id_base
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      IMPORT:: idbase
       CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
       !! |lorene| binary file containing the spectral DRS ID
       CLASS(idbase), INTENT( OUT ):: derived_type
@@ -683,19 +682,19 @@ MODULE id_base
     END SUBROUTINE integrate_baryon_mass_density
 
 
-    MODULE FUNCTION get_n_matter( THIS )
+    PURE MODULE FUNCTION get_n_matter( THIS )
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
       CLASS(idbase), INTENT( IN ):: THIS
-      DOUBLE PRECISION:: get_n_matter
+      INTEGER:: get_n_matter
       !! [[idbase:n_matter]], the number of matter objects in the
       !  physical system
 
     END FUNCTION get_n_matter
 
 
-    MODULE SUBROUTINE set_n_matter( THIS, value )
+    PURE MODULE SUBROUTINE set_n_matter( THIS, value )
     !# Sets [[idbase:n_matter]], the number of matter objects in the
     !  physical system, to the given value
 
@@ -706,7 +705,7 @@ MODULE id_base
     END SUBROUTINE set_n_matter
 
 
-    MODULE FUNCTION get_cold_system( THIS )
+    PURE MODULE FUNCTION get_cold_system( THIS )
     !# Returns [[idbase:cold_system]], the `LOGICAL` variable at specifies if
     !  the system is cold (no thermal component)
 
@@ -760,7 +759,7 @@ MODULE id_base
     END FUNCTION get_total_spatial_extent
 
 
-    MODULE PURE FUNCTION get_one_lapse( THIS )
+    PURE MODULE FUNCTION get_one_lapse( THIS )
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
@@ -772,7 +771,7 @@ MODULE id_base
     END FUNCTION get_one_lapse
 
 
-    MODULE SUBROUTINE set_one_lapse( THIS, logic )
+    PURE MODULE SUBROUTINE set_one_lapse( THIS, logic )
     !# Sets [[idbase:n_matter]], the number of matter objects in the
     !  physical system, to the given value
 
@@ -795,7 +794,7 @@ MODULE id_base
     END FUNCTION get_zero_shift
 
 
-    MODULE SUBROUTINE set_zero_shift( THIS, logic )
+    PURE MODULE SUBROUTINE set_zero_shift( THIS, logic )
     !# Sets [[idbase:n_matter]], the number of matter objects in the
     !  physical system, to the given value
 

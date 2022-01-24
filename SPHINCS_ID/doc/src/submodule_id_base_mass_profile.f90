@@ -39,7 +39,7 @@ SUBMODULE (id_base) mass_profile
     !************************************************
 
     USE utility,   ONLY: ios, err_msg
-    USE constants, ONLY: pi
+    USE constants, ONLY: pi, zero, two, three, four
     USE NR,        ONLY: indexx
     USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
     USe matrix,    ONLY: determinant_3x3_sym_matrix
@@ -53,32 +53,30 @@ SUBMODULE (id_base) mass_profile
 
     LOGICAL, PARAMETER:: debug= .TRUE.
 
-    !rad= 0.0D0
+  !  IF(.NOT.ALLOCATED( mass_profile ))THEN
+  !    ALLOCATE( mass_profile( 3, 0:NINT(radius/dr) ), STAT= ios, &
+  !              ERRMSG= err_msg )
+  !    IF( ios > 0 )THEN
+  !       PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
+  !                // "place_particles_. ", &
+  !                "The error message is", err_msg
+  !       STOP
+  !    ENDIF
+  !  ENDIF
+  !  IF(.NOT.ALLOCATED( mass_profile_idx ))THEN
+  !    ALLOCATE( mass_profile_idx( 0:NINT(radius/dr) ), STAT= ios, &
+  !              ERRMSG= err_msg )
+  !    IF( ios > 0 )THEN
+  !       PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
+  !                // "place_particles_. ", &
+  !                "The error message is", err_msg
+  !       STOP
+  !    ENDIF
+  !  ENDIF
 
-    IF(.NOT.ALLOCATED( mass_profile ))THEN
-      ALLOCATE( mass_profile( 3, 0:NINT(radius/dr) ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( mass_profile_idx ))THEN
-      ALLOCATE( mass_profile_idx( 0:NINT(radius/dr) ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-
-    mass_profile( 1, 0 )= 0.0D0
-    mass_profile( 2, 0 )= 4.0D0/3.0D0*pi*dr**3.0D0*central_density
-    mass_profile( 3, 0 )= 4.0D0/3.0D0*pi*dr**3.0D0*central_density
+    mass_profile( 1, 0 )= zero
+    mass_profile( 2, 0 )= four/three*pi*dr**three*central_density
+    mass_profile( 3, 0 )= four/three*pi*dr**three*central_density
 
     !$OMP PARALLEL DO DEFAULT(NONE) &
     !$OMP             SHARED(dr,dphi,dth,center,radius,mass_profile,THIS) &
@@ -86,14 +84,14 @@ SUBMODULE (id_base) mass_profile
     !$OMP                     g,baryon_density,mass_element,mass)
     radius_loop: DO r= 1, NINT(radius/dr), 1
 
-      mass= 0.0D0
+      mass= zero
       rad_coord= r*dr
 
-      longitude_loop: DO phi= 1, NINT(2.0D0*pi/dphi), 1
+      longitude_loop: DO phi= 1, NINT(two*pi/dphi), 1
 
         long= phi*dphi
 
-        colatitude_loop: DO th= 1, NINT(pi/2.0D0/dth), 1
+        colatitude_loop: DO th= 1, NINT(pi/two/dth), 1
 
           colat= th*dth
 
@@ -106,9 +104,10 @@ SUBMODULE (id_base) mass_profile
                    (rad_coord + dr)*COS(colat), &
                    g, baryon_density, gamma_euler )
 
-          IF( ISNAN( g(jxx) ) .OR. ISNAN( g(jxy) ) .OR. ISNAN( g(jxz) ) &
+          IF(      ISNAN( g(jxx) ) .OR. ISNAN( g(jxy) ) .OR. ISNAN( g(jxz) ) &
               .OR. ISNAN( g(jyy) ) .OR. ISNAN( g(jyz) ) .OR. ISNAN( g(jzz) ) &
-              .OR. ISNAN( baryon_density ) .OR. ISNAN( gamma_euler ) ) CYCLE
+              .OR. ISNAN( baryon_density ) .OR. ISNAN( gamma_euler ) ) &
+              CYCLE
 
   !        CALL bns_obj% import_id( &
   !                 center1 + rad_coord*SIN(lat)*COS(long), &
@@ -152,10 +151,10 @@ SUBMODULE (id_base) mass_profile
           CALL determinant_3x3_sym_matrix( g, sq_g )
           sq_g= SQRT(sq_g)
 
-          mass_element= (rad_coord**2.0D0)*SIN(colat)*dr*dth*dphi &
+          mass_element= (rad_coord**two)*SIN(colat)*dr*dth*dphi &
                         *sq_g*gamma_euler*baryon_density
 
-          mass= mass + 2.0D0*mass_element
+          mass= mass + two*mass_element
 
         ENDDO colatitude_loop
 

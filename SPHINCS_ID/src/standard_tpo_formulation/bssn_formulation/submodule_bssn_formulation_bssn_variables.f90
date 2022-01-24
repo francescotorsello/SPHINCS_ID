@@ -45,9 +45,6 @@ SUBMODULE (bssn_formulation) bssn_variables
     USE mesh_refinement,            ONLY: nlevels, levels, rad_coord, &
                                           allocate_grid_function, &
                                           deallocate_grid_function
-    USE tensor,                     ONLY: itt, itx, ity, itz, ixx, ixy, &
-                                          ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                          jyy, jyz, jzz, jx, jy, jz, n_sym3x3
     USE ADM_refine,                 ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
                                           K_phys3_ll, g_phys3_ll, &
                                           allocate_ADM, deallocate_ADM
@@ -57,7 +54,6 @@ SUBMODULE (bssn_formulation) bssn_variables
                                           Tmunu_ll
     USE GravityAcceleration_refine, ONLY: allocate_GravityAcceleration, &
                                           deallocate_GravityAcceleration
-    USE constants,                  ONLY: Msun_geo
     !
     !-- Use the arrays from the MODULE BSSN to store the BSSN variables
     !-- for the LORENE ID on the grid, and the SUBROUTINE write_BSSN_dump
@@ -536,9 +532,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     !
     !************************************************
 
-    USE tensor,              ONLY: itt, itx, ity, itz, ixx, ixy, &
-                                   ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                   jyy, jyz, jzz, jx, jy, jz
+    USE tensor,              ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz
 
     IMPLICIT NONE
 

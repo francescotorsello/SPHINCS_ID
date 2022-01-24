@@ -23,7 +23,6 @@ page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S
 print_creation_date: true
 proc_internals: true
-license: gfdl
 github: https://github.com/francescotorsello
 linkedin: https://www.linkedin.com/in/francescotorsello
 alias: sphincsid = \(\texttt{SPHINCS_ID}\)
@@ -48,9 +47,12 @@ ___
 
 SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([4][4]{:target="_blank"}).
 
-Currently, it produces initial data for binary neutron star mergers and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"}).
-
 Presently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN or MAGMA2. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN or MAGMA2.
+
+Currently, it produces initial data for:
+
+  - binary neutron star mergers and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"})
+  - data on a Cartesian, uniform grid, representing a generic physical system
 
 The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
 
@@ -58,9 +60,9 @@ SPHINCS_ID needs SPHINCS_BSSN to be compiled.
 
 ---
 
-Copyright (C) 2022 Francesco Torsello
+Copyright (C) 2022 Francesco Torsello.
 
-This program is free software: you can redistribute it and/or modify
+SPHINCS_ID is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -71,11 +73,20 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program. If not, see <https://www.gnu.org/licenses/>.
+along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.
+___
+
+Copyright (C) 2022 Francesco Torsello.
+
+Permission is granted to copy, distribute and/or modify this documentation
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+A copy of the license is included in the section entitled "License", reachable by clicking "More" at the top of the webpage, or at <https://www.gnu.org/licenses/fdl-1.3.html/>.
+---
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://lorene.obspm.fr/>
 [3]: <https://arxiv.org/abs/gr-qc/0007028>
 [4]: <https://academic.oup.com/mnras/article/498/3/4230/5897370>
 [5]: <https://www.gnu.org/licenses/gpl-3.0.en.html>
-___

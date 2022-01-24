@@ -37,7 +37,7 @@ SUBMODULE (diffstar_base) io
     !
     !************************************************
 
-    USE constants,      ONLY: lorene2hydrobase, MSun_geo, kg2g, m2cm
+    USE constants,      ONLY: lorene2hydrobase, kg2g, m2cm
 
     IMPLICIT NONE
 

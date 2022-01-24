@@ -352,7 +352,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: grid_point
 
@@ -364,7 +364,7 @@ MODULE standard_tpo_formulation
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
       ! Result
-      DOUBLE PRECISION:: nlevels
+      INTEGER:: nlevels
 
     END FUNCTION get_nlevels
 
@@ -373,7 +373,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       TYPE(level), DIMENSION(:), ALLOCATABLE:: levels
 
@@ -384,7 +384,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dx
 
@@ -395,7 +395,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dy
 
@@ -406,7 +406,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dz
 
@@ -417,7 +417,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_x
 
@@ -428,7 +428,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_y
 
@@ -439,7 +439,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_z
 
@@ -450,9 +450,9 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
-      INTEGER:: xR
+      DOUBLE PRECISION:: xR
 
     END FUNCTION get_xR
 
@@ -461,9 +461,9 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
-      INTEGER:: yR
+      DOUBLE PRECISION:: yR
 
     END FUNCTION get_yR
 
@@ -472,9 +472,9 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
-      INTEGER:: zR
+      DOUBLE PRECISION:: zR
 
     END FUNCTION get_zR
 
@@ -483,7 +483,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
 
@@ -494,7 +494,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 
@@ -505,7 +505,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
 
@@ -516,7 +516,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 

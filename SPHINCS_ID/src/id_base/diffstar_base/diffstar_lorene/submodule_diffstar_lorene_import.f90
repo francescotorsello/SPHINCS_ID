@@ -295,8 +295,7 @@ SUBMODULE (diffstar_lorene) import
 
     USE constants, ONLY: Msun_geo
 
-    USE tensor,    ONLY: itt, itx, ity, itz, ixx, ixy, &
-                         ixz, iyy, iyz, izz, jxx, jxy, jxz, &
+    USE tensor,    ONLY: jxx, jxy, jxz, &
                          jyy, jyz, jzz, jx, jy, jz, n_sym4x4
 
     IMPLICIT NONE

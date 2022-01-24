@@ -46,9 +46,9 @@ SUBMODULE (sph_particles) sph_variables
     !
     !************************************************
 
-    USE constants,           ONLY: km2cm, km2m, m2cm, g2kg, amu, MSun_geo, &
-                                   third, kg2g, Msun, k_lorene2hydrobase, &
-                                   Msun, m0c2
+    USE constants,           ONLY: km2m, m2cm, amu, MSun_geo, &
+                                   third, Msun, k_lorene2hydrobase, &
+                                   Msun
     USE units,               ONLY: m0c2_cu, set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -83,11 +83,14 @@ SUBMODULE (sph_particles) sph_variables
     !USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D,&
     !                               deallocate_RCB_tree_memory_3D, iorig
     USE APM,                 ONLY: density_loop
-    USE kernel_table,        ONLY: ktable
+    USE kernel_table,        ONLY: ktable!, dWdv_no_norm, &
+                                   !dv_table, dv_table_1, &
+                                   !W_no_norm, n_tab_entry
     USE options,             ONLY: ndes
     USE set_h,               ONLY: exact_nei_tree_update
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE sphincs_sph,         ONLY: density, ncand, all_clists!, flag_dead_ll_cells
+    USE sphincs_sph,         ONLY: density, ncand!, &
+                                   !all_clists!, flag_dead_ll_cells
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
@@ -96,8 +99,6 @@ SUBMODULE (sph_particles) sph_variables
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
-    USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
-                                   W_no_norm,n_tab_entry
 
     IMPLICIT NONE
 
@@ -105,22 +106,23 @@ SUBMODULE (sph_particles) sph_variables
     ! compute_and_export_SPH_variables is called
     INTEGER, SAVE:: call_flag= 0
 
-    INTEGER, PARAMETER:: max_it_h= 1
+    !INTEGER, PARAMETER:: max_it_h= 1
 
     ! Spacetime indices \mu and \nu
-    INTEGER:: nus, mus, cnt1, cnt2, a, i_matter, itr2, inde, index1!, cnt2
+    INTEGER:: nus, mus, cnt1, a, i_matter!, itr2, inde, index1!, cnt2
     INTEGER:: n_problematic_h
-    INTEGER:: itot, l, b, k, ill
+    INTEGER:: itot, l, ill!, b, k
 
     DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION:: det,sq_g, Theta_a!, &!nu_max1, nu_max2, &
-                       !nu_tmp, nu_thres1, nu_thres2          
-    DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
-    DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
-    DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, dx, dy, dz, Wab, &
-                       Wab_ha, Wi, Wi1, dvv
+                       !nu_tmp, nu_thres1, nu_thres2
 
-    LOGICAL:: few_ncand, good_h, invertible_matrix
+    !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
+    !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
+    !DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, dx, dy, dz, Wab, &
+    !                   Wab_ha, Wi, Wi1, dvv
+
+    LOGICAL:: few_ncand!, invertible_matrix
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 

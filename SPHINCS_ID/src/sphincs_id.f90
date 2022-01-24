@@ -1,22 +1,22 @@
 ! File:         sphincs_id.f90
 ! Author:       Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
-
 !************************************************************************
-! Copyright (C) 2022 Francesco Torsello                                 *
+! Copyright (C) 2020 2021 2022 Francesco Torsello                       *
 !                                                                       *
-! This program is free software: you can redistribute it and/or modify  *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
 ! it under the terms of the GNU General Public License as published by  *
 ! the Free Software Foundation, either version 3 of the License, or     *
 ! (at your option) any later version.                                   *
 !                                                                       *
-! This program is distributed in the hope that it will be useful,       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
 ! GNU General Public License for more details.                          *
 !                                                                       *
 ! You should have received a copy of the GNU General Public License     *
-! along with this program. If not, see <https://www.gnu.org/licenses/>. *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
 ! The copy of the GNU General Public License should be in the file      *
 ! 'COPYING'.                                                            *
 !************************************************************************
@@ -25,11 +25,8 @@ PROGRAM sphincs_id
 
   !*****************************************************
   !
-  !# Use the MODULE sphincs_lorene to export binary
-  !  files containing the initial data (|id|) required
-  !  by the evolution code in SPHINCS, and built using
-  !  the binary files produced by LORENE and containing
-  !  the binary neutron stars (BNS) |id|.
+  !# Set up the |sph| and spacetime |id| t be read
+  !  by |sphincsbssn|.
   !
   !  FT 28.10.2020
   !
@@ -48,9 +45,9 @@ PROGRAM sphincs_id
   USE id_base,          ONLY: idbase, initialize
   USE sph_particles,    ONLY: particles
   USE bssn_formulation, ONLY: bssn
-  USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
-                              k_lorene2hydrobase_piecewisepolytrope, &
-                              MSun_geo, kg2g, m2cm, m0c2
+  !USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
+  !                            k_lorene2hydrobase_piecewisepolytrope, &
+  !                            MSun_geo, kg2g, m2cm, m0c2
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
                               itr4, file_exists, cnt, &
@@ -124,7 +121,9 @@ PROGRAM sphincs_id
   !  spacetime output is to be saved
 
   LOGICAL:: exist
+#ifdef __INTEL_COMPILER
   LOGICAL(4):: dir_out
+#endif
   ! Logical variables to steer the execution
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
             compute_constraints, export_constraints_xy, &
@@ -149,7 +148,7 @@ PROGRAM sphincs_id
   ! containing the BSSN variables on the gravity grid ofr each bns object
   TYPE( bssn ),   DIMENSION(:),   ALLOCATABLE:: bssn_forms
 
-  ! Namelist containing parameters read from lorene_bns_id_parameters.par
+  ! Namelist containing parameters read from sphincs_id_parameters.par
   ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM
   NAMELIST /bns_parameters/ n_bns, common_path, filenames, placer, &
                             export_bin, export_form, export_form_xy, &
@@ -654,24 +653,24 @@ PROGRAM sphincs_id
 
     INTEGER:: stat
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: lorene_bns_id_parameters
+    CHARACTER( LEN= : ), ALLOCATABLE:: sphincs_id_parameters
     CHARACTER( LEN= 100 ):: msg
 
-    lorene_bns_id_parameters= 'sphincs_lorene_bns_parameters.par'
+    sphincs_id_parameters= 'sphincs_id_parameters.dat'
 
-    INQUIRE( FILE= lorene_bns_id_parameters, EXIST= file_exists )
+    INQUIRE( FILE= sphincs_id_parameters, EXIST= file_exists )
     IF( file_exists )THEN
-     OPEN( 17, FILE= lorene_bns_id_parameters, STATUS= 'OLD' )
+     OPEN( 17, FILE= sphincs_id_parameters, STATUS= 'OLD' )
     ELSE
      PRINT*
-     PRINT*,'** ERROR: ', lorene_bns_id_parameters, " file not found!"
+     PRINT*,'** ERROR: ', sphincs_id_parameters, " file not found!"
      PRINT*
      STOP
     ENDIF
 
     READ( 17, NML= bns_parameters, IOSTAT= stat, IOMSG= msg )
       IF( stat /= 0 )THEN
-        PRINT *, "** ERROR: Error in reading ",lorene_bns_id_parameters,&
+        PRINT *, "** ERROR: Error in reading ",sphincs_id_parameters,&
                  ". The IOSTAT variable is ", stat, &
                  "The error message is", msg
         STOP

@@ -1540,20 +1540,24 @@ SUBMODULE (sph_particles) apm
 
         adapt_displacement_to_error: &
         IF( dNstar(a) >= ten*ten &
-            .AND. validate_position_final( &
-                    all_pos(1,a) + ten*correction_pos(1,a), &
-                    all_pos(2,a) + ten*correction_pos(2,a), &
-                    all_pos(3,a) + ten*correction_pos(3,a) ) )THEN
+            .AND. &
+            validate_position_final( &
+              all_pos(1,a) + ten*correction_pos(1,a), &
+              all_pos(2,a) + ten*correction_pos(2,a), &
+              all_pos(3,a) + ten*correction_pos(3,a) ) == 1 )THEN
 
           pos_corr_tmp= all_pos(:,a) + ten*correction_pos(:,a) ! 10
 
+
         ELSEIF( dNstar(a) >= ten &
-                .AND. validate_position_final( &
-                    all_pos(1,a) + three*correction_pos(1,a), &
-                    all_pos(2,a) + three*correction_pos(2,a), &
-                    all_pos(3,a) + three*correction_pos(3,a) ) )THEN
+                .AND. &
+                validate_position_final( &
+                  all_pos(1,a) + three*correction_pos(1,a), &
+                  all_pos(2,a) + three*correction_pos(2,a), &
+                  all_pos(3,a) + three*correction_pos(3,a) ) == 1 )THEN
 
           pos_corr_tmp= all_pos(:,a) + three*correction_pos(:,a) ! 3
+
 
         ELSE
 
@@ -2798,6 +2802,8 @@ SUBMODULE (sph_particles) apm
       IF( PRESENT(validate_position) )THEN
 
         answer= validate_position( x, y, z )
+        !IF( validate_position( x, y, z ) == 1 ) answer= .TRUE.
+        !IF( validate_position( x, y, z ) == 0 ) answer= .FALSE.
 
       ELSE
 
@@ -2877,7 +2883,7 @@ SUBMODULE (sph_particles) apm
 
       CALL get_nstar_p( npart_real, x, y, z, nstar_p )
 
-      IF( use_atmosphere == .TRUE. )THEN
+      IF( use_atmosphere .EQV. .TRUE. )THEN
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( npart_real, nstar_p, atmosphere_density ) &

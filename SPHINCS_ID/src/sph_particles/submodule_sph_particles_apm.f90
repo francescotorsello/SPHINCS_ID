@@ -76,8 +76,7 @@ SUBMODULE (sph_particles) apm
     !*****************************************************
 
     USE utility,             ONLY: cnt, spherical_from_cartesian
-    USE constants,           ONLY: half, third, Msun, Msun_geo, km2m, g2kg, &
-                                   amu, pi
+    USE constants,           ONLY: half, third, Msun, amu, pi
 
     USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
                                    npart, h, nu
@@ -93,13 +92,13 @@ SUBMODULE (sph_particles) apm
     USE analyze,             ONLY: COM
     USE matrix,              ONLY: determinant_4x4_matrix
 
-    USE sphincs_sph,         ONLY: density, ncand, all_clists
+    USE sphincs_sph,         ONLY: density, ncand!, all_clists
     USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
-    USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
-                                   W_no_norm,n_tab_entry
+    !USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
+    !                               W_no_norm,n_tab_entry
 
     IMPLICIT NONE
 
@@ -112,15 +111,15 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
     DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0 !3zero
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
-    DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
+    !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
 
-    INTEGER:: a, a2, itr, itr2, n_inc, cnt1, cnt2, inde, index1   ! iterators
+    INTEGER:: a, a2, itr, itr2, n_inc, cnt1!, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
     INTEGER:: dim_seed, rel_sign
-    INTEGER:: n_problematic_h, b, ill, l, itot
+    INTEGER:: n_problematic_h, ill, l, itot
     INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
@@ -148,10 +147,10 @@ SUBMODULE (sph_particles) apm
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
     INTEGER, DIMENSION(:), ALLOCATABLE:: seed
 
-    DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
-    DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
-    DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
-                       Wab_ha, Wi, Wi1, dvv
+    !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
+    !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
+    !DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
+    !                   Wab_ha, Wi, Wi1, dvv
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
@@ -196,13 +195,12 @@ SUBMODULE (sph_particles) apm
                                                v_euler_x, v_euler_y, v_euler_z
 
     LOGICAL:: exist
-    LOGICAL:: good_h
 
     !CHARACTER:: it_n
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
-    LOGICAL:: few_ncand, invertible_matrix
+    LOGICAL:: few_ncand!, invertible_matrix
 
     TYPE(timer):: find_h_bruteforce_timer
 
@@ -1540,20 +1538,24 @@ SUBMODULE (sph_particles) apm
 
         adapt_displacement_to_error: &
         IF( dNstar(a) >= ten*ten &
-            .AND. validate_position_final( &
-                    all_pos(1,a) + ten*correction_pos(1,a), &
-                    all_pos(2,a) + ten*correction_pos(2,a), &
-                    all_pos(3,a) + ten*correction_pos(3,a) ) )THEN
+            .AND. &
+            validate_position_final( &
+              all_pos(1,a) + ten*correction_pos(1,a), &
+              all_pos(2,a) + ten*correction_pos(2,a), &
+              all_pos(3,a) + ten*correction_pos(3,a) ) == 1 )THEN
 
           pos_corr_tmp= all_pos(:,a) + ten*correction_pos(:,a) ! 10
 
+
         ELSEIF( dNstar(a) >= ten &
-                .AND. validate_position_final( &
-                    all_pos(1,a) + three*correction_pos(1,a), &
-                    all_pos(2,a) + three*correction_pos(2,a), &
-                    all_pos(3,a) + three*correction_pos(3,a) ) )THEN
+                .AND. &
+                validate_position_final( &
+                  all_pos(1,a) + three*correction_pos(1,a), &
+                  all_pos(2,a) + three*correction_pos(2,a), &
+                  all_pos(3,a) + three*correction_pos(3,a) ) == 1 )THEN
 
           pos_corr_tmp= all_pos(:,a) + three*correction_pos(:,a) ! 3
+
 
         ELSE
 
@@ -2798,6 +2800,8 @@ SUBMODULE (sph_particles) apm
       IF( PRESENT(validate_position) )THEN
 
         answer= validate_position( x, y, z )
+        !IF( validate_position( x, y, z ) == 1 ) answer= .TRUE.
+        !IF( validate_position( x, y, z ) == 0 ) answer= .FALSE.
 
       ELSE
 
@@ -2877,7 +2881,7 @@ SUBMODULE (sph_particles) apm
 
       CALL get_nstar_p( npart_real, x, y, z, nstar_p )
 
-      IF( use_atmosphere == .TRUE. )THEN
+      IF( use_atmosphere .EQV. .TRUE. )THEN
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( npart_real, nstar_p, atmosphere_density ) &
