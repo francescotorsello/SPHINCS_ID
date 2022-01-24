@@ -1,6 +1,25 @@
 !& File:         submodule_sph_particles_apm.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (sph_particles) apm
 
@@ -261,22 +280,48 @@ SUBMODULE (sph_particles) apm
     h_guess= zero
     DO a= 1, npart_real, 1
       h_guess(a)= three*(pvol(a)**third)
-      IF( ISNAN( h_guess(a) ) )THEN
-        PRINT *, " ** ERROR! h_guess(", a, &
-                 ") is a NaN in SUBROUTINE perform_apm!"
-        PRINT *, "pvol(", a, ")=", pvol(a)
-        PRINT *, "    Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-      IF( h_guess( a ) <= zero )THEN
-        PRINT *, "** ERROR! h_guess(", a, ") is zero or negative!"
-        PRINT *, "   pvol(", a, ")=", pvol(a)
-        PRINT *, "   Stopping..."
-        PRINT *
-        STOP
-      ENDIF
+      !IF( ISNAN( h_guess(a) ) )THEN
+      !  PRINT *, " ** ERROR! h_guess(", a, &
+      !           ") is a NaN in SUBROUTINE perform_apm!"
+      !  PRINT *, "pvol(", a, ")=", pvol(a)
+      !  PRINT *, "    Stopping..."
+      !  PRINT *
+      !  STOP
+      !ENDIF
+      !IF( h_guess( a ) <= zero )THEN
+      !  PRINT *, "** ERROR! h_guess(", a, ") is zero or negative!"
+      !  PRINT *, "   pvol(", a, ")=", pvol(a)
+      !  PRINT *, "   Stopping..."
+      !  PRINT *
+      !  STOP
+      !ENDIF
     ENDDO
+
+    CALL find_h_bruteforce_timer% start_timer()
+    n_problematic_h= 0
+    PRINT *, "npart_real= ", npart_real
+    check_h_guess: DO a= 1, npart_real, 1
+
+      IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
+
+        n_problematic_h= n_problematic_h + 1
+        h_guess(a)= find_h_backup( a, npart_real, pos_input, nn_des )
+        IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", pos_input(:,a)
+          STOP
+        ENDIF
+
+      ENDIF
+
+    ENDDO check_h_guess
+    CALL find_h_bruteforce_timer% stop_timer()
+    CALL find_h_bruteforce_timer% print_timer( 2 )
+
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
 
     IF( debug ) PRINT *, "0.5"
 
@@ -697,7 +742,6 @@ SUBMODULE (sph_particles) apm
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
-        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
@@ -1894,7 +1938,6 @@ SUBMODULE (sph_particles) apm
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
@@ -2400,7 +2443,6 @@ SUBMODULE (sph_particles) apm
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."

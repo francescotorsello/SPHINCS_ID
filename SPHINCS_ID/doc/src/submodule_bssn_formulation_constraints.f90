@@ -1,6 +1,25 @@
 ! File:         submodule_bssn_formulation_constraints.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (bssn_formulation) constraints
 
@@ -39,13 +58,12 @@ SUBMODULE (bssn_formulation) constraints
     !
     !***************************************************
 
-    USE constants,         ONLY: c_light2, cm2m, MSun, g2kg, m2cm, &
-                                 lorene2hydrobase, MSun_geo, pi
+    USE constants,         ONLY: lorene2hydrobase, pi
     USE matrix,            ONLY: invert_4x4_matrix
     USE tensor,            ONLY: itt, itx, ity, itz, ixx, ixy, &
                                  ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                                  jyy, jyz, jzz, jx, jy, jz, &
-                                 it, ix, iy, iz, n_sym3x3, n_sym4x4
+                                 it, ix, iy, iz, n_sym4x4
     USE mesh_refinement,   ONLY: allocate_grid_function, &
                                  levels, nlevels
     USE McLachlan_refine,  ONLY: BSSN_CONSTRAINTS_INTERIOR
@@ -1211,12 +1229,10 @@ SUBMODULE (bssn_formulation) constraints
     !
     !**************************************************
 
-    USE constants,            ONLY: c_light2, cm2m, MSun, g2kg, m2cm, Msun_geo
     USE units,                ONLY: set_units
     USE tensor,               ONLY: itt, itx, ity, itz, ixx, ixy, &
                                     ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                    jyy, jyz, jzz, jx, jy, jz, &
-                                    n_sym3x3, n_sym4x4
+                                    jyy, jyz, jzz, jx, jy, jz
 
     USE mesh_refinement,             ONLY: allocate_grid_function, levels, &
                                            rad_coord, nlevels, &

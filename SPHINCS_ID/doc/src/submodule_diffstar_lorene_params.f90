@@ -1,6 +1,25 @@
 ! File:         submodule_diffstar_lorene_params.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (diffstar_lorene) params
 
@@ -40,7 +59,7 @@ SUBMODULE (diffstar_lorene) params
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR, C_NULL_CHAR
     USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         c_light, cm2km, k_lorene2hydrobase_piecewisepolytrope
+                         k_lorene2hydrobase_piecewisepolytrope
 
     IMPLICIT NONE
 

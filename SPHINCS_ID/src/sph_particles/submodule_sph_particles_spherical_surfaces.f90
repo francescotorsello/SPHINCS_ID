@@ -1,6 +1,25 @@
 !& File:         submodule_sph_particles_spherical_surfaces.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (sph_particles) spherical_surfaces
 
@@ -237,9 +256,12 @@ SUBMODULE (sph_particles) spherical_surfaces
     PRINT *, " * Integrating the baryon mass density to get the mass profile..."
     PRINT *
 
-    dr             = radius/(three*ten*ten)
-    dth            = pi/two/(two*ten*ten)
-    dphi           = two*pi/(two*ten*ten)
+    dr  = radius/(three*ten*ten)
+    dth = pi/two/(two*ten*ten)
+    dphi= two*pi/(two*ten*ten)
+
+    ALLOCATE( mass_profile( 3, 0:NINT(radius/dr) ), STAT= ios, ERRMSG= err_msg )
+    ALLOCATE( mass_profile_idx( 0:NINT(radius/dr) ),STAT= ios, ERRMSG= err_msg )
 
     CALL integrate_density( center, radius, &
                             central_density, &
@@ -1716,9 +1738,9 @@ SUBMODULE (sph_particles) spherical_surfaces
       shell_radii(1)= ( central_dens/m_p )**(-third)
     ELSE
       DO i= 1, 1000, 1
-        IF( get_dens( center + radius*i/(ten*ten*ten), zero, zero ) > 1.0D-13 )THEN
+        IF( get_dens( center + radius*i/(ten*ten*ten), zero, zero ) > zero )THEN
           shell_radii(1)= &
-              ( get_dens( center + radius*i/(ten*ten*ten), zero, zero )/m_p )**(-third)
+      ( get_dens( center + radius*i/(ten*ten*ten), zero, zero )/m_p )**(-third)
           EXIT
         ENDIF
       ENDDO

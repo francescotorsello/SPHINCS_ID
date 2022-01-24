@@ -1,6 +1,25 @@
 ! File:         submodule_sph_particles_constructor.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (sph_particles) constructor
 
@@ -61,14 +80,13 @@ SUBMODULE (sph_particles) constructor
     !**************************************************
 
     !USE NaNChecker,    ONLY: Check_Array_for_NAN
-    USE constants,      ONLY: Msun_geo, km2m, amu, pi, zero, half, third
+    USE constants,      ONLY: amu, pi, zero, half, third
     USE NR,             ONLY: indexx
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
     USE units,          ONLY: set_units
     USE options,        ONLY: ikernel, ndes
     USE alive_flag,     ONLY: alive
-    USE tensor,         ONLY: jx, jy, jz
     USE utility,        ONLY: spherical_from_cartesian
 
     IMPLICIT NONE
@@ -182,11 +200,11 @@ SUBMODULE (sph_particles) constructor
     parts% sph_computer_timer = timer( "sph_computer_timer" )
     parts% same_particle_timer= timer( "same_particle_timer" )
     DO i_matter= 1, parts% n_matter, 1
-      IF( parts% n_matter <= 9 ) WRITE( str_i, "(I1)" ), i_matter
+      IF( parts% n_matter <= 9 ) WRITE( str_i, "(I1)" ) i_matter
       IF( parts% n_matter >= 10 .AND. parts% n_matter <= 99 ) &
-                                                WRITE( str_i, "(I2)" ), i_matter
+                                                WRITE( str_i, "(I2)" ) i_matter
       IF( parts% n_matter >= 100 .AND. parts% n_matter <= 999 ) &
-                                                WRITE( str_i, "(I3)" ), i_matter
+                                                WRITE( str_i, "(I3)" ) i_matter
       parts% apm_timers(i_matter)= timer( "apm_timer"//TRIM(str_i) )
     ENDDO
 
@@ -274,7 +292,8 @@ SUBMODULE (sph_particles) constructor
     DO i_matter= 1, parts% n_matter, 1
       parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
       parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
-      npart_des_i(i_matter)          = parts% mass_fractions(i_matter)*npart_des
+      npart_des_i(i_matter)          = &
+                          NINT(parts% mass_fractions(i_matter)*DBLE(npart_des))
       tmp= 2*npart_des_i(i_matter)
       ALLOCATE( parts_all(i_matter)% pos_i  ( 3, tmp ) )
       ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
@@ -661,6 +680,7 @@ SUBMODULE (sph_particles) constructor
         ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
                    npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
 
+          DEALLOCATE( parts_all(itr)% h_i )
           IF(.NOT.ALLOCATED( parts_all(itr)% h_i ))THEN
             ALLOCATE( parts_all(itr)% h_i( npart_i_tmp(itr) ), &
                       STAT= ios, ERRMSG= err_msg )
@@ -672,6 +692,7 @@ SUBMODULE (sph_particles) constructor
             !CALL test_status( ios, err_msg, &
             !        "...allocation error for array v_euler_parts_z" )
           ENDIF
+          DEALLOCATE( parts_all(itr)% pvol_i )
           IF(.NOT.ALLOCATED( parts_all(itr)% pvol_i ))THEN
             ALLOCATE( parts_all(itr)% pvol_i( npart_i_tmp(itr) ), &
                       STAT= ios, ERRMSG= err_msg )
@@ -888,11 +909,11 @@ SUBMODULE (sph_particles) constructor
 
       matter_objects_sphersurfaces_loop: DO i_matter= 1, parts% n_matter, 1
 
-        IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
+        IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ) i_matter
         IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) &
-                                              WRITE( str_i, '(I2)' ), i_matter
+                                              WRITE( str_i, '(I2)' ) i_matter
         IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
-                                              WRITE( str_i, '(I3)' ), i_matter
+                                              WRITE( str_i, '(I3)' ) i_matter
 
         filename_mass_profile= "spherical_surfaces_mass_profile"//TRIM(str_i)//&
                                ".dat"
@@ -1030,7 +1051,7 @@ SUBMODULE (sph_particles) constructor
             parts_all(2)% pvol_i    =   parts_all(1)% pvol_i
             parts_all(2)% h_i       =   parts_all(1)% h_i
             parts_all(2)% pmass_i   =   parts_all(1)% pmass_i
-            parts% npart_i(2)       = parts% npart_i(1)
+            parts% npart_i(2)       =   parts% npart_i(1)
 
             EXIT
 
@@ -1041,6 +1062,14 @@ SUBMODULE (sph_particles) constructor
         ! Now that the real particle numbers are known, reallocate the arrays
         ! with the appropriate sizes. If the APM is performed, this step is
         ! done after it too
+        !PRINT *, "parts% npart_i(i_matter)=", parts% npart_i(i_matter)
+        !STOP
+
+      ENDDO matter_objects_sphersurfaces_loop
+      CALL parts% placer_timer% stop_timer()
+
+      DO i_matter= 1, parts% n_matter, 1
+
         parts_all(i_matter)% pos_i = &
                     parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
         parts_all(i_matter)% pvol_i = &
@@ -1048,79 +1077,9 @@ SUBMODULE (sph_particles) constructor
         parts_all(i_matter)% pmass_i = &
                     parts_all(i_matter)% pmass_i( 1:parts% npart_i(i_matter) )
 
-      ENDDO matter_objects_sphersurfaces_loop
-      CALL parts% placer_timer% stop_timer()
+      ENDDO
 
       parts% npart= SUM( parts% npart_i )
-
-      !
-      !-- Assign TYPE member variables
-      !-- @todo: this shouldn´t be needed here, since these array should be
-      !--        allocated and populated after the APM code
-      !
-
-     ! IF(.NOT.ALLOCATED( parts% pos ))THEN
-     !   ALLOCATE( parts% pos( 3, parts% npart ), &
-     !             STAT= ios, ERRMSG= err_msg )
-     !   IF( ios > 0 )THEN
-     !      PRINT *, "...allocation error for array pos in SUBROUTINE" &
-     !               // "place_particles_. ", &
-     !               "The error message is", err_msg
-     !      STOP
-     !   ENDIF
-     !   !CALL test_status( ios, err_msg, &
-     !   !                "...allocation error for array pos in SUBROUTINE" &
-     !   !                // "place_particles_3D_lattice." )
-     ! ENDIF
-     ! !parts% pos( :, 1:parts% npart1 )= pos1
-     ! !parts% pos( :, parts% npart1 + 1:parts% npart )= pos2
-     ! DO i_matter= 1, parts% n_matter, 1
-     !   parts% pos( :, parts% npart_i(i_matter-1) + 1: &
-     !                 parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-     !                  parts_all(i_matter)% pos_i
-     ! ENDDO
-     !
-     ! IF(.NOT.ALLOCATED( parts% pvol ))THEN
-     !   ALLOCATE( parts% pvol( parts% npart ), &
-     !             STAT= ios, ERRMSG= err_msg )
-     !   IF( ios > 0 )THEN
-     !      PRINT *, "...allocation error for array pvol in SUBROUTINE" &
-     !               // " place_particles_. ", &
-     !               "The error message is", err_msg
-     !      STOP
-     !   ENDIF
-     !   !CALL test_status( ios, err_msg, &
-     !   !                "...allocation error for array pos in SUBROUTINE" &
-     !   !                // "place_particles_3D_lattice." )
-     ! ENDIF
-     ! !parts% pvol( 1:parts% npart1 )= pvol1
-     ! !parts% pvol( parts% npart1 + 1:parts% npart )= pvol2
-     ! DO itr= 1, parts% n_matter, 1
-     !   parts% pvol( parts% npart_i(itr-1) + 1: &
-     !                parts% npart_i(itr-1) + parts% npart_i(itr) )= &
-     !                parts_all(itr)% pvol_i
-     ! ENDDO
-     !
-     ! IF(.NOT.ALLOCATED( parts% pmass ))THEN
-     !   ALLOCATE( parts% pmass( parts% npart ), &
-     !             STAT= ios, ERRMSG= err_msg )
-     !   IF( ios > 0 )THEN
-     !      PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-     !               // "place_particles_. ", &
-     !               "The error message is", err_msg
-     !      STOP
-     !   ENDIF
-     !   !CALL test_status( ios, err_msg, &
-     !   !                "...allocation error for array pos in SUBROUTINE" &
-     !   !                // "place_particles_3D_lattice." )
-     ! ENDIF
-     ! !parts% pmass( 1:parts% npart1 )= pmass1
-     ! !parts% pmass( parts% npart1 + 1:parts% npart )= pmass2
-     ! DO itr= 1, parts% n_matter, 1
-     !   parts% pmass( parts% npart_i(itr-1) + 1: &
-     !                 parts% npart_i(itr-1) + parts% npart_i(itr) )= &
-     !                 parts_all(itr)% pmass_i
-     ! ENDDO
 
       PRINT *, " * Particles placed. Number of particles=", parts% npart
       DO itr= 1, parts% n_matter, 1
@@ -1197,11 +1156,11 @@ SUBMODULE (sph_particles) constructor
                  "using the APM..."
         PRINT *
 
-        IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ), i_matter
+        IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ) i_matter
         IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) &
-                                              WRITE( str_i, '(I2)' ), i_matter
+                                              WRITE( str_i, '(I2)' ) i_matter
         IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
-                                              WRITE( str_i, '(I3)' ), i_matter
+                                              WRITE( str_i, '(I3)' ) i_matter
 
         filename_apm_pos_id = "apm_pos_id"//TRIM(str_i)//".dat"
         filename_apm_pos    = "apm_pos"//TRIM(str_i)//".dat"
@@ -1235,7 +1194,7 @@ SUBMODULE (sph_particles) constructor
         parts_all(i_matter)% pmass_i = &
                     parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )*amu
 
-        PRINT *, "average nu= ", &
+        IF( debug ) PRINT *, "average nu= ", &
           SUM(parts_all(i_matter)% nu_i, DIM= 1)/SIZE(parts_all(i_matter)% nu_i)
 
         PRINT *, "** Particles placed on matter object", i_matter, &
@@ -2004,9 +1963,6 @@ SUBMODULE (sph_particles) constructor
 
       IMPLICIT NONE
 
-      !& Array to store the indices for array mass_profile, sorted so that
-      !  mass_profile[mass_profile_idx] is in increasing order
-      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
       !> Center of the star
       DOUBLE PRECISION, INTENT( IN )    :: center
       !> Central density of the star
@@ -2018,8 +1974,14 @@ SUBMODULE (sph_particles) constructor
       !> Integrated mass of the star
       DOUBLE PRECISION, INTENT( IN OUT ):: mass
       !> Array storing the radial mass profile of the star
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
-                                       mass_profile
+      !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
+      !                                 mass_profile
+      DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT( OUT ):: &
+                                           mass_profile
+      !& Array to store the indices for array mass_profile, sorted so that
+      !  mass_profile[mass_profile_idx] is in increasing order
+      !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
+      INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT( OUT ):: mass_profile_idx
 
       CALL id% integrate_baryon_mass_density( center, radius, &
                                               central_density, &

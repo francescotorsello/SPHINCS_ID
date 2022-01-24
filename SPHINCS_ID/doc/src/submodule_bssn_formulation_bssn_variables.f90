@@ -1,6 +1,25 @@
 ! File:         submodule_bssn_formulation_bssn_variables.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (bssn_formulation) bssn_variables
 
@@ -45,9 +64,6 @@ SUBMODULE (bssn_formulation) bssn_variables
     USE mesh_refinement,            ONLY: nlevels, levels, rad_coord, &
                                           allocate_grid_function, &
                                           deallocate_grid_function
-    USE tensor,                     ONLY: itt, itx, ity, itz, ixx, ixy, &
-                                          ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                          jyy, jyz, jzz, jx, jy, jz, n_sym3x3
     USE ADM_refine,                 ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
                                           K_phys3_ll, g_phys3_ll, &
                                           allocate_ADM, deallocate_ADM
@@ -57,7 +73,6 @@ SUBMODULE (bssn_formulation) bssn_variables
                                           Tmunu_ll
     USE GravityAcceleration_refine, ONLY: allocate_GravityAcceleration, &
                                           deallocate_GravityAcceleration
-    USE constants,                  ONLY: Msun_geo
     !
     !-- Use the arrays from the MODULE BSSN to store the BSSN variables
     !-- for the LORENE ID on the grid, and the SUBROUTINE write_BSSN_dump
@@ -536,9 +551,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     !
     !************************************************
 
-    USE tensor,              ONLY: itt, itx, ity, itz, ixx, ixy, &
-                                   ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                   jyy, jyz, jzz, jx, jy, jz
+    USE tensor,              ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz
 
     IMPLICIT NONE
 

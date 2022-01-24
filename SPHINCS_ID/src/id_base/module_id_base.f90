@@ -1,6 +1,25 @@
 ! File:         module_id_base.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 MODULE id_base
 
@@ -556,35 +575,38 @@ MODULE id_base
     END SUBROUTINE read_id_k_int
 
 
-    SUBROUTINE integrate_field_int( THIS, center, radius, &
-                                    central_density, &
-                                    dr, dth, dphi, &
-                                    mass, mass_profile, &
-                                    mass_profile_idx )
-    !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
-    !  compute the radial mass profile of a single star.
-
-      IMPORT:: idbase
-      !> Object of class [[idbase]] which this PROCEDURE is a member of
-      CLASS(idbase), INTENT( IN OUT )   :: THIS
-      !& Array to store the indices for array mass_profile, sorted so that
-      !  mass_profile[mass_profile_idx] is in increasing order
-      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
-      !> Center of the star
-      DOUBLE PRECISION, INTENT( IN )    :: center
-      !> Central density of the star
-      DOUBLE PRECISION, INTENT( IN )    :: central_density
-      !> Radius of the star
-      DOUBLE PRECISION, INTENT( IN )    :: radius
-      !> Integration steps
-      DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
-      !> Integrated mass of the star
-      DOUBLE PRECISION, INTENT( IN OUT ):: mass
-      !> Array storing the radial mass profile of the star
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
-                                       mass_profile
-
-    END SUBROUTINE integrate_field_int
+  !  SUBROUTINE integrate_field_int( THIS, center, radius, &
+  !                                  central_density, &
+  !                                  dr, dth, dphi, &
+  !                                  mass, mass_profile, &
+  !                                  mass_profile_idx )
+  !  !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
+  !  !  compute the radial mass profile of a single star.
+  !
+  !    IMPORT:: idbase
+  !    !> Object of class [[idbase]] which this PROCEDURE is a member of
+  !    CLASS(idbase), INTENT( IN OUT )   :: THIS
+  !    !> Center of the star
+  !    DOUBLE PRECISION, INTENT( IN )    :: center
+  !    !> Central density of the star
+  !    DOUBLE PRECISION, INTENT( IN )    :: central_density
+  !    !> Radius of the star
+  !    DOUBLE PRECISION, INTENT( IN )    :: radius
+  !    !> Integration steps
+  !    DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+  !    !> Integrated mass of the star
+  !    DOUBLE PRECISION, INTENT( IN OUT ):: mass
+  !    !> Array storing the radial mass profile of the star
+  !    !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
+  !    !                                 mass_profile
+  !    DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT( OUT ):: &
+  !                                         mass_profile
+  !    !& Array to store the indices for array mass_profile, sorted so that
+  !    !  mass_profile[mass_profile_idx] is in increasing order
+  !    !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
+  !    INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT( OUT ):: mass_profile_idx
+  !
+  !  END SUBROUTINE integrate_field_int
 
 
     FUNCTION return_spatial_extent_int( THIS, i_matter ) RESULT( box )
@@ -661,10 +683,7 @@ MODULE id_base
     !  compute the radial mass profile of a single star.
 
       !> Object of class [[idbase]] which this PROCEDURE is a member of
-      CLASS(idbase), INTENT( IN OUT )      :: THIS
-      !& Array to store the indices for array mass_profile, sorted so that
-      !  mass_profile[mass_profile_idx] is in increasing order
-      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+      CLASS(idbase), INTENT( IN OUT )   :: THIS
       !> Center of the star
       DOUBLE PRECISION, INTENT( IN )    :: center
       !> Central density of the star
@@ -676,8 +695,14 @@ MODULE id_base
       !> Integrated mass of the star
       DOUBLE PRECISION, INTENT( IN OUT ):: mass
       !> Array storing the radial mass profile of the star
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
-                                       mass_profile
+      !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
+      !                                 mass_profile
+      DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT( OUT ):: &
+                                           mass_profile
+      !& Array to store the indices for array mass_profile, sorted so that
+      !  mass_profile[mass_profile_idx] is in increasing order
+      !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
+      INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT( OUT ):: mass_profile_idx
 
     END SUBROUTINE integrate_baryon_mass_density
 

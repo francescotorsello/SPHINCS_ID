@@ -1,6 +1,25 @@
 ! File:         module_standard_tpo_formulation.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 MODULE standard_tpo_formulation
 
@@ -352,7 +371,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: grid_point
 
@@ -364,7 +383,7 @@ MODULE standard_tpo_formulation
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
       ! Result
-      DOUBLE PRECISION:: nlevels
+      INTEGER:: nlevels
 
     END FUNCTION get_nlevels
 
@@ -373,7 +392,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       TYPE(level), DIMENSION(:), ALLOCATABLE:: levels
 
@@ -384,7 +403,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dx
 
@@ -395,7 +414,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dy
 
@@ -406,7 +425,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       DOUBLE PRECISION:: dz
 
@@ -417,7 +436,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_x
 
@@ -428,7 +447,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_y
 
@@ -439,7 +458,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
       INTEGER:: ngrid_z
 
@@ -450,9 +469,9 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
-      INTEGER:: xR
+      DOUBLE PRECISION:: xR
 
     END FUNCTION get_xR
 
@@ -461,9 +480,9 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
-      INTEGER:: yR
+      DOUBLE PRECISION:: yR
 
     END FUNCTION get_yR
 
@@ -472,9 +491,9 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: l
+      INTEGER,    INTENT( IN )    :: l
       ! Result
-      INTEGER:: zR
+      DOUBLE PRECISION:: zR
 
     END FUNCTION get_zR
 
@@ -483,7 +502,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
 
@@ -494,7 +513,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 
@@ -505,7 +524,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
 
@@ -516,7 +535,7 @@ MODULE standard_tpo_formulation
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,           INTENT( IN )    :: i, j, k, l
+      INTEGER,    INTENT( IN )    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 

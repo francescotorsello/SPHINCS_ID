@@ -1,6 +1,25 @@
 ! File:         submodule_standard_tpo_formulation_standard_tpo_variables.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
@@ -49,9 +68,8 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                                 deallocate_grid_function, &
                                 coords, rad_coord
     !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
-    USE tensor,           ONLY: itt, itx, ity, itz, ixx, ixy, &
-                                ixz, iyy, iyz, izz, jxx, jxy, jxz, &
-                                jyy, jyz, jzz, jx, jy, jz, n_sym3x3
+    USE tensor,           ONLY: jxx, jxy, jxz, &
+                                jyy, jyz, jzz, n_sym3x3
     USE utility,          ONLY: determinant_sym3x3_grid
 
     IMPLICIT NONE

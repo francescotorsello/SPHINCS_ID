@@ -1,6 +1,25 @@
 ! File:         submodule_id_base_mass_profile.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (id_base) mass_profile
 
@@ -52,27 +71,6 @@ SUBMODULE (id_base) mass_profile
     DOUBLE PRECISION, DIMENSION(6):: g
 
     !LOGICAL, PARAMETER:: debug= .TRUE.
-
-    IF(.NOT.ALLOCATED( mass_profile ))THEN
-      ALLOCATE( mass_profile( 3, 0:NINT(radius/dr) ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( mass_profile_idx ))THEN
-      ALLOCATE( mass_profile_idx( 0:NINT(radius/dr) ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array mass_profile in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
 
     mass_profile( 1, 0 )= zero
     mass_profile( 2, 0 )= four/three*pi*dr**three*central_density

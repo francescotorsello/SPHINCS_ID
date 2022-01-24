@@ -1,7 +1,7 @@
 ! File:         sphincs_id.f90
 ! Author:       Francesco Torsello (FT)
 !************************************************************************
-! Copyright (C) 2020 2021 2022 Francesco Torsello                       *
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
 !                                                                       *
 ! This file is part of SPHINCS_ID                                       *
 !                                                                       *
@@ -209,25 +209,27 @@ PROGRAM sphincs_id
   PRINT *, "    /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/    "
   PRINT *
   PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime  "
-  PRINT *, "  Initial Data builder  "
+  PRINT *, "  Initial Data builder, v1.0                           "
   PRINT *
   PRINT *, "  SPHINCS_ID  Copyright (C) 2022  Francesco Torsello   "
   PRINT *
-  PRINT *, "  This program is free software: you can redistribute  "
+  PRINT *, "  SPHINCS_ID is free software: you can redistribute    "
   PRINT *, "  it and/or modify it under the terms of the GNU       "
   PRINT *, "  General Public License as published by the Free      "
-  PRINT *, "  Software Foundation, either version 3 of the License,"
-  PRINT *, "  or (at your option) any later version.               "
+  PRINT *, "  Software Foundation, either version 3 of the         "
+  PRINT *, "  License, or (at your option) any later version.      "
   PRINT *
-  PRINT *, "  This program is distributed in the hope that it will "
-  PRINT *, "  be useful, but WITHOUT ANY WARRANTY; without even   "
+  PRINT *, "  SPHINCS_ID is distributed in the hope that it will   "
+  PRINT *, "  be useful, but WITHOUT ANY WARRANTY; without even    "
   PRINT *, "  the implied warranty of MERCHANTABILITY or FITNESS   "
   PRINT *, "  FOR A PARTICULAR PURPOSE. See the GNU General Public "
   PRINT *, "  License for more details.                            "
   PRINT *
   PRINT *, "  You should have received a copy of the GNU General   "
-  PRINT *, "  Public License along with this program. If not, see  "
-  PRINT *, "  https://www.gnu.org/licenses/.  "
+  PRINT *, "  Public License along with SPHINCS_ID. If not, see    "
+  PRINT *, "  https://www.gnu.org/licenses/.                       "
+  PRINT *, "  The copy of the GNU General Public License should    "
+  PRINT *, "  be in the file 'COPYING'.                            "
   PRINT *, "  ____________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id

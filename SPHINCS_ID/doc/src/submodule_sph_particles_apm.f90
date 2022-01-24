@@ -1,6 +1,25 @@
 !& File:         submodule_sph_particles_apm.f90
 ! Authors:      Francesco Torsello (FT)
-! Copyright:    GNU General Public License (GPLv3)
+!************************************************************************
+! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+!                                                                       *
+! This file is part of SPHINCS_ID                                       *
+!                                                                       *
+! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! it under the terms of the GNU General Public License as published by  *
+! the Free Software Foundation, either version 3 of the License, or     *
+! (at your option) any later version.                                   *
+!                                                                       *
+! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+! GNU General Public License for more details.                          *
+!                                                                       *
+! You should have received a copy of the GNU General Public License     *
+! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! The copy of the GNU General Public License should be in the file      *
+! 'COPYING'.                                                            *
+!************************************************************************
 
 SUBMODULE (sph_particles) apm
 
@@ -76,8 +95,7 @@ SUBMODULE (sph_particles) apm
     !*****************************************************
 
     USE utility,             ONLY: cnt, spherical_from_cartesian
-    USE constants,           ONLY: half, third, Msun, Msun_geo, km2m, g2kg, &
-                                   amu, pi
+    USE constants,           ONLY: half, third, Msun, amu, pi
 
     USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
                                    npart, h, nu
@@ -93,13 +111,13 @@ SUBMODULE (sph_particles) apm
     USE analyze,             ONLY: COM
     USE matrix,              ONLY: determinant_4x4_matrix
 
-    USE sphincs_sph,         ONLY: density, ncand, all_clists
+    USE sphincs_sph,         ONLY: density, ncand!, all_clists
     USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
-    USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
-                                   W_no_norm,n_tab_entry
+    !USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
+    !                               W_no_norm,n_tab_entry
 
     IMPLICIT NONE
 
@@ -112,15 +130,15 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
     DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0 !3zero
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
-    DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
+    !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
 
-    INTEGER:: a, a2, itr, itr2, n_inc, cnt1, cnt2, inde, index1   ! iterators
+    INTEGER:: a, a2, itr, itr2, n_inc, cnt1!, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
     INTEGER:: dim_seed, rel_sign
-    INTEGER:: n_problematic_h, b, ill, l, itot
+    INTEGER:: n_problematic_h, ill, l, itot
     INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
@@ -148,10 +166,10 @@ SUBMODULE (sph_particles) apm
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
     INTEGER, DIMENSION(:), ALLOCATABLE:: seed
 
-    DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
-    DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
-    DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
-                       Wab_ha, Wi, Wi1, dvv
+    !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
+    !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
+    !DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
+    !                   Wab_ha, Wi, Wi1, dvv
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
@@ -196,13 +214,12 @@ SUBMODULE (sph_particles) apm
                                                v_euler_x, v_euler_y, v_euler_z
 
     LOGICAL:: exist
-    LOGICAL:: good_h
 
     !CHARACTER:: it_n
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
-    LOGICAL:: few_ncand, invertible_matrix
+    LOGICAL:: few_ncand!, invertible_matrix
 
     TYPE(timer):: find_h_bruteforce_timer
 
@@ -263,22 +280,48 @@ SUBMODULE (sph_particles) apm
     h_guess= zero
     DO a= 1, npart_real, 1
       h_guess(a)= three*(pvol(a)**third)
-      IF( ISNAN( h_guess(a) ) )THEN
-        PRINT *, " ** ERROR! h_guess(", a, &
-                 ") is a NaN in SUBROUTINE perform_apm!"
-        PRINT *, "pvol(", a, ")=", pvol(a)
-        PRINT *, "    Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-      IF( h_guess( a ) <= zero )THEN
-        PRINT *, "** ERROR! h_guess(", a, ") is zero or negative!"
-        PRINT *, "   pvol(", a, ")=", pvol(a)
-        PRINT *, "   Stopping..."
-        PRINT *
-        STOP
-      ENDIF
+      !IF( ISNAN( h_guess(a) ) )THEN
+      !  PRINT *, " ** ERROR! h_guess(", a, &
+      !           ") is a NaN in SUBROUTINE perform_apm!"
+      !  PRINT *, "pvol(", a, ")=", pvol(a)
+      !  PRINT *, "    Stopping..."
+      !  PRINT *
+      !  STOP
+      !ENDIF
+      !IF( h_guess( a ) <= zero )THEN
+      !  PRINT *, "** ERROR! h_guess(", a, ") is zero or negative!"
+      !  PRINT *, "   pvol(", a, ")=", pvol(a)
+      !  PRINT *, "   Stopping..."
+      !  PRINT *
+      !  STOP
+      !ENDIF
     ENDDO
+
+    CALL find_h_bruteforce_timer% start_timer()
+    n_problematic_h= 0
+    PRINT *, "npart_real= ", npart_real
+    check_h_guess: DO a= 1, npart_real, 1
+
+      IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
+
+        n_problematic_h= n_problematic_h + 1
+        h_guess(a)= find_h_backup( a, npart_real, pos_input, nn_des )
+        IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", pos_input(:,a)
+          STOP
+        ENDIF
+
+      ENDIF
+
+    ENDDO check_h_guess
+    CALL find_h_bruteforce_timer% stop_timer()
+    CALL find_h_bruteforce_timer% print_timer( 2 )
+
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
 
     IF( debug ) PRINT *, "0.5"
 
@@ -699,7 +742,6 @@ SUBMODULE (sph_particles) apm
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
-        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
@@ -1896,7 +1938,6 @@ SUBMODULE (sph_particles) apm
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
@@ -2402,7 +2443,6 @@ SUBMODULE (sph_particles) apm
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        PRINT *, h(a)
         IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
