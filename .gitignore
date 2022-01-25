@@ -6,7 +6,7 @@
 !.gitkeep
 !*/
 !*.f90
-!SConstruct*
+!SConstruct
 !**/doc-pages/**/*.md
 !documentation_*.md
 !gravity_grid_parameters.dat
