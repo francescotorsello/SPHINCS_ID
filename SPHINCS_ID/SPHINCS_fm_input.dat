@@ -1,0 +1,83 @@
+################################################################
+#                                                              #
+#                                                              #
+#           Input file to steer a SPHINCS simulation           #
+#           ----------------------------------------           #
+#                                                              #
+#                        (SKR 28.07.2017)                      #
+#                                                              #
+################################################################
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%--    Setup and steering    --%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# basename of files ("basename")
+NSxx.
+
+# start dump ("ipos")
+0
+
+# unit system ("unit_system")
+NSM
+
+# data output intervals
+10
+
+# when to stop?
+200.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%--      Physics      --%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#EOS type ("eos_type", e.g. 'pwp' or 'Poly')                          
+pwp
+
+#Gamma (only used if EOS= "Poly"):  
+2.75
+
+#which pwp-EOS (only used if eos_type= pwp)
+APR4
+
+# metric ("metric_type"): CKS: "Cartesian KS", MIN: Minkowski, NUM: numerical
+NUM
+
+# Cowling? ("icow"): 0: No, 1: yes, -1: inv. Cowling
+0
+
+
+%%%%%%%%%%%%%%%%%%%%%%%
+%--     Methods     --%
+%%%%%%%%%%%%%%%%%%%%%%%
+
+# integration method:EF (0); 3rd-order RK (1) ("integ_meth")
+1
+
+# kernel ("ikernel"):
+# (please double-check parameters in 'module_kernel_table.f90')
+#  M4: 1; WH5: 2; WH6: 3; WH7: 4, WH8: 5; WH9: 6;
+# WC2: 8; WC4: 9; WC6= 10
+10
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-- Numerical parameters --% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# maximum dissipation parameter ("av_max")
+1.0
+
+# minimum dissipation parameter ("av_min")
+1.0
+
+# integ. accuracy/Courant number ("dtfac")           
+0.2
+
+# max. allowed time step ("dt_max")
+1.0
+
+# boundaries? ("iBD")
+0
