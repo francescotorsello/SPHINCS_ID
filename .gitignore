@@ -11,8 +11,8 @@
 !documentation_*.md
 !gravity_grid_parameters.dat
 !bssn_parameters.dat
-!sphincs_lorene_bns_parameters.par
-!sphincs_lorene_bns_particles.par
+!sphincs_id_parameters.dat
+!sphincs_id_particles.dat
 !Make_SPHINCS_fm
 !BH_parameters.dat
 !SPHINCS_fm_input.dat
