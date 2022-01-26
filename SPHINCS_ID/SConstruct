@@ -1,4 +1,7 @@
 ################################################################################
+# SConstruct file to build SPHINCS_ID
+# Author:     Francesco Torsello
+################################################################################
 # Copyright (C) 2020, 2021, 2022 Francesco Torsello
 #
 # This file is part of SPHINCS_ID
@@ -17,11 +20,6 @@
 # along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.
 # The copy of the GNU General Public License should be in the file
 # 'COPYING'.
-################################################################################
-################################################################################
-# SConstruct file to build SPHINCS_ID
-# Author:     Francesco Torsello
-# Copyright:  GNU General Public License (GPLv3)
 ################################################################################
 
 ################################################################################

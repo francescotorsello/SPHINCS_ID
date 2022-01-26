@@ -1285,9 +1285,7 @@ SUBMODULE (bssn_formulation) constraints
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
                                     get_metric_on_particles
-    USE particle_mesh,        ONLY: deallocate_all_lists, &
-                                    deallocate_flag_nei_cell, &
-                                    deallocate_pp_g
+    USE particle_mesh,        ONLY: all_lists, flag_nei_cell, pp_g
     USE particle_mesh_hash,   ONLY: deallocate_hash_memory
 
     IMPLICIT NONE
@@ -1553,9 +1551,15 @@ SUBMODULE (bssn_formulation) constraints
     !-- Deallocate SPH MODULE variables
     !
     CALL deallocate_grid_function ( rad_coord, 'rad_coord' )
-    CALL deallocate_flag_nei_cell
-    CALL deallocate_pp_g
-    CALL deallocate_all_lists
+    IF( ALLOCATED( flag_nei_cell% levels ) )THEN
+      CALL deallocate_grid_function( flag_nei_cell, 'flag_nei_cell' )
+    ENDIF
+    IF( ALLOCATED( pp_g% levels ) )THEN
+      CALL deallocate_grid_function( pp_g, 'pp_g' )
+    ENDIF
+    IF( ALLOCATED(all_lists% levels) )THEN
+      CALL deallocate_grid_function( all_lists, 'all_lists' )
+    ENDIF
     CALL deallocate_hash_memory
     CALL deallocate_metric_on_particles
     CALL deallocate_gradient

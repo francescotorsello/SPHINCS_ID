@@ -512,21 +512,18 @@ MODULE sph_particles
         CLASS(idbase), INTENT( IN OUT ):: id
         !# [[idbase]] object representing the BNS for which we want to place
         !  particles
-        INTEGER,    INTENT( IN )    :: dist
+        INTEGER,       INTENT( IN )    :: dist
         !# Identifier of the desired particle distribution:
         !
         !  - 0: Read particle positions (and optionally the baryon number per
-        !     particle \(\nu\)) from a formatted file
+        !       particle \(\nu\)) from a formatted file
         !
-        !  - 1: Place particles on a single lattice that surrounds both stars
+        !  - 1: Place particles on several lattices, each one surrounding a
+        !       matter object
         !
-        !  - 2: Place particles on two lattices, each one surrounding a star
+        !  - 3: Place particles on spherical surfaces inside each matter object
         !
-        !  - 3: Place particles on spherical surfaces inside the stars
-        !
-        !  @warning Method 1 is almost deprecated, since method 2 is effectively
-        !           an improvement of method 1
-        TYPE(particles)             :: parts
+        TYPE(particles):: parts
         !! Constructed [[particles]] object
 
     END FUNCTION construct_particles
@@ -1547,6 +1544,47 @@ MODULE sph_particles
     h= half*SQRT( select(ndes+1, npart, dist2) )
 
   END FUNCTION find_h_backup
+
+
+  SUBROUTINE COM_PN2( npart, mass, pos, rho, u, v, detg4, &
+                      com_x, com_y, com_z, com_d )
+
+    !************************************************************
+    !                                                           *
+    ! Compute baryonic center of mass on the particles, to      *
+    ! the 1st post-Newtonian order (1PN)                        *
+    !                                                           *
+    ! FT 25.01.2022                                             *
+    !                                                           *
+    !************************************************************
+
+    IMPLICIT NONE
+
+    INTEGER,          INTENT(IN) :: npart
+    ! Number of particles
+    DOUBLE PRECISION, INTENT(IN) :: mass
+    ! Mass of the system
+    DOUBLE PRECISION, INTENT(IN) :: pos(3,npart)
+    ! Particle positions
+    DOUBLE PRECISION, INTENT(IN) :: rho(npart)
+    ! Baryon mass density on the particles
+    DOUBLE PRECISION, INTENT(IN) :: u(npart)
+    ! Specific internal energy on the particles
+    DOUBLE PRECISION, INTENT(IN) :: v(3,npart)
+    ! 3-velocity of the particles in ?? frame
+    DOUBLE PRECISION, INTENT(IN) :: detg4
+    ! Determinant of the spacetime metric on the particles
+    DOUBLE PRECISION, INTENT(OUT):: com_x
+    ! x coordinate of the computed center of mass
+    DOUBLE PRECISION, INTENT(OUT):: com_y
+    ! y coordinate of the computed center of mass
+    DOUBLE PRECISION, INTENT(OUT):: com_z
+    ! z coordinate of the computed center of mass
+    DOUBLE PRECISION, INTENT(OUT):: com_d
+    ! Coordinate distance between the computed center of mass and the origin
+
+
+  END SUBROUTINE COM_PN2
 
 
 END MODULE sph_particles

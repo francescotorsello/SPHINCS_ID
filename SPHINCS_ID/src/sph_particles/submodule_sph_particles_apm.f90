@@ -128,7 +128,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0 !3zero
+    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.5D0!0.25D0 !30.0D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
@@ -299,7 +299,6 @@ SUBMODULE (sph_particles) apm
 
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
-    PRINT *, "npart_real= ", npart_real
     check_h_guess: DO a= 1, npart_real, 1
 
       IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN

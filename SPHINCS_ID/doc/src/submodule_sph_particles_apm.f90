@@ -128,7 +128,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0 !3zero
+    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.5D0!0.25D0 !30.0D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
@@ -299,7 +299,6 @@ SUBMODULE (sph_particles) apm
 
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
-    PRINT *, "npart_real= ", npart_real
     check_h_guess: DO a= 1, npart_real, 1
 
       IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
@@ -2666,6 +2665,67 @@ SUBMODULE (sph_particles) apm
 !
 !    ENDDO ll_cell_loop
 
+    PRINT *, " * Smoothing lengths assigned and tree is built."
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
+
+    !
+    !-- Check that the smoothing length is acceptable
+    !
+  !  check_h: DO a= 1, npart_real, 1
+  !
+  !    IF( ISNAN( h(a) ) )THEN
+  !      PRINT *, "** ERROR! h(", a, ") is a NaN"
+  !      !PRINT *, "Stopping..."
+  !     ! PRINT *
+  !      !STOP
+  !      IF( a > npart_real/2 )THEN
+  !        DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
+  !          IF( h(itr) > 0.25D0 )THEN
+  !            h(a) = h(itr)
+  !            EXIT
+  !          ENDIF
+  !        ENDDO
+  !      ELSE
+  !        !h(a) = h(a - 1)
+  !        DO itr= a + 1, npart_real, 1
+  !          IF( h(itr) > 0.25D0 )THEN
+  !            h(a) = h(itr)
+  !            EXIT
+  !          ENDIF
+  !        ENDDO
+  !      ENDIF
+  !      !PRINT *, "** ERROR! h(", a, ")=", h(a)
+  !      !PRINT *
+  !    ENDIF
+  !    IF( h(a) <= 0.0D0 )THEN
+  !      PRINT *, "** ERROR! h(", a, ")=", h(a)
+  !      !PRINT *, "Stopping..."
+  !      !PRINT *
+  !      !STOP
+  !      IF( a > npart_real/2 )THEN
+  !        DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
+  !          IF( h(itr) > 0.25D0 )THEN
+  !            h(a) = h(itr)
+  !            EXIT
+  !          ENDIF
+  !        ENDDO
+  !      ELSE
+  !        !h(a) = h(a - 1)
+  !        DO itr= a + 1, npart_real, 1
+  !          IF( h(itr) > 0.25D0 )THEN
+  !            h(a) = h(itr)
+  !            EXIT
+  !          ENDIF
+  !        ENDDO
+  !      ENDIF
+  !      !PRINT *, "** ERROR! h(", a, ")=", h(a)
+  !      !PRINT *
+  !    ENDIF
+  !
+  !  ENDDO check_h
+
     IF( debug ) PRINT *, "102"
 
     CALL density( npart_real, pos, nstar_int )
@@ -3137,5 +3197,5 @@ SUBMODULE (sph_particles) apm
 
   END SUBROUTINE get_neighbours_bf
 
-
+  
 END SUBMODULE apm

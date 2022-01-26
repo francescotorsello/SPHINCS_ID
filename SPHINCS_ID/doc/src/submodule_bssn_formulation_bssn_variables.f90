@@ -238,6 +238,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     !CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jy), "Gamma_u_y" )
     !CALL Check_Grid_Function_for_NAN( Gamma_u(:,:,:,jz), "Gamma_u_z" )
 
+    !CALL deallocate_ADM()
     CALL deallocate_Ztmp()
     CALL deallocate_Tmunu()
     CALL deallocate_GravityAcceleration()

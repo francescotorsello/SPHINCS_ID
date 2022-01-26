@@ -44,7 +44,7 @@ filenames(1)="BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_poly2-75_1.4-1.4_40km.bin"
              !"BNSLO_poly2-75_1.4-1.4_45km.bin"
              !"BNSLO_poly2-75_1.6-1.8_40km.bin"
-             "BNSLO_poly275_1.2-1.6_45km.bin"
+             !"BNSLO_poly275_1.2-1.6_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_48km.bin"
              !"BNSLO_poly2-75_1.2-1.8_50km.bin"
@@ -74,10 +74,7 @@ filenames(1)="BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"DRSLO_apr4.bin"
-<<<<<<< HEAD:SPHINCS_LORENE/sphincs_lorene_bns_parameters.par
-=======
              !"EJECT_ejecta_apr4_2516.dat"
->>>>>>> merge-branch:SPHINCS_ID/sphincs_id_parameters.dat
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!

@@ -125,21 +125,12 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-<<<<<<< HEAD:SPHINCS_LORENE/sphincs_lorene_bns_particles.par
-apm_iterate=.TRUE.  ! If .TRUE. applies the APM to the first star
-                    ! If .TRUE. applies the APM to the second star
-=======
 apm_iterate=.TRUE.  ! If .TRUE., applies the APM to the i-th object
->>>>>>> merge-branch:SPHINCS_ID/sphincs_id_particles.dat
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
-<<<<<<< HEAD:SPHINCS_LORENE/sphincs_lorene_bns_particles.par
-                    ! of the value of apm_iterate2
-=======
                     ! of the value of apm_iterate
->>>>>>> merge-branch:SPHINCS_ID/sphincs_id_particles.dat
 apm_max_it= 1         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
