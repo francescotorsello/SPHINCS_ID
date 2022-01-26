@@ -118,6 +118,10 @@ SUBMODULE (sph_particles) sph_variables
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
+    USE analyze,             ONLY: COM
+    USE tensor,              ONLY: n_sym4x4, &
+                                   itt, itx, ity, itz, &
+                                   ixx, ixy, ixz, iyy, iyz, izz
 
     IMPLICIT NONE
 
@@ -133,8 +137,12 @@ SUBMODULE (sph_particles) sph_variables
     INTEGER:: itot, l, ill!, b, k
 
     DOUBLE PRECISION:: g4(0:3,0:3)
-    DOUBLE PRECISION:: det,sq_g, Theta_a!, &!nu_max1, nu_max2, &
+    DOUBLE PRECISION:: gg4(THIS% npart,n_sym4x4)
+    DOUBLE PRECISION:: sq_detg4(THIS% npart)
+    DOUBLE PRECISION:: det, sq_g, Theta_a!, &!nu_max1, nu_max2, &
                        !nu_tmp, nu_thres1, nu_thres2
+    DOUBLE PRECISION:: com_x_newt, com_y_newt, com_z_newt, com_d_newt
+    DOUBLE PRECISION:: com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn
 
     !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
     !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
@@ -235,11 +243,11 @@ SUBMODULE (sph_particles) sph_variables
     !
 
     CALL THIS% sph_computer_timer% start_timer()
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( THIS, pos_u, vel_u, sq_det_g4, Theta, nlrf, &
-    !$OMP                     Pr, u, temp, av, divv ) &
-    !$OMP             PRIVATE( itr, g4, det, sq_g, Theta_a, &
-    !$OMP                      nus, mus )
+!    !$OMP PARALLEL DO DEFAULT( NONE ) &
+!    !$OMP             SHARED( THIS, pos_u, vel_u, sq_det_g4, Theta, nlrf, &
+!    !$OMP                     Pr, u, temp, av, divv ) &
+!    !$OMP             PRIVATE( itr, g4, gg4, det, sq_g, Theta_a, &
+!    !$OMP                      nus, mus )
     compute_SPH_variables_on_particles: DO itr= 1, THIS% npart, 1
 
       ! Particle positions [Msun_geo]
@@ -306,6 +314,17 @@ SUBMODULE (sph_particles) sph_variables
       g4(3,2)= THIS% g_yz_parts(itr)
       g4(3,3)= THIS% g_zz_parts(itr)
 
+      gg4(itr,1)= g4(0,0)
+      gg4(itr,2)= g4(0,1)
+      gg4(itr,3)= g4(0,2)
+      gg4(itr,4)= g4(0,3)
+      gg4(itr,5)= g4(1,1)
+      gg4(itr,6)= g4(1,2)
+      gg4(itr,7)= g4(1,3)
+      gg4(itr,8)= g4(2,2)
+      gg4(itr,9)= g4(2,3)
+      gg4(itr,10)= g4(3,3)
+
       ! sqrt(-det(g4))
       CALL determinant_4x4_matrix(g4,det)
       IF( ABS(det) < 1D-10 )THEN
@@ -319,6 +338,7 @@ SUBMODULE (sph_particles) sph_variables
       ENDIF
       sq_g= SQRT(-det)
       sq_det_g4(itr)= sq_g
+      sq_detg4(itr)= sq_g
 
       !
       !-- Generalized Lorentz factor
@@ -349,7 +369,7 @@ SUBMODULE (sph_particles) sph_variables
       THIS% pressure_parts_cu(itr)= Pr(itr)
 
     ENDDO compute_SPH_variables_on_particles
-    !$OMP END PARALLEL DO
+!    !$OMP END PARALLEL DO
 
     ! Temperature: here dummy
     temp= zero
@@ -1051,7 +1071,7 @@ SUBMODULE (sph_particles) sph_variables
     ! different than nstar close to the surface.                              !
     ! The error can be such that the recovery fails in SPHINCS_BSSN, and      !
     ! this is of course a problem. Now, the density used in SPHINCS_BSSN      !
-    ! during the evolution is not the one given by LORENE. Hence, once        !
+    ! during the evolution is not the one given in the ID. Hence, once        !
     ! nstar_int is computed, nlrf should be recomputed from it, so that the   !
     ! density on the particles corresponds to the density that "they see",    !
     ! that is, the kernel interpolated density that uses these values of nu.  !
@@ -1339,6 +1359,18 @@ SUBMODULE (sph_particles) sph_variables
     DEALLOCATE( alive )
     CALL deallocate_RCB_tree_memory_3D
     CALL deallocate_SPH_memory
+
+    CALL COM( THIS% npart, THIS% pos, THIS% nu, &
+              com_x_newt, com_y_newt, com_z_newt, com_d_newt )
+
+    CALL COM_1PN( THIS% npart, THIS% pos, THIS% v, THIS% nu, &
+                  THIS% baryon_density_parts, &
+                  THIS% specific_energy_parts, THIS% nstar_int, sq_detg4, gg4, &
+                  com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn )
+
+    PRINT *, com_x_newt, com_y_newt, com_z_newt, com_d_newt
+    PRINT *, com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn
+    STOP
 
     call_flag= call_flag + 1
     THIS% call_flag= call_flag

@@ -204,6 +204,64 @@ MODULE utility
   END SUBROUTINE compute_g4
 
 
+  SUBROUTINE determinant_sym4x4( A, det )
+
+    !****************************************************************
+    !
+    !# Compute the determinant of a \(4\times 4\) symmetric matrix
+    !  field, given as a 10-vector
+    !
+    !  FT 26.01.2022
+    !
+    !****************************************************************
+
+    USE tensor, ONLY: itt, itx, ity, itz, ixx, ixy, ixz, iyy, iyz, izz, n_sym4x4
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN):: A(:)
+    !# The \(4\times 4\) symmetric matrix, given as a 10-vector.
+    !  The first 3 components run over the numbers of grid points
+    !  along each axis. The fourth index runs over the number of
+    !  independent components of the \(4\times 4\) symmetric matrix.
+    DOUBLE PRECISION, INTENT(OUT):: det
+    !! Determinant of the \(4\times 4\) symmetric matrix
+
+    IF( SIZE(A) /= n_sym4x4 )THEN
+      PRINT *, "** ERROR in determinant_sym4x4_grid in MODULE utility.", &
+               " This subroutine needs a symmetric matrix with 10 components,",&
+               " and a ", SIZE(A), "component matrix was given instead."
+      STOP
+    ENDIF
+
+    det=   A(itt)*(A(ixx)*(A(iyy)*A(izz) &
+         - A(iyz)* A(iyz)) &
+         + A(ixy)*(A(iyz)* A(ixz) &
+         - A(ixy)* A(izz)) &
+         + A(ixz)*(A(ixy)* A(iyz) &
+         - A(iyy)* A(ixz))) &
+         - A(itx)*(A(itx)*(A(iyy)*A(izz) &
+         - A(iyz)* A(iyz)) &
+         + A(ixy)*(A(iyz)* A(itz) &
+         - A(ity)* A(izz)) &
+         + A(ixz)*(A(ity)* A(iyz) &
+         - A(iyy)* A(itz))) &
+         + A(ity)*(A(itx)*(A(ixy)*A(izz) &
+         - A(iyz)* A(ixz)) &
+         + A(ixx)*(A(iyz)* A(itz) &
+         - A(ity)* A(izz)) &
+         + A(ixz)*(A(ity)* A(ixz) &
+         - A(ixy)* A(itz))) &
+         - A(itz)*(A(itx)*(A(ixy)*A(iyz) &
+         - A(iyy)* A(ixz)) &
+         + A(ixx)*(A(iyy)* A(itz) &
+         - A(ity)* A(iyz)) &
+         + A(ixy)*(A(ity)* A(ixz) &
+         - A(ixy)* A(itz)))
+
+  END SUBROUTINE determinant_sym4x4
+
+
   SUBROUTINE determinant_sym4x4_grid( i, j, k, A, det )
 
     !****************************************************************

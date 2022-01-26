@@ -211,7 +211,7 @@ PROGRAM sphincs_id
   PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime  "
   PRINT *, "  Initial Data builder, v1.0                           "
   PRINT *
-  PRINT *, "  SPHINCS_ID  Copyright (C) 2022  Francesco Torsello   "
+  PRINT *, "  SPHINCS_ID  Copyright (C) 2020, 2021, 2022  Francesco Torsello   "
   PRINT *
   PRINT *, "  SPHINCS_ID is free software: you can redistribute    "
   PRINT *, "  it and/or modify it under the terms of the GNU       "

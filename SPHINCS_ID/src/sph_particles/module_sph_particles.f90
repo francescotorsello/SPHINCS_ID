@@ -1546,45 +1546,70 @@ MODULE sph_particles
   END FUNCTION find_h_backup
 
 
-  SUBROUTINE COM_PN2( npart, mass, pos, rho, u, v, detg4, &
-                      com_x, com_y, com_z, com_d )
+  SUBROUTINE COM_1PN( npart, pos, vel, nu, rho, u, nstar, sq_det_g4, g4, &
+                      pn_com_x, pn_com_y, pn_com_z, pn_com_d )
 
     !************************************************************
     !                                                           *
-    ! Compute baryonic center of mass on the particles, to      *
-    ! the 1st post-Newtonian order (1PN)                        *
+    ! monitor PN baryonic center of mass; PD 30.09.2021         *
     !                                                           *
-    ! FT 25.01.2022                                             *
+    ! See eqs. (7.4), (8.136) and (8.4.7) in                    *
+    ! Eric Poisson, Clifford M. Will                            *
+    ! "Gravity: Newtonian, Post-Newtonian, Relativistic",       *
+    ! Cambridge University Press, 2014                          *
+    !                                                           *
+    ! FT 26.01.2022                                             *
     !                                                           *
     !************************************************************
+
+    USE tensor,    ONLY: n_sym4x4, ixx, ixy, ixz, iyy, iyz, izz
+    USE constants, ONLY: zero, third, half, one, two, three, amu
 
     IMPLICIT NONE
 
-    INTEGER,          INTENT(IN) :: npart
-    ! Number of particles
-    DOUBLE PRECISION, INTENT(IN) :: mass
-    ! Mass of the system
-    DOUBLE PRECISION, INTENT(IN) :: pos(3,npart)
-    ! Particle positions
-    DOUBLE PRECISION, INTENT(IN) :: rho(npart)
-    ! Baryon mass density on the particles
-    DOUBLE PRECISION, INTENT(IN) :: u(npart)
-    ! Specific internal energy on the particles
-    DOUBLE PRECISION, INTENT(IN) :: v(3,npart)
-    ! 3-velocity of the particles in ?? frame
-    DOUBLE PRECISION, INTENT(IN) :: detg4
-    ! Determinant of the spacetime metric on the particles
-    DOUBLE PRECISION, INTENT(OUT):: com_x
-    ! x coordinate of the computed center of mass
-    DOUBLE PRECISION, INTENT(OUT):: com_y
-    ! y coordinate of the computed center of mass
-    DOUBLE PRECISION, INTENT(OUT):: com_z
-    ! z coordinate of the computed center of mass
-    DOUBLE PRECISION, INTENT(OUT):: com_d
-    ! Coordinate distance between the computed center of mass and the origin
+    INTEGER,          INTENT(IN)  :: npart
+    DOUBLE PRECISION, INTENT(IN)  :: pos(3,npart), vel(3,npart), nu(npart), &
+                                     rho(npart), u(npart), nstar(npart), &
+                                     sq_det_g4(npart), g4(n_sym4x4,npart)
+    DOUBLE PRECISION, INTENT(OUT) :: pn_com_x, pn_com_y, pn_com_z, pn_com_d
+
+    INTEGER          :: a
+    DOUBLE PRECISION :: mass, vsq, Upot, pi_pot, g4_avg, sfac, detg4
 
 
-  END SUBROUTINE COM_PN2
+    mass    = zero
+    pn_com_x= zero
+    pn_com_y= zero
+    pn_com_z= zero
+
+    DO a= 1, npart, 1
+
+      !g4_avg= third*( g4(ixx,a) + g4(iyy,a) + g4(izz,a) )
+
+      vsq= g4(ixx,a)*vel(1,a)**two + two*g4(ixy,a)*vel(1,a)*vel(2,a) &
+         + two*g4(ixz,a)*vel(1,a)*vel(3,a) + g4(iyy,a)*vel(2,a)**two &
+         + two*g4(iyz,a)*vel(2,a)*vel(3,a) + g4(izz,a)*vel(3,a)**two
+
+      Upot= half*( sq_det_g4(a) - one )
+
+      pi_pot= u(a)*rho(a)/(nstar(a)*amu)
+
+      sfac= one + half*vsq - half*Upot + pi_pot
+
+      mass= mass + nu(a)*sfac
+
+      pn_com_x= pn_com_x + nu(a)*pos(1,a)*sfac
+      pn_com_y= pn_com_y + nu(a)*pos(2,a)*sfac
+      pn_com_z= pn_com_z + nu(a)*pos(3,a)*sfac
+
+    ENDDO
+
+    pn_com_x= pn_com_x/mass
+    pn_com_y= pn_com_y/mass
+    pn_com_z= pn_com_z/mass
+    pn_com_d= SQRT(pn_com_x**two + pn_com_y**two + pn_com_z**two)
+
+  END SUBROUTINE COM_1PN
 
 
 END MODULE sph_particles
