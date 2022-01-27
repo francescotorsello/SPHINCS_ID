@@ -225,8 +225,11 @@ SUBMODULE (sph_particles) constructor
     ALLOCATE( npart_i_tmp(0:parts% n_matter) )
     ALLOCATE( parts% nbar_i(parts% n_matter) )
     ALLOCATE( parts% nuratio_i(parts% n_matter) )
-    ALLOCATE( parts% mass_ratios (parts% n_matter) )
-    ALLOCATE( parts% mass_fractions (parts% n_matter) )
+    ALLOCATE( parts% mass_ratios(parts% n_matter) )
+    ALLOCATE( parts% mass_fractions(parts% n_matter) )
+
+    ALLOCATE( parts% barycenter(parts% n_matter,3) )
+
     parts% npart_i(0)= 0
     npart_i_tmp(0)   = 0
     parts% nbar_i    = 0.0D0
@@ -240,6 +243,7 @@ SUBMODULE (sph_particles) constructor
                                                         center(i_matter,2), &
                                                         center(i_matter,3) )
       barycenter(i_matter,:)   = id% return_barycenter(i_matter)
+      parts% barycenter(i_matter,:)= barycenter(i_matter,:)
       sizes(i_matter, :)       = id% return_spatial_extent(i_matter)
 
       parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
