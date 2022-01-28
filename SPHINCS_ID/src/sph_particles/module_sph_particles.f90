@@ -1797,12 +1797,9 @@ MODULE sph_particles
         Wab_ha= Wi + ( Wi1 - Wi )*dvv
 
         ! sum up for number density
-        phi_pot(1,a)= phi_pot(1,a) + nu(b)/nstar(b) &
-                                     *phi_pot_integrand(1,a,b)*Wab_ha
-        phi_pot(2,a)= phi_pot(2,a) + nu(b)/nstar(b) &
-                                     *phi_pot_integrand(2,a,b)*Wab_ha
-        phi_pot(3,a)= phi_pot(3,a) + nu(b)/nstar(b) &
-                                     *phi_pot_integrand(3,a,b)*Wab_ha
+        phi_pot(1,a)= phi_pot(1,a) + phi_pot_integrand(1,a,b)*Wab_ha
+        phi_pot(2,a)= phi_pot(2,a) + phi_pot_integrand(2,a,b)*Wab_ha
+        phi_pot(3,a)= phi_pot(3,a) + phi_pot_integrand(3,a,b)*Wab_ha
 
         IF( ISNAN( phi_pot(1,a) ) .OR. ISNAN( phi_pot(2,a) ) &
           .OR. ISNAN( phi_pot(3,a) ) )THEN
@@ -1845,9 +1842,9 @@ MODULE sph_particles
 
     DO a= 1, npart, 1
 
-      v_sqnorm= g4(ixx,a)*vel(1,a)**two + two*g4(ixy,a)*vel(1,a)*vel(2,a) &
-              + two*g4(ixz,a)*vel(1,a)*vel(3,a) + g4(iyy,a)*vel(2,a)**two &
-              + two*g4(iyz,a)*vel(2,a)*vel(3,a) + g4(izz,a)*vel(3,a)**two
+      v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
+              + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
+              + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
 
       u_pot= half*( sq_det_g4(a) - one )
 
@@ -1858,11 +1855,11 @@ MODULE sph_particles
       mass= mass + nu(a)*nu_pot
 
       p_x= p_x + nu(a)*vel(jx,a)*( nu_pot + pressure(a)/nstar(a) ) &
-               - half*phi_pot(jx,a)!*nu(a)
+               - half*phi_pot(jx,a)*nu(a)/nstar(a)
       p_y= p_y + nu(a)*vel(jy,a)*( nu_pot + pressure(a)/nstar(a) ) &
-               - half*phi_pot(jy,a)!*nu(a)
+               - half*phi_pot(jy,a)*nu(a)/nstar(a)
       p_z= p_z + nu(a)*vel(jz,a)*( nu_pot + pressure(a)/nstar(a) ) &
-               - half*phi_pot(jz,a)!*nu(a)
+               - half*phi_pot(jz,a)*nu(a)/nstar(a)
 
      ! PRINT *, "u_pot =", u_pot
      ! PRINT *, "pi_pot=", pi_pot
@@ -1923,10 +1920,10 @@ MODULE sph_particles
 
       CALL lower_index_4vector( [one,vel(:,a)], g4(:,a), vel_cov(:,a) )
 
-      res= nu(b)*( vel_cov(1,b)*(pos(1,a)-pos(1,b)) + &
-      !res= ( vel_cov(1,b)*(pos(1,a)-pos(1,b)) + &
-                   vel_cov(2,b)*(pos(1,a)-pos(2,b)) + &
-                   vel_cov(3,b)*(pos(1,a)-pos(3,b)) &
+      res= nu(b)*( vel_cov(jx,b)*(pos(jx,a)-pos(jx,b)) + &
+      !res= ( vel_cov(jx,b)*(pos(jx,a)-pos(jx,b)) + &
+                   vel_cov(jy,b)*(pos(jy,a)-pos(jy,b)) + &
+                   vel_cov(jz,b)*(pos(jz,a)-pos(jz,b)) &
                  )* &
                  (pos(i,a)-pos(i,b))/(NORM2(pos(:,a)-pos(:,b))**three)
 

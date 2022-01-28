@@ -1312,8 +1312,8 @@ SUBMODULE (sph_particles) constructor
     DO i_matter= 1, parts% n_matter, 1
       !IF( apm_iterate(i_matter) )THEN
         parts% h( parts% npart_i(i_matter-1) + 1: &
-                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                      parts_all(i_matter)% h_i
+                  parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+                  parts_all(i_matter)% h_i(1:parts% npart_i(i_matter))
       !ENDIF
     ENDDO
 
@@ -1329,7 +1329,7 @@ SUBMODULE (sph_particles) constructor
     DO i_matter= 1, parts% n_matter, 1
       parts% pvol( parts% npart_i(i_matter-1) + 1: &
                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                   (parts_all(i_matter)% h_i)**3.0D0
+                   (parts_all(i_matter)% h_i(1:parts% npart_i(i_matter)))**3.0D0
     ENDDO
 
     IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )

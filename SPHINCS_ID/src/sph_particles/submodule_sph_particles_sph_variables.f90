@@ -1385,15 +1385,15 @@ SUBMODULE (sph_particles) sph_variables
     !                   THIS% specific_energy_parts, THIS% pressure_parts_cu, &
     !                   THIS% nstar_int, THIS% h, &
     !                   sq_detg4, gg4, px, py, pz )
-    !CALL momentum_1pn( THIS% npart_i(1), THIS% pos(:,1:THIS% npart_i(1)), &
-    !                   THIS% v(:,1:THIS% npart_i(1)), &
+    !CALL momentum_1pn( THIS% npart, THIS% pos, &
+    !                   THIS% v, &
     !                   !THIS% v_euler_parts_x, &
-    !                   THIS% nu(1:THIS% npart_i(1)), &
-    !                   THIS% baryon_density_parts(1:THIS% npart_i(1)), &
-    !                   THIS% specific_energy_parts(1:THIS% npart_i(1)), &
-    !                   THIS% pressure_parts_cu(1:THIS% npart_i(1)), &
-    !                   THIS% nstar_int(1:THIS% npart_i(1)), &
-    !                   THIS% h(1:THIS% npart_i(1)), &
+    !                   THIS% nu, &
+    !                   THIS% nlrf_int, &
+    !                   THIS% u_pwp, &
+    !                   THIS% pressure_parts_cu, &
+    !                   THIS% nstar_int, &
+    !                   THIS% h, &
     !                   sq_detg4, gg4, px, py, pz )
 
     PRINT *, "LORENE COM:            ", &
