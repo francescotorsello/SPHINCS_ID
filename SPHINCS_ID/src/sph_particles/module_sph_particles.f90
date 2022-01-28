@@ -1548,8 +1548,8 @@ MODULE sph_particles
   END FUNCTION find_h_backup
 
 
-  SUBROUTINE COM_1PN( npart, pos, vel, nu, rho, u, nstar, sq_det_g4, g4, &
-                      pn_com_x, pn_com_y, pn_com_z, pn_com_d )
+  PURE SUBROUTINE COM_1PN( npart, pos, vel, nu, rho, u, nstar, sq_det_g4, g4, &
+                           pn_com_x, pn_com_y, pn_com_z, pn_com_d )
 
     !************************************************************
     !                                                           *
@@ -1558,26 +1558,58 @@ MODULE sph_particles
     ! See eqs. (7.4), (8.136), (8.146) and (8.4.7) in           *
     ! Eric Poisson, Clifford M. Will                            *
     ! "Gravity: Newtonian, Post-Newtonian, Relativistic",       *
-    ! Cambridge University Press, 2014                          *
-    !                                                           *
-    ! FT 26.01.2022                                             *
+    ! Cambridge University Press, 2014. FT 26.01.2022           *
     !                                                           *
     !************************************************************
 
-    USE tensor,    ONLY: n_sym4x4, ixx, ixy, ixz, iyy, iyz, izz
-    USE constants, ONLY: zero, third, half, one, two, three, amu
+    USE tensor,    ONLY: n_sym4x4, ixx, ixy, ixz, iyy, iyz, izz, jx, jy, jz
+    USE constants, ONLY: zero, third, half, one, two, three
 
     IMPLICIT NONE
 
-    INTEGER,          INTENT(IN)  :: npart
-    DOUBLE PRECISION, INTENT(IN)  :: pos(3,npart), vel(3,npart), nu(npart), &
-                                     rho(npart), u(npart), nstar(npart), &
-                                     sq_det_g4(npart), g4(n_sym4x4,npart)
-    DOUBLE PRECISION, INTENT(OUT) :: pn_com_x, pn_com_y, pn_com_z, pn_com_d
+    INTEGER,          INTENT(IN) :: npart
+    ! Number of particles
+    DOUBLE PRECISION, INTENT(IN) :: pos(3,npart)
+    ! Particles' positions
+    DOUBLE PRECISION, INTENT(IN) :: vel(3,npart)
+    ! Particles' 3-velocities in the SPH computing frame
+    DOUBLE PRECISION, INTENT(IN) :: nu(npart)
+    ! Particles' baryon numbers
+    DOUBLE PRECISION, INTENT(IN) :: rho(npart)
+    ! Particles densities
+    DOUBLE PRECISION, INTENT(IN) :: u(npart)
+    ! Particles' specific internal energy
+    DOUBLE PRECISION, INTENT(IN) :: nstar(npart)
+    ! Particles' baryon density
+    DOUBLE PRECISION, INTENT(IN) :: sq_det_g4(npart)
+    ! Square root of minus the determinant of the spacetime metric, at the
+    ! particle positions
+    DOUBLE PRECISION, INTENT(IN) :: g4(n_sym4x4,npart)
+    ! Spacetime metric at the particle positions
+    DOUBLE PRECISION, INTENT(OUT):: pn_com_x
+    ! x component of the 1PN center of mass
+    DOUBLE PRECISION, INTENT(OUT):: pn_com_y
+    ! y component of the 1PN center of mass
+    DOUBLE PRECISION, INTENT(OUT):: pn_com_z
+    ! z component of the 1PN center of mass
+    DOUBLE PRECISION, INTENT(OUT):: pn_com_d
+    ! Distance of the 1PN center of mass from the origin
 
-    INTEGER          :: a
-    DOUBLE PRECISION :: mass, vsq, Upot, pi_pot, sfac!, g4_avg
-
+    INTEGER         :: a
+    ! Index running over the particles
+    DOUBLE PRECISION:: mass
+    ! Total mass of the particles
+    DOUBLE PRECISION:: v_sqnorm
+    ! Squared norm of the particles' 3-velocities in the SPH computing frame
+    DOUBLE PRECISION:: u_pot
+    ! Potential U in the formulas. See Exercise 8.1 on p.410 in the reference
+    ! cited in this SUBROUTINE's description
+    DOUBLE PRECISION:: pi_pot
+    ! Potential Pi in the formulas. See line right below eq.(8.7c) on p.373
+    ! in the reference cited in this SUBROUTINE's description
+    DOUBLE PRECISION:: nu_pot
+    ! Potential nu in the formulas. See lines right above eq.(8.148) on p.409
+    ! in the reference cited in this SUBROUTINE's description
 
     mass    = zero
     pn_com_x= zero
@@ -1586,30 +1618,28 @@ MODULE sph_particles
 
     DO a= 1, npart, 1
 
-      !g4_avg= third*( g4(ixx,a) + g4(iyy,a) + g4(izz,a) )
+      v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
+              + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
+              + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
 
-      vsq= g4(ixx,a)*vel(1,a)**two + two*g4(ixy,a)*vel(1,a)*vel(2,a) &
-         + two*g4(ixz,a)*vel(1,a)*vel(3,a) + g4(iyy,a)*vel(2,a)**two &
-         + two*g4(iyz,a)*vel(2,a)*vel(3,a) + g4(izz,a)*vel(3,a)**two
+      u_pot   = half*( sq_det_g4(a) - one )
 
-      Upot= half*( sq_det_g4(a) - one )
+      pi_pot  = u(a)*rho(a)/nstar(a)
 
-      pi_pot= u(a)*rho(a)/(nstar(a)*amu)
+      nu_pot  = one + half*v_sqnorm - half*u_pot + pi_pot
 
-      sfac= one + half*vsq - half*Upot + pi_pot
+      mass    = mass + nu(a)*nu_pot
 
-      mass= mass + nu(a)*sfac
-
-      pn_com_x= pn_com_x + nu(a)*pos(1,a)*sfac
-      pn_com_y= pn_com_y + nu(a)*pos(2,a)*sfac
-      pn_com_z= pn_com_z + nu(a)*pos(3,a)*sfac
+      pn_com_x= pn_com_x + nu(a)*pos(jx,a)*nu_pot
+      pn_com_y= pn_com_y + nu(a)*pos(jy,a)*nu_pot
+      pn_com_z= pn_com_z + nu(a)*pos(jz,a)*nu_pot
 
     ENDDO
 
-    pn_com_x= pn_com_x/mass
-    pn_com_y= pn_com_y/mass
-    pn_com_z= pn_com_z/mass
-    pn_com_d= SQRT(pn_com_x**two + pn_com_y**two + pn_com_z**two)
+    pn_com_x  = pn_com_x/mass
+    pn_com_y  = pn_com_y/mass
+    pn_com_z  = pn_com_z/mass
+    pn_com_d  = SQRT(pn_com_x**two + pn_com_y**two + pn_com_z**two)
 
   END SUBROUTINE COM_1PN
 
@@ -1767,9 +1797,12 @@ MODULE sph_particles
         Wab_ha= Wi + ( Wi1 - Wi )*dvv
 
         ! sum up for number density
-        phi_pot(1,a)= phi_pot(1,a) + phi_pot_integrand(1,a,b)*Wab_ha
-        phi_pot(2,a)= phi_pot(2,a) + phi_pot_integrand(2,a,b)*Wab_ha
-        phi_pot(3,a)= phi_pot(3,a) + phi_pot_integrand(3,a,b)*Wab_ha
+        phi_pot(1,a)= phi_pot(1,a) + nu(b)/nstar(b) &
+                                     *phi_pot_integrand(1,a,b)*Wab_ha
+        phi_pot(2,a)= phi_pot(2,a) + nu(b)/nstar(b) &
+                                     *phi_pot_integrand(2,a,b)*Wab_ha
+        phi_pot(3,a)= phi_pot(3,a) + nu(b)/nstar(b) &
+                                     *phi_pot_integrand(3,a,b)*Wab_ha
 
         IF( ISNAN( phi_pot(1,a) ) .OR. ISNAN( phi_pot(2,a) ) &
           .OR. ISNAN( phi_pot(3,a) ) )THEN
@@ -1792,7 +1825,7 @@ MODULE sph_particles
       ENDDO cand_loop
 
       ! normalize with ha's
-      phi_pot(:,a)= phi_pot(:,a)*ha_3
+      phi_pot(:,a)= phi_pot(:,a)!*ha_3
 
      ENDDO particle_loop
 
