@@ -1549,7 +1549,7 @@ MODULE sph_particles
 
 
   PURE SUBROUTINE COM_1PN( npart, pos, vel, nu, rho, u, nstar, sq_det_g4, g4, &
-                           pn_com_x, pn_com_y, pn_com_z, pn_com_d )
+                           pn_com_x, pn_com_y, pn_com_z, pn_com_d, mass )
 
     !************************************************************
     !                                                           *
@@ -1597,7 +1597,7 @@ MODULE sph_particles
 
     INTEGER         :: a
     ! Index running over the particles
-    DOUBLE PRECISION:: mass
+    DOUBLE PRECISION, INTENT( OUT ):: mass
     ! Total mass of the particles
     DOUBLE PRECISION:: v_sqnorm
     ! Squared norm of the particles' 3-velocities in the SPH computing frame
@@ -1618,13 +1618,14 @@ MODULE sph_particles
 
     DO a= 1, npart, 1
 
-      v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
-              + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
-              + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
+      v_sqnorm= vel(jx,a)**2 + vel(jy,a)**2 + vel(jz,a)**2
+      !v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
+      !        + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
+      !        + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
 
       u_pot   = half*( sq_det_g4(a) - one )
 
-      pi_pot  = u(a)*rho(a)/nstar(a)
+      pi_pot  = u(a)*( one - half*v_sqnorm - three*u_pot )!u(a)*rho(a)/nstar(a)
 
       nu_pot  = one + half*v_sqnorm - half*u_pot + pi_pot
 
@@ -1639,7 +1640,7 @@ MODULE sph_particles
     pn_com_x  = pn_com_x/mass
     pn_com_y  = pn_com_y/mass
     pn_com_z  = pn_com_z/mass
-    pn_com_d  = SQRT(pn_com_x**two + pn_com_y**two + pn_com_z**two)
+    pn_com_d  = SQRT(pn_com_x**2 + pn_com_y**2 + pn_com_z**2)
 
   END SUBROUTINE COM_1PN
 
@@ -1797,9 +1798,12 @@ MODULE sph_particles
         Wab_ha= Wi + ( Wi1 - Wi )*dvv
 
         ! sum up for number density
-        phi_pot(1,a)= phi_pot(1,a) + phi_pot_integrand(1,a,b)*Wab_ha
-        phi_pot(2,a)= phi_pot(2,a) + phi_pot_integrand(2,a,b)*Wab_ha
-        phi_pot(3,a)= phi_pot(3,a) + phi_pot_integrand(3,a,b)*Wab_ha
+        phi_pot(1,a)= phi_pot(1,a) + phi_pot_integrand(1,a,b)*Wab_ha &
+                                    *nu(a)/nstar(a)
+        phi_pot(2,a)= phi_pot(2,a) + phi_pot_integrand(2,a,b)*Wab_ha &
+                                    *nu(a)/nstar(a)
+        phi_pot(3,a)= phi_pot(3,a) + phi_pot_integrand(3,a,b)*Wab_ha &
+                                    *nu(a)/nstar(a)
 
         IF( ISNAN( phi_pot(1,a) ) .OR. ISNAN( phi_pot(2,a) ) &
           .OR. ISNAN( phi_pot(3,a) ) )THEN
@@ -1842,13 +1846,14 @@ MODULE sph_particles
 
     DO a= 1, npart, 1
 
-      v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
-              + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
-              + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
+      v_sqnorm= vel(jx,a)**two + vel(jy,a)**two + vel(jz,a)**two
+      !v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
+      !        + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
+      !        + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
 
       u_pot= half*( sq_det_g4(a) - one )
 
-      pi_pot= u(a)*rho(a)/nstar(a)
+      pi_pot= u(a)*( one - half*v_sqnorm - three*u_pot )!*rho(a)/nstar(a)
 
       nu_pot= one + half*v_sqnorm - half*u_pot + pi_pot
 

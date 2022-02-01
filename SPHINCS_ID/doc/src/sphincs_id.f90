@@ -202,38 +202,35 @@ PROGRAM sphincs_id
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time
 
-  PRINT *, "  ____________________________________________________ "
-  PRINT *, "       ____________  ________  __________    __ ___    "
-  PRINT *, "      / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \   "
-  PRINT *, "     (__  ) ___/ __  / / / / / /__(__  )___/ / /_/ /   "
-  PRINT *, "    /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/    "
+  PRINT *, "  ________________________________________________________________ "
+  PRINT *, "             ____________  ________  __________    __ ___          "
+  PRINT *, "            / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \         "
+  PRINT *, "           (__  ) ___/ __  / / / / / /__(__  )___/ / /_/ /         "
+  PRINT *, "          /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/          "
   PRINT *
-  PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime  "
-  PRINT *, "  Initial Data builder, v1.0                           "
+  PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime              "
+  PRINT *, "  Initial Data builder, v1.0                                       "
   PRINT *
-  PRINT *, "  SPHINCS_ID  Copyright (C) 2022  Francesco Torsello   "
+  PRINT *, "  SPHINCS_ID  Copyright (C) 2020, 2021, 2022  Francesco Torsello   "
   PRINT *
-  PRINT *, "  SPHINCS_ID is free software: you can redistribute    "
-  PRINT *, "  it and/or modify it under the terms of the GNU       "
-  PRINT *, "  General Public License as published by the Free      "
-  PRINT *, "  Software Foundation, either version 3 of the         "
-  PRINT *, "  License, or (at your option) any later version.      "
+  PRINT *, "  SPHINCS_ID is free software: you can redistribute it and/or      "
+  PRINT *, "  modify it under the terms of the GNU General Public License      "
+  PRINT *, "  as published by the Free Software Foundation, either version     "
+  PRINT *, "  of the License, or (at your option) any later version.           "
   PRINT *
-  PRINT *, "  SPHINCS_ID is distributed in the hope that it will   "
-  PRINT *, "  be useful, but WITHOUT ANY WARRANTY; without even    "
-  PRINT *, "  the implied warranty of MERCHANTABILITY or FITNESS   "
-  PRINT *, "  FOR A PARTICULAR PURPOSE. See the GNU General Public "
-  PRINT *, "  License for more details.                            "
+  PRINT *, "  SPHINCS_ID is distributed in the hope that it will be useful,    "
+  PRINT *, "  but WITHOUT ANY WARRANTY; without even the implied warranty of   "
+  PRINT *, "  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU "
+  PRINT *, "  General Public License for more details.                         "
   PRINT *
-  PRINT *, "  You should have received a copy of the GNU General   "
-  PRINT *, "  Public License along with SPHINCS_ID. If not, see    "
-  PRINT *, "  https://www.gnu.org/licenses/.                       "
-  PRINT *, "  The copy of the GNU General Public License should    "
-  PRINT *, "  be in the file 'COPYING'.                            "
-  PRINT *, "  ____________________________________________________ "
+  PRINT *, "  You should have received a copy of the GNU General Public        "
+  PRINT *, "  along with SPHINCS_ID. If not, see https://www.gnu.org/licenses/."
+  PRINT *, "  The copy of the GNU General Public License should be in the file "
+  PRINT *, "  'COPYING'.                                                       "
+  PRINT *, "  ________________________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id
-  PRINT *, "  ____________________________________________________ "
+  PRINT *, "  ________________________________________________________________ "
   PRINT *
 
   execution_timer= timer( "execution_timer" )

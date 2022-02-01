@@ -1337,7 +1337,7 @@ SUBMODULE (sph_particles) apm
       nstar_p( npart_real+1:npart_all )= zero
       !art_pr ( npart_real+1:npart_all )= 6.0D0*art_pr_max
 
-      DO a= npart_real + 1, npart_all, 1
+      ghost_loop: DO a= npart_real + 1, npart_all, 1
 
         CALL spherical_from_cartesian( &
                               all_pos(1,a), all_pos(2,a), all_pos(3,a), &
@@ -1354,11 +1354,12 @@ SUBMODULE (sph_particles) apm
                    + ( y_ell - center(2) )**two &
                    + ( z_ell - center(3) )**two )
 
-        DO itr2= 1, 10, 1
+        shell_loop: DO itr2= 1, 10, 1
 
           IF( r <= ( one + ( ellipse_thickness - one )*DBLE(itr)/ten )*r_ell &
               .AND. &
               r >= ( one + ( ellipse_thickness - one )*DBLE(itr-1)/ten )*r_ell &
+          ! If the ghost particle is contained within the i-th spherical shell..
 
               !r <= ( 500.D0 + 50.D0*DBLE(itr)/ten ) &
               !.AND. &
@@ -1366,7 +1367,9 @@ SUBMODULE (sph_particles) apm
 
           )THEN
 
-            art_pr( a )= DBLE(3*itr)*art_pr_max
+            ! ..assign a pressure that increases with i, to build a pressure
+            !   gradient
+            art_pr( a )= zero!DBLE(3*itr)*art_pr_max
 
           !ELSE
           !
@@ -1374,9 +1377,9 @@ SUBMODULE (sph_particles) apm
 
           ENDIF
 
-        ENDDO
+        ENDDO shell_loop
 
-      ENDDO
+      ENDDO ghost_loop
 
       IF( debug ) PRINT *, "Before calling position_correction"
 

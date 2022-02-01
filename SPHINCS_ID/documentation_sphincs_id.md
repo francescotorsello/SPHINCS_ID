@@ -18,6 +18,7 @@ exclude_dir: ./src/prototypes
 exclude: submodule_bns_lorene_bindings.f90
          submodule_diffstar_lorene_bindings.f90
          submodule_sph_particles_redistribute_nu.f90
+         proto_artificial-pressure.f90
 output_dir: ./doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S

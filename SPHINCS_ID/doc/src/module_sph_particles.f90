@@ -191,6 +191,8 @@ MODULE sph_particles
     !> Array storing the values of the electron fraction in the CompOSE table
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye_table
 
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: barycenter
+
     !
     !-- Spacetime fields
     !
@@ -1546,45 +1548,394 @@ MODULE sph_particles
   END FUNCTION find_h_backup
 
 
-  SUBROUTINE COM_PN2( npart, mass, pos, rho, u, v, detg4, &
-                      com_x, com_y, com_z, com_d )
+  PURE SUBROUTINE COM_1PN( npart, pos, vel, nu, rho, u, nstar, sq_det_g4, g4, &
+                           pn_com_x, pn_com_y, pn_com_z, pn_com_d, mass )
 
     !************************************************************
     !                                                           *
-    ! Compute baryonic center of mass on the particles, to      *
-    ! the 1st post-Newtonian order (1PN)                        *
+    ! monitor PN baryonic center of mass; PD 30.09.2021         *
     !                                                           *
-    ! FT 25.01.2022                                             *
+    ! See eqs. (7.4), (8.136), (8.146) and (8.4.7) in           *
+    ! Eric Poisson, Clifford M. Will                            *
+    ! "Gravity: Newtonian, Post-Newtonian, Relativistic",       *
+    ! Cambridge University Press, 2014. FT 26.01.2022           *
     !                                                           *
     !************************************************************
+
+    USE tensor,    ONLY: n_sym4x4, ixx, ixy, ixz, iyy, iyz, izz, jx, jy, jz
+    USE constants, ONLY: zero, third, half, one, two, three
 
     IMPLICIT NONE
 
     INTEGER,          INTENT(IN) :: npart
     ! Number of particles
-    DOUBLE PRECISION, INTENT(IN) :: mass
-    ! Mass of the system
     DOUBLE PRECISION, INTENT(IN) :: pos(3,npart)
-    ! Particle positions
+    ! Particles' positions
+    DOUBLE PRECISION, INTENT(IN) :: vel(3,npart)
+    ! Particles' 3-velocities in the SPH computing frame
+    DOUBLE PRECISION, INTENT(IN) :: nu(npart)
+    ! Particles' baryon numbers
     DOUBLE PRECISION, INTENT(IN) :: rho(npart)
-    ! Baryon mass density on the particles
+    ! Particles densities
     DOUBLE PRECISION, INTENT(IN) :: u(npart)
-    ! Specific internal energy on the particles
-    DOUBLE PRECISION, INTENT(IN) :: v(3,npart)
-    ! 3-velocity of the particles in ?? frame
-    DOUBLE PRECISION, INTENT(IN) :: detg4
-    ! Determinant of the spacetime metric on the particles
-    DOUBLE PRECISION, INTENT(OUT):: com_x
-    ! x coordinate of the computed center of mass
-    DOUBLE PRECISION, INTENT(OUT):: com_y
-    ! y coordinate of the computed center of mass
-    DOUBLE PRECISION, INTENT(OUT):: com_z
-    ! z coordinate of the computed center of mass
-    DOUBLE PRECISION, INTENT(OUT):: com_d
-    ! Coordinate distance between the computed center of mass and the origin
+    ! Particles' specific internal energy
+    DOUBLE PRECISION, INTENT(IN) :: nstar(npart)
+    ! Particles' baryon density
+    DOUBLE PRECISION, INTENT(IN) :: sq_det_g4(npart)
+    ! Square root of minus the determinant of the spacetime metric, at the
+    ! particle positions
+    DOUBLE PRECISION, INTENT(IN) :: g4(n_sym4x4,npart)
+    ! Spacetime metric at the particle positions
+    DOUBLE PRECISION, INTENT(OUT):: pn_com_x
+    ! x component of the 1PN center of mass
+    DOUBLE PRECISION, INTENT(OUT):: pn_com_y
+    ! y component of the 1PN center of mass
+    DOUBLE PRECISION, INTENT(OUT):: pn_com_z
+    ! z component of the 1PN center of mass
+    DOUBLE PRECISION, INTENT(OUT):: pn_com_d
+    ! Distance of the 1PN center of mass from the origin
+
+    INTEGER         :: a
+    ! Index running over the particles
+    DOUBLE PRECISION, INTENT( OUT ):: mass
+    ! Total mass of the particles
+    DOUBLE PRECISION:: v_sqnorm
+    ! Squared norm of the particles' 3-velocities in the SPH computing frame
+    DOUBLE PRECISION:: u_pot
+    ! Potential U in the formulas. See Exercise 8.1 on p.410 in the reference
+    ! cited in this SUBROUTINE's description
+    DOUBLE PRECISION:: pi_pot
+    ! Potential Pi in the formulas. See line right below eq.(8.7c) on p.373
+    ! in the reference cited in this SUBROUTINE's description
+    DOUBLE PRECISION:: nu_pot
+    ! Potential nu in the formulas. See lines right above eq.(8.148) on p.409
+    ! in the reference cited in this SUBROUTINE's description
+
+    mass    = zero
+    pn_com_x= zero
+    pn_com_y= zero
+    pn_com_z= zero
+
+    DO a= 1, npart, 1
+
+      v_sqnorm= vel(jx,a)**2 + vel(jy,a)**2 + vel(jz,a)**2
+      !v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
+      !        + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
+      !        + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
+
+      u_pot   = half*( sq_det_g4(a) - one )
+
+      pi_pot  = u(a)*( one - half*v_sqnorm - three*u_pot )!u(a)*rho(a)/nstar(a)
+
+      nu_pot  = one + half*v_sqnorm - half*u_pot + pi_pot
+
+      mass    = mass + nu(a)*nu_pot
+
+      pn_com_x= pn_com_x + nu(a)*pos(jx,a)*nu_pot
+      pn_com_y= pn_com_y + nu(a)*pos(jy,a)*nu_pot
+      pn_com_z= pn_com_z + nu(a)*pos(jz,a)*nu_pot
+
+    ENDDO
+
+    pn_com_x  = pn_com_x/mass
+    pn_com_y  = pn_com_y/mass
+    pn_com_z  = pn_com_z/mass
+    pn_com_d  = SQRT(pn_com_x**2 + pn_com_y**2 + pn_com_z**2)
+
+  END SUBROUTINE COM_1PN
 
 
-  END SUBROUTINE COM_PN2
+  SUBROUTINE momentum_1pn( npart, pos, vel, nu, rho, u, pressure, nstar, h, &
+                           sq_det_g4, g4, &
+                           p_x, p_y, p_z )
+
+    !************************************************************
+    !                                                           *
+    ! Compute the first-order Post-Newtonian three-momentum     *
+    ! of the spacetime.                                         *
+    !                                                           *
+    ! See eqs. (8.145) in                                       *
+    ! Eric Poisson, Clifford M. Will                            *
+    ! "Gravity: Newtonian, Post-Newtonian, Relativistic",       *
+    ! Cambridge University Press, 2014                          *
+    !                                                           *
+    ! @todo: adapt comments to be read by FORD                  *
+    !        (FORtran Documenter)? This requires minimal        *
+    !        modifications                                      *
+    !                                                           *
+    ! FT 26.01.2022                                             *
+    !                                                           *
+    !************************************************************
+
+    USE tensor,       ONLY: n_sym4x4, ixx, ixy, ixz, iyy, iyz, izz, jx, jy, jz
+    USE constants,    ONLY: zero, third, half, one, two, three, amu, m0c2
+    USE RCB_tree_3D,  ONLY: nfinal, nprev, nic, lpart, rpart, iorig
+    USE SPHINCS_SPH,  ONLY: all_clists, ncand
+    USE kernel_table, ONLY: dv_table, dv_table_1, &
+                            W_no_norm, n_tab_entry!, dWdv_no_norm
+
+    IMPLICIT NONE
+
+    INTEGER,          INTENT(IN) :: npart
+    ! Number of particles
+    DOUBLE PRECISION, INTENT(IN) :: pos(3,npart)
+    ! Particles' positions
+    DOUBLE PRECISION, INTENT(IN) :: vel(3,npart)
+    ! Particles' 3-velocities in the SPH computing frame
+    DOUBLE PRECISION, INTENT(IN) :: nu(npart)
+    ! Particles' baryon numbers
+    DOUBLE PRECISION, INTENT(IN) :: rho(npart)
+    ! Particles densities
+    DOUBLE PRECISION, INTENT(IN) :: u(npart)
+    ! Particles' specific internal energy
+    DOUBLE PRECISION, INTENT(IN) :: pressure(npart)
+    ! Particles' pressure
+    DOUBLE PRECISION, INTENT(IN) :: nstar(npart)
+    ! Particles' baryon density
+    DOUBLE PRECISION, INTENT(IN) :: h(npart)
+    ! Particles' smoothing lengths
+    DOUBLE PRECISION, INTENT(IN) :: sq_det_g4(npart)
+    ! Square root of minus the determinant of the spacetime metric, at the
+    ! particle positions
+    DOUBLE PRECISION, INTENT(IN) :: g4(n_sym4x4,npart)
+    ! Spacetime metric at the particle positions
+    DOUBLE PRECISION, INTENT(OUT):: p_x
+    ! x component of the 1PN spacetime momentum
+    DOUBLE PRECISION, INTENT(OUT):: p_y
+    ! y component of the 1PN spacetime momentum
+    DOUBLE PRECISION, INTENT(OUT):: p_z
+    ! z component of the 1PN spacetime momentum
+
+    INTEGER         :: a
+    ! Index running over the particles
+    INTEGER ill, itot, indexx, index1, l, k, b
+    DOUBLE PRECISION:: mass
+    ! Total mass of the particles
+    DOUBLE PRECISION:: v_sqnorm
+    ! Squared norm of the particles' 3-velocities in the SPH computing frame
+    DOUBLE PRECISION:: u_pot
+    ! Potential U in the formulas. See Exercise 8.1 on p.410 in the reference
+    ! cited in this SUBROUTINE's description
+    DOUBLE PRECISION:: pi_pot
+    ! Potential Pi in the formulas. See line right below eq.(8.7c) on p.373
+    ! in the reference cited in this SUBROUTINE's description
+    DOUBLE PRECISION:: nu_pot
+    ! Potential nu in the formulas. See lines right above eq.(8.148) on p.409
+    ! in the reference cited in this SUBROUTINE's description
+    DOUBLE PRECISION:: phi_pot(3,npart)
+    ! Nonlocal potential phi in the formulas. See eq.(8.8) on p.374 in the
+    ! reference cited in this SUBROUTINE's description
+    !DOUBLE PRECISION:: phi_pot_integrand(3,npart)
+    ! Integrand of the nonlocal potential phi in the formulas. See eq.(8.8)
+    ! on p.374 in the reference cited in this SUBROUTINE's description
+    DOUBLE PRECISION:: vel_cov(0:3,npart)
+    ! Covariant particles' 4-velocities in the SPH computing frame
+    DOUBLE PRECISION:: dx, dy, dz, va, ha, ha_1, ha_3, phi_pot_integ(3), &
+                       Wi, Wi1, dvv, Wab_ha
+
+    PRINT *, "nu      =", nu      (1)
+    PRINT *, "rho     =", rho     (1)
+    PRINT *, "u       =", u       (1)
+    PRINT *, "pressure=", pressure(1)
+    PRINT *, "nstar   =", nstar   (1)
+    PRINT *
+    !STOP
+
+    !
+    !-- Computation of the nonlocal potential phi_pot
+    !
+
+    phi_pot= zero
+
+   ! DO a= 1, npart, 1
+   !
+   !   ! For each a, we should sum over the other particles (neighbours?)
+   !   phi_pot= phi_pot + phi_pot_integrand(a,b)
+   !
+   ! ENDDO
+
+    PRINT *, "** Computing SPH integral estimate of the vector potential ", &
+             "Phi^i..."
+
+    !$OMP PARALLEL DO DEFAULT(SHARED) &
+    !$OMP PRIVATE(ill,itot) &
+    !$OMP SCHEDULE(STATIC)
+    ll_cell_loop: DO ill= 1, nfinal, 1
+
+     ! if empty: skip
+     itot= ill + nprev
+     IF( nic(itot) == 0 ) CYCLE
+
+     ! particle content in this cell
+     particle_loop: DO l= lpart(itot), rpart(itot)
+
+      a   = iorig(l)
+
+      ha  = h(a)
+      ha_1= one/ha
+      ha_3= ha_1*ha_1*ha_1
+
+      cand_loop: DO k= 1, ncand(ill), 1
+
+        b= all_clists(ill)% list(k)
+
+        ! Distances (ATTENTION: flatspace version !!!)
+        dx= pos(1,a) - pos(1,b)
+        dy= pos(2,a) - pos(2,b)
+        dz= pos(3,a) - pos(3,b)
+        va= SQRT(dx*dx + dy*dy + dz*dz)*ha_1
+
+        ! get interpolation indices
+        indexx= MIN( INT(va*dv_table_1), n_tab_entry )
+        index1= MIN( indexx + 1, n_tab_entry )
+
+        ! get tabulated values
+        Wi = W_no_norm(indexx)
+        Wi1= W_no_norm(index1)
+
+        ! interpolate
+        dvv   = ( va - DBLE(indexx)*dv_table )*dv_table_1
+        Wab_ha= Wi + ( Wi1 - Wi )*dvv
+
+        ! sum up for number density
+        phi_pot(1,a)= phi_pot(1,a) + phi_pot_integrand(1,a,b)*Wab_ha &
+                                    *nu(a)/nstar(a)
+        phi_pot(2,a)= phi_pot(2,a) + phi_pot_integrand(2,a,b)*Wab_ha &
+                                    *nu(a)/nstar(a)
+        phi_pot(3,a)= phi_pot(3,a) + phi_pot_integrand(3,a,b)*Wab_ha &
+                                    *nu(a)/nstar(a)
+
+        IF( ISNAN( phi_pot(1,a) ) .OR. ISNAN( phi_pot(2,a) ) &
+          .OR. ISNAN( phi_pot(3,a) ) )THEN
+
+          PRINT *
+          PRINT *, "phi_pot_integrand(1,a,b)= ", phi_pot_integrand(1,a,b)
+          PRINT *, "phi_pot_integrand(2,a,b)= ", phi_pot_integrand(2,a,b)
+          PRINT *, "phi_pot_integrand(3,a,b)= ", phi_pot_integrand(3,a,b)
+          PRINT *, "Wab_ha= ", Wab_ha
+          PRINT *, "dvv= ", dvv
+          PRINT *, "dx= ", dx
+          PRINT *, "dy= ", dy
+          PRINT *, "dz= ", dz
+          PRINT *, "phi_pot(:,a)= ", phi_pot(:,a)
+          PRINT *
+          STOP
+
+        ENDIF
+
+      ENDDO cand_loop
+
+      ! normalize with ha's
+      phi_pot(:,a)= phi_pot(:,a)!*ha_3
+
+     ENDDO particle_loop
+
+    ENDDO ll_cell_loop
+    !$OMP END PARALLEL DO
+    PRINT *, "...done."
+    PRINT *
+
+    !
+    !-- Computation of the local potentials, and the spacetime momentum
+    !
+
+    p_x = zero
+    p_y = zero
+    p_z = zero
+    mass= zero
+
+    DO a= 1, npart, 1
+
+      v_sqnorm= vel(jx,a)**two + vel(jy,a)**two + vel(jz,a)**two
+      !v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
+      !        + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
+      !        + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
+
+      u_pot= half*( sq_det_g4(a) - one )
+
+      pi_pot= u(a)*( one - half*v_sqnorm - three*u_pot )!*rho(a)/nstar(a)
+
+      nu_pot= one + half*v_sqnorm - half*u_pot + pi_pot
+
+      mass= mass + nu(a)*nu_pot
+
+      p_x= p_x + nu(a)*vel(jx,a)*( nu_pot + pressure(a)/nstar(a) ) &
+               - half*phi_pot(jx,a)*nu(a)/nstar(a)
+      p_y= p_y + nu(a)*vel(jy,a)*( nu_pot + pressure(a)/nstar(a) ) &
+               - half*phi_pot(jy,a)*nu(a)/nstar(a)
+      p_z= p_z + nu(a)*vel(jz,a)*( nu_pot + pressure(a)/nstar(a) ) &
+               - half*phi_pot(jz,a)*nu(a)/nstar(a)
+
+     ! PRINT *, "u_pot =", u_pot
+     ! PRINT *, "pi_pot=", pi_pot
+     ! PRINT *, "nu_pot=", nu_pot
+     ! PRINT *, "mass  =", mass
+     ! PRINT *, "pressure(a)/nstar(a)= ", pressure(a)/nstar(a)
+     ! PRINT *, "phi_pot(:,a)=", phi_pot(:,a)
+     ! PRINT *
+     ! STOP
+
+    ENDDO
+
+    PRINT *, "u_pot =", u_pot
+    PRINT *, "pi_pot=", pi_pot
+    PRINT *, "nu_pot=", nu_pot
+    PRINT *, "mass  =", mass
+    PRINT *, "phi_pot(:,100)=", phi_pot(:,100)
+    PRINT *, "pressure(100)/nstar(100)= ", pressure(100)/nstar(100)
+    PRINT *, "p/M=", p_x/mass, p_y/mass, p_z/mass
+    PRINT *
+    !STOP
+
+
+    CONTAINS
+
+
+    FUNCTION phi_pot_integrand(i,a,b) RESULT(res)
+
+      !************************************************************
+      !                                                           *
+      ! Integrand of the nonlocal potential phi in the formulas.  *
+      ! See eq.(8.8) on p.374 in the reference cited in this      *
+      ! SUBROUTINE's description                                  *
+      !                                                           *
+      ! FT 26.01.2022                                             *
+      !                                                           *
+      !************************************************************
+
+      USE tensor,    ONLY: lower_index_4vector
+      USE constants, ONLY: zero
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: a
+      ! Index of the particle with non-dummy position
+      INTEGER, INTENT(IN):: b
+      ! Index of the particle with dummy position (the dummy position is
+      ! the integratin variable)
+      INTEGER, INTENT(IN):: i
+      ! Spatial index
+      DOUBLE PRECISION:: res
+      ! Vector integrand
+
+      IF( a == b )THEN
+        res= zero
+        RETURN
+      ENDIF
+
+      CALL lower_index_4vector( [one,vel(:,a)], g4(:,a), vel_cov(:,a) )
+
+      res= nu(b)*( vel_cov(jx,b)*(pos(jx,a)-pos(jx,b)) + &
+      !res= ( vel_cov(jx,b)*(pos(jx,a)-pos(jx,b)) + &
+                   vel_cov(jy,b)*(pos(jy,a)-pos(jy,b)) + &
+                   vel_cov(jz,b)*(pos(jz,a)-pos(jz,b)) &
+                 )* &
+                 (pos(i,a)-pos(i,b))/(NORM2(pos(:,a)-pos(:,b))**three)
+
+    END FUNCTION
+
+
+  END SUBROUTINE momentum_1pn
 
 
 END MODULE sph_particles
