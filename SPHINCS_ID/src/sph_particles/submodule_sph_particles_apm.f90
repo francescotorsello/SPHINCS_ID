@@ -128,7 +128,8 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.5D0!0.25D0 !30.0D0
+    !DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.5D0!0.25D0 !30.0D0
+    DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 2.5D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
@@ -474,9 +475,9 @@ SUBMODULE (sph_particles) apm
       ENDIF
     ENDIF
 
-    rad_x= larger_radius + ghost_dist !+ h_av/7.0D0
-    rad_y= radius_y      + ghost_dist !+ h_av/7.0D0
-    rad_z= radius_z      + ghost_dist !+ h_av/7.0D0
+    rad_x= larger_radius + multiple_h_av*h_av !+ ghost_dist !+ h_av/7.0D0
+    rad_y= radius_y      + multiple_h_av*h_av !+ ghost_dist !+ h_av/7.0D0
+    rad_z= radius_z      + multiple_h_av*h_av !+ ghost_dist !+ h_av/7.0D0
 
     IF( debug ) PRINT *, "larger_radius= ", larger_radius
     IF( debug ) PRINT *, "radius_y= ", radius_y

@@ -11,6 +11,8 @@ predocmark: >
 predocmark_alt: &
 source: true
 graph: false
+graph_dir: doc-graphs
+parallel: 80
 sort: alpha
 src_dir: ./src
 media_dir: ./media

@@ -122,6 +122,7 @@ SUBMODULE (sph_particles) io
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                    deallocate_metric_on_particles
     USE input_output,        ONLY: set_units, read_SPHINCS_dump
+    USE constants, ONLY: amu, c_light2, km2m, m2cm, Msun_geo
 
     IMPLICIT NONE
 
@@ -140,7 +141,7 @@ SUBMODULE (sph_particles) io
     !-- Set up the MODULE variables in MODULE sph_variables
     !-- (used by write_SPHINCS_dump)
     !
-    npart= THIS% npart
+    npart= 10*THIS% npart
 
     CALL set_units('NSM')
 
@@ -149,6 +150,51 @@ SUBMODULE (sph_particles) io
 
     finalnamefile= TRIM(namefile_bin)//"00000"
     CALL read_SPHINCS_dump( finalnamefile )
+
+    PRINT *, " * Maximum interpolated nlrf =", &
+             MAXVAL( nlrf(1:npart), DIM= 1 ) &
+             /((Msun_geo*km2m*m2cm)**3)*amu, " g cm^{-3}"
+             !" m0c2_cu (TODO: CHECK UNITS)"!, &
+             !"baryon Msun_geo^{-3}"
+    PRINT *, " * Minimum interpolated nlrf =", &
+             MINVAL( nlrf(1:npart), DIM= 1 ) &
+             /((Msun_geo*km2m*m2cm)**3)*amu, " g cm^{-3}"
+             !" m0c2_cu (TODO: CHECK UNITS)"!, &
+             !"baryon Msun_geo^{-3}"
+    PRINT *, " * Ratio between the two=", &
+             MAXVAL( nlrf(1:npart), DIM= 1 )/ &
+             MINVAL( nlrf(1:npart), DIM= 1 )
+    PRINT *
+
+    PRINT *, " * Maximum pressure =", &
+             MAXVAL( Pr(1:npart), DIM= 1 ) &
+             *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+             !" m0c2_cu (TODO: CHECK UNITS)"!, &
+             !"baryon Msun_geo^{-3}"
+    PRINT *, " * Minimum pressure =", &
+             MINVAL( Pr(1:npart), DIM= 1 ) &
+             *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+             !" m0c2_cu (TODO: CHECK UNITS)"!, &
+             !"baryon Msun_geo^{-3}"
+    PRINT *, " * Ratio between the two=", &
+             MAXVAL( Pr(1:npart), DIM= 1 )/ &
+             MINVAL( Pr(1:npart), DIM= 1 )
+    PRINT *
+
+    PRINT *, " * Maximum specific internal energy =", &
+             MAXVAL( u(1:npart), DIM= 1 ), " c^2"
+             !" m0c2_cu (TODO: CHECK UNITS)"!, &
+             !"baryon Msun_geo^{-3}"
+    PRINT *, " * Minimum specific internal energy =", &
+             MINVAL( u(1:npart), DIM= 1 ), " c^2"
+             !" m0c2_cu (TODO: CHECK UNITS)"!, &
+             !"baryon Msun_geo^{-3}"
+    PRINT *, " * Ratio between the two=", &
+             MAXVAL( u(1:npart), DIM= 1 )/ &
+             MINVAL( u(1:npart), DIM= 1 )
+    PRINT *
+
+    !STOP
 
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited

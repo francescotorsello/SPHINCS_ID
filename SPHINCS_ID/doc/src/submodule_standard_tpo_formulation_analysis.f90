@@ -49,13 +49,17 @@ SUBMODULE (standard_tpo_formulation) analysis
     !
     !****************************************************
 
+    USE constants, ONLY: pi
+    USE utility,   ONLY: determinant_sym3x3_grid
+
     IMPLICIT NONE
 
     INTEGER:: cnt_m7, cnt_m6, cnt_m5, cnt_m4, cnt_m3, cnt_m2, cnt_m1, cnt_0, &
               cnt_p1, cnt_p2, cnt_p3, cnt_oo, grid_points, i, j, k, &
               unit_analysis, nx, ny, nz
 
-    DOUBLE PRECISION:: tmp, total
+    DOUBLE PRECISION:: tmp, total, dx, dy, dz, detg3
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: l2_norm_array
 
     LOGICAL:: exist
     !LOGICAL, PARAMETER:: DEBUG= .FALSE.
@@ -157,6 +161,9 @@ SUBMODULE (standard_tpo_formulation) analysis
     nx= THIS% get_ngrid_x(l)
     ny= THIS% get_ngrid_y(l)
     nz= THIS% get_ngrid_z(l)
+    dx= THIS% get_dx(l)
+    dy= THIS% get_dy(l)
+    dz= THIS% get_dz(l)
     grid_points= nx*ny*nz
 
     !
@@ -171,6 +178,63 @@ SUBMODULE (standard_tpo_formulation) analysis
       ENDDO
     ENDDO
     l2_norm= SQRT( l2_norm/grid_points )
+  !  PRINT *, l2_norm
+  !  PRINT *
+  !
+  !  ALLOCATE( l2_norm_array( grid_points ) )
+  !  l2_norm_array= 0.0D0
+  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !  !$OMP             SHARED( nx, ny, nz, l2_norm_array, constraint ) &
+  !  !$OMP             PRIVATE( i, j, k )
+  !  DO k= 1, nz, 1
+  !    DO j= 1, ny, 1
+  !      DO i= 1, nx, 1
+  !        l2_norm_array( (k-1)*nx*ny + (j-1)*nx + i )= &
+  !                                          constraint(i,j,k)*constraint(i,j,k)
+  !      ENDDO
+  !    ENDDO
+  !  ENDDO
+  !  !$OMP END PARALLEL DO
+  !  l2_norm= SUM( l2_norm_array, DIM= 1 )
+  !
+  !  PRINT *, l2_norm
+  !  PRINT *
+  !  STOP
+
+    !
+    !-- Compute a rough estimate of the integral of the constraints
+    !
+    integral= 0.0D0
+    IF( PRESENT(source) )THEN
+
+      DO k= 1, nz, 1
+        DO j= 1, ny, 1
+          DO i= 1, nx, 1
+            CALL determinant_sym3x3_grid( i, j, k, &
+                                          THIS% g_phys3_ll% levels(l)% var, &
+                                          detg3 )
+            integral= integral &
+                      + dx*dy*dz*SQRT(detg3)*( constraint(i,j,k) - source(i,j,k) )
+          ENDDO
+        ENDDO
+      ENDDO
+
+    ELSE
+
+      DO k= 1, nz, 1
+        DO j= 1, ny, 1
+          DO i= 1, nx, 1
+            CALL determinant_sym3x3_grid( i, j, k, &
+                                          THIS% g_phys3_ll% levels(l)% var, &
+                                          detg3 )
+            integral= integral &
+                      + dx*dy*dz*SQRT(detg3)*constraint(i,j,k)
+          ENDDO
+        ENDDO
+      ENDDO
+
+    ENDIF
+    integral= integral/(8.0D0*pi)
 
     !
     !-- Compute the loo norm (supremum norm) of the constraints
@@ -222,6 +286,9 @@ SUBMODULE (standard_tpo_formulation) analysis
     WRITE( UNIT = unit_logfile, FMT = * )
     WRITE( UNIT = unit_logfile, FMT = * ) "# l2-norm of ", name_constraint,&
                                " over the gravity grid= ", l2_norm
+    WRITE( UNIT = unit_logfile, FMT = * )
+    WRITE( UNIT = unit_logfile, FMT = * ) "# Integral of ", name_constraint,&
+                               " over the gravity grid= ", integral
     WRITE( UNIT = unit_logfile, FMT = * )
     WRITE( UNIT = unit_logfile, FMT = * ) &
                        "# loo-norm (supremum of the absolute values) of ", &

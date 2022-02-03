@@ -60,7 +60,7 @@ SUBMODULE (bns_lorene) io
 
     IMPLICIT NONE
 
-    IF( THIS% angular_momentum == 0.0D0 )THEN
+    IF( THIS% angular_momentum_z == 0.0D0 )THEN
 
       PRINT *
       PRINT *, " ** The parameters have not ben read yet. ", &
@@ -88,13 +88,18 @@ SUBMODULE (bns_lorene) io
       PRINT *, " Stellar center of NS 2 = ", THIS% center2_x, " M_sun^geo"
       PRINT *, " Barycenter of NS 1 = ", THIS% barycenter1_x, " M_sun^geo"
       PRINT *, " Barycenter of NS 2 = ", THIS% barycenter2_x, " M_sun^geo"
-      PRINT *, " Angular velocity Omega_0 = ", THIS% angular_vel, " rad/s = ", &
+      PRINT *, " Orbital angular velocity Omega_0 = ", &
+               THIS% angular_vel, " rad/s = ", &
                THIS% angular_vel/(c_light*cm2km), "km^{-1}"
       PRINT *, " mOmega = ", &
                "Omega_0[km^{-1}]*(mass_grav1[km] + mass_grav2[km]) = ",&
-               THIS% mOmega, "[pure number]"
-      PRINT *, " Angular momentum of the system = ", &
-               THIS% angular_momentum, " G M_sun^2 /c"
+               THIS% mOmega, "[pure number]"   
+      PRINT *, " Bowen-York angular momentum of the system, x component = ", &
+               THIS% angular_momentum_x, " G M_sun^2 /c"
+      PRINT *, " Bowen-York angular momentum of the system, y component = ", &
+               THIS% angular_momentum_y, " G M_sun^2 /c"
+      PRINT *, " Bowen-York angular momentum of the system, z component = ", &
+               THIS% angular_momentum_z, " G M_sun^2 /c"
       PRINT *, " Estimated time of the merger t_merger = ", THIS% t_merger, &
                " M_sun^geo = ", THIS% t_merger*MSun_geo/(c_light*cm2km)*1000.0,&
                " ms, from Peters_PR_136_B1224_1964, eq. (5.10)"

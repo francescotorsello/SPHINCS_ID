@@ -115,7 +115,9 @@ MODULE bns_base
     DOUBLE PRECISION:: t_merger
 
     !> Angular momentum of the BNS system \([G M_\odot^2/c]\)
-    DOUBLE PRECISION:: angular_momentum= 0.0D0
+    DOUBLE PRECISION:: angular_momentum_x= 0.0D0
+    DOUBLE PRECISION:: angular_momentum_y= 0.0D0
+    DOUBLE PRECISION:: angular_momentum_z= 0.0D0
 
     !& Areal (or circumferential) radius of star 1 \([L_\odot]\)
     ! Note that these is the areal radius of the star in the binary system,
@@ -743,7 +745,7 @@ MODULE bns_base
       !> [[bnsbase]] object which this PROCEDURE is a member of
       CLASS(bnsbase), INTENT( IN ):: THIS
       ! Result
-      DOUBLE PRECISION:: get_angular_momentum
+      DOUBLE PRECISION:: get_angular_momentum(3)
 
     END FUNCTION get_angular_momentum
 

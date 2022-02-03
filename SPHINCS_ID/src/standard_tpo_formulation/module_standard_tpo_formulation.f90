@@ -97,18 +97,24 @@ MODULE standard_tpo_formulation
 
     TYPE(grid_function_scalar):: HC
     !# Grid scalar function storing the Hamiltonian constraint (violations)
-    !  computed using the full |lorene| ID on the mesh
+    !  computed using the ID on the mesh
     TYPE(grid_function_scalar):: HC_parts
     !# Grid scalar function storing the Hamiltonian constraint (violations)
     !  computed using the stress-energy tensor mapped from the particles to the
     !  mesh
+    TYPE(grid_function_scalar):: rho
+    !# Grid scalar function storing the matter source in the Hamiltonian
+    !  constraint computed using the ID on the mesh, multiplied by \(16\pi\)
     TYPE(grid_function):: MC
     !# Grid function storing the momentum constraint (violations)
-    !  computed using the full |lorene| ID on the mesh
+    !  computed using the ID on the mesh
     TYPE(grid_function):: MC_parts
     !# Grid function storing the momentum constraint (violations)
     !  computed using the stress-energy tensor mapped from the particles to the
     !  mesh
+    TYPE(grid_function):: S
+    !# Grid function storing the matter source in the momentum
+    !  constraint computed using the ID on the mesh, multiplied by \(8\pi\)
 
     !
     !-- Norms of constraint violations
@@ -126,6 +132,8 @@ MODULE standard_tpo_formulation
     !# \(\ell_\infty\) norm of the Hamiltonian constraint computed on the mesh,
     !  using the stress-energy tensor mapped from the particles
     !  (i.e., its maximum)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_int
+    !! Integral the Hamiltonian constraint computed on the mesh
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_l2
     !! \(\ell_2\) norm of the momentum constraint computed on the mesh
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_l2
@@ -138,6 +146,8 @@ MODULE standard_tpo_formulation
     !# \(\ell_\infty\) norm of the momentum constraint computed on the mesh,
     !  using the stress-energy tensor mapped from the particles
     !  (i.e., its maximum)
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_int
+    !! Integral of the momentum constraint computed on the mesh
 
     !
     !-- Steering variables
@@ -324,16 +334,20 @@ MODULE standard_tpo_formulation
                                           unit_logfile, &
                                           name_analysis, &
                                           l2_norm, &
-                                          loo_norm )
+                                          loo_norm, &
+                                          integral, &
+                                          source )
 
       CLASS(tpo),                  INTENT( IN OUT ):: THIS
-      INTEGER,                            INTENT( IN )    :: l
-      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
-      CHARACTER( LEN= * ),                INTENT( IN )    :: name_constraint
-      CHARACTER( LEN= * ),                INTENT( IN )    :: name_analysis
-      INTEGER,                            INTENT( IN )    :: unit_logfile
-      DOUBLE PRECISION,                   INTENT( OUT )   :: l2_norm
-      DOUBLE PRECISION,                   INTENT( OUT )   :: loo_norm
+      INTEGER,                            INTENT( IN ) :: l
+      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN ) :: constraint
+      CHARACTER( LEN= * ),                INTENT( IN ) :: name_constraint
+      CHARACTER( LEN= * ),                INTENT( IN ) :: name_analysis
+      INTEGER,                            INTENT( IN ) :: unit_logfile
+      DOUBLE PRECISION,                   INTENT( OUT ):: l2_norm
+      DOUBLE PRECISION,                   INTENT( OUT ):: loo_norm
+      DOUBLE PRECISION,                   INTENT( OUT ):: integral
+      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN ), OPTIONAL:: source
 
     END SUBROUTINE analyze_constraint
 

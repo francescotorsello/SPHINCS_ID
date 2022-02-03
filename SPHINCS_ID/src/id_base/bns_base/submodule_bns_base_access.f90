@@ -376,7 +376,9 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_angular_momentum= THIS% angular_momentum
+    get_angular_momentum= [ THIS% angular_momentum_x, &
+                            THIS% angular_momentum_y, &
+                            THIS% angular_momentum_z ]
 
   END PROCEDURE get_angular_momentum
 

@@ -1202,7 +1202,9 @@ MODULE bns_lorene
                                      mass_grav1, &
                                      mass_grav2, &
                                      adm_mass, &
-                                     angular_momentum, &
+                                     angular_momentum_x, &
+                                     angular_momentum_y, &
+                                     angular_momentum_z, &
                                      area_radius1, &
                                      radius1_x_comp, &
                                      radius1_y, &
@@ -1290,7 +1292,9 @@ MODULE bns_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav1
       REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav2
       REAL(C_DOUBLE), INTENT(OUT)       :: adm_mass
-      REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum
+      REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_y
+      REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_z
       REAL(C_DOUBLE), INTENT(OUT)       :: area_radius1
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_x_comp
       REAL(C_DOUBLE), INTENT(OUT)       :: radius1_y

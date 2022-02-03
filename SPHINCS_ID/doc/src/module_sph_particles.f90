@@ -1548,8 +1548,9 @@ MODULE sph_particles
   END FUNCTION find_h_backup
 
 
-  PURE SUBROUTINE COM_1PN( npart, pos, vel, nu, rho, u, nstar, sq_det_g4, g4, &
-                           pn_com_x, pn_com_y, pn_com_z, pn_com_d, mass )
+  SUBROUTINE COM_1PN( npart, pos, vel, nu, nlrf, u, nstar, &
+                      sq_det_g4, g4, &
+                      pn_com_x, pn_com_y, pn_com_z, pn_com_d, mass )
 
     !************************************************************
     !                                                           *
@@ -1575,8 +1576,8 @@ MODULE sph_particles
     ! Particles' 3-velocities in the SPH computing frame
     DOUBLE PRECISION, INTENT(IN) :: nu(npart)
     ! Particles' baryon numbers
-    DOUBLE PRECISION, INTENT(IN) :: rho(npart)
-    ! Particles densities
+    DOUBLE PRECISION, INTENT(IN) :: nlrf(npart)
+    ! Particles densities in the local rest frame
     DOUBLE PRECISION, INTENT(IN) :: u(npart)
     ! Particles' specific internal energy
     DOUBLE PRECISION, INTENT(IN) :: nstar(npart)
@@ -1619,21 +1620,37 @@ MODULE sph_particles
     DO a= 1, npart, 1
 
       v_sqnorm= vel(jx,a)**2 + vel(jy,a)**2 + vel(jz,a)**2
-      !v_sqnorm= g4(ixx,a)*vel(jx,a)**two + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
-      !        + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**two &
-      !        + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**two
+      !v_sqnorm= g4(ixx,a)*vel(jx,a)**2 + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
+      !        + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**2 &
+      !        + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**2
 
       u_pot   = half*( sq_det_g4(a) - one )
 
-      pi_pot  = u(a)*( one - half*v_sqnorm - three*u_pot )!u(a)*rho(a)/nstar(a)
+      pi_pot  = u(a)*nlrf(a)/nstar(a)
+      !pi_pot  = u(a)*( one - half*v_sqnorm - three*u_pot )
 
       nu_pot  = one + half*v_sqnorm - half*u_pot + pi_pot
 
-      mass    = mass + nu(a)*nu_pot
+      !mass    = mass + nu(a)*nu_pot
+      mass    = mass + nlrf(a)*( nu(a)/nstar(a) ) &
+                /( one - half*v_sqnorm - three*u_pot )*nu_pot
 
-      pn_com_x= pn_com_x + nu(a)*pos(jx,a)*nu_pot
-      pn_com_y= pn_com_y + nu(a)*pos(jy,a)*nu_pot
-      pn_com_z= pn_com_z + nu(a)*pos(jz,a)*nu_pot
+!IF( one - half*v_sqnorm - three*u_pot < zero )THEN
+!  PRINT *, one - half*v_sqnorm - three*u_pot
+!  PRINT *, v_sqnorm
+!  PRINT *, u_pot
+!  STOP
+!ENDIF
+
+      !pn_com_x= pn_com_x + nu(a)*pos(jx,a)*nu_pot
+      !pn_com_y= pn_com_y + nu(a)*pos(jy,a)*nu_pot
+      !pn_com_z= pn_com_z + nu(a)*pos(jz,a)*nu_pot
+      pn_com_x= pn_com_x + nlrf(a)*( nu(a)/nstar(a) ) &
+                /( one - half*v_sqnorm - three*u_pot )*pos(jx,a)*nu_pot
+      pn_com_y= pn_com_y + nlrf(a)*( nu(a)/nstar(a) ) &
+                /( one - half*v_sqnorm - three*u_pot )*pos(jy,a)*nu_pot
+      pn_com_z= pn_com_z + nlrf(a)*( nu(a)/nstar(a) ) &
+                /( one - half*v_sqnorm - three*u_pot )*pos(jz,a)*nu_pot
 
     ENDDO
 

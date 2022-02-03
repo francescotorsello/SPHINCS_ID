@@ -100,8 +100,8 @@ SUBMODULE (bns_lorene) import
         import_id_loop: DO itr= 1, n, 1
 
           ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-          ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-          ! Msun_geo
+          ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
+          ! definition of Msun_geo
           CALL get_lorene_id( THIS% bns_ptr, &
                               x( itr )*Msun_geo, &
                               y( itr )*Msun_geo, &

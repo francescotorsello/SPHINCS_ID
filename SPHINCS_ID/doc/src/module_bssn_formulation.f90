@@ -112,6 +112,9 @@ MODULE bssn_formulation
     !# \(\ell_\infty\) norm, i.e., supremum of the absolute value, of the
     !  connection constraint computed with the |bssn| |id| on the mesh,
     !  and the hydrodynamical |id| mapped from the particles to the mesh
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_int
+    !# Integral of the connection constraint computed
+    !  with the |id| on the mesh
 
     LOGICAL, PUBLIC:: export_bin
     !# `.TRUE.` if the binary files for SPHINCS_BSSN are to be exported,
@@ -327,6 +330,66 @@ MODULE bssn_formulation
 
 
   END INTERFACE
+
+  !*****************************************************************
+  !                                                                *
+  !# PD 26.03.2020: Interface mapping BSSN_CONSTRAINTS_INTERIOR to *
+  !                ML_BSSN_NV_ConstraintsInterior_Body             *
+  !
+  ! Interface mapping BSSN_CONSTRAINTS_INTERIOR to *
+  !                ML_BSSN_NV_ConstraintsInterior_Body             *
+  !
+  ! FT 03.03.2022
+  !                                                                *
+  !*****************************************************************
+
+  INTERFACE bssn_constraint_terms_interior
+
+    SUBROUTINE bssn_constraint_terms_interior( nx, ny, nz, imin, imax, &
+                           dx, dy, dz, &
+                           gt11, gt12, gt13, gt22, gt23, gt33, &
+                           At11, At12, At13, At22, At23, At33, &
+                           trK, phi, Xt1, Xt2, Xt3, eTtt, eTtx, eTty, &
+                           eTtz, eTxx, eTxy, eTxz, eTyy, eTyz, eTzz, &
+                           alp, beta1, beta2, beta3, &
+                           cXt1, cXt2, cXt3, Ham, M1, M2, M3, rho, s1, s2, s3) &
+                      BIND(C, NAME='ML_BSSN_NV_ConstraintTermsInterior_Body')
+
+      USE iso_c_binding
+
+      INTEGER(C_INT), VALUE, INTENT(IN) :: nx, ny, nz
+      INTEGER(C_INT), DIMENSION(3), INTENT(IN) :: imin, imax
+      REAL(C_DOUBLE), VALUE, INTENT(IN) :: dx, dy, dz
+
+      REAL(C_DOUBLE), INTENT(IN) :: gt11(nx,ny,nz), gt12(nx,ny,nz), &
+                                    gt13(nx,ny,nz), gt22(nx,ny,nz), &
+                                    gt23(nx,ny,nz), gt33(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(IN) :: At11(nx,ny,nz), At12(nx,ny,nz), &
+                                    At13(nx,ny,nz), At22(nx,ny,nz), &
+                                    At23(nx,ny,nz), At33(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(IN) :: trk(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(IN) :: phi(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(IN) :: Xt1(nx,ny,nz), Xt2(nx,ny,nz), &
+                                    Xt3(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(IN) :: eTtt(nx,ny,nz), eTtx(nx,ny,nz), &
+                                    eTty(nx,ny,nz), eTtz(nx,ny,nz), &
+                                    eTxx(nx,ny,nz), eTxy(nx,ny,nz), &
+                                    eTxz(nx,ny,nz), eTyy(nx,ny,nz), &
+                                    eTyz(nx,ny,nz), eTzz(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(IN) :: alp(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(IN) :: beta1(nx,ny,nz), beta2(nx,ny,nz), &
+                                    beta3(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(OUT):: cXt1(nx,ny,nz), cXt2(nx,ny,nz), &
+                                    cXt3(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(OUT):: Ham(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(OUT):: M1(nx,ny,nz), M2(nx,ny,nz), &
+                                    M3(nx,ny,nz)
+      REAL(C_DOUBLE), INTENT(OUT):: rho(nx,ny,nz), s1(nx,ny,nz), &
+                                     s2(nx,ny,nz), s3(nx,ny,nz)
+
+    END SUBROUTINE bssn_constraint_terms_interior
+
+  END INTERFACE bssn_constraint_terms_interior
 
 
 END MODULE bssn_formulation

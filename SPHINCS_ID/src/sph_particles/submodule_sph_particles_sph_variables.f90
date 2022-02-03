@@ -39,7 +39,7 @@ SUBMODULE (sph_particles) sph_variables
   !****************************************************
 
 
-  USE constants, ONLY: zero, half, one, two, three
+  USE constants, ONLY: zero, half, one, two, three, c_light2
 
 
   IMPLICIT NONE
@@ -118,7 +118,7 @@ SUBMODULE (sph_particles) sph_variables
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
-    USE analyze,             ONLY: COM
+    USE analyze,             ONLY: COM, lin_mom
     USE tensor,              ONLY: n_sym4x4, &
                                    itt, itx, ity, itz, &
                                    ixx, ixy, ixz, iyy, iyz, izz
@@ -137,13 +137,14 @@ SUBMODULE (sph_particles) sph_variables
     INTEGER:: itot, l, ill!, b, k
 
     DOUBLE PRECISION:: g4(0:3,0:3)
-    DOUBLE PRECISION:: gg4(THIS% npart,n_sym4x4)
+    DOUBLE PRECISION:: gg4(n_sym4x4,THIS% npart)
     DOUBLE PRECISION:: sq_detg4(THIS% npart)
     DOUBLE PRECISION:: det, sq_g, Theta_a!, &!nu_max1, nu_max2, &
                        !nu_tmp, nu_thres1, nu_thres2
     DOUBLE PRECISION:: com_x_newt, com_y_newt, com_z_newt, com_d_newt, mass_newt
     DOUBLE PRECISION:: com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn
-    DOUBLE PRECISION:: px, py, pz
+    DOUBLE PRECISION:: px_newt, py_newt, pz_newt, pnorm_newt
+    DOUBLE PRECISION:: px, py, pz, pnorm
 
     !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
     !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
@@ -315,16 +316,16 @@ SUBMODULE (sph_particles) sph_variables
       g4(3,2)= THIS% g_yz_parts(itr)
       g4(3,3)= THIS% g_zz_parts(itr)
 
-      gg4(itr,1)= g4(0,0)
-      gg4(itr,2)= g4(0,1)
-      gg4(itr,3)= g4(0,2)
-      gg4(itr,4)= g4(0,3)
-      gg4(itr,5)= g4(1,1)
-      gg4(itr,6)= g4(1,2)
-      gg4(itr,7)= g4(1,3)
-      gg4(itr,8)= g4(2,2)
-      gg4(itr,9)= g4(2,3)
-      gg4(itr,10)= g4(3,3)
+      gg4(1, itr)= g4(0,0)
+      gg4(2, itr)= g4(0,1)
+      gg4(3, itr)= g4(0,2)
+      gg4(4, itr)= g4(0,3)
+      gg4(5, itr)= g4(1,1)
+      gg4(6, itr)= g4(1,2)
+      gg4(7, itr)= g4(1,3)
+      gg4(8, itr)= g4(2,2)
+      gg4(9, itr)= g4(2,3)
+      gg4(10,itr)= g4(3,3)
 
       ! sqrt(-det(g4))
       CALL determinant_4x4_matrix(g4,det)
@@ -1249,6 +1250,34 @@ SUBMODULE (sph_particles) sph_variables
                MINVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )
       PRINT *
 
+      PRINT *, " * Maximum pressure", i_matter, "=", &
+               MAXVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 ) &
+               *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Minimum pressure", i_matter, "=", &
+               MINVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 ) &
+               *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Ratio between the two=", &
+               MAXVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 )
+      PRINT *
+
+      PRINT *, " * Maximum specific internal energy", i_matter, "=", &
+               MAXVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 ), " c^2"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Minimum specific internal energy", i_matter, "=", &
+               MINVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 ), " c^2"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Ratio between the two=", &
+               MAXVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 )
+      PRINT *
+
       THIS% nuratio_i(i_matter)= MAXVAL( THIS% nu(npart_in:npart_fin), DIM= 1 )&
                                 /MINVAL( THIS% nu(npart_in:npart_fin), DIM= 1 )
       PRINT *, " * Maximum n. baryon per particle (nu) on object", i_matter, &
@@ -1367,18 +1396,22 @@ SUBMODULE (sph_particles) sph_variables
     !              THIS% specific_energy_parts, THIS% nstar_int, sq_detg4, gg4, &
     !              com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn )
     CALL COM_1PN( THIS% npart_i(1), THIS% pos(:,1:THIS% npart_i(1)), &
-                  THIS% v(:,1:THIS% npart_i(1)), &
+                  THIS% v(1:3,1:THIS% npart_i(1)), &
                   !THIS% v_euler_parts_x, &
-                  THIS% nu(1:THIS% npart_i(1))/sq_det_g4(1:THIS% npart_i(1))/THIS% Theta(1:THIS% npart_i(1)), &
+                  THIS% nu(1:THIS% npart_i(1)), &!/sq_det_g4(1:THIS% npart_i(1))/THIS% Theta(1:THIS% npart_i(1)), &
                   !THIS% baryon_density_parts(1:THIS% npart_i(1)), &
                   THIS% nlrf_int(1:THIS% npart_i(1)), &
                   THIS% u_pwp(1:THIS% npart_i(1)), &
                   THIS% nstar_int(1:THIS% npart_i(1)), &
-                  sq_det_g4(1:THIS% npart_i(1)), gg4(1:THIS% npart_i(1),n_sym4x4), &
+                  sq_det_g4(1:THIS% npart_i(1)), &
+                  gg4(:,1:THIS% npart_i(1)), &
                   com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn )
 
     IF( debug ) PRINT *, "101"
 
+    nu   = THIS% nu
+    vel_u= THIS% v(1:3,:)
+    CALL lin_mom( pnorm_newt, px_newt, py_newt, pz_newt )
     !CALL momentum_1pn( THIS% npart, THIS% pos, &
     !                   THIS% v, &
     !                   !THIS% v_euler_parts_x, &
@@ -1386,16 +1419,16 @@ SUBMODULE (sph_particles) sph_variables
     !                   THIS% specific_energy_parts, THIS% pressure_parts_cu, &
     !                   THIS% nstar_int, THIS% h, &
     !                   sq_detg4, gg4, px, py, pz )
-    CALL momentum_1pn( THIS% npart, THIS% pos, &
-                       THIS% v, &
-                       !THIS% v_euler_parts_x, &
-                       THIS% nu, &
-                       THIS% nlrf_int, &
-                       THIS% u_pwp, &
-                       THIS% pressure_parts_cu, &
-                       THIS% nstar_int, &
-                       THIS% h, &
-                       sq_detg4, gg4, px, py, pz )
+    !CALL momentum_1pn( THIS% npart, THIS% pos, &
+    !                   THIS% v, &
+    !                   !THIS% v_euler_parts_x, &
+    !                   THIS% nu, &
+    !                   THIS% nlrf_int, &
+    !                   THIS% u_pwp, &
+    !                   THIS% pressure_parts_cu, &
+    !                   THIS% nstar_int, &
+    !                   THIS% h, &
+    !                   sq_detg4, gg4, px, py, pz )
 
     PRINT *, "LORENE mass:            ", THIS% masses(1), mass_1pn*amu/Msun
     PRINT *, "LORENE COM:            ", &
@@ -1404,7 +1437,9 @@ SUBMODULE (sph_particles) sph_variables
              com_x_newt, com_y_newt, com_z_newt!, com_d_newt
     PRINT *, "1PN COM:               ", &
              com_x_1pn, com_y_1pn, com_z_1pn!, com_d_1pn
-    PRINT *, "1PN spacetime momentum:", px, py, pz
+    PRINT *, "Newtonian spacetime momentum:", px_newt/SUM(nu,DIM=1), py_newt/SUM(nu,DIM=1), pz_newt/SUM(nu,DIM=1), pnorm_newt/SUM(nu,DIM=1)
+    PRINT *, "1PN spacetime momentum:", px/mass_1pn, py/mass_1pn, pz/mass_1pn, pnorm/mass_1pn
+    PRINT *
     PRINT *
 
     PRINT *, " * Deallocating MODULE variables..."

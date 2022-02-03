@@ -48,6 +48,7 @@ PROGRAM sphincs_id
   !USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
   !                            k_lorene2hydrobase_piecewisepolytrope, &
   !                            MSun_geo, kg2g, m2cm, m0c2
+  USE constants, ONLY: amu, Msun_geo, km2m, m2cm
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
                               itr4, file_exists, cnt, &
@@ -199,6 +200,11 @@ PROGRAM sphincs_id
   ! 1.4-1.4 systems for both ; 1.6-1.6 ; 1.2-1.8 GRAVIATIONAL masses
   !STOP
 
+  !PRINT *, 1.283004487272563D54*amu/(MSun_geo*km2m*m2cm)**3
+  !PRINT *, ( 661708760715581.D0 - 661747751578110.D0 )/661747751578110.D0
+  !PRINT *, ( 664672071917413.D0 - 661747751578110.D0 )/661747751578110.D0
+  !STOP
+
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time
 
@@ -338,7 +344,11 @@ PROGRAM sphincs_id
       ENDDO part_distribution_loop
     ENDDO place_hydro_id_loops
 
-    !STOP
+  !  namefile_parts_bin= "NSNS."
+  !  namefile_parts= "try.dat"
+  !  CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
+  !
+  !  STOP
 
     compute_export_sph_loops: DO itr3= 1, n_bns, 1
       part_distribution_loop2: DO itr4= 1, max_n_parts, 1

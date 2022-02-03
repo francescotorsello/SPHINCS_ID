@@ -57,6 +57,8 @@ SUBMODULE (standard_tpo_formulation) io
     !
     !************************************************
 
+    USE tensor, ONLY: jx, jy, jz
+
     IMPLICIT NONE
 
     INTEGER:: l, last_level, i_matter
@@ -83,6 +85,20 @@ SUBMODULE (standard_tpo_formulation) io
     DO i_matter= 1, THIS% n_matter, 1
       PRINT *, "   Number of grid points across the x-axis-diameter of ", &
                "matter object ", i_matter, "=", THIS% npoints_xaxis(i_matter)
+    ENDDO
+    PRINT *
+    DO l= 1, last_level, 1
+      PRINT *, "   x component of the ADM momentum ", &
+               "on level    ", &
+               l, "= ", THIS% MC_int(l,jx)
+      PRINT *, "   y component of the ADM momentum ", &
+               "on level    ", &
+               l, "= ", THIS% MC_int(l,jy)
+      PRINT *, "   z component of the ADM momentum ", &
+               "on level    ", &
+               l, "= ", THIS% MC_int(l,jz)
+      PRINT *, "   Euclidean norm of the ADM momentum ", &
+               "on level ", l, "= ", NORM2( THIS% MC_int(l,:), DIM=1 )
     ENDDO
     PRINT *
 
