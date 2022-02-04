@@ -44,6 +44,7 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        etdiffrot = \(\texttt{Et_diffrot}\)
        eos = \(\mathrm{EOS}\)
        ee = Einstein equations
+       bns = \(\mathrm{BNS}\)
 
 #### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___

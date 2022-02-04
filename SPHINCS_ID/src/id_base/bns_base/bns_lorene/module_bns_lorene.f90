@@ -182,6 +182,7 @@ MODULE bns_lorene
     PROCEDURE:: read_id_mass_b    => import_id_mass_b
     PROCEDURE:: read_id_k         => import_id_k
 
+    PROCEDURE:: print_summary_derived => print_summary_bnslorene
 
     !-----------------!
     !--  FUNCTIONS  --!
@@ -300,6 +301,23 @@ MODULE bns_lorene
   !
   INTERFACE
 
+
+    !------------------------------!
+    !--  OVERRIDING SUBROUTINES  --!
+    !------------------------------!
+
+
+    MODULE SUBROUTINE print_summary_bnslorene( THIS, filename )
+    !# Prints a summary of the physical properties of the |bns| produced by
+    !  |lorene| to the standard output and, optionally, to a formatted file
+    !  whose name is given as the optional argument `filename`
+
+
+      CLASS(bnslorene), INTENT( IN ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
+
+    END SUBROUTINE print_summary_bnslorene
 
     !
     !-- SUBROUTINES
@@ -1202,6 +1220,9 @@ MODULE bns_lorene
                                      mass_grav1, &
                                      mass_grav2, &
                                      adm_mass, &
+                                     linear_momentum_x, &
+                                     linear_momentum_y, &
+                                     linear_momentum_z, &
                                      angular_momentum_x, &
                                      angular_momentum_y, &
                                      angular_momentum_z, &
@@ -1292,6 +1313,9 @@ MODULE bns_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav1
       REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav2
       REAL(C_DOUBLE), INTENT(OUT)       :: adm_mass
+      REAL(C_DOUBLE), INTENT(OUT)       :: linear_momentum_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: linear_momentum_y
+      REAL(C_DOUBLE), INTENT(OUT)       :: linear_momentum_z
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_x
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_y
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_z

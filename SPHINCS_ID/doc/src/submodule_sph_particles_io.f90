@@ -34,6 +34,9 @@ SUBMODULE (sph_particles) io
   !***************************************************
 
 
+  USE constants, ONLY: amu, c_light2, km2m, m2cm, Msun_geo
+
+
   IMPLICIT NONE
 
 
@@ -62,6 +65,10 @@ SUBMODULE (sph_particles) io
 
     INTEGER:: i_matter
 
+    DOUBLE PRECISION:: max_nlrf_id, max_nlrf_sph, min_nlrf_sph
+    DOUBLE PRECISION:: max_pr_id,   max_pr_sph,   min_pr_sph
+    DOUBLE PRECISION:: max_u_id,    max_u_sph,    min_u_sph
+
     PRINT *, " * SPH:"
     PRINT *
     PRINT *, "   Total particle number= ", THIS% npart
@@ -83,6 +90,70 @@ SUBMODULE (sph_particles) io
     PRINT *, "   Baryon number ratio across all matter objects    =", &
              THIS% nuratio
     PRINT *
+
+    DO i_matter= 1, THIS% n_matter, 1
+
+      ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
+                 npart_fin  => THIS% npart_i(i_matter-1) +    &
+                               THIS% npart_i(i_matter) )
+
+        max_nlrf_id = MAXVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 )
+        max_nlrf_sph= MAXVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )
+        min_nlrf_sph= MINVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )
+
+        max_pr_id = MAXVAL( THIS% pressure_parts(npart_in:npart_fin), DIM= 1 )
+        max_pr_sph= MAXVAL( THIS% pressure_parts_cu(npart_in:npart_fin), &
+                            DIM= 1 )
+        min_pr_sph= MINVAL( THIS% pressure_parts_cu(npart_in:npart_fin), &
+                            DIM= 1 )
+
+        max_u_id = MAXVAL( THIS% specific_energy_parts(npart_in:npart_fin), &
+                           DIM= 1 )
+        max_u_sph= MAXVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 )
+        min_u_sph= MINVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 )
+
+        PRINT *, "   * On matter object ", i_matter, ":"
+        PRINT *
+
+        PRINT *, "   Maximum nlrf from the ID = ", max_nlrf_id &
+                 /((Msun_geo*km2m*m2cm)**3)*amu, " g cm^{-3}"
+        PRINT *, "   Maximum SPH interpolated nlrf =", max_nlrf_sph &
+                 /((Msun_geo*km2m*m2cm)**3)*amu, " g cm^{-3}"
+        PRINT *, "   Minimum SPH interpolated nlrf =", min_nlrf_sph &
+                 /((Msun_geo*km2m*m2cm)**3)*amu, " g cm^{-3}"
+        PRINT *, "   Relative difference between the two maximum nlrf=", &
+                 ABS( max_nlrf_sph - max_nlrf_id )/max_nlrf_id
+        PRINT *, "   Ratio between maximum and minimum nlrf=", &
+                 max_nlrf_sph/min_nlrf_sph
+        PRINT *
+
+        PRINT *, "   Maximum pressure from the ID = ", max_pr_id &
+                 *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+        PRINT *, "   Maximum pressure from SPH interpolated density and EOS =",&
+                 max_pr_sph*amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+        PRINT *, "   Minimum pressure from SPH interpolated density and EOS =",&
+                 min_pr_sph*amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+        PRINT *, "   Relative difference between the maximum pressures=", &
+                 ABS( max_pr_sph - max_pr_id )/max_pr_id
+        PRINT *, "   Ratio between maximum and minimum pressure=", &
+                 max_pr_sph/min_pr_sph
+        PRINT *
+
+        PRINT *, "   Maximum specific internal energy from the ID =", &
+                 max_u_id, " c^2"
+        PRINT *, "   Maximum specific internal energy from SPH interpolated ", &
+                 "density and EOS =", max_u_sph, " c^2"
+        PRINT *, "   Minimum specific internal energy from SPH interpolated ", &
+                 "density and EOS =", min_u_sph, " c^2"
+        PRINT *, "   Relative difference between the maximum specific ", &
+                 "internal energies=", ABS( max_u_sph - max_u_id )/max_u_id
+        PRINT *, "   Ratio between maximum and minimum specific internal ", &
+                 "energy=", max_u_sph/min_u_sph
+        PRINT *
+
+      END ASSOCIATE
+
+    ENDDO
 
   END PROCEDURE print_summary
 
@@ -122,7 +193,6 @@ SUBMODULE (sph_particles) io
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                    deallocate_metric_on_particles
     USE input_output,        ONLY: set_units, read_SPHINCS_dump
-    USE constants, ONLY: amu, c_light2, km2m, m2cm, Msun_geo
 
     IMPLICIT NONE
 
@@ -154,13 +224,9 @@ SUBMODULE (sph_particles) io
     PRINT *, " * Maximum interpolated nlrf =", &
              MAXVAL( nlrf(1:npart), DIM= 1 ) &
              /((Msun_geo*km2m*m2cm)**3)*amu, " g cm^{-3}"
-             !" m0c2_cu (TODO: CHECK UNITS)"!, &
-             !"baryon Msun_geo^{-3}"
     PRINT *, " * Minimum interpolated nlrf =", &
              MINVAL( nlrf(1:npart), DIM= 1 ) &
              /((Msun_geo*km2m*m2cm)**3)*amu, " g cm^{-3}"
-             !" m0c2_cu (TODO: CHECK UNITS)"!, &
-             !"baryon Msun_geo^{-3}"
     PRINT *, " * Ratio between the two=", &
              MAXVAL( nlrf(1:npart), DIM= 1 )/ &
              MINVAL( nlrf(1:npart), DIM= 1 )
@@ -169,13 +235,9 @@ SUBMODULE (sph_particles) io
     PRINT *, " * Maximum pressure =", &
              MAXVAL( Pr(1:npart), DIM= 1 ) &
              *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
-             !" m0c2_cu (TODO: CHECK UNITS)"!, &
-             !"baryon Msun_geo^{-3}"
     PRINT *, " * Minimum pressure =", &
              MINVAL( Pr(1:npart), DIM= 1 ) &
              *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
-             !" m0c2_cu (TODO: CHECK UNITS)"!, &
-             !"baryon Msun_geo^{-3}"
     PRINT *, " * Ratio between the two=", &
              MAXVAL( Pr(1:npart), DIM= 1 )/ &
              MINVAL( Pr(1:npart), DIM= 1 )
@@ -183,12 +245,8 @@ SUBMODULE (sph_particles) io
 
     PRINT *, " * Maximum specific internal energy =", &
              MAXVAL( u(1:npart), DIM= 1 ), " c^2"
-             !" m0c2_cu (TODO: CHECK UNITS)"!, &
-             !"baryon Msun_geo^{-3}"
     PRINT *, " * Minimum specific internal energy =", &
              MINVAL( u(1:npart), DIM= 1 ), " c^2"
-             !" m0c2_cu (TODO: CHECK UNITS)"!, &
-             !"baryon Msun_geo^{-3}"
     PRINT *, " * Ratio between the two=", &
              MAXVAL( u(1:npart), DIM= 1 )/ &
              MINVAL( u(1:npart), DIM= 1 )

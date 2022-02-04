@@ -364,6 +364,25 @@ SUBMODULE (bns_base) access
   END PROCEDURE get_adm_mass
 
 
+  MODULE PROCEDURE get_linear_momentum
+
+    !************************************************
+    !
+    !# Returns the linear momentum of the system
+    !
+    !  FT 04.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    get_linear_momentum= [ THIS% linear_momentum_x, &
+                           THIS% linear_momentum_y, &
+                           THIS% linear_momentum_z ]
+
+  END PROCEDURE get_linear_momentum
+
+
   MODULE PROCEDURE get_angular_momentum
 
     !************************************************

@@ -44,11 +44,11 @@ SUBMODULE (bns_base) io
   !------------------------------!
 
 
-  MODULE PROCEDURE print_summary_bns
+  MODULE PROCEDURE print_summary_bnsbase
 
     !************************************************
     !
-    !# Prints a summary of the physical properties the system
+    !# Prints a summary of the physical properties the |bns| system
     !  to the standard output and, optionally, to a formatted
     !  file whose name is given as the optional argument `filename`
     !
@@ -103,8 +103,10 @@ SUBMODULE (bns_base) io
                  /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
     PRINT *
 
+    CALL THIS% print_summary_derived( filename )
 
-  END PROCEDURE print_summary_bns
+
+  END PROCEDURE print_summary_bnsbase
 
 
 END SUBMODULE io

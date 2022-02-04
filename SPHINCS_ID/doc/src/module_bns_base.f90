@@ -114,10 +114,25 @@ MODULE bns_base
     !  Masses", Phys. Rev. 136, B1224 (1964)](http://gravity.psu.edu/numrel/jclub/jc/Peters_PR_136_B1224_1964.pdf){:target="_blank"}
     DOUBLE PRECISION:: t_merger
 
-    !> Angular momentum of the BNS system \([G M_\odot^2/c]\)
+    DOUBLE PRECISION:: linear_momentum_x= 0.0D0
+    !! \(x\) component of the ADM linear momentum of the system
+    !  \([G M_\odot^2/c]\)
+    DOUBLE PRECISION:: linear_momentum_y= 0.0D0
+    !! \(y\) component of the ADM linear momentum of the system
+    !  \([G M_\odot^2/c]\)
+    DOUBLE PRECISION:: linear_momentum_z= 0.0D0
+    !! \(z\) component of the ADM linear momentum of the system
+    !  \([G M_\odot^2/c]\)
+
     DOUBLE PRECISION:: angular_momentum_x= 0.0D0
+    !! \(x\) component of the angular momentum of the BNS system
+    !  \([G M_\odot^2/c]\)
     DOUBLE PRECISION:: angular_momentum_y= 0.0D0
+    !! \(y\) component of the angular momentum of the BNS system
+    !  \([G M_\odot^2/c]\)
     DOUBLE PRECISION:: angular_momentum_z= 0.0D0
+    !! \(z\) component of the angular momentum of the BNS system
+    !  \([G M_\odot^2/c]\)
 
     !& Areal (or circumferential) radius of star 1 \([L_\odot]\)
     ! Note that these is the areal radius of the star in the binary system,
@@ -358,6 +373,13 @@ MODULE bns_base
     PROCEDURE(get_eos_id_int), DEFERRED:: get_eos2_id
     !! Returns an integer that identifies the equation of state of star 2
 
+    PROCEDURE:: print_summary               => print_summary_bnsbase
+
+    PROCEDURE(print_summary_derived_int),  DEFERRED:: print_summary_derived
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as optional argument. Printse information relative to
+    !  the derived type oly
 
     !-----------------!
     !--  FUNCTIONS  --!
@@ -375,7 +397,6 @@ MODULE bns_base
     PROCEDURE:: return_barycenter           => get_barycenter
     PROCEDURE:: return_eos_name             => get_eos
     PROCEDURE:: return_spatial_extent       => get_radii
-    PROCEDURE:: print_summary               => print_summary_bns
 
     PROCEDURE, PUBLIC:: get_angular_vel
     !! Returns [[bnsbase:angular_vel]]
@@ -393,8 +414,14 @@ MODULE bns_base
     !! Returns [[bnsbase:mass_grav2]]
     PROCEDURE, PUBLIC:: get_adm_mass
     !! Returns [[bnsbase:adm_mass]]
+    PROCEDURE, PUBLIC:: get_linear_momentum
+    !# Returns the linear momentum vector
+    !  \((\)[[bnsbase:linear_momentum_x]], [[bnsbase:linear_momentum_y]],
+    !  [[bnsbase:linear_momentum_z]]\()\)
     PROCEDURE, PUBLIC:: get_angular_momentum
-    !! Returns [[bnsbase:angular_momentum]]
+    !# Returns the angular momentum vector
+    !  \((\)[[bnsbase:angular_momentum_x]], [[bnsbase:angular_momentum_y]],
+    !  [[bnsbase:angular_momentum_z]]\()\)
     PROCEDURE, PUBLIC:: get_radius1_x_comp
     !! Returns [[bnsbase:radius1_x_comp]]
     PROCEDURE, PUBLIC:: get_radius1_y
@@ -522,6 +549,18 @@ MODULE bns_base
 
   ABSTRACT INTERFACE
 
+    SUBROUTINE print_summary_derived_int( THIS, filename )
+    !# Prints a summary of the physical properties the system
+    !  to the standard output and, optionally, to a formatted file whose name
+    !  is given as the optional argument `filename`
+
+      IMPORT:: bnsbase
+      CLASS(bnsbase), INTENT( IN ):: THIS
+      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !! Name of the formatted file to print the summary to
+
+    END SUBROUTINE print_summary_derived_int
+
     FUNCTION get_eos_id_int( THIS )
 
       IMPORT:: bnsbase
@@ -542,8 +581,8 @@ MODULE bns_base
     !------------------------------!
 
 
-    MODULE SUBROUTINE print_summary_bns( THIS, filename )
-    !# Prints a summary of the physical properties the system
+    MODULE SUBROUTINE print_summary_bnsbase( THIS, filename )
+    !# Prints a summary of the physical properties the |bns| system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
@@ -552,7 +591,7 @@ MODULE bns_base
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
-    END SUBROUTINE print_summary_bns
+    END SUBROUTINE print_summary_bnsbase
 
 
     !----------------------------!
@@ -738,6 +777,16 @@ MODULE bns_base
       DOUBLE PRECISION:: get_adm_mass
 
     END FUNCTION get_adm_mass
+
+
+    MODULE PURE FUNCTION get_linear_momentum( THIS )
+
+      !> [[bnsbase]] object which this PROCEDURE is a member of
+      CLASS(bnsbase), INTENT( IN ):: THIS
+      ! Result
+      DOUBLE PRECISION:: get_linear_momentum(3)
+
+    END FUNCTION get_linear_momentum
 
 
     MODULE PURE FUNCTION get_angular_momentum( THIS )

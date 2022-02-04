@@ -44,6 +44,43 @@ SUBMODULE (bns_lorene) io
   !-------------------!
 
 
+  MODULE PROCEDURE print_summary_bnslorene
+
+    !************************************************
+    !
+    !# Prints a summary of the physical properties the |bns| system
+    !  produced by | lorene to the standard output and, optionally,
+    !  to a formatted file whose name is given as the optional
+    !  argument `filename`
+    !
+    !  FT 4.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    PRINT *, "   * Binary system of neutron stars produced by LORENE:"
+    PRINT *
+    PRINT *, "   ADM linear momentum of the system=(", THIS% linear_momentum_x,&
+             ", "
+    PRINT *, "                                      ", THIS% linear_momentum_y,&
+             ", "
+    PRINT *, "                                      ", THIS% linear_momentum_z,&
+             ") Msun*c"
+    PRINT *
+    PRINT *, "   Bowen-York angular momentum of the system= (", &
+             THIS% angular_momentum_x, &
+             ", "
+    PRINT *, "                                    ", THIS% angular_momentum_y, &
+             ", "
+    PRINT *, "                                    ", THIS% angular_momentum_z, &
+             ") G*Msun^2/c"
+    PRINT *
+
+
+  END PROCEDURE print_summary_bnslorene
+
+
   MODULE PROCEDURE print_id_params
 
     !****************************************************

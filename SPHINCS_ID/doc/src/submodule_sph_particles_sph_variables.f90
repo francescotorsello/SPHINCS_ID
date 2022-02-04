@@ -1274,8 +1274,8 @@ SUBMODULE (sph_particles) sph_variables
                !" m0c2_cu (TODO: CHECK UNITS)"!, &
                !"baryon Msun_geo^{-3}"
       PRINT *, " * Ratio between the two=", &
-               MAXVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 )/ &
-               MINVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 )
+               MAXVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 )
       PRINT *
 
       THIS% nuratio_i(i_matter)= MAXVAL( THIS% nu(npart_in:npart_fin), DIM= 1 )&
@@ -1386,32 +1386,32 @@ SUBMODULE (sph_particles) sph_variables
 
     !CALL COM( THIS% npart, THIS% pos, THIS% nu, &
     !          com_x_newt, com_y_newt, com_z_newt, com_d_newt )
-    CALL COM( THIS% npart_i(1), THIS% pos(:,1:THIS% npart_i(1)), &
-              THIS% nu(1:THIS% npart_i(1)), &
-              com_x_newt, com_y_newt, com_z_newt, com_d_newt )
+    !CALL COM( THIS% npart_i(1), THIS% pos(:,1:THIS% npart_i(1)), &
+    !          THIS% nu(1:THIS% npart_i(1)), &
+    !          com_x_newt, com_y_newt, com_z_newt, com_d_newt )
 
     !CALL COM_1PN( THIS% npart, THIS% pos, THIS% v, &
     !              !THIS% v_euler_parts_x, &
     !              THIS% nu, THIS% baryon_density_parts, &
     !              THIS% specific_energy_parts, THIS% nstar_int, sq_detg4, gg4, &
     !              com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn )
-    CALL COM_1PN( THIS% npart_i(1), THIS% pos(:,1:THIS% npart_i(1)), &
-                  THIS% v(1:3,1:THIS% npart_i(1)), &
-                  !THIS% v_euler_parts_x, &
-                  THIS% nu(1:THIS% npart_i(1)), &!/sq_det_g4(1:THIS% npart_i(1))/THIS% Theta(1:THIS% npart_i(1)), &
-                  !THIS% baryon_density_parts(1:THIS% npart_i(1)), &
-                  THIS% nlrf_int(1:THIS% npart_i(1)), &
-                  THIS% u_pwp(1:THIS% npart_i(1)), &
-                  THIS% nstar_int(1:THIS% npart_i(1)), &
-                  sq_det_g4(1:THIS% npart_i(1)), &
-                  gg4(:,1:THIS% npart_i(1)), &
-                  com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn )
+    !CALL COM_1PN( THIS% npart_i(1), THIS% pos(:,1:THIS% npart_i(1)), &
+    !              THIS% v(1:3,1:THIS% npart_i(1)), &
+    !              !THIS% v_euler_parts_x, &
+    !              THIS% nu(1:THIS% npart_i(1)), &!/sq_det_g4(1:THIS% npart_i(1))/THIS% Theta(1:THIS% npart_i(1)), &
+    !              !THIS% baryon_density_parts(1:THIS% npart_i(1)), &
+    !              THIS% nlrf_int(1:THIS% npart_i(1)), &
+    !              THIS% u_pwp(1:THIS% npart_i(1)), &
+    !              THIS% nstar_int(1:THIS% npart_i(1)), &
+    !              sq_det_g4(1:THIS% npart_i(1)), &
+    !              gg4(:,1:THIS% npart_i(1)), &
+    !              com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn )
 
     IF( debug ) PRINT *, "101"
 
-    nu   = THIS% nu
-    vel_u= THIS% v(1:3,:)
-    CALL lin_mom( pnorm_newt, px_newt, py_newt, pz_newt )
+    !nu   = THIS% nu
+    !vel_u= THIS% v(1:3,:)
+    !CALL lin_mom( pnorm_newt, px_newt, py_newt, pz_newt )
     !CALL momentum_1pn( THIS% npart, THIS% pos, &
     !                   THIS% v, &
     !                   !THIS% v_euler_parts_x, &
@@ -1430,17 +1430,17 @@ SUBMODULE (sph_particles) sph_variables
     !                   THIS% h, &
     !                   sq_detg4, gg4, px, py, pz )
 
-    PRINT *, "LORENE mass:            ", THIS% masses(1), mass_1pn*amu/Msun
-    PRINT *, "LORENE COM:            ", &
-             THIS% barycenter(1,:)! + THIS% barycenter(2,:)
-    PRINT *, "Newtonian COM:         ", &
-             com_x_newt, com_y_newt, com_z_newt!, com_d_newt
-    PRINT *, "1PN COM:               ", &
-             com_x_1pn, com_y_1pn, com_z_1pn!, com_d_1pn
-    PRINT *, "Newtonian spacetime momentum:", px_newt/SUM(nu,DIM=1), py_newt/SUM(nu,DIM=1), pz_newt/SUM(nu,DIM=1), pnorm_newt/SUM(nu,DIM=1)
-    PRINT *, "1PN spacetime momentum:", px/mass_1pn, py/mass_1pn, pz/mass_1pn, pnorm/mass_1pn
-    PRINT *
-    PRINT *
+    !PRINT *, "LORENE mass:            ", THIS% masses(1), mass_1pn*amu/Msun
+    !PRINT *, "LORENE COM:            ", &
+    !         THIS% barycenter(1,:)! + THIS% barycenter(2,:)
+    !PRINT *, "Newtonian COM:         ", &
+    !         com_x_newt, com_y_newt, com_z_newt!, com_d_newt
+    !PRINT *, "1PN COM:               ", &
+    !         com_x_1pn, com_y_1pn, com_z_1pn!, com_d_1pn
+    !PRINT *, "Newtonian spacetime momentum:", px_newt/SUM(nu,DIM=1), py_newt/SUM(nu,DIM=1), pz_newt/SUM(nu,DIM=1), pnorm_newt/SUM(nu,DIM=1)
+    !PRINT *, "1PN spacetime momentum:", px/mass_1pn, py/mass_1pn, pz/mass_1pn, pnorm/mass_1pn
+    !PRINT *
+    !PRINT *
 
     PRINT *, " * Deallocating MODULE variables..."
     PRINT *
@@ -1450,7 +1450,7 @@ SUBMODULE (sph_particles) sph_variables
     CALL deallocate_RCB_tree_memory_3D
     CALL deallocate_SPH_memory
 
-    STOP
+    !STOP
 
     call_flag= call_flag + 1
     THIS% call_flag= call_flag

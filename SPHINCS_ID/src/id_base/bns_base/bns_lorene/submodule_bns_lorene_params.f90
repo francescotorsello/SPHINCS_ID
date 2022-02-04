@@ -83,6 +83,9 @@ SUBMODULE (bns_lorene) params
                                THIS% mass_grav1, &
                                THIS% mass_grav2, &
                                THIS% adm_mass, &
+                               THIS% linear_momentum_x, &
+                               THIS% linear_momentum_y, &
+                               THIS% linear_momentum_z, &
                                THIS% angular_momentum_x, &
                                THIS% angular_momentum_y, &
                                THIS% angular_momentum_z, &

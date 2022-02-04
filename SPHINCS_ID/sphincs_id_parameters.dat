@@ -25,8 +25,8 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.4-1.4_43.75km.bin"
              !"BNSLO_apr4_1.35-1.35_42km.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr.bin"
-             !!"BNSLO_apr4_1.35-1.35_42km-hr-73inside.bin"
-             !"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
+             "BNSLO_apr4_1.35-1.35_42km-hr-73inside.bin"
+             !!"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay-5e-8.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129all.bin"
@@ -44,7 +44,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_poly2-75_1.4-1.4_40km.bin"
              !"BNSLO_poly2-75_1.4-1.4_45km.bin"
              !"BNSLO_poly2-75_1.6-1.8_40km.bin"
-             "BNSLO_poly275_1.2-1.6_45km.bin"
+             !!"BNSLO_poly275_1.2-1.6_45km.bin"
              !!"BNSLO_mpa1_1.2-2_45km.bin"
              !!"BNSLO_poly2-75_1.2-1.8_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_48km.bin"
@@ -79,8 +79,8 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.FALSE.
-run_spacetime=.TRUE.
+run_sph=.TRUE.
+run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -92,7 +92,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=1                     ! 0: Read particle positions from formatted
+placer(1,:)=0                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object

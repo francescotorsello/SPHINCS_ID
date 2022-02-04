@@ -57,7 +57,8 @@ SUBMODULE (standard_tpo_formulation) io
     !
     !************************************************
 
-    USE tensor, ONLY: jx, jy, jz
+    USE constants, ONLY: Msun_geo, ten
+    USE tensor,    ONLY: jx, jy, jz
 
     IMPLICIT NONE
 
@@ -73,13 +74,17 @@ SUBMODULE (standard_tpo_formulation) io
              THIS% get_ngrid_x( 1 ), "**3"
     PRINT *
     DO l= 1, last_level, 1
-      PRINT *, "   Resolution on level ", l, "= ", THIS% get_dx(l)
+      PRINT *, "   Resolution on level ", l, "= ", THIS% get_dx(l), &
+               "Msun_geo= ", THIS% get_dx(l)*Msun_geo*ten*ten*ten, "m"
     ENDDO
     PRINT *
     DO l= 1, last_level, 1
-      PRINT *, "   x boundary of level ", l, "= ", THIS% get_xR(l)
-      PRINT *, "   y boundary of level ", l, "= ", THIS% get_yR(l)
-      PRINT *, "   z boundary of level ", l, "= ", THIS% get_zR(l)
+      PRINT *, "   x boundary of level ", l, "= ", THIS% get_xR(l), "= ", &
+               THIS% get_xR(l)*Msun_geo, "km"
+      PRINT *, "   y boundary of level ", l, "= ", THIS% get_yR(l), "= ", &
+               THIS% get_yR(l)*Msun_geo, "km"
+      PRINT *, "   z boundary of level ", l, "= ", THIS% get_zR(l), "= ", &
+               THIS% get_zR(l)*Msun_geo, "km"
     ENDDO
     PRINT *
     DO i_matter= 1, THIS% n_matter, 1
@@ -88,17 +93,15 @@ SUBMODULE (standard_tpo_formulation) io
     ENDDO
     PRINT *
     DO l= 1, last_level, 1
-      PRINT *, "   x component of the ADM momentum ", &
+      PRINT *, "   (Rough) Estimate of the x component of the ADM momentum ", &
                "on level    ", &
-               l, "= ", THIS% MC_int(l,jx)
-      PRINT *, "   y component of the ADM momentum ", &
+               l, "= ", THIS% MC_int(l,jx), "Msun*c"
+      PRINT *, "   (Rough) Estimate of the y component of the ADM momentum ", &
                "on level    ", &
-               l, "= ", THIS% MC_int(l,jy)
-      PRINT *, "   z component of the ADM momentum ", &
+               l, "= ", THIS% MC_int(l,jy), "Msun*c"
+      PRINT *, "   (Rough) Estimate of the z component of the ADM momentum ", &
                "on level    ", &
-               l, "= ", THIS% MC_int(l,jz)
-      PRINT *, "   Euclidean norm of the ADM momentum ", &
-               "on level ", l, "= ", NORM2( THIS% MC_int(l,:), DIM=1 )
+               l, "= ", THIS% MC_int(l,jz), "Msun*c"
     ENDDO
     PRINT *
 
