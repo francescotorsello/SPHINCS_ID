@@ -38,6 +38,7 @@ MODULE sphincs_id_lorene
   USE id_base,         ONLY: idbase
   USE bns_lorene,      ONLY: bnslorene
   USE diffstar_lorene, ONLY: diffstarlorene
+  USE ejecta_generic,  ONLY: ejecta
 
 
   IMPLICIT NONE
@@ -49,6 +50,8 @@ MODULE sphincs_id_lorene
   CHARACTER( LEN= 5 ), PARAMETER:: drslo= "DRSLO"
   !# String that identifies a differentially rotating star computed
   !  with LORENE
+  CHARACTER( LEN= 5 ), PARAMETER:: ejecta_grid= "EJECT"
+  !# String that identifies an ejecta prepared on a uniform Cartesian grid
 
 
   CONTAINS
@@ -99,6 +102,12 @@ MODULE sphincs_id_lorene
       system= drslo
       system_name= "DRSx."
 
+    ELSEIF( filename(1:5) == ejecta_grid )THEN
+
+      ALLOCATE( ejecta:: id )
+      system= ejecta_grid
+      system_name= "EJEC."
+
     ELSE
 
       PRINT *, "** ERROR! Unrecognized physical system ", system
@@ -112,6 +121,7 @@ MODULE sphincs_id_lorene
       PRINT *
       PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
       PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
+      PRINT *, "   3. EJECT: Ejecta data on a uniform Cartesian grid"
       PRINT *
       STOP
 

@@ -43,7 +43,7 @@ MODULE sphincs_id_interpolate
 
 
   CHARACTER( LEN= 5 ), PARAMETER:: ejecta_grid= "EJECT"
-  !# String that identifies an ejecta prepared on a grid
+  !# String that identifies an ejecta prepared on a uniform Cartesian grid
 
 
   CONTAINS
@@ -99,7 +99,7 @@ MODULE sphincs_id_interpolate
       PRINT *, "   The 5-character names, and associated physical systems,", &
               " supported by this version of SPHINCS_ID, with flavour = 2, are:"
       PRINT *
-      PRINT *, "   1. EJECT: Binary Neutron Stars produced with LORENE"
+      PRINT *, "   1. EJECT: Ejecta data on a uniform Cartesian grid"
       PRINT *
       STOP
 

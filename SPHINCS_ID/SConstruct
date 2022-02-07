@@ -411,7 +411,7 @@ if flavour == '1': #
     #, 'm'
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
-                    + module_sphincs_id_lorene
+                    + module_ejecta_generic + module_sphincs_id_lorene
 
 ################################################################################
 # FLAVOUR= 2. Interpolate data from a grid. Do not link to LORENE library
