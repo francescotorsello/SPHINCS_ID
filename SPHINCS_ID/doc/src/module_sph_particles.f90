@@ -138,18 +138,18 @@ MODULE sph_particles
     !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x2
     !& 1-D array storing the baryon mass density in the fluid frame
     !  \([\mathrm{kg}\,\mathrm{m}^{-3}]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: baryon_density_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: baryon_density
     !> 1-D array storing the energy density
     !  \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: energy_density_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: energy_density
     !> 1-D array storing the specific internal energy \([c^2]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: specific_energy_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: specific_energy
     !& 1-D array storing the specific internal energy \([c^2]\) computed using
     !  formula (9) in Read et al., Phys.Rev.D79:124032,2009,
     !  [arXiv:0812.2163][https://arxiv.org/abs/0812.2163]{:target="_blank"}
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: u_pwp
     !> 1-D array storing the pressure \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure
     !& 1-D array storing the pressure on the x axis
     !  \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS 1
     !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x1
@@ -168,16 +168,16 @@ MODULE sph_particles
     !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_length_scale_x2
     !& 1-D array storing the pressure in code units
     !  \([\mathrm{amu}\,c^2\,\mathrm{L_\odot}^{-3}]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_cu
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_cu
     !& 1-D array storing the x component of the fluid 3-velocity wrt
     !  the Eulerian observer \([c]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_x
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_x
     !& 1-D array storing the y component of the fluid 3-velocity wrt
     !  the Eulerian observer \([c]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_y
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_y
     !& 1-D array storing the z component of the fluid 3-velocity wrt
     !  the Eulerian observer \([c]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_parts_z
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_z
 
     !
     !-- Arrays to store the electron fraction Ye as a function of the
@@ -198,34 +198,34 @@ MODULE sph_particles
     !
 
     !> Array storing the values of the lapse function on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse
     !& Array storing the values of the x component of the shift vector
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_parts_x
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_x
     !& Array storing the values of the y component of the shift vector
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_parts_y
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_y
     !& Array storing the values of the z component of the shift vector
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_parts_z
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: shift_z
     !& Array storing the values of the xx component of the spatial metric
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xx_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xx
     !& Array storing the values of the xy component of the spatial metric
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xy_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xy
     !& Array storing the values of the xz component of the spatial metric
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xz_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_xz
     !& Array storing the values of the xz component of the spatial metric
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_yy_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_yy
     !& Array storing the values of the yz component of the spatial metric
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_yz_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_yz
     !& Array storing the values of the zz component of the spatial metric
     !  on the particles
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_zz_parts
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: g_zz
 
     !
     !-- SPH fields

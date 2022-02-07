@@ -101,13 +101,13 @@ SUBMODULE (sph_particles) io
         max_nlrf_sph= MAXVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )
         min_nlrf_sph= MINVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )
 
-        max_pr_id = MAXVAL( THIS% pressure_parts(npart_in:npart_fin), DIM= 1 )
-        max_pr_sph= MAXVAL( THIS% pressure_parts_cu(npart_in:npart_fin), &
+        max_pr_id = MAXVAL( THIS% pressure(npart_in:npart_fin), DIM= 1 )
+        max_pr_sph= MAXVAL( THIS% pressure_cu(npart_in:npart_fin), &
                             DIM= 1 )
-        min_pr_sph= MINVAL( THIS% pressure_parts_cu(npart_in:npart_fin), &
+        min_pr_sph= MINVAL( THIS% pressure_cu(npart_in:npart_fin), &
                             DIM= 1 )
 
-        max_u_id = MAXVAL( THIS% specific_energy_parts(npart_in:npart_fin), &
+        max_u_id = MAXVAL( THIS% specific_energy(npart_in:npart_fin), &
                            DIM= 1 )
         max_u_sph= MAXVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 )
         min_u_sph= MINVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 )
@@ -593,18 +593,18 @@ SUBMODULE (sph_particles) io
         THIS% pos( 1, itr ), &                                             ! 2
         THIS% pos( 2, itr ), &                                             ! 3
         THIS% pos( 3, itr ), &                                             ! 4
-        THIS% lapse_parts( itr ), &                                        ! 5
-        THIS% shift_parts_x( itr ), &                                      ! 6
-        THIS% shift_parts_y( itr ), &                                      ! 7
-        THIS% shift_parts_z( itr ), &                                      ! 8
-        THIS% baryon_density_parts( itr ), &                               ! 9
-        THIS% energy_density_parts( itr ), &                               ! 10
-        THIS% specific_energy_parts( itr ), &                              ! 11
-        THIS% pressure_parts( itr ), &                                     ! 12
-        THIS% pressure_parts_cu( itr ), &                                  ! 13
-        THIS% v_euler_parts_x( itr ), &                                    ! 14
-        THIS% v_euler_parts_y( itr ), &                                    ! 15
-        THIS% v_euler_parts_z( itr ), &                                    ! 16
+        THIS% lapse( itr ), &                                        ! 5
+        THIS% shift_x( itr ), &                                      ! 6
+        THIS% shift_y( itr ), &                                      ! 7
+        THIS% shift_z( itr ), &                                      ! 8
+        THIS% baryon_density( itr ), &                               ! 9
+        THIS% energy_density( itr ), &                               ! 10
+        THIS% specific_energy( itr ), &                              ! 11
+        THIS% pressure( itr ), &                                     ! 12
+        THIS% pressure_cu( itr ), &                                  ! 13
+        THIS% v_euler_x( itr ), &                                    ! 14
+        THIS% v_euler_y( itr ), &                                    ! 15
+        THIS% v_euler_z( itr ), &                                    ! 16
         THIS% v( 1, itr ), &                                               ! 17
         THIS% v( 2, itr ), &                                               ! 18
         THIS% v( 3, itr ), &                                               ! 19
@@ -709,10 +709,10 @@ SUBMODULE (sph_particles) io
 
     DO itr= 1, THIS% npart, 1
 
-      IF( THIS% baryon_density_parts ( itr ) < 0 .OR. &
-          THIS% energy_density_parts ( itr ) < 0 .OR. &
-          THIS% specific_energy_parts( itr ) < 0 .OR. &
-          THIS% pressure_parts       ( itr ) < 0 )THEN
+      IF( THIS% baryon_density ( itr ) < 0 .OR. &
+          THIS% energy_density ( itr ) < 0 .OR. &
+          THIS% specific_energy( itr ) < 0 .OR. &
+          THIS% pressure       ( itr ) < 0 )THEN
 
         negative_hydro= .TRUE.
 

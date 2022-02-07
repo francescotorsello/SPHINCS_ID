@@ -70,7 +70,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
     USE tensor,           ONLY: jxx, jxy, jxz, &
                                 jyy, jyz, jzz, n_sym3x3
-    USE utility,          ONLY: determinant_sym3x3_grid
+    USE utility,          ONLY: determinant_sym3x3
 
     IMPLICIT NONE
 
@@ -253,9 +253,8 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
         DO j= 1, ftpo% get_ngrid_y(l), 1
           DO i= 1, ftpo% get_ngrid_x(l), 1
 
-            CALL determinant_sym3x3_grid( i, j, k, &
-                                     ftpo% g_phys3_ll% levels(l)% var, &
-                                     detg )
+            CALL determinant_sym3x3( &
+                              ftpo% g_phys3_ll% levels(l)% var(i,j,k,:), detg )
 
             IF( detg < 1D-10 )THEN
 

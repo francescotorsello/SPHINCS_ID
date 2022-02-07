@@ -626,6 +626,17 @@ PROGRAM sphincs_id
     ENDIF
 
   ENDDO
+  IF( ( (compute_parts_constraints .EQV. .TRUE.) &
+      .AND. (run_sph .EQV. .FALSE.) ) )THEN
+
+    PRINT *, "** WARNING: The variable `compute_parts_constraints` is ", &
+             ".TRUE., but `run_sph` is .FALSE. . Hence, the constraints ", &
+             "are NOT computed using the particle data mapped to the mesh."
+    PRINT *, "   Please set both variables to .TRUE. to compute the ", &
+             "constraints using the particle data mapped to the mesh."
+    PRINT *
+
+  ENDIF
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 

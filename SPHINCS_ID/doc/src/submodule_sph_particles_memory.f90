@@ -72,203 +72,203 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array pos" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% lapse_parts ))THEN
-      ALLOCATE( THIS% lapse_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% lapse ))THEN
+      ALLOCATE( THIS% lapse( THIS% npart ), STAT= ios, &
             ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array lapse_parts ", &
+        PRINT *, "...allocation error for array lapse ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !            "...allocation error for array lapse_parts" )
+      !            "...allocation error for array lapse" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_parts_x ))THEN
-      ALLOCATE( THIS% shift_parts_x( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% shift_x ))THEN
+      ALLOCATE( THIS% shift_x( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array shift_parts_x ", &
+        PRINT *, "...allocation error for array shift_x ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...allocation error for shift_parts_x" )
+      !                "...allocation error for shift_x" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_parts_y ))THEN
-      ALLOCATE( THIS% shift_parts_y( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% shift_y ))THEN
+      ALLOCATE( THIS% shift_y( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array shift_parts_y ", &
+        PRINT *, "...allocation error for array shift_y ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !        "...allocation error for shift_parts_y" )
+      !        "...allocation error for shift_y" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_parts_z ))THEN
-      ALLOCATE( THIS% shift_parts_z( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% shift_z ))THEN
+      ALLOCATE( THIS% shift_z( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array shift_parts_z ", &
+        PRINT *, "...allocation error for array shift_z ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !        "...allocation error for shift_parts_z" )
+      !        "...allocation error for shift_z" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xx_parts ))THEN
-      ALLOCATE( THIS% g_xx_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% g_xx ))THEN
+      ALLOCATE( THIS% g_xx( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array g_xx_parts ", &
+        PRINT *, "...allocation error for array g_xx ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array g_xx_parts" )
+      !                "...allocation error for array g_xx" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xy_parts ))THEN
-      ALLOCATE( THIS% g_xy_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% g_xy ))THEN
+      ALLOCATE( THIS% g_xy( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array g_xy_parts ", &
+        PRINT *, "...allocation error for array g_xy ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !        "...allocation error for array g_xy_parts" )
+      !        "...allocation error for array g_xy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xz_parts ))THEN
-      ALLOCATE( THIS% g_xz_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% g_xz ))THEN
+      ALLOCATE( THIS% g_xz( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array g_xz_parts ", &
+        PRINT *, "...allocation error for array g_xz ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array g_xz_parts" )
+      !                "...allocation error for array g_xz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_yy_parts ))THEN
-      ALLOCATE( THIS% g_yy_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% g_yy ))THEN
+      ALLOCATE( THIS% g_yy( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array g_yy_parts ", &
+        PRINT *, "...allocation error for array g_yy ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !        "...allocation error for array g_yy_parts" )
+      !        "...allocation error for array g_yy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_yz_parts ))THEN
-      ALLOCATE( THIS% g_yz_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% g_yz ))THEN
+      ALLOCATE( THIS% g_yz( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array g_yz_parts ", &
+        PRINT *, "...allocation error for array g_yz ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array g_yz_parts" )
+      !                "...allocation error for array g_yz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_zz_parts ))THEN
-      ALLOCATE( THIS% g_zz_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% g_zz ))THEN
+      ALLOCATE( THIS% g_zz( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array g_zz_parts ", &
+        PRINT *, "...allocation error for array g_zz ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array g_zz_parts" )
+      !                "...allocation error for array g_zz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% baryon_density_parts ))THEN
-      ALLOCATE( THIS% baryon_density_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% baryon_density ))THEN
+      ALLOCATE( THIS% baryon_density( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array baryon_density_parts ", &
+        PRINT *, "...allocation error for array baryon_density ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !     "...allocation error for array baryon_density_parts" )
+      !     "...allocation error for array baryon_density" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% energy_density_parts ))THEN
-      ALLOCATE( THIS% energy_density_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% energy_density ))THEN
+      ALLOCATE( THIS% energy_density( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array energy_density_parts ", &
+        PRINT *, "...allocation error for array energy_density ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !             "...allocation error for array energy_density_parts" )
+      !             "...allocation error for array energy_density" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% specific_energy_parts ))THEN
-      ALLOCATE( THIS% specific_energy_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% specific_energy ))THEN
+      ALLOCATE( THIS% specific_energy( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array specific_energy_parts ", &
+        PRINT *, "...allocation error for array specific_energy ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !    "...allocation error for array specific_energy_parts" )
+      !    "...allocation error for array specific_energy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% pressure_parts ))THEN
-      ALLOCATE( THIS% pressure_parts( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% pressure ))THEN
+      ALLOCATE( THIS% pressure( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array pressure_parts ", &
+        PRINT *, "...allocation error for array pressure ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !            "...allocation error for array pressure_parts" )
+      !            "...allocation error for array pressure" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% pressure_parts_cu ))THEN
-      ALLOCATE( THIS% pressure_parts_cu( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% pressure_cu ))THEN
+      ALLOCATE( THIS% pressure_cu( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array pressure_parts_cu ", &
+        PRINT *, "...allocation error for array pressure_cu ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !            "...allocation error for array pressure_parts_cu" )
+      !            "...allocation error for array pressure_cu" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_parts_x ))THEN
-      ALLOCATE( THIS% v_euler_parts_x( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% v_euler_x ))THEN
+      ALLOCATE( THIS% v_euler_x( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array v_euler_parts_x ", &
+        PRINT *, "...allocation error for array v_euler_x ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array v_euler_parts_x" )
+      !                "...allocation error for array v_euler_x" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_parts_y ))THEN
-      ALLOCATE( THIS% v_euler_parts_y( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% v_euler_y ))THEN
+      ALLOCATE( THIS% v_euler_y( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array v_euler_parts_y ", &
+        PRINT *, "...allocation error for array v_euler_y ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !        "...allocation error for array v_euler_parts_y" )
+      !        "...allocation error for array v_euler_y" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_parts_z ))THEN
-      ALLOCATE( THIS% v_euler_parts_z( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( THIS% v_euler_z ))THEN
+      ALLOCATE( THIS% v_euler_z( THIS% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array v_euler_parts_z ", &
+        PRINT *, "...allocation error for array v_euler_z ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !        "...allocation error for array v_euler_parts_z" )
+      !        "...allocation error for array v_euler_z" )
     ENDIF
     IF(.NOT.ALLOCATED( THIS% nstar ))THEN
         ALLOCATE( THIS% nstar( THIS% npart ), STAT= ios )
@@ -303,7 +303,7 @@ SUBMODULE (sph_particles) memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                  // " allocate_lorene_id_parts_memory. ", &
+                  // " allocate_lorene_id_memory. ", &
                   "The STAT variable is", ios, ". ", &
                   "The error message is", err_msg
          STOP
@@ -314,7 +314,7 @@ SUBMODULE (sph_particles) memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array u_pwp in SUBROUTINE" &
-                  // "allocate_lorene_id_parts_memory. ", &
+                  // "allocate_lorene_id_memory. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
@@ -324,13 +324,13 @@ SUBMODULE (sph_particles) memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array nlrf_int in SUBROUTINE" &
-                  // "allocate_lorene_id_parts_memory. ", &
+                  // "allocate_lorene_id_memory. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
     ENDIF
 
-    PRINT *, "** Subroutine allocate_lorene_id_parts_memory executed."
+    PRINT *, "** Subroutine allocate_lorene_id_memory executed."
     PRINT *
 
   END PROCEDURE allocate_lorene_id_parts_memory
@@ -362,210 +362,210 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array pos in SUBROUTINE"&
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% baryon_density_parts ))THEN
-      DEALLOCATE( THIS% baryon_density_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% baryon_density ))THEN
+      DEALLOCATE( THIS% baryon_density, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array baryon_density_parts. ", &
+         PRINT *, "...deallocation error for array baryon_density. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array " &
-      !                // "baryon_density_parts in SUBROUTINE " &
+      !                // "baryon_density in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% energy_density_parts ))THEN
-      DEALLOCATE( THIS% energy_density_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% energy_density ))THEN
+      DEALLOCATE( THIS% energy_density, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array energy_density_parts. ", &
+         PRINT *, "...deallocation error for array energy_density. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array " &
-      !                // "energy_density_parts in SUBROUTINE " &
+      !                // "energy_density in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% specific_energy_parts ))THEN
-      DEALLOCATE( THIS% specific_energy_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% specific_energy ))THEN
+      DEALLOCATE( THIS% specific_energy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array specific_energy_parts. ", &
+         PRINT *, "...deallocation error for array specific_energy. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array " &
-      !                // "specific_energy_parts in SUBROUTINE " &
+      !                // "specific_energy in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% pressure_parts ))THEN
-      DEALLOCATE( THIS% pressure_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% pressure ))THEN
+      DEALLOCATE( THIS% pressure, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array pressure_parts. ", &
+         PRINT *, "...deallocation error for array pressure. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array " &
-      !                // "pressure_parts in SUBROUTINE " &
+      !                // "pressure in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% pressure_parts_cu ))THEN
-      DEALLOCATE( THIS% pressure_parts_cu, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% pressure_cu ))THEN
+      DEALLOCATE( THIS% pressure_cu, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array pressure_parts_cu. ", &
+         PRINT *, "...deallocation error for array pressure_cu. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array " &
-      !                // "pressure_parts_cu in SUBROUTINE " &
+      !                // "pressure_cu in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% v_euler_parts_x ))THEN
-      DEALLOCATE( THIS% v_euler_parts_x, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% v_euler_x ))THEN
+      DEALLOCATE( THIS% v_euler_x, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_parts_x. ", &
+         PRINT *, "...deallocation error for array v_euler_x. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array " &
-      !                // "v_euler_parts_x in SUBROUTINE " &
+      !                // "v_euler_x in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% v_euler_parts_y ))THEN
-      DEALLOCATE( THIS% v_euler_parts_y, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% v_euler_y ))THEN
+      DEALLOCATE( THIS% v_euler_y, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_parts_y. ", &
+         PRINT *, "...deallocation error for array v_euler_y. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array " &
-      !                // "v_euler_parts_y in SUBROUTINE " &
+      !                // "v_euler_y in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% v_euler_parts_z ))THEN
-      DEALLOCATE( THIS% v_euler_parts_z, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% v_euler_z ))THEN
+      DEALLOCATE( THIS% v_euler_z, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_parts_z. ", &
+         PRINT *, "...deallocation error for array v_euler_z. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array " &
-      !                // "v_euler_parts_z in SUBROUTINE " &
+      !                // "v_euler_z in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% lapse_parts ))THEN
-      DEALLOCATE( THIS% lapse_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% lapse ))THEN
+      DEALLOCATE( THIS% lapse, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array lapse_parts. ", &
+         PRINT *, "...deallocation error for array lapse. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array lapse_parts in " &
+      !                "...deallocation error for array lapse in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% shift_parts_x ))THEN
-      DEALLOCATE( THIS% shift_parts_x, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% shift_x ))THEN
+      DEALLOCATE( THIS% shift_x, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array shift_parts_x. ", &
+         PRINT *, "...deallocation error for array shift_x. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array shift_parts_x in "&
+      !                "...deallocation error for array shift_x in "&
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% shift_parts_y ))THEN
-      DEALLOCATE( THIS% shift_parts_y, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% shift_y ))THEN
+      DEALLOCATE( THIS% shift_y, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array shift_parts_y. ", &
+         PRINT *, "...deallocation error for array shift_y. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array shift_parts_y in "&
+      !                "...deallocation error for array shift_y in "&
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% shift_parts_z ))THEN
-      DEALLOCATE( THIS% shift_parts_z, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% shift_z ))THEN
+      DEALLOCATE( THIS% shift_z, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array shift_parts_z. ", &
+         PRINT *, "...deallocation error for array shift_z. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array shift_parts_z in "&
+      !                "...deallocation error for array shift_z in "&
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_xx_parts ))THEN
-      DEALLOCATE( THIS% g_xx_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% g_xx ))THEN
+      DEALLOCATE( THIS% g_xx, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_xx_parts. ", &
+         PRINT *, "...deallocation error for array g_xx. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_xx_parts in " &
+      !                "...deallocation error for array g_xx in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_xy_parts ))THEN
-      DEALLOCATE( THIS% g_xy_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% g_xy ))THEN
+      DEALLOCATE( THIS% g_xy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_xy_parts. ", &
+         PRINT *, "...deallocation error for array g_xy. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_xy_parts in " &
+      !                "...deallocation error for array g_xy in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_xz_parts ))THEN
-      DEALLOCATE( THIS% g_xz_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% g_xz ))THEN
+      DEALLOCATE( THIS% g_xz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_xz_parts. ", &
+         PRINT *, "...deallocation error for array g_xz. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_xz_parts in " &
+      !                "...deallocation error for array g_xz in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_yy_parts ))THEN
-      DEALLOCATE( THIS% g_yy_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% g_yy ))THEN
+      DEALLOCATE( THIS% g_yy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_yy_parts. ", &
+         PRINT *, "...deallocation error for array g_yy. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_yy_parts in " &
+      !                "...deallocation error for array g_yy in " &
       !                // "SUBROUTINE estruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_yz_parts ))THEN
-      DEALLOCATE( THIS% g_yz_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% g_yz ))THEN
+      DEALLOCATE( THIS% g_yz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_yz_parts. ", &
+         PRINT *, "...deallocation error for array g_yz. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_yz_parts in " &
+      !                "...deallocation error for array g_yz in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_zz_parts ))THEN
-      DEALLOCATE( THIS% g_zz_parts, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( THIS% g_zz ))THEN
+      DEALLOCATE( THIS% g_zz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array g_zz_parts. ", &
+         PRINT *, "...deallocation error for array g_zz. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !                "...deallocation error for array g_zz_parts in " &
+      !                "...deallocation error for array g_zz in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
     IF( ALLOCATED( THIS% nlrf ))THEN

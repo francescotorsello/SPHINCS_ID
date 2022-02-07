@@ -50,7 +50,7 @@ SUBMODULE (standard_tpo_formulation) analysis
     !****************************************************
 
     USE constants, ONLY: pi
-    USE utility,   ONLY: determinant_sym3x3_grid
+    USE utility,   ONLY: determinant_sym3x3
 
     IMPLICIT NONE
 
@@ -59,7 +59,7 @@ SUBMODULE (standard_tpo_formulation) analysis
               unit_analysis, nx, ny, nz
 
     DOUBLE PRECISION:: tmp, total, dx, dy, dz, detg3
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: l2_norm_array
+    !DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: l2_norm_array
 
     LOGICAL:: exist
     !LOGICAL, PARAMETER:: DEBUG= .FALSE.
@@ -210,11 +210,13 @@ SUBMODULE (standard_tpo_formulation) analysis
       DO k= 1, nz, 1
         DO j= 1, ny, 1
           DO i= 1, nx, 1
-            CALL determinant_sym3x3_grid( i, j, k, &
-                                          THIS% g_phys3_ll% levels(l)% var, &
-                                          detg3 )
+
+            CALL determinant_sym3x3( &
+                              THIS% g_phys3_ll% levels(l)% var(i,j,k,:), detg3 )
+
             integral= integral &
-                      + dx*dy*dz*SQRT(detg3)*( constraint(i,j,k) - source(i,j,k) )
+                    + dx*dy*dz*SQRT(detg3)*( constraint(i,j,k) - source(i,j,k) )
+
           ENDDO
         ENDDO
       ENDDO
@@ -224,11 +226,13 @@ SUBMODULE (standard_tpo_formulation) analysis
       DO k= 1, nz, 1
         DO j= 1, ny, 1
           DO i= 1, nx, 1
-            CALL determinant_sym3x3_grid( i, j, k, &
-                                          THIS% g_phys3_ll% levels(l)% var, &
-                                          detg3 )
+
+            CALL determinant_sym3x3( &
+                              THIS% g_phys3_ll% levels(l)% var(i,j,k,:), detg3 )
+
             integral= integral &
                       + dx*dy*dz*SQRT(detg3)*constraint(i,j,k)
+
           ENDDO
         ENDDO
       ENDDO

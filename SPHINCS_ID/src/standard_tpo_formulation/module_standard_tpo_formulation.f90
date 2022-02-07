@@ -105,6 +105,9 @@ MODULE standard_tpo_formulation
     TYPE(grid_function_scalar):: rho
     !# Grid scalar function storing the matter source in the Hamiltonian
     !  constraint computed using the ID on the mesh, multiplied by \(16\pi\)
+    TYPE(grid_function):: S
+    !# Grid function storing the matter source in the momentum
+    !  constraint computed using the ID on the mesh, multiplied by \(8\pi\)
     TYPE(grid_function):: MC
     !# Grid function storing the momentum constraint (violations)
     !  computed using the ID on the mesh
@@ -112,9 +115,14 @@ MODULE standard_tpo_formulation
     !# Grid function storing the momentum constraint (violations)
     !  computed using the stress-energy tensor mapped from the particles to the
     !  mesh
-    TYPE(grid_function):: S
+    TYPE(grid_function_scalar):: rho_parts
+    !# Grid scalar function storing the matter source in the Hamiltonian
+    !  constraint computed using the stress-energy tensor mapped from the
+    !  particles to the mesh, multiplied by \(16\pi\)
+    TYPE(grid_function):: S_parts
     !# Grid function storing the matter source in the momentum
-    !  constraint computed using the ID on the mesh, multiplied by \(8\pi\)
+    !  constraint computed using the stress-energy tensor mapped from the
+    !  particles to the mesh, multiplied by \(8\pi\)
 
     !
     !-- Norms of constraint violations

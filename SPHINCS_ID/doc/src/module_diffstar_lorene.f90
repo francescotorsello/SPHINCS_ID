@@ -40,7 +40,7 @@ MODULE diffstar_lorene
   USE id_base,                     ONLY: idbase
   USE utility,                     ONLY: itr, ios, err_msg, test_status, &
                                          perc, creturn, compute_g4, &
-                                         determinant_sym4x4_grid, show_progress
+                                         determinant_sym4x4, show_progress
   USE timing,                      ONLY: timer
 
 

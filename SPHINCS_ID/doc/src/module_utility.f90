@@ -133,7 +133,7 @@ MODULE utility
   END SUBROUTINE test_status
 
 
-  PURE SUBROUTINE compute_g4( i, j, k, lapse, shift_u, g_phys3_ll, g4 )
+  PURE SUBROUTINE compute_g4( lapse, shift, g3, g4 )
 
     !***********************************************
     !
@@ -141,6 +141,10 @@ MODULE utility
     !  shift and spatial metric
     !
     !  FT 27.11.2020
+    !
+    !  Generalized to not be bound to the mesh
+    !
+    !  FT 07.02.2022
     !
     !***********************************************
 
@@ -151,55 +155,34 @@ MODULE utility
 
     IMPLICIT NONE
 
-    INTEGER, INTENT( IN ):: i, j, k
-    !! Indices of the grid point
-    DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN ):: lapse
+    DOUBLE PRECISION,                INTENT(IN)   :: lapse
     !! Lapse function
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN ):: shift_u
-    !! Shift vector
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN ):: g_phys3_ll
-    !! Spatial metric
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g4
-    !! Spacetime metric
+    DOUBLE PRECISION, DIMENSION(3),  INTENT(IN)   :: shift
+    !! Contravariant shift vector
+    DOUBLE PRECISION, DIMENSION(6),  INTENT(IN)   :: g3
+    !! Covariant spatial metric
+    DOUBLE PRECISION, DIMENSION(10), INTENT(INOUT):: g4
+    !! Covariant spacetime metric
 
-    g4(i,j,k,itt)= - lapse(i,j,k)*lapse(i,j,k) &
-                      + g_phys3_ll(i,j,k,jxx) &
-                       *shift_u(i,j,k,jx) &
-                       *shift_u(i,j,k,jx) &
-                      + two*g_phys3_ll(i,j,k,jxy) &
-                       *shift_u(i,j,k,jx) &
-                       *shift_u(i,j,k,jy) &
-                      + two*g_phys3_ll(i,j,k,jxz) &
-                       *shift_u(i,j,k,jx) &
-                       *shift_u(i,j,k,jz) &
-                      + g_phys3_ll(i,j,k,jyy) &
-                       *shift_u(i,j,k,jy) &
-                       *shift_u(i,j,k,jy) &
-                      + two*g_phys3_ll(i,j,k,jyz) &
-                       *shift_u(i,j,k,jy) &
-                       *shift_u(i,j,k,jz) &
-                      + g_phys3_ll(i,j,k,jzz) &
-                       *shift_u(i,j,k,jz) &
-                       *shift_u(i,j,k,jz)
+    g4(itt)= - lapse*lapse + g3(jxx)*shift(jx)*shift(jx)     &
+                           + g3(jxy)*shift(jx)*shift(jy)*two &
+                           + g3(jxz)*shift(jx)*shift(jz)*two &
+                           + g3(jyy)*shift(jy)*shift(jy)     &
+                           + g3(jyz)*shift(jy)*shift(jz)*two &
+                           + g3(jzz)*shift(jz)*shift(jz)
 
-    g4(i,j,k,itx)=   g_phys3_ll(i,j,k,jxx)*shift_u(i,j,k,jx) &
-                      + g_phys3_ll(i,j,k,jxy)*shift_u(i,j,k,jy) &
-                      + g_phys3_ll(i,j,k,jxz)*shift_u(i,j,k,jz)
+    g4(itx)=   g3(jxx)*shift(jx) + g3(jxy)*shift(jy) + g3(jxz)*shift(jz)
 
-    g4(i,j,k,ity)=   g_phys3_ll(i,j,k,jxy)*shift_u(i,j,k,jx) &
-                      + g_phys3_ll(i,j,k,jyy)*shift_u(i,j,k,jy) &
-                      + g_phys3_ll(i,j,k,jyz)*shift_u(i,j,k,jz)
+    g4(ity)=   g3(jxy)*shift(jx) + g3(jyy)*shift(jy) + g3(jyz)*shift(jz)
 
-    g4(i,j,k,itz)=   g_phys3_ll(i,j,k,jxz)*shift_u(i,j,k,jx) &
-                      + g_phys3_ll(i,j,k,jyz)*shift_u(i,j,k,jy) &
-                      + g_phys3_ll(i,j,k,jzz)*shift_u(i,j,k,jz)
+    g4(itz)=   g3(jxz)*shift(jx) + g3(jyz)*shift(jy) + g3(jzz)*shift(jz)
 
-    g4(i,j,k,ixx)= g_phys3_ll(i,j,k,jxx)
-    g4(i,j,k,ixy)= g_phys3_ll(i,j,k,jxy)
-    g4(i,j,k,ixz)= g_phys3_ll(i,j,k,jxz)
-    g4(i,j,k,iyy)= g_phys3_ll(i,j,k,jyy)
-    g4(i,j,k,iyz)= g_phys3_ll(i,j,k,jyz)
-    g4(i,j,k,izz)= g_phys3_ll(i,j,k,jzz)
+    g4(ixx)= g3(jxx)
+    g4(ixy)= g3(jxy)
+    g4(ixz)= g3(jxz)
+    g4(iyy)= g3(jyy)
+    g4(iyz)= g3(jyz)
+    g4(izz)= g3(jzz)
 
   END SUBROUTINE compute_g4
 
@@ -212,6 +195,10 @@ MODULE utility
     !  field, given as a 10-vector
     !
     !  FT 26.01.2022
+    !
+    !  Generalized to not be bound to the mesh
+    !
+    !  FT 07.02.2022
     !
     !****************************************************************
 
@@ -262,74 +249,100 @@ MODULE utility
   END SUBROUTINE determinant_sym4x4
 
 
-  SUBROUTINE determinant_sym4x4_grid( i, j, k, A, det )
+  SUBROUTINE spacetime_vector_norm_sym4x4( g4, v, norm )
 
     !****************************************************************
     !
-    !# Compute the determinant of a \(4\times 4\) symmetric matrix
-    !  field, given as a 10-vector, at a given grid point
+    !# Compute the spacetime norm of a vector, using the metric
+    !  given as an array of 10 components
     !
-    !  FT
+    !  FT 07.02.2022
     !
     !****************************************************************
 
-    USE tensor, ONLY: itt, itx, ity, itz, ixx, ixy, ixz, iyy, iyz, izz, n_sym4x4
+    USE tensor,    ONLY: itt, itx, ity, itz, ixx, ixy, ixz, iyy, iyz, izz, &
+                      it, ix, iy, iz, n_sym4x4
+    USE constants, ONLY: two
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k
-    !! Indices of the grid point
-    INTEGER, DIMENSION(4):: components
-    !# Array containing the shape of the \(4\times 4\) symmetric matrix.
-    !  The first 3 components are equal to the numbers of grid points
-    !  along each axis. The fourth component is equal to the number of
-    !  independent components of the 4x4 symmetric matrix.
-    DOUBLE PRECISION, INTENT(IN):: A(:,:,:,:)
-    !# The \(4\times 4\) symmetric matrix, given as a 10-vector.
-    !  The first 3 components run over the numbers of grid points
-    !  along each axis. The fourth index runs over the number of
-    !  independent components of the \(4\times 4\) symmetric matrix.
-    DOUBLE PRECISION, INTENT(OUT):: det
-    !! Determinant of the \(4\times 4\) symmetric matrix
+    DOUBLE PRECISION, INTENT(IN):: g4(itt:izz)
+    !# The \(4\times 4\) spacetime metric, given as a 10-vector.
+    DOUBLE PRECISION, INTENT(IN):: v(it:iz)
+    !# The \(4\)-vector whose norm has to be computed.
+    DOUBLE PRECISION, INTENT(OUT):: norm
+    !! Spacetime norm of the vector v.
 
-    components= SHAPE( A )
-
-    IF( components(4) /= n_sym4x4 )THEN
+    IF( SIZE(g4) /= n_sym4x4 )THEN
       PRINT *, "** ERROR in determinant_sym4x4_grid in MODULE utility.", &
                " This subroutine needs a symmetric matrix with 10 components,",&
-               " and a ", components, "component matrix was given instead."
+               " and a ", SIZE(g4), "component matrix was given instead."
       STOP
     ENDIF
 
-    det=   A(i,j,k,itt)*(A(i,j,k,ixx)*(A(i,j,k,iyy)*A(i,j,k,izz) &
-         - A(i,j,k,iyz)*A(i,j,k,iyz)) &
-         + A(i,j,k,ixy)*(A(i,j,k,iyz)*A(i,j,k,ixz) &
-         - A(i,j,k,ixy)*A(i,j,k,izz)) &
-         + A(i,j,k,ixz)*(A(i,j,k,ixy)*A(i,j,k,iyz) &
-         - A(i,j,k,iyy)*A(i,j,k,ixz))) &
-         - A(i,j,k,itx)*(A(i,j,k,itx)*(A(i,j,k,iyy)*A(i,j,k,izz) &
-         - A(i,j,k,iyz)*A(i,j,k,iyz)) &
-         + A(i,j,k,ixy)*(A(i,j,k,iyz)*A(i,j,k,itz) &
-         - A(i,j,k,ity)*A(i,j,k,izz)) &
-         + A(i,j,k,ixz)*(A(i,j,k,ity)*A(i,j,k,iyz) &
-         - A(i,j,k,iyy)*A(i,j,k,itz))) &
-         + A(i,j,k,ity)*(A(i,j,k,itx)*(A(i,j,k,ixy)*A(i,j,k,izz) &
-         - A(i,j,k,iyz)*A(i,j,k,ixz)) &
-         + A(i,j,k,ixx)*(A(i,j,k,iyz)*A(i,j,k,itz) &
-         - A(i,j,k,ity)*A(i,j,k,izz)) &
-         + A(i,j,k,ixz)*(A(i,j,k,ity)*A(i,j,k,ixz) &
-         - A(i,j,k,ixy)*A(i,j,k,itz))) &
-         - A(i,j,k,itz)*(A(i,j,k,itx)*(A(i,j,k,ixy)*A(i,j,k,iyz) &
-         - A(i,j,k,iyy)*A(i,j,k,ixz)) &
-         + A(i,j,k,ixx)*(A(i,j,k,iyy)*A(i,j,k,itz) &
-         - A(i,j,k,ity)*A(i,j,k,iyz)) &
-         + A(i,j,k,ixy)*(A(i,j,k,ity)*A(i,j,k,ixz) &
-         - A(i,j,k,ixy)*A(i,j,k,itz)))
+    norm= g4(itt)*v(it)*v(it)     + two*g4(itx)*v(it)*v(ix) &
+        + two*g4(ity)*v(it)*v(iy) + two*g4(itz)*v(it)*v(iz) &
+        + g4(ixx)*v(ix)*v(ix)     + two*g4(ixy)*v(ix)*v(iy) &
+        + two*g4(ixz)*v(ix)*v(iz) + g4(iyy)*v(iy)*v(iy)     &
+        + two*g4(iyz)*v(iy)*v(iz) + g4(izz)*v(iz)*v(iz)
 
-  END SUBROUTINE determinant_sym4x4_grid
+  END SUBROUTINE spacetime_vector_norm_sym4x4
 
 
-  SUBROUTINE determinant_sym3x3_grid( i, j, k, A, det )
+!  SUBROUTINE determinant_sym3x3_grid( i, j, k, A, det )
+!
+!    !****************************************************************
+!    !
+!    !# Compute the determinant of a \(3\times 3\) symmetric matrix
+!    !  field, given as a 6-vector, at a given grid point
+!    !
+!    !  FT 26.03.2021
+!    !
+!    !  Generalized to not be bound to the mesh
+!    !
+!    !  FT 07.02.2022
+!    !
+!    !****************************************************************
+!
+!    USE tensor, ONLY: jxx, jxy, jxz, jyy, jyz, jzz, n_sym3x3
+!
+!    IMPLICIT NONE
+!
+!    INTEGER:: i, j, k
+!    !! Indices of the grid point
+!    INTEGER, DIMENSION(4):: components
+!    !# Array containing the shape of the \(3\times 3\) symmetric matrix.
+!    !  The first 3 components are equal to the numbers of grid points
+!    !  along each axis. The fourth component is equal to the number of
+!    !  independent components of the \(3\times 3\) symmetric matrix.
+!    DOUBLE PRECISION, INTENT(IN):: A(:,:,:,:)
+!    !# The \(3\times 3\) symmetric matrix, given as a 6-vector.
+!    !  The first 3 components run over the numbers of grid points
+!    !  along each axis. The fourth index runs over the number of
+!    !  independent components of the \(3\times 3\) symmetric matrix.
+!    DOUBLE PRECISION, INTENT(OUT):: det
+!    !! Determinant of the \(3\times 3\) symmetric matrix
+!
+!    components= SHAPE( A )
+!
+!    IF( components(4) /= n_sym3x3 )THEN
+!      PRINT *, "** ERROR in determinant_sym3x3_grid in MODULE utility.", &
+!               " This subroutine needs a symmetric matrix with 6 components,",&
+!               " and a ", components, "component matrix was given instead."
+!      STOP
+!    ENDIF
+!
+!    det=   A(i,j,k,jxx)*A(i,j,k,jyy)*A(i,j,k,jzz) &
+!         + A(i,j,k,jxy)*A(i,j,k,jyz)*A(i,j,k,jxz) &
+!         + A(i,j,k,jxz)*A(i,j,k,jxy)*A(i,j,k,jyz) &
+!         - A(i,j,k,jxy)*A(i,j,k,jxy)*A(i,j,k,jzz) &
+!         - A(i,j,k,jxz)*A(i,j,k,jyy)*A(i,j,k,jxz) &
+!         - A(i,j,k,jxx)*A(i,j,k,jyz)*A(i,j,k,jyz)
+!
+!  END SUBROUTINE determinant_sym3x3_grid
+
+
+  SUBROUTINE determinant_sym3x3( A, det )
 
     !****************************************************************
     !
@@ -338,44 +351,36 @@ MODULE utility
     !
     !  FT 26.03.2021
     !
+    !  Generalized to not be bound to the mesh
+    !
+    !  FT 07.02.2022
+    !
     !****************************************************************
 
     USE tensor, ONLY: jxx, jxy, jxz, jyy, jyz, jzz, n_sym3x3
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k
-    !! Indices of the grid point
-    INTEGER, DIMENSION(4):: components
-    !# Array containing the shape of the \(3\times 3\) symmetric matrix.
-    !  The first 3 components are equal to the numbers of grid points
-    !  along each axis. The fourth component is equal to the number of
-    !  independent components of the \(3\times 3\) symmetric matrix.
-    DOUBLE PRECISION, INTENT(IN):: A(:,:,:,:)
+    DOUBLE PRECISION, INTENT(IN):: A(jxx:jzz)
     !# The \(3\times 3\) symmetric matrix, given as a 6-vector.
-    !  The first 3 components run over the numbers of grid points
-    !  along each axis. The fourth index runs over the number of
-    !  independent components of the \(3\times 3\) symmetric matrix.
     DOUBLE PRECISION, INTENT(OUT):: det
     !! Determinant of the \(3\times 3\) symmetric matrix
 
-    components= SHAPE( A )
-
-    IF( components(4) /= n_sym3x3 )THEN
+    IF( SIZE(A) /= n_sym3x3 )THEN
       PRINT *, "** ERROR in determinant_sym3x3_grid in MODULE utility.", &
-               " This subroutine needs a symmetric matrix with 6 components,",&
-               " and a ", components, "component matrix was given instead."
+               " This subroutine needs an array with 6 components,",&
+               " and a ", SIZE(A), "component array was given instead."
       STOP
     ENDIF
 
-    det=   A(i,j,k,jxx)*A(i,j,k,jyy)*A(i,j,k,jzz) &
-         + A(i,j,k,jxy)*A(i,j,k,jyz)*A(i,j,k,jxz) &
-         + A(i,j,k,jxz)*A(i,j,k,jxy)*A(i,j,k,jyz) &
-         - A(i,j,k,jxy)*A(i,j,k,jxy)*A(i,j,k,jzz) &
-         - A(i,j,k,jxz)*A(i,j,k,jyy)*A(i,j,k,jxz) &
-         - A(i,j,k,jxx)*A(i,j,k,jyz)*A(i,j,k,jyz)
+    det=   A(jxx)*A(jyy)*A(jzz) &
+         + A(jxy)*A(jyz)*A(jxz) &
+         + A(jxz)*A(jxy)*A(jyz) &
+         - A(jxy)*A(jxy)*A(jzz) &
+         - A(jxz)*A(jyy)*A(jxz) &
+         - A(jxx)*A(jyz)*A(jyz)
 
-  END SUBROUTINE determinant_sym3x3_grid
+  END SUBROUTINE determinant_sym3x3
 
 
   PURE SUBROUTINE spherical_from_cartesian( x, y, z, xo, yo, zo, r, theta, phi )

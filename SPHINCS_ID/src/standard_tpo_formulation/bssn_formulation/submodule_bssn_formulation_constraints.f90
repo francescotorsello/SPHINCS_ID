@@ -159,14 +159,14 @@ SUBMODULE (bssn_formulation) constraints
       PRINT *, " * Importing on refinement level l=", l, "..."
 
       CALL id% read_id_hydro( THIS% get_ngrid_x(l), &
-                                   THIS% get_ngrid_y(l), &
-                                   THIS% get_ngrid_z(l), &
-                                   THIS% coords% levels(l)% var, &
-                                   baryon_density% levels(l)% var, &
-                                   energy_density% levels(l)% var, &
-                                   specific_energy% levels(l)% var, &
-                                   pressure% levels(l)% var, &
-                                   v_euler% levels(l)% var )
+                              THIS% get_ngrid_y(l), &
+                              THIS% get_ngrid_z(l), &
+                              THIS% coords% levels(l)% var, &
+                              baryon_density% levels(l)% var, &
+                              energy_density% levels(l)% var, &
+                              specific_energy% levels(l)% var, &
+                              pressure% levels(l)% var, &
+                              v_euler% levels(l)% var )
 
     ENDDO ref_levels
     PRINT *, " * LORENE hydro ID imported."
@@ -265,9 +265,10 @@ SUBMODULE (bssn_formulation) constraints
               u_euler_l(i,j,k,iz)= lorentz_factor( i, j, k ) &
                                      *v_euler_l( i, j, k, jz )
 
-              CALL compute_g4( i, j, k, lapse, shift_u, g_phys3_ll, g4 )
+              CALL compute_g4( lapse(i,j,k), shift_u(i,j,k,:), &
+                               g_phys3_ll(i,j,k,:), g4(i,j,k,:) )
 
-              CALL determinant_sym4x4_grid( i, j, k, g4, detg4 )
+              CALL determinant_sym4x4( g4(i,j,k,:), detg4 )
 
               IF( ABS( detg4 ) < 1.0D-10 )THEN
                   PRINT *, "The determinant of the spacetime metric "&
@@ -1433,6 +1434,9 @@ SUBMODULE (bssn_formulation) constraints
     CALL allocate_grid_function( THIS% MC_parts, "MC_parts_ID", 3 )
     CALL allocate_grid_function( THIS% GC_parts, "GC_parts_ID", 3 )
 
+    CALL allocate_grid_function( THIS% rho_parts, "HC_rho_parts", 1 )
+    CALL allocate_grid_function( THIS% S_parts, "MC_S_parts", 3 )
+
     PRINT *, "Mapping hydro fields from particles to grid..."
 
     CALL allocate_ADM()
@@ -1686,7 +1690,9 @@ SUBMODULE (bssn_formulation) constraints
                  Tmunu_ll   => Tmunu_ll% levels(l)% var, &
                  HC_parts   => THIS% HC_parts % levels(l)% var, &
                  MC_parts   => THIS% MC_parts % levels(l)% var, &
-                 GC_parts   => THIS% GC_parts % levels(l)% var &
+                 GC_parts   => THIS% GC_parts % levels(l)% var, &
+                 rho_parts  => THIS% rho_parts% levels(l)% var, &
+                 S_parts    => THIS% S_parts% levels(l)% var &
       )
 
         imin(1) = THIS% levels(l)% nghost_x
@@ -1699,7 +1705,7 @@ SUBMODULE (bssn_formulation) constraints
         HC_parts= 0.0D0
         MC_parts= 0.0D0
         GC_parts= 0.0D0
-        CALL BSSN_CONSTRAINTS_INTERIOR( &
+        CALL bssn_constraint_terms_interior( &
           !
           !-- Input
           !
@@ -1741,8 +1747,57 @@ SUBMODULE (bssn_formulation) constraints
           HC_parts(:,:,:), &
           MC_parts(:,:,:,jx), &
           MC_parts(:,:,:,jy), &
-          MC_parts(:,:,:,jz) &
+          MC_parts(:,:,:,jz), &
+          ! Sources in the Hamiltonian and momentum constraints
+          rho_parts(:,:,:), &
+          S_parts(:,:,:,jx), &
+          S_parts(:,:,:,jy), &
+          S_parts(:,:,:,jz) &
         )
+        !CALL BSSN_CONSTRAINTS_INTERIOR( &
+        !  !
+        !  !-- Input
+        !  !
+        !  THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+        !  imin, imax, &
+        !  THIS% get_dx(l), THIS% get_dy(l), THIS% get_dz(l), &
+        !  g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
+        !  g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
+        !  g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
+        !  A_BSSN3_ll(:,:,:,jxx), A_BSSN3_ll(:,:,:,jxy), &
+        !  A_BSSN3_ll(:,:,:,jxz), A_BSSN3_ll(:,:,:,jyy), &
+        !  A_BSSN3_ll(:,:,:,jyz), A_BSSN3_ll(:,:,:,jzz), &
+        !  trK(:,:,:), phi(:,:,:), &
+        !  Gamma_u(:,:,:,jx), &
+        !  Gamma_u(:,:,:,jy), &
+        !  Gamma_u(:,:,:,jz), &
+        !  Tmunu_ll(:,:,:,itt), &
+        !  Tmunu_ll(:,:,:,itx), &
+        !  Tmunu_ll(:,:,:,ity), &
+        !  Tmunu_ll(:,:,:,itz), &
+        !  Tmunu_ll(:,:,:,ixx), &
+        !  Tmunu_ll(:,:,:,ixy), &
+        !  Tmunu_ll(:,:,:,ixz), &
+        !  Tmunu_ll(:,:,:,iyy), &
+        !  Tmunu_ll(:,:,:,iyz), &
+        !  Tmunu_ll(:,:,:,izz), &
+        !  lapse(:,:,:), &
+        !  shift_u(:,:,:,jx), &
+        !  shift_u(:,:,:,jy), &
+        !  shift_u(:,:,:,jz), &
+        !  !
+        !  !-- Output
+        !  !
+        !  ! Connection constraints
+        !  GC_parts(:,:,:,jx), &
+        !  GC_parts(:,:,:,jy), &
+        !  GC_parts(:,:,:,jz), &
+        !  ! Hamiltonian and momentum constraints
+        !  HC_parts(:,:,:), &
+        !  MC_parts(:,:,:,jx), &
+        !  MC_parts(:,:,:,jy), &
+        !  MC_parts(:,:,:,jz) &
+        !)
       END ASSOCIATE
     ENDDO
 !    !$OMP END PARALLEL DO
@@ -1757,11 +1812,11 @@ SUBMODULE (bssn_formulation) constraints
 
     DO l= 1, THIS% nlevels, 1
 
-      ASSOCIATE( HC_parts => THIS% HC_parts% levels(l)% var, &
-                 MC_parts => THIS% MC_parts% levels(l)% var, &
-                 GC_parts => THIS% GC_parts% levels(l)% var, &
-                 rho        => THIS% rho% levels(l)% var, &
-                 S          => THIS% S% levels(l)% var &
+      ASSOCIATE( HC_parts  => THIS% HC_parts% levels(l)% var, &
+                 MC_parts  => THIS% MC_parts% levels(l)% var, &
+                 GC_parts  => THIS% GC_parts% levels(l)% var, &
+                 rho_parts => THIS% rho_parts% levels(l)% var, &
+                 S_parts   => THIS% S_parts% levels(l)% var &
       )
 
         unit_logfile= 2791
@@ -1877,7 +1932,8 @@ SUBMODULE (bssn_formulation) constraints
         CALL THIS% analyze_constraint( &
              l, &
              HC_parts, name_constraint, unit_logfile, name_analysis, &
-             THIS% HC_parts_l2(l), THIS% HC_parts_loo(l), THIS% HC_int(l), rho )
+             THIS% HC_parts_l2(l), THIS% HC_parts_loo(l), THIS% HC_int(l), &
+             rho_parts )
 
 
         name_analysis= "bssn-mc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
@@ -1886,7 +1942,7 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              MC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jx), THIS% MC_parts_loo(l,jx), &
-             THIS% MC_int(l,jx), S(:,:,:,jx) )
+             THIS% MC_int(l,jx), S_parts(:,:,:,jx) )
 
         name_analysis= "bssn-mc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the momentum constraint"
@@ -1894,7 +1950,7 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              MC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jy), THIS% MC_parts_loo(l,jy), &
-             THIS% MC_int(l,jy), S(:,:,:,jy) )
+             THIS% MC_int(l,jy), S_parts(:,:,:,jy) )
 
         name_analysis= "bssn-mc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the momentum constraint"
@@ -1902,28 +1958,31 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              MC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jz), THIS% MC_parts_loo(l,jz), &
-             THIS% MC_int(l,jz), S(:,:,:,jz) )
+             THIS% MC_int(l,jz), S_parts(:,:,:,jz) )
 
         name_analysis= "bssn-gc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the connection constraint"
         CALL THIS% analyze_constraint( &
              l, &
              GC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_parts_l2(l,jx), THIS% GC_parts_loo(l,jx), THIS% GC_int(l,jx) )
+             THIS% GC_parts_l2(l,jx), THIS% GC_parts_loo(l,jx), &
+             THIS% GC_int(l,jx) )
 
         name_analysis= "bssn-gc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the connection constraint"
         CALL THIS% analyze_constraint( &
              l, &
              GC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_parts_l2(l,jy), THIS% GC_parts_loo(l,jy), THIS% GC_int(l,jy) )
+             THIS% GC_parts_l2(l,jy), THIS% GC_parts_loo(l,jy), &
+             THIS% GC_int(l,jy) )
 
         name_analysis= "bssn-gc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the connection constraint"
         CALL THIS% analyze_constraint( &
              l, &
              GC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_parts_l2(l,jz), THIS% GC_parts_loo(l,jz), THIS% GC_int(l,jz) )
+             THIS% GC_parts_l2(l,jz), THIS% GC_parts_loo(l,jz), &
+             THIS% GC_int(l,jz) )
 
         CLOSE( UNIT= unit_logfile )
 

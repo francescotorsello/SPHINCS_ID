@@ -71,10 +71,11 @@ SUBMODULE (bns_lorene) io
     PRINT *, "   Bowen-York angular momentum of the system= (", &
              THIS% angular_momentum_x, &
              ", "
-    PRINT *, "                                    ", THIS% angular_momentum_y, &
+    PRINT *, "                                               ", &
+             THIS% angular_momentum_y, &
              ", "
-    PRINT *, "                                    ", THIS% angular_momentum_z, &
-             ") G*Msun^2/c"
+    PRINT *, "                                               ", &
+             THIS% angular_momentum_z, ") G*Msun^2/c"
     PRINT *
 
 

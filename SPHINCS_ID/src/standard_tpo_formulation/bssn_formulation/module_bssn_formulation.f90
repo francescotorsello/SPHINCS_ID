@@ -40,7 +40,7 @@ MODULE bssn_formulation
   USE timing,                   ONLY: timer
   USE utility,                  ONLY: ios, err_msg, perc, creturn, run_id, &
                                       test_status, compute_g4, &
-                                      determinant_sym4x4_grid, show_progress
+                                      determinant_sym4x4, show_progress
 
 
   IMPLICIT NONE

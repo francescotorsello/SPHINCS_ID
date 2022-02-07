@@ -297,7 +297,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    u= THIS% specific_energy_parts
+    u= THIS% specific_energy
 
   END PROCEDURE get_u
 
@@ -314,7 +314,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    pressure= THIS% pressure_parts
+    pressure= THIS% pressure
 
   END PROCEDURE get_pressure
 
@@ -332,7 +332,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    pressure_cu= THIS% pressure_parts_cu
+    pressure_cu= THIS% pressure_cu
 
   END PROCEDURE get_pressure_cu
 

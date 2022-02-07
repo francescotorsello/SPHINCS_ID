@@ -122,6 +122,8 @@ SUBMODULE (sph_particles) sph_variables
     USE tensor,              ONLY: n_sym4x4, &
                                    itt, itx, ity, itz, &
                                    ixx, ixy, ixz, iyy, iyz, izz
+    USE utility,             ONLY: compute_g4, determinant_sym4x4, &
+                                   spacetime_vector_norm_sym4x4
 
     IMPLICIT NONE
 
@@ -136,7 +138,8 @@ SUBMODULE (sph_particles) sph_variables
     INTEGER:: n_problematic_h
     INTEGER:: itot, l, ill!, b, k
 
-    DOUBLE PRECISION:: g4(0:3,0:3)
+    !DOUBLE PRECISION:: g4(0:3,0:3)
+    DOUBLE PRECISION:: g4(n_sym4x4)
     DOUBLE PRECISION:: gg4(n_sym4x4,THIS% npart)
     DOUBLE PRECISION:: sq_detg4(THIS% npart)
     DOUBLE PRECISION:: det, sq_g, Theta_a!, &!nu_max1, nu_max2, &
@@ -259,12 +262,12 @@ SUBMODULE (sph_particles) sph_variables
 
       ! Coordinate velocity of the fluid [c]
       THIS% v(0,itr)= one
-      THIS% v(1,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_x(itr) &
-                    - THIS% shift_parts_x(itr)
-      THIS% v(2,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_y(itr) &
-                    - THIS% shift_parts_y(itr)
-      THIS% v(3,itr)= THIS% lapse_parts(itr)*THIS% v_euler_parts_z(itr) &
-                    - THIS% shift_parts_z(itr)
+      THIS% v(1,itr)= THIS% lapse(itr)*THIS% v_euler_x(itr) &
+                    - THIS% shift_x(itr)
+      THIS% v(2,itr)= THIS% lapse(itr)*THIS% v_euler_y(itr) &
+                    - THIS% shift_y(itr)
+      THIS% v(3,itr)= THIS% lapse(itr)*THIS% v_euler_z(itr) &
+                    - THIS% shift_z(itr)
       vel_u(1,itr)  = THIS% v(1,itr)
       vel_u(2,itr)  = THIS% v(2,itr)
       vel_u(3,itr)  = THIS% v(3,itr)
@@ -272,63 +275,68 @@ SUBMODULE (sph_particles) sph_variables
       !
       !-- Metric as matrix for easy manipulation
       !
-      g4(0,0)= - THIS% lapse_parts(itr)**2 &
-             + THIS% g_xx_parts(itr)*THIS% shift_parts_x(itr) &
-              *THIS% shift_parts_x(itr)&
-             + 2 * THIS% g_xy_parts(itr)*THIS% shift_parts_x(itr) &
-              *THIS% shift_parts_y(itr)&
-             + 2 * THIS% g_xz_parts(itr)*THIS% shift_parts_x(itr) &
-              *THIS% shift_parts_z(itr)&
-             + THIS% g_yy_parts(itr)*THIS% shift_parts_y(itr) &
-              *THIS% shift_parts_y(itr)&
-             + 2 * THIS% g_yz_parts(itr)*THIS% shift_parts_y(itr) &
-              *THIS% shift_parts_z(itr)&
-             + THIS% g_zz_parts(itr)*THIS% shift_parts_z(itr) &
-              *THIS% shift_parts_z(itr)
-      g4(0,1)= THIS% g_xx_parts(itr)*THIS% shift_parts_x(itr) &
-             + THIS% g_xy_parts(itr)*THIS% shift_parts_y(itr) &
-             + THIS% g_xz_parts(itr)*THIS% shift_parts_z(itr)
-      g4(0,2)= THIS% g_xy_parts(itr)*THIS% shift_parts_x(itr) &
-             + THIS% g_yy_parts(itr)*THIS% shift_parts_y(itr) &
-             + THIS% g_yz_parts(itr)*THIS% shift_parts_z(itr)
-      g4(0,3)= THIS% g_xz_parts(itr)*THIS% shift_parts_x(itr) &
-             + THIS% g_yz_parts(itr)*THIS% shift_parts_y(itr) &
-             + THIS% g_zz_parts(itr)*THIS% shift_parts_z(itr)
+     ! g4(0,0)= - THIS% lapse(itr)**2 &
+     !        + THIS% g_xx(itr)*THIS% shift_x(itr) &
+     !         *THIS% shift_x(itr)&
+     !        + 2 * THIS% g_xy(itr)*THIS% shift_x(itr) &
+     !         *THIS% shift_y(itr)&
+     !        + 2 * THIS% g_xz(itr)*THIS% shift_x(itr) &
+     !         *THIS% shift_z(itr)&
+     !        + THIS% g_yy(itr)*THIS% shift_y(itr) &
+     !         *THIS% shift_y(itr)&
+     !        + 2 * THIS% g_yz(itr)*THIS% shift_y(itr) &
+     !         *THIS% shift_z(itr)&
+     !        + THIS% g_zz(itr)*THIS% shift_z(itr) &
+     !         *THIS% shift_z(itr)
+     ! g4(0,1)= THIS% g_xx(itr)*THIS% shift_x(itr) &
+     !        + THIS% g_xy(itr)*THIS% shift_y(itr) &
+     !        + THIS% g_xz(itr)*THIS% shift_z(itr)
+     ! g4(0,2)= THIS% g_xy(itr)*THIS% shift_x(itr) &
+     !        + THIS% g_yy(itr)*THIS% shift_y(itr) &
+     !        + THIS% g_yz(itr)*THIS% shift_z(itr)
+     ! g4(0,3)= THIS% g_xz(itr)*THIS% shift_x(itr) &
+     !        + THIS% g_yz(itr)*THIS% shift_y(itr) &
+     !        + THIS% g_zz(itr)*THIS% shift_z(itr)
+     !
+     ! g4(1,0)= THIS% g_xx(itr)*THIS% shift_x(itr) &
+     !        + THIS% g_xy(itr)*THIS% shift_y(itr) &
+     !        + THIS% g_xz(itr)*THIS% shift_z(itr)
+     ! g4(1,1)= THIS% g_xx(itr)
+     ! g4(1,2)= THIS% g_xy(itr)
+     ! g4(1,3)= THIS% g_xz(itr)
+     !
+     ! g4(2,0)= THIS% g_xy(itr)*THIS% shift_x(itr) &
+     !        + THIS% g_yy(itr)*THIS% shift_y(itr) &
+     !        + THIS% g_yz(itr)*THIS% shift_z(itr)
+     ! g4(2,1)= THIS% g_xy(itr)
+     ! g4(2,2)= THIS% g_yy(itr)
+     ! g4(2,3)= THIS% g_yz(itr)
+     !
+     ! g4(3,0)= THIS% g_xz(itr)*THIS% shift_x(itr) &
+     !        + THIS% g_yz(itr)*THIS% shift_y(itr) &
+     !        + THIS% g_zz(itr)*THIS% shift_z(itr)
+     ! g4(3,1)= THIS% g_xz(itr)
+     ! g4(3,2)= THIS% g_yz(itr)
+     ! g4(3,3)= THIS% g_zz(itr)
 
-      g4(1,0)= THIS% g_xx_parts(itr)*THIS% shift_parts_x(itr) &
-             + THIS% g_xy_parts(itr)*THIS% shift_parts_y(itr) &
-             + THIS% g_xz_parts(itr)*THIS% shift_parts_z(itr)
-      g4(1,1)= THIS% g_xx_parts(itr)
-      g4(1,2)= THIS% g_xy_parts(itr)
-      g4(1,3)= THIS% g_xz_parts(itr)
+     ! gg4(1, itr)= g4(0,0)
+     ! gg4(2, itr)= g4(0,1)
+     ! gg4(3, itr)= g4(0,2)
+     ! gg4(4, itr)= g4(0,3)
+     ! gg4(5, itr)= g4(1,1)
+     ! gg4(6, itr)= g4(1,2)
+     ! gg4(7, itr)= g4(1,3)
+     ! gg4(8, itr)= g4(2,2)
+     ! gg4(9, itr)= g4(2,3)
+     ! gg4(10,itr)= g4(3,3)
 
-      g4(2,0)= THIS% g_xy_parts(itr)*THIS% shift_parts_x(itr) &
-             + THIS% g_yy_parts(itr)*THIS% shift_parts_y(itr) &
-             + THIS% g_yz_parts(itr)*THIS% shift_parts_z(itr)
-      g4(2,1)= THIS% g_xy_parts(itr)
-      g4(2,2)= THIS% g_yy_parts(itr)
-      g4(2,3)= THIS% g_yz_parts(itr)
+      CALL compute_g4( THIS% lapse(itr), &
+            [THIS% shift_x(itr), THIS% shift_y(itr), THIS% shift_z(itr)], &
+            [THIS% g_xx(itr), THIS% g_xy(itr), THIS% g_xz(itr), &
+             THIS% g_yy(itr), THIS% g_yz(itr), THIS% g_zz(itr)], g4 )
 
-      g4(3,0)= THIS% g_xz_parts(itr)*THIS% shift_parts_x(itr) &
-             + THIS% g_yz_parts(itr)*THIS% shift_parts_y(itr) &
-             + THIS% g_zz_parts(itr)*THIS% shift_parts_z(itr)
-      g4(3,1)= THIS% g_xz_parts(itr)
-      g4(3,2)= THIS% g_yz_parts(itr)
-      g4(3,3)= THIS% g_zz_parts(itr)
-
-      gg4(1, itr)= g4(0,0)
-      gg4(2, itr)= g4(0,1)
-      gg4(3, itr)= g4(0,2)
-      gg4(4, itr)= g4(0,3)
-      gg4(5, itr)= g4(1,1)
-      gg4(6, itr)= g4(1,2)
-      gg4(7, itr)= g4(1,3)
-      gg4(8, itr)= g4(2,2)
-      gg4(9, itr)= g4(2,3)
-      gg4(10,itr)= g4(3,3)
-
-      ! sqrt(-det(g4))
-      CALL determinant_4x4_matrix(g4,det)
+      CALL determinant_sym4x4( g4, det )
+      !CALL determinant_4x4_matrix(g4,det)
       IF( ABS(det) < 1D-10 )THEN
           PRINT *, "The determinant of the spacetime metric is " &
                    // "effectively 0 at particle ", itr
@@ -346,29 +354,30 @@ SUBMODULE (sph_particles) sph_variables
       !-- Generalized Lorentz factor
       !
       Theta_a= zero
-      DO nus=0,3
-        DO mus=0,3
-          Theta_a= Theta_a &
-                   + g4(mus,nus)*THIS% v(mus,itr)*THIS% v(nus,itr)
-        ENDDO
-      ENDDO
+      !DO nus=0,3
+      !  DO mus=0,3
+      !    Theta_a= Theta_a &
+      !             + g4(mus,nus)*THIS% v(mus,itr)*THIS% v(nus,itr)
+      !  ENDDO
+      !ENDDO
+      CALL spacetime_vector_norm_sym4x4( g4, THIS% v(:,itr), Theta_a )
       Theta_a         = one/SQRT(-Theta_a)
       Theta(itr)      = Theta_a
       THIS% Theta(itr)= Theta_a
 
       ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
       ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= THIS% baryon_density_parts(itr)
-      THIS% nlrf(itr)= THIS% baryon_density_parts(itr)
+      nlrf(itr)= THIS% baryon_density(itr)
+      THIS% nlrf(itr)= THIS% baryon_density(itr)
 
       ! Specific internal energy [c^2]
-      u(itr)= THIS% specific_energy_parts(itr)
+      u(itr)= THIS% specific_energy(itr)
 
       ! Pressure [amu*c**2/(Msun_geo**3)]
       !          dimensions: [(M/L**3)*L**2/T**2]= [M/(L*T**2)], same as
       !                      energy density
-      Pr(itr)= THIS% pressure_parts(itr)
-      THIS% pressure_parts_cu(itr)= Pr(itr)
+      Pr(itr)= THIS% pressure(itr)
+      THIS% pressure_cu(itr)= Pr(itr)
 
     ENDDO compute_SPH_variables_on_particles
 !    !$OMP END PARALLEL DO
@@ -592,13 +601,13 @@ SUBMODULE (sph_particles) sph_variables
 !      CALL THIS% reshape_sph_field( THIS% v, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% v_euler_parts_x, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% v_euler_x, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% v_euler_parts_y, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% v_euler_y, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% v_euler_parts_z, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% v_euler_z, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
 !      CALL THIS% reshape_sph_field( THIS% Theta, cnt1, cnt2, &
@@ -607,22 +616,22 @@ SUBMODULE (sph_particles) sph_variables
 !      CALL THIS% reshape_sph_field( THIS% h, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% baryon_density_parts, cnt1, &
+!      CALL THIS% reshape_sph_field( THIS% baryon_density, cnt1, &
 !                                    cnt2, THIS% baryon_density_index )
 !
 !      CALL THIS% reshape_sph_field( THIS% nlrf, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% energy_density_parts, cnt1, &
+!      CALL THIS% reshape_sph_field( THIS% energy_density, cnt1, &
 !                                    cnt2, THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% specific_energy_parts, cnt1, &
+!      CALL THIS% reshape_sph_field( THIS% specific_energy, cnt1, &
 !                                    cnt2, THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% pressure_parts, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% pressure, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% pressure_parts_cu, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% pressure_cu, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
 !      CALL THIS% reshape_sph_field( THIS% nu, cnt1, cnt2, &
@@ -635,34 +644,34 @@ SUBMODULE (sph_particles) sph_variables
 !      !-- Reshape TYPE member spacetime variables
 !      !
 !
-!      CALL THIS% reshape_sph_field( THIS% lapse_parts, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% lapse, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% shift_parts_x, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% shift_x, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% shift_parts_y, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% shift_y, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% shift_parts_z, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% shift_z, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% g_xx_parts, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% g_xx, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% g_xy_parts, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% g_xy, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% g_xz_parts, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% g_xz, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% g_yy_parts, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% g_yy, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% g_yz_parts, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% g_yz, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
-!      CALL THIS% reshape_sph_field( THIS% g_zz_parts, cnt1, cnt2, &
+!      CALL THIS% reshape_sph_field( THIS% g_zz, cnt1, cnt2, &
 !                                    THIS% baryon_density_index )
 !
 !      !
@@ -1118,14 +1127,14 @@ SUBMODULE (sph_particles) sph_variables
                     *( THIS% all_eos(i_matter)% eos_parameters(2) - one ) ) )
 
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          THIS% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
           THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
         ELSE
           ! If the system is hot, that is, has a thermal component, then
           ! the density and the specific energy (the latter including both
           ! cold and thermal part) should be supplied in the ID.
           ! The pressure is computed using them (see pwp_EOS MODULE).
-          u(npart_in:npart_fin)= THIS% specific_energy_parts(npart_in:npart_fin)
+          u(npart_in:npart_fin)= THIS% specific_energy(npart_in:npart_fin)
 
           DO a= npart_in, npart_fin, 1
 
@@ -1141,7 +1150,7 @@ SUBMODULE (sph_particles) sph_variables
                 *( THIS% all_eos(i_matter)% eos_parameters(2) - one ) ) ), zero)
 
           ENDDO
-          THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          THIS% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
           THIS% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ENDIF
@@ -1161,7 +1170,7 @@ SUBMODULE (sph_particles) sph_variables
                               THIS% nlrf_int(npart_in:npart_fin)*m0c2_cu, &
                               u(npart_in:npart_fin) )
 
-        THIS% pressure_parts_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+        THIS% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
 
         IF( THIS% cold_system )THEN
           ! If the system is cold, get the specific energy computed
@@ -1188,7 +1197,7 @@ SUBMODULE (sph_particles) sph_variables
         STOP
       ENDIF
       !CALL test_status( ios, err_msg, &
-      !            "...allocation error for array lapse_parts" )
+      !            "...allocation error for array lapse" )
     ENDIF
 
     assign_ye_on_particles: IF( THIS% compose_eos )THEN
@@ -1223,16 +1232,16 @@ SUBMODULE (sph_particles) sph_variables
                                THIS% npart_i(i_matter) )
 
       PRINT *, " * Maximum baryon density on object", i_matter, "=", &
-                MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
+                MAXVAL(THIS% baryon_density(npart_in:npart_fin), DIM=1) &
                 /((Msun_geo*km2m*m2cm)**3)*(amu), " g cm^{-3}"
                 !*amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
       PRINT *, " * Minimum baryon density on object", i_matter, "=", &
-                MINVAL( THIS% baryon_density_parts(npart_in:npart_fin), DIM=1) &
+                MINVAL( THIS% baryon_density(npart_in:npart_fin), DIM=1) &
                 /((Msun_geo*km2m*m2cm)**3)*(amu), " g cm^{-3}"
                 !*amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
       PRINT *, " * Ratio between the two=", &
-               MAXVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1)/ &
-               MINVAL(THIS% baryon_density_parts(npart_in:npart_fin), DIM=1)
+               MAXVAL(THIS% baryon_density(npart_in:npart_fin), DIM=1)/ &
+               MINVAL(THIS% baryon_density(npart_in:npart_fin), DIM=1)
       PRINT *
 
       PRINT *, " * Maximum interpolated nlrf on object", i_matter, "=", &
@@ -1251,18 +1260,18 @@ SUBMODULE (sph_particles) sph_variables
       PRINT *
 
       PRINT *, " * Maximum pressure", i_matter, "=", &
-               MAXVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 ) &
+               MAXVAL( THIS% pressure_cu(npart_in:npart_fin), DIM= 1 ) &
                *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
                !" m0c2_cu (TODO: CHECK UNITS)"!, &
                !"baryon Msun_geo^{-3}"
       PRINT *, " * Minimum pressure", i_matter, "=", &
-               MINVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 ) &
+               MINVAL( THIS% pressure_cu(npart_in:npart_fin), DIM= 1 ) &
                *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
                !" m0c2_cu (TODO: CHECK UNITS)"!, &
                !"baryon Msun_geo^{-3}"
       PRINT *, " * Ratio between the two=", &
-               MAXVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 )/ &
-               MINVAL( THIS% pressure_parts_cu(npart_in:npart_fin), DIM= 1 )
+               MAXVAL( THIS% pressure_cu(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( THIS% pressure_cu(npart_in:npart_fin), DIM= 1 )
       PRINT *
 
       PRINT *, " * Maximum specific internal energy", i_matter, "=", &
@@ -1391,15 +1400,15 @@ SUBMODULE (sph_particles) sph_variables
     !          com_x_newt, com_y_newt, com_z_newt, com_d_newt )
 
     !CALL COM_1PN( THIS% npart, THIS% pos, THIS% v, &
-    !              !THIS% v_euler_parts_x, &
-    !              THIS% nu, THIS% baryon_density_parts, &
-    !              THIS% specific_energy_parts, THIS% nstar_int, sq_detg4, gg4, &
+    !              !THIS% v_euler_x, &
+    !              THIS% nu, THIS% baryon_density, &
+    !              THIS% specific_energy, THIS% nstar_int, sq_detg4, gg4, &
     !              com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn )
     !CALL COM_1PN( THIS% npart_i(1), THIS% pos(:,1:THIS% npart_i(1)), &
     !              THIS% v(1:3,1:THIS% npart_i(1)), &
-    !              !THIS% v_euler_parts_x, &
+    !              !THIS% v_euler_x, &
     !              THIS% nu(1:THIS% npart_i(1)), &!/sq_det_g4(1:THIS% npart_i(1))/THIS% Theta(1:THIS% npart_i(1)), &
-    !              !THIS% baryon_density_parts(1:THIS% npart_i(1)), &
+    !              !THIS% baryon_density(1:THIS% npart_i(1)), &
     !              THIS% nlrf_int(1:THIS% npart_i(1)), &
     !              THIS% u_pwp(1:THIS% npart_i(1)), &
     !              THIS% nstar_int(1:THIS% npart_i(1)), &
@@ -1414,18 +1423,18 @@ SUBMODULE (sph_particles) sph_variables
     !CALL lin_mom( pnorm_newt, px_newt, py_newt, pz_newt )
     !CALL momentum_1pn( THIS% npart, THIS% pos, &
     !                   THIS% v, &
-    !                   !THIS% v_euler_parts_x, &
-    !                   THIS% nu, THIS% baryon_density_parts, &
-    !                   THIS% specific_energy_parts, THIS% pressure_parts_cu, &
+    !                   !THIS% v_euler_x, &
+    !                   THIS% nu, THIS% baryon_density, &
+    !                   THIS% specific_energy, THIS% pressure_cu, &
     !                   THIS% nstar_int, THIS% h, &
     !                   sq_detg4, gg4, px, py, pz )
     !CALL momentum_1pn( THIS% npart, THIS% pos, &
     !                   THIS% v, &
-    !                   !THIS% v_euler_parts_x, &
+    !                   !THIS% v_euler_x, &
     !                   THIS% nu, &
     !                   THIS% nlrf_int, &
     !                   THIS% u_pwp, &
-    !                   THIS% pressure_parts_cu, &
+    !                   THIS% pressure_cu, &
     !                   THIS% nstar_int, &
     !                   THIS% h, &
     !                   sq_detg4, gg4, px, py, pz )

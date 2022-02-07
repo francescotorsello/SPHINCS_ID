@@ -437,9 +437,10 @@ SUBMODULE (bns_lorene) import
               STOP
             ENDIF
 
-            CALL compute_g4( i, j, k, lapse, shift, g, g4 )
+            CALL compute_g4( lapse(i,j,k), shift(i,j,k,:), &
+                             g(i,j,k,:), g4(i,j,k,:) )
 
-            CALL determinant_sym4x4_grid( i, j, k, g4, detg4 )
+            CALL determinant_sym4x4( g4(i,j,k,:), detg4 )
 
             IF( ABS( detg4 ) < 1D-10 )THEN
               PRINT *, "The determinant of the spacetime metric "&
