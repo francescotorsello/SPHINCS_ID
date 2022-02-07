@@ -32,6 +32,7 @@ SUBMODULE (bssn_formulation) constraints
   !
   !************************************************
 
+  USE constants, ONLY: zero
 
   IMPLICIT NONE
 
@@ -680,9 +681,12 @@ SUBMODULE (bssn_formulation) constraints
         imax(2) = THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
         imax(3) = THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
 
-        HC= 0.0D0
-        MC= 0.0D0
-        GC= 0.0D0
+        HC    = zero
+        MC    = zero
+        GC    = zero
+        rho   = zero
+        S     = zero
+        MC_int= zero
         CALL bssn_constraint_terms_interior( &
           !
           !-- Input
@@ -1702,9 +1706,12 @@ SUBMODULE (bssn_formulation) constraints
         imax(2) = THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
         imax(3) = THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
 
-        HC_parts= 0.0D0
-        MC_parts= 0.0D0
-        GC_parts= 0.0D0
+        HC_parts    = zero
+        MC_parts    = zero
+        GC_parts    = zero
+        rho_parts   = zero
+        S_parts     = zero
+        MC_parts_int= zero
         CALL bssn_constraint_terms_interior( &
           !
           !-- Input

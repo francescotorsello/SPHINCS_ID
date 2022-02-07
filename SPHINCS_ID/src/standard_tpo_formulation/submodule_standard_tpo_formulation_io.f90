@@ -94,14 +94,25 @@ SUBMODULE (standard_tpo_formulation) io
     PRINT *
     DO l= 1, last_level, 1
       PRINT *, "   (Rough) Estimate of the x component of the ADM momentum ", &
-               "on level    ", &
+               "computed with full ID on the mesh, on level    ", &
                l, "= ", THIS% MC_int(l,jx), "Msun*c"
       PRINT *, "   (Rough) Estimate of the y component of the ADM momentum ", &
-               "on level    ", &
+               "computed with full ID on the mesh,on level    ", &
                l, "= ", THIS% MC_int(l,jy), "Msun*c"
       PRINT *, "   (Rough) Estimate of the z component of the ADM momentum ", &
-               "on level    ", &
+               "computed with full ID on the mesh,on level    ", &
                l, "= ", THIS% MC_int(l,jz), "Msun*c"
+    ENDDO
+    DO l= 1, last_level, 1
+      PRINT *, "   (Rough) Estimate of the x component of the ADM momentum ", &
+               "computed with particle data mapped to the mesh, on level    ", &
+               l, "= ", THIS% MC_parts_int(l,jx), "Msun*c"
+      PRINT *, "   (Rough) Estimate of the y component of the ADM momentum ", &
+               "computed with particle data mapped to the mesh, on level    ", &
+               l, "= ", THIS% MC_parts_int(l,jy), "Msun*c"
+      PRINT *, "   (Rough) Estimate of the z component of the ADM momentum ", &
+               "computed with particle data mapped to the mesh, on level    ", &
+               l, "= ", THIS% MC_parts_int(l,jz), "Msun*c"
     ENDDO
     PRINT *
 

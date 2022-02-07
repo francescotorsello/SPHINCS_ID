@@ -418,7 +418,7 @@ PROGRAM sphincs_id
     !
     !-- Construct the bssn objects from the bns objects
     !
-    place_spacetime_id_loop: DO itr3 = 1, n_bns, 1
+    construct_spacetime_id_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
                // "==============="
       PRINT *, " Setting up BSSN object for "//systems(itr3), itr3
@@ -426,7 +426,7 @@ PROGRAM sphincs_id
                // "==============="
       PRINT *
       bssn_forms( itr3 )= bssn( ids(itr3)% idata )
-    ENDDO place_spacetime_id_loop
+    ENDDO construct_spacetime_id_loop
 
     !
     !-- Compute the BSSN initial data, optionally export it to a binary file

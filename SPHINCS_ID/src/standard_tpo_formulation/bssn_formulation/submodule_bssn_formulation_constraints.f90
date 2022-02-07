@@ -32,6 +32,7 @@ SUBMODULE (bssn_formulation) constraints
   !
   !************************************************
 
+  USE constants, ONLY: zero
 
   IMPLICIT NONE
 
@@ -680,9 +681,11 @@ SUBMODULE (bssn_formulation) constraints
         imax(2) = THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
         imax(3) = THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
 
-        HC= 0.0D0
-        MC= 0.0D0
-        GC= 0.0D0
+        HC    = zero
+        MC    = zero
+        GC    = zero
+        rho   = zero
+        S     = zero
         CALL bssn_constraint_terms_interior( &
           !
           !-- Input
@@ -1434,8 +1437,8 @@ SUBMODULE (bssn_formulation) constraints
     CALL allocate_grid_function( THIS% MC_parts, "MC_parts_ID", 3 )
     CALL allocate_grid_function( THIS% GC_parts, "GC_parts_ID", 3 )
 
-    CALL allocate_grid_function( THIS% rho_parts, "HC_rho_parts", 1 )
-    CALL allocate_grid_function( THIS% S_parts, "MC_S_parts", 3 )
+    CALL allocate_grid_function( THIS% rho_parts, "rho_parts", 1 )
+    CALL allocate_grid_function( THIS% S_parts, "S_parts", 3 )
 
     PRINT *, "Mapping hydro fields from particles to grid..."
 
@@ -1702,9 +1705,11 @@ SUBMODULE (bssn_formulation) constraints
         imax(2) = THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
         imax(3) = THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
 
-        HC_parts= 0.0D0
-        MC_parts= 0.0D0
-        GC_parts= 0.0D0
+        HC_parts    = zero
+        MC_parts    = zero
+        GC_parts    = zero
+        rho_parts   = zero
+        S_parts     = zero
         CALL bssn_constraint_terms_interior( &
           !
           !-- Input
@@ -1921,6 +1926,39 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
+        IF( .NOT.ALLOCATED( THIS% HC_parts_int ))THEN
+          ALLOCATE( THIS% HC_parts_int( THIS% nlevels ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array MC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
+        IF( .NOT.ALLOCATED( THIS% MC_parts_int ))THEN
+          ALLOCATE( THIS% MC_parts_int( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array MC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
+        IF( .NOT.ALLOCATED( THIS% GC_parts_int ))THEN
+          ALLOCATE( THIS% GC_parts_int( THIS% nlevels, 3 ), &
+                    STAT= ios, ERRMSG= err_msg )
+          IF( ios > 0 )THEN
+            PRINT *, "...allocation error for array GC_loo. ", &
+                     "The error message is", err_msg
+            STOP
+          ENDIF
+          !CALL test_status( ios, err_msg, &
+          !                "...deallocation error for array HC" )
+        ENDIF
 
         WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -1932,8 +1970,8 @@ SUBMODULE (bssn_formulation) constraints
         CALL THIS% analyze_constraint( &
              l, &
              HC_parts, name_constraint, unit_logfile, name_analysis, &
-             THIS% HC_parts_l2(l), THIS% HC_parts_loo(l), THIS% HC_int(l), &
-             rho_parts )
+             THIS% HC_parts_l2(l), THIS% HC_parts_loo(l), &
+             THIS% HC_parts_int(l), rho_parts )
 
 
         name_analysis= "bssn-mc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
@@ -1942,7 +1980,7 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              MC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jx), THIS% MC_parts_loo(l,jx), &
-             THIS% MC_int(l,jx), S_parts(:,:,:,jx) )
+             THIS% MC_parts_int(l,jx), S_parts(:,:,:,jx) )
 
         name_analysis= "bssn-mc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the momentum constraint"
@@ -1950,7 +1988,7 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              MC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jy), THIS% MC_parts_loo(l,jy), &
-             THIS% MC_int(l,jy), S_parts(:,:,:,jy) )
+             THIS% MC_parts_int(l,jy), S_parts(:,:,:,jy) )
 
         name_analysis= "bssn-mc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the momentum constraint"
@@ -1958,7 +1996,7 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              MC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
              THIS% MC_parts_l2(l,jz), THIS% MC_parts_loo(l,jz), &
-             THIS% MC_int(l,jz), S_parts(:,:,:,jz) )
+             THIS% MC_parts_int(l,jz), S_parts(:,:,:,jz) )
 
         name_analysis= "bssn-gc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the connection constraint"
@@ -1966,7 +2004,7 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              GC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_parts_l2(l,jx), THIS% GC_parts_loo(l,jx), &
-             THIS% GC_int(l,jx) )
+             THIS% GC_parts_int(l,jx) )
 
         name_analysis= "bssn-gc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the connection constraint"
@@ -1974,7 +2012,7 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              GC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_parts_l2(l,jy), THIS% GC_parts_loo(l,jy), &
-             THIS% GC_int(l,jy) )
+             THIS% GC_parts_int(l,jy) )
 
         name_analysis= "bssn-gc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the connection constraint"
@@ -1982,7 +2020,7 @@ SUBMODULE (bssn_formulation) constraints
              l, &
              GC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
              THIS% GC_parts_l2(l,jz), THIS% GC_parts_loo(l,jz), &
-             THIS% GC_int(l,jz) )
+             THIS% GC_parts_int(l,jz) )
 
         CLOSE( UNIT= unit_logfile )
 

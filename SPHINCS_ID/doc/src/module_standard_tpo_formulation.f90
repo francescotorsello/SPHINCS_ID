@@ -156,6 +156,9 @@ MODULE standard_tpo_formulation
     !  (i.e., its maximum)
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_int
     !! Integral of the momentum constraint computed on the mesh
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_int
+    !! Integral of the momentum constraint computed using the stress-energy
+    !  tensor mapped from the particles
 
     !
     !-- Steering variables

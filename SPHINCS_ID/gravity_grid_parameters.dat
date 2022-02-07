@@ -1,7 +1,7 @@
 &gravity_grid
-ngrid_x=150      ! Number of grid points in the x-direction for the coarse grid.
-ngrid_y=150      ! Number of grid points in the y-direction for the coarse grid.
-ngrid_z=150      ! Number of grid points in the z-direction for the coarse grid.
+ngrid_x=50      ! Number of grid points in the x-direction for the coarse grid.
+ngrid_y=50      ! Number of grid points in the y-direction for the coarse grid.
+ngrid_z=50      ! Number of grid points in the z-direction for the coarse grid.
 xL=-256                    ! Lower x coordinate for the coarse grid.
 xR= 256                    ! Upper x coordinate for the coarse grid.
 yL=-256                    ! Lower y coordinate for the coarse grid.

@@ -122,8 +122,8 @@ MODULE sph_particles
 
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
-    !# Array storing the indices to use with [[particles:baryon_density_parts]]
-    !  to sort the elements of [[particles:baryon_density_parts]] in increasing
+    !# Array storing the indices to use with [[particles:baryon_density]]
+    !  to sort the elements of [[particles:baryon_density]] in increasing
     !  order
 
     !
@@ -473,11 +473,11 @@ MODULE sph_particles
     PROCEDURE, PUBLIC:: get_nu
     !! Returns [[particles:nu]]
     PROCEDURE, PUBLIC:: get_u
-    !! Returns [[particles:specific_energy_parts]]
+    !! Returns [[particles:specific_energy]]
     PROCEDURE, PUBLIC:: get_pressure
-    !! Returns [[particles:pressure_parts]]
+    !! Returns [[particles:pressure]]
     PROCEDURE, PUBLIC:: get_pressure_cu
-    !! Returns [[particles:pressure_parts_cu]]
+    !! Returns [[particles:pressure_cu]]
     PROCEDURE, PUBLIC:: get_theta
     !! Returns [[particles:theta]]
     PROCEDURE, PUBLIC:: get_h
@@ -1196,31 +1196,31 @@ MODULE sph_particles
     END FUNCTION get_nu
 
     MODULE PURE FUNCTION get_u( THIS ) RESULT( u )
-    !! Returns [[particles:specific_energy_parts]]
+    !! Returns [[particles:specific_energy]]
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN ):: THIS
-      !> [[particles:specific_energy_parts]]
+      !> [[particles:specific_energy]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u
 
     END FUNCTION get_u
 
     MODULE PURE FUNCTION get_pressure( THIS ) RESULT( pressure )
-    !! Returns [[particles:pressure_parts]]
+    !! Returns [[particles:pressure]]
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN ):: THIS
-      !> [[particles:pressure_parts]]
+      !> [[particles:pressure]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
 
     END FUNCTION get_pressure
 
     MODULE PURE FUNCTION get_pressure_cu( THIS ) RESULT( pressure_cu )
-    !! Returns [[particles:pressure_parts_cu]]
+    !! Returns [[particles:pressure_cu]]
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN ):: THIS
-      !> [[particles:pressure_parts_cu]]
+      !> [[particles:pressure_cu]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure_cu
 
     END FUNCTION get_pressure_cu

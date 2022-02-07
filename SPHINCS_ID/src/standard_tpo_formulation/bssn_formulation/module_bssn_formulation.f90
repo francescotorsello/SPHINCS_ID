@@ -113,8 +113,11 @@ MODULE bssn_formulation
     !  connection constraint computed with the |bssn| |id| on the mesh,
     !  and the hydrodynamical |id| mapped from the particles to the mesh
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_int
-    !# Integral of the connection constraint computed
-    !  with the |id| on the mesh
+    !# Integral of the connection constraint computed with the |id| on the mesh
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: GC_parts_int
+    !# Integral of the connection constraint computed with the |bssn| |id| on
+    !  the mesh, and the hydrodynamical |id| mapped from the particles to the
+    !  mesh with the |id| on the mesh
 
     LOGICAL, PUBLIC:: export_bin
     !# `.TRUE.` if the binary files for SPHINCS_BSSN are to be exported,
