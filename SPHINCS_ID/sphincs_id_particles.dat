@@ -125,7 +125,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
@@ -152,7 +152,7 @@ mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
-use_atmosphere=.TRUE.   ! If .TRUE., allows particles to move where the density
+use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term
                         ! This can be useful when the system has an irregular
                         ! geometry, as, for example, an ejecta

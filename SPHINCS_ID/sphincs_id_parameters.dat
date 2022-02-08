@@ -23,7 +23,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.6-1.73_35km.bin"
              !"BNSLO_apr4_1.2-1.5_60km.bin"
              !"BNSLO_apr4_1.4-1.4_43.75km.bin"
-             !!"BNSLO_apr4_1.35-1.35_42km.bin"
+             "BNSLO_apr4_1.35-1.35_42km.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-73inside.bin"
              !!"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
@@ -31,7 +31,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay-5e-8.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129all.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-251all.bin"
-             "BNSLO_apr4_1.2-1.5_42km.bin"
+             !"BNSLO_apr4_1.2-1.5_42km.bin"
              !"BNSLO_mpa1_1.4-1.8_45km.bin"
              !"BNSLO_mpa1_1.4-2_45km.bin"
              !"BNSLO_apr3_1.4-1.6_80km.bin"
@@ -79,8 +79,8 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_sph=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -92,7 +92,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=1                     ! 0: Read particle positions from formatted
+placer(1,:)=0                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object
@@ -107,10 +107,10 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 !----------------------------------------------!
 ! Choose to compute and export the constraints !
 !----------------------------------------------!
-compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
+compute_constraints=.FALSE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping

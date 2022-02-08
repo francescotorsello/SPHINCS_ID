@@ -898,39 +898,39 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% HC_int ))THEN
-          ALLOCATE( THIS% HC_int( THIS% nlevels ), &
-                    STAT= ios, ERRMSG= err_msg )
-          IF( ios > 0 )THEN
-            PRINT *, "...allocation error for array HC_loo. ", &
-                     "The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, &
-          !                "...deallocation error for array HC" )
-        ENDIF
-        IF( .NOT.ALLOCATED( THIS% MC_int ))THEN
-          ALLOCATE( THIS% MC_int( THIS% nlevels, 3 ), &
-                    STAT= ios, ERRMSG= err_msg )
-          IF( ios > 0 )THEN
-            PRINT *, "...allocation error for array MC_loo. ", &
-                     "The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, &
-          !                "...deallocation error for array HC" )
-        ENDIF
-        IF( .NOT.ALLOCATED( THIS% GC_int ))THEN
-          ALLOCATE( THIS% GC_int( THIS% nlevels, 3 ), &
-                    STAT= ios, ERRMSG= err_msg )
-          IF( ios > 0 )THEN
-            PRINT *, "...allocation error for array GC_loo. ", &
-                     "The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, &
-          !                "...deallocation error for array HC" )
-        ENDIF
+      !  IF( .NOT.ALLOCATED( THIS% HC_int ))THEN
+      !    ALLOCATE( THIS% HC_int( THIS% nlevels ), &
+      !              STAT= ios, ERRMSG= err_msg )
+      !    IF( ios > 0 )THEN
+      !      PRINT *, "...allocation error for array HC_loo. ", &
+      !               "The error message is", err_msg
+      !      STOP
+      !    ENDIF
+      !    !CALL test_status( ios, err_msg, &
+      !    !                "...deallocation error for array HC" )
+      !  ENDIF
+      !  IF( .NOT.ALLOCATED( THIS% MC_int ))THEN
+      !    ALLOCATE( THIS% MC_int( THIS% nlevels, 3 ), &
+      !              STAT= ios, ERRMSG= err_msg )
+      !    IF( ios > 0 )THEN
+      !      PRINT *, "...allocation error for array MC_loo. ", &
+      !               "The error message is", err_msg
+      !      STOP
+      !    ENDIF
+      !    !CALL test_status( ios, err_msg, &
+      !    !                "...deallocation error for array HC" )
+      !  ENDIF
+      !  IF( .NOT.ALLOCATED( THIS% GC_int ))THEN
+      !    ALLOCATE( THIS% GC_int( THIS% nlevels, 3 ), &
+      !              STAT= ios, ERRMSG= err_msg )
+      !    IF( ios > 0 )THEN
+      !      PRINT *, "...allocation error for array GC_loo. ", &
+      !               "The error message is", err_msg
+      !      STOP
+      !    ENDIF
+      !    !CALL test_status( ios, err_msg, &
+      !    !                "...deallocation error for array HC" )
+      !  ENDIF
 
         WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -1926,39 +1926,39 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% HC_parts_int ))THEN
-          ALLOCATE( THIS% HC_parts_int( THIS% nlevels ), &
-                    STAT= ios, ERRMSG= err_msg )
-          IF( ios > 0 )THEN
-            PRINT *, "...allocation error for array MC_loo. ", &
-                     "The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, &
-          !                "...deallocation error for array HC" )
-        ENDIF
-        IF( .NOT.ALLOCATED( THIS% MC_parts_int ))THEN
-          ALLOCATE( THIS% MC_parts_int( THIS% nlevels, 3 ), &
-                    STAT= ios, ERRMSG= err_msg )
-          IF( ios > 0 )THEN
-            PRINT *, "...allocation error for array MC_loo. ", &
-                     "The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, &
-          !                "...deallocation error for array HC" )
-        ENDIF
-        IF( .NOT.ALLOCATED( THIS% GC_parts_int ))THEN
-          ALLOCATE( THIS% GC_parts_int( THIS% nlevels, 3 ), &
-                    STAT= ios, ERRMSG= err_msg )
-          IF( ios > 0 )THEN
-            PRINT *, "...allocation error for array GC_loo. ", &
-                     "The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, &
-          !                "...deallocation error for array HC" )
-        ENDIF
+     !   IF( .NOT.ALLOCATED( THIS% HC_parts_int ))THEN
+     !     ALLOCATE( THIS% HC_parts_int( THIS% nlevels ), &
+     !               STAT= ios, ERRMSG= err_msg )
+     !     IF( ios > 0 )THEN
+     !       PRINT *, "...allocation error for array MC_loo. ", &
+     !                "The error message is", err_msg
+     !       STOP
+     !     ENDIF
+     !     !CALL test_status( ios, err_msg, &
+     !     !                "...deallocation error for array HC" )
+     !   ENDIF
+     !   IF( .NOT.ALLOCATED( THIS% MC_parts_int ))THEN
+     !     ALLOCATE( THIS% MC_parts_int( THIS% nlevels, 3 ), &
+     !               STAT= ios, ERRMSG= err_msg )
+     !     IF( ios > 0 )THEN
+     !       PRINT *, "...allocation error for array MC_loo. ", &
+     !                "The error message is", err_msg
+     !       STOP
+     !     ENDIF
+     !     !CALL test_status( ios, err_msg, &
+     !     !                "...deallocation error for array HC" )
+     !   ENDIF
+     !   IF( .NOT.ALLOCATED( THIS% GC_parts_int ))THEN
+     !     ALLOCATE( THIS% GC_parts_int( THIS% nlevels, 3 ), &
+     !               STAT= ios, ERRMSG= err_msg )
+     !     IF( ios > 0 )THEN
+     !       PRINT *, "...allocation error for array GC_loo. ", &
+     !                "The error message is", err_msg
+     !       STOP
+     !     ENDIF
+     !     !CALL test_status( ios, err_msg, &
+     !     !                "...deallocation error for array HC" )
+     !   ENDIF
 
         WRITE( UNIT = unit_logfile, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
