@@ -626,8 +626,8 @@ PROGRAM sphincs_id
     ENDIF
 
   ENDDO
-  IF( ( (compute_parts_constraints .EQV. .TRUE.) &
-      .AND. (run_sph .EQV. .FALSE.) ) )THEN
+  IF( ( (compute_parts_constraints .EQV. .TRUE.) .AND. (run_sph .EQV. .FALSE.) &
+        .AND. (run_spacetime .EQV. .TRUE.) ) )THEN
 
     PRINT *
     PRINT *, "** WARNING: The variable `compute_parts_constraints` is ", &
