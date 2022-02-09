@@ -54,7 +54,7 @@ PROGRAM write_par_eos
   WRITE(*,'(A,/,A)') "** Do you want to produce a parameter file for a polytropic EOS or piecewise polytropic EOS?", "   Please type `poly` for the first, `pwp` for the second: "
 #endif
 #ifdef __GFORTRAN__
-
+  WRITE(*,'(A,/,A)') "** Do you want to produce a parameter file for a polytropic EOS or piecewise polytropic EOS?", "   Please type `poly` for the first, `pwp` for the second: "
 #endif
   READ(*,'(A)') eos_type
 
@@ -64,19 +64,21 @@ PROGRAM write_par_eos
 
 #ifdef __INTEL_COMPILER
   WRITE(*,'("** Please write the DOUBLE PRECISION value of the polytropic exponent gamma: ",\)')
+  READ(*,'(F)') gamma_poly
 #endif
 #ifdef __GFORTRAN__
-  WRITE(*,'("** Please write the DOUBLE PRECISION value of the polytropic constant gamma: ")')
+  PRINT *, "** Please write the DOUBLE PRECISION value of the polytropic constant gamma, with 4 total digits and 3 decimal digits: "
+  READ(*,'(F4.3)') gamma_poly
 #endif
-    READ(*,'(F)') gamma_poly
 
 #ifdef __INTEL_COMPILER
   WRITE(*,'("** Please write the DOUBLE PRECISION value of the polytropic constant K in SPHINCS units: ",\)')
+  READ(*,'(F)') kappa_poly
 #endif
 #ifdef __GFORTRAN__
-  WRITE(*,'("** Please write the DOUBLE PRECISION value of the polytropic constant K in SPHINCS units: ")')
+  PRINT *, "** Please write the DOUBLE PRECISION value of the polytropic constant K in SPHINCS units, with 6 total digits and 2 decimal digits: "
+  READ(*,'(F6.2)') kappa_poly
 #endif
-    READ(*,'(F)') kappa_poly
 
     kappa_poly= kappa_poly/k_lorene2hydrobase(gamma_poly)
 

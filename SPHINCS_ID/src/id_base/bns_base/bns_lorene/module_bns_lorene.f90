@@ -57,7 +57,8 @@ MODULE bns_lorene
   !*******************************************************
 
   TYPE, EXTENDS(bnsbase):: bnslorene
-  !! TYPE representing a binary system of neutron stars (bns)
+  !# TYPE representing a binary system of neutron stars (|bns|) produced with
+  !  |lorene|
 
 
     PRIVATE

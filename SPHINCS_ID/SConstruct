@@ -55,7 +55,7 @@ fuka_flavour        = '3'
 interpolate_flavour = '4'
 
 # Set the default flavour
-default_flavour = fuka_flavour
+default_flavour = full_flavour
 
 # 'TRUE'  : build in DEBUG MODE
 # 'FALSE' : build in PRODUCTION MODE

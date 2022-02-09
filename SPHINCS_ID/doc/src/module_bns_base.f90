@@ -55,9 +55,9 @@ MODULE bns_base
   !*******************************************************
 
   TYPE, ABSTRACT, EXTENDS(idbase):: bnsbase
-  !# Base TYPE for BNS ID for |sphincsbssn| (produced with |lorene|, or with
-  !  |fuka|, etc.; or produced with the same tool, but read in different ways,
-  !  for example by linking to the LORENE library, or reading the ID from
+  !# ABSTRACT Base TYPE for BNS ID for |sphincsbssn| (produced with |lorene|, or
+  !  with |fuka|, etc.; or produced with the same tool, but read in different
+  !  ways, for example by linking to the LORENE library, or reading the ID from
   !  a lattice, etc.)
 
 

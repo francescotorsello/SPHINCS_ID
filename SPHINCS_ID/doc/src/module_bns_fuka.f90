@@ -51,12 +51,13 @@ MODULE bns_fuka
   !                                                       *
   !            Definition of TYPE bnsfuka                 *
   !                                                       *
-  !   This class read_fukas and stores the |fuka| |bns| |id| *
+  !   This class reads and stores the |fuka| |bns| |id|   *
   !                                                       *
   !********************************************************
 
   TYPE, EXTENDS(bnsbase):: bnsfuka
-  !! TYPE representing a binary system of neutron stars (bns)
+  !# TYPE representing a binary system of neutron stars (|bns|) produced with
+  !  |fuka|
 
 
     PRIVATE
