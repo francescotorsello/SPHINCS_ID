@@ -37,10 +37,25 @@ import glob
 # DEFAULT OPTIONS
 ################################################################################
 
+# A 'flavour' of SPHINCS_ID is define as a set of its MODULES
 # The following flavours are implemented
-#   '1' : Link to the LORENE library to read the ID
-#   '2' : Interpolate from a grid
-default_flavour = '1'
+
+# Include all the MODULES
+full_flavour        = '1'
+
+# Include the MODULES that link to the LORENE library to read the ID, and
+# interpolate the ID from a Cartesian, uniform grid
+lorene_flavour      = '2'
+
+# Include the MODULES that link to the FUKA library to read the ID, and
+# interpolate the ID from a Cartesian, uniform grid
+fuka_flavour        = '3'
+
+# Include the MODULES that interpolate from a Cartesian, uniform grid
+interpolate_flavour = '4'
+
+# Set the default flavour
+default_flavour = fuka_flavour
 
 # 'TRUE'  : build in DEBUG MODE
 # 'FALSE' : build in PRODUCTION MODE
@@ -202,6 +217,16 @@ module_diffstar_lorene = [
   'src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_io.f90'
 ]
 
+module_bns_fuka = [
+  'src/id_base/bns_base/bns_fuka/module_bns_fuka.f90',
+  'src/id_base/bns_base/bns_fuka/submodule_bns_fuka_constructor.f90',
+  'src/id_base/bns_base/bns_fuka/submodule_bns_fuka_read.f90',
+  'src/id_base/bns_base/bns_fuka/submodule_bns_fuka_memory.f90',
+  'src/id_base/bns_base/bns_fuka/submodule_bns_fuka_access.f90',
+  'src/id_base/bns_base/bns_fuka/submodule_bns_fuka_params.f90',
+  'src/id_base/bns_base/bns_fuka/submodule_bns_fuka_io.f90'
+]
+
 module_ejecta_generic = [
   'src/id_base/ejecta_generic/module_ejecta_generic.f90',
   'src/id_base/ejecta_generic/submodule_ejecta_generic_constructor.f90',
@@ -211,8 +236,16 @@ module_ejecta_generic = [
   'src/id_base/ejecta_generic/submodule_ejecta_generic_interpolate.f90'
 ]
 
+module_sphincs_id_full = [
+  'src/sphincs_id_full/module_sphincs_id_full.f90'
+]
+
 module_sphincs_id_lorene = [
   'src/sphincs_id_lorene/module_sphincs_id_lorene.f90'
+]
+
+module_sphincs_id_fuka = [
+  'src/sphincs_id_fuka/module_sphincs_id_fuka.f90'
 ]
 
 module_sphincs_id_interpolate = [
@@ -390,11 +423,38 @@ sources_sphincs_fm = [
 #                         '../../../Lorene/Export/C++/Source/write_lines.C']
 
 ################################################################################
-# FLAVOUR= 1. Link to LORENE library
+# FLAVOUR= 1. Link to LORENE and FUKA libraries, and interpolate from
+#             Cartesian uniform grid
 
-if flavour == '1': #
+if flavour == full_flavour: #
 
   build_flavour= '-Dflavour=1'
+
+  env['LIBPATH'] = ['../../../Lorene/Lib']
+
+  if debug == 'FALSE': #
+
+    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                   'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+    #, 'm'
+
+  if debug == 'TRUE': #
+
+    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                   'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+    #, 'm'
+
+  sources_flavour = module_bns_lorene + module_diffstar_lorene \
+                    + module_bns_fuka \
+                    + module_ejecta_generic + module_sphincs_id_full
+
+################################################################################
+# FLAVOUR= 2. Link to LORENE library, and interpolate from Cartesian uniform
+#             grid
+
+if flavour == lorene_flavour: #
+
+  build_flavour= '-Dflavour=2'
 
   env['LIBPATH'] = ['../../../Lorene/Lib']
 
@@ -414,11 +474,36 @@ if flavour == '1': #
                     + module_ejecta_generic + module_sphincs_id_lorene
 
 ################################################################################
-# FLAVOUR= 2. Interpolate data from a grid. Do not link to LORENE library
+# FLAVOUR= 3. Link to FUKA library, and interpolate from Cartesian uniform
+#             grid
 
-if flavour == '2': #
+if flavour == fuka_flavour: #
 
-  build_flavour= '-Dflavour=2'
+  build_flavour= '-Dflavour=3'
+
+  env['LIBPATH'] = ['../../../Lorene/Lib']
+
+  if debug == 'FALSE': #
+
+    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                   'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+    #, 'm'
+
+  if debug == 'TRUE': #
+
+    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                   'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+    #, 'm'
+
+  sources_flavour = module_bns_fuka \
+                    + module_ejecta_generic + module_sphincs_id_fuka
+
+################################################################################
+# FLAVOUR= 4. Interpolate data from a grid. Do not link to LORENE library
+
+if flavour == interpolate_flavour: #
+
+  build_flavour= '-Dflavour=4'
 
   env['LIBS'] = ['stdc++']
 

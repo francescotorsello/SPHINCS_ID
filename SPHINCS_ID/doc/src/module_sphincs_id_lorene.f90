@@ -117,11 +117,11 @@ MODULE sphincs_id_lorene
                " data."
       PRINT *
       PRINT *, "   The 5-character names, and associated physical systems,", &
-              " supported by this version of SPHINCS_ID, with flavour = 1, are:"
+              " supported by this version of SPHINCS_ID, with flavour = 2, are:"
       PRINT *
-      PRINT *, "   1. BNSLO: Binary Neutron Stars produced with LORENE"
-      PRINT *, "   2. DRSLO: Differentially Rotating Star produced with LORENE"
-      PRINT *, "   3. EJECT: Ejecta data on a uniform Cartesian grid"
+      PRINT *, "   BNSLO: Binary Neutron Stars produced with LORENE"
+      PRINT *, "   DRSLO: Differentially Rotating Star produced with LORENE"
+      PRINT *, "   EJECT: Ejecta data on a uniform Cartesian grid"
       PRINT *
       STOP
 

@@ -71,6 +71,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     USE tensor,           ONLY: jxx, jxy, jxz, &
                                 jyy, jyz, jzz, n_sym3x3
     USE utility,          ONLY: determinant_sym3x3
+    USe constants,        ONLY: one
 
     IMPLICIT NONE
 
@@ -310,6 +311,48 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
         ENDDO
       ENDDO
     ENDDO
+
+    IF( .NOT.ALLOCATED( ftpo% HC_int ))THEN
+      ALLOCATE( ftpo% HC_int( ftpo% nlevels ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array HC_loo. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+    ENDIF
+    IF( .NOT.ALLOCATED( ftpo% MC_int ))THEN
+      ALLOCATE( ftpo% MC_int( ftpo% nlevels, 3 ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array MC_loo. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+    ENDIF
+    ftpo% HC_int= HUGE(one)
+    ftpo% MC_int= HUGE(one)
+
+    IF( .NOT.ALLOCATED( ftpo% HC_parts_int ))THEN
+      ALLOCATE( ftpo% HC_parts_int( ftpo% nlevels ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array MC_loo. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+    ENDIF
+    IF( .NOT.ALLOCATED( ftpo% MC_parts_int ))THEN
+      ALLOCATE( ftpo% MC_parts_int( ftpo% nlevels, 3 ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array MC_loo. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+    ENDIF
+    ftpo% HC_parts_int= HUGE(one)
+    ftpo% MC_parts_int= HUGE(one)
 
     PRINT *, " * Checked that the determinant of the spatial metric is", &
              " strictly positive."

@@ -1,4 +1,4 @@
-! File:         module_sphincs_id_interpolate.f90
+! File:         module_sphincs_id_fuka.f90
 ! Author:       Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
@@ -21,27 +21,31 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-MODULE sphincs_id_interpolate
+MODULE sphincs_id_fuka
 
 
   !*********************************************
   !
   !# This module contains data and PROCEDURES
-  !  needed to set up |id| prepared  on a grid in
+  !  needed to set up the |fuka| |id| in
   !  PROGRAM [[sphincs_id]]
   !
-  !  FT 19.11.2020
+  !  FT 23.10.2020
   !
   !*********************************************
 
 
   USE id_base,         ONLY: idbase
+  USE bns_fuka,        ONLY: bnsfuka
   USE ejecta_generic,  ONLY: ejecta
 
 
   IMPLICIT NONE
 
 
+  CHARACTER( LEN= 5 ), PARAMETER:: bnsfu= "BNSFU"
+  !# String that identifies a binary system of neutron stars computed
+  !  with |fuka|
   CHARACTER( LEN= 5 ), PARAMETER:: ejecta_grid= "EJECT"
   !# String that identifies an ejecta prepared on a uniform Cartesian grid
 
@@ -56,9 +60,9 @@ MODULE sphincs_id_interpolate
     !# This SUBROUTINE allocates a polymorphic
     !  object of class idbase to its dynamic type.
     !  The dynamic type is one among those that
-    !  interpolate the ID from a grid
+    !  use the |fuka| |id|
     !
-    !  FT 19.11.2020
+    !  FT 9.11.2020
     !
     !*********************************************
 
@@ -82,7 +86,13 @@ MODULE sphincs_id_interpolate
 
     ENDIF
 
-    IF( filename(1:5) == ejecta_grid )THEN
+    IF( filename(1:5) == bnsfu )THEN
+
+      ALLOCATE( bnsfuka:: id )
+      system= bnsfu
+      system_name= "NSNS."
+
+    ELSEIF( filename(1:5) == ejecta_grid )THEN
 
       ALLOCATE( ejecta:: id )
       system= ejecta_grid
@@ -97,8 +107,9 @@ MODULE sphincs_id_interpolate
                " data."
       PRINT *
       PRINT *, "   The 5-character names, and associated physical systems,", &
-              " supported by this version of SPHINCS_ID, with flavour = 4, are:"
+              " supported by this version of SPHINCS_ID, with flavour = 3, are:"
       PRINT *
+      PRINT *, "   BNSFU: Binary Neutron Stars produced with FUKA"
       PRINT *, "   EJECT: Ejecta data on a uniform Cartesian grid"
       PRINT *
       STOP
@@ -108,4 +119,4 @@ MODULE sphincs_id_interpolate
   END SUBROUTINE allocate_idbase
 
 
-END MODULE sphincs_id_interpolate
+END MODULE sphincs_id_fuka

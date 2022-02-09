@@ -129,7 +129,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
     !DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.5D0!0.25D0 !30.0D0
-    DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 2.5D0
+    DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 1.5D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0

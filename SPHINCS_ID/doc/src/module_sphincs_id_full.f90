@@ -1,4 +1,4 @@
-! File:         module_sphincs_id_interpolate.f90
+! File:         module_sphincs_id_full.f90
 ! Author:       Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
@@ -21,27 +21,39 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-MODULE sphincs_id_interpolate
+MODULE sphincs_id_full
 
 
   !*********************************************
   !
   !# This module contains data and PROCEDURES
-  !  needed to set up |id| prepared  on a grid in
-  !  PROGRAM [[sphincs_id]]
+  !  needed to set up all the supported
+  !  |id| in PROGRAM sphincs_id
   !
-  !  FT 19.11.2020
+  !  FT 09.02.2022
   !
   !*********************************************
 
 
   USE id_base,         ONLY: idbase
+  USE bns_lorene,      ONLY: bnslorene
+  USE diffstar_lorene, ONLY: diffstarlorene
+  USE bns_fuka,        ONLY: bnsfuka
   USE ejecta_generic,  ONLY: ejecta
 
 
   IMPLICIT NONE
 
 
+  CHARACTER( LEN= 5 ), PARAMETER:: bnslo= "BNSLO"
+  !# String that identifies a binary system of neutron stars computed
+  !  with |lorene|
+  CHARACTER( LEN= 5 ), PARAMETER:: drslo= "DRSLO"
+  !# String that identifies a differentially rotating star computed
+  !  with |lorene|
+  CHARACTER( LEN= 5 ), PARAMETER:: bnsfu= "BNSFU"
+  !# String that identifies a binary system of neutron stars computed
+  !  with |fuka|
   CHARACTER( LEN= 5 ), PARAMETER:: ejecta_grid= "EJECT"
   !# String that identifies an ejecta prepared on a uniform Cartesian grid
 
@@ -55,10 +67,10 @@ MODULE sphincs_id_interpolate
     !
     !# This SUBROUTINE allocates a polymorphic
     !  object of class idbase to its dynamic type.
-    !  The dynamic type is one among those that
-    !  interpolate the ID from a grid
+    !  The dynamic type is one among  all the
+    !  supported |id|
     !
-    !  FT 19.11.2020
+    !  FT 9.11.2020
     !
     !*********************************************
 
@@ -82,7 +94,25 @@ MODULE sphincs_id_interpolate
 
     ENDIF
 
-    IF( filename(1:5) == ejecta_grid )THEN
+    IF( filename(1:5) == bnslo )THEN
+
+      ALLOCATE( bnslorene:: id )
+      system= bnslo
+      system_name= "NSNS."
+
+    ELSEIF( filename(1:5) == drslo )THEN
+
+      ALLOCATE( diffstarlorene:: id )
+      system= drslo
+      system_name= "DRSx."
+
+    ELSEIF( filename(1:5) == bnsfu )THEN
+
+      ALLOCATE( bnsfuka:: id )
+      system= bnsfu
+      system_name= "NSNS."
+
+    ELSEIF( filename(1:5) == ejecta_grid )THEN
 
       ALLOCATE( ejecta:: id )
       system= ejecta_grid
@@ -97,8 +127,11 @@ MODULE sphincs_id_interpolate
                " data."
       PRINT *
       PRINT *, "   The 5-character names, and associated physical systems,", &
-              " supported by this version of SPHINCS_ID, with flavour = 4, are:"
+              " supported by this version of SPHINCS_ID, with flavour = 1, are:"
       PRINT *
+      PRINT *, "   BNSLO: Binary Neutron Stars produced with LORENE"
+      PRINT *, "   DRSLO: Differentially Rotating Star produced with LORENE"
+      PRINT *, "   BNSFU: Binary Neutron Stars produced with FUKA"
       PRINT *, "   EJECT: Ejecta data on a uniform Cartesian grid"
       PRINT *
       STOP
@@ -108,4 +141,4 @@ MODULE sphincs_id_interpolate
   END SUBROUTINE allocate_idbase
 
 
-END MODULE sphincs_id_interpolate
+END MODULE sphincs_id_full

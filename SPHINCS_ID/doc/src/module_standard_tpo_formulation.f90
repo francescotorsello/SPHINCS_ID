@@ -140,8 +140,6 @@ MODULE standard_tpo_formulation
     !# \(\ell_\infty\) norm of the Hamiltonian constraint computed on the mesh,
     !  using the stress-energy tensor mapped from the particles
     !  (i.e., its maximum)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_int
-    !! Integral the Hamiltonian constraint computed on the mesh
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_l2
     !! \(\ell_2\) norm of the momentum constraint computed on the mesh
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_l2
@@ -154,10 +152,15 @@ MODULE standard_tpo_formulation
     !# \(\ell_\infty\) norm of the momentum constraint computed on the mesh,
     !  using the stress-energy tensor mapped from the particles
     !  (i.e., its maximum)
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_int
+    !# Integral the Hamiltonian constraint computed using the stress-energy
+    !  tensor mapped from the particles
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: HC_parts_int
+    !! Integral the Hamiltonian constraint computed on the mesh
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_int
     !! Integral of the momentum constraint computed on the mesh
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: MC_parts_int
-    !! Integral of the momentum constraint computed using the stress-energy
+    !# Integral of the momentum constraint computed using the stress-energy
     !  tensor mapped from the particles
 
     !

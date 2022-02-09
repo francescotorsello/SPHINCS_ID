@@ -57,8 +57,9 @@ SUBMODULE (bssn_formulation) constructor
     !****************************************************
 
     USE McLachlan_refine, ONLY: initialize_BSSN, deallocate_BSSN
-    USE mesh_refinement,  ONLY: levels
+    USE mesh_refinement,  ONLY: levels, allocate_grid_function
     USE Extract_Mass,     ONLY: radius2
+    USE constants,        ONLY: zero, one
 
     IMPLICIT NONE
 
@@ -87,6 +88,28 @@ SUBMODULE (bssn_formulation) constructor
     !CALL allocate_bssn_fields( bssnid )
 
     DEALLOCATE( levels )
+
+    IF( .NOT.ALLOCATED( bssnid% GC_int ))THEN
+      ALLOCATE( bssnid% GC_int( bssnid% nlevels, 3 ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array GC_loo. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+    ENDIF
+    bssnid% GC_int= HUGE(one)
+
+    IF( .NOT.ALLOCATED( bssnid% GC_parts_int ))THEN
+      ALLOCATE( bssnid% GC_parts_int( bssnid% nlevels, 3 ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array GC_loo. ", &
+                 "The error message is", err_msg
+        STOP
+      ENDIF
+    ENDIF
+    bssnid% GC_parts_int= HUGE(one)
 
     ! radius2 is the extraction radius. If not set here, then it is 0 by default
     ! and the metric is not interpolate on the particle in

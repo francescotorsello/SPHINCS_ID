@@ -1,4 +1,4 @@
-! File:         submodule_bns_methods.f90
+! File:         submodule_bnslorene_import.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
@@ -25,8 +25,8 @@ SUBMODULE (bns_lorene) import
 
   !****************************************************
   !
-  !# Implementation of the methods of TYPE bns that
-  !  import BNS data using |lorene|
+  !# Implementation of the methods of TYPE bnslorene that
+  !  import |bns| data using |lorene|
   !
   !  FT 23.10.2020
   !

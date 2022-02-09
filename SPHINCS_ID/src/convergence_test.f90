@@ -37,9 +37,13 @@ PROGRAM convergence_test
 #endif
 
 #if flavour == 1
-  USE sphincs_id_lorene,        ONLY: allocate_idbase
+  USE sphincs_id_full,         ONLY: allocate_idbase
 #elif flavour == 2
-  USE sphincs_id_interpolate,   ONLY: allocate_idbase
+  USE sphincs_id_lorene,       ONLY: allocate_idbase
+#elif flavour == 3
+  USE sphincs_id_fuka,         ONLY: allocate_idbase
+#elif flavour == 4
+  USE sphincs_id_interpolate,  ONLY: allocate_idbase
 #endif
 
   USE id_base,                  ONLY: idbase, initialize

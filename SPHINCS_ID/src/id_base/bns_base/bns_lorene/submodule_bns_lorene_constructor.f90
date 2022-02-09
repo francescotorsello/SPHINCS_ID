@@ -1,4 +1,4 @@
-! File:         submodule_bns_constructor.f90
+! File:         submodule_bnslorene_constructor.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *

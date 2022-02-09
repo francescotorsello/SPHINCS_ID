@@ -97,9 +97,9 @@ MODULE sphincs_id_interpolate
                " data."
       PRINT *
       PRINT *, "   The 5-character names, and associated physical systems,", &
-              " supported by this version of SPHINCS_ID, with flavour = 2, are:"
+              " supported by this version of SPHINCS_ID, with flavour = 4, are:"
       PRINT *
-      PRINT *, "   1. EJECT: Ejecta data on a uniform Cartesian grid"
+      PRINT *, "   EJECT: Ejecta data on a uniform Cartesian grid"
       PRINT *
       STOP
 

@@ -37,8 +37,12 @@ PROGRAM sphincs_id
 #endif
 
 #if flavour == 1
-  USE sphincs_id_lorene,       ONLY: allocate_idbase
+  USE sphincs_id_full,         ONLY: allocate_idbase
 #elif flavour == 2
+  USE sphincs_id_lorene,       ONLY: allocate_idbase
+#elif flavour == 3
+  USE sphincs_id_fuka,         ONLY: allocate_idbase
+#elif flavour == 4
   USE sphincs_id_interpolate,  ONLY: allocate_idbase
 #endif
 
@@ -418,7 +422,7 @@ PROGRAM sphincs_id
     !
     !-- Construct the bssn objects from the bns objects
     !
-    place_spacetime_id_loop: DO itr3 = 1, n_bns, 1
+    construct_spacetime_id_loop: DO itr3 = 1, n_bns, 1
       PRINT *, "===================================================" &
                // "==============="
       PRINT *, " Setting up BSSN object for "//systems(itr3), itr3
@@ -426,7 +430,7 @@ PROGRAM sphincs_id
                // "==============="
       PRINT *
       bssn_forms( itr3 )= bssn( ids(itr3)% idata )
-    ENDDO place_spacetime_id_loop
+    ENDDO construct_spacetime_id_loop
 
     !
     !-- Compute the BSSN initial data, optionally export it to a binary file
@@ -626,12 +630,14 @@ PROGRAM sphincs_id
     ENDIF
 
   ENDDO
-  IF( ( (compute_parts_constraints .EQV. .TRUE.) &
-      .AND. (run_sph .EQV. .FALSE.) ) )THEN
+  IF( ( (compute_parts_constraints .EQV. .TRUE.) .AND. (run_sph .EQV. .FALSE.) &
+        .AND. (run_spacetime .EQV. .TRUE.) ) )THEN
 
+    PRINT *
     PRINT *, "** WARNING: The variable `compute_parts_constraints` is ", &
-             ".TRUE., but `run_sph` is .FALSE. . Hence, the constraints ", &
-             "are NOT computed using the particle data mapped to the mesh."
+             ".TRUE., but `run_sph` is .FALSE. . "
+    PRINT *, "   Hence, the constraints are NOT computed using the ", &
+             "particle data mapped to the mesh."
     PRINT *, "   Please set both variables to .TRUE. to compute the ", &
              "constraints using the particle data mapped to the mesh."
     PRINT *
