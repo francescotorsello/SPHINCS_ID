@@ -454,8 +454,8 @@ MODULE bssn_formulation
   END INTERFACE
 
 
-  INTERFACE! bssn_constraint_terms_interior
-  ! Interface to [[bssn_constraint_terms_interior]]
+  INTERFACE
+
 
     SUBROUTINE bssn_constraint_terms_interior( nx, ny, nz, imin, imax, &
                            dx, dy, dz, &
@@ -510,11 +510,6 @@ MODULE bssn_formulation
 
     END SUBROUTINE bssn_constraint_terms_interior
 
-  !END INTERFACE bssn_constraint_terms_interior
-
-
-  !INTERFACE bssn_ricci_interior_int
-  ! Interface to [[bssn_ricci_interior]]
 
     SUBROUTINE bssn_ricci_interior( nx, ny, nz, imin, imax, &
                                     dx, dy, dz, &
@@ -632,7 +627,8 @@ MODULE bssn_formulation
 
     END SUBROUTINE bssn_ricci_interior
 
-  END INTERFACE bssn_ricci_interior_int
+
+  END INTERFACE
 
 
 END MODULE bssn_formulation

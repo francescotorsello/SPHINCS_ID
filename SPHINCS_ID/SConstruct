@@ -152,7 +152,8 @@ module_id_base = [
   'src/id_base/module_id_base.f90',
   'src/id_base/submodule_id_base_initialization.f90',
   'src/id_base/submodule_id_base_access.f90',
-  'src/id_base/submodule_id_base_mass_profile.f90'
+  'src/id_base/submodule_id_base_mass_profile.f90',
+  'src/id_base/submodule_id_base_length_scale.f90'
 ]
 
 module_sph_particles = [

@@ -245,16 +245,12 @@ MODULE id_base
     !  coordinates, and computes its radial profile inside the star
 
 
-  !  PROCEDURE:: estimate_lengthscale_to_resolve_spacetime
-    !# Estimate typical length scales, one per each matter object, to be
-    !  resolved by the mesh. maybe this one makes more sense if it's deferred,
-    !  because it's based on a approximation of the metric? well, this
-    !  approximation would be the same for all systems...or would it?
-
-
-  !  PROCEDURE:: estimate_lengthscale_to_resolve_sph
-    !# Estimate typical length scales, one per each matter object, to be
-    !  resolved by the particles
+    PROCEDURE:: estimate_lengthscale_field
+    !# Estimate typical length scales, one per each matter object, by
+    !  computing \(\dfrac{f}{\partial f}\), where \(f\) is a field given
+    !  as input, and \(\partial\) represent a derivative of it.
+    !  Presently, the derivatives are computed separately along each spatial
+    !  dimension, as 1D derivatives.
 
 
   END TYPE idbase
@@ -287,18 +283,6 @@ MODULE id_base
       !! Constructed [[diffstarlorene]] object
 
     END SUBROUTINE derived_type_constructor_int
-
-
-   ! SUBROUTINE derived_type_destructor_int( derived_type )
-   ! !# Prints a summary of the physical properties the system
-   ! !  to the standard output and, optionally, to a formatted file whose name
-   ! !  is given as the optional argument `filename`
-   !
-   !   IMPORT:: idbase
-   !   CLASS(idbase), INTENT( IN OUT ):: derived_type
-   !   !! Constructed [[diffstarlorene]] object
-   !
-   ! END SUBROUTINE derived_type_destructor_int
 
 
     FUNCTION read_double_at_pos( THIS, x, y, z ) RESULT( res )
@@ -838,6 +822,38 @@ MODULE id_base
       !! Value to set [[idbase:n_matter]] to
 
     END SUBROUTINE set_zero_shift
+
+
+    MODULE FUNCTION estimate_lengthscale_field( THIS, get_field, n_mat ) &
+      RESULT( scale )
+    !# Estimate typical length scales, one per each matter object, by
+    !  computing \(\dfrac{f}{\partial f}\), where \(f\) is a field given
+    !  as input, and \(\partial\) represent a derivative of it.
+    !  Presently, the derivatives are computed separately along each spatial
+    !  dimension, as 1D derivatives.
+
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      INTERFACE
+        FUNCTION get_field( x, y, z ) RESULT( density )
+          !! Returns the value of a field at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION:: density
+          !! Value of the field at \((x,y,z)\)
+        END FUNCTION get_field
+      END INTERFACE
+
+      INTEGER, INTENT( IN ):: n_mat
+      ! Number of matter objects in the physical ystem
+      DOUBLE PRECISION, DIMENSION(n_mat):: scale
+      !# Array of the minimum \(\dfrac{f}{\partial f}\) over the lattices that
+      !  surround each matter object
+
+    END FUNCTION estimate_lengthscale_field
 
 
   END INTERFACE

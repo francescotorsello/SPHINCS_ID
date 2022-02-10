@@ -55,7 +55,7 @@ SUBMODULE (bssn_formulation) ricci
     !
     !************************************************
 
-    USE constants,       ONLY: zero, one
+    USE constants,       ONLY: zero, one, two, three, ten, Msun_geo
     USE tensor,          ONLY: jx, jy, jz, jxx, jxy, jxz, jyy, jyz, jzz
     USE mesh_refinement, ONLY: allocate_grid_function, levels, nlevels
 
@@ -64,7 +64,7 @@ SUBMODULE (bssn_formulation) ricci
     INTEGER:: l
     INTEGER, DIMENSION(3) :: imin, imax
 
-    DOUBLE PRECISION:: max_ricci
+    DOUBLE PRECISION:: max_ricci, min_lapse
 
     ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -123,21 +123,36 @@ SUBMODULE (bssn_formulation) ricci
     PRINT *, " * Ricci tensor and scalar computed."
     PRINT *
 
-    DO l= 1, THIS% nlevels, 1
+    ! From Wikipedia:
+    ! The sectional curvature of an n-sphere of radius r is K = 1/r^2.
+    ! Hence the scalar curvature is R = n(n − 1)/r^2.
+    ! Find real reference for this.
+    max_ricci= zero
+    min_lapse= HUGE(one)
+    ASSOCIATE( Ricci_scalar => THIS% Ricci_scalar% levels(THIS% nlevels)% var, &
+               lapse        => THIS% lapse% levels(THIS% nlevels)% var )
 
-      ASSOCIATE( Ricci_scalar => THIS% Ricci_scalar% levels(l)% var )
+      !IF( MAXVAL( ABS(Ricci_scalar) ) > max_ricci )THEN
 
-        IF( MAXVAL( ABS(Ricci_scalar) ) > max_ricci )THEN
+        max_ricci= MAXVAL( ABS(Ricci_scalar) )
 
-          max_ricci= MAXVAL( ABS(Ricci_scalar) )
+      !ENDIF
 
-        ENDIF
+      !IF( MINVAL( ABS(lapse) ) < min_lapse )THEN
+      !
+      !  min_lapse= MINVAL( ABS(lapse) )
+      !
+      !ENDIF
 
-      END ASSOCIATE
-
-    ENDDO
-    PRINT *, max_ricci, SQRT(one/max_ricci)
+    END ASSOCIATE
+    PRINT *, "* Maximum value of the Ricci scalar over the finest refinement ", &
+             "level= ", max_ricci, "Msun_geo^{-2}"
+    PRINT *, "* Radius of a 3-sphere with the same Ricci scalar=", &
+             SQRT(three*two/max_ricci), "Msun_geo=", &
+             SQRT(three*two/max_ricci)*Msun_geo*ten*ten*ten, "m"
+    !PRINT *, min_lapse
 
   END PROCEDURE compute_ricci
+
 
 END SUBMODULE ricci
