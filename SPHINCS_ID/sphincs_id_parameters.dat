@@ -77,10 +77,15 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"DRSLO_apr4.bin"
              !"EJECT_ejecta_apr4_2516.dat"
 !--------------------------------------------------!
+! Estimate typical length scales to be resolved    !
+! for the spacetime and the hydro                  !
+!--------------------------------------------------!
+estimate_length_scale=.TRUE.
+!--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_sph=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !

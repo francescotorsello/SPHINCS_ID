@@ -71,7 +71,7 @@ MODULE id_base
 
 
     LOGICAL:: one_lapse
-    !! Logical variable that determines if the lapse function \(\alpha=1\),
+    !# Logical variable that determines if the lapse function \(\alpha=1\),
     !  i.e., if the geodesic gauge is to be used
     LOGICAL:: zero_shift
     !! Logical variable that determines if the shift \(\beta^i=0\)
@@ -121,7 +121,8 @@ MODULE id_base
     !  the BSSN variables and constraints
 
     PROCEDURE(read_id_hydro_int),         DEFERRED:: read_id_hydro
-    !# Reads the hydro |id| needed to compute the constraints on the refined mesh
+    !# Reads the hydro |id| needed to compute the constraints on the refined
+    !  mesh
 
     PROCEDURE(read_id_k_int),             DEFERRED:: read_id_k
     !! Reads the components of the extrinsic curvature
@@ -166,10 +167,7 @@ MODULE id_base
     !
 
     PROCEDURE(derived_type_constructor_int), DEFERRED:: derived_type_constructor
-    !#
-
-    !PROCEDURE(derived_type_destructor_int), DEFERRED:: derived_type_destructor
-    !#
+    !# Constructs a TYPE that extends [[idbase]]
 
 
     !-------------------------------!
@@ -245,6 +243,18 @@ MODULE id_base
     PROCEDURE:: integrate_baryon_mass_density
     !# Integrates the baryon mass density over a matter object, using spherical
     !  coordinates, and computes its radial profile inside the star
+
+
+  !  PROCEDURE:: estimate_lengthscale_to_resolve_spacetime
+    !# Estimate typical length scales, one per each matter object, to be
+    !  resolved by the mesh. maybe this one makes more sense if it's deferred,
+    !  because it's based on a approximation of the metric? well, this
+    !  approximation would be the same for all systems...or would it?
+
+
+  !  PROCEDURE:: estimate_lengthscale_to_resolve_sph
+    !# Estimate typical length scales, one per each matter object, to be
+    !  resolved by the particles
 
 
   END TYPE idbase

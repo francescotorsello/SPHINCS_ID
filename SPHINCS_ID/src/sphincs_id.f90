@@ -134,7 +134,7 @@ PROGRAM sphincs_id
             compute_constraints, export_constraints_xy, &
             export_constraints_x, export_constraints, &
             export_constraints_details, compute_parts_constraints, &
-            one_lapse, zero_shift, run_sph, run_spacetime
+            one_lapse, zero_shift, run_sph, run_spacetime, estimate_length_scale
 
   TYPE( timer ):: execution_timer
 
@@ -163,7 +163,8 @@ PROGRAM sphincs_id
                             constraints_step, compute_parts_constraints, &
                             numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
                             one_lapse, zero_shift, show_progress, &
-                            run_sph, run_spacetime, sph_path, spacetime_path
+                            run_sph, run_spacetime, sph_path, spacetime_path, &
+                            estimate_length_scale
 
   !---------------------------!
   !--  End of declarations  --!
@@ -323,6 +324,29 @@ PROGRAM sphincs_id
 
   ENDDO build_idbase_loop
 
+  !
+  !-- Compute the Ricci scalar on the mesh, to estimate typical lengthscale
+  !-- to be resolved
+  !
+!  IF( estimate_length_scale )THEN
+!
+!    compute_pressure_scale_loop: DO itr3 = 1, n_bns, 1
+!      PRINT *, "===================================================" &
+!               // "==============="
+!      PRINT *, " Computing typical pressure length scale for " &
+!               //systems(itr3), itr3
+!      PRINT *, "===================================================" &
+!               // "==============="
+!      PRINT *
+!
+!      CALL particles_dist( itr3, itr4 )% compute_ricci()
+!
+!    ENDDO compute_pressure_scale_loop
+!
+!    STOP
+!
+!  ENDIF
+
   IF( run_sph )THEN
 
     !
@@ -353,6 +377,94 @@ PROGRAM sphincs_id
   !  CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
   !
   !  STOP
+
+  ENDIF
+
+
+  IF( run_spacetime )THEN
+
+    !
+    !-- Construct the bssn objects from the bns objects
+    !
+    construct_spacetime_id_loop: DO itr3 = 1, n_bns, 1
+      PRINT *, "===================================================" &
+               // "==============="
+      PRINT *, " Setting up BSSN object for "//systems(itr3), itr3
+      PRINT *, "===================================================" &
+               // "==============="
+      PRINT *
+      bssn_forms( itr3 )= bssn( ids(itr3)% idata )
+    ENDDO construct_spacetime_id_loop
+
+    !
+    !-- Compute the BSSN initial data, optionally export it to a binary file
+    !-- readable by SPHINCS_BSSN, and optionally read the content of such binary
+    !-- file and print it to a formatted file (the latter for debugging)
+    !
+    compute_export_bssn_loop: DO itr3 = 1, n_bns, 1
+      PRINT *, "===================================================" &
+               // "==============="
+      PRINT *, " Computing BSSN variables for "//systems(itr3), itr3
+      PRINT *, "===================================================" &
+               // "==============="
+      PRINT *
+      WRITE( namefile_bssn_bin, "(A15)" ) "BSSN_vars.00000"!"BSSN_l", itr3, ".bin""(A6,I1,A4)"
+      namefile_bssn_bin= TRIM( spacetime_path ) // TRIM( namefile_bssn_bin )
+
+      bssn_forms( itr3 )% export_form_xy= export_form_xy
+      bssn_forms( itr3 )% export_form_x = export_form_x
+      bssn_forms( itr3 )% export_bin    = export_bin
+
+      CALL bssn_forms( itr3 )% &
+                          compute_and_export_tpo_variables( namefile_bssn_bin )
+      !IF( bssn_forms( itr3 )% export_bin )THEN
+      !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
+      !  CALL bssn_forms( itr3 )% &
+      !        read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
+      !ENDIF
+    ENDDO compute_export_bssn_loop
+
+    !
+    !-- Print the BSSN initial data to a formatted file
+    !
+    IF( export_form )THEN
+      export_bssn_loop: DO itr3 = 1, n_bns, 1
+        WRITE( namefile_bssn, "(A24,I1,A4)" ) &
+                              "lorene-bns-id-bssn-form_", itr3, ".dat"
+
+        namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+
+        CALL bssn_forms( itr3 )% &
+                    print_formatted_id_tpo_variables( namefile_bssn )
+      ENDDO export_bssn_loop
+    ENDIF
+
+    !
+    !-- Compute the Ricci scalar on the mesh, to estimate typical length scale
+    !-- to be resolved
+    !
+    IF( estimate_length_scale )THEN
+
+      compute_ricci_loop: DO itr3 = 1, n_bns, 1
+        PRINT *, "===================================================" &
+                 // "==============="
+        PRINT *, " Computing Ricci tensor and scalar for "//systems(itr3), itr3
+        PRINT *, "===================================================" &
+                 // "==============="
+        PRINT *
+
+        CALL bssn_forms( itr3 )% compute_ricci()
+
+      ENDDO compute_ricci_loop
+
+      STOP
+
+    ENDIF
+
+  ENDIF
+
+
+  IF( run_sph )THEN
 
     compute_export_sph_loops: DO itr3= 1, n_bns, 1
       part_distribution_loop2: DO itr4= 1, max_n_parts, 1
@@ -417,63 +529,8 @@ PROGRAM sphincs_id
 
   ENDIF
 
+
   IF( run_spacetime )THEN
-
-    !
-    !-- Construct the bssn objects from the bns objects
-    !
-    construct_spacetime_id_loop: DO itr3 = 1, n_bns, 1
-      PRINT *, "===================================================" &
-               // "==============="
-      PRINT *, " Setting up BSSN object for "//systems(itr3), itr3
-      PRINT *, "===================================================" &
-               // "==============="
-      PRINT *
-      bssn_forms( itr3 )= bssn( ids(itr3)% idata )
-    ENDDO construct_spacetime_id_loop
-
-    !
-    !-- Compute the BSSN initial data, optionally export it to a binary file
-    !-- readable by SPHINCS_BSSN, and optionally read the content of such binary
-    !-- file and print it to a formatted file (the latter for debugging)
-    !
-    compute_export_bssn_loop: DO itr3 = 1, n_bns, 1
-      PRINT *, "===================================================" &
-               // "==============="
-      PRINT *, " Computing BSSN variables for "//systems(itr3), itr3
-      PRINT *, "===================================================" &
-               // "==============="
-      PRINT *
-      WRITE( namefile_bssn_bin, "(A15)" ) "BSSN_vars.00000"!"BSSN_l", itr3, ".bin""(A6,I1,A4)"
-      namefile_bssn_bin= TRIM( spacetime_path ) // TRIM( namefile_bssn_bin )
-
-      bssn_forms( itr3 )% export_form_xy= export_form_xy
-      bssn_forms( itr3 )% export_form_x = export_form_x
-      bssn_forms( itr3 )% export_bin= export_bin
-
-      CALL bssn_forms( itr3 )% &
-                          compute_and_export_tpo_variables( namefile_bssn_bin )
-      !IF( bssn_forms( itr3 )% export_bin )THEN
-      !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
-      !  CALL bssn_forms( itr3 )% &
-      !        read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
-      !ENDIF
-    ENDDO compute_export_bssn_loop
-
-    !
-    !-- Print the BSSN initial data to a formatted file
-    !
-    IF( export_form )THEN
-      export_bssn_loop: DO itr3 = 1, n_bns, 1
-        WRITE( namefile_bssn, "(A24,I1,A4)" ) &
-                              "lorene-bns-id-bssn-form_", itr3, ".dat"
-
-        namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
-
-        CALL bssn_forms( itr3 )% &
-                    print_formatted_id_tpo_variables( namefile_bssn )
-      ENDDO export_bssn_loop
-    ENDIF
 
     !
     !-- Compute the BSSN constraints

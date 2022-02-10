@@ -182,6 +182,7 @@ module_bssn_id = [
   'src/standard_tpo_formulation/bssn_formulation/submodule_bssn_formulation_constructor.f90',
   'src/standard_tpo_formulation/bssn_formulation/submodule_bssn_formulation_bssn_variables.f90',
   'src/standard_tpo_formulation/bssn_formulation/submodule_bssn_formulation_constraints.f90',
+  'src/standard_tpo_formulation/bssn_formulation/submodule_bssn_formulation_ricci.f90',
   'src/standard_tpo_formulation/bssn_formulation/submodule_bssn_formulation_memory.f90'
 ]
 
@@ -315,6 +316,7 @@ sources_mesh = [
   '../../BSSN/ML_BSSN_NV_ADMDerivativesInterior.cc',
   '../../BSSN/ML_BSSN_NV_ConstraintsInterior.cc',
   '../../BSSN/ML_BSSN_NV_ConstraintsInterior_mod.cc',
+  '../../BSSN/ML_BSSN_NV_RicciInterior.cc',
   '../../BSSN/module_Extract_Mass.f90',
   '../../BSSN/submodule__Extract_Mass_impl.f90',
   '../../BSSN/fermi_step_f.f90',

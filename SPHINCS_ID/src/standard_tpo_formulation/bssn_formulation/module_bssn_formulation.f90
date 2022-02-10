@@ -88,6 +88,12 @@ MODULE bssn_formulation
     TYPE(grid_function):: g_BSSN3_ll
     !! Conformal spatial metric \(\gamma_{ij} \)
 
+    TYPE(grid_function):: Ricci_ll
+    !! Ricci tensor \(R_{ij} \)
+
+    TYPE(grid_function_scalar):: Ricci_scalar
+    !! Ricci scalar \(R^\mu{}_nu\)
+
     !
     !-- Connection constraints and its l2 norm and loo norm
     !
@@ -142,13 +148,13 @@ MODULE bssn_formulation
     !-------------------!
 
 
-    PROCEDURE :: define_allocate_fields => allocate_bssn_fields
+    PROCEDURE:: define_allocate_fields => allocate_bssn_fields
     !! Allocates memory for the [[bssn]] member grid functions
 
-    PROCEDURE :: deallocate_fields => deallocate_bssn_fields
+    PROCEDURE:: deallocate_fields => deallocate_bssn_fields
     !! Deallocates memory for the [[bssn]] member arrays
 
-    PROCEDURE :: compute_and_export_tpo_variables &
+    PROCEDURE:: compute_and_export_tpo_variables &
                     => compute_and_export_bssn_variables
     !# Computes the |bssn| variables at the particle positions, and optionally
     !  prints them to a binary file to be read by \(\texttt{SPHINCS_BSSN}\)
@@ -156,15 +162,11 @@ MODULE bssn_formulation
     !  \(\texttt{gnuplot}\), by calling
     !  [[bssn:print_formatted_id_tpo_variables]]
 
-    PROCEDURE, PUBLIC :: read_bssn_dump_print_formatted
-    !# Reads the binary |id| file printed by
-    !  [[bssn:compute_and_export_tpo_variables]]
-
-    PROCEDURE :: print_formatted_id_tpo_variables &
+    PROCEDURE:: print_formatted_id_tpo_variables &
                     => print_formatted_id_bssn_variables
     !! Prints the |bssn| |id| to a formatted file
 
-    PROCEDURE :: compute_and_export_tpo_constraints_grid &
+    PROCEDURE:: compute_and_export_tpo_constraints_grid &
                     => compute_and_export_bssn_constraints_grid
     !# Computes the |bssn| constraints using the full |id| on the refined mesh,
     !  prints a summary with the statistics for the constraints. Optionally,
@@ -172,7 +174,7 @@ MODULE bssn_formulation
     !  \(\texttt{gnuplot}\), and analyze the constraints by calling
     !  [[tpo:analyze_constraint]]
 
-    PROCEDURE :: compute_and_export_tpo_constraints_particles &
+    PROCEDURE:: compute_and_export_tpo_constraints_particles &
                     => compute_and_export_bssn_constraints_particles
     !# Computes the |bssn| constraints using the |bssn| |id| on the refined
     !  mesh and the hydrodynamical |id| mapped from the particles to the mesh,
@@ -181,13 +183,22 @@ MODULE bssn_formulation
     !  \(\texttt{gnuplot}\), and analyze the constraints by calling
     !  [[tpo:analyze_constraint]]
 
-    PROCEDURE :: destruct_bssn
+
+    PROCEDURE:: destruct_bssn
     !# Destructor for the EXTENDED TYPE bssn, not ABSTRACT TYPE tpo
 
-    FINAL     :: destructor
+    FINAL    :: destructor
     !# Destructor; finalizes members from both TYPES tpo and bssn,
     !  by calling [[tpo:destruct_tpo]] and
     !  [[bssn:destruct_bssn]]
+
+    PROCEDURE, PUBLIC:: read_bssn_dump_print_formatted
+    !# Reads the binary |id| file printed by
+    !  [[bssn:compute_and_export_tpo_variables]]
+
+    PROCEDURE, PUBLIC:: compute_ricci
+    !# Computes the Ricci tensor and the Ricci scalar on the mesh
+
 
   END TYPE bssn
 
@@ -305,6 +316,114 @@ MODULE bssn_formulation
     END SUBROUTINE compute_and_export_bssn_constraints_particles
 
 
+    MODULE SUBROUTINE compute_ricci( THIS ) !nx, ny, nz, imin, imax, &
+                                     !dx, dy, dz, &
+                                     !gt11, gt12, gt13, gt22, gt23, gt33, &
+                                     !At11, At12, At13, At22, At23, At33, &
+                                     !trK, phi, Xt1, Xt2, Xt3, &
+                                     !R11, R12, R13, R22, R23, R33, R ) &
+    !! Computes the Ricci tensor and the Ricci scalar on the mesh
+
+      CLASS(bssn),      INTENT( IN OUT ):: THIS
+      !! [[bssn]] object to which this PROCEDURE is bound
+    !  INTEGER, INTENT(IN):: nx
+    !  !! Number of mesh points in the \(x\) direction
+    !  INTEGER, INTENT(IN):: ny
+    !  !! Number of mesh points in the \(y\) direction
+    !  INTEGER, INTENT(IN):: nz
+    !  !! Number of mesh points in the \(z\) direction
+    !
+    !  INTEGER, DIMENSION(3), INTENT(IN):: imin
+    !  !# Minimum indexes at which to compute the Ricci tensor and scalar,
+    !  !  along the three spatial directions. Usually, these are the first
+    !  !  non-ghost indexes
+    !  INTEGER, DIMENSION(3), INTENT(IN):: imax
+    !  !# Maximum indexes at which to compute the Ricci tensor and scalar,
+    !  !  along the three spatial directions. Usually, these are the last
+    !  !  non-ghost indexes
+    !
+    !  DOUBLE PRECISION, VALUE, INTENT(IN):: dx
+    !  !! Mesh spacing in the \(x\) direction
+    !  DOUBLE PRECISION, VALUE, INTENT(IN):: dy
+    !  !! Mesh spacing in the \(x\) direction
+    !  DOUBLE PRECISION, VALUE, INTENT(IN):: dz
+    !  !! Mesh spacing in the \(x\) direction
+    !
+    !  DOUBLE PRECISION, INTENT(IN):: gt11(nx,ny,nz)
+    !  !# 3D array storing the \(xx\) component of the conformal spatal metric
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: gt12(nx,ny,nz)
+    !  !# 3D array storing the \(xy\) component of the conformal spatal metric
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: gt13(nx,ny,nz)
+    !  !# 3D array storing the \(xz\) component of the conformal spatal metric
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: gt22(nx,ny,nz)
+    !  !# 3D array storing the \(yy\) component of the conformal spatal metric
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: gt23(nx,ny,nz)
+    !  !# 3D array storing the \(yz\) component of the conformal spatal metric
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: gt33(nx,ny,nz)
+    !  !# 3D array storing the \(zz\) component of the conformal spatal metric
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: At11(nx,ny,nz)
+    !  !# 3D array storing the \(xx\) component of the conformal traceless
+    !  !  extrinsic curvature on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: At12(nx,ny,nz)
+    !  !# 3D array storing the \(xy\) component of the conformal traceless
+    !  !  extrinsic curvature on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: At13(nx,ny,nz)
+    !  !# 3D array storing the \(xz\) component of the conformal traceless
+    !  !  extrinsic curvature on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: At22(nx,ny,nz)
+    !  !# 3D array storing the \(yy\) component of the conformal traceless
+    !  !  extrinsic curvature on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: At23(nx,ny,nz)
+    !  !# 3D array storing the \(yz\) component of the conformal traceless
+    !  !  extrinsic curvature on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: At33(nx,ny,nz)
+    !  !# 3D array storing the \(zz\) component of the conformal traceless
+    !  !  extrinsic curvature on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: trk(nx,ny,nz)
+    !  !# 3D array storing the \(zz\) component of the trace of the
+    !  !  extrinsic curvature on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: phi(nx,ny,nz)
+    !  !# 3D array storing the conformal factor on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: Xt1(nx,ny,nz)
+    !  !# 3D array storing the \(x\) component of the conformal connection
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: Xt2(nx,ny,nz)
+    !  !# 3D array storing the \(y\) component of the conformal connection
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(IN):: Xt3(nx,ny,nz)
+    !  !# 3D array storing the \(z\) component of the conformal connection
+    !  !  on the mesh
+    !
+    !  DOUBLE PRECISION, INTENT(OUT):: R11(nx,ny,nz)
+    !  !# 3D array storing the \(xx\) component of the spatial Ricci tensor
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(OUT):: R12(nx,ny,nz)
+    !  !# 3D array storing the \(xy\) component of the spatial Ricci tensor
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(OUT):: R13(nx,ny,nz)
+    !  !# 3D array storing the \(xz\) component of the spatial Ricci tensor
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(OUT):: R22(nx,ny,nz)
+    !  !# 3D array storing the \(yy\) component of the spatial Ricci tensor
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(OUT):: R23(nx,ny,nz)
+    !  !# 3D array storing the \(yz\) component of the spatial Ricci tensor
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(OUT):: R33(nx,ny,nz)
+    !  !# 3D array storing the \(zz\) component of the spatial Ricci tensor
+    !  !  on the mesh
+    !  DOUBLE PRECISION, INTENT(OUT):: R(nx,ny,nz)
+    !  !# 3D array storing the Ricci scalar on the mesh
+
+    END SUBROUTINE compute_ricci
+
+
     MODULE SUBROUTINE deallocate_bssn_fields( THIS )
     !! Interface to [[bssn:deallocate_fields]]
 
@@ -334,19 +453,9 @@ MODULE bssn_formulation
 
   END INTERFACE
 
-  !*****************************************************************
-  !                                                                *
-  !# PD 26.03.2020: Interface mapping BSSN_CONSTRAINTS_INTERIOR to *
-  !                ML_BSSN_NV_ConstraintsInterior_Body             *
-  !
-  ! Interface mapping BSSN_CONSTRAINTS_INTERIOR to *
-  !                ML_BSSN_NV_ConstraintsInterior_Body             *
-  !
-  ! FT 03.03.2022
-  !                                                                *
-  !*****************************************************************
 
-  INTERFACE bssn_constraint_terms_interior
+  INTERFACE
+
 
     SUBROUTINE bssn_constraint_terms_interior( nx, ny, nz, imin, imax, &
                            dx, dy, dz, &
@@ -355,8 +464,17 @@ MODULE bssn_formulation
                            trK, phi, Xt1, Xt2, Xt3, eTtt, eTtx, eTty, &
                            eTtz, eTxx, eTxy, eTxz, eTyy, eTyz, eTzz, &
                            alp, beta1, beta2, beta3, &
-                           cXt1, cXt2, cXt3, Ham, M1, M2, M3, rho, s1, s2, s3) &
-                      BIND(C, NAME='ML_BSSN_NV_ConstraintTermsInterior_Body')
+                           cXt1, cXt2, cXt3, Ham, M1, M2, M3, rho, s1, s2, s3 )&
+    BIND(C, NAME='ML_BSSN_NV_ConstraintTermsInterior_Body')
+
+      !*********************************************************
+      !
+      !#
+      !  ML_BSSN_NV_ConstraintTermsInterior_Body
+      !
+      !  FT 03.02.2022
+      !
+      !*********************************************************
 
       USE iso_c_binding
 
@@ -392,7 +510,125 @@ MODULE bssn_formulation
 
     END SUBROUTINE bssn_constraint_terms_interior
 
-  END INTERFACE bssn_constraint_terms_interior
+
+    SUBROUTINE bssn_ricci_interior( nx, ny, nz, imin, imax, &
+                                    dx, dy, dz, &
+                                    gt11, gt12, gt13, gt22, gt23, gt33, &
+                                    At11, At12, At13, At22, At23, At33, &
+                                    trK, phi, Xt1, Xt2, Xt3, &
+                                    R11, R12, R13, R22, R23, R33, R ) &
+    BIND(C, NAME='ML_BSSN_NV_RicciInterior_Body')
+
+      !**********************************************
+      !
+      !#
+      !  ML_BSSN_NV_RicciInterior_Body
+      !
+      !  FT 10.02.2022
+      !
+      !**********************************************
+
+      USE iso_c_binding
+
+      INTEGER(C_INT), VALUE, INTENT(IN):: nx
+      !! Number of mesh points in the \(x\) direction
+      INTEGER(C_INT), VALUE, INTENT(IN):: ny
+      !! Number of mesh points in the \(y\) direction
+      INTEGER(C_INT), VALUE, INTENT(IN):: nz
+      !! Number of mesh points in the \(z\) direction
+
+      INTEGER(C_INT), DIMENSION(3), INTENT(IN):: imin
+      !# Minimum indexes at which to compute the Ricci tensor and scalar,
+      !  along the three spatial directions. Usually, these are the first
+      !  non-ghost indexes
+      INTEGER(C_INT), DIMENSION(3), INTENT(IN):: imax
+      !# Maximum indexes at which to compute the Ricci tensor and scalar,
+      !  along the three spatial directions. Usually, these are the last
+      !  non-ghost indexes
+
+      REAL(C_DOUBLE), VALUE, INTENT(IN):: dx
+      !! Mesh spacing in the \(x\) direction
+      REAL(C_DOUBLE), VALUE, INTENT(IN):: dy
+      !! Mesh spacing in the \(x\) direction
+      REAL(C_DOUBLE), VALUE, INTENT(IN):: dz
+      !! Mesh spacing in the \(x\) direction
+
+      REAL(C_DOUBLE), INTENT(IN):: gt11(nx,ny,nz)
+      !# 3D array storing the \(xx\) component of the conformal spatal metric
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: gt12(nx,ny,nz)
+      !# 3D array storing the \(xy\) component of the conformal spatal metric
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: gt13(nx,ny,nz)
+      !# 3D array storing the \(xz\) component of the conformal spatal metric
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: gt22(nx,ny,nz)
+      !# 3D array storing the \(yy\) component of the conformal spatal metric
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: gt23(nx,ny,nz)
+      !# 3D array storing the \(yz\) component of the conformal spatal metric
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: gt33(nx,ny,nz)
+      !# 3D array storing the \(zz\) component of the conformal spatal metric
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: At11(nx,ny,nz)
+      !# 3D array storing the \(xx\) component of the conformal traceless
+      !  extrinsic curvature on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: At12(nx,ny,nz)
+      !# 3D array storing the \(xy\) component of the conformal traceless
+      !  extrinsic curvature on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: At13(nx,ny,nz)
+      !# 3D array storing the \(xz\) component of the conformal traceless
+      !  extrinsic curvature on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: At22(nx,ny,nz)
+      !# 3D array storing the \(yy\) component of the conformal traceless
+      !  extrinsic curvature on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: At23(nx,ny,nz)
+      !# 3D array storing the \(yz\) component of the conformal traceless
+      !  extrinsic curvature on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: At33(nx,ny,nz)
+      !# 3D array storing the \(zz\) component of the conformal traceless
+      !  extrinsic curvature on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: trk(nx,ny,nz)
+      !# 3D array storing the \(zz\) component of the trace of the
+      !  extrinsic curvature on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: phi(nx,ny,nz)
+      !# 3D array storing the conformal factor on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: Xt1(nx,ny,nz)
+      !# 3D array storing the \(x\) component of the conformal connection
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: Xt2(nx,ny,nz)
+      !# 3D array storing the \(y\) component of the conformal connection
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(IN):: Xt3(nx,ny,nz)
+      !# 3D array storing the \(z\) component of the conformal connection
+      !  on the mesh
+
+      REAL(C_DOUBLE), INTENT(OUT):: R11(nx,ny,nz)
+      !# 3D array storing the \(xx\) component of the spatial Ricci tensor
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(OUT):: R12(nx,ny,nz)
+      !# 3D array storing the \(xy\) component of the spatial Ricci tensor
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(OUT):: R13(nx,ny,nz)
+      !# 3D array storing the \(xz\) component of the spatial Ricci tensor
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(OUT):: R22(nx,ny,nz)
+      !# 3D array storing the \(yy\) component of the spatial Ricci tensor
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(OUT):: R23(nx,ny,nz)
+      !# 3D array storing the \(yz\) component of the spatial Ricci tensor
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(OUT):: R33(nx,ny,nz)
+      !# 3D array storing the \(zz\) component of the spatial Ricci tensor
+      !  on the mesh
+      REAL(C_DOUBLE), INTENT(OUT):: R(nx,ny,nz)
+      !# 3D array storing the Ricci scalar on the mesh
+
+    END SUBROUTINE bssn_ricci_interior
+
+
+  END INTERFACE
 
 
 END MODULE bssn_formulation

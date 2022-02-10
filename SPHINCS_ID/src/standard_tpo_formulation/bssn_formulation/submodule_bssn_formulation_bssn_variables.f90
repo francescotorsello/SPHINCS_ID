@@ -139,7 +139,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     ! Here there is not enough memory for 7rl with 291**3 points
     CALL allocate_GravityAcceleration()
 
-    CALL allocate_grid_function ( rad_coord, 'rad_coord' )
+    CALL allocate_grid_function( rad_coord, 'rad_coord' )
 
     ! Assign values to the MODULE variables, in order to call ADM_to_BSSN
     ref_levels: DO l= 1, THIS% nlevels
