@@ -33,8 +33,8 @@ SUBMODULE (sph_particles) apm
   !
   !***********************************
 
-
-  USE constants, ONLY: zero, quarter, one, two, three, ten
+  USE, INTRINSIC:: ieee_arithmetic, ONLY: IEEE_IS_FINITE
+  USE              constants,       ONLY: zero, quarter, one, two, three, ten
 
 
   IMPLICIT NONE
@@ -1230,27 +1230,6 @@ SUBMODULE (sph_particles) apm
           PRINT *
           STOP
 
-          IF( a == 1 )THEN
-            DO a2= 2, npart_all, 1
-              IF( .NOT.ISNAN( nstar_real( a2 ) ) )THEN
-                nstar_real( a )= nstar_real( a2 )
-                h( a )= h( a2 )
-                EXIT
-              ENDIF
-            ENDDO
-          ELSEIF( npart_real == a )THEN
-            nstar_real( a )= nstar_real( a - 1 )
-            h( a )= h( a - 1 )
-          ELSEIF( npart_real + 1 == a )THEN
-            nstar_real( a )= nstar_real( a + 1 )
-            h( a )= h( a + 1 )
-          !ELSEIF( npart_all == a )THEN
-          !  nstar_real( a )= nstar_real( a - 1 )
-          ELSE
-            nstar_real( a )= nstar_real( a - 1 )
-            h( a )= h( a - 1 )
-          ENDIF
-
         ENDIF
 
       ENDDO find_nan_in_nstar_real
@@ -1258,7 +1237,7 @@ SUBMODULE (sph_particles) apm
       CALL get_nstar_p_atm( npart_real, all_pos(1,1:npart_real), &
                                         all_pos(2,1:npart_real), &
                                         all_pos(3,1:npart_real), nstar_p, &
-                                        use_atmosphere  )
+                                        use_atmosphere )
 
       art_pr_max= zero
       err_N_max=  zero
@@ -1307,9 +1286,9 @@ SUBMODULE (sph_particles) apm
         ENDIF
 
         IF( ISNAN(dNstar(a)) )THEN
-          PRINT *, "dNstar is a NaN at particle ", a
-          PRINT *, "nstar_real is ", nstar_real(a)
-          PRINT *, "nstar_p is ", nstar_p(a)
+          PRINT *, "dNstar= ", dNstar(a), " at particle ", a
+          PRINT *, "nstar_real= ", nstar_real(a)
+          PRINT *, "nstar_p= ", nstar_p(a)
           STOP
         ENDIF
 
@@ -1996,7 +1975,7 @@ SUBMODULE (sph_particles) apm
     IF( debug ) PRINT *, "3"
 
     CALL get_nstar_p_atm( npart_real, pos(1,:), pos(2,:), pos(3,:), &
-                          nstar_p, use_atmosphere  )
+                          nstar_p, use_atmosphere )
 
     nu= nu_all
     PRINT *, " * Baryon number on all particles before correction nu_all= ", &
@@ -2103,7 +2082,7 @@ SUBMODULE (sph_particles) apm
 
          CALL get_nstar_p_atm( npart_real, pos(1,:), &
                                        pos(2,:), &
-                                       pos(3,:), nstar_p, use_atmosphere  )
+                                       pos(3,:), nstar_p, use_atmosphere )
 
          !nstar_p( npart_real+1:npart_all )= zero
 
@@ -2306,7 +2285,7 @@ SUBMODULE (sph_particles) apm
 
     CALL get_nstar_p_atm( npart_real, pos(1,:), &
                                       pos(2,:), &
-                                      pos(3,:), nstar_p, use_atmosphere  )
+                                      pos(3,:), nstar_p, use_atmosphere )
 
     dN_av = zero
     dN_max= zero
@@ -2993,8 +2972,8 @@ SUBMODULE (sph_particles) apm
         !$OMP             SHARED( npart_real, nstar_p, atmosphere_density ) &
         !$OMP             PRIVATE( a )
         DO a= 1, npart_real, 1
-          IF( nstar_p(a) == zero )THEN
-              nstar_p(a)= atmosphere_density
+          IF( nstar_p(a) <= atmosphere_density )THEN
+            nstar_p(a)= atmosphere_density
           ENDIF
         ENDDO
         !$OMP END PARALLEL DO

@@ -80,12 +80,12 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
 ! Estimate typical length scales to be resolved    !
 ! for the spacetime and the hydro                  !
 !--------------------------------------------------!
-estimate_length_scale=.TRUE.
+estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.FALSE.
-run_spacetime=.TRUE.
+run_sph=.TRUE.
+run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !

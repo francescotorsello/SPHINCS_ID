@@ -325,8 +325,8 @@ PROGRAM sphincs_id
   ENDDO build_idbase_loop
 
   !
-  !-- Compute the Ricci scalar on the mesh, to estimate typical lengthscale
-  !-- to be resolved
+  !--
+  !--
   !
 !  IF( estimate_length_scale )THEN
 !

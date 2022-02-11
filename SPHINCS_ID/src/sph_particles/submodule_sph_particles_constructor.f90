@@ -2027,11 +2027,11 @@ SUBMODULE (sph_particles) constructor
       !
       !**************************************************************
 
-      USE constants, ONLY: zero, one, two
-      USE tensor,    ONLY: jx, jy, jz
-      !USE matrix,    ONLY: determinant_4x4_matrix
-      USE utility,   ONLY: compute_g4, determinant_sym4x4, &
-                           spacetime_vector_norm_sym4x4
+      USE constants,                    ONLY: zero, one, two
+      USE tensor,                       ONLY: jx, jy, jz, n_sym4x4
+      !USE matrix,                       ONLY: determinant_4x4_matrix
+      USE utility,                      ONLY: compute_g4, determinant_sym4x4, &
+                                              spacetime_vector_norm_sym4x4
 
       IMPLICIT NONE
 
@@ -2052,11 +2052,11 @@ SUBMODULE (sph_particles) constructor
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_p
 
-      INTEGER:: a, mus, nus
+      INTEGER:: a, i!mus, nus
       DOUBLE PRECISION:: det, sq_g, Theta_a
       DOUBLE PRECISION, DIMENSION(0:3,npart_real):: vel
       !DOUBLE PRECISION:: g4(0:3,0:3)
-      DOUBLE PRECISION:: g4(10)
+      DOUBLE PRECISION:: g4(n_sym4x4)
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_real, lapse, shift_x, shift_y, shift_z, &
@@ -2067,10 +2067,24 @@ SUBMODULE (sph_particles) constructor
       DO a= 1, npart_real, 1
 
         ! Coordinate velocity of the fluid [c]
-        vel(0,a)= one
+        vel(0,a) = one
         vel(jx,a)= lapse(a)*v_euler_x(a)- shift_x(a)
         vel(jy,a)= lapse(a)*v_euler_y(a)- shift_y(a)
         vel(jz,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+
+      !  DO i= 1, 3, 1
+      !    IF( ISNAN(vel(i,a)) )THEN
+      !      PRINT *, "ERROR! The ", i, " component of vel is a NaN at ", &
+      !               "particle ", a
+      !      PRINT *
+      !      STOP
+      !    ELSEIF( .NOT.IEEE_IS_FINITE(vel(i,a)) )THEN
+      !      PRINT *, "ERROR! The ", i, " component of vel is infinite at ", &
+      !               "particle ",a
+      !      PRINT *
+      !      STOP
+      !    ENDIF
+      !  ENDDO
 
         !
         !-- Metric as matrix for easy manipulation
@@ -2103,16 +2117,36 @@ SUBMODULE (sph_particles) constructor
         CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
                          [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
 
+      !  DO i= 1, 10, 1
+      !    IF( ISNAN(g4(i)) )THEN
+      !      PRINT *, "ERROR! The ", i, " component of g4 is a NaN at ", &
+      !               "particle ", a
+      !      PRINT *
+      !      STOP
+      !    ELSEIF( .NOT.IEEE_IS_FINITE(g4(i)) )THEN
+      !      PRINT *, "ERROR! The ", i, " component of g4 is infinite at ", &
+      !               "particle ",a
+      !      PRINT *
+      !      STOP
+      !    ENDIF
+      !  ENDDO
+
         CALL determinant_sym4x4( g4, det )
         !CALL determinant_4x4_matrix(g4,det)
         IF( ABS(det) < 1D-10 )THEN
-            PRINT *, "The determinant of the spacetime metric is " &
-                     // "effectively 0 at particle ", a
-            STOP
+          PRINT *, "ERROR! The determinant of the spacetime metric is " &
+                   // "effectively 0 at particle ", a
+          PRINT *
+          STOP
         ELSEIF( det > 0 )THEN
-            PRINT *, "The determinant of the spacetime metric is " &
-                     // "positive at particle ", a
-            STOP
+          PRINT *, "ERROR! The determinant of the spacetime metric is " &
+                   // "positive at particle ", a
+          PRINT *
+          STOP
+        ELSEIF( .NOT.is_finite_number(det) )THEN
+          PRINT *, "ERROR! The determinant is ", det, "at particle ", a
+          PRINT *
+          STOP
         ENDIF
         sq_g= SQRT(-det)
 
@@ -2126,8 +2160,21 @@ SUBMODULE (sph_particles) constructor
         !             + g4(mus,nus)*vel(mus,a)*vel(nus,a)
         !  ENDDO
         !ENDDO
-        CALL spacetime_vector_norm_sym4x4( g4, vel, Theta_a )
+        CALL spacetime_vector_norm_sym4x4( g4, vel(:,a), Theta_a )
+        IF( .NOT.is_finite_number(Theta_a) )THEN
+          PRINT *, "ERROR! The spacetime norm of vel is ", Theta_a, &
+                   "at particle ", a
+          PRINT *
+          STOP
+        ENDIF
+
         Theta_a= one/SQRT(-Theta_a)
+        IF( .NOT.is_finite_number(Theta_a) )THEN
+          PRINT *, "ERROR! The generalized Lorentz factor is ", Theta_a, &
+                   "at particle ", a
+          PRINT *
+          STOP
+        ENDIF
 
         nstar_p(a)= sq_g*Theta_a*baryon_density(a)
 

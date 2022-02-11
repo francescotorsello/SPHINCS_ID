@@ -133,6 +133,26 @@ MODULE utility
   END SUBROUTINE test_status
 
 
+  PURE FUNCTION is_finite_number( x ) RESULT( res )
+
+    !***********************************************
+    !
+    !# Test if a double precision is a finite number
+    !
+    !  FT 11.02.2022
+    !
+    !***********************************************
+
+    USE, INTRINSIC:: IEEE_ARITHMETIC, ONLY: IEEE_IS_FINITE
+
+    DOUBLE PRECISION, INTENT(IN):: x
+    LOGICAL:: res
+
+    res= (.NOT.ISNAN(x)) .AND. IEEE_IS_FINITE(x)
+
+  END FUNCTION is_finite_number
+
+
   PURE SUBROUTINE compute_g4( lapse, shift, g3, g4 )
 
     !***********************************************
@@ -171,11 +191,9 @@ MODULE utility
                            + g3(jyz)*shift(jy)*shift(jz)*two &
                            + g3(jzz)*shift(jz)*shift(jz)
 
-    g4(itx)=   g3(jxx)*shift(jx) + g3(jxy)*shift(jy) + g3(jxz)*shift(jz)
-
-    g4(ity)=   g3(jxy)*shift(jx) + g3(jyy)*shift(jy) + g3(jyz)*shift(jz)
-
-    g4(itz)=   g3(jxz)*shift(jx) + g3(jyz)*shift(jy) + g3(jzz)*shift(jz)
+    g4(itx)= g3(jxx)*shift(jx) + g3(jxy)*shift(jy) + g3(jxz)*shift(jz)
+    g4(ity)= g3(jxy)*shift(jx) + g3(jyy)*shift(jy) + g3(jyz)*shift(jz)
+    g4(itz)= g3(jxz)*shift(jx) + g3(jyz)*shift(jy) + g3(jzz)*shift(jz)
 
     g4(ixx)= g3(jxx)
     g4(ixy)= g3(jxy)
@@ -261,7 +279,7 @@ MODULE utility
     !****************************************************************
 
     USE tensor,    ONLY: itt, itx, ity, itz, ixx, ixy, ixz, iyy, iyz, izz, &
-                      it, ix, iy, iz, n_sym4x4
+                         it, ix, iy, iz, n_sym4x4
     USE constants, ONLY: two
 
     IMPLICIT NONE
@@ -287,59 +305,6 @@ MODULE utility
         + two*g4(iyz)*v(iy)*v(iz) + g4(izz)*v(iz)*v(iz)
 
   END SUBROUTINE spacetime_vector_norm_sym4x4
-
-
-!  SUBROUTINE determinant_sym3x3_grid( i, j, k, A, det )
-!
-!    !****************************************************************
-!    !
-!    !# Compute the determinant of a \(3\times 3\) symmetric matrix
-!    !  field, given as a 6-vector, at a given grid point
-!    !
-!    !  FT 26.03.2021
-!    !
-!    !  Generalized to not be bound to the mesh
-!    !
-!    !  FT 07.02.2022
-!    !
-!    !****************************************************************
-!
-!    USE tensor, ONLY: jxx, jxy, jxz, jyy, jyz, jzz, n_sym3x3
-!
-!    IMPLICIT NONE
-!
-!    INTEGER:: i, j, k
-!    !! Indices of the grid point
-!    INTEGER, DIMENSION(4):: components
-!    !# Array containing the shape of the \(3\times 3\) symmetric matrix.
-!    !  The first 3 components are equal to the numbers of grid points
-!    !  along each axis. The fourth component is equal to the number of
-!    !  independent components of the \(3\times 3\) symmetric matrix.
-!    DOUBLE PRECISION, INTENT(IN):: A(:,:,:,:)
-!    !# The \(3\times 3\) symmetric matrix, given as a 6-vector.
-!    !  The first 3 components run over the numbers of grid points
-!    !  along each axis. The fourth index runs over the number of
-!    !  independent components of the \(3\times 3\) symmetric matrix.
-!    DOUBLE PRECISION, INTENT(OUT):: det
-!    !! Determinant of the \(3\times 3\) symmetric matrix
-!
-!    components= SHAPE( A )
-!
-!    IF( components(4) /= n_sym3x3 )THEN
-!      PRINT *, "** ERROR in determinant_sym3x3_grid in MODULE utility.", &
-!               " This subroutine needs a symmetric matrix with 6 components,",&
-!               " and a ", components, "component matrix was given instead."
-!      STOP
-!    ENDIF
-!
-!    det=   A(i,j,k,jxx)*A(i,j,k,jyy)*A(i,j,k,jzz) &
-!         + A(i,j,k,jxy)*A(i,j,k,jyz)*A(i,j,k,jxz) &
-!         + A(i,j,k,jxz)*A(i,j,k,jxy)*A(i,j,k,jyz) &
-!         - A(i,j,k,jxy)*A(i,j,k,jxy)*A(i,j,k,jzz) &
-!         - A(i,j,k,jxz)*A(i,j,k,jyy)*A(i,j,k,jxz) &
-!         - A(i,j,k,jxx)*A(i,j,k,jyz)*A(i,j,k,jyz)
-!
-!  END SUBROUTINE determinant_sym3x3_grid
 
 
   SUBROUTINE determinant_sym3x3( A, det )

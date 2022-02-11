@@ -66,7 +66,7 @@ MODULE id_base
 
     INTEGER:: n_matter= 0
     !# Number of matter objects belonging the physical system.
-    !  For example, n_objects= 2 for a binary system of stars, and n_objects= 1
+    !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
 
 
@@ -98,6 +98,9 @@ MODULE id_base
 
     PROCEDURE(read_double_at_pos),        DEFERRED:: read_mass_density
     !# Returns the baryon mass density at the given point
+
+    !PROCEDURE(read_double_at_pos),        DEFERRED:: read_pressure
+    !# Returns the pressure at the given point
 
     PROCEDURE(read_integer_at_pos),       DEFERRED:: test_position
     !# Returns 1 if the position has physically acceptable properties,

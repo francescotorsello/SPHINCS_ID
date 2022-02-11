@@ -107,6 +107,7 @@ SUBMODULE (id_base) length_scale
 
     TYPE field
       DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: val
+      DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: der
     END TYPE field
     TYPE(field), DIMENSION(n_mat):: field_mat
 
@@ -130,23 +131,43 @@ SUBMODULE (id_base) length_scale
 
       ALLOCATE( field_mat(i_mat)% val(nx(i_mat), ny(i_mat), nz(i_mat)) )
 
-      lattice_loop: DO i= 1, n, 1
+      lattice_loop_x: DO i= 1, nx(i_mat), 1
 
         x= xL(i_mat) + DBLE(i)*dx(i_mat)
 
-        DO j= 1, n, 1
+        lattice_loop_y: DO j= 1, ny(i_mat), 1
 
           y= yL(i_mat) + DBLE(j)*dx(i_mat)
 
-          DO k= 1, n, 1
+          lattice_loop_z: DO k= 1, nz(i_mat), 1
 
             z= zL(i_mat) + DBLE(z)*dx(i_mat)
 
             field_mat% val(i,j,k)= get_field( x, y, z )
 
-          ENDDO
-        ENDDO
-      END DO lattice_loop
+          ENDDO lattice_loop_z
+        ENDDO lattice_loop_y
+      ENDDO lattice_loop_x
+
+      ALLOCATE( field_mat(i_mat)% der(nx(i_mat), ny(i_mat), nz(i_mat)) )
+
+      lattice_loop_x_der: DO i= 1, nx(i_mat), 1
+
+        x= xL(i_mat) + DBLE(i)*dx(i_mat)
+
+        lattice_loop_y_der: DO j= 1, ny(i_mat), 1
+
+          y= yL(i_mat) + DBLE(j)*dx(i_mat)
+
+          lattice_loop_z_der: DO k= 1, nz(i_mat), 1
+
+            z= zL(i_mat) + DBLE(z)*dx(i_mat)
+
+            field_mat% val(i,j,k)= get_field( x, y, z )
+
+          ENDDO lattice_loop_z_der
+        ENDDO lattice_loop_y_der
+      ENDDO lattice_loop_x_der
 
       DEALLOCATE( field_mat(i_mat)% val )
 
