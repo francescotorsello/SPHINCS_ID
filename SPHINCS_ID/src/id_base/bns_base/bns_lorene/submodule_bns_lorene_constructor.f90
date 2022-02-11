@@ -75,11 +75,13 @@ SUBMODULE (bns_lorene) constructor
     !
     !****************************************************
 
+    USE constants, ONLY: ten, Msun_geo
+
     IMPLICIT NONE
 
     INTEGER, SAVE:: bns_counter= 1
 
-    !DOUBLE PRECISION:: tmp
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: length_scale_pressure
 
     CALL derived_type% set_n_matter(2)
     CALL derived_type% set_cold_system(.TRUE.)
@@ -104,7 +106,34 @@ SUBMODULE (bns_lorene) constructor
     CALL derived_type% set_one_lapse ( .FALSE. )
     CALL derived_type% set_zero_shift( .FALSE. )
 
-    !foo= derived_type
+    ALLOCATE( length_scale_pressure(derived_type% get_n_matter()) )
+    length_scale_pressure= derived_type% estimate_lengthscale_field( &
+                                              get_pressure, &
+                                              derived_type% get_n_matter() )
+
+    PRINT *, " * Minimum length scale to resolve on star 1, based on ", &
+             "pressure= ", length_scale_pressure(1)*Msun_geo*ten*ten*ten, "m"
+    PRINT *, " * Minimum length scale to resolve on star 2, based on ", &
+             "pressure= ", length_scale_pressure(1)*Msun_geo*ten*ten*ten, "m"
+    PRINT *
+
+    CONTAINS
+
+    FUNCTION get_pressure( x, y, z ) RESULT( val )
+    !! Returns the value of the pressure at the desired point
+
+      DOUBLE PRECISION, INTENT(IN):: x
+      !! \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN):: y
+      !! \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN):: z
+      !! \(z\) coordinate of the desired point
+      DOUBLE PRECISION:: val
+      !! Pressure at \((x,y,z)\)
+
+      val= derived_type% import_pressure( x, y, z )
+
+    END FUNCTION get_pressure
 
   END PROCEDURE construct_bnslorene
 

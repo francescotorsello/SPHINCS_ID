@@ -63,11 +63,14 @@ SUBMODULE (id_base) length_scale
     !
     !************************************************
 
+    USE constants, ONLY: zero, half, two, three, ten, Msun_geo
 
     IMPLICIT NONE
 
-    INTEGER, PARAMETER:: n= 200
+    INTEGER, PARAMETER:: n= 350
     !! Number of grid points along the shortest size of the matter object
+
+    INTEGER, PARAMETER:: nghost= 4
 
     !INTEGER:: n_mat
     !! Number of matter objects in the physical system
@@ -76,6 +79,9 @@ SUBMODULE (id_base) length_scale
     INTEGER:: i
     INTEGER:: j
     INTEGER:: k
+    INTEGER:: ig
+    INTEGER:: jg
+    INTEGER:: kg
 
     INTEGER:: nx(n_mat)
     !!
@@ -98,6 +104,8 @@ SUBMODULE (id_base) length_scale
     !! Right boundaries of the lattices in the \(z\) direction
     DOUBLE PRECISION:: sizes(6)
     !! Temporary array to store the sizes of the matter objects
+    DOUBLE PRECISION:: center(3)
+    !! Temporary array to store the centers of the matter objects
     DOUBLE PRECISION:: dx(n_mat)
     !! Uniform spacings of the lattices
 
@@ -108,71 +116,124 @@ SUBMODULE (id_base) length_scale
     TYPE field
       DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: val
       DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: der
+      DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: ratio
     END TYPE field
     TYPE(field), DIMENSION(n_mat):: field_mat
 
     matter_objects_loop: DO i_mat= 1, n_mat, 1
 
       sizes= THIS% return_spatial_extent(i_mat)
-      xL(i_mat)= sizes(1)
-      xR(i_mat)= sizes(2)
-      yL(i_mat)= sizes(3)
-      yR(i_mat)= sizes(4)
-      zL(i_mat)= sizes(5)
-      zR(i_mat)= sizes(6)
+      center= THIS% return_center(i_mat)
+      xL(i_mat)= center(1) - sizes(1)
+      xR(i_mat)= center(1) + sizes(2)
+      yL(i_mat)= center(2) - sizes(3)
+      yR(i_mat)= center(2) + sizes(4)
+      zL(i_mat)= center(3) - sizes(5)
+      zR(i_mat)= center(3) + sizes(6)
 
       dx(i_mat)= MINVAL( [(xR(i_mat)-xL(i_mat))/DBLE(n), &
                           (yR(i_mat)-yL(i_mat))/DBLE(n), &
                           (zR(i_mat)-zL(i_mat))/DBLE(n)] )
 
-      nx(i_mat)= xR(i_mat)-xL(i_mat)/dx(i_mat)
-      ny(i_mat)= yR(i_mat)-yL(i_mat)/dx(i_mat)
-      nz(i_mat)= zR(i_mat)-zL(i_mat)/dx(i_mat)
+      PRINT *, " * Lattice step on matter object ", i_mat, "=", &
+               dx(i_mat)*Msun_geo*ten*ten*ten, "m"
 
-      ALLOCATE( field_mat(i_mat)% val(nx(i_mat), ny(i_mat), nz(i_mat)) )
+      nx(i_mat)= NINT( (xR(i_mat)-xL(i_mat))/dx(i_mat) )
+      ny(i_mat)= NINT( (yR(i_mat)-yL(i_mat))/dx(i_mat) )
+      nz(i_mat)= NINT( (zR(i_mat)-zL(i_mat))/dx(i_mat) )
 
-      lattice_loop_x: DO i= 1, nx(i_mat), 1
+      ALLOCATE( field_mat(i_mat)% val( nx(i_mat) + 2*nghost, &
+                                       ny(i_mat) + 2*nghost, &
+                                       nz(i_mat) + 2*nghost ) )
+      field_mat(i_mat)% val= zero
 
-        x= xL(i_mat) + DBLE(i)*dx(i_mat)
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nx, ny, nz, i_mat, xL, xR, yL, yR, zL, zR, &
+      !$OMP                     dx, field_mat ) &
+      !$OMP             PRIVATE( i, j, k, x, y, z )
+      lattice_loop_x: DO i= 1, nx(i_mat) + 2*nghost, 1
 
-        lattice_loop_y: DO j= 1, ny(i_mat), 1
+        x= xL(i_mat) + DBLE(i-1)*dx(i_mat)
 
-          y= yL(i_mat) + DBLE(j)*dx(i_mat)
+        lattice_loop_y: DO j= 1, ny(i_mat) + 2*nghost, 1
 
-          lattice_loop_z: DO k= 1, nz(i_mat), 1
+          y= yL(i_mat) + DBLE(j-1)*dx(i_mat)
 
-            z= zL(i_mat) + DBLE(z)*dx(i_mat)
+          lattice_loop_z: DO k= 1, nz(i_mat) + 2*nghost, 1
 
-            field_mat% val(i,j,k)= get_field( x, y, z )
+            z= zL(i_mat) + DBLE(k-1)*dx(i_mat)
+
+            IF( get_field( x, y, z ) > zero )THEN
+
+              field_mat(i_mat)% val(i,j,k)= get_field( x, y, z )
+
+            ENDIF
 
           ENDDO lattice_loop_z
         ENDDO lattice_loop_y
       ENDDO lattice_loop_x
+      !$OMP END PARALLEL DO
 
-      ALLOCATE( field_mat(i_mat)% der(nx(i_mat), ny(i_mat), nz(i_mat)) )
+      ! Derivatives
+      ALLOCATE( field_mat(i_mat)% der( nx(i_mat), ny(i_mat), nz(i_mat) ) )
+      ALLOCATE( field_mat(i_mat)% ratio( nx(i_mat), ny(i_mat), nz(i_mat) ) )
 
+      field_mat(i_mat)% der  = zero
+      field_mat(i_mat)% ratio= zero
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nx, ny, nz, i_mat, xL, xR, yL, yR, zL, zR, &
+      !$OMP                     dx, field_mat ) &
+      !$OMP             PRIVATE( i, j, k, ig, jg, kg, x, y, z )
       lattice_loop_x_der: DO i= 1, nx(i_mat), 1
 
-        x= xL(i_mat) + DBLE(i)*dx(i_mat)
+        x= xL(i_mat) + DBLE(i-1)*dx(i_mat)
+        ig= nghost + i
 
         lattice_loop_y_der: DO j= 1, ny(i_mat), 1
 
-          y= yL(i_mat) + DBLE(j)*dx(i_mat)
+          y= yL(i_mat) + DBLE(j-1)*dx(i_mat)
+          jg= nghost + j
 
           lattice_loop_z_der: DO k= 1, nz(i_mat), 1
 
-            z= zL(i_mat) + DBLE(z)*dx(i_mat)
+            z= zL(i_mat) + DBLE(k-1)*dx(i_mat)
+            kg= nghost + k
 
-            field_mat% val(i,j,k)= get_field( x, y, z )
+            field_mat(i_mat)% der(i,j,k)= &
+  !( field_mat(i_mat)% val(ig+1,jg,kg) - field_mat(i_mat)% val(ig-1,jg,kg) )*half
+   !         - field_mat(i_mat)% val(ig+2,jg,kg)/(two*two*three) &
+   !         + field_mat(i_mat)% val(ig+1,jg,kg)*two/three &
+   !         - field_mat(i_mat)% val(ig-1,jg,kg)*two/three &
+   !         + field_mat(i_mat)% val(ig-2,jg,kg)/(two*two*three) &
+            + field_mat(i_mat)% val(ig+3,jg,kg)/(two*three*ten) &
+            - field_mat(i_mat)% val(ig+2,jg,kg)*three/(two*ten) &
+            + field_mat(i_mat)% val(ig+1,jg,kg)*three/(two*two) &
+            - field_mat(i_mat)% val(ig-1,jg,kg)*three/(two*two) &
+            + field_mat(i_mat)% val(ig-2,jg,kg)*three/(two*ten) &
+            - field_mat(i_mat)% val(ig-3,jg,kg)/(two*three*ten)
+
+            IF( field_mat(i_mat)% der(i,j,k) /= zero )THEN
+
+              field_mat(i_mat)% ratio(i,j,k)= &
+                field_mat(i_mat)% val(i,j,k)/ABS(field_mat(i_mat)% der(i,j,k))
+
+            ENDIF
 
           ENDDO lattice_loop_z_der
         ENDDO lattice_loop_y_der
       ENDDO lattice_loop_x_der
+      !$OMP END PARALLEL DO
+
+      scales(i_mat)= MINVAL( field_mat(i_mat)% ratio, &
+                             field_mat(i_mat)% ratio > 0 )
 
       DEALLOCATE( field_mat(i_mat)% val )
+      DEALLOCATE( field_mat(i_mat)% der )
+      DEALLOCATE( field_mat(i_mat)% ratio )
 
     ENDDO matter_objects_loop
-
+    PRINT *
 
   END PROCEDURE estimate_lengthscale_field
 

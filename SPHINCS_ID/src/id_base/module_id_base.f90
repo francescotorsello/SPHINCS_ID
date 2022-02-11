@@ -828,7 +828,7 @@ MODULE id_base
 
 
     MODULE FUNCTION estimate_lengthscale_field( THIS, get_field, n_mat ) &
-      RESULT( scale )
+      RESULT( scales )
     !# Estimate typical length scales, one per each matter object, by
     !  computing \(\dfrac{f}{\partial f}\), where \(f\) is a field given
     !  as input, and \(\partial\) represent a derivative of it.
@@ -837,7 +837,7 @@ MODULE id_base
 
       CLASS(idbase), INTENT( IN OUT ):: THIS
       INTERFACE
-        FUNCTION get_field( x, y, z ) RESULT( density )
+        FUNCTION get_field( x, y, z ) RESULT( val )
           !! Returns the value of a field at the desired point
           DOUBLE PRECISION, INTENT(IN):: x
           !! \(x\) coordinate of the desired point
@@ -845,14 +845,14 @@ MODULE id_base
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          DOUBLE PRECISION:: density
+          DOUBLE PRECISION:: val
           !! Value of the field at \((x,y,z)\)
         END FUNCTION get_field
       END INTERFACE
 
       INTEGER, INTENT( IN ):: n_mat
       ! Number of matter objects in the physical ystem
-      DOUBLE PRECISION, DIMENSION(n_mat):: scale
+      DOUBLE PRECISION, DIMENSION(n_mat):: scales
       !# Array of the minimum \(\dfrac{f}{\partial f}\) over the lattices that
       !  surround each matter object
 
