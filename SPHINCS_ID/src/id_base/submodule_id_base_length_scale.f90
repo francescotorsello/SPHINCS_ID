@@ -206,12 +206,12 @@ SUBMODULE (id_base) length_scale
    !         + field_mat(i_mat)% val(ig+1,jg,kg)*two/three &
    !         - field_mat(i_mat)% val(ig-1,jg,kg)*two/three &
    !         + field_mat(i_mat)% val(ig-2,jg,kg)/(two*two*three) &
-            + field_mat(i_mat)% val(ig+3,jg,kg)/(two*three*ten) &
+            ( field_mat(i_mat)% val(ig+3,jg,kg)/(two*three*ten) &
             - field_mat(i_mat)% val(ig+2,jg,kg)*three/(two*ten) &
             + field_mat(i_mat)% val(ig+1,jg,kg)*three/(two*two) &
             - field_mat(i_mat)% val(ig-1,jg,kg)*three/(two*two) &
             + field_mat(i_mat)% val(ig-2,jg,kg)*three/(two*ten) &
-            - field_mat(i_mat)% val(ig-3,jg,kg)/(two*three*ten)
+            - field_mat(i_mat)% val(ig-3,jg,kg)/(two*three*ten) )/dx(i_mat)
 
             IF( field_mat(i_mat)% der(i,j,k) /= zero )THEN
 
@@ -227,6 +227,9 @@ SUBMODULE (id_base) length_scale
 
       scales(i_mat)= MINVAL( field_mat(i_mat)% ratio, &
                              field_mat(i_mat)% ratio > 0 )
+
+      !PRINT *, SUM( field_mat(i_mat)% ratio )/(nx(i_mat)*ny(i_mat)*nz(i_mat))
+      !STOP
 
       DEALLOCATE( field_mat(i_mat)% val )
       DEALLOCATE( field_mat(i_mat)% der )
