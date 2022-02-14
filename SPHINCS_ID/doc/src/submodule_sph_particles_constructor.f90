@@ -80,14 +80,15 @@ SUBMODULE (sph_particles) constructor
     !**************************************************
 
     !USE NaNChecker,    ONLY: Check_Array_for_NAN
-    USE constants,      ONLY: amu, pi, zero, half, third
+    USE constants,      ONLY: amu, pi, zero, half, third, one , two, Msun_geo
     USE NR,             ONLY: indexx
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
     USE units,          ONLY: set_units
     USE options,        ONLY: ikernel, ndes
     USE alive_flag,     ONLY: alive
-    USE utility,        ONLY: spherical_from_cartesian
+    USE utility,        ONLY: spherical_from_cartesian, &
+                              spatial_vector_norm_sym3x3
 
     IMPLICIT NONE
 
@@ -132,9 +133,12 @@ SUBMODULE (sph_particles) constructor
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),3):: center
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),3):: barycenter
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),6):: sizes
+    DOUBLE PRECISION, DIMENSION(id% get_n_matter())  :: lapse_lengthscales
+    DOUBLE PRECISION, DIMENSION(id% get_n_matter())  :: g00_lengthscales
 
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: tmp_pos
     DOUBLE PRECISION:: nuratio_thres, nuratio_des
+    DOUBLE PRECISION:: min_lapse, min_g00_abs, shift_norm
 
     TYPE parts_i
       DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos_i
@@ -1561,152 +1565,57 @@ SUBMODULE (sph_particles) constructor
     !ENDDO
     ! Ok it seems working
 
-!    PRINT *, "** Computing typical length scale for the change in pressure", &
-!             " on the x axis."
-!    PRINT *
-!
-!    ALLOCATE( abs_pos( 3, parts% npart ) )
-!
-!    DO itr = 1, parts% npart, 1
-!      abs_pos( 1, itr )= ABS( parts% pos( 1, itr ) )
-!      abs_pos( 2, itr )= ABS( parts% pos( 2, itr ) )
-!      abs_pos( 3, itr )= ABS( parts% pos( 3, itr ) )
-!    ENDDO
-!
-!    min_y_index= 0
-!    min_abs_y= 1D+20
-!    DO itr = 1, parts% npart, 1
-!      IF( ABS( parts% pos( 2, itr ) ) < min_abs_y )THEN
-!        min_abs_y= ABS( parts% pos( 2, itr ) )
-!        min_y_index= itr
-!      ENDIF
-!    ENDDO
-!
-!    min_z_index= 0
-!    min_abs_z= 1D+20
-!    DO itr = 1, parts% npart, 1
-!      IF( ABS( parts% pos( 3, itr ) ) < min_abs_z )THEN
-!        min_abs_z= ABS( parts% pos( 3, itr ) )
-!        min_z_index= itr
-!      ENDIF
-!    ENDDO
-!
-!    min_abs_z= MINVAL( abs_pos( 3, : ) )
-!
-!    !PRINT *, "1"
-!
-!    cntr1= 0
-!    cntr2= 0
-!    DO itr = 1, parts% npart, 1
-!      IF( parts% pos( 3, itr ) == min_abs_z &
-!          .AND. &
-!          ABS( ( parts% pos( 2, itr ) - &
-!                 parts% pos( 2, min_y_index ) )/ &
-!                 parts% pos( 2, min_y_index ) ) < 1.0D-5 &
-!      )THEN
-!
-!        IF( parts% pos( 1, itr ) < 0 )THEN
-!          cntr1= cntr1 + 1
-!        ELSEIF( parts% pos( 1, itr ) > 0 )THEN
-!          cntr2= cntr2 + 1
-!        ENDIF
-!
-!      ENDIF
-!    ENDDO
-!    !PRINT *, "cntr1= ", cntr1
-!    !PRINT *, "cntr2= ", cntr2
-!
-!    ALLOCATE( parts% pos_x1( cntr1 ) )
-!    ALLOCATE( parts% pos_x2( cntr2 ) )
-!    ALLOCATE( parts% pressure_x1( cntr1 ) )
-!    ALLOCATE( parts% pressure_x2( cntr2 ) )
-!    ALLOCATE( parts% pressure_x_der1( cntr1 - 5 ) )
-!    ALLOCATE( parts% pressure_x_der2( cntr2 - 5 ) )
-!    ALLOCATE( parts% pressure_length_scale_x1( cntr1 - 5 ) )
-!    ALLOCATE( parts% pressure_length_scale_x2( cntr2 - 5 ) )
-!
-!    !PRINT *, "2"
-!
-!    itr_1= 0
-!    itr_2= 0
-!    DO itr = 1, parts% npart, 1
-!      IF( parts% pos( 3, itr ) == min_abs_z &
-!          .AND. &
-!          ABS( ( parts% pos( 2, itr ) - &
-!                 parts% pos( 2, min_y_index ) )/ &
-!                 parts% pos( 2, min_y_index ) ) < 1.0D-5 &
-!        )THEN
-!
-!        IF( parts% pos( 1, itr ) < 0 )THEN
-!          itr_1= itr_1 + 1
-!          parts% pos_x1( itr_1 )= parts% pos( 1, itr )
-!          parts% pressure_x1( itr_1 )= &
-!                                              parts% pressure( itr )
-!        ELSEIF( parts% pos( 1, itr ) > 0 )THEN
-!          itr_2= itr_2 + 1
-!          parts% pos_x2( itr_2 )= parts% pos( 1, itr )
-!          parts% pressure_x2( itr_2 )= &
-!                                              parts% pressure( itr )
-!        ENDIF
-!
-!      ENDIF
-!    ENDDO
-!
-!    !PRINT *, "3"
-!
-!    DO itr= 3, cntr1 - 3, 1
-!      parts% pressure_x_der1( itr - 2 )=&
-!                     ( + parts% pressure_x1( itr - 2 )/12.0D0 &
-!                       - 2.0*parts% pressure_x1( itr - 1 )/3.0D0 &
-!                       + 2.0*parts% pressure_x1( itr + 1 )/3.0D0 &
-!                       - parts% pressure_x1( itr + 2 )/12.0D0 )&
-!                       /( Msun_geo*km2m*ABS( parts% pos_x1( itr ) - &
-!                                             parts% pos_x1( itr - 1 ) ) )
-!
-!      parts% pressure_length_scale_x1( itr - 2 )= &
-!                          ABS( parts% pressure_x1( itr - 2 )/ &
-!                               parts% pressure_x_der1( itr - 2 ) )
-!
-!      !PRINT *, "p1=", parts% pressure_x1( itr - 2 )
-!      !PRINT *, "p_r1=", parts% pressure_x_der1( itr - 2 )
-!      !PRINT *, "p/p_r1=", parts% pressure_length_scale_x1( itr - 2 )
-!      !PRINT *
-!
-!    ENDDO
-!    DO itr= 3, cntr2 - 3, 1
-!      parts% pressure_x_der2( itr - 2 )=&
-!                     ( + parts% pressure_x2( itr - 2 )/12.0D0 &
-!                       - 2.0*parts% pressure_x2( itr - 1 )/3.0D0 &
-!                       + 2.0*parts% pressure_x2( itr + 1 )/3.0D0 &
-!                       - parts% pressure_x2( itr + 2 )/12.0D0 )&
-!                       /( Msun_geo*km2m*ABS( parts% pos_x2( itr ) - &
-!                                             parts% pos_x2( itr - 1 ) ) )
-!
-!      parts% pressure_length_scale_x2( itr - 2 )= &
-!                          ABS( parts% pressure_x2( itr - 2 )/ &
-!                               parts% pressure_x_der2( itr - 2 ) )
-!
-!      !PRINT *, "p2=", parts% pressure_x2( itr - 2 )
-!      !PRINT *, "p_r2=", parts% pressure_x_der2( itr - 2 )
-!      !PRINT *, "p/p_r2=", parts% pressure_length_scale_x2( itr - 2 )
-!      !PRINT *
-!
-!    ENDDO
-!
-!    PRINT *, " * Maximum typical length scale for change in pressure", &
-!             " along the x axis for NS 1= ", &
-!             MAXVAL( parts% pressure_length_scale_x1, DIM= 1 )/km2m, " km"
-!    PRINT *, " * Minimum typical length scale for change in pressure", &
-!             " along the x axis for NS 1= ", &
-!             MINVAL( parts% pressure_length_scale_x1, DIM= 1 )/km2m, " km"
-!    PRINT *
-!    PRINT *, " * Maximum typical length scale for change in pressure", &
-!             " along the x axis for NS 2= ", &
-!             MAXVAL( parts% pressure_length_scale_x2, DIM= 1 )/km2m, " km"
-!    PRINT *, " * Minimum typical length scale for change in pressure", &
-!             " along the x axis for NS 2= ", &
-!             MINVAL( parts% pressure_length_scale_x2, DIM= 1 )/km2m, " km"
-!    PRINT *
+    !
+    !-- Compute typical legnth-scale approximating g_00 with the Newtonian
+    !-- potential
+    !
+    DO i_matter= 1, parts% n_matter, 1
+
+      ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
+                 npart_fin  => parts% npart_i(i_matter-1) +    &
+                               parts% npart_i(i_matter) )
+
+        min_g00_abs= HUGE(one)
+        DO itr= npart_in, npart_fin, 1
+
+          CALL spatial_vector_norm_sym3x3( &
+                  [parts% g_xx(itr), parts% g_xy(itr), parts% g_xz(itr), &
+                   parts% g_yy(itr), parts% g_yz(itr), parts% g_zz(itr)], &
+              [parts% shift_x(itr), parts% shift_y(itr), parts% shift_z(itr)], &
+                   shift_norm )
+
+          IF( min_g00_abs > parts% lapse(itr)**2 + shift_norm )THEN
+            min_g00_abs= parts% lapse(itr)**2 + shift_norm
+          ENDIF
+
+        ENDDO
+        min_lapse= MINVAL( parts% lapse, DIM= 1 )
+        lapse_lengthscales= two*parts% masses(i_matter)/( one - min_lapse )
+        g00_lengthscales  = two*parts% masses(i_matter)/( one - min_g00_abs )
+
+      END ASSOCIATE
+
+    ENDDO
+    PRINT *, "** Approximating the g_00 component of the metric as a ", &
+             "Newtonian potential (!) and neglecting the shift (!), ", &
+             "the minimum lengthscales given by ", &
+             "the lapse on each matter object are: "
+    DO i_matter= 1, parts% n_matter, 1
+      PRINT *, " * Matter object ", i_matter, "=", &
+               lapse_lengthscales(i_matter), "Msun_geo=", &
+               lapse_lengthscales(i_matter)*Msun_geo, "km"
+    ENDDO
+    PRINT *
+    PRINT *, "** Approximating the g_00 component of the metric as a ", &
+             "Newtonian potential (!), ", &
+             "the minimum lengthscales given by ", &
+             "g_00 on each matter object are: "
+    DO i_matter= 1, parts% n_matter, 1
+      PRINT *, " * Matter object ", i_matter, "=", &
+               g00_lengthscales(i_matter), "Msun_geo=", &
+               g00_lengthscales(i_matter)*Msun_geo, "km"
+    ENDDO
+    PRINT *
 
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1
@@ -2027,11 +1936,11 @@ SUBMODULE (sph_particles) constructor
       !
       !**************************************************************
 
-      USE constants, ONLY: zero, one, two
-      USE tensor,    ONLY: jx, jy, jz
-      !USE matrix,    ONLY: determinant_4x4_matrix
-      USE utility,   ONLY: compute_g4, determinant_sym4x4, &
-                           spacetime_vector_norm_sym4x4
+      USE constants,                    ONLY: zero, one, two
+      USE tensor,                       ONLY: jx, jy, jz, n_sym4x4
+      !USE matrix,                       ONLY: determinant_4x4_matrix
+      USE utility,                      ONLY: compute_g4, determinant_sym4x4, &
+                                              spacetime_vector_norm_sym4x4
 
       IMPLICIT NONE
 
@@ -2052,11 +1961,11 @@ SUBMODULE (sph_particles) constructor
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_p
 
-      INTEGER:: a, mus, nus
+      INTEGER:: a, i!mus, nus
       DOUBLE PRECISION:: det, sq_g, Theta_a
       DOUBLE PRECISION, DIMENSION(0:3,npart_real):: vel
       !DOUBLE PRECISION:: g4(0:3,0:3)
-      DOUBLE PRECISION:: g4(10)
+      DOUBLE PRECISION:: g4(n_sym4x4)
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_real, lapse, shift_x, shift_y, shift_z, &
@@ -2067,10 +1976,24 @@ SUBMODULE (sph_particles) constructor
       DO a= 1, npart_real, 1
 
         ! Coordinate velocity of the fluid [c]
-        vel(0,a)= one
+        vel(0,a) = one
         vel(jx,a)= lapse(a)*v_euler_x(a)- shift_x(a)
         vel(jy,a)= lapse(a)*v_euler_y(a)- shift_y(a)
         vel(jz,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+
+      !  DO i= 1, 3, 1
+      !    IF( ISNAN(vel(i,a)) )THEN
+      !      PRINT *, "ERROR! The ", i, " component of vel is a NaN at ", &
+      !               "particle ", a
+      !      PRINT *
+      !      STOP
+      !    ELSEIF( .NOT.IEEE_IS_FINITE(vel(i,a)) )THEN
+      !      PRINT *, "ERROR! The ", i, " component of vel is infinite at ", &
+      !               "particle ",a
+      !      PRINT *
+      !      STOP
+      !    ENDIF
+      !  ENDDO
 
         !
         !-- Metric as matrix for easy manipulation
@@ -2103,16 +2026,36 @@ SUBMODULE (sph_particles) constructor
         CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
                          [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
 
+      !  DO i= 1, 10, 1
+      !    IF( ISNAN(g4(i)) )THEN
+      !      PRINT *, "ERROR! The ", i, " component of g4 is a NaN at ", &
+      !               "particle ", a
+      !      PRINT *
+      !      STOP
+      !    ELSEIF( .NOT.IEEE_IS_FINITE(g4(i)) )THEN
+      !      PRINT *, "ERROR! The ", i, " component of g4 is infinite at ", &
+      !               "particle ",a
+      !      PRINT *
+      !      STOP
+      !    ENDIF
+      !  ENDDO
+
         CALL determinant_sym4x4( g4, det )
         !CALL determinant_4x4_matrix(g4,det)
         IF( ABS(det) < 1D-10 )THEN
-            PRINT *, "The determinant of the spacetime metric is " &
-                     // "effectively 0 at particle ", a
-            STOP
+          PRINT *, "ERROR! The determinant of the spacetime metric is " &
+                   // "effectively 0 at particle ", a
+          PRINT *
+          STOP
         ELSEIF( det > 0 )THEN
-            PRINT *, "The determinant of the spacetime metric is " &
-                     // "positive at particle ", a
-            STOP
+          PRINT *, "ERROR! The determinant of the spacetime metric is " &
+                   // "positive at particle ", a
+          PRINT *
+          STOP
+        ELSEIF( .NOT.is_finite_number(det) )THEN
+          PRINT *, "ERROR! The determinant is ", det, "at particle ", a
+          PRINT *
+          STOP
         ENDIF
         sq_g= SQRT(-det)
 
@@ -2126,8 +2069,21 @@ SUBMODULE (sph_particles) constructor
         !             + g4(mus,nus)*vel(mus,a)*vel(nus,a)
         !  ENDDO
         !ENDDO
-        CALL spacetime_vector_norm_sym4x4( g4, vel, Theta_a )
+        CALL spacetime_vector_norm_sym4x4( g4, vel(:,a), Theta_a )
+        IF( .NOT.is_finite_number(Theta_a) )THEN
+          PRINT *, "ERROR! The spacetime norm of vel is ", Theta_a, &
+                   "at particle ", a
+          PRINT *
+          STOP
+        ENDIF
+
         Theta_a= one/SQRT(-Theta_a)
+        IF( .NOT.is_finite_number(Theta_a) )THEN
+          PRINT *, "ERROR! The generalized Lorentz factor is ", Theta_a, &
+                   "at particle ", a
+          PRINT *
+          STOP
+        ENDIF
 
         nstar_p(a)= sq_g*Theta_a*baryon_density(a)
 

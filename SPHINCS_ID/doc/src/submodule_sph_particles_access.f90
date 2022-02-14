@@ -306,7 +306,8 @@ SUBMODULE (sph_particles) access
 
     !************************************************
     !
-    !# Returns the array of pressure [kg c^2 m^{-3}]
+    !# Returns the array of pressure
+    !  \([kg c^2 m^{-3}]\)
     !
     !  FT
     !

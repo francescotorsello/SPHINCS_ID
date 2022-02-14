@@ -8,6 +8,7 @@
 !*.f90
 !SConstruct
 !**/doc-pages/**/*.md
+!**/doc-media/*
 !documentation_*.md
 !gravity_grid_parameters.dat
 !bssn_parameters.dat
@@ -15,3 +16,4 @@
 !sphincs_id_particles.dat
 !SPHINCS_fm_input.dat
 !COPYING
+**/doc/**/*.f90

@@ -32,7 +32,7 @@ MODULE sph_particles
   !***********************************************************
 
 
-  USE utility,        ONLY: itr, ios, err_msg, test_status, &
+  USE utility,        ONLY: itr, ios, err_msg, test_status, is_finite_number, &
                             perc, creturn, run_id, show_progress
   USE id_base,        ONLY: idbase
   USE timing,         ONLY: timer

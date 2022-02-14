@@ -10,12 +10,11 @@ docmark_alt: #
 predocmark: >
 predocmark_alt: &
 source: true
-graph: false
-graph_dir: doc-graphs
+graph: true
 parallel: 80
 sort: alpha
 src_dir: ./src
-media_dir: ./media
+media_dir: ./doc-media
 exclude_dir: ./src/prototypes
 exclude: submodule_bns_lorene_bindings.f90
          submodule_diffstar_lorene_bindings.f90
@@ -45,6 +44,7 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        eos = \(\mathrm{EOS}\)
        ee = Einstein equations
        bns = \(\mathrm{BNS}\)
+<!---graph_dir: doc-graphs--->
 
 #### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___

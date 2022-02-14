@@ -66,7 +66,7 @@ MODULE id_base
 
     INTEGER:: n_matter= 0
     !# Number of matter objects belonging the physical system.
-    !  For example, n_objects= 2 for a binary system of stars, and n_objects= 1
+    !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
 
 
@@ -98,6 +98,9 @@ MODULE id_base
 
     PROCEDURE(read_double_at_pos),        DEFERRED:: read_mass_density
     !# Returns the baryon mass density at the given point
+
+    !PROCEDURE(read_double_at_pos),        DEFERRED:: read_pressure
+    !# Returns the pressure at the given point
 
     PROCEDURE(read_integer_at_pos),       DEFERRED:: test_position
     !# Returns 1 if the position has physically acceptable properties,
@@ -245,16 +248,12 @@ MODULE id_base
     !  coordinates, and computes its radial profile inside the star
 
 
-  !  PROCEDURE:: estimate_lengthscale_to_resolve_spacetime
-    !# Estimate typical length scales, one per each matter object, to be
-    !  resolved by the mesh. maybe this one makes more sense if it's deferred,
-    !  because it's based on a approximation of the metric? well, this
-    !  approximation would be the same for all systems...or would it?
-
-
-  !  PROCEDURE:: estimate_lengthscale_to_resolve_sph
-    !# Estimate typical length scales, one per each matter object, to be
-    !  resolved by the particles
+    PROCEDURE:: estimate_lengthscale_field
+    !# Estimate typical length scales, one per each matter object, by
+    !  computing \(\dfrac{f}{\partial f}\), where \(f\) is a field given
+    !  as input, and \(\partial\) represent a derivative of it.
+    !  Presently, the derivatives are computed separately along each spatial
+    !  dimension, as 1D derivatives.
 
 
   END TYPE idbase
@@ -287,18 +286,6 @@ MODULE id_base
       !! Constructed [[diffstarlorene]] object
 
     END SUBROUTINE derived_type_constructor_int
-
-
-   ! SUBROUTINE derived_type_destructor_int( derived_type )
-   ! !# Prints a summary of the physical properties the system
-   ! !  to the standard output and, optionally, to a formatted file whose name
-   ! !  is given as the optional argument `filename`
-   !
-   !   IMPORT:: idbase
-   !   CLASS(idbase), INTENT( IN OUT ):: derived_type
-   !   !! Constructed [[diffstarlorene]] object
-   !
-   ! END SUBROUTINE derived_type_destructor_int
 
 
     FUNCTION read_double_at_pos( THIS, x, y, z ) RESULT( res )
@@ -838,6 +825,38 @@ MODULE id_base
       !! Value to set [[idbase:n_matter]] to
 
     END SUBROUTINE set_zero_shift
+
+
+    MODULE FUNCTION estimate_lengthscale_field( THIS, get_field, n_mat ) &
+      RESULT( scales )
+    !# Estimate typical length scales, one per each matter object, by
+    !  computing \(\dfrac{f}{\partial f}\), where \(f\) is a field given
+    !  as input, and \(\partial\) represent a derivative of it.
+    !  Presently, the derivatives are computed separately along each spatial
+    !  dimension, as 1D derivatives.
+
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      INTERFACE
+        FUNCTION get_field( x, y, z ) RESULT( val )
+          !! Returns the value of a field at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION:: val
+          !! Value of the field at \((x,y,z)\)
+        END FUNCTION get_field
+      END INTERFACE
+
+      INTEGER, INTENT( IN ):: n_mat
+      ! Number of matter objects in the physical ystem
+      DOUBLE PRECISION, DIMENSION(n_mat):: scales
+      !# Array of the minimum \(\dfrac{f}{\partial f}\) over the lattices that
+      !  surround each matter object
+
+    END FUNCTION estimate_lengthscale_field
 
 
   END INTERFACE

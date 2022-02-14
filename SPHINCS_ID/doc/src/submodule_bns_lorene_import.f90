@@ -820,16 +820,16 @@ SUBMODULE (bns_lorene) import
     !
     !***********************************************
 
-    USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                   ONLY: Msun_geo, lorene2hydrobase
+    USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
+    USE constants,                  ONLY: Msun_geo, lorene2hydrobase
 
     IMPLICIT NONE
 
     IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-      ! Msun_geo
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
+      ! definition of Msun_geo
       res= get_lorene_mass_density( THIS% bns_ptr, &
                                     x*Msun_geo, &
                                     y*Msun_geo, &
@@ -838,6 +838,38 @@ SUBMODULE (bns_lorene) import
     ENDIF
 
   END PROCEDURE import_mass_density
+
+
+  MODULE PROCEDURE import_pressure
+
+    !***********************************************
+    !
+    !# Returns the |lorene| pressure at the point
+    !  given as argument, in units of
+    !  \([\mathrm{kg}\,c^2\, \mathrm{m}^{-3}]\).
+    !
+    !  FT 11.02.2022
+    !
+    !***********************************************
+
+    USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
+    USE constants,                  ONLY: Msun_geo
+
+    IMPLICIT NONE
+
+    IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
+
+      ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
+      ! definition of Msun_geo
+      res= get_lorene_pressure( THIS% bns_ptr, &
+                                x*Msun_geo, &
+                                y*Msun_geo, &
+                                z*Msun_geo )
+
+    ENDIF
+
+  END PROCEDURE import_pressure
 
 
   MODULE PROCEDURE import_spatial_metric

@@ -189,8 +189,12 @@ MODULE bns_lorene
     !--  FUNCTIONS  --!
     !-----------------!
 
-    !> Returns the |lorene|'s mass density at the given point
+    !> Returns the |lorene|'s mass density at the desired point
     PROCEDURE:: read_mass_density => import_mass_density
+
+    !> Returns the |lorene|'s pressure at the desired point
+    !PROCEDURE:: read_pressure => import_pressure
+    PROCEDURE:: import_pressure
 
     !> Returns the |lorene|'s conformally flat spatial ADM metric
     PROCEDURE:: import_spatial_metric
@@ -634,6 +638,23 @@ MODULE bns_lorene
     END FUNCTION import_mass_density
 
 
+    MODULE FUNCTION import_pressure( THIS, x, y, z ) RESULT( res )
+    !! Returns the |lorene| pressure at a point \((x,y,z)\)
+
+      !> [[bnslorene]] object which this PROCEDURE is a member of
+      CLASS(bnslorene),     INTENT( IN )         :: THIS
+      !> \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      !> Pressure at \((x,y,z)\)
+      DOUBLE PRECISION:: res
+
+    END FUNCTION import_pressure
+
+
     MODULE FUNCTION import_spatial_metric( THIS, x, y, z ) RESULT( res )
     !# Returns the |lorene| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
@@ -688,7 +709,7 @@ MODULE bns_lorene
     !! Returns the component n of the [[bnslorene]] member arrays named field
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),          INTENT( IN )             :: THIS
+      CLASS(bnslorene),    INTENT( IN )             :: THIS
       !> Name of the desired [[bnslorene]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       !> Component of the desired [[bnslorene]] member array
@@ -755,16 +776,16 @@ MODULE bns_lorene
   END INTERFACE
 
 
-  !------------------------------------------------------------------!
+  !---------------------------------------------------------------------!
   !--  PRIVATE interfaces to the methods of |lorene|'s class |binns|  --!
-  !------------------------------------------------------------------!
+  !---------------------------------------------------------------------!
 
 
   PRIVATE:: construct_bin_ns, get_lorene_id, get_lorene_id_spacetime, &
             get_lorene_id_particles, get_lorene_id_mass_b, &
             get_lorene_id_hydro, get_lorene_id_k, get_lorene_mass_density, &
-            get_lorene_spatial_metric, negative_hydro, get_lorene_id_params, &
-            destruct_bin_ns
+            get_lorene_pressure, get_lorene_spatial_metric, &
+            negative_hydro, get_lorene_id_params, destruct_bin_ns
 
 
   INTERFACE
@@ -1141,6 +1162,40 @@ MODULE bns_lorene
       REAL(C_DOUBLE) :: res
 
     END FUNCTION get_lorene_mass_density
+
+
+    FUNCTION get_lorene_pressure( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "get_bns_pressure")
+
+      !********************************************
+      !
+      !# Interface to the |lorene| method of class
+      !  |binns| with the same name, that returns
+      !  the pressure \([\mathrm{kg}\,
+      !  c^2 \mathrm{m}^{-3}]\) from |lorene|,
+      !  at the specified point
+      !
+      !  FT 11.02.2022
+      !
+      !********************************************
+
+      IMPORT :: C_DOUBLE, C_PTR
+
+      IMPLICIT NONE
+
+      !> C pointer pointing to a |lorene| |binns| object
+      TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
+      !> \(x\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
+      !> \(y\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: y
+      !> \(z\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
+      !& Pressure \([\mathrm{kg}\,c^2\, \mathrm{m}^{-3}]\) at the desired
+      !  point \((x,y,z)\)
+      REAL(C_DOUBLE) :: res
+
+    END FUNCTION get_lorene_pressure
 
 
     FUNCTION get_lorene_spatial_metric( optr, x, y, z ) RESULT( res ) &
