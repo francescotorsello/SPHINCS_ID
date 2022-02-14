@@ -271,8 +271,8 @@ MODULE utility
 
     !****************************************************************
     !
-    !# Compute the spacetime norm of a vector, using the metric
-    !  given as an array of 10 components
+    !# Compute the spacetime squared norm of a vector, using the
+    !  metric given as an array of 10 components
     !
     !  FT 07.02.2022
     !
@@ -292,7 +292,7 @@ MODULE utility
     !! Spacetime norm of the vector v.
 
     IF( SIZE(g4) /= n_sym4x4 )THEN
-      PRINT *, "** ERROR in determinant_sym4x4_grid in MODULE utility.", &
+      PRINT *, "** ERROR in spacetime_vector_norm_sym4x4 in MODULE utility.", &
                " This subroutine needs a symmetric matrix with 10 components,",&
                " and a ", SIZE(g4), "component matrix was given instead."
       STOP
@@ -305,6 +305,43 @@ MODULE utility
         + two*g4(iyz)*v(iy)*v(iz) + g4(izz)*v(iz)*v(iz)
 
   END SUBROUTINE spacetime_vector_norm_sym4x4
+
+
+  SUBROUTINE spatial_vector_norm_sym3x3( g3, v, norm )
+
+    !****************************************************************
+    !
+    !# Compute the spatial squared norm of a vector, using the
+    !  spatial metric given as an array of 6 components
+    !
+    !  FT 14.02.2022
+    !
+    !****************************************************************
+
+    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz, n_sym3x3
+    USE constants, ONLY: two
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN):: g3(jxx:jzz)
+    !# The \(3\times 3\) spacetime metric, given as a 6-vector.
+    DOUBLE PRECISION, INTENT(IN):: v(jx:jz)
+    !# The \(3\)-vector whose norm has to be computed.
+    DOUBLE PRECISION, INTENT(OUT):: norm
+    !! Spatial norm of the vector v.
+
+    IF( SIZE(g3) /= n_sym3x3 )THEN
+      PRINT *, "** ERROR in spatial_vector_norm_sym3x3 in MODULE utility.", &
+               " This subroutine needs a symmetric matrix with 6 components,",&
+               " and a ", SIZE(g3), "component matrix was given instead."
+      STOP
+    ENDIF
+
+    norm= g3(jxx)*v(jx)*v(jx)     + two*g3(jxy)*v(jx)*v(jy) &
+        + two*g3(jxz)*v(jx)*v(jz) + g3(jyy)*v(jy)*v(jy)     &
+        + two*g3(jyz)*v(jy)*v(jz) + g3(jzz)*v(jz)*v(jz)
+
+  END SUBROUTINE spatial_vector_norm_sym3x3
 
 
   SUBROUTINE determinant_sym3x3( A, det )

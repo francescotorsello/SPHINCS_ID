@@ -94,7 +94,6 @@ SUBMODULE (bns_lorene) constructor
     ELSE
         CALL derived_type% construct_binary()
     ENDIF
-
     ! Import the parameters of the binary system
     CALL import_id_params( derived_type )
 

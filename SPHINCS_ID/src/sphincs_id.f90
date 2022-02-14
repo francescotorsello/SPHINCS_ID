@@ -324,28 +324,6 @@ PROGRAM sphincs_id
 
   ENDDO build_idbase_loop
 
-  !
-  !--
-  !--
-  !
-!  IF( estimate_length_scale )THEN
-!
-!    compute_pressure_scale_loop: DO itr3 = 1, n_bns, 1
-!      PRINT *, "===================================================" &
-!               // "==============="
-!      PRINT *, " Computing typical pressure length scale for " &
-!               //systems(itr3), itr3
-!      PRINT *, "===================================================" &
-!               // "==============="
-!      PRINT *
-!
-!      CALL particles_dist( itr3, itr4 )% compute_ricci()
-!
-!    ENDDO compute_pressure_scale_loop
-!
-!    STOP
-!
-!  ENDIF
 
   IF( run_sph )THEN
 
@@ -463,153 +441,156 @@ PROGRAM sphincs_id
 
   ENDIF
 
+  IF( .NOT.estimate_length_scale )THEN
 
-  IF( run_sph )THEN
+    IF( run_sph )THEN
 
-    compute_export_sph_loops: DO itr3= 1, n_bns, 1
-      part_distribution_loop2: DO itr4= 1, max_n_parts, 1
-        IF( placer( itr3, itr4 ) == test_int )THEN
-          EXIT part_distribution_loop2
-          ! Experimental: empty particles object
-          !particles_dist( itr, itr2 )= particles()
-        ELSE
-
-          PRINT *, "===================================================" &
-                   // "====================="
-          PRINT *, " Computing SPH variables for "//systems(itr3), itr3, &
-                   ", distribution", itr4
-          PRINT *, "===================================================" &
-                   // "====================="
-          PRINT *
-          !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
-          !                            "l", &
-          !                            itr3, "-", itr4, "."
-          WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
-          namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
-
-          particles_dist( itr3, itr4 )% export_bin    = export_bin
-          particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
-          particles_dist( itr3, itr4 )% export_form_x = export_form_x
-
-          CALL particles_dist( itr3, itr4 )% &
-               compute_and_export_SPH_variables( namefile_parts_bin )
-          !IF( particles_dist( itr3, itr4 )% export_bin )THEN
-          !  WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
-          !                  "sph_vars-", itr3, "-", itr4, ".dat"
-          !  CALL particles_dist( itr3, itr4 )% &
-          !                  read_sphincs_dump_print_formatted( &
-          !                                namefile_parts_bin, namefile_parts )
-          !ENDIF
-
-        ENDIF
-      ENDDO part_distribution_loop2
-    ENDDO compute_export_sph_loops
-
-    !
-    !-- Print the particle initial data to a formatted file
-    !
-    IF( export_form )THEN
-      export_sph_loops: DO itr3= 1, n_bns, 1
-        DO itr4= 1, max_n_parts, 1
+      compute_export_sph_loops: DO itr3= 1, n_bns, 1
+        part_distribution_loop2: DO itr4= 1, max_n_parts, 1
           IF( placer( itr3, itr4 ) == test_int )THEN
-            EXIT
+            EXIT part_distribution_loop2
             ! Experimental: empty particles object
             !particles_dist( itr, itr2 )= particles()
           ELSE
-            WRITE( namefile_parts, "(A29,I1,A1,I1,A4)" ) &
-                                   "lorene-bns-id-particles-form_", &
-                                   itr3, "-", itr4, ".dat"
-            namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
+
+            PRINT *, "===================================================" &
+                     // "====================="
+            PRINT *, " Computing SPH variables for "//systems(itr3), itr3, &
+                     ", distribution", itr4
+            PRINT *, "===================================================" &
+                     // "====================="
+            PRINT *
+            !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
+            !                            "l", &
+            !                            itr3, "-", itr4, "."
+            WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
+            namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
+
+            particles_dist( itr3, itr4 )% export_bin    = export_bin
+            particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
+            particles_dist( itr3, itr4 )% export_form_x = export_form_x
+
             CALL particles_dist( itr3, itr4 )% &
-                 print_formatted_id_particles( namefile_parts )
+                 compute_and_export_SPH_variables( namefile_parts_bin )
+            !IF( particles_dist( itr3, itr4 )% export_bin )THEN
+            !  WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
+            !                  "sph_vars-", itr3, "-", itr4, ".dat"
+            !  CALL particles_dist( itr3, itr4 )% &
+            !                  read_sphincs_dump_print_formatted( &
+            !                                namefile_parts_bin, namefile_parts )
+            !ENDIF
+
           ENDIF
-        ENDDO
-      ENDDO export_sph_loops
+        ENDDO part_distribution_loop2
+      ENDDO compute_export_sph_loops
+
+      !
+      !-- Print the particle initial data to a formatted file
+      !
+      IF( export_form )THEN
+        export_sph_loops: DO itr3= 1, n_bns, 1
+          DO itr4= 1, max_n_parts, 1
+            IF( placer( itr3, itr4 ) == test_int )THEN
+              EXIT
+              ! Experimental: empty particles object
+              !particles_dist( itr, itr2 )= particles()
+            ELSE
+              WRITE( namefile_parts, "(A29,I1,A1,I1,A4)" ) &
+                                     "lorene-bns-id-particles-form_", &
+                                     itr3, "-", itr4, ".dat"
+              namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
+              CALL particles_dist( itr3, itr4 )% &
+                   print_formatted_id_particles( namefile_parts )
+            ENDIF
+          ENDDO
+        ENDDO export_sph_loops
+      ENDIF
+
     ENDIF
 
-  ENDIF
 
+    IF( run_spacetime )THEN
 
-  IF( run_spacetime )THEN
+      !
+      !-- Compute the BSSN constraints
+      !
+      compute_export_bssn_constraints_loop: DO itr3 = 1, n_bns, 1
 
-    !
-    !-- Compute the BSSN constraints
-    !
-    compute_export_bssn_constraints_loop: DO itr3 = 1, n_bns, 1
+          bssn_forms( itr3 )% cons_step= constraints_step
+          bssn_forms( itr3 )% export_constraints= export_constraints
+          bssn_forms( itr3 )% export_constraints_details= &
+                              export_constraints_details
+          bssn_forms( itr3 )% export_constraints_xy= export_constraints_xy
+          bssn_forms( itr3 )% export_constraints_x = export_constraints_x
 
-        bssn_forms( itr3 )% cons_step= constraints_step
-        bssn_forms( itr3 )% export_constraints= export_constraints
-        bssn_forms( itr3 )% export_constraints_details= &
-                            export_constraints_details
-        bssn_forms( itr3 )% export_constraints_xy= export_constraints_xy
-        bssn_forms( itr3 )% export_constraints_x = export_constraints_x
-
-        IF( compute_constraints )THEN
-
-          PRINT *, "===================================================" &
-                   // "==============="
-          PRINT *, " Computing BSSN constraints for BSSN formulation", itr3
-          PRINT *, "===================================================" &
-                   // "==============="
-          PRINT *
-
-          WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, &
-                                                ".dat"
-          WRITE( name_logfile, "(A28,I1)" ) &
-                              "bssn-constraints-statistics-", itr3
-
-          namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
-          name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
-
-          CALL bssn_forms( itr3 )% &
-                      compute_and_export_tpo_constraints( ids(itr3)% idata, &
-                                                          namefile_bssn, &
-                                                          name_logfile )
-
-        ENDIF
-
-        part_distribution_loop3: DO itr4= 1, max_n_parts, 1
-
-          IF( placer( itr3, itr4 ) == test_int )THEN
-            EXIT
-            ! Experimental: empty particles object
-            !particles_dist( itr, itr2 )= particles()
-          ELSE
-
-          IF( compute_parts_constraints .AND. run_sph )THEN
+          IF( compute_constraints )THEN
 
             PRINT *, "===================================================" &
-                     // "================================================"
-            PRINT *, " Computing BSSN constraints for BSSN", &
-                     " formulation", itr3, "with particle distribution", itr4
+                     // "==============="
+            PRINT *, " Computing BSSN constraints for BSSN formulation", itr3
             PRINT *, "===================================================" &
-                     // "================================================"
+                     // "==============="
             PRINT *
 
-            WRITE( namefile_bssn, "(A23,I1,A1,I1,A4)" ) &
-                                                  "bssn-constraints-parts-", &
-                                                  itr3, "-", itr4, ".dat"
-            WRITE( namefile_sph, "(A12,I1,A1,I1,A4)" ) "sph-density-", itr3, &
-                                                  "-", itr4, ".dat"
-            WRITE( name_logfile, "(A34,I1,A1,I1,A4)" ) &
-                                 "bssn-constraints-parts-statistics-", itr3, &
-                                 "-", itr4
+            WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, &
+                                                  ".dat"
+            WRITE( name_logfile, "(A28,I1)" ) &
+                                "bssn-constraints-statistics-", itr3
 
             namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
-            namefile_sph = TRIM( sph_path ) // TRIM( namefile_sph )
             name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
             CALL bssn_forms( itr3 )% &
-                        compute_and_export_tpo_constraints( &
-                                                particles_dist( itr3, itr4 ), &
-                                                namefile_bssn, &
-                                                name_logfile )
+                        compute_and_export_tpo_constraints( ids(itr3)% idata, &
+                                                            namefile_bssn, &
+                                                            name_logfile )
 
           ENDIF
-        ENDIF
 
-      ENDDO part_distribution_loop3
-    ENDDO compute_export_bssn_constraints_loop
+          part_distribution_loop3: DO itr4= 1, max_n_parts, 1
+
+            IF( placer( itr3, itr4 ) == test_int )THEN
+              EXIT
+              ! Experimental: empty particles object
+              !particles_dist( itr, itr2 )= particles()
+            ELSE
+
+            IF( compute_parts_constraints .AND. run_sph )THEN
+
+              PRINT *, "===================================================" &
+                       // "================================================"
+              PRINT *, " Computing BSSN constraints for BSSN", &
+                       " formulation", itr3, "with particle distribution", itr4
+              PRINT *, "===================================================" &
+                       // "================================================"
+              PRINT *
+
+              WRITE( namefile_bssn, "(A23,I1,A1,I1,A4)" ) &
+                                                    "bssn-constraints-parts-", &
+                                                    itr3, "-", itr4, ".dat"
+              WRITE( namefile_sph, "(A12,I1,A1,I1,A4)" ) "sph-density-", itr3, &
+                                                    "-", itr4, ".dat"
+              WRITE( name_logfile, "(A34,I1,A1,I1,A4)" ) &
+                                   "bssn-constraints-parts-statistics-", itr3, &
+                                   "-", itr4
+
+              namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+              namefile_sph = TRIM( sph_path ) // TRIM( namefile_sph )
+              name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
+
+              CALL bssn_forms( itr3 )% &
+                          compute_and_export_tpo_constraints( &
+                                                  particles_dist( itr3, itr4 ), &
+                                                  namefile_bssn, &
+                                                  name_logfile )
+
+            ENDIF
+          ENDIF
+
+        ENDDO part_distribution_loop3
+      ENDDO compute_export_bssn_constraints_loop
+
+    ENDIF
 
   ENDIF
 
