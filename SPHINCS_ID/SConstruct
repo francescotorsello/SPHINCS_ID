@@ -484,18 +484,18 @@ if flavour == fuka_flavour: #
 
   build_flavour= '-Dflavour=3'
 
-  env['LIBPATH'] = ['../../../Lorene/Lib']
+  #env['LIBPATH'] = ['../../../Lorene/Lib']
 
   if debug == 'FALSE': #
 
-    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
-                   'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+    env['LIBS'] = ['stdc++']#, 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                   #'gfortran', 'lorene_export', 'lorene', 'lorenef77']
     #, 'm'
 
   if debug == 'TRUE': #
 
-    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
-                   'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+    env['LIBS'] = ['stdc++']#, 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                   #'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
     #, 'm'
 
   sources_flavour = module_bns_fuka \
