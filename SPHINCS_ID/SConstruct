@@ -55,7 +55,7 @@ fuka_flavour        = '3'
 interpolate_flavour = '4'
 
 # Set the default flavour
-default_flavour = full_flavour
+default_flavour = lorene_flavour
 
 # 'TRUE'  : build in DEBUG MODE
 # 'FALSE' : build in PRODUCTION MODE
@@ -329,7 +329,7 @@ sources_sphincs_bssn = [
   '../SPHINCS_BSSN/module_CP_distribute.f90',
   '../SPHINCS_BSSN/module_MLS.f90',
   '../SPHINCS_BSSN/module_SelfRegularization.f90',
-  '../SPHINCS_BSSN/module_particle_mesh.f90',
+  #'../SPHINCS_BSSN/module_particle_mesh.f90',
   '../SPHINCS_BSSN/module_particle_mesh_hash_grid.f90',
   '../SPHINCS_BSSN/module_map_particles_2_grid.f90',
   '../SPHINCS_BSSN/module_integ_hydro_BSSN.f90',

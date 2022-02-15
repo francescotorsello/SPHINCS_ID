@@ -94,30 +94,43 @@ SUBMODULE (standard_tpo_formulation) io
     PRINT *
     IF( THIS% MC_int(1,jx) < HUGE(one) )THEN
       DO l= 1, last_level, 1
-        PRINT *, "   (Rough) Estimate of the x component of the ADM ", &
-                 "momentum computed with full ID on the mesh, on level    ", &
-                 l, "= ", THIS% MC_int(l,jx), "Msun*c"
-        PRINT *, "   (Rough) Estimate of the y component of the ADM ", &
-                 "momentum computed with full ID on the mesh,on level    ", &
-                 l, "= ", THIS% MC_int(l,jy), "Msun*c"
-        PRINT *, "   (Rough) Estimate of the z component of the ADM ", &
-                 "momentum computed with full ID on the mesh,on level    ", &
-                 l, "= ", THIS% MC_int(l,jz), "Msun*c"
+        !PRINT *, "   (Rough) Estimate of the x component of the ADM ", &
+        !         "momentum computed with full ID on the mesh, "
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_int(l,jx), "Msun*c"
+        !PRINT *, "   (Rough) Estimate of the y component of the ADM ", &
+        !         "momentum computed with full ID on the mesh, "
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_int(l,jy), "Msun*c"
+        !PRINT *, "   (Rough) Estimate of the z component of the ADM ", &
+        !         "momentum computed with full ID on the mesh, "
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_int(l,jz), "Msun*c"
+        PRINT *, "   (Rough) Estimate of the ADM ", &
+                 "momentum computed with full ID on the mesh, "
+        PRINT *, "   on level    ", l, "= "
+        PRINT *, "   (", THIS% MC_int(l,jx), ","
+        PRINT *, "    ", THIS% MC_int(l,jy), ","
+        PRINT *, "    ", THIS% MC_int(l,jz), ") Msun*c"
+        PRINT *
       ENDDO
     ENDIF
     IF( THIS% MC_parts_int(1,jx) < HUGE(one) )THEN
       DO l= 1, last_level, 1
-        PRINT *, "   (Rough) Estimate of the x component of the ADM ", &
-      "momentum computed with particle data mapped to the mesh, on level    ", &
-                 l, "= ", THIS% MC_parts_int(l,jx), "Msun*c"
-        PRINT *, "   (Rough) Estimate of the y component of the ADM ", &
-      "momentum computed with particle data mapped to the mesh, on level    ", &
-                 l, "= ", THIS% MC_parts_int(l,jy), "Msun*c"
-        PRINT *, "   (Rough) Estimate of the z component of the ADM ", &
-      "momentum computed with particle data mapped to the mesh, on level    ", &
-                 l, "= ", THIS% MC_parts_int(l,jz), "Msun*c"
+        !PRINT *, "   (Rough) Estimate of the x component of the ADM ", &
+        !"momentum computed with particle data mapped to the mesh, "
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_parts_int(l,jx), "Msun*c"
+        !  PRINT *, "   (Rough) Estimate of the y component of the ADM ", &
+        !"momentum computed with particle data mapped to the mesh, "
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_parts_int(l,jy), "Msun*c"
+        !  PRINT *, "   (Rough) Estimate of the z component of the ADM ", &
+        !"momentum computed with particle data mapped to the mesh, "
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_parts_int(l,jz), "Msun*c"
+        PRINT *, "   (Rough) Estimate of the ADM ", &
+                 "momentum computed with particle data mapped to the mesh, "
+        PRINT *, "   on refinement level    ", l, "= "
+        PRINT *, "   (", THIS% MC_parts_int(l,jx), ","
+        PRINT *, "    ", THIS% MC_parts_int(l,jy), ","
+        PRINT *, "    ", THIS% MC_parts_int(l,jz), ") Msun*c"
+        PRINT *
       ENDDO
-      PRINT *
     ENDIF
 
   END PROCEDURE print_summary
