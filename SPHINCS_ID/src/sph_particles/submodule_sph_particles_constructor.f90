@@ -1584,8 +1584,8 @@ SUBMODULE (sph_particles) constructor
               [parts% shift_x(itr), parts% shift_y(itr), parts% shift_z(itr)], &
                    shift_norm )
 
-          IF( min_g00_abs > parts% lapse(itr)**2 + shift_norm )THEN
-            min_g00_abs= parts% lapse(itr)**2 + shift_norm
+          IF( min_g00_abs > parts% lapse(itr)**2 - shift_norm )THEN
+            min_g00_abs= parts% lapse(itr)**2 - shift_norm
           ENDIF
 
         ENDDO
