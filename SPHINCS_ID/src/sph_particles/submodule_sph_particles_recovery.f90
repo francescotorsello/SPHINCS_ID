@@ -54,9 +54,9 @@ SUBMODULE (sph_particles) recovery
     !
     !************************************************
 
-    USE recovery,  ONLY: phys_2_cons, cons_2_phys
-    USE tensor,    ONLY: jx, jy, jz
-    USE constants, ONLY: zero
+    USE recovery,             ONLY: phys_2_cons, cons_2_phys
+    USE tensor,               ONLY: jx, jy, jz
+    USE constants,            ONLY: zero
 
     IMPLICIT NONE
 
@@ -95,11 +95,11 @@ SUBMODULE (sph_particles) recovery
     !
     !-- Recover physical fields from conserved fields
     !
-  !  pr_rec= pr
-  !
-  !  CALL cons_2_phys( npart, nstar_rec, s_l_rec, e_hat_rec, &
-  !                    ! following is output (pressure is INOUT)
-  !                    nlrf_rec, vel_u_rec, u_rec, pr_rec, theta_rec )
+    pr_rec= pr
+
+    CALL cons_2_phys( npart, nstar_rec, s_l_rec, e_hat_rec, &
+                      ! following is output (pressure is INOUT)
+                      nlrf_rec, vel_u_rec, u_rec, pr_rec, theta_rec )
 
     !
     !-- Print the original and recovered fields to formatted file
@@ -128,10 +128,10 @@ SUBMODULE (sph_particles) recovery
       STOP
     ENDIF
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    WRITE( UNIT = unit_recovery, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    WRITE( UNIT = unit_recovery, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Values of the hydro fields computed by SPHINCS_ID and by the " &
     //"recovery, on the particles"
     IF( ios > 0 )THEN
@@ -140,7 +140,7 @@ SUBMODULE (sph_particles) recovery
       STOP
     ENDIF
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    WRITE( UNIT = unit_recovery, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column:      1        2       3       4       5", &
     "       6       7       8", &
     "       9       10      11", &
@@ -153,7 +153,7 @@ SUBMODULE (sph_particles) recovery
       STOP
     ENDIF
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    WRITE( UNIT = unit_recovery, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "#      particle      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]", &
     "       local rest frame proper baryon density     " &
          //"recovered local rest frame proper baryon density", &
@@ -191,7 +191,8 @@ SUBMODULE (sph_particles) recovery
       )THEN
         CYCLE
       ENDIF
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+
+      WRITE( UNIT = unit_recovery, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         itr, &                                                        ! 1
         pos      ( jx, itr ), &                                       ! 2
         pos      ( jy, itr ), &                                       ! 3
@@ -224,7 +225,7 @@ SUBMODULE (sph_particles) recovery
     PRINT *, " * Results from the recovery test printed to file ", finalnamefile
     PRINT *
 
-    STOP
+    !STOP
 
   END PROCEDURE test_recovery
 

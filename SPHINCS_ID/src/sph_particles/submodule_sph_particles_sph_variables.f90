@@ -67,7 +67,7 @@ SUBMODULE (sph_particles) sph_variables
 
     USE constants,           ONLY: km2m, m2cm, amu, MSun_geo, &
                                    third, Msun, k_lorene2hydrobase, &
-                                   Msun
+                                   Msun, zero, one
     USE units,               ONLY: m0c2_cu, set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -124,6 +124,8 @@ SUBMODULE (sph_particles) sph_variables
                                    ixx, ixy, ixz, iyy, iyz, izz
     USE utility,             ONLY: compute_g4, determinant_sym4x4, &
                                    spacetime_vector_norm_sym4x4
+    USE deactivate_particles, ONLY: nlrf_fb, u_fb, pr_fb, vel_u_fb, theta_fb, &
+                                    cs_fb
 
     IMPLICIT NONE
 
@@ -1467,6 +1469,20 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDDO
 
+    ALLOCATE( nlrf_fb (this% npart) )
+    ALLOCATE( u_fb    (this% npart) )
+    ALLOCATE( pr_fb   (this% npart) )
+    ALLOCATE( vel_u_fb(3,this% npart) )
+    ALLOCATE( theta_fb(this% npart) )
+    ALLOCATE( cs_fb(npart) )
+    nlrf_fb = this% nlrf_int
+    u_fb    = this% u_pwp
+    pr_fb   = this% pressure_cu
+    vel_u_fb= this% v(1:3,:)
+    theta_fb= this% theta
+    ! TODO: set the sound speed properly
+    cs_fb   = one
+
     ! Test the recovery on ech matter object separately
     DO i_matter= 1, THIS% n_matter, 1
 
@@ -1484,19 +1500,26 @@ SUBMODULE (sph_particles) sph_variables
                  npart_fin  => THIS% npart_i(i_matter-1) +    &
                                THIS% npart_i(i_matter) )
 
-      CALL this% test_recovery( this% npart_i        (i_matter),             &
-                                this% pos            (:,npart_in:npart_fin), &
-                                this% nlrf_int       (npart_in:npart_fin),   &
-                                this% specific_energy(npart_in:npart_fin),   &
-                                this% pressure_cu    (npart_in:npart_fin),   &
-                                this% v              (1:3,npart_in:npart_fin), &
-                                this% theta          (npart_in:npart_fin),   &
-                                this% nstar_int      (npart_in:npart_fin),   &
+      CALL this% test_recovery( this% npart_i    (i_matter),               &
+                                this% pos        (:,npart_in:npart_fin),   &
+                                this% nlrf_int   (npart_in:npart_fin),     &
+                                this% u_pwp      (npart_in:npart_fin),     &
+                                this% pressure_cu(npart_in:npart_fin),     &
+                                this% v          (1:3,npart_in:npart_fin), &
+                                this% theta      (npart_in:npart_fin),     &
+                                this% nstar_int  (npart_in:npart_fin),     &
                                 finalnamefile )
 
       END ASSOCIATE
 
     ENDDO
+
+    DEALLOCATE( nlrf_fb )
+    DEALLOCATE( u_fb )
+    DEALLOCATE( pr_fb )
+    DEALLOCATE( vel_u_fb )
+    DEALLOCATE( theta_fb )
+    DEALLOCATE( cs_fb )
 
     !
     !-- Deallocate MODULE variables
