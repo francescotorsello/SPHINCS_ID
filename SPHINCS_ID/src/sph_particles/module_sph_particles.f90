@@ -1004,32 +1004,34 @@ MODULE sph_particles
     END SUBROUTINE perform_apm
 
 
-    MODULE SUBROUTINE test_recovery( THIS, npart, nlrf, u, pr, vel, theta, &
-                                     nstar, s, e_hat, namefile )
+    MODULE SUBROUTINE test_recovery( this, npart, pos, nlrf, u, pr, vel_u, &
+                                     theta, nstar, namefile )
     !# Tests the recovery. Computes the conserved variables from the physical
     !  ones, and then the physical ones from the conserved ones. It then
     !  compares the variables computed with the recovery PROCEDURES, with
     !  those computed with |sphincsid|. @todo add reference for recovery
 
-      CLASS(particles),                     INTENT(INOUT):: THIS
+      CLASS(particles),                     INTENT(INOUT):: this
       !! [[particles]] object which this PROCEDURE is a member of
-      INTEGER,                              INTENT(IN):: npart
+      INTEGER,                              INTENT(IN)   :: npart
       !! Particle number
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: nlrf
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: pos
+      !! Particle positions
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nlrf
       !! Baryon density in the local rest frame on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: u
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: u
       !! Specific internal energy on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: pr
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: pr
       !! Pressure on the particles
-      DOUBLE PRECISION, DIMENSION(3:npart), INTENT(IN):: vel
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: vel_u
       !! Spatial velocity in the computing frame on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: theta
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: theta
       !! Generalized Lorentz factor on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: nstar
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nstar
       !! Proper baryon density in the local rest frame on the particles
-      DOUBLE PRECISION, DIMENSION(3:npart), INTENT(IN):: s
+      !DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: s_l
       !! Canonical momentum on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: e_hat
+      !DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: e_hat
       !! Canonical energy on the particles
       CHARACTER( LEN= * ),                  INTENT(INOUT), OPTIONAL :: namefile
       !! Name of the formatted file where the data is printed

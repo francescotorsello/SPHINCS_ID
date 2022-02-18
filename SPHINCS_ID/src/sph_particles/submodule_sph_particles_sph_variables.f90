@@ -1451,6 +1451,19 @@ SUBMODULE (sph_particles) sph_variables
     !PRINT *
     !PRINT *
 
+    !
+    !-- Test the recovery
+    !
+    PRINT *, " * Testing recovery..."
+    PRINT *
+    CALL this% test_recovery( this% npart, this% pos, this% nlrf_int, &
+                              this% specific_energy, &
+                              this% pressure_cu, this% v, this% theta, &
+                              this% nstar_int )
+
+    !
+    !-- Deallocate MODULE variables
+    !
     PRINT *, " * Deallocating MODULE variables..."
     PRINT *
     CALL deallocate_metric_on_particles

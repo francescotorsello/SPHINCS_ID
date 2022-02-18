@@ -1617,6 +1617,7 @@ SUBMODULE (sph_particles) constructor
     ENDDO
     PRINT *
 
+
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1
 
