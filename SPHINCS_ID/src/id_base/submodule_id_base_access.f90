@@ -190,6 +190,56 @@ SUBMODULE (id_base) access
   END PROCEDURE get_cold_system
 
 
+  MODULE PROCEDURE set_estimate_length_scale
+
+    !************************************************
+    !
+    !# Sets [[idbase:estimate_length_scale]] to the
+    !  given value
+    !
+    !  FT 18.02.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    IF( .NOT.(value .EQV. .TRUE.) .AND. .NOT.(value .EQV. .FALSE.) )THEN
+
+      PRINT *, "** ERROR in SUBROUTINE set_estimate_length_scale! The ", &
+               "LOGICAL variable cold_system should be .TRUE. or .FALSE. ."
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ELSE
+
+      THIS% estimate_length_scale= value
+
+    ENDIF
+
+  END PROCEDURE set_estimate_length_scale
+
+
+  MODULE PROCEDURE get_estimate_length_scale
+
+    !************************************************
+    !
+    !# Returns [[idbase:estimate_length_scale]], the
+    !  `LOGICAL` variable that specifies if a typical
+    !  length scale, equal to the ratio of a field over
+    !  its gradient, should be computed
+    !
+    !  FT 18.02.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    get_estimate_length_scale= THIS% estimate_length_scale
+
+  END PROCEDURE get_estimate_length_scale
+
+
   MODULE PROCEDURE check_i_matter
 
     !************************************************

@@ -105,16 +105,20 @@ SUBMODULE (bns_lorene) constructor
     CALL derived_type% set_one_lapse ( .FALSE. )
     CALL derived_type% set_zero_shift( .FALSE. )
 
-    ALLOCATE( length_scale_pressure(derived_type% get_n_matter()) )
-    length_scale_pressure= derived_type% estimate_lengthscale_field( &
-                                              get_pressure, &
-                                              derived_type% get_n_matter() )
+    IF( derived_type% get_estimate_length_scale() )THEN
 
-    PRINT *, " * Minimum length scale to resolve on star 1, based on ", &
-             "pressure= ", length_scale_pressure(1)*Msun_geo*ten*ten*ten, "m"
-    PRINT *, " * Minimum length scale to resolve on star 2, based on ", &
-             "pressure= ", length_scale_pressure(1)*Msun_geo*ten*ten*ten, "m"
-    PRINT *
+      ALLOCATE( length_scale_pressure(derived_type% get_n_matter()) )
+      length_scale_pressure= derived_type% estimate_lengthscale_field( &
+                                                get_pressure, &
+                                                derived_type% get_n_matter() )
+
+      PRINT *, " * Minimum length scale to resolve on star 1, based on ", &
+               "pressure= ", length_scale_pressure(1)*Msun_geo*ten*ten*ten, "m"
+      PRINT *, " * Minimum length scale to resolve on star 2, based on ", &
+               "pressure= ", length_scale_pressure(1)*Msun_geo*ten*ten*ten, "m"
+      PRINT *
+
+    ENDIF
 
     CONTAINS
 

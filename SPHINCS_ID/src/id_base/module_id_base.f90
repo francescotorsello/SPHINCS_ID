@@ -80,6 +80,11 @@ MODULE id_base
     !# `.TRUE.` if the system is at zero temperature (no thermal component);
     !  `.FALSE.` otherwise
 
+    LOGICAL:: estimate_length_scale
+    !# `.TRUE.` if a typical length scale equal to the ratio of a field over
+    !  its gradient should be computed (usually, the field is the pressure);
+    !  `.FALSE.` otherwise
+
 
     TYPE(timer), PUBLIC:: construction_timer
     !! Timer that times the construction of the appropriate object
@@ -229,13 +234,25 @@ MODULE id_base
 
 
     PROCEDURE, NON_OVERRIDABLE:: set_cold_system
-    !# Sets [[idbase:cold_system]], the `LOGICAL` variable at specifies if
+    !# Sets [[idbase:cold_system]], the `LOGICAL` variable that specifies if
     !  the system is cold (no thermal component)
 
 
     PROCEDURE, NON_OVERRIDABLE:: get_cold_system
-    !# Returns [[idbase:cold_system]], the `LOGICAL` variable at specifies if
+    !# Returns [[idbase:cold_system]], the `LOGICAL` variable that specifies if
     !  the system is cold (no thermal component)
+
+
+    PROCEDURE, NON_OVERRIDABLE:: set_estimate_length_scale
+    !# Sets [[idbase:estimate_length_scale]], the `LOGICAL` variable that
+    !  specifies if a typical length scale, equal to the ratio of a field over
+    !  its gradient, should be computed
+
+
+    PROCEDURE, NON_OVERRIDABLE:: get_estimate_length_scale
+    !# Returns [[idbase:estimate_length_scale]], the `LOGICAL` variable that
+    !  specifies if a typical length scale, equal to the ratio of a field over
+    !  its gradient, should be computed
 
 
     PROCEDURE, NON_OVERRIDABLE:: check_i_matter
@@ -733,8 +750,7 @@ MODULE id_base
 
       CLASS(idbase), INTENT( IN ):: THIS
       LOGICAL:: get_cold_system
-      !! [[idbase:cold_system]], the number of matter objects in the
-      !  physical system
+      !! [[idbase:cold_system]]
 
     END FUNCTION get_cold_system
 
@@ -748,6 +764,30 @@ MODULE id_base
       !! Value to set [[idbase:cold_system]] to
 
     END SUBROUTINE set_cold_system
+
+
+    PURE MODULE FUNCTION get_estimate_length_scale( THIS )
+    !# Returns [[idbase:estimate_length_scale]], the `LOGICAL` variable
+    !  that specifies if a typical length scale, equal to the ratio
+    !  of a field over its gradient, should be computed
+
+      CLASS(idbase), INTENT( IN ):: THIS
+      LOGICAL:: get_estimate_length_scale
+      !! [[idbase:estimate_length_scale]]
+
+    END FUNCTION get_estimate_length_scale
+
+
+    MODULE SUBROUTINE set_estimate_length_scale( THIS, value )
+    !# Sets [[idbase:estimate_length_scale]], the `LOGICAL` variable
+    !  that specifies if a typical length scale, equal to the ratio
+    !  of a field over its gradient, should be computed
+
+      CLASS(idbase), INTENT( IN OUT ):: THIS
+      LOGICAL, INTENT( IN ):: value
+      !! Value to set [[idbase:cold_system]] to
+
+    END SUBROUTINE set_estimate_length_scale
 
 
     MODULE SUBROUTINE check_i_matter( THIS, i_matter )

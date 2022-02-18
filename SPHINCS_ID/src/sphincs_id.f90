@@ -321,6 +321,7 @@ PROGRAM sphincs_id
 
     CALL ids(itr)% idata% set_one_lapse( one_lapse )
     CALL ids(itr)% idata% set_zero_shift( zero_shift )
+    CALL ids(itr)% idata% set_estimate_length_scale( estimate_length_scale )
 
   ENDDO build_idbase_loop
 

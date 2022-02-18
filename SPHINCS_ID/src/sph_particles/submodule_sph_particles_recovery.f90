@@ -95,11 +95,11 @@ SUBMODULE (sph_particles) recovery
     !
     !-- Recover physical fields from conserved fields
     !
-    pr_rec= pr
-
-    CALL cons_2_phys( npart, nstar_rec, s_l_rec, e_hat_rec, &
-                      ! following is output (pressure is INOUT)
-                      nlrf_rec, vel_u_rec, u_rec, pr_rec, theta_rec )
+  !  pr_rec= pr
+  !
+  !  CALL cons_2_phys( npart, nstar_rec, s_l_rec, e_hat_rec, &
+  !                    ! following is output (pressure is INOUT)
+  !                    nlrf_rec, vel_u_rec, u_rec, pr_rec, theta_rec )
 
     !
     !-- Print the original and recovered fields to formatted file
@@ -223,6 +223,8 @@ SUBMODULE (sph_particles) recovery
 
     PRINT *, " * Results from the recovery test printed to file ", finalnamefile
     PRINT *
+
+    STOP
 
   END PROCEDURE test_recovery
 

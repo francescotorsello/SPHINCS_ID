@@ -94,7 +94,7 @@ SUBMODULE (sph_particles) sph_variables
                                    deallocate_SPH_memory
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
                                    deallocate_metric_on_particles, &
-                                   sq_det_g4
+                                   sq_det_g4, g4_ll
     USE options,             ONLY: basename
     USE input_output,        ONLY: dcount, write_SPHINCS_dump, read_options
     USE NR,                  ONLY: indexx
@@ -158,6 +158,7 @@ SUBMODULE (sph_particles) sph_variables
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
+    CHARACTER( LEN= 2 ):: i_mat
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
@@ -1454,12 +1455,48 @@ SUBMODULE (sph_particles) sph_variables
     !
     !-- Test the recovery
     !
-    PRINT *, " * Testing recovery..."
-    PRINT *
-    CALL this% test_recovery( this% npart, this% pos, this% nlrf_int, &
-                              this% specific_energy, &
-                              this% pressure_cu, this% v, this% theta, &
-                              this% nstar_int )
+
+    ! Assign valuto the MODULE variable
+    DO itr= 1, this% npart, 1
+
+      CALL compute_g4( THIS% lapse(itr), &
+            [THIS% shift_x(itr), THIS% shift_y(itr), THIS% shift_z(itr)], &
+            [THIS% g_xx(itr), THIS% g_xy(itr), THIS% g_xz(itr), &
+             THIS% g_yy(itr), THIS% g_yz(itr), THIS% g_zz(itr)], &
+             g4_ll(1:n_sym4x4,itr) )
+
+    ENDDO
+
+    ! Test the recovery on ech matter object separately
+    DO i_matter= 1, THIS% n_matter, 1
+
+      PRINT *, " * Testing recovery on matter object", i_matter, "..."
+      PRINT *
+
+      IF( i_matter > 9 )THEN
+        WRITE( i_mat, "(I2)" ) i_matter
+      ELSE
+        WRITE( i_mat, "(I1)" ) i_matter
+      ENDIF
+      finalnamefile= "recovery_test-"//TRIM(i_mat)//".dat"
+
+      ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
+                 npart_fin  => THIS% npart_i(i_matter-1) +    &
+                               THIS% npart_i(i_matter) )
+
+      CALL this% test_recovery( this% npart_i        (i_matter),             &
+                                this% pos            (:,npart_in:npart_fin), &
+                                this% nlrf_int       (npart_in:npart_fin),   &
+                                this% specific_energy(npart_in:npart_fin),   &
+                                this% pressure_cu    (npart_in:npart_fin),   &
+                                this% v              (1:3,npart_in:npart_fin), &
+                                this% theta          (npart_in:npart_fin),   &
+                                this% nstar_int      (npart_in:npart_fin),   &
+                                finalnamefile )
+
+      END ASSOCIATE
+
+    ENDDO
 
     !
     !-- Deallocate MODULE variables

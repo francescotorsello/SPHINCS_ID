@@ -31,7 +31,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay-5e-8.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129all.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-251all.bin"
-             !"BNSLO_apr4_1.2-1.5_42km.bin"
+             "BNSLO_apr4_1.2-1.5_42km.bin"
              !"BNSLO_mpa1_1.4-1.8_45km.bin"
              !"BNSLO_mpa1_1.4-2_45km.bin"
              !"BNSLO_apr3_1.4-1.6_80km.bin"
@@ -45,7 +45,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_poly2-75_1.4-1.4_45km.bin"
              !"BNSLO_poly2-75_1.6-1.8_40km.bin"
              !!"BNSLO_poly275_1.2-1.6_45km.bin"
-             "BNSLO_mpa1_1.2-2_45km.bin"
+             !"BNSLO_mpa1_1.2-2_45km.bin"
              !!"BNSLO_poly2-75_1.2-1.8_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_48km.bin"
              !"BNSLO_poly2-75_1.2-1.8_50km.bin"
@@ -82,12 +82,12 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
 ! N.B. The execution will stop after the           !
 !      computation of the lengths scales           !
 !--------------------------------------------------!
-estimate_length_scale=.TRUE.
+estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.TRUE.
+run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -106,8 +106,8 @@ placer(1,:)=1                     ! 0: Read particle positions from formatted
 !-----------------------------------------------------!
 ! Choose to export data to binary and formatted files !
 !-----------------------------------------------------!
-export_bin=.TRUE.                ! Export ID to binary files
-export_form=.FALSE.               ! Export ID to formatted files
+export_bin=.FALSE.                ! Export ID to binary files
+export_form=.TRUE.               ! Export ID to formatted files
 export_form_xy=.FALSE.  ! Export only the ID on the xy plane to formatted files
 export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
                         ! irrespectively on the value of export_form_xy

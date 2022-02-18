@@ -601,6 +601,17 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array Theta in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
+    IF(.NOT.ALLOCATED( THIS% v ))THEN
+      ALLOCATE( THIS% v( 0:3, THIS% npart ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array v ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array v" )
+    ENDIF
     IF( ALLOCATED( THIS% h ))THEN
       DEALLOCATE( THIS% h, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
