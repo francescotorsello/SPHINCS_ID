@@ -310,7 +310,7 @@ PROGRAM convergence_test
     particles_dist% export_bin    = export_bin
     particles_dist% export_form_xy= export_form_xy
     particles_dist% export_form_x = export_form_x
-    CALL particles_dist% compute_and_export_SPH_variables( namefile_parts )
+    CALL particles_dist% compute_and_print_sph_variables( namefile_parts )
 
     !
     !-- Print the particle initial data to a formatted file

@@ -27,7 +27,7 @@ SUBMODULE (sph_particles) apm
   !
   !# This SUBMODULE contains the
   !  implementation of the method
-  !  perform_apm of TYPE sph_particles.
+  !  perform_apm of TYPE particles.
   !
   !  FT 04.06.2021
   !

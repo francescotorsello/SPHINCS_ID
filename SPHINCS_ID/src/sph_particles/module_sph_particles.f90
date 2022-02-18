@@ -115,10 +115,12 @@ MODULE sph_particles
     !! Identification number for the particle distribution
     INTEGER:: call_flag= 0
     !# Flag that is set different than 0 if the SUBROUTINE
-    !  compute_and_export_SPH_variables is called
+    !  compute_and_print_sph_variables is called
     LOGICAL:: cold_system
     !# `.TRUE.` if the system is at zero temperature (no thermal component);
     !  `.FALSE.` otherwise
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: barycenter
+    !# Array storing the centers of mass of the matter objects
 
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
@@ -132,10 +134,6 @@ MODULE sph_particles
 
     !> 2-D array storing the particle positions
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
-    !> 1-D array storing the position of the particles on the x axis for S 1
-    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x1
-    !> 1-D array storing the position of the particles on the x axis for NS2
-    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_x2
     !& 1-D array storing the baryon mass density in the fluid frame
     !  \([\mathrm{kg}\,\mathrm{m}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: baryon_density
@@ -150,22 +148,6 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: u_pwp
     !> 1-D array storing the pressure \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure
-    !& 1-D array storing the pressure on the x axis
-    !  \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS 1
-    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x1
-    !& 1-D array storing the pressure on the x axis
-    !  \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS 2
-    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x2
-    !& 1-D array storing the first derivative of the pressure
-    !  along the x axis \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS 1
-    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x_der1
-    !& 1-D array storing the first derivative of the pressure
-    !  along the x axis \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\) for NS2
-    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_parts_x_der2
-    !> 1-D array storing the typical length scale for the pressure change
-    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_length_scale_x1
-    !> 1-D array storing the typical length scale for the pressure change
-    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_length_scale_x2
     !& 1-D array storing the pressure in code units
     !  \([\mathrm{amu}\,c^2\,\mathrm{L_\odot}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_cu
@@ -185,13 +167,11 @@ MODULE sph_particles
     !-- imported from the CompOSE database's and software's files
     !
 
-    !& Array storing the values of the baryon number density in the CompOSE
-    !  table. @todo ADD UNITS
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nb_table
-    !> Array storing the values of the electron fraction in the CompOSE table
+    !# Array storing the values of the baryon number density in the |compose|
+    !  table. @todo ADD UNITS
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: Ye_table
-
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: barycenter
+    !! Array storing the values of the electron fraction in the |compose| table
 
     !
     !-- Spacetime fields
@@ -356,8 +336,8 @@ MODULE sph_particles
     !  system has an irregular geometry, as, for example, an ejecta
     !  `.FALSE.` otherwise
     LOGICAL, DIMENSION(:), ALLOCATABLE:: use_atmosphere
-    !& `.TRUE.` if the baryon number per particle \(\nu\) has to be read from the
-    !  formatted file containing the particle positions, `.FALSE.` otherwise
+    !& `.TRUE.` if the baryon number per particle \(\nu\) has to be read from
+    !  the formatted file containing the particle positions, `.FALSE.` otherwise
     LOGICAL:: read_nu
     !& `.TRUE.` if the particles on star 2 should be the reflection of the
     !  particles on star 1 with respect to the \(yz\) plane, only if the baryon
@@ -412,10 +392,10 @@ MODULE sph_particles
   !  PROCEDURE:: reshape_sph_field_2d_ptr => reshape_sph_field_2d
   !  !! Reallocates a 2d array
 
-    PROCEDURE:: allocate_lorene_id_parts_memory
+    PROCEDURE:: allocate_particles_memory
     !! Allocates memory for the [[particles]] member arrays
 
-    PROCEDURE:: deallocate_lorene_id_parts_memory
+    PROCEDURE:: deallocate_particles_memory
     !! Deallocates memory for the [[particles]] member arrays
 
     PROCEDURE:: read_compose_composition
@@ -425,11 +405,20 @@ MODULE sph_particles
     !# Interpates linearly the electron fraction \(Y_e\) at the particle
     !  densities; that is, assigns \(Y_e\) at the particle positions
 
+    PROCEDURE:: test_recovery
+    !# Computes the conserved variables from the physical ones, and vice versa,
+    !  to test that the recovered physical variables are the same to those
+    !  computed from the |id|. @todo add reference for recovery
+
+    !
+    !-- PUBLIC SUBROUTINES
+    !
+
     PROCEDURE, PUBLIC:: analyze_hydro
     !# Scans the hydro fields taken from \(\texttt{|lorene|}\) to look
     !  for negative or zero values
 
-    PROCEDURE, PUBLIC:: compute_and_export_SPH_variables
+    PROCEDURE, PUBLIC:: compute_and_print_sph_variables
     !# Computes the SPH variables at the particle positions, and optionally
     !  prints them to a binary file to be read by \(\texttt{SPHINCS_BSSN}\)
     !  and \(\texttt{splash}\), and to a formatted file to be read by
@@ -438,10 +427,11 @@ MODULE sph_particles
 
     PROCEDURE, PUBLIC:: read_sphincs_dump_print_formatted
     !# Reads the binary ID file printed by
-    !  [[particles:compute_and_export_SPH_variables]]
+    !  [[particles:compute_and_print_sph_variables]], and prints it
+    !  to a formatted file. @todo use this procedure in a second constructor
 
     PROCEDURE, PUBLIC:: print_formatted_id_particles
-    !! Prints the SPH ID to a formatted file
+    !! Prints the |sph| |id| to a formatted file
 
     PROCEDURE, PUBLIC:: print_summary
     !! Prints the SPH ID to a formatted file
@@ -813,22 +803,22 @@ MODULE sph_particles
 !    END SUBROUTINE reshape_sph_field_2d
 
 
-    MODULE SUBROUTINE allocate_lorene_id_parts_memory( THIS )
+    MODULE SUBROUTINE allocate_particles_memory( THIS )
     !! Allocates allocatable arrays member of a [[particles]] object
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
 
-    END SUBROUTINE allocate_lorene_id_parts_memory
+    END SUBROUTINE allocate_particles_memory
 
 
-    MODULE SUBROUTINE deallocate_lorene_id_parts_memory( THIS )
+    MODULE SUBROUTINE deallocate_particles_memory( THIS )
     !! Deallocates allocatable arrays member of a [[particles]] object
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN OUT ):: THIS
 
-    END SUBROUTINE deallocate_lorene_id_parts_memory
+    END SUBROUTINE deallocate_particles_memory
 
 
   END INTERFACE
@@ -851,7 +841,7 @@ MODULE sph_particles
 
     END SUBROUTINE analyze_hydro
 
-    MODULE SUBROUTINE compute_and_export_SPH_variables( THIS, namefile )
+    MODULE SUBROUTINE compute_and_print_sph_variables( THIS, namefile )
     !# Computes the SPH variables at the particle positions, and optionally
     !  prints them to a binary file to be read by \(\texttt{SPHINCS_BSSN}\)
     !  and \(\texttt{splash}\), and to a formatted file to be read by
@@ -863,7 +853,7 @@ MODULE sph_particles
       !> Name of the formatted file where the SPH ID is printed to
       CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
 
-    END SUBROUTINE compute_and_export_SPH_variables
+    END SUBROUTINE compute_and_print_sph_variables
 
     MODULE SUBROUTINE perform_apm( get_density, get_nstar_p, &
                                    npart_output, &
@@ -1014,10 +1004,43 @@ MODULE sph_particles
     END SUBROUTINE perform_apm
 
 
+    MODULE SUBROUTINE test_recovery( THIS, npart, nlrf, u, pr, vel, theta, &
+                                     nstar, s, e_hat, namefile )
+    !# Tests the recovery. Computes the conserved variables from the physical
+    !  ones, and then the physical ones from the conserved ones. It then
+    !  compares the variables computed with the recovery PROCEDURES, with
+    !  those computed with |sphincsid|. @todo add reference for recovery
+
+      CLASS(particles),                     INTENT(INOUT):: THIS
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER,                              INTENT(IN):: npart
+      !! Particle number
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: nlrf
+      !! Baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: u
+      !! Specific internal energy on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: pr
+      !! Pressure on the particles
+      DOUBLE PRECISION, DIMENSION(3:npart), INTENT(IN):: vel
+      !! Spatial velocity in the computing frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: theta
+      !! Generalized Lorentz factor on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: nstar
+      !! Proper baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(3:npart), INTENT(IN):: s
+      !! Canonical momentum on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN):: e_hat
+      !! Canonical energy on the particles
+      CHARACTER( LEN= * ),                  INTENT(INOUT), OPTIONAL :: namefile
+      !! Name of the formatted file where the data is printed
+
+    END SUBROUTINE test_recovery
+
+
     MODULE SUBROUTINE read_sphincs_dump_print_formatted( THIS, namefile_bin, &
                                                                namefile )
     !# Reads the binary ID file printed by
-    !  [[particles:compute_and_export_SPH_variables]]
+    !  [[particles:compute_and_print_sph_variables]]
     !   and prints the data stored in it to a formatted file
 
       !> [[particles]] object which this PROCEDURE is a member of

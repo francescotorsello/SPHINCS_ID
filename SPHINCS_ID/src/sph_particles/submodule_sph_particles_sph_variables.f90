@@ -53,7 +53,7 @@ SUBMODULE (sph_particles) sph_variables
   !-------------------!
 
 
-  MODULE PROCEDURE compute_and_export_SPH_variables
+  MODULE PROCEDURE compute_and_print_sph_variables
 
     !************************************************
     !
@@ -128,7 +128,7 @@ SUBMODULE (sph_particles) sph_variables
     IMPLICIT NONE
 
     ! The flag call_flag is set different than 0 if the SUBROUTINE
-    ! compute_and_export_SPH_variables is called
+    ! compute_and_print_sph_variables is called
     INTEGER, SAVE:: call_flag= 0
 
     !INTEGER, PARAMETER:: max_it_h= 1
@@ -165,7 +165,7 @@ SUBMODULE (sph_particles) sph_variables
 
     find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
 
-    PRINT *, "** Executing the compute_and_export_SPH_variables " &
+    PRINT *, "** Executing the compute_and_print_sph_variables " &
              // "subroutine..."
     PRINT *
 
@@ -1464,10 +1464,10 @@ SUBMODULE (sph_particles) sph_variables
     call_flag= call_flag + 1
     THIS% call_flag= call_flag
 
-    PRINT *, "** Subroutine compute_and_export_SPH_variables executed."
+    PRINT *, "** Subroutine compute_and_print_sph_variables executed."
     PRINT *
 
-  END PROCEDURE compute_and_export_SPH_variables
+  END PROCEDURE compute_and_print_sph_variables
 
 
 END SUBMODULE sph_variables

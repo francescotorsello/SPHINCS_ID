@@ -1371,7 +1371,7 @@ SUBMODULE (sph_particles) constructor
     !-----------------------------------------------------------------------!
 
     ! Allocate needed memory
-    CALL allocate_lorene_id_parts_memory( parts )
+    CALL allocate_particles_memory( parts )
 
     ! flag that particles are 'alive'
     ALLOCATE( alive( parts% npart ) )
@@ -2211,7 +2211,7 @@ SUBMODULE (sph_particles) constructor
 
     IMPLICIT NONE
 
-    CALL THIS% deallocate_lorene_id_parts_memory()
+    CALL THIS% deallocate_particles_memory()
 
 
   END PROCEDURE destruct_particles

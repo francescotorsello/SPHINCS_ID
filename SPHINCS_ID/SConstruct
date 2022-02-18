@@ -167,7 +167,8 @@ module_sph_particles = [
   'src/sph_particles/submodule_sph_particles_io.f90',
   'src/sph_particles/submodule_sph_particles_compose.f90',
   #'src/sph_particles/submodule_sph_particles_redistribute_nu.f90',
-  'src/sph_particles/submodule_sph_particles_apm.f90'
+  'src/sph_particles/submodule_sph_particles_apm.f90',
+  'src/sph_particles/submodule_sph_particles_recovery.f90'
 ]
 
 module_formul_3p1_id = [

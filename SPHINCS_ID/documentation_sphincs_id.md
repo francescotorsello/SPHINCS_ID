@@ -28,7 +28,6 @@ proc_internals: true
 github: https://github.com/francescotorsello
 linkedin: https://www.linkedin.com/in/francescotorsello
 alias: sphincsid = \(\texttt{SPHINCS_ID}\)
-       sphincslorene = \(\texttt{SPHINCS_LORENE}\)
        lorene = \(\texttt{LORENE}\)
        compose = \(\mathrm{CompOSE}\)
        sphincsbssn = \(\texttt{SPHINCS_BSSN}\)

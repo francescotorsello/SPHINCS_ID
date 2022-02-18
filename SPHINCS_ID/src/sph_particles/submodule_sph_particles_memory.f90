@@ -46,7 +46,7 @@ SUBMODULE (sph_particles) memory
   !-------------------!
 
 
-  MODULE PROCEDURE allocate_lorene_id_parts_memory
+  MODULE PROCEDURE allocate_particles_memory
 
     !************************************************
     !
@@ -59,7 +59,7 @@ SUBMODULE (sph_particles) memory
 
     IMPLICIT NONE
 
-    PRINT *, "** Executing allocate_lorene_id_parts_memory."
+    PRINT *, "** Executing allocate_particles_memory."
 
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
       ALLOCATE( THIS% pos( 3, THIS% npart ), STAT= ios, &
@@ -333,10 +333,10 @@ SUBMODULE (sph_particles) memory
     PRINT *, "** Subroutine allocate_lorene_id_memory executed."
     PRINT *
 
-  END PROCEDURE allocate_lorene_id_parts_memory
+  END PROCEDURE allocate_particles_memory
 
 
-  MODULE PROCEDURE deallocate_lorene_id_parts_memory
+  MODULE PROCEDURE deallocate_particles_memory
 
     !*************************************************
     !
@@ -712,7 +712,7 @@ SUBMODULE (sph_particles) memory
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
 
-  END PROCEDURE deallocate_lorene_id_parts_memory
+  END PROCEDURE deallocate_particles_memory
 
 
 END SUBMODULE memory

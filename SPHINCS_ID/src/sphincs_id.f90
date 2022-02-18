@@ -471,7 +471,7 @@ PROGRAM sphincs_id
             particles_dist( itr3, itr4 )% export_form_x = export_form_x
 
             CALL particles_dist( itr3, itr4 )% &
-                 compute_and_export_SPH_variables( namefile_parts_bin )
+                 compute_and_print_sph_variables( namefile_parts_bin )
             !IF( particles_dist( itr3, itr4 )% export_bin )THEN
             !  WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
             !                  "sph_vars-", itr3, "-", itr4, ".dat"
