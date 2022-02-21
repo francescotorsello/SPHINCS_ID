@@ -34,13 +34,13 @@ NSM
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
 #EOS type ("eos_type", e.g. 'pwp' or 'Poly')                          
-pwp
+Poly
 
 #Gamma (only used if EOS= "Poly"):  
-2.75
+2.0
 
 #which pwp-EOS (only used if eos_type= pwp)
-APR4
+MPA1
 
 # metric ("metric_type"): CKS: "Cartesian KS", MIN: Minkowski, NUM: numerical
 NUM

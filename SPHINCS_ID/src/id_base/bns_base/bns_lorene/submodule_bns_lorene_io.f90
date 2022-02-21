@@ -74,7 +74,7 @@ SUBMODULE (bns_lorene) io
     PRINT *, "                                               ", &
              THIS% angular_momentum_y, &
              ", "
-    PRINT *, "                                               ", &
+    PRINT *, "                                             ", &
              THIS% angular_momentum_z, ") G*Msun^2/c"
     PRINT *
 
