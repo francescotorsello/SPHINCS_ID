@@ -40,7 +40,7 @@ pwp
 2.0
 
 #which pwp-EOS (only used if eos_type= pwp)
-MPA1
+soft
 
 # metric ("metric_type"): CKS: "Cartesian KS", MIN: Minkowski, NUM: numerical
 NUM

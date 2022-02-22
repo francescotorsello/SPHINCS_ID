@@ -1135,17 +1135,22 @@ SUBMODULE (sph_particles) sph_variables
         ! If the system is cold, compute pressure and specific energy
         ! exactly using the polytropic EOS
 
-     !     Pr(npart_in:npart_fin)= this% all_eos(i_matter)% eos_parameters(3) &
-     !                          *( this% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
-     !                           **this% all_eos(i_matter)% eos_parameters(2)
-     !
-     !     u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
-     !               /(this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
-     !               *( this% all_eos(i_matter)% eos_parameters(2) - one ) ) )
-     !
-     !     Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-     !     this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-     !     this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
+          Pr(npart_in:npart_fin)= this% all_eos(i_matter)% eos_parameters(3) &
+                               *( this% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
+                                **this% all_eos(i_matter)% eos_parameters(2)
+
+          ! Using this internal energy gives machine-precision relative errors
+          ! after the recovery, since it is computed from nlrf_int
+          ! Using the internal energy from the ID gives largr errors
+          ! For the piecewise polytropes, we have (?) to use the energy
+          ! from the ID
+          u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
+                    /(this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
+                    *( this% all_eos(i_matter)% eos_parameters(2) - one ) ) )
+
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
 
           CALL select_EOS_parameters( 'soft' )
 
@@ -1157,7 +1162,9 @@ SUBMODULE (sph_particles) sph_variables
 
             CALL gen_pwp_eos( this% nlrf_int(a)*m0c2_cu, &
                               this% u_pwp(a), tmp, &
-                              this% specific_energy(a), Pr(a), cs(a) )
+                              !this% specific_energy(a), &
+                              u(a), &
+                              Pr(a), cs(a) )
 
           ENDDO
 
