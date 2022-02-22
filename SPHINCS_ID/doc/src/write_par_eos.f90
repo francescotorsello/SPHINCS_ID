@@ -101,7 +101,7 @@ PROGRAM write_par_eos
     ENDIF
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A68)" ) &
-      "1          Type of the EOS (cf. documentation of Eos::eos_from_file)"
+      "1          Polytropic EOS (cf. documentation of Eos::eos_from_file)"
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A14)" ) &
       "Polytropic EOS"
@@ -158,10 +158,10 @@ PROGRAM write_par_eos
     ENDIF
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A69)" ) &
-      "110        Type of the EOS (cf. documentation of Eos::eos_multi_poly)"
+      "110        Multipolytropic EOS (cf. documentation of Eos::eos_multi_poly)"
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A16,A4,A4)" ) &
-      "Multipolytropic ", eos, " EOS"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A16,A4,A4)" ) eos
+    !  "Multipolytropic ", eos, " EOS"
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(I1,A52)" ) &
       npoly, "npoly,         number of polytropes"

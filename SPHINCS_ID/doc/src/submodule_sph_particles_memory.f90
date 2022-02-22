@@ -46,7 +46,7 @@ SUBMODULE (sph_particles) memory
   !-------------------!
 
 
-  MODULE PROCEDURE allocate_lorene_id_parts_memory
+  MODULE PROCEDURE allocate_particles_memory
 
     !************************************************
     !
@@ -59,7 +59,7 @@ SUBMODULE (sph_particles) memory
 
     IMPLICIT NONE
 
-    PRINT *, "** Executing allocate_lorene_id_parts_memory."
+    PRINT *, "** Executing allocate_particles_memory."
 
     IF(.NOT.ALLOCATED( THIS% pos ))THEN
       ALLOCATE( THIS% pos( 3, THIS% npart ), STAT= ios, &
@@ -333,10 +333,10 @@ SUBMODULE (sph_particles) memory
     PRINT *, "** Subroutine allocate_lorene_id_memory executed."
     PRINT *
 
-  END PROCEDURE allocate_lorene_id_parts_memory
+  END PROCEDURE allocate_particles_memory
 
 
-  MODULE PROCEDURE deallocate_lorene_id_parts_memory
+  MODULE PROCEDURE deallocate_particles_memory
 
     !*************************************************
     !
@@ -601,6 +601,17 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array Theta in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
+    IF(.NOT.ALLOCATED( THIS% v ))THEN
+      ALLOCATE( THIS% v( 0:3, THIS% npart ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array v ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...allocation error for array v" )
+    ENDIF
     IF( ALLOCATED( THIS% h ))THEN
       DEALLOCATE( THIS% h, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
@@ -712,7 +723,7 @@ SUBMODULE (sph_particles) memory
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
 
-  END PROCEDURE deallocate_lorene_id_parts_memory
+  END PROCEDURE deallocate_particles_memory
 
 
 END SUBMODULE memory

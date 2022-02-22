@@ -127,8 +127,11 @@ SUBMODULE (sph_particles) recovery
     pr_fb   = pr
     vel_u_fb= vel_u(1:3,:)
     theta_fb= theta
-    ! TODO: set the sound speed properly
+    ! TODO: set the sound speed properly. From pwp_eos MODULE:
+    ! enth= 1.0D0 + u + rho_rest/P
+    ! cs=   SQRT((Gamma*P_cold + Gamma_th*P_th)/(rho_rest*enth))
     cs_fb   = one
+
 
     ! Initialize local arrays
     nlrf_rec = zero

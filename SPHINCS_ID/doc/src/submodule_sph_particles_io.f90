@@ -298,8 +298,7 @@ SUBMODULE (sph_particles) io
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "# Values of the fields (including coordinates) exported by LORENE "&
-    // "on each grid point"
+    "# Values of the fields (including coordinates) on the particles "
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
@@ -323,8 +322,8 @@ SUBMODULE (sph_particles) io
     !        // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "#      grid point      x [km]       y [km]       z [km]       lapse", &
-    "       shift_x [c]    shift_y [c]    shift_z [c]", &
+    "#      particle      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]", &
+    "       lapse     shift_x [c]    shift_y [c]    shift_z [c]", &
     "       baryon density in the local rest frame [kg m^{-3}$]", &
     "       energy density [c^2]", &
     "       specific energy [c^2]", &
@@ -342,23 +341,23 @@ SUBMODULE (sph_particles) io
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(finalnamefile) )
 
-    DO itr = 1, THIS% npart, 1
-      abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
-      abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
-      abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
-    ENDDO
-
-    min_y_index= 0
-    min_abs_y= 1D+20
-    DO itr = 1, THIS% npart, 1
-      IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
-        min_abs_y= ABS( THIS% pos( 2, itr ) )
-        min_y_index= itr
-      ENDIF
-    ENDDO
-
-    min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart_i(1) ) )
-    min_abs_z2= MINVAL( abs_pos( 3, THIS% npart_i(1)+1:THIS% npart ) )
+  !  DO itr = 1, THIS% npart, 1
+  !    abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
+  !    abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
+  !    abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
+  !  ENDDO
+  !
+  !  min_y_index= 0
+  !  min_abs_y= 1D+20
+  !  DO itr = 1, THIS% npart, 1
+  !    IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
+  !      min_abs_y= ABS( THIS% pos( 2, itr ) )
+  !      min_y_index= itr
+  !    ENDIF
+  !  ENDDO
+  !
+  !  min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart_i(1) ) )
+  !  min_abs_z2= MINVAL( abs_pos( 3, THIS% npart_i(1)+1:THIS% npart ) )
 
     write_data_loop: DO itr = 1, THIS% npart, 1
 

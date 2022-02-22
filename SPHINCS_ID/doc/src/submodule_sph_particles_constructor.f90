@@ -1371,7 +1371,7 @@ SUBMODULE (sph_particles) constructor
     !-----------------------------------------------------------------------!
 
     ! Allocate needed memory
-    CALL allocate_lorene_id_parts_memory( parts )
+    CALL allocate_particles_memory( parts )
 
     ! flag that particles are 'alive'
     ALLOCATE( alive( parts% npart ) )
@@ -1584,8 +1584,8 @@ SUBMODULE (sph_particles) constructor
               [parts% shift_x(itr), parts% shift_y(itr), parts% shift_z(itr)], &
                    shift_norm )
 
-          IF( min_g00_abs > parts% lapse(itr)**2 + shift_norm )THEN
-            min_g00_abs= parts% lapse(itr)**2 + shift_norm
+          IF( min_g00_abs > parts% lapse(itr)**2 - shift_norm )THEN
+            min_g00_abs= parts% lapse(itr)**2 - shift_norm
           ENDIF
 
         ENDDO
@@ -1616,6 +1616,7 @@ SUBMODULE (sph_particles) constructor
                g00_lengthscales(i_matter)*Msun_geo, "km"
     ENDDO
     PRINT *
+
 
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1
@@ -2211,7 +2212,7 @@ SUBMODULE (sph_particles) constructor
 
     IMPLICIT NONE
 
-    CALL THIS% deallocate_lorene_id_parts_memory()
+    CALL THIS% deallocate_particles_memory()
 
 
   END PROCEDURE destruct_particles
