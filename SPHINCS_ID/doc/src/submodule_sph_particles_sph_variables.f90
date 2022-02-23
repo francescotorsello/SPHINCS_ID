@@ -90,6 +90,7 @@ SUBMODULE (sph_particles) sph_variables
                                    av,    &  ! Dissipation
                                    ye,    &  ! Electron fraction
                                    divv,  &  ! Divergence of velocity vel_u
+                                   cs,    &  ! Sound speed
                                    allocate_SPH_memory, &
                                    deallocate_SPH_memory
     USE metric_on_particles, ONLY: allocate_metric_on_particles, &
@@ -113,6 +114,7 @@ SUBMODULE (sph_particles) sph_variables
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
+                                   gen_pwp_eos, gen_pwp_cold_eos, &
                                    get_u_pwp, shorten_eos_name, Gamma_th_1
     USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
                                    rpart, allocate_RCB_tree_memory_3D, &
@@ -138,6 +140,8 @@ SUBMODULE (sph_particles) sph_variables
     INTEGER:: n_problematic_h
     INTEGER:: itot, l, ill!, b, k
 
+    INTEGER:: pwp_gamma, pwp_kappa
+
     !DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION:: g4(n_sym4x4)
     DOUBLE PRECISION:: gg4(n_sym4x4,this% npart)
@@ -147,7 +151,7 @@ SUBMODULE (sph_particles) sph_variables
     DOUBLE PRECISION:: com_x_newt, com_y_newt, com_z_newt, com_d_newt, mass_newt
     DOUBLE PRECISION:: com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn
     DOUBLE PRECISION:: px_newt, py_newt, pz_newt, pnorm_newt
-    DOUBLE PRECISION:: px, py, pz, pnorm
+    DOUBLE PRECISION:: px, py, pz, pnorm, tmp
 
     !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
     !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
@@ -1126,46 +1130,98 @@ SUBMODULE (sph_particles) sph_variables
 
         PRINT *, " * Computing pressure and specific internal energy from", &
                  " the baryon mass density, using the exact formulas for", &
-                 " single polytropic EOS..."
-        PRINT *
+                 " single polytropic EOS, on matter object", i_matter,"..."
 
         ! Formulas from Read et al. (2009), https://arxiv.org/abs/0812.2163
 
         IF( this% cold_system )THEN
-          ! If the system is cold, compute pressure and specific energy
-          ! exactly using the polytropic EOS
-          Pr(npart_in:npart_fin)= this% all_eos(i_matter)% eos_parameters(3) &
-                               *( this% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
-                                **this% all_eos(i_matter)% eos_parameters(2)
+        ! If the system is cold, compute pressure and specific energy
+        ! exactly using the polytropic EOS
 
+          PRINT *, " * Assuming a cold system: no thermal component considered."
+          PRINT *
+
+          Pr(npart_in:npart_fin)= &
+            this% all_eos(i_matter)% eos_parameters($poly_kappa) &
+            *( this% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
+            **this% all_eos(i_matter)% eos_parameters($poly_gamma)
+
+          ! Using this internal energy gives machine-precision relative errors
+          ! after the recovery, since it is computed from nlrf_int
+          ! Using the internal energy from the ID gives largr errors
+          ! For the piecewise polytropes, we have (?) to use the energy
+          ! from the ID
           u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
-                    /(this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
-                    *( this% all_eos(i_matter)% eos_parameters(2) - one ) ) )
+            /(this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
+            *( this% all_eos(i_matter)% eos_parameters($poly_gamma) - one ) ) )
+
+          this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
+            + this% nlrf_int(npart_in:npart_fin)*m0c2_cu/Pr(npart_in:npart_fin)
+
+          cs(npart_in:npart_fin)= SQRT( &
+            this% all_eos(i_matter)% eos_parameters($poly_gamma) &
+              *Pr(npart_in:npart_fin)/ &
+            (this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
+            *this% enthalpy(npart_in:npart_fin)) )
+
+          !
+          !-- Leaving the following code here, commented, because it allows
+          !-- to test the pwp_eos MODULE using single polytropes
+          !-- All tests were passed on 23.02.2022
+          !
+    !      CALL select_EOS_parameters( 'soft' )
+    !
+    !      DO a= npart_in, npart_fin, 1
+    !
+    !        CALL gen_pwp_cold_eos( this% nlrf_int(a)*m0c2_cu, &
+    !                               Pr(a), u(a), cs(a) )
+    !
+    !        !CALL gen_pwp_eos( this% nlrf_int(a)*m0c2_cu, &
+    !        !                  this% u_pwp(a), tmp, &
+    !        !                  u(a), &
+    !        !                  Pr(a), cs(a) )
+    !      ENDDO
 
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
           this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
           this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
+
         ELSE
-          ! If the system is hot, that is, has a thermal component, then
-          ! the density and the specific energy (the latter including both
-          ! cold and thermal part) should be supplied in the ID.
-          ! The pressure is computed using them (see pwp_EOS MODULE).
+        ! If the system is hot, that is, has a thermal component, then
+        ! the density and the specific energy (the latter including both
+        ! cold and thermal part) should be supplied in the ID.
+        ! The pressure is computed using them (see pwp_EOS MODULE).
+
+          PRINT *, " * Assuming a hot system: thermal component considered."
+          PRINT *
+
           u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
 
           DO a= npart_in, npart_fin, 1
 
             Pr(a)= &
             ! cold pressure
-            this% all_eos(i_matter)% eos_parameters(3) &
+            this% all_eos(i_matter)% eos_parameters($poly_kappa) &
               *( this% nlrf_int(a)*m0c2_cu ) &
-              **this% all_eos(i_matter)% eos_parameters(2) &
+              **this% all_eos(i_matter)% eos_parameters($poly_gamma) &
             + &
             ! thermal pressure
             Gamma_th_1*( this% nlrf_int(a)*m0c2_cu )* &
               MAX(u(a) - ( Pr(a)/(this% nlrf_int(a)*m0c2_cu &
-                *( this% all_eos(i_matter)% eos_parameters(2) - one ) ) ), zero)
+                *( this% all_eos(i_matter)% eos_parameters($poly_gamma) &
+                   - one ) ) ), zero)
 
           ENDDO
+          this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
+            + this% nlrf_int(npart_in:npart_fin)*m0c2_cu/Pr(npart_in:npart_fin)
+
+          cs(npart_in:npart_fin)= SQRT( &
+            this% all_eos(i_matter)% eos_parameters($poly_gamma) &
+              *Pr(npart_in:npart_fin)/ &
+            (this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
+            *this% enthalpy(npart_in:npart_fin)) )
+
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
           this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
           this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
 
@@ -1179,21 +1235,84 @@ SUBMODULE (sph_particles) sph_variables
                  " piecewise polytropic EOS..."
         PRINT *
 
-        CALL select_EOS_parameters( &
-                shorten_eos_name(this% all_eos(i_matter)% eos_name) )
-
-        CALL gen_pwp_eos_all( this% npart_i(i_matter), &
-                              this% nlrf_int(npart_in:npart_fin)*m0c2_cu, &
-                              u(npart_in:npart_fin) )
-
-        this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-
         IF( this% cold_system )THEN
-          ! If the system is cold, get the specific energy computed
-          ! exactly using the piecewise polytropic EOS
-          this% u_pwp(npart_in:npart_fin)= get_u_pwp()
-          u(npart_in:npart_fin)= get_u_pwp()
+        ! If the system is cold, compute pressure and specific energy
+        ! exactly using the piecewise polytropic EOS
+
+          PRINT *, " * Assuming a cold system: no thermal component considered."
+          PRINT *
+
+          CALL select_EOS_parameters( &
+                        shorten_eos_name(this% all_eos(i_matter)% eos_name) )
+
+          DO a= npart_in, npart_fin, 1
+
+            CALL gen_pwp_cold_eos( this% nlrf_int(a)*m0c2_cu, &
+                                   Pr(a), u(a), cs(a) )
+
+          ENDDO
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
+
+        ELSE
+        ! If the system is hot, that is, has a thermal component, then
+        ! the density and the specific energy (the latter including both
+        ! cold and thermal part) should be supplied in the ID.
+        ! The pressure is computed using them (see pwp_EOS MODULE).
+
+          PRINT *, " * Assuming a hot system: thermal component considered."
+          PRINT *
+
+          u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
+
+          CALL select_EOS_parameters( &
+                        shorten_eos_name(this% all_eos(i_matter)% eos_name) )
+
+          DO a= npart_in, npart_fin, 1
+
+            CALL gen_pwp_eos( this% nlrf_int(a)*m0c2_cu, &
+                              this% u_pwp(a), tmp, &
+                              u(a), &
+                              Pr(a), cs(a) )
+
+          ENDDO
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
+
         ENDIF
+
+     !   CALL select_EOS_parameters( &
+     !           shorten_eos_name(this% all_eos(i_matter)% eos_name) )
+     !
+     !   !CALL gen_pwp_eos_all( this% npart_i(i_matter), &
+     !   !                      this% nlrf_int(npart_in:npart_fin)*m0c2_cu, &
+     !   !                      u(npart_in:npart_fin) )
+     !
+     !   DO a= npart_in, npart_fin, 1
+     !
+     !     CALL gen_pwp_eos( this% nlrf_int(a)*m0c2_cu, &
+     !                       this% u_pwp(a), tmp, &
+     !                       this% specific_energy(a), Pr(a), cs(a) )
+     !
+     !   ENDDO
+     !
+     !   Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+     !   this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+     !
+     !   IF( this% cold_system )THEN
+     !   ! If the system is cold, get the specific internal energy computed
+     !   ! exactly using the piecewise polytropic EOS
+     !     PRINT *, " * Assuming a cold system: no thermal component."
+     !     PRINT *
+     !     u(npart_in:npart_fin)= this% u_pwp(npart_in:npart_fin)
+     !   ELSE
+     !   ! Otherwise, get the specific nternal nergy from the ID
+     !     PRINT *, " * Assuming a hot system: thermal component added."
+     !     PRINT *
+     !     u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
+     !   ENDIF
 
       ENDIF
 

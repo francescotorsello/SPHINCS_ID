@@ -64,6 +64,39 @@ MODULE sph_particles
   !  300 neighbours.
 
 
+  !
+  !-- TODO: Make the following parameters member of TYPE eos?
+  !--       They belong there, but putting them there decreases readability
+  !--       of the code
+  !
+  INTEGER,               PARAMETER:: $eos_id     = 1
+  !! First component of array [[eos:eos_parameters]] for a polytropic |eos|
+  INTEGER,               PARAMETER:: $poly_gamma = 2
+  !! Second component of array [[eos:eos_parameters]] for a polytropic |eos|
+  INTEGER,               PARAMETER:: $poly_kappa = 3
+  !! Third component of array [[eos:eos_parameters]] for a polytropic |eos|
+  INTEGER,               PARAMETER:: $pwp_npoly  = 2
+  !# Second component of array [[eos:eos_parameters]] for a piecewise
+  !  polytropic |eos|
+  INTEGER, DIMENSION(4), PARAMETER:: $pwp_gamma  = [3,4,5,6]
+  !# Third to sixth component of array [[eos:eos_parameters]] for a piecewise
+  !  polytropic |eos|
+  INTEGER, DIMENSION(4), PARAMETER:: $pwp_kappa  = [7,8,9,10]
+  !# Seventh to tenth component of array [[eos:eos_parameters]] for a piecewise
+  !  polytropic |eos|
+  INTEGER,               PARAMETER:: $pwp_log10p1  = 11
+  !# Eleventh component of array [[eos:eos_parameters]] for a piecewise
+  !  polytropic |eos|
+  INTEGER,               PARAMETER:: $pwp_log10rho0= 12
+  !# Twelfth component of array [[eos:eos_parameters]] for a piecewise
+  !  polytropic |eos|
+  INTEGER,               PARAMETER:: $pwp_log10rho1= 13
+  !# Thirteenth component of array [[eos:eos_parameters]] for a piecewise
+  !  polytropic |eos|
+  INTEGER,               PARAMETER:: $pwp_log10rho2= 14
+  !# Fourteenth component of array [[eos:eos_parameters]] for a piecewise
+  !  polytropic |eos|
+
   TYPE eos
   !! Data structure representing an |eos|
     CHARACTER( LEN= : ), ALLOCATABLE:: eos_name
@@ -76,8 +109,8 @@ MODULE sph_particles
     !  - For a piecewise polytropic |eos|:
     !    [ eos identification number, number of polytropic pieces, \(\gamma_0\),
     !   \(\gamma_1\), \(\gamma_2\), \(\gamma_3\), \(\kappa_0\), \(\kappa_1\),
-    !    \(\kappa_2\), \(\kappa_3\), \(\log(p_1)\), \(\log(\rho_0)\),
-    !    \(\log(\rho_1)\), \(\log(\rho_2)\) ]
+    !    \(\kappa_2\), \(\kappa_3\), \(\log_{10}(p_1)\), \(\log_{10}(\rho_0)\),
+    !    \(\log_{10}(\rho_1)\), \(\log_{10}(\rho_2)\) ]
     !  - For a tabulated |eos|: [ eos identification number ]
     !
     ! \(\gamma\) is the adimensional polytropic exponent, \(\kappa\) is the
@@ -233,6 +266,8 @@ MODULE sph_particles
     !& 1-D array storing the SPH estimate of the particle number density, from
     !  kernel interpolation \([\mathrm{particle}\, (L_\odot)^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density_int
+    !> 1-D array storing the enthalpy \([??]\) @todo add units
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: enthalpy
     !> 2-D array storing the coordinate fluid 4-velocity \([c]\)
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: v
     !> 1-D array storing the generalized Lorentz factor

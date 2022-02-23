@@ -61,8 +61,8 @@ SUBMODULE (sph_particles) memory
 
     PRINT *, "** Executing allocate_particles_memory."
 
-    IF(.NOT.ALLOCATED( THIS% pos ))THEN
-      ALLOCATE( THIS% pos( 3, THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% pos ))THEN
+      ALLOCATE( this% pos( 3, this% npart ), STAT= ios, &
             ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array pos ", &
@@ -72,8 +72,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array pos" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% lapse ))THEN
-      ALLOCATE( THIS% lapse( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% lapse ))THEN
+      ALLOCATE( this% lapse( this% npart ), STAT= ios, &
             ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array lapse ", &
@@ -83,8 +83,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array lapse" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_x ))THEN
-      ALLOCATE( THIS% shift_x( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% shift_x ))THEN
+      ALLOCATE( this% shift_x( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array shift_x ", &
@@ -94,8 +94,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for shift_x" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_y ))THEN
-      ALLOCATE( THIS% shift_y( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% shift_y ))THEN
+      ALLOCATE( this% shift_y( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array shift_y ", &
@@ -105,8 +105,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !        "...allocation error for shift_y" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_z ))THEN
-      ALLOCATE( THIS% shift_z( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% shift_z ))THEN
+      ALLOCATE( this% shift_z( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array shift_z ", &
@@ -116,8 +116,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !        "...allocation error for shift_z" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xx ))THEN
-      ALLOCATE( THIS% g_xx( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_xx ))THEN
+      ALLOCATE( this% g_xx( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array g_xx ", &
@@ -127,8 +127,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for array g_xx" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xy ))THEN
-      ALLOCATE( THIS% g_xy( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_xy ))THEN
+      ALLOCATE( this% g_xy( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array g_xy ", &
@@ -138,8 +138,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !        "...allocation error for array g_xy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xz ))THEN
-      ALLOCATE( THIS% g_xz( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_xz ))THEN
+      ALLOCATE( this% g_xz( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array g_xz ", &
@@ -149,8 +149,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for array g_xz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_yy ))THEN
-      ALLOCATE( THIS% g_yy( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_yy ))THEN
+      ALLOCATE( this% g_yy( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array g_yy ", &
@@ -160,8 +160,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !        "...allocation error for array g_yy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_yz ))THEN
-      ALLOCATE( THIS% g_yz( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_yz ))THEN
+      ALLOCATE( this% g_yz( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array g_yz ", &
@@ -171,8 +171,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for array g_yz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_zz ))THEN
-      ALLOCATE( THIS% g_zz( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_zz ))THEN
+      ALLOCATE( this% g_zz( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array g_zz ", &
@@ -182,8 +182,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for array g_zz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% baryon_density ))THEN
-      ALLOCATE( THIS% baryon_density( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% baryon_density ))THEN
+      ALLOCATE( this% baryon_density( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array baryon_density ", &
@@ -193,8 +193,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !     "...allocation error for array baryon_density" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% energy_density ))THEN
-      ALLOCATE( THIS% energy_density( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% energy_density ))THEN
+      ALLOCATE( this% energy_density( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array energy_density ", &
@@ -204,8 +204,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !             "...allocation error for array energy_density" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% specific_energy ))THEN
-      ALLOCATE( THIS% specific_energy( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% specific_energy ))THEN
+      ALLOCATE( this% specific_energy( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array specific_energy ", &
@@ -215,8 +215,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !    "...allocation error for array specific_energy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% pressure ))THEN
-      ALLOCATE( THIS% pressure( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% pressure ))THEN
+      ALLOCATE( this% pressure( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array pressure ", &
@@ -226,8 +226,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array pressure" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% pressure_cu ))THEN
-      ALLOCATE( THIS% pressure_cu( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% pressure_cu ))THEN
+      ALLOCATE( this% pressure_cu( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array pressure_cu ", &
@@ -237,8 +237,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array pressure_cu" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_x ))THEN
-      ALLOCATE( THIS% v_euler_x( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% v_euler_x ))THEN
+      ALLOCATE( this% v_euler_x( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array v_euler_x ", &
@@ -248,8 +248,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for array v_euler_x" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_y ))THEN
-      ALLOCATE( THIS% v_euler_y( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% v_euler_y ))THEN
+      ALLOCATE( this% v_euler_y( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array v_euler_y ", &
@@ -259,8 +259,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !        "...allocation error for array v_euler_y" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_z ))THEN
-      ALLOCATE( THIS% v_euler_z( THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% v_euler_z ))THEN
+      ALLOCATE( this% v_euler_z( this% npart ), STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array v_euler_z ", &
@@ -270,36 +270,36 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !        "...allocation error for array v_euler_z" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% nstar ))THEN
-        ALLOCATE( THIS% nstar( THIS% npart ), STAT= ios )
+    IF(.NOT.ALLOCATED( this% nstar ))THEN
+        ALLOCATE( this% nstar( this% npart ), STAT= ios )
     ENDIF
     IF( ios > 0 )THEN
        PRINT *, '...allocation error for nstar'
        STOP
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% nstar_int ))THEN
-        ALLOCATE( THIS% nstar_int( THIS% npart ), STAT= ios )
+    IF(.NOT.ALLOCATED( this% nstar_int ))THEN
+        ALLOCATE( this% nstar_int( this% npart ), STAT= ios )
     ENDIF
     IF( ios > 0 )THEN
        PRINT *, '...allocation error for nstar_int'
        STOP
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% particle_density ))THEN
-        ALLOCATE( THIS% particle_density( THIS% npart ), STAT= ios )
+    IF(.NOT.ALLOCATED( this% particle_density ))THEN
+        ALLOCATE( this% particle_density( this% npart ), STAT= ios )
     ENDIF
     IF( ios > 0 )THEN
        PRINT *, '...allocation error for particle_density'
        STOP
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% particle_density_int ))THEN
-        ALLOCATE( THIS% particle_density_int( THIS% npart ), STAT= ios )
+    IF(.NOT.ALLOCATED( this% particle_density_int ))THEN
+        ALLOCATE( this% particle_density_int( this% npart ), STAT= ios )
     ENDIF
     IF( ios > 0 )THEN
        PRINT *, '...allocation error for particle_density_int'
        STOP
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% pmass ))THEN
-      ALLOCATE( THIS% pmass( THIS% npart ), &
+    IF(.NOT.ALLOCATED( this% pmass ))THEN
+      ALLOCATE( this% pmass( this% npart ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pmass in SUBROUTINE" &
@@ -309,8 +309,8 @@ SUBMODULE (sph_particles) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% u_pwp ))THEN
-      ALLOCATE( THIS% u_pwp( THIS% npart ), &
+    IF(.NOT.ALLOCATED( this% u_pwp ))THEN
+      ALLOCATE( this% u_pwp( this% npart ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array u_pwp in SUBROUTINE" &
@@ -319,11 +319,21 @@ SUBMODULE (sph_particles) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% nlrf_int ))THEN
-      ALLOCATE( THIS% nlrf_int( THIS% npart ), &
+    IF(.NOT.ALLOCATED( this% nlrf_int ))THEN
+      ALLOCATE( this% nlrf_int( this% npart ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array nlrf_int in SUBROUTINE" &
+                  // "allocate_lorene_id_memory. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% enthalpy ))THEN
+      ALLOCATE( this% enthalpy( this% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array enthalpy in SUBROUTINE" &
                   // "allocate_lorene_id_memory. ", &
                   "The error message is", err_msg
          STOP
@@ -351,8 +361,8 @@ SUBMODULE (sph_particles) memory
 
     IMPLICIT NONE
 
-    IF( ALLOCATED( THIS% pos ))THEN
-      DEALLOCATE( THIS% pos, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% pos ))THEN
+      DEALLOCATE( this% pos, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array pos. ", &
                   "The error message is", err_msg
@@ -362,8 +372,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array pos in SUBROUTINE"&
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% baryon_density ))THEN
-      DEALLOCATE( THIS% baryon_density, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% baryon_density ))THEN
+      DEALLOCATE( this% baryon_density, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array baryon_density. ", &
                   "The error message is", err_msg
@@ -374,8 +384,8 @@ SUBMODULE (sph_particles) memory
       !                // "baryon_density in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% energy_density ))THEN
-      DEALLOCATE( THIS% energy_density, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% energy_density ))THEN
+      DEALLOCATE( this% energy_density, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array energy_density. ", &
                   "The error message is", err_msg
@@ -386,8 +396,8 @@ SUBMODULE (sph_particles) memory
       !                // "energy_density in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% specific_energy ))THEN
-      DEALLOCATE( THIS% specific_energy, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% specific_energy ))THEN
+      DEALLOCATE( this% specific_energy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array specific_energy. ", &
                   "The error message is", err_msg
@@ -398,8 +408,8 @@ SUBMODULE (sph_particles) memory
       !                // "specific_energy in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% pressure ))THEN
-      DEALLOCATE( THIS% pressure, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% pressure ))THEN
+      DEALLOCATE( this% pressure, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array pressure. ", &
                   "The error message is", err_msg
@@ -410,8 +420,8 @@ SUBMODULE (sph_particles) memory
       !                // "pressure in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% pressure_cu ))THEN
-      DEALLOCATE( THIS% pressure_cu, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% pressure_cu ))THEN
+      DEALLOCATE( this% pressure_cu, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array pressure_cu. ", &
                   "The error message is", err_msg
@@ -422,8 +432,8 @@ SUBMODULE (sph_particles) memory
       !                // "pressure_cu in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% v_euler_x ))THEN
-      DEALLOCATE( THIS% v_euler_x, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% v_euler_x ))THEN
+      DEALLOCATE( this% v_euler_x, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array v_euler_x. ", &
                   "The error message is", err_msg
@@ -434,8 +444,8 @@ SUBMODULE (sph_particles) memory
       !                // "v_euler_x in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% v_euler_y ))THEN
-      DEALLOCATE( THIS% v_euler_y, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% v_euler_y ))THEN
+      DEALLOCATE( this% v_euler_y, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array v_euler_y. ", &
                   "The error message is", err_msg
@@ -446,8 +456,8 @@ SUBMODULE (sph_particles) memory
       !                // "v_euler_y in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% v_euler_z ))THEN
-      DEALLOCATE( THIS% v_euler_z, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% v_euler_z ))THEN
+      DEALLOCATE( this% v_euler_z, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array v_euler_z. ", &
                   "The error message is", err_msg
@@ -458,8 +468,8 @@ SUBMODULE (sph_particles) memory
       !                // "v_euler_z in SUBROUTINE " &
       !                // "destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% lapse ))THEN
-      DEALLOCATE( THIS% lapse, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% lapse ))THEN
+      DEALLOCATE( this% lapse, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array lapse. ", &
                   "The error message is", err_msg
@@ -469,8 +479,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array lapse in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% shift_x ))THEN
-      DEALLOCATE( THIS% shift_x, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% shift_x ))THEN
+      DEALLOCATE( this% shift_x, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array shift_x. ", &
                   "The error message is", err_msg
@@ -480,8 +490,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array shift_x in "&
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% shift_y ))THEN
-      DEALLOCATE( THIS% shift_y, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% shift_y ))THEN
+      DEALLOCATE( this% shift_y, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array shift_y. ", &
                   "The error message is", err_msg
@@ -491,8 +501,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array shift_y in "&
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% shift_z ))THEN
-      DEALLOCATE( THIS% shift_z, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% shift_z ))THEN
+      DEALLOCATE( this% shift_z, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array shift_z. ", &
                   "The error message is", err_msg
@@ -502,8 +512,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array shift_z in "&
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_xx ))THEN
-      DEALLOCATE( THIS% g_xx, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% g_xx ))THEN
+      DEALLOCATE( this% g_xx, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_xx. ", &
                   "The error message is", err_msg
@@ -513,8 +523,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array g_xx in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_xy ))THEN
-      DEALLOCATE( THIS% g_xy, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% g_xy ))THEN
+      DEALLOCATE( this% g_xy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_xy. ", &
                   "The error message is", err_msg
@@ -524,8 +534,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array g_xy in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_xz ))THEN
-      DEALLOCATE( THIS% g_xz, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% g_xz ))THEN
+      DEALLOCATE( this% g_xz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_xz. ", &
                   "The error message is", err_msg
@@ -535,8 +545,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array g_xz in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_yy ))THEN
-      DEALLOCATE( THIS% g_yy, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% g_yy ))THEN
+      DEALLOCATE( this% g_yy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_yy. ", &
                   "The error message is", err_msg
@@ -546,8 +556,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array g_yy in " &
       !                // "SUBROUTINE estruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_yz ))THEN
-      DEALLOCATE( THIS% g_yz, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% g_yz ))THEN
+      DEALLOCATE( this% g_yz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_yz. ", &
                   "The error message is", err_msg
@@ -557,8 +567,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array g_yz in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% g_zz ))THEN
-      DEALLOCATE( THIS% g_zz, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% g_zz ))THEN
+      DEALLOCATE( this% g_zz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_zz. ", &
                   "The error message is", err_msg
@@ -568,8 +578,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array g_zz in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% nlrf ))THEN
-      DEALLOCATE( THIS% nlrf, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% nlrf ))THEN
+      DEALLOCATE( this% nlrf, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array nlrf. ", &
                   "The error message is", err_msg
@@ -579,8 +589,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array nlrf in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% nu ))THEN
-      DEALLOCATE( THIS% nu, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% nu ))THEN
+      DEALLOCATE( this% nu, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array nu. ", &
                   "The error message is", err_msg
@@ -590,8 +600,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array nu in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% Theta ))THEN
-      DEALLOCATE( THIS% Theta, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% Theta ))THEN
+      DEALLOCATE( this% Theta, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array Theta. ", &
                   "The error message is", err_msg
@@ -601,8 +611,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array Theta in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v ))THEN
-      ALLOCATE( THIS% v( 0:3, THIS% npart ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% v ))THEN
+      ALLOCATE( this% v( 0:3, this% npart ), STAT= ios, &
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array v ", &
@@ -612,8 +622,8 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !                "...allocation error for array v" )
     ENDIF
-    IF( ALLOCATED( THIS% h ))THEN
-      DEALLOCATE( THIS% h, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% h ))THEN
+      DEALLOCATE( this% h, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array h. ", &
                   "The error message is", err_msg
@@ -623,8 +633,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array h in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% v ))THEN
-      DEALLOCATE( THIS% v, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% v ))THEN
+      DEALLOCATE( this% v, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array v. ", &
                   "The error message is", err_msg
@@ -634,8 +644,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% Ye ))THEN
-      DEALLOCATE( THIS% Ye, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% Ye ))THEN
+      DEALLOCATE( this% Ye, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array Ye. ", &
                   "The error message is", err_msg
@@ -645,8 +655,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% nstar ))THEN
-      DEALLOCATE( THIS% nstar, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% nstar ))THEN
+      DEALLOCATE( this% nstar, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array nstar. ", &
                   "The error message is", err_msg
@@ -656,8 +666,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% nstar_int ))THEN
-      DEALLOCATE( THIS% nstar_int, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% nstar_int ))THEN
+      DEALLOCATE( this% nstar_int, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array nstar_int. ", &
                   "The error message is", err_msg
@@ -667,8 +677,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% particle_density ))THEN
-      DEALLOCATE( THIS% particle_density, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% particle_density ))THEN
+      DEALLOCATE( this% particle_density, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array particle_density. ", &
                   "The error message is", err_msg
@@ -678,8 +688,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% particle_density_int ))THEN
-      DEALLOCATE( THIS% particle_density_int, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% particle_density_int ))THEN
+      DEALLOCATE( this% particle_density_int, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array particle_density_int. ", &
                   "The error message is", err_msg
@@ -689,8 +699,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% pmass ))THEN
-      DEALLOCATE( THIS% pmass, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% pmass ))THEN
+      DEALLOCATE( this% pmass, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array pmass. ", &
                   "The error message is", err_msg
@@ -700,8 +710,8 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% u_pwp ))THEN
-      DEALLOCATE( THIS% u_pwp, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% u_pwp ))THEN
+      DEALLOCATE( this% u_pwp, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array u_pwp. ", &
                   "The error message is", err_msg
@@ -711,10 +721,21 @@ SUBMODULE (sph_particles) memory
       !                "...deallocation error for array v in " &
       !                // "SUBROUTINE destruct_particles." )
     ENDIF
-    IF( ALLOCATED( THIS% nlrf_int ))THEN
-      DEALLOCATE( THIS% nlrf_int, STAT= ios, ERRMSG= err_msg )
+    IF( ALLOCATED( this% nlrf_int ))THEN
+      DEALLOCATE( this% nlrf_int, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array u_pwp. ", &
+         PRINT *, "...deallocation error for array nlrf_int. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( this% enthalpy ))THEN
+      DEALLOCATE( this% enthalpy, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array enthalpy. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
