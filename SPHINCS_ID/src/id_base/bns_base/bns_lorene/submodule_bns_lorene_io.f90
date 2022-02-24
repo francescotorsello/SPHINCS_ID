@@ -61,7 +61,7 @@ SUBMODULE (bns_lorene) io
 
     PRINT *, "   * Binary system of neutron stars produced by LORENE:"
     PRINT *
-    PRINT *, "   Center of mass of the system, weighted with the baryon ", &
+    PRINT *, "   Center of mass of the system, weighted with the baryonic ", &
              "mass= ", &
             (this% barycenter1_x*this% mass1 + this% barycenter2_x*this% mass2) &
              /(this% mass1 + this% mass2)
