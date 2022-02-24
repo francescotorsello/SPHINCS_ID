@@ -24,6 +24,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.2-1.5_60km.bin"
              !"BNSLO_apr4_1.4-1.4_43.75km.bin"
              !!!"BNSLO_apr4_1.35-1.35_42km.bin"
+             !!!"BNSLO_sly_1.3-1.3_45km.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-73inside.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
@@ -31,7 +32,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay-5e-8.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129all.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-251all.bin"
-             !"BNSLO_apr4_1.2-1.5_42km.bin"
+             !!"BNSLO_apr4_1.2-1.5_42km.bin"
              !"BNSLO_mpa1_1.4-1.8_45km.bin"
              !"BNSLO_mpa1_1.4-2_45km.bin"
              !"BNSLO_apr3_1.4-1.6_80km.bin"
@@ -40,8 +41,8 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
              !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !!!"BNSLO_poly2_1.4-1.4_45km_1e-7.bin"
-             !"BNSLO_sly_1.6-1.4_45km_faber.bin"
-             !"BNSLO_sly_2.0-1.4_45km_faber.bin"
+             !!!"BNSLO_sly_1.6-1.4_45km_faber.bin"
+             !!"BNSLO_sly_2.0-1.4_45km_faber.bin"
              !"BNSLO_poly2-75_1.2-1.4_40km.bin"
              !"BNSLO_poly2-75_1.4-1.4_40km.bin"
              !"BNSLO_poly2-75_1.4-1.4_45km.bin"
@@ -88,7 +89,7 @@ estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.TRUE.
+run_sph=.FALSE.
 run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
