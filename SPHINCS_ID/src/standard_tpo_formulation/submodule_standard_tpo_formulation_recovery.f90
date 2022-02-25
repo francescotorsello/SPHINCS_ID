@@ -164,9 +164,10 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
 
     CALL allocate_gradient( npart )
 
-    IF( .NOT.ALLOCATED(g4_ll) )THEN
-      CALL allocate_metric_on_particles(npart)
+    IF( ALLOCATED(g4_ll) )THEN
+      DEALLOCATE(g4_ll)
     ENDIF
+    CALL allocate_metric_on_particles(npart)
 
     IF( debug ) PRINT *, "0.25"
 
