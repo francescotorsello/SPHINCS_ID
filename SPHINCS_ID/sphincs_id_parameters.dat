@@ -117,10 +117,10 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 !----------------------------------------------!
 ! Choose to compute and export the constraints !
 !----------------------------------------------!
-compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
+compute_constraints=.FALSE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping

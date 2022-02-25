@@ -498,12 +498,18 @@ MODULE sph_particles
     !! Returns [[particles:v]]
     PROCEDURE, PUBLIC:: get_nstar
     !! Returns [[particles:nstar]]
+    PROCEDURE, PUBLIC:: get_nstar_sph
+    !! Returns [[particles:nstar_int]]
     PROCEDURE, PUBLIC:: get_nlrf
     !! Returns [[particles:nlrf]]
+    PROCEDURE, PUBLIC:: get_nlrf_sph
+    !! Returns [[particles:nlrf_int]]
     PROCEDURE, PUBLIC:: get_nu
     !! Returns [[particles:nu]]
     PROCEDURE, PUBLIC:: get_u
     !! Returns [[particles:specific_energy]]
+    PROCEDURE, PUBLIC:: get_u_sph
+    !! Returns [[particles:u_pwp]]
     PROCEDURE, PUBLIC:: get_pressure
     !! Returns [[particles:pressure]]
     PROCEDURE, PUBLIC:: get_pressure_cu
@@ -512,6 +518,12 @@ MODULE sph_particles
     !! Returns [[particles:theta]]
     PROCEDURE, PUBLIC:: get_h
     !! Returns [[particles:h]]
+    PROCEDURE, PUBLIC:: get_lapse
+    !! Returns [[particles:lapse]]
+    PROCEDURE, PUBLIC:: get_shift
+    !! Returns ([[particles:shift_x]],[[particles:shift_y]],[[particles:shift_z]])
+    PROCEDURE, PUBLIC:: get_g3
+    !! Returns ([[particles:g_xx]],[[particles:g_xy]],[[particles:g_xz]],[[particles:g_yy]],[[particles:g_yz]],[[particles:g_zz]])
 
     FINAL:: destruct_particles
     !! Finalizer (Destructor) of [[particles]] object
@@ -1260,6 +1272,16 @@ MODULE sph_particles
 
     END FUNCTION get_nstar
 
+    MODULE PURE FUNCTION get_nstar_sph( THIS ) RESULT( nstar_sph )
+    !! Returns [[particles:nstar_int]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT( IN ):: THIS
+      !> [[particles:nstar_int]]
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nstar_sph
+
+    END FUNCTION get_nstar_sph
+
     MODULE PURE FUNCTION get_nlrf( THIS ) RESULT( nlrf )
     !! Returns [[particles:nlrf]]
 
@@ -1269,6 +1291,16 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nlrf
 
     END FUNCTION get_nlrf
+
+    MODULE PURE FUNCTION get_nlrf_sph( THIS ) RESULT( nlrf_sph )
+    !! Returns [[particles:nlrf_int]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT( IN ):: THIS
+      !> [[particles:nlrf_int]]
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nlrf_sph
+
+    END FUNCTION get_nlrf_sph
 
     MODULE PURE FUNCTION get_nu( THIS ) RESULT( nu )
     !! Returns [[particles:nu]]
@@ -1289,6 +1321,16 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u
 
     END FUNCTION get_u
+
+    MODULE PURE FUNCTION get_u_sph( THIS ) RESULT( u_sph )
+    !! Returns [[particles:u_pwp]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT( IN ):: THIS
+      !> [[particles:u_pwp]]
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u_sph
+
+    END FUNCTION get_u_sph
 
     MODULE PURE FUNCTION get_pressure( THIS ) RESULT( pressure )
     !! Returns [[particles:pressure]]
@@ -1329,6 +1371,37 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: h
 
     END FUNCTION get_h
+
+    MODULE PURE FUNCTION get_lapse( THIS ) RESULT( lapse )
+    !! Returns [[particles:lapse]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT( IN ):: THIS
+      !> [[particles:lapse]]
+      DOUBLE PRECISION, DIMENSION(this% npart):: lapse
+
+    END FUNCTION get_lapse
+
+    MODULE PURE FUNCTION get_shift( THIS ) RESULT( shift )
+    !! Returns [[particles:shift]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT( IN ):: THIS
+      !> ([[particles:shift_x]],[[particles:shift_y]],[[particles:shift_z]])
+      DOUBLE PRECISION, DIMENSION(3,this% npart):: shift
+
+    END FUNCTION get_shift
+
+    MODULE PURE FUNCTION get_g3( THIS ) RESULT( g3 )
+    !! Returns [[particles:h]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT( IN ):: THIS
+      !> ([[particles:g_xx]],[[particles:g_xy]],[[particles:g_xz]],[[particles:g_yy]],[[particles:g_yz]],[[particles:g_zz]])
+      DOUBLE PRECISION, DIMENSION(6,this% npart):: g3
+
+    END FUNCTION get_g3
+
 
   END INTERFACE
 

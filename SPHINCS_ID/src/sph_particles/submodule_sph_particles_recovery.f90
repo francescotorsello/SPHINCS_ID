@@ -106,11 +106,11 @@ SUBMODULE (sph_particles) recovery
       CALL determinant_sym4x4( g4_ll(1:n_sym4x4,a), det )
       IF( ABS(det) < 1D-10 )THEN
           PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", itr
+                   // "effectively 0 at particle ", a
           STOP
       ELSEIF( det > 0 )THEN
           PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                   // "positive at particle ", itr
+                   // "positive at particle ", a
           STOP
       ENDIF
 

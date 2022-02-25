@@ -79,12 +79,15 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     USE units,                ONLY: set_units
     USE sph_variables,        ONLY: allocate_SPH_memory, &
                                     deallocate_SPH_memory
+    USE utility,              ONLY: compute_g4, determinant_sym4x4
 
     IMPLICIT NONE
 
     INTEGER, PARAMETER:: unit_recovery= 34156
 
     INTEGER:: npart, i_matter, a, l
+
+    DOUBLE PRECISION:: det
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar
@@ -97,6 +100,10 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: s_l_rec
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: e_hat_rec
 
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: shift_parts
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: g3_parts
+
     LOGICAL:: exist
 
     CHARACTER( LEN= 2 ):: i_mat
@@ -105,8 +112,6 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     npart= parts% get_npart()
-    pos  = parts% get_pos()
-    nstar= parts% get_nstar()
 
     ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -141,14 +146,14 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
 
     CALL allocate_SPH_memory
 
-    ALLOCATE( nlrf_rec   (npart) )
-    ALLOCATE( u_rec(npart) )
-    ALLOCATE( pr_rec(npart) )
+    ALLOCATE( nlrf_rec (npart)   )
+    ALLOCATE( u_rec    (npart)   )
+    ALLOCATE( pr_rec   (npart)   )
     ALLOCATE( vel_u_rec(3,npart) )
-    ALLOCATE( theta_rec(npart) )
-    ALLOCATE( nstar_rec(npart) )
-    ALLOCATE( s_l_rec(3,npart) )
-    ALLOCATE( e_hat_rec(npart) )
+    ALLOCATE( theta_rec(npart)   )
+    ALLOCATE( nstar_rec(npart)   )
+    ALLOCATE( s_l_rec  (3,npart) )
+    ALLOCATE( e_hat_rec(npart)   )
 
     IF( debug ) PRINT *, "0"
 
@@ -162,14 +167,36 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
       CALL allocate_metric_on_particles(npart)
     ENDIF
 
+    ALLOCATE( lapse_parts(npart) )
+    ALLOCATE( shift_parts(3,npart) )
+    ALLOCATE( g3_parts   (6,npart) )
+    lapse_parts= parts% get_lapse()
+    shift_parts= parts% get_shift()
+    g3_parts   = parts% get_g3()
+
     IF( debug ) PRINT *, "0.25"
 
-    !CALL update_ADM_metric_on_particles( npart, pos, &
-    !                                     ! The following is output
-    !                                     g4_ll, sq_det_g4, &
-    !                                     ! The following is input
-    !                                     .FALSE. )
-    CALL get_metric_on_particles( npart, pos )
+    !CALL get_metric_on_particles( npart, pos )
+    DO a= 1, npart, 1
+
+      CALL compute_g4( lapse_parts(a), &
+            [shift_parts(1,a), shift_parts(2,a), shift_parts(3,a)], &
+            [g3_parts(1,a), g3_parts(2,a), g3_parts(3,a), &
+             g3_parts(4,a), g3_parts(5,a), g3_parts(6,a)], &
+             g4_ll(1:n_sym4x4,a) )
+
+      CALL determinant_sym4x4( g4_ll(1:n_sym4x4,a), det )
+      IF( ABS(det) < 1D-10 )THEN
+          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+                   // "effectively 0 at particle ", a
+          STOP
+      ELSEIF( det > 0 )THEN
+          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+                   // "positive at particle ", a
+          STOP
+      ENDIF
+
+    ENDDO
 
     IF( debug ) PRINT *, "0.5"
 
@@ -178,9 +205,12 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     ALLOCATE( pr_fb   (npart) )
     ALLOCATE( vel_u_fb(3,npart) )
     ALLOCATE( theta_fb(npart) )
-    ALLOCATE( cs_fb(npart) )
-    nlrf_fb = parts% get_nlrf()
-    u_fb    = parts% get_u()
+    ALLOCATE( cs_fb   (npart) )
+
+    pos  = parts% get_pos()
+    nstar= parts% get_nstar_sph()
+    nlrf_fb = parts% get_nlrf_sph()
+    u_fb    = parts% get_u_sph()
     pr_fb   = parts% get_pressure_cu()
     vel_u_fb= parts% get_vel()
     theta_fb= parts% get_theta()
@@ -188,7 +218,6 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     ! enth= 1.0D0 + u + rho_rest/P
     ! cs=   SQRT((Gamma*P_cold + Gamma_th*P_th)/(rho_rest*enth))
     cs_fb   = one
-
 
     ! Initialize local arrays
     nlrf_rec = zero
