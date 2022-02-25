@@ -213,6 +213,23 @@ SUBMODULE (sph_particles) access
   END PROCEDURE get_nuratio_i
 
 
+  MODULE PROCEDURE get_n_matter
+
+    !************************************************
+    !
+    !# Returns the number of matter objects
+    !
+    !  FT 25.02.2021
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    n_matter= THIS% n_matter
+
+  END PROCEDURE get_n_matter
+
+
   MODULE PROCEDURE get_pos
 
     !************************************************
@@ -235,7 +252,7 @@ SUBMODULE (sph_particles) access
     !************************************************
     !
     !# Returns the array of coordinate 3-velocity of
-    ! particles
+    !  particles
     !
     !  FT
     !
@@ -248,12 +265,30 @@ SUBMODULE (sph_particles) access
   END PROCEDURE get_vel
 
 
+  MODULE PROCEDURE get_nstar
+
+    !************************************************
+    !
+    !# Returns the array of proper baryon density
+    !  in the local rest frame
+    !
+    !  FT 25.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    nstar= THIS% nstar
+
+  END PROCEDURE get_nstar
+
+
   MODULE PROCEDURE get_nlrf
 
     !************************************************
     !
     !# Returns the array of baryon density in the
-    ! local rest frame
+    !  local rest frame
     !
     !  FT
     !

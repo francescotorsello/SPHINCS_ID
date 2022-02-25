@@ -1,4 +1,4 @@
-! File:         submodule_sph_particles_recovery.f90
+! File:         submodule_standard_tpo_formulation_recovery.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
@@ -21,14 +21,14 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-SUBMODULE (sph_particles) recovery
+SUBMODULE (standard_tpo_formulation) recovery_m2p
 
   !************************************************
   !
   !# This SUBMODULE contains the implementation
   !  of the method test_recovery of TYPE particles.
   !
-  !  FT 18.02.2020
+  !  FT 25.02.2020
   !
   !************************************************
 
@@ -39,18 +39,20 @@ SUBMODULE (sph_particles) recovery
   CONTAINS
 
 
-  MODULE PROCEDURE test_recovery
+  MODULE PROCEDURE test_recovery_m2p
 
     !************************************************
     !
-    !# Tests the recovery. Computes the conserved
-    !  variables from the physical ones, and then the
-    !  physical ones from the conserved ones. It then
-    !  compares the variables computed with the
-    !  recovery PROCEDURES, with those computed with
-    !  |sphincsid|. @todo add reference for recovery
+    !# Tests the recovery using the metric mapped
+    !  from the emsh to the particles. Computes the
+    !  conserved variables from the physical ones,
+    !  and then the physical ones from the conserved
+    !  ones. It then compares the variables computed
+    !  with the recovery PROCEDURES, with those
+    !  computed with |sphincsid|.
+    !  @todo add reference for recovery
     !
-    !  FT 18.02.2020
+    !  FT 25.02.2020
     !
     !************************************************
 
@@ -61,25 +63,39 @@ SUBMODULE (sph_particles) recovery
                                     cs_fb
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
-                                    g4_ll
-    USE utility,              ONLY: compute_g4, determinant_sym4x4
+                                    get_metric_on_particles, g4_ll
+    !USE map_metric_2_particles_refine, &
+    !                          ONLY: update_ADM_metric_on_particles
+    USE ADM_refine,           ONLY: lapse, shift_u, g_phys3_ll, &
+                                    allocate_ADM, deallocate_ADM
+    USE BSSN_refine,          ONLY: allocate_BSSN, deallocate_BSSN
+    USE mesh_refinement,      ONLY: nlevels, levels, rad_coord, coords, &
+                                    allocate_grid_function, &
+                                    deallocate_grid_function
+    USE gradient,             ONLY: allocate_gradient, deallocate_gradient
+    USE McLachlan_refine,     ONLY: allocate_Ztmp, deallocate_Ztmp
+    USE alive_flag,           ONLY: alive
+    USE input_output,         ONLY: read_options
+    USE units,                ONLY: set_units
+    USE sph_variables,        ONLY: allocate_SPH_memory, &
+                                    deallocate_SPH_memory
 
     IMPLICIT NONE
 
-    INTEGER, PARAMETER:: unit_recovery= 34956
+    INTEGER, PARAMETER:: unit_recovery= 34156
 
-    INTEGER:: i_matter, a
+    INTEGER:: npart, i_matter, a, l
 
-    DOUBLE PRECISION:: det
-
-    DOUBLE PRECISION, DIMENSION(npart)  :: nlrf_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: u_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: pr_rec
-    DOUBLE PRECISION, DIMENSION(3,npart):: vel_u_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: theta_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: nstar_rec
-    DOUBLE PRECISION, DIMENSION(3,npart):: s_l_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: e_hat_rec
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_rec
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: u_rec
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pr_rec
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel_u_rec
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: theta_rec
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_rec
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: s_l_rec
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: e_hat_rec
 
     LOGICAL:: exist
 
@@ -88,33 +104,74 @@ SUBMODULE (sph_particles) recovery
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    PRINT *, " * Testing recovery..."
-    PRINT *
+    npart= parts% get_npart()
+    pos  = parts% get_pos()
+    nstar= parts% get_nstar()
+
+    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    IF( ios > 0 )THEN
+     PRINT*,'...allocation error for levels'
+     STOP
+    ENDIF
+    nlevels= THIS% nlevels
+    levels = THIS% levels
+    coords = THIS% coords
+
+    CALL allocate_ADM()
+    CALL allocate_BSSN()
+
+    ! Allocate temporary memory for time integration
+    CALL allocate_Ztmp()
+
+    ! Allocate memory for the derivatives of the ADM variables
+   ! CALL allocate_GravityAcceleration()
+
+    CALL allocate_grid_function( rad_coord, 'rad_coord', 1 )
+
+    ! Initialize the stress-energy tensor to 0
+    DO l= 1, THIS% nlevels, 1
+      rad_coord%  levels(l)% var= THIS% rad_coord%  levels(l)% var
+      g_phys3_ll% levels(l)% var= THIS% g_phys3_ll% levels(l)% var
+      shift_u%    levels(l)% var= THIS% shift_u%    levels(l)% var
+      lapse%      levels(l)% var= THIS% lapse%      levels(l)% var
+    ENDDO
+
+    CALL set_units('NSM')
+    CALL read_options
+
+    CALL allocate_SPH_memory
+
+    ALLOCATE( nlrf_rec   (npart) )
+    ALLOCATE( u_rec(npart) )
+    ALLOCATE( pr_rec(npart) )
+    ALLOCATE( vel_u_rec(3,npart) )
+    ALLOCATE( theta_rec(npart) )
+    ALLOCATE( nstar_rec(npart) )
+    ALLOCATE( s_l_rec(3,npart) )
+    ALLOCATE( e_hat_rec(npart) )
+
+    IF( debug ) PRINT *, "0"
+
+    ! flag that particles are 'alive'
+    IF( .NOT.ALLOCATED( alive ) ) ALLOCATE( alive( npart ) )
+    alive( 1:npart )= 1
+
+    CALL allocate_gradient( npart )
 
     IF( .NOT.ALLOCATED(g4_ll) )THEN
-      CALL allocate_metric_on_particles(this% npart)
+      CALL allocate_metric_on_particles(npart)
     ENDIF
 
-    DO a= 1, this% npart, 1
+    IF( debug ) PRINT *, "0.25"
 
-      CALL compute_g4( this% lapse(a), &
-            [this% shift_x(a), this% shift_y(a), this% shift_z(a)], &
-            [this% g_xx(a), this% g_xy(a), this% g_xz(a), &
-             this% g_yy(a), this% g_yz(a), this% g_zz(a)], &
-             g4_ll(1:n_sym4x4,a) )
+    !CALL update_ADM_metric_on_particles( npart, pos, &
+    !                                     ! The following is output
+    !                                     g4_ll, sq_det_g4, &
+    !                                     ! The following is input
+    !                                     .FALSE. )
+    CALL get_metric_on_particles( npart, pos )
 
-      CALL determinant_sym4x4( g4_ll(1:n_sym4x4,a), det )
-      IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", itr
-          STOP
-      ELSEIF( det > 0 )THEN
-          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                   // "positive at particle ", itr
-          STOP
-      ENDIF
-
-    ENDDO
+    IF( debug ) PRINT *, "0.5"
 
     ALLOCATE( nlrf_fb (npart) )
     ALLOCATE( u_fb    (npart) )
@@ -122,11 +179,11 @@ SUBMODULE (sph_particles) recovery
     ALLOCATE( vel_u_fb(3,npart) )
     ALLOCATE( theta_fb(npart) )
     ALLOCATE( cs_fb(npart) )
-    nlrf_fb = nlrf
-    u_fb    = u
-    pr_fb   = pr
-    vel_u_fb= vel_u(1:3,:)
-    theta_fb= theta
+    nlrf_fb = parts% get_nlrf()
+    u_fb    = parts% get_u()
+    pr_fb   = parts% get_pressure_cu()
+    vel_u_fb= parts% get_vel()
+    theta_fb= parts% get_theta()
     ! TODO: set the sound speed properly. From pwp_eos MODULE:
     ! enth= 1.0D0 + u + rho_rest/P
     ! cs=   SQRT((Gamma*P_cold + Gamma_th*P_th)/(rho_rest*enth))
@@ -148,7 +205,7 @@ SUBMODULE (sph_particles) recovery
     !
     !-- Compute conserved fields from physical fields
     !
-    CALL phys_2_cons( npart, nlrf, u, pr, vel_u, &
+    CALL phys_2_cons( npart, nlrf_fb, u_fb, pr_fb, vel_u_fb, &
                       ! following is output
                       nstar_rec, s_l_rec, e_hat_rec )
 
@@ -157,7 +214,7 @@ SUBMODULE (sph_particles) recovery
     !
     !-- Recover physical fields from conserved fields
     !
-    pr_rec= pr
+    pr_rec= pr_fb
 
     CALL cons_2_phys( npart, nstar_rec, s_l_rec, e_hat_rec, &
                       ! following is output (pressure is INOUT)
@@ -165,47 +222,48 @@ SUBMODULE (sph_particles) recovery
 
     IF( debug ) PRINT *, "3"
 
-    DEALLOCATE( nlrf_fb )
-    DEALLOCATE( u_fb )
-    DEALLOCATE( pr_fb )
-    DEALLOCATE( vel_u_fb )
-    DEALLOCATE( theta_fb )
-    DEALLOCATE( cs_fb )
-
     CALL deallocate_metric_on_particles
+    CALL deallocate_gradient
+    DEALLOCATE(alive)
+    CALL deallocate_sph_memory
+
+    CALL deallocate_grid_function ( rad_coord, 'rad_coord' )
+    CALL deallocate_ADM()
+    CALL deallocate_Ztmp()
+    !CALL deallocate_GravityAcceleration()
+    CALL deallocate_BSSN()
+    DEALLOCATE( levels )
 
     IF( debug ) PRINT *, "4"
 
-    matter_objects_loop: DO i_matter= 1, this% n_matter, 1
-
-      !PRINT *, " * Testing recovery on matter object", i_matter, "..."
-      !PRINT *
+    matter_objects_loop: DO i_matter= 1, parts% get_n_matter(), 1
 
       IF( i_matter > 9 )THEN
         WRITE( i_mat, "(I2)" ) i_matter
       ELSE
         WRITE( i_mat, "(I1)" ) i_matter
       ENDIF
-      finalnamefile= "recovery_test-"//TRIM(i_mat)//".dat"
+      finalnamefile= TRIM(namefile)//"-"//TRIM(i_mat)//".dat"
 
-      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
-                 npart_fin  => this% npart_i(i_matter-1) +    &
-                               this% npart_i(i_matter) )
+      !PRINT *, "------------"
+      !PRINT *, TRIM(namefile)
+      !PRINT *, "------------"
+      !PRINT *, finalnamefile
+      !PRINT *, "------------"
+
+      ASSOCIATE( npart_in   => parts% get_npart_i(i_matter-1) + 1, &
+                 npart_fin  => parts% get_npart_i(i_matter-1) +    &
+                               parts% get_npart_i(i_matter) )
 
       !
       !-- Print the original and recovered fields to formatted file
       !
-      !IF( PRESENT(namefile) )THEN
-      !  finalnamefile= namefile
-      !ELSE
-      !  finalnamefile= "recovery_test.dat"
-      !ENDIF
 
       INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
       IF( exist )THEN
-        OPEN( UNIT= unit_recovery, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
+        OPEN( UNIT= unit_recovery, FILE= TRIM(finalnamefile), &
+              STATUS= "REPLACE", FORM= "FORMATTED", &
               POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
               IOMSG= err_msg )
       ELSE
@@ -268,41 +326,43 @@ SUBMODULE (sph_particles) recovery
 
       print_data_loop: DO a = npart_in, npart_fin, 1
 
-        IF( THIS% export_form_xy .AND. &
-            ( pos( 3, a ) >=  0.5D0 .OR. &
-              pos( 3, a ) <= -0.5D0 ) &
-        )THEN
-          CYCLE
-        ENDIF
-        IF( THIS% export_form_x .AND. &
-            ( pos( 3, a ) >=  0.5D0 .OR. &
-              pos( 3, a ) <= -0.5D0 .OR. &
-              pos( 2, a ) >=  0.5D0 .OR. &
-              pos( 2, a ) <= -0.5D0 ) &
-        )THEN
-          CYCLE
-        ENDIF
+       ! TODO: make the variables export_fomr-xy and export_form_x member
+       !       of tpo, not bssn
+       ! IF( this% export_form_xy .AND. &
+       !     ( pos( 3, a ) >=  0.5D0 .OR. &
+       !       pos( 3, a ) <= -0.5D0 ) &
+       ! )THEN
+       !   CYCLE
+       ! ENDIF
+       ! IF( this% export_form_x .AND. &
+       !     ( pos( 3, a ) >=  0.5D0 .OR. &
+       !       pos( 3, a ) <= -0.5D0 .OR. &
+       !       pos( 2, a ) >=  0.5D0 .OR. &
+       !       pos( 2, a ) <= -0.5D0 ) &
+       ! )THEN
+       !   CYCLE
+       ! ENDIF
 
         WRITE( UNIT = unit_recovery, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
           a, &                                                        ! 1
-          pos      ( jx, a ) - this% barycenter(i_matter, jx), &      ! 2
-          pos      ( jy, a ) - this% barycenter(i_matter, jy), &      ! 3
-          pos      ( jz, a ) - this% barycenter(i_matter, jz), &      ! 4
+          pos      ( jx, a ), &                                       ! 2
+          pos      ( jy, a ), &                                       ! 3
+          pos      ( jz, a ), &                                       ! 4
           nstar    ( a ),     &                                       ! 5
           nstar_rec( a ),     &                                       ! 6
-          nlrf     ( a ),     &                                       ! 7
+          nlrf_fb  ( a ),     &                                       ! 7
           nlrf_rec ( a ),     &                                       ! 8
-          u        ( a ),     &                                       ! 9
+          u_fb     ( a ),     &                                       ! 9
           u_rec    ( a ),     &                                       ! 10
-          pr       ( a ),     &                                       ! 11
+          pr_fb    ( a ),     &                                       ! 11
           pr_rec   ( a ),     &                                       ! 12
-          vel_u    ( jx, a ), &                                       ! 13
+          vel_u_fb ( jx, a ), &                                       ! 13
           vel_u_rec( jx, a ), &                                       ! 14
-          vel_u    ( jy, a ), &                                       ! 15
+          vel_u_fb ( jy, a ), &                                       ! 15
           vel_u_rec( jy, a ), &                                       ! 16
-          vel_u    ( jz, a ), &                                       ! 17
+          vel_u_fb ( jz, a ), &                                       ! 17
           vel_u_rec( jz, a ), &                                       ! 18
-          theta    ( a ),     &                                       ! 19
+          theta_fb ( a ),     &                                       ! 19
           theta_rec( a )                                              ! 20
 
         IF( ios > 0 )THEN
@@ -318,14 +378,31 @@ SUBMODULE (sph_particles) recovery
       END ASSOCIATE
 
       PRINT *, " * Results from the recovery test on matter object ", &
-               i_matter, " printed to file ", finalnamefile
+               i_matter, ", using the metric mapped from the emsh to the ", &
+               "particles printed to file ", finalnamefile
       PRINT *
 
     ENDDO matter_objects_loop
 
-    !STOP
+    DEALLOCATE( nlrf_fb )
+    DEALLOCATE( u_fb )
+    DEALLOCATE( pr_fb )
+    DEALLOCATE( vel_u_fb )
+    DEALLOCATE( theta_fb )
+    DEALLOCATE( cs_fb )
 
-  END PROCEDURE test_recovery
+    DEALLOCATE( pos       )
+    DEALLOCATE( nstar     )
+    DEALLOCATE( nlrf_rec  )
+    DEALLOCATE( u_rec     )
+    DEALLOCATE( pr_rec    )
+    DEALLOCATE( vel_u_rec )
+    DEALLOCATE( theta_rec )
+    DEALLOCATE( nstar_rec )
+    DEALLOCATE( s_l_rec   )
+    DEALLOCATE( e_hat_rec )
+
+  END PROCEDURE test_recovery_m2p
 
 
-END SUBMODULE recovery
+END SUBMODULE recovery_m2p

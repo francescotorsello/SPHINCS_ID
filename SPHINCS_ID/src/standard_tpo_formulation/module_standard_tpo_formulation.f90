@@ -202,9 +202,9 @@ MODULE standard_tpo_formulation
     CONTAINS
 
 
-    !-------------------!
-    !--  SUBROUTINES  --!
-    !-------------------!
+    !-----------------------------------!
+    !--  NON_OVERRIDABLE SUBROUTINES  --!
+    !-----------------------------------!
 
 
     PROCEDURE, NON_OVERRIDABLE:: setup_standard_tpo_variables
@@ -222,23 +222,29 @@ MODULE standard_tpo_formulation
     !  predefined (hard-coded) intervals
     !  @todo complete this documentation entries with more details
 
+    PROCEDURE, PUBLIC, NON_OVERRIDABLE:: test_recovery_m2p
+    !# Computes the conserved variables from the physical ones, and vice versa,
+    !  to test that the recovered physical variables are the same to those
+    !  computed from the |id|. Uses the metric mapped from the grid to the
+    !  particles. @todo add reference for recovery
+
+    PROCEDURE, NON_OVERRIDABLE:: print_summary
+    !# Prints a summary about the features of the refined mesh
+
+
+    !----------------------------!
+    !--  DEFERRED SUBROUTINES  --!
+    !----------------------------!
+
+
     PROCEDURE(define_allocate_fields_interface), DEFERRED:: &
-                            define_allocate_fields
+                      define_allocate_fields
     !# Allocates memory for the fields specific to the formulation identified
     !  by an EXTENDED TYPE
 
     PROCEDURE(deallocate_fields_interface), DEFERRED:: deallocate_fields
     !# Deallocates memory for the fields specific to the formulation identified
     !  by an EXTENDED TYPE
-
-    PROCEDURE(compute_and_export_tpo_variables_interface), PUBLIC, &
-                            DEFERRED:: compute_and_export_tpo_variables
-    !# Compute the fields specific to the formulation identified by an
-    !  EXTENDED TYPE, starting from the standard 3+1 fields
-
-    PROCEDURE(print_formatted_id_tpo_variables_interface), PUBLIC, &
-                            DEFERRED:: print_formatted_id_tpo_variables
-    !! Prints the spacetime |id| to a formatted file
 
     GENERIC, PUBLIC:: compute_and_export_tpo_constraints => &
                       compute_and_export_tpo_constraints_grid, &
@@ -258,12 +264,20 @@ MODULE standard_tpo_formulation
     !  EXTENDED TYPE, using the |bssn| |id| on the refined
     !  mesh and the hydrodynamical |id| mapped from the particles to the mesh
 
-    PROCEDURE:: print_summary
-    !# Prints a summary about the features of the refined mesh
+    PROCEDURE(compute_and_export_tpo_variables_interface), PUBLIC, &
+                            DEFERRED:: compute_and_export_tpo_variables
+    !# Compute the fields specific to the formulation identified by an
+    !  EXTENDED TYPE, starting from the standard 3+1 fields
+
+    PROCEDURE(print_formatted_id_tpo_variables_interface), PUBLIC, &
+                            DEFERRED:: print_formatted_id_tpo_variables
+    !! Prints the spacetime |id| to a formatted file
+
 
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
+
 
     PROCEDURE:: abs_values_in
 
@@ -364,6 +378,24 @@ MODULE standard_tpo_formulation
       DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN ), OPTIONAL:: source
 
     END SUBROUTINE analyze_constraint
+
+
+    MODULE SUBROUTINE test_recovery_m2p( this, parts, namefile )
+    !# Tests the recovery. Computes the conserved variables from the physical
+    !  ones, and then the physical ones from the conserved ones. It then
+    !  compares the variables computed with the recovery PROCEDURES, with
+    !  those computed with |sphincsid|. Uses the mesh-2-particle.
+    !  @todo add reference for recovery
+
+      CLASS(tpo),          INTENT(IN)   :: this
+      !! [[tpo]] object which this PROCEDURE is a member of
+      CLASS(particles),    INTENT(IN)   :: parts
+      !# [[sph_particles:particles]] object used to map the metric
+      !  from the mesh to the particles, and to call the recovery procedures
+      CHARACTER( LEN= * ), INTENT(INOUT):: namefile
+      !! Name of the formatted file where the data is printed
+
+    END SUBROUTINE test_recovery_m2p
 
 
     MODULE SUBROUTINE print_summary( THIS, filename )

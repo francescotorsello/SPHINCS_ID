@@ -176,6 +176,7 @@ module_formul_3p1_id = [
   'src/standard_tpo_formulation/submodule_standard_tpo_formulation_standard_tpo_variables.f90',
   'src/standard_tpo_formulation/submodule_standard_tpo_formulation_access.f90',
   'src/standard_tpo_formulation/submodule_standard_tpo_formulation_io.f90',
+ 'src/standard_tpo_formulation/submodule_standard_tpo_formulation_recovery.f90',
   'src/standard_tpo_formulation/submodule_standard_tpo_formulation_analysis.f90'
 ]
 

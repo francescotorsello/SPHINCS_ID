@@ -32,10 +32,11 @@ MODULE sph_particles
   !***********************************************************
 
 
-  USE utility,        ONLY: itr, ios, err_msg, test_status, is_finite_number, &
-                            perc, creturn, run_id, show_progress
-  USE id_base,        ONLY: idbase
-  USE timing,         ONLY: timer
+  USE utility,                  ONLY: itr, ios, err_msg, test_status, &
+                                      is_finite_number, perc, creturn, &
+                                      run_id, show_progress
+  USE id_base,                  ONLY: idbase
+  USE timing,                   ONLY: timer
 
 
   IMPLICIT NONE
@@ -485,6 +486,8 @@ MODULE sph_particles
     !! Returns [[particles:npart]]
     PROCEDURE, PUBLIC:: get_npart_i
     !! Returns the number of particles on the object `i_matter`
+    PROCEDURE, PUBLIC:: get_n_matter
+    !! Returns [[particles:n_matter]]
     PROCEDURE, PUBLIC:: get_nuratio
     !! Returns [[particles:nuratio]]
     PROCEDURE, PUBLIC:: get_nuratio_i
@@ -493,6 +496,8 @@ MODULE sph_particles
     !! Returns [[particles:pos]]
     PROCEDURE, PUBLIC:: get_vel
     !! Returns [[particles:v]]
+    PROCEDURE, PUBLIC:: get_nstar
+    !! Returns [[particles:nstar]]
     PROCEDURE, PUBLIC:: get_nlrf
     !! Returns [[particles:nlrf]]
     PROCEDURE, PUBLIC:: get_nu
@@ -1168,6 +1173,16 @@ MODULE sph_particles
    !
    !END SUBROUTINE write_lorene_bns_id_dump
 
+    MODULE PURE FUNCTION get_n_matter( THIS ) RESULT( n_matter )
+    !! Returns [[particles:n_matter]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT( IN ):: THIS
+      !> [[particles:n_matter]]
+      INTEGER:: n_matter
+
+    END FUNCTION get_n_matter
+
     MODULE PURE FUNCTION get_npart( THIS ) RESULT( n_part )
     !! Returns [[particles:npart]]
 
@@ -1234,6 +1249,16 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
 
     END FUNCTION get_vel
+
+    MODULE PURE FUNCTION get_nstar( THIS ) RESULT( nstar )
+    !! Returns [[particles:nstar]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT( IN ):: THIS
+      !> [[particles:nstar]]
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nstar
+
+    END FUNCTION get_nstar
 
     MODULE PURE FUNCTION get_nlrf( THIS ) RESULT( nlrf )
     !! Returns [[particles:nlrf]]

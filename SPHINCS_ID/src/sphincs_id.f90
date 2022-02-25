@@ -106,6 +106,9 @@ PROGRAM sphincs_id
   CHARACTER( LEN= 500 ):: namefile_sph
   !# String storing the name for ??
   !
+  CHARACTER( LEN= 500 ):: namefile_recovery
+  !# String storing the name for the formatted file containing the data
+  !  from the recovery test
   CHARACTER( LEN= 500 ):: namefile_bssn
   !# String storing the name for the formatted file containing the |bssn| |id|
   CHARACTER( LEN= 500 ):: namefile_bssn_bin
@@ -517,44 +520,44 @@ PROGRAM sphincs_id
       !
       compute_export_bssn_constraints_loop: DO itr3 = 1, n_bns, 1
 
-          bssn_forms( itr3 )% cons_step= constraints_step
-          bssn_forms( itr3 )% export_constraints= export_constraints
-          bssn_forms( itr3 )% export_constraints_details= &
-                              export_constraints_details
-          bssn_forms( itr3 )% export_constraints_xy= export_constraints_xy
-          bssn_forms( itr3 )% export_constraints_x = export_constraints_x
+        bssn_forms( itr3 )% cons_step= constraints_step
+        bssn_forms( itr3 )% export_constraints= export_constraints
+        bssn_forms( itr3 )% export_constraints_details= &
+                            export_constraints_details
+        bssn_forms( itr3 )% export_constraints_xy= export_constraints_xy
+        bssn_forms( itr3 )% export_constraints_x = export_constraints_x
 
-          IF( compute_constraints )THEN
+        IF( compute_constraints )THEN
 
-            PRINT *, "===================================================" &
-                     // "==============="
-            PRINT *, " Computing BSSN constraints for BSSN formulation", itr3
-            PRINT *, "===================================================" &
-                     // "==============="
-            PRINT *
+          PRINT *, "===================================================" &
+                   // "==============="
+          PRINT *, " Computing BSSN constraints for BSSN formulation", itr3
+          PRINT *, "===================================================" &
+                   // "==============="
+          PRINT *
 
-            WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, &
-                                                  ".dat"
-            WRITE( name_logfile, "(A28,I1)" ) &
-                                "bssn-constraints-statistics-", itr3
+          WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, &
+                                                ".dat"
+          WRITE( name_logfile, "(A28,I1)" ) &
+                              "bssn-constraints-statistics-", itr3
 
-            namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
-            name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
+          namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+          name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
-            CALL bssn_forms( itr3 )% &
-                        compute_and_export_tpo_constraints( ids(itr3)% idata, &
-                                                            namefile_bssn, &
-                                                            name_logfile )
+          CALL bssn_forms( itr3 )% &
+                      compute_and_export_tpo_constraints( ids(itr3)% idata, &
+                                                          namefile_bssn, &
+                                                          name_logfile )
 
-          ENDIF
+        ENDIF
 
-          part_distribution_loop3: DO itr4= 1, max_n_parts, 1
+        part_distribution_loop3: DO itr4= 1, max_n_parts, 1
 
-            IF( placer( itr3, itr4 ) == test_int )THEN
-              EXIT
-              ! Experimental: empty particles object
-              !particles_dist( itr, itr2 )= particles()
-            ELSE
+          IF( placer( itr3, itr4 ) == test_int )THEN
+            EXIT
+            ! Experimental: empty particles object
+            !particles_dist( itr, itr2 )= particles()
+          ELSE
 
             IF( compute_parts_constraints .AND. run_sph )THEN
 
@@ -581,15 +584,48 @@ PROGRAM sphincs_id
 
               CALL bssn_forms( itr3 )% &
                           compute_and_export_tpo_constraints( &
-                                                  particles_dist( itr3, itr4 ), &
-                                                  namefile_bssn, &
-                                                  name_logfile )
+                                                particles_dist( itr3, itr4 ), &
+                                                namefile_bssn, &
+                                                name_logfile )
 
             ENDIF
           ENDIF
 
         ENDDO part_distribution_loop3
+
       ENDDO compute_export_bssn_constraints_loop
+
+      !
+      !-- Test recovery using the mesh-2-particle mapping
+      !
+      test_recovery_m2p: DO itr3 = 1, n_bns, 1
+
+        part_distribution_loop4: DO itr4= 1, max_n_parts, 1
+          IF( placer( itr3, itr4 ) == test_int )THEN
+            EXIT part_distribution_loop4
+            ! Experimental: empty particles object
+            !particles_dist( itr, itr2 )= particles()
+          ELSE
+
+            PRINT *, "===================================================" &
+                     // "================================================"
+            PRINT *, " Testing recovery using mesh-2-particle mapping, for BSSN",&
+                     " formulation", itr3, "with particle distribution", itr4
+            PRINT *, "===================================================" &
+                     // "================================================"
+            PRINT *
+
+            WRITE( namefile_recovery, "(A18,I1,A4)" ) "recovery-test-m2p_", itr3
+            namefile_recovery= TRIM( spacetime_path )//TRIM( namefile_recovery )
+            CALL bssn_forms( itr3 )% &
+                 test_recovery_m2p( particles_dist( itr3, itr4 ), &
+                                    namefile_recovery )
+
+          ENDIF
+
+        ENDDO part_distribution_loop4
+
+      ENDDO test_recovery_m2p
 
     ENDIF
 
