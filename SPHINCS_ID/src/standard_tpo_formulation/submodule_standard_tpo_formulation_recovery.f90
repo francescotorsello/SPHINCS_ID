@@ -87,7 +87,7 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
 
     INTEGER:: npart, i_matter, a, l
 
-    DOUBLE PRECISION:: det
+    !DOUBLE PRECISION:: det
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar
@@ -100,9 +100,9 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: s_l_rec
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: e_hat_rec
 
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: shift_parts
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: g3_parts
+    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse_parts
+    !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: shift_parts
+    !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: g3_parts
 
     LOGICAL:: exist
 
@@ -112,6 +112,7 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     npart= parts% get_npart()
+    pos  = parts% get_pos()
 
     ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -167,36 +168,47 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
       CALL allocate_metric_on_particles(npart)
     ENDIF
 
-    ALLOCATE( lapse_parts(npart) )
-    ALLOCATE( shift_parts(3,npart) )
-    ALLOCATE( g3_parts   (6,npart) )
-    lapse_parts= parts% get_lapse()
-    shift_parts= parts% get_shift()
-    g3_parts   = parts% get_g3()
-
     IF( debug ) PRINT *, "0.25"
 
-    !CALL get_metric_on_particles( npart, pos )
-    DO a= 1, npart, 1
+    !
+    !-- Uncomment the following lines to use he metric from the particles
+    !-- This is to compare with he SUBROUTINE recovery_test in TYPE particles,
+    !-- and check that both give the same results when using the same data.
+    !-- They do on 25.02.2022
+    !
 
-      CALL compute_g4( lapse_parts(a), &
-            [shift_parts(1,a), shift_parts(2,a), shift_parts(3,a)], &
-            [g3_parts(1,a), g3_parts(2,a), g3_parts(3,a), &
-             g3_parts(4,a), g3_parts(5,a), g3_parts(6,a)], &
-             g4_ll(1:n_sym4x4,a) )
+    !ALLOCATE( lapse_parts(npart) )
+    !ALLOCATE( shift_parts(3,npart) )
+    !ALLOCATE( g3_parts   (6,npart) )
+    !lapse_parts= parts% get_lapse()
+    !shift_parts= parts% get_shift()
+    !g3_parts   = parts% get_g3()
 
-      CALL determinant_sym4x4( g4_ll(1:n_sym4x4,a), det )
-      IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", a
-          STOP
-      ELSEIF( det > 0 )THEN
-          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                   // "positive at particle ", a
-          STOP
-      ENDIF
+    !DO a= 1, npart, 1
+    !
+    !  CALL compute_g4( lapse_parts(a), &
+    !        [shift_parts(1,a), shift_parts(2,a), shift_parts(3,a)], &
+    !        [g3_parts(1,a), g3_parts(2,a), g3_parts(3,a), &
+    !         g3_parts(4,a), g3_parts(5,a), g3_parts(6,a)], &
+    !         g4_ll(1:n_sym4x4,a) )
+    !
+    !  CALL determinant_sym4x4( g4_ll(1:n_sym4x4,a), det )
+    !  IF( ABS(det) < 1D-10 )THEN
+    !      PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+    !               // "effectively 0 at particle ", a
+    !      STOP
+    !  ELSEIF( det > 0 )THEN
+    !      PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+    !               // "positive at particle ", a
+    !      STOP
+    !  ENDIF
+    !
+    !ENDDO
 
-    ENDDO
+    ! Uncomment the following line to use the metric mapped from the mesh
+    ! to the particles
+
+    CALL get_metric_on_particles( npart, pos )
 
     IF( debug ) PRINT *, "0.5"
 
@@ -207,8 +219,7 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     ALLOCATE( theta_fb(npart) )
     ALLOCATE( cs_fb   (npart) )
 
-    pos  = parts% get_pos()
-    nstar= parts% get_nstar_sph()
+    nstar   = parts% get_nstar_sph()
     nlrf_fb = parts% get_nlrf_sph()
     u_fb    = parts% get_u_sph()
     pr_fb   = parts% get_pressure_cu()
