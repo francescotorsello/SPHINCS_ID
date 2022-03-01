@@ -332,7 +332,7 @@ PROGRAM sphincs_id
   IF( run_sph )THEN
 
     !
-    !-- Construct the particles objects from the bns objects
+    !-- Construct the particles objects
     !
     place_hydro_id_loops: DO itr3= 1, n_bns, 1
       part_distribution_loop: DO itr4= 1, max_n_parts, 1
@@ -347,18 +347,23 @@ PROGRAM sphincs_id
           PRINT *, "===================================================" &
                    // "==============="
           PRINT *
+
+          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
+          !                                         placer( itr3, itr4 ) )
+
+          namefile_parts_bin= "NSNS.00000"
           particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-                                                   placer( itr3, itr4 ) )
+                                                   namefile_parts_bin )
 
         ENDIF
       ENDDO part_distribution_loop
     ENDDO place_hydro_id_loops
 
-  !  namefile_parts_bin= "NSNS."
-  !  namefile_parts= "try.dat"
-  !  CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
-  !
-  !  STOP
+    !namefile_parts_bin= "NSNS.00000"
+    !namefile_parts= "try.dat"
+    !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
+
+    STOP
 
   ENDIF
 

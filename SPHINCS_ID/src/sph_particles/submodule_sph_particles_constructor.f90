@@ -61,7 +61,7 @@ SUBMODULE (sph_particles) constructor
   !END PROCEDURE construct_particles_idase_empty
 
 
-  MODULE PROCEDURE construct_particles
+  MODULE PROCEDURE construct_particles_std
 
     !**************************************************
     !
@@ -1380,7 +1380,7 @@ SUBMODULE (sph_particles) constructor
     IF( debug ) PRINT *, "33"
 
     !
-    !-- Import the needed ID on the particles, and time the process
+    !-- Read the needed ID on the particles, and time the process
     !
     PRINT *, "** Assigning the ID to the particles..."
     PRINT *
@@ -2197,7 +2197,7 @@ SUBMODULE (sph_particles) constructor
     END SUBROUTINE reflect_particles_yz_plane
 
 
-  END PROCEDURE construct_particles
+  END PROCEDURE construct_particles_std
 
 
   MODULE PROCEDURE destruct_particles
