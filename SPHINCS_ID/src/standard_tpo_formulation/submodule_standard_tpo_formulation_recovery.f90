@@ -57,13 +57,14 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     !************************************************
 
     USE recovery,             ONLY: phys_2_cons, cons_2_phys
-    USE tensor,               ONLY: jx, jy, jz, n_sym4x4
-    USE constants,            ONLY: zero, one
+    USE tensor,               ONLY: jx, jy, jz, n_sym4x4, itt, itx, ity, itz, &
+                                    ixx, ixy, ixz, iyy, iyz, izz
+    USE constants,            ONLY: zero, one, ten
     USE deactivate_particles, ONLY: nlrf_fb, u_fb, pr_fb, vel_u_fb, theta_fb, &
                                     cs_fb
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
-                                    get_metric_on_particles, g4_ll
+                                    get_metric_on_particles, g4_ll, sq_det_g4
     !USE map_metric_2_particles_refine, &
     !                          ONLY: update_ADM_metric_on_particles
     USE ADM_refine,           ONLY: lapse, shift_u, g_phys3_ll, &
@@ -205,6 +206,20 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     !  ENDIF
     !
     !ENDDO
+
+    ! Uncomment the following lines for testing
+    !g4_ll(itt,:)= - one
+    !g4_ll(itx,:)= zero
+    !g4_ll(ity,:)= zero
+    !g4_ll(itz,:)= zero
+    !g4_ll(ixx,:)= one
+    !g4_ll(ixy,:)= zero
+    !g4_ll(ixz,:)= zero
+    !g4_ll(iyy,:)= one
+    !g4_ll(iyz,:)= zero
+    !g4_ll(izz,:)= one
+    !
+    !sq_det_g4= - ten*ten
 
     ! Uncomment the following line to use the metric mapped from the mesh
     ! to the particles
