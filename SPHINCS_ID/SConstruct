@@ -288,10 +288,10 @@ env['F90PATH'] = [
 #]
 
 mesh_dir         = ['../../BSSN/']
-#sphincs_bssn_dir = ['../SPHINCS_BSSN/']
+sphincs_bssn_dir = ['../SPHINCS_BSSN/']
 sphincs_fm_dir   = ['../SPHINCS_fix_metric/']
 
-sphincs_bssn_dir = ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_BSSN/']
+#sphincs_bssn_dir = ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_BSSN/']
 #sphincs_fm_dir   = \
 #  ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/']
 
@@ -359,8 +359,8 @@ sources_sphincs_bssn = [
   #'module_grav_acc_check.f90',
   'module_dyn_metric_on_particles.f90',
   'module_alive_flag.f90',
-  'module_quadrup_GW_extraction.f90',
-  'module_tmp.f90'
+  'module_quadrup_GW_extraction.f90'#,
+  #'module_tmp.f90'
 ]
 
 sources_sphincs_fm = [
@@ -381,7 +381,7 @@ sources_sphincs_fm = [
   'module_tensor.f90',
   'module_BH_params.f90',
   'module_input_output.f90',
-  #'module_recovery_via_pressure.f90',
+  'module_recovery_via_pressure.f90',
   'module_SPHINCS_SPH_v2.f90',
   'module_SPHINCS_version.f90',
   'module_SPHINCS_logbook.f90',
@@ -394,7 +394,7 @@ sources_sphincs_fm = [
   'module_piecewise_polytrope.f90'
 ]
 
-sources_sphincs_fm = sources_sphincs_fm + ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/module_recovery_via_pressure.f90']
+#sources_sphincs_fm = sources_sphincs_fm + ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/module_recovery_via_pressure.f90']
 
 lorene_dir       = ['../../../Lorene/C++/Source/']
 lorene_bin_ns_dir= ['../../../Lorene/Export/C++/Source/']

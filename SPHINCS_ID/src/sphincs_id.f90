@@ -237,7 +237,7 @@ PROGRAM sphincs_id
   PRINT *, "  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU "
   PRINT *, "  General Public License for more details.                         "
   PRINT *
-  PRINT *, "  You should have received a copy of the GNU General Public        "
+  PRINT *, "  You should have received a copy of the GNU General Public License"
   PRINT *, "  along with SPHINCS_ID. If not, see https://www.gnu.org/licenses/."
   PRINT *, "  The copy of the GNU General Public License should be in the file "
   PRINT *, "  'COPYING'.                                                       "
@@ -348,12 +348,12 @@ PROGRAM sphincs_id
                    // "==============="
           PRINT *
 
-          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-          !                                         placer( itr3, itr4 ) )
-
-          namefile_parts_bin= "NSNS.00000"
           particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-                                                   namefile_parts_bin )
+                                                   placer( itr3, itr4 ) )
+
+          !namefile_parts_bin= "NSNS.00000"
+          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
+          !                                         namefile_parts_bin )
 
         ENDIF
       ENDDO part_distribution_loop
@@ -363,7 +363,7 @@ PROGRAM sphincs_id
     !namefile_parts= "try.dat"
     !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
 
-    STOP
+    !STOP
 
   ENDIF
 
