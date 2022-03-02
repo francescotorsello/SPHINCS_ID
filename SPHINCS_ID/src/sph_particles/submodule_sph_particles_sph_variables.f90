@@ -1183,11 +1183,6 @@ SUBMODULE (sph_particles) sph_variables
           CALL select_EOS_parameters( &
                         shorten_eos_name(this% all_eos(i_matter)% eos_name) )
 
-          PRINT *, this% all_eos(i_matter)% eos_name
-          PRINT *, shorten_eos_name(this% all_eos(i_matter)% eos_name)
-          PRINT *, eos_str
-          STOP
-
           DO a= npart_in, npart_fin, 1
 
             CALL gen_pwp_cold_eos( this% nlrf_int(a)*m0c2_cu, &
