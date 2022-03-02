@@ -359,8 +359,8 @@ sources_sphincs_bssn = [
   #'module_grav_acc_check.f90',
   'module_dyn_metric_on_particles.f90',
   'module_alive_flag.f90',
-  'module_quadrup_GW_extraction.f90'#,
-  #'module_tmp.f90'
+  'module_quadrup_GW_extraction.f90',
+  'module_tmp.f90'
 ]
 
 sources_sphincs_fm = [

@@ -39,7 +39,8 @@ SUBMODULE (sph_particles) sph_variables
   !****************************************************
 
 
-  USE constants, ONLY: zero, half, one, two, three, c_light2
+  USE constants,  ONLY: zero, half, one, two, three, c_light2
+  USE options,    ONLY: eos_str
 
 
   IMPLICIT NONE
@@ -277,78 +278,21 @@ SUBMODULE (sph_particles) sph_variables
       vel_u(2,itr)  = this% v(2,itr)
       vel_u(3,itr)  = this% v(3,itr)
 
-      !
-      !-- Metric as matrix for easy manipulation
-      !
-     ! g4(0,0)= - this% lapse(itr)**2 &
-     !        + this% g_xx(itr)*this% shift_x(itr) &
-     !         *this% shift_x(itr)&
-     !        + 2 * this% g_xy(itr)*this% shift_x(itr) &
-     !         *this% shift_y(itr)&
-     !        + 2 * this% g_xz(itr)*this% shift_x(itr) &
-     !         *this% shift_z(itr)&
-     !        + this% g_yy(itr)*this% shift_y(itr) &
-     !         *this% shift_y(itr)&
-     !        + 2 * this% g_yz(itr)*this% shift_y(itr) &
-     !         *this% shift_z(itr)&
-     !        + this% g_zz(itr)*this% shift_z(itr) &
-     !         *this% shift_z(itr)
-     ! g4(0,1)= this% g_xx(itr)*this% shift_x(itr) &
-     !        + this% g_xy(itr)*this% shift_y(itr) &
-     !        + this% g_xz(itr)*this% shift_z(itr)
-     ! g4(0,2)= this% g_xy(itr)*this% shift_x(itr) &
-     !        + this% g_yy(itr)*this% shift_y(itr) &
-     !        + this% g_yz(itr)*this% shift_z(itr)
-     ! g4(0,3)= this% g_xz(itr)*this% shift_x(itr) &
-     !        + this% g_yz(itr)*this% shift_y(itr) &
-     !        + this% g_zz(itr)*this% shift_z(itr)
-     !
-     ! g4(1,0)= this% g_xx(itr)*this% shift_x(itr) &
-     !        + this% g_xy(itr)*this% shift_y(itr) &
-     !        + this% g_xz(itr)*this% shift_z(itr)
-     ! g4(1,1)= this% g_xx(itr)
-     ! g4(1,2)= this% g_xy(itr)
-     ! g4(1,3)= this% g_xz(itr)
-     !
-     ! g4(2,0)= this% g_xy(itr)*this% shift_x(itr) &
-     !        + this% g_yy(itr)*this% shift_y(itr) &
-     !        + this% g_yz(itr)*this% shift_z(itr)
-     ! g4(2,1)= this% g_xy(itr)
-     ! g4(2,2)= this% g_yy(itr)
-     ! g4(2,3)= this% g_yz(itr)
-     !
-     ! g4(3,0)= this% g_xz(itr)*this% shift_x(itr) &
-     !        + this% g_yz(itr)*this% shift_y(itr) &
-     !        + this% g_zz(itr)*this% shift_z(itr)
-     ! g4(3,1)= this% g_xz(itr)
-     ! g4(3,2)= this% g_yz(itr)
-     ! g4(3,3)= this% g_zz(itr)
-
-     ! gg4(1, itr)= g4(0,0)
-     ! gg4(2, itr)= g4(0,1)
-     ! gg4(3, itr)= g4(0,2)
-     ! gg4(4, itr)= g4(0,3)
-     ! gg4(5, itr)= g4(1,1)
-     ! gg4(6, itr)= g4(1,2)
-     ! gg4(7, itr)= g4(1,3)
-     ! gg4(8, itr)= g4(2,2)
-     ! gg4(9, itr)= g4(2,3)
-     ! gg4(10,itr)= g4(3,3)
-
       CALL compute_g4( this% lapse(itr), &
             [this% shift_x(itr), this% shift_y(itr), this% shift_z(itr)], &
             [this% g_xx(itr), this% g_xy(itr), this% g_xz(itr), &
              this% g_yy(itr), this% g_yz(itr), this% g_zz(itr)], g4 )
 
       CALL determinant_sym4x4( g4, det )
-      !CALL determinant_4x4_matrix(g4,det)
       IF( ABS(det) < 1D-10 )THEN
           PRINT *, "The determinant of the spacetime metric is " &
                    // "effectively 0 at particle ", itr
+          PRINT *
           STOP
       ELSEIF( det > 0 )THEN
           PRINT *, "The determinant of the spacetime metric is " &
                    // "positive at particle ", itr
+          PRINT *
           STOP
       ENDIF
       sq_g= SQRT(-det)
@@ -359,12 +303,6 @@ SUBMODULE (sph_particles) sph_variables
       !-- Generalized Lorentz factor
       !
       Theta_a= zero
-      !DO nus=0,3
-      !  DO mus=0,3
-      !    Theta_a= Theta_a &
-      !             + g4(mus,nus)*this% v(mus,itr)*this% v(nus,itr)
-      !  ENDDO
-      !ENDDO
       CALL spacetime_vector_norm_sym4x4( g4, this% v(:,itr), Theta_a )
       IF( Theta_a > zero )THEN
         PRINT *, "** ERROR! The computing frame particle 4-velocity is ", &
@@ -1244,6 +1182,11 @@ SUBMODULE (sph_particles) sph_variables
 
           CALL select_EOS_parameters( &
                         shorten_eos_name(this% all_eos(i_matter)% eos_name) )
+
+          PRINT *, this% all_eos(i_matter)% eos_name
+          PRINT *, shorten_eos_name(this% all_eos(i_matter)% eos_name)
+          PRINT *, eos_str
+          STOP
 
           DO a= npart_in, npart_fin, 1
 

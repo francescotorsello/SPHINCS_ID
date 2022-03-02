@@ -351,23 +351,23 @@ SUBMODULE (sph_particles) io
     !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
     !        // TRIM(finalnamefile) )
 
-  !  WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  !  "#      particle      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]", &
-  !  "       lapse     shift_x [c]    shift_y [c]    shift_z [c]", &
-  !  "       baryon density in the local rest frame [kg m^{-3}$]", &
-  !  "       energy density [c^2]", &
-  !  "       specific energy [c^2]", &
-  !  "       pressure [Pa]", &
-  !  "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
-  !  "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
-  !  "       baryon number per particle nu", &
-  !  "       baryon density in the local rest frame nlrf [baryon/cm^3]", &
-  !  "       generalized Lorentz factor Theta"
-  !  IF( ios > 0 )THEN
-  !    PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
-  !             ". The error message is", err_msg
-  !    STOP
-  !  ENDIF
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "#      particle      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]", &
+    "       lapse     shift_x [c]    shift_y [c]    shift_z [c]", &
+    "       baryon density in the local rest frame [kg m^{-3}$]", &
+    "       energy density [c^2]", &
+    "       specific energy [c^2]", &
+    "       pressure [Pa]", &
+    "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
+    "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
+    "       baryon number per particle nu", &
+    "       baryon density in the local rest frame nlrf [baryon/cm^3]", &
+    "       generalized Lorentz factor Theta"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(finalnamefile) )
 
@@ -393,23 +393,39 @@ SUBMODULE (sph_particles) io
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        itr, &
-        pos_u( 1, itr ), &
-        pos_u( 2, itr ), &
-        pos_u( 3, itr ), &
-        vel_u( 1, itr ), &
-        vel_u( 2, itr ), &
-        vel_u( 3, itr ), &
-        h( itr ), &
-        u( itr ), &
-        nu( itr ), &
-        nlrf( itr ), &
-        temp( itr ), &
-        av( itr ), &
-        ye( itr ), &
-        divv( itr ), &
-        Theta( itr ), &
-        Pr( itr )
+        itr, &                                  ! 1     33
+        pos_u( 1, itr ), &                      ! 2     34
+        pos_u( 2, itr ), &                      ! 3     35
+        pos_u( 3, itr ), &                      ! 4     36
+        vel_u( 1, itr ), &                      ! 5     37
+        vel_u( 2, itr ), &                      ! 6     38
+        vel_u( 3, itr ), &                      ! 7     39
+        h( itr ), &                             ! 8     40
+        u( itr ), &                             ! 9     41
+        nu( itr ), &                            ! 10    42
+        nlrf( itr ), &                          ! 11    43
+        temp( itr ), &                          ! 12    44
+        av( itr ), &                            ! 13    45
+        ye( itr ), &                            ! 14    46
+        divv( itr ), &                          ! 15    47
+        Theta( itr ), &                         ! 16    48
+        Pr( itr )                               ! 17    49
+        !this% pos( 1, itr ), &                  ! 2     34
+        !this% pos( 2, itr ), &                  ! 3     35
+        !this% pos( 3, itr ), &                  ! 4     36
+        !this% v( 1, itr ), &                    ! 5     37
+        !this% v( 2, itr ), &                    ! 6     38
+        !this% v( 3, itr ), &                    ! 7     39
+        !this% h( itr ), &                       ! 8     40
+        !this% u_pwp( itr ), &                   ! 9     41
+        !this% nu( itr ), &                      ! 10    42
+        !this% nlrf_int( itr ), &                ! 11    43
+        !temp( itr ), &                          ! 12    44
+        !av( itr ), &                            ! 13    45
+        !ye( itr ), &                            ! 14    46
+        !divv( itr ), &                          ! 15    47
+        !this% theta( itr ), &                   ! 16    48
+        !this% pressure_cu( itr )                ! 17    49
 
       IF( ios > 0 )THEN
         PRINT *, "...error when writing the arrays in " &
@@ -600,10 +616,10 @@ SUBMODULE (sph_particles) io
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        itr, &                                                             ! 1
-        this% pos( 1, itr ), &                                             ! 2
-        this% pos( 2, itr ), &                                             ! 3
-        this% pos( 3, itr ), &                                             ! 4
+        itr, &                                                       ! 1
+        this% pos( 1, itr ), &                                       ! 2
+        this% pos( 2, itr ), &                                       ! 3
+        this% pos( 3, itr ), &                                       ! 4
         this% lapse( itr ), &                                        ! 5
         this% shift_x( itr ), &                                      ! 6
         this% shift_y( itr ), &                                      ! 7
@@ -616,22 +632,22 @@ SUBMODULE (sph_particles) io
         this% v_euler_x( itr ), &                                    ! 14
         this% v_euler_y( itr ), &                                    ! 15
         this% v_euler_z( itr ), &                                    ! 16
-        this% v( 1, itr ), &                                               ! 17
-        this% v( 2, itr ), &                                               ! 18
-        this% v( 3, itr ), &                                               ! 19
-        this% nu( itr ), &                                                 ! 20
-        this% nlrf( itr ), &                                               ! 21
-        this% Ye( itr ), &                                                 ! 22
-        this% Theta( itr ), &                                              ! 23
-        this% nstar( itr ), &                                              ! 24
-        this% nstar_int( itr ), &                                          ! 25
-        this% h( itr ), &                                                  ! 26
-        this% particle_density( itr ), &                                   ! 27
-        this% particle_density_int( itr ), &                               ! 28
-        this% pvol( itr ), &                                               ! 29
-        this% pmass( itr ), &                                              ! 30
-        this% u_pwp( itr ), &                                              ! 31
-        this% nlrf_int( itr )                                              ! 32
+        this% v( 1, itr ), &                                         ! 17
+        this% v( 2, itr ), &                                         ! 18
+        this% v( 3, itr ), &                                         ! 19
+        this% nu( itr ), &                                           ! 20
+        this% nlrf( itr ), &                                         ! 21
+        this% Ye( itr ), &                                           ! 22
+        this% Theta( itr ), &                                        ! 23
+        this% nstar( itr ), &                                        ! 24
+        this% nstar_int( itr ), &                                    ! 25
+        this% h( itr ), &                                            ! 26
+        this% particle_density( itr ), &                             ! 27
+        this% particle_density_int( itr ), &                         ! 28
+        this% pvol( itr ), &                                         ! 29
+        this% pmass( itr ), &                                        ! 30
+        this% u_pwp( itr ), &                                        ! 31
+        this% nlrf_int( itr )                                        ! 32
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &

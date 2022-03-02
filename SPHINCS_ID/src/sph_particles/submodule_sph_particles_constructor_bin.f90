@@ -55,7 +55,8 @@ SUBMODULE (sph_particles) constructor_bin
     USE OMP_LIB
     USE constants,      ONLY: zero, one
     USE tensor,         ONLY: n_sym4x4
-    USE utility,        ONLY: compute_g4, determinant_sym4x4
+    USE utility,        ONLY: compute_g4, determinant_sym4x4, &
+                              spacetime_vector_norm_sym4x4
     USE input_output,   ONLY: read_options
     USE options,        ONLY: eos_str
     USE units,          ONLY: set_units
@@ -92,7 +93,7 @@ SUBMODULE (sph_particles) constructor_bin
 
     INTEGER:: tmp
 
-    DOUBLE PRECISION:: g4(n_sym4x4), det
+    DOUBLE PRECISION:: g4(n_sym4x4), det, v_norm
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp1
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp2
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp3
@@ -161,6 +162,7 @@ SUBMODULE (sph_particles) constructor_bin
     DEALLOCATE( tmp10 )
 
     ALLOCATE( sq_detg4( parts% npart ) )
+
     DO a= 1, parts% npart, 1
 
       CALL compute_g4( parts% lapse(a), &
@@ -173,13 +175,49 @@ SUBMODULE (sph_particles) constructor_bin
       IF( ABS(det) < 1D-10 )THEN
           PRINT *, "** ERROR! The determinant of the spacetime metric is " &
                    // "effectively 0 at particle ", a
+          PRINT *
           STOP
       ELSEIF( det > 0 )THEN
           PRINT *, "** ERROR! The determinant of the spacetime metric is " &
                    // "positive at particle ", a
+          PRINT *
           STOP
       ENDIF
       sq_detg4(a)= SQRT(-det)
+
+      IF( parts% theta(a) < zero )THEN
+        PRINT *, "** ERROR! The computing frame generalized Lorentz factor ", &
+                 "is negative at particle  ", a
+        PRINT *, " * Its value is ", parts% theta(a)
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ELSEIF( parts% theta(a) == zero )THEN
+        PRINT *, "** ERROR! The computing frame generalized Lorentz factor ", &
+                 "is zero at particle ", a
+        PRINT *, " * Its value is ", parts% theta(a)
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+
+      v_norm= zero
+      CALL spacetime_vector_norm_sym4x4( g4, parts% v(:,a), v_norm )
+      IF( v_norm > zero )THEN
+        PRINT *, "** ERROR! The computing frame particle 4-velocity is ", &
+                 "spacelike at particle ", a
+        PRINT *, " * Its norm is ", v_norm
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ELSEIF( v_norm == zero )THEN
+        PRINT *, "** ERROR! The computing frame particle 4-velocity is ", &
+                 "null at particle ", a
+        PRINT *, " * Its norm is ", v_norm
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ENDIF
 
     ENDDO
 

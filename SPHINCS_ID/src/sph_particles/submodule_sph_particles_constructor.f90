@@ -85,8 +85,9 @@ SUBMODULE (sph_particles) constructor
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
     USE units,          ONLY: set_units
-    USE options,        ONLY: ikernel, ndes
+    USE options,        ONLY: ikernel, ndes, eos_str
     USE alive_flag,     ONLY: alive
+    USE pwp_EOS,        ONLY: shorten_eos_name
     USE utility,        ONLY: spherical_from_cartesian, &
                               spatial_vector_norm_sym3x3
 
@@ -382,6 +383,27 @@ SUBMODULE (sph_particles) constructor
 
     ! tabulate kernel, get ndes
     CALL ktable( ikernel, ndes )
+
+    DO i_matter= 1, parts% n_matter, 1
+
+      IF( (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .LT. eos_str) &
+          .OR. &
+          (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .GT. eos_str) )&
+      THEN
+        PRINT *, "** ERROR! On matter object ", i_matter, &
+                 ", the EOS taken from the ID is not the same as the ",&
+                 "one specified in parameter file SPHINCS_fm_input.dat."
+        PRINT *
+        PRINT *, " * EOS from the ID: ", &
+                 shorten_eos_name(parts% all_eos(i_matter)% eos_name)
+        PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+                 eos_str
+        PRINT *, "Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+    ENDDO
 
     ! TODO: Add check that the number of rows in placer is the same as the
     !       number of bns objects, and that all bns have a value for placer

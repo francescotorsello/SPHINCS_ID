@@ -351,7 +351,7 @@ PROGRAM sphincs_id
           particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
                                                    placer( itr3, itr4 ) )
 
-          !namefile_parts_bin= "NSNS.00000"
+          !namefile_parts_bin= "sph-output/NSNS.00000"
           !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
           !                                         namefile_parts_bin )
 

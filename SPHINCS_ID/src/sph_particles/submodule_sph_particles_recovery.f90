@@ -63,7 +63,7 @@ SUBMODULE (sph_particles) recovery
                                     deallocate_metric_on_particles, &
                                     g4_ll
     USE utility,              ONLY: compute_g4, determinant_sym4x4
-    USE tmp,                  ONLY: fill_arrays
+    !USE tmp,                  ONLY: fill_arrays
 
     IMPLICIT NONE
 
@@ -158,15 +158,15 @@ SUBMODULE (sph_particles) recovery
     !-------------------------------------------------------
     !-----DEBUGGING
     !-------------------------------------------------------
-   ! p_max= 0.0D0
-   ! DO a= 1, npart, 1
-   !   IF( pr(a) > p_max )THEN
-   !     p_max= pr(a)
-   !     a_max= a
-   !   ENDIF
-   ! ENDDO
-   ! CALL fill_arrays( npart, nstar, s_l_rec, e_hat_rec, nlrf, u, &
-   !                   pr, vel_u, theta )
+    !p_max= 0.0D0
+    !DO a= 1, npart, 1
+    !  IF( pr(a) > p_max )THEN
+    !    p_max= pr(a)
+    !    a_max= a
+    !  ENDIF
+    !ENDDO
+    !CALL fill_arrays( npart, nstar, s_l_rec, e_hat_rec, nlrf, u, &
+    !                  pr, vel_u, theta )
     !-------------------------------------------------------
     !-------------------------------------------------------
 
@@ -177,7 +177,7 @@ SUBMODULE (sph_particles) recovery
 
     CALL cons_2_phys( npart, nstar_rec, s_l_rec, e_hat_rec, &
                       ! following is output (pressure is INOUT)
-                      nlrf_rec, vel_u_rec, u_rec, pr_rec, theta_rec )
+                      nlrf_rec, vel_u_rec, u_rec, pr_rec, theta_rec )!, a_max )
 
     IF( debug ) PRINT *, "3"
 
