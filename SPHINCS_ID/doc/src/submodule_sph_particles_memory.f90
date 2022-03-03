@@ -339,6 +339,16 @@ SUBMODULE (sph_particles) memory
          STOP
       ENDIF
     ENDIF
+    IF(.NOT.ALLOCATED( this% v ))THEN
+      ALLOCATE( this% v( 0:3, this% npart ), &
+                STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array v in SUBROUTINE" &
+                  // "allocate_lorene_id_memory. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
 
     PRINT *, "** Subroutine allocate_lorene_id_memory executed."
     PRINT *
@@ -736,6 +746,17 @@ SUBMODULE (sph_particles) memory
       DEALLOCATE( this% enthalpy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array enthalpy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, &
+      !                "...deallocation error for array v in " &
+      !                // "SUBROUTINE destruct_particles." )
+    ENDIF
+    IF( ALLOCATED( this% v ))THEN
+      DEALLOCATE( this% v, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v. ", &
                   "The error message is", err_msg
          STOP
       ENDIF

@@ -166,7 +166,7 @@ module_id_base = [
 
 module_sph_particles = [
   'src/sph_particles/module_sph_particles.f90',
-  'src/sph_particles/submodule_sph_particles_constructor.f90',
+  'src/sph_particles/submodule_sph_particles_constructor_std.f90',
   'src/sph_particles/submodule_sph_particles_constructor_bin.f90',
   'src/sph_particles/submodule_sph_particles_memory.f90',
   'src/sph_particles/submodule_sph_particles_lattices.f90',

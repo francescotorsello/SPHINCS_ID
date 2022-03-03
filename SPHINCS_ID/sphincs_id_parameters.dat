@@ -1,4 +1,4 @@
-&bns_parameters
+&sphincs_id_parameters
 !-------------------------------------------------------------------------!
 ! gfortran requires the assignment to be on the same line, ifort does not !
 !-------------------------------------------------------------------------!

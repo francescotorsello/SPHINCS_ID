@@ -51,40 +51,35 @@ PROGRAM convergence_test
   USE bssn_formulation,         ONLY: bssn
   USE standard_tpo_formulation, ONLY: tpo
   USE timing,                   ONLY: timer
-  USE utility,                  ONLY: date, time, zone, values, run_id, itr, &
-                                      itr3, file_exists, cnt, ios, err_msg, &
-                                      test_status, show_progress, end_time
+  USE utility,                  ONLY: date, time, zone, values, run_id, &
+                                      itr3, ios, err_msg, &
+                                      test_status, show_progress, end_time, &
+                                      read_sphincs_id_parameters, &
+                                      !----------
+                                      n_bns, common_path, filenames, placer, &
+                                      export_bin, export_form, export_form_xy, &
+                                      export_form_x, export_constraints_xy, &
+                                      export_constraints_x, &
+                                      compute_constraints, &
+                                      export_constraints, &
+                                      export_constraints_details, &
+                                      constraints_step, &
+                                      compute_parts_constraints, &
+                                      numerator_ratio_dx, denominator_ratio_dx, &
+                                      one_lapse, zero_shift, show_progress, &
+                                      run_sph, run_spacetime, sph_path, &
+                                      spacetime_path, estimate_length_scale, &
+                                      test_int, max_n_parts, ref_lev
 
   IMPLICIT NONE
 
-  ! Maximum length for strings, and for the number of imported binaries
-  INTEGER, PARAMETER:: max_length= 50
-  ! Maximum number of binary systems
-  INTEGER, PARAMETER:: max_n_bns= 50
-  ! Maximum number of particle distributions
-  INTEGER, PARAMETER:: max_n_parts= 250
   ! Loop limits for BSSN objects (for debugging; 3 is for production)
   INTEGER, PARAMETER:: min_bssn= 1
   INTEGER, PARAMETER:: max_bssn= 3
-  ! Refinement level over which to compute contraints (make input parameter)
-  INTEGER:: ref_lev
-  ! Number of binary systems of neutron stars (BNS) to import
-  INTEGER:: n_bns
-  ! Export the constraints every constraints_step-th step
-  INTEGER:: constraints_step
-
-  ! Matrix storing the information on how to place particles for each bns
-  ! object. Row i contains information about the i^th bns object.
-  INTEGER, PARAMETER:: test_int= - 112
-  INTEGER, DIMENSION( max_n_bns, max_n_parts ):: placer= test_int
 
   ! Grid spacing for the first BSSN object; the other two will have
   ! original_dx/2 and original_dx/4 as grid spacings
   DOUBLE PRECISION:: original_dx
-  ! Rational ratio between the large grid spacing and the medium one,
-  ! equal to the ratio between the medium grid spacing nd the small one
-  DOUBLE PRECISION:: numerator_ratio_dx
-  DOUBLE PRECISION:: denominator_ratio_dx
   DOUBLE PRECISION:: ratio_dx
 
   CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
@@ -105,52 +100,24 @@ PROGRAM convergence_test
   CHARACTER( LEN= 500 ):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
-  CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
-  ! Array of strings storing the names of the |id| files
-  CHARACTER( LEN= max_length ):: common_path
-  !# String storing the local path to the directory where the |id| files
-  !  are stored
-  CHARACTER( LEN= max_length ):: sph_path
-  !# String storing the local path to the directory where the
-  !  SPH output is to be saved
-  CHARACTER( LEN= max_length ):: spacetime_path
-  !# String storing the local path to the directory where the
-  !  spacetime output is to be saved
 
   LOGICAL, PARAMETER:: debug= .FALSE.
   LOGICAL:: exist
   LOGICAL(4):: dir_out
 
-  ! Logical variables to steer the execution
-  LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
-            compute_constraints, export_constraints_xy, &
-            export_constraints_x, export_constraints, &
-            export_constraints_details, compute_parts_constraints, &
-            one_lapse, zero_shift, run_sph, run_spacetime
+  TYPE(timer):: execution_timer
 
-  TYPE( timer ):: execution_timer
+  CLASS(idbase), ALLOCATABLE:: idata
 
-  ! Declaration of the bns (binary neutron star) object containing the
-  ! formatted ID
-  !TYPE( bnslorene ):: binary
-  CLASS( idbase ), ALLOCATABLE:: idata
-  ! Declaration of the particles object containing the particle distribution
-  TYPE( particles ):: particles_dist
-  ! Declaration of the 3-component array storing the 3 bssn objects,
-  ! containing the BSSN variables on the gravity grid
-  TYPE( bssn ), DIMENSION(3):: bssn_forms
+  TYPE(particles):: particles_dist
+  !# Array storing the particles objects,
+  !  containing the particle distributions for each idbase object.
+  !  Multiple particle objects can contain different particle distributions
+  !  for the same idbase object.
 
-  ! Namelist containing parameters read from lorene_bns_id_parameters.par
-  ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM                           
-  NAMELIST /bns_parameters/ n_bns, common_path, filenames, placer, &
-                            export_bin, export_form, export_form_xy, &
-                            export_form_x, export_constraints_xy, &
-                            export_constraints_x, compute_constraints, &
-                            export_constraints, export_constraints_details, &
-                            constraints_step, compute_parts_constraints, &
-                            numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
-                            one_lapse, zero_shift, show_progress, &
-                            run_sph, run_spacetime, sph_path, spacetime_path
+  TYPE(bssn), DIMENSION(3):: bssn_forms
+  !# Array storing the bssn objects,
+  !  containing the BSSN variables on the gravity grid for each idbase object
 
   !---------------------------!
   !--  End of declarations  --!
@@ -191,7 +158,7 @@ PROGRAM convergence_test
   PRINT *, "  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU "
   PRINT *, "  General Public License for more details.                         "
   PRINT *
-  PRINT *, "  You should have received a copy of the GNU General Public        "
+  PRINT *, "  You should have received a copy of the GNU General Public License"
   PRINT *, "  along with SPHINCS_ID. If not, see https://www.gnu.org/licenses/."
   PRINT *, "  The copy of the GNU General Public License should be in the file "
   PRINT *, "  'COPYING'.                                                       "
@@ -204,7 +171,7 @@ PROGRAM convergence_test
   execution_timer= timer( "execution_timer" )
   CALL execution_timer% start_timer()
 
-  CALL read_bns_id_parameters()
+  CALL read_sphincs_id_parameters()
 
   ratio_dx= numerator_ratio_dx/denominator_ratio_dx
 
@@ -1466,73 +1433,5 @@ PROGRAM convergence_test
 
   END SUBROUTINE cauchy_convergence_test_unknown
 
-
-  SUBROUTINE read_bns_id_parameters()
-
-    IMPLICIT NONE
-
-    INTEGER:: stat
-    INTEGER, PARAMETER:: unit_parameters= 17
-
-    CHARACTER( LEN= : ), ALLOCATABLE:: lorene_bns_id_parameters
-    CHARACTER( LEN= : ), ALLOCATABLE:: msg
-
-    lorene_bns_id_parameters= 'sphincs_id_parameters.dat'
-
-    INQUIRE( FILE= lorene_bns_id_parameters, EXIST= file_exists )
-
-    IF( file_exists )THEN
-
-     OPEN( UNIT= unit_parameters, FILE= lorene_bns_id_parameters, &
-           STATUS= 'OLD' )
-
-    ELSE
-
-     PRINT*
-     PRINT*,'** ERROR: ', lorene_bns_id_parameters, " file not found!"
-     PRINT*
-     STOP
-
-    ENDIF
-
-    READ( UNIT= unit_parameters, NML= bns_parameters, IOSTAT= stat, &
-          IOMSG= msg )
-
-    IF( stat /= 0 )THEN
-      PRINT *, "** ERROR: Error in reading ",lorene_bns_id_parameters,&
-               ". The IOSTAT variable is ", stat, &
-               "The error message is", msg
-      STOP
-    ENDIF
-
-    CLOSE( UNIT= unit_parameters )
-
-    DO itr= 1, max_length, 1
-      IF( TRIM(filenames(itr)).NE."0" )THEN
-          cnt= cnt + 1
-      ENDIF
-    ENDDO
-    IF( cnt.NE.n_bns )THEN
-      PRINT *, "** ERROR! The number of file names is", cnt, &
-               "and n_bns=", n_bns, ". The two should be the same."
-      PRINT *
-      STOP
-    ENDIF
-
-   !DO itr= 1, n_bns, 1
-   !  DO itr2= 1, max_n_parts, 1
-   !    IF( placer( itr, itr2 ) == test_int )THEN
-   !      PRINT *
-   !      PRINT *, "** ERROR! The array placer does not have ", &
-   !               "enough components to specify all the desired ", &
-   !               "particle distributions. Specify the ", &
-   !               "components in file lorene_bns_id_particles.par"
-   !      PRINT *
-   !      STOP
-   !    ENDIF
-   !  ENDDO
-   !ENDDO
-
-  END SUBROUTINE read_bns_id_parameters
 
 END PROGRAM convergence_test

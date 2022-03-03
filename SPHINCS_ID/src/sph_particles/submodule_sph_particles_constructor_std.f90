@@ -1,4 +1,4 @@
-! File:         submodule_sph_particles_constructor.f90
+! File:         submodule_sph_particles_constructor_std.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
@@ -21,7 +21,7 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-SUBMODULE (sph_particles) constructor
+SUBMODULE (sph_particles) constructor_std
 
   !************************************************
   !
@@ -181,7 +181,7 @@ SUBMODULE (sph_particles) constructor
     LOGICAL, DIMENSION(id% get_n_matter()):: apm_iterate, use_atmosphere, &
                                              remove_atmosphere
 
-    NAMELIST /bns_particles/ &
+    NAMELIST /sphincs_id_particles/ &
               parts_pos_path, parts_pos, columns, header_lines, n_cols, &
               read_nu, column_nu, &
               stretch, &
@@ -279,7 +279,7 @@ SUBMODULE (sph_particles) constructor
      STOP
     ENDIF
 
-    READ( 10, NML= bns_particles )
+    READ( 10, NML= sphincs_id_particles )
     CLOSE( 10 )
 
     parts% use_thres          = use_thres
@@ -2240,4 +2240,4 @@ SUBMODULE (sph_particles) constructor
   END PROCEDURE destruct_particles
 
 
-END SUBMODULE constructor
+END SUBMODULE constructor_std

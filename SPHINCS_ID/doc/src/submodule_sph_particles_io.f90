@@ -71,46 +71,46 @@ SUBMODULE (sph_particles) io
 
     PRINT *, " * SPH:"
     PRINT *
-    PRINT *, "   Total particle number= ", THIS% npart
-    DO i_matter= 1, THIS% n_matter, 1
+    PRINT *, "   Total particle number= ", this% npart
+    DO i_matter= 1, this% n_matter, 1
       PRINT *, "   Particle number on matter object    ", i_matter, "=", &
-                                            THIS% npart_i(i_matter)
+                                            this% npart_i(i_matter)
     ENDDO
     PRINT *
-    DO i_matter= 1, THIS% n_matter, 1
+    DO i_matter= 1, this% n_matter, 1
       PRINT *, "   Mass fraction of matter object      ", i_matter, "=", &
-               THIS% mass_fractions(i_matter)
+               this% mass_fractions(i_matter)
       PRINT *, "   Particle fraction of matter object  ", i_matter, "=", &
-               DBLE(THIS% npart_i(i_matter))/DBLE(THIS% npart)
+               DBLE(this% npart_i(i_matter))/DBLE(this% npart)
       PRINT *, "   Baryon number ratio on matter object", i_matter, "=", &
-               THIS% nuratio_i(i_matter)
+               this% nuratio_i(i_matter)
     ENDDO
     PRINT *
 
     PRINT *, "   Baryon number ratio across all matter objects    =", &
-             THIS% nuratio
+             this% nuratio
     PRINT *
 
-    DO i_matter= 1, THIS% n_matter, 1
+    DO i_matter= 1, this% n_matter, 1
 
-      ASSOCIATE( npart_in   => THIS% npart_i(i_matter-1) + 1, &
-                 npart_fin  => THIS% npart_i(i_matter-1) +    &
-                               THIS% npart_i(i_matter) )
+      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
+                 npart_fin  => this% npart_i(i_matter-1) +    &
+                               this% npart_i(i_matter) )
 
-        max_nlrf_id = MAXVAL( THIS% nlrf(npart_in:npart_fin), DIM= 1 )
-        max_nlrf_sph= MAXVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )
-        min_nlrf_sph= MINVAL( THIS% nlrf_int(npart_in:npart_fin), DIM= 1 )
+        max_nlrf_id = MAXVAL( this% nlrf(npart_in:npart_fin), DIM= 1 )
+        max_nlrf_sph= MAXVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 )
+        min_nlrf_sph= MINVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 )
 
-        max_pr_id = MAXVAL( THIS% pressure(npart_in:npart_fin), DIM= 1 )
-        max_pr_sph= MAXVAL( THIS% pressure_cu(npart_in:npart_fin), &
+        max_pr_id = MAXVAL( this% pressure(npart_in:npart_fin), DIM= 1 )
+        max_pr_sph= MAXVAL( this% pressure_cu(npart_in:npart_fin), &
                             DIM= 1 )
-        min_pr_sph= MINVAL( THIS% pressure_cu(npart_in:npart_fin), &
+        min_pr_sph= MINVAL( this% pressure_cu(npart_in:npart_fin), &
                             DIM= 1 )
 
-        max_u_id = MAXVAL( THIS% specific_energy(npart_in:npart_fin), &
+        max_u_id = MAXVAL( this% specific_energy(npart_in:npart_fin), &
                            DIM= 1 )
-        max_u_sph= MAXVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 )
-        min_u_sph= MINVAL( THIS% u_pwp(npart_in:npart_fin), DIM= 1 )
+        max_u_sph= MAXVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 )
+        min_u_sph= MINVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 )
 
         PRINT *, "   * On matter object ", i_matter, ":"
         PRINT *
@@ -189,21 +189,32 @@ SUBMODULE (sph_particles) io
                                    ye,    &  ! Electron fraction
                                    divv,  &  ! Divergence of velocity vel_u
                                    allocate_SPH_memory, &
-                                   deallocate_SPH_memory
-    USE metric_on_particles, ONLY: allocate_metric_on_particles, &
-                                   deallocate_metric_on_particles
+                                   deallocate_SPH_memory, &
+                                   n1, n2
+    !USE metric_on_particles, ONLY: allocate_metric_on_particles, &
+    !                               deallocate_metric_on_particles
     USE input_output,        ONLY: set_units, read_SPHINCS_dump
+    USE constants,           ONLY: one
+    USE alive_flag,          ONLY: alive
 
     IMPLICIT NONE
+
+    INTEGER, PARAMETER:: max_npart= 2.D+7
 
     INTEGER:: itr, min_y_index
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z1, min_abs_z2
     DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
 
-    LOGICAL:: exist
+    LOGICAL:: exist, final_save_data
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+
+    IF( PRESENT(save_data) )THEN
+      final_save_data= save_data
+    ELSE
+      final_save_data= .FALSE.
+    ENDIF
 
     PRINT *, "** Executing the read_sphincs_dump_print_formatted subroutine..."
 
@@ -211,14 +222,15 @@ SUBMODULE (sph_particles) io
     !-- Set up the MODULE variables in MODULE sph_variables
     !-- (used by write_SPHINCS_dump)
     !
-    npart= 10*THIS% npart
+    !npart= 10*this% npart
+    npart= max_npart
 
     CALL set_units('NSM')
 
     CALL allocate_SPH_memory
-    CALL allocate_metric_on_particles( THIS% npart )
+    !CALL allocate_metric_on_particles( npart )
 
-    finalnamefile= TRIM(namefile_bin)//"00000"
+    finalnamefile= TRIM(namefile_bin)!//"00000"
     CALL read_SPHINCS_dump( finalnamefile )
 
     PRINT *, " * Maximum interpolated nlrf =", &
@@ -252,20 +264,38 @@ SUBMODULE (sph_particles) io
              MINVAL( u(1:npart), DIM= 1 )
     PRINT *
 
+    PRINT *, " * Maximum nu =", &
+             MAXVAL( nu(1:npart), DIM= 1 )
+    PRINT *, " * Minimum nu =", &
+             MINVAL( nu(1:npart), DIM= 1 )
+    PRINT *, " * Ratio between the two=", &
+             MAXVAL( nu(1:npart), DIM= 1 )/ &
+             MINVAL( nu(1:npart), DIM= 1 )
+    PRINT *
+
     !STOP
+    IF( final_save_data )THEN
 
-    ! Being abs_grid a local array, it is good practice to allocate it on the
-    ! heap, otherwise it will be stored on the stack which has a very limited
-    ! size. This results in a segmentation fault.
-    ALLOCATE( abs_pos( 3, THIS% npart ) )
+      ALLOCATE( this% npart_i(2) )
+      ALLOCATE( alive( npart ) )
+      alive( 1:npart )= 1
 
-    IF( THIS% call_flag == 0 )THEN
-      PRINT *, "** The SUBROUTINE print_formatted_id_particles must", &
-               " be called after compute_and_export_SPH_variables, otherwise", &
-               " there are no SPH fields to export to the formatted file."
-      PRINT *, "   Aborting."
-      PRINT *
-      STOP
+      this% npart      = npart
+      CALL this% allocate_particles_memory
+
+      this% npart_i(1) = n1
+      this% npart_i(2) = n2
+      this% pos        = pos_u(:,1:npart)
+      this% v(0,:)     = one
+      this% v(1:3,:)   = vel_u(:,1:npart)
+      this% u_pwp      = u(1:npart)
+      this% nu         = nu(1:npart)
+      this% h          = h(1:npart)
+      this% nlrf_int   = nlrf(1:npart)
+      this% pressure_cu= Pr(1:npart)
+      this% Ye         = Ye(1:npart)
+      this% theta      = Theta(1:npart)
+
     ENDIF
 
     IF( PRESENT(namefile) )THEN
@@ -341,63 +371,61 @@ SUBMODULE (sph_particles) io
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(finalnamefile) )
 
-  !  DO itr = 1, THIS% npart, 1
-  !    abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
-  !    abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
-  !    abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
-  !  ENDDO
-  !
-  !  min_y_index= 0
-  !  min_abs_y= 1D+20
-  !  DO itr = 1, THIS% npart, 1
-  !    IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
-  !      min_abs_y= ABS( THIS% pos( 2, itr ) )
-  !      min_y_index= itr
-  !    ENDIF
-  !  ENDDO
-  !
-  !  min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart_i(1) ) )
-  !  min_abs_z2= MINVAL( abs_pos( 3, THIS% npart_i(1)+1:THIS% npart ) )
+    write_data_loop: DO itr = 1, this% npart, 1
 
-    write_data_loop: DO itr = 1, THIS% npart, 1
-
-      IF( THIS% export_form_xy .AND. &
-          !( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
-          !  THIS% pos( 3, itr ) /= min_abs_z2 ) &
-          ( THIS% pos( 3, itr ) >=  0.5D0 .OR. &
-            THIS% pos( 3, itr ) <= -0.5D0 ) &
+      IF( this% export_form_xy .AND. &
+          !( pos_u( 3, itr ) /= min_abs_z1 .AND. &
+          !  pos_u( 3, itr ) /= min_abs_z2 ) &
+          ( pos_u( 3, itr ) >=  0.5D0 .OR. &
+            pos_u( 3, itr ) <= -0.5D0 ) &
       )THEN
         CYCLE
       ENDIF
-      IF( THIS% export_form_x .AND. &
-          !( THIS% pos( 3, itr ) /= min_abs_z1 &
-          !.OR. THIS% pos( 3, itr ) /= min_abs_z2 &
-          !.OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
-          ( THIS% pos( 3, itr ) >=  0.5D0 .OR. &
-            THIS% pos( 3, itr ) <= -0.5D0 .OR. &
-            THIS% pos( 2, itr ) >=  0.5D0 .OR. &
-            THIS% pos( 2, itr ) <= -0.5D0 ) &
+      IF( this% export_form_x .AND. &
+          !( pos_u( 3, itr ) /= min_abs_z1 &
+          !.OR. pos_u( 3, itr ) /= min_abs_z2 &
+          !.OR. pos_u( 2, itr ) /= this% pos( 2, min_y_index ) ) )THEN
+          ( pos_u( 3, itr ) >=  0.5D0 .OR. &
+            pos_u( 3, itr ) <= -0.5D0 .OR. &
+            pos_u( 2, itr ) >=  0.5D0 .OR. &
+            pos_u( 2, itr ) <= -0.5D0 ) &
       )THEN
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        itr, &
-        pos_u( 1, itr ), &
-        pos_u( 2, itr ), &
-        pos_u( 3, itr ), &
-        vel_u( 1, itr ), &
-        vel_u( 2, itr ), &
-        vel_u( 3, itr ), &
-        h( itr ), &
-        u( itr ), &
-        nu( itr ), &
-        nlrf( itr ), &
-        temp( itr ), &
-        av( itr ), &
-        ye( itr ), &
-        divv( itr ), &
-        Theta( itr ), &
-        Pr( itr )
+        itr, &                                  ! 1     33
+        pos_u( 1, itr ), &                      ! 2     34
+        pos_u( 2, itr ), &                      ! 3     35
+        pos_u( 3, itr ), &                      ! 4     36
+        vel_u( 1, itr ), &                      ! 5     37
+        vel_u( 2, itr ), &                      ! 6     38
+        vel_u( 3, itr ), &                      ! 7     39
+        h( itr ), &                             ! 8     40
+        u( itr ), &                             ! 9     41
+        nu( itr ), &                            ! 10    42
+        nlrf( itr ), &                          ! 11    43
+        temp( itr ), &                          ! 12    44
+        av( itr ), &                            ! 13    45
+        ye( itr ), &                            ! 14    46
+        divv( itr ), &                          ! 15    47
+        Theta( itr ), &                         ! 16    48
+        Pr( itr )                               ! 17    49
+        !this% pos( 1, itr ), &                  ! 2     34
+        !this% pos( 2, itr ), &                  ! 3     35
+        !this% pos( 3, itr ), &                  ! 4     36
+        !this% v( 1, itr ), &                    ! 5     37
+        !this% v( 2, itr ), &                    ! 6     38
+        !this% v( 3, itr ), &                    ! 7     39
+        !this% h( itr ), &                       ! 8     40
+        !this% u_pwp( itr ), &                   ! 9     41
+        !this% nu( itr ), &                      ! 10    42
+        !this% nlrf_int( itr ), &                ! 11    43
+        !temp( itr ), &                          ! 12    44
+        !av( itr ), &                            ! 13    45
+        !ye( itr ), &                            ! 14    46
+        !divv( itr ), &                          ! 15    47
+        !this% theta( itr ), &                   ! 16    48
+        !this% pressure_cu( itr )                ! 17    49
 
       IF( ios > 0 )THEN
         PRINT *, "...error when writing the arrays in " &
@@ -413,7 +441,7 @@ SUBMODULE (sph_particles) io
     !
     !-- Deallocate MODULE variables
     !
-    CALL deallocate_metric_on_particles
+    !CALL deallocate_metric_on_particles
     CALL deallocate_SPH_memory
 
     PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
@@ -450,13 +478,13 @@ SUBMODULE (sph_particles) io
     ! Being abs_pos a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
     ! size. This results in a segmentation fault.
-    ALLOCATE( abs_pos( 3, THIS% npart ) )
+    ALLOCATE( abs_pos( 3, this% npart ) )
 
     PRINT *, "** Executing the print_formatted_id_particles " &
              // "subroutine..."
     PRINT *
 
-    IF( THIS% call_flag == 0 )THEN
+    IF( this% call_flag == 0 )THEN
       PRINT *, "** The SUBROUTINE print_formatted_id_particles must", &
                " be called after compute_and_export_SPH_variables, otherwise", &
                " there are no SPH fields to export to the formatted file."
@@ -548,78 +576,78 @@ SUBMODULE (sph_particles) io
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !          // TRIM(finalnamefile) )
 
-    !DO itr = 1, THIS% npart, 1
-    !  abs_pos( 1, itr )= ABS( THIS% pos( 1, itr ) )
-    !  abs_pos( 2, itr )= ABS( THIS% pos( 2, itr ) )
-    !  abs_pos( 3, itr )= ABS( THIS% pos( 3, itr ) )
+    !DO itr = 1, this% npart, 1
+    !  abs_pos( 1, itr )= ABS( this% pos( 1, itr ) )
+    !  abs_pos( 2, itr )= ABS( this% pos( 2, itr ) )
+    !  abs_pos( 3, itr )= ABS( this% pos( 3, itr ) )
     !ENDDO
     !
     !min_y_index= 0
     !min_abs_y= 1D+20
-    !DO itr = 1, THIS% npart, 1
-    !  IF( ABS( THIS% pos( 2, itr ) ) < min_abs_y )THEN
-    !    min_abs_y= ABS( THIS% pos( 2, itr ) )
+    !DO itr = 1, this% npart, 1
+    !  IF( ABS( this% pos( 2, itr ) ) < min_abs_y )THEN
+    !    min_abs_y= ABS( this% pos( 2, itr ) )
     !    min_y_index= itr
     !  ENDIF
     !ENDDO
     !
-    !min_abs_z1= MINVAL( abs_pos( 3, 1:THIS% npart1 ) )
-    !min_abs_z2= MINVAL( abs_pos( 3, THIS% npart1+1:THIS% npart ) )
+    !min_abs_z1= MINVAL( abs_pos( 3, 1:this% npart1 ) )
+    !min_abs_z2= MINVAL( abs_pos( 3, this% npart1+1:this% npart ) )
 
-    write_data_loop: DO itr = 1, THIS% npart, 1
+    write_data_loop: DO itr = 1, this% npart, 1
 
-      IF( THIS% export_form_xy .AND. &
-          !( THIS% pos( 3, itr ) /= min_abs_z1 .AND. &
-          !  THIS% pos( 3, itr ) /= min_abs_z2 ) &
-          ( THIS% pos( 3, itr ) >=  0.5D0 .OR. &
-            THIS% pos( 3, itr ) <= -0.5D0 ) &
+      IF( this% export_form_xy .AND. &
+          !( this% pos( 3, itr ) /= min_abs_z1 .AND. &
+          !  this% pos( 3, itr ) /= min_abs_z2 ) &
+          ( this% pos( 3, itr ) >=  0.5D0 .OR. &
+            this% pos( 3, itr ) <= -0.5D0 ) &
       )THEN
         CYCLE
       ENDIF
-      IF( THIS% export_form_x .AND. &
-          !( THIS% pos( 3, itr ) /= min_abs_z1 &
-          !.OR. THIS% pos( 3, itr ) /= min_abs_z2 &
-          !.OR. THIS% pos( 2, itr ) /= THIS% pos( 2, min_y_index ) ) )THEN
-          ( THIS% pos( 3, itr ) >=  0.5D0 .OR. &
-            THIS% pos( 3, itr ) <= -0.5D0 .OR. &
-            THIS% pos( 2, itr ) >=  0.5D0 .OR. &
-            THIS% pos( 2, itr ) <= -0.5D0 ) &
+      IF( this% export_form_x .AND. &
+          !( this% pos( 3, itr ) /= min_abs_z1 &
+          !.OR. this% pos( 3, itr ) /= min_abs_z2 &
+          !.OR. this% pos( 2, itr ) /= this% pos( 2, min_y_index ) ) )THEN
+          ( this% pos( 3, itr ) >=  0.5D0 .OR. &
+            this% pos( 3, itr ) <= -0.5D0 .OR. &
+            this% pos( 2, itr ) >=  0.5D0 .OR. &
+            this% pos( 2, itr ) <= -0.5D0 ) &
       )THEN
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        itr, &                                                             ! 1
-        THIS% pos( 1, itr ), &                                             ! 2
-        THIS% pos( 2, itr ), &                                             ! 3
-        THIS% pos( 3, itr ), &                                             ! 4
-        THIS% lapse( itr ), &                                        ! 5
-        THIS% shift_x( itr ), &                                      ! 6
-        THIS% shift_y( itr ), &                                      ! 7
-        THIS% shift_z( itr ), &                                      ! 8
-        THIS% baryon_density( itr ), &                               ! 9
-        THIS% energy_density( itr ), &                               ! 10
-        THIS% specific_energy( itr ), &                              ! 11
-        THIS% pressure( itr ), &                                     ! 12
-        THIS% pressure_cu( itr ), &                                  ! 13
-        THIS% v_euler_x( itr ), &                                    ! 14
-        THIS% v_euler_y( itr ), &                                    ! 15
-        THIS% v_euler_z( itr ), &                                    ! 16
-        THIS% v( 1, itr ), &                                               ! 17
-        THIS% v( 2, itr ), &                                               ! 18
-        THIS% v( 3, itr ), &                                               ! 19
-        THIS% nu( itr ), &                                                 ! 20
-        THIS% nlrf( itr ), &                                               ! 21
-        THIS% Ye( itr ), &                                                 ! 22
-        THIS% Theta( itr ), &                                              ! 23
-        THIS% nstar( itr ), &                                              ! 24
-        THIS% nstar_int( itr ), &                                          ! 25
-        THIS% h( itr ), &                                                  ! 26
-        THIS% particle_density( itr ), &                                   ! 27
-        THIS% particle_density_int( itr ), &                               ! 28
-        THIS% pvol( itr ), &                                               ! 29
-        THIS% pmass( itr ), &                                              ! 30
-        THIS% u_pwp( itr ), &                                              ! 31
-        THIS% nlrf_int( itr )                                              ! 32
+        itr, &                                                       ! 1
+        this% pos( 1, itr ), &                                       ! 2
+        this% pos( 2, itr ), &                                       ! 3
+        this% pos( 3, itr ), &                                       ! 4
+        this% lapse( itr ), &                                        ! 5
+        this% shift_x( itr ), &                                      ! 6
+        this% shift_y( itr ), &                                      ! 7
+        this% shift_z( itr ), &                                      ! 8
+        this% baryon_density( itr ), &                               ! 9
+        this% energy_density( itr ), &                               ! 10
+        this% specific_energy( itr ), &                              ! 11
+        this% pressure( itr ), &                                     ! 12
+        this% pressure_cu( itr ), &                                  ! 13
+        this% v_euler_x( itr ), &                                    ! 14
+        this% v_euler_y( itr ), &                                    ! 15
+        this% v_euler_z( itr ), &                                    ! 16
+        this% v( 1, itr ), &                                         ! 17
+        this% v( 2, itr ), &                                         ! 18
+        this% v( 3, itr ), &                                         ! 19
+        this% nu( itr ), &                                           ! 20
+        this% nlrf( itr ), &                                         ! 21
+        this% Ye( itr ), &                                           ! 22
+        this% Theta( itr ), &                                        ! 23
+        this% nstar( itr ), &                                        ! 24
+        this% nstar_int( itr ), &                                    ! 25
+        this% h( itr ), &                                            ! 26
+        this% particle_density( itr ), &                             ! 27
+        this% particle_density_int( itr ), &                         ! 28
+        this% pvol( itr ), &                                         ! 29
+        this% pmass( itr ), &                                        ! 30
+        this% u_pwp( itr ), &                                        ! 31
+        this% nlrf_int( itr )                                        ! 32
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &
@@ -706,21 +734,21 @@ SUBMODULE (sph_particles) io
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(namefile) )
 
-    DO itr= 1, THIS% npart, 1
+    DO itr= 1, this% npart, 1
 
-      IF( THIS% baryon_density ( itr ) < 0 .OR. &
-          THIS% energy_density ( itr ) < 0 .OR. &
-          THIS% specific_energy( itr ) < 0 .OR. &
-          THIS% pressure       ( itr ) < 0 )THEN
+      IF( this% baryon_density ( itr ) < 0 .OR. &
+          this% energy_density ( itr ) < 0 .OR. &
+          this% specific_energy( itr ) < 0 .OR. &
+          this% pressure       ( itr ) < 0 )THEN
 
         negative_hydro= .TRUE.
 
         WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, &
                FMT = * )&
 
-            THIS% pos( 1, itr ), &
-            THIS% pos( 2, itr ), &
-            THIS% pos( 3, itr )
+            this% pos( 1, itr ), &
+            this% pos( 2, itr ), &
+            this% pos( 3, itr )
 
         IF( ios > 0 )THEN
           PRINT *, "...error when writing the arrays in ", TRIM(namefile), &
@@ -766,7 +794,7 @@ SUBMODULE (sph_particles) io
   !
   !    LOGICAL:: exist
   !
-  !    ! TODO: THIS OPTIONAL ARGUMENT DOES NOT WORK...
+  !    ! TODO: this OPTIONAL ARGUMENT DOES NOT WORK...
   !    IF( .NOT.PRESENT(TRIM(namefile)) )THEN
   !            TRIM(namefile)= "lorene-bns-id-particles-form.dat"
   !    ENDIF

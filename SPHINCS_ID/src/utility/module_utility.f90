@@ -95,7 +95,147 @@ MODULE utility
   !! Time when the run ends
 
 
+  INTEGER, PARAMETER:: max_length= 50
+  !! Maximum length for strings
+  INTEGER, PARAMETER:: max_n_bns= 50
+  ! Maximum number of physical systems
+  INTEGER, PARAMETER:: max_n_parts= 250
+  !! Maximum number of particle distributions
+
+  INTEGER:: n_bns
+  !! Number of physical systems to set up
+  INTEGER:: ref_lev
+  !! Number of refinement levels
+  INTEGER:: constraints_step
+  !! Export the constraints every constraints_step-th step
+
+  INTEGER, PARAMETER:: test_int= - 112
+  INTEGER, DIMENSION( max_n_bns, max_n_parts ):: placer= test_int
+  !# Matrix storing the information on how to place particles for each bns
+  !  object. Row i contains information about the i^th bns object.
+
+
+  DOUBLE PRECISION:: numerator_ratio_dx
+  !# Numerator of the rational ratio between the large grid spacing and the
+  !  medium one,equal to the ratio between the medium grid spacing nd the small
+  !  one. Not used in this PROGRAM, but needed since the PROGRAM reads the same
+  !  parameter file as the convergence_test PROGRAM
+  DOUBLE PRECISION:: denominator_ratio_dx
+  !# Denominator of the rational ratio between the large grid spacing and the
+  !  medium one,equal to the ratio between the medium grid spacing nd the small
+  !  one. Not used in this PROGRAM, but needed since the PROGRAM reads the same
+  !  parameter file as the convergence_test PROGRAM
+
+  ! Logical variables to steer the execution
+  LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
+            compute_constraints, export_constraints_xy, &
+            export_constraints_x, export_constraints, &
+            export_constraints_details, compute_parts_constraints, &
+            one_lapse, zero_shift, run_sph, run_spacetime, estimate_length_scale
+
+  CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
+  !! Array of strings storing the names of the |id| files
+  CHARACTER( LEN= max_length ):: common_path
+  !# String storing the local path to the directory where the |id| files
+  !  are stored
+  CHARACTER( LEN= max_length ):: sph_path
+  !# String storing the local path to the directory where the
+  !  SPH output is to be saved
+  CHARACTER( LEN= max_length ):: spacetime_path
+  !# String storing the local path to the directory where the
+  !  spacetime output is to be saved
+
+
   CONTAINS
+
+
+  SUBROUTINE read_sphincs_id_parameters()
+
+    !***********************************************
+    !
+    !# Read the parameters to steer SPHINCS_ID
+    !
+    !  FT
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+    INTEGER:: stat
+    INTEGER, PARAMETER:: unit_parameters= 17
+
+    CHARACTER( LEN= : ), ALLOCATABLE:: sphincs_id_parameters_namefile
+    CHARACTER( LEN= 100 ):: msg
+
+    ! Namelist containing parameters read from sphincs_id_parameters.par
+    ! by the SUBROUTINE read_sphincs_id_parameters of this PROGRAM
+    NAMELIST /sphincs_id_parameters/ &
+              n_bns, common_path, filenames, placer, &
+              export_bin, export_form, export_form_xy, &
+              export_form_x, export_constraints_xy, &
+              export_constraints_x, compute_constraints, &
+              export_constraints, export_constraints_details, &
+              constraints_step, compute_parts_constraints, &
+              numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
+              one_lapse, zero_shift, show_progress, &
+              run_sph, run_spacetime, sph_path, spacetime_path, &
+              estimate_length_scale
+
+    sphincs_id_parameters_namefile= 'sphincs_id_parameters.dat'
+
+    INQUIRE( FILE= sphincs_id_parameters_namefile, EXIST= file_exists )
+    IF( file_exists )THEN
+
+     OPEN( 17, FILE= sphincs_id_parameters_namefile, STATUS= 'OLD' )
+
+    ELSE
+
+     PRINT*
+     PRINT*,'** ERROR: ', sphincs_id_parameters_namefile, " file not found!"
+     PRINT*
+     STOP
+
+    ENDIF
+
+    READ( UNIT= unit_parameters, NML= sphincs_id_parameters, IOSTAT= stat, &
+          IOMSG= msg )
+
+      IF( stat /= 0 )THEN
+        PRINT *, "** ERROR: Error in reading ", sphincs_id_parameters_namefile,&
+                 ". The IOSTAT variable is ", stat, &
+                 "The error message is", msg
+        STOP
+      ENDIF
+
+    CLOSE( UNIT= unit_parameters )
+
+    DO itr= 1, max_length, 1
+      IF( TRIM(filenames(itr)).NE."0" )THEN
+        cnt= cnt + 1
+      ENDIF
+    ENDDO
+    IF( cnt.NE.n_bns )THEN
+      PRINT *, "** ERROR! The number of file names is", cnt, &
+               "and n_bns=", n_bns, ". The two should be the same."
+      PRINT *
+      STOP
+    ENDIF
+
+   !DO itr= 1, n_bns, 1
+   !  DO itr2= 1, max_n_parts, 1
+   !    IF( placer( itr, itr2 ) == test_int )THEN
+   !      PRINT *
+   !      PRINT *, "** ERROR! The array placer does not have ", &
+   !               "enough components to specify all the desired ", &
+   !               "particle distributions. Specify the ", &
+   !               "components in file lorene_bns_id_particles.par"
+   !      PRINT *
+   !      STOP
+   !    ENDIF
+   !  ENDDO
+   !ENDDO
+
+  END SUBROUTINE read_sphincs_id_parameters
 
 
   SUBROUTINE test_status( io_stat, io_msg, opt_msg )

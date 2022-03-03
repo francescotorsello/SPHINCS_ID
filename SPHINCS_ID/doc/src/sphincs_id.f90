@@ -52,48 +52,30 @@ PROGRAM sphincs_id
   !USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
   !                            k_lorene2hydrobase_piecewisepolytrope, &
   !                            MSun_geo, kg2g, m2cm, m0c2
-  USE constants, ONLY: amu, Msun_geo, km2m, m2cm
+  USE constants,        ONLY: amu, Msun_geo, km2m, m2cm
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
-                              itr4, file_exists, cnt, &
-                              test_status, show_progress, end_time
+                              itr4, &
+                              test_status, show_progress, end_time, &
+                              read_sphincs_id_parameters, &
+                              !----------
+                              n_bns, common_path, filenames, placer, &
+                              export_bin, export_form, export_form_xy, &
+                              export_form_x, export_constraints_xy, &
+                              export_constraints_x, compute_constraints, &
+                              export_constraints, export_constraints_details, &
+                              constraints_step, compute_parts_constraints, &
+                              numerator_ratio_dx, denominator_ratio_dx, &
+                              one_lapse, zero_shift, show_progress, ref_lev, &
+                              run_sph, run_spacetime, sph_path, &
+                              spacetime_path, estimate_length_scale, &
+                              test_int, max_n_parts
 
   IMPLICIT NONE
 
 
-  INTEGER, PARAMETER:: max_length= 50
-  !! Maximum length for strings
-  INTEGER, PARAMETER:: max_n_bns= 50
-  ! Maximum number of physical systems
-  INTEGER, PARAMETER:: max_n_parts= 250
-  !! Maximum number of particle distributions
-
-  INTEGER, PARAMETER:: test_int= - 112
-  INTEGER, DIMENSION( max_n_bns, max_n_parts ):: placer= test_int
-  !# Matrix storing the information on how to place particles for each bns
-  !  object. Row i contains information about the i^th bns object.
-
-  INTEGER:: n_bns
-  !! Number of physical systems to set up
   INTEGER:: i_matter
   !! Index running over the number of physical systems
-  INTEGER:: ref_lev
-  !! Number of refinement levels
-  INTEGER:: constraints_step
-  !! Export the constraints every constraints_step-th step
-
-
-  DOUBLE PRECISION:: numerator_ratio_dx
-  !# Numerator of the rational ratio between the large grid spacing and the
-  !  medium one,equal to the ratio between the medium grid spacing nd the small
-  !  one. Not used in this PROGRAM, but needed since the PROGRAM reads the same
-  !  parameter file as the convergence_test PROGRAM
-  DOUBLE PRECISION:: denominator_ratio_dx
-  !# Denominator of the rational ratio between the large grid spacing and the
-  !  medium one,equal to the ratio between the medium grid spacing nd the small
-  !  one. Not used in this PROGRAM, but needed since the PROGRAM reads the same
-  !  parameter file as the convergence_test PROGRAM
-
 
   CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
@@ -116,58 +98,28 @@ PROGRAM sphincs_id
   CHARACTER( LEN= 500 ):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
-  CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
-  ! Array of strings storing the names of the |id| files
-  CHARACTER( LEN= max_length ):: common_path
-  !# String storing the local path to the directory where the |id| files
-  !  are stored
-  CHARACTER( LEN= max_length ):: sph_path
-  !# String storing the local path to the directory where the
-  !  SPH output is to be saved
-  CHARACTER( LEN= max_length ):: spacetime_path
-  !# String storing the local path to the directory where the
-  !  spacetime output is to be saved
 
   LOGICAL:: exist
 #ifdef __INTEL_COMPILER
   LOGICAL(4):: dir_out
 #endif
-  ! Logical variables to steer the execution
-  LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
-            compute_constraints, export_constraints_xy, &
-            export_constraints_x, export_constraints, &
-            export_constraints_details, compute_parts_constraints, &
-            one_lapse, zero_shift, run_sph, run_spacetime, estimate_length_scale
 
   TYPE( timer ):: execution_timer
 
   TYPE id
-    CLASS( idbase ), ALLOCATABLE:: idata
+    CLASS(idbase), ALLOCATABLE:: idata
   END TYPE id
-  TYPE( id ), DIMENSION(:), ALLOCATABLE:: ids
-  !CLASS(idbase), POINTER:: foo
-  !CLASS( idbase ), DIMENSION(:), ALLOCATABLE:: ids
-  ! Declaration of the allocatable array storing the particles objects,
-  ! containing the particle distributions for each bns object.
-  ! Multiple particle objects can contain different particle distributions
-  ! for the same bns object.
-  TYPE( particles ), DIMENSION(:,:), ALLOCATABLE:: particles_dist
-  ! Declaration of the allocatable array storing the bssn objects,
-  ! containing the BSSN variables on the gravity grid ofr each bns object
-  TYPE( bssn ),   DIMENSION(:),   ALLOCATABLE:: bssn_forms
+  TYPE(id), DIMENSION(:), ALLOCATABLE:: ids
 
-  ! Namelist containing parameters read from sphincs_id_parameters.par
-  ! by the SUBROUTINE read_bns_id_parameters of this PROGRAM
-  NAMELIST /bns_parameters/ n_bns, common_path, filenames, placer, &
-                            export_bin, export_form, export_form_xy, &
-                            export_form_x, export_constraints_xy, &
-                            export_constraints_x, compute_constraints, &
-                            export_constraints, export_constraints_details, &
-                            constraints_step, compute_parts_constraints, &
-                            numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
-                            one_lapse, zero_shift, show_progress, &
-                            run_sph, run_spacetime, sph_path, spacetime_path, &
-                            estimate_length_scale
+  TYPE(particles), DIMENSION(:,:), ALLOCATABLE:: particles_dist
+  !# Array storing the particles objects,
+  !  containing the particle distributions for each idbase object.
+  !  Multiple particle objects can contain different particle distributions
+  !  for the same idbase object.
+
+  TYPE(bssn), DIMENSION(:), ALLOCATABLE:: bssn_forms
+  !# Array storing the bssn objects,
+  !  containing the BSSN variables on the gravity grid for each idbase object
 
   !---------------------------!
   !--  End of declarations  --!
@@ -237,7 +189,7 @@ PROGRAM sphincs_id
   PRINT *, "  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU "
   PRINT *, "  General Public License for more details.                         "
   PRINT *
-  PRINT *, "  You should have received a copy of the GNU General Public        "
+  PRINT *, "  You should have received a copy of the GNU General Public License"
   PRINT *, "  along with SPHINCS_ID. If not, see https://www.gnu.org/licenses/."
   PRINT *, "  The copy of the GNU General Public License should be in the file "
   PRINT *, "  'COPYING'.                                                       "
@@ -250,7 +202,7 @@ PROGRAM sphincs_id
   execution_timer= timer( "execution_timer" )
   CALL execution_timer% start_timer()
 
-  CALL read_bns_id_parameters()
+  CALL read_sphincs_id_parameters()
 
   !
   !-- Check that the specified subdirectories exist. If not, create them
@@ -332,7 +284,7 @@ PROGRAM sphincs_id
   IF( run_sph )THEN
 
     !
-    !-- Construct the particles objects from the bns objects
+    !-- Construct the particles objects
     !
     place_hydro_id_loops: DO itr3= 1, n_bns, 1
       part_distribution_loop: DO itr4= 1, max_n_parts, 1
@@ -347,18 +299,23 @@ PROGRAM sphincs_id
           PRINT *, "===================================================" &
                    // "==============="
           PRINT *
+
           particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
                                                    placer( itr3, itr4 ) )
+
+          !namefile_parts_bin= "sph-output/NSNS.00000"
+          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
+          !                                         namefile_parts_bin )
 
         ENDIF
       ENDDO part_distribution_loop
     ENDDO place_hydro_id_loops
 
-  !  namefile_parts_bin= "NSNS."
-  !  namefile_parts= "try.dat"
-  !  CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
-  !
-  !  STOP
+    !namefile_parts_bin= "NSNS.00000"
+    !namefile_parts= "try.dat"
+    !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
+
+    !STOP
 
   ENDIF
 
@@ -744,66 +701,5 @@ PROGRAM sphincs_id
     DEALLOCATE( bssn_forms )
   ENDIF
 
-
-  CONTAINS
-
-
-  SUBROUTINE read_bns_id_parameters()
-
-    IMPLICIT NONE
-
-    INTEGER:: stat
-
-    CHARACTER( LEN= : ), ALLOCATABLE:: sphincs_id_parameters
-    CHARACTER( LEN= 100 ):: msg
-
-    sphincs_id_parameters= 'sphincs_id_parameters.dat'
-
-    INQUIRE( FILE= sphincs_id_parameters, EXIST= file_exists )
-    IF( file_exists )THEN
-     OPEN( 17, FILE= sphincs_id_parameters, STATUS= 'OLD' )
-    ELSE
-     PRINT*
-     PRINT*,'** ERROR: ', sphincs_id_parameters, " file not found!"
-     PRINT*
-     STOP
-    ENDIF
-
-    READ( 17, NML= bns_parameters, IOSTAT= stat, IOMSG= msg )
-      IF( stat /= 0 )THEN
-        PRINT *, "** ERROR: Error in reading ",sphincs_id_parameters,&
-                 ". The IOSTAT variable is ", stat, &
-                 "The error message is", msg
-        STOP
-      ENDIF
-    CLOSE( 17 )
-
-    DO itr= 1, max_length, 1
-      IF( TRIM(filenames(itr)).NE."0" )THEN
-        cnt= cnt + 1
-      ENDIF
-    ENDDO
-    IF( cnt.NE.n_bns )THEN
-      PRINT *, "** ERROR! The number of file names is", cnt, &
-               "and n_bns=", n_bns, ". The two should be the same."
-      PRINT *
-      STOP
-    ENDIF
-
-   !DO itr= 1, n_bns, 1
-   !  DO itr2= 1, max_n_parts, 1
-   !    IF( placer( itr, itr2 ) == test_int )THEN
-   !      PRINT *
-   !      PRINT *, "** ERROR! The array placer does not have ", &
-   !               "enough components to specify all the desired ", &
-   !               "particle distributions. Specify the ", &
-   !               "components in file lorene_bns_id_particles.par"
-   !      PRINT *
-   !      STOP
-   !    ENDIF
-   !  ENDDO
-   !ENDDO
-
-  END SUBROUTINE
 
 END PROGRAM sphincs_id

@@ -1,4 +1,4 @@
-&bns_particles
+&sphincs_id_particles
 !-------------------------------------------------------------------------!
 ! gfortran requires the assignment to be on the same line, ifort does not !
 !-------------------------------------------------------------------------!

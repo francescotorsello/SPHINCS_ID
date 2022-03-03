@@ -155,7 +155,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    n_part= THIS% npart
+    n_part= this% npart
 
   END PROCEDURE get_npart
 
@@ -173,7 +173,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    n_part= THIS% npart_i(i_matter)
+    n_part= this% npart_i(i_matter)
 
   END PROCEDURE get_npart_i
 
@@ -190,7 +190,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    nuratio= THIS% nuratio
+    nuratio= this% nuratio
 
   END PROCEDURE get_nuratio
 
@@ -208,7 +208,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    nuratio= THIS% nuratio_i(i_matter)
+    nuratio= this% nuratio_i(i_matter)
 
   END PROCEDURE get_nuratio_i
 
@@ -225,7 +225,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    n_matter= THIS% n_matter
+    n_matter= this% n_matter
 
   END PROCEDURE get_n_matter
 
@@ -242,7 +242,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    pos_u= THIS% pos
+    pos_u= this% pos
 
   END PROCEDURE get_pos
 
@@ -260,7 +260,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    vel= THIS% v(1:3,:)
+    vel= this% v(1:3,:)
 
   END PROCEDURE get_vel
 
@@ -278,9 +278,27 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    nstar= THIS% nstar
+    nstar= this% nstar
 
   END PROCEDURE get_nstar
+
+
+  MODULE PROCEDURE get_nstar_sph
+
+    !************************************************
+    !
+    !# Returns the array of SPH density estimate of
+    !  proper baryon density in the local rest frame
+    !
+    !  FT 25.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    nstar_sph= this% nstar_int
+
+END PROCEDURE get_nstar_sph
 
 
   MODULE PROCEDURE get_nlrf
@@ -296,9 +314,27 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    nlrf= THIS% nlrf
+    nlrf= this% nlrf
 
   END PROCEDURE get_nlrf
+
+
+  MODULE PROCEDURE get_nlrf_sph
+
+    !************************************************
+    !
+    !# Returns the array of SPH estimate of the
+    !  baryon density in the local rest frame
+    !
+    !  FT 25.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    nlrf_sph= this% nlrf_int
+
+  END PROCEDURE get_nlrf_sph
 
 
   MODULE PROCEDURE get_nu
@@ -314,7 +350,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    nu= THIS% nu
+    nu= this% nu
 
   END PROCEDURE get_nu
 
@@ -324,7 +360,7 @@ SUBMODULE (sph_particles) access
     !************************************************
     !
     !# Returns the array of specific internal
-    ! energy [c^2]
+    !  energy [c^2]
     !
     !  FT
     !
@@ -332,9 +368,29 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    u= THIS% specific_energy
+    u= this% specific_energy
 
   END PROCEDURE get_u
+
+
+  MODULE PROCEDURE get_u_sph
+
+    !************************************************
+    !
+    !# Returns the array of specific internal
+    !  energy computed from the SPH estimate
+    !  of the baryon number density in the local
+    !  rest frame [c^2]
+    !
+    !  FT 25.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    u_sph= this% u_pwp
+
+  END PROCEDURE get_u_sph
 
 
   MODULE PROCEDURE get_pressure
@@ -350,7 +406,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    pressure= THIS% pressure
+    pressure= this% pressure
 
   END PROCEDURE get_pressure
 
@@ -368,7 +424,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    pressure_cu= THIS% pressure_cu
+    pressure_cu= this% pressure_cu
 
   END PROCEDURE get_pressure_cu
 
@@ -386,7 +442,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    theta= THIS% Theta
+    theta= this% Theta
 
   END PROCEDURE get_theta
 
@@ -404,9 +460,67 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    h= THIS% h
+    h= this% h
 
   END PROCEDURE get_h
+
+
+  MODULE PROCEDURE get_lapse
+
+    !************************************************
+    !
+    !# Returns the lapse function on the particles
+    !
+    !  FT 25.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    lapse= this% lapse
+
+  END PROCEDURE get_lapse
+
+
+  MODULE PROCEDURE get_shift
+
+    !************************************************
+    !
+    !# Returns the shift vector on the particles
+    !
+    !  FT 25.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    shift(1,:)= this% shift_x
+    shift(2,:)= this% shift_y
+    shift(3,:)= this% shift_z
+
+  END PROCEDURE get_shift
+
+
+  MODULE PROCEDURE get_g3
+
+    !************************************************
+    !
+    !# Returns the spatial metric on the particles
+    !
+    !  FT 25.02.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    g3(1,:)= this% g_xx
+    g3(2,:)= this% g_xy
+    g3(3,:)= this% g_xz
+    g3(4,:)= this% g_yy
+    g3(5,:)= this% g_yz
+    g3(6,:)= this% g_zz
+
+  END PROCEDURE get_g3
 
 
   MODULE PROCEDURE is_empty
@@ -423,7 +537,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    answer= THIS% empty_object
+    answer= this% empty_object
 
   END PROCEDURE is_empty
 
