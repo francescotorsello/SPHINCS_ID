@@ -33,17 +33,27 @@ PROGRAM convergence_test
   !*****************************************************
 
 #ifdef __INTEL_COMPILER
+
   USE IFPORT,          ONLY: MAKEDIRQQ
+
 #endif
 
 #if flavour == 1
+
   USE sphincs_id_full,         ONLY: allocate_idbase
+
 #elif flavour == 2
+
   USE sphincs_id_lorene,       ONLY: allocate_idbase
+
 #elif flavour == 3
+
   USE sphincs_id_fuka,         ONLY: allocate_idbase
+
 #elif flavour == 4
+
   USE sphincs_id_interpolate,  ONLY: allocate_idbase
+
 #endif
 
   USE id_base,                  ONLY: idbase, initialize
@@ -105,8 +115,6 @@ PROGRAM convergence_test
   LOGICAL:: exist
   LOGICAL(4):: dir_out
 
-  TYPE(timer):: execution_timer
-
   CLASS(idbase), ALLOCATABLE:: idata
 
   TYPE(particles):: particles_dist
@@ -118,6 +126,8 @@ PROGRAM convergence_test
   TYPE(bssn), DIMENSION(3):: bssn_forms
   !# Array storing the bssn objects,
   !  containing the BSSN variables on the gravity grid for each idbase object
+
+  TYPE(timer):: execution_timer
 
   !---------------------------!
   !--  End of declarations  --!

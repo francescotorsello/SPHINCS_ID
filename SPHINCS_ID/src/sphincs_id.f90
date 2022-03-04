@@ -33,17 +33,27 @@ PROGRAM sphincs_id
   !*****************************************************
 
 #ifdef __INTEL_COMPILER
+
   USE IFPORT,          ONLY: MAKEDIRQQ
+
 #endif
 
 #if flavour == 1
+
   USE sphincs_id_full,         ONLY: allocate_idbase
+
 #elif flavour == 2
+
   USE sphincs_id_lorene,       ONLY: allocate_idbase
+
 #elif flavour == 3
+
   USE sphincs_id_fuka,         ONLY: allocate_idbase
+
 #elif flavour == 4
+
   USE sphincs_id_interpolate,  ONLY: allocate_idbase
+
 #endif
 
   USE id_base,          ONLY: idbase, initialize
@@ -104,8 +114,6 @@ PROGRAM sphincs_id
   LOGICAL(4):: dir_out
 #endif
 
-  TYPE( timer ):: execution_timer
-
   TYPE id
     CLASS(idbase), ALLOCATABLE:: idata
   END TYPE id
@@ -120,6 +128,8 @@ PROGRAM sphincs_id
   TYPE(bssn), DIMENSION(:), ALLOCATABLE:: bssn_forms
   !# Array storing the bssn objects,
   !  containing the BSSN variables on the gravity grid for each idbase object
+
+  TYPE( timer ):: execution_timer
 
   !---------------------------!
   !--  End of declarations  --!
@@ -555,34 +565,41 @@ PROGRAM sphincs_id
       !
       !-- Test recovery using the mesh-2-particle mapping
       !
-      test_recovery_m2p: DO itr3 = 1, n_bns, 1
+      IF( run_sph )THEN
 
-        part_distribution_loop4: DO itr4= 1, max_n_parts, 1
-          IF( placer( itr3, itr4 ) == test_int )THEN
-            EXIT part_distribution_loop4
-            ! Experimental: empty particles object
-            !particles_dist( itr, itr2 )= particles()
-          ELSE
+        test_recovery_m2p: DO itr3 = 1, n_bns, 1
 
-            PRINT *, "===================================================" &
-                     // "================================================"
-            PRINT *, " Testing recovery using mesh-2-particle mapping, for BSSN",&
-                     " formulation", itr3, "with particle distribution", itr4
-            PRINT *, "===================================================" &
-                     // "================================================"
-            PRINT *
+          part_distribution_loop4: DO itr4= 1, max_n_parts, 1
+            IF( placer( itr3, itr4 ) == test_int )THEN
+              EXIT part_distribution_loop4
+              ! Experimental: empty particles object
+              !particles_dist( itr, itr2 )= particles()
+            ELSE
 
-            WRITE( namefile_recovery, "(A18,I1,A4)" ) "recovery-test-m2p_", itr3
-            namefile_recovery= TRIM( spacetime_path )//TRIM( namefile_recovery )
-            CALL bssn_forms( itr3 )% &
-                 test_recovery_m2p( particles_dist( itr3, itr4 ), &
-                                    namefile_recovery )
+              PRINT *, "===================================================" &
+                       // "================================================"
+              PRINT *, " Testing recovery using mesh-to-particle mapping, for",&
+                       " BSSN formulation", itr3, &
+                       "with particle distribution", itr4
+              PRINT *, "===================================================" &
+                       // "================================================"
+              PRINT *
 
-          ENDIF
+              WRITE( namefile_recovery, "(A18,I1,A4)" ) &
+                              "recovery-test-m2p_", itr3
+              namefile_recovery= TRIM( spacetime_path ) &
+                               //TRIM( namefile_recovery )
+              CALL bssn_forms( itr3 )% &
+                   test_recovery_m2p( particles_dist( itr3, itr4 ), &
+                                      namefile_recovery )
 
-        ENDDO part_distribution_loop4
+            ENDIF
 
-      ENDDO test_recovery_m2p
+          ENDDO part_distribution_loop4
+
+        ENDDO test_recovery_m2p
+
+      ENDIF
 
     ENDIF
 
