@@ -16,7 +16,7 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
           !"apm-pos-nu_1216_45km_pol275_500k.dat"
-          "apm-pos-nu_1313_45km_pol2_500k.dat"
+          !"apm-pos-nu_1313_45km_pol2_500k.dat"
           !"apm-pos-nu_1218_42km_dd2sfrdf18_5M.dat"
           !"apm-pos-nu_1218_42km_dd2sfrdf18_2.6M.dat"
           !!"apm-pos-nu_135135_42km_apr4_500k.dat"
@@ -30,7 +30,7 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm50.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm200-atm.dat"
-          !"apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
+          "apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -126,7 +126,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
