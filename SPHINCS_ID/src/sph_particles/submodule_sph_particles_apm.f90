@@ -479,6 +479,10 @@ SUBMODULE (sph_particles) apm
     rad_y= radius_y      + ghost_dist !+ multiple_h_av*h_av
     rad_z= radius_z      + ghost_dist !+ multiple_h_av*h_av
 
+    PRINT *, "** Distance between the size of the object and the ghost ", &
+             "particles: ghost_dist =", ghost_dist
+    PRINT *
+
     IF( debug ) PRINT *, "larger_radius= ", larger_radius
     IF( debug ) PRINT *, "radius_y= ", radius_y
     IF( debug ) PRINT *, "radius_z= ", radius_z

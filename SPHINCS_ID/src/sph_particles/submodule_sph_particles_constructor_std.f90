@@ -386,21 +386,27 @@ SUBMODULE (sph_particles) constructor_std
 
     DO i_matter= 1, parts% n_matter, 1
 
-      IF( (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .LT. eos_str) &
-          .OR. &
-          (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .GT. eos_str) )&
-      THEN
-        PRINT *, "** ERROR! On matter object ", i_matter, &
-                 ", the EOS taken from the ID is not the same as the ",&
-                 "one specified in parameter file SPHINCS_fm_input.dat."
-        PRINT *
-        PRINT *, " * EOS from the ID: ", &
-                 shorten_eos_name(parts% all_eos(i_matter)% eos_name)
-        PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
-                 eos_str
-        PRINT *, "Stopping..."
-        PRINT *
-        STOP
+      IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
+
+        IF( (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .LT. eos_str)&
+            .OR. &
+            (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .GT. eos_str)&
+        )THEN
+
+          PRINT *, "** ERROR! On matter object ", i_matter, &
+                   ", the EOS taken from the ID is not the same as the ",&
+                   "one specified in parameter file SPHINCS_fm_input.dat."
+          PRINT *
+          PRINT *, " * EOS from the ID: ", &
+                   shorten_eos_name(parts% all_eos(i_matter)% eos_name)
+          PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+                   eos_str
+          PRINT *, "Stopping..."
+          PRINT *
+          STOP
+
+        ENDIF
+
       ENDIF
 
     ENDDO

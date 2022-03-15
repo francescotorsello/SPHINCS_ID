@@ -1404,7 +1404,7 @@ MODULE sph_particles
     END FUNCTION get_lapse
 
     MODULE PURE FUNCTION get_shift( this ) RESULT( shift )
-    !! Returns [[particles:shift]]
+    !! Returns \([[particles:shift_x]],[[particles:shift_y]],[[particles:shift_z]]\)
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT( IN ):: this

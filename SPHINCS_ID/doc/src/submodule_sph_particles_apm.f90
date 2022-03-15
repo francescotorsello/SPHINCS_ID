@@ -128,7 +128,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.5D0!0.25D0 !30.0D0
+    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.375D0!0.25D0 !30.0D0
     DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 1.0D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
@@ -478,6 +478,10 @@ SUBMODULE (sph_particles) apm
     rad_x= larger_radius + ghost_dist !+ multiple_h_av*h_av
     rad_y= radius_y      + ghost_dist !+ multiple_h_av*h_av
     rad_z= radius_z      + ghost_dist !+ multiple_h_av*h_av
+
+    PRINT *, "** Distance between the size of the object and the ghost ", &
+             "particles: ghost_dist =", ghost_dist
+    PRINT *
 
     IF( debug ) PRINT *, "larger_radius= ", larger_radius
     IF( debug ) PRINT *, "radius_y= ", radius_y
