@@ -121,16 +121,30 @@ if host is None: host = default_host
 
 if fortran_compiler == 'ifort': #
 
-  env = DefaultEnvironment(
+  if host == 'r3x': #
 
-    ENV       = { 'PATH'               : os.environ['PATH'],
-                  'INTEL_LICENSE_FILE' : os.environ['INTEL_LICENSE_FILE'],
-                  'LD_LIBRARY_PATH'    : os.environ['LD_LIBRARY_PATH']  },
-    LINK      = 'ifort',
-    LINKFLAGS = '-g -qopenmp',
-    TOOLS     = ['default', 'ifort']
+    env = DefaultEnvironment(
 
-  )
+      ENV       = { 'PATH'               : os.environ['PATH'],
+                    'INTEL_LICENSE_FILE' : os.environ['INTEL_LICENSE_FILE'],
+                    'LD_LIBRARY_PATH'    : os.environ['LD_LIBRARY_PATH']  },
+      LINK      = 'ifort',
+      LINKFLAGS = '-g -qopenmp',
+      TOOLS     = ['default', 'ifort']
+
+    )
+
+  if host == 'Sunrise': #
+
+    env = DefaultEnvironment(
+
+      ENV       = { 'PATH'               : os.environ['PATH'],
+                    'LD_LIBRARY_PATH'    : os.environ['LD_LIBRARY_PATH']  },
+      LINK      = 'ifort',
+      LINKFLAGS = '-g -qopenmp',
+      TOOLS     = ['default', 'ifort']
+
+    )
 
 if fortran_compiler == 'gfortran': #
 
