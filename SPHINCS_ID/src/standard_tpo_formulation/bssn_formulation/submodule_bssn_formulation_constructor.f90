@@ -161,7 +161,7 @@ SUBMODULE (bssn_formulation) constructor
 
   CALL THIS% deallocate_standard_tpo_variables
 
-#elif host == r3x
+#else
 
 #ifdef __INTEL_COMPILER
   CALL deallocate_standard_tpo_variables( THIS )

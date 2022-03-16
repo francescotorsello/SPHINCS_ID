@@ -81,6 +81,10 @@ default_compile_lorene = 'FALSE'
 # 'r3x'     : The r30, r31, r32 machines @ Department of Astronomy,
 #             Stockholm University
 # 'Sunrise' : The Sunrise HPC cluster @ Fysikum, Stockholm University
+#             The following line needs to be added to the user's .bash_profile
+#             file, so that the necessary modules are loaded to the user's local
+#             environment on Sunrise:
+#   module load -openmpi3 +openmpi4 +gsl +fftw +scalapack +libgfortran +pgplot
 default_host = 'r3x'
 
 # Version of SPHINCS_ID
@@ -593,16 +597,16 @@ if flavour == full_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'fftw3', 'openblas', \
+      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'openblas', \
                      'gslcblas', 'gfortran', 'lorene_export', 'lorene', \
-                     'lorenef77']
+                     'lorenef77', 'fftw3']
       #, 'm'
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'fftw3', 'openblas', \
+      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'openblas', \
                      'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g']
+                     'lorenef77_g', 'fftw3']
 
     #, 'm'
 
@@ -647,16 +651,16 @@ if flavour == lorene_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'fftw3', 'openblas', \
+      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'openblas', \
                      'gslcblas', 'gfortran', 'lorene_export', 'lorene', \
-                     'lorenef77']
+                     'lorenef77', 'fftw3']
       #, 'm'
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'fftw3', 'openblas', \
+      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'openblas', \
                      'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g']
+                     'lorenef77_g', 'fftw3']
     #, 'm'
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
