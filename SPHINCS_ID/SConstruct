@@ -32,6 +32,7 @@
 import sys
 import os
 import glob
+import socket # gethostname
 
 ################################################################################
 # DEFAULT OPTIONS
@@ -76,6 +77,12 @@ default_verbose = 'FALSE'
 # 'FALSE' : only links the LORENE library to SPHINCS_ID
 default_compile_lorene = 'FALSE'
 
+# Specifies the host machine where SPHINCS_ID is compiled
+# 'r3x'     : The r30, r31, r32 machines @ Department of Astronomy,
+#             Stockholm University
+# 'Sunrise' : The Sunrise HPC cluster @ Fysikum, Stockholm University
+default_host = 'r3x'
+
 # Version of SPHINCS_ID
 version = '_v1.0'
 
@@ -102,6 +109,9 @@ if verbose is None: verbose = default_verbose
 
 compile_lorene = ARGUMENTS.get('compile_lorene')
 if compile_lorene is None: compile_lorene = default_compile_lorene
+
+host = ARGUMENTS.get('host')
+if host is None: host = default_host
 
 ################################################################################
 
@@ -544,7 +554,17 @@ if flavour == full_flavour: #
 
   build_flavour= '-Dflavour=1'
 
-  env['LIBPATH'] = ['../../../Lorene/Lib']
+  if host == 'r3x': #
+
+    env['LIBPATH'] = ['../../../Lorene/Lib']
+
+  if host == 'Sunrise': #
+
+    env['LIBPATH'] = ['../../../Lorene/Lib', \
+                '/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
+                '/opt/ohpc/pub/libs/gnu8/openmpi4/scalapack/2.1.0/lib', \
+                '/opt/ohpc/pub/libs/gnu8/openmpi4/fftw/3.3.8/lib', \
+                '/opt/ohpc/pub/libs/gnu8/openblas/0.3.12/lib']
 
   if debug == 'FALSE': #
 
@@ -574,7 +594,17 @@ if flavour == lorene_flavour: #
 
   build_flavour= '-Dflavour=2'
 
-  env['LIBPATH'] = ['../../../Lorene/Lib']
+  if host == 'r3x': #
+
+    env['LIBPATH'] = ['../../../Lorene/Lib']
+
+  if host == 'Sunrise': #
+
+    env['LIBPATH'] = ['../../../Lorene/Lib', \
+                '/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
+                '/opt/ohpc/pub/libs/gnu8/openmpi4/scalapack/2.1.0/lib', \
+                '/opt/ohpc/pub/libs/gnu8/openmpi4/fftw/3.3.8/lib', \
+                '/opt/ohpc/pub/libs/gnu8/openblas/0.3.12/lib']
 
   if debug == 'FALSE': #
 
