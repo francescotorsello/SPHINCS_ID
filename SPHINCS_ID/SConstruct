@@ -626,6 +626,17 @@ if flavour == lorene_flavour: #
 
     env['LIBPATH'] = ['../../../Lorene/Lib']
 
+    if debug == 'FALSE': #
+
+      env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                     'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+      #, 'm'
+
+    if debug == 'TRUE': #
+
+      env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+                     'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+
   if host == 'Sunrise': #
 
     env['LIBPATH'] = ['../../../Lorene/Lib', \
@@ -634,16 +645,18 @@ if flavour == lorene_flavour: #
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/fftw/3.3.8/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openblas/0.3.12/lib']
 
-  if debug == 'FALSE': #
+    if debug == 'FALSE': #
 
-    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
-                   'gfortran', 'lorene_export', 'lorene', 'lorenef77']
-    #, 'm'
+      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'fftw3', 'openblas', \
+                     'gslcblas', 'gfortran', 'lorene_export', 'lorene', \
+                     'lorenef77']
+      #, 'm'
 
-  if debug == 'TRUE': #
+    if debug == 'TRUE': #
 
-    env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
-                   'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+      env['LIBS'] = ['stdc++', 'gsl', 'scalapack', 'fftw3', 'openblas', \
+                     'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', \
+                     'lorenef77_g']
     #, 'm'
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
