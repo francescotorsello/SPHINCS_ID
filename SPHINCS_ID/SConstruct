@@ -579,13 +579,14 @@ if flavour == full_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+      env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', \
+                     'gslcblas', \
                      'gfortran', 'lorene_export', 'lorene', 'lorenef77']
-      #, 'm'
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['stdc++', 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
+      env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', \
+                     'gslcblas', \
                      'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
 
   if host == 'Sunrise': #
@@ -608,7 +609,6 @@ if flavour == full_flavour: #
                      'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', \
                      'lorenef77_g', 'fftw3']
 
-    #, 'm'
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
                     + module_bns_fuka \
