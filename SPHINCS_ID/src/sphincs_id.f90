@@ -80,6 +80,7 @@ PROGRAM sphincs_id
                               run_sph, run_spacetime, sph_path, &
                               spacetime_path, estimate_length_scale, &
                               test_int, max_n_parts
+  USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
 
   IMPLICIT NONE
 
@@ -205,9 +206,17 @@ PROGRAM sphincs_id
   PRINT *, "  'COPYING'.                                                       "
   PRINT *, "  ________________________________________________________________ "
   PRINT *
+  PRINT *, "  SPHINCS_ID was compiled with: "
+  PRINT *, COMPILER_VERSION()
+  PRINT *
+  PRINT *, "  using the options: "
+  PRINT *, COMPILER_OPTIONS()
+  PRINT *, "  ________________________________________________________________ "
+  PRINT *
   PRINT *, "  Run id: ", run_id
   PRINT *, "  ________________________________________________________________ "
   PRINT *
+
 
   execution_timer= timer( "execution_timer" )
   CALL execution_timer% start_timer()
