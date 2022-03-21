@@ -50,7 +50,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !!"BNSLO_poly275_1.2-1.6_45km.bin"
              !!!"BNSLO_mpa1_1.2-2_45km.bin"
              !!!"BNSLO_mpa1_1.2-1.5_45km.bin"
-             "BNSLO_mpa1_1.2-1.5_45km-0com.bin"
+             !!"BNSLO_mpa1_1.2-1.5_45km-0com.bin"
              !!"BNSLO_poly2-75_1.2-1.8_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_48km.bin"
              !"BNSLO_poly2-75_1.2-1.8_50km.bin"
@@ -78,7 +78,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr-new.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
-             !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
+             "BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"DRSLO_apr4.bin"
              !"EJECT_ejecta_apr4_2516.dat"
 !--------------------------------------------------!
@@ -91,7 +91,7 @@ estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.FALSE.
+run_sph=.TRUE.
 run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !

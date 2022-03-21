@@ -659,7 +659,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
       npart_discard   = SUM( SUM( npart_discarded, DIM= 1 ), DIM= 1 )
       npart_shell_cnt = SUM( SUM( npart_surface_tmp, DIM= 1 ), DIM= 1 )
-      npart_shell( r )= npart_shell( r ) - npart_discard
+      npart_shell( r )= MAX( npart_shell( r ) - npart_discard, 0 )
       npart_out       = npart_out + npart_shell( r )/2
 
       IF( debug ) PRINT *, "Right after OMP"

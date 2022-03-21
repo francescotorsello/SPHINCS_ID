@@ -1131,7 +1131,6 @@ SUBMODULE (sph_particles) constructor_std
       DO itr= 1, parts% n_matter, 1
         PRINT *, " * Number of particles on object ", itr, "=", &
                  parts% npart_i(itr)
-        PRINT *
       ENDDO
       PRINT *
       !STOP

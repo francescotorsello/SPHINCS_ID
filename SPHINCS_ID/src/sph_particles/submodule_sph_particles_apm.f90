@@ -33,8 +33,9 @@ SUBMODULE (sph_particles) apm
   !
   !***********************************
 
-  USE, INTRINSIC:: ieee_arithmetic, ONLY: IEEE_IS_FINITE
-  USE              constants,       ONLY: zero, quarter, one, two, three, ten
+
+  USE constants,  ONLY: zero, quarter, one, two, three, ten
+  USE utility,    ONLY: is_finite_number
 
 
   IMPLICIT NONE
@@ -128,7 +129,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.375D0!0.25D0 !30.0D0
+    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.25D0!0.25D0 !30.0D0
     DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 1.0D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
@@ -181,7 +182,8 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev_dump
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
@@ -442,15 +444,15 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "npart_real= ", npart_real
 
-    max_r_real= zero
-    DO itr= 1, npart_real, 1
-
-      r_real= SQRT( ( pos_input( 1, itr ) - center(1) )**two &
-                  + ( pos_input( 2, itr ) - center(2) )**two &
-                  + ( pos_input( 3, itr ) - center(3) )**two )
-      IF( r_real > max_r_real ) max_r_real= r_real
-
-    ENDDO
+   ! max_r_real= zero
+   ! DO itr= 1, npart_real, 1
+   !
+   !   r_real= SQRT( ( pos_input( 1, itr ) - center(1) )**two &
+   !               + ( pos_input( 2, itr ) - center(2) )**two &
+   !               + ( pos_input( 3, itr ) - center(3) )**two )
+   !   IF( r_real > max_r_real ) max_r_real= r_real
+   !
+   ! ENDDO
 
     nx= nx_gh
     ny= ny_gh
@@ -934,7 +936,8 @@ SUBMODULE (sph_particles) apm
     ALLOCATE( freeze( npart_all ) )
     ALLOCATE( correction_pos( 3, npart_all ) )
     ALLOCATE( all_pos_tmp( 3, npart_all ) )
-    ALLOCATE( all_pos_tmp2( 3, npart_all ) )
+    ALLOCATE( all_pos_prev( 3, npart_all ) )
+    ALLOCATE( all_pos_prev_dump( 3, npart_all ) )
     ALLOCATE( cnt_move( npart_real ) )
     cnt_move= 0
 
@@ -991,7 +994,8 @@ SUBMODULE (sph_particles) apm
       ENDIF
     ENDIF
 
-    all_pos_tmp2= -one
+    all_pos_prev     = -one
+    all_pos_prev_dump= zero
     PRINT *, " * The APM iteration starts here."
     PRINT *
 
@@ -999,11 +1003,11 @@ SUBMODULE (sph_particles) apm
     err_N_mean_min= HUGE(one)
     apm_iteration: DO itr= 1, apm_max_it, 1
 
-      PRINT *, "------------------------------------------"
+      PRINT *, "---------------------------------------------------------------"
       PRINT *, " * Starting with APM step #: ", itr
       PRINT *
 
-      IF( MOD( itr, print_step ) == 0 )THEN
+      dump_pos: IF( MOD( itr, print_step ) == 0 )THEN
 
      ! DEBUGGING
      !
@@ -1064,7 +1068,10 @@ SUBMODULE (sph_particles) apm
             all_pos( 1, a ), &
             all_pos( 2, a ), &
             all_pos( 3, a ), &
-            tmp, cnt_move(a)
+            tmp, cnt_move(a), &
+            all_pos_prev_dump( 1, a ), &
+            all_pos_prev_dump( 2, a ), &
+            all_pos_prev_dump( 3, a )
         ENDDO
 
         DO a= npart_real + 1, npart_all, 1
@@ -1079,7 +1086,9 @@ SUBMODULE (sph_particles) apm
 
         CLOSE( UNIT= 2 )
 
-      ENDIF
+        all_pos_prev_dump= all_pos
+
+      ENDIF dump_pos
 
       IF( debug ) PRINT *, "enforcing center of mass..."
 
@@ -1243,11 +1252,9 @@ SUBMODULE (sph_particles) apm
       !$OMP             PRIVATE( a )
       find_nan_in_nstar_real: DO a= 1, npart_all, 1
 
-        IF( ISNAN( nstar_real( a ) ) )THEN
+        IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
 
-          PRINT *, "** WARNING! nstar_real(", a, ") is a NaN!", &
-                   "   Changing the values of nstar_real and h to one taken", &
-                   "   from a neighboring particle."
+          PRINT *, "** WARNING! nstar_real(", a, ") is a not a finite number!"
           IF( debug ) PRINT *, " * h(", a, ")=", h(a)
           IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
           IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
@@ -1290,7 +1297,34 @@ SUBMODULE (sph_particles) apm
 
       ENDDO
       !$OMP END PARALLEL DO
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_all, npart_real, art_pr, nstar_real, &
+      !$OMP                     nstar_p ) &
+      !$OMP             PRIVATE( a )
+      find_nan_in_art_pr: DO a= 1, npart_real, 1
+
+        IF( .NOT.is_finite_number(art_pr(a)) )THEN
+          PRINT *, "** ERROR! art_pr(", a, ")= ", art_pr(a), &
+                   " is not a finite number on a real particle!"
+          PRINT *, "   nstar_real(", a, ")=", nstar_real(a)
+          PRINT *, "   nstar_p(", a, ")=", nstar_p(a)
+          PRINT *, " * Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO find_nan_in_art_pr
+      !$OMP END PARALLEL DO
+
       art_pr_max= MAXVAL( art_pr, DIM= 1 )
+
+      IF( .NOT.is_finite_number(art_pr_max) )THEN
+        PRINT *, "** ERROR! art_pr_max =", art_pr_max
+        PRINT *, " * Stopping..."
+        PRINT *
+        STOP
+      ENDIF
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, npart_real, good_rho ) &
@@ -1308,7 +1342,7 @@ SUBMODULE (sph_particles) apm
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, npart_real, nstar_real, nstar_p, &
-      !$OMP                     dNstar, art_pr, err_N_max, &
+      !$OMP                     dNstar, err_N_max, &
       !$OMP                     pos_maxerr, nstar_real_err, nstar_p_err ) &
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
@@ -1352,14 +1386,14 @@ SUBMODULE (sph_particles) apm
       ENDDO
       !$OMP END PARALLEL DO
 
-      IF( ISNAN( art_pr_max ) )THEN
-        PRINT *, "** ERROR! art_pr_max is a NaN!", &
+      IF( .NOT.is_finite_number( art_pr_max ) )THEN
+        PRINT *, "** ERROR! art_pr_max is not a finite number!", &
                  " Stopping.."
         PRINT *
         STOP
       ENDIF
-      IF( ISNAN( nu_all ) )THEN
-        PRINT *, "** ERROR! nu_all is a NaN!", &
+      IF( .NOT.is_finite_number( nu_all ) )THEN
+        PRINT *, "** ERROR! nu_all is a not a finite number!", &
                  " Stopping.."
         PRINT *
         STOP
@@ -1386,31 +1420,29 @@ SUBMODULE (sph_particles) apm
                               r, theta, phi )
 
         x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
-
         y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
-
         z_ell= center(3) + rad_z*COS(theta)
 
         r_ell= SQRT( ( x_ell - center(1) )**two &
                    + ( y_ell - center(2) )**two &
                    + ( z_ell - center(3) )**two )
 
-        shell_loop: DO itr2= 1, 10, 1
+        shell_loop: DO itr2= 0, 20, 1
 
           IF( r <= ( one + ( ellipse_thickness - one )*DBLE(itr2)/ten )*r_ell &
               .AND. &
               r >= ( one + ( ellipse_thickness - one )*DBLE(itr2-1)/ten )*r_ell&
           ! If the ghost particle is contained within the i-th spherical shell..
 
-              !r <= ( 500.D0 + 50.D0*DBLE(itr)/ten ) &
+              !r <= ( 500.D0 + 50.D0*DBLE(itr2)/ten ) &
               !.AND. &
-              !r > ( 500.D0 + 50.D0*DBLE(itr-1)/ten ) &
+              !r > ( 500.D0 + 50.D0*DBLE(itr2-1)/ten ) &
 
           )THEN
 
             ! ..assign a pressure that increases with i, to build a pressure
             !   gradient
-            art_pr( a )= DBLE(3*itr2)*art_pr_max
+            art_pr(a)= three*art_pr_max!DBLE(itr2+1)*art_pr_max
 
           !ELSE
           !
@@ -1423,6 +1455,25 @@ SUBMODULE (sph_particles) apm
       ENDDO ghost_loop
       !$OMP END PARALLEL DO
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_all, npart_real, art_pr, nstar_real, &
+      !$OMP                     nstar_p ) &
+      !$OMP             PRIVATE( a )
+      find_nan_in_art_pr_ghost: DO a= npart_real + 1, npart_all, 1
+
+        IF( .NOT.is_finite_number(art_pr(a)) )THEN
+          PRINT *, "** ERROR! art_pr(", a, ")= ", art_pr(a), &
+                   " is not a finite number on a ghost particle!"
+          PRINT *, "   nstar_real(", a, ")=", nstar_real(a)
+          PRINT *, "   nstar_p(", a, ")=", nstar_p(a)
+          PRINT *, " * Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO find_nan_in_art_pr_ghost
+      !$OMP END PARALLEL DO
+
       IF( debug ) PRINT *, "Before calling position_correction"
 
       IF( debug ) PRINT *, npart_all
@@ -1431,27 +1482,6 @@ SUBMODULE (sph_particles) apm
       IF( debug ) PRINT *, SIZE(art_pr)
       IF( debug ) PRINT *, SIZE(nstar_real)
       IF( debug ) PRINT *, SIZE(correction_pos(1,:))
-
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_all, art_pr ) &
-      !$OMP             PRIVATE( a )
-      find_nan_in_art_pr: DO a= 1, npart_all, 1
-
-        IF( ISNAN( art_pr( a ) ) )THEN
-          PRINT *, "** ERROR! art_pr(", a, ") is a NaN!", &
-                   " Stopping.."
-          PRINT *
-          STOP
-        ENDIF
-        IF( art_pr( a ) > HUGE(one) )THEN
-          PRINT *, "** ERROR! art_pr(", a, ")= ", art_pr( a ), " is infinite!",&
-                   " Stopping.."
-          PRINT *
-          STOP
-        ENDIF
-
-      ENDDO find_nan_in_art_pr
-      !$OMP END PARALLEL DO
 
       err_N_mean= err_N_mean/DBLE(npart_real)
 
@@ -1578,48 +1608,61 @@ SUBMODULE (sph_particles) apm
       !
       PRINT *, " * Updating positions..."
 
-      all_pos_tmp2= all_pos
+      all_pos_prev= all_pos
 
       CALL position_correction( npart_all, &
                                 all_pos, h, nu_all, art_pr, nstar_real, &
                                 correction_pos )
 
+      correction_pos(:,npart_real+1:npart_all)= zero
+
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_all, correction_pos, all_pos, center, &
       !$OMP                     larger_radius ) &
-      !$OMP             PRIVATE( a, itr2, r_tmp, theta_tmp, phi_tmp, &
-      !$OMP                      rel_sign )
+      !$OMP             PRIVATE( a, itr2, r, theta, phi )
       find_nan_in_correction_pos: DO a= 1, npart_all, 1
 
-        DO itr2= 1, 3, 1
+        loop_over_spatial_components: DO itr2= 1, 3, 1
 
-          IF( ISNAN( correction_pos( itr2, a ) ) )THEN
+          IF( .NOT.is_finite_number( correction_pos( itr2, a ) ) )THEN
 
-            PRINT *, "** ERROR! correction_pos(", itr2, ",", a, ") is a NaN!"
-            PRINT *, " *        Particle position: x=", all_pos(1,a), &
-                     ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+            CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
+                                           all_pos(3,a), &
+                                           center(1), center(2), center(3), &
+                                           r, theta, phi )
 
-            CALL spherical_from_cartesian( &
-                              all_pos(1,a), all_pos(2,a), all_pos(3,a), &
-                              center(1), center(2), center(3), &
-                              r_tmp, theta_tmp, phi_tmp )
+            correction_pos( 1, a )= - one/(two*ten)*SIN(theta)*COS(phi)
+            correction_pos( 2, a )= - one/(two*ten)*SIN(theta)*SIN(phi)
+            correction_pos( 3, a )= - one/(two*ten)*COS(theta)
+            !correction_pos( itr2, a )= zero
 
-            !r_tmp= SQRT( ( all_pos(1,a) - center(1) )**two + &
-            !             ( all_pos(2,a) - center(2) )**two + &
-            !             ( all_pos(3,a) - center(3) )**two )
-
-            PRINT *, " *        Particle radius: r=", r_tmp, &
-                     "=", r_tmp/larger_radius*ten*ten, &
-                     "% of the larger radius of the star."
-            PRINT *, " *        Particle colatitude: theta=", theta_tmp/pi," pi"
-            PRINT *, " *        Particle longitude: phi=", phi_tmp/pi, " pi"
-            PRINT *, " * Stopping.."
-            PRINT *
-            STOP
+           ! PRINT *, "** ERROR! correction_pos(", itr2, ",", a, ") is a NaN!"
+           ! PRINT *, " *        correction_pos: x=", correction_pos(1,a), &
+           !          ", y=", correction_pos(2,a), ", z=", correction_pos(3,a)
+           ! PRINT *, " *        Particle position: x=", all_pos(1,a), &
+           !          ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+           !
+           ! CALL spherical_from_cartesian( &
+           !                   all_pos(1,a), all_pos(2,a), all_pos(3,a), &
+           !                   center(1), center(2), center(3), &
+           !                   r_tmp, theta_tmp, phi_tmp )
+           !
+           ! !r_tmp= SQRT( ( all_pos(1,a) - center(1) )**two + &
+           ! !             ( all_pos(2,a) - center(2) )**two + &
+           ! !             ( all_pos(3,a) - center(3) )**two )
+           !
+           ! PRINT *, " *        Particle radius: r=", r_tmp, &
+           !          "=", r_tmp/larger_radius*ten*ten, &
+           !          "% of the larger radius of the star."
+           ! PRINT *, " *        Particle colatitude: theta=", theta_tmp/pi," pi"
+           ! PRINT *, " *        Particle longitude: phi=", phi_tmp/pi, " pi"
+           ! PRINT *, " * Stopping.."
+           ! PRINT *
+           ! STOP
 
           ENDIF
 
-        ENDDO
+        ENDDO loop_over_spatial_components
 
       ENDDO find_nan_in_correction_pos
       !$OMP END PARALLEL DO
@@ -1629,9 +1672,9 @@ SUBMODULE (sph_particles) apm
       cnt_move= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( use_atmosphere, all_pos, correction_pos, &
-      !$OMP                     dNstar, npart_real, nstar_p, cnt_move ) &
+      !$OMP                     dNstar, npart_real, nstar_p, cnt_move, center )&
       !$OMP             PRIVATE( pos_corr_tmp, a, cnt, rand_num, rand_num2, &
-      !$OMP                      rel_sign )
+      !$OMP                      rel_sign, r, theta, phi, theta_tmp )
       particle_loop: DO a= 1, npart_real, 1
 
         adapt_displacement_to_error: &
@@ -1745,6 +1788,62 @@ SUBMODULE (sph_particles) apm
               ! IF( rand_num2 >= half ) rel_sign=   1
               ! all_pos(:,a)= all_pos(:,a)*( one -rand_num*half*third )
 
+              CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
+                                             all_pos(3,a), &
+                                             center(1), center(2), center(3), &
+                                             r, theta, phi )
+
+              !all_pos(1,a)= all_pos(1,a) &
+              !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*COS(phi)
+              !all_pos(2,a)= all_pos(2,a) &
+              !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*SIN(phi)
+              !all_pos(3,a)= all_pos(3,a) &
+              !      - one/(two*ten)*COS(theta*(one + one/(ten*ten)))
+
+              ! ...push the particle closer to the origin close to its radial
+              !    line, and place it to the first place having an acceptable
+              !    density
+              ! TODO: what if the particles is placed on top of another
+              !       particle?
+              scan_radial_line: DO itr2= (ten - three)*ten, 1, -1
+
+               ! CALL RANDOM_NUMBER( rand_num )
+               ! CALL RANDOM_NUMBER( rand_num2 )
+               !
+               ! IF( rand_num2 < half )  rel_sign= - 1
+               ! IF( rand_num2 >= half ) rel_sign=   1
+               !
+               ! theta_tmp= theta*( one + DBLE(rel_sign)*rand_num*half )
+               !
+               ! IF( theta_tmp < pi .AND. theta_tmp > pi/two ) theta= theta_tmp
+               !
+               ! CALL RANDOM_NUMBER( rand_num )
+               ! CALL RANDOM_NUMBER( rand_num2 )
+               !
+               ! IF( rand_num2 < half )  rel_sign= - 1
+               ! IF( rand_num2 >= half ) rel_sign=   1
+               !
+               ! phi= phi*( one + DBLE(rel_sign)*rand_num*half )
+
+                pos_corr_tmp(1)= center(1) +r*itr2/(ten*ten)*SIN(theta)*COS(phi)
+                pos_corr_tmp(2)= center(2) +r*itr2/(ten*ten)*SIN(theta)*SIN(phi)
+                pos_corr_tmp(3)= center(3) +r*itr2/(ten*ten)*COS(theta)
+
+                IF( get_density( &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
+                    .AND. &
+                    validate_position_final( &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+                )THEN
+
+                  all_pos(:,a)= pos_corr_tmp
+                  cnt_move(a)= 1
+                  EXIT
+
+                ENDIF
+
+              ENDDO scan_radial_line
+
               EXIT
 
             ENDIF test_position
@@ -1781,14 +1880,14 @@ SUBMODULE (sph_particles) apm
       ! last step, reflect them back above the xy plane
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, all_pos_tmp2, npart_real ) &
+      !$OMP             SHARED( all_pos, all_pos_prev, npart_real ) &
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
-        IF( all_pos_tmp2( 3, a ) > 0 .AND. &
+        IF( all_pos_prev( 3, a ) > 0 .AND. &
             all_pos( 3, a ) <= 0 )THEN
 
-          all_pos( 3, a )= all_pos_tmp2( 3, a )
+          all_pos( 3, a )= all_pos_prev( 3, a )
 
         ENDIF
 
@@ -3093,31 +3192,37 @@ SUBMODULE (sph_particles) apm
 
       ELSE
 
-     !   !$OMP PARALLEL DO DEFAULT( NONE ) &
-     !   !$OMP             SHARED( npart_real, nstar_p ) &
-     !   !$OMP             PRIVATE( a )
-     !   DO a= 1, npart_real, 1
-     !
-     !     IF( ISNAN( nstar_p( a ) ) )THEN
-     !       PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
-     !                " Stopping.."
-     !       PRINT *
-     !       STOP
-     !     ENDIF
-     !     IF( nstar_p( a ) == zero )THEN
-     !       PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
-     !       !PRINT *, "   sq_g=", sq_g
-     !       !PRINT *, "   Theta_a=", Theta_a
-     !       !PRINT *, "   baryon_density(", a, ")=", baryon_density(a)
-     !       !PRINT *, " * Stopping.."
-     !       !PRINT *
-     !       STOP
-     !     ENDIF
-     !
-     !   ENDDO
-     !   !$OMP END PARALLEL DO
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( npart_real, nstar_p ) &
+        !$OMP             PRIVATE( a )
+        DO a= 1, npart_real, 1
+
+          IF( nstar_p( a ) < 1.0D-10 )THEN
+            PRINT *, "** ERROR! nstar_p(", a, ")=", nstar_p( a ), &
+                     " Stopping.."
+            PRINT *
+            STOP
+          ENDIF
+
+        ENDDO
+        !$OMP END PARALLEL DO
 
       ENDIF
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, nstar_p ) &
+      !$OMP             PRIVATE( a )
+      DO a= 1, npart_real, 1
+
+        IF( .NOT.is_finite_number( nstar_p( a ) ) )THEN
+          PRINT *, "** ERROR! nstar_p(", a, ") is a not a finite number!", &
+                   " Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO
+      !$OMP END PARALLEL DO
 
     END SUBROUTINE get_nstar_p_atm
 
