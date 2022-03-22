@@ -93,6 +93,14 @@ version = '_v1.0'
 ################################################################################
 
 ################################################################################
+# EXTERNAL LIBRARIES
+################################################################################
+
+liblorene_dir = ['../../../Lorene/Lib']
+
+################################################################################
+
+################################################################################
 # CUSTOM OPTIONS
 ################################################################################
 
@@ -162,7 +170,6 @@ if fortran_compiler == 'gfortran': #
 
   )
 
-# Pretty output
 if verbose == 'FALSE':
 
   if sys.stdout.isatty():
@@ -314,8 +321,6 @@ module_utility = [
   'module_utility.f90'
 ]
 
-all_modules = [ module_id_base, module_utility, module_sphincs_id_interpolate ]
-
 for i in range(len(module_id_base)):
   module_id_base[i] = module_id_base_dir[0] + module_id_base[i]
 
@@ -375,6 +380,8 @@ sources_base = module_id_base + module_bns_base + module_diffstar_base \
              + module_sph_particles + module_standard_tpo_formulation \
              + module_bssn_formulation + module_utility
 
+#all_modules = [ module_id_base, module_utility, module_sphincs_id_interpolate ]
+
 ################################################################################
 
 ################################################################################
@@ -384,10 +391,6 @@ sources_base = module_id_base + module_bns_base + module_diffstar_base \
 env['F90PATH'] = [
   '.', '../../BSSN', '../SPHINCS_fix_metric', "../SPHINCS_BSSN"
 ]
-
-#env['CPPPATH'] = [
-#  '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/Include'
-#]
 
 mesh_dir         = ['../../BSSN/']
 sphincs_bssn_dir = ['../SPHINCS_BSSN/']
@@ -399,21 +402,13 @@ sphincs_fm_dir   = ['../SPHINCS_fix_metric/']
 
 sources_mesh = [
   'module_mesh_refinement.f90',
-  #'module_ADM.f90',
   'module_ADM_refine.f90',
-  #'module_BSSN.f90',
   'module_BSSN_refine.f90',
   'module_BSSN_parameters.f90',
-  #'module_GravityAcceleration.f90',
   'module_GravityAcceleration_refine.f90',
-  #'module_McLachlan.f90',
   'module_McLachlan_refine.f90',
-  #'module_TOV.f90',
   'module_TOV_refine.f90',
-  #'module_Tmunu.f90',
   'module_Tmunu_refine.f90',
-  #'module_gravity_grid.f90',
-  #'module_map_metric_2_particles.f90',
   'module_map_metric_2_particles_refine.f90',
   'module_evolution_parameters.f90',
   'submodule_prolongation.f90',
@@ -422,7 +417,6 @@ sources_mesh = [
   'submodule_parameter.f90',
   'submodule_allocation.f90',
   'submodule_output.f90',
-  #'module_tensor.f90',
   'module_Numerics.f90',
   'module_Hermite_refine.f90',
   'Hermite_3D_Weights.f',
@@ -443,22 +437,18 @@ sources_mesh = [
   'submodule__Extract_Mass_impl.f90',
   'fermi_step_f.f90',
   'bssn_parameters.cc'
-  #'module_NaNChecker.f90'
 ]
 
 sources_sphincs_bssn = [
   'module_CP_distribute.f90',
   'module_MLS.f90',
   'module_SelfRegularization.f90',
-  #'module_particle_mesh.f90',
   'module_particle_mesh_hash_grid.f90',
   'module_map_particles_2_grid.f90',
   'module_integ_hydro_BSSN.f90',
-  #'module_grid_output.f90',
   'module_gradient.f90',
   'module_timing.f90',
   'module_debug_output.f90',
-  #'module_grav_acc_check.f90',
   'module_dyn_metric_on_particles.f90',
   'module_alive_flag.f90',
   'module_quadrup_GW_extraction.f90'
@@ -495,7 +485,24 @@ sources_sphincs_fm = [
   'module_piecewise_polytrope.f90'
 ]
 
-#sources_sphincs_fm = sources_sphincs_fm + ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/module_recovery_via_pressure.f90']
+for i in range(len(sources_mesh)):
+ sources_mesh[i]           = mesh_dir[0]          + sources_mesh[i]
+
+for i in range(len(sources_sphincs_bssn)):
+ sources_sphincs_bssn[i]   = sphincs_bssn_dir[0]  + sources_sphincs_bssn[i]
+
+for i in range(len(sources_sphincs_fm)):
+ sources_sphincs_fm[i]     = sphincs_fm_dir[0]    + sources_sphincs_fm[i]
+
+################################################################################
+
+################################################################################
+# SOURCE FILES FROM LORENE (THESE CAN BE OPTIONALLY COMPILED)
+################################################################################
+
+#env['CPPPATH'] = [
+#  '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/Include'
+#]
 
 lorene_dir       = ['../../../Lorene/C++/Source/']
 lorene_bin_ns_dir= ['../../../Lorene/Export/C++/Source/']
@@ -549,21 +556,13 @@ lorene_sources = [
 
 lorene_sources_bin_ns = ['bin_ns.C', 'bin_ns_aux.C', 'write_lines.C']
 
-
-for i in range(len(sources_mesh)):
- sources_mesh[i]           = mesh_dir[0]          + sources_mesh[i]
-
-for i in range(len(sources_sphincs_bssn)):
- sources_sphincs_bssn[i]   = sphincs_bssn_dir[0]  + sources_sphincs_bssn[i]
-
-for i in range(len(sources_sphincs_fm)):
- sources_sphincs_fm[i]     = sphincs_fm_dir[0]    + sources_sphincs_fm[i]
-
 for i in range(len(lorene_sources)):
   lorene_sources[i]        = lorene_dir[0]        + lorene_sources[i]
 
 for i in range(len(lorene_sources_bin_ns)):
   lorene_sources_bin_ns[i] = lorene_bin_ns_dir[0] + lorene_sources_bin_ns[i]
+
+################################################################################
 
 ################################################################################
 # FLAVOUR= 1. Link to LORENE and FUKA libraries, and interpolate from
@@ -575,7 +574,7 @@ if flavour == full_flavour: #
 
   if host == 'r3x': #
 
-    env['LIBPATH'] = ['../../../Lorene/Lib']
+    env['LIBPATH'] = liblorene_dir
 
     if debug == 'FALSE': #
 
@@ -591,8 +590,8 @@ if flavour == full_flavour: #
 
   if host == 'Sunrise': #
 
-    env['LIBPATH'] = ['../../../Lorene/Lib', \
-                      '/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
+    env['LIBPATH'] = liblorene_dir + \
+                     ['/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/scalapack/2.1.0/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/fftw/3.3.8/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openblas/0.3.12/lib']
@@ -628,7 +627,7 @@ if flavour == lorene_flavour: #
 
   if host == 'r3x': #
 
-    env['LIBPATH'] = ['../../../Lorene/Lib']
+    env['LIBPATH'] = liblorene_dir
 
     if debug == 'FALSE': #
 
@@ -644,8 +643,8 @@ if flavour == lorene_flavour: #
 
   if host == 'Sunrise': #
 
-    env['LIBPATH'] = ['../../../Lorene/Lib', \
-                      '/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
+    env['LIBPATH'] = liblorene_dir + \
+                     ['/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/scalapack/2.1.0/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/fftw/3.3.8/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openblas/0.3.12/lib']
@@ -677,19 +676,15 @@ if flavour == fuka_flavour: #
 
   build_flavour= '-Dflavour=3'
 
-  #env['LIBPATH'] = ['../../../Lorene/Lib']
+  #env['LIBPATH'] = ['']
 
   if debug == 'FALSE': #
 
     env['LIBS'] = ['stdc++', 'm']
-                   #, 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
-                   #'gfortran', 'lorene_export', 'lorene', 'lorenef77']
 
   if debug == 'TRUE': #
 
     env['LIBS'] = ['stdc++', 'm']
-                   #, 'gsl', 'lapack', 'fftw3', 'blas', 'gslcblas', \
-                   #'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
 
   sources_flavour = module_bns_fuka \
                     + module_ejecta_generic + module_sphincs_id_fuka
