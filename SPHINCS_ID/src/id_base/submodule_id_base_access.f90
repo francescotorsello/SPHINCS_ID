@@ -290,7 +290,11 @@ SUBMODULE (id_base) access
     !
     !************************************************
 
+    USE constants, ONLY: one, five, ten
+
     IMPLICIT NONE
+
+    DOUBLE PRECISION, PARAMETER:: stretch= five/(ten*ten*ten)
 
     INTEGER:: i_matter
     DOUBLE PRECISION, DIMENSION(3):: center_matter
@@ -305,7 +309,7 @@ SUBMODULE (id_base) access
 
     DO i_matter= 1, THIS% get_n_matter(), 1
 
-      size_matter  = THIS% return_spatial_extent( i_matter )
+      size_matter  = THIS% return_spatial_extent( i_matter )*(one + stretch)
       center_matter= THIS% return_center( i_matter )
 
       IF( center_matter(1) - size_matter(1) < box(1) ) &
