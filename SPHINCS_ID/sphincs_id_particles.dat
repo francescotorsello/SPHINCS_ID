@@ -132,6 +132,10 @@ apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
+print_step= 15          ! Evey print_step steps, print the particle positions
+                        ! at the current step, and the particle positions at
+                        ! the (current - print_step) step, to a formatted file.
+                        ! This allows the user to monitor the APM evolution
 apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
@@ -153,6 +157,8 @@ mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
+ghost_dist=0.25D0       ! Distance between the ghost particles and the surface
+                        ! of the matter object considered (star, ejecta, etc...)
 use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term
                         ! This can be useful when the system has an irregular

@@ -110,7 +110,7 @@ SUBMODULE (sph_particles) constructor_std
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
     ! APM parameters
-    INTEGER:: apm_max_it, max_inc
+    INTEGER:: apm_max_it, max_inc, print_step
     INTEGER:: column_nu
     ! Temporary number of matter objects
     INTEGER:: n_matter_tmp, tmp
@@ -121,7 +121,7 @@ SUBMODULE (sph_particles) constructor_std
     ! Temporary array storing the number of particles on each matter object
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_i_tmp
 
-    DOUBLE PRECISION:: thres, nu_ratio_des
+    DOUBLE PRECISION:: thres, nu_ratio_des, ghost_dist
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
     DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor, &
                        last_r
@@ -192,7 +192,8 @@ SUBMODULE (sph_particles) constructor_std
               randomize_phi, randomize_theta, randomize_r, &
               apm_iterate, apm_max_it, max_inc, mass_it, &
               nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
-              use_atmosphere, remove_atmosphere, nuratio_des
+              use_atmosphere, remove_atmosphere, nuratio_des, print_step, &
+              ghost_dist
 
     ! Get the number of matter objects in the physical system
     parts% n_matter= id% get_n_matter()
@@ -1199,8 +1200,10 @@ SUBMODULE (sph_particles) constructor_std
                     sizes(i_matter, :), &
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
+                    ghost_dist, &
                     use_atmosphere(i_matter), &
                     remove_atmosphere(i_matter), &
+                    print_step, &
                     filename_apm_pos_id, filename_apm_pos, &
                     filename_apm_results, check_negative_hydro )
         CALL parts% apm_timers(i_matter)% stop_timer()
@@ -1914,6 +1917,15 @@ SUBMODULE (sph_particles) constructor_std
 
     SUBROUTINE get_nstar_p( npart_real, x, y, z, nstar_p )
 
+      !**************************************************************
+      !
+      !# Stores the proper baryon mass density in the array nstar_p
+      !  given as argument
+      !
+      !  FT 31.08.2021
+      !
+      !**************************************************************
+
       IMPLICIT NONE
 
       INTEGER, INTENT(IN):: npart_real
@@ -1958,7 +1970,7 @@ SUBMODULE (sph_particles) constructor_std
       !**************************************************************
       !
       !# Compute nstar_p, the proper baryon mass density, given the
-      !  |lorene| ID
+      !  |id|
       !
       !  FT 31.08.2021
       !
@@ -1966,7 +1978,6 @@ SUBMODULE (sph_particles) constructor_std
 
       USE constants,                    ONLY: zero, one, two
       USE tensor,                       ONLY: jx, jy, jz, n_sym4x4
-      !USE matrix,                       ONLY: determinant_4x4_matrix
       USE utility,                      ONLY: compute_g4, determinant_sym4x4, &
                                               spacetime_vector_norm_sym4x4
 
@@ -1989,10 +2000,9 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_p
 
-      INTEGER:: a, i!mus, nus
+      INTEGER:: a, i
       DOUBLE PRECISION:: det, sq_g, Theta_a
       DOUBLE PRECISION, DIMENSION(0:3,npart_real):: vel
-      !DOUBLE PRECISION:: g4(0:3,0:3)
       DOUBLE PRECISION:: g4(n_sym4x4)
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -2009,79 +2019,29 @@ SUBMODULE (sph_particles) constructor_std
         vel(jy,a)= lapse(a)*v_euler_y(a)- shift_y(a)
         vel(jz,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
-      !  DO i= 1, 3, 1
-      !    IF( ISNAN(vel(i,a)) )THEN
-      !      PRINT *, "ERROR! The ", i, " component of vel is a NaN at ", &
-      !               "particle ", a
-      !      PRINT *
-      !      STOP
-      !    ELSEIF( .NOT.IEEE_IS_FINITE(vel(i,a)) )THEN
-      !      PRINT *, "ERROR! The ", i, " component of vel is infinite at ", &
-      !               "particle ",a
-      !      PRINT *
-      !      STOP
-      !    ENDIF
-      !  ENDDO
-
-        !
-        !-- Metric as matrix for easy manipulation
-        !
-      !  g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
-      !         + two*g_xy(a)*shift_x(a)*shift_y(a) &
-      !         + two*g_xz(a)*shift_x(a)*shift_z(a) &
-      !         + g_yy(a)*shift_y(a)*shift_y(a) &
-      !         + two*g_yz(a)*shift_y(a)*shift_z(a) &
-      !         + g_zz(a)*shift_z(a)*shift_z(a)
-      !  g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      !  g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      !  g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-      !
-      !  g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      !  g4(1,1)= g_xx(a)
-      !  g4(1,2)= g_xy(a)
-      !  g4(1,3)= g_xz(a)
-      !
-      !  g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      !  g4(2,1)= g_xy(a)
-      !  g4(2,2)= g_yy(a)
-      !  g4(2,3)= g_yz(a)
-      !
-      !  g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-      !  g4(3,1)= g_xz(a)
-      !  g4(3,2)= g_yz(a)
-      !  g4(3,3)= g_zz(a)
-
         CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
                          [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
 
-      !  DO i= 1, 10, 1
-      !    IF( ISNAN(g4(i)) )THEN
-      !      PRINT *, "ERROR! The ", i, " component of g4 is a NaN at ", &
-      !               "particle ", a
-      !      PRINT *
-      !      STOP
-      !    ELSEIF( .NOT.IEEE_IS_FINITE(g4(i)) )THEN
-      !      PRINT *, "ERROR! The ", i, " component of g4 is infinite at ", &
-      !               "particle ",a
-      !      PRINT *
-      !      STOP
-      !    ENDIF
-      !  ENDDO
-
         CALL determinant_sym4x4( g4, det )
-        !CALL determinant_4x4_matrix(g4,det)
         IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "ERROR! The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", a
+          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+                   // "effectively 0 at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
+          PRINT *, " * Stopping..."
           PRINT *
           STOP
-        ELSEIF( det > 0 )THEN
-          PRINT *, "ERROR! The determinant of the spacetime metric is " &
-                   // "positive at particle ", a
+        ENDIF
+        IF( det > 0 )THEN
+          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+                   // "positive at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
           PRINT *
           STOP
-        ELSEIF( .NOT.is_finite_number(det) )THEN
-          PRINT *, "ERROR! The determinant is ", det, "at particle ", a
+        ENDIF
+        IF( .NOT.is_finite_number(det) )THEN
+          PRINT *, "** ERROR! The determinant is ", det, "at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
+          PRINT *, " * Stopping..."
           PRINT *
           STOP
         ENDIF
@@ -2091,24 +2051,30 @@ SUBMODULE (sph_particles) constructor_std
         !-- Generalized Lorentz factor
         !
         Theta_a= zero
-        !DO nus=0,3
-        !  DO mus=0,3
-        !    Theta_a= Theta_a &
-        !             + g4(mus,nus)*vel(mus,a)*vel(nus,a)
-        !  ENDDO
-        !ENDDO
         CALL spacetime_vector_norm_sym4x4( g4, vel(:,a), Theta_a )
         IF( .NOT.is_finite_number(Theta_a) )THEN
-          PRINT *, "ERROR! The spacetime norm of vel is ", Theta_a, &
-                   "at particle ", a
+          PRINT *, "** ERROR! The spacetime norm of vel is ", Theta_a, &
+                   "at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
+          PRINT *, " * Stopping..."
           PRINT *
           STOP
         ENDIF
 
         Theta_a= one/SQRT(-Theta_a)
         IF( .NOT.is_finite_number(Theta_a) )THEN
-          PRINT *, "ERROR! The generalized Lorentz factor is ", Theta_a, &
-                   "at particle ", a
+          PRINT *, "** ERROR! The generalized Lorentz factor is ", Theta_a, &
+                   "at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+        ENDIF
+        IF( Theta_a < one )THEN
+          PRINT *, "** ERROR! The generalized Lorentz factor is ", Theta_a, &
+                   "< 1 at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
+          PRINT *, " * Stopping..."
           PRINT *
           STOP
         ENDIF

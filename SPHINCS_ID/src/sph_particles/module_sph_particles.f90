@@ -933,14 +933,14 @@ MODULE sph_particles
                                    center, &
                                    com_star, &
                                    mass, &
-                                   sizes, &!radx_opp, &
-                                   !rady, radz, &
+                                   sizes, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
                                    nuratio_des, &
-                                   nx_gh, ny_gh, nz_gh, &
+                                   nx_gh, ny_gh, nz_gh, ghost_dist, &
                                    use_atmosphere, &
                                    remove_atmosphere, &
+                                   print_step, &
                                    namefile_pos_id, namefile_pos, &
                                    namefile_results, &
                                    validate_position )
@@ -993,6 +993,8 @@ MODULE sph_particles
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
       !> Initial particle number
       INTEGER,                          INTENT( INOUT ):: npart_output
+      !> Prints he particle positions to a formatted file every print_step steps
+      INTEGER,                          INTENT( INOUT ):: print_step
       !> Initial particle positions
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos_input
       !> Initial particle volume
@@ -1048,6 +1050,9 @@ MODULE sph_particles
       INTEGER,                          INTENT( IN )   :: ny_gh
       !> Number of lattice points in the z direction for ghosts
       INTEGER,                          INTENT( IN )   :: nz_gh
+      !> Distance between the ghost particles and the surface
+      !  of the matter object considered (star, ejecta, etc...)
+      DOUBLE PRECISION,                 INTENT( IN )   :: ghost_dist
       !> If .TRUE., allows particles to move where the density
       !  is 0, and displace them using only the smoothing term.
       !  This can be useful when the system has an irregular
