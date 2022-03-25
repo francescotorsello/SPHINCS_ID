@@ -3235,7 +3235,6 @@ SUBMODULE (sph_particles) apm
     INTEGER, INTENT(IN)   :: npart_ghost
 
     INTEGER:: npart_real_old
-    INTEGER:: npart_real_diff
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
 
@@ -3259,7 +3258,8 @@ SUBMODULE (sph_particles) apm
       PRINT *
     ENDIF
 
-    pos_tmp= pos
+    npart_real_old= npart_real
+    pos_tmp       = pos
     IF( PRESENT(nu) ) nu_tmp = nu
 
     CALL find_particles_above_xy_plane( npart_real, pos(:,1:npart_real), &
@@ -3267,12 +3267,8 @@ SUBMODULE (sph_particles) apm
 
     IF(npart_real/2 /= npart_half )THEN
 
-      npart_real_old= npart_real
-
       npart_real= 2*npart_half
       npart_all= npart_real + npart_ghost
-
-      npart_real_diff= npart_real_old - npart_real
 
       DEALLOCATE(pos)
       ALLOCATE( pos(3,npart_all) )
@@ -3299,13 +3295,11 @@ SUBMODULE (sph_particles) apm
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( pos, npart_real, npart_all, nu, pos_tmp, nu_tmp, &
-    !$OMP                     npart_real_diff )&
+    !$OMP                     npart_real_old, npart_ghost )&
     !$OMP             PRIVATE( a )
-    DO a= npart_real + 1, npart_all, 1
-      pos( 1, a )= pos_tmp( 1, npart_real_diff + a )
-      pos( 2, a )= pos_tmp( 2, npart_real_diff + a )
-      pos( 3, a )= pos_tmp( 3, npart_real_diff + a )
-      IF( PRESENT(nu) ) nu( a )= nu_tmp( npart_real_diff + a )
+    DO a= 1, npart_ghost, 1
+      pos( :, npart_real + a ) = pos_tmp( :, npart_real_old + a )
+      IF( PRESENT(nu) ) nu( a )= nu_tmp( npart_real_old + a )
     ENDDO
     !$OMP END PARALLEL DO
 
