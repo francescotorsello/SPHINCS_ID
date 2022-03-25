@@ -75,11 +75,12 @@ PROGRAM convergence_test
                                       export_constraints_details, &
                                       constraints_step, &
                                       compute_parts_constraints, &
-                                      numerator_ratio_dx, denominator_ratio_dx, &
+                                      numerator_ratio_dx, denominator_ratio_dx,&
                                       one_lapse, zero_shift, show_progress, &
                                       run_sph, run_spacetime, sph_path, &
                                       spacetime_path, estimate_length_scale, &
                                       test_int, max_n_parts, ref_lev
+  USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
 
   IMPLICIT NONE
 
@@ -172,6 +173,13 @@ PROGRAM convergence_test
   PRINT *, "  along with SPHINCS_ID. If not, see https://www.gnu.org/licenses/."
   PRINT *, "  The copy of the GNU General Public License should be in the file "
   PRINT *, "  'COPYING'.                                                       "
+  PRINT *, "  ________________________________________________________________ "
+  PRINT *
+  PRINT *, "  SPHINCS_ID was compiled with: "
+  PRINT *, COMPILER_VERSION()
+  PRINT *
+  PRINT *, "  using the options: "
+  PRINT *, COMPILER_OPTIONS()
   PRINT *, "  ________________________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id

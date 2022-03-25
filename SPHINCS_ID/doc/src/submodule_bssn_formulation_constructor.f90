@@ -157,12 +157,20 @@ SUBMODULE (bssn_formulation) constructor
 
     CALL destruct_bssn( THIS )
 
+#if host == Sunrise
+
+  CALL THIS% deallocate_standard_tpo_variables
+
+#else
+
 #ifdef __INTEL_COMPILER
   CALL deallocate_standard_tpo_variables( THIS )
 #endif
 
 #ifdef __GFORTRAN__
   CALL THIS% deallocate_standard_tpo_variables
+#endif
+
 #endif
 
   END PROCEDURE destructor

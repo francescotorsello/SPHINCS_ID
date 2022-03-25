@@ -910,9 +910,9 @@ SUBMODULE (sph_particles) apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    CALL impose_equatorial_plane_symmetry( npart_real, &
-                                           all_pos(:,1:npart_real), &
-                                           nu(1:npart_real) )
+    CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
+                                               npart_ghost, &
+                                               all_pos, nu= nu )
 
     PRINT *, " * ID set up for the APM iteration."
     PRINT *
@@ -1007,7 +1007,9 @@ SUBMODULE (sph_particles) apm
       PRINT *, " * Starting with APM step #: ", itr
       PRINT *
 
-      dump_pos: IF( MOD( itr, print_step ) == 0 )THEN
+      dump_pos: IF( (print_step /= 0) &
+                    .AND. &
+                    (MOD( itr, print_step ) == 0) )THEN
 
      ! DEBUGGING
      !
@@ -1098,9 +1100,13 @@ SUBMODULE (sph_particles) apm
 
       IF( debug ) PRINT *, "mirroring particles..."
 
-      CALL impose_equatorial_plane_symmetry( npart_real, &
-                                             all_pos(:,1:npart_real), &
-                                             nu(1:npart_real) )
+      !CALL impose_equatorial_plane_symmetry_apm( npart_real, npart_ghost, &
+      !                                all_pos(:,1:npart_real), &
+      !                                nu= nu(1:npart_real), &
+      !                                pos_prev= all_pos_prev(:,1:npart_real) )
+
+      CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
+                                             npart_ghost, all_pos, nu )
 
       IF( debug )THEN
 
@@ -1209,10 +1215,6 @@ SUBMODULE (sph_particles) apm
 
       CALL density_loop( npart_all, all_pos, &    ! input
                          nu, h, nstar_real )      ! output
-
-      IF( debug ) PRINT *, "npart_real= ", npart_real
-      IF( debug ) PRINT *, "npart_all= ", npart_all
-      IF( debug ) PRINT *
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, npart_all, nstar_real, h, nu, &
@@ -1337,9 +1339,14 @@ SUBMODULE (sph_particles) apm
       ENDDO
       !$OMP END PARALLEL DO
 
-      err_N_max = MAXVAL( dNstar, MASK= good_rho )
-      err_N_min = MINVAL( dNstar, MASK= good_rho )
-      err_N_mean= SUM( dNstar, DIM= 1 )/SIZE( dNstar )
+      err_N_max     = MAXVAL( ABS(dNstar), MASK= good_rho )
+      err_N_min     = MINVAL( ABS(dNstar), MASK= good_rho )
+      err_N_mean    = SUM( ABS(dNstar), DIM= 1 )/SIZE( dNstar )
+      err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
+
+      IF( err_N_mean_min == err_N_mean )THEN
+        all_pos_best= all_pos
+      ENDIF
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, npart_real, nstar_real, nstar_p, &
@@ -1487,16 +1494,8 @@ SUBMODULE (sph_particles) apm
       IF( debug ) PRINT *, SIZE(nstar_real)
       IF( debug ) PRINT *, SIZE(correction_pos(1,:))
 
-      err_N_mean= err_N_mean/DBLE(npart_real)
-
-      err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
-
-      IF( err_N_mean_min == err_N_mean )THEN
-        all_pos_best= all_pos
-      ENDIF
-
       PRINT *, " * Maximum relative error between the star density profile", &
-               "   and its SPH estimate: err_N_max= ", err_N_max
+               " and its SPH estimate: err_N_max= ", err_N_max
       PRINT *, "     at position: x=", pos_maxerr(1), ", y=", pos_maxerr(2), &
                ", z=", pos_maxerr(3)
       PRINT *, "     with r/(system size)= ", SQRT( &
@@ -1594,6 +1593,11 @@ SUBMODULE (sph_particles) apm
       !ELSE
       !  n_inc= 0
       !ENDIF
+
+      PRINT *, " * npart_real= ",  npart_real
+      PRINT *, " * npart_ghost= ", npart_ghost
+      PRINT *, " * npart_all= ",   npart_all
+      PRINT *
 
       !
       !-- EXIT conditions
@@ -1890,20 +1894,20 @@ SUBMODULE (sph_particles) apm
       ! If some of the particles crossed the xy plane top-down in the
       ! last step, reflect them back above the xy plane
 
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, all_pos_prev, npart_real ) &
-      !$OMP             PRIVATE( a )
-      DO a= 1, npart_real, 1
-
-        IF( all_pos_prev( 3, a ) > 0 .AND. &
-            all_pos( 3, a ) <= 0 )THEN
-
-          all_pos( 3, a )= all_pos_prev( 3, a )
-
-        ENDIF
-
-      ENDDO
-      !$OMP END PARALLEL DO
+   !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+   !   !$OMP             SHARED( all_pos, all_pos_prev, npart_real ) &
+   !   !$OMP             PRIVATE( a )
+   !   DO a= 1, npart_real, 1
+   !
+   !     IF( all_pos_prev( 3, a ) > 0 .AND. &
+   !         all_pos( 3, a ) <= 0 )THEN
+   !
+   !       all_pos( 3, a )= all_pos_prev( 3, a )
+   !
+   !     ENDIF
+   !
+   !   ENDDO
+   !   !$OMP END PARALLEL DO
 
       IF( debug ) PRINT *, "After correcting positions"
 
@@ -1967,12 +1971,13 @@ SUBMODULE (sph_particles) apm
       npart= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
-      !$OMP                 h_guess, h_guess_tmp, nu, nu_tmp, pvol_tmp, pvol ) &
+      !$OMP                     nstar_p, h_guess, h_guess_tmp, nu, nu_tmp, &
+      !$OMP                     pvol_tmp, pvol ) &
       !$OMP             PRIVATE( a ) &
       !$OMP             REDUCTION( +: npart )
       DO a= 1, npart_real, 1
-        rho_tmp(a)= get_density( pos(1,a), pos(2,a), pos(3,a) )
-        IF( rho_tmp(a) > zero )THEN
+        !rho_tmp(a)= get_density( pos(1,a), pos(2,a), pos(3,a) )
+        IF( nstar_p(a) > zero )THEN!rho_tmp(a) > zero )THEN
           npart= npart + 1
           pos_tmp(:,a)  = pos(:,a)
           h_tmp(a)      = h(a)
@@ -2033,7 +2038,8 @@ SUBMODULE (sph_particles) apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    CALL impose_equatorial_plane_symmetry( npart_real, pos, nu )
+    CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
+                                               npart_ghost, all_pos )
 
     !-----------------------------!
     !-- Print positions to file --!
@@ -2445,7 +2451,8 @@ SUBMODULE (sph_particles) apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    CALL impose_equatorial_plane_symmetry( npart_real, pos, nu )
+    CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
+                                               npart_ghost, all_pos )
 
 
   !  finalnamefile= "dbg_apm_pos2.dat"
@@ -2502,7 +2509,8 @@ SUBMODULE (sph_particles) apm
     !$OMP             REDUCTION( +: dN_av, cnt1 )
     DO a= 1, npart_real, 1
 
-      IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > zero )THEN
+      !IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > zero )THEN
+      IF( nstar_p(a) > zero )THEN
 
         dN(a)= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
         dN_av=  dN_av + dN(a)
@@ -2522,7 +2530,7 @@ SUBMODULE (sph_particles) apm
     !$OMP             REDUCTION( +: variance_dN, cnt1 )
     DO a= 1, npart_real, 1
 
-      IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > zero )THEN
+      IF( nstar_p(a) > zero )THEN
 
         variance_dN = variance_dN + (dN(a) - dN_av)**two
         cnt1= cnt1 + 1
@@ -3120,45 +3128,6 @@ SUBMODULE (sph_particles) apm
     END FUNCTION validate_position_final
 
 
-  !  FUNCTION get_density_atm( x, y, z, use_atmosphere ) RESULT( res )
-  !
-  !    !*******************************************************
-  !    !
-  !    !#
-  !    !
-  !    !
-  !    !  FT 5.12.2021
-  !    !
-  !    !*******************************************************
-  !
-  !    IMPLICIT NONE
-  !
-  !    DOUBLE PRECISION, INTENT(IN):: x
-  !    !! \(x\) coordinate of the desired point
-  !    DOUBLE PRECISION, INTENT(IN):: y
-  !    !! \(y\) coordinate of the desired point
-  !    DOUBLE PRECISION, INTENT(IN):: z
-  !    !! \(z\) coordinate of the desired point
-  !    INTEGER:: res
-  !    !# Equal to get_density( x, y, z ) if use_atmosphere is `.FALSE.`;
-  !    !  equal to atmosphere_density if use_atmosphere is `.TRUE.`
-  !
-  !    IF( use_atmosphere == .TRUE. )THEN
-  !
-  !      res= get_density( x, y, z )
-  !      IF( res == zero )THEN
-  !        res= atmosphere_density
-  !      ENDIF
-  !
-  !    ELSE
-  !
-  !      res= get_density( x, y, z )
-  !
-  !    ENDIF
-  !
-  !  END FUNCTION get_density_atm
-
-
     SUBROUTINE get_nstar_p_atm( npart_real, x, y, z, nstar_p, use_atmosphere )
 
       !*******************************************************
@@ -3243,6 +3212,120 @@ SUBMODULE (sph_particles) apm
   END PROCEDURE perform_apm
 
 
+  SUBROUTINE impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
+                                                   npart_ghost, pos, nu, &
+                                                   com_star, verbose )
+
+    !*************************************************************
+    !
+    !# Mirror the particle with z>0 with respect to the xy plane,
+    !  to impose the equatorial-plane symmetry
+    !
+    !  FT 1.09.2021
+    !
+    !*************************************************************
+
+    USE analyze,    ONLY: COM
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(INOUT):: npart_all
+    INTEGER, INTENT(INOUT):: npart_real
+    INTEGER, INTENT(IN)   :: npart_ghost
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
+
+    DOUBLE PRECISION,                     INTENT(IN),    OPTIONAL:: com_star
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE,   INTENT(INOUT), OPTIONAL:: nu
+    LOGICAL,                              INTENT(IN),    OPTIONAL:: verbose
+
+    INTEGER:: a, npart_half
+    DOUBLE PRECISION:: com_x, com_y, com_z, com_d
+
+    INTEGER, DIMENSION(:), ALLOCATABLE:: above_xy_plane_a
+
+    DOUBLE PRECISION, DIMENSION(3,npart_all):: pos_tmp
+    DOUBLE PRECISION, DIMENSION(npart_all)  :: nu_tmp
+
+    IF( MOD(npart_real,2) /= 0 )THEN
+      PRINT *, "** ERROR! If the equatorial symmetry has to be imposed, ", &
+               "the particle number must be even."
+      PRINT *, " * npart_real= ", npart_real
+      PRINT *, " * Stopping..."
+      PRINT *
+    ENDIF
+
+    pos_tmp= pos
+    IF( PRESENT(nu) ) nu_tmp = nu
+
+    CALL find_particles_above_xy_plane( npart_real, pos(:,1:npart_real), &
+                                        npart_half, above_xy_plane_a )
+
+    IF(npart_real/2 /= npart_half )THEN
+
+      npart_real= 2*npart_half
+      npart_all= npart_real + npart_ghost
+
+      DEALLOCATE(pos)
+      ALLOCATE( pos(3,npart_all) )
+
+      IF( PRESENT(nu) )THEN
+        DEALLOCATE(nu)
+        ALLOCATE( nu(npart_all) )
+      ENDIF
+
+    ENDIF
+
+    IF( PRESENT(nu) )THEN
+
+      CALL reflect_particles_xy_plane( npart_real, pos(:,1:npart_real), &
+                                       npart_half, above_xy_plane_a, &
+                                       nu(1:npart_real) )
+
+    ELSE
+
+      CALL reflect_particles_xy_plane( npart_real, pos(:,1:npart_real), &
+                                       npart_half, above_xy_plane_a )
+
+    ENDIF
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, npart_real, npart_all, nu, pos_tmp, nu_tmp )&
+    !$OMP             PRIVATE( a )
+    DO a= npart_real + 1, npart_all, 1
+      pos( 1, a )= pos_tmp( 1, a )
+      pos( 2, a )= pos_tmp( 2, a )
+      pos( 3, a )= pos_tmp( 3, a )
+      IF( PRESENT(nu) ) nu( a )= nu_tmp( a )
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
+
+      CALL COM( npart_real, pos(:,1:npart_real), nu(1:npart_real), & ! input
+                com_x, com_y, com_z, com_d ) ! output
+
+      PRINT *, "** After mirroring particles:"
+      IF( PRESENT(com_star) ) PRINT *, &
+               " * x coordinate of the center of mass of the star, ", &
+               "from LORENE: com_star= ", com_star, "Msun_geo"
+      PRINT *, " * x coordinate of the center of mass of the particle ", &
+               "distribution: com_x= ", com_x, "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the particle ", &
+               "distribution: com_y= ", com_y, "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the particle ", &
+               "distribution: com_z= ", com_z, "Msun_geo"
+      PRINT *, " * Distance of the center of mass of the particle ", &
+               "distribution from the  origin: com_d= ", com_d
+      IF( PRESENT(com_star) ) PRINT *, " * |com_x-com_star/com_star|=", &
+               ABS( com_x-com_star )/ABS( com_star + 1 )
+      PRINT *
+
+    ENDIF
+
+  END SUBROUTINE impose_equatorial_plane_symmetry_apm
+
+
   SUBROUTINE correct_center_of_mass( npart_real, pos, nu, get_density, &
                                      validate_pos, com_star, verbose )
 
@@ -3325,7 +3408,6 @@ SUBMODULE (sph_particles) apm
       IF( get_density( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
           .AND. &
-          !binary% is_hydro_negative( &
           validate_pos( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
       )THEN

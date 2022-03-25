@@ -823,19 +823,55 @@ MODULE sph_particles
 
 
     MODULE SUBROUTINE impose_equatorial_plane_symmetry( npart, pos, &
-                                                 nu, com_star, verbose )
+                                          nu, com_star, verbose )!, pos_prev )
     !# Mirror the particle with z>0 with respect to the xy plane,
     !  to impose the equatorial-plane symmetry
 
-      !CLASS(particles), INTENT( IN OUT ):: this
       INTEGER, INTENT(INOUT):: npart
-      DOUBLE PRECISION, INTENT(IN), OPTIONAL:: com_star
-      LOGICAL, INTENT(IN), OPTIONAL:: verbose
+      !INTEGER, INTENT(INOUT):: npart_real
+      !INTEGER, INTENT(IN)   :: npart_ghost
+
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
+
+      DOUBLE PRECISION,                     INTENT(IN),    OPTIONAL:: com_star
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT), OPTIONAL:: nu
+      !DOUBLE PRECISION, DIMENSION(3,npart_real+npart_ghost), &
+      !INTENT(IN),    OPTIONAL:: pos_prev
+      LOGICAL,                              INTENT(IN),    OPTIONAL:: verbose
+
+    END SUBROUTINE impose_equatorial_plane_symmetry
+
+
+    MODULE SUBROUTINE find_particles_above_xy_plane( npart, pos, &
+                                            npart_above_xy, above_xy_plane_a )
+    !# Mirror the particle with z>0 with respect to the xy plane,
+    !  to impose the equatorial-plane symmetry
+
+      INTEGER, INTENT(IN) :: npart
+      INTEGER, INTENT(OUT):: npart_above_xy
+
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: &
+      above_xy_plane_a
+
+    END SUBROUTINE find_particles_above_xy_plane
+
+
+    MODULE SUBROUTINE reflect_particles_xy_plane( npart, pos, &
+                                        npart_above_xy, above_xy_plane_a, nu )
+    !# Mirror the particle with z>0 with respect to the xy plane,
+    !  to impose the equatorial-plane symmetry
+
+      INTEGER, INTENT(IN):: npart
+      INTEGER, INTENT(IN):: npart_above_xy
+      INTEGER, DIMENSION(npart_above_xy), INTENT(IN):: &
+      above_xy_plane_a
 
       DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
       DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT), OPTIONAL:: nu
 
-    END SUBROUTINE impose_equatorial_plane_symmetry
+    END SUBROUTINE reflect_particles_xy_plane
 
 
 !    MODULE SUBROUTINE reshape_sph_field_1d( this, field, new_size1, new_size2, &

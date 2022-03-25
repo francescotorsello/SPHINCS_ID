@@ -10,9 +10,10 @@
 !   particles with z > 0 to z < 0, to impose the equatorial-plane        !
 !   symmetry                                                             !
 !------------------------------------------------------------------------!
-parts_pos_path="pos-archive/"     ! Path to the directory containing the
+parts_pos_path="./"     ! Path to the directory containing the
                                   ! formatted files with the particle positions
-parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
+parts_pos="apm_pos_nu.dat"
+          !"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
           !"apm-pos-nu_1216_45km_pol275_500k.dat"
@@ -30,7 +31,7 @@ parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm50.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm200-atm.dat"
-          "apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
+          !"apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -136,7 +137,8 @@ print_step= 15          ! Evey print_step steps, print the particle positions
                         ! at the current step, and the particle positions at
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
-apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
+                        ! Set to 0 to not print positions at all
+apm_max_it= 2         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate

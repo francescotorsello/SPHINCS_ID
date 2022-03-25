@@ -328,35 +328,35 @@ SUBMODULE (sph_particles) constructor_std
 
     IF( upper_bound <= lower_bound )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
                "upper_bound should be greater than lower_bound!"
       PRINT *
       STOP
     ENDIF
     IF( upper_factor < 1.0D0 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
                "upper_factor should be greater than or equal to 1!"
       PRINT *
       STOP
     ENDIF
     IF( lower_factor > 1 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
                "lower_factor should be smaller than or equal to 1!"
       PRINT *
       STOP
     ENDIF
     IF( max_steps < 10 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
                "max_steps should be an integer greater than or equal to 10!"
       PRINT *
       STOP
     ENDIF
     IF( last_r < 0.95D0 .OR. last_r > 1.0D0 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
                "last_r should be greater than or equal to 0.95, ", &
                "and lower than or equal to 1!"
       PRINT *
@@ -365,15 +365,29 @@ SUBMODULE (sph_particles) constructor_std
     IF( apm_max_it < 0 .OR. max_inc < 0 .OR. nuratio_thres < 0 &
         .OR. nuratio_des < 0 .OR. nx_gh < 0 .OR. ny_gh < 0 .OR. nz_gh < 0 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
                "the numeric parameters for the APM method should be positive!"
       PRINT *
       STOP
     ENDIF
     IF( nuratio_des >= nuratio_thres )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
                "nuratio_des has to be stricly lower than nuratio_thres!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( print_step < 0 )THEN
+      PRINT *
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
+               "print_step has to be a positive integer or zero!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( ghost_dist < zero )THEN
+      PRINT *
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
+               "ghost_dist has to be a positive double precision or zero!"
       PRINT *
       STOP
     ENDIF
@@ -602,11 +616,11 @@ SUBMODULE (sph_particles) constructor_std
       IF( debug ) PRINT *, "parts% npart_i_tmp=", npart_i_tmp
 
       ! Impose equatorial plane symmetry on each object
-      ! @TODO: make this optional
+      ! TODO: make this optional
       DO itr= 1, parts% n_matter, 1
 
-        ASSOCIATE( npart_in   => npart_i_tmp(itr-1) + 1, &
-                   npart_fin  => npart_i_tmp(itr-1) + npart_i_tmp(itr) )
+        ASSOCIATE( npart_in  => npart_i_tmp(itr-1) + 1, &
+                   npart_fin => npart_i_tmp(itr-1) + npart_i_tmp(itr) )
 
           IF( debug )THEN
             PRINT *, "npart_in=", npart_in
