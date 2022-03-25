@@ -3225,6 +3225,7 @@ SUBMODULE (sph_particles) apm
     !
     !*************************************************************
 
+    USE constants,  ONLY: zero
     USE analyze,    ONLY: COM
 
     IMPLICIT NONE
@@ -3232,6 +3233,9 @@ SUBMODULE (sph_particles) apm
     INTEGER, INTENT(INOUT):: npart_all
     INTEGER, INTENT(INOUT):: npart_real
     INTEGER, INTENT(IN)   :: npart_ghost
+
+    INTEGER:: npart_real_old
+    INTEGER:: npart_real_diff
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
 
@@ -3263,8 +3267,12 @@ SUBMODULE (sph_particles) apm
 
     IF(npart_real/2 /= npart_half )THEN
 
+      npart_real_old= npart_real
+
       npart_real= 2*npart_half
       npart_all= npart_real + npart_ghost
+
+      npart_real_diff= npart_real_old - npart_real
 
       DEALLOCATE(pos)
       ALLOCATE( pos(3,npart_all) )
@@ -3290,13 +3298,14 @@ SUBMODULE (sph_particles) apm
     ENDIF
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, npart_real, npart_all, nu, pos_tmp, nu_tmp )&
+    !$OMP             SHARED( pos, npart_real, npart_all, nu, pos_tmp, nu_tmp, &
+    !$OMP                     npart_real_diff )&
     !$OMP             PRIVATE( a )
     DO a= npart_real + 1, npart_all, 1
-      pos( 1, a )= pos_tmp( 1, a )
-      pos( 2, a )= pos_tmp( 2, a )
-      pos( 3, a )= pos_tmp( 3, a )
-      IF( PRESENT(nu) ) nu( a )= nu_tmp( a )
+      pos( 1, a )= pos_tmp( 1, npart_real_diff + a )
+      pos( 2, a )= pos_tmp( 2, npart_real_diff + a )
+      pos( 3, a )= pos_tmp( 3, npart_real_diff + a )
+      IF( PRESENT(nu) ) nu( a )= nu_tmp( npart_real_diff + a )
     ENDDO
     !$OMP END PARALLEL DO
 
