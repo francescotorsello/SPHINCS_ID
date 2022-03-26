@@ -50,6 +50,53 @@ SUBMODULE (sph_particles) apm
   IMPLICIT NONE
 
 
+  TYPE apm_fields
+
+
+
+  END TYPE
+
+
+  ! TODO: VERY IMPORTANT! These fields here are global!
+  !       Maybe make an object called 'apm_fields' and include them as members,
+  !       so you handle their allocation and deallocatio locally and SAFELY
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse, &
+                                             shift_x, shift_y, shift_z, &
+                                             g_xx, g_xy, g_xz, &
+                                             g_yy, g_yz, g_zz, &
+                                             baryon_density, &
+                                             energy_density, &
+                                             specific_energy, &
+                                             pressure, &
+                                             v_euler_x, v_euler_y, v_euler_z
+  LOGICAL, DIMENSION(:),   ALLOCATABLE:: good_rho
+
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_tmp
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
+  DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev_dump
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
+
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess_tmp
+
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dN
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
+  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_tmp
+  INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
+
+
   CONTAINS
 
 
@@ -141,7 +188,6 @@ SUBMODULE (sph_particles) apm
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
     INTEGER:: dim_seed, rel_sign
     INTEGER:: n_problematic_h, ill, l, itot
-    INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
     DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
     DOUBLE PRECISION:: h_max, h_av, tmp, dens_min, atmosphere_density!, delta
@@ -175,30 +221,7 @@ SUBMODULE (sph_particles) apm
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_tmp
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev_dump
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
 
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess_tmp
-
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dN
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
-
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_one
 
@@ -207,16 +230,6 @@ SUBMODULE (sph_particles) apm
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: nearest_neighbors
 
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse, &
-                                               shift_x, shift_y, shift_z, &
-                                               g_xx, g_xy, g_xz, &
-                                               g_yy, g_yz, g_zz, &
-                                               baryon_density, &
-                                               energy_density, &
-                                               specific_energy, &
-                                               pressure, &
-                                               v_euler_x, v_euler_y, v_euler_z
-    LOGICAL, DIMENSION(:),   ALLOCATABLE:: good_rho
     LOGICAL:: exist
 
     !CHARACTER:: it_n
@@ -820,23 +833,23 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "5"
 
-    ALLOCATE( lapse          (npart_real) )
-    ALLOCATE( shift_x        (npart_real) )
-    ALLOCATE( shift_y        (npart_real) )
-    ALLOCATE( shift_z        (npart_real) )
-    ALLOCATE( g_xx           (npart_real) )
-    ALLOCATE( g_xy           (npart_real) )
-    ALLOCATE( g_xz           (npart_real) )
-    ALLOCATE( g_yy           (npart_real) )
-    ALLOCATE( g_yz           (npart_real) )
-    ALLOCATE( g_zz           (npart_real) )
-    ALLOCATE( baryon_density (npart_real) )
-    ALLOCATE( energy_density (npart_real) )
-    ALLOCATE( specific_energy(npart_real) )
-    ALLOCATE( pressure       (npart_real) )
-    ALLOCATE( v_euler_x      (npart_real) )
-    ALLOCATE( v_euler_y      (npart_real) )
-    ALLOCATE( v_euler_z      (npart_real) )
+    IF( .NOT.ALLOCATED( lapse           ) ) ALLOCATE( lapse          (npart_real) )
+    IF( .NOT.ALLOCATED( shift_x         ) ) ALLOCATE( shift_x        (npart_real) )
+    IF( .NOT.ALLOCATED( shift_y         ) ) ALLOCATE( shift_y        (npart_real) )
+    IF( .NOT.ALLOCATED( shift_z         ) ) ALLOCATE( shift_z        (npart_real) )
+    IF( .NOT.ALLOCATED( g_xx            ) ) ALLOCATE( g_xx           (npart_real) )
+    IF( .NOT.ALLOCATED( g_xy            ) ) ALLOCATE( g_xy           (npart_real) )
+    IF( .NOT.ALLOCATED( g_xz            ) ) ALLOCATE( g_xz           (npart_real) )
+    IF( .NOT.ALLOCATED( g_yy            ) ) ALLOCATE( g_yy           (npart_real) )
+    IF( .NOT.ALLOCATED( g_yz            ) ) ALLOCATE( g_yz           (npart_real) )
+    IF( .NOT.ALLOCATED( g_zz            ) ) ALLOCATE( g_zz           (npart_real) )
+    IF( .NOT.ALLOCATED( baryon_density  ) ) ALLOCATE( baryon_density (npart_real) )
+    IF( .NOT.ALLOCATED( energy_density  ) ) ALLOCATE( energy_density (npart_real) )
+    IF( .NOT.ALLOCATED( specific_energy ) ) ALLOCATE( specific_energy(npart_real) )
+    IF( .NOT.ALLOCATED( pressure        ) ) ALLOCATE( pressure       (npart_real) )
+    IF( .NOT.ALLOCATED( v_euler_x       ) ) ALLOCATE( v_euler_x      (npart_real) )
+    IF( .NOT.ALLOCATED( v_euler_y       ) ) ALLOCATE( v_euler_y      (npart_real) )
+    IF( .NOT.ALLOCATED( v_euler_z       ) ) ALLOCATE( v_euler_z      (npart_real) )
 
     IF( debug ) PRINT *, "6"
 
@@ -908,24 +921,31 @@ SUBMODULE (sph_particles) apm
     PRINT *, " * Performing APM iteration..."
     PRINT *
 
-    ALLOCATE( freeze( npart_all ) )
-    ALLOCATE( correction_pos( 3, npart_all ) )
-    ALLOCATE( all_pos_tmp( 3, npart_all ) )
-    ALLOCATE( all_pos_prev( 3, npart_all ) )
-    ALLOCATE( all_pos_prev_dump( 3, npart_all ) )
-    ALLOCATE( cnt_move( npart_real ) )
+    IF( .NOT.ALLOCATED(freeze) ) ALLOCATE( freeze( npart_all ) )
+    IF( .NOT.ALLOCATED(correction_pos) ) ALLOCATE( correction_pos( 3, npart_all ) )
+    IF( .NOT.ALLOCATED(all_pos_tmp) ) ALLOCATE( all_pos_tmp( 3, npart_all ) )
+    IF( .NOT.ALLOCATED(all_pos_prev) ) ALLOCATE( all_pos_prev( 3, npart_all ) )
+    IF( .NOT.ALLOCATED(all_pos_prev_dump) ) ALLOCATE( all_pos_prev_dump( 3, npart_all ) )
+    IF( .NOT.ALLOCATED(cnt_move) ) ALLOCATE( cnt_move( npart_real ) )
     cnt_move= 0
 
     ! Set the particles to be equal-mass
     nu_all= (mass/DBLE(npart_real))*umass/amu
     nu= nu_all
-    DO a= 1, npart_all
-      IF( a <= npart_real )THEN
-        freeze(a)= 0
-      ELSE
-        freeze(a)= 1
-      ENDIF
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, freeze ) &
+    !$OMP             PRIVATE( a )
+    DO a= 1, npart_real, 1
+      freeze(a)= 0
     ENDDO
+    !$OMP END PARALLEL DO
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, npart_all, freeze ) &
+    !$OMP             PRIVATE( a )
+    DO a= npart_real + 1, npart_all ,1
+      freeze(a)= 1
+    ENDDO
+    !$OMP END PARALLEL DO
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
                                  nu(1:npart_real), get_density, &
@@ -3226,8 +3246,8 @@ SUBMODULE (sph_particles) apm
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: above_xy_plane_a
 
-    DOUBLE PRECISION, DIMENSION(3,npart_all):: pos_tmp
-    DOUBLE PRECISION, DIMENSION(npart_all)  :: nu_tmp
+    DOUBLE PRECISION, DIMENSION(3,npart_all):: postmp
+    DOUBLE PRECISION, DIMENSION(npart_all)  :: nutmp
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_below
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_below
@@ -3244,10 +3264,10 @@ SUBMODULE (sph_particles) apm
     ENDIF
 
     npart_real_old= npart_real
-    pos_tmp       = pos
-    IF( PRESENT(nu) ) nu_tmp = nu
+    postmp       = pos
+    IF( PRESENT(nu) ) nutmp = nu
 
-    CALL find_particles_above_xy_plane( npart_real, pos_tmp(:,1:npart_real), &
+    CALL find_particles_above_xy_plane( npart_real, postmp(:,1:npart_real), &
                                         npart_above_xy, above_xy_plane_a )
 
     ALLOCATE( pos_below(3,npart_above_xy) )
@@ -3255,14 +3275,14 @@ SUBMODULE (sph_particles) apm
     IF( PRESENT(nu) )THEN
 
       ALLOCATE( nu_below(npart_above_xy) )
-      CALL reflect_particles_xy_plane( npart_real, pos_tmp(:,1:npart_real), &
+      CALL reflect_particles_xy_plane( npart_real, postmp(:,1:npart_real), &
                                        pos_below, npart_above_xy, &
-                                       above_xy_plane_a, nu_tmp(1:npart_real), &
+                                       above_xy_plane_a, nutmp(1:npart_real), &
                                        nu_below )
 
     ELSE
 
-      CALL reflect_particles_xy_plane( npart_real, pos_tmp(:,1:npart_real), &
+      CALL reflect_particles_xy_plane( npart_real, postmp(:,1:npart_real), &
                                        pos_below, npart_above_xy, &
                                        above_xy_plane_a )
 
@@ -3281,6 +3301,86 @@ SUBMODULE (sph_particles) apm
         ALLOCATE( nu(npart_all) )
       ENDIF
 
+      IF( ALLOCATED(nstar_real )        ) DEALLOCATE( nstar_real )
+      IF( ALLOCATED(nstar_p )           ) DEALLOCATE( nstar_p )
+      IF( ALLOCATED(art_pr )            ) DEALLOCATE( art_pr )
+      IF( ALLOCATED(dNstar )            ) DEALLOCATE( dNstar )
+      IF( ALLOCATED(nu_tmp )            ) DEALLOCATE( nu_tmp )
+      IF( ALLOCATED(dN )                ) DEALLOCATE( dN )
+      IF( ALLOCATED(good_rho )          ) DEALLOCATE( good_rho )
+      IF( ALLOCATED(freeze )            ) DEALLOCATE( freeze )
+      IF( ALLOCATED(correction_pos )    ) DEALLOCATE( correction_pos )
+      IF( ALLOCATED(all_pos_tmp )       ) DEALLOCATE( all_pos_tmp )
+      IF( ALLOCATED(all_pos_prev )      ) DEALLOCATE( all_pos_prev )
+      IF( ALLOCATED(all_pos_prev_dump ) ) DEALLOCATE( all_pos_prev_dump )
+      IF( ALLOCATED(cnt_move )          ) DEALLOCATE( cnt_move )
+
+      ALLOCATE( nstar_real(npart_all) )
+      ALLOCATE( nstar_p(npart_all) )
+      ALLOCATE( art_pr(npart_all) )
+      ALLOCATE( freeze( npart_all ) )
+      ALLOCATE( correction_pos( 3, npart_all ) )
+      ALLOCATE( all_pos_tmp( 3, npart_all ) )
+      ALLOCATE( all_pos_prev( 3, npart_all ) )
+      ALLOCATE( all_pos_prev_dump( 3, npart_all ) )
+      ALLOCATE( cnt_move( npart_real ) )
+      ALLOCATE( dNstar( npart_real ) )
+      ALLOCATE( nu_tmp( npart_real ) )
+      ALLOCATE( dN( npart_real ) )
+      ALLOCATE( good_rho( npart_real ) )
+      all_pos_prev     = -one
+      all_pos_prev_dump= zero
+      cnt_move= 0
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, freeze ) &
+      !$OMP             PRIVATE( a )
+      DO a= 1, npart_real, 1
+        freeze(a)= 0
+      ENDDO
+      !$OMP END PARALLEL DO
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, npart_all, freeze ) &
+      !$OMP             PRIVATE( a )
+      DO a= npart_real + 1, npart_all ,1
+        freeze(a)= 1
+      ENDDO
+      !$OMP END PARALLEL DO
+
+      DEALLOCATE( lapse           )
+      DEALLOCATE( shift_x         )
+      DEALLOCATE( shift_y         )
+      DEALLOCATE( shift_z         )
+      DEALLOCATE( g_xx            )
+      DEALLOCATE( g_xy            )
+      DEALLOCATE( g_xz            )
+      DEALLOCATE( g_yy            )
+      DEALLOCATE( g_yz            )
+      DEALLOCATE( g_zz            )
+      DEALLOCATE( baryon_density  )
+      DEALLOCATE( energy_density  )
+      DEALLOCATE( specific_energy )
+      DEALLOCATE( pressure        )
+      DEALLOCATE( v_euler_x       )
+      DEALLOCATE( v_euler_y       )
+      DEALLOCATE( v_euler_z       )
+      ALLOCATE( lapse          (npart_real) )
+      ALLOCATE( shift_x        (npart_real) )
+      ALLOCATE( shift_y        (npart_real) )
+      ALLOCATE( shift_z        (npart_real) )
+      ALLOCATE( g_xx           (npart_real) )
+      ALLOCATE( g_xy           (npart_real) )
+      ALLOCATE( g_xz           (npart_real) )
+      ALLOCATE( g_yy           (npart_real) )
+      ALLOCATE( g_yz           (npart_real) )
+      ALLOCATE( g_zz           (npart_real) )
+      ALLOCATE( baryon_density (npart_real) )
+      ALLOCATE( energy_density (npart_real) )
+      ALLOCATE( specific_energy(npart_real) )
+      ALLOCATE( pressure       (npart_real) )
+      ALLOCATE( v_euler_x      (npart_real) )
+      ALLOCATE( v_euler_y      (npart_real) )
+      ALLOCATE( v_euler_z      (npart_real) )
+
       npart= npart_all
       IF( ALLOCATED(posmash) ) DEALLOCATE(posmash)
       CALL deallocate_metric_on_particles
@@ -3297,26 +3397,26 @@ SUBMODULE (sph_particles) apm
     ENDIF
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, npart_above_xy, nu, pos_tmp, nu_tmp, &
+    !$OMP             SHARED( pos, npart_above_xy, nu, postmp, nutmp, &
     !$OMP                     pos_below, nu_below ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_above_xy, 1
-      pos( :, a )= pos_tmp( :, a )
+      pos( :, a )= postmp( :, a )
       pos( :, npart_above_xy + a )= pos_below( :, a )
       IF( PRESENT(nu) )THEN
-        nu( a )= nu_tmp( a )
+        nu( a )= nutmp( a )
         nu( npart_above_xy + a )= nu_below( a )
       ENDIF
     ENDDO
     !$OMP END PARALLEL DO
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, npart_real, npart_all, nu, pos_tmp, nu_tmp, &
+    !$OMP             SHARED( pos, npart_real, npart_all, nu, postmp, nutmp, &
     !$OMP                     npart_real_old, npart_ghost )&
     !$OMP             PRIVATE( a )
     DO a= 1, npart_ghost, 1
-      pos( :, npart_real + a ) = pos_tmp( :, npart_real_old + a )
-      IF( PRESENT(nu) ) nu( a )= nu_tmp( npart_real_old + a )
+      pos( :, npart_real + a ) = postmp( :, npart_real_old + a )
+      IF( PRESENT(nu) ) nu( a )= nutmp( npart_real_old + a )
     ENDDO
     !$OMP END PARALLEL DO
 
