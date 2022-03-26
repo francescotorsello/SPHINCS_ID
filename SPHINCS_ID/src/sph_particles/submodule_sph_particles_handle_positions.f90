@@ -53,9 +53,12 @@ SUBMODULE (sph_particles) handle_positions
 
     IMPLICIT NONE
 
-    INTEGER:: a, npart_half
+    INTEGER:: a
 
     INTEGER, DIMENSION(npart):: above_xy_plane
+
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    LOGICAL:: exist
 
     above_xy_plane= zero
     npart_above_xy= zero
@@ -76,7 +79,7 @@ SUBMODULE (sph_particles) handle_positions
     !$OMP END PARALLEL DO
 
     ALLOCATE(above_xy_plane_a(npart_above_xy))
-    above_xy_plane_a= PACK( above_xy_plane, above_xy_plane /= 0 )
+    above_xy_plane_a= PACK( above_xy_plane, above_xy_plane /= zero )
 
   END PROCEDURE find_particles_above_xy_plane
 
@@ -98,15 +101,28 @@ SUBMODULE (sph_particles) handle_positions
     DOUBLE PRECISION, DIMENSION(3,npart):: pos_tmp
     DOUBLE PRECISION, DIMENSION(npart)  :: nu_tmp
 
-    IF( npart/2 /= npart_above_xy )THEN
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    LOGICAL:: exist
 
-      PRINT *, "** ERROR! Mismatch in the number of particles above the xy ", &
-               "plane in SUBROUTINE reflect_particles_xy_plane!"
-      PRINT *, " * npart/2= ", npart/2
-      PRINT *, " * npart_above_xy= ", npart_above_xy
+    IF( PRESENT(nu) .NEQV. PRESENT(nu_below) )THEN
+      PRINT *, "** ERROR! In SUBROUTINE reflect_particles_xy_plane, the ", &
+               "arguments 'nu' and 'nu_below must be either both present or ", &
+               "both absent."
       PRINT *, " * Stopping..."
       PRINT *
       STOP
+    ENDIF
+
+    IF( npart/2 /= npart_above_xy )THEN
+
+      PRINT *, "** WARNING! Mismatch in the number of particles above the xy ",&
+               "plane in SUBROUTINE reflect_particles_xy_plane!"
+      PRINT *, " * npart/2= ", npart/2
+      PRINT *, " * npart_above_xy= ", npart_above_xy
+      PRINT *, " * If you are inside the APM, you're safe since this is ", &
+               "taken care of. Otherwise, you may want to double check that ", &
+               "you know what's going on."
+      PRINT *
 
     ENDIF
 
@@ -126,13 +142,13 @@ SUBMODULE (sph_particles) handle_positions
     !$OMP END PARALLEL DO
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, npart_above_xy, nu ) &
+    !$OMP             SHARED( pos, pos_below, npart_above_xy, nu, nu_below ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_above_xy, 1
-      pos( 1, npart_above_xy + a )=   pos( 1, a )
-      pos( 2, npart_above_xy + a )=   pos( 2, a )
-      pos( 3, npart_above_xy + a )= - pos( 3, a )
-      IF( PRESENT(nu) ) nu( npart_above_xy + a )= nu( a )
+      pos_below( 1, a )=   pos( 1, a )
+      pos_below( 2, a )=   pos( 2, a )
+      pos_below( 3, a )= - pos( 3, a )
+      IF( PRESENT(nu) ) nu_below( a )= nu( a )
     ENDDO
     !$OMP END PARALLEL DO
 
@@ -154,10 +170,13 @@ SUBMODULE (sph_particles) handle_positions
 
     IMPLICIT NONE
 
-    INTEGER:: a, npart_half
+    INTEGER:: a, npart_above_xy
     DOUBLE PRECISION:: com_x, com_y, com_z, com_d
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: above_xy_plane_a
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_below
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_below
 
   !  DOUBLE PRECISION, DIMENSION(3,npart_real+npart_ghost):: pos_tmp
   !  DOUBLE PRECISION, DIMENSION(npart_real+npart_ghost)  :: nu_tmp
@@ -210,28 +229,42 @@ SUBMODULE (sph_particles) handle_positions
    !   ENDIF
    !
    ! ENDDO
-   ! npart_half= itr
+   ! npart_above_xy= itr
 
-    CALL find_particles_above_xy_plane( npart, pos, npart_half, &
+    CALL find_particles_above_xy_plane( npart, pos, npart_above_xy, &
                                         above_xy_plane_a )
 
-   ! IF(npart/2 /= npart_half )THEN
+   ! IF(npart/2 /= npart_above_xy )THEN
    !
    !
    !
    ! ENDIF
+    ALLOCATE( pos_below(3,npart_above_xy) )
 
     IF( PRESENT(nu) )THEN
 
-      CALL reflect_particles_xy_plane( npart, pos, npart_half, &
-                                       above_xy_plane_a, nu )
+      ALLOCATE( nu_below(npart_above_xy) )
+      CALL reflect_particles_xy_plane( npart, pos, pos_below, npart_above_xy, &
+                                       above_xy_plane_a, nu, nu_below )
 
     ELSE
 
-      CALL reflect_particles_xy_plane( npart, pos, npart_half, &
+      CALL reflect_particles_xy_plane( npart, pos, pos_below, npart_above_xy, &
                                        above_xy_plane_a )
 
     ENDIF
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, npart_above_xy, nu, &
+    !$OMP                     pos_below, nu_below ) &
+    !$OMP             PRIVATE( a )
+    DO a= 1, npart_above_xy, 1
+      pos( :, npart_above_xy + a ) = pos_below( :, a )
+      IF( PRESENT(nu) )THEN
+        nu( npart_above_xy + a )= nu_below( a )
+      ENDIF
+    ENDDO
+    !$OMP END PARALLEL DO
 
     IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
 

@@ -34,8 +34,17 @@ SUBMODULE (sph_particles) apm
   !***********************************
 
 
-  USE constants,  ONLY: zero, quarter, one, two, three, ten
-  USE utility,    ONLY: is_finite_number
+  USE constants,            ONLY: zero, quarter, one, two, three, ten
+  USE utility,              ONLY: is_finite_number
+  USE sph_variables,        ONLY: allocate_sph_memory, deallocate_sph_memory, &
+                                  npart
+  USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
+                                  deallocate_metric_on_particles
+  USE gradient,             ONLY: allocate_gradient, deallocate_gradient
+
+  USE RCB_tree_3D,          ONLY: allocate_RCB_tree_memory_3D, &
+                                  deallocate_RCB_tree_memory_3D, iorig
+  USE set_h,                ONLY: posmash
 
 
   IMPLICIT NONE
@@ -98,14 +107,8 @@ SUBMODULE (sph_particles) apm
     USE utility,             ONLY: cnt, spherical_from_cartesian
     USE constants,           ONLY: half, third, Msun, amu, pi
 
-    USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
-                                   npart, h, nu
-    USE metric_on_particles, ONLY: allocate_metric_on_particles, &
-                                   deallocate_metric_on_particles
-    USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE set_h,               ONLY: exact_nei_tree_update, posmash
-    !USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
-    !                               deallocate_RCB_tree_memory_3D
+    USE sph_variables,       ONLY: h, nu
+    USE set_h,               ONLY: exact_nei_tree_update
     USE units,               ONLY: umass
 
     USE APM,                 ONLY: density_loop, position_correction, assign_h
@@ -113,12 +116,9 @@ SUBMODULE (sph_particles) apm
     USE matrix,              ONLY: determinant_4x4_matrix
 
     USE sphincs_sph,         ONLY: density, ncand!, all_clists
-    USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
-                                   rpart, allocate_RCB_tree_memory_3D, &
-                                   deallocate_RCB_tree_memory_3D
+    USE RCB_tree_3D,         ONLY: nic, nfinal, nprev, lpart, &
+                                   rpart
     USE matrix,              ONLY: invert_3x3_matrix
-    !USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
-    !                               W_no_norm,n_tab_entry
 
     IMPLICIT NONE
 
@@ -301,6 +301,7 @@ SUBMODULE (sph_particles) apm
       !ENDIF
     ENDDO
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h_guess: DO a= 1, npart_real, 1
@@ -741,6 +742,7 @@ SUBMODULE (sph_particles) apm
                    all_pos, h_guess, &
                    h )
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h_0: DO a= 1, npart_real, 1
@@ -765,33 +767,6 @@ SUBMODULE (sph_particles) apm
     PRINT *, " * The smoothing length was found brute-force for ", &
              n_problematic_h, " particles."
     PRINT *
-
-   ! DO a= 1, npart_all, 1
-   !
-   !   IF( ISNAN( h( a ) ) )THEN
-   !     PRINT *, "** ERROR! h(", a, ") is a NaN!"
-   !     PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-   !     PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-   !     PRINT *, " Stopping..."
-   !     PRINT *
-   !     STOP
-   !   ENDIF
-   !   IF( h( a ) <= zero )THEN
-   !    ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
-   !    ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-   !    ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-   !    ! PRINT *, " * h(", a, ")= ", h(a)
-   !    ! PRINT *, " Stopping..."
-   !    ! PRINT *
-   !    ! STOP
-   !     IF( a == 1 )THEN
-   !       h(a) = h(a + 1)
-   !     ELSE
-   !       h(a) = h(a - 1)
-   !     ENDIF
-   !   ENDIF
-   !
-   ! ENDDO
 
     PRINT *, " * Measure SPH particle number density..."
     PRINT *
@@ -1186,6 +1161,7 @@ SUBMODULE (sph_particles) apm
                      npart_all, &
                      all_pos, h_guess, h )
 
+      find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
       CALL find_h_bruteforce_timer% start_timer()
       n_problematic_h= 0
       check_h: DO a= 1, npart_real, 1
@@ -2105,6 +2081,7 @@ SUBMODULE (sph_particles) apm
                    pos, h_guess, & ! Input
                    h )                 ! Output
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     ! find_h_backup is parallelized already
@@ -2567,6 +2544,7 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "101.5"
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h4: DO a= 1, npart_real, 1
@@ -2648,6 +2626,7 @@ SUBMODULE (sph_particles) apm
 
     ENDDO
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h5: DO a= 1, npart_real, 1
@@ -3065,7 +3044,7 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "3"
 
-    IF( ALLOCATED( posmash ) ) DEALLOCATE( posmash )
+    IF( ALLOCATED(posmash) ) DEALLOCATE(posmash)
     CALL deallocate_metric_on_particles()
     IF( debug ) PRINT *, "4"
     CALL deallocate_gradient()
@@ -3242,13 +3221,19 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE,   INTENT(INOUT), OPTIONAL:: nu
     LOGICAL,                              INTENT(IN),    OPTIONAL:: verbose
 
-    INTEGER:: a, npart_half
+    INTEGER:: a, npart_above_xy
     DOUBLE PRECISION:: com_x, com_y, com_z, com_d
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: above_xy_plane_a
 
     DOUBLE PRECISION, DIMENSION(3,npart_all):: pos_tmp
     DOUBLE PRECISION, DIMENSION(npart_all)  :: nu_tmp
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_below
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_below
+
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    LOGICAL:: exist
 
     IF( MOD(npart_real,2) /= 0 )THEN
       PRINT *, "** ERROR! If the equatorial symmetry has to be imposed, ", &
@@ -3262,12 +3247,30 @@ SUBMODULE (sph_particles) apm
     pos_tmp       = pos
     IF( PRESENT(nu) ) nu_tmp = nu
 
-    CALL find_particles_above_xy_plane( npart_real, pos(:,1:npart_real), &
-                                        npart_half, above_xy_plane_a )
+    CALL find_particles_above_xy_plane( npart_real, pos_tmp(:,1:npart_real), &
+                                        npart_above_xy, above_xy_plane_a )
 
-    IF(npart_real/2 /= npart_half )THEN
+    ALLOCATE( pos_below(3,npart_above_xy) )
 
-      npart_real= 2*npart_half
+    IF( PRESENT(nu) )THEN
+
+      ALLOCATE( nu_below(npart_above_xy) )
+      CALL reflect_particles_xy_plane( npart_real, pos_tmp(:,1:npart_real), &
+                                       pos_below, npart_above_xy, &
+                                       above_xy_plane_a, nu_tmp(1:npart_real), &
+                                       nu_below )
+
+    ELSE
+
+      CALL reflect_particles_xy_plane( npart_real, pos_tmp(:,1:npart_real), &
+                                       pos_below, npart_above_xy, &
+                                       above_xy_plane_a )
+
+    ENDIF
+
+    IF( npart_real/2 /= npart_above_xy )THEN
+
+      npart_real= 2*npart_above_xy
       npart_all= npart_real + npart_ghost
 
       DEALLOCATE(pos)
@@ -3278,20 +3281,34 @@ SUBMODULE (sph_particles) apm
         ALLOCATE( nu(npart_all) )
       ENDIF
 
+      npart= npart_all
+      IF( ALLOCATED(posmash) ) DEALLOCATE(posmash)
+      CALL deallocate_metric_on_particles
+      CALL deallocate_gradient
+      CALL deallocate_RCB_tree_memory_3D
+      CALL deallocate_SPH_memory
+
+      CALL allocate_SPH_memory
+      CALL allocate_RCB_tree_memory_3D(npart_all)
+      iorig(1:npart)= (/ (a,a=1,npart_all) /)
+      CALL allocate_gradient(npart_all)
+      CALL allocate_metric_on_particles(npart_all)
+
     ENDIF
 
-    IF( PRESENT(nu) )THEN
-
-      CALL reflect_particles_xy_plane( npart_real, pos(:,1:npart_real), &
-                                       npart_half, above_xy_plane_a, &
-                                       nu(1:npart_real) )
-
-    ELSE
-
-      CALL reflect_particles_xy_plane( npart_real, pos(:,1:npart_real), &
-                                       npart_half, above_xy_plane_a )
-
-    ENDIF
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, npart_above_xy, nu, pos_tmp, nu_tmp, &
+    !$OMP                     pos_below, nu_below ) &
+    !$OMP             PRIVATE( a )
+    DO a= 1, npart_above_xy, 1
+      pos( :, a )= pos_tmp( :, a )
+      pos( :, npart_above_xy + a )= pos_below( :, a )
+      IF( PRESENT(nu) )THEN
+        nu( a )= nu_tmp( a )
+        nu( npart_above_xy + a )= nu_below( a )
+      ENDIF
+    ENDDO
+    !$OMP END PARALLEL DO
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( pos, npart_real, npart_all, nu, pos_tmp, nu_tmp, &

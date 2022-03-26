@@ -852,24 +852,26 @@ MODULE sph_particles
 
       DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
 
-      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: &
-      above_xy_plane_a
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: above_xy_plane_a
 
     END SUBROUTINE find_particles_above_xy_plane
 
 
-    MODULE SUBROUTINE reflect_particles_xy_plane( npart, pos, &
-                                        npart_above_xy, above_xy_plane_a, nu )
+    MODULE SUBROUTINE reflect_particles_xy_plane( npart, pos, pos_below,  &
+                                        npart_above_xy, above_xy_plane_a, &
+                                        nu, nu_below )
     !# Mirror the particle with z>0 with respect to the xy plane,
     !  to impose the equatorial-plane symmetry
 
       INTEGER, INTENT(IN):: npart
       INTEGER, INTENT(IN):: npart_above_xy
-      INTEGER, DIMENSION(npart_above_xy), INTENT(IN):: &
-      above_xy_plane_a
+      INTEGER, DIMENSION(npart_above_xy), INTENT(IN):: above_xy_plane_a
 
-      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT), OPTIONAL:: nu
+      DOUBLE PRECISION, DIMENSION(3,npart),          INTENT(INOUT) :: pos
+      DOUBLE PRECISION, DIMENSION(3,npart_above_xy), INTENT(OUT)   :: pos_below
+      DOUBLE PRECISION, DIMENSION(npart),        INTENT(INOUT), OPTIONAL:: nu
+      DOUBLE PRECISION, DIMENSION(npart_above_xy), INTENT(OUT), OPTIONAL:: &
+      nu_below
 
     END SUBROUTINE reflect_particles_xy_plane
 

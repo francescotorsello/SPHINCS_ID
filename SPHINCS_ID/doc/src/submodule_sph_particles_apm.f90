@@ -34,8 +34,17 @@ SUBMODULE (sph_particles) apm
   !***********************************
 
 
-  USE constants,  ONLY: zero, quarter, one, two, three, ten
-  USE utility,    ONLY: is_finite_number
+  USE constants,            ONLY: zero, quarter, one, two, three, ten
+  USE utility,              ONLY: is_finite_number
+  USE sph_variables,        ONLY: allocate_sph_memory, deallocate_sph_memory, &
+                                  npart
+  USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
+                                  deallocate_metric_on_particles
+  USE gradient,             ONLY: allocate_gradient, deallocate_gradient
+
+  USE RCB_tree_3D,          ONLY: allocate_RCB_tree_memory_3D, &
+                                  deallocate_RCB_tree_memory_3D, iorig
+  USE set_h,                ONLY: posmash
 
 
   IMPLICIT NONE
@@ -98,14 +107,8 @@ SUBMODULE (sph_particles) apm
     USE utility,             ONLY: cnt, spherical_from_cartesian
     USE constants,           ONLY: half, third, Msun, amu, pi
 
-    USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
-                                   npart, h, nu
-    USE metric_on_particles, ONLY: allocate_metric_on_particles, &
-                                   deallocate_metric_on_particles
-    USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE set_h,               ONLY: exact_nei_tree_update, posmash
-    !USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
-    !                               deallocate_RCB_tree_memory_3D
+    USE sph_variables,       ONLY: h, nu
+    USE set_h,               ONLY: exact_nei_tree_update
     USE units,               ONLY: umass
 
     USE APM,                 ONLY: density_loop, position_correction, assign_h
@@ -113,12 +116,9 @@ SUBMODULE (sph_particles) apm
     USE matrix,              ONLY: determinant_4x4_matrix
 
     USE sphincs_sph,         ONLY: density, ncand!, all_clists
-    USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
-                                   rpart, allocate_RCB_tree_memory_3D, &
-                                   deallocate_RCB_tree_memory_3D
+    USE RCB_tree_3D,         ONLY: nic, nfinal, nprev, lpart, &
+                                   rpart
     USE matrix,              ONLY: invert_3x3_matrix
-    !USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
-    !                               W_no_norm,n_tab_entry
 
     IMPLICIT NONE
 
@@ -3065,7 +3065,7 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "3"
 
-    IF( ALLOCATED( posmash ) ) DEALLOCATE( posmash )
+    IF( ALLOCATED(posmash) ) DEALLOCATE(posmash)
     CALL deallocate_metric_on_particles()
     IF( debug ) PRINT *, "4"
     CALL deallocate_gradient()
@@ -3225,6 +3225,7 @@ SUBMODULE (sph_particles) apm
     !
     !*************************************************************
 
+    USE constants,  ONLY: zero
     USE analyze,    ONLY: COM
 
     IMPLICIT NONE
@@ -3232,6 +3233,8 @@ SUBMODULE (sph_particles) apm
     INTEGER, INTENT(INOUT):: npart_all
     INTEGER, INTENT(INOUT):: npart_real
     INTEGER, INTENT(IN)   :: npart_ghost
+
+    INTEGER:: npart_real_old
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
 
@@ -3255,7 +3258,8 @@ SUBMODULE (sph_particles) apm
       PRINT *
     ENDIF
 
-    pos_tmp= pos
+    npart_real_old= npart_real
+    pos_tmp       = pos
     IF( PRESENT(nu) ) nu_tmp = nu
 
     CALL find_particles_above_xy_plane( npart_real, pos(:,1:npart_real), &
@@ -3274,6 +3278,19 @@ SUBMODULE (sph_particles) apm
         ALLOCATE( nu(npart_all) )
       ENDIF
 
+      npart= npart_all
+      IF( ALLOCATED(posmash) ) DEALLOCATE(posmash)
+      CALL deallocate_metric_on_particles
+      CALL deallocate_gradient
+      CALL deallocate_RCB_tree_memory_3D
+      CALL deallocate_SPH_memory
+
+      CALL allocate_SPH_memory
+      CALL allocate_RCB_tree_memory_3D(npart_all)
+      iorig(1:npart)= (/ (a,a=1,npart_all) /)
+      CALL allocate_gradient(npart_all)
+      CALL allocate_metric_on_particles(npart_all)
+
     ENDIF
 
     IF( PRESENT(nu) )THEN
@@ -3290,13 +3307,12 @@ SUBMODULE (sph_particles) apm
     ENDIF
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, npart_real, npart_all, nu, pos_tmp, nu_tmp )&
+    !$OMP             SHARED( pos, npart_real, npart_all, nu, pos_tmp, nu_tmp, &
+    !$OMP                     npart_real_old, npart_ghost )&
     !$OMP             PRIVATE( a )
-    DO a= npart_real + 1, npart_all, 1
-      pos( 1, a )= pos_tmp( 1, a )
-      pos( 2, a )= pos_tmp( 2, a )
-      pos( 3, a )= pos_tmp( 3, a )
-      IF( PRESENT(nu) ) nu( a )= nu_tmp( a )
+    DO a= 1, npart_ghost, 1
+      pos( :, npart_real + a ) = pos_tmp( :, npart_real_old + a )
+      IF( PRESENT(nu) ) nu( a )= nu_tmp( npart_real_old + a )
     ENDDO
     !$OMP END PARALLEL DO
 
