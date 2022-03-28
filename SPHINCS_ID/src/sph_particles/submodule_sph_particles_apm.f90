@@ -235,7 +235,7 @@ SUBMODULE (sph_particles) apm
     !CHARACTER:: it_n
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
     LOGICAL:: few_ncand!, invertible_matrix
 
     TYPE(timer):: find_h_bruteforce_timer
@@ -304,11 +304,11 @@ SUBMODULE (sph_particles) apm
     n_problematic_h= 0
     check_h_guess: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h_guess(a)= find_h_backup( a, npart_real, pos_input, nn_des )
-        IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos_input(:,a)
@@ -718,12 +718,14 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h_0: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos(:,a)
@@ -796,30 +798,30 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "5"
 
-    IF( .NOT.ALLOCATED( lapse           ) ) ALLOCATE( lapse          (npart_real) )
-    IF( .NOT.ALLOCATED( shift_x         ) ) ALLOCATE( shift_x        (npart_real) )
-    IF( .NOT.ALLOCATED( shift_y         ) ) ALLOCATE( shift_y        (npart_real) )
-    IF( .NOT.ALLOCATED( shift_z         ) ) ALLOCATE( shift_z        (npart_real) )
-    IF( .NOT.ALLOCATED( g_xx            ) ) ALLOCATE( g_xx           (npart_real) )
-    IF( .NOT.ALLOCATED( g_xy            ) ) ALLOCATE( g_xy           (npart_real) )
-    IF( .NOT.ALLOCATED( g_xz            ) ) ALLOCATE( g_xz           (npart_real) )
-    IF( .NOT.ALLOCATED( g_yy            ) ) ALLOCATE( g_yy           (npart_real) )
-    IF( .NOT.ALLOCATED( g_yz            ) ) ALLOCATE( g_yz           (npart_real) )
-    IF( .NOT.ALLOCATED( g_zz            ) ) ALLOCATE( g_zz           (npart_real) )
-    IF( .NOT.ALLOCATED( baryon_density  ) ) ALLOCATE( baryon_density (npart_real) )
-    IF( .NOT.ALLOCATED( energy_density  ) ) ALLOCATE( energy_density (npart_real) )
-    IF( .NOT.ALLOCATED( specific_energy ) ) ALLOCATE( specific_energy(npart_real) )
-    IF( .NOT.ALLOCATED( pressure        ) ) ALLOCATE( pressure       (npart_real) )
-    IF( .NOT.ALLOCATED( v_euler_x       ) ) ALLOCATE( v_euler_x      (npart_real) )
-    IF( .NOT.ALLOCATED( v_euler_y       ) ) ALLOCATE( v_euler_y      (npart_real) )
-    IF( .NOT.ALLOCATED( v_euler_z       ) ) ALLOCATE( v_euler_z      (npart_real) )
+    IF(.NOT.ALLOCATED( lapse           ))ALLOCATE( lapse          (npart_real) )
+    IF(.NOT.ALLOCATED( shift_x         ))ALLOCATE( shift_x        (npart_real) )
+    IF(.NOT.ALLOCATED( shift_y         ))ALLOCATE( shift_y        (npart_real) )
+    IF(.NOT.ALLOCATED( shift_z         ))ALLOCATE( shift_z        (npart_real) )
+    IF(.NOT.ALLOCATED( g_xx            ))ALLOCATE( g_xx           (npart_real) )
+    IF(.NOT.ALLOCATED( g_xy            ))ALLOCATE( g_xy           (npart_real) )
+    IF(.NOT.ALLOCATED( g_xz            ))ALLOCATE( g_xz           (npart_real) )
+    IF(.NOT.ALLOCATED( g_yy            ))ALLOCATE( g_yy           (npart_real) )
+    IF(.NOT.ALLOCATED( g_yz            ))ALLOCATE( g_yz           (npart_real) )
+    IF(.NOT.ALLOCATED( g_zz            ))ALLOCATE( g_zz           (npart_real) )
+    IF(.NOT.ALLOCATED( baryon_density  ))ALLOCATE( baryon_density (npart_real) )
+    IF(.NOT.ALLOCATED( energy_density  ))ALLOCATE( energy_density (npart_real) )
+    IF(.NOT.ALLOCATED( specific_energy ))ALLOCATE( specific_energy(npart_real) )
+    IF(.NOT.ALLOCATED( pressure        ))ALLOCATE( pressure       (npart_real) )
+    IF(.NOT.ALLOCATED( v_euler_x       ))ALLOCATE( v_euler_x      (npart_real) )
+    IF(.NOT.ALLOCATED( v_euler_y       ))ALLOCATE( v_euler_y      (npart_real) )
+    IF(.NOT.ALLOCATED( v_euler_z       ))ALLOCATE( v_euler_z      (npart_real) )
 
     IF( debug ) PRINT *, "6"
 
     IF( debug ) PRINT *, "7"
 
     max_nu= zero
-    min_nu= 1.0D60
+    min_nu= HUGE(one)!1.0D60
 
     IF(.NOT.ALLOCATED( art_pr ))THEN
       ALLOCATE( art_pr( npart_all ), STAT= ios, ERRMSG= err_msg )
@@ -835,7 +837,8 @@ SUBMODULE (sph_particles) apm
 
     CALL get_nstar_p_atm( npart_real, all_pos(1,1:npart_real), &
                                       all_pos(2,1:npart_real), &
-                                      all_pos(3,1:npart_real), nstar_p, &
+                                      all_pos(3,1:npart_real), &
+                                      nstar_p, &
                                       use_atmosphere )
 
     IF( debug ) PRINT *, "8"
@@ -1064,12 +1067,11 @@ SUBMODULE (sph_particles) apm
       !                                pos_prev= all_pos_prev(:,1:npart_real) )
 
       CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
-                                                 npart_ghost, all_pos, nu )
+                                                 npart_ghost, all_pos, nu= nu )
 
       IF( debug ) PRINT *, "assign h..."
 
       h_guess(1:npart_real)= h(1:npart_real)
-      h_guess(npart_real+1:npart_all)= dx*dy*dz
 
       CALL assign_h( nn_des, &
                      npart_all, &
@@ -1132,7 +1134,8 @@ SUBMODULE (sph_particles) apm
 
       CALL get_nstar_p_atm( npart_real, all_pos(1,1:npart_real), &
                                         all_pos(2,1:npart_real), &
-                                        all_pos(3,1:npart_real), nstar_p, &
+                                        all_pos(3,1:npart_real), &
+                                        nstar_p, &
                                         use_atmosphere )
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -1143,7 +1146,7 @@ SUBMODULE (sph_particles) apm
 
         IF( .NOT.is_finite_number( nstar_p( a ) ) )THEN
 
-          PRINT *, "** WARNING! nstar_p(", a, ") is a not a finite number ", &
+          PRINT *, "** ERROR! nstar_p(", a, ") is a not a finite number ", &
                    "in SUBROUTINE perform_apm!"
           PRINT *, "   nstar_p(", a, ")=", nstar_p(a)
           PRINT *, "   dNstar(", a, ")=", dNstar(a)
@@ -1341,7 +1344,7 @@ SUBMODULE (sph_particles) apm
 
             ! ..assign a pressure that increases with i, to build a pressure
             !   gradient
-            art_pr(a)= three*three*art_pr_max
+            art_pr(a)= ten*three*three*art_pr_max
             !art_pr(a)= DBLE(itr+1)*art_pr_max
 
           !ELSE
@@ -1517,11 +1520,17 @@ SUBMODULE (sph_particles) apm
 
       !all_pos_prev= all_pos
 
+      IF( debug ) PRINT *, "21"
+
       CALL position_correction( npart_all, &
                                 all_pos, h, nu_all, art_pr, nstar_real, &
                                 correction_pos )
 
+      IF( debug ) PRINT *, "22"
+
       correction_pos(:,npart_real+1:npart_all)= zero
+
+      IF( debug ) PRINT *, "23"
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_all, correction_pos, all_pos, center, &
@@ -2014,11 +2023,11 @@ SUBMODULE (sph_particles) apm
     ! find_h_backup is parallelized already
     check_h3: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos(:,a)
@@ -2033,7 +2042,7 @@ SUBMODULE (sph_particles) apm
 
    ! find_problem_in_h_2: DO a= 1, npart_real, 1
    !
-   !   IF( ISNAN( h( a ) ) )THEN
+   !   IF( .NOT.is_finite_number( h( a ) ) )THEN
    !     PRINT *, "** ERROR! h(", a, ") is a NaN!"
    !     PRINT *, " * h_guess(", a, ")= ", h_guess(a)
    !     PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
@@ -2486,11 +2495,11 @@ SUBMODULE (sph_particles) apm
     n_problematic_h= 0
     check_h4: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos(:,a)
@@ -2568,11 +2577,11 @@ SUBMODULE (sph_particles) apm
     n_problematic_h= 0
     check_h5: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos(:,a)
@@ -2597,7 +2606,7 @@ SUBMODULE (sph_particles) apm
     !
    ! check_h: DO a= 1, npart_real, 1
    !
-   !   IF( ISNAN( h(a) ) )THEN
+   !   IF( .NOT.is_finite_number( h(a) ) )THEN
    !     PRINT *, "** ERROR! h(", a, ") is a NaN"
    !     !PRINT *, "Stopping..."
    !    ! PRINT *

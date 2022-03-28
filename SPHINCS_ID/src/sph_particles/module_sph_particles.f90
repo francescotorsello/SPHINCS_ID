@@ -1470,245 +1470,42 @@ MODULE sph_particles
   END INTERFACE
 
 
-
-  CONTAINS
-
+  INTERFACE
 
 
-  SUBROUTINE check_particle_positions( npart, pos, debug )
+    MODULE SUBROUTINE check_particle_positions( npart, pos, debug )
+    !! Check that the particles are not at the same positions
 
-    !*************************************************
-    !
-    !# Check that the particles are not at the same
-    !  positions
-    !
-    !  FT 1.9.2021
-    !
-    !*************************************************
+      INTEGER, INTENT(IN):: npart
+      !! Number of particles
+      LOGICAL, INTENT(IN), OPTIONAL:: debug
+      !! `TRUE` to debug the SUBROUTINE, `FALSE` otherwise
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+      !! Array of particle positions
 
-    USE NR, ONLY: indexx
-
-    IMPLICIT NONE
-
-    INTEGER, INTENT(IN):: npart
-    !! Number of particles
-    LOGICAL, INTENT(IN), OPTIONAL:: debug
-    !! `TRUE` to debug the SUBROUTINE, `FALSE` otherwise
-    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
-    !! Array of particle positions
-
-    INTEGER:: itr
-    !! Iterator
-    INTEGER:: itr2
-    !! Iterator
-    INTEGER:: x_idx
-    !# Index at which a new value of the \(x\) coordinate appears,
-    !  in the array `pos` sorted so that the \(x\) coordinate does not decrease
-    INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort
-    !# Array storing the sorted indices of array `pos`, so that the \(x\)
-    !  coordinate of the particles is in nondecreasing order
-    INTEGER, DIMENSION(:), ALLOCATABLE:: x_number
-    !# Array storing, for each \(x\) coordinate, the number of particles
-    !  having that \(x\) coordinate
-
-    PRINT *, "** Checking that there are not multiple particles", &
-             " at the same position..."
-    PRINT *
-
-    ALLOCATE( x_sort( npart ) )
-    ALLOCATE( x_number( npart ) )
-
-    ! Sort x coordinates of the particles
-    CALL indexx( npart, pos( 1, : ), x_sort )
-
-    x_number= 1
-    itr2= 1
-    ! Find the number of times each x appears
-    DO itr= 1, npart - 1, 1
-
-      IF( pos( 1, x_sort(itr) ) == &
-          pos( 1, x_sort(itr+1) ) )THEN
-
-        x_number(itr2)= x_number(itr2) + 1
-
-      ELSE
-
-        itr2= itr2 + 1
-
-      ENDIF
-
-    ENDDO
-    x_number= x_number(1:itr2)
-
-    IF( SUM( x_number ) /= npart )THEN
-
-      PRINT *, "** ERROR! The sum of the numbers of particles with the same", &
-               " x is not equal to the particle number."
-      PRINT *, " * SUM( x_number )=", SUM( x_number ), ", ", &
-               "npart=", npart
-      PRINT *, " * Stopping..."
-      PRINT *
-      STOP
-
-    ENDIF
-
-    IF( PRESENT(debug) .AND. debug .EQV. .TRUE. )THEN
-
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( pos, x_sort, x_number ) &
-      !$OMP             PRIVATE( itr, itr2, x_idx )
-      DO itr= 1, SIZE(x_number), 1
-
-        IF( itr == 1 )THEN
-          x_idx= 1
-        ELSE
-          x_idx= SUM(x_number(1:itr-1)) + 1
-        ENDIF
-
-        DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
-
-          ! If they do not have the same x
-          IF( pos( 1, x_sort(itr2) ) /= &
-              pos( 1, x_sort(itr2+1) ) )THEN
-
-            PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
-                     " and", x_sort(itr2+1), &
-                     " do not have the same x, but should!"
-            PRINT *, pos( :, x_sort(itr2) )
-            PRINT *, pos( :, x_sort(itr2+1) )
-            PRINT *, " * Stopping..."
-            PRINT *
-            STOP
-
-          ENDIF
-
-        ENDDO
-      ENDDO
-      !$OMP END PARALLEL DO
-
-    ENDIF
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, x_sort, x_number ) &
-    !$OMP             PRIVATE( itr, itr2, x_idx )
-    DO itr= 1, SIZE(x_number), 1
-
-      IF( itr == 1 )THEN
-        x_idx= 1
-      ELSE
-        x_idx= SUM(x_number(1:itr-1)) + 1
-      ENDIF
-
-      DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
-
-        ! If they have the same y
-        IF( pos( 2, x_sort(itr2) ) == &
-            pos( 2, x_sort(itr2+1) ) )THEN
-
-          ! If they have the same z
-          IF( pos( 3, x_sort(itr2) ) == &
-              pos( 3, x_sort(itr2+1) ) )THEN
-
-            ! They are the same
-            PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
-                     " and", x_sort(itr2+1), " have the same coordinates!"
-            PRINT *, pos( :, x_sort(itr2) )
-            PRINT *, pos( :, x_sort(itr2+1) )
-            PRINT *, " * Stopping..."
-            PRINT *
-            STOP
-
-          ENDIF
-        ENDIF
-
-      ENDDO
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    DEALLOCATE( x_sort )
-    DEALLOCATE( x_number )
-
-  END SUBROUTINE check_particle_positions
+    END SUBROUTINE check_particle_positions
 
 
-  FUNCTION check_particle_position( npart, pos, pos_a ) RESULT( cnt )
-
-    !*****************************************************
-    !
-    !# Return the number of times that pos_a appears
-    !  in the array pos
+    MODULE FUNCTION check_particle_position( npart, pos, pos_a ) RESULT( cnt )
+    !# Return the number of times that pos_a appears in the array pos
     !  @todo This algorithm scales as O(npart**2)
     !        if used in a loop over the particles...
     !        To be documented, after it's fixed
-    !
-    !  FT 13.10.2021
-    !
-    !*****************************************************
 
-    !USE NR,             ONLY: indexx
+      INTEGER, INTENT(IN):: npart
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: pos_a
+      INTEGER:: cnt
 
-    IMPLICIT NONE
+    END FUNCTION check_particle_position
 
-    INTEGER, INTENT(IN):: npart
-    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
-    DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: pos_a
-    INTEGER:: cnt
 
-    INTEGER:: itr, itr2, size_x!, cnt
-    INTEGER, DIMENSION(npart):: x_sort, cnts
-    INTEGER, DIMENSION(npart):: x_number
-    INTEGER, DIMENSION(:), ALLOCATABLE:: x_number_filt
+  END INTERFACE
 
-    ! Sort x coordinates of the particles
-    !CALL indexx( npart, pos( 1, : ), x_sort )
 
-    x_number= 0
-    itr2= 0
-    ! Find the number of times that the x coordinate of pos_a appears in pos
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, pos_a, x_sort, x_number, npart ) &
-    !$OMP             PRIVATE( itr )
-    DO itr= 1, npart, 1
 
-      IF( pos( 1, itr ) == pos_a( 1 ) )THEN
+  CONTAINS
 
-        !itr2= itr2 + 1
-        x_number(itr)= itr
-
-      !ELSEIF( pos( 1, x_sort(itr) ) > pos_a( 1 ) )THEN
-      !
-      !  EXIT
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-    x_number_filt= PACK( x_number, x_number /= 0 )
-    size_x= SIZE(x_number_filt)
-
-    cnts= 0
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, pos_a, x_sort, x_number_filt, size_x, cnts )&
-    !$OMP             PRIVATE( itr )
-    DO itr= 1, size_x, 1
-
-      ! If they have the same y
-      IF( pos( 2, x_number_filt(itr) ) == pos_a( 2 ) )THEN
-
-        ! If they have the same z
-        IF( pos( 3, x_number_filt(itr) ) == pos_a( 3 ) )THEN
-
-          cnts(itr)= cnts(itr) + 1
-
-        ENDIF
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    cnt= SUM( cnts )
-
-  END FUNCTION check_particle_position
 
 
   FUNCTION find_h_backup( a, npart, pos, ndes ) RESULT( h )
