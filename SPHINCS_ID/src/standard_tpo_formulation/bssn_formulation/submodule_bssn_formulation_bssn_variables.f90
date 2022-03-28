@@ -64,7 +64,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     USE mesh_refinement,            ONLY: nlevels, levels, rad_coord, &
                                           allocate_grid_function, &
                                           deallocate_grid_function
-    USE ADM_refine,                 ONLY: lapse, dt_lapse, shift_u, dt_shift_u, &
+    USE ADM_refine,                 ONLY: lapse, dt_lapse, shift_u, dt_shift_u,&
                                           K_phys3_ll, g_phys3_ll, &
                                           allocate_ADM, deallocate_ADM
     USE McLachlan_refine,           ONLY: allocate_Ztmp, deallocate_Ztmp, &
@@ -112,18 +112,18 @@ SUBMODULE (bssn_formulation) bssn_variables
     PRINT *, " * Allocating needed memory..."
     PRINT *
 
-    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    ALLOCATE ( levels( this% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
      PRINT*,'...allocation error for levels'
      STOP
     ENDIF
-    levels = THIS% levels
-    nlevels= THIS% nlevels
+    levels = this% levels
+    nlevels= this% nlevels
 
-    !DO l= 1, THIS% nlevels, 1
-    !  levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
-    !  levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
-    !  levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
+    !DO l= 1, this% nlevels, 1
+    !  levels(l)% ngrid_x= this% levels(l)% ngrid_x
+    !  levels(l)% ngrid_x= this% levels(l)% ngrid_x
+    !  levels(l)% ngrid_x= this% levels(l)% ngrid_x
     !ENDDO
 
     CALL allocate_ADM()
@@ -142,18 +142,18 @@ SUBMODULE (bssn_formulation) bssn_variables
     CALL allocate_grid_function( rad_coord, 'rad_coord' )
 
     ! Assign values to the MODULE variables, in order to call ADM_to_BSSN
-    ref_levels: DO l= 1, THIS% nlevels
+    ref_levels: DO l= 1, this% nlevels
 
-      Tmunu_ll% levels(l)% var= 0.0D0
+      Tmunu_ll% levels(l)% var  = 0.0D0
 
       dt_lapse% levels(l)% var  = 0.0D0
       dt_shift_u% levels(l)% var= 0.0D0
 
-      rad_coord% levels(l)% var = THIS% rad_coord% levels(l)% var
-      lapse% levels(l)% var     = THIS% lapse% levels(l)% var
-      shift_u% levels(l)% var   = THIS% shift_u% levels(l)% var
-      g_phys3_ll% levels(l)% var= THIS% g_phys3_ll% levels(l)% var
-      K_phys3_ll% levels(l)% var= THIS% K_phys3_ll% levels(l)% var
+      rad_coord% levels(l)% var = this% rad_coord% levels(l)% var
+      lapse% levels(l)% var     = this% lapse% levels(l)% var
+      shift_u% levels(l)% var   = this% shift_u% levels(l)% var
+      g_phys3_ll% levels(l)% var= this% g_phys3_ll% levels(l)% var
+      K_phys3_ll% levels(l)% var= this% K_phys3_ll% levels(l)% var
 
     ENDDO ref_levels
 
@@ -164,21 +164,21 @@ SUBMODULE (bssn_formulation) bssn_variables
     !
     PRINT *, " * Computing BSSN variables..."
     PRINT *
-    CALL THIS% bssn_computer_timer% start_timer()
+    CALL this% bssn_computer_timer% start_timer()
     CALL ADM_to_BSSN()
     !CALL ADM_to_BSSN_args( &
-    !  THIS% dx, THIS% dy, THIS% dz, &
+    !  this% dx, this% dy, this% dz, &
     !  ! ADM variables (input)
-    !  THIS% g_phys3_ll(:,:,:,jxx), THIS% g_phys3_ll(:,:,:,jxy), &
-    !  THIS% g_phys3_ll(:,:,:,jxz), THIS% g_phys3_ll(:,:,:,jyy), &
-    !  THIS% g_phys3_ll(:,:,:,jyz), THIS% g_phys3_ll(:,:,:,jzz), &
-    !  THIS% K_phys3_ll(:,:,:,jxx), THIS% K_phys3_ll(:,:,:,jxy), &
-    !  THIS% K_phys3_ll(:,:,:,jxz), THIS% K_phys3_ll(:,:,:,jyy), &
-    !  THIS% K_phys3_ll(:,:,:,jyz), THIS% K_phys3_ll(:,:,:,jzz), &
-    !  THIS% lapse(:,:,:), &
-    !  THIS% shift_u(:,:,:,jx), &
-    !  THIS% shift_u(:,:,:,jy), &
-    !  THIS% shift_u(:,:,:,jz), &
+    !  this% g_phys3_ll(:,:,:,jxx), this% g_phys3_ll(:,:,:,jxy), &
+    !  this% g_phys3_ll(:,:,:,jxz), this% g_phys3_ll(:,:,:,jyy), &
+    !  this% g_phys3_ll(:,:,:,jyz), this% g_phys3_ll(:,:,:,jzz), &
+    !  this% K_phys3_ll(:,:,:,jxx), this% K_phys3_ll(:,:,:,jxy), &
+    !  this% K_phys3_ll(:,:,:,jxz), this% K_phys3_ll(:,:,:,jyy), &
+    !  this% K_phys3_ll(:,:,:,jyz), this% K_phys3_ll(:,:,:,jzz), &
+    !  this% lapse(:,:,:), &
+    !  this% shift_u(:,:,:,jx), &
+    !  this% shift_u(:,:,:,jy), &
+    !  this% shift_u(:,:,:,jz), &
     !  dt_lapse(:,:,:), &
     !  dt_shift_u(:,:,:,jx), dt_shift_u(:,:,:,jy), dt_shift_u(:,:,:,jz), &
     !  ! BSSN variables (output)
@@ -195,11 +195,11 @@ SUBMODULE (bssn_formulation) bssn_variables
     !  Gamma_u(:,:,:,jx), Gamma_u(:,:,:,jy), &
     !  Gamma_u(:,:,:,jz) &
     !)
-    CALL THIS% bssn_computer_timer% stop_timer()
+    CALL this% bssn_computer_timer% stop_timer()
 
     ! Set the MODULE variables equal to the TYPE variables
-    !lapse= THIS% lapse
-    !shift_u= THIS% shift_u
+    !lapse= this% lapse
+    !shift_u= this% shift_u
 
     !
     !-- Check the BSSN MODULE variables for NaNs
@@ -247,19 +247,20 @@ SUBMODULE (bssn_formulation) bssn_variables
     !-- Setting the TYPE variables equal to the MODULE variables
     !
     CALL allocate_bssn_fields( THIS )
-    ref_levels2: DO l= 1, THIS% nlevels
 
-      THIS% Gamma_u% levels(l)% var   = Gamma_u% levels(l)% var
-      THIS% phi% levels(l)% var       = phi% levels(l)% var
-      THIS% trK% levels(l)% var       = trK% levels(l)% var
-      THIS% g_BSSN3_ll% levels(l)% var= g_BSSN3_ll% levels(l)% var
-      THIS% A_BSSN3_ll% levels(l)% var= A_BSSN3_ll% levels(l)% var
+    ref_levels2: DO l= 1, this% nlevels
+
+      this% Gamma_u% levels(l)% var   = Gamma_u% levels(l)% var
+      this% phi% levels(l)% var       = phi% levels(l)% var
+      this% trK% levels(l)% var       = trK% levels(l)% var
+      this% g_BSSN3_ll% levels(l)% var= g_BSSN3_ll% levels(l)% var
+      this% A_BSSN3_ll% levels(l)% var= A_BSSN3_ll% levels(l)% var
 
     ENDDO ref_levels2
 
     ! Write BSSN ID to a binary file to be read by the evolution code
     ! in SPHINCS
-    IF( THIS% export_bin )THEN
+    IF( this% export_bin )THEN
       IF( PRESENT(namefile) )THEN
         CALL write_BSSN_dump( namefile )
         !CALL write_BSSN_dump()
@@ -281,7 +282,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     DEALLOCATE( levels )
 
     call_flag= call_flag + 1
-    THIS% call_flag= call_flag
+    this% call_flag= call_flag
 
     PRINT *, "** BSSN ID computed."
     PRINT *
@@ -334,15 +335,15 @@ SUBMODULE (bssn_formulation) bssn_variables
 
     PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
 
-    levels = THIS% levels
-    nlevels= THIS% nlevels
+    levels = this% levels
+    nlevels= this% nlevels
 
     CALL allocate_ADM()
     CALL allocate_BSSN()
 
     CALL read_BSSN_dump( 00000, namefile_bin )
 
-    IF( THIS% call_flag == 0 )THEN
+    IF( this% call_flag == 0 )THEN
       PRINT *, "** The SUBROUTINE print_formatted_id_bssn_variables ", &
         " must be called after compute_and_export_bssn_variables, otherwise", &
         " there are no bssn fields to export to the formatted file."
@@ -421,7 +422,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(finalnamefile) )
 
-    DO l= 1, THIS% nlevels, 1
+    DO l= 1, this% nlevels, 1
 
       ASSOCIATE( lapse      => lapse% levels(l)% var, &
                  shift_u    => shift_u% levels(l)% var, &
@@ -434,21 +435,21 @@ SUBMODULE (bssn_formulation) bssn_variables
 
         min_abs_y= 1D+20
         min_abs_z= 1D+20
-        DO k= 1, THIS% get_ngrid_z(l), 1
-          DO j= 1, THIS% get_ngrid_y(l), 1
-            DO i= 1, THIS% get_ngrid_x(l), 1
+        DO k= 1, this% get_ngrid_z(l), 1
+          DO j= 1, this% get_ngrid_y(l), 1
+            DO i= 1, this% get_ngrid_x(l), 1
 
-              IF( ABS( THIS% coords% levels(l)% var( i, j, k, jy ) ) &
+              IF( ABS( this% coords% levels(l)% var( i, j, k, jy ) ) &
                   < min_abs_y )THEN
-                min_abs_y= ABS( THIS% coords% levels(l)% var( i, j, k, jy ) )
+                min_abs_y= ABS( this% coords% levels(l)% var( i, j, k, jy ) )
                 min_ix_y= i
                 min_iy_y= j
                 min_iz_y= k
               ENDIF
 
-              IF( ABS( THIS% coords% levels(l)% var( i, j, k, jz ) ) &
+              IF( ABS( this% coords% levels(l)% var( i, j, k, jz ) ) &
                   < min_abs_z )THEN
-                min_abs_z= ABS( THIS% coords% levels(l)% var( i, j, k, jz ) )
+                min_abs_z= ABS( this% coords% levels(l)% var( i, j, k, jz ) )
                 min_ix_z= i
                 min_iy_z= j
                 min_iz_z= k
@@ -458,34 +459,34 @@ SUBMODULE (bssn_formulation) bssn_variables
           ENDDO
         ENDDO
 
-        DO k= 1, THIS% get_ngrid_z(l), 1
+        DO k= 1, this% get_ngrid_z(l), 1
 
-          DO j= 1, THIS% get_ngrid_y(l), 1
+          DO j= 1, this% get_ngrid_y(l), 1
 
-            DO i= 1, THIS% get_ngrid_x(l), 1
+            DO i= 1, this% get_ngrid_x(l), 1
 
-              IF( THIS% export_form_xy .AND. &
-                  ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
-                    THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
+              IF( this% export_form_xy .AND. &
+                  ( this% coords% levels(l)% var( i, j, k, jz ) /= &
+                    this% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                   min_iz_z, jz ) ) )THEN
                 CYCLE
               ENDIF
-              IF( THIS% export_form_x .AND. &
-                  ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
-                    THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
+              IF( this% export_form_x .AND. &
+                  ( this% coords% levels(l)% var( i, j, k, jz ) /= &
+                    this% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                   min_iz_z, jz ) &
                     .OR. &
-                    THIS% coords% levels(l)% var( i, j, k, jy ) /= &
-                    THIS% coords% levels(l)% var( min_ix_y, min_iy_y, &
+                    this% coords% levels(l)% var( i, j, k, jy ) /= &
+                    this% coords% levels(l)% var( min_ix_y, min_iy_y, &
                                                   min_iz_y, jy ) ) )THEN
                 CYCLE
               ENDIF
 
               WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
                   l, &
-                  THIS% coords% levels(l)% var( i, j, k, jx ), &
-                  THIS% coords% levels(l)% var( i, j, k, jy ), &
-                  THIS% coords% levels(l)% var( i, j, k, jz ), &
+                  this% coords% levels(l)% var( i, j, k, jx ), &
+                  this% coords% levels(l)% var( i, j, k, jy ), &
+                  this% coords% levels(l)% var( i, j, k, jz ), &
                   lapse( i, j, k ), &
                   shift_u( i, j, k, jx ), &
                   shift_u( i, j, k, jy ), &
@@ -567,12 +568,12 @@ SUBMODULE (bssn_formulation) bssn_variables
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
     ! size. This results in a segmentation fault.
-    !ALLOCATE( abs_grid( 3, THIS% ngrid_x, THIS% ngrid_y, THIS% ngrid_z ) )
+    !ALLOCATE( abs_grid( 3, this% ngrid_x, this% ngrid_y, this% ngrid_z ) )
 
     PRINT *, "** Executing the print_formatted_id_BSSN_variables " &
              // "subroutine..."
 
-    IF( THIS% call_flag == 0 )THEN
+    IF( this% call_flag == 0 )THEN
       PRINT *, "** The SUBROUTINE print_formatted_id_bssn_variables ", &
         " must be called after compute_and_export_bssn_variables, otherwise", &
         " there are no bssn fields to export to the formatted file."
@@ -651,45 +652,45 @@ SUBMODULE (bssn_formulation) bssn_variables
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(finalnamefile) )
 
-    DO l= 1, THIS% nlevels, 1
+    DO l= 1, this% nlevels, 1
 
-      ASSOCIATE( lapse           => THIS% lapse% levels(l)% var, &
-                 shift_u         => THIS% shift_u% levels(l)% var, &
-                 phi             => THIS% phi% levels(l)% var, &
-                 trK             => THIS% trK% levels(l)% var, &
-                 g_BSSN3_ll      => THIS% g_BSSN3_ll% levels(l)% var, &
-                 A_BSSN3_ll      => THIS% A_BSSN3_ll% levels(l)% var, &
-                 Gamma_u         => THIS% Gamma_u% levels(l)% var &
+      ASSOCIATE( lapse           => this% lapse% levels(l)% var, &
+                 shift_u         => this% shift_u% levels(l)% var, &
+                 phi             => this% phi% levels(l)% var, &
+                 trK             => this% trK% levels(l)% var, &
+                 g_BSSN3_ll      => this% g_BSSN3_ll% levels(l)% var, &
+                 A_BSSN3_ll      => this% A_BSSN3_ll% levels(l)% var, &
+                 Gamma_u         => this% Gamma_u% levels(l)% var &
       )
 
 
-        !DO iz= 1, THIS% ngrid_z, 1
-        !  DO iy= 1, THIS% ngrid_y, 1
-        !    DO ix= 1, THIS% ngrid_x, 1
-        !      abs_grid( 1, ix, iy, iz )= ABS( THIS% grid( 1, ix, iy, iz ) )
-        !      abs_grid( 2, ix, iy, iz )= ABS( THIS% grid( 2, ix, iy, iz ) )
-        !      abs_grid( 3, ix, iy, iz )= ABS( THIS% grid( 3, ix, iy, iz ) )
+        !DO iz= 1, this% ngrid_z, 1
+        !  DO iy= 1, this% ngrid_y, 1
+        !    DO ix= 1, this% ngrid_x, 1
+        !      abs_grid( 1, ix, iy, iz )= ABS( this% grid( 1, ix, iy, iz ) )
+        !      abs_grid( 2, ix, iy, iz )= ABS( this% grid( 2, ix, iy, iz ) )
+        !      abs_grid( 3, ix, iy, iz )= ABS( this% grid( 3, ix, iy, iz ) )
         !    ENDDO
         !  ENDDO
         !ENDDO
 
         min_abs_y= HUGE(1.0D0)
         min_abs_z= HUGE(1.0D0)
-        DO k= 1, THIS% get_ngrid_z(l), 1
-          DO j= 1, THIS% get_ngrid_y(l), 1
-            DO i= 1, THIS% get_ngrid_x(l), 1
+        DO k= 1, this% get_ngrid_z(l), 1
+          DO j= 1, this% get_ngrid_y(l), 1
+            DO i= 1, this% get_ngrid_x(l), 1
 
-              IF( ABS( THIS% coords% levels(l)% var( i, j, k, jy ) ) &
+              IF( ABS( this% coords% levels(l)% var( i, j, k, jy ) ) &
                   < min_abs_y )THEN
-                min_abs_y= ABS( THIS% coords% levels(l)% var( i, j, k, jy ) )
+                min_abs_y= ABS( this% coords% levels(l)% var( i, j, k, jy ) )
                 min_ix_y= i
                 min_iy_y= j
                 min_iz_y= k
               ENDIF
 
-              IF( ABS( THIS% coords% levels(l)% var( i, j, k, jz ) ) &
+              IF( ABS( this% coords% levels(l)% var( i, j, k, jz ) ) &
                   < min_abs_z )THEN
-                min_abs_z= ABS( THIS% coords% levels(l)% var( i, j, k, jz ) )
+                min_abs_z= ABS( this% coords% levels(l)% var( i, j, k, jz ) )
                 min_ix_z= i
                 min_iy_z= j
                 min_iz_z= k
@@ -699,34 +700,34 @@ SUBMODULE (bssn_formulation) bssn_variables
           ENDDO
         ENDDO
 
-        DO k= 1, THIS% get_ngrid_z(l), 1
+        DO k= 1, this% get_ngrid_z(l), 1
 
-          DO j= 1, THIS% get_ngrid_y(l), 1
+          DO j= 1, this% get_ngrid_y(l), 1
 
-            DO i= 1, THIS% get_ngrid_x(l), 1
+            DO i= 1, this% get_ngrid_x(l), 1
 
-              IF( THIS% export_form_xy .AND. &
-                  ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
-                    THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
+              IF( this% export_form_xy .AND. &
+                  ( this% coords% levels(l)% var( i, j, k, jz ) /= &
+                    this% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                   min_iz_z, jz ) ) )THEN
                 CYCLE
               ENDIF
-              IF( THIS% export_form_x .AND. &
-                  ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
-                    THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
+              IF( this% export_form_x .AND. &
+                  ( this% coords% levels(l)% var( i, j, k, jz ) /= &
+                    this% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                   min_iz_z, jz ) &
                     .OR. &
-                    THIS% coords% levels(l)% var( i, j, k, jy ) /= &
-                    THIS% coords% levels(l)% var( min_ix_y, min_iy_y, &
+                    this% coords% levels(l)% var( i, j, k, jy ) /= &
+                    this% coords% levels(l)% var( min_ix_y, min_iy_y, &
                                                   min_iz_y, jy ) ) )THEN
                 CYCLE
               ENDIF
 
               WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
                 l, &
-                THIS% coords% levels(l)% var( i, j, k, jx ), &
-                THIS% coords% levels(l)% var( i, j, k, jy ), &
-                THIS% coords% levels(l)% var( i, j, k, jz ), &
+                this% coords% levels(l)% var( i, j, k, jx ), &
+                this% coords% levels(l)% var( i, j, k, jy ), &
+                this% coords% levels(l)% var( i, j, k, jz ), &
                 lapse( i, j, k ), &
                 shift_u( i, j, k, jx ), &
                 shift_u( i, j, k, jy ), &

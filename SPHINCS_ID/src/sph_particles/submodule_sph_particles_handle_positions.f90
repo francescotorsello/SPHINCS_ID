@@ -259,7 +259,7 @@ SUBMODULE (sph_particles) handle_positions
     !$OMP                     pos_below, nu_below ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_above_xy, 1
-      pos( :, npart_above_xy + a ) = pos_below( :, a )
+      pos( :, npart_above_xy + a )= pos_below( :, a )
       IF( PRESENT(nu) )THEN
         nu( npart_above_xy + a )= nu_below( a )
       ENDIF

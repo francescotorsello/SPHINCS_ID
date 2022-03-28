@@ -59,18 +59,16 @@ npart_des= 500000 !1200000 !2800000
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
 stretch=1.2     ! Factor by which the lattices around the stars are stretched
-!nx=80           ! Number of particles in the x direction for each lattice
-!ny=80           ! Number of particles in the y direction for each lattice
-!nz=80           ! EVEN number of particles in the z direction for each lattice
-use_thres=.FALSE.
-thres=10      ! (~rho_max)/thres is the minimum mass density considered
+use_thres=.TRUE.
+thres=100      ! (~rho_max)/thres is the minimum mass density considered
                 ! when placing particles. Used only when redistribute_nu is
                 ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
 redistribute_nu=.FALSE. ! If .TRUE., nu is reassigned on the particles such that
                        ! the baryon number ratio does not exceed nu_ratio on
-                       ! each star
+                       ! each star (obsolescent; not used in this version)
 nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
-                       ! redistribute_nu is .TRUE.
+                       ! redistribute_nu is .TRUE. (obsolescent; not used in
+                       ! this version)
 !---------------------------------------------------------------!
 ! Parameters needed to place particles on spherical surfaces    !
 !   This method integrates the density over the stars, computes !
@@ -103,7 +101,8 @@ lower_bound= 0.975D0  ! Desired lower bound for the same differences as above
                       ! following parameters.
 max_steps= 100        ! If, after max_steps, the iteration did not converge,
                       ! multiply upper_bound by upper_factor, and lower_bound
-                      ! by lower_factor. max_steps >= 10. 100 is a nice value
+                      ! by lower_factor, defined below.
+                      ! max_steps >= 10. 100 is a nice value
 upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
 lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
 randomize_phi=  .TRUE.  ! Randomize particle positions in phi
@@ -134,12 +133,12 @@ apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
-print_step= 20          ! Evey print_step steps, print the particle positions
+print_step= 10          ! Evey print_step steps, print the particle positions
                         ! at the current step, and the particle positions at
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
                         ! Set to 0 to not print positions at all
-apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
+apm_max_it= 50         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate

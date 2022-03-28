@@ -66,7 +66,7 @@ PROGRAM convergence_test
                                       test_status, show_progress, end_time, &
                                       read_sphincs_id_parameters, &
                                       !----------
-                                      n_bns, common_path, filenames, placer, &
+                                      n_id, common_path, filenames, placer, &
                                       export_bin, export_form, export_form_xy, &
                                       export_form_x, export_constraints_xy, &
                                       export_constraints_x, &
@@ -258,6 +258,12 @@ PROGRAM convergence_test
   !-- Construct the idbase objects
   !
   CALL allocate_idbase( idata, TRIM(filenames(1)), systems(1), systems_name(1) )
+  PRINT *, "===================================================" &
+           // "==============="
+  PRINT *, " Constructing idbase object for "//systems(1)
+  PRINT *, "===================================================" &
+           // "==============="
+  PRINT *
   CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)) )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)

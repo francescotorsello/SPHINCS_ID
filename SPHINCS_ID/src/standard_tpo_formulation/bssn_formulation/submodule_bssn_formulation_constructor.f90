@@ -48,7 +48,7 @@ SUBMODULE (bssn_formulation) constructor
     !****************************************************
     !
     !# This constructor of TYPE bssn calls the
-    !  SUBROUTINES that rely on an bns object, and
+    !  SUBROUTINES that rely on an idbase object, and
     !  allocates memory. It constructs the grid
     !  using the number of grid points along each axis.
     !
@@ -112,7 +112,7 @@ SUBMODULE (bssn_formulation) constructor
     bssnid% GC_parts_int= HUGE(one)
 
     ! radius2 is the extraction radius. If not set here, then it is 0 by default
-    ! and the metric is not interpolate on the particle in
+    ! and the metric is not interpolated on the particle in
     ! get_metric_on_particles
     radius2= HUGE(DBLE(1.0D0))
 

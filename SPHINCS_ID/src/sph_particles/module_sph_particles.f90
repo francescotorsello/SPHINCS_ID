@@ -125,10 +125,10 @@ MODULE sph_particles
   !                                                          *
   !              Definition of TYPE particles                *
   !                                                          *
-  ! This class places the |sph| particles, imports           *
+  ! This class places the |sph| particles, reads             *
   ! the |id| on the particle positions, stores               *
   ! it, computes the relevant |sph| fields and exports it to *
-  ! both a formatted, and a binary file for evolution        *
+  ! both a formatted file, and a binary file for evolution   *
   !                                                          *
   !***********************************************************
 

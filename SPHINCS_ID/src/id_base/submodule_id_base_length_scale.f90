@@ -122,8 +122,8 @@ SUBMODULE (id_base) length_scale
 
     matter_objects_loop: DO i_mat= 1, n_mat, 1
 
-      sizes= THIS% return_spatial_extent(i_mat)
-      center= THIS% return_center(i_mat)
+      sizes = this% return_spatial_extent(i_mat)
+      center= this% return_center(i_mat)
       xL(i_mat)= center(1) - sizes(1)
       xR(i_mat)= center(1) + sizes(2)
       yL(i_mat)= center(2) - sizes(3)

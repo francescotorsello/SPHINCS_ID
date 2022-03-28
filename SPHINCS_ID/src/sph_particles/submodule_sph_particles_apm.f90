@@ -77,8 +77,8 @@ SUBMODULE (sph_particles) apm
   DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
   !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
-  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
-  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
+  !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
+  !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev_dump
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
 
@@ -235,7 +235,7 @@ SUBMODULE (sph_particles) apm
     !CHARACTER:: it_n
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
-    LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .TRUE.
     LOGICAL:: few_ncand!, invertible_matrix
 
     TYPE(timer):: find_h_bruteforce_timer
@@ -757,13 +757,15 @@ SUBMODULE (sph_particles) apm
     CALL density_loop( npart_all, all_pos, &    ! input
                        nu, h, nstar_real )      ! output
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( all_pos, npart_all, nstar_real, h, nu, &
+    !$OMP                     center ) &
+    !$OMP             PRIVATE( a )
     DO a= 1, npart_all, 1
 
-      IF( ISNAN( nstar_real( a ) ) )THEN
+      IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
 
-        PRINT *, "** WARNING! nstar_real(", a, ") is a NaN!", &
-                 "   Changing the values of nstar_real and h to one taken", &
-                 "   from a neighboring particle."
+        PRINT *, "** ERROR! nstar_real(", a, ") is not a finite number!"
         IF( debug ) PRINT *, " * h(", a, ")=", h(a)
         IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
         IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
@@ -773,10 +775,12 @@ SUBMODULE (sph_particles) apm
         PRINT *, " * Check if the smoothing length is 0 for some particles,", &
                  "   and if so, make its initial guess, h_guess, a bit larger."
         PRINT *
+        STOP
 
       ENDIF
 
     ENDDO
+    !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "4"
 
@@ -883,7 +887,7 @@ SUBMODULE (sph_particles) apm
     IF( .NOT.ALLOCATED(freeze) ) ALLOCATE( freeze( npart_all ) )
     IF( .NOT.ALLOCATED(correction_pos) ) ALLOCATE( correction_pos( 3, npart_all ) )
     !IF( .NOT.ALLOCATED(all_pos_tmp) ) ALLOCATE( all_pos_tmp( 3, npart_all ) )
-    IF( .NOT.ALLOCATED(all_pos_prev) ) ALLOCATE( all_pos_prev( 3, npart_all ) )
+    !IF( .NOT.ALLOCATED(all_pos_prev) ) ALLOCATE( all_pos_prev( 3, npart_all ) )
     IF( .NOT.ALLOCATED(all_pos_prev_dump) ) ALLOCATE( all_pos_prev_dump( 3, npart_all ) )
     IF( .NOT.ALLOCATED(cnt_move) ) ALLOCATE( cnt_move( npart_real ) )
     cnt_move= 0
@@ -1060,81 +1064,12 @@ SUBMODULE (sph_particles) apm
       !                                pos_prev= all_pos_prev(:,1:npart_real) )
 
       CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
-                                             npart_ghost, all_pos, nu )
-
-      IF( debug )THEN
-
-        CALL COM( npart_real, all_pos(:,1:npart_real), &  !
-                  nu(1:npart_real), &                     ! input
-                  com_x, com_y, com_z, com_d )            ! output
-
-        PRINT *, "** After center of mass correction:"
-        PRINT *, " * x coordinate of the center of mass of the star, ", &
-                 "from LORENE: com_star= ", com_star, "Msun_geo"
-        PRINT *, " * x coordinate of the center of mass of the particle ", &
-                 "distribution: com_x= ", com_x, "Msun_geo"
-        PRINT *, " * y coordinate of the center of mass of the particle ", &
-                 "distribution: com_y= ", com_y, "Msun_geo"
-        PRINT *, " * z coordinate of the center of mass of the particle ", &
-                 "distribution: com_z= ", com_z, "Msun_geo"
-        PRINT *, " * Distance of the center of mass of the particle ", &
-                 "distribution from the  origin: com_d= ", com_d
-        PRINT *, " * |com_x-com_star/com_star|=", &
-                 ABS( com_x-com_star )/ABS( com_star + 1 )
-        PRINT *
-
-        finalnamefile= "dbg-pos.dat"
-
-        INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-        IF( exist )THEN
-            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-                  FORM= "FORMATTED", &
-                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                  IOMSG= err_msg )
-        ELSE
-            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-                  FORM= "FORMATTED", &
-                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-        ENDIF
-        IF( ios > 0 )THEN
-          PRINT *, "...error when opening " // TRIM(finalnamefile), &
-                   ". The error message is", err_msg
-          STOP
-        ENDIF
-
-        DO a= 1, npart_real/2, 1
-          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-            1, a, &
-            all_pos( 1, a ), &
-            all_pos( 2, a ), &
-            all_pos( 3, a )
-        ENDDO
-
-        DO a= npart_real/2+1, npart_real, 1
-          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-            2, a, &
-            all_pos( 1, a ), &
-            all_pos( 2, a ), &
-            all_pos( 3, a )
-        ENDDO
-
-        DO a= npart_real+1, npart_all, 1
-          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-            3, a, &
-            all_pos( 1, a ), &
-            all_pos( 2, a ), &
-            all_pos( 3, a )
-        ENDDO
-
-        CLOSE( UNIT= 2 )
-
-      ENDIF
+                                                 npart_ghost, all_pos, nu )
 
       IF( debug ) PRINT *, "assign h..."
 
       h_guess(1:npart_real)= h(1:npart_real)
-      !h_guess(npart_real+1:npart_all)= dx*dy*dz
+      h_guess(npart_real+1:npart_all)= dx*dy*dz
 
       CALL assign_h( nn_des, &
                      npart_all, &
@@ -1145,11 +1080,11 @@ SUBMODULE (sph_particles) apm
       n_problematic_h= 0
       check_h: DO a= 1, npart_real, 1
 
-        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
           n_problematic_h= n_problematic_h + 1
           h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
-          IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+          IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
             PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                      " force method."
             PRINT *, "   Particle position: ", all_pos(:,a)
@@ -1179,7 +1114,7 @@ SUBMODULE (sph_particles) apm
 
         IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
 
-          PRINT *, "** WARNING! nstar_real(", a, ") is a not a finite number ",&
+          PRINT *, "** ERROR! nstar_real(", a, ") is a not a finite number ",&
                    "in SUBROUTINE perform_apm!"
           IF( debug ) PRINT *, " * h(", a, ")=", h(a)
           IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
@@ -1375,7 +1310,8 @@ SUBMODULE (sph_particles) apm
       !$OMP                     art_pr_max ) &
       !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
       !$OMP                      itr, itr2 )
-      ghost_loop: DO a= npart_real + 1, npart_all, 1
+      assign_artificial_pressure_on_ghost_particles: &
+      DO a= npart_real + 1, npart_all, 1
 
         CALL spherical_from_cartesian( &
                               all_pos(1,a), all_pos(2,a), all_pos(3,a), &
@@ -1405,8 +1341,8 @@ SUBMODULE (sph_particles) apm
 
             ! ..assign a pressure that increases with i, to build a pressure
             !   gradient
-            !art_pr(a)= three*three*art_pr_max
-            art_pr(a)= DBLE(itr+1)*art_pr_max
+            art_pr(a)= three*three*art_pr_max
+            !art_pr(a)= DBLE(itr+1)*art_pr_max
 
           !ELSE
           !
@@ -1416,7 +1352,7 @@ SUBMODULE (sph_particles) apm
 
         ENDDO shell_loop
 
-      ENDDO ghost_loop
+      ENDDO assign_artificial_pressure_on_ghost_particles
       !$OMP END PARALLEL DO
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -1886,14 +1822,13 @@ SUBMODULE (sph_particles) apm
     !-- Discard ghost particles --!
     !-----------------------------!
 
-    IF(.NOT.ALLOCATED( pos ))THEN
-      ALLOCATE( pos( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pos in SUBROUTINE ", &
-                  "perform_apm. The error message is", &
-                  err_msg
-         STOP
-      ENDIF
+    IF(ALLOCATED( pos )) DEALLOCATE( pos )
+    ALLOCATE( pos( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for array pos in SUBROUTINE ", &
+                "perform_apm. The error message is", &
+                err_msg
+       STOP
     ENDIF
 
     pos= all_pos( :, 1:npart_real )
@@ -1986,6 +1921,9 @@ SUBMODULE (sph_particles) apm
     !-- enforce centre of mass --!
     !----------------------------!
 
+    PRINT *, " * Correcting center of mass..."
+    PRINT *
+
     CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
@@ -1994,8 +1932,13 @@ SUBMODULE (sph_particles) apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
-                                               npart_ghost, all_pos )
+    PRINT *, " * Imposing equatorial plane symmetry..."
+    PRINT *
+
+    !CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
+    !                                           npart_ghost, all_pos )
+
+    CALL impose_equatorial_plane_symmetry( npart_real, all_pos, nu= nu )
 
     !-----------------------------!
     !-- Print positions to file --!
@@ -2006,6 +1949,10 @@ SUBMODULE (sph_particles) apm
     ELSE
       finalnamefile= "apm_pos.dat"
     ENDIF
+
+    PRINT *, " * Printing APM positions to formatted file ", &
+             TRIM(finalnamefile) ,"..."
+    PRINT *
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -2408,8 +2355,10 @@ SUBMODULE (sph_particles) apm
     !-- Mirror the positions after having repositioned the center of mass --!
     !-----------------------------------------------------------------------!
 
-    CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
-                                               npart_ghost, all_pos )
+    !CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
+    !                                           npart_ghost, all_pos )
+
+    CALL impose_equatorial_plane_symmetry( npart_real, all_pos, nu= nu )
 
 
   !  finalnamefile= "dbg_apm_pos2.dat"
@@ -2499,11 +2448,19 @@ SUBMODULE (sph_particles) apm
     variance_dN = variance_dN / DBLE(cnt1)
     stddev_dN   = SQRT(variance_dN)            ! compute standard deviation
 
-    PRINT *, "dN_max=", dN_max
-    PRINT *, "dN_av=", dN_av
-    PRINT *, "variance_dN=", variance_dN
-    PRINT *, "stddev_dN=", stddev_dN
-    PRINT *, "stddev_dN/dN_a=", stddev_dN/dN_av
+    PRINT *, " * Final maximum relative error between the density from the ", &
+             "ID and the SPH density estimate: dN_max=", dN_max
+    PRINT *, " * Final average relative error between the density from the ", &
+             "ID and the SPH density estimate: dN_max=", dN_av
+    PRINT *, " * Final variance of the relative error between the density ", &
+             "from the ID and the SPH density estimate: variance_dN=", &
+             variance_dN
+    PRINT *, " * Final standard deviation of the relative error between the ", &
+             "density from the ID and the SPH density estimate: stddev_dN=", &
+             stddev_dN
+    PRINT *, " * Final normalized standard deviation of the relative error ", &
+             "between the density from the ID and the SPH density ", &
+             "estimate: stddev_dN/dN_a=", stddev_dN/dN_av
     PRINT *
 
     IF( debug ) PRINT *, "100"
@@ -2843,62 +2800,6 @@ SUBMODULE (sph_particles) apm
              n_problematic_h, " particles."
     PRINT *
 
-    !
-    !-- Check that the smoothing length is acceptable
-    !
-  !  check_h: DO a= 1, npart_real, 1
-  !
-  !    IF( ISNAN( h(a) ) )THEN
-  !      PRINT *, "** ERROR! h(", a, ") is a NaN"
-  !      !PRINT *, "Stopping..."
-  !     ! PRINT *
-  !      !STOP
-  !      IF( a > npart_real/2 )THEN
-  !        DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
-  !          IF( h(itr) > 0.25D0 )THEN
-  !            h(a) = h(itr)
-  !            EXIT
-  !          ENDIF
-  !        ENDDO
-  !      ELSE
-  !        !h(a) = h(a - 1)
-  !        DO itr= a + 1, npart_real, 1
-  !          IF( h(itr) > 0.25D0 )THEN
-  !            h(a) = h(itr)
-  !            EXIT
-  !          ENDIF
-  !        ENDDO
-  !      ENDIF
-  !      !PRINT *, "** ERROR! h(", a, ")=", h(a)
-  !      !PRINT *
-  !    ENDIF
-  !    IF( h(a) <= 0.0D0 )THEN
-  !      PRINT *, "** ERROR! h(", a, ")=", h(a)
-  !      !PRINT *, "Stopping..."
-  !      !PRINT *
-  !      !STOP
-  !      IF( a > npart_real/2 )THEN
-  !        DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
-  !          IF( h(itr) > 0.25D0 )THEN
-  !            h(a) = h(itr)
-  !            EXIT
-  !          ENDIF
-  !        ENDDO
-  !      ELSE
-  !        !h(a) = h(a - 1)
-  !        DO itr= a + 1, npart_real, 1
-  !          IF( h(itr) > 0.25D0 )THEN
-  !            h(a) = h(itr)
-  !            EXIT
-  !          ENDIF
-  !        ENDDO
-  !      ENDIF
-  !      !PRINT *, "** ERROR! h(", a, ")=", h(a)
-  !      !PRINT *
-  !    ENDIF
-  !
-  !  ENDDO check_h
-
     IF( debug ) PRINT *, "102"
 
     CALL density( npart_real, pos, nstar_int )
@@ -3210,6 +3111,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(3,npart_all):: postmp
     DOUBLE PRECISION, DIMENSION(npart_all)  :: nutmp
     DOUBLE PRECISION, DIMENSION(npart_all)  :: htmp
+    DOUBLE PRECISION, DIMENSION(npart_all)  :: nstarptmp
     DOUBLE PRECISION, DIMENSION(3,npart_all):: all_pos_prev_dump_tmp
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_below
@@ -3230,6 +3132,7 @@ SUBMODULE (sph_particles) apm
     postmp        = pos
     IF( PRESENT(nu) ) nutmp = nu
     htmp= h
+    nstarptmp= nstar_p
     IF( ALLOCATED(all_pos_prev_dump) ) all_pos_prev_dump_tmp= all_pos_prev_dump
 
     CALL find_particles_above_xy_plane( npart_real, postmp(:,1:npart_real), &
@@ -3276,7 +3179,7 @@ SUBMODULE (sph_particles) apm
       IF( ALLOCATED( freeze )            ) DEALLOCATE( freeze )
       IF( ALLOCATED( correction_pos )    ) DEALLOCATE( correction_pos )
       !IF( ALLOCATED( all_pos_tmp )       ) DEALLOCATE( all_pos_tmp )
-      IF( ALLOCATED( all_pos_prev )      ) DEALLOCATE( all_pos_prev )
+      !IF( ALLOCATED( all_pos_prev )      ) DEALLOCATE( all_pos_prev )
       IF( ALLOCATED( all_pos_prev_dump ) ) DEALLOCATE( all_pos_prev_dump )
       IF( ALLOCATED( cnt_move )          ) DEALLOCATE( cnt_move )
 
@@ -3286,14 +3189,14 @@ SUBMODULE (sph_particles) apm
       ALLOCATE( freeze( npart_all ) )
       ALLOCATE( correction_pos( 3, npart_all ) )
       !ALLOCATE( all_pos_tmp( 3, npart_all ) )
-      ALLOCATE( all_pos_prev( 3, npart_all ) )
+      !ALLOCATE( all_pos_prev( 3, npart_all ) )
       ALLOCATE( all_pos_prev_dump( 3, npart_all ) )
       ALLOCATE( cnt_move( npart_real ) )
       ALLOCATE( dNstar( npart_real ) )
       ALLOCATE( nu_tmp( npart_real ) )
       ALLOCATE( dN( npart_real ) )
       ALLOCATE( good_rho( npart_real ) )
-      all_pos_prev     = -one
+      !all_pos_prev     = -one
       all_pos_prev_dump= zero
       cnt_move= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -3364,13 +3267,16 @@ SUBMODULE (sph_particles) apm
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( pos, npart_above_xy, nu, postmp, nutmp, &
     !$OMP                     pos_below, nu_below, h, htmp, above_xy_plane_a, &
-    !$OMP                     all_pos_prev_dump, all_pos_prev_dump_tmp ) &
+    !$OMP                     all_pos_prev_dump, all_pos_prev_dump_tmp, &
+    !$OMP                     nstar_p, nstarptmp ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_above_xy, 1
       pos( :, a )= postmp( :, a )
       pos( :, npart_above_xy + a )= pos_below( :, a )
       h( a )= htmp( above_xy_plane_a(a) )
       h( npart_above_xy + a )= htmp( above_xy_plane_a(a) )
+      nstar_p( a )= nstarptmp( above_xy_plane_a(a) )
+      nstar_p( npart_above_xy + a )= nstarptmp( above_xy_plane_a(a) )
       IF( ALLOCATED(all_pos_prev_dump) )THEN
         all_pos_prev_dump(1,a)= all_pos_prev_dump_tmp(1,above_xy_plane_a(a))
         all_pos_prev_dump(2,a)= all_pos_prev_dump_tmp(2,above_xy_plane_a(a))
@@ -3392,12 +3298,14 @@ SUBMODULE (sph_particles) apm
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( pos, npart_real, npart_all, nu, postmp, nutmp, &
     !$OMP                     npart_real_old, npart_ghost, h, htmp, &
-    !$OMP                     all_pos_prev_dump, all_pos_prev_dump_tmp ) &
+    !$OMP                     all_pos_prev_dump, all_pos_prev_dump_tmp, &
+    !$OMP                     nstar_p, nstarptmp ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_ghost, 1
       pos( :, npart_real + a ) = postmp( :, npart_real_old + a )
       IF( PRESENT(nu) ) nu( a )= nutmp( npart_real_old + a )
       h( a )= htmp( npart_real_old + a )
+      nstar_p( a )= nstarptmp( npart_real_old + a )
       IF( ALLOCATED(all_pos_prev_dump) )THEN
         all_pos_prev_dump( :, npart_real + a )= &
                                 all_pos_prev_dump_tmp( :, npart_real_old + a )

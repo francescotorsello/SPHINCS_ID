@@ -235,9 +235,9 @@ SUBMODULE (sph_particles) spherical_surfaces
       ENDIF
     ENDIF
 
-    !-------------------------------------------------------!
-    !-- Place surfaces based on mass density a that point --!
-    !-------------------------------------------------------!
+    !--------------------------------------------------------!
+    !-- Place surfaces based on mass density at that point --!
+    !--------------------------------------------------------!
 
     CALL place_surfaces( central_density, center, radius, m_p, n_shells, &
                          shell_radii, last_r, get_density )

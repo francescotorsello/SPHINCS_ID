@@ -12,7 +12,7 @@
 ! features of the code.                                          !
 !----------------------------------------------------------------!
 ! n_bns and the number of specified components of filenames must be the same
-n_bns=1                          ! Number of BNS to import
+n_id=1                          ! Number of BNS to import
 common_path="lorene-id-files/"   ! Path to the directory containing the LORENE
                                  ! BNS binary files
             !"eccentric-ejecta-files/"
@@ -39,8 +39,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_wff1_1.2-1.4_35km.bin"
              !"BNSLO_poly2_1.3-1.3_45km.bin"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
-             !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
-             !"BNSLO_poly2_1.4-1.4_45km_1e-7.bin"
+             "BNSLO_poly2_1.4-1.4_45km_1e-7.bin"
              !!"BNSLO_sly_1.6-1.4_45km_faber.bin"
              !!"BNSLO_sly_2.0-1.4_45km_faber.bin"
              !"BNSLO_poly2-75_1.2-1.4_40km.bin"
@@ -48,10 +47,10 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_poly2-75_1.4-1.4_45km.bin"
              !"BNSLO_poly2-75_1.6-1.8_40km.bin"
              !!"BNSLO_poly275_1.2-1.6_45km.bin"
-             "BNSLO_ms1b_1.3-1.3_45km.bin"
+             !"BNSLO_ms1b_1.3-1.3_45km.bin"
              !!"BNSLO_mpa1_1.2-2_45km.bin"
              !!!"BNSLO_mpa1_1.2-1.5_45km.bin"
-             !"BNSLO_mpa1_1.2-1.5_45km-0com.bin"
+             !!"BNSLO_mpa1_1.2-1.5_45km-0com.bin"
              !"BNSLO_mpa1_1.2-1.5_45km_0com0admmom.bin"
              !"BNSLO_sly_1.4-1.4_45km.bin"
              !!"BNSLO_poly2-75_1.2-1.8_45km.bin"
