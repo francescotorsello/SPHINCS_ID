@@ -40,7 +40,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_poly2_1.3-1.3_45km.bin"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
              !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
-             "BNSLO_poly2_1.4-1.4_45km_1e-7.bin"
+             !"BNSLO_poly2_1.4-1.4_45km_1e-7.bin"
              !!"BNSLO_sly_1.6-1.4_45km_faber.bin"
              !!"BNSLO_sly_2.0-1.4_45km_faber.bin"
              !"BNSLO_poly2-75_1.2-1.4_40km.bin"
@@ -48,7 +48,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_poly2-75_1.4-1.4_45km.bin"
              !"BNSLO_poly2-75_1.6-1.8_40km.bin"
              !!"BNSLO_poly275_1.2-1.6_45km.bin"
-             !!!"BNSLO_ms1b_1.3-1.3_45km.bin"
+             "BNSLO_ms1b_1.3-1.3_45km.bin"
              !!"BNSLO_mpa1_1.2-2_45km.bin"
              !!!"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"BNSLO_mpa1_1.2-1.5_45km-0com.bin"
@@ -107,7 +107,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=1                     ! 0: Read particle positions from formatted
+placer(1,:)=2                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object
