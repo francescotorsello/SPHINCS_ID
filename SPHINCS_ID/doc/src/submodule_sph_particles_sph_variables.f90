@@ -40,7 +40,6 @@ SUBMODULE (sph_particles) sph_variables
 
 
   USE constants,  ONLY: zero, half, one, two, three, c_light2
-  USE options,    ONLY: eos_str
 
 
   IMPLICIT NONE

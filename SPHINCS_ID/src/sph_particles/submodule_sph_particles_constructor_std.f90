@@ -1216,7 +1216,7 @@ SUBMODULE (sph_particles) constructor_std
         ! Matter object 1
         CALL parts% apm_timers(i_matter)% start_timer()
         CALL parts% perform_apm( &
-                    import_density, get_nstar_p, &
+                    import_density, get_nstar_id, &
                     parts% npart_i(i_matter), &
                     parts_all(i_matter)% pos_i, &
                     parts_all(i_matter)% pvol_i, &
@@ -1942,11 +1942,11 @@ SUBMODULE (sph_particles) constructor_std
     END FUNCTION check_negative_hydro
 
 
-    SUBROUTINE get_nstar_p( npart_real, x, y, z, nstar_p )
+    SUBROUTINE get_nstar_id( npart_real, x, y, z, nstar_id )
 
       !**************************************************************
       !
-      !# Stores the proper baryon mass density in the array nstar_p
+      !# Stores the proper baryon mass density in the array nstar_id
       !  given as argument
       !
       !  FT 31.08.2021
@@ -1959,7 +1959,7 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, INTENT(IN):: x(npart_real)
       DOUBLE PRECISION, INTENT(IN):: y(npart_real)
       DOUBLE PRECISION, INTENT(IN):: z(npart_real)
-      DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
+      DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart_real)
 
       DOUBLE PRECISION, DIMENSION(npart_real):: lapse, &
                                                 shift_x, shift_y, shift_z, &
@@ -1981,22 +1981,22 @@ SUBMODULE (sph_particles) constructor_std
                                   pressure, &
                                   v_euler_x, v_euler_y, v_euler_z )
 
-      CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-                            shift_z, v_euler_x, v_euler_y, v_euler_z, &
-                            g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                            baryon_density, nstar_p )
+      CALL compute_nstar_id( npart_real, lapse, shift_x, shift_y, &
+                             shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                             g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                             baryon_density, nstar_id )
 
-    END SUBROUTINE get_nstar_p
+    END SUBROUTINE get_nstar_id
 
 
-    SUBROUTINE compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-                                shift_z, v_euler_x, v_euler_y, v_euler_z, &
-                                g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                                baryon_density, nstar_p )
+    SUBROUTINE compute_nstar_id( npart_real, lapse, shift_x, shift_y, &
+                                 shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                                 g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                                 baryon_density, nstar_id )
 
       !**************************************************************
       !
-      !# Compute nstar_p, the proper baryon mass density, given the
+      !# Compute nstar_id, the proper baryon mass density, given the
       !  |id|
       !
       !  FT 31.08.2021
@@ -2025,7 +2025,7 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yz
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_zz
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_p
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_id
 
       INTEGER:: a, i
       DOUBLE PRECISION:: det, sq_g, Theta_a
@@ -2036,7 +2036,7 @@ SUBMODULE (sph_particles) constructor_std
       !$OMP             SHARED( npart_real, lapse, shift_x, shift_y, shift_z, &
       !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
       !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-      !$OMP                     baryon_density, vel, nstar_p ) &
+      !$OMP                     baryon_density, vel, nstar_id ) &
       !$OMP             PRIVATE( a, det, sq_g, Theta_a, g4 )
       DO a= 1, npart_real, 1
 
@@ -2053,7 +2053,7 @@ SUBMODULE (sph_particles) constructor_std
         IF( ABS(det) < 1D-10 )THEN
           PRINT *, "** ERROR! The determinant of the spacetime metric is " &
                    // "effectively 0 at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *, " * Stopping..."
           PRINT *
           STOP
@@ -2061,13 +2061,13 @@ SUBMODULE (sph_particles) constructor_std
         IF( det > 0 )THEN
           PRINT *, "** ERROR! The determinant of the spacetime metric is " &
                    // "positive at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *
           STOP
         ENDIF
         IF( .NOT.is_finite_number(det) )THEN
           PRINT *, "** ERROR! The determinant is ", det, "at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *, " * Stopping..."
           PRINT *
           STOP
@@ -2082,7 +2082,7 @@ SUBMODULE (sph_particles) constructor_std
         IF( .NOT.is_finite_number(Theta_a) )THEN
           PRINT *, "** ERROR! The spacetime norm of vel is ", Theta_a, &
                    "at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *, " * Stopping..."
           PRINT *
           STOP
@@ -2092,7 +2092,7 @@ SUBMODULE (sph_particles) constructor_std
         IF( .NOT.is_finite_number(Theta_a) )THEN
           PRINT *, "** ERROR! The generalized Lorentz factor is ", Theta_a, &
                    "at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *, " * Stopping..."
           PRINT *
           STOP
@@ -2100,18 +2100,18 @@ SUBMODULE (sph_particles) constructor_std
         IF( Theta_a < one )THEN
           PRINT *, "** ERROR! The generalized Lorentz factor is ", Theta_a, &
                    "< 1 at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *, " * Stopping..."
           PRINT *
           STOP
         ENDIF
 
-        nstar_p(a)= sq_g*Theta_a*baryon_density(a)
+        nstar_id(a)= sq_g*Theta_a*baryon_density(a)
 
       ENDDO
       !$OMP END PARALLEL DO
 
-    END SUBROUTINE compute_nstar_p
+    END SUBROUTINE compute_nstar_id
 
 
     SUBROUTINE reflect_particles_yz_plane( pos_star1, pvol_star1, pmass_star1, &

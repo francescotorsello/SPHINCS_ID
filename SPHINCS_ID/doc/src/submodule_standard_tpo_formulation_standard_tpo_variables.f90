@@ -136,7 +136,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     ENDIF
 
     CALL allocate_grid_function( ftpo% coords,    "coords_id", 3 )
-    CALL allocate_grid_function( ftpo% rad_coord, 'rad_coord_id', 1 )
+    CALL allocate_grid_function( ftpo% rad_coord, "rad_coord_id", 1 )
 
     ftpo% nlevels= nlevels
     ftpo% levels = levels
@@ -174,7 +174,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     CALL ftpo% grid_timer% stop_timer()
 
     !
-    !-- Import the LORENE spacetime ID on the refined mesh,
+    !-- Import the spacetime ID on the refined mesh,
     !-- and time the process
     !
     PRINT *
@@ -196,19 +196,19 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
       !PRINT *, ftpo% coords% levels(l)% var
 
       CALL id% read_id_spacetime( ftpo% get_ngrid_x(l), &
-                             ftpo% get_ngrid_y(l), &
-                             ftpo% get_ngrid_z(l), &
-                             ftpo% coords%     levels(l)% var, &
-                             ftpo% lapse%      levels(l)% var, &
-                             ftpo% shift_u%    levels(l)% var, &
-                             ftpo% g_phys3_ll% levels(l)% var, &
-                             ftpo% K_phys3_ll% levels(l)% var )
+                                  ftpo% get_ngrid_y(l), &
+                                  ftpo% get_ngrid_z(l), &
+                                  ftpo% coords%     levels(l)% var, &
+                                  ftpo% lapse%      levels(l)% var, &
+                                  ftpo% shift_u%    levels(l)% var, &
+                                  ftpo% g_phys3_ll% levels(l)% var, &
+                                  ftpo% K_phys3_ll% levels(l)% var )
 
     ENDDO ref_levels2
 
     CALL ftpo% importer_timer% stop_timer()
 
-    PRINT *, " * LORENE spacetime ID imported on the gravity grid."
+    PRINT *, " * Spacetime ID imported on the gravity grid."
 
     !
     !-- Check that the imported ID does not contain NaNs
@@ -312,6 +312,10 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
       ENDDO
     ENDDO
 
+    PRINT *, " * Checked that the determinant of the spatial metric is", &
+             " strictly positive."
+    PRINT *
+
     IF( .NOT.ALLOCATED( ftpo% HC_int ))THEN
       ALLOCATE( ftpo% HC_int( ftpo% nlevels ), &
                 STAT= ios, ERRMSG= err_msg )
@@ -353,10 +357,6 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     ENDIF
     ftpo% HC_parts_int= HUGE(one)
     ftpo% MC_parts_int= HUGE(one)
-
-    PRINT *, " * Checked that the determinant of the spatial metric is", &
-             " strictly positive."
-    PRINT *
 
   END PROCEDURE setup_standard_tpo_variables
 

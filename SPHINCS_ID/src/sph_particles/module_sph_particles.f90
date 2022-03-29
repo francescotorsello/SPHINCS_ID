@@ -964,7 +964,7 @@ MODULE sph_particles
 
     END SUBROUTINE compute_and_print_sph_variables
 
-    MODULE SUBROUTINE perform_apm( get_density, get_nstar_p, &
+    MODULE SUBROUTINE perform_apm( get_density, get_nstar_id, &
                                    npart_output, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
@@ -1000,7 +1000,7 @@ MODULE sph_particles
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
-        SUBROUTINE get_nstar_p( npart_real, x, y, z, nstar_p )
+        SUBROUTINE get_nstar_id( npart_real, x, y, z, nstar_p )
         !! Computes the proper baryon number density at the particle positions
           INTEGER, INTENT(IN):: npart_real
           !! Number of real particles (i.e., no ghost particles included here)
@@ -1012,7 +1012,7 @@ MODULE sph_particles
           !! Array of \(z\) coordinates
           DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
           !! Array to store the computed proper baryon number density
-        END SUBROUTINE get_nstar_p
+        END SUBROUTINE get_nstar_id
       END INTERFACE
       INTERFACE
         FUNCTION validate_position_int( x, y, z ) RESULT( answer )
