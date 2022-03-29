@@ -51,7 +51,62 @@ SUBMODULE (sph_particles) apm
 
 
   TYPE apm_fields
+  !! Data structure containing the fields used during the APM iteration
 
+
+    INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
+    !# Array storing \(0\) if a particle does not move at an APM step,
+    !  \(1\) if it moves
+
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse,                      &
+                                                  shift_x, shift_y, shift_z,  &
+                                                  g_xx, g_xy, g_xz,           &
+                                                  g_yy, g_yz, g_zz,           &
+                                                  baryon_density,             &
+                                                  energy_density,             &
+                                                  specific_energy,            &
+                                                  pressure,                   &
+                                                  v_euler_x,v_euler_y,v_euler_z
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
+    !! Array storing the real particles and the ghost particles, in this order
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev_dump
+    !# Array storing the real particles and the ghost particles, in this order,
+    !  from the previous dump (for plotting purposes only)
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
+    !# Array storing the correction to the positions of the real particles and
+    !  the ghost particles. Thoe for the ghost particles are zero
+
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
+    !! First guesses for the smoothing lengths
+
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_id
+    !! Proper baryon number density computed from the |id|
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_sph
+    !! |sph| estimate of the proper baryon number density
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
+    !# Relative difference between the proper baryon number density computed
+    !  from the |id| and its |sph| estimate
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
+    !! Artificial pressure
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_tmp
+    !! Cache-array used to temporarily store the baryon number nu
+
+    LOGICAL, DIMENSION(:), ALLOCATABLE:: good_rho
+    !! Array storing `.TRUE.` if the density is acceptable, `.FALSE.` otherwise
+
+
+    CONTAINS
+
+
+    PROCEDURE:: allocate_apm_fields
+    !! Allocates the APM fields member of TYPE [[apm_fields]]
+
+    PROCEDURE:: deallocate_apm_fields
+    !! Deallocates the APM fields member of TYPE [[apm_fields]]
+
+    PROCEDURE:: reallocate_apm_fields
+    !! Reallocates the APM fields member of TYPE [[apm_fields]]
 
 
   END TYPE
@@ -71,33 +126,150 @@ SUBMODULE (sph_particles) apm
                                              v_euler_x, v_euler_y, v_euler_z
   LOGICAL, DIMENSION(:),   ALLOCATABLE:: good_rho
 
-  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
-  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_tmp
-  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
-  DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
-  !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
-  !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
-  !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev_dump
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
 
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess_tmp
 
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dN
+  !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dN
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
-  DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
+  !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
   DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_tmp
   INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
 
   CONTAINS
+
+
+  SUBROUTINE deallocate_apm_fields( this )
+
+    !*****************************************************
+    !
+    !# Deallocates the APM fields member of TYPE [[apm_fields]]
+    !
+    !  FT 29.03.2022
+    !
+    !*****************************************************
+
+    IMPLICIT NONE
+
+    CLASS(apm_fields), INTENT(INOUT):: this
+    !! The [[apm_fields]] object that this PROCEDURE is a member of
+
+    IF( ALLOCATED( this% nstar_sph )         ) DEALLOCATE( this% nstar_sph )
+    IF( ALLOCATED( this% nstar_id )          ) DEALLOCATE( this% nstar_id )
+    IF( ALLOCATED( this% art_pr )            ) DEALLOCATE( this% art_pr )
+    IF( ALLOCATED( this% dNstar )            ) DEALLOCATE( this% dNstar )
+    IF( ALLOCATED( this% nu_tmp )            ) DEALLOCATE( this% nu_tmp )
+    IF( ALLOCATED( this% good_rho )          ) DEALLOCATE( this% good_rho )
+    IF( ALLOCATED( this% correction_pos )    ) &
+      DEALLOCATE( this% correction_pos )
+    IF( ALLOCATED( this% all_pos_prev_dump ) ) &
+      DEALLOCATE( this% all_pos_prev_dump )
+    IF( ALLOCATED( this% cnt_move )          ) DEALLOCATE( this% cnt_move )
+
+    IF( ALLOCATED( this% lapse            )) DEALLOCATE( this% lapse           )
+    IF( ALLOCATED( this% shift_x          )) DEALLOCATE( this% shift_x         )
+    IF( ALLOCATED( this% shift_y          )) DEALLOCATE( this% shift_y         )
+    IF( ALLOCATED( this% shift_z          )) DEALLOCATE( this% shift_z         )
+    IF( ALLOCATED( this% g_xx             )) DEALLOCATE( this% g_xx            )
+    IF( ALLOCATED( this% g_xy             )) DEALLOCATE( this% g_xy            )
+    IF( ALLOCATED( this% g_xz             )) DEALLOCATE( this% g_xz            )
+    IF( ALLOCATED( this% g_yy             )) DEALLOCATE( this% g_yy            )
+    IF( ALLOCATED( this% g_yz             )) DEALLOCATE( this% g_yz            )
+    IF( ALLOCATED( this% g_zz             )) DEALLOCATE( this% g_zz            )
+    IF( ALLOCATED( this% baryon_density   )) DEALLOCATE( this% baryon_density  )
+    IF( ALLOCATED( this% energy_density   )) DEALLOCATE( this% energy_density  )
+    IF( ALLOCATED( this% specific_energy  )) DEALLOCATE( this% specific_energy )
+    IF( ALLOCATED( this% pressure         )) DEALLOCATE( this% pressure        )
+    IF( ALLOCATED( this% v_euler_x        )) DEALLOCATE( this% v_euler_x       )
+    IF( ALLOCATED( this% v_euler_y        )) DEALLOCATE( this% v_euler_y       )
+    IF( ALLOCATED( this% v_euler_z        )) DEALLOCATE( this% v_euler_z       )
+
+  END SUBROUTINE deallocate_apm_fields
+
+
+  SUBROUTINE allocate_apm_fields( this, npart_real, npart_ghost )
+
+    !*****************************************************
+    !
+    !# Allocates the APM fields member of TYPE [[apm_fields]]
+    !
+    !  FT 29.03.2022
+    !
+    !*****************************************************
+
+    IMPLICIT NONE
+
+    CLASS(apm_fields), INTENT(INOUT):: this
+    !! The [[apm_fields]] object that this PROCEDURE is a member of
+    INTEGER, INTENT(IN):: npart_real
+    !! The number of real particles
+    INTEGER, INTENT(IN):: npart_ghost
+    !! The number of ghost particles
+
+    ALLOCATE( this% nstar_sph        (npart_real + npart_ghost) )
+    ALLOCATE( this% nstar_id         (npart_real + npart_ghost) )
+    ALLOCATE( this% art_pr           (npart_real + npart_ghost) )
+    ALLOCATE( this% correction_pos   (3,npart_real + npart_ghost) )
+    ALLOCATE( this% all_pos_prev_dump(3,npart_real + npart_ghost) )
+
+    ALLOCATE( this% cnt_move         (npart_real) )
+    ALLOCATE( this% dNstar           (npart_real) )
+    ALLOCATE( this% nu_tmp           (npart_real) )
+    ALLOCATE( this% good_rho         (npart_real) )
+
+    ALLOCATE( this% lapse            (npart_real) )
+    ALLOCATE( this% shift_x          (npart_real) )
+    ALLOCATE( this% shift_y          (npart_real) )
+    ALLOCATE( this% shift_z          (npart_real) )
+    ALLOCATE( this% g_xx             (npart_real) )
+    ALLOCATE( this% g_xy             (npart_real) )
+    ALLOCATE( this% g_xz             (npart_real) )
+    ALLOCATE( this% g_yy             (npart_real) )
+    ALLOCATE( this% g_yz             (npart_real) )
+    ALLOCATE( this% g_zz             (npart_real) )
+    ALLOCATE( this% baryon_density   (npart_real) )
+    ALLOCATE( this% energy_density   (npart_real) )
+    ALLOCATE( this% specific_energy  (npart_real) )
+    ALLOCATE( this% pressure         (npart_real) )
+    ALLOCATE( this% v_euler_x        (npart_real) )
+    ALLOCATE( this% v_euler_y        (npart_real) )
+    ALLOCATE( this% v_euler_z        (npart_real) )
+
+  END SUBROUTINE allocate_apm_fields
+
+
+  SUBROUTINE reallocate_apm_fields( this, npart_real, npart_ghost )
+
+    !*****************************************************
+    !
+    !# Reallocates the APM fields member of TYPE [[apm_fields]]
+    !
+    !  FT 29.03.2022
+    !
+    !*****************************************************
+
+    IMPLICIT NONE
+
+    CLASS(apm_fields), INTENT(INOUT):: this
+    !! The [[apm_fields]] object that this PROCEDURE is a member of
+    INTEGER, INTENT(IN):: npart_real
+    !! The number of real particles
+    INTEGER, INTENT(IN):: npart_ghost
+    !! The number of ghost particles
+
+    CALL this% deallocate_apm_fields
+    CALL this% allocate_apm_fields( npart_real, npart_ghost )
+
+    this% all_pos_prev_dump= zero
+    this% cnt_move= 0
+
+  END SUBROUTINE reallocate_apm_fields
 
 
   MODULE PROCEDURE perform_apm
@@ -219,6 +391,8 @@ SUBMODULE (sph_particles) apm
     !DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
     !                   Wab_ha, Wi, Wi1, dvv
 
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
 
@@ -230,6 +404,18 @@ SUBMODULE (sph_particles) apm
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: nearest_neighbors
 
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
+    !# Array storing the positions of the ghost particles. Only used when
+    !  placing the ghost particles.
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
+    !! Cache-array used when placing ghost particles
+
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
+    !! Cache-array used to temporarily store the smoothing lengths
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess_tmp
+    !# Cache-array used to temporarily store the first guesses for the
+    !  smoothing lengths
+
     LOGICAL:: exist
 
     !CHARACTER:: it_n
@@ -237,6 +423,8 @@ SUBMODULE (sph_particles) apm
 
     LOGICAL, PARAMETER:: debug= .FALSE.
     LOGICAL:: few_ncand!, invertible_matrix
+
+    TYPE(apm_fields):: fld
 
     TYPE(timer):: find_h_bruteforce_timer
 
@@ -303,6 +491,8 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h_guess: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
 
@@ -717,24 +907,24 @@ SUBMODULE (sph_particles) apm
     find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
-    check_h_0: DO a= 1, npart_real, 1
+    check_h1: DO a= 1, npart_all, 1
     ! find_h_backup, called below, is OMP parallelized, so this loop
     ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
-        h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
+        h(a)= find_h_backup( a, npart_all, all_pos, nn_des )
         IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
-          PRINT *, "   Particle position: ", pos(:,a)
+          PRINT *, "   Particle position: ", all_pos(:,a)
           STOP
         ENDIF
 
       ENDIF
 
-    ENDDO check_h_0
+    ENDDO check_h1
     CALL find_h_bruteforce_timer% stop_timer()
     CALL find_h_bruteforce_timer% print_timer( 2 )
 
@@ -754,20 +944,47 @@ SUBMODULE (sph_particles) apm
          STOP
       ENDIF
     ENDIF
+    !CALL allocate_apm_fields( npart_real, npart_ghost )
 
     nu= one
     CALL density_loop( npart_all, all_pos, &    ! input
                        nu, h, nstar_real )      ! output
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( all_pos, npart_all, nstar_real, h, nu, &
+    !$OMP             SHARED( all_pos, npart_real, nstar_real, h, nu, &
     !$OMP                     center ) &
     !$OMP             PRIVATE( a )
-    DO a= 1, npart_all, 1
+    DO a= 1, npart_real, 1
 
       IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
 
-        PRINT *, "** ERROR! nstar_real(", a, ") is not a finite number!"
+        PRINT *, "** ERROR! nstar_real(", a, ") is not a finite number on ", &
+                 "a real particle!"
+        IF( debug ) PRINT *, " * h(", a, ")=", h(a)
+        IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
+        IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
+        IF( debug ) PRINT *, " * r(", a, ")=", &
+                              SQRT( ( all_pos(1,a) - center )**two &
+                              + all_pos(2,a)**two + all_pos(3,a)**two )
+        PRINT *, " * Check if the smoothing length is 0 for some particles,", &
+                 "   and if so, make its initial guess, h_guess, a bit larger."
+        PRINT *
+        STOP
+
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( all_pos, npart_real, nstar_real, h, nu, &
+    !$OMP                     center, npart_all ) &
+    !$OMP             PRIVATE( a )
+    DO a= npart_real + 1, npart_all, 1
+
+      IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
+
+        PRINT *, "** ERROR! nstar_real(", a, ") is not a finite number on ", &
+                 "a ghost particle!"
         IF( debug ) PRINT *, " * h(", a, ")=", h(a)
         IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
         IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
@@ -887,7 +1104,7 @@ SUBMODULE (sph_particles) apm
     PRINT *, " * Performing APM iteration..."
     PRINT *
 
-    IF( .NOT.ALLOCATED(freeze) ) ALLOCATE( freeze( npart_all ) )
+    !IF( .NOT.ALLOCATED(freeze) ) ALLOCATE( freeze( npart_all ) )
     IF( .NOT.ALLOCATED(correction_pos) ) ALLOCATE( correction_pos( 3, npart_all ) )
     !IF( .NOT.ALLOCATED(all_pos_tmp) ) ALLOCATE( all_pos_tmp( 3, npart_all ) )
     !IF( .NOT.ALLOCATED(all_pos_prev) ) ALLOCATE( all_pos_prev( 3, npart_all ) )
@@ -898,20 +1115,20 @@ SUBMODULE (sph_particles) apm
     ! Set the particles to be equal-mass
     nu_all= (mass/DBLE(npart_real))*umass/amu
     nu= nu_all
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart_real, freeze ) &
-    !$OMP             PRIVATE( a )
-    DO a= 1, npart_real, 1
-      freeze(a)= 0
-    ENDDO
-    !$OMP END PARALLEL DO
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart_real, npart_all, freeze ) &
-    !$OMP             PRIVATE( a )
-    DO a= npart_real + 1, npart_all ,1
-      freeze(a)= 1
-    ENDDO
-    !$OMP END PARALLEL DO
+!    !$OMP PARALLEL DO DEFAULT( NONE ) &
+!    !$OMP             SHARED( npart_real, freeze ) &
+!    !$OMP             PRIVATE( a )
+!    DO a= 1, npart_real, 1
+!      freeze(a)= 0
+!    ENDDO
+!    !$OMP END PARALLEL DO
+!    !$OMP PARALLEL DO DEFAULT( NONE ) &
+!    !$OMP             SHARED( npart_real, npart_all, freeze ) &
+!    !$OMP             PRIVATE( a )
+!    DO a= npart_real + 1, npart_all ,1
+!      freeze(a)= 1
+!    ENDDO
+!    !$OMP END PARALLEL DO
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
                                  nu(1:npart_real), get_density, &
@@ -936,15 +1153,15 @@ SUBMODULE (sph_particles) apm
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( dN ))THEN
-      ALLOCATE( dN( npart_real ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array dN in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
+    !IF(.NOT.ALLOCATED( dN ))THEN
+    !  ALLOCATE( dN( npart_real ), STAT= ios, ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array dN in SUBROUTINE ", &
+    !              "perform_apm. The error message is",&
+    !              err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
     IF(.NOT.ALLOCATED( good_rho ))THEN
       ALLOCATE( good_rho( npart_real ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
@@ -1080,12 +1297,14 @@ SUBMODULE (sph_particles) apm
       find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
       CALL find_h_bruteforce_timer% start_timer()
       n_problematic_h= 0
-      check_h: DO a= 1, npart_real, 1
+      check_h2: DO a= 1, npart_all, 1
+      ! find_h_backup, called below, is OMP parallelized, so this loop
+      ! should not be parallelized as well
 
         IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
           n_problematic_h= n_problematic_h + 1
-          h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
+          h(a)= find_h_backup( a, npart_all, all_pos, nn_des )
           IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
             PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                      " force method."
@@ -1095,7 +1314,7 @@ SUBMODULE (sph_particles) apm
 
         ENDIF
 
-      ENDDO check_h
+      ENDDO check_h2
       CALL find_h_bruteforce_timer% stop_timer()
       CALL find_h_bruteforce_timer% print_timer( 2 )
 
@@ -1109,27 +1328,54 @@ SUBMODULE (sph_particles) apm
                          nu, h, nstar_real )      ! output
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, npart_all, nstar_real, h, nu, &
+      !$OMP             SHARED( all_pos, npart_real, nstar_real, h, nu, &
       !$OMP                     center ) &
       !$OMP             PRIVATE( a )
-      check_nstar_real: DO a= 1, npart_all, 1
+      DO a= 1, npart_real, 1
 
         IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
 
-          PRINT *, "** ERROR! nstar_real(", a, ") is a not a finite number ",&
-                   "in SUBROUTINE perform_apm!"
+          PRINT *, "** ERROR! nstar_real(", a, ") is not a finite number on ", &
+                   "a real particle!"
           IF( debug ) PRINT *, " * h(", a, ")=", h(a)
           IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
           IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
           IF( debug ) PRINT *, " * r(", a, ")=", &
                                 SQRT( ( all_pos(1,a) - center )**two &
                                 + all_pos(2,a)**two + all_pos(3,a)**two )
+          PRINT *, " * Check if the smoothing length is 0 for some particles,", &
+                   "   and if so, make its initial guess, h_guess, a bit larger."
           PRINT *
           STOP
 
         ENDIF
 
-      ENDDO check_nstar_real
+      ENDDO
+      !$OMP END PARALLEL DO
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( all_pos, npart_real, nstar_real, h, nu, &
+      !$OMP                     center, npart_all ) &
+      !$OMP             PRIVATE( a )
+      DO a= npart_real + 1, npart_all, 1
+
+        IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
+
+          PRINT *, "** ERROR! nstar_real(", a, ") is not a finite number on ", &
+                   "a ghost particle!"
+          IF( debug ) PRINT *, " * h(", a, ")=", h(a)
+          IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
+          IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
+          IF( debug ) PRINT *, " * r(", a, ")=", &
+                                SQRT( ( all_pos(1,a) - center )**two &
+                                + all_pos(2,a)**two + all_pos(3,a)**two )
+          PRINT *, " * Check if the smoothing length is 0 for some particles,", &
+                   "   and if so, make its initial guess, h_guess, a bit larger."
+          PRINT *
+          STOP
+
+        ENDIF
+
+      ENDDO
       !$OMP END PARALLEL DO
 
       CALL get_nstar_p_atm( npart_real, all_pos(1,1:npart_real), &
@@ -1853,7 +2099,6 @@ SUBMODULE (sph_particles) apm
 
     IF( use_atmosphere .AND. remove_atmosphere )THEN
 
-      ALLOCATE( rho_tmp( npart_real ) )
       IF(ALLOCATED(pos_tmp)) DEALLOCATE(pos_tmp)
       ALLOCATE( pos_tmp( 3, npart_real ) )
       IF(ALLOCATED(h_tmp)) DEALLOCATE(h_tmp)
@@ -1870,14 +2115,14 @@ SUBMODULE (sph_particles) apm
 
       npart= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
+      !$OMP             SHARED( pos, pos_tmp, h, h_tmp, npart_real, &
       !$OMP                     nstar_p, h_guess, h_guess_tmp, nu, nu_tmp, &
       !$OMP                     pvol_tmp, pvol ) &
       !$OMP             PRIVATE( a ) &
       !$OMP             REDUCTION( +: npart )
       DO a= 1, npart_real, 1
-        !rho_tmp(a)= get_density( pos(1,a), pos(2,a), pos(3,a) )
-        IF( nstar_p(a) > zero )THEN!rho_tmp(a) > zero )THEN
+
+        IF( nstar_p(a) > zero )THEN
           npart= npart + 1
           pos_tmp(:,a)  = pos(:,a)
           h_tmp(a)      = h(a)
@@ -1885,6 +2130,7 @@ SUBMODULE (sph_particles) apm
           nu_tmp(a)     = nu(a)
           !pvol_tmp(a)   = pvol(a)
         ENDIF
+
       ENDDO
       !$OMP END PARALLEL DO
 
@@ -1900,7 +2146,7 @@ SUBMODULE (sph_particles) apm
       !ALLOCATE( pvol( npart ) )
 
    !   !$OMP PARALLEL DO DEFAULT( NONE ) &
-   !   !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
+   !   !$OMP             SHARED( pos, pos_tmp, h, h_tmp, npart_real, &
    !   !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
    !   !$OMP             PRIVATE( a )
       cnt1= 0
@@ -2020,8 +2266,9 @@ SUBMODULE (sph_particles) apm
     find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
-    ! find_h_backup is parallelized already
     check_h3: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
@@ -2198,8 +2445,8 @@ SUBMODULE (sph_particles) apm
 
 
          CALL get_nstar_p_atm( npart_real, pos(1,:), &
-                                       pos(2,:), &
-                                       pos(3,:), nstar_p, use_atmosphere )
+                                           pos(2,:), &
+                                           pos(3,:), nstar_p, use_atmosphere )
 
          !nstar_p( npart_real+1:npart_all )= zero
 
@@ -2208,9 +2455,10 @@ SUBMODULE (sph_particles) apm
          max_nu= zero
          min_nu= HUGE(one)
          DO a= 1, npart_real, 1
-          dN(a)=    (nstar_real(a)-nstar_p(a))/nstar_p(a)
-          nu(a)= nu(a)*(one - dN(a))
-          dN_av= dN_av + dN(a)
+
+          dNstar(a)= (nstar_real(a)-nstar_p(a))/nstar_p(a)
+          nu(a)= nu(a)*(one - dNstar(a))
+          dN_av= dN_av + dNstar(a)
           IF( nu(a) > max_nu )THEN
             max_nu= nu(a)
             a_numax= a
@@ -2219,6 +2467,7 @@ SUBMODULE (sph_particles) apm
             min_nu= nu(a)
             a_numin= a
           ENDIF
+
          ENDDO
          dN_av= dN_av/DBLE(npart_real)
 
@@ -2414,12 +2663,12 @@ SUBMODULE (sph_particles) apm
                                       pos(2,:), &
                                       pos(3,:), nstar_p, use_atmosphere )
 
-    dN= zero
+    dNstar= zero
     dN_av = zero
     dN_max= zero
     cnt1= 0
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart_real, pos, nstar_real, nstar_p, dN ) &
+    !$OMP             SHARED( npart_real, pos, nstar_real, nstar_p, dNstar ) &
     !$OMP             PRIVATE( a ) &
     !$OMP             REDUCTION( +: dN_av, cnt1 )
     DO a= 1, npart_real, 1
@@ -2427,8 +2676,8 @@ SUBMODULE (sph_particles) apm
       !IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > zero )THEN
       IF( nstar_p(a) > zero )THEN
 
-        dN(a)= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
-        dN_av=  dN_av + dN(a)
+        dNstar(a)= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+        dN_av=  dN_av + dNstar(a)
         cnt1= cnt1 + 1
 
       ENDIF
@@ -2436,18 +2685,18 @@ SUBMODULE (sph_particles) apm
     ENDDO
     !$OMP END PARALLEL DO
     dN_av= dN_av/DBLE(cnt1)
-    dN_max= MAXVAL(dN, DIM= 1)
+    dN_max= MAXVAL(dNstar, DIM= 1)
 
     variance_dN = zero                       ! compute variance
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart_real, pos, nstar_real, nstar_p, dN_av, dN )&
+    !$OMP             SHARED( npart_real,pos,nstar_real,nstar_p,dNstar,dN_av )&
     !$OMP             PRIVATE( a ) &
     !$OMP             REDUCTION( +: variance_dN, cnt1 )
     DO a= 1, npart_real, 1
 
       IF( nstar_p(a) > zero )THEN
 
-        variance_dN = variance_dN + (dN(a) - dN_av)**two
+        variance_dN = variance_dN + (dNstar(a) - dN_av)**two
         cnt1= cnt1 + 1
 
       ENDIF
@@ -2494,6 +2743,8 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h4: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
@@ -2576,6 +2827,8 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h5: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
@@ -3107,6 +3360,7 @@ SUBMODULE (sph_particles) apm
     INTEGER:: npart_real_old
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
+    !TYPE(apm_fields), INTENT(INOUT):: fld
 
     DOUBLE PRECISION,                     INTENT(IN),    OPTIONAL:: com_star
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE,   INTENT(INOUT), OPTIONAL:: nu
@@ -3178,14 +3432,16 @@ SUBMODULE (sph_particles) apm
         ALLOCATE( nu(npart_all) )
       ENDIF
 
+      !CALL fld% reallocate_apm_fields( npart_real, npart_ghost )
+
       IF( ALLOCATED( nstar_real )        ) DEALLOCATE( nstar_real )
       IF( ALLOCATED( nstar_p )           ) DEALLOCATE( nstar_p )
       IF( ALLOCATED( art_pr )            ) DEALLOCATE( art_pr )
       IF( ALLOCATED( dNstar )            ) DEALLOCATE( dNstar )
       IF( ALLOCATED( nu_tmp )            ) DEALLOCATE( nu_tmp )
-      IF( ALLOCATED( dN )                ) DEALLOCATE( dN )
+      !IF( ALLOCATED( dN )                ) DEALLOCATE( dN )
       IF( ALLOCATED( good_rho )          ) DEALLOCATE( good_rho )
-      IF( ALLOCATED( freeze )            ) DEALLOCATE( freeze )
+      !IF( ALLOCATED( freeze )            ) DEALLOCATE( freeze )
       IF( ALLOCATED( correction_pos )    ) DEALLOCATE( correction_pos )
       !IF( ALLOCATED( all_pos_tmp )       ) DEALLOCATE( all_pos_tmp )
       !IF( ALLOCATED( all_pos_prev )      ) DEALLOCATE( all_pos_prev )
@@ -3195,33 +3451,34 @@ SUBMODULE (sph_particles) apm
       ALLOCATE( nstar_real(npart_all) )
       ALLOCATE( nstar_p(npart_all) )
       ALLOCATE( art_pr(npart_all) )
-      ALLOCATE( freeze( npart_all ) )
+      !ALLOCATE( freeze( npart_all ) )
       ALLOCATE( correction_pos( 3, npart_all ) )
       !ALLOCATE( all_pos_tmp( 3, npart_all ) )
       !ALLOCATE( all_pos_prev( 3, npart_all ) )
       ALLOCATE( all_pos_prev_dump( 3, npart_all ) )
+
       ALLOCATE( cnt_move( npart_real ) )
       ALLOCATE( dNstar( npart_real ) )
       ALLOCATE( nu_tmp( npart_real ) )
-      ALLOCATE( dN( npart_real ) )
+      !ALLOCATE( dN( npart_real ) )
       ALLOCATE( good_rho( npart_real ) )
       !all_pos_prev     = -one
       all_pos_prev_dump= zero
       cnt_move= 0
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_real, freeze ) &
-      !$OMP             PRIVATE( a )
-      DO a= 1, npart_real, 1
-        freeze(a)= 0
-      ENDDO
-      !$OMP END PARALLEL DO
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_real, npart_all, freeze ) &
-      !$OMP             PRIVATE( a )
-      DO a= npart_real + 1, npart_all , 1
-        freeze(a)= 1
-      ENDDO
-      !$OMP END PARALLEL DO
+ !     !$OMP PARALLEL DO DEFAULT( NONE ) &
+ !     !$OMP             SHARED( npart_real, freeze ) &
+ !     !$OMP             PRIVATE( a )
+ !     DO a= 1, npart_real, 1
+ !       freeze(a)= 0
+ !     ENDDO
+ !     !$OMP END PARALLEL DO
+ !     !$OMP PARALLEL DO DEFAULT( NONE ) &
+ !     !$OMP             SHARED( npart_real, npart_all, freeze ) &
+ !     !$OMP             PRIVATE( a )
+ !     DO a= npart_real + 1, npart_all , 1
+ !       freeze(a)= 1
+ !     ENDDO
+ !     !$OMP END PARALLEL DO
 
       DEALLOCATE( lapse           )
       DEALLOCATE( shift_x         )
