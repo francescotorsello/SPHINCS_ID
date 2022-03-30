@@ -857,7 +857,6 @@ SUBMODULE (sph_particles) apm
     PRINT *
 
     fld% h_guess= h_guess(1:npart_all)
-
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
     CALL assign_h( nn_des, &
@@ -1203,7 +1202,8 @@ SUBMODULE (sph_particles) apm
         ENDIF
 
         DO a= 1, npart_real, 1
-          tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+          !tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+          tmp= fld% art_pr(a)
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             1, a, &
             all_pos( 1, a ), &
@@ -1216,7 +1216,7 @@ SUBMODULE (sph_particles) apm
         ENDDO
 
         DO a= npart_real + 1, npart_all, 1
-          tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+          tmp= fld% art_pr(a)
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             2, a, &
             all_pos( 1, a ), &
@@ -1248,10 +1248,9 @@ SUBMODULE (sph_particles) apm
                                                  npart_ghost, all_pos, fld, &
                                                  nu )
 
-      IF( debug ) PRINT *, "assign h..."
+      PRINT *, " * Assigning smoothing lengths..."
 
-      fld% h_guess(1:npart_real)= h(1:npart_real)
-
+      fld% h_guess(1:npart_all)= h(1:npart_all)
       CALL assign_h( nn_des, &
                      npart_all, &
                      all_pos, fld% h_guess, h )
@@ -1429,6 +1428,10 @@ SUBMODULE (sph_particles) apm
       art_pr_max= MAXVAL( ABS( fld% art_pr(1:npart_real) ), DIM= 1 )
       art_pr_max= MAX( art_pr_max_prev, art_pr_max )
 
+      PRINT *, " * Maximum artificial pressure over the real particles= ", &
+               art_pr_max
+      PRINT *
+
       IF( .NOT.is_finite_number(art_pr_max) )THEN
         PRINT *, "** ERROR! art_pr_max =", art_pr_max
         PRINT *, " * Stopping..."
@@ -1556,8 +1559,10 @@ SUBMODULE (sph_particles) apm
 
             ! ..assign a pressure that increases with i, to build a pressure
             !   gradient
-            fld% art_pr(a)= ten*three*three*art_pr_max
-            !fld% art_pr(a)= three*DBLE(itr+1)*art_pr_max
+            !fld% art_pr(a)= ten*three*three*art_pr_max
+            !fld% art_pr(a)= ten*three*DBLE(itr+1)*art_pr_max
+            fld% art_pr(a)= art_pr_max*ten*three*DBLE(itr2+1)**two
+            !fld% art_pr(a)= art_pr_max*ten*three*DBLE(itr+1)*DBLE(itr2+1)**two
 
           !ELSE
           !
@@ -1878,7 +1883,8 @@ SUBMODULE (sph_particles) apm
               IF( rand_num2 >= half ) rel_sign=   1
 
               pos_corr_tmp(1)= all_pos(1,a) + &
-                fld% correction_pos(1,a)*( one + DBLE(rel_sign)*rand_num*half )
+                !fld% correction_pos(1,a)*( one + DBLE(rel_sign)*rand_num*half )
+                fld% correction_pos(1,a)*( one - rand_num*half )
 
               CALL RANDOM_NUMBER( rand_num )
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1887,7 +1893,8 @@ SUBMODULE (sph_particles) apm
               IF( rand_num2 >= half ) rel_sign=   1
 
               pos_corr_tmp(2)= all_pos(2,a) + &
-                fld% correction_pos(2,a)*( one + DBLE(rel_sign)*rand_num*half )
+                !fld% correction_pos(2,a)*( one + DBLE(rel_sign)*rand_num*half )
+                fld% correction_pos(2,a)*( one - rand_num*half )
 
               CALL RANDOM_NUMBER( rand_num )
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1896,7 +1903,8 @@ SUBMODULE (sph_particles) apm
               IF( rand_num2 >= half ) rel_sign=   1
 
               pos_corr_tmp(3)= all_pos(3,a) + &
-                fld% correction_pos(3,a)*( one + DBLE(rel_sign)*rand_num*half )
+                !fld% correction_pos(3,a)*( one + DBLE(rel_sign)*rand_num*half )
+                fld% correction_pos(3,a)*( one - rand_num*half )
 
               !pos_corr_tmp*( one + DBLE(rel_sign)*rand_num*half*third )
 
@@ -1933,7 +1941,7 @@ SUBMODULE (sph_particles) apm
               !    density
               ! TODO: what if the particles is placed on top of another
               !       particle?
-              scan_radial_line: DO itr2= (ten - three)*ten, 1, -1
+              scan_radial_line: DO itr2= NINT((ten - three)*ten), 1, -1
 
                ! CALL RANDOM_NUMBER( rand_num )
                ! CALL RANDOM_NUMBER( rand_num2 )
@@ -1953,9 +1961,12 @@ SUBMODULE (sph_particles) apm
                !
                ! phi= phi*( one + DBLE(rel_sign)*rand_num*half )
 
-                pos_corr_tmp(1)= center(1) +r*itr2/(ten*ten)*SIN(theta)*COS(phi)
-                pos_corr_tmp(2)= center(2) +r*itr2/(ten*ten)*SIN(theta)*SIN(phi)
-                pos_corr_tmp(3)= center(3) +r*itr2/(ten*ten)*COS(theta)
+                pos_corr_tmp(1)= center(1) + &
+                                 r*DBLE(itr2)/(ten*ten)*SIN(theta)*COS(phi)
+                pos_corr_tmp(2)= center(2) + &
+                                 r*DBLE(itr2)/(ten*ten)*SIN(theta)*SIN(phi)
+                pos_corr_tmp(3)= center(3) + &
+                                 r*DBLE(itr2)/(ten*ten)*COS(theta)
 
                 IF( get_density( &
                     pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
@@ -2055,9 +2066,9 @@ SUBMODULE (sph_particles) apm
     pos= all_pos( :, 1:npart_real )
     IF( debug ) PRINT *, npart
 
-    h      = h(1:npart_real)
-    fld% h_guess= fld% h_guess(1:npart_real)
-    nu     = nu(1:npart_real)
+    h           = h(1:npart_real)
+    fld% h_guess= h(1:npart_real)!fld% h_guess(1:npart_real)
+    nu          = nu(1:npart_real)
 
     !------------------------------------------------!
     !-- Discard atmosphere, if present and desired --!
@@ -2077,7 +2088,7 @@ SUBMODULE (sph_particles) apm
       pos_tmp    = HUGE(one)
       h_tmp      = HUGE(one)
       h_guess_tmp= HUGE(one)
-      fld% nu_tmp     = HUGE(one)
+      fld% nu_tmp= HUGE(one)
 
       npart= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -2666,6 +2677,7 @@ SUBMODULE (sph_particles) apm
 
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
+    fld% h_guess= h
     CALL assign_h( nn_des, &
                    npart_real, &
                    pos, fld% h_guess, & ! Input
@@ -3287,7 +3299,7 @@ SUBMODULE (sph_particles) apm
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, PARAMETER:: h_fac= 1.05D0
+    DOUBLE PRECISION, PARAMETER:: h_fac= 1.1D0
     !# Factor that multiplies the smoothing lengths, after the particles
     !  (with their properties) have been reflected
 
@@ -3438,20 +3450,25 @@ SUBMODULE (sph_particles) apm
     DO a= 1, npart_above_xy, 1
       pos( :, a )= postmp( :, a )
       pos( :, npart_above_xy + a )= pos_below( :, a )
-      h( a )= h_fac*htmp( above_xy_plane_a(a) )
+      h( a )= htmp( above_xy_plane_a(a) )
       h( npart_above_xy + a )= h_fac*htmp( above_xy_plane_a(a) )
       fld% nstar_id( a )= nstar_id_tmp( above_xy_plane_a(a) )
       fld% nstar_id( npart_above_xy + a )= nstar_id_tmp( above_xy_plane_a(a) )
       IF( ALLOCATED(fld% all_pos_prev_dump) )THEN
-        fld% all_pos_prev_dump(1,a)= all_pos_prev_dump_tmp(1,above_xy_plane_a(a))
-        fld% all_pos_prev_dump(2,a)= all_pos_prev_dump_tmp(2,above_xy_plane_a(a))
-        fld% all_pos_prev_dump(3,a)= all_pos_prev_dump_tmp(3,above_xy_plane_a(a))
+
+        fld% all_pos_prev_dump(1,a)= &
+                                all_pos_prev_dump_tmp(1,above_xy_plane_a(a))
+        fld% all_pos_prev_dump(2,a)= &
+                                all_pos_prev_dump_tmp(2,above_xy_plane_a(a))
+        fld% all_pos_prev_dump(3,a)= &
+                                all_pos_prev_dump_tmp(3,above_xy_plane_a(a))
         fld% all_pos_prev_dump(1,npart_above_xy + a)= &
                                 all_pos_prev_dump_tmp(1,above_xy_plane_a(a))
         fld% all_pos_prev_dump(2,npart_above_xy + a)= &
                                 all_pos_prev_dump_tmp(2,above_xy_plane_a(a))
         fld% all_pos_prev_dump(3,npart_above_xy + a)= &
                               - all_pos_prev_dump_tmp(3,above_xy_plane_a(a))
+
       ENDIF
       nu( a )= nutmp( a )
       nu( npart_above_xy + a )= nu_below( a )
