@@ -236,7 +236,7 @@ MODULE ejecta_generic
     !PROCEDURE:: interpolate_spatial_metric
     !! Returns the |lorene|'s conformally flat spatial ADM metric
 
-    PROCEDURE:: test_position => is_hydro_negative
+    PROCEDURE:: test_position => is_hydro_positive
     !# Returns 1 if the energy density or the specific energy or the pressure
     !  are negative
 
@@ -629,9 +629,9 @@ MODULE ejecta_generic
     END FUNCTION interpolate_spatial_metric
 
 
-    MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
-    !# Returns 1 if the energy density or the specific energy or the pressure
-    !  are negative, 0 otherwise
+    MODULE FUNCTION is_hydro_positive( THIS, x, y, z ) RESULT( res )
+    !# Returns `.TRUE.` if the energy density or the specific energy or the
+    !  pressure are positivee, `.FALSE.` otherwise
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta),     INTENT( IN )       :: THIS
@@ -641,11 +641,11 @@ MODULE ejecta_generic
       DOUBLE PRECISION, INTENT( IN ), VALUE:: y
       !> \(z\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: z
-      !& 1 if the energy density or the specific energy or the pressure
-      !  are negative, 0 otherwise
-      INTEGER:: res
+      !& `.FALSE.` if the energy density or the specific energy or the pressure
+      !  are negative, `.TRUE.` otherwise
+      LOGICAL:: res
 
-    END FUNCTION is_hydro_negative
+    END FUNCTION is_hydro_positive
 
 
     !-----------------!

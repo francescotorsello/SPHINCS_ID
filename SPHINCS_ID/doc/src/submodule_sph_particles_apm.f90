@@ -34,7 +34,7 @@ SUBMODULE (sph_particles) apm
   !***********************************
 
 
-  USE constants,            ONLY: zero, quarter, one, two, three, ten
+  USE constants,            ONLY: zero, quarter, one, two, three, five, ten
   USE utility,              ONLY: is_finite_number
   USE sph_variables,        ONLY: allocate_sph_memory, deallocate_sph_memory, &
                                   npart
@@ -57,16 +57,6 @@ SUBMODULE (sph_particles) apm
     INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
     !# Array storing \(0\) if a particle does not move at an APM step,
     !  \(1\) if it moves
-
-    !DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse,                      &
-    !                                              shift_x, shift_y, shift_z,  &
-    !                                              g_xx, g_xy, g_xz,           &
-    !                                              g_yy, g_yz, g_zz,           &
-    !                                              baryon_density,             &
-    !                                              energy_density,             &
-    !                                              specific_energy,            &
-    !                                              pressure,                   &
-    !                                              v_euler_x,v_euler_y,v_euler_z
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
     !! Array storing the real particles and the ghost particles, in this order
@@ -172,24 +162,6 @@ SUBMODULE (sph_particles) apm
       DEALLOCATE( this% all_pos_prev_dump )
     IF( ALLOCATED( this% cnt_move )          ) DEALLOCATE( this% cnt_move )
 
-    !IF( ALLOCATED( this% lapse            )) DEALLOCATE( this% lapse           )
-    !IF( ALLOCATED( this% shift_x          )) DEALLOCATE( this% shift_x         )
-    !IF( ALLOCATED( this% shift_y          )) DEALLOCATE( this% shift_y         )
-    !IF( ALLOCATED( this% shift_z          )) DEALLOCATE( this% shift_z         )
-    !IF( ALLOCATED( this% g_xx             )) DEALLOCATE( this% g_xx            )
-    !IF( ALLOCATED( this% g_xy             )) DEALLOCATE( this% g_xy            )
-    !IF( ALLOCATED( this% g_xz             )) DEALLOCATE( this% g_xz            )
-    !IF( ALLOCATED( this% g_yy             )) DEALLOCATE( this% g_yy            )
-    !IF( ALLOCATED( this% g_yz             )) DEALLOCATE( this% g_yz            )
-    !IF( ALLOCATED( this% g_zz             )) DEALLOCATE( this% g_zz            )
-    !IF( ALLOCATED( this% baryon_density   )) DEALLOCATE( this% baryon_density  )
-    !IF( ALLOCATED( this% energy_density   )) DEALLOCATE( this% energy_density  )
-    !IF( ALLOCATED( this% specific_energy  )) DEALLOCATE( this% specific_energy )
-    !IF( ALLOCATED( this% pressure         )) DEALLOCATE( this% pressure        )
-    !IF( ALLOCATED( this% v_euler_x        )) DEALLOCATE( this% v_euler_x       )
-    !IF( ALLOCATED( this% v_euler_y        )) DEALLOCATE( this% v_euler_y       )
-    !IF( ALLOCATED( this% v_euler_z        )) DEALLOCATE( this% v_euler_z       )
-
   END SUBROUTINE deallocate_apm_fields
 
 
@@ -223,24 +195,6 @@ SUBMODULE (sph_particles) apm
     ALLOCATE( this% dNstar           (npart_real) )
     ALLOCATE( this% nu_tmp           (npart_real) )
     ALLOCATE( this% good_rho         (npart_real) )
-
-    !ALLOCATE( this% lapse            (npart_real) )
-    !ALLOCATE( this% shift_x          (npart_real) )
-    !ALLOCATE( this% shift_y          (npart_real) )
-    !ALLOCATE( this% shift_z          (npart_real) )
-    !ALLOCATE( this% g_xx             (npart_real) )
-    !ALLOCATE( this% g_xy             (npart_real) )
-    !ALLOCATE( this% g_xz             (npart_real) )
-    !ALLOCATE( this% g_yy             (npart_real) )
-    !ALLOCATE( this% g_yz             (npart_real) )
-    !ALLOCATE( this% g_zz             (npart_real) )
-    !ALLOCATE( this% baryon_density   (npart_real) )
-    !ALLOCATE( this% energy_density   (npart_real) )
-    !ALLOCATE( this% specific_energy  (npart_real) )
-    !ALLOCATE( this% pressure         (npart_real) )
-    !ALLOCATE( this% v_euler_x        (npart_real) )
-    !ALLOCATE( this% v_euler_y        (npart_real) )
-    !ALLOCATE( this% v_euler_z        (npart_real) )
 
   END SUBROUTINE allocate_apm_fields
 
@@ -354,6 +308,8 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
+    DOUBLE PRECISION, PARAMETER:: max_art_pr_ghost= 1.0D+10
+    DOUBLE PRECISION, PARAMETER:: tiny_real       = 1.0D-10
 
     INTEGER:: a, a2, itr, itr2, n_inc, cnt1!, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
@@ -375,7 +331,7 @@ SUBMODULE (sph_particles) apm
                        err_mean_old, err_n_min, err_N_max, &!dNstar, &
                        nstar_id_err, nstar_sph_err, dN_max, dN_av, &
                        r_tmp, theta_tmp, phi_tmp
-    DOUBLE PRECISION:: art_pr_max
+    DOUBLE PRECISION:: art_pr_max, art_pr_max_prev
     DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
     DOUBLE PRECISION:: variance_dN, stddev_dN
@@ -903,7 +859,6 @@ SUBMODULE (sph_particles) apm
     PRINT *
 
     fld% h_guess= h_guess(1:npart_all)
-
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
     CALL assign_h( nn_des, &
@@ -960,7 +915,7 @@ SUBMODULE (sph_particles) apm
     !$OMP             SHARED( all_pos, npart_real, fld, h, nu, &
     !$OMP                     center ) &
     !$OMP             PRIVATE( a )
-    DO a= 1, npart_real, 1
+    check_nstar_sph_on_real1: DO a= 1, npart_real, 1
 
       IF( .NOT.is_finite_number( fld% nstar_sph( a ) ) )THEN
 
@@ -979,13 +934,14 @@ SUBMODULE (sph_particles) apm
 
       ENDIF
 
-    ENDDO
+    ENDDO check_nstar_sph_on_real1
     !$OMP END PARALLEL DO
+
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( all_pos, npart_real, fld, h, nu, &
     !$OMP                     center, npart_all ) &
     !$OMP             PRIVATE( a )
-    DO a= npart_real + 1, npart_all, 1
+    check_nstar_sph_on_ghost1: DO a= npart_real + 1, npart_all, 1
 
       IF( .NOT.is_finite_number( fld% nstar_sph( a ) ) )THEN
 
@@ -1004,7 +960,7 @@ SUBMODULE (sph_particles) apm
 
       ENDIF
 
-    ENDDO
+    ENDDO check_nstar_sph_on_ghost1
     !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "4"
@@ -1059,10 +1015,10 @@ SUBMODULE (sph_particles) apm
     IF( debug ) PRINT *, "7"
 
     CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
-                                      all_pos(2,1:npart_real), &
-                                      all_pos(3,1:npart_real), &
-                                      fld% nstar_id, &
-                                      use_atmosphere )
+                                       all_pos(2,1:npart_real), &
+                                       all_pos(3,1:npart_real), &
+                                       fld% nstar_id, &
+                                       use_atmosphere )
 
     IF( debug ) PRINT *, "8"
 
@@ -1089,7 +1045,7 @@ SUBMODULE (sph_particles) apm
 
     CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
                                                npart_ghost, &
-                                               all_pos, fld, nu= nu )
+                                               all_pos, fld, nu )
 
     PRINT *, " * ID set up for the APM iteration."
     PRINT *
@@ -1184,6 +1140,7 @@ SUBMODULE (sph_particles) apm
     PRINT *
 
     n_inc= 0
+    art_pr_max= zero
     err_N_mean_min= HUGE(one)
     apm_iteration: DO itr= 1, apm_max_it, 1
 
@@ -1248,7 +1205,8 @@ SUBMODULE (sph_particles) apm
         ENDIF
 
         DO a= 1, npart_real, 1
-          tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+          !tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+          tmp= fld% art_pr(a)
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             1, a, &
             all_pos( 1, a ), &
@@ -1261,7 +1219,7 @@ SUBMODULE (sph_particles) apm
         ENDDO
 
         DO a= npart_real + 1, npart_all, 1
-          tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+          tmp= fld% art_pr(a)
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             2, a, &
             all_pos( 1, a ), &
@@ -1291,16 +1249,18 @@ SUBMODULE (sph_particles) apm
 
       CALL impose_equatorial_plane_symmetry_apm( npart_all, npart_real, &
                                                  npart_ghost, all_pos, fld, &
-                                                 nu= nu )
+                                                 nu )
 
-      IF( debug ) PRINT *, "assign h..."
+      PRINT *, " * Assigning smoothing lengths..."
 
-      fld% h_guess(1:npart_real)= h(1:npart_real)
-
+      fld% h_guess(1:npart_all)= h(1:npart_all)
       CALL assign_h( nn_des, &
                      npart_all, &
                      all_pos, fld% h_guess, h )
 
+      PRINT *, "** Checking that the smoothing lengths are such that each ", &
+               "real and ghost particle "
+      PRINT *, "   has exactly", nn_des - 1, " neighbours..."
       find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
       CALL find_h_bruteforce_timer% start_timer()
       n_problematic_h= 0
@@ -1338,12 +1298,12 @@ SUBMODULE (sph_particles) apm
       !$OMP             SHARED( all_pos, npart_real, fld, h, nu, &
       !$OMP                     center ) &
       !$OMP             PRIVATE( a )
-      DO a= 1, npart_real, 1
+      check_nstar_sph_on_real2: DO a= 1, npart_real, 1
 
         IF( .NOT.is_finite_number( fld% nstar_sph( a ) ) )THEN
 
-          PRINT *, "** ERROR! fld% nstar_sph(", a, ") is not a finite number on ", &
-                   "a real particle!"
+          PRINT *, "** ERROR! fld% nstar_sph(", a, ") is not a finite ", &
+                   "number on a real particle!"
           IF( debug ) PRINT *, " * h(", a, ")=", h(a)
           IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
           IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
@@ -1357,18 +1317,19 @@ SUBMODULE (sph_particles) apm
 
         ENDIF
 
-      ENDDO
+      ENDDO check_nstar_sph_on_real2
       !$OMP END PARALLEL DO
+
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, npart_real, fld, h, nu, &
       !$OMP                     center, npart_all ) &
       !$OMP             PRIVATE( a )
-      DO a= npart_real + 1, npart_all, 1
+      check_nstar_sph_on_ghost2: DO a= npart_real + 1, npart_all, 1
 
         IF( .NOT.is_finite_number( fld% nstar_sph( a ) ) )THEN
 
-          PRINT *, "** ERROR! fld% nstar_sph(", a, ") is not a finite number on ", &
-                   "a ghost particle!"
+          PRINT *, "** ERROR! fld% nstar_sph(", a, ") is not a finite ", &
+                   "number on a ghost particle!"
           IF( debug ) PRINT *, " * h(", a, ")=", h(a)
           IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
           IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
@@ -1382,20 +1343,20 @@ SUBMODULE (sph_particles) apm
 
         ENDIF
 
-      ENDDO
+      ENDDO check_nstar_sph_on_ghost2
       !$OMP END PARALLEL DO
 
       CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
-                                        all_pos(2,1:npart_real), &
-                                        all_pos(3,1:npart_real), &
-                                        fld% nstar_id, &
-                                        use_atmosphere )
+                                         all_pos(2,1:npart_real), &
+                                         all_pos(3,1:npart_real), &
+                                         fld% nstar_id, &
+                                         use_atmosphere )
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, npart_all, h, nu, &
       !$OMP                     center, fld ) &
       !$OMP             PRIVATE( a )
-      check_nstar_p: DO a= 1, npart_all, 1
+      check_nstar_id: DO a= 1, npart_all, 1
 
         IF( .NOT.is_finite_number( fld% nstar_id( a ) ) )THEN
 
@@ -1417,13 +1378,14 @@ SUBMODULE (sph_particles) apm
 
         ENDIF
 
-      ENDDO check_nstar_p
+      ENDDO check_nstar_id
       !$OMP END PARALLEL DO
 
-      art_pr_max= zero
-      err_N_max=  zero
-      err_N_min=  HUGE(one)
-      err_N_mean= zero
+      art_pr_max_prev= art_pr_max
+      err_N_max  = zero
+      err_N_min  = HUGE(one)
+      err_N_mean = zero
+      fld% art_pr= zero
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_real, fld ) &
@@ -1436,7 +1398,7 @@ SUBMODULE (sph_particles) apm
 
         ELSE
 
-          fld% dNstar(a)= ( fld% nstar_sph(a) - fld% nstar_id(a) )/fld% nstar_id(a)
+          fld% dNstar(a)=(fld% nstar_sph(a) - fld% nstar_id(a))/fld% nstar_id(a)
 
         ENDIF
         fld% art_pr(a) = MAX( one + fld% dNstar(a), one/ten )
@@ -1467,14 +1429,12 @@ SUBMODULE (sph_particles) apm
       ENDDO find_nan_in_art_pr
       !$OMP END PARALLEL DO
 
-      art_pr_max= MAXVAL( fld% art_pr, DIM= 1 )
+      art_pr_max= MAXVAL( fld% art_pr(1:npart_real), DIM= 1 )
+      !art_pr_max= MAX( art_pr_max_prev, art_pr_max )
 
-      IF( .NOT.is_finite_number(art_pr_max) )THEN
-        PRINT *, "** ERROR! art_pr_max =", art_pr_max
-        PRINT *, " * Stopping..."
-        PRINT *
-        STOP
-      ENDIF
+      PRINT *, " * Maximum artificial pressure over the real particles= ", &
+               art_pr_max
+      PRINT *
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_real, fld ) &
@@ -1484,9 +1444,9 @@ SUBMODULE (sph_particles) apm
       ENDDO
       !$OMP END PARALLEL DO
 
-      err_N_max     = MAXVAL( ABS(fld% dNstar), MASK= fld% good_rho )
-      err_N_min     = MINVAL( ABS(fld% dNstar), MASK= fld% good_rho )
-      err_N_mean    = SUM( ABS(fld% dNstar), DIM= 1 )/SIZE( fld% dNstar )
+      err_N_max     = MAXVAL(ABS(fld% dNstar(1:npart_real)), MASK=fld% good_rho)
+      err_N_min     = MINVAL(ABS(fld% dNstar(1:npart_real)), MASK=fld% good_rho)
+      err_N_mean    = SUM( ABS(fld% dNstar(1:npart_real)), DIM= 1 )/npart_real
       err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
 
       !IF( err_N_mean_min == err_N_mean )THEN
@@ -1508,15 +1468,15 @@ SUBMODULE (sph_particles) apm
         !
         !  err_N_max     = ABS(fld% dNstar(a))
         !  pos_maxerr    = all_pos(:,a)
-        !  nstar_sph_err= nstar_real(a)
+        !  nstar_sph_err= nstar_sph(a)
         !  nstar_id_err   = fld% nstar_id(a)
         !
         !ENDIF
 
         IF( fld% dNstar(a) == err_N_max )THEN
-          pos_maxerr    = all_pos(:,a)
+          pos_maxerr   = all_pos(:,a)
           nstar_sph_err= fld% nstar_sph(a)
-          nstar_id_err   = fld% nstar_id(a)
+          nstar_id_err = fld% nstar_id(a)
         ENDIF
 
         !err_N_max = MAX( err_N_max, ABS(fld% dNstar) )
@@ -1531,7 +1491,7 @@ SUBMODULE (sph_particles) apm
 
         IF( .NOT.is_finite_number(fld% dNstar(a)) )THEN
           PRINT *, "fld% dNstar= ", fld% dNstar(a), " at particle ", a
-          PRINT *, "nstar_real= ", fld% nstar_sph(a)
+          PRINT *, "nstar_sph= ", fld% nstar_sph(a)
           PRINT *, "fld% nstar_id= ", fld% nstar_id(a)
           STOP
         ENDIF
@@ -1557,58 +1517,66 @@ SUBMODULE (sph_particles) apm
       !
 
       fld% nstar_id( npart_real+1:npart_all )= zero
-      !art_pr ( npart_real+1:npart_all )= 6.0D0*art_pr_max
+      !IF( itr <= 50 )THEN
+      !  fld% art_pr( npart_real+1:npart_all )= zero
+      !ELSE
+      fld% art_pr( npart_real+1:npart_all )= &
+                                MIN( two*three*art_pr_max, max_art_pr_ghost )
+      !ENDIF
 
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, npart_all, npart_real, center, &
-      !$OMP                     fld, rad_x, rad_y, rad_z, &
-      !$OMP                     art_pr_max ) &
-      !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
-      !$OMP                      itr, itr2 )
-      assign_artificial_pressure_on_ghost_particles: &
-      DO a= npart_real + 1, npart_all, 1
-
-        CALL spherical_from_cartesian( &
-                              all_pos(1,a), all_pos(2,a), all_pos(3,a), &
-                              center(1), center(2), center(3), &
-                              r, theta, phi )
-
-        x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
-        y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
-        z_ell= center(3) + rad_z*COS(theta)
-
-        r_ell= SQRT( ( x_ell - center(1) )**two &
-                   + ( y_ell - center(2) )**two &
-                   + ( z_ell - center(3) )**two )
-
-        shell_loop: DO itr2= 0, 20, 1
-
-          IF( r <= ( one + ( ellipse_thickness - one )*DBLE(itr2)/ten )*r_ell &
-              .AND. &
-              r >= ( one + ( ellipse_thickness - one )*DBLE(itr2-1)/ten )*r_ell&
-          ! If the ghost particle is contained within the i-th spherical shell..
-
-              !r <= ( 500.D0 + 50.D0*DBLE(itr2)/ten ) &
-              !.AND. &
-              !r > ( 500.D0 + 50.D0*DBLE(itr2-1)/ten ) &
-
-          )THEN
-
-            ! ..assign a pressure that increases with i, to build a pressure
-            !   gradient
-            fld% art_pr(a)= ten*three*three*art_pr_max
-            !fld% art_pr(a)= DBLE(itr+1)*art_pr_max
-
-          !ELSE
-          !
-          !  fld% art_pr( a )= art_pr_max
-
-          ENDIF
-
-        ENDDO shell_loop
-
-      ENDDO assign_artificial_pressure_on_ghost_particles
-      !$OMP END PARALLEL DO
+   !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+   !   !$OMP             SHARED( all_pos, npart_all, npart_real, center, &
+   !   !$OMP                     fld, rad_x, rad_y, rad_z, &
+   !   !$OMP                     art_pr_max, itr ) &
+   !   !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
+   !   !$OMP                      itr2 )
+   !   assign_artificial_pressure_on_ghost_particles: &
+   !   DO a= npart_real + 1, npart_all, 1
+   !
+   !     CALL spherical_from_cartesian( &
+   !                           all_pos(1,a), all_pos(2,a), all_pos(3,a), &
+   !                           center(1), center(2), center(3), &
+   !                           r, theta, phi )
+   !
+   !     x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
+   !     y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
+   !     z_ell= center(3) + rad_z*COS(theta)
+   !
+   !     r_ell= SQRT( ( x_ell - center(1) )**two &
+   !                + ( y_ell - center(2) )**two &
+   !                + ( z_ell - center(3) )**two )
+   !
+   !     shell_loop: DO itr2= 0, 20, 1
+   !
+   !       IF( r <= ( one + ( ellipse_thickness - one )*DBLE(itr2)/ten )*r_ell &
+   !           .AND. &
+   !           r >= ( one + ( ellipse_thickness - one )*DBLE(itr2-1)/ten )*r_ell&
+   !       ! If the ghost particle is contained within the i-th spherical shell..
+   !
+   !           !r <= ( 500.D0 + 50.D0*DBLE(itr2)/ten ) &
+   !           !.AND. &
+   !           !r > ( 500.D0 + 50.D0*DBLE(itr2-1)/ten ) &
+   !
+   !       )THEN
+   !
+   !         ! ..assign a pressure that increases with i, to build a pressure
+   !         !   gradient
+   !         !fld% art_pr(a)= ten*three*three*art_pr_max
+   !         !fld% art_pr(a)= ten*three*DBLE(itr+1)*art_pr_max
+   !         !fld% art_pr(a)= art_pr_max*ten*three*DBLE(itr2+1)**two
+   !         fld% art_pr(a)= art_pr_max*ten*three*DBLE(itr+1)*DBLE(itr2+1)**two
+   !         EXIT
+   !
+   !       !ELSE
+   !       !
+   !       !  fld% art_pr( a )= art_pr_max
+   !
+   !       ENDIF
+   !
+   !     ENDDO shell_loop
+   !
+   !   ENDDO assign_artificial_pressure_on_ghost_particles
+   !   !$OMP END PARALLEL DO
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_all, npart_real, fld, &
@@ -1619,6 +1587,9 @@ SUBMODULE (sph_particles) apm
         IF( .NOT.is_finite_number(fld% art_pr(a)) )THEN
           PRINT *, "** ERROR! fld% art_pr(", a, ")= ", fld% art_pr(a), &
                    " is not a finite number on a ghost particle!"
+          PRINT *, " * How is the artifical pressure assigned on the ghost", &
+                   " particles? Can it become so big that Fortran thinks", &
+                   " it is infinitely big?"
           PRINT *, "   fld% nstar_sph(", a, ")=", fld% nstar_sph(a)
           PRINT *, "   fld% nstar_id(", a, ")=", fld% nstar_id(a)
           PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
@@ -1680,10 +1651,10 @@ SUBMODULE (sph_particles) apm
         nu_tmp2= nu(a)
         fld% nu_tmp(a)= fld% nstar_id(a)/fld% nstar_sph(a)
 
-          IF( fld% nu_tmp(a) > nu_tmp2*SQRT(nuratio_thres) ) fld% nu_tmp(a)= &
-                                            nu_tmp2*SQRT(nuratio_thres)
-          IF( fld% nu_tmp(a) < nu_tmp2/SQRT(nuratio_thres) ) fld% nu_tmp(a)= &
-                                            nu_tmp2/SQRT(nuratio_thres)
+        IF( fld% nu_tmp(a) > nu_tmp2*SQRT(nuratio_thres) ) &
+          fld% nu_tmp(a)= nu_tmp2*SQRT(nuratio_thres)
+        IF( fld% nu_tmp(a) < nu_tmp2/SQRT(nuratio_thres) ) &
+          fld% nu_tmp(a)= nu_tmp2/SQRT(nuratio_thres)
 
       ENDDO cap_nu
       !$OMP END PARALLEL DO
@@ -1775,8 +1746,8 @@ SUBMODULE (sph_particles) apm
       IF( debug ) PRINT *, "21"
 
       CALL position_correction( npart_all, &
-                                all_pos, h, nu_all, fld% art_pr, fld% nstar_sph, &
-                                fld% correction_pos )
+                                all_pos, h, nu_all, fld% art_pr, &
+                                fld% nstar_sph, fld% correction_pos )
 
       IF( debug ) PRINT *, "22"
 
@@ -1785,10 +1756,10 @@ SUBMODULE (sph_particles) apm
       IF( debug ) PRINT *, "23"
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_all, fld, all_pos, center, &
+      !$OMP             SHARED( npart_real, fld, all_pos, center, &
       !$OMP                     larger_radius ) &
       !$OMP             PRIVATE( a, itr2, r, theta, phi )
-      find_nan_in_correction_pos: DO a= 1, npart_all, 1
+      find_nan_in_correction_pos: DO a= 1, npart_real, 1
 
         loop_over_spatial_components: DO itr2= 1, 3, 1
 
@@ -1843,7 +1814,7 @@ SUBMODULE (sph_particles) apm
       !$OMP                     npart_real, center )&
       !$OMP             PRIVATE( pos_corr_tmp, a, cnt, rand_num, rand_num2, &
       !$OMP                      rel_sign, r, theta, phi, theta_tmp )
-      particle_loop: DO a= 1, npart_real, 1
+      displace_particles: DO a= 1, npart_real, 1
 
         adapt_displacement_to_error: &
         IF( fld% dNstar(a) >= ten*ten &
@@ -1851,7 +1822,7 @@ SUBMODULE (sph_particles) apm
             validate_position_final( &
               all_pos(1,a) + ten*fld% correction_pos(1,a), &
               all_pos(2,a) + ten*fld% correction_pos(2,a), &
-              all_pos(3,a) + ten*fld% correction_pos(3,a) ) == 1 )THEN
+              all_pos(3,a) + ten*fld% correction_pos(3,a) ) )THEN
 
           pos_corr_tmp= all_pos(:,a) + ten*fld% correction_pos(:,a) ! 10
 
@@ -1861,7 +1832,7 @@ SUBMODULE (sph_particles) apm
                 validate_position_final( &
                   all_pos(1,a) + three*fld% correction_pos(1,a), &
                   all_pos(2,a) + three*fld% correction_pos(2,a), &
-                  all_pos(3,a) + three*fld% correction_pos(3,a) ) == 1 )THEN
+                  all_pos(3,a) + three*fld% correction_pos(3,a) ) )THEN
 
           pos_corr_tmp= all_pos(:,a) + three*fld% correction_pos(:,a) ! 3
 
@@ -1888,7 +1859,7 @@ SUBMODULE (sph_particles) apm
                 pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
                 .AND. &
                 validate_position_final( &
-                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
                 !.AND. &
                 !check_particle_position( a - 1, &
                 !                         all_pos(:,1:a-1), &
@@ -1919,6 +1890,7 @@ SUBMODULE (sph_particles) apm
 
               pos_corr_tmp(1)= all_pos(1,a) + &
                 fld% correction_pos(1,a)*( one + DBLE(rel_sign)*rand_num*half )
+                !fld% correction_pos(1,a)*( one - rand_num*half )
 
               CALL RANDOM_NUMBER( rand_num )
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1928,6 +1900,7 @@ SUBMODULE (sph_particles) apm
 
               pos_corr_tmp(2)= all_pos(2,a) + &
                 fld% correction_pos(2,a)*( one + DBLE(rel_sign)*rand_num*half )
+                !fld% correction_pos(2,a)*( one - rand_num*half )
 
               CALL RANDOM_NUMBER( rand_num )
               CALL RANDOM_NUMBER( rand_num2 )
@@ -1937,6 +1910,7 @@ SUBMODULE (sph_particles) apm
 
               pos_corr_tmp(3)= all_pos(3,a) + &
                 fld% correction_pos(3,a)*( one + DBLE(rel_sign)*rand_num*half )
+                !fld% correction_pos(3,a)*( one - rand_num*half )
 
               !pos_corr_tmp*( one + DBLE(rel_sign)*rand_num*half*third )
 
@@ -1948,6 +1922,9 @@ SUBMODULE (sph_particles) apm
             !    times, do not move the particle at this step,
             !    and exit the 'determine_new_position' loop
 
+              fld% cnt_move(a)= 0
+              EXIT
+
               ! cnt= cnt + 1
               ! CALL RANDOM_NUMBER( rand_num )
               ! CALL RANDOM_NUMBER( rand_num2 )
@@ -1956,61 +1933,64 @@ SUBMODULE (sph_particles) apm
               ! IF( rand_num2 >= half ) rel_sign=   1
               ! all_pos(:,a)= all_pos(:,a)*( one -rand_num*half*third )
 
-              CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
-                                             all_pos(3,a), &
-                                             center(1), center(2), center(3), &
-                                             r, theta, phi )
-
-              !all_pos(1,a)= all_pos(1,a) &
-              !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*COS(phi)
-              !all_pos(2,a)= all_pos(2,a) &
-              !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*SIN(phi)
-              !all_pos(3,a)= all_pos(3,a) &
-              !      - one/(two*ten)*COS(theta*(one + one/(ten*ten)))
-
-              ! ...push the particle closer to the origin close to its radial
-              !    line, and place it to the first place having an acceptable
-              !    density
-              ! TODO: what if the particles is placed on top of another
-              !       particle?
-              scan_radial_line: DO itr2= (ten - three)*ten, 1, -1
-
-               ! CALL RANDOM_NUMBER( rand_num )
-               ! CALL RANDOM_NUMBER( rand_num2 )
-               !
-               ! IF( rand_num2 < half )  rel_sign= - 1
-               ! IF( rand_num2 >= half ) rel_sign=   1
-               !
-               ! theta_tmp= theta*( one + DBLE(rel_sign)*rand_num*half )
-               !
-               ! IF( theta_tmp < pi .AND. theta_tmp > pi/two ) theta= theta_tmp
-               !
-               ! CALL RANDOM_NUMBER( rand_num )
-               ! CALL RANDOM_NUMBER( rand_num2 )
-               !
-               ! IF( rand_num2 < half )  rel_sign= - 1
-               ! IF( rand_num2 >= half ) rel_sign=   1
-               !
-               ! phi= phi*( one + DBLE(rel_sign)*rand_num*half )
-
-                pos_corr_tmp(1)= center(1) +r*itr2/(ten*ten)*SIN(theta)*COS(phi)
-                pos_corr_tmp(2)= center(2) +r*itr2/(ten*ten)*SIN(theta)*SIN(phi)
-                pos_corr_tmp(3)= center(3) +r*itr2/(ten*ten)*COS(theta)
-
-                IF( get_density( &
-                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
-                    .AND. &
-                    validate_position_final( &
-                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
-                )THEN
-
-                  all_pos(:,a)= pos_corr_tmp
-                  fld% cnt_move(a)= 1
-                  EXIT
-
-                ENDIF
-
-              ENDDO scan_radial_line
+           !   CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
+           !                                  all_pos(3,a), &
+           !                                  center(1), center(2), center(3), &
+           !                                  r, theta, phi )
+           !
+           !   !all_pos(1,a)= all_pos(1,a) &
+           !   !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*COS(phi)
+           !   !all_pos(2,a)= all_pos(2,a) &
+           !   !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*SIN(phi)
+           !   !all_pos(3,a)= all_pos(3,a) &
+           !   !      - one/(two*ten)*COS(theta*(one + one/(ten*ten)))
+           !
+           !   ! ...push the particle closer to the origin close to its radial
+           !   !    line, and place it to the first place having an acceptable
+           !   !    density
+           !   ! TODO: what if the particles is placed on top of another
+           !   !       particle?
+          !    scan_radial_line: DO itr2= NINT((ten - three)*ten), 1, -1
+          !
+          !     ! CALL RANDOM_NUMBER( rand_num )
+          !     ! CALL RANDOM_NUMBER( rand_num2 )
+          !     !
+          !     ! IF( rand_num2 < half )  rel_sign= - 1
+          !     ! IF( rand_num2 >= half ) rel_sign=   1
+          !     !
+          !     ! theta_tmp= theta*( one + DBLE(rel_sign)*rand_num*half )
+          !     !
+          !     ! IF( theta_tmp < pi .AND. theta_tmp > pi/two ) theta= theta_tmp
+          !     !
+          !     ! CALL RANDOM_NUMBER( rand_num )
+          !     ! CALL RANDOM_NUMBER( rand_num2 )
+          !     !
+          !     ! IF( rand_num2 < half )  rel_sign= - 1
+          !     ! IF( rand_num2 >= half ) rel_sign=   1
+          !     !
+          !     ! phi= phi*( one + DBLE(rel_sign)*rand_num*half )
+          !
+          !      pos_corr_tmp(1)= center(1) + &
+          !                       r*DBLE(itr2)/(ten*ten)*SIN(theta)*COS(phi)
+          !      pos_corr_tmp(2)= center(2) + &
+          !                       r*DBLE(itr2)/(ten*ten)*SIN(theta)*SIN(phi)
+          !      pos_corr_tmp(3)= center(3) + &
+          !                       r*DBLE(itr2)/(ten*ten)*COS(theta)
+          !
+          !      IF( get_density( &
+          !          pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
+          !          .AND. &
+          !          validate_position_final( &
+          !          pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
+          !      )THEN
+          !
+          !        all_pos(:,a)= pos_corr_tmp
+          !        fld% cnt_move(a)= 1
+          !        EXIT
+          !
+          !      ENDIF
+          !
+          !    ENDDO scan_radial_line
 
               EXIT
 
@@ -2020,7 +2000,7 @@ SUBMODULE (sph_particles) apm
 
         ENDIF if_atmosphere
 
-      ENDDO particle_loop
+      ENDDO displace_particles
       !$OMP END PARALLEL DO
 
       PRINT *, " * The fraction of particles that moved at this step is", &
@@ -2028,20 +2008,39 @@ SUBMODULE (sph_particles) apm
       PRINT *
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_all, all_pos ) &
+      !$OMP             SHARED( npart_real, all_pos ) &
       !$OMP             PRIVATE( a, itr2 )
-      find_nan_in_all_pos: DO a= 1, npart_all, 1
+      find_nan_in_all_pos_real: DO a= 1, npart_real, 1
 
         DO itr2= 1, 3, 1
-          IF( ISNAN( all_pos( itr2, a ) ) )THEN
-            PRINT *, "** ERROR! all_pos(", itr2, ",", a, ") is a NaN!", &
-                     " Stopping.."
+          IF( .NOT.is_finite_number( all_pos( itr2, a ) ) )THEN
+            PRINT *, "** ERROR! all_pos(", itr2, ",", a, ") is not a", &
+                     " finite number on a real particle!"
+            PRINT *, " * Stopping..."
             PRINT *
             STOP
           ENDIF
         ENDDO
 
-      ENDDO find_nan_in_all_pos
+      ENDDO find_nan_in_all_pos_real
+      !$OMP END PARALLEL DO
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, npart_all, all_pos ) &
+      !$OMP             PRIVATE( a, itr2 )
+      find_nan_in_all_pos_ghost: DO a= npart_real + 1, npart_all, 1
+
+        DO itr2= 1, 3, 1
+          IF( .NOT.is_finite_number( all_pos( itr2, a ) ) )THEN
+            PRINT *, "** ERROR! all_pos(", itr2, ",", a, ") is not a", &
+                     " finite number on a ghost particle!"
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
+          ENDIF
+        ENDDO
+
+      ENDDO find_nan_in_all_pos_ghost
       !$OMP END PARALLEL DO
 
       ! If some of the particles crossed the xy plane top-down in the
@@ -2095,9 +2094,9 @@ SUBMODULE (sph_particles) apm
     pos= all_pos( :, 1:npart_real )
     IF( debug ) PRINT *, npart
 
-    h      = h(1:npart_real)
-    fld% h_guess= fld% h_guess(1:npart_real)
-    nu     = nu(1:npart_real)
+    h           = h(1:npart_real)
+    fld% h_guess= h(1:npart_real)!fld% h_guess(1:npart_real)
+    nu          = nu(1:npart_real)
 
     !------------------------------------------------!
     !-- Discard atmosphere, if present and desired --!
@@ -2117,7 +2116,7 @@ SUBMODULE (sph_particles) apm
       pos_tmp    = HUGE(one)
       h_tmp      = HUGE(one)
       h_guess_tmp= HUGE(one)
-      fld% nu_tmp     = HUGE(one)
+      fld% nu_tmp= HUGE(one)
 
       npart= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -2659,7 +2658,7 @@ SUBMODULE (sph_particles) apm
     ENDDO
     !$OMP END PARALLEL DO
     dN_av= dN_av/DBLE(cnt1)
-    dN_max= MAXVAL(fld% dNstar, DIM= 1)
+    dN_max= MAXVAL(fld% dNstar(1:npart_real), DIM= 1)
 
     variance_dN = zero                       ! compute variance
     !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -2706,6 +2705,7 @@ SUBMODULE (sph_particles) apm
 
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
+    fld% h_guess= h
     CALL assign_h( nn_des, &
                    npart_real, &
                    pos, fld% h_guess, & ! Input
@@ -3192,7 +3192,7 @@ SUBMODULE (sph_particles) apm
       !*******************************************************
       !
       !# Returns validate_position( x, y, z ) if the latter
-      !  is present, 0 otherwise
+      !  is present, .TRUE. otherwise
       !
       !  FT 22.09.2021
       !
@@ -3206,7 +3206,7 @@ SUBMODULE (sph_particles) apm
       !! \(y\) coordinate of the desired point
       DOUBLE PRECISION, INTENT(IN):: z
       !! \(z\) coordinate of the desired point
-      INTEGER:: answer
+      LOGICAL:: answer
       !! validate_position( x, y, z ) if the latter is present, 0 otherwise
 
       IF( PRESENT(validate_position) )THEN
@@ -3217,7 +3217,7 @@ SUBMODULE (sph_particles) apm
 
       ELSE
 
-        answer= 0
+        answer= .TRUE.
 
       ENDIF
 
@@ -3273,7 +3273,7 @@ SUBMODULE (sph_particles) apm
         !$OMP             PRIVATE( a )
         DO a= 1, npart_real, 1
 
-          IF( nstar_id( a ) < 1.0D-10 )THEN
+          IF( nstar_id( a ) < tiny_real )THEN
             PRINT *, "** ERROR! nstar_id(", a, ")=", nstar_id( a ), &
                      " in SUBROUTINE get_nstar_id_atm."
             PRINT *, " * Stopping.."
@@ -3327,6 +3327,10 @@ SUBMODULE (sph_particles) apm
 
     IMPLICIT NONE
 
+    DOUBLE PRECISION, PARAMETER:: h_fac= 1.1D0
+    !# Factor that multiplies the smoothing lengths, after the particles
+    !  (with their properties) have been reflected
+
     INTEGER, INTENT(INOUT):: npart_all
     INTEGER, INTENT(INOUT):: npart_real
     INTEGER, INTENT(IN)   :: npart_ghost
@@ -3335,9 +3339,9 @@ SUBMODULE (sph_particles) apm
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
     TYPE(apm_fields), INTENT(INOUT):: fld
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE,   INTENT(INOUT):: nu
 
     DOUBLE PRECISION,                     INTENT(IN),    OPTIONAL:: com_star
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE,   INTENT(INOUT), OPTIONAL:: nu
     LOGICAL,                              INTENT(IN),    OPTIONAL:: verbose
 
     INTEGER:: a, npart_above_xy
@@ -3348,7 +3352,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(3,npart_all):: postmp
     DOUBLE PRECISION, DIMENSION(npart_all)  :: nutmp
     DOUBLE PRECISION, DIMENSION(npart_all)  :: htmp
-    DOUBLE PRECISION, DIMENSION(npart_all)  :: nstarptmp
+    DOUBLE PRECISION, DIMENSION(npart_all)  :: nstar_id_tmp
     DOUBLE PRECISION, DIMENSION(3,npart_all):: all_pos_prev_dump_tmp
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_below
@@ -3363,35 +3367,34 @@ SUBMODULE (sph_particles) apm
       PRINT *, " * npart_real= ", npart_real
       PRINT *, " * Stopping..."
       PRINT *
+      STOP
     ENDIF
 
     npart_real_old= npart_real
     postmp        = pos
-    IF( PRESENT(nu) ) nutmp = nu
+    nutmp = nu
     htmp= h
-    nstarptmp= fld% nstar_id
-    IF( ALLOCATED(fld% all_pos_prev_dump) ) all_pos_prev_dump_tmp= fld% all_pos_prev_dump
+    nstar_id_tmp= fld% nstar_id
+    IF( ALLOCATED(fld% all_pos_prev_dump) ) &
+      all_pos_prev_dump_tmp= fld% all_pos_prev_dump
 
     CALL find_particles_above_xy_plane( npart_real, postmp(:,1:npart_real), &
                                         npart_above_xy, above_xy_plane_a )
 
     ALLOCATE( pos_below(3,npart_above_xy) )
+    ALLOCATE( nu_below(npart_above_xy) )
+    CALL reflect_particles_xy_plane( npart_real, postmp(:,1:npart_real), &
+                                     pos_below, npart_above_xy, &
+                                     above_xy_plane_a, nutmp(1:npart_real), &
+                                     nu_below )
 
-    IF( PRESENT(nu) )THEN
-
-      ALLOCATE( nu_below(npart_above_xy) )
-      CALL reflect_particles_xy_plane( npart_real, postmp(:,1:npart_real), &
-                                       pos_below, npart_above_xy, &
-                                       above_xy_plane_a, nutmp(1:npart_real), &
-                                       nu_below )
-
-    ELSE
-
-      CALL reflect_particles_xy_plane( npart_real, postmp(:,1:npart_real), &
-                                       pos_below, npart_above_xy, &
-                                       above_xy_plane_a )
-
-    ENDIF
+    !ELSE
+    !
+    !  CALL reflect_particles_xy_plane( npart_real, postmp(:,1:npart_real), &
+    !                                   pos_below, npart_above_xy, &
+    !                                   above_xy_plane_a )
+    !
+    !ENDIF
 
     IF( npart_real/2 /= npart_above_xy )THEN
 
@@ -3401,10 +3404,8 @@ SUBMODULE (sph_particles) apm
       DEALLOCATE(pos)
       ALLOCATE( pos(3,npart_all) )
 
-      IF( PRESENT(nu) )THEN
-        DEALLOCATE(nu)
-        ALLOCATE( nu(npart_all) )
-      ENDIF
+      DEALLOCATE(nu)
+      ALLOCATE( nu(npart_all) )
 
       CALL fld% reallocate_apm_fields( npart_real, npart_ghost )
 
@@ -3453,41 +3454,6 @@ SUBMODULE (sph_particles) apm
 ! !       freeze(a)= 1
 ! !     ENDDO
 ! !     !$OMP END PARALLEL DO
-!
-!      DEALLOCATE( lapse           )
-!      DEALLOCATE( shift_x         )
-!      DEALLOCATE( shift_y         )
-!      DEALLOCATE( shift_z         )
-!      DEALLOCATE( g_xx            )
-!      DEALLOCATE( g_xy            )
-!      DEALLOCATE( g_xz            )
-!      DEALLOCATE( g_yy            )
-!      DEALLOCATE( g_yz            )
-!      DEALLOCATE( g_zz            )
-!      DEALLOCATE( baryon_density  )
-!      DEALLOCATE( energy_density  )
-!      DEALLOCATE( specific_energy )
-!      DEALLOCATE( pressure        )
-!      DEALLOCATE( v_euler_x       )
-!      DEALLOCATE( v_euler_y       )
-!      DEALLOCATE( v_euler_z       )
-!      ALLOCATE( lapse          (npart_real) )
-!      ALLOCATE( shift_x        (npart_real) )
-!      ALLOCATE( shift_y        (npart_real) )
-!      ALLOCATE( shift_z        (npart_real) )
-!      ALLOCATE( g_xx           (npart_real) )
-!      ALLOCATE( g_xy           (npart_real) )
-!      ALLOCATE( g_xz           (npart_real) )
-!      ALLOCATE( g_yy           (npart_real) )
-!      ALLOCATE( g_yz           (npart_real) )
-!      ALLOCATE( g_zz           (npart_real) )
-!      ALLOCATE( baryon_density (npart_real) )
-!      ALLOCATE( energy_density (npart_real) )
-!      ALLOCATE( specific_energy(npart_real) )
-!      ALLOCATE( pressure       (npart_real) )
-!      ALLOCATE( v_euler_x      (npart_real) )
-!      ALLOCATE( v_euler_y      (npart_real) )
-!      ALLOCATE( v_euler_z      (npart_real) )
 
       npart= npart_all
       IF( ALLOCATED(posmash) ) DEALLOCATE(posmash)
@@ -3508,30 +3474,33 @@ SUBMODULE (sph_particles) apm
     !$OMP             SHARED( pos, npart_above_xy, nu, postmp, nutmp, &
     !$OMP                     pos_below, nu_below, h, htmp, above_xy_plane_a, &
     !$OMP                     fld, all_pos_prev_dump_tmp, &
-    !$OMP                     nstarptmp ) &
+    !$OMP                     nstar_id_tmp ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_above_xy, 1
       pos( :, a )= postmp( :, a )
-      pos( :, npart_above_xy + a )= pos_below( :, a )
-      h( a )= htmp( above_xy_plane_a(a) )
-      h( npart_above_xy + a )= htmp( above_xy_plane_a(a) )
-      fld% nstar_id( a )= nstarptmp( above_xy_plane_a(a) )
-      fld% nstar_id( npart_above_xy + a )= nstarptmp( above_xy_plane_a(a) )
+      pos( :, npart_above_xy + a )       = pos_below( :, a )
+      h( a )                             = htmp( above_xy_plane_a(a) )
+      h( npart_above_xy + a )            = htmp( above_xy_plane_a(a) )
+      fld% nstar_id( a )                 = nstar_id_tmp( above_xy_plane_a(a) )
+      fld% nstar_id( npart_above_xy + a )= nstar_id_tmp( above_xy_plane_a(a) )
       IF( ALLOCATED(fld% all_pos_prev_dump) )THEN
-        fld% all_pos_prev_dump(1,a)= all_pos_prev_dump_tmp(1,above_xy_plane_a(a))
-        fld% all_pos_prev_dump(2,a)= all_pos_prev_dump_tmp(2,above_xy_plane_a(a))
-        fld% all_pos_prev_dump(3,a)= all_pos_prev_dump_tmp(3,above_xy_plane_a(a))
+
+        fld% all_pos_prev_dump(1,a)= &
+                                all_pos_prev_dump_tmp(1,above_xy_plane_a(a))
+        fld% all_pos_prev_dump(2,a)= &
+                                all_pos_prev_dump_tmp(2,above_xy_plane_a(a))
+        fld% all_pos_prev_dump(3,a)= &
+                                all_pos_prev_dump_tmp(3,above_xy_plane_a(a))
         fld% all_pos_prev_dump(1,npart_above_xy + a)= &
                                 all_pos_prev_dump_tmp(1,above_xy_plane_a(a))
         fld% all_pos_prev_dump(2,npart_above_xy + a)= &
                                 all_pos_prev_dump_tmp(2,above_xy_plane_a(a))
         fld% all_pos_prev_dump(3,npart_above_xy + a)= &
                               - all_pos_prev_dump_tmp(3,above_xy_plane_a(a))
+
       ENDIF
-      IF( PRESENT(nu) )THEN
-        nu( a )= nutmp( a )
-        nu( npart_above_xy + a )= nu_below( a )
-      ENDIF
+      nu( a )= nutmp( a )
+      nu( npart_above_xy + a )= nu_below( a )
     ENDDO
     !$OMP END PARALLEL DO
 
@@ -3539,13 +3508,13 @@ SUBMODULE (sph_particles) apm
     !$OMP             SHARED( pos, npart_real, npart_all, nu, postmp, nutmp, &
     !$OMP                     npart_real_old, npart_ghost, h, htmp, &
     !$OMP                     fld, all_pos_prev_dump_tmp, &
-    !$OMP                     nstarptmp ) &
+    !$OMP                     nstar_id_tmp ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_ghost, 1
       pos( :, npart_real + a ) = postmp( :, npart_real_old + a )
-      IF( PRESENT(nu) ) nu( a )= nutmp( npart_real_old + a )
-      h( a )= htmp( npart_real_old + a )
-      fld% nstar_id( a )= nstarptmp( npart_real_old + a )
+      nu( a )= nutmp( npart_real_old + a )
+      h( a )= h_fac*htmp( npart_real_old + a )
+      fld% nstar_id( a )= nstar_id_tmp( npart_real_old + a )
       IF( ALLOCATED(fld% all_pos_prev_dump) )THEN
         fld% all_pos_prev_dump( :, npart_real + a )= &
                                 all_pos_prev_dump_tmp( :, npart_real_old + a )
@@ -3613,7 +3582,7 @@ SUBMODULE (sph_particles) apm
         DOUBLE PRECISION, INTENT(IN):: x
         DOUBLE PRECISION, INTENT(IN):: y
         DOUBLE PRECISION, INTENT(IN):: z
-        INTEGER:: answer
+        LOGICAL:: answer
       END FUNCTION
     END INTERFACE
 

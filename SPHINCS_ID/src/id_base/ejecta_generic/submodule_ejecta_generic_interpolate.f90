@@ -451,7 +451,7 @@ SUBMODULE (ejecta_generic) interpolate
   END PROCEDURE interpolate_spatial_metric
 
 
-  MODULE PROCEDURE is_hydro_negative
+  MODULE PROCEDURE is_hydro_positive
 
     !************************************************
     !
@@ -482,12 +482,12 @@ SUBMODULE (ejecta_generic) interpolate
         .OR. y < center(2) - sizes(4) &
         .OR. ABS(z) > center(3) + sizes(5) &
     )THEN
-      res= 1
+      res= .FALSE.
     ELSE
-      res= 0
+      res= .TRUE.
     ENDIF
 
-  END PROCEDURE is_hydro_negative
+  END PROCEDURE is_hydro_positive
 
 
 END SUBMODULE interpolate

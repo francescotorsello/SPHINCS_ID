@@ -188,6 +188,7 @@ SUBMODULE (sph_particles) handle_positions
       PRINT *, " * npart= ", npart
       PRINT *, " * Stopping..."
       PRINT *
+      STOP
     ENDIF
 
   !  IF( PRESENT(pos_prev) )THEN

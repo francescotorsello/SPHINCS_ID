@@ -308,45 +308,6 @@ PROGRAM sphincs_id
   ENDDO build_idbase_loop
 
 
-  IF( run_sph )THEN
-
-    !
-    !-- Construct the particles objects
-    !
-    place_hydro_id_loops: DO itr3= 1, n_id, 1
-      part_distribution_loop: DO itr4= 1, max_n_parts, 1
-        IF( placer( itr3, itr4 ) == test_int )THEN
-          EXIT part_distribution_loop
-        ELSE
-
-          PRINT *, "===================================================" &
-                   // "==============="
-          PRINT *, " Placing particles for "//systems(itr3), itr3, &
-                   ", distribution", itr4
-          PRINT *, "===================================================" &
-                   // "==============="
-          PRINT *
-
-          particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-                                                   placer( itr3, itr4 ) )
-
-          !namefile_parts_bin= "sph-output/NSNS.00000"
-          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-          !                                         namefile_parts_bin )
-
-        ENDIF
-      ENDDO part_distribution_loop
-    ENDDO place_hydro_id_loops
-
-    !namefile_parts_bin= "NSNS.00000"
-    !namefile_parts= "try.dat"
-    !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
-
-    !STOP
-
-  ENDIF
-
-
   IF( run_spacetime )THEN
 
     !
@@ -428,6 +389,46 @@ PROGRAM sphincs_id
     ENDIF
 
   ENDIF
+
+
+  IF( run_sph )THEN
+
+    !
+    !-- Construct the particles objects
+    !
+    place_hydro_id_loops: DO itr3= 1, n_id, 1
+      part_distribution_loop: DO itr4= 1, max_n_parts, 1
+        IF( placer( itr3, itr4 ) == test_int )THEN
+          EXIT part_distribution_loop
+        ELSE
+
+          PRINT *, "===================================================" &
+                   // "==============="
+          PRINT *, " Placing particles for "//systems(itr3), itr3, &
+                   ", distribution", itr4
+          PRINT *, "===================================================" &
+                   // "==============="
+          PRINT *
+
+          particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
+                                                   placer( itr3, itr4 ) )
+
+          !namefile_parts_bin= "sph-output/NSNS.00000"
+          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
+          !                                         namefile_parts_bin )
+
+        ENDIF
+      ENDDO part_distribution_loop
+    ENDDO place_hydro_id_loops
+
+    !namefile_parts_bin= "NSNS.00000"
+    !namefile_parts= "try.dat"
+    !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
+
+    !STOP
+
+  ENDIF
+
 
   IF( .NOT.estimate_length_scale )THEN
 

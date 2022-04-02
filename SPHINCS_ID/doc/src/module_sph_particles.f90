@@ -672,8 +672,8 @@ MODULE sph_particles
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          INTEGER:: answer
-          !! 1 if the position is not valid, 0 otherwise
+          LOGICAL:: answer
+          !! `.TRUE.` if the position is valid, `.FALSE.` otherwise
         END FUNCTION validate_position_int
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
@@ -811,8 +811,8 @@ MODULE sph_particles
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          INTEGER:: answer
-          !! 1 if the position is not valid, 0 otherwise
+          LOGICAL:: answer
+          !! `.TRUE.` if the position is valid, `.FALSE.` otherwise
         END FUNCTION validate_position_int
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
@@ -1023,8 +1023,8 @@ MODULE sph_particles
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          INTEGER:: answer
-          !! 1 if the position is not valid, 0 otherwise
+          LOGICAL:: answer
+          !! `.TRUE.` if the position is valid, `.FALSE.` otherwise
         END FUNCTION validate_position_int
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise

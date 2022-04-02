@@ -846,7 +846,7 @@ SUBMODULE (sph_particles) constructor_std
                                              parts_all(itr)% pos_i, &
                                              parts_all(itr)% pvol_i, &
                                              import_density, &
-                                             check_negative_hydro )
+                                             validate_position )
 
         ! Now that the real particle numbers are known, reallocate the arrays
         ! to the appropriate sizes. Note that, if the APM is performed,
@@ -1000,7 +1000,7 @@ SUBMODULE (sph_particles) constructor_std
                                               import_density, &
                                               integrate_mass_density, &
                                               import_id, &
-                                              check_negative_hydro )
+                                              validate_position )
 
       !
       !-- Experimental code to get the desired number of particles for
@@ -1043,7 +1043,7 @@ SUBMODULE (sph_particles) constructor_std
       !                                          import_density, &
       !                                          integrate_mass_density, &
       !                                          import_id, &
-      !                                          check_negative_hydro, &
+      !                                          validate_position, &
       !                                          pmass_des )
       !
       !  ENDDO
@@ -1232,7 +1232,7 @@ SUBMODULE (sph_particles) constructor_std
                     remove_atmosphere(i_matter), &
                     print_step, &
                     filename_apm_pos_id, filename_apm_pos, &
-                    filename_apm_results, check_negative_hydro )
+                    filename_apm_results, validate_position )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
         parts_all(i_matter)% pmass_i = &
@@ -1928,18 +1928,18 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE integrate_mass_density
 
 
-    FUNCTION check_negative_hydro( x, y, z ) RESULT( answer )
+    FUNCTION validate_position( x, y, z ) RESULT( answer )
 
       IMPLICIT NONE
 
       DOUBLE PRECISION, INTENT(IN):: x
       DOUBLE PRECISION, INTENT(IN):: y
       DOUBLE PRECISION, INTENT(IN):: z
-      INTEGER:: answer
+      LOGICAL:: answer
 
       answer= id% test_position( x, y, z )
 
-    END FUNCTION check_negative_hydro
+    END FUNCTION validate_position
 
 
     SUBROUTINE get_nstar_id( npart_real, x, y, z, nstar_id )

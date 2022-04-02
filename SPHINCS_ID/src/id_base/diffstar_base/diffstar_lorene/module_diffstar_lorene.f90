@@ -187,7 +187,7 @@ MODULE diffstar_lorene
     PROCEDURE:: import_spatial_metric
     !! Returns the |lorene|'s conformally flat spatial ADM metric
 
-    PROCEDURE:: test_position => is_hydro_negative
+    PROCEDURE:: test_position => is_hydro_positive
     !# Returns 1 if the energy density or the specific energy or the pressure
     !  are negative
 
@@ -572,9 +572,9 @@ MODULE diffstar_lorene
     END FUNCTION import_spatial_metric
 
 
-    MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
-    !# Returns 1 if the energy density or the specific energy or the pressure
-    !  are negative, 0 otherwise
+    MODULE FUNCTION is_hydro_positive( THIS, x, y, z ) RESULT( res )
+    !# Returns .TRUE. if the energy density or the specific energy or the
+    !  pressure are positive, .FALSE. otherwise
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
       CLASS(diffstarlorene),     INTENT( IN )       :: THIS
@@ -586,9 +586,9 @@ MODULE diffstar_lorene
       DOUBLE PRECISION, INTENT( IN ), VALUE:: z
       !& 1 if the energy density or the specific energy or the pressure
       !  are negative, 0 otherwise
-      INTEGER:: res
+      LOGICAL:: res
 
-    END FUNCTION is_hydro_negative
+    END FUNCTION is_hydro_positive
 
 
     MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
@@ -667,7 +667,7 @@ MODULE diffstar_lorene
   PRIVATE:: construct_etdiffrot, get_diffstar_full, get_diffstar_spacetime, &
             get_diffstar_particles, get_diffstar_mass_b, &
             get_diffstar_hydro, get_diffstar_mass_density, &
-            get_diffstar_spatial_metric, negative_hydro, get_diffstar_params, &
+            get_diffstar_spatial_metric, positive_hydro, get_diffstar_params, &
             destruct_etdiffrot
 
 
@@ -1046,16 +1046,16 @@ MODULE diffstar_lorene
     END FUNCTION get_diffstar_spatial_metric
 
 
-    FUNCTION negative_hydro( optr, x, y, z ) RESULT( res ) &
-      BIND(C, NAME= "is_hydro_negative")
+    FUNCTION positive_hydro( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "is_hydro_positive_diffrot")
 
       !************************************************
       !
       !# Interface to the |lorene| method of class
       !  |etdiffrot| with the same name, that returns 1
-      !  if the energy density is nonpositive,
-      !  or if the specific energy is nonpositive,
-      !  or if the pressure is nonpositive,
+      !  if the energy density is positive,
+      !  and if the specific energy is positive,
+      !  and if the pressure is nonpositive,
       !  at the specified point; it returns 0 otherwise
       !
       !  FT 24.10.2021
@@ -1075,10 +1075,10 @@ MODULE diffstar_lorene
       !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
       !& 1 if the energy density or the specific energy or the pressure
-      !  are negative, 0 otherwise
+      !  are positive, 0 otherwise
       INTEGER(C_INT) :: res
 
-    END FUNCTION negative_hydro
+    END FUNCTION positive_hydro
 
 
     SUBROUTINE get_diffstar_params( optr,                           &

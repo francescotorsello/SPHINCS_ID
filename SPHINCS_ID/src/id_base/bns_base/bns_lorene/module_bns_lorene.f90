@@ -39,7 +39,7 @@ MODULE bns_lorene
                                          C_PTR, C_NULL_PTR, C_ASSOCIATED
   USE bns_base,                    ONLY: bnsbase
   USE id_base,                     ONLY: idbase
-  USE utility,                     ONLY: itr, ios, err_msg, test_status, &
+  USE utility,                     ONLY: itr, ios, err_msg, &
                                          perc, creturn, compute_g4, &
                                          determinant_sym4x4, show_progress
   USE timing,                      ONLY: timer
@@ -201,7 +201,7 @@ MODULE bns_lorene
 
     !& Returns 1 if the energy density or the specific energy or the pressure
     !  are negative
-    PROCEDURE:: test_position => is_hydro_negative
+    PROCEDURE:: test_position => is_hydro_positive
 
     !PROCEDURE, NOPASS:: derived_type_constructor => construct_bnslorene2
 
@@ -673,7 +673,7 @@ MODULE bns_lorene
     END FUNCTION import_spatial_metric
 
 
-    MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION is_hydro_positive( THIS, x, y, z ) RESULT( res )
     !# Returns 1 if the energy density or the specific energy or the pressure
     !  are negative, 0 otherwise
 
@@ -685,11 +685,11 @@ MODULE bns_lorene
       DOUBLE PRECISION, INTENT( IN ), VALUE:: y
       !> \(z\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: z
-      !& 1 if the energy density or the specific energy or the pressure
-      !  are negative, 0 otherwise
-      INTEGER:: res
+      !& `.TRUE.` if the energy density or the specific energy or the pressure
+      !  are negative, `.FALSE.` otherwise
+      LOGICAL:: res
 
-    END FUNCTION is_hydro_negative
+    END FUNCTION is_hydro_positive
 
 
     MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
@@ -785,7 +785,7 @@ MODULE bns_lorene
             get_lorene_id_particles, get_lorene_id_mass_b, &
             get_lorene_id_hydro, get_lorene_id_k, get_lorene_mass_density, &
             get_lorene_pressure, get_lorene_spatial_metric, &
-            negative_hydro, get_lorene_id_params, destruct_bin_ns
+            positive_hydro, get_lorene_id_params, destruct_bin_ns
 
 
   INTERFACE
@@ -1232,16 +1232,16 @@ MODULE bns_lorene
     END FUNCTION get_lorene_spatial_metric
 
 
-    FUNCTION negative_hydro( optr, x, y, z ) RESULT( res ) &
-      BIND(C, NAME= "negative_hydro")
+    FUNCTION positive_hydro( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "is_hydro_positive")
 
       !************************************************
       !
       !# Interface to the |lorene| method of class
       !  |binns| with the same name, that returns 1
-      !  if the energy density is nonpositive,
-      !  or if the specific energy is nonpositive,
-      !  or if the pressure is nonpositive,
+      !  if the energy density is positive,
+      !  and if the specific energy is positive,
+      !  and if the pressure is positive,
       !  at the specified point; it returns 0 otherwise
       !
       !  FT 12.03.2021
@@ -1261,10 +1261,10 @@ MODULE bns_lorene
       !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
       !& 1 if the energy density or the specific energy or the pressure
-      !  are negative, 0 otherwise
+      !  are positve, 0 otherwise
       INTEGER(C_INT) :: res
 
-    END FUNCTION negative_hydro
+    END FUNCTION positive_hydro
 
 
     SUBROUTINE get_lorene_id_params( optr, &
