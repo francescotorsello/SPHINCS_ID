@@ -133,6 +133,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
+    DOUBLE PRECISION, PARAMETER:: max_art_pr       = 1.0D+10
 
     INTEGER:: a, a2, itr, itr2, n_inc, cnt1!, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
@@ -1353,7 +1354,7 @@ SUBMODULE (sph_particles) apm
 
             ! ..assign a pressure that increases with i, to build a pressure
             !   gradient
-            art_pr( a )= DBLE(3*itr)*art_pr_max
+            art_pr( a )= MAX( DBLE(3*itr)*art_pr_max, max_art_pr )
 
           !ELSE
           !
@@ -1572,7 +1573,7 @@ SUBMODULE (sph_particles) apm
             validate_position_final( &
               all_pos(1,a) + ten*correction_pos(1,a), &
               all_pos(2,a) + ten*correction_pos(2,a), &
-              all_pos(3,a) + ten*correction_pos(3,a) ) == 1 )THEN
+              all_pos(3,a) + ten*correction_pos(3,a) ) )THEN
 
           pos_corr_tmp= all_pos(:,a) + ten*correction_pos(:,a) ! 10
 
@@ -1582,7 +1583,7 @@ SUBMODULE (sph_particles) apm
                 validate_position_final( &
                   all_pos(1,a) + three*correction_pos(1,a), &
                   all_pos(2,a) + three*correction_pos(2,a), &
-                  all_pos(3,a) + three*correction_pos(3,a) ) == 1 )THEN
+                  all_pos(3,a) + three*correction_pos(3,a) ) )THEN
 
           pos_corr_tmp= all_pos(:,a) + three*correction_pos(:,a) ! 3
 
@@ -1609,7 +1610,7 @@ SUBMODULE (sph_particles) apm
                 pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
                 .AND. &
                 validate_position_final( &
-                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
                 !.AND. &
                 !check_particle_position( a - 1, &
                 !                         all_pos(:,1:a-1), &
@@ -2894,7 +2895,7 @@ SUBMODULE (sph_particles) apm
 
       ELSE
 
-        answer= 0
+        answer= .TRUE.
 
       ENDIF
 

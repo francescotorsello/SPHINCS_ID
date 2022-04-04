@@ -235,9 +235,9 @@ SUBMODULE (sph_particles) spherical_surfaces
       ENDIF
     ENDIF
 
-    !-------------------------------------------------------!
-    !-- Place surfaces based on mass density a that point --!
-    !-------------------------------------------------------!
+    !--------------------------------------------------------!
+    !-- Place surfaces based on mass density at that point --!
+    !--------------------------------------------------------!
 
     CALL place_surfaces( central_density, center, radius, m_p, n_shells, &
                          shell_radii, last_r, get_density )
@@ -613,11 +613,11 @@ SUBMODULE (sph_particles) spherical_surfaces
                        gam_euler_tmp( th, phi ) )
 
           ! Place a particle at a given position only if the hydro
-          ! computed by LORENE is acceptable
+          ! is acceptable
           IF( &!bar_density_tmp( th, phi ) > zero &
               !pos_shells(r)% baryon_density( itr + 1 ) > zero &
               !.AND. &
-              validate_position_final( xtemp, ytemp, ztemp ) == 0 )THEN
+              validate_position_final( xtemp, ytemp, ztemp ) )THEN
 
             !npart_shell_cnt= npart_shell_cnt + 1
             npart_surface_tmp( th, phi )= 1
@@ -659,7 +659,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
       npart_discard   = SUM( SUM( npart_discarded, DIM= 1 ), DIM= 1 )
       npart_shell_cnt = SUM( SUM( npart_surface_tmp, DIM= 1 ), DIM= 1 )
-      npart_shell( r )= npart_shell( r ) - npart_discard
+      npart_shell( r )= MAX( npart_shell( r ) - npart_discard, 0 )
       npart_out       = npart_out + npart_shell( r )/2
 
       IF( debug ) PRINT *, "Right after OMP"
@@ -680,7 +680,7 @@ SUBMODULE (sph_particles) spherical_surfaces
       IF( npart_shell( r ) == 0 )THEN
         m_parts( r )= m_parts( prev_shell )
         PRINT *, " * Placed", npart_shell( r )/2, &
-                 " particles on one emisphere of spherical shell ", r, &
+                 " particles on one emisphere of spherical surface ", r, &
                  " out of ", n_shells
         IF( r == 1 )THEN
           EXIT
@@ -1001,13 +1001,13 @@ SUBMODULE (sph_particles) spherical_surfaces
       ! At this point, the particles are placed on this surface
       ! Print out the result
       PRINT *, " * Placed", npart_shell( r )/2, &
-               " particles on one emisphere of spherical shell ", r, &
+               " particles on one emisphere of spherical surface ", r, &
                " out of ", n_shells
       PRINT *, "   Shell radius= ", shell_radii( r )/radius*ten*ten, &
               "% of the radius of the star"
       PRINT *, "   Placed", npart_out, " particles overall, so far."
       IF( r /= CEILING(DBLE(n_shells)/two) ) PRINT *, &
-               "   Ratio of particle masses on last 2 shells: ", &
+               "   Ratio of particle masses on last 2 surfaces: ", &
                "   m_parts(", r, ")/m_parts(", prev_shell, ")= ",  &
                m_parts( r )/m_parts( prev_shell )
 
@@ -1538,8 +1538,9 @@ SUBMODULE (sph_particles) spherical_surfaces
       !! \(y\) coordinate of the desired point
       DOUBLE PRECISION, INTENT(IN):: z
       !! \(z\) coordinate of the desired point
-      INTEGER:: answer
-      !! validate_position( x, y, z ) if the latter is present, 0 otherwise
+      LOGICAL:: answer
+      !# validate_position( x, y, z ) if the latter is present,
+      !  `.TRUE.` otherwise
 
       IF( PRESENT(validate_position) )THEN
 
@@ -1547,7 +1548,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
       ELSE
 
-        answer= 0
+        answer= .TRUE.
 
       ENDIF
 
