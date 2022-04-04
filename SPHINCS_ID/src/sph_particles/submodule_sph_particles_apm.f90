@@ -58,7 +58,7 @@ SUBMODULE (sph_particles) apm
     !# Array storing \(0\) if a particle does not move at an APM step,
     !  \(1\) if it moves
 
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
+    !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
     !! Array storing the real particles and the ghost particles, in this order
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev_dump
     !# Array storing the real particles and the ghost particles, in this order,
@@ -1189,14 +1189,14 @@ SUBMODULE (sph_particles) apm
         INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
         IF( exist )THEN
-            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-                  FORM= "FORMATTED", &
-                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                  IOMSG= err_msg )
+          OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
         ELSE
-            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-                  FORM= "FORMATTED", &
-                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+          OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+                FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
         ENDIF
         IF( ios > 0 )THEN
           PRINT *, "...error when opening " // TRIM(finalnamefile), &
@@ -1206,7 +1206,7 @@ SUBMODULE (sph_particles) apm
 
         DO a= 1, npart_real, 1
           !tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
-          tmp= fld% art_pr(a)
+          tmp= NORM2( fld% correction_pos(:,a) )
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             1, a, &
             all_pos( 1, a ), &
@@ -1219,7 +1219,7 @@ SUBMODULE (sph_particles) apm
         ENDDO
 
         DO a= npart_real + 1, npart_all, 1
-          tmp= fld% art_pr(a)
+          tmp= NORM2( fld% correction_pos(:,a) )
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             2, a, &
             all_pos( 1, a ), &
@@ -1363,7 +1363,6 @@ SUBMODULE (sph_particles) apm
           PRINT *, "** ERROR! fld% nstar_id(", a, ") is a not a finite number ", &
                    "in SUBROUTINE perform_apm!"
           PRINT *, "   fld% nstar_id(", a, ")=", fld% nstar_id(a)
-          PRINT *, "   fld% dNstar(", a, ")=", fld% dNstar(a)
           PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
                                                     all_pos(2,a), &
                                                     all_pos(3,a) )
@@ -1516,12 +1515,12 @@ SUBMODULE (sph_particles) apm
       !-- Assign artificial pressure to the ghost particles
       !
 
-      fld% nstar_id( npart_real+1:npart_all )= zero
+      !fld% nstar_id( npart_real+1:npart_all )= zero
       !IF( itr <= 50 )THEN
       !  fld% art_pr( npart_real+1:npart_all )= zero
       !ELSE
-      fld% art_pr( npart_real+1:npart_all )= &
-                                MIN( two*three*art_pr_max, max_art_pr_ghost )
+        fld% art_pr( npart_real+1:npart_all )= &
+                            MIN( itr*two*three*art_pr_max, max_art_pr_ghost )
       !ENDIF
 
    !   !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -1631,6 +1630,54 @@ SUBMODULE (sph_particles) apm
       PRINT *, " * Minimum of the average relative error between the star", &
                " density profile and its SPH estimate: ", err_N_mean_min
       PRINT *
+
+      IF( MOD( itr, print_step ) == 0 )THEN
+
+        finalnamefile= "apm_dbg.dat"
+
+        INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+        IF( exist )THEN
+        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+        ELSE
+        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+        ENDIF
+        IF( ios > 0 )THEN
+        PRINT *, "...error when opening " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+        ENDIF
+
+        DO a= 1, npart_real, 1
+          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+            1, a, &
+            all_pos( 1, a ), &
+            all_pos( 2, a ), &
+            all_pos( 3, a ), &
+            fld% nstar_id(a), &
+            fld% nstar_sph(a), &
+            fld% art_pr(a)
+        ENDDO
+
+        DO a= npart_real + 1, npart_all, 1
+        WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+          2, a, &
+          all_pos( 1, a ), &
+          all_pos( 2, a ), &
+          all_pos( 3, a ), &
+          fld% nstar_id(a), &
+          fld% nstar_sph(a), &
+          fld% art_pr(a)
+        ENDDO
+
+        CLOSE( UNIT= 2 )
+
+      ENDIF
 
       !
       !-- Compute what would be the baryon number at this step
@@ -1742,6 +1789,8 @@ SUBMODULE (sph_particles) apm
       PRINT *, " * Updating positions..."
 
       !all_pos_prev= all_pos
+      CALL density_loop( npart_all, all_pos, &    ! input
+                         nu, h, fld% nstar_sph )      ! output
 
       IF( debug ) PRINT *, "21"
 
@@ -1765,39 +1814,42 @@ SUBMODULE (sph_particles) apm
 
           IF( .NOT.is_finite_number( fld% correction_pos( itr2, a ) ) )THEN
 
-            CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
-                                           all_pos(3,a), &
-                                           center(1), center(2), center(3), &
-                                           r, theta, phi )
-
-            fld% correction_pos( 1, a )= - one/(two*ten)*SIN(theta)*COS(phi)
-            fld% correction_pos( 2, a )= - one/(two*ten)*SIN(theta)*SIN(phi)
-            fld% correction_pos( 3, a )= - one/(two*ten)*COS(theta)
+            !CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
+            !                               all_pos(3,a), &
+            !                               center(1), center(2), center(3), &
+            !                               r, theta, phi )
+            !
+            !fld% correction_pos( 1, a )= - one/(two*ten)*SIN(theta)*COS(phi)
+            !fld% correction_pos( 2, a )= - one/(two*ten)*SIN(theta)*SIN(phi)
+            !fld% correction_pos( 3, a )= - one/(two*ten)*COS(theta)
             !fld% correction_pos( itr2, a )= zero
 
-           ! PRINT *, "** ERROR! fld% correction_pos(", itr2, ",", a, ") is a NaN!"
-           ! PRINT *, " *        fld% correction_pos: x=", fld% correction_pos(1,a), &
-           !          ", y=", fld% correction_pos(2,a), ", z=", fld% correction_pos(3,a)
-           ! PRINT *, " *        Particle position: x=", all_pos(1,a), &
-           !          ", y=", all_pos(2,a), ", z=", all_pos(3,a)
-           !
-           ! CALL spherical_from_cartesian( &
-           !                   all_pos(1,a), all_pos(2,a), all_pos(3,a), &
-           !                   center(1), center(2), center(3), &
-           !                   r_tmp, theta_tmp, phi_tmp )
-           !
-           ! !r_tmp= SQRT( ( all_pos(1,a) - center(1) )**two + &
-           ! !             ( all_pos(2,a) - center(2) )**two + &
-           ! !             ( all_pos(3,a) - center(3) )**two )
-           !
-           ! PRINT *, " *        Particle radius: r=", r_tmp, &
-           !          "=", r_tmp/larger_radius*ten*ten, &
-           !          "% of the larger radius of the star."
-           ! PRINT *, " *        Particle colatitude: theta=", theta_tmp/pi," pi"
-           ! PRINT *, " *        Particle longitude: phi=", phi_tmp/pi, " pi"
-           ! PRINT *, " * Stopping.."
-           ! PRINT *
-           ! STOP
+            PRINT *, "** ERROR! fld% correction_pos(", itr2, ",", a, &
+                     ") is a NaN!"
+            PRINT *, " *        fld% correction_pos: x=", &
+                     fld% correction_pos(1,a), &
+                     ", y=", fld% correction_pos(2,a), ", z=", &
+                     fld% correction_pos(3,a)
+            PRINT *, " *        Particle position: x=", all_pos(1,a), &
+                     ", y=", all_pos(2,a), ", z=", all_pos(3,a)
+
+            CALL spherical_from_cartesian( &
+                              all_pos(1,a), all_pos(2,a), all_pos(3,a), &
+                              center(1), center(2), center(3), &
+                              r, theta, phi )
+
+            !r_tmp= SQRT( ( all_pos(1,a) - center(1) )**two + &
+            !             ( all_pos(2,a) - center(2) )**two + &
+            !             ( all_pos(3,a) - center(3) )**two )
+
+            PRINT *, " *        Particle radius: r=", r, &
+                     "=", r/larger_radius*ten*ten, &
+                     "% of the larger radius of the star."
+            PRINT *, " *        Particle colatitude: theta=", theta/pi," pi"
+            PRINT *, " *        Particle longitude: phi=", phi/pi, " pi"
+            PRINT *, " * Stopping.."
+            PRINT *
+            STOP
 
           ENDIF
 
@@ -1826,7 +1878,6 @@ SUBMODULE (sph_particles) apm
 
           pos_corr_tmp= all_pos(:,a) + ten*fld% correction_pos(:,a) ! 10
 
-
         ELSEIF( fld% dNstar(a) >= ten &
                 .AND. &
                 validate_position_final( &
@@ -1835,7 +1886,6 @@ SUBMODULE (sph_particles) apm
                   all_pos(3,a) + three*fld% correction_pos(3,a) ) )THEN
 
           pos_corr_tmp= all_pos(:,a) + three*fld% correction_pos(:,a) ! 3
-
 
         ELSE
 
@@ -1933,66 +1983,66 @@ SUBMODULE (sph_particles) apm
               ! IF( rand_num2 >= half ) rel_sign=   1
               ! all_pos(:,a)= all_pos(:,a)*( one -rand_num*half*third )
 
-           !   CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
-           !                                  all_pos(3,a), &
-           !                                  center(1), center(2), center(3), &
-           !                                  r, theta, phi )
-           !
-           !   !all_pos(1,a)= all_pos(1,a) &
-           !   !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*COS(phi)
-           !   !all_pos(2,a)= all_pos(2,a) &
-           !   !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*SIN(phi)
-           !   !all_pos(3,a)= all_pos(3,a) &
-           !   !      - one/(two*ten)*COS(theta*(one + one/(ten*ten)))
-           !
-           !   ! ...push the particle closer to the origin close to its radial
-           !   !    line, and place it to the first place having an acceptable
-           !   !    density
-           !   ! TODO: what if the particles is placed on top of another
-           !   !       particle?
-          !    scan_radial_line: DO itr2= NINT((ten - three)*ten), 1, -1
-          !
-          !     ! CALL RANDOM_NUMBER( rand_num )
-          !     ! CALL RANDOM_NUMBER( rand_num2 )
-          !     !
-          !     ! IF( rand_num2 < half )  rel_sign= - 1
-          !     ! IF( rand_num2 >= half ) rel_sign=   1
-          !     !
-          !     ! theta_tmp= theta*( one + DBLE(rel_sign)*rand_num*half )
-          !     !
-          !     ! IF( theta_tmp < pi .AND. theta_tmp > pi/two ) theta= theta_tmp
-          !     !
-          !     ! CALL RANDOM_NUMBER( rand_num )
-          !     ! CALL RANDOM_NUMBER( rand_num2 )
-          !     !
-          !     ! IF( rand_num2 < half )  rel_sign= - 1
-          !     ! IF( rand_num2 >= half ) rel_sign=   1
-          !     !
-          !     ! phi= phi*( one + DBLE(rel_sign)*rand_num*half )
-          !
-          !      pos_corr_tmp(1)= center(1) + &
-          !                       r*DBLE(itr2)/(ten*ten)*SIN(theta)*COS(phi)
-          !      pos_corr_tmp(2)= center(2) + &
-          !                       r*DBLE(itr2)/(ten*ten)*SIN(theta)*SIN(phi)
-          !      pos_corr_tmp(3)= center(3) + &
-          !                       r*DBLE(itr2)/(ten*ten)*COS(theta)
-          !
-          !      IF( get_density( &
-          !          pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
-          !          .AND. &
-          !          validate_position_final( &
-          !          pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
-          !      )THEN
-          !
-          !        all_pos(:,a)= pos_corr_tmp
-          !        fld% cnt_move(a)= 1
-          !        EXIT
-          !
-          !      ENDIF
-          !
-          !    ENDDO scan_radial_line
+             !CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
+             !                               all_pos(3,a), &
+             !                               center(1), center(2), center(3), &
+             !                               r, theta, phi )
 
-              EXIT
+              !all_pos(1,a)= all_pos(1,a) &
+              !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*COS(phi)
+              !all_pos(2,a)= all_pos(2,a) &
+              !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*SIN(phi)
+              !all_pos(3,a)= all_pos(3,a) &
+              !      - one/(two*ten)*COS(theta*(one + one/(ten*ten)))
+
+              ! ...push the particle closer to the origin close to its radial
+              !    line, and place it to the first place having an acceptable
+              !    density
+              ! TODO: what if the particles is placed on top of another
+              !       particle?
+             ! scan_radial_line: DO itr2= NINT((ten - three)*ten), 1, -1
+             !
+             !  ! CALL RANDOM_NUMBER( rand_num )
+             !  ! CALL RANDOM_NUMBER( rand_num2 )
+             !  !
+             !  ! IF( rand_num2 < half )  rel_sign= - 1
+             !  ! IF( rand_num2 >= half ) rel_sign=   1
+             !  !
+             !  ! theta_tmp= theta*( one + DBLE(rel_sign)*rand_num*half )
+             !  !
+             !  ! IF( theta_tmp < pi .AND. theta_tmp > pi/two ) theta= theta_tmp
+             !  !
+             !  ! CALL RANDOM_NUMBER( rand_num )
+             !  ! CALL RANDOM_NUMBER( rand_num2 )
+             !  !
+             !  ! IF( rand_num2 < half )  rel_sign= - 1
+             !  ! IF( rand_num2 >= half ) rel_sign=   1
+             !  !
+             !  ! phi= phi*( one + DBLE(rel_sign)*rand_num*half )
+             !
+             !   pos_corr_tmp(1)= center(1) + &
+             !                    r*DBLE(itr2)/(ten*ten)*SIN(theta)*COS(phi)
+             !   pos_corr_tmp(2)= center(2) + &
+             !                    r*DBLE(itr2)/(ten*ten)*SIN(theta)*SIN(phi)
+             !   pos_corr_tmp(3)= center(3) + &
+             !                    r*DBLE(itr2)/(ten*ten)*COS(theta)
+             !
+             !   IF( get_density( &
+             !       pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
+             !       .AND. &
+             !       validate_position_final( &
+             !       pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
+             !   )THEN
+             !
+             !     all_pos(:,a)= pos_corr_tmp
+             !     fld% cnt_move(a)= 1
+             !     EXIT
+             !
+             !   ENDIF
+             !
+             ! ENDDO scan_radial_line
+             !
+             ! EXIT
 
             ENDIF test_position
 
@@ -2418,10 +2468,11 @@ SUBMODULE (sph_particles) apm
 
 
          CALL get_nstar_id_atm( npart_real, pos(1,:), &
-                                           pos(2,:), &
-                                           pos(3,:), fld% nstar_id, use_atmosphere )
+                                            pos(2,:), &
+                                            pos(3,:), fld% nstar_id, &
+                                            use_atmosphere )
 
-         !fld% nstar_id( npart_real+1:npart_all )= zero
+         fld% nstar_id( npart_real+1:npart_all )= zero
 
          ! get RELATIVE nu's right
          dN_av= zero
@@ -2633,8 +2684,8 @@ SUBMODULE (sph_particles) apm
                        nu, h, fld% nstar_sph )      ! output
 
     CALL get_nstar_id_atm( npart_real, pos(1,:), &
-                                      pos(2,:), &
-                                      pos(3,:), fld% nstar_id, use_atmosphere )
+                                       pos(2,:), &
+                                       pos(3,:), fld% nstar_id, use_atmosphere )
 
     fld% dNstar= zero
     dN_av = zero
@@ -3353,6 +3404,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(npart_all)  :: nutmp
     DOUBLE PRECISION, DIMENSION(npart_all)  :: htmp
     DOUBLE PRECISION, DIMENSION(npart_all)  :: nstar_id_tmp
+    DOUBLE PRECISION, DIMENSION(npart_all)  :: nstar_sph_tmp
     DOUBLE PRECISION, DIMENSION(3,npart_all):: all_pos_prev_dump_tmp
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_below
@@ -3375,6 +3427,7 @@ SUBMODULE (sph_particles) apm
     nutmp = nu
     htmp= h
     nstar_id_tmp= fld% nstar_id
+    nstar_sph_tmp= fld% nstar_sph
     IF( ALLOCATED(fld% all_pos_prev_dump) ) &
       all_pos_prev_dump_tmp= fld% all_pos_prev_dump
 
@@ -3474,15 +3527,17 @@ SUBMODULE (sph_particles) apm
     !$OMP             SHARED( pos, npart_above_xy, nu, postmp, nutmp, &
     !$OMP                     pos_below, nu_below, h, htmp, above_xy_plane_a, &
     !$OMP                     fld, all_pos_prev_dump_tmp, &
-    !$OMP                     nstar_id_tmp ) &
+    !$OMP                     nstar_id_tmp, nstar_sph_tmp ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_above_xy, 1
       pos( :, a )= postmp( :, a )
-      pos( :, npart_above_xy + a )       = pos_below( :, a )
-      h( a )                             = htmp( above_xy_plane_a(a) )
-      h( npart_above_xy + a )            = htmp( above_xy_plane_a(a) )
-      fld% nstar_id( a )                 = nstar_id_tmp( above_xy_plane_a(a) )
-      fld% nstar_id( npart_above_xy + a )= nstar_id_tmp( above_xy_plane_a(a) )
+      pos( :, npart_above_xy + a )        = pos_below( :, a )
+      h( a )                              = htmp( above_xy_plane_a(a) )
+      h( npart_above_xy + a )             = htmp( above_xy_plane_a(a) )
+      fld% nstar_id( a )                  = nstar_id_tmp( above_xy_plane_a(a) )
+      fld% nstar_id( npart_above_xy + a ) = nstar_id_tmp( above_xy_plane_a(a) )
+      fld% nstar_sph( a )                 = nstar_sph_tmp( above_xy_plane_a(a) )
+      fld% nstar_sph( npart_above_xy + a )= nstar_sph_tmp( above_xy_plane_a(a) )
       IF( ALLOCATED(fld% all_pos_prev_dump) )THEN
 
         fld% all_pos_prev_dump(1,a)= &
@@ -3508,13 +3563,14 @@ SUBMODULE (sph_particles) apm
     !$OMP             SHARED( pos, npart_real, npart_all, nu, postmp, nutmp, &
     !$OMP                     npart_real_old, npart_ghost, h, htmp, &
     !$OMP                     fld, all_pos_prev_dump_tmp, &
-    !$OMP                     nstar_id_tmp ) &
+    !$OMP                     nstar_id_tmp, nstar_sph_tmp ) &
     !$OMP             PRIVATE( a )
     DO a= 1, npart_ghost, 1
-      pos( :, npart_real + a ) = postmp( :, npart_real_old + a )
-      nu( a )= nutmp( npart_real_old + a )
-      h( a )= h_fac*htmp( npart_real_old + a )
-      fld% nstar_id( a )= nstar_id_tmp( npart_real_old + a )
+      pos( :, npart_real + a )= postmp( :, npart_real_old + a )
+      nu( a )            = nutmp( npart_real_old + a )
+      h( a )             = h_fac*htmp( npart_real_old + a )
+      fld% nstar_id( a ) = nstar_id_tmp( npart_real_old + a )
+      fld% nstar_sph( a )= nstar_sph_tmp( npart_real_old + a )
       IF( ALLOCATED(fld% all_pos_prev_dump) )THEN
         fld% all_pos_prev_dump( :, npart_real + a )= &
                                 all_pos_prev_dump_tmp( :, npart_real_old + a )

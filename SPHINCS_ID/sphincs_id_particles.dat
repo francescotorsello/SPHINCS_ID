@@ -79,7 +79,7 @@ nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-last_r= 0.999D0     ! The radius of the last spherical surface is
+last_r= 0.99D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -134,7 +134,7 @@ apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
-print_step= 5          ! Evey print_step steps, print the particle positions
+print_step= 10          ! Evey print_step steps, print the particle positions
                         ! at the current step, and the particle positions at
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution

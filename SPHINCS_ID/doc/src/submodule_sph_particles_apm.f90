@@ -299,7 +299,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: max_npart        = 10D+6
     INTEGER,          PARAMETER:: nn_des           = 301
     INTEGER,          PARAMETER:: m_max_it         = 50
-    INTEGER,          PARAMETER:: search_pos       = 10
+    INTEGER,          PARAMETER:: search_pos       = 0
     !INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
@@ -1189,14 +1189,14 @@ SUBMODULE (sph_particles) apm
         INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
         IF( exist )THEN
-            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-                  FORM= "FORMATTED", &
-                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                  IOMSG= err_msg )
+          OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
         ELSE
-            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-                  FORM= "FORMATTED", &
-                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+          OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+                FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
         ENDIF
         IF( ios > 0 )THEN
           PRINT *, "...error when opening " // TRIM(finalnamefile), &
@@ -1206,7 +1206,7 @@ SUBMODULE (sph_particles) apm
 
         DO a= 1, npart_real, 1
           !tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
-          tmp= fld% art_pr(a)
+          tmp= fld% dNstar(a)
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             1, a, &
             all_pos( 1, a ), &
@@ -1219,7 +1219,7 @@ SUBMODULE (sph_particles) apm
         ENDDO
 
         DO a= npart_real + 1, npart_all, 1
-          tmp= fld% art_pr(a)
+          tmp= fld% dNstar(a)
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             2, a, &
             all_pos( 1, a ), &
@@ -1520,8 +1520,8 @@ SUBMODULE (sph_particles) apm
       !IF( itr <= 50 )THEN
       !  fld% art_pr( npart_real+1:npart_all )= zero
       !ELSE
-      fld% art_pr( npart_real+1:npart_all )= &
-                                MIN( two*three*art_pr_max, max_art_pr_ghost )
+        fld% art_pr( npart_real+1:npart_all )= &
+                            MIN( itr*two*three*art_pr_max, max_art_pr_ghost )
       !ENDIF
 
    !   !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -1742,6 +1742,8 @@ SUBMODULE (sph_particles) apm
       PRINT *, " * Updating positions..."
 
       !all_pos_prev= all_pos
+      CALL density_loop( npart_all, all_pos, &    ! input
+                         nu, h, fld% nstar_sph )      ! output
 
       IF( debug ) PRINT *, "21"
 
@@ -1826,7 +1828,6 @@ SUBMODULE (sph_particles) apm
 
           pos_corr_tmp= all_pos(:,a) + ten*fld% correction_pos(:,a) ! 10
 
-
         ELSEIF( fld% dNstar(a) >= ten &
                 .AND. &
                 validate_position_final( &
@@ -1835,7 +1836,6 @@ SUBMODULE (sph_particles) apm
                   all_pos(3,a) + three*fld% correction_pos(3,a) ) )THEN
 
           pos_corr_tmp= all_pos(:,a) + three*fld% correction_pos(:,a) ! 3
-
 
         ELSE
 
@@ -1922,8 +1922,8 @@ SUBMODULE (sph_particles) apm
             !    times, do not move the particle at this step,
             !    and exit the 'determine_new_position' loop
 
-              fld% cnt_move(a)= 0
-              EXIT
+            !  fld% cnt_move(a)= 0
+            !  EXIT
 
               ! cnt= cnt + 1
               ! CALL RANDOM_NUMBER( rand_num )
@@ -1933,64 +1933,64 @@ SUBMODULE (sph_particles) apm
               ! IF( rand_num2 >= half ) rel_sign=   1
               ! all_pos(:,a)= all_pos(:,a)*( one -rand_num*half*third )
 
-           !   CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
-           !                                  all_pos(3,a), &
-           !                                  center(1), center(2), center(3), &
-           !                                  r, theta, phi )
-           !
-           !   !all_pos(1,a)= all_pos(1,a) &
-           !   !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*COS(phi)
-           !   !all_pos(2,a)= all_pos(2,a) &
-           !   !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*SIN(phi)
-           !   !all_pos(3,a)= all_pos(3,a) &
-           !   !      - one/(two*ten)*COS(theta*(one + one/(ten*ten)))
-           !
-           !   ! ...push the particle closer to the origin close to its radial
-           !   !    line, and place it to the first place having an acceptable
-           !   !    density
-           !   ! TODO: what if the particles is placed on top of another
-           !   !       particle?
-          !    scan_radial_line: DO itr2= NINT((ten - three)*ten), 1, -1
-          !
-          !     ! CALL RANDOM_NUMBER( rand_num )
-          !     ! CALL RANDOM_NUMBER( rand_num2 )
-          !     !
-          !     ! IF( rand_num2 < half )  rel_sign= - 1
-          !     ! IF( rand_num2 >= half ) rel_sign=   1
-          !     !
-          !     ! theta_tmp= theta*( one + DBLE(rel_sign)*rand_num*half )
-          !     !
-          !     ! IF( theta_tmp < pi .AND. theta_tmp > pi/two ) theta= theta_tmp
-          !     !
-          !     ! CALL RANDOM_NUMBER( rand_num )
-          !     ! CALL RANDOM_NUMBER( rand_num2 )
-          !     !
-          !     ! IF( rand_num2 < half )  rel_sign= - 1
-          !     ! IF( rand_num2 >= half ) rel_sign=   1
-          !     !
-          !     ! phi= phi*( one + DBLE(rel_sign)*rand_num*half )
-          !
-          !      pos_corr_tmp(1)= center(1) + &
-          !                       r*DBLE(itr2)/(ten*ten)*SIN(theta)*COS(phi)
-          !      pos_corr_tmp(2)= center(2) + &
-          !                       r*DBLE(itr2)/(ten*ten)*SIN(theta)*SIN(phi)
-          !      pos_corr_tmp(3)= center(3) + &
-          !                       r*DBLE(itr2)/(ten*ten)*COS(theta)
-          !
-          !      IF( get_density( &
-          !          pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
-          !          .AND. &
-          !          validate_position_final( &
-          !          pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
-          !      )THEN
-          !
-          !        all_pos(:,a)= pos_corr_tmp
-          !        fld% cnt_move(a)= 1
-          !        EXIT
-          !
-          !      ENDIF
-          !
-          !    ENDDO scan_radial_line
+              CALL spherical_from_cartesian( all_pos(1,a), all_pos(2,a), &
+                                             all_pos(3,a), &
+                                             center(1), center(2), center(3), &
+                                             r, theta, phi )
+
+              !all_pos(1,a)= all_pos(1,a) &
+              !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*COS(phi)
+              !all_pos(2,a)= all_pos(2,a) &
+              !      - one/(two*ten)*SIN(theta*(one + one/(ten*ten)))*SIN(phi)
+              !all_pos(3,a)= all_pos(3,a) &
+              !      - one/(two*ten)*COS(theta*(one + one/(ten*ten)))
+
+              ! ...push the particle closer to the origin close to its radial
+              !    line, and place it to the first place having an acceptable
+              !    density
+              ! TODO: what if the particles is placed on top of another
+              !       particle?
+              scan_radial_line: DO itr2= NINT((ten - three)*ten), 1, -1
+
+               ! CALL RANDOM_NUMBER( rand_num )
+               ! CALL RANDOM_NUMBER( rand_num2 )
+               !
+               ! IF( rand_num2 < half )  rel_sign= - 1
+               ! IF( rand_num2 >= half ) rel_sign=   1
+               !
+               ! theta_tmp= theta*( one + DBLE(rel_sign)*rand_num*half )
+               !
+               ! IF( theta_tmp < pi .AND. theta_tmp > pi/two ) theta= theta_tmp
+               !
+               ! CALL RANDOM_NUMBER( rand_num )
+               ! CALL RANDOM_NUMBER( rand_num2 )
+               !
+               ! IF( rand_num2 < half )  rel_sign= - 1
+               ! IF( rand_num2 >= half ) rel_sign=   1
+               !
+               ! phi= phi*( one + DBLE(rel_sign)*rand_num*half )
+
+                pos_corr_tmp(1)= center(1) + &
+                                 r*DBLE(itr2)/(ten*ten)*SIN(theta)*COS(phi)
+                pos_corr_tmp(2)= center(2) + &
+                                 r*DBLE(itr2)/(ten*ten)*SIN(theta)*SIN(phi)
+                pos_corr_tmp(3)= center(3) + &
+                                 r*DBLE(itr2)/(ten*ten)*COS(theta)
+
+                IF( get_density( &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
+                    .AND. &
+                    validate_position_final( &
+                    pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
+                )THEN
+
+                  all_pos(:,a)= pos_corr_tmp
+                  fld% cnt_move(a)= 1
+                  EXIT
+
+                ENDIF
+
+              ENDDO scan_radial_line
 
               EXIT
 

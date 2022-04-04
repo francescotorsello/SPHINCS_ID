@@ -455,10 +455,10 @@ SUBMODULE (ejecta_generic) interpolate
 
     !************************************************
     !
-    !# Return 1 if the energy density is nonpositive
+    !# Return `.TRUE` if the energy density is nonpositive
     !  or if the specific energy is nonpositive,
     !  or if the pressure is nonpositive
-    !  at the specified point; return 0 otherwise
+    !  at the specified point; return `.FALSE.` otherwise
     !
     !  FT 19.11.2021
     !
