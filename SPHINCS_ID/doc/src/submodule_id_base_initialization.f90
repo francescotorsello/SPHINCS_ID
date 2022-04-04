@@ -133,16 +133,10 @@ SUBMODULE (id_base) initialization
           MAXVAL( centers(:,CEILING(DBLE(itr+1)/DBLE(2))) + sizes(:,itr+1) ) &
                     > total_sizes(itr+1))THEN
 
+
         PRINT *, "** ERROR! A matter object", &
                  " is not contained within the given size of the", &
                  " physical system."
-        PRINT *, " * 'Left' size of the matter object= ", &
-                 MINVAL( centers(:,CEILING(DBLE(itr)/DBLE(2))) - sizes(:,itr) )
-        PRINT *, " * 'Left' size of the physical system= ", total_sizes(itr)
-        PRINT *, " * 'Right' size of the matter object= ", &
-              MAXVAL( centers(:,CEILING(DBLE(itr+1)/DBLE(2))) + sizes(:,itr+1) )
-        PRINT *, " * 'Right' size of the physical system=", total_sizes(itr+1)
-        PRINT *
         PRINT *, "   Please assign the appropriate sizes", &
                  " in the constructor of the TYPE that extends idbase."
         PRINT *, "   Stopping..."

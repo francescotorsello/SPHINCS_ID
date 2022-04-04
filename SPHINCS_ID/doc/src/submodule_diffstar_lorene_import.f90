@@ -838,14 +838,14 @@ SUBMODULE (diffstar_lorene) import
   END PROCEDURE import_spatial_metric
 
 
-  MODULE PROCEDURE is_hydro_positive
+  MODULE PROCEDURE is_hydro_negative
 
     !************************************************
     !
-    !# Return .FALSE. if the energy density is nonpositive
+    !# Return 1 if the energy density is nonpositive
     !  or if the specific energy is nonpositive,
     !  or if the pressure is nonpositive
-    !  at the specified point; .TRUE. otherwise
+    !  at the specified point
     !
     !  FT 25.10.2021
     !
@@ -856,27 +856,19 @@ SUBMODULE (diffstar_lorene) import
 
     IMPLICIT NONE
 
-    INTEGER:: tmp
-
     IF ( C_ASSOCIATED( THIS% diffstar_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
-      !  definition of Msun_geo
-      tmp= positive_hydro( THIS% diffstar_ptr, &
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
+      ! Msun_geo
+      res= negative_hydro( THIS% diffstar_ptr, &
                            x*Msun_geo, &
                            y*Msun_geo, &
                            z*Msun_geo )
 
-      IF( tmp == 1 )THEN
-        res= .TRUE.
-      ELSE
-        res= .FALSE.
-      ENDIF
-
     ENDIF
 
-  END PROCEDURE is_hydro_positive
+  END PROCEDURE is_hydro_negative
 
 
 END SUBMODULE import

@@ -52,7 +52,6 @@ SUBMODULE (id_base) mass_profile
     !# Perform 3D integration over a spherical grid
     !  of the baryon mass density. Output baryon
     !  mass and radial mass profile.
-    !  @todo improve the integration algorithm?
     !
     !  FT 19.02.2021
     !

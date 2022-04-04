@@ -12,10 +12,7 @@
 !------------------------------------------------------------------------!
 parts_pos_path="pos-archive/"     ! Path to the directory containing the
                                   ! formatted files with the particle positions
-               !"./"
-parts_pos=!"apm_pos_nu.dat"
-          "apm-pos-nu_1313_45km_ms1b_500k.dat"
-          !"apm-pos-nu_135135_42km_apr4_500k.dat"
+parts_pos=!"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
           !"apm-pos-nu_1216_45km_pol275_500k.dat"
@@ -33,7 +30,7 @@ parts_pos=!"apm_pos_nu.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm50.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm200-atm.dat"
-          !"apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
+          "apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -55,21 +52,23 @@ reflect_particles_x= .TRUE.
 !----------------------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers;
 ! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 500000 !1200000 !2800000
+npart_des= 2800000 !1200000 !2800000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
 stretch=1.2     ! Factor by which the lattices around the stars are stretched
-use_thres=.TRUE.
-thres=100      ! (~rho_max)/thres is the minimum mass density considered
+!nx=80           ! Number of particles in the x direction for each lattice
+!ny=80           ! Number of particles in the y direction for each lattice
+!nz=80           ! EVEN number of particles in the z direction for each lattice
+use_thres=.FALSE.
+thres=10      ! (~rho_max)/thres is the minimum mass density considered
                 ! when placing particles. Used only when redistribute_nu is
                 ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
 redistribute_nu=.FALSE. ! If .TRUE., nu is reassigned on the particles such that
                        ! the baryon number ratio does not exceed nu_ratio on
-                       ! each star (obsolescent; not used in this version)
+                       ! each star
 nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
-                       ! redistribute_nu is .TRUE. (obsolescent; not used in
-                       ! this version)
+                       ! redistribute_nu is .TRUE.
 !---------------------------------------------------------------!
 ! Parameters needed to place particles on spherical surfaces    !
 !   This method integrates the density over the stars, computes !
@@ -79,7 +78,7 @@ nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-last_r= 0.99D0     ! The radius of the last spherical surface is
+last_r= 0.999D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -102,8 +101,7 @@ lower_bound= 0.975D0  ! Desired lower bound for the same differences as above
                       ! following parameters.
 max_steps= 100        ! If, after max_steps, the iteration did not converge,
                       ! multiply upper_bound by upper_factor, and lower_bound
-                      ! by lower_factor, defined below.
-                      ! max_steps >= 10. 100 is a nice value
+                      ! by lower_factor. max_steps >= 10. 100 is a nice value
 upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
 lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
 randomize_phi=  .TRUE.  ! Randomize particle positions in phi
@@ -128,17 +126,12 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
-print_step= 10          ! Evey print_step steps, print the particle positions
-                        ! at the current step, and the particle positions at
-                        ! the (current - print_step) step, to a formatted file.
-                        ! This allows the user to monitor the APM evolution
-                        ! Set to 0 to not print positions at all
 apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
@@ -148,7 +141,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.425D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.65D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
@@ -160,8 +153,6 @@ mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
-ghost_dist=0.25D0       ! Distance between the ghost particles and the surface
-                        ! of the matter object considered (star, ejecta, etc...)
 use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term
                         ! This can be useful when the system has an irregular

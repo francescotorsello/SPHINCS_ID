@@ -1,7 +1,6 @@
 Project: SPHINCS_ID
 Version: 1.0
-github: https://github.com/francescotorsello
-linkedin: https://www.linkedin.com/in/francescotorsello
+Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src
 Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.PNG){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of the SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.2M_\odot\) (left) and \(1.8M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the \(\texttt{CompOSE}\) database. The solution was computed with \(\texttt{LORENE}\) and the \(\texttt{CompOSE}\) software, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with \(\texttt{SPLASH}\) and \(\texttt{GIMP}\). </font>
 Author: Francesco Torsello
 display: private
@@ -17,15 +16,17 @@ sort: alpha
 src_dir: ./src
 media_dir: ./doc-media
 exclude_dir: ./src/prototypes
-exclude: src/id_base/bns_base/bns_lorene/submodule_bns_lorene_bindings.f90
-         src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_bindings.f90
-         src/sph_particles/submodule_sph_particles_redistribute_nu.f90
+exclude: submodule_bns_lorene_bindings.f90
+         submodule_diffstar_lorene_bindings.f90
+         submodule_sph_particles_redistribute_nu.f90
+         proto_artificial-pressure.f90
 output_dir: ./doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S
 print_creation_date: true
 proc_internals: true
-favicon: ./doc-media/favicon.png
+github: https://github.com/francescotorsello
+linkedin: https://www.linkedin.com/in/francescotorsello
 alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        lorene = \(\texttt{LORENE}\)
        compose = \(\mathrm{CompOSE}\)
@@ -43,19 +44,17 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        ee = Einstein equations
        bns = \(\mathrm{BNS}\)
 <!---graph_dir: doc-graphs--->
-<!---Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src--->
-<!---Project_url: https://francescotorsello.github.io/SPHINCS_ID-doc/--->
 
 #### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___
 
-SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([2][2]{:target="_blank"}).
+SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([4][4]{:target="_blank"}).
 
 Presently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN or MAGMA2. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN or MAGMA2.
 
 Currently, it produces initial data for:
 
-  - binary neutron star mergers and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([3][3]{:target="_blank"},[4][4]{:target="_blank"})
+  - binary neutron star mergers and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([2][2]{:target="_blank"},[3][3]{:target="_blank"})
   - data on a Cartesian, uniform grid, representing a generic physical system
 
 The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
@@ -90,7 +89,7 @@ A copy of the license is included in the section entitled "License", reachable b
 ---
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
-[2]: <https://academic.oup.com/mnras/article/498/3/4230/5897370>
-[3]: <https://lorene.obspm.fr/>
-[4]: <https://arxiv.org/abs/gr-qc/0007028>
+[2]: <https://lorene.obspm.fr/>
+[3]: <https://arxiv.org/abs/gr-qc/0007028>
+[4]: <https://academic.oup.com/mnras/article/498/3/4230/5897370>
 [5]: <https://www.gnu.org/licenses/gpl-3.0.en.html>

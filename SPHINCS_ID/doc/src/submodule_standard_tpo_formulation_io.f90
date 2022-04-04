@@ -64,71 +64,71 @@ SUBMODULE (standard_tpo_formulation) io
 
     INTEGER:: l, last_level, i_matter
 
-    last_level= this% get_nlevels()
+    last_level= THIS% get_nlevels()
 
     PRINT *, " * Spacetime:"
     PRINT *
     PRINT *, "   Number of refinement levels= ", last_level
     PRINT *
     PRINT *, "   Number of grid points on each level= ", &
-             this% get_ngrid_x( 1 ), "**3"
+             THIS% get_ngrid_x( 1 ), "**3"
     PRINT *
     DO l= 1, last_level, 1
-      PRINT *, "   Resolution on level ", l, "= ", this% get_dx(l), &
-               "Msun_geo= ", this% get_dx(l)*Msun_geo*ten*ten*ten, "m"
+      PRINT *, "   Resolution on level ", l, "= ", THIS% get_dx(l), &
+               "Msun_geo= ", THIS% get_dx(l)*Msun_geo*ten*ten*ten, "m"
     ENDDO
     PRINT *
     DO l= 1, last_level, 1
-      PRINT *, "   x boundary of level ", l, "= ", this% get_xR(l), "= ", &
-               this% get_xR(l)*Msun_geo, "km"
-      PRINT *, "   y boundary of level ", l, "= ", this% get_yR(l), "= ", &
-               this% get_yR(l)*Msun_geo, "km"
-      PRINT *, "   z boundary of level ", l, "= ", this% get_zR(l), "= ", &
-               this% get_zR(l)*Msun_geo, "km"
+      PRINT *, "   x boundary of level ", l, "= ", THIS% get_xR(l), "= ", &
+               THIS% get_xR(l)*Msun_geo, "km"
+      PRINT *, "   y boundary of level ", l, "= ", THIS% get_yR(l), "= ", &
+               THIS% get_yR(l)*Msun_geo, "km"
+      PRINT *, "   z boundary of level ", l, "= ", THIS% get_zR(l), "= ", &
+               THIS% get_zR(l)*Msun_geo, "km"
     ENDDO
     PRINT *
-    DO i_matter= 1, this% n_matter, 1
+    DO i_matter= 1, THIS% n_matter, 1
       PRINT *, "   Number of grid points across the x-axis-diameter of ", &
-               "matter object ", i_matter, "=", this% npoints_xaxis(i_matter)
+               "matter object ", i_matter, "=", THIS% npoints_xaxis(i_matter)
     ENDDO
     PRINT *
-    IF( this% MC_int(1,jx) < HUGE(one) )THEN
+    IF( THIS% MC_int(1,jx) < HUGE(one) )THEN
       DO l= 1, last_level, 1
         !PRINT *, "   (Rough) Estimate of the x component of the ADM ", &
         !         "momentum computed with full ID on the mesh, "
-        !PRINT *, "   on level    ", l, "= ", this% MC_int(l,jx), "Msun*c"
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_int(l,jx), "Msun*c"
         !PRINT *, "   (Rough) Estimate of the y component of the ADM ", &
         !         "momentum computed with full ID on the mesh, "
-        !PRINT *, "   on level    ", l, "= ", this% MC_int(l,jy), "Msun*c"
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_int(l,jy), "Msun*c"
         !PRINT *, "   (Rough) Estimate of the z component of the ADM ", &
         !         "momentum computed with full ID on the mesh, "
-        !PRINT *, "   on level    ", l, "= ", this% MC_int(l,jz), "Msun*c"
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_int(l,jz), "Msun*c"
         PRINT *, "   (Rough) Estimate of the ADM ", &
                  "momentum computed with full ID on the mesh, "
         PRINT *, "   on level    ", l, "= "
-        PRINT *, "   (", this% MC_int(l,jx), ","
-        PRINT *, "    ", this% MC_int(l,jy), ","
-        PRINT *, "    ", this% MC_int(l,jz), ") Msun*c"
+        PRINT *, "   (", THIS% MC_int(l,jx), ","
+        PRINT *, "    ", THIS% MC_int(l,jy), ","
+        PRINT *, "    ", THIS% MC_int(l,jz), ") Msun*c"
         PRINT *
       ENDDO
     ENDIF
-    IF( this% MC_parts_int(1,jx) < HUGE(one) )THEN
+    IF( THIS% MC_parts_int(1,jx) < HUGE(one) )THEN
       DO l= 1, last_level, 1
         !PRINT *, "   (Rough) Estimate of the x component of the ADM ", &
         !"momentum computed with particle data mapped to the mesh, "
-        !PRINT *, "   on level    ", l, "= ", this% MC_parts_int(l,jx), "Msun*c"
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_parts_int(l,jx), "Msun*c"
         !  PRINT *, "   (Rough) Estimate of the y component of the ADM ", &
         !"momentum computed with particle data mapped to the mesh, "
-        !PRINT *, "   on level    ", l, "= ", this% MC_parts_int(l,jy), "Msun*c"
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_parts_int(l,jy), "Msun*c"
         !  PRINT *, "   (Rough) Estimate of the z component of the ADM ", &
         !"momentum computed with particle data mapped to the mesh, "
-        !PRINT *, "   on level    ", l, "= ", this% MC_parts_int(l,jz), "Msun*c"
+        !PRINT *, "   on level    ", l, "= ", THIS% MC_parts_int(l,jz), "Msun*c"
         PRINT *, "   (Rough) Estimate of the ADM ", &
                  "momentum computed with particle data mapped to the mesh, "
         PRINT *, "   on refinement level    ", l, "= "
-        PRINT *, "   (", this% MC_parts_int(l,jx), ","
-        PRINT *, "    ", this% MC_parts_int(l,jy), ","
-        PRINT *, "    ", this% MC_parts_int(l,jz), ") Msun*c"
+        PRINT *, "   (", THIS% MC_parts_int(l,jx), ","
+        PRINT *, "    ", THIS% MC_parts_int(l,jy), ","
+        PRINT *, "    ", THIS% MC_parts_int(l,jz), ") Msun*c"
         PRINT *
       ENDDO
     ENDIF

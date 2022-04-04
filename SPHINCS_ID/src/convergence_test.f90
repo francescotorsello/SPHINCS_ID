@@ -66,7 +66,7 @@ PROGRAM convergence_test
                                       test_status, show_progress, end_time, &
                                       read_sphincs_id_parameters, &
                                       !----------
-                                      n_id, common_path, filenames, placer, &
+                                      n_bns, common_path, filenames, placer, &
                                       export_bin, export_form, export_form_xy, &
                                       export_form_x, export_constraints_xy, &
                                       export_constraints_x, &
@@ -75,12 +75,11 @@ PROGRAM convergence_test
                                       export_constraints_details, &
                                       constraints_step, &
                                       compute_parts_constraints, &
-                                      numerator_ratio_dx, denominator_ratio_dx,&
+                                      numerator_ratio_dx, denominator_ratio_dx, &
                                       one_lapse, zero_shift, show_progress, &
                                       run_sph, run_spacetime, sph_path, &
                                       spacetime_path, estimate_length_scale, &
                                       test_int, max_n_parts, ref_lev
-  USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
 
   IMPLICIT NONE
 
@@ -175,13 +174,6 @@ PROGRAM convergence_test
   PRINT *, "  'COPYING'.                                                       "
   PRINT *, "  ________________________________________________________________ "
   PRINT *
-  PRINT *, "  SPHINCS_ID was compiled with: "
-  PRINT *, COMPILER_VERSION()
-  PRINT *
-  PRINT *, "  using the options: "
-  PRINT *, COMPILER_OPTIONS()
-  PRINT *, "  ________________________________________________________________ "
-  PRINT *
   PRINT *, "  Run id: ", run_id
   PRINT *, "  ________________________________________________________________ "
   PRINT *
@@ -258,18 +250,56 @@ PROGRAM convergence_test
   !-- Construct the idbase objects
   !
   CALL allocate_idbase( idata, TRIM(filenames(1)), systems(1), systems_name(1) )
-  PRINT *, "===================================================" &
-           // "==============="
-  PRINT *, " Constructing idbase object for "//systems(1)
-  PRINT *, "===================================================" &
-           // "==============="
-  PRINT *
   CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)) )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)
   CALL idata% set_one_lapse ( one_lapse )
   CALL idata% set_zero_shift( zero_shift )
 
+  !
+  !-- Construct the particles object from the bns object
+  !
+  IF( compute_parts_constraints )THEN
+
+    PRINT *, "===================================================" &
+             // "==============="
+    PRINT *, " Placing particles"
+    PRINT *, "===================================================" &
+             // "==============="
+    PRINT *
+    particles_dist= particles( idata, placer( 1, 1 ) )
+
+    !
+    !-- Compute the SPH variables
+    !
+    PRINT *, "===================================================" &
+             // "====================="
+    PRINT *, " Computing SPH variables "
+    PRINT *, "===================================================" &
+             // "====================="
+    PRINT *
+    WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
+                                "l", &
+                                1, "-", 1, "."
+    WRITE( namefile_parts_bin, "(A5)" ) systems_name(1)
+    namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
+
+    particles_dist% export_bin    = export_bin
+    particles_dist% export_form_xy= export_form_xy
+    particles_dist% export_form_x = export_form_x
+    CALL particles_dist% compute_and_print_sph_variables( namefile_parts )
+
+    !
+    !-- Print the particle initial data to a formatted file
+    !
+    IF( export_form )THEN
+      WRITE( namefile_parts, "(A34)" ) &
+                             "lorene-bns-id-particles-form_1.dat"
+      namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
+      CALL particles_dist% print_formatted_id_particles( namefile_parts )
+    ENDIF
+
+  ENDIF
 
   !
   !-- Construct the bssn objects from the bns object
@@ -368,53 +398,6 @@ PROGRAM convergence_test
                   print_formatted_id_tpo_variables( namefile_bssn )
     ENDDO export_bssn_loop
   ENDIF
-
-
-  !
-  !-- Construct the particles object from the bns object
-  !
-  IF( compute_parts_constraints )THEN
-
-    PRINT *, "===================================================" &
-             // "==============="
-    PRINT *, " Placing particles"
-    PRINT *, "===================================================" &
-             // "==============="
-    PRINT *
-    particles_dist= particles( idata, placer( 1, 1 ) )
-
-    !
-    !-- Compute the SPH variables
-    !
-    PRINT *, "===================================================" &
-             // "====================="
-    PRINT *, " Computing SPH variables "
-    PRINT *, "===================================================" &
-             // "====================="
-    PRINT *
-    WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
-                                "l", &
-                                1, "-", 1, "."
-    WRITE( namefile_parts_bin, "(A5)" ) systems_name(1)
-    namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
-
-    particles_dist% export_bin    = export_bin
-    particles_dist% export_form_xy= export_form_xy
-    particles_dist% export_form_x = export_form_x
-    CALL particles_dist% compute_and_print_sph_variables( namefile_parts )
-
-    !
-    !-- Print the particle initial data to a formatted file
-    !
-    IF( export_form )THEN
-      WRITE( namefile_parts, "(A34)" ) &
-                             "lorene-bns-id-particles-form_1.dat"
-      namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
-      CALL particles_dist% print_formatted_id_particles( namefile_parts )
-    ENDIF
-
-  ENDIF
-
 
   !
   !-- Compute the BSSN constraints

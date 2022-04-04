@@ -51,7 +51,7 @@ SUBMODULE (id_base) access
 
     IMPLICIT NONE
 
-    this% n_matter= value
+    THIS% n_matter= value
 
   END PROCEDURE set_n_matter
 
@@ -69,7 +69,7 @@ SUBMODULE (id_base) access
 
     IMPLICIT NONE
 
-    get_n_matter= this% n_matter
+    get_n_matter= THIS% n_matter
 
   END PROCEDURE get_n_matter
 
@@ -86,7 +86,7 @@ SUBMODULE (id_base) access
 
     IMPLICIT NONE
 
-    this% one_lapse= logic
+    THIS% one_lapse= logic
 
   END PROCEDURE set_one_lapse
 
@@ -103,7 +103,7 @@ SUBMODULE (id_base) access
 
     IMPLICIT NONE
 
-    get_one_lapse= this% one_lapse
+    get_one_lapse= THIS% one_lapse
 
   END PROCEDURE get_one_lapse
 
@@ -120,7 +120,7 @@ SUBMODULE (id_base) access
 
     IMPLICIT NONE
 
-    this% zero_shift= logic
+    THIS% zero_shift= logic
 
   END PROCEDURE set_zero_shift
 
@@ -137,7 +137,7 @@ SUBMODULE (id_base) access
 
     IMPLICIT NONE
 
-    get_zero_shift= this% zero_shift
+    get_zero_shift= THIS% zero_shift
 
   END PROCEDURE get_zero_shift
 
@@ -164,7 +164,7 @@ SUBMODULE (id_base) access
 
     ELSE
 
-      this% cold_system= value
+      THIS% cold_system= value
 
     ENDIF
 
@@ -185,7 +185,7 @@ SUBMODULE (id_base) access
 
     IMPLICIT NONE
 
-    get_cold_system= this% cold_system
+    get_cold_system= THIS% cold_system
 
   END PROCEDURE get_cold_system
 
@@ -213,7 +213,7 @@ SUBMODULE (id_base) access
 
     ELSE
 
-      this% estimate_length_scale= value
+      THIS% estimate_length_scale= value
 
     ENDIF
 
@@ -235,7 +235,7 @@ SUBMODULE (id_base) access
 
     IMPLICIT NONE
 
-    get_estimate_length_scale= this% estimate_length_scale
+    get_estimate_length_scale= THIS% estimate_length_scale
 
   END PROCEDURE get_estimate_length_scale
 
@@ -257,17 +257,17 @@ SUBMODULE (id_base) access
     IF( i_matter < 1 )THEN
 
       PRINT *, "** ERROR! The index of the matter object is lower than 1. "
-      PRINT *, "   It should be between 1 and n_matter= ", this% n_matter
+      PRINT *, "   It should be between 1 and n_matter= ", THIS% n_matter
       PRINT *, "   The index is ", i_matter
       PRINT *, "   Stopping..."
       PRINT *
       STOP
 
-    ELSEIF( i_matter > this% n_matter )THEN
+    ELSEIF( i_matter > THIS% n_matter )THEN
 
       PRINT *, "** ERROR! The index of the matter object is larger than ", &
-               this% n_matter
-      PRINT *, "   It should be between 1 and n_matter= ", this% n_matter
+               THIS% n_matter
+      PRINT *, "   It should be between 1 and n_matter= ", THIS% n_matter
       PRINT *, "   The index is ", i_matter
       PRINT *, "   Stopping..."
       PRINT *
@@ -290,11 +290,7 @@ SUBMODULE (id_base) access
     !
     !************************************************
 
-    USE constants, ONLY: one, five, ten
-
     IMPLICIT NONE
-
-    DOUBLE PRECISION, PARAMETER:: stretch= five/(ten*ten*ten)
 
     INTEGER:: i_matter
     DOUBLE PRECISION, DIMENSION(3):: center_matter
@@ -307,10 +303,10 @@ SUBMODULE (id_base) access
     box(4)= - HUGE(1.0D0)
     box(6)= - HUGE(1.0D0)
 
-    DO i_matter= 1, this% get_n_matter(), 1
+    DO i_matter= 1, THIS% get_n_matter(), 1
 
-      size_matter  = this% return_spatial_extent( i_matter )*(one + stretch)
-      center_matter= this% return_center( i_matter )
+      size_matter  = THIS% return_spatial_extent( i_matter )
+      center_matter= THIS% return_center( i_matter )
 
       IF( center_matter(1) - size_matter(1) < box(1) ) &
                           box(1) = center_matter(1) - size_matter(1)

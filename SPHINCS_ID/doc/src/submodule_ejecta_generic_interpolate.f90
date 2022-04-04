@@ -451,14 +451,14 @@ SUBMODULE (ejecta_generic) interpolate
   END PROCEDURE interpolate_spatial_metric
 
 
-  MODULE PROCEDURE is_hydro_positive
+  MODULE PROCEDURE is_hydro_negative
 
     !************************************************
     !
-    !# Return `.TRUE` if the energy density is nonpositive
+    !# Return 1 if the energy density is nonpositive
     !  or if the specific energy is nonpositive,
     !  or if the pressure is nonpositive
-    !  at the specified point; return `.FALSE.` otherwise
+    !  at the specified point; return 0 otherwise
     !
     !  FT 19.11.2021
     !
@@ -482,12 +482,12 @@ SUBMODULE (ejecta_generic) interpolate
         .OR. y < center(2) - sizes(4) &
         .OR. ABS(z) > center(3) + sizes(5) &
     )THEN
-      res= .FALSE.
+      res= 1
     ELSE
-      res= .TRUE.
+      res= 0
     ENDIF
 
-  END PROCEDURE is_hydro_positive
+  END PROCEDURE is_hydro_negative
 
 
 END SUBMODULE interpolate

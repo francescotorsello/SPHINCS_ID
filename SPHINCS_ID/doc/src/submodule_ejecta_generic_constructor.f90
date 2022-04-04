@@ -420,12 +420,6 @@ SUBMODULE (ejecta_generic) constructor
     dr             = derived_type% dx_grid/4.0D0
     dth            = pi/2.0D0/100.0D0
     dphi           = 2.0D0*pi/100.0D0
-
-    ALLOCATE( mass_profile( 3, 0:NINT(ABS(MAXVAL(grid_tmp( :, 1 )))/dr) ), &
-              STAT= ios, ERRMSG= err_msg )
-    ALLOCATE( mass_profile_idx( 0:NINT(ABS(MAXVAL(grid_tmp( :, 1 )))/dr) ), &
-              STAT= ios, ERRMSG= err_msg )
-
     CALL derived_type% integrate_baryon_mass_density( &
                             derived_type% centers(1,1), &
                             ABS(MAXVAL(grid_tmp( :, 1 ))), &
