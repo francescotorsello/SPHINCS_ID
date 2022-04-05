@@ -2010,67 +2010,11 @@ SUBMODULE (sph_particles) constructor_std
         vel(jy,a)= lapse(a)*v_euler_y(a)- shift_y(a)
         vel(jz,a)= lapse(a)*v_euler_z(a)- shift_z(a)
 
-      !  DO i= 1, 3, 1
-      !    IF( ISNAN(vel(i,a)) )THEN
-      !      PRINT *, "ERROR! The ", i, " component of vel is a NaN at ", &
-      !               "particle ", a
-      !      PRINT *
-      !      STOP
-      !    ELSEIF( .NOT.IEEE_IS_FINITE(vel(i,a)) )THEN
-      !      PRINT *, "ERROR! The ", i, " component of vel is infinite at ", &
-      !               "particle ",a
-      !      PRINT *
-      !      STOP
-      !    ENDIF
-      !  ENDDO
-
-        !
-        !-- Metric as matrix for easy manipulation
-        !
-      !  g4(0,0)= - lapse(a)**2 + g_xx(a)*shift_x(a)*shift_x(a)&
-      !         + two*g_xy(a)*shift_x(a)*shift_y(a) &
-      !         + two*g_xz(a)*shift_x(a)*shift_z(a) &
-      !         + g_yy(a)*shift_y(a)*shift_y(a) &
-      !         + two*g_yz(a)*shift_y(a)*shift_z(a) &
-      !         + g_zz(a)*shift_z(a)*shift_z(a)
-      !  g4(0,1)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      !  g4(0,2)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      !  g4(0,3)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-      !
-      !  g4(1,0)= g_xx(a)*shift_x(a) + g_xy(a)*shift_y(a) + g_xz(a)*shift_z(a)
-      !  g4(1,1)= g_xx(a)
-      !  g4(1,2)= g_xy(a)
-      !  g4(1,3)= g_xz(a)
-      !
-      !  g4(2,0)= g_xy(a)*shift_x(a) + g_yy(a)*shift_y(a) + g_yz(a)*shift_z(a)
-      !  g4(2,1)= g_xy(a)
-      !  g4(2,2)= g_yy(a)
-      !  g4(2,3)= g_yz(a)
-      !
-      !  g4(3,0)= g_xz(a)*shift_x(a) + g_yz(a)*shift_y(a) + g_zz(a)*shift_z(a)
-      !  g4(3,1)= g_xz(a)
-      !  g4(3,2)= g_yz(a)
-      !  g4(3,3)= g_zz(a)
-
         CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
                          [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
 
-      !  DO i= 1, 10, 1
-      !    IF( ISNAN(g4(i)) )THEN
-      !      PRINT *, "ERROR! The ", i, " component of g4 is a NaN at ", &
-      !               "particle ", a
-      !      PRINT *
-      !      STOP
-      !    ELSEIF( .NOT.IEEE_IS_FINITE(g4(i)) )THEN
-      !      PRINT *, "ERROR! The ", i, " component of g4 is infinite at ", &
-      !               "particle ",a
-      !      PRINT *
-      !      STOP
-      !    ENDIF
-      !  ENDDO
-
         CALL determinant_sym4x4( g4, det )
-        !CALL determinant_4x4_matrix(g4,det)
+
         IF( ABS(det) < 1D-10 )THEN
           PRINT *, "ERROR! The determinant of the spacetime metric is " &
                    // "effectively 0 at particle ", a
@@ -2092,24 +2036,30 @@ SUBMODULE (sph_particles) constructor_std
         !-- Generalized Lorentz factor
         !
         Theta_a= zero
-        !DO nus=0,3
-        !  DO mus=0,3
-        !    Theta_a= Theta_a &
-        !             + g4(mus,nus)*vel(mus,a)*vel(nus,a)
-        !  ENDDO
-        !ENDDO
         CALL spacetime_vector_norm_sym4x4( g4, vel(:,a), Theta_a )
         IF( .NOT.is_finite_number(Theta_a) )THEN
-          PRINT *, "ERROR! The spacetime norm of vel is ", Theta_a, &
-                   "at particle ", a
+          PRINT *, "** ERROR! The spacetime norm of vel is ", Theta_a, &
+                   "at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
+          PRINT *, " * Stopping..."
           PRINT *
           STOP
         ENDIF
 
         Theta_a= one/SQRT(-Theta_a)
         IF( .NOT.is_finite_number(Theta_a) )THEN
-          PRINT *, "ERROR! The generalized Lorentz factor is ", Theta_a, &
-                   "at particle ", a
+          PRINT *, "** ERROR! The generalized Lorentz factor is ", Theta_a, &
+                   "at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+        ENDIF
+        IF( Theta_a < one )THEN
+          PRINT *, "** ERROR! The generalized Lorentz factor is ", Theta_a, &
+                   "< 1 at particle ", a, &
+                   "in SUBROUTINE compute_nstar_p"
+          PRINT *, " * Stopping..."
           PRINT *
           STOP
         ENDIF

@@ -182,7 +182,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp2
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
@@ -302,6 +302,8 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h_guess: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
 
@@ -741,7 +743,9 @@ SUBMODULE (sph_particles) apm
 
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
-    check_h_0: DO a= 1, npart_real, 1
+    check_h1: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
@@ -756,7 +760,7 @@ SUBMODULE (sph_particles) apm
 
       ENDIF
 
-    ENDDO check_h_0
+    ENDDO check_h1
     CALL find_h_bruteforce_timer% stop_timer()
     CALL find_h_bruteforce_timer% print_timer( 2 )
 
@@ -966,7 +970,7 @@ SUBMODULE (sph_particles) apm
     ALLOCATE( freeze( npart_all ) )
     ALLOCATE( correction_pos( 3, npart_all ) )
     ALLOCATE( all_pos_tmp( 3, npart_all ) )
-    ALLOCATE( all_pos_tmp2( 3, npart_all ) )
+    ALLOCATE( all_pos_prev( 3, npart_all ) )
     ALLOCATE( cnt_move( npart_real ) )
     cnt_move= 0
 
@@ -1005,7 +1009,7 @@ SUBMODULE (sph_particles) apm
       ENDIF
     ENDIF
 
-    all_pos_tmp2= -one
+    all_pos_prev= -one
     PRINT *, " * The APM iteration starts here."
     PRINT *
 
@@ -1185,41 +1189,11 @@ SUBMODULE (sph_particles) apm
                      npart_all, &
                      all_pos, h_guess, h )
 
-    !  find_problem_in_h: DO a= 1, npart_all, 1
-    !
-    !    IF( .NOT.is_finite_number( h( a ) ) )THEN
-    !      PRINT *, "** ERROR! h(", a, ") is a NaN!"
-    !      PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-    !      PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-    !      PRINT *, " Stopping..."
-    !      PRINT *
-    !      STOP
-    !    ENDIF
-    !    IF( h( a ) <= zero )THEN
-    !     ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
-    !     ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-    !     ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-    !     ! PRINT *, " * h(", a, ")= ", h(a)
-    !     ! PRINT *, " Stopping..."
-    !     ! PRINT *
-    !     ! STOP
-    !      IF( a == 1 )THEN
-    !        DO a2= 2, npart_real, 1
-    !          IF( h( a2 ) > zero )THEN
-    !            h( a )= h( a2 )
-    !            EXIT
-    !          ENDIF
-    !        ENDDO
-    !      ELSE
-    !        h(a) = h(a - 1)
-    !      ENDIF
-    !    ENDIF
-    !
-    !  ENDDO find_problem_in_h
-
       CALL find_h_bruteforce_timer% start_timer()
       n_problematic_h= 0
-      check_h: DO a= 1, npart_real, 1
+      check_h2: DO a= 1, npart_real, 1
+      ! find_h_backup, called below, is OMP parallelized, so this loop
+      ! should not be parallelized as well
 
         IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= 0.0D0 )THEN
 
@@ -1234,7 +1208,7 @@ SUBMODULE (sph_particles) apm
 
         ENDIF
 
-      ENDDO check_h
+      ENDDO check_h2
       CALL find_h_bruteforce_timer% stop_timer()
       CALL find_h_bruteforce_timer% print_timer( 2 )
 
@@ -1386,49 +1360,94 @@ SUBMODULE (sph_particles) apm
         STOP
       ENDIF
 
-      !err_N_max = MAXVAL( dNstar, MASK= nstar(1:npart_real) > zero )
-      !err_N_min = MINVAL( dNstar, MASK= nstar(1:npart_real) > zero )
-      !err_N_mean= SUM( dNstar, DIM= 1 )/npart_real
+      err_N_max = MAXVAL( dNstar, MASK= nstar_p(1:npart_real) > zero )
+      err_N_min = MINVAL( dNstar, MASK= nstar_p(1:npart_real) > zero )
+      err_N_mean= SUM( dNstar, DIM= 1 )/npart_real
 
+    !  DO a= 1, npart_real, 1
+    !
+    !    IF( ABS(dNstar(a)) > err_N_max &
+    !        .AND. &
+    !        get_density( all_pos(1,a), &
+    !                     all_pos(2,a), &
+    !                     all_pos(3,a) ) > zero )THEN
+    !
+    !      err_N_max     = ABS(dNstar(a))
+    !      pos_maxerr    = all_pos(:,a)
+    !      nstar_real_err= nstar_real(a)
+    !      nstar_p_err   = nstar_p(a)
+    !
+    !    ENDIF
+    !
+    !    !err_N_max = MAX( err_N_max, ABS(dNstar) )
+    !    IF( get_density( all_pos(1,a), &
+    !                     all_pos(2,a), &
+    !                     all_pos(3,a) ) > zero )THEN
+    !
+    !      err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
+    !      err_N_mean= err_N_mean + ABS(dNstar(a))
+    !
+    !    ENDIF
+    !
+    !    IF( .NOT.is_finite_number(dNstar(a)) )THEN
+    !      PRINT *, "dNstar= ", dNstar(a), " at particle ", a
+    !      PRINT *, "nstar_real= ", nstar_real(a)
+    !      PRINT *, "nstar_p= ", nstar_p(a)
+    !      STOP
+    !    ENDIF
+    !
+    !  ENDDO
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( all_pos, npart_real, nstar_real, nstar_p, &
+      !$OMP                     dNstar, err_N_max, &
+      !$OMP                     pos_maxerr, nstar_real_err, nstar_p_err ) &
+      !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
-        IF( ABS(dNstar(a)) > err_N_max &
-            .AND. &
-            get_density( all_pos(1,a), &
-                         all_pos(2,a), &
-                         all_pos(3,a) ) > zero )THEN
+        !IF( ABS(dNstar(a)) > err_N_max &
+        !    .AND. &
+        !    get_density( all_pos(1,a), &
+        !                 all_pos(2,a), &
+        !                 all_pos(3,a) ) > zero )THEN
+        !
+        !  err_N_max     = ABS(dNstar(a))
+        !  pos_maxerr    = all_pos(:,a)
+        !  nstar_real_err= nstar_real(a)
+        !  nstar_p_err   = nstar_p(a)
+        !
+        !ENDIF
 
-          err_N_max     = ABS(dNstar(a))
+        IF( dNstar(a) == err_N_max )THEN
           pos_maxerr    = all_pos(:,a)
           nstar_real_err= nstar_real(a)
           nstar_p_err   = nstar_p(a)
-
         ENDIF
 
         !err_N_max = MAX( err_N_max, ABS(dNstar) )
-        IF( get_density( all_pos(1,a), &
-                         all_pos(2,a), &
-                         all_pos(3,a) ) > zero )THEN
-
-          err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
-          err_N_mean= err_N_mean + ABS(dNstar(a))
-
-        ENDIF
+        !IF( get_density( all_pos(1,a), &
+        !                 all_pos(2,a), &
+        !                 all_pos(3,a) ) > zero )THEN
+        !
+        !  err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
+        !  err_N_mean= err_N_mean + ABS(dNstar(a))
+        !
+        !ENDIF
 
         IF( .NOT.is_finite_number(dNstar(a)) )THEN
-          PRINT *, "dNstar= ", dNstar(a), " at particle ", a
-          PRINT *, "nstar_real= ", nstar_real(a)
-          PRINT *, "nstar_p= ", nstar_p(a)
+          PRINT *, "** ERROR! dNstar(", a, ")= ", dNstar(a), &
+                   " is not a finite number on a real particle!"
+          PRINT *, "   nstar_real= ", nstar_real(a)
+          PRINT *, "   nstar_p= ", nstar_p(a)
           STOP
         ENDIF
 
       ENDDO
-!      !$OMP END PARALLEL DO
-      !err_N_max = MAXVAL( ABS(dNstar), DIM= 1 )
+      !$OMP END PARALLEL DO
 
       IF( .NOT.is_finite_number( nu_all ) )THEN
         PRINT *, "** ERROR! nu_all is not a finite number!", &
-                 " Stopping.."
+                 " * Stopping.."
         PRINT *
         STOP
       ENDIF
@@ -1446,7 +1465,8 @@ SUBMODULE (sph_particles) apm
       !$OMP                     art_pr_max, itr ) &
       !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
       !$OMP                      itr2 )
-      ghost_loop: DO a= npart_real + 1, npart_all, 1
+      assign_artificial_pressure_on_ghost_particles: &
+      DO a= npart_real + 1, npart_all, 1
 
         CALL spherical_from_cartesian( &
                               all_pos(1,a), all_pos(2,a), all_pos(3,a), &
@@ -1488,7 +1508,7 @@ SUBMODULE (sph_particles) apm
 
         ENDDO shell_loop
 
-      ENDDO ghost_loop
+      ENDDO assign_artificial_pressure_on_ghost_particles
       !$OMP END PARALLEL DO
 
       IF( debug ) PRINT *, "Before calling position_correction"
@@ -1526,9 +1546,9 @@ SUBMODULE (sph_particles) apm
 
       err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
 
-      IF( err_N_mean_min == err_N_mean )THEN
-        all_pos_best= all_pos
-      ENDIF
+      !IF( err_N_mean_min == err_N_mean )THEN
+      !  all_pos_best= all_pos
+      !ENDIF
 
       PRINT *, " * Maximum relative error between the star density profile", &
                "   and its SPH estimate: err_N_max= ", err_N_max
@@ -1647,7 +1667,7 @@ SUBMODULE (sph_particles) apm
       !
       PRINT *, " * Updating positions..."
 
-      all_pos_tmp2= all_pos
+      all_pos_prev= all_pos
 
       CALL density_loop( npart_all, all_pos, &    ! input
                          nu, h, nstar_real )      ! output
@@ -1863,14 +1883,14 @@ SUBMODULE (sph_particles) apm
       ! last step, reflect them back above the xy plane
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, all_pos_tmp2, npart_real ) &
+      !$OMP             SHARED( all_pos, all_pos_prev, npart_real ) &
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
-        IF( all_pos_tmp2( 3, a ) > 0 .AND. &
+        IF( all_pos_prev( 3, a ) > 0 .AND. &
             all_pos( 3, a ) <= 0 )THEN
 
-          all_pos( 3, a )= all_pos_tmp2( 3, a )
+          all_pos( 3, a )= all_pos_prev( 3, a )
 
         ENDIF
 
@@ -2074,6 +2094,8 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h3: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
@@ -2498,6 +2520,8 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h4: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
@@ -2579,6 +2603,8 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h5: DO a= 1, npart_real, 1
+    ! find_h_backup, called below, is OMP parallelized, so this loop
+    ! should not be parallelized as well
 
       IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
@@ -2607,58 +2633,6 @@ SUBMODULE (sph_particles) apm
     !
     !-- Check that the smoothing length is acceptable
     !
-   ! check_h: DO a= 1, npart_real, 1
-   !
-   !   IF( .NOT.is_finite_number( h(a) ) )THEN
-   !     PRINT *, "** ERROR! h(", a, ") is a NaN"
-   !     !PRINT *, "Stopping..."
-   !    ! PRINT *
-   !     !STOP
-   !     IF( a > npart_real/2 )THEN
-   !       DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
-   !         IF( h(itr) >= backup_h )THEN
-   !           h(a) = h(itr)
-   !           EXIT
-   !         ENDIF
-   !       ENDDO
-   !     ELSE
-   !       !h(a) = h(a - 1)
-   !       DO itr= a + 1, npart_real, 1
-   !         IF( h(itr) >= backup_h )THEN
-   !           h(a) = h(itr)
-   !           EXIT
-   !         ENDIF
-   !       ENDDO
-   !     ENDIF
-   !     !PRINT *, "** ERROR! h(", a, ")=", h(a)
-   !     !PRINT *
-   !   ENDIF
-   !   IF( h(a) <= zero )THEN
-   !     PRINT *, "** ERROR! h(", a, ")=", h(a)
-   !     !PRINT *, "Stopping..."
-   !     !PRINT *
-   !     !STOP
-   !     IF( a > npart_real/2 )THEN
-   !       DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
-   !         IF( h(itr) >= backup_h )THEN
-   !           h(a) = h(itr)
-   !           EXIT
-   !         ENDIF
-   !       ENDDO
-   !     ELSE
-   !       !h(a) = h(a - 1)
-   !       DO itr= a + 1, npart_real, 1
-   !         IF( h(itr) >= backup_h )THEN
-   !           h(a) = h(itr)
-   !           EXIT
-   !         ENDIF
-   !       ENDDO
-   !     ENDIF
-   !     !PRINT *, "** ERROR! h(", a, ")=", h(a)
-   !     !PRINT *
-   !   ENDIF
-   !
-   ! ENDDO check_h
 
 !    PRINT *
 !    PRINT *, "nfinal= ", nfinal
@@ -2815,59 +2789,6 @@ SUBMODULE (sph_particles) apm
     !
     !-- Check that the smoothing length is acceptable
     !
-  !  check_h: DO a= 1, npart_real, 1
-  !
-  !    IF( .NOT.is_finite_number( h(a) ) )THEN
-  !      PRINT *, "** ERROR! h(", a, ") is a NaN"
-  !      !PRINT *, "Stopping..."
-  !     ! PRINT *
-  !      !STOP
-  !      IF( a > npart_real/2 )THEN
-  !        DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
-  !          IF( h(itr) > 0.25D0 )THEN
-  !            h(a) = h(itr)
-  !            EXIT
-  !          ENDIF
-  !        ENDDO
-  !      ELSE
-  !        !h(a) = h(a - 1)
-  !        DO itr= a + 1, npart_real, 1
-  !          IF( h(itr) > 0.25D0 )THEN
-  !            h(a) = h(itr)
-  !            EXIT
-  !          ENDIF
-  !        ENDDO
-  !      ENDIF
-  !      !PRINT *, "** ERROR! h(", a, ")=", h(a)
-  !      !PRINT *
-  !    ENDIF
-  !    IF( h(a) <= 0.0D0 )THEN
-  !      PRINT *, "** ERROR! h(", a, ")=", h(a)
-  !      !PRINT *, "Stopping..."
-  !      !PRINT *
-  !      !STOP
-  !      IF( a > npart_real/2 )THEN
-  !        DO itr= CEILING(DBLE(npart_real/2)) - 1, 1, -1
-  !          IF( h(itr) > 0.25D0 )THEN
-  !            h(a) = h(itr)
-  !            EXIT
-  !          ENDIF
-  !        ENDDO
-  !      ELSE
-  !        !h(a) = h(a - 1)
-  !        DO itr= a + 1, npart_real, 1
-  !          IF( h(itr) > 0.25D0 )THEN
-  !            h(a) = h(itr)
-  !            EXIT
-  !          ENDIF
-  !        ENDDO
-  !      ENDIF
-  !      !PRINT *, "** ERROR! h(", a, ")=", h(a)
-  !      !PRINT *
-  !    ENDIF
-  !
-  !  ENDDO check_h
-
     IF( debug ) PRINT *, "102"
 
     CALL density( npart_real, pos, nstar_int )
