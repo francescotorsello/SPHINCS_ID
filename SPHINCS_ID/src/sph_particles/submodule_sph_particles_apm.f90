@@ -1322,6 +1322,12 @@ SUBMODULE (sph_particles) apm
       nstar_p( npart_real+1:npart_all )= zero
       !art_pr ( npart_real+1:npart_all )= 6.0D0*art_pr_max
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( all_pos, npart_all, npart_real, center, &
+      !$OMP                     dNstar, art_pr, rad_x, rad_y, rad_z, &
+      !$OMP                     art_pr_max, itr ) &
+      !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
+      !$OMP                      itr2 )
       ghost_loop: DO a= npart_real + 1, npart_all, 1
 
         CALL spherical_from_cartesian( &
@@ -1365,6 +1371,7 @@ SUBMODULE (sph_particles) apm
         ENDDO shell_loop
 
       ENDDO ghost_loop
+      !$OMP END PARALLEL DO
 
       IF( debug ) PRINT *, "Before calling position_correction"
 
@@ -1518,6 +1525,9 @@ SUBMODULE (sph_particles) apm
       PRINT *, " * Updating positions..."
 
       all_pos_tmp2= all_pos
+
+      CALL density_loop( npart_all, all_pos, &    ! input
+                         nu, h, nstar_real )      ! output
 
       CALL position_correction( npart_all, &
                                 all_pos, h, nu_all, art_pr, nstar_real, &
