@@ -282,7 +282,7 @@ SUBMODULE (sph_particles) apm
     h_guess= zero
     DO a= 1, npart_real, 1
       h_guess(a)= three*(pvol(a)**third)
-      !IF( ISNAN( h_guess(a) ) )THEN
+      !IF( .NOT.is_finite_number( h_guess(a) ) )THEN
       !  PRINT *, " ** ERROR! h_guess(", a, &
       !           ") is a NaN in SUBROUTINE perform_apm!"
       !  PRINT *, "pvol(", a, ")=", pvol(a)
@@ -303,11 +303,11 @@ SUBMODULE (sph_particles) apm
     n_problematic_h= 0
     check_h_guess: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h_guess(a)= find_h_backup( a, npart_real, pos_input, nn_des )
-        IF( ISNAN( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h_guess(a) ) .OR. h_guess(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos_input(:,a)
@@ -718,7 +718,7 @@ SUBMODULE (sph_particles) apm
     !
     !  DO a= 1, npart_all, 1
     !
-    !    IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+    !    IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
     !
     !      h_guess(a)= three*h_guess(a)
     !      good_h= .FALSE.
@@ -743,11 +743,11 @@ SUBMODULE (sph_particles) apm
     n_problematic_h= 0
     check_h_0: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos(:,a)
@@ -766,7 +766,7 @@ SUBMODULE (sph_particles) apm
 
    ! DO a= 1, npart_all, 1
    !
-   !   IF( ISNAN( h( a ) ) )THEN
+   !   IF( .NOT.is_finite_number( h( a ) ) )THEN
    !     PRINT *, "** ERROR! h(", a, ") is a NaN!"
    !     PRINT *, " * h_guess(", a, ")= ", h_guess(a)
    !     PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
@@ -1187,7 +1187,7 @@ SUBMODULE (sph_particles) apm
 
     !  find_problem_in_h: DO a= 1, npart_all, 1
     !
-    !    IF( ISNAN( h( a ) ) )THEN
+    !    IF( .NOT.is_finite_number( h( a ) ) )THEN
     !      PRINT *, "** ERROR! h(", a, ") is a NaN!"
     !      PRINT *, " * h_guess(", a, ")= ", h_guess(a)
     !      PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
@@ -1221,11 +1221,11 @@ SUBMODULE (sph_particles) apm
       n_problematic_h= 0
       check_h: DO a= 1, npart_real, 1
 
-        IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= 0.0D0 )THEN
 
           n_problematic_h= n_problematic_h + 1
           h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
-          IF( ISNAN( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+          IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= 0.0D0 )THEN
             PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                      " force method."
             PRINT *, "   Particle position: ", all_pos(:,a)
@@ -1314,58 +1314,46 @@ SUBMODULE (sph_particles) apm
       err_N_min=  HUGE(one)!1.D30
       err_N_mean= zero
 
-!      !$OMP PARALLEL DO DEFAULT( NONE ) &
-!      !$OMP             SHARED( all_pos, npart_real, nstar_real, nstar_p, &
-!      !$OMP                     dNstar, art_p ) &
-!      !$OMP             PRIVATE( itr, g4, det, sq_g, Theta_a, &
-!      !$OMP                      nus, mus )
-      DO a= 1, npart_real, 1
+    !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !  !$OMP             SHARED( all_pos, npart_real, nstar_real, nstar_p, &
+    !  !$OMP                     dNstar, art_pr ) &
+    !  !$OMP             PRIVATE( g4, det, sq_g, Theta_a, &
+    !  !$OMP                      nus, mus )
+    !  DO a= 1, npart_real, 1
+    !
+    !    IF( get_density( all_pos(1,a), &
+    !                     all_pos(2,a), &
+    !                     all_pos(3,a) ) <= zero &
+    !    )THEN
+    !      dNstar(a)= zero
+    !    ELSE
+    !      dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+    !    ENDIF
+    !    art_pr(a) = MAX( one + dNstar(a), one/ten )
+    !    !art_pr_max= MAX( art_pr_max, art_pr(a) )
+    !
+    !  ENDDO
+    !  !$OMP END PARALLEL DO
 
-        IF( get_density( all_pos(1,a), &
-                         all_pos(2,a), &
-                         all_pos(3,a) ) <= zero &
-        )THEN
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, nstar_real, nstar_p, &
+      !$OMP                     dNstar, art_pr ) &
+      !$OMP             PRIVATE( a )
+      assign_artificial_pressure_on_real_particles: DO a= 1, npart_real, 1
+
+        IF( nstar_p(a) <= zero )THEN
+
           dNstar(a)= zero
+
         ELSE
+
           dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+
         ENDIF
         art_pr(a) = MAX( one + dNstar(a), one/ten )
-        art_pr_max= MAX( art_pr_max, art_pr(a) )
 
-        IF( ABS(dNstar(a)) > err_N_max &
-            .AND. &
-            get_density( all_pos(1,a), &
-                         all_pos(2,a), &
-                         all_pos(3,a) ) > zero )THEN
-
-          err_N_max     = ABS(dNstar(a))
-          pos_maxerr    = all_pos(:,a)
-          nstar_real_err= nstar_real(a)
-          nstar_p_err   = nstar_p(a)
-
-        ENDIF
-
-        !err_N_max = MAX( err_N_max, ABS(dNstar) )
-        IF( get_density( all_pos(1,a), &
-                         all_pos(2,a), &
-                         all_pos(3,a) ) > zero )THEN
-
-          err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
-          err_N_mean= err_N_mean + ABS(dNstar(a))
-
-        ENDIF
-
-        IF( ISNAN(dNstar(a)) )THEN
-          PRINT *, "dNstar= ", dNstar(a), " at particle ", a
-          PRINT *, "nstar_real= ", nstar_real(a)
-          PRINT *, "nstar_p= ", nstar_p(a)
-          STOP
-        ENDIF
-
-      ENDDO
-!      !$OMP END PARALLEL DO
-      !art_pr_max= MAXVAL( art_pr, DIM= 1 )
-      !err_N_max = MAXVAL( ABS(dNstar), DIM= 1 )
+      ENDDO assign_artificial_pressure_on_real_particles
+      !$OMP END PARALLEL DO
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_all, npart_real, art_pr, nstar_real, &
@@ -1390,14 +1378,56 @@ SUBMODULE (sph_particles) apm
       ENDDO find_nan_in_art_pr
       !$OMP END PARALLEL DO
 
-      IF( ISNAN( art_pr_max ) )THEN
-        PRINT *, "** ERROR! art_pr_max is a NaN!", &
+      art_pr_max= MAXVAL( art_pr(1:npart_real), DIM= 1 )
+      IF( .NOT.is_finite_number( art_pr_max ) )THEN
+        PRINT *, "** ERROR! art_pr_max is not a finite number!", &
                  " Stopping.."
         PRINT *
         STOP
       ENDIF
-      IF( ISNAN( nu_all ) )THEN
-        PRINT *, "** ERROR! nu_all is a NaN!", &
+
+      !err_N_max = MAXVAL( dNstar, MASK= nstar(1:npart_real) > zero )
+      !err_N_min = MINVAL( dNstar, MASK= nstar(1:npart_real) > zero )
+      !err_N_mean= SUM( dNstar, DIM= 1 )/npart_real
+
+      DO a= 1, npart_real, 1
+
+        IF( ABS(dNstar(a)) > err_N_max &
+            .AND. &
+            get_density( all_pos(1,a), &
+                         all_pos(2,a), &
+                         all_pos(3,a) ) > zero )THEN
+
+          err_N_max     = ABS(dNstar(a))
+          pos_maxerr    = all_pos(:,a)
+          nstar_real_err= nstar_real(a)
+          nstar_p_err   = nstar_p(a)
+
+        ENDIF
+
+        !err_N_max = MAX( err_N_max, ABS(dNstar) )
+        IF( get_density( all_pos(1,a), &
+                         all_pos(2,a), &
+                         all_pos(3,a) ) > zero )THEN
+
+          err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
+          err_N_mean= err_N_mean + ABS(dNstar(a))
+
+        ENDIF
+
+        IF( .NOT.is_finite_number(dNstar(a)) )THEN
+          PRINT *, "dNstar= ", dNstar(a), " at particle ", a
+          PRINT *, "nstar_real= ", nstar_real(a)
+          PRINT *, "nstar_p= ", nstar_p(a)
+          STOP
+        ENDIF
+
+      ENDDO
+!      !$OMP END PARALLEL DO
+      !err_N_max = MAXVAL( ABS(dNstar), DIM= 1 )
+
+      IF( .NOT.is_finite_number( nu_all ) )THEN
+        PRINT *, "** ERROR! nu_all is not a finite number!", &
                  " Stopping.."
         PRINT *
         STOP
@@ -1818,7 +1848,7 @@ SUBMODULE (sph_particles) apm
       find_nan_in_all_pos: DO a= 1, npart_all, 1
 
         DO itr2= 1, 3, 1
-          IF( ISNAN( all_pos( itr2, a ) ) )THEN
+          IF( .NOT.is_finite_number( all_pos( itr2, a ) ) )THEN
             PRINT *, "** ERROR! all_pos(", itr2, ",", a, ") is a NaN!", &
                      " Stopping.."
             PRINT *
@@ -2045,11 +2075,11 @@ SUBMODULE (sph_particles) apm
     n_problematic_h= 0
     check_h3: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos(:,a)
@@ -2064,7 +2094,7 @@ SUBMODULE (sph_particles) apm
 
    ! find_problem_in_h_2: DO a= 1, npart_real, 1
    !
-   !   IF( ISNAN( h( a ) ) )THEN
+   !   IF( .NOT.is_finite_number( h( a ) ) )THEN
    !     PRINT *, "** ERROR! h(", a, ") is a NaN!"
    !     PRINT *, " * h_guess(", a, ")= ", h_guess(a)
    !     PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
@@ -2159,7 +2189,7 @@ SUBMODULE (sph_particles) apm
     !
     DO a= 1, npart_real, 1
 
-      IF( ISNAN( nu(a) ) )THEN
+      IF( .NOT.is_finite_number( nu(a) ) )THEN
         PRINT *, " * ERROR! nu(", a, ") is a NaN."
         PRINT *, " nstar_real(a)= ", nstar_real(a)
         PRINT *, " nstar_p(a)= ", nstar_p(a)
@@ -2469,11 +2499,11 @@ SUBMODULE (sph_particles) apm
     n_problematic_h= 0
     check_h4: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos(:,a)
@@ -2550,11 +2580,11 @@ SUBMODULE (sph_particles) apm
     n_problematic_h= 0
     check_h5: DO a= 1, npart_real, 1
 
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+      IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
         n_problematic_h= n_problematic_h + 1
         h(a)= find_h_backup( a, npart_real, pos, nn_des )
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
           PRINT *, "   Particle position: ", pos(:,a)
@@ -2579,7 +2609,7 @@ SUBMODULE (sph_particles) apm
     !
    ! check_h: DO a= 1, npart_real, 1
    !
-   !   IF( ISNAN( h(a) ) )THEN
+   !   IF( .NOT.is_finite_number( h(a) ) )THEN
    !     PRINT *, "** ERROR! h(", a, ") is a NaN"
    !     !PRINT *, "Stopping..."
    !    ! PRINT *
@@ -2787,7 +2817,7 @@ SUBMODULE (sph_particles) apm
     !
   !  check_h: DO a= 1, npart_real, 1
   !
-  !    IF( ISNAN( h(a) ) )THEN
+  !    IF( .NOT.is_finite_number( h(a) ) )THEN
   !      PRINT *, "** ERROR! h(", a, ") is a NaN"
   !      !PRINT *, "Stopping..."
   !     ! PRINT *
@@ -3114,7 +3144,7 @@ SUBMODULE (sph_particles) apm
      !   !$OMP             PRIVATE( a )
      !   DO a= 1, npart_real, 1
      !
-     !     IF( ISNAN( nstar_p( a ) ) )THEN
+     !     IF( .NOT.is_finite_number( nstar_p( a ) ) )THEN
      !       PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
      !                " Stopping.."
      !       PRINT *
