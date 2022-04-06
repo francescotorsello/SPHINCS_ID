@@ -1524,7 +1524,7 @@ SUBMODULE (sph_particles) spherical_surfaces
       !*******************************************************
       !
       !# Returns validate_position( x, y, z ) if the latter
-      !  is present, 0 otherwise
+      !  is present, `.TRUE.` otherwise
       !
       !  FT 22.09.2021
       !

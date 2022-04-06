@@ -110,7 +110,7 @@ SUBMODULE (sph_particles) constructor_std
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
     ! APM parameters
-    INTEGER:: apm_max_it, max_inc
+    INTEGER:: apm_max_it, max_inc, print_step
     INTEGER:: column_nu
     ! Temporary number of matter objects
     INTEGER:: n_matter_tmp, tmp
@@ -121,7 +121,7 @@ SUBMODULE (sph_particles) constructor_std
     ! Temporary array storing the number of particles on each matter object
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_i_tmp
 
-    DOUBLE PRECISION:: thres, nu_ratio_des
+    DOUBLE PRECISION:: thres, nu_ratio_des, ghost_dist
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, stretch
     DOUBLE PRECISION:: upper_bound, lower_bound, upper_factor, lower_factor, &
                        last_r
@@ -192,7 +192,8 @@ SUBMODULE (sph_particles) constructor_std
               randomize_phi, randomize_theta, randomize_r, &
               apm_iterate, apm_max_it, max_inc, mass_it, &
               nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
-              use_atmosphere, remove_atmosphere, nuratio_des
+              use_atmosphere, remove_atmosphere, nuratio_des, print_step, &
+              ghost_dist
 
     ! Get the number of matter objects in the physical system
     parts% n_matter= id% get_n_matter()
@@ -373,6 +374,20 @@ SUBMODULE (sph_particles) constructor_std
       PRINT *
       PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
                "nuratio_des has to be stricly lower than nuratio_thres!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( print_step < 0 )THEN
+      PRINT *
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
+               "print_step has to be a positive integer or zero!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( ghost_dist < zero )THEN
+      PRINT *
+      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
+               "ghost_dist has to be a positive double precision or zero!"
       PRINT *
       STOP
     ENDIF
@@ -818,7 +833,7 @@ SUBMODULE (sph_particles) constructor_std
                                              parts_all(itr)% pos_i, &
                                              parts_all(itr)% pvol_i, &
                                              import_density, &
-                                             check_negative_hydro )
+                                             validate_position )
 
         ! Now that the real particle numbers are known, reallocate the arrays
         ! to the appropriate sizes. Note that, if the APM is performed,
@@ -972,7 +987,7 @@ SUBMODULE (sph_particles) constructor_std
                                               import_density, &
                                               integrate_mass_density, &
                                               import_id, &
-                                              check_negative_hydro )
+                                              validate_position )
 
       !
       !-- Experimental code to get the desired number of particles for
@@ -1015,7 +1030,7 @@ SUBMODULE (sph_particles) constructor_std
       !                                          import_density, &
       !                                          integrate_mass_density, &
       !                                          import_id, &
-      !                                          check_negative_hydro, &
+      !                                          validate_position, &
       !                                          pmass_des )
       !
       !  ENDDO
@@ -1189,7 +1204,7 @@ SUBMODULE (sph_particles) constructor_std
         ! Matter object 1
         CALL parts% apm_timers(i_matter)% start_timer()
         CALL parts% perform_apm( &
-                    import_density, get_nstar_p, &
+                    import_density, get_nstar_id, &
                     parts% npart_i(i_matter), &
                     parts_all(i_matter)% pos_i, &
                     parts_all(i_matter)% pvol_i, &
@@ -1200,10 +1215,12 @@ SUBMODULE (sph_particles) constructor_std
                     sizes(i_matter, :), &
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
+                    ghost_dist, &
                     use_atmosphere(i_matter), &
                     remove_atmosphere(i_matter), &
+                    print_step, &
                     filename_apm_pos_id, filename_apm_pos, &
-                    filename_apm_results, check_negative_hydro )
+                    filename_apm_results, validate_position )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
         parts_all(i_matter)% pmass_i = &
@@ -1899,21 +1916,21 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE integrate_mass_density
 
 
-    FUNCTION check_negative_hydro( x, y, z ) RESULT( answer )
+    FUNCTION validate_position( x, y, z ) RESULT( answer )
 
       IMPLICIT NONE
 
       DOUBLE PRECISION, INTENT(IN):: x
       DOUBLE PRECISION, INTENT(IN):: y
       DOUBLE PRECISION, INTENT(IN):: z
-      INTEGER:: answer
+      LOGICAL:: answer
 
       answer= id% test_position( x, y, z )
 
-    END FUNCTION check_negative_hydro
+    END FUNCTION validate_position
 
 
-    SUBROUTINE get_nstar_p( npart_real, x, y, z, nstar_p )
+    SUBROUTINE get_nstar_id( npart_real, x, y, z, nstar_id, nstar_eul_id )
 
       IMPLICIT NONE
 
@@ -1921,7 +1938,8 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, INTENT(IN):: x(npart_real)
       DOUBLE PRECISION, INTENT(IN):: y(npart_real)
       DOUBLE PRECISION, INTENT(IN):: z(npart_real)
-      DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
+      DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart_real)
+      DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
 
       DOUBLE PRECISION, DIMENSION(npart_real):: lapse, &
                                                 shift_x, shift_y, shift_z, &
@@ -1943,23 +1961,28 @@ SUBMODULE (sph_particles) constructor_std
                                   pressure, &
                                   v_euler_x, v_euler_y, v_euler_z )
 
-      CALL compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-                            shift_z, v_euler_x, v_euler_y, v_euler_z, &
-                            g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                            baryon_density, nstar_p )
+      CALL compute_nstar_id( npart_real, lapse, shift_x, shift_y, &
+                             shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                             g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                             baryon_density, nstar_id )
 
-    END SUBROUTINE get_nstar_p
+      CALL compute_nstar_eul_id( npart_real, &
+                                 v_euler_x, v_euler_y, v_euler_z, &
+                                 g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                                 baryon_density, nstar_eul_id )
+
+    END SUBROUTINE get_nstar_id
 
 
-    SUBROUTINE compute_nstar_p( npart_real, lapse, shift_x, shift_y, &
-                                shift_z, v_euler_x, v_euler_y, v_euler_z, &
-                                g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                                baryon_density, nstar_p )
+    SUBROUTINE compute_nstar_id( npart_real, lapse, shift_x, shift_y, &
+                                 shift_z, v_euler_x, v_euler_y, v_euler_z, &
+                                 g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                                 baryon_density, nstar_id )
 
       !**************************************************************
       !
-      !# Compute nstar_p, the proper baryon mass density, given the
-      !  |lorene| ID
+      !# Compute nstar_id, the proper baryon mass density, given the
+      !  |id|
       !
       !  FT 31.08.2021
       !
@@ -1967,7 +1990,6 @@ SUBMODULE (sph_particles) constructor_std
 
       USE constants,                    ONLY: zero, one, two
       USE tensor,                       ONLY: jx, jy, jz, n_sym4x4
-      !USE matrix,                       ONLY: determinant_4x4_matrix
       USE utility,                      ONLY: compute_g4, determinant_sym4x4, &
                                               spacetime_vector_norm_sym4x4
 
@@ -1988,7 +2010,7 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yz
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_zz
       DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_p
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_id
 
       INTEGER:: a, i!mus, nus
       DOUBLE PRECISION:: det, sq_g, Theta_a
@@ -2000,7 +2022,7 @@ SUBMODULE (sph_particles) constructor_std
       !$OMP             SHARED( npart_real, lapse, shift_x, shift_y, shift_z, &
       !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
       !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-      !$OMP                     baryon_density, vel, nstar_p ) &
+      !$OMP                     baryon_density, vel, nstar_id ) &
       !$OMP             PRIVATE( a, det, sq_g, Theta_a, g4 )
       DO a= 1, npart_real, 1
 
@@ -2040,7 +2062,7 @@ SUBMODULE (sph_particles) constructor_std
         IF( .NOT.is_finite_number(Theta_a) )THEN
           PRINT *, "** ERROR! The spacetime norm of vel is ", Theta_a, &
                    "at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *, " * Stopping..."
           PRINT *
           STOP
@@ -2050,7 +2072,7 @@ SUBMODULE (sph_particles) constructor_std
         IF( .NOT.is_finite_number(Theta_a) )THEN
           PRINT *, "** ERROR! The generalized Lorentz factor is ", Theta_a, &
                    "at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *, " * Stopping..."
           PRINT *
           STOP
@@ -2058,18 +2080,128 @@ SUBMODULE (sph_particles) constructor_std
         IF( Theta_a < one )THEN
           PRINT *, "** ERROR! The generalized Lorentz factor is ", Theta_a, &
                    "< 1 at particle ", a, &
-                   "in SUBROUTINE compute_nstar_p"
+                   "in SUBROUTINE compute_nstar_id"
           PRINT *, " * Stopping..."
           PRINT *
           STOP
         ENDIF
 
-        nstar_p(a)= sq_g*Theta_a*baryon_density(a)
+        nstar_id(a)= sq_g*Theta_a*baryon_density(a)
 
       ENDDO
       !$OMP END PARALLEL DO
 
-    END SUBROUTINE compute_nstar_p
+    END SUBROUTINE compute_nstar_id
+
+
+    SUBROUTINE compute_nstar_eul_id( npart_real, &
+                                     v_euler_x, v_euler_y, v_euler_z, &
+                                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+                                     baryon_density, nstar_eul_id )
+
+      !**************************************************************
+      !
+      !# Compute nstar_eul_id, the relativistic baryon mass density
+      !  seen by the Eulerian observer, given the |id|
+      !
+      !  FT 31.08.2021
+      !
+      !**************************************************************
+
+      USE constants,                    ONLY: zero, one, two
+      USE tensor,                       ONLY: jx, jy, jz, n_sym4x4
+      USE utility,                      ONLY: compute_g4, determinant_sym3x3, &
+                                              spatial_vector_norm_sym3x3
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: npart_real
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_x
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_y
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_z
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xx
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xy
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xz
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yy
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yz
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_zz
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
+      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_eul_id
+
+      INTEGER:: a, i!mus, nus
+      DOUBLE PRECISION:: det, sq_g, v_euler_norm2, gamma_eul_a
+      DOUBLE PRECISION, DIMENSION(0:3,npart_real):: vel
+      !DOUBLE PRECISION:: g4(0:3,0:3)
+      DOUBLE PRECISION:: g4(n_sym4x4)
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, &
+      !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
+      !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+      !$OMP                     baryon_density, nstar_eul_id ) &
+      !$OMP             PRIVATE( a, det, sq_g, v_euler_norm2, gamma_eul_a )
+      DO a= 1, npart_real, 1
+
+        CALL determinant_sym3x3( &
+              [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], det )
+
+        IF( ABS(det) < 1D-10 )THEN
+          PRINT *, "ERROR! The determinant of the spatial metric is " &
+                   // "effectively 0 at particle ", a
+          PRINT *
+          STOP
+        ELSEIF( det < 0 )THEN
+          PRINT *, "ERROR! The determinant of the spatial metric is " &
+                   // "negative at particle ", a
+          PRINT *
+          STOP
+        ELSEIF( .NOT.is_finite_number(det) )THEN
+          PRINT *, "ERROR! The determinant is ", det, "at particle ", a
+          PRINT *
+          STOP
+        ENDIF
+        sq_g= SQRT(det)
+
+        !
+        !-- Generalized Lorentz factor
+        !
+        v_euler_norm2= zero
+        CALL spatial_vector_norm_sym3x3( &
+             [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+             [v_euler_x(a),v_euler_y(a),v_euler_z(a)], v_euler_norm2 )
+        IF( .NOT.is_finite_number(v_euler_norm2) )THEN
+          PRINT *, "** ERROR! The spatial norm of v_euler is ", v_euler_norm2, &
+                   "at particle ", a, &
+                   "in SUBROUTINE compute_nstar_eul_id"
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+        ENDIF
+
+        gamma_eul_a= one/SQRT(one-v_euler_norm2)
+        IF( .NOT.is_finite_number(gamma_eul_a) )THEN
+          PRINT *, "** ERROR! The Lorentz factor is ", gamma_eul_a, &
+                   "at particle ", a, &
+                   "in SUBROUTINE compute_nstar_eul_id"
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+        ENDIF
+        IF( gamma_eul_a < one )THEN
+          PRINT *, "** ERROR! The Lorentz factor is ", gamma_eul_a, &
+                   "< 1 at particle ", a, &
+                   "in SUBROUTINE compute_nstar_eul_id"
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+        ENDIF
+
+        nstar_eul_id(a)= sq_g*gamma_eul_a*baryon_density(a)
+
+      ENDDO
+      !$OMP END PARALLEL DO
+
+    END SUBROUTINE compute_nstar_eul_id
 
 
     SUBROUTINE reflect_particles_yz_plane( pos_star1, pvol_star1, pmass_star1, &

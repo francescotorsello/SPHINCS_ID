@@ -208,7 +208,8 @@ module_sph_particles = [
   'submodule_sph_particles_compose.f90',
   #'submodule_sph_particles_redistribute_nu.f90',
   'submodule_sph_particles_apm.f90',
-  'submodule_sph_particles_recovery.f90'
+  'submodule_sph_particles_recovery.f90',
+  'submodule_sph_particles_handle_positions.f90'
 ]
 
 module_standard_tpo_formulation_dir = ['src/standard_tpo_formulation/']

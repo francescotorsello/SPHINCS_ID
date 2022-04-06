@@ -189,7 +189,7 @@ SUBMODULE (sph_particles) lattices
           IF( get_density( xtemp, ytemp, ztemp ) &
                                   > thres_baryon_density &
               .AND. &
-              validate_position( xtemp, ytemp, ztemp ) == 0 )THEN
+              validate_position( xtemp, ytemp, ztemp ) )THEN
 
             pos_tmp( 1, i, j, k )= xtemp
             pos_tmp( 2, i, j, k )= ytemp

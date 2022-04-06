@@ -33,8 +33,7 @@ SUBMODULE (sph_particles) apm
   !
   !***********************************
 
-  USE, INTRINSIC:: ieee_arithmetic, ONLY: IEEE_IS_FINITE
-  USE              constants,       ONLY: zero, quarter, one, two, three, ten
+  USE constants,  ONLY: zero, quarter, one, two, three, ten
 
 
   IMPLICIT NONE
@@ -94,6 +93,8 @@ SUBMODULE (sph_particles) apm
     !
     !*****************************************************
 
+    USE, INTRINSIC:: IEEE_ARITHMETIC, &
+                             ONLY: IEEE_IS_FINITE
     USE utility,             ONLY: cnt, spherical_from_cartesian
     USE constants,           ONLY: half, third, Msun, amu, pi
 
@@ -125,17 +126,18 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: nn_des           = 301
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
-    INTEGER,          PARAMETER:: print_step       = 15
+    !INTEGER,          PARAMETER:: print_step       = 15
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.375D0!0.25D0 !30.0D0
+    !DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.375D0!0.25D0 !30.0D0
     DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 1.0D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
-    DOUBLE PRECISION, PARAMETER:: max_art_pr       = 1.0D+10
+    DOUBLE PRECISION, PARAMETER:: max_art_pr_ghost = 1.0D+10
+    DOUBLE PRECISION, PARAMETER:: tiny_real        = 1.0D-10
 
-    INTEGER:: a, a2, itr, itr2, n_inc, cnt1!, inde, index1   ! iterators
+    INTEGER:: a, itr, itr2, n_inc, cnt1!, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
@@ -154,8 +156,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION:: nu_all
     DOUBLE PRECISION:: err_N_mean_min, err_N_mean_min_old, err_N_mean, &
                        err_mean_old, err_n_min, err_N_max, dN, &!dNstar, &
-                       nstar_p_err, nstar_real_err, dN_max, dN_av, &
-                       r_tmp, theta_tmp, phi_tmp
+                       nstar_id_err, nstar_sph_err, dN_max, dN_av
     DOUBLE PRECISION:: art_pr_max
     DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
@@ -180,8 +181,6 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_tmp
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_best
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
 
@@ -190,11 +189,12 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess_tmp
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_p
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_real
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_id
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_eul_id
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_eul
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_sph
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: freeze
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol_tmp
@@ -205,19 +205,8 @@ SUBMODULE (sph_particles) apm
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: nearest_neighbors
 
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: lapse, &
-                                               shift_x, shift_y, shift_z, &
-                                               g_xx, g_xy, g_xz, &
-                                               g_yy, g_yz, g_zz, &
-                                               baryon_density, &
-                                               energy_density, &
-                                               specific_energy, &
-                                               pressure, &
-                                               v_euler_x, v_euler_y, v_euler_z
-
     LOGICAL:: exist
 
-    !CHARACTER:: it_n
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -798,10 +787,10 @@ SUBMODULE (sph_particles) apm
     PRINT *, " * Measure SPH particle number density..."
     PRINT *
 
-    IF(.NOT.ALLOCATED( nstar_real ))THEN
-      ALLOCATE( nstar_real( npart_all ), STAT= ios, ERRMSG= err_msg )
+    IF(.NOT.ALLOCATED( nstar_sph ))THEN
+      ALLOCATE( nstar_sph( npart_all ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array nstar_real in SUBROUTINE ", &
+         PRINT *, "...allocation error for array nstar_sph in SUBROUTINE ", &
                   "perform_apm. The error message is",&
                   err_msg
          STOP
@@ -810,17 +799,17 @@ SUBMODULE (sph_particles) apm
 
     nu= one
     CALL density_loop( npart_all, all_pos, &    ! input
-                       nu, h, nstar_real )      ! output
+                       nu, h, nstar_sph )      ! output
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( all_pos, npart_all, nstar_real, h, nu, &
+    !$OMP             SHARED( all_pos, npart_all, nstar_sph, h, nu, &
     !$OMP                     center ) &
     !$OMP             PRIVATE( a )
-    check_nstar_real: DO a= 1, npart_all, 1
+    check_nstar_sph: DO a= 1, npart_all, 1
 
-      IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
+      IF( .NOT.is_finite_number( nstar_sph( a ) ) )THEN
 
-        PRINT *, "** WARNING! nstar_real(", a, ") is a not a finite number ",&
+        PRINT *, "** WARNING! nstar_sph(", a, ") is a not a finite number ",&
                  "in SUBROUTINE perform_apm!"
         IF( debug ) PRINT *, " * h(", a, ")=", h(a)
         IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
@@ -833,44 +822,38 @@ SUBMODULE (sph_particles) apm
 
       ENDIF
 
-    ENDDO check_nstar_real
+    ENDDO check_nstar_sph
     !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "4"
 
-    IF(.NOT.ALLOCATED( nstar_p ))THEN
-      ALLOCATE( nstar_p( npart_all ), STAT= ios, ERRMSG= err_msg )
+    IF(.NOT.ALLOCATED( nstar_id ))THEN
+      ALLOCATE( nstar_id( npart_all ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array nstar_p in SUBROUTINE ", &
+         PRINT *, "...allocation error for array nstar_id in SUBROUTINE ", &
                   "perform_apm. The error message is",&
                   err_msg
          STOP
       ENDIF
     ENDIF
-
-    IF( debug ) PRINT *, "5"
-
-    ALLOCATE( lapse          (npart_real) )
-    ALLOCATE( shift_x        (npart_real) )
-    ALLOCATE( shift_y        (npart_real) )
-    ALLOCATE( shift_z        (npart_real) )
-    ALLOCATE( g_xx           (npart_real) )
-    ALLOCATE( g_xy           (npart_real) )
-    ALLOCATE( g_xz           (npart_real) )
-    ALLOCATE( g_yy           (npart_real) )
-    ALLOCATE( g_yz           (npart_real) )
-    ALLOCATE( g_zz           (npart_real) )
-    ALLOCATE( baryon_density (npart_real) )
-    ALLOCATE( energy_density (npart_real) )
-    ALLOCATE( specific_energy(npart_real) )
-    ALLOCATE( pressure       (npart_real) )
-    ALLOCATE( v_euler_x      (npart_real) )
-    ALLOCATE( v_euler_y      (npart_real) )
-    ALLOCATE( v_euler_z      (npart_real) )
-
-    IF( debug ) PRINT *, "6"
-
-    IF( debug ) PRINT *, "7"
+    IF(.NOT.ALLOCATED( nstar_eul_id ))THEN
+      ALLOCATE( nstar_eul_id( npart_all ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array nstar_eul_id in SUBROUTINE ", &
+                  "perform_apm. The error message is",&
+                  err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( nu_eul ))THEN
+      ALLOCATE( nu_eul( npart_real ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array nu_eul in SUBROUTINE ", &
+                  "perform_apm. The error message is",&
+                  err_msg
+         STOP
+      ENDIF
+    ENDIF
 
     max_nu= zero
     min_nu= 1.0D60
@@ -887,39 +870,41 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "7"
 
-    CALL get_nstar_p_atm( npart_real, all_pos(1,1:npart_real), &
+    CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
                                   all_pos(2,1:npart_real), &
-                                  all_pos(3,1:npart_real), nstar_p, &
+                                  all_pos(3,1:npart_real), &
+                                  nstar_id, nstar_eul_id, &
                                   use_atmosphere )
 
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( all_pos, npart_all, nstar_p, h, nu, &
-    !$OMP                     center, dNstar ) &
-    !$OMP             PRIVATE( a )
-    check_nstar_p: DO a= 1, npart_all, 1
-
-      IF( .NOT.is_finite_number( nstar_p( a ) ) )THEN
-
-        PRINT *, "** WARNING! nstar_p(", a, ") is a not a finite number ", &
-                 "in SUBROUTINE perform_apm!"
-        PRINT *, "   nstar_p(", a, ")=", nstar_p(a)
-        PRINT *, "   dNstar(", a, ")=", dNstar(a)
-        PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
-                                                  all_pos(2,a), &
-                                                  all_pos(3,a) )
-        IF( debug ) PRINT *, " * h(", a, ")=", h(a)
-        IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
-        IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
-        IF( debug ) PRINT *, " * r(", a, ")=", &
-                              SQRT( ( all_pos(1,a) - center )**two &
-                              + all_pos(2,a)**two + all_pos(3,a)**two )
-        PRINT *
-        STOP
-
-      ENDIF
-
-    ENDDO check_nstar_p
-    !$OMP END PARALLEL DO
+  ! The following test is done inside get_nstar_id_atm. Kept here for paranoia
+  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !  !$OMP             SHARED( all_pos, npart_all, nstar_id, h, nu, &
+  !  !$OMP                     center, dNstar ) &
+  !  !$OMP             PRIVATE( a )
+  !  check_nstar_id: DO a= 1, npart_all, 1
+  !
+  !    IF( .NOT.is_finite_number( nstar_id( a ) ) )THEN
+  !
+  !      PRINT *, "** WARNING! nstar_id(", a, ") is a not a finite number ", &
+  !               "in SUBROUTINE perform_apm!"
+  !      PRINT *, "   nstar_id(", a, ")=", nstar_id(a)
+  !      PRINT *, "   dNstar(", a, ")=", dNstar(a)
+  !      PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
+  !                                                all_pos(2,a), &
+  !                                                all_pos(3,a) )
+  !      IF( debug ) PRINT *, " * h(", a, ")=", h(a)
+  !      IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
+  !      IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
+  !      IF( debug ) PRINT *, " * r(", a, ")=", &
+  !                            SQRT( ( all_pos(1,a) - center )**two &
+  !                            + all_pos(2,a)**two + all_pos(3,a)**two )
+  !      PRINT *
+  !      STOP
+  !
+  !    ENDIF
+  !
+  !  ENDDO check_nstar_id
+  !  !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "8"
 
@@ -935,8 +920,16 @@ SUBMODULE (sph_particles) apm
 
     ENDIF
 
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+    !$OMP             PRIVATE( a )
+    compute_nu_eul1: DO a= 1, npart_real, 1
+      nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+    ENDDO compute_nu_eul1
+    !$OMP END PARALLEL DO
+
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                 nu(1:npart_real), get_density, &
+                                 nu_eul, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -967,9 +960,8 @@ SUBMODULE (sph_particles) apm
     PRINT *, " * Performing APM iteration..."
     PRINT *
 
-    ALLOCATE( freeze( npart_all ) )
+    !ALLOCATE( freeze( npart_all ) )
     ALLOCATE( correction_pos( 3, npart_all ) )
-    ALLOCATE( all_pos_tmp( 3, npart_all ) )
     ALLOCATE( all_pos_prev( 3, npart_all ) )
     ALLOCATE( cnt_move( npart_real ) )
     cnt_move= 0
@@ -977,16 +969,24 @@ SUBMODULE (sph_particles) apm
     ! Set the particles to be equal-mass
     nu_all= (mass/DBLE(npart_real))*umass/amu
     nu= nu_all
-    DO a= 1, npart_all
-      IF( a <= npart_real )THEN
-        freeze(a)= 0
-      ELSE
-        freeze(a)= 1
-      ENDIF
-    ENDDO
+   ! DO a= 1, npart_all
+   !   IF( a <= npart_real )THEN
+   !     freeze(a)= 0
+   !   ELSE
+   !     freeze(a)= 1
+   !   ENDIF
+   ! ENDDO
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+    !$OMP             PRIVATE( a )
+    compute_nu_eul2: DO a= 1, npart_real, 1
+      nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+    ENDDO compute_nu_eul2
+    !$OMP END PARALLEL DO
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                 nu(1:npart_real), get_density, &
+                                 nu_eul, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -1101,8 +1101,16 @@ SUBMODULE (sph_particles) apm
 
       IF( debug ) PRINT *, "enforcing center of mass..."
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+      !$OMP             PRIVATE( a )
+      compute_nu_eul3: DO a= 1, npart_real, 1
+        nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+      ENDDO compute_nu_eul3
+      !$OMP END PARALLEL DO
+
       CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                   nu(1:npart_real), get_density, &
+                                   nu_eul, get_density, &
                                    validate_position_final, com_star )
 
       IF( debug ) PRINT *, "mirroring particles..."
@@ -1219,21 +1227,21 @@ SUBMODULE (sph_particles) apm
       IF( debug ) PRINT *, "density_loop..."
 
       CALL density_loop( npart_all, all_pos, &    ! input
-                         nu, h, nstar_real )      ! output
+                         nu, h, nstar_sph )      ! output
 
       IF( debug ) PRINT *, "npart_real= ", npart_real
       IF( debug ) PRINT *, "npart_all= ", npart_all
       IF( debug ) PRINT *
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, npart_all, nstar_real, h, nu, &
+      !$OMP             SHARED( all_pos, npart_all, nstar_sph, h, nu, &
       !$OMP                     center ) &
       !$OMP             PRIVATE( a )
-      check_nstar_real2: DO a= 1, npart_all, 1
+      check_nstar_sph2: DO a= 1, npart_all, 1
 
-        IF( .NOT.is_finite_number( nstar_real( a ) ) )THEN
+        IF( .NOT.is_finite_number( nstar_sph( a ) ) )THEN
 
-          PRINT *, "** WARNING! nstar_real(", a, ") is a not a finite number ",&
+          PRINT *, "** WARNING! nstar_sph(", a, ") is a not a finite number ",&
                    "in SUBROUTINE perform_apm!"
           IF( debug ) PRINT *, " * h(", a, ")=", h(a)
           IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
@@ -1246,42 +1254,44 @@ SUBMODULE (sph_particles) apm
 
         ENDIF
 
-      ENDDO check_nstar_real2
+      ENDDO check_nstar_sph2
       !$OMP END PARALLEL DO
 
-      CALL get_nstar_p_atm( npart_real, all_pos(1,1:npart_real), &
+      CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
                                         all_pos(2,1:npart_real), &
-                                        all_pos(3,1:npart_real), nstar_p, &
+                                        all_pos(3,1:npart_real), &
+                                        nstar_id, nstar_eul_id, &
                                         use_atmosphere )
 
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, npart_all, nstar_p, h, nu, &
-      !$OMP                     center, dNstar ) &
-      !$OMP             PRIVATE( a )
-      check_nstar_p2: DO a= 1, npart_all, 1
-
-        IF( .NOT.is_finite_number( nstar_p( a ) ) )THEN
-
-          PRINT *, "** WARNING! nstar_p(", a, ") is a not a finite number ", &
-                   "in SUBROUTINE perform_apm!"
-          PRINT *, "   nstar_p(", a, ")=", nstar_p(a)
-          PRINT *, "   dNstar(", a, ")=", dNstar(a)
-          PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
-                                                    all_pos(2,a), &
-                                                    all_pos(3,a) )
-          IF( debug ) PRINT *, " * h(", a, ")=", h(a)
-          IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
-          IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
-          IF( debug ) PRINT *, " * r(", a, ")=", &
-                                SQRT( ( all_pos(1,a) - center )**two &
-                                + all_pos(2,a)**two + all_pos(3,a)**two )
-          PRINT *
-          STOP
-
-        ENDIF
-
-      ENDDO check_nstar_p2
-      !$OMP END PARALLEL DO
+! The following test is done inside get_nstar_id_atm. Kept here for paranoia
+!      !$OMP PARALLEL DO DEFAULT( NONE ) &
+!      !$OMP             SHARED( all_pos, npart_all, nstar_id, h, nu, &
+!      !$OMP                     center, dNstar ) &
+!      !$OMP             PRIVATE( a )
+!      check_nstar_id2: DO a= 1, npart_all, 1
+!
+!        IF( .NOT.is_finite_number( nstar_id( a ) ) )THEN
+!
+!          PRINT *, "** WARNING! nstar_id(", a, ") is a not a finite number ", &
+!                   "in SUBROUTINE perform_apm!"
+!          PRINT *, "   nstar_id(", a, ")=", nstar_id(a)
+!          PRINT *, "   dNstar(", a, ")=", dNstar(a)
+!          PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
+!                                                    all_pos(2,a), &
+!                                                    all_pos(3,a) )
+!          IF( debug ) PRINT *, " * h(", a, ")=", h(a)
+!          IF( debug ) PRINT *, " * nu(", a, ")=", nu(a)
+!          IF( debug ) PRINT *, " * all_pos(", a, ")=", all_pos(:,a)
+!          IF( debug ) PRINT *, " * r(", a, ")=", &
+!                                SQRT( ( all_pos(1,a) - center )**two &
+!                                + all_pos(2,a)**two + all_pos(3,a)**two )
+!          PRINT *
+!          STOP
+!
+!        ENDIF
+!
+!      ENDDO check_nstar_id2
+!      !$OMP END PARALLEL DO
 
       art_pr_max= zero
       err_N_max=  zero
@@ -1289,7 +1299,7 @@ SUBMODULE (sph_particles) apm
       err_N_mean= zero
 
     !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !  !$OMP             SHARED( all_pos, npart_real, nstar_real, nstar_p, &
+    !  !$OMP             SHARED( all_pos, npart_real, nstar_sph, nstar_id, &
     !  !$OMP                     dNstar, art_pr ) &
     !  !$OMP             PRIVATE( g4, det, sq_g, Theta_a, &
     !  !$OMP                      nus, mus )
@@ -1301,7 +1311,7 @@ SUBMODULE (sph_particles) apm
     !    )THEN
     !      dNstar(a)= zero
     !    ELSE
-    !      dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+    !      dNstar(a)= ( nstar_sph(a) - nstar_id(a) )/nstar_id(a)
     !    ENDIF
     !    art_pr(a) = MAX( one + dNstar(a), one/ten )
     !    !art_pr_max= MAX( art_pr_max, art_pr(a) )
@@ -1310,18 +1320,18 @@ SUBMODULE (sph_particles) apm
     !  !$OMP END PARALLEL DO
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_real, nstar_real, nstar_p, &
+      !$OMP             SHARED( npart_real, nstar_sph, nstar_id, &
       !$OMP                     dNstar, art_pr ) &
       !$OMP             PRIVATE( a )
       assign_artificial_pressure_on_real_particles: DO a= 1, npart_real, 1
 
-        IF( nstar_p(a) <= zero )THEN
+        IF( nstar_id(a) <= zero )THEN
 
           dNstar(a)= zero
 
         ELSE
 
-          dNstar(a)= ( nstar_real(a) - nstar_p(a) )/nstar_p(a)
+          dNstar(a)= ( nstar_sph(a) - nstar_id(a) )/nstar_id(a)
 
         ENDIF
         art_pr(a) = MAX( one + dNstar(a), one/ten )
@@ -1330,16 +1340,16 @@ SUBMODULE (sph_particles) apm
       !$OMP END PARALLEL DO
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_all, npart_real, art_pr, nstar_real, &
-      !$OMP                     nstar_p, dNstar, all_pos ) &
+      !$OMP             SHARED( npart_all, npart_real, art_pr, nstar_sph, &
+      !$OMP                     nstar_id, dNstar, all_pos ) &
       !$OMP             PRIVATE( a )
       find_nan_in_art_pr: DO a= 1, npart_real, 1
 
         IF( .NOT.is_finite_number(art_pr(a)) )THEN
           PRINT *, "** ERROR! art_pr(", a, ")= ", art_pr(a), &
                    " is not a finite number on a real particle!"
-          PRINT *, "   nstar_real(", a, ")=", nstar_real(a)
-          PRINT *, "   nstar_p(", a, ")=", nstar_p(a)
+          PRINT *, "   nstar_sph(", a, ")=", nstar_sph(a)
+          PRINT *, "   nstar_id(", a, ")=", nstar_id(a)
           PRINT *, "   dNstar(", a, ")=", dNstar(a)
           PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
                                                     all_pos(2,a), &
@@ -1360,8 +1370,8 @@ SUBMODULE (sph_particles) apm
         STOP
       ENDIF
 
-      err_N_max = MAXVAL( dNstar, MASK= nstar_p(1:npart_real) > zero )
-      err_N_min = MINVAL( dNstar, MASK= nstar_p(1:npart_real) > zero )
+      err_N_max = MAXVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
+      err_N_min = MINVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
       err_N_mean= SUM( dNstar, DIM= 1 )/npart_real
 
     !  DO a= 1, npart_real, 1
@@ -1374,8 +1384,8 @@ SUBMODULE (sph_particles) apm
     !
     !      err_N_max     = ABS(dNstar(a))
     !      pos_maxerr    = all_pos(:,a)
-    !      nstar_real_err= nstar_real(a)
-    !      nstar_p_err   = nstar_p(a)
+    !      nstar_sph_err= nstar_sph(a)
+    !      nstar_id_err   = nstar_id(a)
     !
     !    ENDIF
     !
@@ -1391,17 +1401,17 @@ SUBMODULE (sph_particles) apm
     !
     !    IF( .NOT.is_finite_number(dNstar(a)) )THEN
     !      PRINT *, "dNstar= ", dNstar(a), " at particle ", a
-    !      PRINT *, "nstar_real= ", nstar_real(a)
-    !      PRINT *, "nstar_p= ", nstar_p(a)
+    !      PRINT *, "nstar_sph= ", nstar_sph(a)
+    !      PRINT *, "nstar_id= ", nstar_id(a)
     !      STOP
     !    ENDIF
     !
     !  ENDDO
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, npart_real, nstar_real, nstar_p, &
+      !$OMP             SHARED( all_pos, npart_real, nstar_sph, nstar_id, &
       !$OMP                     dNstar, err_N_max, &
-      !$OMP                     pos_maxerr, nstar_real_err, nstar_p_err ) &
+      !$OMP                     pos_maxerr, nstar_sph_err, nstar_id_err ) &
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
@@ -1413,15 +1423,15 @@ SUBMODULE (sph_particles) apm
         !
         !  err_N_max     = ABS(dNstar(a))
         !  pos_maxerr    = all_pos(:,a)
-        !  nstar_real_err= nstar_real(a)
-        !  nstar_p_err   = nstar_p(a)
+        !  nstar_sph_err= nstar_sph(a)
+        !  nstar_id_err   = nstar_id(a)
         !
         !ENDIF
 
         IF( dNstar(a) == err_N_max )THEN
-          pos_maxerr    = all_pos(:,a)
-          nstar_real_err= nstar_real(a)
-          nstar_p_err   = nstar_p(a)
+          pos_maxerr   = all_pos(:,a)
+          nstar_sph_err= nstar_sph(a)
+          nstar_id_err = nstar_id(a)
         ENDIF
 
         !err_N_max = MAX( err_N_max, ABS(dNstar) )
@@ -1437,8 +1447,8 @@ SUBMODULE (sph_particles) apm
         IF( .NOT.is_finite_number(dNstar(a)) )THEN
           PRINT *, "** ERROR! dNstar(", a, ")= ", dNstar(a), &
                    " is not a finite number on a real particle!"
-          PRINT *, "   nstar_real= ", nstar_real(a)
-          PRINT *, "   nstar_p= ", nstar_p(a)
+          PRINT *, "   nstar_sph= ", nstar_sph(a)
+          PRINT *, "   nstar_id= ", nstar_id(a)
           STOP
         ENDIF
 
@@ -1456,7 +1466,7 @@ SUBMODULE (sph_particles) apm
       !-- Assign artificial pressure to the ghost particles
       !
 
-      nstar_p( npart_real+1:npart_all )= zero
+      nstar_id( npart_real+1:npart_all )= zero
       !art_pr ( npart_real+1:npart_all )= 6.0D0*art_pr_max
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -1498,7 +1508,8 @@ SUBMODULE (sph_particles) apm
 
             ! ..assign a pressure that increases with i, to build a pressure
             !   gradient
-            art_pr( a )= MAX( DBLE(3*itr)*art_pr_max, max_art_pr )
+            art_pr(a)= DBLE(3*itr)*art_pr_max
+            IF( .NOT.IEEE_IS_FINITE(art_pr(a)) ) art_pr(a)= max_art_pr_ghost
 
           !ELSE
           !
@@ -1517,20 +1528,20 @@ SUBMODULE (sph_particles) apm
       IF( debug ) PRINT *, SIZE(all_pos(1,:))
       IF( debug ) PRINT *, SIZE(h)
       IF( debug ) PRINT *, SIZE(art_pr)
-      IF( debug ) PRINT *, SIZE(nstar_real)
+      IF( debug ) PRINT *, SIZE(nstar_sph)
       IF( debug ) PRINT *, SIZE(correction_pos(1,:))
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_all, npart_real, art_pr, nstar_real, &
-      !$OMP                     nstar_p, all_pos ) &
+      !$OMP             SHARED( npart_all, npart_real, art_pr, nstar_sph, &
+      !$OMP                     nstar_id, all_pos ) &
       !$OMP             PRIVATE( a )
       find_nan_in_art_pr_ghost: DO a= npart_real + 1, npart_all, 1
 
         IF( .NOT.is_finite_number(art_pr(a)) )THEN
           PRINT *, "** ERROR! art_pr(", a, ")= ", art_pr(a), &
                    " is not a finite number on a ghost particle!"
-          PRINT *, "   nstar_real(", a, ")=", nstar_real(a)
-          PRINT *, "   nstar_p(", a, ")=", nstar_p(a)
+          PRINT *, "   nstar_sph(", a, ")=", nstar_sph(a)
+          PRINT *, "   nstar_id(", a, ")=", nstar_id(a)
           PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
                                                     all_pos(2,a), &
                                                     all_pos(3,a) )
@@ -1559,8 +1570,8 @@ SUBMODULE (sph_particles) apm
                             + ( ABS(pos_maxerr(2)) - ABS(center(2)) )**two &
                             + ( ABS(pos_maxerr(3)) - ABS(center(3)) )**two ) &
                             /sizes(1)
-      PRINT *, "   The ID density is   = ", nstar_p_err
-      PRINT *, "   The SPH estimate is= ", nstar_real_err
+      PRINT *, "   The ID density is   = ", nstar_id_err
+      PRINT *, "   The SPH estimate is= ", nstar_sph_err
       PRINT *
       PRINT *, " * Minimum relative error between the star density profile", &
                " and its SPH estimate: ", err_N_min
@@ -1577,17 +1588,17 @@ SUBMODULE (sph_particles) apm
       ! Compute particle number density
       nu= one
       CALL density_loop( npart_all, all_pos, &    ! input
-                         nu, h, nstar_real )      ! output
+                         nu, h, nstar_sph )      ! output
       nu= nu_all
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( nu_tmp, nu, nstar_p, nstar_real, &
+      !$OMP             SHARED( nu_tmp, nu, nstar_id, nstar_sph, &
       !$OMP                     nuratio_thres, npart_real ) &
       !$OMP             PRIVATE( nu_tmp2, a )
       cap_nu: DO a= 1, npart_real, 1
 
         nu_tmp2= nu(a)
-        nu_tmp(a)= nstar_p(a)/nstar_real(a)
+        nu_tmp(a)= nstar_id(a)/nstar_sph(a)
 
           IF( nu_tmp(a) > nu_tmp2*SQRT(nuratio_thres) ) nu_tmp(a)= &
                                             nu_tmp2*SQRT(nuratio_thres)
@@ -1670,10 +1681,10 @@ SUBMODULE (sph_particles) apm
       all_pos_prev= all_pos
 
       CALL density_loop( npart_all, all_pos, &    ! input
-                         nu, h, nstar_real )      ! output
+                         nu, h, nstar_sph )      ! output
 
       CALL position_correction( npart_all, &
-                                all_pos, h, nu_all, art_pr, nstar_real, &
+                                all_pos, h, nu_all, art_pr, nstar_sph, &
                                 correction_pos )
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -1732,7 +1743,7 @@ SUBMODULE (sph_particles) apm
       cnt_move= 0
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( use_atmosphere, all_pos, correction_pos, &
-      !$OMP                     dNstar, npart_real, nstar_p, cnt_move ) &
+      !$OMP                     dNstar, npart_real, nstar_id, cnt_move ) &
       !$OMP             PRIVATE( pos_corr_tmp, a, cnt, rand_num, rand_num2, &
       !$OMP                      rel_sign )
       particle_loop: DO a= 1, npart_real, 1
@@ -1879,7 +1890,7 @@ SUBMODULE (sph_particles) apm
       ENDDO find_nan_in_all_pos
       !$OMP END PARALLEL DO
 
-      ! If some of the particles crossed the xy plane top-down in the
+      ! If some of the particles crossed the xy plane in the
       ! last step, reflect them back above the xy plane
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -1887,8 +1898,10 @@ SUBMODULE (sph_particles) apm
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
-        IF( all_pos_prev( 3, a ) > 0 .AND. &
-            all_pos( 3, a ) <= 0 )THEN
+        IF( (all_pos_prev( 3, a ) > 0 .AND. all_pos( 3, a ) <= 0) &
+            .OR. &
+            (all_pos_prev( 3, a ) < 0 .AND. all_pos( 3, a ) >= 0) &
+        )THEN
 
           all_pos( 3, a )= all_pos_prev( 3, a )
 
@@ -2017,7 +2030,15 @@ SUBMODULE (sph_particles) apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-    CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+    !$OMP             PRIVATE( a )
+    compute_nu_eul4: DO a= 1, npart_real, 1
+      nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+    ENDDO compute_nu_eul4
+    !$OMP END PARALLEL DO
+
+    CALL correct_center_of_mass( npart_real, pos, nu_eul, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -2151,12 +2172,12 @@ SUBMODULE (sph_particles) apm
     ! Measure SPH particle number density
     nu= one
     CALL density_loop( npart_real, pos, &    ! input
-                       nu, h, nstar_real )      ! output                   
+                       nu, h, nstar_sph )      ! output
 
     IF( debug ) PRINT *, "3"
 
-    CALL get_nstar_p_atm( npart_real, pos(1,:), pos(2,:), pos(3,:), &
-                          nstar_p, use_atmosphere )
+    CALL get_nstar_id_atm( npart_real, pos(1,:), pos(2,:), pos(3,:), &
+                           nstar_id, nstar_eul_id, use_atmosphere )
 
     nu= nu_all
     PRINT *, " * Baryon number on all particles before correction nu_all= ", &
@@ -2190,13 +2211,13 @@ SUBMODULE (sph_particles) apm
     PRINT *
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( nu_tmp, nu, nstar_p, nstar_real, &
+    !$OMP             SHARED( nu_tmp, nu, nstar_id, nstar_sph, &
     !$OMP                     nuratio_thres, npart_real ) &
     !$OMP             PRIVATE( nu_tmp2, a )
     DO a= 1, npart_real, 1
 
       nu_tmp2= nu(a)
-      nu(a)= nstar_p(a)/nstar_real(a)
+      nu(a)= nstar_id(a)/nstar_sph(a)
 
         IF( nu(a) > nu_tmp2*SQRT(nuratio_thres) ) nu(a)= &
                                           nu_tmp2*SQRT(nuratio_thres)
@@ -2213,8 +2234,8 @@ SUBMODULE (sph_particles) apm
 
       IF( .NOT.is_finite_number( nu(a) ) )THEN
         PRINT *, " * ERROR! nu(", a, ") is a NaN."
-        PRINT *, " nstar_real(a)= ", nstar_real(a)
-        PRINT *, " nstar_p(a)= ", nstar_p(a)
+        PRINT *, " nstar_sph(a)= ", nstar_sph(a)
+        PRINT *, " nstar_id(a)= ", nstar_id(a)
         PRINT *, " Stopping..."
         PRINT *
         STOP
@@ -2222,8 +2243,8 @@ SUBMODULE (sph_particles) apm
       IF( nu(a) < zero )THEN
         PRINT *, " * ERROR! nu(", a, ") is negative."
         PRINT *, " nu(a)= ", nu(a)
-        PRINT *, " nstar_real(a)= ", nstar_real(a)
-        PRINT *, " nstar_p(a)= ", nstar_p(a)
+        PRINT *, " nstar_sph(a)= ", nstar_sph(a)
+        PRINT *, " nstar_id(a)= ", nstar_id(a)
         PRINT *, " Stopping..."
         PRINT *
         STOP
@@ -2258,21 +2279,22 @@ SUBMODULE (sph_particles) apm
 
          ! measure density
          CALL density_loop( npart_real, pos, &    ! input
-                            nu, h, nstar_real )      ! output
+                            nu, h, nstar_sph )      ! output
 
 
-         CALL get_nstar_p_atm( npart_real, pos(1,:), &
-                                       pos(2,:), &
-                                       pos(3,:), nstar_p, use_atmosphere )
+         CALL get_nstar_id_atm( npart_real, pos(1,:), &
+                                pos(2,:), &
+                                pos(3,:), nstar_id, nstar_eul_id, &
+                                use_atmosphere )
 
-         !nstar_p( npart_real+1:npart_all )= zero
+         !nstar_id( npart_real+1:npart_all )= zero
 
          ! get RELATIVE nu's right
          dN_av= zero
          max_nu= zero
          min_nu= HUGE(one)
          DO a= 1, npart_real, 1
-            dN=    (nstar_real(a)-nstar_p(a))/nstar_p(a)
+            dN=    (nstar_sph(a)-nstar_id(a))/nstar_id(a)
             nu(a)= nu(a)*(one - dN)
             dN_av= dN_av + dN
             IF( nu(a) > max_nu )THEN
@@ -2413,7 +2435,15 @@ SUBMODULE (sph_particles) apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-    CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+    !$OMP             PRIVATE( a )
+    compute_nu_eul5: DO a= 1, npart_real, 1
+      nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+    ENDDO compute_nu_eul5
+    !$OMP END PARALLEL DO
+
+    CALL correct_center_of_mass( npart_real, pos, nu_eul, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -2462,18 +2492,18 @@ SUBMODULE (sph_particles) apm
 
     ! measure density
     CALL density_loop( npart_real, pos, &    ! input
-                       nu, h, nstar_real )      ! output
+                       nu, h, nstar_sph )      ! output
 
-    CALL get_nstar_p_atm( npart_real, pos(1,:), &
-                                      pos(2,:), &
-                                      pos(3,:), nstar_p, use_atmosphere )
+    CALL get_nstar_id_atm( npart_real, pos(1,:), &
+                           pos(2,:), &
+                           pos(3,:), nstar_id, nstar_eul_id, use_atmosphere )
 
     dN_av = zero
     dN_max= zero
     cnt1= 0
     DO a= 1, npart_real, 1
       IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > zero )THEN
-        dN= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+        dN= ABS(nstar_sph(a)-nstar_id(a))/nstar_id(a)
         dN_av=  dN_av + dN
         dN_max= MAX(dN_max,dN)
         cnt1= cnt1 + 1
@@ -2484,7 +2514,7 @@ SUBMODULE (sph_particles) apm
     variance_dN = zero                       ! compute variance
     DO a = 1, npart_real, 1
       IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > zero )THEN
-        dN= ABS(nstar_real(a)-nstar_p(a))/nstar_p(a)
+        dN= ABS(nstar_sph(a)-nstar_id(a))/nstar_id(a)
         variance_dN = variance_dN + (dN - dN_av)**two
         cnt1= cnt1 + 1
       ENDIF
@@ -2881,11 +2911,11 @@ SUBMODULE (sph_particles) apm
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         a, &
         pos( 1, a ), pos( 2, a ), pos( 3, a ), &
-        nstar_p( a ), &
+        nstar_id( a ), &
         nstar_int( a ), &
         particle_density_final( a ), &
-        particle_density_final( a )*nstar_p( 1 )/particle_density_final( 1 ), &
-        ABS(nstar_real(a)-nstar_p(a))/nstar_p(a), &
+        particle_density_final( a )*nstar_id( 1 )/particle_density_final( 1 ), &
+        ABS(nstar_sph(a)-nstar_id(a))/nstar_id(a), &
         nu(a), &
         nearest_neighbors(2,a)
     ENDDO
@@ -2959,7 +2989,7 @@ SUBMODULE (sph_particles) apm
       !! \(y\) coordinate of the desired point
       DOUBLE PRECISION, INTENT(IN):: z
       !! \(z\) coordinate of the desired point
-      INTEGER:: answer
+      LOGICAL:: answer
       !! validate_position( x, y, z ) if the latter is present, 0 otherwise
 
       IF( PRESENT(validate_position) )THEN
@@ -3016,7 +3046,8 @@ SUBMODULE (sph_particles) apm
   !  END FUNCTION get_density_atm
 
 
-    SUBROUTINE get_nstar_p_atm( npart_real, x, y, z, nstar_p, use_atmosphere )
+    SUBROUTINE get_nstar_id_atm( npart_real, x, y, z, nstar_id, nstar_eul_id, &
+                                 use_atmosphere )
 
       !*******************************************************
       !
@@ -3037,56 +3068,87 @@ SUBMODULE (sph_particles) apm
       !! Array of \(y\) coordinates
       DOUBLE PRECISION, INTENT(IN):: z(npart_real)
       !! Array of \(z\) coordinates
-      DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
+      DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart_real)
       !! Array to store the computed proper baryon number density
+      DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
+      !# Array to store the computed proper baryon number density seen
+      !  by the Eulerian observer
       LOGICAL,  INTENT( IN ):: use_atmosphere
       !# `.TRUE.` if an atmosphere should be used during the APM, to allow
       !  the real aprticles more freedom to move around and adjust;
       !  `.FALSE.` otherwise
 
-      CALL get_nstar_p( npart_real, x, y, z, nstar_p )
+      CALL get_nstar_id( npart_real, x, y, z, nstar_id, nstar_eul_id )
 
       IF( use_atmosphere .EQV. .TRUE. )THEN
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( npart_real, nstar_p, atmosphere_density ) &
+        !$OMP             SHARED( npart_real, nstar_id, nstar_eul_id, &
+        !$OMP                     atmosphere_density ) &
         !$OMP             PRIVATE( a )
         DO a= 1, npart_real, 1
-          IF( nstar_p(a) <= atmosphere_density )THEN
-            nstar_p(a)= atmosphere_density
+          IF( nstar_id(a) <= atmosphere_density )THEN
+            nstar_id(a)= atmosphere_density
+          ENDIF
+          IF( nstar_eul_id(a) <= atmosphere_density )THEN
+            nstar_eul_id(a)= atmosphere_density
           ENDIF
         ENDDO
         !$OMP END PARALLEL DO
 
       ELSE
 
-     !   !$OMP PARALLEL DO DEFAULT( NONE ) &
-     !   !$OMP             SHARED( npart_real, nstar_p ) &
-     !   !$OMP             PRIVATE( a )
-     !   DO a= 1, npart_real, 1
-     !
-     !     IF( .NOT.is_finite_number( nstar_p( a ) ) )THEN
-     !       PRINT *, "** ERROR! nstar_p(", a, ") is a NaN!", &
-     !                " Stopping.."
-     !       PRINT *
-     !       STOP
-     !     ENDIF
-     !     IF( nstar_p( a ) == zero )THEN
-     !       PRINT *, "** ERROR! nstar_p(", a, ")= 0 on a real particle!"
-     !       !PRINT *, "   sq_g=", sq_g
-     !       !PRINT *, "   Theta_a=", Theta_a
-     !       !PRINT *, "   baryon_density(", a, ")=", baryon_density(a)
-     !       !PRINT *, " * Stopping.."
-     !       !PRINT *
-     !       STOP
-     !     ENDIF
-     !
-     !   ENDDO
-     !   !$OMP END PARALLEL DO
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( npart_real, nstar_id, nstar_eul_id ) &
+        !$OMP             PRIVATE( a )
+        DO a= 1, npart_real, 1
+
+          IF( nstar_id( a ) < tiny_real )THEN
+            PRINT *, "** ERROR! nstar_id(", a, ")=", nstar_id( a ), &
+                     " in SUBROUTINE get_nstar_id_atm."
+            PRINT *, " * Stopping.."
+            PRINT *
+            STOP
+          ENDIF
+          IF( nstar_eul_id( a ) < tiny_real )THEN
+            PRINT *, "** ERROR! nstar_eul_id(", a, ")=", nstar_eul_id( a ), &
+                     " in SUBROUTINE get_nstar_id_atm."
+            PRINT *, " * Stopping.."
+            PRINT *
+            STOP
+          ENDIF
+
+        ENDDO
+        !$OMP END PARALLEL DO
 
       ENDIF
 
-    END SUBROUTINE get_nstar_p_atm
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, nstar_id, nstar_eul_id ) &
+      !$OMP             PRIVATE( a )
+      DO a= 1, npart_real, 1
+
+        IF( .NOT.is_finite_number( nstar_id( a ) ) )THEN
+          PRINT *, "** ERROR! nstar_id(", a, ")= ", nstar_id( a ), &
+                   "is a not a finite number!", &
+                   " in SUBROUTINE get_nstar_id_atm."
+          PRINT *, " * Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+        IF( .NOT.is_finite_number( nstar_eul_id( a ) ) )THEN
+          PRINT *, "** ERROR! nstar_eul_id(", a, ")= ", nstar_eul_id( a ), &
+                   "is a not a finite number!", &
+                   " in SUBROUTINE get_nstar_id_atm."
+          PRINT *, " * Stopping.."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDDO
+      !$OMP END PARALLEL DO
+
+    END SUBROUTINE get_nstar_id_atm
 
 
   END PROCEDURE perform_apm
@@ -3099,7 +3161,7 @@ SUBMODULE (sph_particles) apm
     !
     !# Translate the particles so that their center of mass
     !  coincides with the center of mass of the star, given by
-    !  LORENE
+    !  |id|
     !
     !  FT 1.09.2021
     !
@@ -3126,7 +3188,7 @@ SUBMODULE (sph_particles) apm
         DOUBLE PRECISION, INTENT(IN):: x
         DOUBLE PRECISION, INTENT(IN):: y
         DOUBLE PRECISION, INTENT(IN):: z
-        INTEGER:: answer
+        LOGICAL:: answer
       END FUNCTION
     END INTERFACE
 
@@ -3176,7 +3238,7 @@ SUBMODULE (sph_particles) apm
           .AND. &
           !binary% is_hydro_negative( &
           validate_pos( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) == 0 &
+                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
       )THEN
 
         pos(:,a)= pos_corr_tmp

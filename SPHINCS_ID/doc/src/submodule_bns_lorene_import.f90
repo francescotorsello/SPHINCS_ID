@@ -904,14 +904,14 @@ SUBMODULE (bns_lorene) import
   END PROCEDURE import_spatial_metric
 
 
-  MODULE PROCEDURE is_hydro_negative
+  MODULE PROCEDURE is_hydro_positive
 
     !************************************************
     !
-    !# Return 1 if the energy density is nonpositive
+    !# Return .FALSE. if the energy density is nonpositive
     !  or if the specific energy is nonpositive,
     !  or if the pressure is nonpositive
-    !  at the specified point
+    !  at the specified point; .TRUE. otherwise
     !
     !  FT 12.03.2021
     !
@@ -922,19 +922,26 @@ SUBMODULE (bns_lorene) import
 
     IMPLICIT NONE
 
+    INTEGER:: tmp
+
     IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-      ! Msun_geo
-      res= negative_hydro( THIS% bns_ptr, &
-                                    x*Msun_geo, &
-                                    y*Msun_geo, &
-                                    z*Msun_geo )
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
+      ! definition  of Msun_geo
+      tmp= positive_hydro( THIS% bns_ptr, x*Msun_geo, &
+                                          y*Msun_geo, &
+                                          z*Msun_geo )
+
+      IF( tmp == 1 )THEN
+        res= .TRUE.
+      ELSE
+        res= .FALSE.
+      ENDIF
 
     ENDIF
 
-  END PROCEDURE is_hydro_negative
+  END PROCEDURE is_hydro_positive
 
 
 END SUBMODULE import

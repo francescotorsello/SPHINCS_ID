@@ -672,8 +672,8 @@ MODULE sph_particles
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          INTEGER:: answer
-          !! 1 if the position is not valid, 0 otherwise
+          LOGICAL:: answer
+          !! `.TRUE.` if the position is valid, `.FALSE.` otherwise
         END FUNCTION validate_position_int
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
@@ -811,8 +811,8 @@ MODULE sph_particles
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          INTEGER:: answer
-          !! 1 if the position is not valid, 0 otherwise
+          LOGICAL:: answer
+          !! `.TRUE.` if the position is valid, `.FALSE.` otherwise
         END FUNCTION validate_position_int
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
@@ -836,6 +836,40 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT), OPTIONAL:: nu
 
     END SUBROUTINE impose_equatorial_plane_symmetry
+
+
+    MODULE SUBROUTINE find_particles_above_xy_plane( npart, pos, &
+                                            npart_above_xy, above_xy_plane_a )
+    !# Mirror the particle with z>0 with respect to the xy plane,
+    !  to impose the equatorial-plane symmetry
+
+      INTEGER, INTENT(IN) :: npart
+      INTEGER, INTENT(OUT):: npart_above_xy
+
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+
+      INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: above_xy_plane_a
+
+    END SUBROUTINE find_particles_above_xy_plane
+
+
+    MODULE SUBROUTINE reflect_particles_xy_plane( npart, pos, pos_below,  &
+                                        npart_above_xy, above_xy_plane_a, &
+                                        nu, nu_below )
+    !# Mirror the particle with z>0 with respect to the xy plane,
+    !  to impose the equatorial-plane symmetry
+
+      INTEGER, INTENT(IN):: npart
+      INTEGER, INTENT(IN):: npart_above_xy
+      INTEGER, DIMENSION(npart_above_xy), INTENT(IN):: above_xy_plane_a
+
+      DOUBLE PRECISION, DIMENSION(3,npart),          INTENT(INOUT) :: pos
+      DOUBLE PRECISION, DIMENSION(3,npart_above_xy), INTENT(OUT)   :: pos_below
+      DOUBLE PRECISION, DIMENSION(npart),        INTENT(INOUT), OPTIONAL:: nu
+      DOUBLE PRECISION, DIMENSION(npart_above_xy), INTENT(OUT), OPTIONAL:: &
+      nu_below
+
+    END SUBROUTINE reflect_particles_xy_plane
 
 
 !    MODULE SUBROUTINE reshape_sph_field_1d( this, field, new_size1, new_size2, &
@@ -926,24 +960,24 @@ MODULE sph_particles
 
     END SUBROUTINE compute_and_print_sph_variables
 
-    MODULE SUBROUTINE perform_apm( get_density, get_nstar_p, &
-                                   npart_output, &
-                                   pos_input, &
-                                   pvol, h_output, nu_output, &
-                                   center, &
-                                   com_star, &
-                                   mass, &
-                                   sizes, &!radx_opp, &
-                                   !rady, radz, &
-                                   apm_max_it, max_inc, &
-                                   mass_it, correct_nu, nuratio_thres, &
-                                   nuratio_des, &
-                                   nx_gh, ny_gh, nz_gh, &
-                                   use_atmosphere, &
-                                   remove_atmosphere, &
-                                   namefile_pos_id, namefile_pos, &
-                                   namefile_results, &
-                                   validate_position )
+    MODULE SUBROUTINE perform_apm( get_density, get_nstar_id, &
+                                       npart_output, &
+                                       pos_input, &
+                                       pvol, h_output, nu_output, &
+                                       center, &
+                                       com_star, &
+                                       mass, &
+                                       sizes, &
+                                       apm_max_it, max_inc, &
+                                       mass_it, correct_nu, nuratio_thres, &
+                                       nuratio_des, &
+                                       nx_gh, ny_gh, nz_gh, ghost_dist, &
+                                       use_atmosphere, &
+                                       remove_atmosphere, &
+                                       print_step, &
+                                       namefile_pos_id, namefile_pos, &
+                                       namefile_results, &
+                                       validate_position )
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -962,7 +996,7 @@ MODULE sph_particles
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
-        SUBROUTINE get_nstar_p( npart_real, x, y, z, nstar_p )
+        SUBROUTINE get_nstar_id( npart_real, x, y, z, nstar_id, nstar_eul_id )
         !! Computes the proper baryon number density at the particle positions
           INTEGER, INTENT(IN):: npart_real
           !! Number of real particles (i.e., no ghost particles included here)
@@ -972,9 +1006,12 @@ MODULE sph_particles
           !! Array of \(y\) coordinates
           DOUBLE PRECISION, INTENT(IN):: z(npart_real)
           !! Array of \(z\) coordinates
-          DOUBLE PRECISION, INTENT(OUT):: nstar_p(npart_real)
+          DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart_real)
           !! Array to store the computed proper baryon number density
-        END SUBROUTINE get_nstar_p
+          DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
+          !# Array to store the computed proper baryon number density seen
+          !  by the Eulerian observer
+        END SUBROUTINE get_nstar_id
       END INTERFACE
       INTERFACE
         FUNCTION validate_position_int( x, y, z ) RESULT( answer )
@@ -985,14 +1022,17 @@ MODULE sph_particles
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          INTEGER:: answer
-          !! 1 if the position is not valid, 0 otherwise
+          LOGICAL:: answer
+          !! `.TRUE.` if the position is valid, `.FALSE.` otherwise
         END FUNCTION validate_position_int
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
       !> Initial particle number
       INTEGER,                          INTENT( INOUT ):: npart_output
+      !& Prints the particle positions to a formatted file every
+      !  print_step steps
+      INTEGER,                          INTENT( INOUT ):: print_step
       !> Initial particle positions
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos_input
       !> Initial particle volume
@@ -1011,12 +1051,6 @@ MODULE sph_particles
       DOUBLE PRECISION,                 INTENT( IN )   :: mass
       !> Radius of the star in the x direction, towards the companion
       DOUBLE PRECISION, DIMENSION(6),   INTENT( IN )   :: sizes
-      !> Radius of the star in the x direction, opposite to companion
-      !DOUBLE PRECISION,                 INTENT( IN )   :: radx_opp
-      !> Radius of the star in the y direction
-      !DOUBLE PRECISION,                 INTENT( IN )   :: rady
-      !> Radius of the star in the z direction
-      !DOUBLE PRECISION,                 INTENT( IN )   :: radz
       !> Maximum number of APM iterations, irrespective of the EXIT condition
       INTEGER,                          INTENT( IN )   :: apm_max_it
       !& Sets the EXIT condition: If the average over all the
@@ -1048,23 +1082,26 @@ MODULE sph_particles
       INTEGER,                          INTENT( IN )   :: ny_gh
       !> Number of lattice points in the z direction for ghosts
       INTEGER,                          INTENT( IN )   :: nz_gh
-      !> If .TRUE., allows particles to move where the density
+      !& Distance between the ghost particles and the surface
+      !  of the matter object considered (star, ejecta, etc...)
+      DOUBLE PRECISION,                 INTENT( IN )   :: ghost_dist
+      !& If .TRUE., allows particles to move where the density
       !  is 0, and displace them using only the smoothing term.
       !  This can be useful when the system has an irregular
       !  geometry, as, for example, an ejecta; `.FALSE.` otherwise
       LOGICAL,                          INTENT( INOUT ):: use_atmosphere
-      !> If .TRUE., removes the particles placed where the density is 0,
+      !& If .TRUE., removes the particles placed where the density is 0,
       !  at the end of the APM iteration; `.FALSE.` otherwise
       LOGICAL,                          INTENT( INOUT ):: remove_atmosphere
-      !> Name for the formatted file where the initial particle positions
+      !& Name for the formatted file where the initial particle positions
       !  and the ghost positions will be printed
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
                                                             namefile_pos_id
-      !> Name for the formatted file where the particle positions
+      !& Name for the formatted file where the particle positions
       !  and the ghost positions will be printed every 15 iterations
       CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
                                                             namefile_pos
-      !> Name for the formatted file where various quantities related
+      !& Name for the formatted file where various quantities related
       !  to the particle distribution, the baryon number particle and the
       !  kernel estimate of the density will be printed at the end of
       !  the APM iteration
@@ -1427,245 +1464,42 @@ MODULE sph_particles
   END INTERFACE
 
 
-
-  CONTAINS
-
+  INTERFACE
 
 
-  SUBROUTINE check_particle_positions( npart, pos, debug )
+    MODULE SUBROUTINE check_particle_positions( npart, pos, debug )
+    !! Check that the particles are not at the same positions
 
-    !*************************************************
-    !
-    !# Check that the particles are not at the same
-    !  positions
-    !
-    !  FT 1.9.2021
-    !
-    !*************************************************
+      INTEGER, INTENT(IN):: npart
+      !! Number of particles
+      LOGICAL, INTENT(IN), OPTIONAL:: debug
+      !! `TRUE` to debug the SUBROUTINE, `FALSE` otherwise
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+      !! Array of particle positions
 
-    USE NR, ONLY: indexx
-
-    IMPLICIT NONE
-
-    INTEGER, INTENT(IN):: npart
-    !! Number of particles
-    LOGICAL, INTENT(IN), OPTIONAL:: debug
-    !! `TRUE` to debug the SUBROUTINE, `FALSE` otherwise
-    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
-    !! Array of particle positions
-
-    INTEGER:: itr
-    !! Iterator
-    INTEGER:: itr2
-    !! Iterator
-    INTEGER:: x_idx
-    !# Index at which a new value of the \(x\) coordinate appears,
-    !  in the array `pos` sorted so that the \(x\) coordinate does not decrease
-    INTEGER, DIMENSION(:), ALLOCATABLE:: x_sort
-    !# Array storing the sorted indices of array `pos`, so that the \(x\)
-    !  coordinate of the particles is in nondecreasing order
-    INTEGER, DIMENSION(:), ALLOCATABLE:: x_number
-    !# Array storing, for each \(x\) coordinate, the number of particles
-    !  having that \(x\) coordinate
-
-    PRINT *, "** Checking that there are not multiple particles", &
-             " at the same position..."
-    PRINT *
-
-    ALLOCATE( x_sort( npart ) )
-    ALLOCATE( x_number( npart ) )
-
-    ! Sort x coordinates of the particles
-    CALL indexx( npart, pos( 1, : ), x_sort )
-
-    x_number= 1
-    itr2= 1
-    ! Find the number of times each x appears
-    DO itr= 1, npart - 1, 1
-
-      IF( pos( 1, x_sort(itr) ) == &
-          pos( 1, x_sort(itr+1) ) )THEN
-
-        x_number(itr2)= x_number(itr2) + 1
-
-      ELSE
-
-        itr2= itr2 + 1
-
-      ENDIF
-
-    ENDDO
-    x_number= x_number(1:itr2)
-
-    IF( SUM( x_number ) /= npart )THEN
-
-      PRINT *, "** ERROR! The sum of the numbers of particles with the same", &
-               " x is not equal to the particle number."
-      PRINT *, " * SUM( x_number )=", SUM( x_number ), ", ", &
-               "npart=", npart
-      PRINT *, " * Stopping..."
-      PRINT *
-      STOP
-
-    ENDIF
-
-    IF( PRESENT(debug) .AND. debug .EQV. .TRUE. )THEN
-
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( pos, x_sort, x_number ) &
-      !$OMP             PRIVATE( itr, itr2, x_idx )
-      DO itr= 1, SIZE(x_number), 1
-
-        IF( itr == 1 )THEN
-          x_idx= 1
-        ELSE
-          x_idx= SUM(x_number(1:itr-1)) + 1
-        ENDIF
-
-        DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
-
-          ! If they do not have the same x
-          IF( pos( 1, x_sort(itr2) ) /= &
-              pos( 1, x_sort(itr2+1) ) )THEN
-
-            PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
-                     " and", x_sort(itr2+1), &
-                     " do not have the same x, but should!"
-            PRINT *, pos( :, x_sort(itr2) )
-            PRINT *, pos( :, x_sort(itr2+1) )
-            PRINT *, " * Stopping..."
-            PRINT *
-            STOP
-
-          ENDIF
-
-        ENDDO
-      ENDDO
-      !$OMP END PARALLEL DO
-
-    ENDIF
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, x_sort, x_number ) &
-    !$OMP             PRIVATE( itr, itr2, x_idx )
-    DO itr= 1, SIZE(x_number), 1
-
-      IF( itr == 1 )THEN
-        x_idx= 1
-      ELSE
-        x_idx= SUM(x_number(1:itr-1)) + 1
-      ENDIF
-
-      DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
-
-        ! If they have the same y
-        IF( pos( 2, x_sort(itr2) ) == &
-            pos( 2, x_sort(itr2+1) ) )THEN
-
-          ! If they have the same z
-          IF( pos( 3, x_sort(itr2) ) == &
-              pos( 3, x_sort(itr2+1) ) )THEN
-
-            ! They are the same
-            PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
-                     " and", x_sort(itr2+1), " have the same coordinates!"
-            PRINT *, pos( :, x_sort(itr2) )
-            PRINT *, pos( :, x_sort(itr2+1) )
-            PRINT *, " * Stopping..."
-            PRINT *
-            STOP
-
-          ENDIF
-        ENDIF
-
-      ENDDO
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    DEALLOCATE( x_sort )
-    DEALLOCATE( x_number )
-
-  END SUBROUTINE check_particle_positions
+    END SUBROUTINE check_particle_positions
 
 
-  FUNCTION check_particle_position( npart, pos, pos_a ) RESULT( cnt )
-
-    !*****************************************************
-    !
-    !# Return the number of times that pos_a appears
-    !  in the array pos
+    MODULE FUNCTION check_particle_position( npart, pos, pos_a ) RESULT( cnt )
+    !# Return the number of times that pos_a appears in the array pos
     !  @todo This algorithm scales as O(npart**2)
     !        if used in a loop over the particles...
     !        To be documented, after it's fixed
-    !
-    !  FT 13.10.2021
-    !
-    !*****************************************************
 
-    !USE NR,             ONLY: indexx
+      INTEGER, INTENT(IN):: npart
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: pos_a
+      INTEGER:: cnt
 
-    IMPLICIT NONE
+    END FUNCTION check_particle_position
 
-    INTEGER, INTENT(IN):: npart
-    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN):: pos
-    DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: pos_a
-    INTEGER:: cnt
 
-    INTEGER:: itr, itr2, size_x!, cnt
-    INTEGER, DIMENSION(npart):: x_sort, cnts
-    INTEGER, DIMENSION(npart):: x_number
-    INTEGER, DIMENSION(:), ALLOCATABLE:: x_number_filt
+  END INTERFACE
 
-    ! Sort x coordinates of the particles
-    !CALL indexx( npart, pos( 1, : ), x_sort )
 
-    x_number= 0
-    itr2= 0
-    ! Find the number of times that the x coordinate of pos_a appears in pos
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, pos_a, x_sort, x_number, npart ) &
-    !$OMP             PRIVATE( itr )
-    DO itr= 1, npart, 1
 
-      IF( pos( 1, itr ) == pos_a( 1 ) )THEN
+  CONTAINS
 
-        !itr2= itr2 + 1
-        x_number(itr)= itr
-
-      !ELSEIF( pos( 1, x_sort(itr) ) > pos_a( 1 ) )THEN
-      !
-      !  EXIT
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-    x_number_filt= PACK( x_number, x_number /= 0 )
-    size_x= SIZE(x_number_filt)
-
-    cnts= 0
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, pos_a, x_sort, x_number_filt, size_x, cnts )&
-    !$OMP             PRIVATE( itr )
-    DO itr= 1, size_x, 1
-
-      ! If they have the same y
-      IF( pos( 2, x_number_filt(itr) ) == pos_a( 2 ) )THEN
-
-        ! If they have the same z
-        IF( pos( 3, x_number_filt(itr) ) == pos_a( 3 ) )THEN
-
-          cnts(itr)= cnts(itr) + 1
-
-        ENDIF
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    cnt= SUM( cnts )
-
-  END FUNCTION check_particle_position
 
 
   FUNCTION find_h_backup( a, npart, pos, ndes ) RESULT( h )
