@@ -17,9 +17,7 @@ sort: alpha
 src_dir: ./src
 media_dir: ./doc-media
 exclude_dir: ./src/prototypes
-exclude: src/id_base/bns_base/bns_lorene/submodule_bns_lorene_bindings.f90
-         src/id_base/diffstar_base/diffstar_lorene/submodule_diffstar_lorene_bindings.f90
-         src/sph_particles/submodule_sph_particles_redistribute_nu.f90
+exclude: ./src/sph_particles/submodule_sph_particles_redistribute_nu.f90
 output_dir: ./doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S

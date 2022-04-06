@@ -157,10 +157,10 @@ MODULE bns_lorene
     PROCEDURE:: destruct_binary
     !! Destructs the |lorene| |binns| object
 
-    PROCEDURE:: allocate_lorene_id_memory
+    PROCEDURE:: allocate_bnslorene_memory
     !! Allocates memory for the [[bnslorene]] member arrays
 
-    PROCEDURE:: deallocate_lorene_id_memory
+    PROCEDURE:: deallocate_bnslorene_memory
     !! Deallocates memory for the [[bnslorene]] member arrays
 
     PROCEDURE:: import_id_params
@@ -347,7 +347,7 @@ MODULE bns_lorene
     END SUBROUTINE destruct_binary
 
 
-    MODULE SUBROUTINE allocate_lorene_id_memory( THIS, d )
+    MODULE SUBROUTINE allocate_bnslorene_memory( THIS, d )
     !! Allocates allocatable arrays member of a [[bnslorene]] object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -355,16 +355,16 @@ MODULE bns_lorene
       !> Dimension of the arrays
       INTEGER,    INTENT( IN )    :: d
 
-    END SUBROUTINE allocate_lorene_id_memory
+    END SUBROUTINE allocate_bnslorene_memory
 
 
-    MODULE SUBROUTINE deallocate_lorene_id_memory( THIS )
+    MODULE SUBROUTINE deallocate_bnslorene_memory( THIS )
     !! Deallocates allocatable arrays member of a [[bnslorene]] object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT( IN OUT ):: THIS
 
-    END SUBROUTINE deallocate_lorene_id_memory
+    END SUBROUTINE deallocate_bnslorene_memory
 
 
     MODULE SUBROUTINE import_id_params( THIS )

@@ -63,7 +63,7 @@ SUBMODULE (bns_lorene) constructor
 
 
   !
-  !-- Implementation of the constructor of the bns object
+  !-- Implementation of the constructor of the bnslorene object
   !
   MODULE PROCEDURE construct_bnslorene
 
@@ -97,7 +97,7 @@ SUBMODULE (bns_lorene) constructor
     ! Import the parameters of the binary system
     CALL import_id_params( derived_type )
 
-    ! Assign a unique identifier to the bns object
+    ! Assign a unique identifier to the bnslorene object
     derived_type% bns_identifier= bns_counter
     bns_counter= bns_counter + 1
 
@@ -142,7 +142,7 @@ SUBMODULE (bns_lorene) constructor
 
 
   !
-  !-- Implementation of the destructor of the bns object
+  !-- Implementation of the destructor of the bnslorene object
   !
   MODULE PROCEDURE destruct_bnslorene
 
@@ -160,7 +160,7 @@ SUBMODULE (bns_lorene) constructor
     !PRINT *
 
     ! Deallocate memory
-    CALL THIS% deallocate_lorene_id_memory()
+    CALL THIS% deallocate_bnslorene_memory()
 
   END PROCEDURE destruct_bnslorene
 

@@ -12,7 +12,7 @@
 ! features of the code.                                          !
 !----------------------------------------------------------------!
 ! n_bns and the number of specified components of filenames must be the same
-n_bns=1                          ! Number of BNS to import
+n_id=1                          ! Number of physical systems to use
 common_path="lorene-id-files/"   ! Path to the directory containing the LORENE
                                  ! BNS binary files
             !"eccentric-ejecta-files/"

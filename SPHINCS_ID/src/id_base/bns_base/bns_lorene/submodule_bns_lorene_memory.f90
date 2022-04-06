@@ -44,7 +44,7 @@ SUBMODULE (bns_lorene) memory
   !-------------------!
 
 
-  MODULE PROCEDURE allocate_lorene_id_memory
+  MODULE PROCEDURE allocate_bnslorene_memory
 
     !***********************************************
     !
@@ -57,7 +57,7 @@ SUBMODULE (bns_lorene) memory
 
     IMPLICIT NONE
 
-    !PRINT *, "** Executing the allocate_lorene_id_memory subroutine..."
+    !PRINT *, "** Executing the allocate_bnslorene_memory subroutine..."
 
     IF(.NOT.ALLOCATED( THIS% lapse ))THEN
       ALLOCATE( THIS% lapse( d ), STAT= ios, &
@@ -305,16 +305,16 @@ SUBMODULE (bns_lorene) memory
     ENDIF
 
     IF( SIZE( THIS% lapse ) /= d )THEN
-      PRINT *, "** ERROR in memory allocation in allocate_lorene_id_memory"
+      PRINT *, "** ERROR in memory allocation in allocate_bnslorene_memory"
     ENDIF
 
-    !PRINT *, "** Subroutine allocate_lorene_id_memory executed."
+    !PRINT *, "** Subroutine allocate_bnslorene_memory executed."
     !PRINT *
 
-  END PROCEDURE allocate_lorene_id_memory
+  END PROCEDURE allocate_bnslorene_memory
 
 
-  MODULE PROCEDURE deallocate_lorene_id_memory
+  MODULE PROCEDURE deallocate_bnslorene_memory
 
     !***********************************************
     !
@@ -326,7 +326,7 @@ SUBMODULE (bns_lorene) memory
 
     IMPLICIT NONE
 
-    !PRINT *, "** Executing the deallocate_lorene_id_memory subroutine..."
+    !PRINT *, "** Executing the deallocate_bnslorene_memory subroutine..."
 
     IF(ALLOCATED( THIS% lapse ))THEN
       DEALLOCATE( THIS% lapse, STAT= ios, ERRMSG= err_msg )
@@ -558,10 +558,10 @@ SUBMODULE (bns_lorene) memory
       !                "...deallocation error for array v_euler_z" )
     ENDIF
 
-    !PRINT *, "** Subroutine deallocate_lorene_id_memory executed."
+    !PRINT *, "** Subroutine deallocate_bnslorene_memory executed."
     !PRINT *
 
-  END PROCEDURE deallocate_lorene_id_memory
+  END PROCEDURE deallocate_bnslorene_memory
 
 
 END SUBMODULE memory

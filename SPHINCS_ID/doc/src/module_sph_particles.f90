@@ -1494,6 +1494,50 @@ MODULE sph_particles
     END FUNCTION check_particle_position
 
 
+    MODULE SUBROUTINE correct_center_of_mass( npart_real, pos, nu, get_density,&
+                                       validate_pos, com_star, verbose )
+
+      !***********************************************************
+      !
+      !# Translate the particles so that their center of mass
+      !  coincides with the center of mass of the star, given by
+      !  |id|
+      !
+      !  FT 1.09.2021
+      !
+      !***********************************************************
+
+      USE analyze, ONLY: COM
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: npart_real
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: com_star
+      LOGICAL, INTENT(IN), OPTIONAL:: verbose
+
+      INTERFACE
+        FUNCTION get_density( x, y, z ) RESULT( density )
+          DOUBLE PRECISION, INTENT(IN):: x
+          DOUBLE PRECISION, INTENT(IN):: y
+          DOUBLE PRECISION, INTENT(IN):: z
+          DOUBLE PRECISION:: density
+        END FUNCTION
+      END INTERFACE
+      INTERFACE
+        FUNCTION validate_pos( x, y, z ) RESULT( answer )
+          DOUBLE PRECISION, INTENT(IN):: x
+          DOUBLE PRECISION, INTENT(IN):: y
+          DOUBLE PRECISION, INTENT(IN):: z
+          LOGICAL:: answer
+        END FUNCTION
+      END INTERFACE
+
+      DOUBLE PRECISION, DIMENSION(3,npart_real), INTENT(INOUT):: pos
+      DOUBLE PRECISION, DIMENSION(npart_real),   INTENT(INOUT):: nu
+
+    END SUBROUTINE correct_center_of_mass
+
+
   END INTERFACE
 
 

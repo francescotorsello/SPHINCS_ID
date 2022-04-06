@@ -105,7 +105,7 @@ SUBMODULE (sph_particles) constructor_std
     ! construct_particles_idase is called
     INTEGER, SAVE:: counter= 1
     INTEGER:: npart_des, a, max_steps, nlines, header_lines, n_cols, &
-              npart_tmp, nx_gh, ny_gh, nz_gh, i_matter
+              npart_tmp, nx_gh, ny_gh, nz_gh, i_matter, itr2
 
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50
@@ -1400,6 +1400,35 @@ SUBMODULE (sph_particles) constructor_std
 
     ENDDO
 
+  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !  !$OMP             SHARED( parts ) &
+  !  !$OMP             PRIVATE( a, itr2 )
+  !  find_nan_in_pos: DO a= 1, parts% npart, 1
+  !
+  !    DO itr2= 1, 3, 1
+  !      IF( .NOT.is_finite_number(parts% pos(itr2,a)) )THEN
+  !        PRINT *, "** ERROR! pos(", itr2, a, ")= ", parts% pos(itr2,a), &
+  !                 " is not a finite number!"
+  !        PRINT *, " * Stopping.."
+  !        PRINT *
+  !        STOP
+  !      ENDIF
+  !    ENDDO
+  !
+  !  ENDDO find_nan_in_pos
+  !  !$OMP END PARALLEL DO
+
+    !
+    !-- Set the total center of mass of the system at the
+    !-- Cartesian origin
+    !
+    ! TODO: The idbase object should tell the location of the total
+    !       computing frame center of mass to the particle object
+    CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
+                                 import_density, &
+                                 validate_position, [zero,zero,zero], &
+                                 verbose= .TRUE. )
+
     PRINT *, " * Final particle distribution prepared. Number of particles=", &
              parts% npart
     DO i_matter= 1, parts% n_matter, 1
@@ -1930,28 +1959,89 @@ SUBMODULE (sph_particles) constructor_std
     END FUNCTION validate_position
 
 
-    SUBROUTINE get_nstar_id( npart_real, x, y, z, nstar_id, nstar_eul_id )
+    SUBROUTINE correct_eulerian_center_of_mass_of_system( npart, pos, nu, &
+                                                 com_system )
 
       IMPLICIT NONE
 
-      INTEGER, INTENT(IN):: npart_real
-      DOUBLE PRECISION, INTENT(IN):: x(npart_real)
-      DOUBLE PRECISION, INTENT(IN):: y(npart_real)
-      DOUBLE PRECISION, INTENT(IN):: z(npart_real)
-      DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart_real)
-      DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
+      INTEGER, INTENT(IN):: npart
+      DOUBLE PRECISION, INTENT(IN):: com_system(3)
+      DOUBLE PRECISION, INTENT(IN):: nu(npart)
+      DOUBLE PRECISION, INTENT(INOUT):: pos(3,npart)
 
-      DOUBLE PRECISION, DIMENSION(npart_real):: lapse, &
-                                                shift_x, shift_y, shift_z, &
-                                                g_xx, g_xy, g_xz, &
-                                                g_yy, g_yz, g_zz, &
-                                                baryon_density, &
-                                                energy_density, &
-                                                specific_energy, &
-                                                pressure, &
-                                                v_euler_x, v_euler_y, v_euler_z
+      DOUBLE PRECISION:: nstar_id(npart)
+      DOUBLE PRECISION:: nstar_eul_id(npart)
+      DOUBLE PRECISION:: nu_eul(npart)
 
-      CALL id% read_id_particles( npart_real, x, y, z, &
+INTEGER:: a, itr2
+
+PRINT *, "1"
+
+!$OMP PARALLEL DO DEFAULT( NONE ) &
+!$OMP             SHARED( npart, pos ) &
+!$OMP             PRIVATE( a, itr2 )
+find_nan_in_pos: DO a= 1, npart, 1
+
+  DO itr2= 1, 3, 1
+    IF( .NOT.is_finite_number(pos(itr2,a)) )THEN
+      PRINT *, "** ERROR! pos(", itr2, a, ")= ", pos(itr2,a), &
+               " is not a finite number!"
+      PRINT *, " * Stopping.."
+      PRINT *
+      STOP
+    ENDIF
+  ENDDO
+
+ENDDO find_nan_in_pos
+!$OMP END PARALLEL DO
+
+      CALL get_nstar_id( npart, &
+                         pos(1,npart), pos(2,npart), &
+                         pos(3,npart), nstar_id, nstar_eul_id )
+
+PRINT *, "2"
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart,nu,nu_eul,nstar_eul_id,nstar_id ) &
+      !$OMP             PRIVATE( a )
+      compute_nu_eul: DO a= 1, npart, 1
+        nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+      ENDDO compute_nu_eul
+      !$OMP END PARALLEL DO
+
+PRINT *, "3"
+
+      CALL correct_center_of_mass( npart, pos, nu_eul, import_density, &
+                                   validate_position, com_system, &
+                                   verbose= .TRUE. )
+
+PRINT *, "4"
+
+    END SUBROUTINE correct_eulerian_center_of_mass_of_system
+
+
+    SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id, nstar_eul_id )
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: npart
+      DOUBLE PRECISION, INTENT(IN):: x(npart)
+      DOUBLE PRECISION, INTENT(IN):: y(npart)
+      DOUBLE PRECISION, INTENT(IN):: z(npart)
+      DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
+      DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
+
+      DOUBLE PRECISION, DIMENSION(npart):: lapse, &
+                                           shift_x, shift_y, shift_z, &
+                                           g_xx, g_xy, g_xz, &
+                                           g_yy, g_yz, g_zz, &
+                                           baryon_density, &
+                                           energy_density, &
+                                           specific_energy, &
+                                           pressure, &
+                                           v_euler_x, v_euler_y, v_euler_z
+
+      CALL id% read_id_particles( npart, x, y, z, &
                                   lapse, shift_x, shift_y, shift_z, &
                                   g_xx, g_xy, g_xz, &
                                   g_yy, g_yz, g_zz, &
@@ -1961,12 +2051,12 @@ SUBMODULE (sph_particles) constructor_std
                                   pressure, &
                                   v_euler_x, v_euler_y, v_euler_z )
 
-      CALL compute_nstar_id( npart_real, lapse, shift_x, shift_y, &
+      CALL compute_nstar_id( npart, lapse, shift_x, shift_y, &
                              shift_z, v_euler_x, v_euler_y, v_euler_z, &
                              g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
                              baryon_density, nstar_id )
 
-      CALL compute_nstar_eul_id( npart_real, &
+      CALL compute_nstar_eul_id( npart, &
                                  v_euler_x, v_euler_y, v_euler_z, &
                                  g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
                                  baryon_density, nstar_eul_id )
@@ -1974,7 +2064,7 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE get_nstar_id
 
 
-    SUBROUTINE compute_nstar_id( npart_real, lapse, shift_x, shift_y, &
+    SUBROUTINE compute_nstar_id( npart, lapse, shift_x, shift_y, &
                                  shift_z, v_euler_x, v_euler_y, v_euler_z, &
                                  g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
                                  baryon_density, nstar_id )
@@ -1995,36 +2085,36 @@ SUBMODULE (sph_particles) constructor_std
 
       IMPLICIT NONE
 
-      INTEGER, INTENT(IN):: npart_real
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: lapse
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_x
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_y
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: shift_z
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_x
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_y
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_z
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xx
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xy
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xz
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yy
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yz
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_zz
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_id
+      INTEGER, INTENT(IN):: npart
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: lapse
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: shift_x
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: shift_y
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: shift_z
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: v_euler_x
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: v_euler_y
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: v_euler_z
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_xx
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_xy
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_xz
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_yy
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_yz
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_zz
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: baryon_density
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: nstar_id
 
       INTEGER:: a, i!mus, nus
       DOUBLE PRECISION:: det, sq_g, Theta_a
-      DOUBLE PRECISION, DIMENSION(0:3,npart_real):: vel
+      DOUBLE PRECISION, DIMENSION(0:3,npart):: vel
       !DOUBLE PRECISION:: g4(0:3,0:3)
       DOUBLE PRECISION:: g4(n_sym4x4)
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_real, lapse, shift_x, shift_y, shift_z, &
+      !$OMP             SHARED( npart, lapse, shift_x, shift_y, shift_z, &
       !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
       !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
       !$OMP                     baryon_density, vel, nstar_id ) &
       !$OMP             PRIVATE( a, det, sq_g, Theta_a, g4 )
-      DO a= 1, npart_real, 1
+      DO a= 1, npart, 1
 
         ! Coordinate velocity of the fluid [c]
         vel(0,a) = one
@@ -2094,7 +2184,7 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE compute_nstar_id
 
 
-    SUBROUTINE compute_nstar_eul_id( npart_real, &
+    SUBROUTINE compute_nstar_eul_id( npart, &
                                      v_euler_x, v_euler_y, v_euler_z, &
                                      g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
                                      baryon_density, nstar_eul_id )
@@ -2115,32 +2205,32 @@ SUBMODULE (sph_particles) constructor_std
 
       IMPLICIT NONE
 
-      INTEGER, INTENT(IN):: npart_real
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_x
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_y
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: v_euler_z
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xx
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xy
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_xz
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yy
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_yz
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: g_zz
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(IN):: baryon_density
-      DOUBLE PRECISION, DIMENSION(npart_real), INTENT(OUT):: nstar_eul_id
+      INTEGER, INTENT(IN):: npart
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: v_euler_x
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: v_euler_y
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: v_euler_z
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_xx
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_xy
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_xz
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_yy
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_yz
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_zz
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: baryon_density
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: nstar_eul_id
 
       INTEGER:: a, i!mus, nus
       DOUBLE PRECISION:: det, sq_g, v_euler_norm2, gamma_eul_a
-      DOUBLE PRECISION, DIMENSION(0:3,npart_real):: vel
+      DOUBLE PRECISION, DIMENSION(0:3,npart):: vel
       !DOUBLE PRECISION:: g4(0:3,0:3)
       DOUBLE PRECISION:: g4(n_sym4x4)
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_real, &
+      !$OMP             SHARED( npart, &
       !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
       !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
       !$OMP                     baryon_density, nstar_eul_id ) &
       !$OMP             PRIVATE( a, det, sq_g, v_euler_norm2, gamma_eul_a )
-      DO a= 1, npart_real, 1
+      DO a= 1, npart, 1
 
         CALL determinant_sym3x3( &
               [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], det )

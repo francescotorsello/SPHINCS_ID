@@ -1370,43 +1370,21 @@ SUBMODULE (sph_particles) apm
         STOP
       ENDIF
 
+      ! TODO: make these parallelized. Fortran does not do that automatically
       err_N_max = MAXVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
       err_N_min = MINVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
-      err_N_mean= SUM( dNstar, DIM= 1 )/npart_real
+      !err_N_mean= &
+      !SUM( ABS(dNstar), DIM= 1, MASK= nstar_id(1:npart_real) > zero )/npart_real
 
-    !  DO a= 1, npart_real, 1
-    !
-    !    IF( ABS(dNstar(a)) > err_N_max &
-    !        .AND. &
-    !        get_density( all_pos(1,a), &
-    !                     all_pos(2,a), &
-    !                     all_pos(3,a) ) > zero )THEN
-    !
-    !      err_N_max     = ABS(dNstar(a))
-    !      pos_maxerr    = all_pos(:,a)
-    !      nstar_sph_err= nstar_sph(a)
-    !      nstar_id_err   = nstar_id(a)
-    !
-    !    ENDIF
-    !
-    !    !err_N_max = MAX( err_N_max, ABS(dNstar) )
-    !    IF( get_density( all_pos(1,a), &
-    !                     all_pos(2,a), &
-    !                     all_pos(3,a) ) > zero )THEN
-    !
-    !      err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
-    !      err_N_mean= err_N_mean + ABS(dNstar(a))
-    !
-    !    ENDIF
-    !
-    !    IF( .NOT.is_finite_number(dNstar(a)) )THEN
-    !      PRINT *, "dNstar= ", dNstar(a), " at particle ", a
-    !      PRINT *, "nstar_sph= ", nstar_sph(a)
-    !      PRINT *, "nstar_id= ", nstar_id(a)
-    !      STOP
-    !    ENDIF
-    !
-    !  ENDDO
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, dNstar, nstar_id ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION( +: err_N_mean )
+      DO a= 1, npart_real, 1
+        err_N_mean= err_N_mean + ABS(dNstar(a))
+      ENDDO
+      !$OMP END PARALLEL DO
+      err_N_mean= err_N_mean/npart_real
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, npart_real, nstar_sph, nstar_id, &
@@ -1415,34 +1393,11 @@ SUBMODULE (sph_particles) apm
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
-        !IF( ABS(dNstar(a)) > err_N_max &
-        !    .AND. &
-        !    get_density( all_pos(1,a), &
-        !                 all_pos(2,a), &
-        !                 all_pos(3,a) ) > zero )THEN
-        !
-        !  err_N_max     = ABS(dNstar(a))
-        !  pos_maxerr    = all_pos(:,a)
-        !  nstar_sph_err= nstar_sph(a)
-        !  nstar_id_err   = nstar_id(a)
-        !
-        !ENDIF
-
         IF( dNstar(a) == err_N_max )THEN
           pos_maxerr   = all_pos(:,a)
           nstar_sph_err= nstar_sph(a)
           nstar_id_err = nstar_id(a)
         ENDIF
-
-        !err_N_max = MAX( err_N_max, ABS(dNstar) )
-        !IF( get_density( all_pos(1,a), &
-        !                 all_pos(2,a), &
-        !                 all_pos(3,a) ) > zero )THEN
-        !
-        !  err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
-        !  err_N_mean= err_N_mean + ABS(dNstar(a))
-        !
-        !ENDIF
 
         IF( .NOT.is_finite_number(dNstar(a)) )THEN
           PRINT *, "** ERROR! dNstar(", a, ")= ", dNstar(a), &
@@ -1476,6 +1431,21 @@ SUBMODULE (sph_particles) apm
       !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
       !$OMP                      itr2 )
       assign_artificial_pressure_on_ghost_particles: &
+      !
+      !-- This way of assigning the artificial pressure comes from a bug.
+      !-- In the loop shell_loop below, the running index should be itr2.
+      !-- However, due to human error, the index is itr; the index itr
+      !-- counts the APM step, hence the artificial pressure increases with the
+      !-- APM step, and a pressure gradient is not imposed. Building a pressure
+      !-- gradient was the intended purpose for loop shell_loop.
+      !-- So, what happens now is that the pressure is assigned gradually,
+      !-- starting from the ghost particles closer to the surface of the
+      !-- matter object, and proceeding towards those which are farer away.
+      !-- From APM step=10, a uniform pressure is assigned to all the ghost
+      !-- particles, which increases with the APM step.
+      !-- All the tried alternatives (uniform constant pressure,
+      !-- constant pressure gradient) perform worse than the current one.
+      !
       DO a= npart_real + 1, npart_all, 1
 
         CALL spherical_from_cartesian( &
@@ -1498,22 +1468,16 @@ SUBMODULE (sph_particles) apm
           IF( r <= ( one + ( ellipse_thickness - one )*DBLE(itr)/ten )*r_ell &
               .AND. &
               r >= ( one + ( ellipse_thickness - one )*DBLE(itr-1)/ten )*r_ell &
-          ! If the ghost particle is contained within the i-th spherical shell..
-
-              !r <= ( 500.D0 + 50.D0*DBLE(itr)/ten ) &
-              !.AND. &
-              !r > ( 500.D0 + 50.D0*DBLE(itr-1)/ten ) &
-
           )THEN
 
-            ! ..assign a pressure that increases with i, to build a pressure
-            !   gradient
             art_pr(a)= DBLE(3*itr)*art_pr_max
-            IF( .NOT.IEEE_IS_FINITE(art_pr(a)) ) art_pr(a)= max_art_pr_ghost
-
-          !ELSE
-          !
-          !  art_pr( a )= art_pr_max
+            IF( .NOT.IEEE_IS_FINITE(art_pr(a)) &
+                .OR. &
+                art_pr(a) > max_art_pr_ghost &
+            )THEN
+              art_pr(a)= max_art_pr_ghost
+            ENDIF
+            EXIT
 
           ENDIF
 
@@ -1851,6 +1815,8 @@ SUBMODULE (sph_particles) apm
             !    times, do not move the particle at this step,
             !    and exit the 'determine_new_position' loop
 
+              cnt_move(a)= 0
+
               ! cnt= cnt + 1
               ! CALL RANDOM_NUMBER( rand_num )
               ! CALL RANDOM_NUMBER( rand_num2 )
@@ -2135,38 +2101,6 @@ SUBMODULE (sph_particles) apm
     CALL find_h_bruteforce_timer% stop_timer()
     CALL find_h_bruteforce_timer% print_timer( 2 )
 
-   ! find_problem_in_h_2: DO a= 1, npart_real, 1
-   !
-   !   IF( .NOT.is_finite_number( h( a ) ) )THEN
-   !     PRINT *, "** ERROR! h(", a, ") is a NaN!"
-   !     PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-   !     PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-   !     PRINT *, " Stopping..."
-   !     PRINT *
-   !     STOP
-   !   ENDIF
-   !   IF( h( a ) <= zero )THEN
-   !    ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
-   !    ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-   !    ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-   !    ! PRINT *, " * h(", a, ")= ", h(a)
-   !    ! PRINT *, " Stopping..."
-   !    ! PRINT *
-   !    ! STOP
-   !     IF( a == 1 )THEN
-   !       DO a2= 2, npart_real, 1
-   !         IF( h( a2 ) > zero )THEN
-   !           h( a )= h( a2 )
-   !           EXIT
-   !         ENDIF
-   !       ENDDO
-   !     ELSE
-   !       h(a) = h(a - 1)
-   !     ENDIF
-   !   ENDIF
-   !
-   ! ENDDO find_problem_in_h_2
-
     IF( debug ) PRINT *, "2"
 
     ! Measure SPH particle number density
@@ -2344,15 +2278,15 @@ SUBMODULE (sph_particles) apm
        ENDIF
     ENDDO
 
-    PRINT *, "Excluding the absolute max and min of nu:"
+    PRINT *, " * Excluding the absolute max and min of nu:"
     PRINT *
-    PRINT *, "max_nu=", max_nu2
+    PRINT *, "   max_nu=", max_nu2
     PRINT *, "        at ", pos(:, a_numax2), " r= ", &
              NORM2( pos(:, a_numax2) )/larger_radius
-    PRINT *, "min_nu=", min_nu2
+    PRINT *, "   min_nu=", min_nu2
     PRINT *, "        at ", pos(:, a_numin2), " r= ", &
              NORM2( pos(:, a_numin2) )/larger_radius
-    PRINT *, "max_nu/min_nu=", max_nu2/min_nu2
+    PRINT *, "   max_nu/min_nu=", max_nu2/min_nu2
     PRINT *
 
     nu_tot= zero
@@ -2522,11 +2456,19 @@ SUBMODULE (sph_particles) apm
     variance_dN = variance_dN / DBLE(cnt1)
     stddev_dN   = SQRT(variance_dN)            ! compute standard deviation
 
-    PRINT *, "dN_max=", dN_max
-    PRINT *, "dN_av=", dN_av
-    PRINT *, "variance_dN=", variance_dN
-    PRINT *, "stddev_dN=", stddev_dN
-    PRINT *, "stddev_dN/dN_a=", stddev_dN/dN_av
+    PRINT *, " * Final maximum relative error between the density from the ", &
+             "ID and the SPH density estimate: dN_max=", dN_max
+    PRINT *, " * Final average relative error between the density from the ", &
+             "ID and the SPH density estimate: dN_max=", dN_av
+    PRINT *, " * Final variance of the relative error between the density ", &
+             "from the ID and the SPH density estimate: variance_dN=", &
+             variance_dN
+    PRINT *, " * Final standard deviation of the relative error between the ", &
+             "density from the ID and the SPH density estimate: stddev_dN=", &
+             stddev_dN
+    PRINT *, " * Final normalized standard deviation of the relative error ", &
+             "between the density from the ID and the SPH density ", &
+             "estimate: stddev_dN/dN_a=", stddev_dN/dN_av
     PRINT *
 
     IF( debug ) PRINT *, "100"
@@ -3152,127 +3094,6 @@ SUBMODULE (sph_particles) apm
 
 
   END PROCEDURE perform_apm
-
-
-  SUBROUTINE correct_center_of_mass( npart_real, pos, nu, get_density, &
-                                     validate_pos, com_star, verbose )
-
-    !***********************************************************
-    !
-    !# Translate the particles so that their center of mass
-    !  coincides with the center of mass of the star, given by
-    !  |id|
-    !
-    !  FT 1.09.2021
-    !
-    !***********************************************************
-
-    USE analyze, ONLY: COM
-
-    IMPLICIT NONE
-
-    INTEGER, INTENT(IN):: npart_real
-    DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: com_star
-    LOGICAL, INTENT(IN), OPTIONAL:: verbose
-
-    INTERFACE
-      FUNCTION get_density( x, y, z ) RESULT( density )
-        DOUBLE PRECISION, INTENT(IN):: x
-        DOUBLE PRECISION, INTENT(IN):: y
-        DOUBLE PRECISION, INTENT(IN):: z
-        DOUBLE PRECISION:: density
-      END FUNCTION
-    END INTERFACE
-    INTERFACE
-      FUNCTION validate_pos( x, y, z ) RESULT( answer )
-        DOUBLE PRECISION, INTENT(IN):: x
-        DOUBLE PRECISION, INTENT(IN):: y
-        DOUBLE PRECISION, INTENT(IN):: z
-        LOGICAL:: answer
-      END FUNCTION
-    END INTERFACE
-
-    DOUBLE PRECISION, DIMENSION(3,npart_real), INTENT(INOUT):: pos
-    DOUBLE PRECISION, DIMENSION(npart_real),   INTENT(INOUT):: nu
-
-    INTEGER:: a
-    DOUBLE PRECISION:: com_x, com_y, com_z, com_d
-    DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
-
-    CALL COM( npart_real, pos, nu, &       ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
-      PRINT *, "** Before center of mass correction:"
-      PRINT *, " * x coordinate of the center of mass of the star, ", &
-               "from the ID: com_star= ", com_star(1), "Msun_geo"
-      PRINT *, " * y coordinate of the center of mass of the star, ", &
-               "from the ID: com_star= ", com_star(2), "Msun_geo"
-      PRINT *, " * z coordinate of the center of mass of the star, ", &
-               "from the ID: com_star= ", com_star(3), "Msun_geo"
-      PRINT *, " * x coordinate of the center of mass of the particle ", &
-               "distribution: com_x= ", com_x, "Msun_geo"
-      PRINT *, " * y coordinate of the center of mass of the particle ", &
-               "distribution: com_y= ", com_y, "Msun_geo"
-      PRINT *, " * z coordinate of the center of mass of the particle ", &
-               "distribution: com_z= ", com_z, "Msun_geo"
-      PRINT *, " * Distance of the center of mass of the particle ", &
-               "distribution from the  origin: com_d= ", com_d
-      PRINT *, " * |com_x-com_star_x/com_star_x|=", &
-               ABS( com_x-com_star(1) )/ABS( com_star(1) + 1 )
-      PRINT *
-    ENDIF
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, com_star, &
-    !$OMP                     com_x, com_y, com_z, npart_real ) &
-    !$OMP             PRIVATE( pos_corr_tmp, a )
-    DO a= 1, npart_real, 1
-
-      pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star(1) )
-      pos_corr_tmp(2)= pos(2,a) - ( com_y - com_star(2) )
-      pos_corr_tmp(3)= pos(3,a) - ( com_z - com_star(3) )
-
-      IF( get_density( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
-          .AND. &
-          !binary% is_hydro_negative( &
-          validate_pos( &
-                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
-      )THEN
-
-        pos(:,a)= pos_corr_tmp
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    CALL COM( npart_real, pos, nu, & ! input
-              com_x, com_y, com_z, com_d ) ! output
-
-    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
-      PRINT *, "** After center of mass correction:"
-      PRINT *, " * x coordinate of the center of mass of the star, ", &
-               "from the ID: com_star= ", com_star(1), "Msun_geo"
-      PRINT *, " * y coordinate of the center of mass of the star, ", &
-               "from the ID: com_star= ", com_star(2), "Msun_geo"
-      PRINT *, " * z coordinate of the center of mass of the star, ", &
-               "from the ID: com_star= ", com_star(3), "Msun_geo"
-      PRINT *, " * x coordinate of the center of mass of the particle ", &
-               "distribution: com_x= ", com_x, "Msun_geo"
-      PRINT *, " * y coordinate of the center of mass of the particle ", &
-               "distribution: com_y= ", com_y, "Msun_geo"
-      PRINT *, " * z coordinate of the center of mass of the particle ", &
-               "distribution: com_z= ", com_z, "Msun_geo"
-      PRINT *, " * Distance of the center of mass of the particle ", &
-               "distribution from the  origin: com_d= ", com_d
-      PRINT *, " * |com_x-com_star_x/com_star_x|=", &
-               ABS( com_x-com_star(1) )/ABS( com_star(1) + 1 )
-      PRINT *
-    ENDIF
-
-  END SUBROUTINE correct_center_of_mass
 
 
   SUBROUTINE get_neighbours_bf(ipart,npart,pos,h,dimensions,nnei,neilist)

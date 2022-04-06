@@ -61,30 +61,37 @@ SUBMODULE (bns_lorene) io
 
     PRINT *, "   * Binary system of neutron stars produced by LORENE:"
     PRINT *
-    PRINT *, "   Center of mass of the system, weighted with the baryonic ", &
-             "mass= ", &
+    PRINT *, "     x coordinate of the center of mass of the system, ", &
+             "weighted with the baryonic mass= ", &
             (this% barycenter1_x*this% mass1 + this% barycenter2_x*this% mass2) &
              /(this% mass1 + this% mass2)
-
-    PRINT *, "   Center of mass of the system, weighted with the ", &
-             "gravitational mass= ", (this% barycenter1_x*this% mass_grav1 &
-             + this% barycenter2_x*this% mass_grav2) &
-             /(this% mass_grav1 + this% mass_grav2)
+    !PRINT *, "   Center of mass of the system, weighted with the ", &
+    !         "gravitational mass= ", (this% barycenter1_x*this% mass_grav1 &
+    !         + this% barycenter2_x*this% mass_grav2) &
+    !         /(this% mass_grav1 + this% mass_grav2)
     PRINT *
-    PRINT *, "   ADM linear momentum of the system=(", this% linear_momentum_x,&
-             ", "
-    PRINT *, "                                      ", this% linear_momentum_y,&
-             ", "
-    PRINT *, "                                      ", this% linear_momentum_z,&
-             ") Msun*c"
+    PRINT *, "     ADM mass of the system= ", this% adm_mass, "MSun"
     PRINT *
-    PRINT *, "   Bowen-York angular momentum of the system= (", &
-             this% angular_momentum_x, &
-             ", "
-    PRINT *, "                                               ", &
-             this% angular_momentum_y, &
-             ", "
-    PRINT *, "                                             ", &
+    PRINT *, "     ADM linear momentum of the system=(", &
+             this% linear_momentum_x, ", "
+    PRINT *, "                                        ", &
+             this% linear_momentum_y, ", "
+    PRINT *, "                                        ", &
+             this% linear_momentum_z, ") Msun*c"
+    PRINT *
+    PRINT *, "     Velocity of the COM of the system="
+    PRINT *, "     ADM linear momentum / ADM mass =(", &
+             this% linear_momentum_x/this% adm_mass, ", "
+    PRINT *, "                                      ", &
+             this% linear_momentum_y/this% adm_mass, ", "
+    PRINT *, "                                      ", &
+             this% linear_momentum_z/this% adm_mass, ") c"
+    PRINT *
+    PRINT *, "     Bowen-York angular momentum of the system= (", &
+             this% angular_momentum_x, ", "
+    PRINT *, "                                                 ", &
+             this% angular_momentum_y, ", "
+    PRINT *, "                                                 ", &
              this% angular_momentum_z, ") G*Msun^2/c"
     PRINT *
 

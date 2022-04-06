@@ -521,4 +521,101 @@ SUBMODULE (sph_particles) handle_positions
   END PROCEDURE check_particle_position
 
 
+  MODULE PROCEDURE correct_center_of_mass
+
+    !***********************************************************
+    !
+    !# Translate the particles so that their center of mass
+    !  coincides with the center of mass of the star, given by
+    !  |id|
+    !
+    !  FT 1.09.2021
+    !
+    !***********************************************************
+
+    USE analyze,    ONLY: COM
+    USE constants,  ONLY: zero
+
+    IMPLICIT NONE
+
+    INTEGER:: a
+    DOUBLE PRECISION:: com_x, com_y, com_z, com_d
+    DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
+
+    CALL COM( npart_real, pos, nu, &       ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
+      PRINT *, "** Before center of mass correction:"
+      PRINT *, " * x coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(1), "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(2), "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(3), "Msun_geo"
+      PRINT *, " * x coordinate of the center of mass of the particle ", &
+               "distribution: com_x= ", com_x, "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the particle ", &
+               "distribution: com_y= ", com_y, "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the particle ", &
+               "distribution: com_z= ", com_z, "Msun_geo"
+      PRINT *, " * Distance of the center of mass of the particle ", &
+               "distribution from the  origin: com_d= ", com_d
+      PRINT *, " * |com_x-com_star_x/com_star_x|=", &
+               ABS( com_x-com_star(1) )/ABS( com_star(1) + 1 )
+      PRINT *
+    ENDIF
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos, com_star, &
+    !$OMP                     com_x, com_y, com_z, npart_real ) &
+    !$OMP             PRIVATE( pos_corr_tmp, a )
+    DO a= 1, npart_real, 1
+
+      pos_corr_tmp(1)= pos(1,a) - ( com_x - com_star(1) )
+      pos_corr_tmp(2)= pos(2,a) - ( com_y - com_star(2) )
+      pos_corr_tmp(3)= pos(3,a) - ( com_z - com_star(3) )
+
+      IF( get_density( &
+                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
+          .AND. &
+          !binary% is_hydro_negative( &
+          validate_pos( &
+                  pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
+      )THEN
+
+        pos(:,a)= pos_corr_tmp
+
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    CALL COM( npart_real, pos, nu, & ! input
+              com_x, com_y, com_z, com_d ) ! output
+
+    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
+      PRINT *, "** After center of mass correction:"
+      PRINT *, " * x coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(1), "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(2), "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the star, ", &
+               "from the ID: com_star= ", com_star(3), "Msun_geo"
+      PRINT *, " * x coordinate of the center of mass of the particle ", &
+               "distribution: com_x= ", com_x, "Msun_geo"
+      PRINT *, " * y coordinate of the center of mass of the particle ", &
+               "distribution: com_y= ", com_y, "Msun_geo"
+      PRINT *, " * z coordinate of the center of mass of the particle ", &
+               "distribution: com_z= ", com_z, "Msun_geo"
+      PRINT *, " * Distance of the center of mass of the particle ", &
+               "distribution from the  origin: com_d= ", com_d
+      PRINT *, " * |com_x-com_star_x/com_star_x|=", &
+               ABS( com_x-com_star(1) )/ABS( com_star(1) + 1 )
+      PRINT *
+    ENDIF
+
+  END PROCEDURE correct_center_of_mass
+
+
 END SUBMODULE handle_positions

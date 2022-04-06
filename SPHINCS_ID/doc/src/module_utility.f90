@@ -97,12 +97,12 @@ MODULE utility
 
   INTEGER, PARAMETER:: max_length= 50
   !! Maximum length for strings
-  INTEGER, PARAMETER:: max_n_bns= 50
+  INTEGER, PARAMETER:: max_n_id= 50
   ! Maximum number of physical systems
   INTEGER, PARAMETER:: max_n_parts= 250
   !! Maximum number of particle distributions
 
-  INTEGER:: n_bns
+  INTEGER:: n_id
   !! Number of physical systems to set up
   INTEGER:: ref_lev
   !! Number of refinement levels
@@ -110,7 +110,7 @@ MODULE utility
   !! Export the constraints every constraints_step-th step
 
   INTEGER, PARAMETER:: test_int= - 112
-  INTEGER, DIMENSION( max_n_bns, max_n_parts ):: placer= test_int
+  INTEGER, DIMENSION( max_n_id, max_n_parts ):: placer= test_int
   !# Matrix storing the information on how to place particles for each bns
   !  object. Row i contains information about the i^th bns object.
 
@@ -170,7 +170,7 @@ MODULE utility
     ! Namelist containing parameters read from sphincs_id_parameters.par
     ! by the SUBROUTINE read_sphincs_id_parameters of this PROGRAM
     NAMELIST /sphincs_id_parameters/ &
-              n_bns, common_path, filenames, placer, &
+              n_id, common_path, filenames, placer, &
               export_bin, export_form, export_form_xy, &
               export_form_x, export_constraints_xy, &
               export_constraints_x, compute_constraints, &
@@ -214,14 +214,14 @@ MODULE utility
         cnt= cnt + 1
       ENDIF
     ENDDO
-    IF( cnt.NE.n_bns )THEN
+    IF( cnt.NE.n_id )THEN
       PRINT *, "** ERROR! The number of file names is", cnt, &
-               "and n_bns=", n_bns, ". The two should be the same."
+               "and n_id=", n_id, ". The two should be the same."
       PRINT *
       STOP
     ENDIF
 
-   !DO itr= 1, n_bns, 1
+   !DO itr= 1, n_id, 1
    !  DO itr2= 1, max_n_parts, 1
    !    IF( placer( itr, itr2 ) == test_int )THEN
    !      PRINT *

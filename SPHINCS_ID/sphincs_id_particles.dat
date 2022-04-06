@@ -132,7 +132,7 @@ apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
-print_step= 20          ! Evey print_step steps, print the particle positions
+print_step= 50          ! Evey print_step steps, print the particle positions
                         ! at the current step, and the particle positions at
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
@@ -146,7 +146,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.525D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.125D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc

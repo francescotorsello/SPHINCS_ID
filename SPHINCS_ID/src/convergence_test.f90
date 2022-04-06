@@ -66,7 +66,7 @@ PROGRAM convergence_test
                                       test_status, show_progress, end_time, &
                                       read_sphincs_id_parameters, &
                                       !----------
-                                      n_bns, common_path, filenames, placer, &
+                                      n_id, common_path, filenames, placer, &
                                       export_bin, export_form, export_form_xy, &
                                       export_form_x, export_constraints_xy, &
                                       export_constraints_x, &
