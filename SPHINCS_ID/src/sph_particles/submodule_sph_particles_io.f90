@@ -155,6 +155,13 @@ SUBMODULE (sph_particles) io
 
     ENDDO
 
+    PRINT *, "   SPH estimate of the ADM ", &
+             "momentum computed using the canonical momentum per baryon= "
+    PRINT *, "   (", this% adm_linear_momentum(1), ","
+    PRINT *, "    ", this% adm_linear_momentum(2), ","
+    PRINT *, "    ", this% adm_linear_momentum(3), ") Msun*c"
+    PRINT *
+
   END PROCEDURE print_summary
 
 

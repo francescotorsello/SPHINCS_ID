@@ -250,59 +250,21 @@ PROGRAM convergence_test
   !-- Construct the idbase objects
   !
   CALL allocate_idbase( idata, TRIM(filenames(1)), systems(1), systems_name(1) )
+  PRINT *, "===================================================" &
+           // "==============="
+  PRINT *, " Constructing idbase object for "//systems(1)
+  PRINT *, "===================================================" &
+           // "==============="
+  PRINT *
   CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)) )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)
   CALL idata% set_one_lapse ( one_lapse )
   CALL idata% set_zero_shift( zero_shift )
 
-  !
-  !-- Construct the particles object from the bns object
-  !
-  IF( compute_parts_constraints )THEN
-
-    PRINT *, "===================================================" &
-             // "==============="
-    PRINT *, " Placing particles"
-    PRINT *, "===================================================" &
-             // "==============="
-    PRINT *
-    particles_dist= particles( idata, placer( 1, 1 ) )
-
-    !
-    !-- Compute the SPH variables
-    !
-    PRINT *, "===================================================" &
-             // "====================="
-    PRINT *, " Computing SPH variables "
-    PRINT *, "===================================================" &
-             // "====================="
-    PRINT *
-    WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
-                                "l", &
-                                1, "-", 1, "."
-    WRITE( namefile_parts_bin, "(A5)" ) systems_name(1)
-    namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
-
-    particles_dist% export_bin    = export_bin
-    particles_dist% export_form_xy= export_form_xy
-    particles_dist% export_form_x = export_form_x
-    CALL particles_dist% compute_and_print_sph_variables( namefile_parts )
-
-    !
-    !-- Print the particle initial data to a formatted file
-    !
-    IF( export_form )THEN
-      WRITE( namefile_parts, "(A34)" ) &
-                             "lorene-bns-id-particles-form_1.dat"
-      namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
-      CALL particles_dist% print_formatted_id_particles( namefile_parts )
-    ENDIF
-
-  ENDIF
 
   !
-  !-- Construct the bssn objects from the bns object
+  !-- Construct the bssn objects from the idbase object
   !
   construct_bssn_loop: DO itr3 = min_bssn, max_bssn, 1
 
@@ -397,6 +359,52 @@ PROGRAM convergence_test
       CALL bssn_forms( itr3 )% &
                   print_formatted_id_tpo_variables( namefile_bssn )
     ENDDO export_bssn_loop
+  ENDIF
+
+
+  !
+  !-- Construct the particles object from the idbase object
+  !
+  IF( compute_parts_constraints )THEN
+
+    PRINT *, "===================================================" &
+             // "==============="
+    PRINT *, " Placing particles"
+    PRINT *, "===================================================" &
+             // "==============="
+    PRINT *
+    particles_dist= particles( idata, placer( 1, 1 ) )
+
+    !
+    !-- Compute the SPH variables
+    !
+    PRINT *, "===================================================" &
+             // "====================="
+    PRINT *, " Computing SPH variables "
+    PRINT *, "===================================================" &
+             // "====================="
+    PRINT *
+    WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
+                                "l", &
+                                1, "-", 1, "."
+    WRITE( namefile_parts_bin, "(A5)" ) systems_name(1)
+    namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
+
+    particles_dist% export_bin    = export_bin
+    particles_dist% export_form_xy= export_form_xy
+    particles_dist% export_form_x = export_form_x
+    CALL particles_dist% compute_and_print_sph_variables( namefile_parts )
+
+    !
+    !-- Print the particle initial data to a formatted file
+    !
+    IF( export_form )THEN
+      WRITE( namefile_parts, "(A34)" ) &
+                             "lorene-bns-id-particles-form_1.dat"
+      namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
+      CALL particles_dist% print_formatted_id_particles( namefile_parts )
+    ENDIF
+
   ENDIF
 
   !
@@ -577,7 +585,7 @@ PROGRAM convergence_test
   !
   !-- Destruct the formatted Bin_NS object by hand, since the pointer to it is
   !-- global (because it is bound to C++) and cannot be nullified by the
-  !-- destructor of bns. In case of multiple bns objects, this would lead
+  !-- destructor of bns. In case of multiple idbase objects, this would lead
   !-- to problems...
   !-- TODO: fix this
   !

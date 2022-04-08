@@ -28,7 +28,7 @@ SUBMODULE (sph_particles) recovery
   !# This SUBMODULE contains the implementation
   !  of the method test_recovery of TYPE particles.
   !
-  !  FT 18.02.2020
+  !  FT 18.02.2022
   !
   !************************************************
 
@@ -50,7 +50,7 @@ SUBMODULE (sph_particles) recovery
     !  recovery PROCEDURES, with those computed with
     !  |sphincsid|. @todo add reference for recovery
     !
-    !  FT 18.02.2020
+    !  FT 18.02.2022
     !
     !************************************************
 

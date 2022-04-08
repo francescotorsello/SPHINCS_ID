@@ -1482,6 +1482,21 @@ SUBMODULE (sph_particles) sph_variables
                               this% theta,       &
                               this% nstar_int )
 
+    CALL compute_adm_momentum( this, this% npart, &
+                               this% pos,         &
+                               this% nlrf_int,    &
+                               this% u_pwp,       &
+                               this% pressure_cu, &
+                               this% v(1:3,:),    &
+                               this% theta,       &
+                               this% nstar_int,   &
+                               this% nu,          &
+                               this% lapse,       &
+                               [this% shift_x,    &
+                                this% shift_y,    &
+                                this% shift_x],   &
+                               this% adm_linear_momentum )
+
     ! Test the recovery on ech matter object separately
     ! DO i_matter= 1, this% n_matter, 1
     !

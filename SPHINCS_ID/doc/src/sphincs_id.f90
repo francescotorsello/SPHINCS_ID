@@ -80,6 +80,7 @@ PROGRAM sphincs_id
                               run_sph, run_spacetime, sph_path, &
                               spacetime_path, estimate_length_scale, &
                               test_int, max_n_parts
+  USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
 
   IMPLICIT NONE
 
@@ -205,6 +206,13 @@ PROGRAM sphincs_id
   PRINT *, "  'COPYING'.                                                       "
   PRINT *, "  ________________________________________________________________ "
   PRINT *
+  PRINT *, "  SPHINCS_ID was compiled with: "
+  PRINT *, COMPILER_VERSION()
+  PRINT *
+  PRINT *, "  using the options: "
+  PRINT *, COMPILER_OPTIONS()
+  PRINT *, "  ________________________________________________________________ "
+  PRINT *
   PRINT *, "  Run id: ", run_id
   PRINT *, "  ________________________________________________________________ "
   PRINT *
@@ -267,6 +275,21 @@ PROGRAM sphincs_id
 
 #endif
 
+  IF( ( (compute_parts_constraints .EQV. .TRUE.) .AND. (run_sph .EQV. .FALSE.) &
+        .AND. (run_spacetime .EQV. .TRUE.) ) )THEN
+
+    PRINT *
+    PRINT *, "** WARNING: The variable `compute_parts_constraints` is ", &
+             ".TRUE., but `run_sph` is .FALSE. . "
+    !PRINT *, "   Hence, the constraints are NOT computed using the ", &
+    !         "particle data mapped to the mesh."
+    PRINT *, "   Please set both variables to .TRUE. to compute the ", &
+             "constraints using the particle data mapped to the mesh."
+    PRINT *
+    STOP
+
+  ENDIF
+
   ALLOCATE( CHARACTER(5):: systems(n_id) )
   ALLOCATE( CHARACTER(5):: systems_name(n_id) )
 
@@ -282,6 +305,14 @@ PROGRAM sphincs_id
 
     CALL allocate_idbase( ids(itr)% idata, TRIM(filenames(itr)), &
                           systems(itr), systems_name(itr) )
+
+    PRINT *, "===================================================" &
+             // "==============="
+    PRINT *, " Constructing idbase object for "//systems(itr), itr
+    PRINT *, "===================================================" &
+             // "==============="
+    PRINT *
+
     CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)) )
 
     CALL ids(itr)% idata% set_one_lapse( one_lapse )
@@ -289,45 +320,6 @@ PROGRAM sphincs_id
     CALL ids(itr)% idata% set_estimate_length_scale( estimate_length_scale )
 
   ENDDO build_idbase_loop
-
-
-  IF( run_sph )THEN
-
-    !
-    !-- Construct the particles objects
-    !
-    place_hydro_id_loops: DO itr3= 1, n_id, 1
-      part_distribution_loop: DO itr4= 1, max_n_parts, 1
-        IF( placer( itr3, itr4 ) == test_int )THEN
-          EXIT part_distribution_loop
-        ELSE
-
-          PRINT *, "===================================================" &
-                   // "==============="
-          PRINT *, " Placing particles for "//systems(itr3), itr3, &
-                   ", distribution", itr4
-          PRINT *, "===================================================" &
-                   // "==============="
-          PRINT *
-
-          particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-                                                   placer( itr3, itr4 ) )
-
-          !namefile_parts_bin= "sph-output/NSNS.00000"
-          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-          !                                         namefile_parts_bin )
-
-        ENDIF
-      ENDDO part_distribution_loop
-    ENDDO place_hydro_id_loops
-
-    !namefile_parts_bin= "NSNS.00000"
-    !namefile_parts= "try.dat"
-    !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
-
-    !STOP
-
-  ENDIF
 
 
   IF( run_spacetime )THEN
@@ -411,6 +403,46 @@ PROGRAM sphincs_id
     ENDIF
 
   ENDIF
+
+
+  IF( run_sph )THEN
+
+    !
+    !-- Construct the particles objects
+    !
+    place_hydro_id_loops: DO itr3= 1, n_id, 1
+      part_distribution_loop: DO itr4= 1, max_n_parts, 1
+        IF( placer( itr3, itr4 ) == test_int )THEN
+          EXIT part_distribution_loop
+        ELSE
+
+          PRINT *, "===================================================" &
+                   // "==============="
+          PRINT *, " Placing particles for "//systems(itr3), itr3, &
+                   ", distribution", itr4
+          PRINT *, "===================================================" &
+                   // "==============="
+          PRINT *
+
+          particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
+                                                   placer( itr3, itr4 ) )
+
+          !namefile_parts_bin= "sph-output/NSNS.00000"
+          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
+          !                                         namefile_parts_bin )
+
+        ENDIF
+      ENDDO part_distribution_loop
+    ENDDO place_hydro_id_loops
+
+    !namefile_parts_bin= "NSNS.00000"
+    !namefile_parts= "try.dat"
+    !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
+
+    !STOP
+
+  ENDIF
+
 
   IF( .NOT.estimate_length_scale )THEN
 
@@ -679,19 +711,6 @@ PROGRAM sphincs_id
     ENDIF
 
   ENDDO
-  IF( ( (compute_parts_constraints .EQV. .TRUE.) .AND. (run_sph .EQV. .FALSE.) &
-        .AND. (run_spacetime .EQV. .TRUE.) ) )THEN
-
-    PRINT *
-    PRINT *, "** WARNING: The variable `compute_parts_constraints` is ", &
-             ".TRUE., but `run_sph` is .FALSE. . "
-    PRINT *, "   Hence, the constraints are NOT computed using the ", &
-             "particle data mapped to the mesh."
-    PRINT *, "   Please set both variables to .TRUE. to compute the ", &
-             "constraints using the particle data mapped to the mesh."
-    PRINT *
-
-  ENDIF
   PRINT *, "** Run started on ", run_id, " and ended on ", end_time
   PRINT *
 

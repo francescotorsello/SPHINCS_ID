@@ -303,6 +303,10 @@ MODULE sph_particles
     !> Baryon number ratios on the matter objects
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nuratio_i
 
+    DOUBLE PRECISION, DIMENSION(3)               :: adm_linear_momentum
+    !# Estimate of the \(\mathrm{ADM}\) linear momentum computed from
+    !  the canonical momentum per baryon on the particles
+
     !
     !-- Strings
     !
@@ -445,6 +449,10 @@ MODULE sph_particles
     !# Computes the conserved variables from the physical ones, and vice versa,
     !  to test that the recovered physical variables are the same to those
     !  computed from the |id|. @todo add reference for recovery
+
+    !PROCEDURE:: compute_adm_momentum
+    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum using
+    !  the canonical momentum per baryon on the particles
 
     !
     !-- PUBLIC SUBROUTINES
@@ -1145,6 +1153,43 @@ MODULE sph_particles
       !! Name of the formatted file where the data is printed
 
     END SUBROUTINE test_recovery
+
+
+    MODULE SUBROUTINE compute_adm_momentum( this, npart, pos, nlrf, u, pr,  &
+                                            vel_u, theta, nstar, &
+                                            nu, lapse, shift, adm_mom )
+    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum using
+    !  the canonical momentum per baryon on the particles
+    !  @todo add reference
+
+      CLASS(particles),                     INTENT(INOUT):: this
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER,                              INTENT(IN)   :: npart
+      !! Particle number
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: pos
+      !! Particle positions
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nlrf
+      !! Baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: u
+      !! Specific internal energy on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: pr
+      !! Pressure on the particles
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: vel_u
+      !! Spatial velocity in the computing frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: theta
+      !! Generalized Lorentz factor on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nstar
+      !! Proper baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: lapse
+      !! Lapse function on the particles
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: shift
+      !! Shift vector on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nu
+      !! Baryon number per particle
+      DOUBLE PRECISION, DIMENSION(3),       INTENT(OUT)   :: adm_mom
+      !! ADM linear momentum
+
+    END SUBROUTINE compute_adm_momentum
 
 
     MODULE SUBROUTINE read_sphincs_dump_print_formatted( this, namefile_bin, &
