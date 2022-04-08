@@ -1424,19 +1424,19 @@ SUBMODULE (sph_particles) constructor_std
     !
     ! TODO: The idbase object should tell the location of the total
     !       computing frame center of mass to the particle object
-    CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-                                 import_density, &
-                                 validate_position, [zero,zero,zero], &
-                                 verbose= .TRUE. )
-
-    PRINT *, " * Final particle distribution prepared. Number of particles=", &
-             parts% npart
-    DO i_matter= 1, parts% n_matter, 1
-      PRINT *, " * Number of particles on object ", i_matter, "=", &
-               parts% npart_i(i_matter)
-      PRINT *
-    ENDDO
-    PRINT *
+  !  CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
+  !                               import_density, &
+  !                               validate_position, [zero,zero,zero], &
+  !                               verbose= .TRUE. )
+  !
+  !  PRINT *, " * Final particle distribution prepared. Number of particles=", &
+  !           parts% npart
+  !  DO i_matter= 1, parts% n_matter, 1
+  !    PRINT *, " * Number of particles on object ", i_matter, "=", &
+  !             parts% npart_i(i_matter)
+  !    PRINT *
+  !  ENDDO
+  !  PRINT *
 
     !STOP
 
@@ -1640,7 +1640,7 @@ SUBMODULE (sph_particles) constructor_std
     ! Ok it seems working
 
     !
-    !-- Compute typical legnth-scale approximating g_00 with the Newtonian
+    !-- Compute typical length-scale approximating g_00 with the Newtonian
     !-- potential
     !
     DO i_matter= 1, parts% n_matter, 1

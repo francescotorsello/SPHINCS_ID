@@ -1004,19 +1004,19 @@ MODULE sph_particles
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
-        SUBROUTINE get_nstar_id( npart_real, x, y, z, nstar_id, nstar_eul_id )
+        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id, nstar_eul_id )
         !! Computes the proper baryon number density at the particle positions
-          INTEGER, INTENT(IN):: npart_real
+          INTEGER, INTENT(IN):: npart
           !! Number of real particles (i.e., no ghost particles included here)
-          DOUBLE PRECISION, INTENT(IN):: x(npart_real)
+          DOUBLE PRECISION, INTENT(IN):: x(npart)
           !! Array of \(x\) coordinates
-          DOUBLE PRECISION, INTENT(IN):: y(npart_real)
+          DOUBLE PRECISION, INTENT(IN):: y(npart)
           !! Array of \(y\) coordinates
-          DOUBLE PRECISION, INTENT(IN):: z(npart_real)
+          DOUBLE PRECISION, INTENT(IN):: z(npart)
           !! Array of \(z\) coordinates
-          DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart_real)
+          DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
           !! Array to store the computed proper baryon number density
-          DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
+          DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
           !# Array to store the computed proper baryon number density seen
           !  by the Eulerian observer
         END SUBROUTINE get_nstar_id
@@ -1539,7 +1539,7 @@ MODULE sph_particles
     END FUNCTION check_particle_position
 
 
-    MODULE SUBROUTINE correct_center_of_mass( npart_real, pos, nu, get_density,&
+    MODULE SUBROUTINE correct_center_of_mass( npart, pos, nu, get_density,&
                                        validate_pos, com_star, verbose )
 
       !***********************************************************
@@ -1552,11 +1552,9 @@ MODULE sph_particles
       !
       !***********************************************************
 
-      USE analyze, ONLY: COM
-
       IMPLICIT NONE
 
-      INTEGER, INTENT(IN):: npart_real
+      INTEGER, INTENT(IN):: npart
       DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: com_star
       LOGICAL, INTENT(IN), OPTIONAL:: verbose
 
@@ -1577,8 +1575,8 @@ MODULE sph_particles
         END FUNCTION
       END INTERFACE
 
-      DOUBLE PRECISION, DIMENSION(3,npart_real), INTENT(INOUT):: pos
-      DOUBLE PRECISION, DIMENSION(npart_real),   INTENT(INOUT):: nu
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
 
     END SUBROUTINE correct_center_of_mass
 

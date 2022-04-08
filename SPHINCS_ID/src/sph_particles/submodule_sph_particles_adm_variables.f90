@@ -71,7 +71,7 @@ SUBMODULE (sph_particles) adm_variables
 
     INTEGER:: i_matter, a, a_max, j
 
-    DOUBLE PRECISION:: det, p_max, shift_norm
+    DOUBLE PRECISION:: det, p_max, shift_norm2
 
     DOUBLE PRECISION, DIMENSION(npart)  :: nlrf_rec
     DOUBLE PRECISION, DIMENSION(npart)  :: u_rec
@@ -160,7 +160,7 @@ SUBMODULE (sph_particles) adm_variables
     !
     adm_mom= zero
     !$OMP PARALLEL DO SHARED( npart, nu, lapse, shift, s_l_rec, this ) &
-    !$OMP             PRIVATE( a, shift_norm ) &
+    !$OMP             PRIVATE( a, shift_norm2 ) &
     !$OMP             REDUCTION( +: adm_mom )
     DO a= 1, npart, 1
 
@@ -169,10 +169,10 @@ SUBMODULE (sph_particles) adm_variables
         CALL spatial_vector_norm_sym3x3( &
                         [this% g_xx(a), this% g_xy(a), this% g_xz(a), &
                          this% g_yy(a), this% g_yz(a), this% g_zz(a)], &
-                        shift(:,a), shift_norm )
+                        shift(:,a), shift_norm2 )
 
         adm_mom(j)= adm_mom(j) &
-                - nu(a)*( shift_norm/lapse(a)**two - one )*s_l_rec(j,a)*amu/Msun
+            - nu(a)*( shift_norm2/(lapse(a)**two) - one )*s_l_rec(j,a)*amu/Msun
 
       ENDDO
 
