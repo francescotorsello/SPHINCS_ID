@@ -399,6 +399,19 @@ SUBMODULE (sph_particles) constructor_std
     ! tabulate kernel, get ndes
     CALL ktable( ikernel, ndes )
 
+    IF( (eos_type /= 'Poly') .AND. (eos_type /= 'pwp') )THEN
+      PRINT *, "** ERROR! Unkown EOS specified in parameter file ", &
+               "SPHINCS_fm_input.dat."
+      PRINT *, " * The currently supported EOS types are 'Poly' for a ", &
+               "polytropic EOS, and 'pwp' for a piecewise polytropic EOS."
+      PRINT *
+      PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+               eos_type
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+    ENDIF
+
     DO i_matter= 1, parts% n_matter, 1
 
       IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
