@@ -103,8 +103,8 @@ SUBMODULE (standard_tpo_formulation) io
         !PRINT *, "   (Rough) Estimate of the z component of the ADM ", &
         !         "momentum computed with full ID on the mesh, "
         !PRINT *, "   on level    ", l, "= ", this% MC_int(l,jz), "Msun*c"
-        PRINT *, "   (Rough) Estimate of the ADM ", &
-                 "momentum computed with full ID on the mesh, "
+        PRINT *, "   (Rough) Estimate of the ADM momentumof the fluid ", &
+                 "computed with full ID on the mesh, "
         PRINT *, "   on level    ", l, "= "
         PRINT *, "   (", this% MC_int(l,jx), ","
         PRINT *, "    ", this% MC_int(l,jy), ","
@@ -123,8 +123,8 @@ SUBMODULE (standard_tpo_formulation) io
         !  PRINT *, "   (Rough) Estimate of the z component of the ADM ", &
         !"momentum computed with particle data mapped to the mesh, "
         !PRINT *, "   on level    ", l, "= ", this% MC_parts_int(l,jz), "Msun*c"
-        PRINT *, "   (Rough) Estimate of the ADM ", &
-                 "momentum computed with particle data mapped to the mesh, "
+        PRINT *, "   (Rough) Estimate of the ADM momentum of the fluid ", &
+                 "computed with particle data mapped to the mesh, "
         PRINT *, "   on refinement level    ", l, "= "
         PRINT *, "   (", this% MC_parts_int(l,jx), ","
         PRINT *, "    ", this% MC_parts_int(l,jy), ","

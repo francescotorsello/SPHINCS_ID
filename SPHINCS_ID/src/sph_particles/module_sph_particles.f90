@@ -303,9 +303,12 @@ MODULE sph_particles
     !> Baryon number ratios on the matter objects
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nuratio_i
 
-    DOUBLE PRECISION, DIMENSION(3)               :: adm_linear_momentum
-    !# Estimate of the \(\mathrm{ADM}\) linear momentum computed from
-    !  the canonical momentum per baryon on the particles
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: adm_linear_momentum_i
+    !# Estimate of the \(\mathrm{ADM}\) linear momentum of each matter object,
+    !  computed from the canonical momentum per baryon on the particles
+    DOUBLE PRECISION, DIMENSION(3)               :: adm_linear_momentum_fluid
+    !# Estimate of the \(\mathrm{ADM}\) linear momentum of the fluid computed
+    !  from the canonical momentum per baryon on the particles
 
     !
     !-- Strings
@@ -1155,43 +1158,6 @@ MODULE sph_particles
     END SUBROUTINE test_recovery
 
 
-    MODULE SUBROUTINE compute_adm_momentum( this, npart, pos, nlrf, u, pr,  &
-                                            vel_u, theta, nstar, &
-                                            nu, lapse, shift, adm_mom )
-    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum using
-    !  the canonical momentum per baryon on the particles
-    !  @todo add reference
-
-      CLASS(particles),                     INTENT(INOUT):: this
-      !! [[particles]] object which this PROCEDURE is a member of
-      INTEGER,                              INTENT(IN)   :: npart
-      !! Particle number
-      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: pos
-      !! Particle positions
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nlrf
-      !! Baryon density in the local rest frame on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: u
-      !! Specific internal energy on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: pr
-      !! Pressure on the particles
-      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: vel_u
-      !! Spatial velocity in the computing frame on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: theta
-      !! Generalized Lorentz factor on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nstar
-      !! Proper baryon density in the local rest frame on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: lapse
-      !! Lapse function on the particles
-      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: shift
-      !! Shift vector on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nu
-      !! Baryon number per particle
-      DOUBLE PRECISION, DIMENSION(3),       INTENT(OUT)   :: adm_mom
-      !! ADM linear momentum
-
-    END SUBROUTINE compute_adm_momentum
-
-
     MODULE SUBROUTINE read_sphincs_dump_print_formatted( this, namefile_bin, &
                                                          namefile, save_data )
     !# Reads the binary ID file printed by
@@ -1266,9 +1232,11 @@ MODULE sph_particles
 
     END SUBROUTINE destruct_particles
 
+
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
+
 
     MODULE FUNCTION is_empty( this ) RESULT( answer )
     !# Returns `.TRUE` if the [[particles]] object is empty, `.FALSE` otherwise
@@ -1281,12 +1249,14 @@ MODULE sph_particles
 
     END FUNCTION is_empty
 
+
    !MODULE SUBROUTINE write_lorene_bns_id_dump( this, namefile )
    !
    !    CLASS(particles),    INTENT( IN )               :: this
    !    CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
    !
    !END SUBROUTINE write_lorene_bns_id_dump
+
 
     MODULE PURE FUNCTION get_n_matter( this ) RESULT( n_matter )
     !! Returns [[particles:n_matter]]
@@ -1298,6 +1268,7 @@ MODULE sph_particles
 
     END FUNCTION get_n_matter
 
+
     MODULE PURE FUNCTION get_npart( this ) RESULT( n_part )
     !! Returns [[particles:npart]]
 
@@ -1307,6 +1278,7 @@ MODULE sph_particles
       INTEGER:: n_part
 
     END FUNCTION get_npart
+
 
     MODULE PURE FUNCTION get_npart_i( this, i_matter ) RESULT( n_part )
     !! Returns the number of particles on the object `i_matter`
@@ -1355,6 +1327,7 @@ MODULE sph_particles
 
     END FUNCTION get_pos
 
+
     MODULE PURE FUNCTION get_vel( this ) RESULT( vel )
     !! Returns [[particles:v]]
 
@@ -1364,6 +1337,7 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
 
     END FUNCTION get_vel
+
 
     MODULE PURE FUNCTION get_nstar( this ) RESULT( nstar )
     !! Returns [[particles:nstar]]
@@ -1375,6 +1349,7 @@ MODULE sph_particles
 
     END FUNCTION get_nstar
 
+
     MODULE PURE FUNCTION get_nstar_sph( this ) RESULT( nstar_sph )
     !! Returns [[particles:nstar_int]]
 
@@ -1384,6 +1359,7 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nstar_sph
 
     END FUNCTION get_nstar_sph
+
 
     MODULE PURE FUNCTION get_nlrf( this ) RESULT( nlrf )
     !! Returns [[particles:nlrf]]
@@ -1395,6 +1371,7 @@ MODULE sph_particles
 
     END FUNCTION get_nlrf
 
+
     MODULE PURE FUNCTION get_nlrf_sph( this ) RESULT( nlrf_sph )
     !! Returns [[particles:nlrf_int]]
 
@@ -1404,6 +1381,7 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nlrf_sph
 
     END FUNCTION get_nlrf_sph
+
 
     MODULE PURE FUNCTION get_nu( this ) RESULT( nu )
     !! Returns [[particles:nu]]
@@ -1415,6 +1393,7 @@ MODULE sph_particles
 
     END FUNCTION get_nu
 
+
     MODULE PURE FUNCTION get_u( this ) RESULT( u )
     !! Returns [[particles:specific_energy]]
 
@@ -1424,6 +1403,7 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u
 
     END FUNCTION get_u
+
 
     MODULE PURE FUNCTION get_u_sph( this ) RESULT( u_sph )
     !! Returns [[particles:u_pwp]]
@@ -1435,6 +1415,7 @@ MODULE sph_particles
 
     END FUNCTION get_u_sph
 
+
     MODULE PURE FUNCTION get_pressure( this ) RESULT( pressure )
     !! Returns [[particles:pressure]]
 
@@ -1444,6 +1425,7 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
 
     END FUNCTION get_pressure
+
 
     MODULE PURE FUNCTION get_pressure_cu( this ) RESULT( pressure_cu )
     !! Returns [[particles:pressure_cu]]
@@ -1455,6 +1437,7 @@ MODULE sph_particles
 
     END FUNCTION get_pressure_cu
 
+
     MODULE PURE FUNCTION get_theta( this ) RESULT( theta )
     !! Returns [[particles:theta]]
 
@@ -1464,6 +1447,7 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: theta
 
     END FUNCTION get_theta
+
 
     MODULE PURE FUNCTION get_h( this ) RESULT( h )
     !! Returns [[particles:h]]
@@ -1475,6 +1459,7 @@ MODULE sph_particles
 
     END FUNCTION get_h
 
+
     MODULE PURE FUNCTION get_lapse( this ) RESULT( lapse )
     !! Returns [[particles:lapse]]
 
@@ -1485,6 +1470,7 @@ MODULE sph_particles
 
     END FUNCTION get_lapse
 
+
     MODULE PURE FUNCTION get_shift( this ) RESULT( shift )
     !! Returns \([[particles:shift_x]],[[particles:shift_y]],[[particles:shift_z]]\)
 
@@ -1494,6 +1480,7 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(3,this% npart):: shift
 
     END FUNCTION get_shift
+
 
     MODULE PURE FUNCTION get_g3( this ) RESULT( g3 )
     !! Returns [[particles:h]]
@@ -1579,6 +1566,89 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
 
     END SUBROUTINE correct_center_of_mass
+
+
+  END INTERFACE
+
+
+  INTERFACE compute_adm_momentum_fluid
+  !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the fluid
+
+    MODULE PROCEDURE compute_adm_momentum_fluid_fields
+    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
+    !  fluid using the canonical momentum per baryon on the particles
+    MODULE PROCEDURE compute_adm_momentum_fluid_canmom
+    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
+    !  fluid using the |sph| fields
+
+  END INTERFACE compute_adm_momentum_fluid
+
+
+  INTERFACE
+
+
+    MODULE SUBROUTINE compute_adm_momentum_fluid_fields &
+      ( npart, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, lapse, &
+        shift_x, shift_y, shift_z, nu, theta, nlrf, pr, u, vel_u, adm_mom )
+    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
+    !  fluid using the |sph| fields
+    !  @todo add reference
+
+      INTEGER,                              INTENT(IN) :: npart
+      !! Particle number
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: g_xx
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: g_xy
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: g_xz
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: g_yy
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: g_yz
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: g_zz
+      !! Spatial metric on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: lapse
+      !! Lapse function on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: shift_x
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: shift_y
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: shift_z
+      !! Shift vector on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: nu
+      !! Baryon number per particle
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: theta
+      !! Generalized Lorentz factor on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: nlrf
+      !! Baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: pr
+      !! Pressure on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: u
+      !! Specific internal energy on the particles
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN) :: vel_u
+      !! Spatial velocity in the computing frame on the particles
+      DOUBLE PRECISION, DIMENSION(3),       INTENT(OUT):: adm_mom
+      !! ADM linear momentum
+
+    END SUBROUTINE compute_adm_momentum_fluid_fields
+
+
+    MODULE SUBROUTINE compute_adm_momentum_fluid_canmom &
+      ( npart, g3, lapse, shift, nu, s_l, adm_mom )
+    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
+    !  fluid using the canonical momentum per baryon on the particles
+    !  @todo add reference
+
+      INTEGER,                              INTENT(IN) :: npart
+      !! Particle number
+      DOUBLE PRECISION, DIMENSION(6,npart), INTENT(IN) :: g3
+      !! Spatial metric on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: lapse
+      !! Lapse function on the particles
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN) :: shift
+      !! Shift vector on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: nu
+      !! Baryon number per particle
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN) :: s_l
+      !! Canonical momentum per baryon on the particles
+      DOUBLE PRECISION, DIMENSION(3),       INTENT(OUT):: adm_mom
+      !! ADM linear momentum
+
+    END SUBROUTINE compute_adm_momentum_fluid_canmom
 
 
   END INTERFACE

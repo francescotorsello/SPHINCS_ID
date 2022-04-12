@@ -116,13 +116,13 @@ SUBMODULE (bssn_formulation) constraints
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    ALLOCATE ( levels( this% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
      PRINT*,'...allocation error for levels'
      STOP
     ENDIF
-    levels = THIS% levels
-    nlevels= THIS% nlevels
+    levels = this% levels
+    nlevels= this% nlevels
 
     CALL allocate_grid_function( baryon_density, "baryon_density", 1 )
     CALL allocate_grid_function( energy_density, "energy_density", 1 )
@@ -143,26 +143,26 @@ SUBMODULE (bssn_formulation) constraints
     CALL allocate_grid_function( HC_A, "HC_A", 1 )
     CALL allocate_grid_function( HC_derphi, "HC_derphi", 1 )
 
-    CALL allocate_grid_function( THIS% HC, "HC_id", 1 )
-    CALL allocate_grid_function( THIS% MC, "MC_id", 3 )
-    CALL allocate_grid_function( THIS% GC, "GC_id", 3 )
+    CALL allocate_grid_function( this% HC, "HC_id", 1 )
+    CALL allocate_grid_function( this% MC, "MC_id", 3 )
+    CALL allocate_grid_function( this% GC, "GC_id", 3 )
 
-    CALL allocate_grid_function( THIS% rho, "HC_rho", 1 )
-    CALL allocate_grid_function( THIS% S, "MC_S", 3 )
+    CALL allocate_grid_function( this% rho, "HC_rho", 1 )
+    CALL allocate_grid_function( this% S, "MC_S", 3 )
 
     !
     !-- Import the hydro LORENE ID on the gravity grid
     !
     PRINT *, "** Importing LORENE hydro ID on the gravity grid..."
     PRINT *
-    ref_levels: DO l= 1, THIS% nlevels, 1
+    ref_levels: DO l= 1, this% nlevels, 1
 
       PRINT *, " * Importing on refinement level l=", l, "..."
 
-      CALL id% read_id_hydro( THIS% get_ngrid_x(l), &
-                              THIS% get_ngrid_y(l), &
-                              THIS% get_ngrid_z(l), &
-                              THIS% coords% levels(l)% var, &
+      CALL id% read_id_hydro( this% get_ngrid_x(l), &
+                              this% get_ngrid_y(l), &
+                              this% get_ngrid_z(l), &
+                              this% coords% levels(l)% var, &
                               baryon_density% levels(l)% var, &
                               energy_density% levels(l)% var, &
                               specific_energy% levels(l)% var, &
@@ -183,12 +183,12 @@ SUBMODULE (bssn_formulation) constraints
     PRINT *, "** Computing fluid 4-velocity wrt Eulerian observer..."
 
 !    !$OMP PARALLEL DEFAULT( NONE ) &
-!    !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
+!    !$OMP          SHARED( this, v_euler_l, u_euler_l, lorentz_factor, &
 !    !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
 !    !$OMP                  show_progress, l ) &
 !    !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
 !    !$OMP                   perc )
-    ref_levels2: DO l= 1, THIS% nlevels
+    ref_levels2: DO l= 1, this% nlevels
 
 #ifdef __INTEL_COMPILER
 
@@ -196,9 +196,9 @@ SUBMODULE (bssn_formulation) constraints
              u_euler_l      => u_euler_l% levels(l)% var, &
              v_euler        => v_euler% levels(l)% var, &
              lorentz_factor => lorentz_factor% levels(l)% var, &
-             lapse          => THIS% lapse% levels(l)% var, &
-             shift_u        => THIS% shift_u% levels(l)% var, &
-             g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
+             lapse          => this% lapse% levels(l)% var, &
+             shift_u        => this% shift_u% levels(l)% var, &
+             g_phys3_ll     => this% g_phys3_ll% levels(l)% var, &
              g4             => g4% levels(l)% var, &
              Tmunu_ll       => Tmunu_ll% levels(l)% var, &
              energy_density => energy_density% levels(l)% var, &
@@ -208,14 +208,14 @@ SUBMODULE (bssn_formulation) constraints
 #endif
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
+        !$OMP          SHARED( this, v_euler_l, u_euler_l, lorentz_factor, &
         !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
         !$OMP                  show_progress, l ) &
         !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
         !$OMP                   perc )
-        DO k= 1, THIS% get_ngrid_z(l), 1
-          DO j= 1, THIS% get_ngrid_y(l), 1
-            DO i= 1, THIS% get_ngrid_x(l), 1
+        DO k= 1, this% get_ngrid_z(l), 1
+          DO j= 1, this% get_ngrid_y(l), 1
+            DO i= 1, this% get_ngrid_x(l), 1
 
 #ifdef __GFORTRAN__
 
@@ -223,9 +223,9 @@ SUBMODULE (bssn_formulation) constraints
              u_euler_l      => u_euler_l% levels(l)% var, &
              v_euler        => v_euler% levels(l)% var, &
              lorentz_factor => lorentz_factor% levels(l)% var, &
-             lapse          => THIS% lapse% levels(l)% var, &
-             shift_u        => THIS% shift_u% levels(l)% var, &
-             g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
+             lapse          => this% lapse% levels(l)% var, &
+             shift_u        => this% shift_u% levels(l)% var, &
+             g_phys3_ll     => this% g_phys3_ll% levels(l)% var, &
              g4             => g4% levels(l)% var, &
              Tmunu_ll       => Tmunu_ll% levels(l)% var, &
              energy_density => energy_density% levels(l)% var, &
@@ -340,10 +340,10 @@ SUBMODULE (bssn_formulation) constraints
               ENDIF
 
             ! Print progress on screen
-            perc= 100*(THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)*(k - 1) &
-                  + THIS% get_ngrid_x(l)*(j - 1) + i) &
-                  /( THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)* &
-                     THIS% get_ngrid_z(l) )
+            perc= 100*(this% get_ngrid_x(l)*this% get_ngrid_y(l)*(k - 1) &
+                  + this% get_ngrid_x(l)*(j - 1) + i) &
+                  /( this% get_ngrid_x(l)*this% get_ngrid_y(l)* &
+                     this% get_ngrid_z(l) )
             IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
               WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) creturn//" ", perc, "%"
             ENDIF
@@ -381,14 +381,14 @@ SUBMODULE (bssn_formulation) constraints
 #endif
 !        !$OMP DO
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP          SHARED( THIS, v_euler_l, u_euler_l, lorentz_factor, &
+        !$OMP          SHARED( this, v_euler_l, u_euler_l, lorentz_factor, &
         !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
         !$OMP                  show_progress, l ) &
         !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
         !$OMP                   perc )
-        DO k= 1, THIS% get_ngrid_z(l), 1
-          DO j= 1, THIS% get_ngrid_y(l), 1
-            DO i= 1, THIS% get_ngrid_x(l), 1
+        DO k= 1, this% get_ngrid_z(l), 1
+          DO j= 1, this% get_ngrid_y(l), 1
+            DO i= 1, this% get_ngrid_x(l), 1
 
 #ifdef __GFORTRAN__
 
@@ -396,9 +396,9 @@ SUBMODULE (bssn_formulation) constraints
              u_euler_l      => u_euler_l% levels(l)% var, &
              v_euler        => v_euler% levels(l)% var, &
              lorentz_factor => lorentz_factor% levels(l)% var, &
-             lapse          => THIS% lapse% levels(l)% var, &
-             shift_u        => THIS% shift_u% levels(l)% var, &
-             g_phys3_ll     => THIS% g_phys3_ll% levels(l)% var, &
+             lapse          => this% lapse% levels(l)% var, &
+             shift_u        => this% shift_u% levels(l)% var, &
+             g_phys3_ll     => this% g_phys3_ll% levels(l)% var, &
              g4             => g4% levels(l)% var, &
              Tmunu_ll       => Tmunu_ll% levels(l)% var, &
              energy_density => energy_density% levels(l)% var, &
@@ -468,10 +468,10 @@ SUBMODULE (bssn_formulation) constraints
                        )
 
             ! Print progress on screen
-            perc= 100*(THIS% get_ngrid_x(l)*THIS% get_ngrid_y(l)*(k - 1) &
-                  + THIS% get_ngrid_x(l)*(j - 1) + i) &
-                  /( THIS% get_ngrid_x(l)* THIS% get_ngrid_y(l)* &
-                     THIS% get_ngrid_z(l) )
+            perc= 100*(this% get_ngrid_x(l)*this% get_ngrid_y(l)*(k - 1) &
+                  + this% get_ngrid_x(l)*(j - 1) + i) &
+                  /( this% get_ngrid_x(l)* this% get_ngrid_y(l)* &
+                     this% get_ngrid_z(l) )
             IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
               WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
                       creturn//" ", perc, "%"
@@ -500,7 +500,7 @@ SUBMODULE (bssn_formulation) constraints
     ! In debug mode, compute the Hamiltonian constraint by hand
     IF( debug )THEN
 
-      DO l= 1, THIS% nlevels, 1
+      DO l= 1, this% nlevels, 1
 
 #ifdef __INTEL_COMPILER
 
@@ -509,9 +509,9 @@ SUBMODULE (bssn_formulation) constraints
              HC_A           => HC_A% levels(l)%var, &
              HC_derphi      => HC_derphi% levels(l)%var, &
              HC_hand        => HC_hand% levels(l)%var, &
-             phi            => THIS% phi% levels(l)%var, &
-             trK            => THIS% trK% levels(l)%var, &
-             A_BSSN3_ll     => THIS% A_BSSN3_ll% levels(l)%var, &
+             phi            => this% phi% levels(l)%var, &
+             trK            => this% trK% levels(l)%var, &
+             A_BSSN3_ll     => this% A_BSSN3_ll% levels(l)%var, &
              energy_density => energy_density% levels(l)% var, &
              pressure       => pressure% levels(l)% var &
   )
@@ -535,9 +535,9 @@ SUBMODULE (bssn_formulation) constraints
 #endif
           fd_lim= 5
 
-          DO k= fd_lim, THIS% get_ngrid_z(l) - fd_lim, 1
-            DO j= fd_lim, THIS% get_ngrid_y(l) - fd_lim, 1
-              DO i= fd_lim, THIS% get_ngrid_x(l) - fd_lim, 1
+          DO k= fd_lim, this% get_ngrid_z(l) - fd_lim, 1
+            DO j= fd_lim, this% get_ngrid_y(l) - fd_lim, 1
+              DO i= fd_lim, this% get_ngrid_x(l) - fd_lim, 1
 
 #ifdef __GFORTRAN__
 
@@ -546,9 +546,9 @@ SUBMODULE (bssn_formulation) constraints
              HC_A           => HC_A% levels(l)%var, &
              HC_derphi      => HC_derphi% levels(l)%var, &
              HC_hand        => HC_hand% levels(l)%var, &
-             phi            => THIS% phi% levels(l)%var, &
-             trK            => THIS% trK% levels(l)%var, &
-             A_BSSN3_ll     => THIS% A_BSSN3_ll% levels(l)%var, &
+             phi            => this% phi% levels(l)%var, &
+             trK            => this% trK% levels(l)%var, &
+             A_BSSN3_ll     => this% A_BSSN3_ll% levels(l)%var, &
              energy_density => energy_density% levels(l)% var, &
              pressure       => pressure% levels(l)% var &
   )
@@ -579,22 +579,22 @@ SUBMODULE (bssn_formulation) constraints
 
                 ! Second derivative of conformal factor with fourth-order FD
                 !HC_derphi( ix, iy, iz )= &
-                !                   ( -      EXP(THIS% phi( ix + 2, iy, iz )) &
-                !                     + 16.0*EXP(THIS% phi( ix + 1, iy, iz )) &
-                !                     - 30.0*EXP(THIS% phi( ix    , iy, iz )) &
-                !                     + 16.0*EXP(THIS% phi( ix - 1, iy, iz )) &
-                !                     -      EXP(THIS% phi( ix - 2, iy, iz )) &
-                !                     -      EXP(THIS% phi( ix, iy + 2, iz )) &
-                !                     + 16.0*EXP(THIS% phi( ix, iy + 1, iz )) &
-                !                     - 30.0*EXP(THIS% phi( ix, iy, iz )) &
-                !                     + 16.0*EXP(THIS% phi( ix, iy - 1, iz )) &
-                !                     -      EXP(THIS% phi( ix, iy - 2, iz )) &
-                !                     -      EXP(THIS% phi( ix, iy, iz + 2 )) &
-                !                     + 16.0*EXP(THIS% phi( ix, iy, iz + 1 )) &
-                !                     - 30.0*EXP(THIS% phi( ix, iy, iz )) &
-                !                     + 16.0*EXP(THIS% phi( ix, iy, iz - 1 )) &
-                !                     -      EXP(THIS% phi( ix, iy, iz - 2 )) )&
-                !                     /(12.0*THIS% dx**2)
+                !                   ( -      EXP(this% phi( ix + 2, iy, iz )) &
+                !                     + 16.0*EXP(this% phi( ix + 1, iy, iz )) &
+                !                     - 30.0*EXP(this% phi( ix    , iy, iz )) &
+                !                     + 16.0*EXP(this% phi( ix - 1, iy, iz )) &
+                !                     -      EXP(this% phi( ix - 2, iy, iz )) &
+                !                     -      EXP(this% phi( ix, iy + 2, iz )) &
+                !                     + 16.0*EXP(this% phi( ix, iy + 1, iz )) &
+                !                     - 30.0*EXP(this% phi( ix, iy, iz )) &
+                !                     + 16.0*EXP(this% phi( ix, iy - 1, iz )) &
+                !                     -      EXP(this% phi( ix, iy - 2, iz )) &
+                !                     -      EXP(this% phi( ix, iy, iz + 2 )) &
+                !                     + 16.0*EXP(this% phi( ix, iy, iz + 1 )) &
+                !                     - 30.0*EXP(this% phi( ix, iy, iz )) &
+                !                     + 16.0*EXP(this% phi( ix, iy, iz - 1 )) &
+                !                     -      EXP(this% phi( ix, iy, iz - 2 )) )&
+                !                     /(12.0*this% dx**2)
 
                 ! Second derivative of conformal factor with eighth-order FD
                 HC_derphi( i, j, k )= ( &
@@ -625,7 +625,7 @@ SUBMODULE (bssn_formulation) constraints
                                 - DBLE(1.0/5.0  )*EXP(phi(i, j, k - 2)) &
                                 + DBLE(8.0/315.0)*EXP(phi(i, j, k - 3)) &
                                 - DBLE(1.0/560.0)*EXP(phi(i, j, k - 4)) )&
-                                /(THIS% levels(l)% dx**2)
+                                /(this% levels(l)% dx**2)
 
 
                 HC_hand( i, j, k )= HC_rho( i, j, k ) + &
@@ -655,31 +655,31 @@ SUBMODULE (bssn_formulation) constraints
     !
     PRINT *, "** Computing contraints..."
 !    !$OMP PARALLEL DO DEFAULT( NONE ) &
-!    !$OMP          SHARED( THIS, Tmunu_ll ) &
+!    !$OMP          SHARED( this, Tmunu_ll ) &
 !    !$OMP          PRIVATE( l, imin, imax )
-    DO l= 1, THIS% nlevels, 1
+    DO l= 1, this% nlevels, 1
 
-      ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
-                 shift_u    => THIS% shift_u% levels(l)% var, &
-                 phi        => THIS% phi% levels(l)% var, &
-                 trK        => THIS% trK% levels(l)% var, &
-                 g_BSSN3_ll => THIS% g_BSSN3_ll% levels(l)% var, &
-                 A_BSSN3_ll => THIS% A_BSSN3_ll% levels(l)% var, &
-                 Gamma_u    => THIS% Gamma_u% levels(l)% var, &
+      ASSOCIATE( lapse      => this% lapse% levels(l)% var, &
+                 shift_u    => this% shift_u% levels(l)% var, &
+                 phi        => this% phi% levels(l)% var, &
+                 trK        => this% trK% levels(l)% var, &
+                 g_BSSN3_ll => this% g_BSSN3_ll% levels(l)% var, &
+                 A_BSSN3_ll => this% A_BSSN3_ll% levels(l)% var, &
+                 Gamma_u    => this% Gamma_u% levels(l)% var, &
                  Tmunu_ll   => Tmunu_ll% levels(l)% var, &
-                 HC         => THIS% HC% levels(l)% var, &
-                 MC         => THIS% MC% levels(l)% var, &
-                 GC         => THIS% GC% levels(l)% var, &
-                 rho        => THIS% rho% levels(l)% var, &
-                 S          => THIS% S% levels(l)% var &
+                 HC         => this% HC% levels(l)% var, &
+                 MC         => this% MC% levels(l)% var, &
+                 GC         => this% GC% levels(l)% var, &
+                 rho        => this% rho% levels(l)% var, &
+                 S          => this% S% levels(l)% var &
       )
 
-        imin(1) = THIS% levels(l)% nghost_x
-        imin(2) = THIS% levels(l)% nghost_y
-        imin(3) = THIS% levels(l)% nghost_z
-        imax(1) = THIS% get_ngrid_x(l) - THIS% levels(l)% nghost_x - 1
-        imax(2) = THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
-        imax(3) = THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
+        imin(1) = this% levels(l)% nghost_x
+        imin(2) = this% levels(l)% nghost_y
+        imin(3) = this% levels(l)% nghost_z
+        imax(1) = this% get_ngrid_x(l) - this% levels(l)% nghost_x - 1
+        imax(2) = this% get_ngrid_y(l) - this% levels(l)% nghost_y - 1
+        imax(3) = this% get_ngrid_z(l) - this% levels(l)% nghost_z - 1
 
         HC    = zero
         MC    = zero
@@ -690,9 +690,9 @@ SUBMODULE (bssn_formulation) constraints
           !
           !-- Input
           !
-          THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+          this% get_ngrid_x(l), this% get_ngrid_y(l), this% get_ngrid_z(l), &
           imin, imax, &
-          THIS% get_dx(l), THIS% get_dy(l), THIS% get_dz(l), &
+          this% get_dx(l), this% get_dy(l), this% get_dz(l), &
           g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
           g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
           g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
@@ -739,9 +739,9 @@ SUBMODULE (bssn_formulation) constraints
        !   !
        !   !-- Input
        !   !
-       !   THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+       !   this% get_ngrid_x(l), this% get_ngrid_y(l), this% get_ngrid_z(l), &
        !   imin, imax, &
-       !   THIS% get_dx(l), THIS% get_dy(l), THIS% get_dz(l), &
+       !   this% get_dx(l), this% get_dy(l), this% get_dz(l), &
        !   g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
        !   g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
        !   g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
@@ -789,13 +789,13 @@ SUBMODULE (bssn_formulation) constraints
     !--  Analyze constraints, and print to formatted files  --!
     !---------------------------------------------------------!
 
-    DO l= 1, THIS% nlevels, 1
+    DO l= 1, this% nlevels, 1
 
-      ASSOCIATE( HC         => THIS% HC% levels(l)% var, &
-                 MC         => THIS% MC% levels(l)% var, &
-                 GC         => THIS% GC% levels(l)% var, &
-                 rho        => THIS% rho% levels(l)% var, &
-                 S          => THIS% S% levels(l)% var &
+      ASSOCIATE( HC         => this% HC% levels(l)% var, &
+                 MC         => this% MC% levels(l)% var, &
+                 GC         => this% GC% levels(l)% var, &
+                 rho        => this% rho% levels(l)% var, &
+                 S          => this% S% levels(l)% var &
       )
         !
         !-- Export the constraint statistics to a formatted file
@@ -832,8 +832,8 @@ SUBMODULE (bssn_formulation) constraints
         !CALL test_status( ios, err_msg, "...error when opening " &
         !         // TRIM(name_logfile) )
 
-        IF( .NOT.ALLOCATED( THIS% HC_l2 ))THEN
-          ALLOCATE( THIS% HC_l2( THIS% nlevels ), &
+        IF( .NOT.ALLOCATED( this% HC_l2 ))THEN
+          ALLOCATE( this% HC_l2( this% nlevels ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array HC_l2. ", &
@@ -843,8 +843,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% MC_l2 ))THEN
-          ALLOCATE( THIS% MC_l2( THIS% nlevels, 3 ), &
+        IF( .NOT.ALLOCATED( this% MC_l2 ))THEN
+          ALLOCATE( this% MC_l2( this% nlevels, 3 ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array MC_l2. ", &
@@ -854,8 +854,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% GC_l2 ))THEN
-          ALLOCATE( THIS% GC_l2( THIS% nlevels, 3 ), &
+        IF( .NOT.ALLOCATED( this% GC_l2 ))THEN
+          ALLOCATE( this% GC_l2( this% nlevels, 3 ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array GC_l2. ", &
@@ -865,8 +865,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% HC_loo ))THEN
-          ALLOCATE( THIS% HC_loo( THIS% nlevels ), &
+        IF( .NOT.ALLOCATED( this% HC_loo ))THEN
+          ALLOCATE( this% HC_loo( this% nlevels ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array HC_loo. ", &
@@ -876,8 +876,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% MC_loo ))THEN
-          ALLOCATE( THIS% MC_loo( THIS% nlevels, 3 ), &
+        IF( .NOT.ALLOCATED( this% MC_loo ))THEN
+          ALLOCATE( this% MC_loo( this% nlevels, 3 ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array MC_loo. ", &
@@ -887,8 +887,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% GC_loo ))THEN
-          ALLOCATE( THIS% GC_loo( THIS% nlevels, 3 ), &
+        IF( .NOT.ALLOCATED( this% GC_loo ))THEN
+          ALLOCATE( this% GC_loo( this% nlevels, 3 ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array GC_loo. ", &
@@ -898,8 +898,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-      !  IF( .NOT.ALLOCATED( THIS% HC_int ))THEN
-      !    ALLOCATE( THIS% HC_int( THIS% nlevels ), &
+      !  IF( .NOT.ALLOCATED( this% HC_int ))THEN
+      !    ALLOCATE( this% HC_int( this% nlevels ), &
       !              STAT= ios, ERRMSG= err_msg )
       !    IF( ios > 0 )THEN
       !      PRINT *, "...allocation error for array HC_loo. ", &
@@ -909,8 +909,8 @@ SUBMODULE (bssn_formulation) constraints
       !    !CALL test_status( ios, err_msg, &
       !    !                "...deallocation error for array HC" )
       !  ENDIF
-      !  IF( .NOT.ALLOCATED( THIS% MC_int ))THEN
-      !    ALLOCATE( THIS% MC_int( THIS% nlevels, 3 ), &
+      !  IF( .NOT.ALLOCATED( this% MC_int ))THEN
+      !    ALLOCATE( this% MC_int( this% nlevels, 3 ), &
       !              STAT= ios, ERRMSG= err_msg )
       !    IF( ios > 0 )THEN
       !      PRINT *, "...allocation error for array MC_loo. ", &
@@ -920,8 +920,8 @@ SUBMODULE (bssn_formulation) constraints
       !    !CALL test_status( ios, err_msg, &
       !    !                "...deallocation error for array HC" )
       !  ENDIF
-      !  IF( .NOT.ALLOCATED( THIS% GC_int ))THEN
-      !    ALLOCATE( THIS% GC_int( THIS% nlevels, 3 ), &
+      !  IF( .NOT.ALLOCATED( this% GC_int ))THEN
+      !    ALLOCATE( this% GC_int( this% nlevels, 3 ), &
       !              STAT= ios, ERRMSG= err_msg )
       !    IF( ios > 0 )THEN
       !      PRINT *, "...allocation error for array GC_loo. ", &
@@ -939,55 +939,55 @@ SUBMODULE (bssn_formulation) constraints
 
         name_analysis= "bssn-hc-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the Hamiltonian constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              HC, name_constraint, unit_logfile, name_analysis, &
-             THIS% HC_l2(l), THIS% HC_loo(l), THIS% HC_int(l), rho )
+             this% HC_l2(l), this% HC_loo(l), this% HC_int(l), rho )
 
         name_analysis= "bssn-mc1-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the momentum constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              MC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
-             THIS% MC_l2(l,jx), THIS% MC_loo(l,jx), THIS% MC_int(l,jx), &
+             this% MC_l2(l,jx), this% MC_loo(l,jx), this% MC_int(l,jx), &
              S(:,:,:,jx) )
 
         name_analysis= "bssn-mc2-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the momentum constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              MC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
-             THIS% MC_l2(l,jy), THIS% MC_loo(l,jy), THIS% MC_int(l,jy), &
+             this% MC_l2(l,jy), this% MC_loo(l,jy), this% MC_int(l,jy), &
              S(:,:,:,jy) )
 
         name_analysis= "bssn-mc3-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the momentum constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              MC(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
-             THIS% MC_l2(l,jz), THIS% MC_loo(l,jz), THIS% MC_int(l,jz), &
+             this% MC_l2(l,jz), this% MC_loo(l,jz), this% MC_int(l,jz), &
              S(:,:,:,jz) )
 
         name_analysis= "bssn-gc1-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the connection constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              GC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_l2(l,jx), THIS% GC_loo(l,jx), THIS% GC_int(l,jx) )
+             this% GC_l2(l,jx), this% GC_loo(l,jx), this% GC_int(l,jx) )
 
         name_analysis= "bssn-gc2-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the connection constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              GC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_l2(l,jy), THIS% GC_loo(l,jy), THIS% GC_int(l,jy) )
+             this% GC_l2(l,jy), this% GC_loo(l,jy), this% GC_int(l,jy) )
 
         name_analysis= "bssn-gc3-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the connection constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              GC(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_l2(l,jz), THIS% GC_loo(l,jz), THIS% GC_int(l,jz) )
+             this% GC_l2(l,jz), this% GC_loo(l,jz), this% GC_int(l,jz) )
 
         CLOSE( UNIT= unit_logfile )
 
@@ -997,7 +997,7 @@ SUBMODULE (bssn_formulation) constraints
       END ASSOCIATE
     ENDDO
 
-    IF( THIS% export_constraints )THEN
+    IF( this% export_constraints )THEN
 
       PRINT *, "** Printing constraints to file ", TRIM(namefile), "..."
 
@@ -1041,7 +1041,7 @@ SUBMODULE (bssn_formulation) constraints
       "# column:      1        2       3       4       5", &
       "       6       7       8       9       10", &
       "       11       12       13       14       15", &
-      "       16       17       18       19       20"
+      "       16       17       18       19       20      21"
       IF( ios > 0 )THEN
         PRINT *, "...error when writing line 2 in ", TRIM(namefile), &
                  ". The error message is", err_msg
@@ -1062,25 +1062,25 @@ SUBMODULE (bssn_formulation) constraints
       !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
       !        // TRIM(namefile) )
 
-      DO l= 1, THIS% nlevels, 1
+      DO l= 1, this% nlevels, 1
 
-        ASSOCIATE( lapse           => THIS% lapse% levels(l)% var, &
-                   shift_u         => THIS% shift_u% levels(l)% var, &
-                   phi             => THIS% phi% levels(l)% var, &
-                   trK             => THIS% trK% levels(l)% var, &
-                   g_BSSN3_ll      => THIS% g_BSSN3_ll% levels(l)% var, &
-                   A_BSSN3_ll      => THIS% A_BSSN3_ll% levels(l)% var, &
-                   g_phys3_ll      => THIS% g_phys3_ll% levels(l)% var, &
-                   k_phys3_ll      => THIS% k_phys3_ll% levels(l)% var, &
-                   Gamma_u         => THIS% Gamma_u% levels(l)% var, &
+        ASSOCIATE( lapse           => this% lapse% levels(l)% var, &
+                   shift_u         => this% shift_u% levels(l)% var, &
+                   phi             => this% phi% levels(l)% var, &
+                   trK             => this% trK% levels(l)% var, &
+                   g_BSSN3_ll      => this% g_BSSN3_ll% levels(l)% var, &
+                   A_BSSN3_ll      => this% A_BSSN3_ll% levels(l)% var, &
+                   g_phys3_ll      => this% g_phys3_ll% levels(l)% var, &
+                   k_phys3_ll      => this% k_phys3_ll% levels(l)% var, &
+                   Gamma_u         => this% Gamma_u% levels(l)% var, &
                    Tmunu_ll        => Tmunu_ll% levels(l)% var, &
                    v_euler_l       => v_euler_l% levels(l)% var, &
                    u_euler_l       => u_euler_l% levels(l)% var, &
                    v_euler         => v_euler% levels(l)% var, &
                    lorentz_factor  => lorentz_factor% levels(l)% var, &
-                   HC              => THIS% HC% levels(l)% var, &
-                   MC              => THIS% MC% levels(l)% var, &
-                   GC              => THIS% GC% levels(l)% var, &
+                   HC              => this% HC% levels(l)% var, &
+                   MC              => this% MC% levels(l)% var, &
+                   GC              => this% GC% levels(l)% var, &
                    HC_rho          => HC_rho% levels(l)%var, &
                    HC_trK          => HC_trK% levels(l)%var, &
                    HC_A            => HC_A% levels(l)%var, &
@@ -1099,19 +1099,19 @@ SUBMODULE (bssn_formulation) constraints
           IF( ALLOCATED( abs_grid ) )THEN
             DEALLOCATE( abs_grid )
           ENDIF
-          ALLOCATE( abs_grid( THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), &
-                              THIS% get_ngrid_z(l), 3 ) )
+          ALLOCATE( abs_grid( this% get_ngrid_x(l), this% get_ngrid_y(l), &
+                              this% get_ngrid_z(l), 3 ) )
 
-          DO k= 1, THIS% get_ngrid_z(l), 1
-            DO j= 1, THIS% get_ngrid_y(l), 1
-              DO i= 1, THIS% get_ngrid_x(l), 1
+          DO k= 1, this% get_ngrid_z(l), 1
+            DO j= 1, this% get_ngrid_y(l), 1
+              DO i= 1, this% get_ngrid_x(l), 1
 
                 abs_grid( i, j, k, jx )= &
-                            ABS( THIS% coords% levels(l)% var( i, j, k, jx ) )
+                            ABS( this% coords% levels(l)% var( i, j, k, jx ) )
                 abs_grid( i, j, k, jy )= &
-                            ABS( THIS% coords% levels(l)% var( i, j, k, jy ) )
+                            ABS( this% coords% levels(l)% var( i, j, k, jy ) )
                 abs_grid( i, j, k, jz )= &
-                            ABS( THIS% coords% levels(l)% var( i, j, k, jz ) )
+                            ABS( this% coords% levels(l)% var( i, j, k, jz ) )
 
               ENDDO
             ENDDO
@@ -1119,21 +1119,21 @@ SUBMODULE (bssn_formulation) constraints
 
           min_abs_y= 1D+20
           min_abs_z= 1D+20
-          DO k= 1, THIS% get_ngrid_z(l), 1
-            DO j= 1, THIS% get_ngrid_y(l), 1
-              DO i= 1, THIS% get_ngrid_x(l), 1
+          DO k= 1, this% get_ngrid_z(l), 1
+            DO j= 1, this% get_ngrid_y(l), 1
+              DO i= 1, this% get_ngrid_x(l), 1
 
-                IF( ABS( THIS% coords% levels(l)% var( i, j, k, jy ) ) &
+                IF( ABS( this% coords% levels(l)% var( i, j, k, jy ) ) &
                     < min_abs_y )THEN
-                  min_abs_y= ABS( THIS% coords% levels(l)% var( i, j, k, jy ) )
+                  min_abs_y= ABS( this% coords% levels(l)% var( i, j, k, jy ) )
                   min_ix_y= i
                   min_iy_y= j
                   min_iz_y= k
                 ENDIF
 
-                IF( ABS( THIS% coords% levels(l)% var( i, j, k, jz ) ) &
+                IF( ABS( this% coords% levels(l)% var( i, j, k, jz ) ) &
                     < min_abs_z )THEN
-                  min_abs_z= ABS( THIS% coords% levels(l)% var( i, j, k, jz ) )
+                  min_abs_z= ABS( this% coords% levels(l)% var( i, j, k, jz ) )
                   min_ix_z= i
                   min_iy_z= j
                   min_iz_z= k
@@ -1143,31 +1143,31 @@ SUBMODULE (bssn_formulation) constraints
             ENDDO
           ENDDO
 
-          DO k= 1, THIS% get_ngrid_z(l), 1
+          DO k= 1, this% get_ngrid_z(l), 1
 
-            IF( MOD( k, THIS% cons_step ) /= 0 ) CYCLE
+            IF( MOD( k, this% cons_step ) /= 0 ) CYCLE
 
-            DO j= 1, THIS% get_ngrid_y(l), 1
+            DO j= 1, this% get_ngrid_y(l), 1
 
-              IF( MOD( j, THIS% cons_step ) /= 0 ) CYCLE
+              IF( MOD( j, this% cons_step ) /= 0 ) CYCLE
 
-              DO i= 1, THIS% get_ngrid_x(l), 1
+              DO i= 1, this% get_ngrid_x(l), 1
 
-                IF( MOD( i, THIS% cons_step ) /= 0 ) CYCLE
+                IF( MOD( i, this% cons_step ) /= 0 ) CYCLE
 
-                IF( THIS% export_constraints_xy .AND. &
-                    ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
-                      THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
+                IF( this% export_constraints_xy .AND. &
+                    ( this% coords% levels(l)% var( i, j, k, jz ) /= &
+                      this% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                     min_iz_z, jz ) ) )THEN
                   CYCLE
                 ENDIF
-                IF( THIS% export_constraints_x .AND. &
-                    ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
-                      THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
+                IF( this% export_constraints_x .AND. &
+                    ( this% coords% levels(l)% var( i, j, k, jz ) /= &
+                      this% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                     min_iz_z, jz ) &
                       .OR. &
-                      THIS% coords% levels(l)% var( i, j, k, jy ) /= &
-                      THIS% coords% levels(l)% var( min_ix_y, min_iy_y, &
+                      this% coords% levels(l)% var( i, j, k, jy ) /= &
+                      this% coords% levels(l)% var( min_ix_y, min_iy_y, &
                                                     min_iz_y, jy ) ) )THEN
                   CYCLE
                 ENDIF
@@ -1176,9 +1176,9 @@ SUBMODULE (bssn_formulation) constraints
                   WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, &
                            FMT = * )&
                     l, &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), &
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), &
                     baryon_density( i, j, k ), &
                     energy_density( i, j, k ), &
                     specific_energy( i, j, k ), &
@@ -1247,9 +1247,9 @@ SUBMODULE (bssn_formulation) constraints
                 ELSE
                   WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
                     l, &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), &
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), &
                     Tmunu_ll( i, j, k, itt ), &
                     Tmunu_ll( i, j, k, itx ), &
                     Tmunu_ll( i, j, k, ity ), &
@@ -1413,32 +1413,32 @@ SUBMODULE (bssn_formulation) constraints
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    ALLOCATE ( levels( this% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
      PRINT*,'...allocation error for levels'
      STOP
     ENDIF
-    nlevels= THIS% nlevels
-    levels = THIS% levels
-    coords = THIS% coords
+    nlevels= this% nlevels
+    levels = this% levels
+    coords = this% coords
 
-    DO l= 1, THIS% nlevels, 1
-      levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
-      levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
-      levels(l)% ngrid_x= THIS% levels(l)% ngrid_x
+    DO l= 1, this% nlevels, 1
+      levels(l)% ngrid_x= this% levels(l)% ngrid_x
+      levels(l)% ngrid_x= this% levels(l)% ngrid_x
+      levels(l)% ngrid_x= this% levels(l)% ngrid_x
     ENDDO
 
-    IF( debug ) PRINT *, "ngrid_x=", THIS% levels(1)%ngrid_x
-    IF( debug ) PRINT *, "ngrid_y=", THIS% levels(1)%ngrid_y
-    IF( debug ) PRINT *, "ngrid_z=", THIS% levels(1)%ngrid_z
+    IF( debug ) PRINT *, "ngrid_x=", this% levels(1)%ngrid_x
+    IF( debug ) PRINT *, "ngrid_y=", this% levels(1)%ngrid_y
+    IF( debug ) PRINT *, "ngrid_z=", this% levels(1)%ngrid_z
     IF( debug ) PRINT *
 
-    CALL allocate_grid_function( THIS% HC_parts, "HC_parts_ID", 1 )
-    CALL allocate_grid_function( THIS% MC_parts, "MC_parts_ID", 3 )
-    CALL allocate_grid_function( THIS% GC_parts, "GC_parts_ID", 3 )
+    CALL allocate_grid_function( this% HC_parts, "HC_parts_ID", 1 )
+    CALL allocate_grid_function( this% MC_parts, "MC_parts_ID", 3 )
+    CALL allocate_grid_function( this% GC_parts, "GC_parts_ID", 3 )
 
-    CALL allocate_grid_function( THIS% rho_parts, "rho_parts", 1 )
-    CALL allocate_grid_function( THIS% S_parts, "S_parts", 3 )
+    CALL allocate_grid_function( this% rho_parts, "rho_parts", 1 )
+    CALL allocate_grid_function( this% S_parts, "S_parts", 3 )
 
     PRINT *, "Mapping hydro fields from particles to grid..."
 
@@ -1457,12 +1457,12 @@ SUBMODULE (bssn_formulation) constraints
     CALL allocate_grid_function( rad_coord, 'rad_coord', 1 )
 
     ! Initialize the stress-energy tensor to 0
-    DO l= 1, THIS% nlevels, 1
+    DO l= 1, this% nlevels, 1
       Tmunu_ll%   levels(l)% var= 0.0D0
-      rad_coord%  levels(l)% var= THIS% rad_coord%  levels(l)% var
-      g_phys3_ll% levels(l)% var= THIS% g_phys3_ll% levels(l)% var
-      shift_u%    levels(l)% var= THIS% shift_u%    levels(l)% var
-      lapse%      levels(l)% var= THIS% lapse%      levels(l)% var
+      rad_coord%  levels(l)% var= this% rad_coord%  levels(l)% var
+      g_phys3_ll% levels(l)% var= this% g_phys3_ll% levels(l)% var
+      shift_u%    levels(l)% var= this% shift_u%    levels(l)% var
+      lapse%      levels(l)% var= this% lapse%      levels(l)% var
     ENDDO
 
     npart= parts_obj% get_npart()
@@ -1679,31 +1679,31 @@ SUBMODULE (bssn_formulation) constraints
     !
     PRINT *, " * Computing constraints using particle data..."
 !    !$OMP PARALLEL DO DEFAULT( NONE ) &
-!    !$OMP          SHARED( THIS, Tmunu_ll ) &
+!    !$OMP          SHARED( this, Tmunu_ll ) &
 !    !$OMP          PRIVATE( l, imin, imax )
-    DO l= 1, THIS% nlevels, 1
+    DO l= 1, this% nlevels, 1
 
-      ASSOCIATE( lapse      => THIS% lapse% levels(l)% var, &
-                 shift_u    => THIS% shift_u% levels(l)% var, &
-                 phi        => THIS% phi% levels(l)% var, &
-                 trK        => THIS% trK% levels(l)% var, &
-                 g_BSSN3_ll => THIS% g_BSSN3_ll% levels(l)% var, &
-                 A_BSSN3_ll => THIS% A_BSSN3_ll% levels(l)% var, &
-                 Gamma_u    => THIS% Gamma_u% levels(l)% var, &
+      ASSOCIATE( lapse      => this% lapse% levels(l)% var, &
+                 shift_u    => this% shift_u% levels(l)% var, &
+                 phi        => this% phi% levels(l)% var, &
+                 trK        => this% trK% levels(l)% var, &
+                 g_BSSN3_ll => this% g_BSSN3_ll% levels(l)% var, &
+                 A_BSSN3_ll => this% A_BSSN3_ll% levels(l)% var, &
+                 Gamma_u    => this% Gamma_u% levels(l)% var, &
                  Tmunu_ll   => Tmunu_ll% levels(l)% var, &
-                 HC_parts   => THIS% HC_parts % levels(l)% var, &
-                 MC_parts   => THIS% MC_parts % levels(l)% var, &
-                 GC_parts   => THIS% GC_parts % levels(l)% var, &
-                 rho_parts  => THIS% rho_parts% levels(l)% var, &
-                 S_parts    => THIS% S_parts% levels(l)% var &
+                 HC_parts   => this% HC_parts % levels(l)% var, &
+                 MC_parts   => this% MC_parts % levels(l)% var, &
+                 GC_parts   => this% GC_parts % levels(l)% var, &
+                 rho_parts  => this% rho_parts% levels(l)% var, &
+                 S_parts    => this% S_parts% levels(l)% var &
       )
 
-        imin(1) = THIS% levels(l)% nghost_x
-        imin(2) = THIS% levels(l)% nghost_y
-        imin(3) = THIS% levels(l)% nghost_z
-        imax(1) = THIS% get_ngrid_x(l) - THIS% levels(l)% nghost_x - 1
-        imax(2) = THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
-        imax(3) = THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
+        imin(1) = this% levels(l)% nghost_x
+        imin(2) = this% levels(l)% nghost_y
+        imin(3) = this% levels(l)% nghost_z
+        imax(1) = this% get_ngrid_x(l) - this% levels(l)% nghost_x - 1
+        imax(2) = this% get_ngrid_y(l) - this% levels(l)% nghost_y - 1
+        imax(3) = this% get_ngrid_z(l) - this% levels(l)% nghost_z - 1
 
         HC_parts    = zero
         MC_parts    = zero
@@ -1714,9 +1714,9 @@ SUBMODULE (bssn_formulation) constraints
           !
           !-- Input
           !
-          THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+          this% get_ngrid_x(l), this% get_ngrid_y(l), this% get_ngrid_z(l), &
           imin, imax, &
-          THIS% get_dx(l), THIS% get_dy(l), THIS% get_dz(l), &
+          this% get_dx(l), this% get_dy(l), this% get_dz(l), &
           g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
           g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
           g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
@@ -1763,9 +1763,9 @@ SUBMODULE (bssn_formulation) constraints
         !  !
         !  !-- Input
         !  !
-        !  THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+        !  this% get_ngrid_x(l), this% get_ngrid_y(l), this% get_ngrid_z(l), &
         !  imin, imax, &
-        !  THIS% get_dx(l), THIS% get_dy(l), THIS% get_dz(l), &
+        !  this% get_dx(l), this% get_dy(l), this% get_dz(l), &
         !  g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
         !  g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
         !  g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
@@ -1815,13 +1815,13 @@ SUBMODULE (bssn_formulation) constraints
     !--  Analyze constraints, and print to formatted files  --!
     !---------------------------------------------------------!
 
-    DO l= 1, THIS% nlevels, 1
+    DO l= 1, this% nlevels, 1
 
-      ASSOCIATE( HC_parts  => THIS% HC_parts% levels(l)% var, &
-                 MC_parts  => THIS% MC_parts% levels(l)% var, &
-                 GC_parts  => THIS% GC_parts% levels(l)% var, &
-                 rho_parts => THIS% rho_parts% levels(l)% var, &
-                 S_parts   => THIS% S_parts% levels(l)% var &
+      ASSOCIATE( HC_parts  => this% HC_parts% levels(l)% var, &
+                 MC_parts  => this% MC_parts% levels(l)% var, &
+                 GC_parts  => this% GC_parts% levels(l)% var, &
+                 rho_parts => this% rho_parts% levels(l)% var, &
+                 S_parts   => this% S_parts% levels(l)% var &
       )
 
         unit_logfile= 2791
@@ -1860,8 +1860,8 @@ SUBMODULE (bssn_formulation) constraints
 
         IF( debug ) PRINT *, "2"
 
-        IF( .NOT.ALLOCATED( THIS% HC_parts_l2 ))THEN
-          ALLOCATE( THIS% HC_parts_l2( THIS% nlevels ), &
+        IF( .NOT.ALLOCATED( this% HC_parts_l2 ))THEN
+          ALLOCATE( this% HC_parts_l2( this% nlevels ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array HC_parts_l2. ", &
@@ -1871,8 +1871,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% MC_parts_l2 ))THEN
-          ALLOCATE( THIS% MC_parts_l2( THIS% nlevels, 3 ), &
+        IF( .NOT.ALLOCATED( this% MC_parts_l2 ))THEN
+          ALLOCATE( this% MC_parts_l2( this% nlevels, 3 ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array MC_parts_l2. ", &
@@ -1882,8 +1882,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% GC_parts_l2 ))THEN
-          ALLOCATE( THIS% GC_parts_l2( THIS% nlevels, 3 ), &
+        IF( .NOT.ALLOCATED( this% GC_parts_l2 ))THEN
+          ALLOCATE( this% GC_parts_l2( this% nlevels, 3 ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array GC_parts_l2. ", &
@@ -1893,8 +1893,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% HC_parts_loo ))THEN
-          ALLOCATE( THIS% HC_parts_loo( THIS% nlevels ), &
+        IF( .NOT.ALLOCATED( this% HC_parts_loo ))THEN
+          ALLOCATE( this% HC_parts_loo( this% nlevels ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array HC_parts_loo. ", &
@@ -1904,8 +1904,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% MC_parts_loo ))THEN
-          ALLOCATE( THIS% MC_parts_loo( THIS% nlevels, 3 ), &
+        IF( .NOT.ALLOCATED( this% MC_parts_loo ))THEN
+          ALLOCATE( this% MC_parts_loo( this% nlevels, 3 ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array MC_parts_loo. ", &
@@ -1915,8 +1915,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-        IF( .NOT.ALLOCATED( THIS% GC_parts_loo ))THEN
-          ALLOCATE( THIS% GC_parts_loo( THIS% nlevels, 3 ), &
+        IF( .NOT.ALLOCATED( this% GC_parts_loo ))THEN
+          ALLOCATE( this% GC_parts_loo( this% nlevels, 3 ), &
                     STAT= ios, ERRMSG= err_msg )
           IF( ios > 0 )THEN
             PRINT *, "...allocation error for array GC_parts_loo. ", &
@@ -1926,8 +1926,8 @@ SUBMODULE (bssn_formulation) constraints
           !CALL test_status( ios, err_msg, &
           !                "...deallocation error for array HC" )
         ENDIF
-     !   IF( .NOT.ALLOCATED( THIS% HC_parts_int ))THEN
-     !     ALLOCATE( THIS% HC_parts_int( THIS% nlevels ), &
+     !   IF( .NOT.ALLOCATED( this% HC_parts_int ))THEN
+     !     ALLOCATE( this% HC_parts_int( this% nlevels ), &
      !               STAT= ios, ERRMSG= err_msg )
      !     IF( ios > 0 )THEN
      !       PRINT *, "...allocation error for array MC_loo. ", &
@@ -1937,8 +1937,8 @@ SUBMODULE (bssn_formulation) constraints
      !     !CALL test_status( ios, err_msg, &
      !     !                "...deallocation error for array HC" )
      !   ENDIF
-     !   IF( .NOT.ALLOCATED( THIS% MC_parts_int ))THEN
-     !     ALLOCATE( THIS% MC_parts_int( THIS% nlevels, 3 ), &
+     !   IF( .NOT.ALLOCATED( this% MC_parts_int ))THEN
+     !     ALLOCATE( this% MC_parts_int( this% nlevels, 3 ), &
      !               STAT= ios, ERRMSG= err_msg )
      !     IF( ios > 0 )THEN
      !       PRINT *, "...allocation error for array MC_loo. ", &
@@ -1948,8 +1948,8 @@ SUBMODULE (bssn_formulation) constraints
      !     !CALL test_status( ios, err_msg, &
      !     !                "...deallocation error for array HC" )
      !   ENDIF
-     !   IF( .NOT.ALLOCATED( THIS% GC_parts_int ))THEN
-     !     ALLOCATE( THIS% GC_parts_int( THIS% nlevels, 3 ), &
+     !   IF( .NOT.ALLOCATED( this% GC_parts_int ))THEN
+     !     ALLOCATE( this% GC_parts_int( this% nlevels, 3 ), &
      !               STAT= ios, ERRMSG= err_msg )
      !     IF( ios > 0 )THEN
      !       PRINT *, "...allocation error for array GC_loo. ", &
@@ -1967,60 +1967,60 @@ SUBMODULE (bssn_formulation) constraints
 
         name_analysis= "bssn-hc-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the Hamiltonian constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              HC_parts, name_constraint, unit_logfile, name_analysis, &
-             THIS% HC_parts_l2(l), THIS% HC_parts_loo(l), &
-             THIS% HC_parts_int(l), rho_parts )
+             this% HC_parts_l2(l), this% HC_parts_loo(l), &
+             this% HC_parts_int(l), rho_parts )
 
 
         name_analysis= "bssn-mc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the momentum constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              MC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
-             THIS% MC_parts_l2(l,jx), THIS% MC_parts_loo(l,jx), &
-             THIS% MC_parts_int(l,jx), S_parts(:,:,:,jx) )
+             this% MC_parts_l2(l,jx), this% MC_parts_loo(l,jx), &
+             this% MC_parts_int(l,jx), S_parts(:,:,:,jx) )
 
         name_analysis= "bssn-mc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the momentum constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              MC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
-             THIS% MC_parts_l2(l,jy), THIS% MC_parts_loo(l,jy), &
-             THIS% MC_parts_int(l,jy), S_parts(:,:,:,jy) )
+             this% MC_parts_l2(l,jy), this% MC_parts_loo(l,jy), &
+             this% MC_parts_int(l,jy), S_parts(:,:,:,jy) )
 
         name_analysis= "bssn-mc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the momentum constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              MC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
-             THIS% MC_parts_l2(l,jz), THIS% MC_parts_loo(l,jz), &
-             THIS% MC_parts_int(l,jz), S_parts(:,:,:,jz) )
+             this% MC_parts_l2(l,jz), this% MC_parts_loo(l,jz), &
+             this% MC_parts_int(l,jz), S_parts(:,:,:,jz) )
 
         name_analysis= "bssn-gc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the connection constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              GC_parts(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_parts_l2(l,jx), THIS% GC_parts_loo(l,jx), &
-             THIS% GC_parts_int(l,jx) )
+             this% GC_parts_l2(l,jx), this% GC_parts_loo(l,jx), &
+             this% GC_parts_int(l,jx) )
 
         name_analysis= "bssn-gc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the connection constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              GC_parts(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_parts_l2(l,jy), THIS% GC_parts_loo(l,jy), &
-             THIS% GC_parts_int(l,jy) )
+             this% GC_parts_l2(l,jy), this% GC_parts_loo(l,jy), &
+             this% GC_parts_int(l,jy) )
 
         name_analysis= "bssn-gc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the connection constraint"
-        CALL THIS% analyze_constraint( &
+        CALL this% analyze_constraint( &
              l, &
              GC_parts(:,:,:,jz), name_constraint, unit_logfile, name_analysis, &
-             THIS% GC_parts_l2(l,jz), THIS% GC_parts_loo(l,jz), &
-             THIS% GC_parts_int(l,jz) )
+             this% GC_parts_l2(l,jz), this% GC_parts_loo(l,jz), &
+             this% GC_parts_int(l,jz) )
 
         CLOSE( UNIT= unit_logfile )
 
@@ -2030,7 +2030,7 @@ SUBMODULE (bssn_formulation) constraints
       END ASSOCIATE
     ENDDO
 
-    IF( THIS% export_constraints )THEN
+    IF( this% export_constraints )THEN
 
       PRINT *, " * Printing constraints to file ", TRIM(namefile), "..."
 
@@ -2101,21 +2101,21 @@ SUBMODULE (bssn_formulation) constraints
 
       IF( debug ) PRINT *, "3"
 
-      DO l= 1, THIS% nlevels, 1
+      DO l= 1, this% nlevels, 1
 
-        ASSOCIATE( lapse           => THIS% lapse% levels(l)% var, &
-                   shift_u         => THIS% shift_u% levels(l)% var, &
-                   phi             => THIS% phi% levels(l)% var, &
-                   trK             => THIS% trK% levels(l)% var, &
-                   g_BSSN3_ll      => THIS% g_BSSN3_ll% levels(l)% var, &
-                   A_BSSN3_ll      => THIS% A_BSSN3_ll% levels(l)% var, &
-                   g_phys3_ll      => THIS% g_phys3_ll% levels(l)% var, &
-                   k_phys3_ll      => THIS% k_phys3_ll% levels(l)% var, &
-                   Gamma_u         => THIS% Gamma_u% levels(l)% var, &
+        ASSOCIATE( lapse           => this% lapse% levels(l)% var, &
+                   shift_u         => this% shift_u% levels(l)% var, &
+                   phi             => this% phi% levels(l)% var, &
+                   trK             => this% trK% levels(l)% var, &
+                   g_BSSN3_ll      => this% g_BSSN3_ll% levels(l)% var, &
+                   A_BSSN3_ll      => this% A_BSSN3_ll% levels(l)% var, &
+                   g_phys3_ll      => this% g_phys3_ll% levels(l)% var, &
+                   k_phys3_ll      => this% k_phys3_ll% levels(l)% var, &
+                   Gamma_u         => this% Gamma_u% levels(l)% var, &
                    Tmunu_ll        => Tmunu_ll% levels(l)% var, &
-                   HC_parts        => THIS% HC_parts% levels(l)% var, &
-                   MC_parts        => THIS% MC_parts% levels(l)% var, &
-                   GC_parts        => THIS% GC_parts% levels(l)% var &
+                   HC_parts        => this% HC_parts% levels(l)% var, &
+                   MC_parts        => this% MC_parts% levels(l)% var, &
+                   GC_parts        => this% GC_parts% levels(l)% var &
         )
 
           ! Being abs_grid a local array, it is good practice to allocate it on
@@ -2124,19 +2124,19 @@ SUBMODULE (bssn_formulation) constraints
           IF( ALLOCATED( abs_grid ) )THEN
             DEALLOCATE( abs_grid )
           ENDIF
-          ALLOCATE( abs_grid( THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), &
-                              THIS% get_ngrid_z(l), 3 ) )
+          ALLOCATE( abs_grid( this% get_ngrid_x(l), this% get_ngrid_y(l), &
+                              this% get_ngrid_z(l), 3 ) )
 
-          DO k= 1, THIS% get_ngrid_z(l), 1
-            DO j= 1, THIS% get_ngrid_y(l), 1
-              DO i= 1, THIS% get_ngrid_x(l), 1
+          DO k= 1, this% get_ngrid_z(l), 1
+            DO j= 1, this% get_ngrid_y(l), 1
+              DO i= 1, this% get_ngrid_x(l), 1
 
                 abs_grid( i, j, k, jx )= &
-                            ABS( THIS% coords% levels(l)% var( i, j, k, jx ) )
+                            ABS( this% coords% levels(l)% var( i, j, k, jx ) )
                 abs_grid( i, j, k, jy )= &
-                            ABS( THIS% coords% levels(l)% var( i, j, k, jy ) )
+                            ABS( this% coords% levels(l)% var( i, j, k, jy ) )
                 abs_grid( i, j, k, jz )= &
-                            ABS( THIS% coords% levels(l)% var( i, j, k, jz ) )
+                            ABS( this% coords% levels(l)% var( i, j, k, jz ) )
 
               ENDDO
             ENDDO
@@ -2144,21 +2144,21 @@ SUBMODULE (bssn_formulation) constraints
 
           min_abs_y= 1D+20
           min_abs_z= 1D+20
-          DO k= 1, THIS% get_ngrid_z(l), 1
-            DO j= 1, THIS% get_ngrid_y(l), 1
-              DO i= 1, THIS% get_ngrid_x(l), 1
+          DO k= 1, this% get_ngrid_z(l), 1
+            DO j= 1, this% get_ngrid_y(l), 1
+              DO i= 1, this% get_ngrid_x(l), 1
 
-                IF( ABS( THIS% coords% levels(l)% var( i, j, k, jy ) ) &
+                IF( ABS( this% coords% levels(l)% var( i, j, k, jy ) ) &
                     < min_abs_y )THEN
-                  min_abs_y= ABS( THIS% coords% levels(l)% var( i, j, k, jy ) )
+                  min_abs_y= ABS( this% coords% levels(l)% var( i, j, k, jy ) )
                   min_ix_y= i
                   min_iy_y= j
                   min_iz_y= k
                 ENDIF
 
-                IF( ABS( THIS% coords% levels(l)% var( i, j, k, jz ) ) &
+                IF( ABS( this% coords% levels(l)% var( i, j, k, jz ) ) &
                     < min_abs_z )THEN
-                  min_abs_z= ABS( THIS% coords% levels(l)% var( i, j, k, jz ) )
+                  min_abs_z= ABS( this% coords% levels(l)% var( i, j, k, jz ) )
                   min_ix_z= i
                   min_iy_z= j
                   min_iz_z= k
@@ -2168,31 +2168,31 @@ SUBMODULE (bssn_formulation) constraints
             ENDDO
           ENDDO
 
-          DO k= 1, THIS% get_ngrid_z(l), 1
+          DO k= 1, this% get_ngrid_z(l), 1
 
-            IF( MOD( k, THIS% cons_step ) /= 0 ) CYCLE
+            IF( MOD( k, this% cons_step ) /= 0 ) CYCLE
 
-            DO j= 1, THIS% get_ngrid_y(l), 1
+            DO j= 1, this% get_ngrid_y(l), 1
 
-              IF( MOD( j, THIS% cons_step ) /= 0 ) CYCLE
+              IF( MOD( j, this% cons_step ) /= 0 ) CYCLE
 
-              DO i= 1, THIS% get_ngrid_x(l), 1
+              DO i= 1, this% get_ngrid_x(l), 1
 
-                IF( MOD( i, THIS% cons_step ) /= 0 ) CYCLE
+                IF( MOD( i, this% cons_step ) /= 0 ) CYCLE
 
-                IF( THIS% export_constraints_xy .AND. &
-                    ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
-                      THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
+                IF( this% export_constraints_xy .AND. &
+                    ( this% coords% levels(l)% var( i, j, k, jz ) /= &
+                      this% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                     min_iz_z, jz ) ) )THEN
                   CYCLE
                 ENDIF
-                IF( THIS% export_constraints_x .AND. &
-                    ( THIS% coords% levels(l)% var( i, j, k, jz ) /= &
-                      THIS% coords% levels(l)% var( min_ix_z, min_iy_z, &
+                IF( this% export_constraints_x .AND. &
+                    ( this% coords% levels(l)% var( i, j, k, jz ) /= &
+                      this% coords% levels(l)% var( min_ix_z, min_iy_z, &
                                                     min_iz_z, jz ) &
                       .OR. &
-                      THIS% coords% levels(l)% var( i, j, k, jy ) /= &
-                      THIS% coords% levels(l)% var( min_ix_y, min_iy_y, &
+                      this% coords% levels(l)% var( i, j, k, jy ) /= &
+                      this% coords% levels(l)% var( min_ix_y, min_iy_y, &
                                                     min_iz_y, jy ) ) )THEN
                   CYCLE
                 ENDIF
@@ -2200,24 +2200,24 @@ SUBMODULE (bssn_formulation) constraints
                 IF( debug )THEN
                   WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
                     l, &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), & ! columns 18
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), &
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), &
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), &
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), &
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), &
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), & ! columns 18
                     !pos_loc( 1, ix, iy, iz ), &
                     !pos_loc( 2, ix, iy, iz ), &
                     !pos_loc( 3, ix, iy, iz ), &
@@ -2276,9 +2276,9 @@ SUBMODULE (bssn_formulation) constraints
                 ELSE
                   WRITE( UNIT = 21, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
                     l, &
-                    THIS% coords% levels(l)% var( i, j, k, jx ), &
-                    THIS% coords% levels(l)% var( i, j, k, jy ), &
-                    THIS% coords% levels(l)% var( i, j, k, jz ), &
+                    this% coords% levels(l)% var( i, j, k, jx ), &
+                    this% coords% levels(l)% var( i, j, k, jy ), &
+                    this% coords% levels(l)% var( i, j, k, jz ), &
                     Tmunu_ll( i, j, k, itt ), &
                     Tmunu_ll( i, j, k, itx ), &
                     Tmunu_ll( i, j, k, ity ), &

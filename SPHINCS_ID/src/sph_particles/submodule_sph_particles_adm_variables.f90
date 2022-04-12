@@ -39,7 +39,7 @@ SUBMODULE (sph_particles) adm_variables
   CONTAINS
 
 
-  MODULE PROCEDURE compute_adm_momentum
+  MODULE PROCEDURE compute_adm_momentum_fluid_canmom
 
     !************************************************
     !
@@ -52,35 +52,17 @@ SUBMODULE (sph_particles) adm_variables
     !
     !************************************************
 
-    USE units,                ONLY: m0c2_cu
-    USE recovery,             ONLY: phys_2_cons, cons_2_phys
-    USE tensor,               ONLY: jx, jy, jz, n_sym4x4
+    USE tensor,               ONLY: jx, jy, jz
     USE constants,            ONLY: zero, one, two, amu, MSun
-    USE deactivate_particles, ONLY: nlrf_fb, u_fb, pr_fb, vel_u_fb, theta_fb, &
-                                    cs_fb
-    USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
-                                    deallocate_metric_on_particles, &
-                                    g4_ll
-    USE utility,              ONLY: compute_g4, determinant_sym4x4, &
-                                    spatial_vector_norm_sym3x3
-    !USE tmp,                  ONLY: fill_arrays
+    USE utility,              ONLY: spatial_vector_norm_sym3x3
 
     IMPLICIT NONE
 
     INTEGER, PARAMETER:: unit_recovery= 34956
 
-    INTEGER:: i_matter, a, a_max, j
+    INTEGER:: a, j
 
     DOUBLE PRECISION:: det, p_max, shift_norm2
-
-    DOUBLE PRECISION, DIMENSION(npart)  :: nlrf_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: u_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: pr_rec
-    DOUBLE PRECISION, DIMENSION(3,npart):: vel_u_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: theta_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: nstar_rec
-    DOUBLE PRECISION, DIMENSION(3,npart):: s_l_rec
-    DOUBLE PRECISION, DIMENSION(npart)  :: e_hat_rec
 
     LOGICAL:: exist
 
@@ -89,110 +71,120 @@ SUBMODULE (sph_particles) adm_variables
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    PRINT *, " * Estimating ADM linear momentum using the canonical SPH ", &
-             "momentum per baryon on the particles..."
+    PRINT *, " * Estimating the ADM linear momentum of the fluid using the ", &
+             "canonical SPH momentum per baryon on the particles..."
     PRINT *
 
-    IF( .NOT.ALLOCATED(g4_ll) )THEN
-      CALL allocate_metric_on_particles(npart)
-    ENDIF
-
-    DO a= 1, npart, 1
-
-      CALL compute_g4( lapse(a), shift(:,a), &
-            [this% g_xx(a), this% g_xy(a), this% g_xz(a), &
-             this% g_yy(a), this% g_yz(a), this% g_zz(a)], &
-             g4_ll(1:n_sym4x4,a) )
-
-      CALL determinant_sym4x4( g4_ll(1:n_sym4x4,a), det )
-      IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", a
-          STOP
-      ELSEIF( det > 0 )THEN
-          PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                   // "positive at particle ", a
-          STOP
-      ENDIF
-
-    ENDDO
-
-    ALLOCATE( nlrf_fb (npart) )
-    ALLOCATE( u_fb    (npart) )
-    ALLOCATE( pr_fb   (npart) )
-    ALLOCATE( vel_u_fb(3,npart) )
-    ALLOCATE( theta_fb(npart) )
-    ALLOCATE( cs_fb(npart) )
-    nlrf_fb = nlrf
-    u_fb    = u
-    pr_fb   = pr
-    vel_u_fb= vel_u(1:3,:)
-    theta_fb= theta
-    ! TODO: set the sound speed properly. From pwp_eos MODULE:
-    ! enth= 1.0D0 + u + rho_rest/P
-    ! cs=   SQRT((Gamma*P_cold + Gamma_th*P_th)/(rho_rest*enth))
-    cs_fb   = one
-
-
-    ! Initialize local arrays
-    nlrf_rec = zero
-    u_rec    = zero
-    pr_rec   = zero
-    vel_u_rec= zero
-    theta_rec= zero
-    nstar_rec= zero
-    s_l_rec  = zero
-    e_hat_rec= zero
-
-    IF( debug ) PRINT *, "1"
-
-    !
-    !-- Compute conserved fields from physical fields
-    !
-    CALL phys_2_cons( npart, nlrf, u, pr, vel_u, &
-                      ! following is output
-                      nstar_rec, s_l_rec, e_hat_rec )
-
-    IF( debug ) PRINT *, "2"
-
-    !
-    !-- Compute the ADM linear momentum
-    !
     adm_mom= zero
-    !$OMP PARALLEL DO SHARED( npart, nu, lapse, shift, s_l_rec, this ) &
-    !$OMP             PRIVATE( a, shift_norm2 ) &
+    !$OMP PARALLEL DO SHARED( npart, nu, lapse, shift, g3, s_l ) &
+    !$OMP             PRIVATE( a, det, shift_norm2, j ) &
     !$OMP             REDUCTION( +: adm_mom )
     DO a= 1, npart, 1
 
-      DO j= 1, 3, 1
+      CALL spatial_vector_norm_sym3x3( g3(:,a), shift(:,a), shift_norm2 )
 
-        CALL spatial_vector_norm_sym3x3( &
-                        [this% g_xx(a), this% g_xy(a), this% g_xz(a), &
-                         this% g_yy(a), this% g_yz(a), this% g_zz(a)], &
-                        shift(:,a), shift_norm2 )
+      DO j= jx, jz, 1
 
         adm_mom(j)= adm_mom(j) &
-            - nu(a)*( shift_norm2/(lapse(a)**two) - one )*s_l_rec(j,a)*amu/Msun
+            - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one )*s_l(j,a)
 
       ENDDO
 
     ENDDO
     !$OMP END PARALLEL DO
 
-    IF( debug ) PRINT *, "3"
-
-    DEALLOCATE( nlrf_fb )
-    DEALLOCATE( u_fb )
-    DEALLOCATE( pr_fb )
-    DEALLOCATE( vel_u_fb )
-    DEALLOCATE( theta_fb )
-    DEALLOCATE( cs_fb )
-
-    CALL deallocate_metric_on_particles
-
     IF( debug ) PRINT *, "4"
 
-  END PROCEDURE compute_adm_momentum
+  END PROCEDURE compute_adm_momentum_fluid_canmom
+
+
+  MODULE PROCEDURE compute_adm_momentum_fluid_fields
+
+    !************************************************
+    !
+    !# Computes an estimate of the \(\mathrm{ADM}\)
+    !  linear momentum using the |sph| fields
+    !  on the particles
+    !  @todo add reference
+    !
+    !  FT 12.04.2022
+    !
+    !************************************************
+
+    USE tensor,               ONLY: jx, jy, jz, n_sym4x4, lower_index_4vector
+    USE constants,            ONLY: zero, one, two, amu, MSun
+    USE utility,              ONLY: compute_g4, determinant_sym4x4, &
+                                    spatial_vector_norm_sym3x3
+
+    IMPLICIT NONE
+
+    INTEGER, PARAMETER:: unit_recovery= 34956
+
+    INTEGER:: a, j
+
+    DOUBLE PRECISION:: det, p_max, shift_norm2
+
+    DOUBLE PRECISION, DIMENSION(n_sym4x4,npart)  :: g4
+    DOUBLE PRECISION, DIMENSION(0:3)             :: v_u
+    DOUBLE PRECISION, DIMENSION(0:3,npart)       :: v_l
+
+    LOGICAL:: exist
+
+    CHARACTER( LEN= 2 ):: i_mat
+    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+
+    LOGICAL, PARAMETER:: debug= .FALSE.
+
+    PRINT *, " * Estimating the ADM linear momentum of the fluid using the ", &
+             "canonical SPH momentum per baryon on the particles..."
+    PRINT *
+
+    adm_mom= zero
+    !$OMP PARALLEL DO SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
+    !$OMP                     theta, u, pr, nlrf, &
+    !$OMP                     v_l, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, g4 ) &
+    !$OMP             PRIVATE( a, det, v_u, shift_norm2, j ) &
+    !$OMP             REDUCTION( +: adm_mom )
+    DO a= 1, npart, 1
+
+      CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
+                       [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+                       g4(:,a) )
+
+      CALL determinant_sym4x4( g4(:,a), det )
+      IF( ABS(det) < 1D-10 )THEN
+        PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+                 // "effectively 0 at particle ", a
+        PRINT *, " * det= ", det
+        PRINT *, " * Stopping..."
+        STOP
+      ELSEIF( det > 0 )THEN
+        PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+                 // "positive at particle ", a
+        PRINT *, " * det= ", det
+        PRINT *, " * Stopping..."
+        STOP
+      ENDIF
+
+      v_u= [one, vel_u(:,a)]
+      CALL lower_index_4vector( v_u, g4(:,a), v_l(:,a) )
+
+      CALL spatial_vector_norm_sym3x3( &
+                    [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+                    [shift_x(a),shift_y(a),shift_z(a)], shift_norm2 )
+
+      DO j= jx, jz, 1
+
+        adm_mom(j)= adm_mom(j) &
+            - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one ) &
+              *theta(a)*( one + u(a) + pr(a)/nlrf(a) )*v_l(j,a)
+
+      ENDDO
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+  END PROCEDURE compute_adm_momentum_fluid_fields
 
 
 END SUBMODULE adm_variables

@@ -61,8 +61,8 @@ SUBMODULE (bns_lorene) io
 
     PRINT *, "   * Binary system of neutron stars produced by LORENE:"
     PRINT *
-    PRINT *, "     x coordinate of the center of mass of the system, ", &
-             "weighted with the baryonic mass= ", &
+    PRINT *, "     x coordinate of the center of mass of the system= ", &
+             !"weighted with the baryonic mass= ", &
             (this% barycenter1_x*this% mass1 + this% barycenter2_x*this% mass2) &
              /(this% mass1 + this% mass2)
     !PRINT *, "   Center of mass of the system, weighted with the ", &
@@ -79,7 +79,7 @@ SUBMODULE (bns_lorene) io
     PRINT *, "                                        ", &
              this% linear_momentum_z, ") Msun*c"
     PRINT *
-    PRINT *, "     Velocity of the COM of the system="
+    PRINT *, "     Velocity of the center of mass of the system="
     PRINT *, "     ADM linear momentum / ADM mass =(", &
              this% linear_momentum_x/this% adm_mass, ", "
     PRINT *, "                                      ", &
