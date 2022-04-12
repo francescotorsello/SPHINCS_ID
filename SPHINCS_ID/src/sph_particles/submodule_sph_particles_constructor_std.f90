@@ -85,7 +85,7 @@ SUBMODULE (sph_particles) constructor_std
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
     USE units,          ONLY: set_units
-    USE options,        ONLY: ikernel, ndes, eos_str
+    USE options,        ONLY: ikernel, ndes, eos_str, eos_type
     USE alive_flag,     ONLY: alive
     USE pwp_EOS,        ONLY: shorten_eos_name
     USE utility,        ONLY: spherical_from_cartesian, &
