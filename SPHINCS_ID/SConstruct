@@ -220,7 +220,8 @@ module_standard_tpo_formulation = [
   'submodule_standard_tpo_formulation_access.f90',
   'submodule_standard_tpo_formulation_io.f90',
   'submodule_standard_tpo_formulation_recovery.f90',
-  'submodule_standard_tpo_formulation_analysis.f90'
+  'submodule_standard_tpo_formulation_analysis.f90',
+  'submodule_standard_tpo_formulation_sph_adm_variables.f90'
 ]
 
 module_bssn_formulation_dir = \

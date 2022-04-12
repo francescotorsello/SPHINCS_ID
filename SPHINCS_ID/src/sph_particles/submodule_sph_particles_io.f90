@@ -157,8 +157,9 @@ SUBMODULE (sph_particles) io
 
     DO i_matter= 1, this% n_matter, 1
 
-      PRINT *, "   SPH estimate of the ADM momentum of the fluid ", &
-               "computed using the canonical momentum per baryon= "
+      PRINT *, "   SPH estimate of the ADM linear momentum computed using ", &
+               "the canonical momentum per baryon, on matter object", &
+               i_matter,"= "
       PRINT *, "   (", this% adm_linear_momentum_i(i_matter, 1), ","
       PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 2), ","
       PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 3), ") Msun*c"

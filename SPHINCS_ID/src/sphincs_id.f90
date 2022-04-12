@@ -88,6 +88,10 @@ PROGRAM sphincs_id
   INTEGER:: i_matter
   !! Index running over the number of physical systems
 
+  DOUBLE PRECISION, DIMENSION(3):: adm_mom_m2p
+  !# ADM linear momentum of the fluid computed using the metric mapped
+  !  with the mesh-to-particle mapping
+
   CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
   CHARACTER( LEN= 500 ):: namefile_parts
@@ -625,6 +629,20 @@ PROGRAM sphincs_id
                    test_recovery_m2p( particles_dist( itr3, itr4 ), &
                                       namefile_recovery )
 
+              PRINT *, "===================================================" &
+                       // "================================================"
+              PRINT *, " Estimating the ADM momentum of the fluid using ", &
+                       " the metric mapped with mesh-to-particle mapping, for",&
+                       " BSSN formulation", itr3, &
+                       "with particle distribution", itr4
+              PRINT *, "===================================================" &
+                       // "================================================"
+              PRINT *
+
+              CALL bssn_forms( itr3 )% &
+                compute_adm_momentum_fluid_m2p( particles_dist( itr3, itr4 ), &
+                                                adm_mom_m2p )
+
             ENDIF
 
           ENDDO part_distribution_loop4
@@ -707,6 +725,13 @@ PROGRAM sphincs_id
     IF( run_spacetime )THEN
 
       CALL bssn_forms(itr)% print_summary()
+      PRINT *, "   Estimate of the ADM momentum of the fluid computed using ", &
+               "the SPH hydro fields and the metric mapped with ", &
+               "mesh-to-particle mapping= "
+      PRINT *, "   (", adm_mom_m2p(1), ","
+      PRINT *, "    ", adm_mom_m2p(2), ","
+      PRINT *, "    ", adm_mom_m2p(3), ") Msun*c"
+      PRINT *
 
     ENDIF
 

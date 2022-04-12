@@ -115,14 +115,14 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     npart= parts% get_npart()
     pos  = parts% get_pos()
 
-    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    ALLOCATE ( levels( this% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
      PRINT*,'...allocation error for levels'
      STOP
     ENDIF
-    nlevels= THIS% nlevels
-    levels = THIS% levels
-    coords = THIS% coords
+    nlevels= this% nlevels
+    levels = this% levels
+    coords = this% coords
 
     CALL allocate_ADM()
     CALL allocate_BSSN()
@@ -136,11 +136,11 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     CALL allocate_grid_function( rad_coord, 'rad_coord', 1 )
 
     ! Initialize the stress-energy tensor to 0
-    DO l= 1, THIS% nlevels, 1
-      rad_coord%  levels(l)% var= THIS% rad_coord%  levels(l)% var
-      g_phys3_ll% levels(l)% var= THIS% g_phys3_ll% levels(l)% var
-      shift_u%    levels(l)% var= THIS% shift_u%    levels(l)% var
-      lapse%      levels(l)% var= THIS% lapse%      levels(l)% var
+    DO l= 1, this% nlevels, 1
+      rad_coord%  levels(l)% var= this% rad_coord%  levels(l)% var
+      g_phys3_ll% levels(l)% var= this% g_phys3_ll% levels(l)% var
+      shift_u%    levels(l)% var= this% shift_u%    levels(l)% var
+      lapse%      levels(l)% var= this% lapse%      levels(l)% var
     ENDDO
 
     CALL set_units('NSM')
@@ -173,7 +173,7 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     IF( debug ) PRINT *, "0.25"
 
     !
-    !-- Uncomment the following lines to use he metric from the particles
+    !-- Uncomment the following lines to use the metric from the particles
     !-- This is to compare with he SUBROUTINE recovery_test in TYPE particles,
     !-- and check that both give the same results when using the same data.
     !-- They do on 25.02.2022

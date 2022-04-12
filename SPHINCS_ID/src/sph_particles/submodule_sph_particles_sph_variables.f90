@@ -1537,8 +1537,9 @@ SUBMODULE (sph_particles) sph_variables
     this% adm_linear_momentum_fluid= zero
     DO i_matter= 1, this% n_matter, 1
 
-      PRINT *, " * Computing ADM linear momentum on matter object", &
-               i_matter, "..."
+      PRINT *, " * Estimating the ADM linear momentum using the canonical ", &
+               "SPH momentum per baryon on the particles, ", &
+               "on matter object ", i_matter, "..."
       PRINT *
 
       ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
@@ -1565,8 +1566,9 @@ SUBMODULE (sph_particles) sph_variables
                                   this% v(1:3,npart_in:npart_fin),        &
                                   this% adm_linear_momentum_i(i_matter,:) )
 
-      PRINT *, "   SPH estimate of the ADM momentum of the fluid ", &
-               "computed using the canonical momentum per baryon= "
+      PRINT *, "   SPH estimate of the ADM linear momentum computed using ", &
+               "the canonical momentum per baryon, on matter object", &
+               i_matter,"= "
       PRINT *, "   (", this% adm_linear_momentum_i(i_matter, 1), ","
       PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 2), ","
       PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 3), ") Msun*c"

@@ -135,10 +135,6 @@ SUBMODULE (sph_particles) adm_variables
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    PRINT *, " * Estimating the ADM linear momentum of the fluid using the ", &
-             "canonical SPH momentum per baryon on the particles..."
-    PRINT *
-
     adm_mom= zero
     !$OMP PARALLEL DO SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
     !$OMP                     theta, u, pr, nlrf, &

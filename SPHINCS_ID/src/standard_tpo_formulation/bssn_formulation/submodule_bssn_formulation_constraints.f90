@@ -681,11 +681,11 @@ SUBMODULE (bssn_formulation) constraints
         imax(2) = this% get_ngrid_y(l) - this% levels(l)% nghost_y - 1
         imax(3) = this% get_ngrid_z(l) - this% levels(l)% nghost_z - 1
 
-        HC    = zero
-        MC    = zero
-        GC    = zero
-        rho   = zero
-        S     = zero
+        HC = zero
+        MC = zero
+        GC = zero
+        rho= zero
+        S  = zero
         CALL bssn_constraint_terms_interior( &
           !
           !-- Input
