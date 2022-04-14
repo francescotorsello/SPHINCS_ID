@@ -1593,11 +1593,22 @@ SUBMODULE (sph_particles) sph_variables
                                       this% baryon_density, &
                                       this% specific_energy, &
                                       this% pressure, this% pos, &
-                                      this% lapse, this% lapse, this% nu )
+                                      this% lapse, this% lapse, this% nu,  &
+                                      this% g_xx,      &
+                                      this% g_xy,      &
+                                      this% g_xz,      &
+                                      this% g_yy,      &
+                                      this% g_yz,      &
+                                      this% g_zz,      &
+                                      this% lapse,     &
+                                      this% shift_x,   &
+                                      this% shift_y,   &
+                                      this% shift_z,   &
+                                      this% adm_linear_momentum_fluid )
 
     ELSE
 
-      PRINT *, "** ERROR! The procedure pointer post_process_sph_id ", &
+      PRINT *, "** ERROR! The PROCEDURE POINTER post_process_sph_id ", &
                "is not associated with any PROCEDURE!"
       PRINT *, " * Stopping..."
       PRINT *

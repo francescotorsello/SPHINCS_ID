@@ -76,7 +76,8 @@ SUBMODULE (sph_particles) adm_variables
     PRINT *
 
     adm_mom= zero
-    !$OMP PARALLEL DO SHARED( npart, nu, lapse, shift, g3, s_l ) &
+    !$OMP PARALLEL DO DEFAULT(NONE) &
+    !$OMP             SHARED( npart, nu, lapse, shift, g3, s_l ) &
     !$OMP             PRIVATE( a, det, shift_norm2, j ) &
     !$OMP             REDUCTION( +: adm_mom )
     DO a= 1, npart, 1
@@ -136,8 +137,9 @@ SUBMODULE (sph_particles) adm_variables
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     adm_mom= zero
-    !$OMP PARALLEL DO SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
-    !$OMP                     theta, u, pr, nlrf, &
+    !$OMP PARALLEL DO DEFAULT(NONE) &
+    !$OMP             SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
+    !$OMP                     theta, u, pr, nlrf, vel_u, &
     !$OMP                     v_l, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, g4 ) &
     !$OMP             PRIVATE( a, det, v_u, shift_norm2, j ) &
     !$OMP             REDUCTION( +: adm_mom )

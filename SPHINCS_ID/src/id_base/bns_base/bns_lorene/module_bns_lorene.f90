@@ -768,12 +768,11 @@ MODULE bns_lorene
 
 
     MODULE SUBROUTINE correct_adm_linear_momentum &
-      ( npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu )
+      ( npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu, g_xx, g_xy, g_xz,  &
+        g_yy, g_yz, g_zz, lapse, shift_x, shift_y, shift_z, adm_mom_error )
     !# Post-process the |sph| |id|; for example, correct for the residual
     !  ADM linear momentum.
 
-      !IMPORT:: idbase
-      !CLASS(idbase),                        INTENT(IN)   :: this
       INTEGER,                              INTENT(IN)   :: npart
       !! Particle number
       DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
@@ -792,6 +791,18 @@ MODULE bns_lorene
       !! Proper baryon density in the local rest frame on the particles
       DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
       !! Baryon number per particle
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: g_xx
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: g_xy
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: g_xz
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: g_yy
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: g_yz
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: g_zz
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: lapse
+      !! Lapse function on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: shift_x
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: shift_y
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: shift_z
+      DOUBLE PRECISION, DIMENSION(3),       INTENT(IN)   :: adm_mom_error
 
     END SUBROUTINE correct_adm_linear_momentum
 

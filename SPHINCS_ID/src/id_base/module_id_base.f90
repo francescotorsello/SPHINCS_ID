@@ -90,7 +90,8 @@ MODULE id_base
     !! Timer that times the construction of the appropriate object
 
 
-    PROCEDURE(finalize_sph_id_int), NOPASS, POINTER, PUBLIC::finalize_sph_id_ptr
+    !PROCEDURE(finalize_sph_id_int), NOPASS, POINTER, PUBLIC::finalize_sph_id_ptr
+    PROCEDURE(), POINTER, NOPASS, PUBLIC:: finalize_sph_id_ptr
     !# Pointer to a procedure that finalize the |sph| |id|; for example,
     !  correct for the residual ADM linear momentum.
 
@@ -181,11 +182,6 @@ MODULE id_base
 
     PROCEDURE(derived_type_constructor_int), DEFERRED:: derived_type_constructor
     !# Constructs a TYPE that extends [[idbase]]
-
-
-    !PROCEDURE(finalize_sph_id_int), NOPASS, DEFERRED:: finalize_sph_id
-    !# Finalize the |sph| |id|; for example,
-    !  correct for the residual ADM linear momentum.
 
 
     !-------------------------------!

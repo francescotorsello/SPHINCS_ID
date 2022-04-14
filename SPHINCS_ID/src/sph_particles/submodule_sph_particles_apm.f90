@@ -1391,6 +1391,7 @@ SUBMODULE (sph_particles) apm
       ENDDO
       !$OMP END PARALLEL DO
       err_N_mean= err_N_mean/npart_real
+      err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( all_pos, npart_real, nstar_sph, nstar_id, &
@@ -1522,10 +1523,6 @@ SUBMODULE (sph_particles) apm
 
       ENDDO find_nan_in_art_pr_ghost
       !$OMP END PARALLEL DO
-
-      err_N_mean= err_N_mean/DBLE(npart_real)
-
-      err_N_mean_min= MIN( err_N_mean, err_N_mean_min )
 
       !IF( err_N_mean_min == err_N_mean )THEN
       !  all_pos_best= all_pos
@@ -3130,7 +3127,8 @@ SUBMODULE (sph_particles) apm
     r_int2= (two*h(ipart))**2
 
     nnei= 0
-    !$OMP PARALLEL DO SHARED(pos,dimensions,ipart,npart,r_int2,nnei,neilist)&
+    !$OMP PARALLEL DO DEFAULT(NONE) &
+    !$OMP             SHARED(pos,dimensions,ipart,npart,r_int2,nnei,neilist)&
     !$OMP             PRIVATE(a,diff,d2)
     DO a= 1, npart, 1
 

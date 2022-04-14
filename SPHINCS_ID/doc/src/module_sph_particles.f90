@@ -336,7 +336,10 @@ MODULE sph_particles
     !-- Procedure pointers
     !
 
-    PROCEDURE(post_process_sph_id_int), POINTER, NOPASS:: post_process_sph_id
+    !PROCEDURE(post_process_sph_id_int), POINTER, NOPASS:: post_process_sph_id
+    PROCEDURE(), POINTER, NOPASS:: post_process_sph_id
+    !# Pointer to a procedure that post_process the |sph| |id|; for example,
+    !  correct for the residual ADM linear momentum.
 
     !
     !-- Steering variables
