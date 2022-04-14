@@ -185,6 +185,10 @@ MODULE bns_lorene
 
     PROCEDURE:: print_summary_derived => print_summary_bnslorene
 
+    PROCEDURE, NOPASS:: correct_adm_linear_momentum
+    !# Corrects the |sph| |id| so that the linear \(\mathrm{ADM}\) momentum
+    !  is zero
+
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
@@ -290,10 +294,10 @@ MODULE bns_lorene
     END SUBROUTINE construct_bnslorene
 
 
-    MODULE SUBROUTINE destruct_bnslorene( THIS )
+    MODULE SUBROUTINE destruct_bnslorene( this )
     !! Destruct a [[bnslorene]] object
 
-      TYPE(bnslorene), INTENT( IN OUT ):: THIS
+      TYPE(bnslorene), INTENT( IN OUT ):: this
       !! [[bnslorene]] object to be destructed
 
     END SUBROUTINE destruct_bnslorene
@@ -312,13 +316,13 @@ MODULE bns_lorene
     !------------------------------!
 
 
-    MODULE SUBROUTINE print_summary_bnslorene( THIS, filename )
+    MODULE SUBROUTINE print_summary_bnslorene( this, filename )
     !# Prints a summary of the physical properties of the |bns| produced by
     !  |lorene| to the standard output and, optionally, to a formatted file
     !  whose name is given as the optional argument `filename`
 
 
-      CLASS(bnslorene), INTENT( IN ):: THIS
+      CLASS(bnslorene), INTENT( IN ):: this
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -327,65 +331,65 @@ MODULE bns_lorene
     !
     !-- SUBROUTINES
     !
-    MODULE SUBROUTINE construct_binary( THIS, resu_file )
+    MODULE SUBROUTINE construct_binary( this, resu_file )
     !! Interface of the subroutine that constructs the |lorene| |binns| object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT )      :: THIS
+      CLASS(bnslorene),                     INTENT( IN OUT )      :: this
       !> |lorene| binary file containing the spectral BNS ID
       CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
 
     END SUBROUTINE construct_binary
 
 
-    MODULE SUBROUTINE destruct_binary( THIS )
+    MODULE SUBROUTINE destruct_binary( this )
     !! Destructs a |lorene| |binns| object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: THIS
+      CLASS(bnslorene), INTENT( IN OUT ):: this
 
     END SUBROUTINE destruct_binary
 
 
-    MODULE SUBROUTINE allocate_bnslorene_memory( THIS, d )
+    MODULE SUBROUTINE allocate_bnslorene_memory( this, d )
     !! Allocates allocatable arrays member of a [[bnslorene]] object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: THIS
+      CLASS(bnslorene), INTENT( IN OUT ):: this
       !> Dimension of the arrays
       INTEGER,    INTENT( IN )    :: d
 
     END SUBROUTINE allocate_bnslorene_memory
 
 
-    MODULE SUBROUTINE deallocate_bnslorene_memory( THIS )
+    MODULE SUBROUTINE deallocate_bnslorene_memory( this )
     !! Deallocates allocatable arrays member of a [[bnslorene]] object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: THIS
+      CLASS(bnslorene), INTENT( IN OUT ):: this
 
     END SUBROUTINE deallocate_bnslorene_memory
 
 
-    MODULE SUBROUTINE import_id_params( THIS )
+    MODULE SUBROUTINE import_id_params( this )
     !! Imports the BNS parameters from |lorene|
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: THIS
+      CLASS(bnslorene), INTENT( IN OUT ):: this
 
     END SUBROUTINE import_id_params
 
 
-    MODULE SUBROUTINE print_id_params( THIS )
+    MODULE SUBROUTINE print_id_params( this )
     !! Prints the BNS parameters to the standard output
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: THIS
+      CLASS(bnslorene), INTENT( IN OUT ):: this
 
     END SUBROUTINE print_id_params
 
 
-  !  MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+  !  MODULE SUBROUTINE integrate_baryon_mass_density( this, center, radius, &
   !                                                   central_density, &
   !                                                   dr, dth, dphi, &
   !                                                   mass, mass_profile, &
@@ -394,7 +398,7 @@ MODULE bns_lorene
   !  !  profile. TODO: Improve integration algorithm.
   !
   !    !> [[bnslorene]] object which this PROCEDURE is a member of
-  !    CLASS(bnslorene), INTENT( IN OUT )      :: THIS
+  !    CLASS(bnslorene), INTENT( IN OUT )      :: this
   !    !& Array to store the indices for array mass_profile, sorted so that
   !    !  mass_profile[mass_profile_idx] is in increasing order
   !    INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
@@ -415,11 +419,11 @@ MODULE bns_lorene
   !  END SUBROUTINE integrate_baryon_mass_density
 
 
-    MODULE SUBROUTINE import_id_int( THIS, n, x, y, z )
+    MODULE SUBROUTINE import_id_int( this, n, x, y, z )
     !! Stores the ID in the [[bnslorene]] member arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT ):: THIS
+      CLASS(bnslorene),                     INTENT( IN OUT ):: this
       INTEGER, INTENT( IN ):: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -446,7 +450,7 @@ MODULE bns_lorene
     ! not OUT. The array arguments are not allocatable anymore
 
 
-    MODULE SUBROUTINE import_id_full( THIS, n, x, y, z,&
+    MODULE SUBROUTINE import_id_full( this, n, x, y, z,&
                                       lapse, &
                                       shift_x, shift_y, shift_z, &
                                       g_xx, g_xy, g_xz, &
@@ -461,7 +465,7 @@ MODULE bns_lorene
     !  [[bnslorene]] member arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT ):: THIS
+      CLASS(bnslorene),                     INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -492,7 +496,7 @@ MODULE bns_lorene
     END SUBROUTINE import_id_full
 
 
-    MODULE SUBROUTINE import_id_spacetime( THIS, nx, ny, nz, &
+    MODULE SUBROUTINE import_id_spacetime( this, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
@@ -502,7 +506,7 @@ MODULE bns_lorene
     !  the BSSN variables and constraints
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                           INTENT( IN OUT ):: THIS
+      CLASS(bnslorene),                           INTENT( IN OUT ):: this
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -515,7 +519,7 @@ MODULE bns_lorene
     END SUBROUTINE import_id_spacetime
 
 
-    MODULE SUBROUTINE import_id_hydro( THIS, nx, ny, nz, &
+    MODULE SUBROUTINE import_id_hydro( this, nx, ny, nz, &
                                              pos, &
                                              baryon_density, &
                                              energy_density, &
@@ -526,7 +530,7 @@ MODULE bns_lorene
     !  on the refined mesh
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                           INTENT( IN OUT ):: THIS
+      CLASS(bnslorene),                           INTENT( IN OUT ):: this
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -540,7 +544,7 @@ MODULE bns_lorene
     END SUBROUTINE import_id_hydro
 
 
-    MODULE SUBROUTINE import_id_particles( THIS, n, x, y, z, &
+    MODULE SUBROUTINE import_id_particles( this, n, x, y, z, &
                                            lapse, &
                                            shift_x, shift_y, shift_z, &
                                            g_xx, g_xy, g_xz, &
@@ -553,7 +557,7 @@ MODULE bns_lorene
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT ):: THIS
+      CLASS(bnslorene),                     INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: x
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: y
@@ -579,14 +583,14 @@ MODULE bns_lorene
     END SUBROUTINE import_id_particles
 
 
-    MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
+    MODULE SUBROUTINE import_id_mass_b( this, x, y, z, &
                                         g, &
                                         baryon_density, &
                                         gamma_euler )
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),       INTENT( IN OUT ):: THIS
+      CLASS(bnslorene),       INTENT( IN OUT ):: this
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
       DOUBLE PRECISION, INTENT( IN )    :: z
@@ -597,13 +601,13 @@ MODULE bns_lorene
     END SUBROUTINE import_id_mass_b
 
 
-    MODULE SUBROUTINE import_id_k( THIS, n, x, y, z,&
+    MODULE SUBROUTINE import_id_k( this, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
    !! Stores the components of the extrinsic curvature in arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT ):: THIS
+      CLASS(bnslorene),                     INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -621,11 +625,11 @@ MODULE bns_lorene
     !
     !-- FUNCTIONS
     !
-    MODULE FUNCTION import_mass_density( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION import_mass_density( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )         :: THIS
+      CLASS(bnslorene),     INTENT( IN )         :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -638,11 +642,11 @@ MODULE bns_lorene
     END FUNCTION import_mass_density
 
 
-    MODULE FUNCTION import_pressure( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION import_pressure( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| pressure at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )         :: THIS
+      CLASS(bnslorene),     INTENT( IN )         :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -655,12 +659,12 @@ MODULE bns_lorene
     END FUNCTION import_pressure
 
 
-    MODULE FUNCTION import_spatial_metric( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION import_spatial_metric( this, x, y, z ) RESULT( res )
     !# Returns the |lorene| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )       :: THIS
+      CLASS(bnslorene),     INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -673,12 +677,12 @@ MODULE bns_lorene
     END FUNCTION import_spatial_metric
 
 
-    MODULE FUNCTION is_hydro_positive( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION is_hydro_positive( this, x, y, z ) RESULT( res )
     !# Returns 1 if the energy density or the specific energy or the pressure
     !  are negative, 0 otherwise
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )       :: THIS
+      CLASS(bnslorene),     INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -692,11 +696,11 @@ MODULE bns_lorene
     END FUNCTION is_hydro_positive
 
 
-    MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
+    MODULE FUNCTION get_field_array( this, field ) RESULT( field_array )
     !! Returns the [[bnslorene]] member arrays named field
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),          INTENT( IN )             :: THIS
+      CLASS(bnslorene),          INTENT( IN )             :: this
       !> Name of the desired [[bnslorene]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       !> Desired [[bnslorene]] member array
@@ -705,11 +709,11 @@ MODULE bns_lorene
     END FUNCTION get_field_array
 
 
-    MODULE FUNCTION get_field_value( THIS, field, n ) RESULT( field_value )
+    MODULE FUNCTION get_field_value( this, field, n ) RESULT( field_value )
     !! Returns the component n of the [[bnslorene]] member arrays named field
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),    INTENT( IN )             :: THIS
+      CLASS(bnslorene),    INTENT( IN )             :: this
       !> Name of the desired [[bnslorene]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       !> Component of the desired [[bnslorene]] member array
@@ -720,40 +724,40 @@ MODULE bns_lorene
     END FUNCTION get_field_value
 
 
-    MODULE FUNCTION get_bns_identifier( THIS )
+    MODULE FUNCTION get_bns_identifier( this )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN ):: THIS
+      CLASS(bnslorene), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_bns_identifier
 
     END FUNCTION get_bns_identifier
 
 
-    MODULE FUNCTION get_eos1_loreneid( THIS )
+    MODULE FUNCTION get_eos1_loreneid( this )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN ):: THIS
+      CLASS(bnslorene), INTENT( IN ):: this
       ! Result
       INTEGER:: get_eos1_loreneid
 
     END FUNCTION get_eos1_loreneid
 
 
-    MODULE FUNCTION get_eos2_loreneid( THIS )
+    MODULE FUNCTION get_eos2_loreneid( this )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN ):: THIS
+      CLASS(bnslorene), INTENT( IN ):: this
       ! Result
       INTEGER:: get_eos2_loreneid
 
     END FUNCTION get_eos2_loreneid
 
 
-    MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
+    MODULE SUBROUTINE get_eos_parameters( this, i_matter, eos_params )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN ):: THIS
+      CLASS(bnslorene), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
@@ -763,10 +767,39 @@ MODULE bns_lorene
     END SUBROUTINE get_eos_parameters
 
 
-    !MODULE FUNCTION get_bns_ptr( THIS )
+    MODULE SUBROUTINE correct_adm_linear_momentum &
+      ( npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu )
+    !# Post-process the |sph| |id|; for example, correct for the residual
+    !  ADM linear momentum.
+
+      !IMPORT:: idbase
+      !CLASS(idbase),                        INTENT(IN)   :: this
+      INTEGER,                              INTENT(IN)   :: npart
+      !! Particle number
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
+      !! Particle positions
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nlrf
+      !! Baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: u
+      !! Specific internal energy on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: pr
+      !! Pressure on the particles
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: vel_u
+      !! Spatial velocity in the computing frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: theta
+      !! Generalized Lorentz factor on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nstar
+      !! Proper baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
+      !! Baryon number per particle
+
+    END SUBROUTINE correct_adm_linear_momentum
+
+
+    !MODULE FUNCTION get_bns_ptr( this )
     !
     !  ! Argument
-    !  CLASS(bnslorene), INTENT( IN ):: THIS
+    !  CLASS(bnslorene), INTENT( IN ):: this
     !  ! Result
     !  TYPE(C_PTR):: get_bns_ptr
     !

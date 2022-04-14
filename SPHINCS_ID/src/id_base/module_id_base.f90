@@ -90,6 +90,11 @@ MODULE id_base
     !! Timer that times the construction of the appropriate object
 
 
+    PROCEDURE(finalize_sph_id_int), NOPASS, POINTER, PUBLIC::finalize_sph_id_ptr
+    !# Pointer to a procedure that finalize the |sph| |id|; for example,
+    !  correct for the residual ADM linear momentum.
+
+
     CONTAINS
 
 
@@ -176,6 +181,11 @@ MODULE id_base
 
     PROCEDURE(derived_type_constructor_int), DEFERRED:: derived_type_constructor
     !# Constructs a TYPE that extends [[idbase]]
+
+
+    !PROCEDURE(finalize_sph_id_int), NOPASS, DEFERRED:: finalize_sph_id
+    !# Finalize the |sph| |id|; for example,
+    !  correct for the residual ADM linear momentum.
 
 
     !-------------------------------!
@@ -676,10 +686,67 @@ MODULE id_base
     END SUBROUTINE print_summary_int
 
 
+    SUBROUTINE finalize_sph_id_int &
+      ( npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu )
+    !# Post-process the |sph| |id|; for example, correct for the residual
+    !  ADM linear momentum.
+
+      !IMPORT:: idbase
+      !CLASS(idbase),                        INTENT(IN)   :: this
+      INTEGER,                              INTENT(IN)   :: npart
+      !! Particle number
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
+      !! Particle positions
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nlrf
+      !! Baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: u
+      !! Specific internal energy on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: pr
+      !! Pressure on the particles
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: vel_u
+      !! Spatial velocity in the computing frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: theta
+      !! Generalized Lorentz factor on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nstar
+      !! Proper baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
+      !! Baryon number per particle
+
+    END SUBROUTINE finalize_sph_id_int
+
+
   END INTERFACE
 
 
   INTERFACE
+
+
+!MODULE SUBROUTINE post_process_sph_id &
+!  ( this, npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu )
+!!# Post-process the |sph| |id|; for example, correct for the residual
+!!  ADM linear momentum.
+!
+!  CLASS(idbase),                        INTENT(IN)   :: this
+!  INTEGER,                              INTENT(IN)   :: npart
+!  !! Particle number
+!  DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
+!  !! Particle positions
+!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nlrf
+!  !! Baryon density in the local rest frame on the particles
+!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: u
+!  !! Specific internal energy on the particles
+!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: pr
+!  !! Pressure on the particles
+!  DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: vel_u
+!  !! Spatial velocity in the computing frame on the particles
+!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: theta
+!  !! Generalized Lorentz factor on the particles
+!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nstar
+!  !! Proper baryon density in the local rest frame on the particles
+!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
+!  !! Baryon number per particle
+!
+!END SUBROUTINE post_process_sph_id
 
 
     MODULE SUBROUTINE sanity_check( derived_type )

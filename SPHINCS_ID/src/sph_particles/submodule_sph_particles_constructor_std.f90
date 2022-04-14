@@ -227,7 +227,7 @@ SUBMODULE (sph_particles) constructor_std
     !-- Read needed data from the idbase object
     !
 
-    parts% nbar_tot       = 0.0D0
+    parts% nbar_tot       = zero
     parts% npart          = 0
     parts% distribution_id= dist
 
@@ -244,8 +244,8 @@ SUBMODULE (sph_particles) constructor_std
 
     parts% npart_i(0)= 0
     npart_i_tmp(0)   = 0
-    parts% nbar_i    = 0.0D0
-    parts% nuratio_i = 0.0D0
+    parts% nbar_i    = zero
+    parts% nuratio_i = zero
 
     DO i_matter= 1, parts% n_matter, 1
 
@@ -263,6 +263,8 @@ SUBMODULE (sph_particles) constructor_std
                                       parts% all_eos(i_matter)% eos_parameters )
 
     ENDDO
+
+    parts% post_process_sph_id => id% finalize_sph_id_ptr
 
     !
     !-- Read the parameters of the particle distributions
@@ -414,7 +416,39 @@ SUBMODULE (sph_particles) constructor_std
 
     DO i_matter= 1, parts% n_matter, 1
 
+      IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
+
+        IF( eos_type == 'pwp' )THEN
+          PRINT *, "** ERROR! On matter object ", i_matter, &
+                   ", the EOS taken from the ID is not the same as the ",&
+                   "one specified in parameter file SPHINCS_fm_input.dat."
+          PRINT *
+          PRINT *, " * EOS from the ID: ", &
+                   parts% all_eos(i_matter)% eos_name
+          PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+                   eos_type
+          PRINT *, "Stopping..."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDIF
+
       IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
+
+        IF( eos_type == 'Poly' )THEN
+          PRINT *, "** ERROR! On matter object ", i_matter, &
+                   ", the EOS taken from the ID is not the same as the ",&
+                   "one specified in parameter file SPHINCS_fm_input.dat."
+          PRINT *
+          PRINT *, " * EOS from the ID: ", &
+                   shorten_eos_name(parts% all_eos(i_matter)% eos_name)
+          PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+                   eos_type
+          PRINT *, "Stopping..."
+          PRINT *
+          STOP
+        ENDIF
 
         IF( (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .LT. eos_str)&
             .OR. &
@@ -672,6 +706,45 @@ SUBMODULE (sph_particles) constructor_std
         PRINT *, "parts% npart=", parts% npart
         PRINT *
       ENDIF
+
+      two_matter_objects_read: &
+      IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
+
+        ! with practically the same mass, and the physical system
+        ! is symmetric wrt the yz plane (in which case the user should set
+        ! the reflect_particles_x to .TRUE. in the parameter file)
+        equal_masses_read: &
+        IF( ABS(parts% masses(1) - parts% masses(2)) &
+           /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
+
+          ! ...reflect particles
+
+          DEALLOCATE(parts_all(2)% pos_i)
+          DEALLOCATE(parts_all(2)% pvol_i)
+          DEALLOCATE(parts_all(2)% h_i)
+          DEALLOCATE(parts_all(2)% pmass_i)
+          DEALLOCATE(parts_all(2)% nu_i)
+
+          CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
+                                           parts_all(1)% pvol_i,  &
+                                           parts_all(1)% pmass_i, &
+                                           parts_all(1)% nu_i,    &
+                                           parts_all(1)% h_i,     &
+                                           parts% npart_i(1),     &
+                                           parts_all(2)% pos_i,   &
+                                           parts_all(2)% pvol_i,  &
+                                           parts_all(2)% pmass_i, &
+                                           parts_all(2)% nu_i,    &
+                                           parts_all(2)% h_i,     &
+                                           parts% npart_i(2) )
+
+          PRINT *, "** Particles placed on star 1 according to the APM,", &
+                   " and reflected about the yz plane onto star 2."
+          PRINT *
+
+        ENDIF equal_masses_read
+
+      ENDIF two_matter_objects_read
 
       ! Allocating the memory for the array pos( 3, npart )
   !    IF(.NOT.ALLOCATED( parts% pos ))THEN
@@ -1254,7 +1327,7 @@ SUBMODULE (sph_particles) constructor_std
           ! the reflect_particles_x to .TRUE. in the parameter file)
           equal_masses_apm: &
           IF( ABS(parts% masses(1) - parts% masses(2)) &
-              /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
+             /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
 
             ! ...reflect particles
 
@@ -1441,15 +1514,20 @@ SUBMODULE (sph_particles) constructor_std
   !                               import_density, &
   !                               validate_position, [zero,zero,zero], &
   !                               verbose= .TRUE. )
-  !
-  !  PRINT *, " * Final particle distribution prepared. Number of particles=", &
-  !           parts% npart
-  !  DO i_matter= 1, parts% n_matter, 1
-  !    PRINT *, " * Number of particles on object ", i_matter, "=", &
-  !             parts% npart_i(i_matter)
-  !    PRINT *
-  !  ENDDO
-  !  PRINT *
+
+    !CALL COM( this% npart, this% pos, this% nu, &       ! input
+    !          com_x, com_y, com_z, com_d ) ! output
+    !
+    !PRINT *, com_x, com_y, com_z, com_d
+
+    PRINT *, " * Final particle distribution prepared. Number of particles=", &
+             parts% npart
+    DO i_matter= 1, parts% n_matter, 1
+      PRINT *, " * Number of particles on object ", i_matter, "=", &
+               parts% npart_i(i_matter)
+      PRINT *
+    ENDDO
+    PRINT *
 
     !STOP
 
@@ -1972,7 +2050,7 @@ SUBMODULE (sph_particles) constructor_std
     END FUNCTION validate_position
 
 
-    SUBROUTINE correct_eulerian_center_of_mass_of_system( npart, pos, nu, &
+    SUBROUTINE correct_center_of_mass_of_system( npart, pos, nu, &
                                                  com_system )
 
       IMPLICIT NONE
@@ -2030,7 +2108,7 @@ PRINT *, "3"
 
 PRINT *, "4"
 
-    END SUBROUTINE correct_eulerian_center_of_mass_of_system
+    END SUBROUTINE correct_center_of_mass_of_system
 
 
     SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id, nstar_eul_id )
@@ -2395,9 +2473,12 @@ PRINT *, "4"
         ENDIF
       ENDIF
 
+      PRINT *, " * Reflecting particles about the yz plane..."
+      PRINT *
+
       ! Reflect the particles on matter object 1, and their properties,
       ! to matter object 2
-      pos_star2(1,:)= - pos_star1(1,:)
+      pos_star2(1,:)= - pos_star1(1,:) !+ ( ABS(center(2,:)) - ABS(center(1,:)) )
       pos_star2(2,:)=   pos_star1(2,:)
       pos_star2(3,:)=   pos_star1(3,:)
       pvol_star2    =   pvol_star1

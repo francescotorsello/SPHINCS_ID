@@ -120,6 +120,8 @@ SUBMODULE (bns_lorene) constructor
 
     ENDIF
 
+    derived_type% finalize_sph_id_ptr => correct_adm_linear_momentum
+
     CONTAINS
 
     FUNCTION get_pressure( x, y, z ) RESULT( val )
@@ -160,7 +162,7 @@ SUBMODULE (bns_lorene) constructor
     !PRINT *
 
     ! Deallocate memory
-    CALL THIS% deallocate_bnslorene_memory()
+    CALL this% deallocate_bnslorene_memory()
 
   END PROCEDURE destruct_bnslorene
 
@@ -184,9 +186,9 @@ SUBMODULE (bns_lorene) constructor
 
 #ifdef __INTEL_COMPILER
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
-      CALL destruct_bin_ns( THIS% bns_ptr )
+      CALL destruct_bin_ns( this% bns_ptr )
 
     ENDIF
 
@@ -204,9 +206,9 @@ SUBMODULE (bns_lorene) constructor
 
       IF( exist )THEN
 
-        CALL THIS% construction_timer% start_timer()
-        THIS% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
-        CALL THIS% construction_timer% stop_timer()
+        CALL this% construction_timer% start_timer()
+        this% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
+        CALL this% construction_timer% stop_timer()
 
       ELSE
 
@@ -220,9 +222,9 @@ SUBMODULE (bns_lorene) constructor
     ELSE
 
       default_case= "read_it"
-      CALL THIS% construction_timer% start_timer()
-      THIS% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
-      CALL THIS% construction_timer% stop_timer()
+      CALL this% construction_timer% start_timer()
+      this% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
+      CALL this% construction_timer% stop_timer()
 
     ENDIF
 
@@ -247,10 +249,10 @@ SUBMODULE (bns_lorene) constructor
 
     !PRINT *, "** Executing the destruct_binary subroutine."
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
-      CALL destruct_bin_ns( THIS% bns_ptr )
-      THIS% bns_ptr = C_NULL_PTR
+      CALL destruct_bin_ns( this% bns_ptr )
+      this% bns_ptr = C_NULL_PTR
 
     ENDIF
 

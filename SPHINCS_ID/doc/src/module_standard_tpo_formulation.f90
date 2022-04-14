@@ -228,6 +228,12 @@ MODULE standard_tpo_formulation
     !  computed from the |id|. Uses the metric mapped from the grid to the
     !  particles. @todo add reference for recovery
 
+    PROCEDURE, PUBLIC, NON_OVERRIDABLE:: compute_adm_momentum_fluid_m2p
+    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
+    !  fluid using the |sph| hydro fields, and the spacetime metric mapped
+    !  from the mesh
+    !  @todo add reference
+
     PROCEDURE, NON_OVERRIDABLE:: print_summary
     !# Prints a summary about the features of the refined mesh
 
@@ -396,6 +402,24 @@ MODULE standard_tpo_formulation
       !! Name of the formatted file where the data is printed
 
     END SUBROUTINE test_recovery_m2p
+
+
+    MODULE SUBROUTINE compute_adm_momentum_fluid_m2p( this, parts, adm_mom )
+    !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
+    !  fluid using the |sph| hydro fields, and the spacetime metric mapped
+    !  from the mesh
+    !  @todo add reference
+
+      CLASS(tpo),                     INTENT(IN) :: this
+      !! [[tpo]] object which this PROCEDURE is a member of
+      CLASS(particles),               INTENT(IN) :: parts
+      !# [[sph_particles:particles]] object used to map the metric
+      !  from the mesh to the particles, and to call the recovery procedures
+      DOUBLE PRECISION, DIMENSION(3), INTENT(OUT):: adm_mom
+      !# ADM linear momentum of the fluid computed using the metric mapped
+      !  with the mesh-to-particle mapping
+
+    END SUBROUTINE compute_adm_momentum_fluid_m2p
 
 
     MODULE SUBROUTINE print_summary( THIS, filename )

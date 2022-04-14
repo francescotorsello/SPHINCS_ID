@@ -1586,6 +1586,29 @@ SUBMODULE (sph_particles) sph_variables
     PRINT *, "    ", this% adm_linear_momentum_fluid(3), ") Msun*c"
     PRINT *
 
+
+    IF( ASSOCIATED(this% post_process_sph_id) )THEN
+
+      CALL this% post_process_sph_id( this% npart, this% pos, &
+                                      this% baryon_density, &
+                                      this% specific_energy, &
+                                      this% pressure, this% pos, &
+                                      this% lapse, this% lapse, this% nu )
+
+    ELSE
+
+      PRINT *, "** ERROR! The procedure pointer post_process_sph_id ", &
+               "is not associated with any PROCEDURE!"
+      PRINT *, " * Stopping..."
+      PRINT *
+
+    ENDIF
+
+
+    !
+    !-- Compute particle number density
+    !
+
     PRINT *, " * Computing particle number density by kernel interpolation..."
     PRINT *
     nu= one

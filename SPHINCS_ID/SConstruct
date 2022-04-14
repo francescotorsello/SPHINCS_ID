@@ -250,7 +250,8 @@ module_bns_lorene = [
   'submodule_bns_lorene_memory.f90',
   'submodule_bns_lorene_access.f90',
   'submodule_bns_lorene_params.f90',
-  'submodule_bns_lorene_io.f90'
+  'submodule_bns_lorene_io.f90',
+  'submodule_bns_lorene_finalize_id.f90'
 ]
 
 module_diffstar_base_dir = ['src/id_base/diffstar_base/']

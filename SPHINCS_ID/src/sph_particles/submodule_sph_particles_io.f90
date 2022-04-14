@@ -389,7 +389,7 @@ SUBMODULE (sph_particles) io
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(finalnamefile) )
 
-    write_data_loop: DO itr = 1, this% npart, 1
+    write_data_loop: DO itr = 1, npart, 1
 
       IF( this% export_form_xy .AND. &
           !( pos_u( 3, itr ) /= min_abs_z1 .AND. &
@@ -463,7 +463,7 @@ SUBMODULE (sph_particles) io
     CALL deallocate_SPH_memory
 
     PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
-             // "file", TRIM(namefile)
+             // "file ", TRIM(namefile)
 
     PRINT *, "** Subroutine read_sphincs_dump_print_formatted " &
              // "executed."

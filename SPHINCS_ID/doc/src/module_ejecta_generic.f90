@@ -225,6 +225,10 @@ MODULE ejecta_generic
     PROCEDURE:: read_id_mass_b    => interpolate_id_mass_b
     PROCEDURE:: read_id_k         => interpolate_id_k
 
+    PROCEDURE, NOPASS:: finalize
+    !# Corrects the |sph| |id| so that the linear \(\mathrm{ADM}\) momentum
+    !  is zero
+
 
     !-----------------!
     !--  FUNCTIONS  --!
@@ -852,6 +856,35 @@ MODULE ejecta_generic
       !# Array containing the parameters of the |eos| for the DRS
 
     END SUBROUTINE get_eos_parameters
+
+
+    MODULE SUBROUTINE finalize &
+      ( npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu )
+    !# Post-process the |sph| |id|; for example, correct for the residual
+    !  ADM linear momentum.
+
+      !IMPORT:: idbase
+      !CLASS(idbase),                        INTENT(IN)   :: this
+      INTEGER,                              INTENT(IN)   :: npart
+      !! Particle number
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
+      !! Particle positions
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nlrf
+      !! Baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: u
+      !! Specific internal energy on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: pr
+      !! Pressure on the particles
+      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: vel_u
+      !! Spatial velocity in the computing frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: theta
+      !! Generalized Lorentz factor on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nstar
+      !! Proper baryon density in the local rest frame on the particles
+      DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
+      !! Baryon number per particle
+
+    END SUBROUTINE finalize
 
 
   END INTERFACE

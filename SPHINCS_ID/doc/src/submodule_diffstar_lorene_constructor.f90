@@ -86,7 +86,24 @@ SUBMODULE (diffstar_lorene) constructor
     CALL derived_type% set_one_lapse ( .FALSE. )
     CALL derived_type% set_zero_shift( .FALSE. )
 
+    derived_type% finalize_sph_id_ptr => finalize
+
   END PROCEDURE construct_diffstarlorene
+
+
+  MODULE PROCEDURE finalize
+
+    !***********************************************
+    !
+    !#
+    !
+    !  FT 14.04.2022
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+  END PROCEDURE finalize
 
 
   !

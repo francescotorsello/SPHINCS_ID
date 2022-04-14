@@ -88,6 +88,10 @@ PROGRAM sphincs_id
   INTEGER:: i_matter
   !! Index running over the number of physical systems
 
+  DOUBLE PRECISION, DIMENSION(3):: adm_mom_m2p
+  !# ADM linear momentum of the fluid computed using the metric mapped
+  !  with the mesh-to-particle mapping
+
   CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
   CHARACTER( LEN= 500 ):: namefile_parts
@@ -427,7 +431,7 @@ PROGRAM sphincs_id
           particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
                                                    placer( itr3, itr4 ) )
 
-          !namefile_parts_bin= "sph-output/NSNS.00000"
+          !namefile_parts_bin= "sph-output/NSNS-2M-closeghost.00000"
           !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
           !                                         namefile_parts_bin )
 
@@ -435,10 +439,10 @@ PROGRAM sphincs_id
       ENDDO part_distribution_loop
     ENDDO place_hydro_id_loops
 
-    !namefile_parts_bin= "NSNS.00000"
+    !namefile_parts_bin= "sph-output/NSNS-2M-closeghost.00000"
     !namefile_parts= "try.dat"
     !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
-
+    !
     !STOP
 
   ENDIF
@@ -625,6 +629,20 @@ PROGRAM sphincs_id
                    test_recovery_m2p( particles_dist( itr3, itr4 ), &
                                       namefile_recovery )
 
+              PRINT *, "===================================================" &
+                       // "================================================"
+              PRINT *, " Estimating the ADM momentum of the fluid using ", &
+                       " the metric mapped with mesh-to-particle mapping, for",&
+                       " BSSN formulation", itr3, &
+                       "with particle distribution", itr4
+              PRINT *, "===================================================" &
+                       // "================================================"
+              PRINT *
+
+              CALL bssn_forms( itr3 )% &
+                compute_adm_momentum_fluid_m2p( particles_dist( itr3, itr4 ), &
+                                                adm_mom_m2p )
+
             ENDIF
 
           ENDDO part_distribution_loop4
@@ -707,6 +725,13 @@ PROGRAM sphincs_id
     IF( run_spacetime )THEN
 
       CALL bssn_forms(itr)% print_summary()
+      PRINT *, "   Estimate of the ADM momentum of the fluid computed using ", &
+               "the SPH hydro fields and the metric mapped with ", &
+               "mesh-to-particle mapping= "
+      PRINT *, "   (", adm_mom_m2p(1), ","
+      PRINT *, "    ", adm_mom_m2p(2), ","
+      PRINT *, "    ", adm_mom_m2p(3), ") Msun*c"
+      PRINT *
 
     ENDIF
 

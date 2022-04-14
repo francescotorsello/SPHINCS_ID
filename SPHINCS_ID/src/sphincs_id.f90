@@ -431,7 +431,7 @@ PROGRAM sphincs_id
           particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
                                                    placer( itr3, itr4 ) )
 
-          !namefile_parts_bin= "sph-output/NSNS.00000"
+          !namefile_parts_bin= "sph-output/NSNS-2M-closeghost.00000"
           !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
           !                                         namefile_parts_bin )
 
@@ -439,10 +439,10 @@ PROGRAM sphincs_id
       ENDDO part_distribution_loop
     ENDDO place_hydro_id_loops
 
-    !namefile_parts_bin= "NSNS.00000"
+    !namefile_parts_bin= "sph-output/NSNS-2M-closeghost.00000"
     !namefile_parts= "try.dat"
     !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
-
+    !
     !STOP
 
   ENDIF

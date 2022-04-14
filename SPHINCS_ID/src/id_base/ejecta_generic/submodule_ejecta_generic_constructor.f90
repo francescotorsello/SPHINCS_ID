@@ -456,7 +456,24 @@ SUBMODULE (ejecta_generic) constructor
     derived_type% logRho1= LOG10(get_rho_1())
     derived_type% logRho2= LOG10(get_rho_2())
 
+    derived_type% finalize_sph_id_ptr => finalize
+
   END PROCEDURE construct_ejecta
+
+
+  MODULE PROCEDURE finalize
+
+    !***********************************************
+    !
+    !#
+    !
+    !  FT 14.04.2022
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+  END PROCEDURE finalize
 
 
   !

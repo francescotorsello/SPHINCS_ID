@@ -12,7 +12,9 @@
 !------------------------------------------------------------------------!
 parts_pos_path="pos-archive/"     ! Path to the directory containing the
                                   ! formatted files with the particle positions
-parts_pos="apm-pos-nu_1313_45km_ms1b_500k.dat"
+parts_pos=!"apm-pos-nu_1313_45km_ms1b_500k.dat"
+          !"apm-pos-nu_1313_45km_ms1b_2M.dat"
+          "apm-pos-nu_1313_45km_ms1b_2M-tmp.dat"
           !"apm-pos-nu_135135_42km_apr4_500k.dat"
           !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
           !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
@@ -138,7 +140,7 @@ print_step= 50          ! Evey print_step steps, print the particle positions
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
                         ! Set to 0 to not print positions at all
-apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
+apm_max_it= 500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
@@ -147,7 +149,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.125D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.525D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
@@ -159,7 +161,7 @@ mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
-ghost_dist=0.375D0       ! Distance between the ghost particles and the surface
+ghost_dist=0.5D0       ! Distance between the ghost particles and the surface
                         ! of the matter object considered (star, ejecta, etc...)
 use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term

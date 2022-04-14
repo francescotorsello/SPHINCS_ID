@@ -288,6 +288,7 @@ SUBMODULE (sph_particles) apm
       !ENDIF
     ENDDO
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h_guess: DO a= 1, npart_real, 1
@@ -730,6 +731,7 @@ SUBMODULE (sph_particles) apm
                    all_pos, h_guess, &
                    h )
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h1: DO a= 1, npart_real, 1
@@ -1021,7 +1023,9 @@ SUBMODULE (sph_particles) apm
       PRINT *, " * Starting with APM step #: ", itr
       PRINT *
 
-      IF( MOD( itr, print_step ) == 0 )THEN
+      IF( print_step /= 0 &
+          .AND. &
+          MOD( itr, print_step ) == 0 )THEN
 
      ! DEBUGGING
      !
@@ -1082,6 +1086,7 @@ SUBMODULE (sph_particles) apm
             all_pos( 1, a ), &
             all_pos( 2, a ), &
             all_pos( 3, a ), &
+            nu_tmp(a), &
             tmp, cnt_move(a)
         ENDDO
 
@@ -1197,6 +1202,7 @@ SUBMODULE (sph_particles) apm
                      npart_all, &
                      all_pos, h_guess, h )
 
+      find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
       CALL find_h_bruteforce_timer% start_timer()
       n_problematic_h= 0
       check_h2: DO a= 1, npart_real, 1
@@ -2078,6 +2084,7 @@ SUBMODULE (sph_particles) apm
                    pos, h_guess, & ! Input
                    h )                 ! Output
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h3: DO a= 1, npart_real, 1
@@ -2489,6 +2496,7 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "101.5"
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h4: DO a= 1, npart_real, 1
@@ -2572,6 +2580,7 @@ SUBMODULE (sph_particles) apm
 
     ENDDO
 
+    find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
     n_problematic_h= 0
     check_h5: DO a= 1, npart_real, 1

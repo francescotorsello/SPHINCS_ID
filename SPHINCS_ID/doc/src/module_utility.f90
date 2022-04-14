@@ -345,6 +345,70 @@ MODULE utility
   END SUBROUTINE compute_g4
 
 
+  SUBROUTINE compute_tpo_metric( g4, lapse, shift, g3 )
+
+    !***********************************************
+    !
+    !# Computes the lapse,shift and spatial metric
+    !  from the covariant spacetime metric
+    !
+    !  FT 12.04.2022
+    !
+    !***********************************************
+
+    USE constants,  ONLY: two
+    USE matrix,     ONLY: invert_3x3_matrix
+    USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
+                          ixz, iyy, iyz, izz, jxx, jxy, jxz, &
+                          jyy, jyz, jzz, jx, jy, jz
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, DIMENSION(10), INTENT(IN)   :: g4
+    !! Covariant spacetime metric
+    DOUBLE PRECISION,                INTENT(INOUT):: lapse
+    !! Lapse function
+    DOUBLE PRECISION, DIMENSION(3),  INTENT(INOUT):: shift
+    !! Contravariant shift vector
+    DOUBLE PRECISION, DIMENSION(6),  INTENT(INOUT):: g3
+    !! Covariant spatial metric
+
+    DOUBLE PRECISION, DIMENSION(3,3):: gmat
+    DOUBLE PRECISION, DIMENSION(3,3):: gmat_inv
+    DOUBLE PRECISION, DIMENSION(6)  :: g3_inv
+
+    g3(jxx)= g4(ixx)
+    g3(jxy)= g4(ixy)
+    g3(jxz)= g4(ixz)
+    g3(jyy)= g4(iyy)
+    g3(jyz)= g4(iyz)
+    g3(jzz)= g4(izz)
+
+    gmat(1,1)= g3(jxx)
+    gmat(1,2)= g3(jxy)
+    gmat(1,3)= g3(jxz)
+    gmat(2,1)= g3(jxy)
+    gmat(2,2)= g3(jyy)
+    gmat(2,3)= g3(jyz)
+    gmat(3,1)= g3(jxz)
+    gmat(3,2)= g3(jyz)
+    gmat(3,3)= g3(jzz)
+
+    CALL invert_3x3_matrix( gmat, gmat_inv )
+
+    shift(jx)= gmat_inv(jx,jx)*g4(itx) + gmat_inv(jx,jy)*g4(ity) &
+             + gmat_inv(jx,jz)*g4(itz)
+    shift(jy)= gmat_inv(jy,jx)*g4(itx) + gmat_inv(jy,jy)*g4(ity) &
+             + gmat_inv(jy,jz)*g4(itz)
+    shift(jz)= gmat_inv(jz,jx)*g4(itx) + gmat_inv(jz,jy)*g4(ity) &
+             + gmat_inv(jz,jz)*g4(itz)
+
+    lapse= SQRT( shift(jx)*g4(itx) + shift(jy)*g4(ity) + shift(jz)*g4(itz) &
+                 - g4(itt) )
+
+  END SUBROUTINE compute_tpo_metric
+
+
   SUBROUTINE determinant_sym4x4( A, det )
 
     !****************************************************************

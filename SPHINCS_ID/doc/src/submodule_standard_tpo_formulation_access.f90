@@ -59,28 +59,28 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    IF( i > THIS% levels(l)% ngrid_x )THEN
+    IF( i > this% levels(l)% ngrid_x )THEN
       PRINT *, "** ERROR in get_grid_point: i=", i, "> ngrid_x=", &
-               THIS% levels(l)% ngrid_x, "on refinement level l=", l
+               this% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( j > THIS% levels(l)% ngrid_y )THEN
+    IF( j > this% levels(l)% ngrid_y )THEN
       PRINT *, "** ERROR in get_grid_point j=", j, "> ngrid_y=", &
-               THIS% levels(l)% ngrid_y, "on refinement level l=", l
+               this% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( k > THIS% levels(l)% ngrid_z )THEN
+    IF( k > this% levels(l)% ngrid_z )THEN
       PRINT *, "** ERROR in get_grid_point k=", k, "> ngrid_z=", &
-               THIS% levels(l)% ngrid_z, "on refinement level l=", l
+               this% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    grid_point(1)= THIS% coords% levels(l)% var( i, j, k, jx )
-    grid_point(2)= THIS% coords% levels(l)% var( i, j, k, jy )
-    grid_point(3)= THIS% coords% levels(l)% var( i, j, k, jz )
+    grid_point(1)= this% coords% levels(l)% var( i, j, k, jx )
+    grid_point(2)= this% coords% levels(l)% var( i, j, k, jy )
+    grid_point(3)= this% coords% levels(l)% var( i, j, k, jz )
 
   END PROCEDURE get_grid_point
 
@@ -97,7 +97,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    nlevels= THIS% nlevels
+    nlevels= this% nlevels
 
   END PROCEDURE get_nlevels
 
@@ -114,7 +114,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    levels= THIS% levels
+    levels= this% levels
 
   END PROCEDURE get_levels
 
@@ -131,7 +131,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    dx= THIS% levels(l)% dx
+    dx= this% levels(l)% dx
 
   END PROCEDURE get_dx
 
@@ -148,7 +148,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    dy= THIS% levels(l)% dy
+    dy= this% levels(l)% dy
 
   END PROCEDURE get_dy
 
@@ -165,7 +165,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    dz= THIS% levels(l)% dz
+    dz= this% levels(l)% dz
 
   END PROCEDURE get_dz
 
@@ -183,7 +183,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    ngrid_x= THIS% levels(l)% ngrid_x
+    ngrid_x= this% levels(l)% ngrid_x
 
   END PROCEDURE get_ngrid_x
 
@@ -201,7 +201,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    ngrid_y= THIS% levels(l)% ngrid_y
+    ngrid_y= this% levels(l)% ngrid_y
 
   END PROCEDURE get_ngrid_y
 
@@ -219,7 +219,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    ngrid_z= THIS% levels(l)% ngrid_z
+    ngrid_z= this% levels(l)% ngrid_z
 
   END PROCEDURE get_ngrid_z
 
@@ -236,7 +236,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    xR= THIS% levels(l)% xR
+    xR= this% levels(l)% xR
 
   END PROCEDURE get_xR
 
@@ -253,7 +253,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    yR= THIS% levels(l)% yR
+    yR= this% levels(l)% yR
 
   END PROCEDURE get_yR
 
@@ -270,7 +270,7 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    zR= THIS% levels(l)% zR
+    zR= this% levels(l)% zR
 
   END PROCEDURE get_zR
 
@@ -288,26 +288,26 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    IF( i > THIS% levels(l)% ngrid_x )THEN
+    IF( i > this% levels(l)% ngrid_x )THEN
       PRINT *, "** ERROR in get_HC: i=", i, "> ngrid_x=", &
-               THIS% levels(l)% ngrid_x, "on refinement level l=", l
+               this% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( j > THIS% levels(l)% ngrid_y )THEN
+    IF( j > this% levels(l)% ngrid_y )THEN
       PRINT *, "** ERROR in get_HC: j=", j, "> ngrid_y=", &
-               THIS% levels(l)% ngrid_y, "on refinement level l=", l
+               this% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( k > THIS% levels(l)% ngrid_z )THEN
+    IF( k > this% levels(l)% ngrid_z )THEN
       PRINT *, "** ERROR in get_HC: k=", k, "> ngrid_z=", &
-               THIS% levels(l)% ngrid_z, "on refinement level l=", l
+               this% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    HC_value= THIS% HC% levels(l)% var( i, j, k )
+    HC_value= this% HC% levels(l)% var( i, j, k )
 
   END PROCEDURE get_HC
 
@@ -327,28 +327,28 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    IF( i > THIS% levels(l)% ngrid_x )THEN
+    IF( i > this% levels(l)% ngrid_x )THEN
       PRINT *, "** ERROR in get_HC: i=", i, "> ngrid_x=", &
-               THIS% levels(l)% ngrid_x, "on refinement level l=", l
+               this% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( j > THIS% levels(l)% ngrid_y )THEN
+    IF( j > this% levels(l)% ngrid_y )THEN
       PRINT *, "** ERROR in get_HC: j=", j, "> ngrid_y=", &
-               THIS% levels(l)% ngrid_y, "on refinement level l=", l
+               this% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( k > THIS% levels(l)% ngrid_z )THEN
+    IF( k > this% levels(l)% ngrid_z )THEN
       PRINT *, "** ERROR in get_HC: k=", k, "> ngrid_z=", &
-               THIS% levels(l)% ngrid_z, "on refinement level l=", l
+               this% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    MC_value(1)= THIS% MC% levels(l)% var( i, j, k, jx )
-    MC_value(2)= THIS% MC% levels(l)% var( i, j, k, jy )
-    MC_value(3)= THIS% MC% levels(l)% var( i, j, k, jz )
+    MC_value(1)= this% MC% levels(l)% var( i, j, k, jx )
+    MC_value(2)= this% MC% levels(l)% var( i, j, k, jy )
+    MC_value(3)= this% MC% levels(l)% var( i, j, k, jz )
 
   END PROCEDURE get_MC
 
@@ -367,26 +367,26 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    IF( i > THIS% levels(l)% ngrid_x )THEN
+    IF( i > this% levels(l)% ngrid_x )THEN
       PRINT *, "** ERROR in get_HC: i=", i, "> ngrid_x=", &
-               THIS% levels(l)% ngrid_x, "on refinement level l=", l
+               this% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( j > THIS% levels(l)% ngrid_y )THEN
+    IF( j > this% levels(l)% ngrid_y )THEN
       PRINT *, "** ERROR in get_HC: j=", j, "> ngrid_y=", &
-               THIS% levels(l)% ngrid_y, "on refinement level l=", l
+               this% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( k > THIS% levels(l)% ngrid_z )THEN
+    IF( k > this% levels(l)% ngrid_z )THEN
       PRINT *, "** ERROR in get_HC: k=", k, "> ngrid_z=", &
-               THIS% levels(l)% ngrid_z, "on refinement level l=", l
+               this% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    HC_value= THIS% HC_parts% levels(l)% var( i, j, k )
+    HC_value= this% HC_parts% levels(l)% var( i, j, k )
 
   END PROCEDURE get_HC_parts
 
@@ -407,28 +407,28 @@ SUBMODULE (standard_tpo_formulation) access
 
     IMPLICIT NONE
 
-    IF( i > THIS% levels(l)% ngrid_x )THEN
+    IF( i > this% levels(l)% ngrid_x )THEN
       PRINT *, "** ERROR in get_HC: i=", i, "> ngrid_x=", &
-               THIS% levels(l)% ngrid_x, "on refinement level l=", l
+               this% levels(l)% ngrid_x, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( j > THIS% levels(l)% ngrid_y )THEN
+    IF( j > this% levels(l)% ngrid_y )THEN
       PRINT *, "** ERROR in get_HC: j=", j, "> ngrid_y=", &
-               THIS% levels(l)% ngrid_y, "on refinement level l=", l
+               this% levels(l)% ngrid_y, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
-    IF( k > THIS% levels(l)% ngrid_z )THEN
+    IF( k > this% levels(l)% ngrid_z )THEN
       PRINT *, "** ERROR in get_HC: k=", k, "> ngrid_z=", &
-               THIS% levels(l)% ngrid_z, "on refinement level l=", l
+               this% levels(l)% ngrid_z, "on refinement level l=", l
       PRINT *
       STOP
     ENDIF
 
-    MC_value(1)= THIS% MC_parts% levels(l)% var( i, j, k, jx )
-    MC_value(2)= THIS% MC_parts% levels(l)% var( i, j, k, jy )
-    MC_value(3)= THIS% MC_parts% levels(l)% var( i, j, k, jz )
+    MC_value(1)= this% MC_parts% levels(l)% var( i, j, k, jx )
+    MC_value(2)= this% MC_parts% levels(l)% var( i, j, k, jy )
+    MC_value(3)= this% MC_parts% levels(l)% var( i, j, k, jz )
 
   END PROCEDURE get_MC_parts
 
