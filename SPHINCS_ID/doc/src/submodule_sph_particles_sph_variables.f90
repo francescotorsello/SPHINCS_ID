@@ -1590,10 +1590,10 @@ SUBMODULE (sph_particles) sph_variables
     IF( ASSOCIATED(this% post_process_sph_id) )THEN
 
       CALL this% post_process_sph_id( this% npart, this% pos, &
-                                      this% baryon_density, &
-                                      this% specific_energy, &
-                                      this% pressure, this% pos, &
-                                      this% lapse, this% lapse, this% nu,  &
+                                      this% nlrf_int, &
+                                      this% u_pwp, &
+                                      this% pressure_cu, this% v(1:3,:), &
+                                      this% theta, this% nstar_int, this% nu, &
                                       this% g_xx,      &
                                       this% g_xy,      &
                                       this% g_xz,      &
@@ -1604,7 +1604,8 @@ SUBMODULE (sph_particles) sph_variables
                                       this% shift_x,   &
                                       this% shift_y,   &
                                       this% shift_z,   &
-                                      this% adm_linear_momentum_fluid )
+                                      this% adm_linear_momentum_fluid, &
+                                      this% adm_mass )
 
     ELSE
 
@@ -1612,8 +1613,62 @@ SUBMODULE (sph_particles) sph_variables
                "is not associated with any PROCEDURE!"
       PRINT *, " * Stopping..."
       PRINT *
+      STOP
 
     ENDIF
+
+
+    this% adm_linear_momentum_fluid= zero
+    DO i_matter= 1, this% n_matter, 1
+
+      PRINT *, " * Estimating the ADM linear momentum using the canonical ", &
+               "SPH momentum per baryon on the particles, ", &
+               "on matter object ", i_matter, "..."
+      PRINT *
+
+      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
+                 npart_fin  => this% npart_i(i_matter-1) +    &
+                               this% npart_i(i_matter) )
+
+      CALL compute_adm_momentum_fluid_fields(                             &
+                                  npart_fin - npart_in + 1,               &
+                                  this% g_xx(npart_in:npart_fin),         &
+                                  this% g_xy(npart_in:npart_fin),         &
+                                  this% g_xz(npart_in:npart_fin),         &
+                                  this% g_yy(npart_in:npart_fin),         &
+                                  this% g_yz(npart_in:npart_fin),         &
+                                  this% g_zz(npart_in:npart_fin),         &
+                                  this% lapse(npart_in:npart_fin),        &
+                                  this% shift_x(npart_in:npart_fin),      &
+                                  this% shift_y(npart_in:npart_fin),      &
+                                  this% shift_z(npart_in:npart_fin),      &
+                                  this% nu(npart_in:npart_fin),           &
+                                  this% Theta(npart_in:npart_fin),        &
+                                  this% nlrf_int(npart_in:npart_fin),     &
+                                  this% pressure_cu(npart_in:npart_fin),  &
+                                  this% u_pwp(npart_in:npart_fin),        &
+                                  this% v(1:3,npart_in:npart_fin),        &
+                                  this% adm_linear_momentum_i(i_matter,:) )
+
+      PRINT *, "   SPH estimate of the ADM linear momentum computed using ", &
+               "the canonical momentum per baryon, on matter object", &
+               i_matter,"= "
+      PRINT *, "   (", this% adm_linear_momentum_i(i_matter, 1), ","
+      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 2), ","
+      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 3), ") Msun*c"
+      PRINT *
+      this% adm_linear_momentum_fluid= this% adm_linear_momentum_fluid + &
+                                       this% adm_linear_momentum_i(i_matter,:)
+
+      END ASSOCIATE
+
+    ENDDO
+    PRINT *, "   SPH estimate of the ADM momentum of the fluid ", &
+             "computed using the canonical momentum per baryon= "
+    PRINT *, "   (", this% adm_linear_momentum_fluid(1), ","
+    PRINT *, "    ", this% adm_linear_momentum_fluid(2), ","
+    PRINT *, "    ", this% adm_linear_momentum_fluid(3), ") Msun*c"
+    PRINT *
 
 
     !

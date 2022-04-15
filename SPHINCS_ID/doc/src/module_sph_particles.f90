@@ -303,6 +303,7 @@ MODULE sph_particles
     !> Baryon number ratios on the matter objects
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nuratio_i
 
+    DOUBLE PRECISION:: adm_mass
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: adm_linear_momentum_i
     !# Estimate of the \(\mathrm{ADM}\) linear momentum of each matter object,
     !  computed from the canonical momentum per baryon on the particles

@@ -768,8 +768,9 @@ MODULE bns_lorene
 
 
     MODULE SUBROUTINE correct_adm_linear_momentum &
-      ( npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu, g_xx, g_xy, g_xz,  &
-        g_yy, g_yz, g_zz, lapse, shift_x, shift_y, shift_z, adm_mom_error )
+    ( npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu, g_xx, g_xy, g_xz,  &
+      g_yy, g_yz, g_zz, lapse, shift_x, shift_y, shift_z, adm_mom_error, &
+      adm_mass )
     !# Post-process the |sph| |id|; for example, correct for the residual
     !  ADM linear momentum.
 
@@ -803,6 +804,7 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: shift_y
       DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: shift_z
       DOUBLE PRECISION, DIMENSION(3),       INTENT(IN)   :: adm_mom_error
+      DOUBLE PRECISION,                     INTENT(IN)   :: adm_mass
 
     END SUBROUTINE correct_adm_linear_momentum
 

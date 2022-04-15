@@ -92,9 +92,6 @@ MODULE bns_base
     !> Gravitational mass of star 2 \([M_\odot]\)
     DOUBLE PRECISION:: mass_grav2
 
-    !> ADM mass of the BNS \([M_\odot]\)
-    DOUBLE PRECISION:: adm_mass
-
     !& mOmega= ( [[bnsbase:angular_vel]]\([{\rm km^{-1}}]\) )
     !  \(\times\) ( [[bnsbase:mass_grav1]]\([{\rm km}]\)
     !      + [[bnsbase:mass_grav2]]\([{\rm km}]\) ) [pure number]

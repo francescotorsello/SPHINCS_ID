@@ -53,33 +53,151 @@ SUBMODULE (bns_lorene) finalize_id
     !
     !***********************************************
 
-    USE constants,  ONLY: zero, one, two
-    USE tensor,     ONLY: jx, jy, jz, n_sym4x4
-    USE matrix,     ONLY: invert_3x3_matrix
+    USE constants,  ONLY: zero, one, two, amu, Msun
+    USE tensor,     ONLY: jx, jy, jz, n_sym4x4, itt, itx, ity, itz, ixx, ixy, &
+                          ixz, iyy, iyz, izz, raise_index_4vector,  &
+                          lower_index_4vector
+    USE matrix,     ONLY: invert_3x3_matrix, invert_4x4_matrix
     USE utility,    ONLY: compute_g4, spacetime_vector_norm_sym4x4, &
-                          spatial_vector_norm_sym3x3, is_finite_number
+                          spatial_vector_norm_sym3x3, is_finite_number, &
+                          determinant_sym4x4
 
     IMPLICIT NONE
 
     INTEGER:: a, j
 
-    DOUBLE PRECISION:: shift_norm2
-    DOUBLE PRECISION, DIMENSION(3,npart):: vel_u_corr
-    DOUBLE PRECISION:: g4(n_sym4x4)
+    DOUBLE PRECISION:: shift_norm2, shift_delta, sgn
+    DOUBLE PRECISION, DIMENSION(3,npart):: vel_l_corr
+    DOUBLE PRECISION, DIMENSION(3):: delta
+    DOUBLE PRECISION:: g4(n_sym4x4), det, den
     DOUBLE PRECISION, DIMENSION(3,3):: g3mat
     DOUBLE PRECISION, DIMENSION(3,3):: g3mat_inv
+    DOUBLE PRECISION, DIMENSION(4,4):: g4mat
+    DOUBLE PRECISION, DIMENSION(4,4):: g4mat_inv
+    DOUBLE PRECISION, DIMENSION(0:3):: v_l
+    DOUBLE PRECISION, DIMENSION(0:3):: v_u
 
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart, lapse, shift_x, shift_y, shift_z, vel_u, &
-    !$OMP                     vel_u_corr, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-    !$OMP                     theta, adm_mom_error ) &
-    !$OMP             PRIVATE( a, j, shift_norm2, g4, g3mat, g3mat_inv &
-    !$OMP                       )
+    !DOUBLE PRECISION, DIMENSION(3):: com_vel
+
+
+    !
+    !-- Simply subtract the velocity of the center of mass from the velocity
+    !-- of the particles, and recompute the generalized Lorentz factor theta
+    !-- It doesn't work
+    !
+
+!    com_vel= adm_mom_error/adm_mass
+!
+!    !$OMP PARALLEL DO DEFAULT( NONE ) &
+!    !$OMP             SHARED( npart, lapse, shift_x, shift_y, shift_z, vel_u, &
+!    !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+!    !$OMP                     theta, adm_mom_error, com_vel ) &
+!    !$OMP             PRIVATE( a, g4, det )
+!    DO a= 1, npart, 1
+!
+!      vel_u(:,a)= vel_u(:,a) - com_vel
+!
+!      CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
+!                       [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
+!
+!      CALL determinant_sym4x4( g4, det )
+!      IF( ABS(det) < 1D-10 )THEN
+!        PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+!                 // "effectively 0 at particle ", a
+!        PRINT *, " * det= ", det, &
+!                 "in SUBROUTINE correct_adm_linear_momentum"
+!        PRINT *, " * Stopping..."
+!        STOP
+!      ELSEIF( det > 0 )THEN
+!        PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+!                 // "positive at particle ", a
+!        PRINT *, " * det= ", det, &
+!                 "in SUBROUTINE correct_adm_linear_momentum"
+!        PRINT *, " * Stopping..."
+!        STOP
+!      ENDIF
+!
+!      CALL spacetime_vector_norm_sym4x4( g4, [one, vel_u(:,a)], theta(a) )
+!      IF( .NOT.is_finite_number(theta(a)) )THEN
+!        PRINT *, "** ERROR! The spacetime norm of vel_u is ", theta(a), &
+!                 "at particle ", a, &
+!                 "in SUBROUTINE correct_adm_linear_momentum"
+!        PRINT *, " * Stopping..."
+!        PRINT *
+!        STOP
+!      ENDIF
+!      IF( theta(a) > zero )THEN
+!        PRINT *, "** ERROR! The spacetime norm of vel_u is ", theta(a), &
+!                 "at particle ", a, "(that is, vel_u is spacelike)", &
+!                 "in SUBROUTINE correct_adm_linear_momentum"
+!        PRINT *, " * Stopping..."
+!        PRINT *
+!        STOP
+!      ENDIF
+!      IF( theta(a) == zero )THEN
+!        PRINT *, "** ERROR! The spacetime norm of vel_u is ", theta(a), &
+!                 "at particle ", a, "(that is, vel_u is null)", &
+!                 "in SUBROUTINE correct_adm_linear_momentum"
+!        PRINT *, " * Stopping..."
+!        PRINT *
+!        STOP
+!      ENDIF
+!
+!      theta(a)= one/SQRT(-theta(a))
+!      IF( .NOT.is_finite_number(theta(a)) )THEN
+!        PRINT *, "** ERROR! The generalized Lorentz factor is ", theta(a), &
+!                 "at particle ", a, &
+!                 "in SUBROUTINE correct_adm_linear_momentum"
+!        PRINT *, " * Stopping..."
+!        PRINT *
+!        STOP
+!      ENDIF
+!      IF( theta(a) < one )THEN
+!        PRINT *, "** ERROR! The generalized Lorentz factor is ", theta(a), &
+!                 "< 1 at particle ", a, &
+!                 "in SUBROUTINE correct_adm_linear_momentum"
+!        PRINT *, " * Stopping..."
+!        PRINT *
+!        STOP
+!      ENDIF
+!
+!    ENDDO
+!    !$OMP END PARALLEL DO
+
+    den= zero
+    !$OMP PARALLEL DO DEFAULT(NONE) &
+    !$OMP             SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
+    !$OMP                     theta, u, pr, nlrf, vel_u, &
+    !$OMP                     v_l, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz ) &
+    !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g4 ) &
+    !$OMP             REDUCTION( +: den )
     DO a= 1, npart, 1
 
       CALL spatial_vector_norm_sym3x3( &
                     [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
                     [shift_x(a),shift_y(a),shift_z(a)], shift_norm2 )
+
+      den= den + ( nu(a)*amu/Msun )*theta(a) &
+                *( shift_norm2/(lapse(a)**two) - one ) &
+                *( one + u(a) + pr(a)/nlrf(a) )
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart, lapse, shift_x, shift_y, shift_z, vel_u, &
+    !$OMP                     vel_l_corr, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
+    !$OMP                     theta, adm_mom_error, den ) &
+    !$OMP             PRIVATE( a, j, shift_norm2, g4, g3mat, g3mat_inv, sgn, &
+    !$OMP                      v_l, v_u, g4mat, g4mat_inv, delta, shift_delta )
+    DO a= 1, npart, 1
+
+      CALL spatial_vector_norm_sym3x3( &
+                    [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+                    [shift_x(a),shift_y(a),shift_z(a)], shift_norm2 )
+
+      CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
+                       [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
 
       g3mat(1,1)= g_xx(a)
       g3mat(1,2)= g_xy(a)
@@ -91,34 +209,79 @@ SUBMODULE (bns_lorene) finalize_id
       g3mat(3,2)= g_yz(a)
       g3mat(3,3)= g_zz(a)
 
+      g4mat(1,1)= g4(itt)
+      g4mat(1,2)= g4(itx)
+      g4mat(1,3)= g4(ity)
+      g4mat(1,4)= g4(itz)
+      g4mat(2,1)= g4(itx)
+      g4mat(2,2)= g4(ixx)
+      g4mat(2,3)= g4(ixy)
+      g4mat(2,4)= g4(ixz)
+      g4mat(3,1)= g4(ity)
+      g4mat(3,2)= g4(ixy)
+      g4mat(3,3)= g4(iyy)
+      g4mat(3,4)= g4(iyz)
+      g4mat(4,1)= g4(itz)
+      g4mat(4,2)= g4(ixz)
+      g4mat(4,3)= g4(iyz)
+      g4mat(4,4)= g4(izz)
+
       CALL invert_3x3_matrix( g3mat, g3mat_inv )
+      CALL invert_4x4_matrix( g4mat, g4mat_inv )
 
-      ! That's the correction to the COVARIANT velocity, isn't it?
+      CALL lower_index_4vector( [one, vel_u(:,a)], g4, v_l )
 
-      vel_u_corr(1,a)= adm_mom_error(1) &
-                     /( two*g3mat_inv(1,1)*NORM2(adm_mom_error)**two ) &
-                     *( - one + SQRT( one - &
-                        two*two*g3mat_inv(1,1)*NORM2(adm_mom_error)**two &
-                        *( -lapse(a)**two + shift_norm2 ) ) )
+      delta= - adm_mom_error/den
+      shift_delta= shift_x(a)*delta(jx) + shift_y(a)*delta(jy) &
+                   + shift_z(a)*delta(jz)
 
-      vel_u_corr(2,a)= vel_u_corr(1,a)*adm_mom_error(2)/adm_mom_error(1)
-      vel_u_corr(3,a)= vel_u_corr(1,a)*adm_mom_error(3)/adm_mom_error(1)
+      !vel_l_corr(jx,a)= delta(jx) &
+      !               /( two*g3mat_inv(1,1)*NORM2(delta)**two ) &
+      !               *( - ( one + shift_delta ) &
+      !                  + SQRT( ( one + shift_delta )**two &
+      !                  + two*two*g3mat_inv(1,1)*NORM2(delta)**two &
+      !                    *lapse(a)**two ) )
 
-      IF( a == 1 )THEN
-        PRINT *, "adm_mom_error=", adm_mom_error
-        PRINT *, "vel_u_corr=", vel_u_corr
-      ENDIF
+      !vel_l_corr(jx,a)= delta(jx) &
+      !               /( two*( one + g3mat_inv(1,1)*NORM2(delta)**two ) ) &
+      !               *( - shift_delta &
+      !                  + SQRT( shift_delta**two &
+      !                  + two*two*( one + g3mat_inv(1,1)*NORM2(delta)**two ) &
+      !                    *lapse(a)**two ) )
+
+      vel_l_corr(jx,a)= delta(jx)
+
+      vel_l_corr(jy,a)= vel_l_corr(jx,a)*delta(jy)/delta(jx)
+      vel_l_corr(jz,a)= vel_l_corr(jx,a)*delta(jz)/delta(jx)
 
       DO j= jx, jz, 1
 
-        vel_u(j,a)= vel_u(j,a) + vel_u_corr(j,a)
+        v_l(j)= v_l(j) + vel_l_corr(j,a)
 
       ENDDO
 
-      CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
-                       [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
+      v_l(0)= ( one - g4mat_inv(1,2)*v_l(jx) - g4mat_inv(1,3)*v_l(jy) &
+                - g4mat_inv(1,4)*v_l(jz) )/g4mat_inv(1,1)
 
-      CALL spacetime_vector_norm_sym4x4( g4, [one, vel_u(:,a)], theta(a) )
+      CALL raise_index_4vector( v_l, &
+              [g4mat_inv(1,1),g4mat_inv(1,2),g4mat_inv(1,3), &
+               g4mat_inv(1,4),g4mat_inv(2,2),g4mat_inv(2,3), &
+               g4mat_inv(2,4),g4mat_inv(3,3),g4mat_inv(3,4),g4mat_inv(4,4)], &
+               v_u )
+
+      IF( ABS( v_u(0) - one ) > 1.D-10 )THEN
+        PRINT *, "** ERROR! The 0 component of the corrected computing frame ",&
+                 "velocity at particle ", a, "is not 1 ", &
+                 "in SUBROUTINE correct_adm_linear_momentum."
+        PRINT *, " * v(0)= ", v_u(0)
+        PRINT *, " * Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+      vel_u(:,a)= v_u(1:3)
+
+      CALL spacetime_vector_norm_sym4x4( g4, v_u, theta(a) )
       IF( .NOT.is_finite_number(theta(a)) )THEN
         PRINT *, "** ERROR! The spacetime norm of vel_u is ", theta(a), &
                  "at particle ", a, &
@@ -129,7 +292,7 @@ SUBMODULE (bns_lorene) finalize_id
       ENDIF
       IF( theta(a) > zero )THEN
         PRINT *, "** ERROR! The spacetime norm of vel_u is ", theta(a), &
-                 "at particle ", a, "(that is, vel_u is spacelike)", &
+                 "at particle ", a, "(that is, vel_u is spacelike) ", &
                  "in SUBROUTINE correct_adm_linear_momentum"
         PRINT *, " * Stopping..."
         PRINT *
@@ -137,7 +300,7 @@ SUBMODULE (bns_lorene) finalize_id
       ENDIF
       IF( theta(a) == zero )THEN
         PRINT *, "** ERROR! The spacetime norm of vel_u is ", theta(a), &
-                 "at particle ", a, "(that is, vel_u is null)", &
+                 "at particle ", a, "(that is, vel_u is null) ", &
                  "in SUBROUTINE correct_adm_linear_momentum"
         PRINT *, " * Stopping..."
         PRINT *
@@ -164,8 +327,6 @@ SUBMODULE (bns_lorene) finalize_id
 
     ENDDO
     !$OMP END PARALLEL DO
-
-    STOP
 
 
   END PROCEDURE correct_adm_linear_momentum

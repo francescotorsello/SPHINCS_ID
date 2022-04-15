@@ -69,6 +69,8 @@ MODULE id_base
     !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
 
+    DOUBLE PRECISION, PUBLIC:: adm_mass
+    !! ADM mass of the BNS \([M_\odot]\)
 
     LOGICAL:: one_lapse
     !# Logical variable that determines if the lapse function \(\alpha=1\),

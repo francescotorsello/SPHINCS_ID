@@ -249,6 +249,7 @@ SUBMODULE (sph_particles) constructor_std
 
     DO i_matter= 1, parts% n_matter, 1
 
+      parts% adm_mass          = id% adm_mass
       parts% masses(i_matter)  = id% return_mass(i_matter)
       center(i_matter,:)       = id% return_center(i_matter)
       central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
