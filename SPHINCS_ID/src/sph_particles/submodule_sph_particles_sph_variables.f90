@@ -1441,23 +1441,23 @@ SUBMODULE (sph_particles) sph_variables
     !
     !-- Exporting the SPH ID to a binary file, for evolution
     !
-    IF( this% export_bin )THEN
-
-      IF( PRESENT(namefile) )THEN
-
-        finalnamefile= TRIM( namefile ) // "00000"
-        dcount= -1 ! since it is increased before writing
-        CALL write_SPHINCS_dump( finalnamefile )
-
-      ELSE
-
-        basename= "NSNS."
-        dcount= -1 ! since it is increased before writing
-        CALL write_SPHINCS_dump()
-
-      ENDIF
-
-    ENDIF
+ !   IF( this% export_bin )THEN
+ !
+ !     IF( PRESENT(namefile) )THEN
+ !
+ !       finalnamefile= TRIM( namefile ) // "00000"
+ !       dcount= -1 ! since it is increased before writing
+ !       CALL write_SPHINCS_dump( finalnamefile )
+ !
+ !     ELSE
+ !
+ !       basename= "NSNS."
+ !       dcount= -1 ! since it is increased before writing
+ !       CALL write_SPHINCS_dump()
+ !
+ !     ENDIF
+ !
+ !   ENDIF
 
     !
     !-- Test the recovery
@@ -1670,6 +1670,27 @@ SUBMODULE (sph_particles) sph_variables
     PRINT *, "    ", this% adm_linear_momentum_fluid(3), ") Msun*c"
     PRINT *
 
+
+    !
+    !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN
+    !
+    IF( this% export_bin )THEN
+
+      IF( PRESENT(namefile) )THEN
+
+        finalnamefile= TRIM( namefile ) // "00000"
+        dcount= -1 ! since it is increased before writing
+        CALL write_SPHINCS_dump( finalnamefile )
+
+      ELSE
+
+        basename= "NSNS."
+        dcount= -1 ! since it is increased before writing
+        CALL write_SPHINCS_dump()
+
+      ENDIF
+
+    ENDIF
 
     !
     !-- Compute particle number density
