@@ -114,8 +114,8 @@ SUBMODULE (ejecta_generic) interpolate
     LOGICAL, PARAMETER:: debug= .FALSE.
     !
 
-    INTEGER:: i, j, k, i_eps, i_vel
-    DOUBLE PRECISION:: zp, min_eps, min_vel, xtmp, ytmp, ztmp, xsgn, ysgn, zsgn
+    INTEGER:: i, j, k
+    DOUBLE PRECISION:: zp, xtmp, ytmp, ztmp
 
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
     LOGICAL:: exist
@@ -387,13 +387,7 @@ SUBMODULE (ejecta_generic) interpolate
 
     IMPLICIT NONE
 
-
-    INTEGER:: i, j, k, ierr, sgn_z
-
-    DOUBLE PRECISION:: x0, y0, z0, x1, y1, z1, xd, yd, zd, &
-                       c000, c001, c010, c100, c011, c110, c101, c111, &
-                       c00, c01, c10, c11, c0, c1, zp, x_ell, y_ell, z_ell, &
-                       theta, phi, r
+    DOUBLE PRECISION:: zp, x_ell, y_ell, z_ell, theta, phi, r
 
     zp= z
     res= trilinear_interpolation( x, y, zp, &

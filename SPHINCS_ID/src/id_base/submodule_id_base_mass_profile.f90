@@ -57,7 +57,6 @@ SUBMODULE (id_base) mass_profile
     !
     !************************************************
 
-    USE utility,   ONLY: ios, err_msg
     USE constants, ONLY: pi, zero, two, three, four
     USE NR,        ONLY: indexx
     USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz

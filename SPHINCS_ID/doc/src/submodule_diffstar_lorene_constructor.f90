@@ -101,7 +101,21 @@ SUBMODULE (diffstar_lorene) constructor
     !
     !***********************************************
 
+    USE constants,  ONLY: zero
+
     IMPLICIT NONE
+
+    ! Temporary implementation, to avoid warnings about unuesed variables
+
+    pos  = npart
+    nlrf = zero
+    nu   = zero
+    pr   = zero
+    vel_u= zero
+    theta= zero
+    nstar= zero
+    u    = zero
+
 
   END PROCEDURE finalize
 

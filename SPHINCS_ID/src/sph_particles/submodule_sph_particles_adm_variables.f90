@@ -62,12 +62,7 @@ SUBMODULE (sph_particles) adm_variables
 
     INTEGER:: a, j
 
-    DOUBLE PRECISION:: det, p_max, shift_norm2
-
-    LOGICAL:: exist
-
-    CHARACTER( LEN= 2 ):: i_mat
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    DOUBLE PRECISION:: det, shift_norm2
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -123,16 +118,11 @@ SUBMODULE (sph_particles) adm_variables
 
     INTEGER:: a, j
 
-    DOUBLE PRECISION:: det, p_max, shift_norm2
+    DOUBLE PRECISION:: det, shift_norm2
 
     DOUBLE PRECISION, DIMENSION(n_sym4x4,npart)  :: g4
     DOUBLE PRECISION, DIMENSION(0:3)             :: v_u
     DOUBLE PRECISION, DIMENSION(0:3,npart)       :: v_l
-
-    LOGICAL:: exist
-
-    CHARACTER( LEN= 2 ):: i_mat
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 

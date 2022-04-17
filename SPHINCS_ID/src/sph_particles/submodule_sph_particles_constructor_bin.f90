@@ -61,37 +61,13 @@ SUBMODULE (sph_particles) constructor_bin
     USE options,        ONLY: eos_str
     USE units,          ONLY: set_units
     USE pwp_EOS,        ONLY: select_EOS_parameters
-    USE sph_variables,  ONLY: npart, &  ! particle number
-                              n1,    &  ! particle number for star 1
-                              n2,    &  ! particle number for star 2
-                              pos_u, &  ! particle positions
-                              vel_u, &  ! particle velocities in
-                                        ! coordinate frame
-                              nlrf,  &  ! baryon number density in
-                                        ! local rest frame
-                              !ehat,  &  ! canonical energy per baryon
-                              nu,    &  ! canonical baryon number per
-                                        ! particle
-                              Theta, &  ! Generalized Lorentz factor
-                              h,     &  ! Smoothing length
-                              Pr,    &  ! Pressure
-                              u,     &  ! Specific internal energy in local
-                                        ! rest frame (no kinetic energy)
-                              temp,  &  ! Temperature
-                              av,    &  ! Dissipation
-                              ye,    &  ! Electron fraction
-                              divv,  &  ! Divergence of velocity vel_u
-                              cs,    &  ! Sound speed
-                              allocate_SPH_memory, &
-                              deallocate_SPH_memory
+    USE sph_variables,  ONLY: allocate_SPH_memory, deallocate_SPH_memory
 
 
     IMPLICIT NONE
 
 
     INTEGER:: a
-
-    INTEGER:: tmp
 
     DOUBLE PRECISION:: g4(n_sym4x4), det, v_norm
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: tmp1
@@ -225,7 +201,7 @@ SUBMODULE (sph_particles) constructor_bin
 
     CALL allocate_sph_memory
 
-    CALL OMP_SET_NUM_THREADS(1)
+    !CALL OMP_SET_NUM_THREADS(1)
 
     CALL select_EOS_parameters( eos_str )
 

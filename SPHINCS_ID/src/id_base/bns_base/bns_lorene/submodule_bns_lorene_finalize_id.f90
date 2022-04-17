@@ -66,7 +66,7 @@ SUBMODULE (bns_lorene) finalize_id
 
     INTEGER:: a, j
 
-    DOUBLE PRECISION:: shift_norm2, shift_delta, sgn
+    DOUBLE PRECISION:: shift_norm2, shift_delta
     DOUBLE PRECISION, DIMENSION(3,npart):: vel_l_corr
     DOUBLE PRECISION, DIMENSION(3):: delta, adm_mom
     DOUBLE PRECISION:: g4(n_sym4x4), det, den

@@ -84,7 +84,7 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
 
     INTEGER:: a, j, l, i_matter
 
-    DOUBLE PRECISION:: det, p_max, shift_norm2
+    DOUBLE PRECISION:: det, shift_norm2
 
     !DOUBLE PRECISION, DIMENSION(n_sym4x4,npart)  :: g4
     DOUBLE PRECISION, DIMENSION(0:3)             :: v_u
@@ -103,11 +103,6 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: theta_loc
 
     DOUBLE PRECISION, DIMENSION(parts% get_n_matter(),3):: adm_mom_i
-
-    LOGICAL:: exist
-
-    CHARACTER( LEN= 2 ):: i_mat
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 

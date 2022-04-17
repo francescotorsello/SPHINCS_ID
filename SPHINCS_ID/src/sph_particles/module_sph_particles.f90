@@ -1168,7 +1168,7 @@ MODULE sph_particles
 
 
     MODULE SUBROUTINE test_recovery( this, npart, pos, nlrf, u, pr, vel_u, &
-                                     theta, nstar, namefile )
+                                     theta, nstar )!, namefile )
     !# Tests the recovery. Computes the conserved variables from the physical
     !  ones, and then the physical ones from the conserved ones. It then
     !  compares the variables computed with the recovery PROCEDURES, with
@@ -1196,7 +1196,7 @@ MODULE sph_particles
       !! Canonical momentum on the particles
       !DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: e_hat
       !! Canonical energy on the particles
-      CHARACTER( LEN= * ),                  INTENT(INOUT), OPTIONAL :: namefile
+      !CHARACTER( LEN= * ),                  INTENT(INOUT), OPTIONAL :: namefile
       !! Name of the formatted file where the data is printed
 
     END SUBROUTINE test_recovery
@@ -1255,14 +1255,14 @@ MODULE sph_particles
     END SUBROUTINE compute_Ye
 
 
-    MODULE SUBROUTINE print_summary( this, filename )
+    MODULE SUBROUTINE print_summary( this )!, filename )
     !# Prints a summary of the properties of the |sph| particle
     !  distribution, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
 
       CLASS(particles), INTENT( IN OUT ):: this
-      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
     END SUBROUTINE print_summary

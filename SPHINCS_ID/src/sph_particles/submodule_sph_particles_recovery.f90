@@ -69,9 +69,9 @@ SUBMODULE (sph_particles) recovery
 
     INTEGER, PARAMETER:: unit_recovery= 34956
 
-    INTEGER:: i_matter, a, a_max
+    INTEGER:: i_matter, a
 
-    DOUBLE PRECISION:: det, p_max
+    DOUBLE PRECISION:: det
 
     DOUBLE PRECISION, DIMENSION(npart)  :: nlrf_rec
     DOUBLE PRECISION, DIMENSION(npart)  :: u_rec

@@ -68,14 +68,14 @@ SUBMODULE (ejecta_generic) constructor
     INTEGER:: header_lines= 2 ! TODO: give this as input
     INTEGER:: nlines, ntmp
     INTEGER:: i_matter, n_matter_loc, itr, i, j, k
-    INTEGER, DIMENSION(:), ALLOCATABLE:: x_sorted, y_sorted, z_sorted
+   ! INTEGER, DIMENSION(:), ALLOCATABLE:: x_sorted, y_sorted, z_sorted
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx
 
     DOUBLE PRECISION:: xtmp, ytmp, ztmp, &
                        rhotmp, epstmp, vxtmp, vytmp, vztmp, &
                        dr, dphi, dth
     DOUBLE PRECISION, DIMENSION(:,:),   ALLOCATABLE:: grid_tmp
-    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: rho_tmp
+    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: rho_tmp
     DOUBLE PRECISION, DIMENSION(:,:),   ALLOCATABLE:: mass_profile
 
     LOGICAL:: exist
@@ -471,7 +471,20 @@ SUBMODULE (ejecta_generic) constructor
     !
     !***********************************************
 
+    USE constants,  ONLY: zero
+
     IMPLICIT NONE
+
+    ! Temporary implementation, to avoid warnings about unuesed variables
+
+    pos  = npart
+    nlrf = zero
+    nu   = zero
+    pr   = zero
+    vel_u= zero
+    theta= zero
+    nstar= zero
+    u    = zero
 
   END PROCEDURE finalize
 

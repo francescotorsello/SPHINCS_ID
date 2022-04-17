@@ -57,9 +57,6 @@ SUBMODULE (sph_particles) handle_positions
 
     INTEGER, DIMENSION(npart):: above_xy_plane
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
-    LOGICAL:: exist
-
     above_xy_plane= zero
     npart_above_xy= zero
     !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -101,8 +98,8 @@ SUBMODULE (sph_particles) handle_positions
     DOUBLE PRECISION, DIMENSION(3,npart):: pos_tmp
     DOUBLE PRECISION, DIMENSION(npart)  :: nu_tmp
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
-    LOGICAL:: exist
+    !CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    !LOGICAL:: exist
 
     IF( PRESENT(nu) .NEQV. PRESENT(nu_below) )THEN
       PRINT *, "** ERROR! In SUBROUTINE reflect_particles_xy_plane, the ", &

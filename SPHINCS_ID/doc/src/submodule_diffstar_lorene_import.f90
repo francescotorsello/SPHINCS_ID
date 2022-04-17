@@ -765,6 +765,18 @@ SUBMODULE (diffstar_lorene) import
     !
     !****************************************************
 
+    USE constants,  ONLY: zero
+
+    IMPLICIT NONE
+
+    ! Temporary implemetation, to avoid warning about unused variables
+
+    k_xx= x
+    k_xy= y
+    k_xz= z
+    k_yy= n
+    k_yz= zero
+    k_zz= zero
 
   END PROCEDURE import_id_k
 

@@ -137,23 +137,19 @@ SUBMODULE (sph_particles) sph_variables
     !INTEGER, PARAMETER:: max_it_h= 1
 
     ! Spacetime indices \mu and \nu
-    INTEGER:: nus, mus, cnt1, a, i_matter!, itr2, inde, index1!, cnt2
+    INTEGER:: cnt1, a, i_matter!, itr2, inde, index1!, cnt2
     INTEGER:: n_problematic_h
     INTEGER:: itot, l, ill!, b, k
 
-    INTEGER:: pwp_gamma, pwp_kappa
-
-    !DOUBLE PRECISION:: g4(0:3,0:3)
     DOUBLE PRECISION:: g4(n_sym4x4)
-    DOUBLE PRECISION:: gg4(n_sym4x4,this% npart)
+    !DOUBLE PRECISION:: gg4(n_sym4x4,this% npart)
     DOUBLE PRECISION:: sq_detg4(this% npart)
-    DOUBLE PRECISION:: det, sq_g, Theta_a!, &!nu_max1, nu_max2, &
-                       !nu_tmp, nu_thres1, nu_thres2
-    DOUBLE PRECISION:: com_x_newt, com_y_newt, com_z_newt, com_d_newt, mass_newt
-    DOUBLE PRECISION:: com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn
-    DOUBLE PRECISION:: px_newt, py_newt, pz_newt, pnorm_newt
-    DOUBLE PRECISION:: px, py, pz, pnorm, tmp
-    DOUBLE PRECISION, DIMENSION(3):: tmp2
+    DOUBLE PRECISION:: det, sq_g, Theta_a, tmp
+    !DOUBLE PRECISION:: com_x_newt, com_y_newt, com_z_newt, com_d_newt, mass_newt
+    !DOUBLE PRECISION:: com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn
+    !DOUBLE PRECISION:: px_newt, py_newt, pz_newt, pnorm_newt
+    !DOUBLE PRECISION:: px, py, pz, pnorm, tmp
+    !DOUBLE PRECISION, DIMENSION(3):: tmp2
 
     !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
     !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
@@ -164,7 +160,7 @@ SUBMODULE (sph_particles) sph_variables
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    CHARACTER( LEN= 2 ):: i_mat
+    !CHARACTER( LEN= 2 ):: i_mat
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 

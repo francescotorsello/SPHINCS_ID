@@ -105,7 +105,7 @@ SUBMODULE (sph_particles) constructor_std
     ! construct_particles_idase is called
     INTEGER, SAVE:: counter= 1
     INTEGER:: npart_des, a, max_steps, nlines, header_lines, n_cols, &
-              npart_tmp, nx_gh, ny_gh, nz_gh, i_matter, itr2
+              npart_tmp, nx_gh, ny_gh, nz_gh, i_matter
 
     ! Maximum length for strings, and for the number of imported binaries
     INTEGER, PARAMETER:: max_length= 50

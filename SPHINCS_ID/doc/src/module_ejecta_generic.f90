@@ -313,13 +313,13 @@ MODULE ejecta_generic
     !------------------------------!
 
 
-    MODULE SUBROUTINE print_summary_ejecta( THIS, filename )
+    MODULE SUBROUTINE print_summary_ejecta( this, filename )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
 
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -331,11 +331,11 @@ MODULE ejecta_generic
     !----------------------------!
 
 
-    MODULE FUNCTION get_mass( THIS, i_matter )
+    MODULE FUNCTION get_mass( this, i_matter )
     !! Returns [[ejecta:masses]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       ! Result
       DOUBLE PRECISION:: get_mass
@@ -343,10 +343,10 @@ MODULE ejecta_generic
     END FUNCTION get_mass
 
 
-    MODULE FUNCTION get_center( THIS, i_matter )
+    MODULE FUNCTION get_center( this, i_matter )
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: get_center
@@ -354,10 +354,10 @@ MODULE ejecta_generic
     END FUNCTION get_center
 
 
-    MODULE FUNCTION get_barycenter( THIS, i_matter )
+    MODULE FUNCTION get_barycenter( this, i_matter )
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: get_barycenter
@@ -365,10 +365,10 @@ MODULE ejecta_generic
     END FUNCTION get_barycenter
 
 
-    MODULE FUNCTION get_radii( THIS, i_matter )
+    MODULE FUNCTION get_radii( this, i_matter )
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose string is to return
       DOUBLE PRECISION, DIMENSION(6):: get_radii
@@ -394,19 +394,19 @@ MODULE ejecta_generic
     END SUBROUTINE construct_ejecta
 
 
-    MODULE SUBROUTINE destruct_ejecta( THIS )
+    MODULE SUBROUTINE destruct_ejecta( this )
     !! Destruct a [[ejecta]] object
 
-      TYPE(ejecta), INTENT( IN OUT ):: THIS
+      TYPE(ejecta), INTENT( IN OUT ):: this
       !! [[ejecta]] object to be destructed
 
     END SUBROUTINE destruct_ejecta
 
 
-    MODULE SUBROUTINE allocate_gridid_memory( THIS, n_matter )
+    MODULE SUBROUTINE allocate_gridid_memory( this, n_matter )
     !! Allocates allocatable arrays member of a [[ejecta]] object
 
-      CLASS(ejecta), INTENT( IN OUT ):: THIS
+      CLASS(ejecta), INTENT( IN OUT ):: this
       !! [[ejecta]] object which this PROCEDURE is a member of
       INTEGER, INTENT( IN ):: n_matter
       !! Number of matter objects
@@ -414,16 +414,16 @@ MODULE ejecta_generic
     END SUBROUTINE allocate_gridid_memory
 
 
-    MODULE SUBROUTINE deallocate_gridid_memory( THIS )
+    MODULE SUBROUTINE deallocate_gridid_memory( this )
     !! Deallocates allocatable arrays member of a [[ejecta]] object
 
-      CLASS(ejecta), INTENT( IN OUT ):: THIS
+      CLASS(ejecta), INTENT( IN OUT ):: this
       !! [[ejecta]] object which this PROCEDURE is a member of
 
     END SUBROUTINE deallocate_gridid_memory
 
 
-    MODULE SUBROUTINE interpolate_id_full( THIS, n, x, y, z,&
+    MODULE SUBROUTINE interpolate_id_full( this, n, x, y, z,&
                                            lapse, &
                                            shift_x, shift_y, shift_z, &
                                            g_xx, g_xy, g_xz, &
@@ -438,7 +438,7 @@ MODULE ejecta_generic
     !  shape as the [[ejecta]] member arrays
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                     INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                     INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -469,17 +469,13 @@ MODULE ejecta_generic
     END SUBROUTINE interpolate_id_full
 
 
-    MODULE SUBROUTINE interpolate_id_spacetime( THIS, nx, ny, nz, &
-                                              pos, &
-                                              lapse, &
-                                              shift, &
-                                              g, &
-                                              ek )
+    MODULE SUBROUTINE interpolate_id_spacetime &
+    ( this, nx, ny, nz, pos, lapse, shift, g, ek )
     !# Stores the spacetime ID in multi-dimensional arrays needed to compute
     !  the BSSN variables and constraints
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                           INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                           INTENT( IN OUT ):: this
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -492,18 +488,18 @@ MODULE ejecta_generic
     END SUBROUTINE interpolate_id_spacetime
 
 
-    MODULE SUBROUTINE interpolate_id_hydro( THIS, nx, ny, nz, &
-                                             pos, &
-                                             baryon_density, &
-                                             energy_density, &
-                                             specific_energy, &
-                                             pressure, &
-                                             u_euler )
+    MODULE SUBROUTINE interpolate_id_hydro( this, nx, ny, nz, &
+                                            pos, &
+                                            baryon_density, &
+                                            energy_density, &
+                                            specific_energy, &
+                                            pressure, &
+                                            u_euler )
     !# Stores the hydro ID in the arrays needed to compute the constraints
     !  on the refined mesh
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                           INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                           INTENT( IN OUT ):: this
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -517,20 +513,14 @@ MODULE ejecta_generic
     END SUBROUTINE interpolate_id_hydro
 
 
-    MODULE SUBROUTINE interpolate_id_particles( THIS, n, x, y, z, &
-                                           lapse, &
-                                           shift_x, shift_y, shift_z, &
-                                           g_xx, g_xy, g_xz, &
-                                           g_yy, g_yz, g_zz, &
-                                           baryon_density, &
-                                           energy_density, &
-                                           specific_energy, &
-                                           pressure, &
-                                           u_euler_x, u_euler_y, u_euler_z )
+    MODULE SUBROUTINE interpolate_id_particles &
+    ( this, n, x, y, z, lapse, shift_x, shift_y, shift_z, &
+      g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, baryon_density, energy_density, &
+      specific_energy, pressure, u_euler_x, u_euler_y, u_euler_z )
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                  INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                  INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -556,14 +546,14 @@ MODULE ejecta_generic
     END SUBROUTINE interpolate_id_particles
 
 
-    MODULE SUBROUTINE interpolate_id_mass_b( THIS, x, y, z, &
+    MODULE SUBROUTINE interpolate_id_mass_b( this, x, y, z, &
                                              g, &
                                              baryon_density, &
                                              gamma_euler )
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),    INTENT( IN OUT ):: THIS
+      CLASS(ejecta),    INTENT( IN OUT ):: this
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
       DOUBLE PRECISION, INTENT( IN )    :: z
@@ -574,13 +564,13 @@ MODULE ejecta_generic
     END SUBROUTINE interpolate_id_mass_b
 
 
-    MODULE SUBROUTINE interpolate_id_k( THIS, n, x, y, z,&
-                                         k_xx, k_xy, k_xz, &
-                                         k_yy, k_yz, k_zz )
+    MODULE SUBROUTINE interpolate_id_k( this, n, x, y, z,&
+                                        k_xx, k_xy, k_xz, &
+                                        k_yy, k_yz, k_zz )
     !! Stores the components of the extrinsic curvature in arrays
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                  INTENT( IN OUT ):: THIS
+      CLASS(ejecta),                  INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -598,11 +588,11 @@ MODULE ejecta_generic
     !
     !-- FUNCTIONS
     !
-    MODULE FUNCTION interpolate_mass_density( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION interpolate_mass_density( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),    INTENT( IN ):: THIS
+      CLASS(ejecta),    INTENT( IN ):: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -615,12 +605,12 @@ MODULE ejecta_generic
     END FUNCTION interpolate_mass_density
 
 
-    MODULE FUNCTION interpolate_spatial_metric( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION interpolate_spatial_metric( this, x, y, z ) RESULT( res )
     !# Returns the |lorene| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),     INTENT( IN )       :: THIS
+      CLASS(ejecta),     INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -633,12 +623,12 @@ MODULE ejecta_generic
     END FUNCTION interpolate_spatial_metric
 
 
-    MODULE FUNCTION is_hydro_positive( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION is_hydro_positive( this, x, y, z ) RESULT( res )
     !# Returns `.TRUE.` if the energy density or the specific energy or the
     !  pressure are positivee, `.FALSE.` otherwise
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),     INTENT( IN )       :: THIS
+      CLASS(ejecta),     INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -657,33 +647,33 @@ MODULE ejecta_generic
     !-----------------!
 
 
-    MODULE PURE FUNCTION get_gamma( THIS )
+    MODULE PURE FUNCTION get_gamma( this )
     !! Interface to [[ejecta_generic:get_gamma]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma
 
     END FUNCTION get_gamma
 
 
-    MODULE PURE FUNCTION get_kappa( THIS )
+    MODULE PURE FUNCTION get_kappa( this )
     !! Interface to [[ejecta_generic:get_kappa]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa
 
     END FUNCTION get_kappa
 
 
-    MODULE FUNCTION get_eos( THIS, i_matter )
+    MODULE FUNCTION get_eos( this, i_matter )
     !! Interface to [[ejecta_generic:get_eos]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose string is to return
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
@@ -691,165 +681,165 @@ MODULE ejecta_generic
     END FUNCTION get_eos
 
 
-    MODULE PURE FUNCTION get_npeos( THIS )
+    MODULE PURE FUNCTION get_npeos( this )
     !! Interface to [[ejecta_generic:get_npeos]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       INTEGER:: get_npeos
 
     END FUNCTION get_npeos
 
 
-    MODULE PURE FUNCTION get_gamma0( THIS )
+    MODULE PURE FUNCTION get_gamma0( this )
     !! Interface to [[ejecta_generic:get_gamma0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma0
 
     END FUNCTION get_gamma0
 
 
-    MODULE PURE FUNCTION get_gamma1( THIS )
+    MODULE PURE FUNCTION get_gamma1( this )
     !! Interface to [[ejecta_generic:get_gamma1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma1
 
     END FUNCTION get_gamma1
 
 
-    MODULE PURE FUNCTION get_gamma2( THIS )
+    MODULE PURE FUNCTION get_gamma2( this )
     !! Interface to [[ejecta_generic:get_gamma2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma2
 
     END FUNCTION get_gamma2
 
 
-    MODULE PURE FUNCTION get_gamma3( THIS )
+    MODULE PURE FUNCTION get_gamma3( this )
     !! Interface to [[ejecta_generic:get_gamma3]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma3
 
     END FUNCTION get_gamma3
 
 
-    MODULE PURE FUNCTION get_kappa0( THIS )
+    MODULE PURE FUNCTION get_kappa0( this )
     !! Interface to [[ejecta_generic:get_kappa0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa0
 
     END FUNCTION get_kappa0
 
 
-    MODULE PURE FUNCTION get_kappa1( THIS )
+    MODULE PURE FUNCTION get_kappa1( this )
     !! Interface to [[ejecta_generic:get_kappa1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa1
 
     END FUNCTION get_kappa1
 
 
-    MODULE PURE FUNCTION get_kappa2( THIS )
+    MODULE PURE FUNCTION get_kappa2( this )
     !! Interface to [[ejecta_generic:get_kappa2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa2
 
     END FUNCTION get_kappa2
 
 
-    MODULE PURE FUNCTION get_kappa3( THIS )
+    MODULE PURE FUNCTION get_kappa3( this )
     !! Interface to [[ejecta_generic:get_kappa3]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa3
 
     END FUNCTION get_kappa3
 
 
-    MODULE PURE FUNCTION get_logP1( THIS )
+    MODULE PURE FUNCTION get_logP1( this )
     !! Interface to [[ejecta_generic:get_logP1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logP1
 
     END FUNCTION get_logP1
 
 
-    MODULE PURE FUNCTION get_logRho0( THIS )
+    MODULE PURE FUNCTION get_logRho0( this )
     !! Interface to [[ejecta_generic:get_logRho0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho0
 
     END FUNCTION get_logRho0
 
 
-    MODULE PURE FUNCTION get_logRho1( THIS )
+    MODULE PURE FUNCTION get_logRho1( this )
     !! Interface to [[ejecta_generic:get_logRho1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho1
 
     END FUNCTION get_logRho1
 
 
-    MODULE PURE FUNCTION get_logRho2( THIS )
+    MODULE PURE FUNCTION get_logRho2( this )
     !! Interface to [[ejecta_generic:get_logRho2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho2
 
     END FUNCTION get_logRho2
 
 
-    MODULE FUNCTION get_eos_ejectaid( THIS )
+    MODULE FUNCTION get_eos_ejectaid( this )
     !! Interface to [[ejecta_generic:get_eos_ejectaid]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       ! Result
       INTEGER:: get_eos_ejectaid
 
     END FUNCTION get_eos_ejectaid
 
 
-    MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
+    MODULE SUBROUTINE get_eos_parameters( this, i_matter, eos_params )
     !! Interface to [[ejecta_generic:get_eos_parameters]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: THIS
+      CLASS(ejecta), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params

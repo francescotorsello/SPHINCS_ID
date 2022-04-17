@@ -64,7 +64,7 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
                                     cs_fb
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
-                                    get_metric_on_particles, g4_ll, sq_det_g4
+                                    get_metric_on_particles, g4_ll
     !USE map_metric_2_particles_refine, &
     !                          ONLY: update_ADM_metric_on_particles
     USE ADM_refine,           ONLY: lapse, shift_u, g_phys3_ll, &

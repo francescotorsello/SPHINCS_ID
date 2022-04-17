@@ -375,7 +375,6 @@ MODULE utility
 
     DOUBLE PRECISION, DIMENSION(3,3):: gmat
     DOUBLE PRECISION, DIMENSION(3,3):: gmat_inv
-    DOUBLE PRECISION, DIMENSION(6)  :: g3_inv
 
     g3(jxx)= g4(ixx)
     g3(jxy)= g4(ixy)

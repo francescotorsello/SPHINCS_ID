@@ -219,10 +219,7 @@ SUBMODULE (sph_particles) io
 
     INTEGER, PARAMETER:: max_npart= 2.D+7
 
-    INTEGER:: itr, min_y_index
-
-    DOUBLE PRECISION:: min_abs_y, min_abs_z1, min_abs_z2
-    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
+    INTEGER:: itr
 
     LOGICAL:: exist, final_save_data
 

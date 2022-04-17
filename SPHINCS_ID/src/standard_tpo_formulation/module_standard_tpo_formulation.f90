@@ -422,14 +422,14 @@ MODULE standard_tpo_formulation
     END SUBROUTINE compute_adm_momentum_fluid_m2p
 
 
-    MODULE SUBROUTINE print_summary( THIS, filename )
+    MODULE SUBROUTINE print_summary( THIS )!, filename )
     !# Prints a summary of the properties of the refined mesh,
     !  and optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
 
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      !CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
     END SUBROUTINE print_summary
@@ -472,11 +472,10 @@ MODULE standard_tpo_formulation
     END FUNCTION get_nlevels
 
 
-    MODULE FUNCTION get_levels( THIS, l ) RESULT( levels )
+    MODULE FUNCTION get_levels( THIS ) RESULT( levels )
 
       ! Arguments
       CLASS(tpo), INTENT( IN OUT ):: THIS
-      INTEGER,    INTENT( IN )    :: l
       ! Result
       TYPE(level), DIMENSION(:), ALLOCATABLE:: levels
 
