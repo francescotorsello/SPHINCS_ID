@@ -1077,9 +1077,9 @@ SUBMODULE (sph_particles) sph_variables
           PRINT *
 
           Pr(npart_in:npart_fin)= &
-            this% all_eos(i_matter)% eos_parameters($poly_kappa) &
+            this% all_eos(i_matter)% eos_parameters(poly$kappa) &
             *( this% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
-            **this% all_eos(i_matter)% eos_parameters($poly_gamma)
+            **this% all_eos(i_matter)% eos_parameters(poly$gamma)
 
           ! Using this internal energy gives machine-precision relative errors
           ! after the recovery, since it is computed from nlrf_int
@@ -1088,13 +1088,13 @@ SUBMODULE (sph_particles) sph_variables
           ! from the ID
           u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
             /(this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
-            *( this% all_eos(i_matter)% eos_parameters($poly_gamma) - one ) ) )
+            *( this% all_eos(i_matter)% eos_parameters(poly$gamma) - one ) ) )
 
           this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
             + this% nlrf_int(npart_in:npart_fin)*m0c2_cu/Pr(npart_in:npart_fin)
 
           cs(npart_in:npart_fin)= SQRT( &
-            this% all_eos(i_matter)% eos_parameters($poly_gamma) &
+            this% all_eos(i_matter)% eos_parameters(poly$gamma) &
               *Pr(npart_in:npart_fin)/ &
             (this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
             *this% enthalpy(npart_in:npart_fin)) )
@@ -1136,14 +1136,14 @@ SUBMODULE (sph_particles) sph_variables
 
             Pr(a)= &
             ! cold pressure
-            this% all_eos(i_matter)% eos_parameters($poly_kappa) &
+            this% all_eos(i_matter)% eos_parameters(poly$kappa) &
               *( this% nlrf_int(a)*m0c2_cu ) &
-              **this% all_eos(i_matter)% eos_parameters($poly_gamma) &
+              **this% all_eos(i_matter)% eos_parameters(poly$gamma) &
             + &
             ! thermal pressure
             Gamma_th_1*( this% nlrf_int(a)*m0c2_cu )* &
               MAX(u(a) - ( Pr(a)/(this% nlrf_int(a)*m0c2_cu &
-                *( this% all_eos(i_matter)% eos_parameters($poly_gamma) &
+                *( this% all_eos(i_matter)% eos_parameters(poly$gamma) &
                    - one ) ) ), zero)
 
           ENDDO
@@ -1151,7 +1151,7 @@ SUBMODULE (sph_particles) sph_variables
             + this% nlrf_int(npart_in:npart_fin)*m0c2_cu/Pr(npart_in:npart_fin)
 
           cs(npart_in:npart_fin)= SQRT( &
-            this% all_eos(i_matter)% eos_parameters($poly_gamma) &
+            this% all_eos(i_matter)% eos_parameters(poly$gamma) &
               *Pr(npart_in:npart_fin)/ &
             (this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
             *this% enthalpy(npart_in:npart_fin)) )
@@ -1613,6 +1613,7 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDIF
 
+    vel_u= this% v(1:3,:)
 
     this% adm_linear_momentum_fluid= zero
     DO i_matter= 1, this% n_matter, 1
@@ -1643,7 +1644,7 @@ SUBMODULE (sph_particles) sph_variables
                                   this% nlrf_int(npart_in:npart_fin),     &
                                   this% pressure_cu(npart_in:npart_fin),  &
                                   this% u_pwp(npart_in:npart_fin),        &
-                                  this% v(1:3,npart_in:npart_fin),        &
+                                  vel_u(1:3,npart_in:npart_fin),        &
                                   this% adm_linear_momentum_i(i_matter,:) )
 
       PRINT *, "   SPH estimate of the ADM linear momentum computed using ", &
@@ -1665,7 +1666,6 @@ SUBMODULE (sph_particles) sph_variables
     PRINT *, "    ", this% adm_linear_momentum_fluid(2), ","
     PRINT *, "    ", this% adm_linear_momentum_fluid(3), ") Msun*c"
     PRINT *
-
 
     !
     !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN

@@ -16,7 +16,8 @@ n_id=1                          ! Number of physical systems to use
 common_path="lorene-id-files/"   ! Path to the directory containing the LORENE
                                  ! BNS binary files
             !"eccentric-ejecta-files/"
-filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
+filenames(1)="BNSLO_mpa1_1.2-1.5_45km-0com.bin"
+             !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_mpa1_1.6-2_45km_1e-9.bin"
              !"BNSLO_apr3_1.4-2_35km.bin"
@@ -50,7 +51,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !!"BNSLO_poly275_1.2-1.6_45km.bin"
              !!!"BNSLO_mpa1_1.2-2_45km.bin"
              !!!"BNSLO_mpa1_1.2-1.5_45km.bin"
-             "BNSLO_mpa1_1.2-1.5_45km-0com.bin"
+             !"BNSLO_mpa1_1.2-1.5_45km-0com.bin"
              !"BNSLO_ms1b_1.3-1.3_45km.bin"
              !!"BNSLO_poly2-75_1.2-1.8_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_48km.bin"

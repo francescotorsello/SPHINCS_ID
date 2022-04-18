@@ -193,19 +193,20 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
     adm_mom= zero
     matter_objects_loop: DO i_matter= 1, parts% get_n_matter(), 1
 
-      ASSOCIATE( npart_in   => parts% get_npart_i(i_matter-1) + 1, &
-                 npart_fin  => parts% get_npart_i(i_matter-1) +    &
-                               parts% get_npart_i(i_matter) )
+      !ASSOCIATE( npart_in   => parts% get_npart_i(i_matter-1) + 1, &
+      !           npart_fin  => parts% get_npart_i(i_matter-1) +    &
+      !                         parts% get_npart_i(i_matter) )
 
       adm_mom_i(i_matter,:)= zero
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_in, npart_fin, parts, g4_ll, vel_loc, &
+      !$OMP             SHARED( parts, g4_ll, vel_loc, &
       !$OMP                     v_l, nu_loc, theta_loc, pr_loc, nlrf_loc, &
       !$OMP                     u_loc, i_matter ) &
       !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g3, lapse_loc, &
       !$OMP                      shift ) &
       !$OMP             REDUCTION( +: adm_mom_i )
-      DO a= npart_in, npart_fin, 1
+      DO a= parts% get_npart_i(i_matter-1) + 1, &
+            parts% get_npart_i(i_matter-1) + parts% get_npart_i(i_matter), 1
 
         CALL compute_tpo_metric( g4_ll(:,a), lapse_loc, shift, g3 )
 
@@ -235,7 +236,7 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
 
       adm_mom= adm_mom + adm_mom_i(i_matter,:)
 
-      END ASSOCIATE
+      !END ASSOCIATE
 
     ENDDO matter_objects_loop
 

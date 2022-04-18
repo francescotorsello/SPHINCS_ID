@@ -65,8 +65,8 @@ default_debug = 'FALSE'
 # Which compilers to use
 #   Fortran : 'gfortran', 'ifort'
 #   C++     : 'g++', 'gcc' or 'icpc'
-default_fortran_compiler = 'ifort'
-default_cpp_compiler     = 'icpc'
+default_fortran_compiler = 'gfortran'
+default_cpp_compiler     = 'g++'
 
 # 'TRUE'  : enables verbose output
 # 'FALSE' : disables verbose output
@@ -163,7 +163,7 @@ if fortran_compiler == 'gfortran': #
 
   env = DefaultEnvironment(
 
-    ENV       = { 'PATH' : os.environ['PATH'] },
+    ENV       = { 'PATH'            : os.environ['PATH'] },
     LINK      = 'gfortran',
     LINKFLAGS = '-g -fopenmp',
     TOOLS     = ['default', 'gfortran']
@@ -582,15 +582,15 @@ if flavour == full_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', \
-                     'gfortran', 'lorene_export', 'lorene', 'lorenef77']
+      env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
+                     'lorenef77', 'gsl', 'lapack', 'fftw3', 'blas', \
+                     'gslcblas', 'gfortran']
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', \
-                     'gfortran', 'lorene_export_g', 'lorene_g', 'lorenef77_g']
+      env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
+                     'lorenef77_g', 'gsl', 'lapack', 'fftw3', 'blas', \
+                     'gslcblas', 'gfortran']
 
   if host == 'Sunrise': #
 
@@ -602,16 +602,15 @@ if flavour == full_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'gsl', 'scalapack', 'openblas', \
-                     'gslcblas', 'gfortran', 'lorene_export', 'lorene', \
-                     'lorenef77', 'fftw3']
+      env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
+                     'lorenef77', 'gsl', 'scalapack', 'openblas', \
+                     'gslcblas', 'gfortran', 'fftw3']
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'gsl', 'scalapack', 'openblas', \
-                     'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g', 'fftw3']
-
+      env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
+                     'lorenef77_g', 'gsl', 'scalapack', 'openblas', \
+                     'gslcblas', 'gfortran', 'fftw3']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
                     + module_bns_fuka \
@@ -635,15 +634,15 @@ if flavour == lorene_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran', 'lorene_export', 'lorene', \
-                     'lorenef77']
+      env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
+                     'lorenef77', 'gsl', 'lapack', 'fftw3', 'blas', \
+                     'gslcblas', 'gfortran']
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g']
+      env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
+                     'lorenef77_g', 'gsl', 'lapack', 'fftw3', 'blas', \
+                     'gslcblas', 'gfortran']
 
   if host == 'Sunrise': #
 
@@ -655,15 +654,15 @@ if flavour == lorene_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'gsl', 'scalapack', 'openblas', \
-                     'gslcblas', 'gfortran', 'lorene_export', 'lorene', \
-                     'lorenef77', 'fftw3']
+      env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
+                     'lorenef77', 'gsl', 'scalapack', 'openblas', \
+                     'gslcblas', 'gfortran', 'fftw3']
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'gsl', 'scalapack', 'openblas', \
-                     'gslcblas', 'gfortran', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g', 'fftw3']
+      env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
+                     'lorenef77_g', 'gsl', 'scalapack', 'openblas', \
+                     'gslcblas', 'gfortran', 'fftw3']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
                     + module_ejecta_generic + module_sphincs_id_lorene
@@ -736,7 +735,7 @@ if debug == 'FALSE': #
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
-                          '-fopt-info-vec',\
+                          '-fopt-info-vec', '-fdollar-ok', \
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
@@ -786,7 +785,7 @@ if debug == 'FALSE': #
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
-                          '-fopt-info-vec',\
+                          '-fopt-info-vec', '-fdollar-ok', \
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
@@ -858,7 +857,7 @@ if debug == 'TRUE': #
                           '-ffpe-trap=zero,overflow,underflow', \
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
-                          '-ffixed-line-length-none', \
+                          '-ffixed-line-length-none', '-fdollar-ok', \
                           build_flavour ]
 
     ############################################################################
@@ -934,7 +933,7 @@ if debug == 'TRUE': #
                           '-ffpe-trap=zero,overflow,underflow', \
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
-                          '-ffixed-line-length-none', \
+                          '-ffixed-line-length-none', '-fdollar-ok', \
                           build_flavour ]
 
     ############################################################################

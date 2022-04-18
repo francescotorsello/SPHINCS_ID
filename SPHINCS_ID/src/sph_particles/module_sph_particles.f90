@@ -69,32 +69,34 @@ MODULE sph_particles
   !-- TODO: Make the following parameters member of TYPE eos?
   !--       They belong there, but putting them there decreases readability
   !--       of the code
+  !--       Rewrite this as an enumeration?
+  !--       How to write enumerations in Fortran?
   !
-  INTEGER,               PARAMETER:: $eos_id     = 1
+  INTEGER,               PARAMETER:: eos$id     = 1
   !! First component of array [[eos:eos_parameters]] for a polytropic |eos|
-  INTEGER,               PARAMETER:: $poly_gamma = 2
+  INTEGER,               PARAMETER:: poly$gamma = 2
   !! Second component of array [[eos:eos_parameters]] for a polytropic |eos|
-  INTEGER,               PARAMETER:: $poly_kappa = 3
+  INTEGER,               PARAMETER:: poly$kappa = 3
   !! Third component of array [[eos:eos_parameters]] for a polytropic |eos|
-  INTEGER,               PARAMETER:: $pwp_npoly  = 2
+  INTEGER,               PARAMETER:: pwp$npoly  = 2
   !# Second component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
-  INTEGER, DIMENSION(4), PARAMETER:: $pwp_gamma  = [3,4,5,6]
+  INTEGER, DIMENSION(4), PARAMETER:: pwp$gamma  = [3,4,5,6]
   !# Third to sixth component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
-  INTEGER, DIMENSION(4), PARAMETER:: $pwp_kappa  = [7,8,9,10]
+  INTEGER, DIMENSION(4), PARAMETER:: pwp$kappa  = [7,8,9,10]
   !# Seventh to tenth component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
-  INTEGER,               PARAMETER:: $pwp_log10p1  = 11
+  INTEGER,               PARAMETER:: pwp$log10p1  = 11
   !# Eleventh component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
-  INTEGER,               PARAMETER:: $pwp_log10rho0= 12
+  INTEGER,               PARAMETER:: pwp$log10rho0= 12
   !# Twelfth component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
-  INTEGER,               PARAMETER:: $pwp_log10rho1= 13
+  INTEGER,               PARAMETER:: pwp$log10rho1= 13
   !# Thirteenth component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
-  INTEGER,               PARAMETER:: $pwp_log10rho2= 14
+  INTEGER,               PARAMETER:: pwp$log10rho2= 14
   !# Fourteenth component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
 
