@@ -2182,7 +2182,7 @@ PRINT *, "4"
 
     IMPLICIT NONE
 
-    CALL THIS% deallocate_particles_memory()
+    CALL this% deallocate_particles_memory()
 
 
   END PROCEDURE destruct_particles

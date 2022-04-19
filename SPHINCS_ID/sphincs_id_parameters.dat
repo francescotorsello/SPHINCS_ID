@@ -94,7 +94,7 @@ estimate_length_scale=.FALSE.
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
