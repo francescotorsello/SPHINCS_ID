@@ -43,13 +43,19 @@ SUBMODULE (standard_tpo_formulation) analysis
 
     !****************************************************
     !
-    !#
+    !# Count on how many grid points the argument 'constraint'
+    !  has values lying in the intervals \( (-oo,10^{-7}],
+    !  [10^{-7},10^{-6}],
+    !  [10^{-6},10^{-5}], [10^{-5},10^{-4}], [10^{-4},10^{-3}],
+    !  [10^{-3},10^{-2}], [10^{-2},10^{-1}], [10^{-1},1],
+    !  [1,10^1], [10^1,10^2], [10^2,10^3],
+    !  [10^3,+oo) \)
     !
     !  FT
     !
     !****************************************************
 
-    USE constants, ONLY: pi
+    USE constants, ONLY: pi, zero, one, two, four, ten
     USE utility,   ONLY: determinant_sym3x3
 
     IMPLICIT NONE
@@ -59,12 +65,11 @@ SUBMODULE (standard_tpo_formulation) analysis
               unit_analysis, nx, ny, nz
 
     DOUBLE PRECISION:: tmp, total, dx, dy, dz, detg3
-    !DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: l2_norm_array
 
     LOGICAL:: exist
     !LOGICAL, PARAMETER:: DEBUG= .FALSE.
 
-    IF( THIS% export_constraints_details )THEN
+    IF( this% export_constraints_details )THEN
       !
       !-- Export the constraint analysis to a formatted file
       !
@@ -103,73 +108,77 @@ SUBMODULE (standard_tpo_formulation) analysis
       // ", [1D+1,1D+2], [1D+2,1D+3], [1D+3,+oo)"
     ENDIF
 
-    CALL THIS% abs_values_in( 0.0D0, 1.0D-7, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( zero, 1.0D-7, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_m7 )
 
-    CALL THIS% abs_values_in( 1.0D-7, 1.0D-6, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D-7, 1.0D-6, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_m6 )
 
-    CALL THIS% abs_values_in( 1.0D-6, 1.0D-5, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D-6, 1.0D-5, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_m5 )
 
-    CALL THIS% abs_values_in( 1.0D-5, 1.0D-4, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D-5, 1.0D-4, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_m4 )
 
-    CALL THIS% abs_values_in( 1.0D-4, 1.0D-3, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D-4, 1.0D-3, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_m3 )
 
-    CALL THIS% abs_values_in( 1.0D-3, 1.0D-2, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D-3, 1.0D-2, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_m2 )
 
-    CALL THIS% abs_values_in( 1.0D-2, 1.0D-1, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D-2, 1.0D-1, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_m1 )
 
-    CALL THIS% abs_values_in( 1.0D-1, 1.0D0, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D-1, 1.0D0, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_0 )
 
-    CALL THIS% abs_values_in( 1.0D0, 1D+1, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D0, 1D+1, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_p1 )
 
-    CALL THIS% abs_values_in( 1.0D+1, 1.0D+2, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D+1, 1.0D+2, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_p2 )
 
-    CALL THIS% abs_values_in( 1.0D+2, 1.0D+3, constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D+2, 1.0D+3, constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_p3 )
 
-    CALL THIS% abs_values_in( 1.0D+3, HUGE(DBLE(1.0D0)), constraint, l, &
-                              THIS% export_constraints_details, &
+    CALL this% abs_values_in( 1.0D+3, HUGE(DBLE(one)), constraint, l, &
+                              this% export_constraints_details, &
                               unit_analysis, cnt_oo )
 
     CLOSE( UNIT= unit_analysis )
 
-    IF( THIS% export_constraints_details )THEN
+    IF( this% export_constraints_details )THEN
       PRINT *, " * The details about the absolute values of ", &
                name_constraint, " are printed to ", name_analysis
     ENDIF
 
-    nx= THIS% get_ngrid_x(l)
-    ny= THIS% get_ngrid_y(l)
-    nz= THIS% get_ngrid_z(l)
-    dx= THIS% get_dx(l)
-    dy= THIS% get_dy(l)
-    dz= THIS% get_dz(l)
+    nx= this% get_ngrid_x(l)
+    ny= this% get_ngrid_y(l)
+    nz= this% get_ngrid_z(l)
+    dx= this% get_dx(l)
+    dy= this% get_dy(l)
+    dz= this% get_dz(l)
     grid_points= nx*ny*nz
 
     !
     !-- Compute the l2 norm of the constraints
     !
-    l2_norm= 0.0D0
+    l2_norm= zero
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nx, ny, nz, constraint ) &
+    !$OMP             PRIVATE( i, j, k ) &
+    !$OMP             REDUCTION( +: l2_norm )
     DO k= 1, nz, 1
       DO j= 1, ny, 1
         DO i= 1, nx, 1
@@ -177,42 +186,26 @@ SUBMODULE (standard_tpo_formulation) analysis
         ENDDO
       ENDDO
     ENDDO
+    !$OMP END PARALLEL DO
     l2_norm= SQRT( l2_norm/grid_points )
-  !  PRINT *, l2_norm
-  !  PRINT *
-  !
-  !  ALLOCATE( l2_norm_array( grid_points ) )
-  !  l2_norm_array= 0.0D0
-  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-  !  !$OMP             SHARED( nx, ny, nz, l2_norm_array, constraint ) &
-  !  !$OMP             PRIVATE( i, j, k )
-  !  DO k= 1, nz, 1
-  !    DO j= 1, ny, 1
-  !      DO i= 1, nx, 1
-  !        l2_norm_array( (k-1)*nx*ny + (j-1)*nx + i )= &
-  !                                          constraint(i,j,k)*constraint(i,j,k)
-  !      ENDDO
-  !    ENDDO
-  !  ENDDO
-  !  !$OMP END PARALLEL DO
-  !  l2_norm= SUM( l2_norm_array, DIM= 1 )
-  !
-  !  PRINT *, l2_norm
-  !  PRINT *
-  !  STOP
 
     !
     !-- Compute a rough estimate of the integral of the constraints
     !
-    integral= 0.0D0
+    integral= zero
     IF( PRESENT(source) )THEN
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nx, ny, nz, dx, dy, dz, this, &
+      !$OMP                     constraint, source, l ) &
+      !$OMP             PRIVATE( i, j, k, detg3 ) &
+      !$OMP             REDUCTION( +: integral )
       DO k= 1, nz, 1
         DO j= 1, ny, 1
           DO i= 1, nx, 1
 
             CALL determinant_sym3x3( &
-                              THIS% g_phys3_ll% levels(l)% var(i,j,k,:), detg3 )
+                              this% g_phys3_ll% levels(l)% var(i,j,k,:), detg3 )
 
             integral= integral &
                     + dx*dy*dz*SQRT(detg3)*( constraint(i,j,k) - source(i,j,k) )
@@ -220,15 +213,21 @@ SUBMODULE (standard_tpo_formulation) analysis
           ENDDO
         ENDDO
       ENDDO
+      !$OMP END PARALLEL DO
 
     ELSE
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nx, ny, nz, dx, dy, dz, this, &
+      !$OMP                     constraint, l ) &
+      !$OMP             PRIVATE( i, j, k, detg3 ) &
+      !$OMP             REDUCTION( +: integral )
       DO k= 1, nz, 1
         DO j= 1, ny, 1
           DO i= 1, nx, 1
 
             CALL determinant_sym3x3( &
-                              THIS% g_phys3_ll% levels(l)% var(i,j,k,:), detg3 )
+                              this% g_phys3_ll% levels(l)% var(i,j,k,:), detg3 )
 
             integral= integral &
                       + dx*dy*dz*SQRT(detg3)*constraint(i,j,k)
@@ -236,24 +235,27 @@ SUBMODULE (standard_tpo_formulation) analysis
           ENDDO
         ENDDO
       ENDDO
+      !$OMP END PARALLEL DO
 
     ENDIF
-    integral= integral/(8.0D0*pi)
+    integral= integral/(two*four*pi)
 
     !
     !-- Compute the loo norm (supremum norm) of the constraints
     !
-    loo_norm= 0.0D0
+    loo_norm= zero
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nx, ny, nz, constraint ) &
+    !$OMP             PRIVATE( i, j, k ) &
+    !$OMP             REDUCTION( MAX: loo_norm )
     DO k= 1, nz, 1
       DO j= 1, ny, 1
         DO i= 1, nx, 1
-          tmp= ABS( constraint(i,j,k) )
-          IF( tmp > loo_norm )THEN
-            loo_norm= tmp
-          ENDIF
+          loo_norm= MAX( loo_norm, ABS( constraint(i,j,k) ) )
         ENDDO
       ENDDO
     ENDDO
+    !$OMP END PARALLEL DO
 
     !
     !-- Write a summary of the results to the logfile
@@ -264,29 +266,29 @@ SUBMODULE (standard_tpo_formulation) analysis
          "given percentage of grid points:"
     WRITE( UNIT= unit_logfile, FMT = * ) ""
     WRITE( UNIT= unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (-oo,1D-7]: ", &
-        100.0D0*DBLE(cnt_m7)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_m7)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-7,1D-6]: ", &
-        100.0D0*DBLE(cnt_m6)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_m6)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-6,1D-5]: ", &
-        100.0D0*DBLE(cnt_m5)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_m5)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-5,1D-4]: ", &
-        100.0D0*DBLE(cnt_m4)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_m4)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-4,1D-3]: ", &
-        100.0D0*DBLE(cnt_m3)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_m3)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-3,1D-2]: ", &
-        100.0D0*DBLE(cnt_m2)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_m2)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-2,1D-1]: ", &
-        100.0D0*DBLE(cnt_m1)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_m1)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D-1,1]: ",   &
-        100.0D0*DBLE(cnt_0)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_0)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1,10]: ",      &
-        100.0D0*DBLE(cnt_p1)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_p1)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (10,1D+2]: ",   &
-        100.0D0*DBLE(cnt_p2)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_p2)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D+2,1D+3]: ", &
-        100.0D0*DBLE(cnt_p3)/DBLE(grid_points) , "%"
+        ten*ten*DBLE(cnt_p3)/DBLE(grid_points) , "%"
     WRITE( UNIT = unit_logfile, FMT = "(A15,F5.1,A1)" ) "  (1D+3,+oo]: ",  &
-        100.0D0*DBLE(cnt_oo)/DBLE(grid_points), "%"
+        ten*ten*DBLE(cnt_oo)/DBLE(grid_points), "%"
     WRITE( UNIT = unit_logfile, FMT = * )
     WRITE( UNIT = unit_logfile, FMT = * ) "# l2-norm of ", name_constraint,&
                                " over the gravity grid= ", l2_norm
@@ -300,20 +302,20 @@ SUBMODULE (standard_tpo_formulation) analysis
                        " over the gravity grid= ", loo_norm
     WRITE( UNIT = unit_logfile, FMT = * )
 
-    total= 100.0D0*DBLE(cnt_m7)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_m6)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_m5)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_m4)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_m3)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_m2)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_m1)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_0) /DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_p1)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_p2)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_p3)/DBLE(grid_points) + &
-           100.0D0*DBLE(cnt_oo)/DBLE(grid_points)
+    total= ten*ten*DBLE(cnt_m7)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_m6)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_m5)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_m4)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_m3)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_m2)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_m1)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_0) /DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_p1)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_p2)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_p3)/DBLE(grid_points) + &
+           ten*ten*DBLE(cnt_oo)/DBLE(grid_points)
 
-    IF( total - DBLE(100) > 1.0D-4 )THEN
+    IF( total - ten*ten > 1.0D-4 )THEN
       PRINT *, " * WARNING! The percentages of the absolute values of ", &
                name_constraint, &
                " in the given intervals do not sum up to 100%. ", &
@@ -345,9 +347,9 @@ SUBMODULE (standard_tpo_formulation) analysis
 
     INTEGER:: i, j, k, nx, ny, nz
 
-    nx= THIS% get_ngrid_x(l)
-    ny= THIS% get_ngrid_y(l)
-    nz= THIS% get_ngrid_z(l)
+    nx= this% get_ngrid_x(l)
+    ny= this% get_ngrid_y(l)
+    nz= this% get_ngrid_z(l)
 
     cnt= 0
     DO k= 1, nz, 1
@@ -364,19 +366,19 @@ SUBMODULE (standard_tpo_formulation) analysis
               WRITE( UNIT= unit_analysis, IOSTAT = ios, &
                      IOMSG = err_msg, FMT = "(F17.13)", &
                      ADVANCE= "NO" ) &!"(E15.6)" &
-                     THIS% coords% levels(l)% var( i, j, k, jx )
+                     this% coords% levels(l)% var( i, j, k, jx )
               WRITE( UNIT= unit_analysis, FMT= "(A2)", &
                      ADVANCE= "NO" ) "  "
               WRITE( UNIT= unit_analysis, IOSTAT = ios, &
                      IOMSG = err_msg, FMT = "(F17.13)", &
                      ADVANCE= "NO" ) &
-                     THIS% coords% levels(l)% var( i, j, k, jy )
+                     this% coords% levels(l)% var( i, j, k, jy )
               WRITE( UNIT= unit_analysis, FMT= "(A2)", &
                      ADVANCE= "NO" ) "  "
               WRITE( UNIT= unit_analysis, IOSTAT = ios, &
                      IOMSG = err_msg, FMT = "(F17.13)", &
                      ADVANCE= "NO" ) &
-                     THIS% coords% levels(l)% var( i, j, k, jz )
+                     this% coords% levels(l)% var( i, j, k, jz )
               WRITE( UNIT= unit_analysis, FMT= "(A2)", &
                      ADVANCE= "NO" ) "  "
             ENDIF
@@ -390,7 +392,7 @@ SUBMODULE (standard_tpo_formulation) analysis
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
       WRITE( UNIT= unit_analysis, FMT= "(I1)", ADVANCE= "NO" ) 0
     ENDIF
-    WRITE( UNIT= unit_analysis, FMT= * ) ""
+    !WRITE( UNIT= unit_analysis, FMT= * ) ""
 
   END PROCEDURE abs_values_in
 

@@ -111,11 +111,12 @@ SUBMODULE (bns_lorene) io
     !****************************************************
 
     USE constants, ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                         lorene2hydrobase, c_light, cm2km
+                         lorene2hydrobase, c_light, cm2km, &
+                         zero, one, two, four, five, ten
 
     IMPLICIT NONE
 
-    IF( this% angular_momentum_z == 0.0D0 )THEN
+    IF( this% angular_momentum_z == zero )THEN
 
       PRINT *
       PRINT *, " ** The parameters have not ben read yet. ", &
@@ -156,18 +157,19 @@ SUBMODULE (bns_lorene) io
       PRINT *, " Bowen-York angular momentum of the system, z component = ", &
                this% angular_momentum_z, " G M_sun^2 /c"
       PRINT *, " Estimated time of the merger t_merger = ", this% t_merger, &
-               " M_sun^geo = ", this% t_merger*MSun_geo/(c_light*cm2km)*1000.0,&
-               " ms, from Peters_PR_136_B1224_1964, eq. (5.10)"
+               " M_sun^geo = ", this% t_merger*MSun_geo/(c_light*cm2km) &
+               *ten*ten*ten, " ms, from Peters_PR_136_B1224_1964, eq. (5.10)"
       PRINT *
       PRINT *, " Estimated separation to have the merger at t_merger = 2000", &
-               " Msun_geo = ", 2000.0D0*MSun_geo/(c_light*cm2km)*1000.0, &
-               " ms :", &
-               ( 2000.0D0*( this% mass_grav1*this% mass_grav2* &
-                  ( this% mass_grav1 + this% mass_grav2 ) )/(5.0D0/256.0D0) ) &
-                **(1.0D0/4.0D0), "M_sun^geo = ", &
-                ( 2000.0D0*( this% mass_grav1*this% mass_grav2* &
-                ( this% mass_grav1 + this% mass_grav2 ) )/(5.0D0/256.0D0) ) &
-                **(1.0D0/4.0D0)*Msun_geo, &
+               " Msun_geo = ", two*ten*ten*ten*MSun_geo/(c_light*cm2km) &
+               *ten*ten*ten, " ms :", &
+               ( two*ten*ten*ten*( this% mass_grav1*this% mass_grav2* &
+                  ( this% mass_grav1 + this% mass_grav2 ) ) &
+                  /(five/(two**(two*four))) )**(one/four), "M_sun^geo = ", &
+                ( two*ten*ten*ten*( this% mass_grav1*this% mass_grav2* &
+                ( this% mass_grav1 + this% mass_grav2 ) ) &
+                /(five/(two**(two*four))) ) &
+                **(one/four)*Msun_geo, &
                 "km, from Peters_PR_136_B1224_1964, eq. (5.10)"
       PRINT *
       PRINT *, " Radii of star 1: "

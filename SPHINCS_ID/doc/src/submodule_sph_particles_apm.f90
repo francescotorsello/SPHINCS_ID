@@ -1368,7 +1368,21 @@ SUBMODULE (sph_particles) apm
       ENDDO find_nan_in_art_pr
       !$OMP END PARALLEL DO
 
-      art_pr_max= MAXVAL( art_pr(1:npart_real), DIM= 1 )
+      !art_pr_max= MAXVAL( art_pr(1:npart_real), DIM= 1 )
+      art_pr_max= - HUGE(one)
+      err_N_max = - HUGE(one)
+      err_N_min =   HUGE(one)
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, art_pr, dNstar ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION( MAX: art_pr_max, err_N_max ) &
+      !$OMP             REDUCTION( MIN: err_N_min )
+      DO a= 1, npart_real, 1
+        art_pr_max= MAX( art_pr_max, art_pr(a) )
+        err_N_max = MAX( err_N_max, ABS(dNstar(a)) )
+        err_N_min = MIN( err_N_min, ABS(dNstar(a)) )
+      ENDDO
+      !$OMP END PARALLEL DO
       IF( .NOT.is_finite_number( art_pr_max ) )THEN
         PRINT *, "** ERROR! art_pr_max is not a finite number!", &
                  " Stopping.."
@@ -1377,8 +1391,8 @@ SUBMODULE (sph_particles) apm
       ENDIF
 
       ! TODO: make these parallelized. Fortran does not do that automatically
-      err_N_max = MAXVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
-      err_N_min = MINVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
+      !err_N_max = MAXVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
+      !err_N_min = MINVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
       !err_N_mean= &
       !SUM( ABS(dNstar), DIM= 1, MASK= nstar_id(1:npart_real) > zero )/npart_real
 

@@ -725,13 +725,15 @@ PROGRAM sphincs_id
     IF( run_spacetime )THEN
 
       CALL bssn_forms(itr)% print_summary()
-      PRINT *, "   Estimate of the ADM momentum of the fluid computed using ", &
-               "the SPH hydro fields and the metric mapped with ", &
-               "mesh-to-particle mapping= "
-      PRINT *, "   (", adm_mom_m2p(1), ","
-      PRINT *, "    ", adm_mom_m2p(2), ","
-      PRINT *, "    ", adm_mom_m2p(3), ") Msun*c"
-      PRINT *
+      IF( run_sph )THEN
+        PRINT *, "   Estimate of the ADM momentum of the fluid computed ", &
+                 "using the SPH hydro fields and the metric mapped with ", &
+                 "mesh-to-particle mapping= "
+        PRINT *, "   (", adm_mom_m2p(1), ","
+        PRINT *, "    ", adm_mom_m2p(2), ","
+        PRINT *, "    ", adm_mom_m2p(3), ") Msun*c"
+        PRINT *
+      ENDIF
 
     ENDIF
 

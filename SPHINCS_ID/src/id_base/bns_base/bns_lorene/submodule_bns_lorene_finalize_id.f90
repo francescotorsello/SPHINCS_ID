@@ -165,59 +165,59 @@ SUBMODULE (bns_lorene) finalize_id
 !    !$OMP END PARALLEL DO
 
 
-    adm_mom= zero
-    !$OMP PARALLEL DO DEFAULT(NONE) &
-    !$OMP             SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
-    !$OMP                     theta, u, pr, nlrf, vel_u, &
-    !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz ) &
-    !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g4, v_l ) &
-    !$OMP             REDUCTION( +: adm_mom )
-    DO a= 1, npart, 1
-
-      CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
-                       [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
-                       g4 )
-
-      CALL determinant_sym4x4( g4, det )
-      IF( ABS(det) < 1D-10 )THEN
-        PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                 // "effectively 0 at particle ", a
-        PRINT *, " * det= ", det
-        PRINT *, " * Stopping..."
-        STOP
-      ELSEIF( det > 0 )THEN
-        PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                 // "positive at particle ", a
-        PRINT *, " * det= ", det
-        PRINT *, " * Stopping..."
-        STOP
-      ENDIF
-
-      v_u= [one, vel_u(:,a)]
-      CALL lower_index_4vector( v_u, g4, v_l )
-
-      CALL spatial_vector_norm_sym3x3( &
-                    [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
-                    [shift_x(a),shift_y(a),shift_z(a)], shift_norm2 )
-
-      DO j= jx, jz, 1
-
-        adm_mom(j)= adm_mom(j) &
-            - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one ) &
-              *theta(a)*( one + u(a) + pr(a)/nlrf(a) )*v_l(j)
-
-      ENDDO
-
-      !IF( a == 1 )THEN
-      !  PRINT *, "v_l inside compute_adm= ", v_l
-      !  PRINT *
-      !ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    PRINT *, "adm_mom before correction=", adm_mom
-    PRINT *
+ !   adm_mom= zero
+ !   !$OMP PARALLEL DO DEFAULT(NONE) &
+ !   !$OMP             SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
+ !   !$OMP                     theta, u, pr, nlrf, vel_u, &
+ !   !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz ) &
+ !   !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g4, v_l ) &
+ !   !$OMP             REDUCTION( +: adm_mom )
+ !   DO a= 1, npart, 1
+ !
+ !     CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
+ !                      [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+ !                      g4 )
+ !
+ !     CALL determinant_sym4x4( g4, det )
+ !     IF( ABS(det) < 1D-10 )THEN
+ !       PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+ !                // "effectively 0 at particle ", a
+ !       PRINT *, " * det= ", det
+ !       PRINT *, " * Stopping..."
+ !       STOP
+ !     ELSEIF( det > 0 )THEN
+ !       PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+ !                // "positive at particle ", a
+ !       PRINT *, " * det= ", det
+ !       PRINT *, " * Stopping..."
+ !       STOP
+ !     ENDIF
+ !
+ !     v_u= [one, vel_u(:,a)]
+ !     CALL lower_index_4vector( v_u, g4, v_l )
+ !
+ !     CALL spatial_vector_norm_sym3x3( &
+ !                   [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+ !                   [shift_x(a),shift_y(a),shift_z(a)], shift_norm2 )
+ !
+ !     DO j= jx, jz, 1
+ !
+ !       adm_mom(j)= adm_mom(j) &
+ !           - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one ) &
+ !             *theta(a)*( one + u(a) + pr(a)/nlrf(a) )*v_l(j)
+ !
+ !     ENDDO
+ !
+ !     !IF( a == 1 )THEN
+ !     !  PRINT *, "v_l inside compute_adm= ", v_l
+ !     !  PRINT *
+ !     !ENDIF
+ !
+ !   ENDDO
+ !   !$OMP END PARALLEL DO
+ !
+ !   PRINT *, "adm_mom before correction=", adm_mom
+ !   PRINT *
 
 !===============================================================================
 
@@ -414,60 +414,60 @@ SUBMODULE (bns_lorene) finalize_id
 
 !===============================================================================
 
-    adm_mom= zero
-    !$OMP PARALLEL DO DEFAULT(NONE) &
-    !$OMP             SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
-    !$OMP                     theta, u, pr, nlrf, vel_u, &
-    !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz ) &
-    !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g4, v_l ) &
-    !$OMP             REDUCTION( +: adm_mom )
-    DO a= 1, npart, 1
-
-      CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
-                       [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
-                       g4 )
-
-      CALL determinant_sym4x4( g4, det )
-      IF( ABS(det) < 1D-10 )THEN
-        PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                 // "effectively 0 at particle ", a
-        PRINT *, " * det= ", det
-        PRINT *, " * Stopping..."
-        STOP
-      ELSEIF( det > 0 )THEN
-        PRINT *, "** ERROR! The determinant of the spacetime metric is " &
-                 // "positive at particle ", a
-        PRINT *, " * det= ", det
-        PRINT *, " * Stopping..."
-        STOP
-      ENDIF
-
-      v_u= [one, vel_u(:,a)]
-      CALL lower_index_4vector( v_u, g4, v_l )
-
-      CALL spatial_vector_norm_sym3x3( &
-                    [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
-                    [shift_x(a),shift_y(a),shift_z(a)], shift_norm2 )
-
-      DO j= jx, jz, 1
-
-        adm_mom(j)= adm_mom(j) &
-            - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one ) &
-              *theta(a)*( one + u(a) + pr(a)/nlrf(a) )*v_l(j)
-
-      ENDDO
-
-      !IF( a == 1 )THEN
-      !  PRINT *, "v_l inside compute_adm= ", v_l
-      !  PRINT *
-      !ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    PRINT *, "adm_mom after correction=", adm_mom
-    PRINT *
-    !STOP
+ !   adm_mom= zero
+ !   !$OMP PARALLEL DO DEFAULT(NONE) &
+ !   !$OMP             SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
+ !   !$OMP                     theta, u, pr, nlrf, vel_u, &
+ !   !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz ) &
+ !   !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g4, v_l ) &
+ !   !$OMP             REDUCTION( +: adm_mom )
+ !   DO a= 1, npart, 1
+ !
+ !     CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
+ !                      [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+ !                      g4 )
+ !
+ !     CALL determinant_sym4x4( g4, det )
+ !     IF( ABS(det) < 1D-10 )THEN
+ !       PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+ !                // "effectively 0 at particle ", a
+ !       PRINT *, " * det= ", det
+ !       PRINT *, " * Stopping..."
+ !       STOP
+ !     ELSEIF( det > 0 )THEN
+ !       PRINT *, "** ERROR! The determinant of the spacetime metric is " &
+ !                // "positive at particle ", a
+ !       PRINT *, " * det= ", det
+ !       PRINT *, " * Stopping..."
+ !       STOP
+ !     ENDIF
+ !
+ !     v_u= [one, vel_u(:,a)]
+ !     CALL lower_index_4vector( v_u, g4, v_l )
+ !
+ !     CALL spatial_vector_norm_sym3x3( &
+ !                   [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+ !                   [shift_x(a),shift_y(a),shift_z(a)], shift_norm2 )
+ !
+ !     DO j= jx, jz, 1
+ !
+ !       adm_mom(j)= adm_mom(j) &
+ !           - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one ) &
+ !             *theta(a)*( one + u(a) + pr(a)/nlrf(a) )*v_l(j)
+ !
+ !     ENDDO
+ !
+ !     !IF( a == 1 )THEN
+ !     !  PRINT *, "v_l inside compute_adm= ", v_l
+ !     !  PRINT *
+ !     !ENDIF
+ !
+ !   ENDDO
+ !   !$OMP END PARALLEL DO
+ !
+ !   PRINT *, "adm_mom after correction=", adm_mom
+ !   PRINT *
+ !   !STOP
 
 
   END PROCEDURE correct_adm_linear_momentum
