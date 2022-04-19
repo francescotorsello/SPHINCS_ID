@@ -1003,7 +1003,7 @@ SUBMODULE (sph_particles) spherical_surfaces
       PRINT *, " * Placed", npart_shell( r )/2, &
                " particles on one emisphere of spherical surface ", r, &
                " out of ", n_shells
-      PRINT *, "   Shell radius= ", shell_radii( r )/radius*ten*ten, &
+      PRINT *, "   Surface radius= ", shell_radii( r )/radius*ten*ten, &
               "% of the radius of the star"
       PRINT *, "   Placed", npart_out, " particles overall, so far."
       IF( r /= CEILING(DBLE(n_shells)/two) ) PRINT *, &

@@ -16,4 +16,5 @@
 !sphincs_id_particles.dat
 !SPHINCS_fm_input.dat
 !COPYING
+!README.md
 **/doc/**/*.f90
