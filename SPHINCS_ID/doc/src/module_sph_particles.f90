@@ -157,6 +157,8 @@ MODULE sph_particles
     !  `.FALSE.` otherwise
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: barycenter
     !# Array storing the centers of mass of the matter objects
+    DOUBLE PRECISION, DIMENSION(4):: barycenter_system
+    !# Array storing the center of mass of the **entire particle distribution**
 
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
@@ -1018,23 +1020,23 @@ MODULE sph_particles
     END SUBROUTINE compute_and_print_sph_variables
 
     MODULE SUBROUTINE perform_apm( get_density, get_nstar_id, &
-                                       npart_output, &
-                                       pos_input, &
-                                       pvol, h_output, nu_output, &
-                                       center, &
-                                       com_star, &
-                                       mass, &
-                                       sizes, &
-                                       apm_max_it, max_inc, &
-                                       mass_it, correct_nu, nuratio_thres, &
-                                       nuratio_des, &
-                                       nx_gh, ny_gh, nz_gh, ghost_dist, &
-                                       use_atmosphere, &
-                                       remove_atmosphere, &
-                                       print_step, &
-                                       namefile_pos_id, namefile_pos, &
-                                       namefile_results, &
-                                       validate_position )
+                                   npart_output, &
+                                   pos_input, &
+                                   pvol, h_output, nu_output, &
+                                   center, &
+                                   com_star, &
+                                   mass, &
+                                   sizes, &
+                                   apm_max_it, max_inc, &
+                                   mass_it, correct_nu, nuratio_thres, &
+                                   nuratio_des, &
+                                   nx_gh, ny_gh, nz_gh, ghost_dist, &
+                                   use_atmosphere, &
+                                   remove_atmosphere, &
+                                   print_step, &
+                                   namefile_pos_id, namefile_pos, &
+                                   namefile_results, &
+                                   validate_position )
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -1053,7 +1055,7 @@ MODULE sph_particles
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
-        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id, nstar_eul_id )
+        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id )!, nstar_eul_id )
         !! Computes the proper baryon number density at the particle positions
           INTEGER, INTENT(IN):: npart
           !! Number of real particles (i.e., no ghost particles included here)
@@ -1065,7 +1067,7 @@ MODULE sph_particles
           !! Array of \(z\) coordinates
           DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
           !! Array to store the computed proper baryon number density
-          DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
+          !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
           !# Array to store the computed proper baryon number density seen
           !  by the Eulerian observer
         END SUBROUTINE get_nstar_id
@@ -1572,18 +1574,10 @@ MODULE sph_particles
     END FUNCTION check_particle_position
 
 
-    MODULE SUBROUTINE correct_center_of_mass( npart, pos, nu, get_density,&
-                                       validate_pos, com_star, verbose )
-
-      !***********************************************************
-      !
-      !# Translate the particles so that their center of mass
-      !  coincides with the center of mass of the star, given by
-      !  |id|
-      !
-      !  FT 1.09.2021
-      !
-      !***********************************************************
+    MODULE SUBROUTINE correct_center_of_mass &
+    ( npart, pos, nu, get_density, validate_pos, com_star, verbose )
+    !# Translate the particles so that their center of mass
+    !  coincides with the center of mass of the star, given by |id|
 
       IMPLICIT NONE
 
@@ -1614,6 +1608,19 @@ MODULE sph_particles
     END SUBROUTINE correct_center_of_mass
 
 
+    MODULE SUBROUTINE get_neighbours_bf &
+    (ipart,npart,pos,h,dimensions,nnei,neilist)
+    !# Get neighbours of particle ipart in a "brute force" way
+
+      IMPLICIT NONE
+
+      INTEGER,          INTENT(IN) :: ipart, npart, dimensions
+      DOUBLE PRECISION, INTENT(IN) :: pos(dimensions,npart), h(npart)
+      INTEGER,          INTENT(OUT):: nnei, neilist(npart)
+
+    END SUBROUTINE get_neighbours_bf
+
+
   END INTERFACE
 
 
@@ -1634,8 +1641,8 @@ MODULE sph_particles
 
 
     MODULE SUBROUTINE compute_adm_momentum_fluid_fields &
-      ( npart, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, lapse, &
-        shift_x, shift_y, shift_z, nu, theta, nlrf, pr, u, vel_u, adm_mom )
+    ( npart, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, lapse, &
+      shift_x, shift_y, shift_z, nu, theta, nlrf, pr, u, vel_u, adm_mom )
     !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
     !  fluid using the |sph| fields
     !  @todo add reference
@@ -1674,7 +1681,7 @@ MODULE sph_particles
 
 
     MODULE SUBROUTINE compute_adm_momentum_fluid_canmom &
-      ( npart, g3, lapse, shift, nu, s_l, adm_mom )
+    ( npart, g3, lapse, shift, nu, s_l, adm_mom )
     !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
     !  fluid using the canonical momentum per baryon on the particles
     !  @todo add reference

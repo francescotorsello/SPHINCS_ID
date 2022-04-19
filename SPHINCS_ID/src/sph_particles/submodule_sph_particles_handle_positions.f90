@@ -615,4 +615,50 @@ SUBMODULE (sph_particles) handle_positions
   END PROCEDURE correct_center_of_mass
 
 
+  MODULE PROCEDURE get_neighbours_bf
+
+    !**************************************************************
+    !
+    !# just for test purposes: get neighbours of particle ipart in
+    !  a "brute force" way; ipart is ALSO on the neighbour list;
+    !  SKR 8.2.2010
+    !
+    !  Removed ipart from its own neighbors' list
+    !  FT 04.06.2021
+    !
+    !**************************************************************
+
+    IMPLICIT NONE
+
+    INTEGER a
+    DOUBLE PRECISION diff(dimensions),d2,r_int2
+
+    ! square of interaction radius
+    r_int2= (2.D0*h(ipart))**2
+
+    nnei= 0
+    !$OMP PARALLEL DO DEFAULT(NONE) &
+    !$OMP             SHARED(pos,dimensions,ipart,npart,r_int2,nnei,neilist)&
+    !$OMP             PRIVATE(a,diff,d2)
+    DO a= 1, npart, 1
+
+      IF( a /= ipart )THEN
+
+        diff= pos(1:dimensions,a)-pos(1:dimensions,ipart)
+        d2= DOT_PRODUCT(diff,diff)
+
+        ! neighbour?
+        IF(d2 < r_int2)THEN
+          nnei= nnei + 1
+          neilist(nnei)= a
+        ENDIF
+
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+  END PROCEDURE get_neighbours_bf
+
+
 END SUBMODULE handle_positions

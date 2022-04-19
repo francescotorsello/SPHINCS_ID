@@ -68,7 +68,7 @@ SUBMODULE (bns_lorene) finalize_id
 
     DOUBLE PRECISION:: shift_norm2, shift_delta
     DOUBLE PRECISION, DIMENSION(3,npart):: vel_l_corr
-    DOUBLE PRECISION, DIMENSION(3):: delta, adm_mom
+    DOUBLE PRECISION, DIMENSION(3):: delta!, com_vel!, adm_mom
     DOUBLE PRECISION:: g4(n_sym4x4), det, den
     DOUBLE PRECISION, DIMENSION(3,3):: g3mat
     DOUBLE PRECISION, DIMENSION(3,3):: g3mat_inv
@@ -87,6 +87,7 @@ SUBMODULE (bns_lorene) finalize_id
     !
 
 !    com_vel= adm_mom_error/adm_mass
+!    PRINT *, "com_vel= ", com_vel
 !
 !    !$OMP PARALLEL DO DEFAULT( NONE ) &
 !    !$OMP             SHARED( npart, lapse, shift_x, shift_y, shift_z, vel_u, &
@@ -241,12 +242,16 @@ SUBMODULE (bns_lorene) finalize_id
     ENDDO
     !$OMP END PARALLEL DO
 
+    delta(1)= - adm_mom_error(1)/den
+    delta(2)= - adm_mom_error(2)/den
+    delta(3)= - adm_mom_error(3)/den
+
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( npart, lapse, shift_x, shift_y, shift_z, vel_u, &
     !$OMP                     vel_l_corr, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-    !$OMP                     theta, adm_mom_error, den, nu, nstar, nlrf ) &
+    !$OMP                     theta, adm_mom_error, nu, nstar, nlrf, delta ) &
     !$OMP             PRIVATE( a, j, shift_norm2, g4, g3mat, g3mat_inv, det, &
-    !$OMP                      v_l, v_u, g4mat, g4mat_inv, delta, shift_delta )
+    !$OMP                      v_l, v_u, g4mat, g4mat_inv, shift_delta )
     DO a= 1, npart, 1
 
       CALL spatial_vector_norm_sym3x3( &
@@ -305,11 +310,8 @@ SUBMODULE (bns_lorene) finalize_id
 
       CALL lower_index_4vector( [one, vel_u(:,a)], g4, v_l )
 
-      delta(1)= - adm_mom_error(1)/den
-      delta(2)= - adm_mom_error(2)/den
-      delta(3)= - adm_mom_error(3)/den
-      shift_delta= shift_x(a)*delta(jx) + shift_y(a)*delta(jy) &
-                   + shift_z(a)*delta(jz)
+      !shift_delta= shift_x(a)*delta(jx) + shift_y(a)*delta(jy) &
+      !             + shift_z(a)*delta(jz)
 
       !vel_l_corr(jx,a)= delta(jx) &
       !               /( two*g3mat_inv(1,1)*NORM2(delta)**two ) &

@@ -64,7 +64,7 @@ SUBMODULE (standard_tpo_formulation) analysis
               cnt_p1, cnt_p2, cnt_p3, cnt_oo, grid_points, i, j, k, &
               unit_analysis, nx, ny, nz
 
-    DOUBLE PRECISION:: tmp, total, dx, dy, dz, detg3
+    DOUBLE PRECISION:: total, dx, dy, dz, detg3
 
     LOGICAL:: exist
     !LOGICAL, PARAMETER:: DEBUG= .FALSE.

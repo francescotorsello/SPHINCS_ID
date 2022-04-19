@@ -190,8 +190,8 @@ SUBMODULE (sph_particles) apm
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_id
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_eul_id
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_eul
+    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_eul_id
+    !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_eul
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_sph
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
@@ -838,24 +838,24 @@ SUBMODULE (sph_particles) apm
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( nstar_eul_id ))THEN
-      ALLOCATE( nstar_eul_id( npart_all ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array nstar_eul_id in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( nu_eul ))THEN
-      ALLOCATE( nu_eul( npart_real ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array nu_eul in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
+    !IF(.NOT.ALLOCATED( nstar_eul_id ))THEN
+    !  ALLOCATE( nstar_eul_id( npart_all ), STAT= ios, ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array nstar_eul_id in SUBROUTINE ", &
+    !              "perform_apm. The error message is",&
+    !              err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
+    !IF(.NOT.ALLOCATED( nu_eul ))THEN
+    !  ALLOCATE( nu_eul( npart_real ), STAT= ios, ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array nu_eul in SUBROUTINE ", &
+    !              "perform_apm. The error message is",&
+    !              err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
 
     max_nu= zero
     min_nu= 1.0D60
@@ -873,10 +873,10 @@ SUBMODULE (sph_particles) apm
     IF( debug ) PRINT *, "7"
 
     CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
-                                  all_pos(2,1:npart_real), &
-                                  all_pos(3,1:npart_real), &
-                                  nstar_id, nstar_eul_id, &
-                                  use_atmosphere )
+                           all_pos(2,1:npart_real), &
+                           all_pos(3,1:npart_real), &
+                           nstar_id, &!nstar_eul_id, &
+                           use_atmosphere )
 
   ! The following test is done inside get_nstar_id_atm. Kept here for paranoia
   !  !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -922,16 +922,16 @@ SUBMODULE (sph_particles) apm
 
     ENDIF
 
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-    !$OMP             PRIVATE( a )
-    compute_nu_eul1: DO a= 1, npart_real, 1
-      nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-    ENDDO compute_nu_eul1
-    !$OMP END PARALLEL DO
+   ! !$OMP PARALLEL DO DEFAULT( NONE ) &
+   ! !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+   ! !$OMP             PRIVATE( a )
+   ! compute_nu_eul1: DO a= 1, npart_real, 1
+   !   nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+   ! ENDDO compute_nu_eul1
+   ! !$OMP END PARALLEL DO
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                 nu_eul, get_density, &
+                                 nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -979,16 +979,16 @@ SUBMODULE (sph_particles) apm
    !   ENDIF
    ! ENDDO
 
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-    !$OMP             PRIVATE( a )
-    compute_nu_eul2: DO a= 1, npart_real, 1
-      nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-    ENDDO compute_nu_eul2
-    !$OMP END PARALLEL DO
+  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !  !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+  !  !$OMP             PRIVATE( a )
+  !  compute_nu_eul2: DO a= 1, npart_real, 1
+  !    nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+  !  ENDDO compute_nu_eul2
+  !  !$OMP END PARALLEL DO
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                 nu_eul, get_density, &
+                                 nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -1106,16 +1106,16 @@ SUBMODULE (sph_particles) apm
 
       IF( debug ) PRINT *, "enforcing center of mass..."
 
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-      !$OMP             PRIVATE( a )
-      compute_nu_eul3: DO a= 1, npart_real, 1
-        nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-      ENDDO compute_nu_eul3
-      !$OMP END PARALLEL DO
+   !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+   !   !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+   !   !$OMP             PRIVATE( a )
+   !   compute_nu_eul3: DO a= 1, npart_real, 1
+   !     nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+   !   ENDDO compute_nu_eul3
+   !   !$OMP END PARALLEL DO
 
       CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                   nu_eul, get_density, &
+                                   nu, get_density, &
                                    validate_position_final, com_star )
 
       IF( debug ) PRINT *, "mirroring particles..."
@@ -1264,10 +1264,10 @@ SUBMODULE (sph_particles) apm
       !$OMP END PARALLEL DO
 
       CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
-                                        all_pos(2,1:npart_real), &
-                                        all_pos(3,1:npart_real), &
-                                        nstar_id, nstar_eul_id, &
-                                        use_atmosphere )
+                             all_pos(2,1:npart_real), &
+                             all_pos(3,1:npart_real), &
+                             nstar_id, &!nstar_eul_id, &
+                             use_atmosphere )
 
 ! The following test is done inside get_nstar_id_atm. Kept here for paranoia
 !      !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -1368,7 +1368,12 @@ SUBMODULE (sph_particles) apm
       ENDDO find_nan_in_art_pr
       !$OMP END PARALLEL DO
 
+      ! TODO: make these parallelized. Fortran does not do that automatically
       !art_pr_max= MAXVAL( art_pr(1:npart_real), DIM= 1 )
+      !err_N_max = MAXVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
+      !err_N_min = MINVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
+      !err_N_mean= &
+      !SUM( ABS(dNstar), DIM= 1, MASK= nstar_id(1:npart_real) > zero )/npart_real
       art_pr_max= - HUGE(one)
       err_N_max = - HUGE(one)
       err_N_min =   HUGE(one)
@@ -1389,12 +1394,6 @@ SUBMODULE (sph_particles) apm
         PRINT *
         STOP
       ENDIF
-
-      ! TODO: make these parallelized. Fortran does not do that automatically
-      !err_N_max = MAXVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
-      !err_N_min = MINVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
-      !err_N_mean= &
-      !SUM( ABS(dNstar), DIM= 1, MASK= nstar_id(1:npart_real) > zero )/npart_real
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_real, dNstar, nstar_id ) &
@@ -2013,15 +2012,15 @@ SUBMODULE (sph_particles) apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-    !$OMP             PRIVATE( a )
-    compute_nu_eul4: DO a= 1, npart_real, 1
-      nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-    ENDDO compute_nu_eul4
-    !$OMP END PARALLEL DO
+  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !  !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+  !  !$OMP             PRIVATE( a )
+  !  compute_nu_eul4: DO a= 1, npart_real, 1
+  !    nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+  !  ENDDO compute_nu_eul4
+  !  !$OMP END PARALLEL DO
 
-    CALL correct_center_of_mass( npart_real, pos, nu_eul, get_density, &
+    CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -2129,7 +2128,8 @@ SUBMODULE (sph_particles) apm
     IF( debug ) PRINT *, "3"
 
     CALL get_nstar_id_atm( npart_real, pos(1,:), pos(2,:), pos(3,:), &
-                           nstar_id, nstar_eul_id, use_atmosphere )
+                           nstar_id, &!nstar_eul_id, &
+                           use_atmosphere )
 
     nu= nu_all
     PRINT *, " * Baryon number on all particles before correction nu_all= ", &
@@ -2236,7 +2236,7 @@ SUBMODULE (sph_particles) apm
 
          CALL get_nstar_id_atm( npart_real, pos(1,:), &
                                 pos(2,:), &
-                                pos(3,:), nstar_id, nstar_eul_id, &
+                                pos(3,:), nstar_id, &!nstar_eul_id, &
                                 use_atmosphere )
 
          !nstar_id( npart_real+1:npart_all )= zero
@@ -2387,15 +2387,15 @@ SUBMODULE (sph_particles) apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-    !$OMP             PRIVATE( a )
-    compute_nu_eul5: DO a= 1, npart_real, 1
-      nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-    ENDDO compute_nu_eul5
-    !$OMP END PARALLEL DO
+ !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+ !   !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
+ !   !$OMP             PRIVATE( a )
+ !   compute_nu_eul5: DO a= 1, npart_real, 1
+ !     nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
+ !   ENDDO compute_nu_eul5
+ !   !$OMP END PARALLEL DO
 
-    CALL correct_center_of_mass( npart_real, pos, nu_eul, get_density, &
+    CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -2448,7 +2448,8 @@ SUBMODULE (sph_particles) apm
 
     CALL get_nstar_id_atm( npart_real, pos(1,:), &
                            pos(2,:), &
-                           pos(3,:), nstar_id, nstar_eul_id, use_atmosphere )
+                           pos(3,:), nstar_id, &!nstar_eul_id, &
+                           use_atmosphere )
 
     dN_av = zero
     dN_max= zero
@@ -3008,8 +3009,9 @@ SUBMODULE (sph_particles) apm
   !  END FUNCTION get_density_atm
 
 
-    SUBROUTINE get_nstar_id_atm( npart_real, x, y, z, nstar_id, nstar_eul_id, &
-                                 use_atmosphere )
+    SUBROUTINE get_nstar_id_atm &
+    ( npart_real, x, y, z, nstar_id, use_atmosphere )
+    !, nstar_eul_id, use_atmosphere )
 
       !*******************************************************
       !
@@ -3032,7 +3034,7 @@ SUBMODULE (sph_particles) apm
       !! Array of \(z\) coordinates
       DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart_real)
       !! Array to store the computed proper baryon number density
-      DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
+      !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
       !# Array to store the computed proper baryon number density seen
       !  by the Eulerian observer
       LOGICAL,  INTENT( IN ):: use_atmosphere
@@ -3040,28 +3042,28 @@ SUBMODULE (sph_particles) apm
       !  the real aprticles more freedom to move around and adjust;
       !  `.FALSE.` otherwise
 
-      CALL get_nstar_id( npart_real, x, y, z, nstar_id, nstar_eul_id )
+      CALL get_nstar_id( npart_real, x, y, z, nstar_id )!, nstar_eul_id )
 
       IF( use_atmosphere .EQV. .TRUE. )THEN
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( npart_real, nstar_id, nstar_eul_id, &
+        !$OMP             SHARED( npart_real, nstar_id, &
         !$OMP                     atmosphere_density ) &
         !$OMP             PRIVATE( a )
         DO a= 1, npart_real, 1
           IF( nstar_id(a) <= atmosphere_density )THEN
             nstar_id(a)= atmosphere_density
           ENDIF
-          IF( nstar_eul_id(a) <= atmosphere_density )THEN
-            nstar_eul_id(a)= atmosphere_density
-          ENDIF
+          !IF( nstar_eul_id(a) <= atmosphere_density )THEN
+          !  nstar_eul_id(a)= atmosphere_density
+          !ENDIF
         ENDDO
         !$OMP END PARALLEL DO
 
       ELSE
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( npart_real, nstar_id, nstar_eul_id ) &
+        !$OMP             SHARED( npart_real, nstar_id ) &
         !$OMP             PRIVATE( a )
         DO a= 1, npart_real, 1
 
@@ -3072,13 +3074,13 @@ SUBMODULE (sph_particles) apm
             PRINT *
             STOP
           ENDIF
-          IF( nstar_eul_id( a ) < tiny_real )THEN
-            PRINT *, "** ERROR! nstar_eul_id(", a, ")=", nstar_eul_id( a ), &
-                     " in SUBROUTINE get_nstar_id_atm."
-            PRINT *, " * Stopping.."
-            PRINT *
-            STOP
-          ENDIF
+          !IF( nstar_eul_id( a ) < tiny_real )THEN
+          !  PRINT *, "** ERROR! nstar_eul_id(", a, ")=", nstar_eul_id( a ), &
+          !           " in SUBROUTINE get_nstar_id_atm."
+          !  PRINT *, " * Stopping.."
+          !  PRINT *
+          !  STOP
+          !ENDIF
 
         ENDDO
         !$OMP END PARALLEL DO
@@ -3086,7 +3088,7 @@ SUBMODULE (sph_particles) apm
       ENDIF
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_real, nstar_id, nstar_eul_id ) &
+      !$OMP             SHARED( npart_real, nstar_id ) &
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
@@ -3098,14 +3100,14 @@ SUBMODULE (sph_particles) apm
           PRINT *
           STOP
         ENDIF
-        IF( .NOT.is_finite_number( nstar_eul_id( a ) ) )THEN
-          PRINT *, "** ERROR! nstar_eul_id(", a, ")= ", nstar_eul_id( a ), &
-                   "is a not a finite number!", &
-                   " in SUBROUTINE get_nstar_id_atm."
-          PRINT *, " * Stopping.."
-          PRINT *
-          STOP
-        ENDIF
+        !IF( .NOT.is_finite_number( nstar_eul_id( a ) ) )THEN
+        !  PRINT *, "** ERROR! nstar_eul_id(", a, ")= ", nstar_eul_id( a ), &
+        !           "is a not a finite number!", &
+        !           " in SUBROUTINE get_nstar_id_atm."
+        !  PRINT *, " * Stopping.."
+        !  PRINT *
+        !  STOP
+        !ENDIF
 
       ENDDO
       !$OMP END PARALLEL DO
@@ -3114,55 +3116,6 @@ SUBMODULE (sph_particles) apm
 
 
   END PROCEDURE perform_apm
-
-
-  SUBROUTINE get_neighbours_bf(ipart,npart,pos,h,dimensions,nnei,neilist)
-
-    !**************************************************************
-    !
-    !# just for test purposes: get neighbours of particle ipart in
-    !  a "brute force" way; ipart is ALSO on the neighbour list;
-    !  SKR 8.2.2010
-    !
-    !  Removed ipart from its own neighbors' list
-    !  FT 04.06.2021
-    !
-    !**************************************************************
-
-    IMPLICIT NONE
-
-    INTEGER,INTENT(IN)::          ipart,npart,dimensions
-    DOUBLE PRECISION,INTENT(IN):: pos(dimensions,npart),h(npart)
-    INTEGER,INTENT(OUT)::         nnei,neilist(npart)
-    INTEGER a
-    DOUBLE PRECISION diff(dimensions),d2,r_int2
-
-    ! square of interaction radius
-    r_int2= (two*h(ipart))**2
-
-    nnei= 0
-    !$OMP PARALLEL DO DEFAULT(NONE) &
-    !$OMP             SHARED(pos,dimensions,ipart,npart,r_int2,nnei,neilist)&
-    !$OMP             PRIVATE(a,diff,d2)
-    DO a= 1, npart, 1
-
-      IF( a /= ipart )THEN
-
-        diff= pos(1:dimensions,a)-pos(1:dimensions,ipart)
-        d2= DOT_PRODUCT(diff,diff)
-
-        ! neighbour?
-        IF(d2 < r_int2)THEN
-          nnei= nnei + 1
-          neilist(nnei)= a
-        ENDIF
-
-      ENDIF
-
-    ENDDO
-    !$OMP END PARALLEL DO
-
-  END SUBROUTINE get_neighbours_bf
 
   
 END SUBMODULE apm
