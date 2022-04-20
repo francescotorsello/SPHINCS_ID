@@ -93,8 +93,6 @@ SUBMODULE (sph_particles) apm
     !
     !*****************************************************
 
-    USE, INTRINSIC:: IEEE_ARITHMETIC, &
-                             ONLY: IEEE_IS_FINITE
     USE utility,             ONLY: cnt, spherical_from_cartesian
     USE constants,           ONLY: half, third, Msun, amu, pi
 
@@ -179,7 +177,6 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: ghost_pos
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: all_pos_prev
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: correction_pos
@@ -271,21 +268,6 @@ SUBMODULE (sph_particles) apm
     h_guess= zero
     DO a= 1, npart_real, 1
       h_guess(a)= three*(pvol(a)**third)
-      !IF( .NOT.is_finite_number( h_guess(a) ) )THEN
-      !  PRINT *, " ** ERROR! h_guess(", a, &
-      !           ") is a NaN in SUBROUTINE perform_apm!"
-      !  PRINT *, "pvol(", a, ")=", pvol(a)
-      !  PRINT *, "    Stopping..."
-      !  PRINT *
-      !  STOP
-      !ENDIF
-      !IF( h_guess( a ) <= zero )THEN
-      !  PRINT *, "** ERROR! h_guess(", a, ") is zero or negative!"
-      !  PRINT *, "   pvol(", a, ")=", pvol(a)
-      !  PRINT *, "   Stopping..."
-      !  PRINT *
-      !  STOP
-      !ENDIF
     ENDDO
 
     find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
@@ -415,256 +397,7 @@ SUBMODULE (sph_particles) apm
     !--  Placing ghost particles  --!
     !-------------------------------!
 
-    IF(.NOT.ALLOCATED( ghost_pos ))THEN
-      ALLOCATE( ghost_pos( 3, max_npart ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
-
-    ghost_pos= zero
-
-    PRINT *, " * Placing ghost particles on a lattice between ellipsodial ", &
-             "surfaces..."
-    PRINT *
-
-    IF( debug ) PRINT *, "npart_real= ", npart_real
-
-    max_r_real= zero
-    DO itr= 1, npart_real, 1
-
-      r_real= SQRT( ( pos_input( 1, itr ) - center(1) )**two &
-                  + ( pos_input( 2, itr ) - center(2) )**two &
-                  + ( pos_input( 3, itr ) - center(3) )**two )
-      IF( r_real > max_r_real ) max_r_real= r_real
-
-    ENDDO
-
-    nx= nx_gh
-    ny= ny_gh
-    nz= nz_gh
-    xmin= center(1) - sizes(1)*( one + eps )
-    xmax= center(1) + sizes(2)*( one + eps )
-    ymin= center(2) - sizes(3)*( one + eps )
-    ymax= center(2) + sizes(4)*( one + eps )
-    zmin= center(3) - sizes(5)*( one + eps )
-    zmax= center(3) + sizes(6)*( one + eps )
-    dx= ABS( xmax - xmin )/DBLE( nx )
-    dy= ABS( ymax - ymin )/DBLE( ny )
-    dz= ABS( zmax - zmin )/DBLE( nz )
-
-    IF(.NOT.ALLOCATED( ghost_pos_tmp ))THEN
-      ALLOCATE( ghost_pos_tmp( 3, nx, ny, nz ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
-
-    rad_x= larger_radius + ghost_dist !+ multiple_h_av*h_av
-    rad_y= radius_y      + ghost_dist !+ multiple_h_av*h_av
-    rad_z= radius_z      + ghost_dist !+ multiple_h_av*h_av
-
-    PRINT *, "** Distance between the size of the object and the ghost ", &
-             "particles: ghost_dist =", ghost_dist
-    PRINT *
-
-    IF( debug ) PRINT *, "larger_radius= ", larger_radius
-    IF( debug ) PRINT *, "radius_y= ", radius_y
-    IF( debug ) PRINT *, "radius_z= ", radius_z
-    IF( debug ) PRINT *, "rad_x= ", rad_x
-    IF( debug ) PRINT *, "rad_y= ", rad_y
-    IF( debug ) PRINT *, "rad_z= ", rad_z
-    IF( debug ) PRINT *
-
-    ghost_pos_tmp= HUGE(zero)
-
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( nx, ny, nz, xmin, ymin, zmin, dx, dy, dz, &
-    !$OMP                     ghost_pos_tmp, &
-    !$OMP                     center, rad_x, rad_y, rad_z ) &
-    !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp, &
-    !$OMP                      x_ell, y_ell, z_ell, r, theta, phi, &
-    !$OMP                      r_ell, theta_ell, phi_ell )
-    DO k= 1, nz, 1
-
-      ztemp= zmin + dz/two + DBLE( k - 1 )*dz
-
-      DO j= 1, ny, 1
-
-        ytemp= ymin + dy/two + DBLE( j - 1 )*dy
-
-        DO i= 1, nx, 1
-
-          xtemp= xmin + dx/two + DBLE( i - 1 )*dx
-
-          CALL spherical_from_cartesian( xtemp, ytemp, ztemp, &
-                                         center(1), center(2), center(3), &
-                                         r, theta, phi )
-
-          x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
-          y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
-          z_ell= center(3) + rad_z*COS(theta)
-
-       !  x_ell= center(1) + rad_x*COS(ATAN( ( ytemp - center(2) )/( xtemp - center(1) ) )) &
-       !         *SIN(ACOS(( ztemp - center(3) )/SQRT( ( xtemp - center(1) )**two &
-       !         + ( ytemp - center(2) )**two &
-       !         + ( ztemp - center(3) )**two )))
-       !
-       !  y_ell= center(2) + rad_y*SIN(ATAN( ( ytemp - center(2) )/( xtemp - center(1) ) )) &
-       !         *SIN(ACOS(( ztemp - center(3) )/SQRT( ( xtemp - center(1) )**two &
-       !         + ( ytemp - center(2) )**two &
-       !         + ( ztemp - center(3) )**two )))
-       !
-       !  z_ell= center(3) + rad_z*( ( ztemp - center(3) )/SQRT( ( xtemp - center(1) )**two &
-       !         + ( ytemp - center(2) )**two &
-       !         + ( ztemp - center(3) )**two ))
-
-          CALL spherical_from_cartesian( x_ell, y_ell, z_ell, &
-                                         center(1), center(2), center(3), &
-                                         r_ell, theta_ell, phi_ell )
-
-          IF( ( r <= ellipse_thickness*r_ell .AND. r >= r_ell &
-                .AND. &
-                get_density( xtemp, ytemp, ztemp ) <= zero ) &
-           !   .OR. &
-           !   ( SQRT( ( xtemp - center )**two + ytemp**two &
-           !   + ztemp**two ) <= 55zero&
-           !   !ellipse_thickness*SQRT( ( x_ell - center )**two &
-           !   !            + y_ell**two + z_ell**two ) &
-           !   .AND. &
-           !   SQRT( ( xtemp - center )**two + ytemp**two &
-           !         + ztemp**two ) >= 50zero ) & !
-           !   !SQRT( ( x_ell - center )**two + y_ell**two &
-           !   !      + z_ell**two ) )
-          )THEN
-
-            ghost_pos_tmp( 1, i, j, k )= xtemp
-            ghost_pos_tmp( 2, i, j, k )= ytemp
-            ghost_pos_tmp( 3, i, j, k )= ztemp
-
-        !  ELSE
-        !
-        !    PRINT *, SQRT( ( xtemp - center )**two + ytemp**two &
-        !    + ztemp**two ) <= & !
-        !    ellipse_thickness*SQRT( ( x_ell - center )**two &
-        !                + y_ell**two + z_ell**two )
-        !    PRINT *, SQRT( ( xtemp - center )**two + ytemp**two &
-        !    + ztemp**two ) >= &
-        !    SQRT( ( x_ell - center )**two + y_ell**two &
-        !    + z_ell**two )
-        !    PRINT *, get_density( xtemp, ytemp, ztemp ) <= zero
-
-          ENDIF
-
-         ENDDO
-      ENDDO
-    ENDDO
-    !$OMP END PARALLEL DO
-
-    itr= 0
-    DO k= 1, nz, 1
-
-      DO j= 1, ny, 1
-
-        DO i= 1, nx, 1
-
-          IF( ghost_pos_tmp( 1, i, j, k ) < HUGE(zero) )THEN
-
-            itr= itr + 1
-            ghost_pos( 1, itr )= ghost_pos_tmp( 1, i, j, k )
-            ghost_pos( 2, itr )= ghost_pos_tmp( 2, i, j, k )
-            ghost_pos( 3, itr )= ghost_pos_tmp( 3, i, j, k )
-
-          ENDIF
-
-         ENDDO
-      ENDDO
-    ENDDO
-    npart_ghost= itr
-    IF( npart_ghost == 0 )THEN
-      PRINT *, "** ERROR: No ghost particles were placed. Is the PARAMETER ", &
-               "'ghost_dist' appropriate for the physical system?"
-      PRINT *, "Stopping.."
-      PRINT *
-      STOP
-    ENDIF
-    ghost_pos = ghost_pos( :, 1:npart_ghost )
-
-    PRINT *, " * ", npart_ghost, " ghost particles placed around ", &
-             npart_real, "real particles."
-    PRINT *
-
-    DEALLOCATE( ghost_pos_tmp )
-
-    PRINT *, " * Printing ghost particles to file..."
-
-    IF( PRESENT(namefile_pos_id) )THEN
-      finalnamefile= namefile_pos_id
-    ELSE
-      finalnamefile= "apm_pos_id.dat"
-    ENDIF
-
-    INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-    IF( exist )THEN
-        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO a= 1, npart_real, 1
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        1, a, &
-        pos_input( 1, a ), &
-        pos_input( 2, a ), &
-        pos_input( 3, a )
-    ENDDO
-
-    DO a= 1, npart_ghost, 1
-      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        2, a, &
-        ghost_pos( 1, a ), &
-        ghost_pos( 2, a ), &
-        ghost_pos( 3, a )
-    ENDDO
-
-    CLOSE( UNIT= 2 )
-
-    PRINT *, " * Positions of ghost and real particles printed to ", &
-             TRIM(finalnamefile), " ."
-
-    !STOP
-
-    npart_all= npart_real + npart_ghost
-
-    IF(.NOT.ALLOCATED( all_pos ))THEN
-      ALLOCATE( all_pos( 3, npart_all ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
+    CALL place_and_print_ghost_particles()
 
     all_pos( :, 1:npart_real )          = pos_input
     all_pos( :, npart_real+1:npart_all )= ghost_pos
@@ -697,32 +430,6 @@ SUBMODULE (sph_particles) apm
 
     PRINT *, " * Assigning h..."
     PRINT *
-    !good_h= .TRUE.
-    !DO itr= 1, 1, 1
-    !
-    !  IF( debug ) PRINT *, itr
-    !  IF( debug ) PRINT *
-    !
-    !  CALL assign_h( nn_des, &
-    !                 npart_all, &
-    !                 all_pos, h_guess, &
-    !                 h )
-    !
-    !  DO a= 1, npart_all, 1
-    !
-    !    IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
-    !
-    !      h_guess(a)= three*h_guess(a)
-    !      good_h= .FALSE.
-    !      EXIT
-    !
-    !    ENDIF
-    !
-    !  ENDDO
-    !
-    !  IF( good_h ) EXIT
-    !
-    !ENDDO
 
     ! Determine smoothing length so that each particle has exactly
     ! 300 neighbours inside 2h
@@ -759,45 +466,10 @@ SUBMODULE (sph_particles) apm
              n_problematic_h, " particles."
     PRINT *
 
-   ! DO a= 1, npart_all, 1
-   !
-   !   IF( .NOT.is_finite_number( h( a ) ) )THEN
-   !     PRINT *, "** ERROR! h(", a, ") is a NaN!"
-   !     PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-   !     PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-   !     PRINT *, " Stopping..."
-   !     PRINT *
-   !     STOP
-   !   ENDIF
-   !   IF( h( a ) <= zero )THEN
-   !    ! PRINT *, "** ERROR! h(", a, ") is zero or negative!"
-   !    ! PRINT *, " * h_guess(", a, ")= ", h_guess(a)
-   !    ! PRINT *, " * all_pos(:,", a, ")= ", all_pos(:,a)
-   !    ! PRINT *, " * h(", a, ")= ", h(a)
-   !    ! PRINT *, " Stopping..."
-   !    ! PRINT *
-   !    ! STOP
-   !     IF( a == 1 )THEN
-   !       h(a) = h(a + 1)
-   !     ELSE
-   !       h(a) = h(a - 1)
-   !     ENDIF
-   !   ENDIF
-   !
-   ! ENDDO
-
     PRINT *, " * Measure SPH particle number density..."
     PRINT *
 
-    IF(.NOT.ALLOCATED( nstar_sph ))THEN
-      ALLOCATE( nstar_sph( npart_all ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array nstar_sph in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
+    CALL allocate_apm_fields( npart_real, npart_ghost )
 
     nu= one
     CALL density_loop( npart_all, all_pos, &    ! input
@@ -829,46 +501,8 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "4"
 
-    IF(.NOT.ALLOCATED( nstar_id ))THEN
-      ALLOCATE( nstar_id( npart_all ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array nstar_id in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
-    !IF(.NOT.ALLOCATED( nstar_eul_id ))THEN
-    !  ALLOCATE( nstar_eul_id( npart_all ), STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !     PRINT *, "...allocation error for array nstar_eul_id in SUBROUTINE ", &
-    !              "perform_apm. The error message is",&
-    !              err_msg
-    !     STOP
-    !  ENDIF
-    !ENDIF
-    !IF(.NOT.ALLOCATED( nu_eul ))THEN
-    !  ALLOCATE( nu_eul( npart_real ), STAT= ios, ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !     PRINT *, "...allocation error for array nu_eul in SUBROUTINE ", &
-    !              "perform_apm. The error message is",&
-    !              err_msg
-    !     STOP
-    !  ENDIF
-    !ENDIF
-
     max_nu= zero
-    min_nu= 1.0D60
-
-    IF(.NOT.ALLOCATED( art_pr ))THEN
-      ALLOCATE( art_pr( npart_all ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array art_pr in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
+    min_nu= HUGE(one)
 
     IF( debug ) PRINT *, "7"
 
@@ -962,22 +596,11 @@ SUBMODULE (sph_particles) apm
     PRINT *, " * Performing APM iteration..."
     PRINT *
 
-    !ALLOCATE( freeze( npart_all ) )
-    ALLOCATE( correction_pos( 3, npart_all ) )
-    ALLOCATE( all_pos_prev( 3, npart_all ) )
-    ALLOCATE( cnt_move( npart_real ) )
     cnt_move= 0
 
     ! Set the particles to be equal-mass
     nu_all= (mass/DBLE(npart_real))*umass/amu
     nu= nu_all
-   ! DO a= 1, npart_all
-   !   IF( a <= npart_real )THEN
-   !     freeze(a)= 0
-   !   ELSE
-   !     freeze(a)= 1
-   !   ENDIF
-   ! ENDDO
 
   !  !$OMP PARALLEL DO DEFAULT( NONE ) &
   !  !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
@@ -991,25 +614,6 @@ SUBMODULE (sph_particles) apm
                                  nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
-
-    IF(.NOT.ALLOCATED( dNstar ))THEN
-      ALLOCATE( dNstar( npart_real ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array dNstar in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( nu_tmp ))THEN
-      ALLOCATE( nu_tmp( npart_real ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array nu_tmp in SUBROUTINE ", &
-                  "perform_apm. The error message is",&
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
 
     all_pos_prev= -one
     PRINT *, " * The APM iteration starts here."
@@ -1053,54 +657,7 @@ SUBMODULE (sph_particles) apm
      !
      ! END DEBUGGING
 
-        IF( debug ) PRINT *, "printing positions to file..."
-
-        IF( PRESENT(namefile_pos) )THEN
-          finalnamefile= namefile_pos
-        ELSE
-          finalnamefile= "apm_pos.dat"
-        ENDIF
-
-        INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-
-        IF( exist )THEN
-            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-                  FORM= "FORMATTED", &
-                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                  IOMSG= err_msg )
-        ELSE
-            OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-                  FORM= "FORMATTED", &
-                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-        ENDIF
-        IF( ios > 0 )THEN
-          PRINT *, "...error when opening " // TRIM(finalnamefile), &
-                   ". The error message is", err_msg
-          STOP
-        ENDIF
-
-        DO a= 1, npart_real, 1
-          tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
-          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-            1, a, &
-            all_pos( 1, a ), &
-            all_pos( 2, a ), &
-            all_pos( 3, a ), &
-            nu_tmp(a), &
-            tmp, cnt_move(a)
-        ENDDO
-
-        DO a= npart_real + 1, npart_all, 1
-          tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
-          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-            2, a, &
-            all_pos( 1, a ), &
-            all_pos( 2, a ), &
-            all_pos( 3, a ), &
-            tmp
-        ENDDO
-
-        CLOSE( UNIT= 2 )
+        CALL dump_apm_pos()
 
       ENDIF
 
@@ -1304,27 +861,6 @@ SUBMODULE (sph_particles) apm
       err_N_min=  HUGE(one)!1.D30
       err_N_mean= zero
 
-    !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !  !$OMP             SHARED( all_pos, npart_real, nstar_sph, nstar_id, &
-    !  !$OMP                     dNstar, art_pr ) &
-    !  !$OMP             PRIVATE( g4, det, sq_g, Theta_a, &
-    !  !$OMP                      nus, mus )
-    !  DO a= 1, npart_real, 1
-    !
-    !    IF( get_density( all_pos(1,a), &
-    !                     all_pos(2,a), &
-    !                     all_pos(3,a) ) <= zero &
-    !    )THEN
-    !      dNstar(a)= zero
-    !    ELSE
-    !      dNstar(a)= ( nstar_sph(a) - nstar_id(a) )/nstar_id(a)
-    !    ENDIF
-    !    art_pr(a) = MAX( one + dNstar(a), one/ten )
-    !    !art_pr_max= MAX( art_pr_max, art_pr(a) )
-    !
-    !  ENDDO
-    !  !$OMP END PARALLEL DO
-
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_real, nstar_sph, nstar_id, &
       !$OMP                     dNstar, art_pr ) &
@@ -1368,12 +904,6 @@ SUBMODULE (sph_particles) apm
       ENDDO find_nan_in_art_pr
       !$OMP END PARALLEL DO
 
-      ! TODO: make these parallelized. Fortran does not do that automatically
-      !art_pr_max= MAXVAL( art_pr(1:npart_real), DIM= 1 )
-      !err_N_max = MAXVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
-      !err_N_min = MINVAL( ABS(dNstar), MASK= nstar_id(1:npart_real) > zero )
-      !err_N_mean= &
-      !SUM( ABS(dNstar), DIM= 1, MASK= nstar_id(1:npart_real) > zero )/npart_real
       art_pr_max= - HUGE(one)
       err_N_max = - HUGE(one)
       err_N_min =   HUGE(one)
@@ -1491,7 +1021,7 @@ SUBMODULE (sph_particles) apm
           )THEN
 
             art_pr(a)= DBLE(3*itr)*art_pr_max
-            IF( .NOT.IEEE_IS_FINITE(art_pr(a)) &
+            IF( .NOT.is_finite_number(art_pr(a)) &
                 .OR. &
                 art_pr(a) > max_art_pr_ghost &
             )THEN
@@ -1536,10 +1066,6 @@ SUBMODULE (sph_particles) apm
 
       ENDDO find_nan_in_art_pr_ghost
       !$OMP END PARALLEL DO
-
-      !IF( err_N_mean_min == err_N_mean )THEN
-      !  all_pos_best= all_pos
-      !ENDIF
 
       PRINT *, " * Maximum relative error between the star density profile", &
                "   and its SPH estimate: err_N_max= ", err_N_max
@@ -1913,16 +1439,6 @@ SUBMODULE (sph_particles) apm
     !-- Discard ghost particles --!
     !-----------------------------!
 
-    IF(.NOT.ALLOCATED( pos ))THEN
-      ALLOCATE( pos( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pos in SUBROUTINE ", &
-                  "perform_apm. The error message is", &
-                  err_msg
-         STOP
-      ENDIF
-    ENDIF
-
     pos= all_pos( :, 1:npart_real )
     IF( debug ) PRINT *, npart
 
@@ -1930,75 +1446,13 @@ SUBMODULE (sph_particles) apm
     h_guess= h_guess(1:npart_real)
     nu     = nu(1:npart_real)
 
-    !------------------------------------------------!
-    !-- Discard atmosphere, if present and desired --!
-    !------------------------------------------------!
+    !-----------------------------------------------!
+    !-- Remove atmosphere, if present and desired --!
+    !-----------------------------------------------!
 
     IF( use_atmosphere .AND. remove_atmosphere )THEN
 
-      ALLOCATE( rho_tmp( npart_real ) )
-      IF(ALLOCATED(pos_tmp)) DEALLOCATE(pos_tmp)
-      ALLOCATE( pos_tmp( 3, npart_real ) )
-      IF(ALLOCATED(h_tmp)) DEALLOCATE(h_tmp)
-      ALLOCATE( h_tmp( npart_real ) )
-      IF(ALLOCATED(h_guess_tmp)) DEALLOCATE(h_guess_tmp)
-      ALLOCATE( h_guess_tmp( npart_real ) )
-      IF(ALLOCATED(nu_tmp)) DEALLOCATE(nu_tmp)
-      ALLOCATE( nu_tmp( npart_real ) )
-
-      pos_tmp    = HUGE(one)
-      h_tmp      = HUGE(one)
-      h_guess_tmp= HUGE(one)
-      nu_tmp     = HUGE(one)
-
-      npart= 0
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
-      !$OMP                 h_guess, h_guess_tmp, nu, nu_tmp, pvol_tmp, pvol ) &
-      !$OMP             PRIVATE( a ) &
-      !$OMP             REDUCTION( +: npart )
-      DO a= 1, npart_real, 1
-        rho_tmp(a)= get_density( pos(1,a), pos(2,a), pos(3,a) )
-        IF( rho_tmp(a) > zero )THEN
-          npart= npart + 1
-          pos_tmp(:,a)  = pos(:,a)
-          h_tmp(a)      = h(a)
-          h_guess_tmp(a)= h_guess(a)
-          nu_tmp(a)     = nu(a)
-          !pvol_tmp(a)   = pvol(a)
-        ENDIF
-      ENDDO
-      !$OMP END PARALLEL DO
-
-      IF(ALLOCATED(pos)) DEALLOCATE(pos)
-      ALLOCATE( pos( 3, npart ) )
-      IF(ALLOCATED(h)) DEALLOCATE(h)
-      ALLOCATE( h( npart ) )
-      IF(ALLOCATED(h_guess)) DEALLOCATE(h_guess)
-      ALLOCATE( h_guess( npart ) )
-      IF(ALLOCATED(nu)) DEALLOCATE(nu)
-      ALLOCATE( nu( npart ) )
-      !IF(ALLOCATED(pvol)) DEALLOCATE(pvol)
-      !ALLOCATE( pvol( npart ) )
-
-   !   !$OMP PARALLEL DO DEFAULT( NONE ) &
-   !   !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
-   !   !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
-   !   !$OMP             PRIVATE( a )
-      cnt1= 0
-      DO a= 1, npart_real, 1
-        IF( h_tmp(a) < HUGE(one) )THEN
-          cnt1= cnt1 + 1
-          pos(:,cnt1)  = pos_tmp(:,a)
-          h(cnt1)      = h_tmp(a)
-          h_guess(cnt1)= h_guess_tmp(a)
-          nu(cnt1)     = nu_tmp(a)
-          !pvol(cnt1)   = pvol_tmp(a)
-        ENDIF
-      ENDDO
-   !   !$OMP END PARALLEL DO
-
-      npart_real= npart
+      CALL discard_atmosphere( npart_real )
 
     ENDIF
 
@@ -2863,9 +2317,9 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "1"
 
-    IF( .NOT.ALLOCATED( nu_one ) ) ALLOCATE( nu_one( npart_real ) )
-    IF( .NOT.ALLOCATED( particle_density_final ) ) &
-      ALLOCATE( particle_density_final( npart_real ) )
+  !  IF( .NOT.ALLOCATED( nu_one ) ) ALLOCATE( nu_one( npart_real ) )
+  !  IF( .NOT.ALLOCATED( particle_density_final ) ) &
+  !    ALLOCATE( particle_density_final( npart_real ) )
     nu_one= one
     CALL density_loop( npart_real, pos, &    ! input
                        nu_one, h, particle_density_final )      ! output
@@ -2887,25 +2341,19 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "2"
 
-    IF( ALLOCATED( pos_input ) ) DEALLOCATE( pos_input )
-    ALLOCATE( pos_input( 3, npart_real ) )
+    CALL reallocate_output_fields( npart_real )
+
     pos_input(:,1:npart_real)= pos(:,1:npart_real)
-
-    IF( debug ) PRINT *, "2.5"
-
-    IF( ALLOCATED( h_output ) ) DEALLOCATE( h_output )
-    ALLOCATE( h_output( npart_real ) )
-    h_output(1:npart_real)= h(1:npart_real)
-
-    IF( debug ) PRINT *, "2.6"
-
-    IF( ALLOCATED( nu_output ) ) DEALLOCATE( nu_output )
-    ALLOCATE( nu_output( npart_real ) )
-    nu_output(1:npart_real)= nu(1:npart_real)
+    h_output(1:npart_real)   = h(1:npart_real)
+    nu_output(1:npart_real)  = nu(1:npart_real)
 
     npart_output= npart_real
 
     IF( debug ) PRINT *, "3"
+
+    !
+    !-- Deallocate global variables
+    !
 
     IF( ALLOCATED( posmash ) ) DEALLOCATE( posmash )
     CALL deallocate_metric_on_particles()
@@ -3113,6 +2561,584 @@ SUBMODULE (sph_particles) apm
       !$OMP END PARALLEL DO
 
     END SUBROUTINE get_nstar_id_atm
+
+
+    SUBROUTINE allocate_apm_fields( npart_real, npart_ghost )
+
+      !*******************************************************
+      !
+      !# Allocate the fields used during the APM iteration
+      !
+      !  FT 20.04.2022
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: npart_real
+      INTEGER, INTENT(IN):: npart_ghost
+
+      INTEGER:: npart_all
+
+      npart_all= npart_real + npart_ghost
+
+      IF(.NOT.ALLOCATED( nstar_sph ))THEN
+        ALLOCATE( nstar_sph( npart_all ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nstar_sph in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( nstar_id ))THEN
+        ALLOCATE( nstar_id( npart_all ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nstar_id in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      !IF(.NOT.ALLOCATED( nstar_eul_id ))THEN
+      !  ALLOCATE( nstar_eul_id( npart_all ), STAT= ios, ERRMSG= err_msg )
+      !  IF( ios > 0 )THEN
+      !     PRINT *, "...allocation error for array nstar_eul_id in SUBROUTINE ", &
+      !              "allocate_apm_fields. The error message is",&
+      !              err_msg
+      !     STOP
+      !  ENDIF
+      !ENDIF
+      !IF(.NOT.ALLOCATED( nu_eul ))THEN
+      !  ALLOCATE( nu_eul( npart_real ), STAT= ios, ERRMSG= err_msg )
+      !  IF( ios > 0 )THEN
+      !     PRINT *, "...allocation error for array nu_eul in SUBROUTINE ", &
+      !              "allocate_apm_fields. The error message is",&
+      !              err_msg
+      !     STOP
+      !  ENDIF
+      !ENDIF
+      IF(.NOT.ALLOCATED( art_pr ))THEN
+        ALLOCATE( art_pr( npart_all ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array art_pr in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( correction_pos ))THEN
+        ALLOCATE( correction_pos( 3, npart_all ) )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array correction_pos in ", &
+                    "SUBROUTINE allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( all_pos_prev ))THEN
+        ALLOCATE( all_pos_prev( 3, npart_all ) )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array all_pos_prev in ", &
+                    "SUBROUTINE allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( cnt_move ))THEN
+        ALLOCATE( cnt_move( npart_real ) )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array cnt_move in ", &
+                    "SUBROUTINE allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( dNstar ))THEN
+        ALLOCATE( dNstar( npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array dNstar in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( nu_tmp ))THEN
+        ALLOCATE( nu_tmp( npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nu_tmp in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( pos ))THEN
+        ALLOCATE( pos( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pos in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is", &
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF( .NOT.ALLOCATED( nu_one ) )THEN
+        ALLOCATE( nu_one( npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nu_one in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is", &
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF( .NOT.ALLOCATED( particle_density_final ) )THEN
+        ALLOCATE( particle_density_final( npart_real ), &
+                  STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array particle_density_final in ", &
+                    "SUBROUTINE allocate_apm_fields. The error message is", &
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+    END SUBROUTINE allocate_apm_fields
+
+
+    SUBROUTINE discard_atmosphere( npart_real )
+
+      !*******************************************************
+      !
+      !# Remove the atmosphere
+      !
+      !  FT 20.04.2022
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(INOUT):: npart_real
+      INTEGER:: a
+
+      ALLOCATE( rho_tmp( npart_real ) )
+      IF(ALLOCATED(pos_tmp)) DEALLOCATE(pos_tmp)
+      ALLOCATE( pos_tmp( 3, npart_real ) )
+      IF(ALLOCATED(h_tmp)) DEALLOCATE(h_tmp)
+      ALLOCATE( h_tmp( npart_real ) )
+      IF(ALLOCATED(h_guess_tmp)) DEALLOCATE(h_guess_tmp)
+      ALLOCATE( h_guess_tmp( npart_real ) )
+      IF(ALLOCATED(nu_tmp)) DEALLOCATE(nu_tmp)
+      ALLOCATE( nu_tmp( npart_real ) )
+
+      pos_tmp    = HUGE(one)
+      h_tmp      = HUGE(one)
+      h_guess_tmp= HUGE(one)
+      nu_tmp     = HUGE(one)
+
+      npart= 0
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
+      !$OMP                 h_guess, h_guess_tmp, nu, nu_tmp, pvol_tmp, pvol ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION( +: npart )
+      DO a= 1, npart_real, 1
+        rho_tmp(a)= get_density( pos(1,a), pos(2,a), pos(3,a) )
+        IF( rho_tmp(a) > zero )THEN
+          npart= npart + 1
+          pos_tmp(:,a)  = pos(:,a)
+          h_tmp(a)      = h(a)
+          h_guess_tmp(a)= h_guess(a)
+          nu_tmp(a)     = nu(a)
+          !pvol_tmp(a)   = pvol(a)
+        ENDIF
+      ENDDO
+      !$OMP END PARALLEL DO
+
+      IF(ALLOCATED(pos)) DEALLOCATE(pos)
+      ALLOCATE( pos( 3, npart ) )
+      IF(ALLOCATED(h)) DEALLOCATE(h)
+      ALLOCATE( h( npart ) )
+      IF(ALLOCATED(h_guess)) DEALLOCATE(h_guess)
+      ALLOCATE( h_guess( npart ) )
+      IF(ALLOCATED(nu)) DEALLOCATE(nu)
+      ALLOCATE( nu( npart ) )
+      !IF(ALLOCATED(pvol)) DEALLOCATE(pvol)
+      !ALLOCATE( pvol( npart ) )
+
+  !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !   !$OMP             SHARED( pos, pos_tmp, h, h_tmp, rho_tmp, npart_real, &
+  !   !$OMP                     h_guess, h_guess_tmp, nu, nu_tmp ) &
+  !   !$OMP             PRIVATE( a )
+      cnt1= 0
+      DO a= 1, npart_real, 1
+        IF( h_tmp(a) < HUGE(one) )THEN
+          cnt1= cnt1 + 1
+          pos(:,cnt1)  = pos_tmp(:,a)
+          h(cnt1)      = h_tmp(a)
+          h_guess(cnt1)= h_guess_tmp(a)
+          nu(cnt1)     = nu_tmp(a)
+          !pvol(cnt1)   = pvol_tmp(a)
+        ENDIF
+      ENDDO
+  !   !$OMP END PARALLEL DO
+
+      npart_real= npart
+
+
+    END SUBROUTINE discard_atmosphere
+
+
+    SUBROUTINE reallocate_output_fields( npart_real )
+
+      !*******************************************************
+      !
+      !# Reallocate the fields to be returned by perform_apm
+      !
+      !  FT 20.04.2022
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: npart_real
+
+      IF( ALLOCATED( pos_input ) ) DEALLOCATE( pos_input )
+      ALLOCATE( pos_input( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pos_input in ", &
+                  "SUBROUTINE reallocate_output_fields. The error message is", &
+                  err_msg
+         STOP
+      ENDIF
+
+      IF( ALLOCATED( h_output ) ) DEALLOCATE( h_output )
+      ALLOCATE( h_output( npart_real ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array h_output in ", &
+                  "SUBROUTINE reallocate_output_fields. The error message is", &
+                  err_msg
+         STOP
+      ENDIF
+
+      IF( ALLOCATED( nu_output ) ) DEALLOCATE( nu_output )
+      ALLOCATE( nu_output( npart_real ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array nu_output in ", &
+                  "SUBROUTINE reallocate_output_fields. The error message is", &
+                  err_msg
+         STOP
+      ENDIF
+
+
+    END SUBROUTINE reallocate_output_fields
+
+
+    SUBROUTINE place_and_print_ghost_particles()
+
+      !*******************************************************
+      !
+      !# Place ghost particles around the matter object,
+      !  and print their positions together with the positions
+      !  of the real particles to a formatted file
+      !
+      !  FT 20.04.2022
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
+
+      IF(.NOT.ALLOCATED( ghost_pos ))THEN
+        ALLOCATE( ghost_pos( 3, max_npart ), STAT= ios, &
+            ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
+                    "perform_apm. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+      ghost_pos= zero
+
+      PRINT *, " * Placing ghost particles on a lattice between ellipsodial ", &
+               "surfaces..."
+      PRINT *
+
+      IF( debug ) PRINT *, "npart_real= ", npart_real
+
+      max_r_real= zero
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, pos_input, center ) &
+      !$OMP             PRIVATE( itr, r_real ) &
+      !$OMP             REDUCTION( MAX: max_r_real )
+      DO itr= 1, npart_real, 1
+
+        r_real= SQRT( ( pos_input( 1, itr ) - center(1) )**two &
+                    + ( pos_input( 2, itr ) - center(2) )**two &
+                    + ( pos_input( 3, itr ) - center(3) )**two )
+        !IF( r_real > max_r_real ) max_r_real= r_real
+        max_r_real= MAX( max_r_real, r_real )
+
+      ENDDO
+      !$OMP END PARALLEL DO
+
+      nx= nx_gh
+      ny= ny_gh
+      nz= nz_gh
+      xmin= center(1) - sizes(1)*( one + eps )
+      xmax= center(1) + sizes(2)*( one + eps )
+      ymin= center(2) - sizes(3)*( one + eps )
+      ymax= center(2) + sizes(4)*( one + eps )
+      zmin= center(3) - sizes(5)*( one + eps )
+      zmax= center(3) + sizes(6)*( one + eps )
+      dx= ABS( xmax - xmin )/DBLE( nx )
+      dy= ABS( ymax - ymin )/DBLE( ny )
+      dz= ABS( zmax - zmin )/DBLE( nz )
+
+      IF(.NOT.ALLOCATED( ghost_pos_tmp ))THEN
+        ALLOCATE( ghost_pos_tmp( 3, nx, ny, nz ), STAT= ios, &
+            ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
+                    "perform_apm. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+      rad_x= larger_radius + ghost_dist !+ multiple_h_av*h_av
+      rad_y= radius_y      + ghost_dist !+ multiple_h_av*h_av
+      rad_z= radius_z      + ghost_dist !+ multiple_h_av*h_av
+
+      PRINT *, "** Distance between the size of the object and the ghost ", &
+               "particles: ghost_dist =", ghost_dist
+      PRINT *
+
+      IF( debug ) PRINT *, "larger_radius= ", larger_radius
+      IF( debug ) PRINT *, "radius_y= ", radius_y
+      IF( debug ) PRINT *, "radius_z= ", radius_z
+      IF( debug ) PRINT *, "rad_x= ", rad_x
+      IF( debug ) PRINT *, "rad_y= ", rad_y
+      IF( debug ) PRINT *, "rad_z= ", rad_z
+      IF( debug ) PRINT *
+
+      ghost_pos_tmp= HUGE(zero)
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nx, ny, nz, xmin, ymin, zmin, dx, dy, dz, &
+      !$OMP                     ghost_pos_tmp, &
+      !$OMP                     center, rad_x, rad_y, rad_z ) &
+      !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp, &
+      !$OMP                      x_ell, y_ell, z_ell, r, theta, phi, &
+      !$OMP                      r_ell, theta_ell, phi_ell )
+      DO k= 1, nz, 1
+
+        ztemp= zmin + dz/two + DBLE( k - 1 )*dz
+
+        DO j= 1, ny, 1
+
+          ytemp= ymin + dy/two + DBLE( j - 1 )*dy
+
+          DO i= 1, nx, 1
+
+            xtemp= xmin + dx/two + DBLE( i - 1 )*dx
+
+            CALL spherical_from_cartesian( xtemp, ytemp, ztemp, &
+                                           center(1), center(2), center(3), &
+                                           r, theta, phi )
+
+            x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
+            y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
+            z_ell= center(3) + rad_z*COS(theta)
+
+            CALL spherical_from_cartesian( x_ell, y_ell, z_ell, &
+                                           center(1), center(2), center(3), &
+                                           r_ell, theta_ell, phi_ell )
+
+            IF( ( r <= ellipse_thickness*r_ell .AND. r >= r_ell &
+                  .AND. &
+                  get_density( xtemp, ytemp, ztemp ) <= zero ) &
+            )THEN
+
+              ghost_pos_tmp( 1, i, j, k )= xtemp
+              ghost_pos_tmp( 2, i, j, k )= ytemp
+              ghost_pos_tmp( 3, i, j, k )= ztemp
+
+            ENDIF
+
+           ENDDO
+        ENDDO
+      ENDDO
+      !$OMP END PARALLEL DO
+
+      itr= 0
+      DO k= 1, nz, 1
+
+        DO j= 1, ny, 1
+
+          DO i= 1, nx, 1
+
+            IF( ghost_pos_tmp( 1, i, j, k ) < HUGE(zero) )THEN
+
+              itr= itr + 1
+              ghost_pos( 1, itr )= ghost_pos_tmp( 1, i, j, k )
+              ghost_pos( 2, itr )= ghost_pos_tmp( 2, i, j, k )
+              ghost_pos( 3, itr )= ghost_pos_tmp( 3, i, j, k )
+
+            ENDIF
+
+           ENDDO
+        ENDDO
+      ENDDO
+      npart_ghost= itr
+      IF( npart_ghost == 0 )THEN
+        PRINT *, "** ERROR: No ghost particles were placed. Is the ", &
+                 "PARAMETER 'ghost_dist' appropriate for the physical system?"
+        PRINT *, "Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+      ghost_pos = ghost_pos( :, 1:npart_ghost )
+
+      PRINT *, " * ", npart_ghost, " ghost particles placed around ", &
+               npart_real, "real particles."
+      PRINT *
+
+      DEALLOCATE( ghost_pos_tmp )
+
+      PRINT *, " * Printing ghost particles to file..."
+
+      IF( PRESENT(namefile_pos_id) )THEN
+        finalnamefile= namefile_pos_id
+      ELSE
+        finalnamefile= "apm_pos_id.dat"
+      ENDIF
+
+      INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+      IF( exist )THEN
+          OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
+      ELSE
+          OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+                FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      DO a= 1, npart_real, 1
+        WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+          1, a, &
+          pos_input( 1, a ), &
+          pos_input( 2, a ), &
+          pos_input( 3, a )
+      ENDDO
+
+      DO a= 1, npart_ghost, 1
+        WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+          2, a, &
+          ghost_pos( 1, a ), &
+          ghost_pos( 2, a ), &
+          ghost_pos( 3, a )
+      ENDDO
+
+      CLOSE( UNIT= 2 )
+
+      PRINT *, " * Positions of ghost and real particles printed to ", &
+               TRIM(finalnamefile), " ."
+
+      !STOP
+
+      npart_all= npart_real + npart_ghost
+
+      IF(.NOT.ALLOCATED( all_pos ))THEN
+        ALLOCATE( all_pos( 3, npart_all ), STAT= ios, &
+            ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
+                    "perform_apm. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+
+    END SUBROUTINE place_and_print_ghost_particles
+
+
+    SUBROUTINE dump_apm_pos()
+
+      !*******************************************************
+      !
+      !# Print the positions of the real and ghost particles
+      !  to a formatted file
+      !
+      !  FT 20.04.2022
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      INTEGER, PARAMETER:: unit_dump= 7314891
+
+      IF( debug ) PRINT *, "printing positions to file..."
+
+      IF( PRESENT(namefile_pos) )THEN
+        finalnamefile= namefile_pos
+      ELSE
+        finalnamefile= "apm_pos.dat"
+      ENDIF
+
+      INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
+
+      IF( exist )THEN
+          OPEN( UNIT= unit_dump, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
+      ELSE
+          OPEN( UNIT= unit_dump, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+                FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      DO a= 1, npart_real, 1
+        tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+        WRITE( UNIT = unit_dump, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+          1, a, &
+          all_pos( 1, a ), &
+          all_pos( 2, a ), &
+          all_pos( 3, a ), &
+          nu_tmp(a), &
+          tmp, cnt_move(a)
+      ENDDO
+
+      DO a= npart_real + 1, npart_all, 1
+        tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+        WRITE( UNIT = unit_dump, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+          2, a, &
+          all_pos( 1, a ), &
+          all_pos( 2, a ), &
+          all_pos( 3, a ), &
+          tmp
+      ENDDO
+
+      CLOSE( UNIT= unit_dump )
+
+
+    END SUBROUTINE dump_apm_pos
 
 
   END PROCEDURE perform_apm
