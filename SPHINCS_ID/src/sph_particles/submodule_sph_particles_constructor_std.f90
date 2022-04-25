@@ -71,17 +71,18 @@ SUBMODULE (sph_particles) constructor_std
     !  that rely on an object of STATIC TYPE idbase.
     !
     !  @todo assign sub-tasks to separate SUBROUTINES
-    !        CONTAINED in this SUBMODULE
+    !        contained in this SUBMODULE
     !
     !  FT 17.10.2020
     !
-    !  @note Last updated: FT 17.01.2022
+    !  @note Last updated: FT 25.04.2022
     !
     !**************************************************
 
     !USE NaNChecker,    ONLY: Check_Array_for_NAN
-    USE constants,      ONLY: amu, pi, zero, half, third, one , two, Msun_geo
-    USE NR,             ONLY: indexx
+    USE constants,      ONLY: amu, pi, zero, half, third, one, two, ten, &
+                              Msun_geo
+    !USE NR,             ONLY: indexx
     USE kernel_table,   ONLY: ktable
     USE input_output,   ONLY: read_options
     USE units,          ONLY: set_units
@@ -96,7 +97,7 @@ SUBMODULE (sph_particles) constructor_std
 
     INTEGER, PARAMETER:: unit_pos= 2289
     ! Variable storing the number of column where nu is written
-    DOUBLE PRECISION, PARAMETER:: tol_equal_mass= 5D-3
+    DOUBLE PRECISION, PARAMETER:: tol_equal_mass= 5.0D-3
     ! Tolerance for the difference between the masse of the stars
     ! for a BNS system, to determine if a BNS is equal-mass or not.
     ! If the relative difference between the masses of the stars is lower
@@ -1098,7 +1099,8 @@ SUBMODULE (sph_particles) constructor_std
                     parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
         parts_all(i_matter)% pmass_i = &
                     parts_all(i_matter)% pmass_i( 1:parts% npart_i(i_matter) )
-
+        parts_all(i_matter)% nu_i = &
+                    parts_all(i_matter)% pmass_i( 1:parts% npart_i(i_matter) )
       ENDDO
 
       parts% npart= SUM( parts% npart_i )
@@ -1293,7 +1295,11 @@ SUBMODULE (sph_particles) constructor_std
       ! If nu is known already at this stage, either because computed by the APM
       ! or because it is read from file, assign it to the TYPE member array
       IF( apm_iterate(i_matter) &
-          .OR. ( parts% distribution_id == 0 .AND. read_nu ) )THEN
+          .OR. &
+          ( parts% distribution_id == id_particles_from_file .AND. read_nu ) &
+          .OR. &
+          ( parts% distribution_id == id_particles_on_spherical_surfaces ) &
+      )THEN
         parts% nu( parts% npart_i(i_matter-1) + 1: &
                    parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
                    parts_all(i_matter)% nu_i
@@ -1593,8 +1599,16 @@ SUBMODULE (sph_particles) constructor_std
 
         ENDDO
         min_lapse= MINVAL( parts% lapse, DIM= 1 )
-        lapse_lengthscales= two*parts% masses(i_matter)/( one - min_lapse )
-        g00_lengthscales  = two*parts% masses(i_matter)/( one - min_g00_abs )
+        IF( one == min_lapse )THEN
+          lapse_lengthscales= HUGE(one)/(ten*ten*ten)
+        ELSE
+          lapse_lengthscales= two*parts% masses(i_matter)/( one - min_lapse )
+        ENDIF
+        IF( one == min_g00_abs )THEN
+          g00_lengthscales= HUGE(one)/(ten*ten*ten)
+        ELSE
+          g00_lengthscales= two*parts% masses(i_matter)/( one - min_g00_abs )
+        ENDIF
 
       END ASSOCIATE
 
