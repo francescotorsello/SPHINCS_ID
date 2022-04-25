@@ -65,7 +65,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     IMPLICIT NONE
 
-    INTEGER:: n_shells, itr2, cnt, &
+    INTEGER:: n_surfaces, itr2, cnt, &
               r, th, phi, i_shell, npart_test, npart_shell_tmp, &
               cnt2, rel_sign, dim_seed, r_cnt, prev_shell, &
               npart_discard, npart_shell_cnt, size_pos_shell
@@ -84,10 +84,10 @@ SUBMODULE (sph_particles) spherical_surfaces
     DOUBLE PRECISION, PARAMETER:: huge_real= 1.0D30!ABS( HUGE(0.0D0) )
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shell_radii, shell_masses, &
-                                                  alpha, m_parts, vol_shell, &
-                                                  vol_shell2, mass_shell, &
-                                                  mass_shell2, shell_scales
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: surface_radii, surface_masses, &
+                                                  alpha, m_parts, surface_vol, &
+                                                  surface_vol2, mass_surface, &
+                                                  mass_surface2, shell_scales
 
     LOGICAL:: exist, high_mass, low_mass, kept_all
 
@@ -99,18 +99,18 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     TYPE(colatitude_pos_shell), DIMENSION(:), ALLOCATABLE:: colatitude_pos
 
-    TYPE:: pos_on_shells
+    TYPE:: pos_on_surfaces
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_shell
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_th
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pos_phi
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol_shell
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol_shell2
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: psurface_vol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: psurface_vol2
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: sqdetg
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: baryon_density
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: gamma_euler
     END TYPE
 
-    TYPE(pos_on_shells), DIMENSION(:), ALLOCATABLE:: pos_shells
+    TYPE(pos_on_surfaces), DIMENSION(:), ALLOCATABLE:: pos_surfaces
 
     DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: pos_shell_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sqdetg_tmp
@@ -141,112 +141,33 @@ SUBMODULE (sph_particles) spherical_surfaces
     IF( PRESENT(pmass_des) )THEN
       m_p= pmass_des
     ELSE
-      m_p= mass_star/npart_des
+      m_p= mass_star/DBLE(npart_des)
     ENDIF
 
     !------------------------------------------!
     !-- Compute number of spherical surfaces --!
     !------------------------------------------!
 
-    n_shells= number_surfaces( m_p, center, radius, get_density )
+    n_surfaces= number_surfaces( m_p, center, radius, get_density )
 
     !------------------------------------------------!
     !-- Allocate memory for the spherical surfaces --!
     !------------------------------------------------!
 
-    IF(.NOT.ALLOCATED( shell_radii ))THEN
-      ALLOCATE( shell_radii( n_shells ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array shell_radii in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( shell_masses ))THEN
-      ALLOCATE( shell_masses( n_shells ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array shell_masses in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( shell_scales ))THEN
-      ALLOCATE( shell_scales( n_shells ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array shell_scales in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( vol_shell ))THEN
-      ALLOCATE( vol_shell( n_shells ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array vol_shell in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( vol_shell2 ))THEN
-      ALLOCATE( vol_shell2( n_shells ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array vol_shell2 in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( mass_shell ))THEN
-      ALLOCATE( mass_shell( n_shells ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array vol_shell in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( mass_shell2 ))THEN
-      ALLOCATE( mass_shell2( n_shells ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array vol_shell2 in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( m_parts ))THEN
-      ALLOCATE( m_parts( 1:n_shells ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
-                  // "place_particles_. ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
+    CALL allocate_surface_memory()
 
     !--------------------------------------------------------!
     !-- Place surfaces based on mass density at that point --!
     !--------------------------------------------------------!
 
-    CALL place_surfaces( central_density, center, radius, m_p, n_shells, &
-                         shell_radii, last_r, get_density )
+    CALL place_surfaces( central_density, center, radius, m_p, n_surfaces, &
+                         surface_radii, last_r, get_density )
 
     ! Printout
-    PRINT *, " * Number of the spherical surfaces= ", n_shells
+    PRINT *, " * Number of the spherical surfaces= ", n_surfaces
     PRINT *, " * Radii of the surfaces in units of the equatorial radius", &
              " of the star, towards the companion= "
-    PRINT *, shell_radii/radius
+    PRINT *, surface_radii/radius
     PRINT *
 
     !---------------------------------!
@@ -275,8 +196,8 @@ SUBMODULE (sph_particles) spherical_surfaces
     !-- Assign masses to each spherical surface --!
     !---------------------------------------------!
 
-    CALL assign_surfaces_mass( shell_masses, shell_radii, radius, dr, &
-                               n_shells, mass_profile_idx, mass_profile, &
+    CALL assign_surfaces_mass( surface_masses, surface_radii, radius, dr, &
+                               n_surfaces, mass_profile_idx, mass_profile, &
                                mass_star )
 
     !----------------------------------------------------!
@@ -292,12 +213,12 @@ SUBMODULE (sph_particles) spherical_surfaces
     IF( PRESENT(filename_shells_radii) )THEN
       finalnamefile2= filename_shells_radii
     ELSE
-      finalnamefile2= "shell_radii.dat"
+      finalnamefile2= "surface_radii.dat"
     ENDIF
 
     CALL print_mass_profile_surface_radii( mass_profile, mass_profile_idx, &
-                                           shell_radii, radius, dr, &
-                                           n_shells, &
+                                           surface_radii, radius, dr, &
+                                           n_surfaces, &
                                            filename_mass_profile, &
                                            filename_shells_radii )
 
@@ -308,102 +229,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     PRINT *, " * Initializing quantities before starting the iteration..."
     PRINT *
 
-    ALLOCATE( npart_shell( n_shells ) )
-    ALLOCATE( npart_shelleq( n_shells ) )
-    ALLOCATE( alpha( n_shells ) )
-    ALLOCATE( colatitude_pos( n_shells ) )
-    ALLOCATE( pos_shells( n_shells ) )
-
-    initialization: DO r= 1, n_shells, 1
-
-      IF( ALLOCATED( pos_shells( r )% pos_shell ) ) &
-        DEALLOCATE( pos_shells( r )% pos_shell )
-
-      IF( ALLOCATED( pos_shells( r )% pvol_shell ) ) &
-        DEALLOCATE( pos_shells( r )% pvol_shell )
-
-      IF( ALLOCATED( pos_shells( r )% pvol_shell2 ) ) &
-        DEALLOCATE( pos_shells( r )% pvol_shell2 )
-
-      IF( ALLOCATED( pos_shells( r )% sqdetg ) )&
-        DEALLOCATE( pos_shells( r )% sqdetg )
-
-      IF( ALLOCATED( pos_shells( r )% baryon_density ) ) &
-        DEALLOCATE( pos_shells( r )% baryon_density )
-
-      IF( ALLOCATED( pos_shells( r )% gamma_euler ) ) &
-        DEALLOCATE( pos_shells( r )% gamma_euler )
-
-      IF( ALLOCATED( pos_shells( r )% pos_th ) ) &
-        DEALLOCATE( pos_shells( r )% pos_th )
-
-      IF( ALLOCATED( pos_shells( r )% pos_phi ) ) &
-        DEALLOCATE( pos_shells( r )% pos_phi )
-
-      ALLOCATE( pos_shells( r )% pos_shell     ( 3, npart_des ) )
-      ALLOCATE( pos_shells( r )% pvol_shell    (    npart_des ) )
-      ALLOCATE( pos_shells( r )% pvol_shell2   (    npart_des ) )
-      ALLOCATE( pos_shells( r )% sqdetg        (    npart_des ) )
-      ALLOCATE( pos_shells( r )% baryon_density(    npart_des ) )
-      ALLOCATE( pos_shells( r )% gamma_euler   (    npart_des ) )
-      ALLOCATE( pos_shells( r )% pos_th        (    npart_des ) )
-      ALLOCATE( pos_shells( r )% pos_phi       (    npart_des ) )
-
-      pos_shells(r)% pos_shell= zero
-      pos_shells(r)% pos_phi= -one
-      pos_shells(r)% pos_th= -one
-      pos_shells(r)% pvol_shell= zero
-      pos_shells(r)% pvol_shell2= zero
-      pos_shells(r)% sqdetg= zero
-      pos_shells(r)% baryon_density= zero
-      pos_shells(r)% gamma_euler= zero
-      m_parts( r )= m_p
-      npart_shelleq( r )= CEILING( SQRT(DBLE(2*shell_masses( r )/m_parts( r ))))
-
-    ENDDO initialization
-
-    IF( ALLOCATED(pos) )THEN
-      DEALLOCATE(pos)
-      ALLOCATE( pos( 3, 2*npart_des ) )
-    ENDIF
-    IF( ALLOCATED(pvol) )THEN
-      DEALLOCATE(pvol)
-      ALLOCATE( pvol( 2*npart_des ) )
-    ENDIF
-    IF( ALLOCATED(pmass) )THEN
-      DEALLOCATE(pmass)
-      ALLOCATE( pmass( 2*npart_des ) )
-    ENDIF
-
-    pos            = zero
-    pmass          = zero
-    phase          = zero
-    proper_volume  = zero
-    vol_shell      = zero
-    vol_shell2     = zero
-    dr_shells      = radius/n_shells
-    npart_out      = 0
-    upper_bound_tmp= upper_bound
-    lower_bound_tmp= lower_bound
-    r    = CEILING(DBLE(n_shells)/two)
-    cnt2 = 0
-    r_cnt= 1
-
-    ! These array are needed to be able to parallelize the loops on each surface
-    ALLOCATE( pos_shell_tmp  ( 3, 5*CEILING(SQRT(DBLE(2*npart_des))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
-    ALLOCATE( sqdetg_tmp     (    5*CEILING(SQRT(DBLE(2*npart_des))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
-    ALLOCATE( bar_density_tmp(    5*CEILING(SQRT(DBLE(2*npart_des))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
-    ALLOCATE( gam_euler_tmp  (    5*CEILING(SQRT(DBLE(2*npart_des))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
-    ALLOCATE( pvol_tmp       (    5*CEILING(SQRT(DBLE(2*npart_des))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
-    ALLOCATE( npart_discarded(    5*CEILING(SQRT(DBLE(2*npart_des))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
-    ALLOCATE( npart_surface_tmp(  5*CEILING(SQRT(DBLE(2*npart_des))), &
-                                  5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+    CALL initialize_surfaces()
 
     !--------------------------------------------------!
     !--  Main iteration over the spherical surfaces  --!
@@ -450,7 +276,7 @@ SUBMODULE (sph_particles) spherical_surfaces
         DEALLOCATE( colatitude_pos( r )% colatitudes )
       ALLOCATE( colatitude_pos( r )% colatitudes( npart_shelleq( r )/4 ) )
 
-      IF( shell_radii(r) < 0.95D0*last_r*radius )THEN
+      IF( surface_radii(r) < 0.95D0*last_r*radius )THEN
 
         CALL compute_colatitudes_uniformly_in( pi/two, 9.5D0/ten*pi, &
                                       colatitude_pos( r )% colatitudes( : ) )
@@ -508,8 +334,8 @@ SUBMODULE (sph_particles) spherical_surfaces
       !$OMP                      dth_shells, delta_r, long, &
       !$OMP                      th, phi, rand_num2, phase_th, rel_sign ), &
       !$OMP             SHARED( r, npart_shelleq, center, rad, alpha, &
-      !$OMP                     pos_shells, colatitude_pos, n_shells, &
-      !$OMP                     dr_shells, shell_radii, shell_thickness, THIS, &
+      !$OMP                     pos_surfaces, colatitude_pos, n_surfaces, &
+      !$OMP                     dr_shells, surface_radii, shell_thickness, THIS, &
       !$OMP                     sqdetg_tmp, bar_density_tmp, gam_euler_tmp, &
       !$OMP                     pos_shell_tmp, pvol_tmp, dphi_shells, radius, &
       !$OMP                     npart_discarded, npart_surface_tmp, last_r )
@@ -530,7 +356,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
           ENDIF
 
-        !  IF( shell_radii(r) < 0.95D0*last_r*radius )THEN
+        !  IF( surface_radii(r) < 0.95D0*last_r*radius )THEN
         !
         !    long= phase + phi*alpha(r)
         !
@@ -560,7 +386,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
           ENDIF
 
-          rad= shell_radii(r)
+          rad= surface_radii(r)
           IF( THIS% randomize_r )THEN
 
             CALL RANDOM_NUMBER( delta_r )
@@ -568,7 +394,7 @@ SUBMODULE (sph_particles) spherical_surfaces
             IF( rand_num2 >= half ) rel_sign=  1
             IF( rand_num2 < half )  rel_sign= -1
 
-            IF( r/n_shells < 0.95D0 )THEN
+            IF( r/n_surfaces < 0.95D0 )THEN
               rad= rad + rel_sign*delta_r*0.35D0*dr_shells
             ELSE
               !rad= rad - ( one + delta_r )*0.35D0*dr_shells
@@ -615,7 +441,7 @@ SUBMODULE (sph_particles) spherical_surfaces
           ! Place a particle at a given position only if the hydro
           ! is acceptable
           IF( &!bar_density_tmp( th, phi ) > zero &
-              !pos_shells(r)% baryon_density( itr + 1 ) > zero &
+              !pos_surfaces(r)% baryon_density( itr + 1 ) > zero &
               !.AND. &
               validate_position_final( xtemp, ytemp, ztemp ) )THEN
 
@@ -633,7 +459,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
             ! Safety check
             IF( pvol_tmp( th, phi ) <= 0 )THEN
-                ! pos_shells(r)% pvol_shell2( itr + 1 ) <= 0 )THEN
+                ! pos_surfaces(r)% psurface_vol2( itr + 1 ) <= 0 )THEN
               PRINT *, "When placing first half of particles"
               PRINT *, "pvol_tmp( ", r, ",", th, ",", phi, " ) =", &
                        pvol_tmp( th, phi )
@@ -681,25 +507,25 @@ SUBMODULE (sph_particles) spherical_surfaces
         m_parts( r )= m_parts( prev_shell )
         PRINT *, " * Placed", npart_shell( r )/2, &
                  " particles on one emisphere of spherical surface ", r, &
-                 " out of ", n_shells
+                 " out of ", n_surfaces
         IF( r == 1 )THEN
           EXIT
-        ELSEIF( r < CEILING(DBLE(n_shells)/two) )THEN
+        ELSEIF( r < CEILING(DBLE(n_surfaces)/two) )THEN
           !PRINT *, "r=", r
           r= r - 1
           cnt2 = 0
           upper_bound_tmp= upper_bound
           lower_bound_tmp= lower_bound
           CYCLE
-        ELSEIF( r == n_shells )THEN
+        ELSEIF( r == n_surfaces )THEN
           !PRINT *, "r=", r
-          r= CEILING(DBLE(n_shells)/two) - 1
+          r= CEILING(DBLE(n_surfaces)/two) - 1
           r_cnt= r_cnt + 1
           cnt2 = 0
           upper_bound_tmp= upper_bound
           lower_bound_tmp= lower_bound
           CYCLE
-        ELSEIF( r >= CEILING(DBLE(n_shells)/two) )THEN
+        ELSEIF( r >= CEILING(DBLE(n_surfaces)/two) )THEN
           !PRINT *, "r=", r
           r= r + 1
           cnt2 = 0
@@ -708,7 +534,7 @@ SUBMODULE (sph_particles) spherical_surfaces
           CYCLE
         ENDIF
       ELSE
-        m_parts( r )= shell_masses( r )/DBLE(npart_shell( r ))
+        m_parts( r )= surface_masses( r )/DBLE(npart_shell( r ))
       ENDIF
 
       IF( debug ) PRINT *, " * Before storing the particles"
@@ -718,12 +544,12 @@ SUBMODULE (sph_particles) spherical_surfaces
       IF( debug ) PRINT *, "npart_out=", npart_out
 
       ! If it's not the first populated surface
-      not_first_populated_surface: IF( r /= CEILING(DBLE(n_shells)/two) )THEN
+      not_first_populated_surface: IF( r /= CEILING(DBLE(n_surfaces)/two) )THEN
 
         ! Identify the previous surface
-        IF( r < CEILING(DBLE(n_shells)/two) )THEN
+        IF( r < CEILING(DBLE(n_surfaces)/two) )THEN
           prev_shell= r + 1
-        ELSEIF( r > CEILING(DBLE(n_shells)/two) )THEN
+        ELSEIF( r > CEILING(DBLE(n_surfaces)/two) )THEN
           prev_shell= r - 1
         ELSEIF( r == 1 )THEN
           EXIT
@@ -733,7 +559,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
         ! This speeds up the iteration considerably, since the inner layers
         ! seem to always want a larger tolerance
-        IF( r <= 0.45D0*n_shells )THEN
+        IF( r <= 0.45D0*n_surfaces )THEN
           upper_bound_tmp= upper_bound_tmp*1.1D0
           lower_bound_tmp= lower_bound_tmp*0.9D0
         ENDIF
@@ -767,7 +593,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
             ! If the range of particle masses is getting too generous
             ! near the surface
-            IF( r > 0.8D0*n_shells .AND. &
+            IF( r > 0.8D0*n_surfaces .AND. &
                 m_parts( r )/m_parts( prev_shell ) > 1.1D0*upper_bound &
             )THEN
 
@@ -835,7 +661,7 @@ SUBMODULE (sph_particles) spherical_surfaces
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( r > 0.8D0*n_shells .AND. &
+            IF( r > 0.8D0*n_surfaces .AND. &
                 m_parts( r )/m_parts( prev_shell ) < 0.9D0*lower_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
@@ -878,7 +704,7 @@ SUBMODULE (sph_particles) spherical_surfaces
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( r > 0.8D0*n_shells .AND. &
+            IF( r > 0.8D0*n_surfaces .AND. &
                 m_parts( r )/m_parts( prev_shell ) > 1.1D0*upper_bound &
                 !upper_bound_tmp > 1.1D0*upper_bound &
             )THEN
@@ -907,7 +733,7 @@ SUBMODULE (sph_particles) spherical_surfaces
           ! on the equator by x, and adjust with some other random and
           ! non-random factors which turn out to work well a posteriori
           npart_shelleq( r )= CEILING( SQRT( &
-                                2*(shell_masses( r )/m_parts( prev_shell )) &
+                                2*(surface_masses( r )/m_parts( prev_shell )) &
                                 /npart_shell_kept &
                               ) ) + rel_sign*NINT( 1 + rand_num )
 
@@ -930,7 +756,7 @@ SUBMODULE (sph_particles) spherical_surfaces
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( r > 0.8D0*n_shells .AND. &
+            IF( r > 0.8D0*n_surfaces .AND. &
                 m_parts( r )/m_parts( prev_shell ) < 0.9D0*lower_bound &
                 !lower_bound_tmp < 0.9D0*lower_bound &
             )THEN
@@ -959,7 +785,7 @@ SUBMODULE (sph_particles) spherical_surfaces
           ! on the equator by x, and adjust with some other random and
           ! non-random factors which turn out to work well a posteriori
           npart_shelleq( r )= CEILING( SQRT( &
-                                2*(shell_masses( r )/m_parts( prev_shell )) &
+                                2*(surface_masses( r )/m_parts( prev_shell )) &
                                 /npart_shell_kept &
                               ) ) + rel_sign*NINT( 1 + rand_num )
 
@@ -1002,33 +828,33 @@ SUBMODULE (sph_particles) spherical_surfaces
       ! Print out the result
       PRINT *, " * Placed", npart_shell( r )/2, &
                " particles on one emisphere of spherical surface ", r, &
-               " out of ", n_shells
-      PRINT *, "   Surface radius= ", shell_radii( r )/radius*ten*ten, &
+               " out of ", n_surfaces
+      PRINT *, "   Surface radius= ", surface_radii( r )/radius*ten*ten, &
               "% of the radius of the star"
       PRINT *, "   Placed", npart_out, " particles overall, so far."
-      IF( r /= CEILING(DBLE(n_shells)/two) ) PRINT *, &
+      IF( r /= CEILING(DBLE(n_surfaces)/two) ) PRINT *, &
                "   Ratio of particle masses on last 2 surfaces: ", &
                "   m_parts(", r, ")/m_parts(", prev_shell, ")= ",  &
                m_parts( r )/m_parts( prev_shell )
 
       ! Save particles to non-temporary variables
-      size_pos_shell= SIZE( pos_shells(r)% pos_shell( 1, : ) )
+      size_pos_shell= SIZE( pos_surfaces(r)% pos_shell( 1, : ) )
 
       IF( npart_shelleq(r)*npart_shelleq(r)/4 > size_pos_shell )THEN
 
-        CALL reallocate_array_2d( pos_shells(r)% pos_shell, 3, &
+        CALL reallocate_array_2d( pos_surfaces(r)% pos_shell, 3, &
                       npart_shelleq(r)*npart_shelleq(r)/4 )
 
-        CALL reallocate_array_1d( pos_shells(r)% sqdetg, &
+        CALL reallocate_array_1d( pos_surfaces(r)% sqdetg, &
                       npart_shelleq(r)*npart_shelleq(r)/4 )
 
-        CALL reallocate_array_1d( pos_shells(r)% baryon_density, &
+        CALL reallocate_array_1d( pos_surfaces(r)% baryon_density, &
                       npart_shelleq(r)*npart_shelleq(r)/4 )
 
-        CALL reallocate_array_1d( pos_shells(r)% gamma_euler, &
+        CALL reallocate_array_1d( pos_surfaces(r)% gamma_euler, &
                       npart_shelleq(r)*npart_shelleq(r)/4 )
 
-        CALL reallocate_array_1d( pos_shells(r)% pvol_shell2, &
+        CALL reallocate_array_1d( pos_surfaces(r)% psurface_vol2, &
                       npart_shelleq(r)*npart_shelleq(r)/4 )
 
       ENDIF
@@ -1045,14 +871,14 @@ SUBMODULE (sph_particles) spherical_surfaces
 
             itr= itr + 1
 
-            pos_shells(r)% pos_shell( 1, itr )= pos_shell_tmp( 1, th, phi )
-            pos_shells(r)% pos_shell( 2, itr )= pos_shell_tmp( 2, th, phi )
-            pos_shells(r)% pos_shell( 3, itr )= pos_shell_tmp( 3, th, phi )
+            pos_surfaces(r)% pos_shell( 1, itr )= pos_shell_tmp( 1, th, phi )
+            pos_surfaces(r)% pos_shell( 2, itr )= pos_shell_tmp( 2, th, phi )
+            pos_surfaces(r)% pos_shell( 3, itr )= pos_shell_tmp( 3, th, phi )
 
-            pos_shells(r)% sqdetg( itr )        = sqdetg_tmp( th, phi )
-            pos_shells(r)% baryon_density( itr )= bar_density_tmp( th, phi )
-            pos_shells(r)% gamma_euler( itr )   = gam_euler_tmp( th, phi )
-            pos_shells(r)% pvol_shell2( itr )   = pvol_tmp( th, phi )
+            pos_surfaces(r)% sqdetg( itr )        = sqdetg_tmp( th, phi )
+            pos_surfaces(r)% baryon_density( itr )= bar_density_tmp( th, phi )
+            pos_surfaces(r)% gamma_euler( itr )   = gam_euler_tmp( th, phi )
+            pos_surfaces(r)% psurface_vol2( itr )   = pvol_tmp( th, phi )
 
 
           ENDIF
@@ -1069,8 +895,8 @@ SUBMODULE (sph_particles) spherical_surfaces
       ENDIF
 
       ! Set up next step
-      IF( r == n_shells )THEN
-        r= CEILING(DBLE(n_shells)/two) - 1
+      IF( r == n_surfaces )THEN
+        r= CEILING(DBLE(n_surfaces)/two) - 1
         r_cnt= r_cnt + 1
         cnt2 = 0
         upper_bound_tmp= upper_bound
@@ -1079,14 +905,14 @@ SUBMODULE (sph_particles) spherical_surfaces
       ELSEIF( r == 1 )THEN
         IF( debug ) PRINT *, "exit"
         EXIT
-      ELSEIF( r < CEILING(DBLE(n_shells)/two) )THEN
+      ELSEIF( r < CEILING(DBLE(n_surfaces)/two) )THEN
         r= r - 1
         r_cnt= r_cnt + 1
         cnt2 = 0
         upper_bound_tmp= upper_bound
         lower_bound_tmp= lower_bound
         IF( debug ) PRINT *, "inner layers"
-      ELSEIF( r >= CEILING(DBLE(n_shells)/two) )THEN
+      ELSEIF( r >= CEILING(DBLE(n_surfaces)/two) )THEN
         r= r + 1
         r_cnt= r_cnt + 1
         cnt2 = 0
@@ -1198,40 +1024,40 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     IF( debug ) PRINT *, " * npart/2=", npart_out
 
-    DO r= 1, n_shells, 1
+    DO r= 1, n_surfaces, 1
 
       DO itr= 1, npart_shell( r )/2, 1
 
         npart_out= npart_out + 1
 
-        pos_shells(r)% pos_shell( 1, npart_shell( r )/2 + itr )= &
-                                          pos_shells(r)% pos_shell( 1, itr )
-        pos_shells(r)% pos_shell( 2, npart_shell( r )/2 + itr )= &
-                                          pos_shells(r)% pos_shell( 2, itr )
-        pos_shells(r)% pos_shell( 3, npart_shell( r )/2 + itr )= &
-                                        - pos_shells(r)% pos_shell( 3, itr )
-        pos_shells(r)% sqdetg( npart_shell( r )/2 + itr )= &
-                                                 pos_shells(r)% sqdetg( itr )
-        pos_shells(r)% baryon_density( npart_shell( r )/2 + itr )= &
-                                        pos_shells(r)% baryon_density( itr )
-        pos_shells(r)% gamma_euler( npart_shell( r )/2 + itr )= &
-                                          pos_shells(r)% gamma_euler( itr )
-        pos_shells(r)% pvol_shell2( npart_shell( r )/2 + itr )= &
-                                           pos_shells(r)% pvol_shell2( itr )
+        pos_surfaces(r)% pos_shell( 1, npart_shell( r )/2 + itr )= &
+                                          pos_surfaces(r)% pos_shell( 1, itr )
+        pos_surfaces(r)% pos_shell( 2, npart_shell( r )/2 + itr )= &
+                                          pos_surfaces(r)% pos_shell( 2, itr )
+        pos_surfaces(r)% pos_shell( 3, npart_shell( r )/2 + itr )= &
+                                        - pos_surfaces(r)% pos_shell( 3, itr )
+        pos_surfaces(r)% sqdetg( npart_shell( r )/2 + itr )= &
+                                                 pos_surfaces(r)% sqdetg( itr )
+        pos_surfaces(r)% baryon_density( npart_shell( r )/2 + itr )= &
+                                        pos_surfaces(r)% baryon_density( itr )
+        pos_surfaces(r)% gamma_euler( npart_shell( r )/2 + itr )= &
+                                          pos_surfaces(r)% gamma_euler( itr )
+        pos_surfaces(r)% psurface_vol2( npart_shell( r )/2 + itr )= &
+                                           pos_surfaces(r)% psurface_vol2( itr )
 
         ! Safety checks
-        IF( pos_shells(r)% baryon_density( itr ) == 0 )THEN
+        IF( pos_surfaces(r)% baryon_density( itr ) == 0 )THEN
           PRINT *, "When mirroring particles"
-          PRINT *, r, itr, pos_shells(r)% pos_shell( 1, itr ), &
-                   pos_shells(r)% pos_shell( 2, itr ), &
-                   pos_shells(r)% pos_shell( 3, itr ), &
-                   pos_shells(r)% baryon_density( itr )
+          PRINT *, r, itr, pos_surfaces(r)% pos_shell( 1, itr ), &
+                   pos_surfaces(r)% pos_shell( 2, itr ), &
+                   pos_surfaces(r)% pos_shell( 3, itr ), &
+                   pos_surfaces(r)% baryon_density( itr )
           STOP
         ENDIF
-        IF( pos_shells(r)% pvol_shell2( itr ) < 0 )THEN
+        IF( pos_surfaces(r)% psurface_vol2( itr ) < 0 )THEN
           PRINT *, "When mirroring particles"
-          PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
-                   pos_shells(r)% pvol_shell2( itr )
+          PRINT *, "pos_surfaces(", r, ")% psurface_vol2( ", itr, " ) =", &
+                   pos_surfaces(r)% psurface_vol2( itr )
           STOP
         ENDIF
 
@@ -1243,7 +1069,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     ! Safety checks (maybe redundant at this point, but better to be paranoid)
     npart_test= 0
-    DO r= 1, n_shells, 1
+    DO r= 1, n_surfaces, 1
       npart_test= npart_test + npart_shell( r )
     ENDDO
     IF( npart_test /= npart_out )THEN
@@ -1269,7 +1095,7 @@ SUBMODULE (sph_particles) spherical_surfaces
       proper_volume_test= zero
       proper_volume= zero
       i_shell= 1
-      DO r= 1, n_shells, 1
+      DO r= 1, n_surfaces, 1
         !DO itr= i_shell, (i_shell - 1) + (npart_shelleq(r)**two)/two, 1
         !  CALL bns_obj% import_id( &
         !           pos( 1, itr ), pos( 2, itr ), pos( 3, itr ), &
@@ -1284,38 +1110,38 @@ SUBMODULE (sph_particles) spherical_surfaces
         !i_shell= i_shell + (npart_shelleq(r)**two)/two
         DO itr= 1, npart_shell( r ), 1
 
-          IF( pos_shells(r)% baryon_density( itr ) == 0 )THEN
+          IF( pos_surfaces(r)% baryon_density( itr ) == 0 )THEN
             PRINT *, "When computing particle volume"
-            PRINT *, r, itr, pos_shells(r)% pos_shell( 1, itr ), &
-                     pos_shells(r)% pos_shell( 2, itr ), &
-                     pos_shells(r)% pos_shell( 3, itr ), &
-                     pos_shells(r)% baryon_density( itr )
+            PRINT *, r, itr, pos_surfaces(r)% pos_shell( 1, itr ), &
+                     pos_surfaces(r)% pos_shell( 2, itr ), &
+                     pos_surfaces(r)% pos_shell( 3, itr ), &
+                     pos_surfaces(r)% baryon_density( itr )
           ENDIF
-          !IF( pos_shells(r)% pvol_shell2( itr ) <= zero )THEN
+          !IF( pos_surfaces(r)% psurface_vol2( itr ) <= zero )THEN
           !  PRINT *, "When computing particle volume"
-          !  PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
-          !           pos_shells(r)% pvol_shell2( itr )
+          !  PRINT *, "pos_surfaces(", r, ")% psurface_vol2( ", itr, " ) =", &
+          !           pos_surfaces(r)% psurface_vol2( itr )
           !  STOP
           !ENDIF
 
-          pos_shells(r)% pvol_shell( itr )= m_parts( r ) &
-                            /( pos_shells(r)% baryon_density( itr ) &
-                              *pos_shells(r)% sqdetg( itr ) &
-                              *pos_shells(r)% gamma_euler( itr ) )
+          pos_surfaces(r)% psurface_vol( itr )= m_parts( r ) &
+                            /( pos_surfaces(r)% baryon_density( itr ) &
+                              *pos_surfaces(r)% sqdetg( itr ) &
+                              *pos_surfaces(r)% gamma_euler( itr ) )
 
           proper_volume_test= proper_volume_test + &
-                              pos_shells(r)% pvol_shell( itr )
+                              pos_surfaces(r)% psurface_vol( itr )
 
-          proper_volume= proper_volume + pos_shells(r)% pvol_shell2( itr )
+          proper_volume= proper_volume + pos_surfaces(r)% psurface_vol2( itr )
 
-          mass_test= mass_test + pos_shells(r)% baryon_density( itr ) &
-                    *pos_shells(r)% pvol_shell( itr ) &
-                    *pos_shells(r)% sqdetg( itr ) &
-                    *pos_shells(r)% gamma_euler( itr )
-          mass_test2= mass_test2 + pos_shells(r)% baryon_density( itr ) &
-                    *pos_shells(r)% pvol_shell2( itr ) &
-                    *pos_shells(r)% sqdetg( itr ) &
-                    *pos_shells(r)% gamma_euler( itr )
+          mass_test= mass_test + pos_surfaces(r)% baryon_density( itr ) &
+                    *pos_surfaces(r)% psurface_vol( itr ) &
+                    *pos_surfaces(r)% sqdetg( itr ) &
+                    *pos_surfaces(r)% gamma_euler( itr )
+          mass_test2= mass_test2 + pos_surfaces(r)% baryon_density( itr ) &
+                    *pos_surfaces(r)% psurface_vol2( itr ) &
+                    *pos_surfaces(r)% sqdetg( itr ) &
+                    *pos_surfaces(r)% gamma_euler( itr )
 
         ENDDO
       ENDDO
@@ -1327,42 +1153,42 @@ SUBMODULE (sph_particles) spherical_surfaces
       mass_test2= zero
       proper_volume_test = zero
       proper_volume= zero
-      vol_shell( r )  = zero
-      vol_shell2( r ) = zero
-      mass_shell( r ) = zero
-      mass_shell2( r )= zero
-      DO r= 1, n_shells, 1
+      surface_vol( r )  = zero
+      surface_vol2( r ) = zero
+      mass_surface( r ) = zero
+      mass_surface2( r )= zero
+      DO r= 1, n_surfaces, 1
         DO itr= 1, npart_shell( r ), 1
-          !IF( pos_shells(r)% pvol_shell2( itr ) <= 0 )THEN
+          !IF( pos_surfaces(r)% psurface_vol2( itr ) <= 0 )THEN
           !  PRINT *, "When computing shell volumes and masses"
-          !  PRINT *, "pos_shells(", r, ")% pvol_shell2( ", itr, " ) =", &
-          !           pos_shells(r)% pvol_shell2( itr )
+          !  PRINT *, "pos_surfaces(", r, ")% psurface_vol2( ", itr, " ) =", &
+          !           pos_surfaces(r)% psurface_vol2( itr )
           !  STOP
           !ENDIF
-          vol_shell( r )  = vol_shell( r )  + pos_shells(r)% pvol_shell( itr )
-          vol_shell2( r ) = vol_shell2( r ) + pos_shells(r)% pvol_shell2( itr )
-          mass_shell( r ) = mass_shell( r ) + &
-                            pos_shells(r)% baryon_density( itr ) &
-                           *pos_shells(r)% pvol_shell( itr ) &
-                           *pos_shells(r)% sqdetg( itr ) &
-                           *pos_shells(r)% gamma_euler( itr )
-          mass_shell2( r )= mass_shell2( r ) + &
-                            pos_shells(r)% baryon_density( itr ) &
-                           *pos_shells(r)% pvol_shell2( itr ) &
-                           *pos_shells(r)% sqdetg( itr ) &
-                           *pos_shells(r)% gamma_euler( itr )
+          surface_vol( r )  = surface_vol( r )  + pos_surfaces(r)% psurface_vol( itr )
+          surface_vol2( r ) = surface_vol2( r ) + pos_surfaces(r)% psurface_vol2( itr )
+          mass_surface( r ) = mass_surface( r ) + &
+                            pos_surfaces(r)% baryon_density( itr ) &
+                           *pos_surfaces(r)% psurface_vol( itr ) &
+                           *pos_surfaces(r)% sqdetg( itr ) &
+                           *pos_surfaces(r)% gamma_euler( itr )
+          mass_surface2( r )= mass_surface2( r ) + &
+                            pos_surfaces(r)% baryon_density( itr ) &
+                           *pos_surfaces(r)% psurface_vol2( itr ) &
+                           *pos_surfaces(r)% sqdetg( itr ) &
+                           *pos_surfaces(r)% gamma_euler( itr )
         ENDDO
-        mass_test= mass_test + mass_shell( r )
-        mass_test2= mass_test2 + mass_shell2( r )
-        proper_volume= proper_volume + vol_shell( r )
-        proper_volume_test= proper_volume_test + vol_shell2( r )
+        mass_test= mass_test + mass_surface( r )
+        mass_test2= mass_test2 + mass_surface2( r )
+        proper_volume= proper_volume + surface_vol( r )
+        proper_volume_test= proper_volume_test + surface_vol2( r )
         IF( r > 1 )THEN
           PRINT *, "shell", r
-          PRINT *, "  shell volumes:", vol_shell( r ), vol_shell2( r ), &
+          PRINT *, "  shell volumes:", surface_vol( r ), surface_vol2( r ), &
                    4.0D0/3.0D0*pi* &
-                   ( shell_radii( r )**3.0D0 - shell_radii( r - 1 )**3.0D0 )
-          PRINT *, "  shell masses:", mass_shell( r ), mass_shell2( r ), &
-                   shell_masses( r )
+                   ( surface_radii( r )**3.0D0 - surface_radii( r - 1 )**3.0D0 )
+          PRINT *, "  shell masses:", mass_surface( r ), mass_surface2( r ), &
+                   surface_masses( r )
           PRINT *
         ENDIF
       ENDDO
@@ -1374,14 +1200,14 @@ SUBMODULE (sph_particles) spherical_surfaces
 
       !STOP
 
-      !DO r= 1, n_shells, 1
+      !DO r= 1, n_surfaces, 1
       !  DO itr= 1, npart_shell( r ), 1
       !
-      !    PRINT*, (m_parts( r )*MSun/amu)/pos_shells(r)% pvol_shell( itr ) &
-      !            /(pos_shells(r)% g_xx( itr ) &
-      !              *SQRT(pos_shells(r)% g_xx( itr )) &
-      !              *pos_shells(r)% gamma_euler( itr )), &
-      !            pos_shells(r)% baryon_density( itr )*MSun/amu
+      !    PRINT*, (m_parts( r )*MSun/amu)/pos_surfaces(r)% psurface_vol( itr ) &
+      !            /(pos_surfaces(r)% g_xx( itr ) &
+      !              *SQRT(pos_surfaces(r)% g_xx( itr )) &
+      !              *pos_surfaces(r)% gamma_euler( itr )), &
+      !            pos_surfaces(r)% baryon_density( itr )*MSun/amu
       !  ENDDO
       !ENDDO
       !STOP
@@ -1425,12 +1251,12 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     cnt= 0
     npart_shell_tmp= 0
-    DO r= 1, n_shells, 1
+    DO r= 1, n_surfaces, 1
       DO itr= 1, npart_shell( r ), 1
-        pos( 1, itr + npart_shell_tmp )= pos_shells(r)% pos_shell( 1, itr )
-        pos( 2, itr + npart_shell_tmp )= pos_shells(r)% pos_shell( 2, itr )
-        pos( 3, itr + npart_shell_tmp )= pos_shells(r)% pos_shell( 3, itr )
-        pvol( itr + npart_shell_tmp )  = pos_shells(r)% pvol_shell2( itr )
+        pos( 1, itr + npart_shell_tmp )= pos_surfaces(r)% pos_shell( 1, itr )
+        pos( 2, itr + npart_shell_tmp )= pos_surfaces(r)% pos_shell( 2, itr )
+        pos( 3, itr + npart_shell_tmp )= pos_surfaces(r)% pos_shell( 3, itr )
+        pvol( itr + npart_shell_tmp )  = pos_surfaces(r)% psurface_vol2( itr )
         pmass( itr + npart_shell_tmp ) = m_parts( r )
         cnt= cnt + 1
       ENDDO
@@ -1489,13 +1315,13 @@ SUBMODULE (sph_particles) spherical_surfaces
     !
     !ENDDO
 
-    DO r= 1, n_shells, 1
+    DO r= 1, n_surfaces, 1
       DO itr= 1, npart_shell( r ), 1
 
         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-          r, pos_shells(r)% pos_shell( 1, itr ), &
-          pos_shells(r)% pos_shell( 2, itr ), &
-          pos_shells(r)% pos_shell( 3, itr )
+          r, pos_surfaces(r)% pos_shell( 1, itr ), &
+          pos_surfaces(r)% pos_shell( 2, itr ), &
+          pos_surfaces(r)% pos_shell( 3, itr )
 
         IF( ios > 0 )THEN
           PRINT *, "...error when writing the arrays in " &
@@ -1554,11 +1380,223 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     END FUNCTION validate_position_final
 
+
+    SUBROUTINE allocate_surface_memory()
+
+      !**************************************
+      !
+      !# Allocates memory for the spherical
+      !  surfaces
+      !
+      !  FT 21.04.2022
+      !
+      !**************************************
+
+      IMPLICIT NONE
+
+      IF(.NOT.ALLOCATED( surface_radii ))THEN
+        ALLOCATE( surface_radii( n_surfaces ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array surface_radii in SUBROUTINE" &
+                    // "allocate_surface_memory. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( surface_masses ))THEN
+        ALLOCATE( surface_masses( n_surfaces ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array surface_masses in SUBROUTINE" &
+                    // "allocate_surface_memory. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( shell_scales ))THEN
+        ALLOCATE( shell_scales( n_surfaces ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array shell_scales in SUBROUTINE" &
+                    // "allocate_surface_memory. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( surface_vol ))THEN
+        ALLOCATE( surface_vol( n_surfaces ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array surface_vol in SUBROUTINE" &
+                    // "allocate_surface_memory. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( surface_vol2 ))THEN
+        ALLOCATE( surface_vol2( n_surfaces ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array surface_vol2 in SUBROUTINE" &
+                    // "allocate_surface_memory. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( mass_surface ))THEN
+        ALLOCATE( mass_surface( n_surfaces ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array surface_vol in SUBROUTINE" &
+                    // "allocate_surface_memory. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( mass_surface2 ))THEN
+        ALLOCATE( mass_surface2( n_surfaces ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array surface_vol2 in SUBROUTINE" &
+                    // "allocate_surface_memory. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( m_parts ))THEN
+        ALLOCATE( m_parts( 1:n_surfaces ), STAT= ios, &
+                  ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array m_parts in SUBROUTINE" &
+                    // "allocate_surface_memory. ", &
+                    "The error message is", err_msg
+           STOP
+        ENDIF
+      ENDIF
+
+    END SUBROUTINE allocate_surface_memory
+
+
+    SUBROUTINE initialize_surfaces()
+
+      !**************************************
+      !
+      !# Initializes the fields before the
+      !  iteration over the surfaces
+      !
+      !  FT 21.04.2022
+      !
+      !**************************************
+
+      IMPLICIT NONE
+
+      ALLOCATE( npart_shell( n_surfaces ) )
+      ALLOCATE( npart_shelleq( n_surfaces ) )
+      ALLOCATE( alpha( n_surfaces ) )
+      ALLOCATE( colatitude_pos( n_surfaces ) )
+      ALLOCATE( pos_surfaces( n_surfaces ) )
+
+      initialization: DO r= 1, n_surfaces, 1
+
+        IF( ALLOCATED( pos_surfaces( r )% pos_shell ) ) &
+          DEALLOCATE( pos_surfaces( r )% pos_shell )
+
+        IF( ALLOCATED( pos_surfaces( r )% psurface_vol ) ) &
+          DEALLOCATE( pos_surfaces( r )% psurface_vol )
+
+        IF( ALLOCATED( pos_surfaces( r )% psurface_vol2 ) ) &
+          DEALLOCATE( pos_surfaces( r )% psurface_vol2 )
+
+        IF( ALLOCATED( pos_surfaces( r )% sqdetg ) )&
+          DEALLOCATE( pos_surfaces( r )% sqdetg )
+
+        IF( ALLOCATED( pos_surfaces( r )% baryon_density ) ) &
+          DEALLOCATE( pos_surfaces( r )% baryon_density )
+
+        IF( ALLOCATED( pos_surfaces( r )% gamma_euler ) ) &
+          DEALLOCATE( pos_surfaces( r )% gamma_euler )
+
+        IF( ALLOCATED( pos_surfaces( r )% pos_th ) ) &
+          DEALLOCATE( pos_surfaces( r )% pos_th )
+
+        IF( ALLOCATED( pos_surfaces( r )% pos_phi ) ) &
+          DEALLOCATE( pos_surfaces( r )% pos_phi )
+
+        ALLOCATE( pos_surfaces( r )% pos_shell     ( 3, npart_des ) )
+        ALLOCATE( pos_surfaces( r )% psurface_vol    (    npart_des ) )
+        ALLOCATE( pos_surfaces( r )% psurface_vol2   (    npart_des ) )
+        ALLOCATE( pos_surfaces( r )% sqdetg        (    npart_des ) )
+        ALLOCATE( pos_surfaces( r )% baryon_density(    npart_des ) )
+        ALLOCATE( pos_surfaces( r )% gamma_euler   (    npart_des ) )
+        ALLOCATE( pos_surfaces( r )% pos_th        (    npart_des ) )
+        ALLOCATE( pos_surfaces( r )% pos_phi       (    npart_des ) )
+
+        pos_surfaces(r)% pos_shell= zero
+        pos_surfaces(r)% pos_phi= -one
+        pos_surfaces(r)% pos_th= -one
+        pos_surfaces(r)% psurface_vol= zero
+        pos_surfaces(r)% psurface_vol2= zero
+        pos_surfaces(r)% sqdetg= zero
+        pos_surfaces(r)% baryon_density= zero
+        pos_surfaces(r)% gamma_euler= zero
+        m_parts( r )= m_p
+        npart_shelleq( r )= CEILING( &
+                                SQRT(DBLE(2*surface_masses( r )/m_parts( r ))))
+
+      ENDDO initialization
+
+      IF( ALLOCATED(pos) )THEN
+        DEALLOCATE(pos)
+        ALLOCATE( pos( 3, 2*npart_des ) )
+      ENDIF
+      IF( ALLOCATED(pvol) )THEN
+        DEALLOCATE(pvol)
+        ALLOCATE( pvol( 2*npart_des ) )
+      ENDIF
+      IF( ALLOCATED(pmass) )THEN
+        DEALLOCATE(pmass)
+        ALLOCATE( pmass( 2*npart_des ) )
+      ENDIF
+
+      pos            = zero
+      pmass          = zero
+      phase          = zero
+      proper_volume  = zero
+      surface_vol      = zero
+      surface_vol2     = zero
+      dr_shells      = radius/n_surfaces
+      npart_out      = 0
+      upper_bound_tmp= upper_bound
+      lower_bound_tmp= lower_bound
+      r    = CEILING(DBLE(n_surfaces)/two)
+      cnt2 = 0
+      r_cnt= 1
+
+      ! These array are needed to be able to parallelize the loops on each surface
+      ALLOCATE( pos_shell_tmp  ( 3, 5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                    5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+      ALLOCATE( sqdetg_tmp     (    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                    5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+      ALLOCATE( bar_density_tmp(    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                    5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+      ALLOCATE( gam_euler_tmp  (    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                    5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+      ALLOCATE( pvol_tmp       (    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                    5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+      ALLOCATE( npart_discarded(    5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                    5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+      ALLOCATE( npart_surface_tmp(  5*CEILING(SQRT(DBLE(2*npart_des))), &
+                                    5*CEILING(SQRT(DBLE(2*npart_des))) ) )
+
+    END SUBROUTINE initialize_surfaces
+
+
   END PROCEDURE place_particles_spherical_surfaces
 
 
   FUNCTION number_surfaces( m_p, center, radius, get_dens ) &
-           RESULT( n_shells )
+           RESULT( n_surfaces )
 
     !************************************************
     !
@@ -1571,6 +1609,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     !************************************************
 
     USE constants, ONLY: zero, third
+    USE utility,   ONLY: is_finite_number
 
     IMPLICIT NONE
 
@@ -1590,10 +1629,10 @@ SUBMODULE (sph_particles) spherical_surfaces
     END INTERFACE
 
 
-    INTEGER:: n_shells
+    INTEGER:: n_surfaces
 
     INTEGER:: r
-    DOUBLE PRECISION:: n_shells_tmp
+    DOUBLE PRECISION:: n_surfaces_tmp, x_tmp, rho_tmp
   !  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: particle_profile
   !
   !  IF(.NOT.ALLOCATED( particle_profile ))THEN
@@ -1607,21 +1646,37 @@ SUBMODULE (sph_particles) spherical_surfaces
   !    ENDIF
   !  ENDIF
 
-    n_shells_tmp= zero
-  !  particle_profile= zero
+    n_surfaces_tmp= zero
 
     DO r= 1, 500, 1
 
-      n_shells_tmp= n_shells_tmp + &
-                      radius/500*( ( get_dens( &
-                                     center + r*radius/500, zero, zero ) &
-                                     )/m_p )**third
-      !particle_profile( 1, r )= r*radius/500
-      !particle_profile( 2, r )= n_shells_tmp
+      x_tmp  = center + r*radius/DBLE(500)
+      rho_tmp= get_dens( x_tmp, zero, zero )
+
+      IF( .NOT.is_finite_number(( rho_tmp/m_p )**third) )THEN
+        CYCLE
+      ENDIF
+
+      n_surfaces_tmp= n_surfaces_tmp + &
+                      radius/DBLE(500)*(( rho_tmp/m_p )**third)
 
     ENDDO
 
-    n_shells= NINT( n_shells_tmp )
+    IF( .NOT.is_finite_number(n_surfaces_tmp) )THEN
+      PRINT *, "** ERROR in SUBROUTINE number_surfaces!", &
+               " n_surfaces_tmp = ", n_surfaces_tmp, " is not a finite number!"
+      PRINT *
+      STOP
+    ENDIF
+    IF( n_surfaces_tmp <= zero )THEN
+      PRINT *, "** ERROR in SUBROUTINE number_surfaces!", &
+               " n_surfaces_tmp = ", n_surfaces_tmp, " is nonpositive!"
+      PRINT *
+      STOP
+    ENDIF
+
+    n_surfaces= NINT( n_surfaces_tmp )
+
 
   END FUNCTION number_surfaces
 
@@ -1694,8 +1749,8 @@ SUBMODULE (sph_particles) spherical_surfaces
   END SUBROUTINE reallocate_array_2d
 
 
-  SUBROUTINE place_surfaces( central_dens, center, radius, m_p, n_shells, &
-                             shell_radii, last_r, get_dens )
+  SUBROUTINE place_surfaces( central_dens, center, radius, m_p, n_surfaces, &
+                             surface_radii, last_r, get_dens )
 
     !************************************************
     !
@@ -1711,9 +1766,9 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     IMPLICIT NONE
 
-    INTEGER,          INTENT( IN ):: n_shells
+    INTEGER,          INTENT( IN ):: n_surfaces
     DOUBLE PRECISION, INTENT( IN ):: central_dens, center, radius, m_p, last_r
-    DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN OUT ):: shell_radii
+    DOUBLE PRECISION, DIMENSION( n_surfaces ), INTENT( IN OUT ):: surface_radii
     INTERFACE
       FUNCTION get_dens( x, y, z ) RESULT( density )
         !! Returns the baryon mass density at the desired point
@@ -1731,25 +1786,23 @@ SUBMODULE (sph_particles) spherical_surfaces
     INTEGER:: i, th, phi
     DOUBLE PRECISION:: rho_tmp, long, lat, rad
 
-    !central_density= bns_obj% get_rho_center1()
-
-    shell_radii= zero
+    surface_radii= zero
 
     IF( central_dens > zero )THEN
-      shell_radii(1)= ( central_dens/m_p )**(-third)
+      surface_radii(1)= ( central_dens/m_p )**(-third)
     ELSE
       DO i= 1, 1000, 1
         IF( get_dens( center + radius*i/(ten*ten*ten), zero, zero ) > zero )THEN
-          shell_radii(1)= &
+          surface_radii(1)= &
       ( get_dens( center + radius*i/(ten*ten*ten), zero, zero )/m_p )**(-third)
           EXIT
         ENDIF
       ENDDO
     ENDIF
 
-    DO itr= 2, n_shells, 1
+    DO itr= 2, n_surfaces, 1
 
-      rho_tmp= get_dens( center + shell_radii( itr - 1 ), zero, zero )
+      rho_tmp= get_dens( center + surface_radii( itr - 1 ), zero, zero )
 
       IF( rho_tmp <= 1.0D-13 )THEN
 
@@ -1759,7 +1812,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
               long= phi/(two*ten)*(two*pi)
               lat = th/ten*pi
-              rad = (center + shell_radii( itr - 1 ) + radius*i/(ten*ten*ten))
+              rad = (center + surface_radii( itr - 1 ) + radius*i/(ten*ten*ten))
 
               IF( get_dens( rad*SIN(lat)*COS(long),&
                             rad*SIN(lat)*SIN(long), &
@@ -1780,19 +1833,19 @@ SUBMODULE (sph_particles) spherical_surfaces
       ENDIF
 
       IF( rho_tmp == zero )THEN
-        shell_radii= shell_radii*itr/n_shells
+        surface_radii= surface_radii*itr/n_surfaces
       ENDIF
 
-      shell_radii( itr )= shell_radii( itr - 1 ) + ( rho_tmp/m_p )**(-third)
+      surface_radii( itr )= surface_radii( itr - 1 ) + ( rho_tmp/m_p )**(-third)
 
     ENDDO
-    shell_radii= shell_radii*(radius*last_r/shell_radii(n_shells))
+    surface_radii= surface_radii*(radius*last_r/surface_radii(n_surfaces))
 
   END SUBROUTINE place_surfaces
 
 
-  SUBROUTINE assign_surfaces_mass( shell_masses, shell_radii, radius, dr, &
-                                   n_shells, mass_profile_idx, mass_profile, &
+  SUBROUTINE assign_surfaces_mass( surface_masses, surface_radii, radius, dr, &
+                                   n_surfaces, mass_profile_idx, mass_profile, &
                                    mass_star )
 
     !*************************************************
@@ -1809,24 +1862,24 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     IMPLICIT NONE
 
-    INTEGER,          INTENT( IN ):: n_shells
+    INTEGER,          INTENT( IN ):: n_surfaces
     DOUBLE PRECISION, INTENT( IN ):: radius, dr, mass_star
 
     INTEGER, DIMENSION( : ),                 INTENT( IN ):: mass_profile_idx
-    DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN ):: shell_radii
+    DOUBLE PRECISION, DIMENSION( n_surfaces ), INTENT( IN ):: surface_radii
     DOUBLE PRECISION, DIMENSION( :, : ),     INTENT( IN ):: mass_profile
-    DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN OUT ):: shell_masses
+    DOUBLE PRECISION, DIMENSION( n_surfaces ), INTENT( IN OUT ):: surface_masses
 
     INTEGER shell_index, itr2
 
     shell_index= 1
     itr2= 1
-    shell_masses= zero
+    surface_masses= zero
     assign_masses_to_surfaces: DO itr= 1, NINT(radius/dr), 1
 
-      IF( shell_index == n_shells )THEN
+      IF( shell_index == n_surfaces )THEN
 
-        shell_masses( shell_index )= SUM( mass_profile( 2, &
+        surface_masses( shell_index )= SUM( mass_profile( 2, &
          mass_profile_idx(itr2):mass_profile_idx(NINT(radius/dr)-1) ), DIM= 1 )
 
         EXIT
@@ -1834,10 +1887,10 @@ SUBMODULE (sph_particles) spherical_surfaces
       ENDIF
 
       IF( mass_profile( 1, mass_profile_idx(itr) ) &
-          >= shell_radii( shell_index ) &!+ radius/DBLE(2*n_shells)
+          >= surface_radii( shell_index ) &!+ radius/DBLE(2*n_surfaces)
       )THEN
 
-       shell_masses( shell_index )= SUM( mass_profile( 2, &
+       surface_masses( shell_index )= SUM( mass_profile( 2, &
                      mass_profile_idx(itr2):mass_profile_idx(itr) ), DIM= 1 )
 
        itr2= itr + 1
@@ -1848,12 +1901,12 @@ SUBMODULE (sph_particles) spherical_surfaces
     ENDDO assign_masses_to_surfaces
 
     ! Safety check
-    IF( ABS( SUM( shell_masses, DIM= 1 ) - mass_star )/mass_star > 5.0D-3 )THEN
+    IF( ABS( SUM( surface_masses, DIM= 1 ) - mass_star )/mass_star > 5.0D-3 )THEN
       PRINT *, " ** The masses of the shells do not add up to the ", &
                "mass of the star. Stopping..."
-      PRINT *, " * SUM( shell_masses )= ", SUM( shell_masses, DIM=1 )
+      PRINT *, " * SUM( surface_masses )= ", SUM( surface_masses, DIM=1 )
       PRINT *, " * Baryon mass of the star= ", mass_star
-      PRINT *, " * Array shell_masses=", shell_masses
+      PRINT *, " * Array surface_masses=", surface_masses
       PRINT *
       STOP
     ENDIF
@@ -1862,8 +1915,8 @@ SUBMODULE (sph_particles) spherical_surfaces
 
 
   SUBROUTINE print_mass_profile_surface_radii( mass_profile, mass_profile_idx, &
-                                               shell_radii, radius, dr, &
-                                               n_shells, &
+                                               surface_radii, radius, dr, &
+                                               n_surfaces, &
                                                filename_mass_profile, &
                                                filename_shells_radii )
 
@@ -1880,11 +1933,11 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     IMPLICIT NONE
 
-    INTEGER,          INTENT( IN ):: n_shells
+    INTEGER,          INTENT( IN ):: n_surfaces
     DOUBLE PRECISION, INTENT( IN ):: radius, dr
 
     INTEGER, DIMENSION( : ),                 INTENT( IN ):: mass_profile_idx
-    DOUBLE PRECISION, DIMENSION( n_shells ), INTENT( IN ):: shell_radii
+    DOUBLE PRECISION, DIMENSION( n_surfaces ), INTENT( IN ):: surface_radii
     DOUBLE PRECISION, DIMENSION( :, : ),     INTENT( IN ):: mass_profile
 
     CHARACTER( LEN= * ), INTENT( IN ):: filename_mass_profile, &
@@ -1952,10 +2005,10 @@ SUBMODULE (sph_particles) spherical_surfaces
       STOP
     ENDIF
 
-    DO itr = 1, n_shells, 1
+    DO itr = 1, n_surfaces, 1
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        shell_radii( itr )
+        surface_radii( itr )
 
       IF( ios > 0 )THEN
         PRINT *, "...error when writing the arrays in " &

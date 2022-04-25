@@ -1045,30 +1045,39 @@ SUBMODULE (sph_particles) apm
       IF( debug ) PRINT *, SIZE(nstar_sph)
       IF( debug ) PRINT *, SIZE(correction_pos(1,:))
 
+      !
+      !-- The following loop shouldn't be needed, but apparently
+      !-- the test in the previous loop is not enough to remove
+      !-- random NaNs from the artificial pressure on the ghost particles.
+      !-- Which, btw, shouldn't be there at all since all the quantities are
+      !-- tested, and no errors are detected...
+      !-- Also, this loop is needed only when compiling with gfortran.
+      !
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_all, npart_real, art_pr, nstar_sph, &
       !$OMP                     nstar_id, all_pos ) &
       !$OMP             PRIVATE( a )
-      find_nan_in_art_pr_ghost: DO a= npart_real + 1, npart_all, 1
+      fix_nan_in_art_pr_ghost: DO a= npart_real + 1, npart_all, 1
 
         IF( .NOT.is_finite_number(art_pr(a)) )THEN
-          PRINT *, "** ERROR! art_pr(", a, ")= ", art_pr(a), &
-                   " is not a finite number on a ghost particle!"
-          PRINT *, "   nstar_sph(", a, ")=", nstar_sph(a)
-          PRINT *, "   nstar_id(", a, ")=", nstar_id(a)
-          PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
-                                                    all_pos(2,a), &
-                                                    all_pos(3,a) )
-          PRINT *, " * Stopping.."
-          PRINT *
-          STOP
+          art_pr(a)= max_art_pr_ghost
+          !PRINT *, "** ERROR! art_pr(", a, ")= ", art_pr(a), &
+          !         " is not a finite number on a ghost particle!"
+          !PRINT *, "   nstar_sph(", a, ")=", nstar_sph(a)
+          !PRINT *, "   nstar_id(", a, ")=", nstar_id(a)
+          !PRINT *, "   rho(", a, ")=", get_density( all_pos(1,a), &
+          !                                          all_pos(2,a), &
+          !                                          all_pos(3,a) )
+          !PRINT *, " * Stopping.."
+          !PRINT *
+          !STOP
         ENDIF
 
-      ENDDO find_nan_in_art_pr_ghost
+      ENDDO fix_nan_in_art_pr_ghost
       !$OMP END PARALLEL DO
 
       PRINT *, " * Maximum relative error between the star density profile", &
-               "   and its SPH estimate: err_N_max= ", err_N_max
+               " and its SPH estimate: err_N_max= ", err_N_max
       PRINT *, "     at position: x=", pos_maxerr(1), ", y=", pos_maxerr(2), &
                ", z=", pos_maxerr(3)
       PRINT *, "     with r/(system size)= ", SQRT( &

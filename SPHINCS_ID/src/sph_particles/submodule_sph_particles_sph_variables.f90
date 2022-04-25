@@ -1025,9 +1025,11 @@ SUBMODULE (sph_particles) sph_variables
     ! density calls dens_ll_cell, which computes nstar on particle a as
     ! Na=     Na + nu(b)*Wab_ha, so this is nstar= nlrf*sq_g*Theta
     ! It has to be compared with nstar= nlrf*sq_g*Theta
-    CALL density( this% npart, &
-                  this% pos,   &
-                  this% nstar_int )
+    CALL density_loop( this% npart,     &
+                       this% pos,       &
+                       this% nu,        &
+                       this% h,         &
+                       this% nstar_int )
 
     !-------------------------------------------------------------------------!
     !-------------------------------------------------------------------------!

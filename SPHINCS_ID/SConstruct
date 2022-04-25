@@ -65,19 +65,14 @@ default_debug = 'FALSE'
 # Which compilers to use
 #   Fortran : 'gfortran', 'ifort'
 #   C++     : 'g++', 'gcc' or 'icpc'
-default_fortran_compiler = 'ifort'
-default_cpp_compiler     = 'icpc'
+default_fortran_compiler = 'gfortran'
+default_cpp_compiler     = 'g++'
 
 # 'TRUE'  : enables verbose output
 # 'FALSE' : disables verbose output
 default_verbose = 'FALSE'
 
-# 'TRUE'  : compiles source files from LORENE, used by SPHINCS_ID, and links the
-#           resulting LORENE library to SPHINCS_ID
-# 'FALSE' : only links the LORENE library to SPHINCS_ID
-default_compile_lorene = 'FALSE'
-
-# Specifies the host machine where SPHINCS_ID is compiled
+# Specifies the host machine where SPHINCS_ID is used
 # 'r3x'     : The r30, r31, r32 machines @ Department of Astronomy,
 #             Stockholm University
 # 'Sunrise' : The Sunrise HPC cluster @ Fysikum, Stockholm University
@@ -116,11 +111,16 @@ if fortran_compiler is None: fortran_compiler = default_fortran_compiler
 cpp_compiler = ARGUMENTS.get('cpp_compiler')
 if cpp_compiler is None: cpp_compiler = default_cpp_compiler
 
+compilers = ARGUMENTS.get('compilers')
+if compilers == 'intel':
+    fortran_compiler = 'ifort'
+    cpp_compiler     = 'icpc'
+if compilers == 'gnu':
+    fortran_compiler = 'gfortran'
+    cpp_compiler     = 'g++'
+
 verbose = ARGUMENTS.get('verbose')
 if verbose is None: verbose = default_verbose
-
-compile_lorene = ARGUMENTS.get('compile_lorene')
-if compile_lorene is None: compile_lorene = default_compile_lorene
 
 host = ARGUMENTS.get('host')
 if host is None: host = default_host
@@ -501,72 +501,6 @@ for i in range(len(sources_sphincs_fm)):
 ################################################################################
 
 ################################################################################
-# SOURCE FILES FROM LORENE (THESE CAN BE OPTIONALLY COMPILED)
-################################################################################
-
-#env['CPPPATH'] = [
-#  '../../../Lorene/Export/C++/Include', '../../../Lorene/C++/Include'
-#]
-
-lorene_dir       = ['../../../Lorene/C++/Source/']
-lorene_bin_ns_dir= ['../../../Lorene/Export/C++/Source/']
-
-lorene_sources = [
-  'Binaire/*.C',
-  #'Binary_xcts/*.C',
-  #'Star/*.C',
-  'Tenseur/*.C',
-  'Valeur/*.C',
-  'Tensor/*.C',
-  'Tensor/Scalar/*.C',
-  'Metric/*.C',
-  'Metrique/*.C',
-  'Connection/*.C',
-  'Diff/*.C',
-  'Itbl/*.C',
-  'Tbl/*.C',
-  'Mtbl/*.C',
-  'Grille3d/*.C',
-  'Map/*.C',
-  'Mtbl_cf/*.C',
-  'Etoile/*.C',
-  'Eos/*.C',
-  'Map_et/*.C',
-  'Mg3d/*.C',
-  'Cmp/*.C',
-  'Matrice/*.C',
-  'Param/*.C',
-  'Param_elliptic/*.C',
-  'Coord/*.C',
-  'Base_val/*.C',
-  'Base_vect/*.C',
-  'Non_class_members/Utilities/*.C',
-  'Non_class_members/PDE/*.C',
-  'Non_class_members/Operators/*.C',
-  'Non_class_members/Coef/*.C',
-  'Non_class_members/Coef/FFTW3/*.C',
-  'Non_class_members/Graphics/save_profile.C',
-  #'Non_class_members/Coef/FFT991/*.C',
-  'Ope_elementary/*.C',
-  'Ope_elementary/Ope_helmholtz_minus_2d/*.C',
-  'Ope_elementary/Ope_helmholtz_minus_pseudo_1d/*.C',
-  'Ope_elementary/Ope_poisson_2d/*.C',
-  'Ope_elementary/Ope_poisson_pseudo_1d/*.C',
-  'Ope_elementary/Ope_pois_vect_r/*.C',
-  'Ope_elementary/Ope_sec_order/*.C',
-  'Ope_elementary/Ope_sec_order_r2/*.C',
-  'Ope_elementary/Ope_vorton/*.C'
-]
-
-lorene_sources_bin_ns = ['bin_ns.C', 'bin_ns_aux.C', 'write_lines.C']
-
-for i in range(len(lorene_sources)):
-  lorene_sources[i]        = lorene_dir[0]        + lorene_sources[i]
-
-for i in range(len(lorene_sources_bin_ns)):
-  lorene_sources_bin_ns[i] = lorene_bin_ns_dir[0] + lorene_sources_bin_ns[i]
-
-################################################################################
 
 ################################################################################
 # FLAVOUR= 1. Link to LORENE and FUKA libraries, and interpolate from
@@ -613,12 +547,8 @@ if flavour == full_flavour: #
                      'gslcblas', 'gfortran', 'fftw3']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
-                    + module_bns_fuka \
-                    + module_ejecta_generic + module_sphincs_id_full
-
-if compile_lorene == 'TRUE': #
-
-  sources_flavour = sources_flavour + lorene_sources + lorene_sources_bin_ns
+                  + module_bns_fuka \
+                  + module_ejecta_generic + module_sphincs_id_full
 
 ################################################################################
 # FLAVOUR= 2. Link to LORENE library, and interpolate from Cartesian uniform
@@ -665,11 +595,7 @@ if flavour == lorene_flavour: #
                      'gslcblas', 'gfortran', 'fftw3']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
-                    + module_ejecta_generic + module_sphincs_id_lorene
-
-if compile_lorene == 'TRUE': #
-
-  sources_flavour = sources_flavour + lorene_sources + lorene_sources_bin_ns
+                  + module_ejecta_generic + module_sphincs_id_lorene
 
 ################################################################################
 # FLAVOUR= 3. Link to FUKA library, and interpolate from Cartesian uniform
@@ -735,7 +661,7 @@ if debug == 'FALSE': #
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
-                          '-fopt-info-vec', '-fdollar-ok', \
+                          '-fopt-info-vec', '-fdollar-ok', '-fbounds-check', \
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
@@ -785,7 +711,7 @@ if debug == 'FALSE': #
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
-                          '-fopt-info-vec', '-fdollar-ok', \
+                          '-fopt-info-vec', '-fdollar-ok', '-fbounds-check', \
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \

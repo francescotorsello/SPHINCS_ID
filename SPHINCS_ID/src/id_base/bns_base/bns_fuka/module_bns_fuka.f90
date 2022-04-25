@@ -196,7 +196,7 @@ MODULE bns_fuka
 
     !& Returns 1 if the energy density or the specific energy or the pressure
     !  are negative
-    PROCEDURE:: test_position => is_hydro_negative
+    PROCEDURE:: test_position => is_hydro_positive
 
     !PROCEDURE, NOPASS:: derived_type_constructor => construct_bnsfuka2
 
@@ -651,23 +651,23 @@ MODULE bns_fuka
     END FUNCTION read_fuka_spatial_metric
 
 
-    MODULE FUNCTION is_hydro_negative( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION is_hydro_positive( this, x, y, z ) RESULT( res )
     !# Returns 1 if the energy density or the specific energy or the pressure
     !  are negative, 0 otherwise
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),     INTENT( IN )       :: THIS
+      CLASS(bnsfuka),     INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: y
       !> \(z\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: z
-      !& 1 if the energy density or the specific energy or the pressure
-      !  are negative, 0 otherwise
-      INTEGER:: res
+      !& `.TRUE.` if the energy density or the specific energy or the pressure
+      !  are negative, `.FALSE.` otherwise
+      LOGICAL:: res
 
-    END FUNCTION is_hydro_negative
+    END FUNCTION is_hydro_positive
 
 
     MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
@@ -762,7 +762,7 @@ MODULE bns_fuka
   PRIVATE:: construct_bin_ns, get_fuka_id, get_fuka_id_spacetime, &
             get_fuka_id_particles, get_fuka_id_mass_b, &
             get_fuka_id_hydro, get_fuka_id_k, get_fuka_mass_density, &
-            get_fuka_spatial_metric, negative_hydro, get_fuka_id_params, &
+            get_fuka_spatial_metric, positive_hydro, get_fuka_id_params, &
             destruct_bin_ns
 
 
@@ -1113,11 +1113,7 @@ MODULE bns_fuka
 
       !********************************************
       !
-      !# Interface to the |fuka| method of class
-      !  |binns| with the same name, that returns
-      !  the baryon mass density \([\mathrm{kg}\,
-      !  \mathrm{m}^{-3}]\) from |fuka|,
-      !  at the specified point
+      !#
       !
       !  FT
       !
@@ -1147,11 +1143,7 @@ MODULE bns_fuka
 
       !************************************************
       !
-      !# Interface to the |fuka| method of class
-      !  |binns| with the same name, that returns the
-      !  diagonal components of the metric,
-      !  all equal to the |fuka| conformal factor to
-      !  the 4th power.
+      !#
       !
       !  FT
       !
@@ -1176,19 +1168,14 @@ MODULE bns_fuka
     END FUNCTION get_fuka_spatial_metric
 
 
-    FUNCTION negative_hydro( optr, x, y, z ) RESULT( res ) &
-      BIND(C, NAME= "negative_hydro")
+    FUNCTION positive_hydro( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "is_hydro_positive")
 
       !************************************************
       !
-      !# Interface to the |fuka| method of class
-      !  |binns| with the same name, that returns 1
-      !  if the energy density is nonpositive,
-      !  or if the specific energy is nonpositive,
-      !  or if the pressure is nonpositive,
-      !  at the specified point; it returns 0 otherwise
+      !#
       !
-      !  FT 12.03.2021
+      !  FT
       !
       !************************************************
 
@@ -1196,7 +1183,7 @@ MODULE bns_fuka
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a |fuka| |binns| object
+      !> C pointer pointing to a |lorene| |binns| object
       TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
@@ -1205,10 +1192,10 @@ MODULE bns_fuka
       !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
       !& 1 if the energy density or the specific energy or the pressure
-      !  are negative, 0 otherwise
+      !  are positve, 0 otherwise
       INTEGER(C_INT) :: res
 
-    END FUNCTION negative_hydro
+    END FUNCTION positive_hydro
 
 
     SUBROUTINE get_fuka_id_params( optr, &
@@ -1290,10 +1277,7 @@ MODULE bns_fuka
 
       !**********************************************
       !
-      !# Interface to the |fuka| method of class
-      !  |binns| with the same name, that stores
-      !  the physical parameters of the binary
-      !  system from |fuka| in the desired variables
+      !#
       !
       !  FT
       !

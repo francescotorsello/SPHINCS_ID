@@ -51,7 +51,7 @@ SUBMODULE (sph_particles) lattices
     !
     !*********************************************************
 
-    USE constants,    ONLY: pi, third
+    USE constants,    ONLY: pi, third, one
 
     IMPLICIT NONE
 
@@ -186,14 +186,18 @@ SUBMODULE (sph_particles) lattices
           !-- Promote a lattice point to a particle,
           !-- if the mass density is higher than the threshold
           !
-          IF( get_density( xtemp, ytemp, ztemp ) &
-                                  > thres_baryon_density &
+          IF( (get_density( xtemp, ytemp, ztemp ) > thres_baryon_density) &
               .AND. &
-              validate_position( xtemp, ytemp, ztemp ) )THEN
+              (validate_position_final( xtemp, ytemp, ztemp )) &
+          )THEN
+
+            !IF( validate_position_final( xtemp, ytemp, ztemp ) )THEN
 
             pos_tmp( 1, i, j, k )= xtemp
             pos_tmp( 2, i, j, k )= ytemp
             pos_tmp( 3, i, j, k )= ztemp
+
+            !ENDIF
 
           ENDIF
 
@@ -209,7 +213,7 @@ SUBMODULE (sph_particles) lattices
 
         DO i= 1, nx, 1
 
-          IF( pos_tmp( 1, i, j, k ) < HUGE(0.0D0) )THEN
+          IF( pos_tmp( 1, i, j, k ) < HUGE(one) )THEN
 
             npart_out= npart_out + 1
 
@@ -317,6 +321,46 @@ SUBMODULE (sph_particles) lattices
 
     PRINT *, "** Subroutine place_particles_3D_lattice executed."
     PRINT *
+
+
+    CONTAINS
+
+
+    FUNCTION validate_position_final( x, y, z ) RESULT( answer )
+
+      !*******************************************************
+      !
+      !# Returns validate_position( x, y, z ) if the latter
+      !  is present, `.TRUE.` otherwise
+      !
+      !  FT 21.04.2021
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      DOUBLE PRECISION, INTENT(IN):: x
+      !! \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN):: y
+      !! \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN):: z
+      !! \(z\) coordinate of the desired point
+      LOGICAL:: answer
+      !# validate_position( x, y, z ) if the latter is present,
+      !  `.TRUE.` otherwise
+
+      IF( PRESENT(validate_position) )THEN
+
+        answer= validate_position( x, y, z )
+
+      ELSE
+
+        answer= .TRUE.
+
+      ENDIF
+
+    END FUNCTION validate_position_final
+
 
   END PROCEDURE place_particles_lattice
 

@@ -362,39 +362,45 @@ SUBMODULE (sph_particles) handle_positions
 
     ENDIF
 
-    IF( PRESENT(debug) .AND. debug .EQV. .TRUE. )THEN
+    IF( PRESENT(debug) )THEN
 
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( pos, x_sort, x_number ) &
-      !$OMP             PRIVATE( itr, itr2, x_idx )
-      DO itr= 1, SIZE(x_number), 1
+      IF( debug .EQV. .TRUE. )THEN
+      ! These wo IF statements are nested because gfortran doesn't like them
+      ! together when debug is not PRESENT
 
-        IF( itr == 1 )THEN
-          x_idx= 1
-        ELSE
-          x_idx= SUM(x_number(1:itr-1)) + 1
-        ENDIF
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( pos, x_sort, x_number ) &
+        !$OMP             PRIVATE( itr, itr2, x_idx )
+        DO itr= 1, SIZE(x_number), 1
 
-        DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
-
-          ! If they do not have the same x
-          IF( pos( 1, x_sort(itr2) ) /= &
-              pos( 1, x_sort(itr2+1) ) )THEN
-
-            PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
-                     " and", x_sort(itr2+1), &
-                     " do not have the same x, but should!"
-            PRINT *, pos( :, x_sort(itr2) )
-            PRINT *, pos( :, x_sort(itr2+1) )
-            PRINT *, " * Stopping..."
-            PRINT *
-            STOP
-
+          IF( itr == 1 )THEN
+            x_idx= 1
+          ELSE
+            x_idx= SUM(x_number(1:itr-1)) + 1
           ENDIF
 
+          DO itr2= x_idx, x_idx + x_number(itr) - 2, 1
+
+            ! If they do not have the same x
+            IF( pos( 1, x_sort(itr2) ) /= &
+                pos( 1, x_sort(itr2+1) ) )THEN
+
+              PRINT *, "** ERROR! ", "The two particles ", x_sort(itr2), &
+                       " and", x_sort(itr2+1), &
+                       " do not have the same x, but should!"
+              PRINT *, pos( :, x_sort(itr2) )
+              PRINT *, pos( :, x_sort(itr2+1) )
+              PRINT *, " * Stopping..."
+              PRINT *
+              STOP
+
+            ENDIF
+
+          ENDDO
         ENDDO
-      ENDDO
-      !$OMP END PARALLEL DO
+        !$OMP END PARALLEL DO
+
+      ENDIF
 
     ENDIF
 
@@ -532,14 +538,15 @@ SUBMODULE (sph_particles) handle_positions
 
     USE analyze,    ONLY: COM
     USE constants,  ONLY: zero
+    USE utility,    ONLY: is_finite_number
 
     IMPLICIT NONE
 
-    INTEGER:: a
+    INTEGER:: a, i
     DOUBLE PRECISION:: com_x, com_y, com_z, com_d
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
 
-    CALL COM( npart, pos, nu, &       ! input
+    CALL COM( npart, pos, nu, &            ! input
               com_x, com_y, com_z, com_d ) ! output
 
     IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
@@ -573,10 +580,16 @@ SUBMODULE (sph_particles) handle_positions
       pos_corr_tmp(2)= pos(2,a) - ( com_y - com_star(2) )
       pos_corr_tmp(3)= pos(3,a) - ( com_z - com_star(3) )
 
+      DO i= 1, 3, 1
+        IF( .NOT.is_finite_number(pos_corr_tmp(i)) )THEN
+          PRINT *, pos_corr_tmp
+          STOP
+        ENDIF
+      ENDDO
+
       IF( get_density( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) > zero &
           .AND. &
-          !binary% is_hydro_negative( &
           validate_pos( &
                   pos_corr_tmp(1), pos_corr_tmp(2), pos_corr_tmp(3) ) &
       )THEN

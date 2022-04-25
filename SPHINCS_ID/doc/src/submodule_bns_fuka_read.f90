@@ -864,7 +864,7 @@ SUBMODULE (bns_fuka) read
   END PROCEDURE read_fuka_spatial_metric
 
 
-  MODULE PROCEDURE is_hydro_negative
+  MODULE PROCEDURE is_hydro_positive
 
     !************************************************
     !
@@ -894,7 +894,7 @@ SUBMODULE (bns_fuka) read
   !
   !  ENDIF
 
-  END PROCEDURE is_hydro_negative
+  END PROCEDURE is_hydro_positive
 
 
 END SUBMODULE read

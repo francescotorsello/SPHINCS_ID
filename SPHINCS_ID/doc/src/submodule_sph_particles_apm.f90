@@ -1068,7 +1068,7 @@ SUBMODULE (sph_particles) apm
       !$OMP END PARALLEL DO
 
       PRINT *, " * Maximum relative error between the star density profile", &
-               "   and its SPH estimate: err_N_max= ", err_N_max
+               " and its SPH estimate: err_N_max= ", err_N_max
       PRINT *, "     at position: x=", pos_maxerr(1), ", y=", pos_maxerr(2), &
                ", z=", pos_maxerr(3)
       PRINT *, "     with r/(system size)= ", SQRT( &

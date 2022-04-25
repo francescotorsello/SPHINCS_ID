@@ -1370,26 +1370,37 @@ SUBMODULE (sph_particles) constructor_std
     ! TODO: The idbase object should tell the location of the total
     !       computing frame center of mass to the particle object
 
-    CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-                                 import_density, &
-                                 validate_position, [zero,zero,zero], &
-                                 verbose= .FALSE. )
+   ! DO i_matter= 1, parts% n_matter, 1
+   !   parts% barycenter_system(1:3)= &
+   !           parts% barycenter_system(1:3) + barycenter(i_matter,1:3)
+   ! ENDDO
+   ! PRINT *, parts% barycenter_system(1:3)
+   ! STOP
 
-    CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-                                 import_density, &
-                                 validate_position, [zero,zero,zero], &
-                                 verbose= .FALSE. )
+    IF( dist /= id_particles_on_lattice )THEN
 
-    CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-                                 import_density, &
-                                 validate_position, [zero,zero,zero], &
-                                 verbose= .TRUE. )
+      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
+                                   import_density, &
+                                   validate_position, [zero,zero,zero], &
+                                   verbose= .FALSE. )
 
-    CALL COM( & ! input
-              parts% npart, parts% pos, parts% nu, &
-              ! output
-              parts% barycenter_system(1), parts% barycenter_system(2), &
-              parts% barycenter_system(3), parts% barycenter_system(4) )
+      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
+                                   import_density, &
+                                   validate_position, [zero,zero,zero], &
+                                   verbose= .FALSE. )
+
+      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
+                                   import_density, &
+                                   validate_position, [zero,zero,zero], &
+                                   verbose= .TRUE. )
+
+      CALL COM( & ! input
+                parts% npart, parts% pos, parts% nu, &
+                ! output
+                parts% barycenter_system(1), parts% barycenter_system(2), &
+                parts% barycenter_system(3), parts% barycenter_system(4) )
+
+    ENDIF
 
     !PRINT *, com_x, com_y, com_z, com_d
 
