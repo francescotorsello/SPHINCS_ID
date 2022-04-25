@@ -67,7 +67,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     INTEGER:: n_surfaces, itr2, cnt, &
               r, th, phi, i_shell, npart_test, npart_shell_tmp, &
-              cnt2, rel_sign, dim_seed, r_cnt, prev_shell, &
+              cnt2, rel_sign, dim_seed, r_cnt, prev_shell, first_r, &
               npart_discard, npart_shell_cnt, size_pos_shell
     !INTEGER, PARAMETER:: max_length= 5D+6
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx, seed
@@ -440,12 +440,8 @@ SUBMODULE (sph_particles) spherical_surfaces
 
           ! Place a particle at a given position only if the hydro
           ! is acceptable
-          IF( &!bar_density_tmp( th, phi ) > zero &
-              !pos_surfaces(r)% baryon_density( itr + 1 ) > zero &
-              !.AND. &
-              validate_position_final( xtemp, ytemp, ztemp ) )THEN
+          IF( validate_position_final( xtemp, ytemp, ztemp ) )THEN
 
-            !npart_shell_cnt= npart_shell_cnt + 1
             npart_surface_tmp( th, phi )= 1
             pos_shell_tmp( 1, th, phi )= xtemp
             pos_shell_tmp( 2, th, phi )= ytemp
@@ -488,6 +484,13 @@ SUBMODULE (sph_particles) spherical_surfaces
       npart_shell( r )= MAX( npart_shell( r ) - npart_discard, 0 )
       npart_out       = npart_out + npart_shell( r )/2
 
+    !  PRINT *, 'r=', r
+    !  PRINT *, "npart_discard=", npart_discard
+    !  PRINT *, "npart_shell_cnt=", npart_shell_cnt
+    !  PRINT *, 'npart_shell( r )=', npart_shell( r )
+    !  PRINT *
+    !  STOP
+
       IF( debug ) PRINT *, "Right after OMP"
 
       ! Safety check
@@ -504,13 +507,34 @@ SUBMODULE (sph_particles) spherical_surfaces
       ! Set up the next step in pathological cases
       IF( npart_shell( r ) < 0 ) npart_shell( r )= 0
       IF( npart_shell( r ) == 0 )THEN
+        IF( r == first_r )THEN
+          PRINT *, " ** ERROR! No particles were placed on the first ", &
+                   "spherical surface! Maybe the system has a geometry such ", &
+                   "that there is no matter on the spherical surface with ", &
+                   "radius r ~ R/2, with R its radial size?"
+          PRINT *, "    If so, the first spherical surface to be populated ", &
+                   "has to be changed by changing the variable first_r ", &
+                   "in the (internal) SUBROUTINE initialize_surfaces in ", &
+                   "SUBMODULE sph_particles spherical_surfaces."
+          PRINT *, "    Another possibility is that the FUNCTION ", &
+                   "validate_position given as argument to the SUBROUTINE ", &
+                   "place_particles_spherical_surfaces, does not return ", &
+                   ".TRUE. when a position is acceptable, and .FALSE. when ", &
+                   "it is not."
+          PRINT *, "    Yet another possibility is that the (internal) ", &
+                   "FUNCTION validate_position_final is not set up ", &
+                   "properly in SUBMODULE sph_particles spherical_surfaces."
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+        ENDIF
         m_parts( r )= m_parts( prev_shell )
         PRINT *, " * Placed", npart_shell( r )/2, &
                  " particles on one emisphere of spherical surface ", r, &
                  " out of ", n_surfaces
         IF( r == 1 )THEN
           EXIT
-        ELSEIF( r < CEILING(DBLE(n_surfaces)/two) )THEN
+        ELSEIF( r < first_r )THEN
           !PRINT *, "r=", r
           r= r - 1
           cnt2 = 0
@@ -519,13 +543,13 @@ SUBMODULE (sph_particles) spherical_surfaces
           CYCLE
         ELSEIF( r == n_surfaces )THEN
           !PRINT *, "r=", r
-          r= CEILING(DBLE(n_surfaces)/two) - 1
+          r= first_r - 1
           r_cnt= r_cnt + 1
           cnt2 = 0
           upper_bound_tmp= upper_bound
           lower_bound_tmp= lower_bound
           CYCLE
-        ELSEIF( r >= CEILING(DBLE(n_surfaces)/two) )THEN
+        ELSEIF( r >= first_r )THEN
           !PRINT *, "r=", r
           r= r + 1
           cnt2 = 0
@@ -544,12 +568,12 @@ SUBMODULE (sph_particles) spherical_surfaces
       IF( debug ) PRINT *, "npart_out=", npart_out
 
       ! If it's not the first populated surface
-      not_first_populated_surface: IF( r /= CEILING(DBLE(n_surfaces)/two) )THEN
+      not_first_populated_surface: IF( r /= first_r )THEN
 
         ! Identify the previous surface
-        IF( r < CEILING(DBLE(n_surfaces)/two) )THEN
+        IF( r < first_r )THEN
           prev_shell= r + 1
-        ELSEIF( r > CEILING(DBLE(n_surfaces)/two) )THEN
+        ELSEIF( r > first_r )THEN
           prev_shell= r - 1
         ELSEIF( r == 1 )THEN
           EXIT
@@ -832,7 +856,7 @@ SUBMODULE (sph_particles) spherical_surfaces
       PRINT *, "   Surface radius= ", surface_radii( r )/radius*ten*ten, &
               "% of the radius of the star"
       PRINT *, "   Placed", npart_out, " particles overall, so far."
-      IF( r /= CEILING(DBLE(n_surfaces)/two) ) PRINT *, &
+      IF( r /= first_r ) PRINT *, &
                "   Ratio of particle masses on last 2 surfaces: ", &
                "   m_parts(", r, ")/m_parts(", prev_shell, ")= ",  &
                m_parts( r )/m_parts( prev_shell )
@@ -896,7 +920,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
       ! Set up next step
       IF( r == n_surfaces )THEN
-        r= CEILING(DBLE(n_surfaces)/two) - 1
+        r= first_r - 1
         r_cnt= r_cnt + 1
         cnt2 = 0
         upper_bound_tmp= upper_bound
@@ -905,14 +929,14 @@ SUBMODULE (sph_particles) spherical_surfaces
       ELSEIF( r == 1 )THEN
         IF( debug ) PRINT *, "exit"
         EXIT
-      ELSEIF( r < CEILING(DBLE(n_surfaces)/two) )THEN
+      ELSEIF( r < first_r )THEN
         r= r - 1
         r_cnt= r_cnt + 1
         cnt2 = 0
         upper_bound_tmp= upper_bound
         lower_bound_tmp= lower_bound
         IF( debug ) PRINT *, "inner layers"
-      ELSEIF( r >= CEILING(DBLE(n_surfaces)/two) )THEN
+      ELSEIF( r >= first_r )THEN
         r= r + 1
         r_cnt= r_cnt + 1
         cnt2 = 0
@@ -1563,13 +1587,14 @@ SUBMODULE (sph_particles) spherical_surfaces
       pmass          = zero
       phase          = zero
       proper_volume  = zero
-      surface_vol      = zero
-      surface_vol2     = zero
+      surface_vol    = zero
+      surface_vol2   = zero
       dr_shells      = radius/n_surfaces
       npart_out      = 0
       upper_bound_tmp= upper_bound
       lower_bound_tmp= lower_bound
-      r    = CEILING(DBLE(n_surfaces)/two)
+      first_r        = CEILING(DBLE(n_surfaces)/two)
+      r              = first_r
       cnt2 = 0
       r_cnt= 1
 

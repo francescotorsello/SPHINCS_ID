@@ -59,7 +59,7 @@ SUBMODULE (diffstar_lorene) params
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR, C_NULL_CHAR
     USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         k_lorene2hydrobase_piecewisepolytrope
+                         k_lorene2hydrobase_piecewisepolytrope, zero, two
 
     IMPLICIT NONE
 
@@ -71,106 +71,112 @@ SUBMODULE (diffstar_lorene) params
     PRINT *
     PRINT *, "** Executing the import_diffstar_params subroutine..."
 
-    CALL get_diffstar_params( THIS% diffstar_ptr,                   &
-                              THIS% omega_c,                        &
-                              THIS% mass,                           &
-                              THIS% mass_grav,                      &
-                              THIS% angular_momentum,               &
-                              THIS% tsw,                            &
-                              THIS% grv2,                           &
-                              THIS% grv3,                           &
-                              THIS% r_circ,                         &
-                              THIS% surface_area,                   &
-                              THIS% r_mean,                         &
-                              THIS% r_eq,                           &
-                              THIS% r_eq_pi2,                       &
-                              THIS% r_eq_pi,                        &
-                              THIS% r_eq_3pi2,                      &
-                              THIS% r_pole,                         &
-                              THIS% r_ratio,                        &
-                              THIS% r_isco,                         &
-                              THIS% f_isco,                         &
-                              THIS% specific_energy_isco,           &
-                              THIS% specific_angular_momentum_isco, &
-                              THIS% area_radius,                    &
-                              THIS% ent_center,                     &
-                              THIS% nbar_center,                    &
-                              THIS% rho_center,                     &
-                              THIS% energy_density_center,          &
-                              THIS% specific_energy_center,         &
-                              THIS% pressure_center,                &
-                              THIS% redshift_eqf,                   &
-                              THIS% redshift_eqb,                   &
-                              THIS% redshift_pole,                  &
+    CALL get_diffstar_params( this% diffstar_ptr,                   &
+                              this% omega_c,                        &
+                              this% mass,                           &
+                              this% mass_grav,                      &
+                              this% angular_momentum,               &
+                              this% tsw,                            &
+                              this% grv2,                           &
+                              this% grv3,                           &
+                              this% r_circ,                         &
+                              this% surface_area,                   &
+                              this% r_mean,                         &
+                              this% r_eq,                           &
+                              this% r_eq_pi2,                       &
+                              this% r_eq_pi,                        &
+                              this% r_eq_3pi2,                      &
+                              this% r_pole,                         &
+                              this% r_ratio,                        &
+                              this% r_isco,                         &
+                              this% f_isco,                         &
+                              this% specific_energy_isco,           &
+                              this% specific_angular_momentum_isco, &
+                              this% area_radius,                    &
+                              this% ent_center,                     &
+                              this% nbar_center,                    &
+                              this% rho_center,                     &
+                              this% energy_density_center,          &
+                              this% specific_energy_center,         &
+                              this% pressure_center,                &
+                              this% redshift_eqf,                   &
+                              this% redshift_eqb,                   &
+                              this% redshift_pole,                  &
                               eos_tmp_c,                            &
-                              THIS% eos_loreneid,                   &
-                              THIS% gamma,                          &
-                              THIS% kappa,                          &
-                              THIS% npeos,                          &
-                              THIS% gamma0,                         &
-                              THIS% gamma1,                         &
-                              THIS% gamma2,                         &
-                              THIS% gamma3,                         &
-                              THIS% kappa0,                         &
-                              THIS% kappa1,                         &
-                              THIS% kappa2,                         &
-                              THIS% kappa3,                         &
-                              THIS% logP1,                          &
-                              THIS% logRho0,                        &
-                              THIS% logRho1,                        &
-                              THIS% logRho2 )
+                              this% eos_loreneid,                   &
+                              this% gamma,                          &
+                              this% kappa,                          &
+                              this% npeos,                          &
+                              this% gamma0,                         &
+                              this% gamma1,                         &
+                              this% gamma2,                         &
+                              this% gamma3,                         &
+                              this% kappa0,                         &
+                              this% kappa1,                         &
+                              this% kappa2,                         &
+                              this% kappa3,                         &
+                              this% logP1,                          &
+                              this% logRho0,                        &
+                              this% logRho1,                        &
+                              this% logRho2 )
 
     ! Convert distances from |lorene| units (km) to SPHINCS units (Msun_geo)
     ! See MODULE constants for the definition of Msun_geo
-    THIS% r_circ      = THIS% r_circ/Msun_geo
-    THIS% r_mean      = THIS% r_mean/Msun_geo
-    THIS% area_radius = THIS% area_radius/Msun_geo
-    THIS% r_eq        = THIS% r_eq/Msun_geo
-    THIS% r_eq_pi2    = THIS% r_eq_pi2/Msun_geo
-    THIS% r_eq_pi     = THIS% r_eq_pi/Msun_geo
-    THIS% r_eq_3pi2   = THIS% r_eq_3pi2/Msun_geo
-    THIS% r_pole      = THIS% r_pole/Msun_geo
-    THIS% r_isco      = THIS% r_isco/Msun_geo
-    THIS% surface_area= THIS% surface_area/(Msun_geo**2.0D0)
+    this% r_circ      = this% r_circ/Msun_geo
+    this% r_mean      = this% r_mean/Msun_geo
+    this% area_radius = this% area_radius/Msun_geo
+    this% r_eq        = this% r_eq/Msun_geo
+    this% r_eq_pi2    = this% r_eq_pi2/Msun_geo
+    this% r_eq_pi     = this% r_eq_pi/Msun_geo
+    this% r_eq_3pi2   = this% r_eq_3pi2/Msun_geo
+    this% r_pole      = this% r_pole/Msun_geo
+    this% r_isco      = this% r_isco/Msun_geo
+    this% surface_area= this% surface_area/(Msun_geo**two)
 
-    THIS% radii(:)= [THIS% r_eq_pi, THIS% r_eq, &
-                     THIS% r_eq_pi2, THIS% r_eq_pi2, &
-                     THIS% r_pole, THIS% r_pole]
+    ! Note that here the radii of the star along the z axis are set equal to
+    ! the equatorial ones. This is because the star can have a toroidal shape
+    ! and a box with a z-size determined by the polar radius won't enclose
+    ! the entire star. This would be problematic both in the particle and in the
+    ! tpo objects.
+    this% radii(:)= [this% r_eq_pi, this% r_eq, &
+                     this% r_eq_pi2, this% r_eq_pi2, &
+                     this% r_eq_pi2, this% r_eq_pi2]
+                     !this% r_pole, this% r_pole]
 
-    THIS% center(:)= [0.0D0, 0.0D0, 0.0D0]
+    this% center(:)= [zero, zero, zero]
 
-    THIS% barycenter(:)= [0.0D0, 0.0D0, 0.0D0]
+    this% barycenter(:)= [zero, zero, zero]
 
     ! Convert hydro quantities from |lorene| units to SPHINCS units
-    THIS% nbar_center           = THIS% nbar_center*(MSun_geo*km2m)**3
-    THIS% rho_center            = THIS% rho_center*lorene2hydrobase
-    THIS% energy_density_center = THIS% energy_density_center*lorene2hydrobase
-    THIS% pressure_center       = THIS% pressure_center*lorene2hydrobase
+    this% nbar_center           = this% nbar_center*(MSun_geo*km2m)**3
+    this% rho_center            = this% rho_center*lorene2hydrobase
+    this% energy_density_center = this% energy_density_center*lorene2hydrobase
+    this% pressure_center       = this% pressure_center*lorene2hydrobase
 
     ! Convert polytropic constants from |lorene| units to SPHINCS units
-    IF( THIS% eos_loreneid == 1 )THEN ! If the EOS is polytropic
+    IF( this% eos_loreneid == 1 )THEN ! If the EOS is polytropic
 
-      THIS% kappa= THIS% kappa*k_lorene2hydrobase( THIS% gamma )
+      this% kappa= this% kappa*k_lorene2hydrobase( this% gamma )
 
-    ELSEIF( THIS% gamma0 /= 0 )THEN ! If the EOS is piecewise polytropic
+    ELSEIF( this% gamma0 /= 0 )THEN ! If the EOS is piecewise polytropic
 
-      THIS% kappa0= THIS% kappa0 &
-                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma0 )
-      THIS% kappa1= THIS% kappa1 &
-                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma1 )
-      THIS% kappa2= THIS% kappa2 &
-                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma2 )
-      THIS% kappa3= THIS% kappa3 &
-                      *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3 )
+      this% kappa0= this% kappa0 &
+                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma0 )
+      this% kappa1= this% kappa1 &
+                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma1 )
+      this% kappa2= this% kappa2 &
+                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma2 )
+      this% kappa3= this% kappa3 &
+                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma3 )
 
-    ELSEIF( THIS% eos_loreneid == 17 .OR. THIS% eos_loreneid == 20 )THEN
+    ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
     ! If the EOS is tabulated
 
     ELSE
 
       PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
                " The equation of state is unknown! LORENE EOS IDs=", &
-               THIS% eos_loreneid, ", ", THIS% eos_loreneid
+               this% eos_loreneid, ", ", this% eos_loreneid
       STOP
 
     ENDIF
@@ -183,16 +189,16 @@ SUBMODULE (diffstar_lorene) params
     ENDDO
     nchars = i - 1
 
-    ALLOCATE( CHARACTER(nchars):: THIS% eos, STAT= ios, ERRMSG= err_msg )
+    ALLOCATE( CHARACTER(nchars):: this% eos, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos. ", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        STOP
     ENDIF
-    THIS% eos= TRANSFER( eos_tmp_c(1:nchars), THIS% eos )
+    this% eos= TRANSFER( eos_tmp_c(1:nchars), this% eos )
 
-    CALL print_diffstar_params( THIS )
+    CALL print_diffstar_params( this )
 
     PRINT *, "** Subroutine import_diffstar_params executed."
     PRINT *

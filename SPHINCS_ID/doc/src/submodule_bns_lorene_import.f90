@@ -41,6 +41,9 @@ SUBMODULE (bns_lorene) import
   !****************************************************
 
 
+  USE constants,  ONLY: zero, one, two
+
+
   IMPLICIT NONE
 
 
@@ -66,7 +69,7 @@ SUBMODULE (bns_lorene) import
 
     IMPLICIT NONE
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
             .OR. SIZE( y ) /= SIZE( z ) )THEN
@@ -76,53 +79,53 @@ SUBMODULE (bns_lorene) import
         STOP
       ENDIF
 
-      IF( ALLOCATED( THIS% lapse )   .AND. &
-          ALLOCATED( THIS% shift_x ) .AND. &
-          ALLOCATED( THIS% shift_y ) .AND. &
-          ALLOCATED( THIS% shift_z ) .AND. &
-          ALLOCATED( THIS% g_xx ) .AND. ALLOCATED( THIS% g_xy ) .AND. &
-          ALLOCATED( THIS% g_xz ) .AND. ALLOCATED( THIS% g_yy ) .AND. &
-          ALLOCATED( THIS% g_yz ) .AND. ALLOCATED( THIS% g_zz ) .AND. &
-          ALLOCATED( THIS% k_xx ) .AND. ALLOCATED( THIS% k_xy ) .AND. &
-          ALLOCATED( THIS% k_xz ) .AND. ALLOCATED( THIS% k_yy ) .AND. &
-          ALLOCATED( THIS% k_yz ) .AND. ALLOCATED( THIS% k_zz ) .AND. &
-          ALLOCATED( THIS% baryon_density )  .AND. &
-          ALLOCATED( THIS% energy_density )  .AND. &
-          ALLOCATED( THIS% specific_energy ) .AND. &
-          ALLOCATED( THIS% v_euler_x )       .AND. &
-          ALLOCATED( THIS% v_euler_y )       .AND. &
-          ALLOCATED( THIS% v_euler_z ) &
+      IF( ALLOCATED( this% lapse )   .AND. &
+          ALLOCATED( this% shift_x ) .AND. &
+          ALLOCATED( this% shift_y ) .AND. &
+          ALLOCATED( this% shift_z ) .AND. &
+          ALLOCATED( this% g_xx ) .AND. ALLOCATED( this% g_xy ) .AND. &
+          ALLOCATED( this% g_xz ) .AND. ALLOCATED( this% g_yy ) .AND. &
+          ALLOCATED( this% g_yz ) .AND. ALLOCATED( this% g_zz ) .AND. &
+          ALLOCATED( this% k_xx ) .AND. ALLOCATED( this% k_xy ) .AND. &
+          ALLOCATED( this% k_xz ) .AND. ALLOCATED( this% k_yy ) .AND. &
+          ALLOCATED( this% k_yz ) .AND. ALLOCATED( this% k_zz ) .AND. &
+          ALLOCATED( this% baryon_density )  .AND. &
+          ALLOCATED( this% energy_density )  .AND. &
+          ALLOCATED( this% specific_energy ) .AND. &
+          ALLOCATED( this% v_euler_x )       .AND. &
+          ALLOCATED( this% v_euler_y )       .AND. &
+          ALLOCATED( this% v_euler_z ) &
       )THEN
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( n, THIS, x, y, z ) &
+        !$OMP             SHARED( n, this, x, y, z ) &
         !$OMP             PRIVATE( itr )
         import_id_loop: DO itr= 1, n, 1
 
           ! The coordinates need to be converted from |sphincs| units (Msun_geo)
           ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
           ! definition of Msun_geo
-          CALL get_lorene_id( THIS% bns_ptr, &
+          CALL get_lorene_id( this% bns_ptr, &
                               x( itr )*Msun_geo, &
                               y( itr )*Msun_geo, &
                               z( itr )*Msun_geo, &
-                              THIS% lapse( itr ), &
-                              THIS% shift_x( itr ), &
-                              THIS% shift_y( itr ), &
-                              THIS% shift_z( itr ), &
-                              THIS% g_xx( itr ), &
-                              THIS% k_xx( itr ), &
-                              THIS% k_xy( itr ), &
-                              THIS% k_xz( itr ), &
-                              THIS% k_yy( itr ), &
-                              THIS% k_yz( itr ), &
-                              THIS% k_zz( itr ), &
-                              THIS% baryon_density( itr ), &
-                              THIS% energy_density( itr ), &
-                              THIS% specific_energy( itr ), &
-                              THIS% v_euler_x( itr ), &
-                              THIS% v_euler_y( itr ), &
-                              THIS% v_euler_z( itr ) )
+                              this% lapse( itr ), &
+                              this% shift_x( itr ), &
+                              this% shift_y( itr ), &
+                              this% shift_z( itr ), &
+                              this% g_xx( itr ), &
+                              this% k_xx( itr ), &
+                              this% k_xy( itr ), &
+                              this% k_xz( itr ), &
+                              this% k_yy( itr ), &
+                              this% k_yz( itr ), &
+                              this% k_zz( itr ), &
+                              this% baryon_density( itr ), &
+                              this% energy_density( itr ), &
+                              this% specific_energy( itr ), &
+                              this% v_euler_x( itr ), &
+                              this% v_euler_y( itr ), &
+                              this% v_euler_z( itr ) )
 
         ENDDO import_id_loop
         !$OMP END PARALLEL DO
@@ -133,34 +136,34 @@ SUBMODULE (bns_lorene) import
           !-- The following follows from the assumption of conformal
           !-- flatness in |lorene|
           !
-          THIS% g_yy( itr )= THIS% g_xx( itr )
-          THIS% g_zz( itr )= THIS% g_xx( itr )
-          THIS% g_xy( itr )= 0.0D0
-          THIS% g_xz( itr )= 0.0D0
-          THIS% g_yz( itr )= 0.0D0
+          this% g_yy( itr )= this% g_xx( itr )
+          this% g_zz( itr )= this% g_xx( itr )
+          this% g_xy( itr )= 0.0D0
+          this% g_xz( itr )= 0.0D0
+          this% g_yz( itr )= 0.0D0
 
           !
           !- Set/unset the geodesic gauge
           !
-          IF( THIS% get_one_lapse() )THEN
-            THIS% lapse( itr )= 1.0D0
+          IF( this% get_one_lapse() )THEN
+            this% lapse( itr )= 1.0D0
           ENDIF
-          IF( THIS% get_zero_shift() )THEN
-            THIS% shift_x( itr )= 0.0D0
-            THIS% shift_y( itr )= 0.0D0
-            THIS% shift_z( itr )= 0.0D0
+          IF( this% get_zero_shift() )THEN
+            this% shift_x( itr )= 0.0D0
+            this% shift_y( itr )= 0.0D0
+            this% shift_z( itr )= 0.0D0
           ENDIF
 
           !
           !-- Convert the extrinsic curvature from |lorene| units to
           !-- |sphincs| units
           !
-          THIS% k_xx( itr )= THIS% k_xx( itr )*Msun_geo
-          THIS% k_xy( itr )= THIS% k_xy( itr )*Msun_geo
-          THIS% k_xz( itr )= THIS% k_xz( itr )*Msun_geo
-          THIS% k_yy( itr )= THIS% k_yy( itr )*Msun_geo
-          THIS% k_yz( itr )= THIS% k_yz( itr )*Msun_geo
-          THIS% k_zz( itr )= THIS% k_zz( itr )*Msun_geo
+          this% k_xx( itr )= this% k_xx( itr )*Msun_geo
+          this% k_xy( itr )= this% k_xy( itr )*Msun_geo
+          this% k_xz( itr )= this% k_xz( itr )*Msun_geo
+          this% k_yy( itr )= this% k_yy( itr )*Msun_geo
+          this% k_yz( itr )= this% k_yz( itr )*Msun_geo
+          this% k_zz( itr )= this% k_zz( itr )*Msun_geo
 
           ! Print progress on screen
           perc= 100*itr/n
@@ -204,7 +207,7 @@ SUBMODULE (bns_lorene) import
 
     IMPLICIT NONE
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
             .OR. SIZE( y ) /= SIZE( z ) )THEN
@@ -215,7 +218,7 @@ SUBMODULE (bns_lorene) import
       ENDIF
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( n, THIS, x, y, z, lapse, &
+      !$OMP             SHARED( n, this, x, y, z, lapse, &
       !$OMP                     shift_x, shift_y, shift_z, &
       !$OMP                     g_xx, k_xx, k_xy, k_xz, k_yy, k_yz, k_zz, &
       !$OMP                     baryon_density, energy_density, &
@@ -227,7 +230,7 @@ SUBMODULE (bns_lorene) import
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
         ! Msun_geo
-        CALL get_lorene_id( THIS% bns_ptr, &
+        CALL get_lorene_id( this% bns_ptr, &
                             x( itr )*Msun_geo, &
                             y( itr )*Msun_geo, &
                             z( itr )*Msun_geo, &
@@ -267,10 +270,10 @@ SUBMODULE (bns_lorene) import
         !
         !- Set/unset the geodesic gauge
         !
-        IF( THIS% get_one_lapse() )THEN
+        IF( this% get_one_lapse() )THEN
           lapse( itr )= 1.0D0
         ENDIF
-        IF( THIS% get_zero_shift() )THEN
+        IF( this% get_zero_shift() )THEN
           shift_x( itr )= 0.0D0
           shift_y( itr )= 0.0D0
           shift_z( itr )= 0.0D0
@@ -334,7 +337,7 @@ SUBMODULE (bns_lorene) import
     ! causing a segmentation fault
     ALLOCATE( g4( nx, ny, nz, n_sym4x4 ) )
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
       IF( .FALSE. &!SHAPE( pos(:,:,:,1) ) /= SHAPE( lapse ) .OR. &
           !SHAPE( pos(:,:,:,1) ) /= SHAPE( shift(:,:,:,jx) ) & ! .OR. &
@@ -348,7 +351,7 @@ SUBMODULE (bns_lorene) import
       ENDIF
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( nx, ny, nz, THIS, pos, &
+      !$OMP             SHARED( nx, ny, nz, this, pos, &
       !$OMP                     lapse, shift, g, ek ) &
       !$OMP             PRIVATE( i, j, k )
       coords_z: DO k= 1, nz, 1
@@ -358,7 +361,7 @@ SUBMODULE (bns_lorene) import
             ! The coordinates need to be converted from |sphincs| units (Msun_geo)
             ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
             ! Msun_geo
-            CALL get_lorene_id_spacetime( THIS% bns_ptr, &
+            CALL get_lorene_id_spacetime( this% bns_ptr, &
                                 pos( i, j, k, jx )*Msun_geo, &
                                 pos( i, j, k, jy )*Msun_geo, &
                                 pos( i, j, k, jz )*Msun_geo, &
@@ -379,6 +382,10 @@ SUBMODULE (bns_lorene) import
       ENDDO coords_z
       !$OMP END PARALLEL DO
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nx, ny, nz, this, pos, &
+      !$OMP                     lapse, shift, g, ek, g4 ) &
+      !$OMP             PRIVATE( i, j, k, detg, detg4 )
       DO k= 1, nz, 1
         DO j= 1, ny, 1
           DO i= 1, nx, 1
@@ -396,10 +403,10 @@ SUBMODULE (bns_lorene) import
             !
             !- Set/unset the geodesic gauge
             !
-            IF( THIS% get_one_lapse() )THEN
+            IF( this% get_one_lapse() )THEN
               lapse( i, j, k )= 1.0D0
             ENDIF
-            IF( THIS% get_zero_shift() )THEN
+            IF( this% get_zero_shift() )THEN
               shift( i, j, k, jx )= 0.0D0
               shift( i, j, k, jy )= 0.0D0
               shift( i, j, k, jz )= 0.0D0
@@ -458,22 +465,10 @@ SUBMODULE (bns_lorene) import
               STOP
             ENDIF
 
-            ! Print progress on screen
-            perc= 100*( nx*ny*(k - 1) + nx*(j - 1) + i )/( nx*ny*nz )
-            !perc2= 100.0*DBLE(nx*ny*(iz - 1) + nx*(iy - 1) + ix) &
-            !       /DBLE( nx*ny*nz )
-            !perc= 100*cnt/( nx*ny*nz )
-            IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-              WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-                      creturn//" ", perc, "%"
-              !WRITE( *, "(A2,F5.2,A1)", ADVANCE= "NO" ) &
-              !        creturn//" ", perc2, "%"
-            ENDIF
-
           ENDDO
         ENDDO
       ENDDO
-      IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+      !$OMP END PARALLEL DO
 
       PRINT *, "** Subroutine import_lorene_id executed."
       PRINT *
@@ -501,10 +496,10 @@ SUBMODULE (bns_lorene) import
 
     INTEGER:: ix, iy, iz
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( nx, ny, nz, THIS, pos, &
+      !$OMP             SHARED( nx, ny, nz, this, pos, &
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, pressure, u_euler ) &
       !$OMP             PRIVATE( ix, iy, iz )
@@ -515,7 +510,7 @@ SUBMODULE (bns_lorene) import
             ! The coordinates need to be converted from |sphincs| units (Msun_geo)
             ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
             ! Msun_geo
-            CALL get_lorene_id_hydro( THIS% bns_ptr, &
+            CALL get_lorene_id_hydro( this% bns_ptr, &
                               pos( ix, iy, iz, jx )*Msun_geo, &
                               pos( ix, iy, iz, jy )*Msun_geo, &
                               pos( ix, iy, iz, jz )*Msun_geo, &
@@ -570,7 +565,7 @@ SUBMODULE (bns_lorene) import
 
     DOUBLE PRECISION:: detg
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
               .OR. SIZE( y ) /= SIZE( z ) )THEN
@@ -583,7 +578,7 @@ SUBMODULE (bns_lorene) import
       PRINT *, "** Importing ID on particles..."
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( n, THIS, x, y, z, lapse, &
+      !$OMP             SHARED( n, this, x, y, z, lapse, &
       !$OMP                     shift_x, shift_y, shift_z, &
       !$OMP                     g_xx, &
       !$OMP                     baryon_density, energy_density, &
@@ -595,7 +590,7 @@ SUBMODULE (bns_lorene) import
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
         ! Msun_geo
-        CALL get_lorene_id_particles( THIS% bns_ptr, &
+        CALL get_lorene_id_particles( this% bns_ptr, &
                                       x( itr )*Msun_geo, &
                                       y( itr )*Msun_geo, &
                                       z( itr )*Msun_geo, &
@@ -630,10 +625,10 @@ SUBMODULE (bns_lorene) import
         !
         !- Set/unset the geodesic gauge
         !
-        IF( THIS% get_one_lapse() )THEN
+        IF( this% get_one_lapse() )THEN
           lapse( itr )= 1.0D0
         ENDIF
-        IF( THIS% get_zero_shift() )THEN
+        IF( this% get_zero_shift() )THEN
           shift_x( itr )= 0.0D0
           shift_y( itr )= 0.0D0
           shift_z( itr )= 0.0D0
@@ -698,12 +693,12 @@ SUBMODULE (bns_lorene) import
 
     IMPLICIT NONE
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |lorene| units (\(\mathrm{km}\)).
       ! See MODULE constants for the definition of Msun_geo
-      CALL get_lorene_id_mass_b( THIS% bns_ptr, &
+      CALL get_lorene_id_mass_b( this% bns_ptr, &
                                     x*Msun_geo, &
                                     y*Msun_geo, &
                                     z*Msun_geo, &
@@ -739,7 +734,7 @@ SUBMODULE (bns_lorene) import
 
     IMPLICIT NONE
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
               .OR. SIZE( y ) /= SIZE( z ) )THEN
@@ -750,7 +745,7 @@ SUBMODULE (bns_lorene) import
       ENDIF
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( n, THIS, x, y, z, &
+      !$OMP             SHARED( n, this, x, y, z, &
       !$OMP                     k_xx, k_xy, k_xz, k_yy, k_yz, k_zz ) &
       !$OMP             PRIVATE( itr )
       import_id_loop: DO itr= 1, n, 1
@@ -758,7 +753,7 @@ SUBMODULE (bns_lorene) import
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
         ! Msun_geo
-        CALL get_lorene_id_k( THIS% bns_ptr, &
+        CALL get_lorene_id_k( this% bns_ptr, &
                               x( itr )*Msun_geo, &
                               y( itr )*Msun_geo, &
                               z( itr )*Msun_geo, &
@@ -825,12 +820,12 @@ SUBMODULE (bns_lorene) import
 
     IMPLICIT NONE
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
       ! definition of Msun_geo
-      res= get_lorene_mass_density( THIS% bns_ptr, &
+      res= get_lorene_mass_density( this% bns_ptr, &
                                     x*Msun_geo, &
                                     y*Msun_geo, &
                                     z*Msun_geo )*lorene2hydrobase
@@ -857,12 +852,12 @@ SUBMODULE (bns_lorene) import
 
     IMPLICIT NONE
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
       ! definition of Msun_geo
-      res= get_lorene_pressure( THIS% bns_ptr, &
+      res= get_lorene_pressure( this% bns_ptr, &
                                 x*Msun_geo, &
                                 y*Msun_geo, &
                                 z*Msun_geo )
@@ -889,12 +884,12 @@ SUBMODULE (bns_lorene) import
 
     IMPLICIT NONE
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
       ! Msun_geo
-      res= get_lorene_spatial_metric( THIS% bns_ptr, &
+      res= get_lorene_spatial_metric( this% bns_ptr, &
                                       x*Msun_geo, &
                                       y*Msun_geo, &
                                       z*Msun_geo )
@@ -924,12 +919,12 @@ SUBMODULE (bns_lorene) import
 
     INTEGER:: tmp
 
-    IF ( C_ASSOCIATED( THIS% bns_ptr ) )THEN
+    IF ( C_ASSOCIATED( this% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
       ! definition  of Msun_geo
-      tmp= positive_hydro( THIS% bns_ptr, x*Msun_geo, &
+      tmp= positive_hydro( this% bns_ptr, x*Msun_geo, &
                                           y*Msun_geo, &
                                           z*Msun_geo )
 

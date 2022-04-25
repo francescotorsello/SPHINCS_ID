@@ -408,6 +408,96 @@ MODULE utility
   END SUBROUTINE compute_tpo_metric
 
 
+  SUBROUTINE invert_sym4x4( A, iA )
+
+    !****************************************************************
+    !
+    !# Invert a \(4\times 4\) symemtric matrix stored as a \(10\)-vector
+    !  @note The inverse (and the adjugate) of a symmetric matrix
+    !        is symmetric
+    !
+    !  FT 25.04.2022
+    !
+    !****************************************************************
+
+    USE tensor,               ONLY: n_sym4x4
+    USE metric_on_particles,  ONLY: gvec2mat, mat2gvec
+    USE matrix,               ONLY: invert_4x4_matrix
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN):: A(:)
+    !# The \(4\times 4\) symmetric matrix, given as a 10-vector.
+    !  The first 3 components run over the numbers of grid points
+    !  along each axis. The fourth index runs over the number of
+    !  independent components of the \(4\times 4\) symmetric matrix.
+    DOUBLE PRECISION, INTENT(OUT):: iA(n_sym4x4)
+    !# Inverse of the \(4\times 4\) symmetric matrix, given as input.
+
+    DOUBLE PRECISION:: Amat(4,4)
+    !! The \(4\times 4\) symmetric matrix as a matrix
+    DOUBLE PRECISION:: iAmat(4,4)
+    !! The inverse of the \(4\times 4\) symmetric matrix, as a matrix
+
+    IF( SIZE(A) /= n_sym4x4 )THEN
+      PRINT *, "** ERROR in determinant_sym4x4_grid in MODULE utility.", &
+               " This subroutine needs a symmetric matrix with 10 components,",&
+               " and a ", SIZE(A), "component matrix was given instead."
+      STOP
+    ENDIF
+
+    CALL gvec2mat(A,Amat)
+
+    CALL invert_4x4_matrix(Amat,iAmat)
+
+    CALL mat2gvec(iA,iAmat)
+
+  END SUBROUTINE invert_sym4x4
+
+
+  SUBROUTINE invert_sym3x3( A, iA )
+
+    !****************************************************************
+    !
+    !# Invert a \(3\times 3\) symemtric matrix stored as a \(6\)-vector
+    !  @note The inverse (and the adjugate) of a symmetric matrix
+    !        is symmetric
+    !
+    !  FT 25.04.2022
+    !
+    !****************************************************************
+
+    USE tensor, ONLY: n_sym3x3
+    USE matrix, ONLY: invert_3x3_matrix
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN):: A(:)
+    !# The \(3\times 3\) symmetric matrix, given as a \(6\)-vector.
+    DOUBLE PRECISION, INTENT(OUT):: iA(n_sym3x3)
+    !# Inverse of the \(3\times 3\) symmetric matrix, given as input.
+
+    DOUBLE PRECISION:: Amat(3,3)
+    !! The \(3\times 3\) symmetric matrix as a matrix
+    DOUBLE PRECISION:: iAmat(3,3)
+    !! The inverse of the \(3\times 3\) symmetric matrix, as a matrix
+
+    IF( SIZE(A) /= n_sym3x3 )THEN
+      PRINT *, "** ERROR in determinant_sym3x3_grid in MODULE utility.", &
+               " This subroutine needs a symmetric matrix with 6 components,",&
+               " and a ", SIZE(A), "component matrix was given instead."
+      STOP
+    ENDIF
+
+    CALL vec2mat_sym3x3(A,Amat)
+
+    CALL invert_3x3_matrix(Amat,iAmat)
+
+    CALL mat2vec_sym3x3(iAmat,iA)
+
+  END SUBROUTINE invert_sym3x3
+
+
   SUBROUTINE determinant_sym4x4( A, det )
 
     !****************************************************************
@@ -468,6 +558,47 @@ MODULE utility
          - A(ixy)* A(itz)))
 
   END SUBROUTINE determinant_sym4x4
+
+
+  SUBROUTINE determinant_sym3x3( A, det )
+
+    !****************************************************************
+    !
+    !# Compute the determinant of a \(3\times 3\) symmetric matrix
+    !  field, given as a 6-vector, at a given grid point
+    !
+    !  FT 26.03.2021
+    !
+    !  Generalized to not be bound to the mesh
+    !
+    !  FT 07.02.2022
+    !
+    !****************************************************************
+
+    USE tensor, ONLY: jxx, jxy, jxz, jyy, jyz, jzz, n_sym3x3
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN):: A(jxx:jzz)
+    !# The \(3\times 3\) symmetric matrix, given as a 6-vector.
+    DOUBLE PRECISION, INTENT(OUT):: det
+    !! Determinant of the \(3\times 3\) symmetric matrix
+
+    IF( SIZE(A) /= n_sym3x3 )THEN
+      PRINT *, "** ERROR in determinant_sym3x3_grid in MODULE utility.", &
+               " This subroutine needs an array with 6 components,",&
+               " and a ", SIZE(A), "component array was given instead."
+      STOP
+    ENDIF
+
+    det=   A(jxx)*A(jyy)*A(jzz) &
+         + A(jxy)*A(jyz)*A(jxz) &
+         + A(jxz)*A(jxy)*A(jyz) &
+         - A(jxy)*A(jxy)*A(jzz) &
+         - A(jxz)*A(jyy)*A(jxz) &
+         - A(jxx)*A(jyz)*A(jyz)
+
+  END SUBROUTINE determinant_sym3x3
 
 
   SUBROUTINE spacetime_vector_norm_sym4x4( g4, v, norm )
@@ -547,45 +678,64 @@ MODULE utility
   END SUBROUTINE spatial_vector_norm_sym3x3
 
 
-  SUBROUTINE determinant_sym3x3( A, det )
+  PURE SUBROUTINE vec2mat_sym3x3( vec, mat )
 
-    !****************************************************************
+    !********************************************
     !
-    !# Compute the determinant of a \(3\times 3\) symmetric matrix
-    !  field, given as a 6-vector, at a given grid point
+    !# Write the components of symmetric \(3\times 3\)
+    !  matrix given as a \(6\)-vector, into a
+    !  \(3\times 3\) matrix
     !
-    !  FT 26.03.2021
+    ! FT 25.04.2022
     !
-    !  Generalized to not be bound to the mesh
-    !
-    !  FT 07.02.2022
-    !
-    !****************************************************************
+    !*********************************************
 
-    USE tensor, ONLY: jxx, jxy, jxz, jyy, jyz, jzz, n_sym3x3
+    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz, n_sym3x3
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN):: A(jxx:jzz)
-    !# The \(3\times 3\) symmetric matrix, given as a 6-vector.
-    DOUBLE PRECISION, INTENT(OUT):: det
-    !! Determinant of the \(3\times 3\) symmetric matrix
+    DOUBLE PRECISION, INTENT(IN)  :: vec(n_sym3x3)
+    DOUBLE PRECISION, INTENT(OUT) :: mat(3,3)
 
-    IF( SIZE(A) /= n_sym3x3 )THEN
-      PRINT *, "** ERROR in determinant_sym3x3_grid in MODULE utility.", &
-               " This subroutine needs an array with 6 components,",&
-               " and a ", SIZE(A), "component array was given instead."
-      STOP
-    ENDIF
+    mat(1,1)= vec(jxx)
+    mat(1,2)= vec(jxy)
+    mat(1,3)= vec(jxz)
 
-    det=   A(jxx)*A(jyy)*A(jzz) &
-         + A(jxy)*A(jyz)*A(jxz) &
-         + A(jxz)*A(jxy)*A(jyz) &
-         - A(jxy)*A(jxy)*A(jzz) &
-         - A(jxz)*A(jyy)*A(jxz) &
-         - A(jxx)*A(jyz)*A(jyz)
+    mat(2,1)= mat(1,2)
+    mat(2,2)= vec(jyy)
+    mat(2,3)= vec(jyz)
 
-  END SUBROUTINE determinant_sym3x3
+    mat(3,1)= mat(1,3)
+    mat(3,2)= mat(2,3)
+    mat(3,3)= vec(jzz)
+
+  END SUBROUTINE vec2mat_sym3x3
+
+
+  PURE SUBROUTINE mat2vec_sym3x3( mat, vec )
+
+    !************************************
+    !                                   *
+    ! transform symmetric 4x4-matrix    *
+    ! into vector; SKR 30.11.2017       *
+    !                                   *
+    !************************************
+
+    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz, n_sym3x3
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN)  :: mat(3,3)
+    DOUBLE PRECISION, INTENT(OUT) :: vec(n_sym3x3)
+
+    vec(jxx)= mat(1,1)
+    vec(jxy)= mat(1,2)
+    vec(jxz)= mat(1,3)
+    vec(jyy)= mat(2,2)
+    vec(jyz)= mat(2,3)
+    vec(jzz)= mat(3,3)
+
+  END SUBROUTINE mat2vec_sym3x3
 
 
   PURE SUBROUTINE spherical_from_cartesian( x, y, z, xo, yo, zo, r, theta, phi )

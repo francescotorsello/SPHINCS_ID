@@ -603,31 +603,31 @@ SUBMODULE (sph_particles) constructor_std
           ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
                      npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
 
-           ! PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-           !         ABS(center(itr,1)) + sizes(itr, 1)
-           ! PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-           !         ABS(center(itr,1)) + sizes(itr, 2)
-           ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-           !         ABS(center(itr,2)) + sizes(itr, 3)
-           ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-           !         ABS(center(itr,2)) + sizes(itr, 4)
-           ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-           !         ABS(center(itr,3)) + sizes(itr, 5)
-           ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-           !         ABS(center(itr,3)) + sizes(itr, 6)
-           !
-           ! PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
-           ! PRINT *, ABS(center(itr,1)) + sizes(itr, 1)
-           ! PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
-           ! PRINT *, ABS(center(itr,1)) + sizes(itr, 2)
-           ! PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
-           ! PRINT *, ABS(center(itr,2)) + sizes(itr, 3)
-           ! PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
-           ! PRINT *, ABS(center(itr,2)) + sizes(itr, 4)
-           ! PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
-           ! PRINT *, ABS(center(itr,3)) + sizes(itr, 5)
-           ! PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
-           ! PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
+          !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+          !          ABS(center(itr,1)) + sizes(itr, 1)
+          !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+          !          ABS(center(itr,1)) + sizes(itr, 2)
+          !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+          !          ABS(center(itr,2)) + sizes(itr, 3)
+          !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+          !          ABS(center(itr,2)) + sizes(itr, 4)
+          !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+          !          ABS(center(itr,3)) + sizes(itr, 5)
+          !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+          !          ABS(center(itr,3)) + sizes(itr, 6)
+          !
+          !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
+          !  PRINT *, ABS(center(itr,1)) + sizes(itr, 1)
+          !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
+          !  PRINT *, ABS(center(itr,1)) + sizes(itr, 2)
+          !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
+          !  PRINT *, ABS(center(itr,2)) + sizes(itr, 3)
+          !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
+          !  PRINT *, ABS(center(itr,2)) + sizes(itr, 4)
+          !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
+          !  PRINT *, ABS(center(itr,3)) + sizes(itr, 5)
+          !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
+          !  PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
 
             IF( ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
                         ABS(center(itr,1)) + sizes(itr, 1) &

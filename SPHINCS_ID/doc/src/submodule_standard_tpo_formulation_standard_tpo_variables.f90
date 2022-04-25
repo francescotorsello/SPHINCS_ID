@@ -164,7 +164,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
     !
     !-- Allocating the memory for the grid functions
-    !-- storing the LORENE spacetime ID at the grid points
+    !-- storing the spacetime ID at the grid points
     !
     CALL allocate_grid_function( ftpo% lapse,      "lapse_id",      1 )
     CALL allocate_grid_function( ftpo% shift_u,    "shift_u_id",    3 )
@@ -174,35 +174,26 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     CALL ftpo% grid_timer% stop_timer()
 
     !
-    !-- Import the LORENE spacetime ID on the refined mesh,
+    !-- Import the spacetime ID on the refined mesh,
     !-- and time the process
     !
     PRINT *
-    PRINT *, "** Importing the LORENE spacetime ID on the refined mesh..."
+    PRINT *, "** Importing the spacetime ID on the refined mesh..."
     PRINT *
     CALL ftpo% importer_timer% start_timer()
-
-    !PRINT *, "nlevels=", ftpo% nlevels
 
     ref_levels2: DO l= 1, ftpo% nlevels, 1
 
       PRINT *, " * Importing on refinement level l=", l, "..."
 
-      !PRINT *, "get_ngrid_x=", ftpo% get_ngrid_x(l)
-      !PRINT *, "get_ngrid_y=", ftpo% get_ngrid_y(l)
-      !PRINT *, "get_ngrid_z=", ftpo% get_ngrid_z(l)
-      !PRINT *
-
-      !PRINT *, ftpo% coords% levels(l)% var
-
       CALL id% read_id_spacetime( ftpo% get_ngrid_x(l), &
-                             ftpo% get_ngrid_y(l), &
-                             ftpo% get_ngrid_z(l), &
-                             ftpo% coords%     levels(l)% var, &
-                             ftpo% lapse%      levels(l)% var, &
-                             ftpo% shift_u%    levels(l)% var, &
-                             ftpo% g_phys3_ll% levels(l)% var, &
-                             ftpo% K_phys3_ll% levels(l)% var )
+                                  ftpo% get_ngrid_y(l), &
+                                  ftpo% get_ngrid_z(l), &
+                                  ftpo% coords%     levels(l)% var, &
+                                  ftpo% lapse%      levels(l)% var, &
+                                  ftpo% shift_u%    levels(l)% var, &
+                                  ftpo% g_phys3_ll% levels(l)% var, &
+                                  ftpo% K_phys3_ll% levels(l)% var )
 
     ENDDO ref_levels2
 

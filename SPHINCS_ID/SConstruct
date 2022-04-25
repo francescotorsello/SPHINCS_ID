@@ -38,7 +38,7 @@ import socket # gethostname
 # DEFAULT OPTIONS
 ################################################################################
 
-# A 'flavour' of SPHINCS_ID is define as a set of its MODULES
+# A 'flavour' of SPHINCS_ID is defined as a set of its MODULES
 # The following flavours are implemented
 
 # Include all the MODULES
@@ -56,7 +56,7 @@ fuka_flavour        = '3'
 interpolate_flavour = '4'
 
 # Set the default flavour
-default_flavour = lorene_flavour
+default_flavour = full_flavour
 
 # 'TRUE'  : build in DEBUG MODE
 # 'FALSE' : build in PRODUCTION MODE

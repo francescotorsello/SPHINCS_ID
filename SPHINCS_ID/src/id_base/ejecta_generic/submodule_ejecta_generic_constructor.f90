@@ -58,6 +58,7 @@ SUBMODULE (ejecta_generic) constructor
     USE pwp_EOS,   ONLY: get_Gamma0, get_Gamma1, get_Gamma2, get_Gamma3, &
                          get_K0, get_K1, get_K2, get_K3, get_p1, &
                          get_rho_0, get_rho_1, get_rho_2, select_EOS_parameters
+    USE timing,    ONLY: timer
 
     IMPLICIT NONE
 
@@ -89,6 +90,10 @@ SUBMODULE (ejecta_generic) constructor
     n_matter_loc= derived_type% get_n_matter()
 
     CALL derived_type% set_cold_system(.FALSE.)
+
+    derived_type% construction_timer= timer( "ejecta_construction_timer" )
+
+    CALL derived_type% construction_timer% start_timer()
 
     INQUIRE( FILE= TRIM(filename), EXIST= exist )
 
@@ -458,6 +463,8 @@ SUBMODULE (ejecta_generic) constructor
 
     derived_type% finalize_sph_id_ptr => finalize
 
+    CALL derived_type% construction_timer% stop_timer()
+
   END PROCEDURE construct_ejecta
 
 
@@ -471,20 +478,18 @@ SUBMODULE (ejecta_generic) constructor
     !
     !***********************************************
 
-    USE constants,  ONLY: zero
-
     IMPLICIT NONE
 
-    ! Temporary implementation, to avoid warnings about unuesed variables
+    ! Temporary implementation, to avoid warnings about unused variables
 
-    pos  = npart
-    nlrf = zero
-    nu   = zero
-    pr   = zero
-    vel_u= zero
-    theta= zero
-    nstar= zero
-    u    = zero
+    pos  = pos
+    nlrf = nlrf
+    nu   = nu
+    pr   = pr
+    vel_u= vel_u
+    theta= theta
+    nstar= nstar
+    u    = u
 
   END PROCEDURE finalize
 

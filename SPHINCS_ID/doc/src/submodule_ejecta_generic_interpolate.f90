@@ -74,7 +74,59 @@ SUBMODULE (ejecta_generic) interpolate
     !
     !*******************************************************
 
+    USE tensor, ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz, n_sym4x4
+
     IMPLICIT NONE
+
+    INTEGER:: i, j, k
+
+    PRINT *, "** N.B. : This SUBROUTINE is not yet implemented!"
+    PRINT *, " * Stopping..."
+    PRINT *
+    STOP
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nx, ny, nz, this, pos, &
+    !$OMP                     lapse, shift, g, ek ) &
+    !$OMP             PRIVATE( i, j, k )
+    DO k= 1, nz, 1
+      DO j= 1, ny, 1
+        DO i= 1, nx, 1
+
+          g( i, j, k, jyy )= one
+          g( i, j, k, jyy )= one
+          g( i, j, k, jzz )= one
+          g( i, j, k, jxy )= zero
+          g( i, j, k, jxz )= zero
+          g( i, j, k, jyz )= zero
+
+          !
+          !- Set/unset the geodesic gauge
+          !
+          IF( this% get_one_lapse() )THEN
+            lapse( i, j, k )= one
+          ENDIF
+          IF( this% get_zero_shift() )THEN
+            shift( i, j, k, jx )= zero
+            shift( i, j, k, jy )= zero
+            shift( i, j, k, jz )= zero
+          ENDIF
+
+          !
+          !-- Convert the extrinsic curvature from |lorene| units to
+          !-- |sphincs| units
+          !
+          ek( i, j, k, jxx )= zero
+          ek( i, j, k, jxy )= zero
+          ek( i, j, k, jxz )= zero
+          ek( i, j, k, jyy )= zero
+          ek( i, j, k, jyz )= zero
+          ek( i, j, k, jzz )= zero
+
+        ENDDO
+      ENDDO
+    ENDDO
+    !$OMP END PARALLEL DO
 
   END PROCEDURE interpolate_id_spacetime
 
@@ -121,19 +173,19 @@ SUBMODULE (ejecta_generic) interpolate
     LOGICAL:: exist
 
     DOUBLE PRECISION:: foo(n), foo_exact(n), &
-                       foo_grid(THIS% nx_grid, THIS% ny_grid, THIS% nz_grid), &
-                       grid_coords(THIS%nx_grid,THIS%ny_grid,THIS%nz_grid,3), &
+                       foo_grid(this% nx_grid, this% ny_grid, this% nz_grid), &
+                       grid_coords(this%nx_grid,this%ny_grid,this%nz_grid,3), &
                        coords(n,3)
 
     IF( debug )THEN
 
-      DO i= 1, THIS% nx_grid, 1
-        DO j= 1, THIS% ny_grid, 1
-          DO k= 1, THIS% nz_grid, 1
+      DO i= 1, this% nx_grid, 1
+        DO j= 1, this% ny_grid, 1
+          DO k= 1, this% nz_grid, 1
 
-            grid_coords(i,j,k,1)= DBLE(i) - DBLE(THIS% nx_grid)/two
-            grid_coords(i,j,k,2)= DBLE(j) - DBLE(THIS% ny_grid)/two
-            grid_coords(i,j,k,3)= DBLE(k)/two! - DBLE(THIS% nz_grid)/two
+            grid_coords(i,j,k,1)= DBLE(i) - DBLE(this% nx_grid)/two
+            grid_coords(i,j,k,2)= DBLE(j) - DBLE(this% ny_grid)/two
+            grid_coords(i,j,k,3)= DBLE(k)/two! - DBLE(this% nz_grid)/two
             foo_grid(i,j,k)= (grid_coords(i,j,k,3))**3.D0
 
           ENDDO
@@ -150,15 +202,15 @@ SUBMODULE (ejecta_generic) interpolate
         CALL RANDOM_NUMBER( ytmp )
         CALL RANDOM_NUMBER( ztmp )
 
-        coords(i,1)= xtmp*DBLE(THIS% nx_grid - 2) &
-                     - DBLE(THIS% nx_grid)/two + two
-        coords(i,2)= ytmp*DBLE(THIS% ny_grid - 2) &
-                     - DBLE(THIS% ny_grid)/two + two
-        coords(i,3)= (- DBLE(THIS% nz_grid)/two + one)*(one-ztmp) &
-                      + (DBLE(THIS% nz_grid)/two - one)*ztmp
+        coords(i,1)= xtmp*DBLE(this% nx_grid - 2) &
+                     - DBLE(this% nx_grid)/two + two
+        coords(i,2)= ytmp*DBLE(this% ny_grid - 2) &
+                     - DBLE(this% ny_grid)/two + two
+        coords(i,3)= (- DBLE(this% nz_grid)/two + one)*(one-ztmp) &
+                      + (DBLE(this% nz_grid)/two - one)*ztmp
 
         foo(i)= trilinear_interpolation( coords(i,1), coords(i,2), coords(i,3),&
-                      THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
+                      this% nx_grid, this% ny_grid, this% nz_grid, &
                       grid_coords, foo_grid, &
                       equator_symmetry= .FALSE., parity= -one, debug= .FALSE. )
         foo_exact(i)= (coords(i,3))**3.D0
@@ -168,32 +220,32 @@ SUBMODULE (ejecta_generic) interpolate
     ENDIF
 
     ! The density has to be converted in units of the atomic mass unit
-    ! TODO: CHECK THAT EVERYTHING ELSE IS CONSISTENT WITH THIS!!
+    ! TODO: CHECK THAT EVERYTHING ELSE IS CONSISTENT WITH this!!
     DO i= 1, n, 1
 
       zp= z(i)
 
-      baryon_density(i) = THIS% read_mass_density( x(i), y(i), zp )*MSun/amu
+      baryon_density(i) = this% read_mass_density( x(i), y(i), zp )*MSun/amu
 
       u_euler_x(i)      = trilinear_interpolation( x(i), y(i), zp, &
-                                THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
-                                THIS% grid, THIS% vel(:,:,:,1), &
+                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% grid, this% vel(:,:,:,1), &
                                 equator_symmetry= .TRUE., parity= one, &
                                 debug= .FALSE. )
       u_euler_y(i)      = trilinear_interpolation( x(i), y(i), zp, &
-                                THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
-                                THIS% grid, THIS% vel(:,:,:,2), &
+                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% grid, this% vel(:,:,:,2), &
                                 equator_symmetry= .TRUE., parity= one, &
                                 debug= .FALSE. )
       u_euler_z(i)      = trilinear_interpolation( x(i), y(i), zp, &
-                                THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
-                                THIS% grid, THIS% vel(:,:,:,3), &
+                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% grid, this% vel(:,:,:,3), &
                                 equator_symmetry= .TRUE., parity= -one, &
                                 debug= .FALSE. )
 
       specific_energy(i)= trilinear_interpolation( x(i), y(i), zp, &
-                                THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
-                                THIS% grid, THIS% specific_energy, &
+                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% grid, this% specific_energy, &
                                 equator_symmetry= .TRUE., parity= one, &
                                 debug= .FALSE. )
 
@@ -228,21 +280,21 @@ SUBMODULE (ejecta_generic) interpolate
         STOP
       ENDIF
 
-      DO i= 1, THIS% nx_grid - 1, 1
-        DO j= 1, THIS% ny_grid - 1, 1
-          DO k= 1, THIS% nz_grid - 1, 1
+      DO i= 1, this% nx_grid - 1, 1
+        DO j= 1, this% ny_grid - 1, 1
+          DO k= 1, this% nz_grid - 1, 1
 
             WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-              THIS% grid( i, j, k, 1 ), &
-              THIS% grid( i, j, k, 2 ), &
-              THIS% grid( i, j, k, 3 ), &
-              THIS% baryon_mass_density( i, j, k )*Msun/amu, &
-              THIS% read_mass_density( &
-                THIS% grid( i, j, k, 1 ) + THIS% dx_grid/two, &
-                THIS% grid( i, j, k, 2 ), &
-                THIS% grid( i, j, k, 3 ) ), &
-              THIS% grid( i, j, k, 1 ) + THIS% dx_grid/two, &
-              THIS% specific_energy( i, j, k )
+              this% grid( i, j, k, 1 ), &
+              this% grid( i, j, k, 2 ), &
+              this% grid( i, j, k, 3 ), &
+              this% baryon_mass_density( i, j, k )*Msun/amu, &
+              this% read_mass_density( &
+                this% grid( i, j, k, 1 ) + this% dx_grid/two, &
+                this% grid( i, j, k, 2 ), &
+                this% grid( i, j, k, 3 ) ), &
+              this% grid( i, j, k, 1 ) + this% dx_grid/two, &
+              this% specific_energy( i, j, k )
           ENDDO
         ENDDO
       ENDDO
@@ -331,7 +383,7 @@ SUBMODULE (ejecta_generic) interpolate
 
     IMPLICIT NONE
 
-    baryon_density= THIS% read_mass_density( x, y, z )
+    baryon_density= this% read_mass_density( x, y, z )
 
     g(jxx)= one
     g(jyy)= one
@@ -391,41 +443,41 @@ SUBMODULE (ejecta_generic) interpolate
 
     zp= z
     res= trilinear_interpolation( x, y, zp, &
-                                  THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, &
-                                  THIS% grid, THIS% baryon_mass_density, &
+                                  this% nx_grid, this% ny_grid, this% nz_grid, &
+                                  this% grid, this% baryon_mass_density, &
                                   equator_symmetry= .TRUE., parity= one, &
                                   debug= .FALSE. )
 
     CALL spherical_from_cartesian( x, y, z, &
-                  THIS% centers(1,1), THIS% centers(1,2), THIS% centers(1,3), &
+                  this% centers(1,1), this% centers(1,2), this% centers(1,3), &
                                    r, theta, phi )
 
-    x_ell= THIS% centers(1,1) &
-           + MAX(THIS% sizes(1,1),THIS% sizes(1,2))*COS(phi)*SIN(theta)
+    x_ell= this% centers(1,1) &
+           + MAX(this% sizes(1,1),this% sizes(1,2))*COS(phi)*SIN(theta)
 
-    y_ell= THIS% centers(1,2) &
-           + MAX(THIS% sizes(1,3),THIS% sizes(1,4))*SIN(phi)*SIN(theta)
+    y_ell= this% centers(1,2) &
+           + MAX(this% sizes(1,3),this% sizes(1,4))*SIN(phi)*SIN(theta)
 
-    z_ell= THIS% centers(1,3) &
-           + MAX(THIS% sizes(1,5),THIS% sizes(1,6))*COS(theta)
+    z_ell= this% centers(1,3) &
+           + MAX(this% sizes(1,5),this% sizes(1,6))*COS(theta)
 
-    IF( r >= SQRT( ( x_ell - THIS% centers(1,1) )**two &
-                 + ( y_ell - THIS% centers(1,2) )**two &
-                 + ( z_ell - THIS% centers(1,3) )**two ) ) res= zero
+    IF( r >= SQRT( ( x_ell - this% centers(1,1) )**two &
+                 + ( y_ell - this% centers(1,2) )**two &
+                 + ( z_ell - this% centers(1,3) )**two ) ) res= zero
 
     IF( res < zero ) res= zero
 
-  !  IF(      x > THIS% centers(1,1) + THIS% sizes(1,2) &
-  !      .OR. x < THIS% centers(1,1) - THIS% sizes(1,1) &
-  !      .OR. y > THIS% centers(1,2) + THIS% sizes(1,4) &
-  !      .OR. y < THIS% centers(1,2) - THIS% sizes(1,3) &
-  !      .OR. zp > THIS% centers(1,3) + THIS% sizes(1,6) ) res= zero
+  !  IF(      x > this% centers(1,1) + this% sizes(1,2) &
+  !      .OR. x < this% centers(1,1) - this% sizes(1,1) &
+  !      .OR. y > this% centers(1,2) + this% sizes(1,4) &
+  !      .OR. y < this% centers(1,2) - this% sizes(1,3) &
+  !      .OR. zp > this% centers(1,3) + this% sizes(1,6) ) res= zero
 
-  !   IF(      x > THIS% xR_grid &
-  !       .OR. x < THIS% xL_grid &
-  !       .OR. y > THIS% yR_grid &
-  !       .OR. y < THIS% yL_grid &
-  !       .OR. zp > THIS% zR_grid ) res= zero
+  !   IF(      x > this% xR_grid &
+  !       .OR. x < this% xL_grid &
+  !       .OR. y > this% yR_grid &
+  !       .OR. y < this% yL_grid &
+  !       .OR. zp > this% zR_grid ) res= zero
 
   END PROCEDURE interpolate_mass_density
 
@@ -463,10 +515,10 @@ SUBMODULE (ejecta_generic) interpolate
     DOUBLE PRECISION, DIMENSION(3):: center
     DOUBLE PRECISION, DIMENSION(6):: sizes
 
-    center= THIS% return_center(1)
-    sizes = THIS% return_spatial_extent(1)
+    center= this% return_center(1)
+    sizes = this% return_spatial_extent(1)
 
-    IF( THIS% read_mass_density( x, y, z ) <= zero &
+    IF( this% read_mass_density( x, y, z ) <= zero &
         .OR. &
         !SQRT( ( x - center(1) )**2 + ( y - center(2) )**2 &
         !    + ( z - center(3) )**2  ) > 50zero

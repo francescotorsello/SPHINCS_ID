@@ -188,8 +188,8 @@ MODULE diffstar_lorene
     !! Returns the |lorene|'s conformally flat spatial ADM metric
 
     PROCEDURE:: test_position => is_hydro_positive
-    !# Returns 1 if the energy density or the specific energy or the pressure
-    !  are negative
+    !# Returns `.TRUE.` if the energy density or the specific energy or the
+    !  pressure are positive
 
     !
     !-- Overloaded FUNCTION to access the fields as arrays and as values
