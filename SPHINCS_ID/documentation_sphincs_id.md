@@ -12,7 +12,6 @@ predocmark: >
 predocmark_alt: &
 source: true
 graph: true
-parallel: 80
 sort: alpha
 src_dir: ./src
 media_dir: ./doc-media
@@ -40,7 +39,8 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        eos = \(\mathrm{EOS}\)
        ee = Einstein equations
        bns = \(\mathrm{BNS}\)
-<!---graph_dir: doc-graphs--->
+graph_dir: doc-graphs
+<!---parallel: 80--->
 <!---Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src--->
 <!---Project_url: https://francescotorsello.github.io/SPHINCS_ID-doc/--->
 

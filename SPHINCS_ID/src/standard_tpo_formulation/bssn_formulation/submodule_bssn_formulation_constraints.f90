@@ -1056,6 +1056,7 @@ SUBMODULE (bssn_formulation) constraints
   !$OMP                  show_progress, l ) &
   !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
   !$OMP                   perc )
+
 #endif
         DO k= 1, this% get_ngrid_z(l), 1
           DO j= 1, this% get_ngrid_y(l), 1
@@ -1193,6 +1194,7 @@ SUBMODULE (bssn_formulation) constraints
 
 #ifdef __INTEL_COMPILER
   !$OMP END PARALLEL DO
+  END ASSOCIATE
 #endif
 
 
@@ -1211,17 +1213,30 @@ SUBMODULE (bssn_formulation) constraints
 
       IMPLICIT NONE
 
+      Tmunu_ll% levels(l)% var= zero
+
 #ifdef __INTEL_COMPILER
-  Tmunu_ll= zero
+
+  ASSOCIATE( v_euler_l      => v_euler_l% levels(l)% var, &
+             u_euler_l      => u_euler_l% levels(l)% var, &
+             v_euler        => v_euler% levels(l)% var, &
+             lorentz_factor => lorentz_factor% levels(l)% var, &
+             lapse          => this% lapse% levels(l)% var, &
+             shift_u        => this% shift_u% levels(l)% var, &
+             g_phys3_ll     => this% g_phys3_ll% levels(l)% var, &
+             g4             => g4% levels(l)% var, &
+             Tmunu_ll       => Tmunu_ll% levels(l)% var, &
+             energy_density => energy_density% levels(l)% var, &
+             pressure       => pressure% levels(l)% var &
+  )
+
   !$OMP PARALLEL DO DEFAULT( NONE ) &
   !$OMP          SHARED( this, v_euler_l, u_euler_l, lorentz_factor, &
   !$OMP                  v_euler, Tmunu_ll, energy_density, pressure, &
   !$OMP                  show_progress, l ) &
   !$OMP          PRIVATE( i, j, k, g4, detg4, g4temp, ig4, u_euler_norm, &
   !$OMP                   perc )
-#endif
-#ifdef __GFORTRAN__
-  Tmunu_ll% levels(l)% var= zero
+
 #endif
               DO k= 1, this% get_ngrid_z(l), 1
                 DO j= 1, this% get_ngrid_y(l), 1

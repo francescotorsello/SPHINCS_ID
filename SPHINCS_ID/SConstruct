@@ -65,8 +65,8 @@ default_debug = 'FALSE'
 # Which compilers to use
 #   Fortran : 'gfortran', 'ifort'
 #   C++     : 'g++', 'gcc' or 'icpc'
-default_fortran_compiler = 'gfortran'
-default_cpp_compiler     = 'g++'
+default_fortran_compiler = 'ifort'
+default_cpp_compiler     = 'icpc'
 
 # 'TRUE'  : enables verbose output
 # 'FALSE' : disables verbose output
