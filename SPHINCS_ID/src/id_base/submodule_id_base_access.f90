@@ -290,23 +290,27 @@ SUBMODULE (id_base) access
     !
     !************************************************
 
+    USE constants, ONLY: one, five, ten
+
     IMPLICIT NONE
+
+    DOUBLE PRECISION, PARAMETER:: stretch= five/(ten*ten*ten)
 
     INTEGER:: i_matter
     DOUBLE PRECISION, DIMENSION(3):: center_matter
     DOUBLE PRECISION, DIMENSION(6):: size_matter
 
-    box(1)=   HUGE(1.0D0)
-    box(3)=   HUGE(1.0D0)
-    box(5)=   HUGE(1.0D0)
-    box(2)= - HUGE(1.0D0)
-    box(4)= - HUGE(1.0D0)
-    box(6)= - HUGE(1.0D0)
+    box(1)=   HUGE(one)
+    box(3)=   HUGE(one)
+    box(5)=   HUGE(one)
+    box(2)= - HUGE(one)
+    box(4)= - HUGE(one)
+    box(6)= - HUGE(one)
 
-    DO i_matter= 1, THIS% get_n_matter(), 1
+    DO i_matter= 1, this% get_n_matter(), 1
 
-      size_matter  = THIS% return_spatial_extent( i_matter )
-      center_matter= THIS% return_center( i_matter )
+      size_matter  = this% return_spatial_extent( i_matter )*(one + stretch)
+      center_matter= this% return_center( i_matter )
 
       IF( center_matter(1) - size_matter(1) < box(1) ) &
                           box(1) = center_matter(1) - size_matter(1)
@@ -324,7 +328,6 @@ SUBMODULE (id_base) access
     ENDDO
 
   END PROCEDURE get_total_spatial_extent
-
 
 
 END SUBMODULE access
