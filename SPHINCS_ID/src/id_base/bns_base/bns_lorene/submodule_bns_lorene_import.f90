@@ -138,21 +138,23 @@ SUBMODULE (bns_lorene) import
           !
           this% g_yy( itr )= this% g_xx( itr )
           this% g_zz( itr )= this% g_xx( itr )
-          this% g_xy( itr )= 0.0D0
-          this% g_xz( itr )= 0.0D0
-          this% g_yz( itr )= 0.0D0
+          this% g_xy( itr )= zero
+          this% g_xz( itr )= zero
+          this% g_yz( itr )= zero
 
           !
           !- Set/unset the geodesic gauge
           !
           IF( this% get_one_lapse() )THEN
-            this% lapse( itr )= 1.0D0
+            this% lapse( itr )= one
           ENDIF
           IF( this% get_zero_shift() )THEN
-            this% shift_x( itr )= 0.0D0
-            this% shift_y( itr )= 0.0D0
-            this% shift_z( itr )= 0.0D0
+            this% shift_x( itr )= zero
+            this% shift_y( itr )= zero
+            this% shift_z( itr )= zero
           ENDIF
+
+          this% lapse( itr )= one/this% g_xx( itr )
 
           !
           !-- Convert the extrinsic curvature from |lorene| units to
@@ -263,21 +265,23 @@ SUBMODULE (bns_lorene) import
         !
         g_yy( itr )= g_xx( itr )
         g_zz( itr )= g_xx( itr )
-        g_xy( itr )= 0.0D0
-        g_xz( itr )= 0.0D0
-        g_yz( itr )= 0.0D0
+        g_xy( itr )= zero
+        g_xz( itr )= zero
+        g_yz( itr )= zero
 
         !
         !- Set/unset the geodesic gauge
         !
         IF( this% get_one_lapse() )THEN
-          lapse( itr )= 1.0D0
+          lapse( itr )= one
         ENDIF
         IF( this% get_zero_shift() )THEN
-          shift_x( itr )= 0.0D0
-          shift_y( itr )= 0.0D0
-          shift_z( itr )= 0.0D0
+          shift_x( itr )= zero
+          shift_y( itr )= zero
+          shift_z( itr )= zero
         ENDIF
+
+        lapse( itr )= one/g_xx( itr )
 
         !
         !-- Convert the extrinsic curvature from |lorene| units to
@@ -396,21 +400,23 @@ SUBMODULE (bns_lorene) import
             !
             g( i, j, k, jyy )= g( i, j, k, jxx )
             g( i, j, k, jzz )= g( i, j, k, jxx )
-            g( i, j, k, jxy )= 0.0D0
-            g( i, j, k, jxz )= 0.0D0
-            g( i, j, k, jyz )= 0.0D0
+            g( i, j, k, jxy )= zero
+            g( i, j, k, jxz )= zero
+            g( i, j, k, jyz )= zero
 
             !
             !- Set/unset the geodesic gauge
             !
             IF( this% get_one_lapse() )THEN
-              lapse( i, j, k )= 1.0D0
+              lapse( i, j, k )= one
             ENDIF
             IF( this% get_zero_shift() )THEN
-              shift( i, j, k, jx )= 0.0D0
-              shift( i, j, k, jy )= 0.0D0
-              shift( i, j, k, jz )= 0.0D0
+              shift( i, j, k, jx )= zero
+              shift( i, j, k, jy )= zero
+              shift( i, j, k, jz )= zero
             ENDIF
+
+            lapse( i, j, k )= one/g( i, j, k, jxx )
 
             !
             !-- Convert the extrinsic curvature from |lorene| units to
@@ -618,21 +624,23 @@ SUBMODULE (bns_lorene) import
         !
         g_yy( itr )= g_xx( itr )
         g_zz( itr )= g_xx( itr )
-        g_xy( itr )= 0.0D0
-        g_xz( itr )= 0.0D0
-        g_yz( itr )= 0.0D0
+        g_xy( itr )= zero
+        g_xz( itr )= zero
+        g_yz( itr )= zero
 
         !
         !- Set/unset the geodesic gauge
         !
         IF( this% get_one_lapse() )THEN
-          lapse( itr )= 1.0D0
+          lapse( itr )= one
         ENDIF
         IF( this% get_zero_shift() )THEN
-          shift_x( itr )= 0.0D0
-          shift_y( itr )= 0.0D0
-          shift_z( itr )= 0.0D0
+          shift_x( itr )= zero
+          shift_y( itr )= zero
+          shift_z( itr )= zero
         ENDIF
+
+        lapse( itr )= one/g_xx( itr )
 
         detg= 2*g_xy(itr)*g_xz(itr)*g_yz(itr) &
               - g_zz(itr)*g_xy(itr)**2 &
@@ -706,10 +714,10 @@ SUBMODULE (bns_lorene) import
                                     baryon_density, &
                                     gamma_euler )
 
-      g(jxy)= 0.0D0
-      g(jxz)= 0.0D0
+      g(jxy)= zero
+      g(jxz)= zero
       g(jyy)= g(jxx)
-      g(jyz)= 0.0D0
+      g(jyz)= zero
       g(jzz)= g(jxx)
 
       baryon_density= baryon_density*lorene2hydrobase

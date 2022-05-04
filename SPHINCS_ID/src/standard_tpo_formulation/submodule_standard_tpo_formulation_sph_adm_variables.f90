@@ -58,7 +58,7 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
     USE constants,            ONLY: zero, one, two, amu, MSun
     USE utility,              ONLY: compute_g4, determinant_sym4x4, &
                                     spatial_vector_norm_sym3x3, &
-                                    compute_tpo_metric
+                                    compute_tpo_metric, is_finite_number
 
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
@@ -84,7 +84,7 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
 
     INTEGER:: a, j, l, i_matter
 
-    DOUBLE PRECISION:: det, shift_norm2
+    DOUBLE PRECISION:: det, shift_norm2, adm_mom_element
 
     !DOUBLE PRECISION, DIMENSION(n_sym4x4,npart)  :: g4
     DOUBLE PRECISION, DIMENSION(0:3)             :: v_u
@@ -163,32 +163,32 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
     PRINT *
     CALL get_metric_on_particles( npart, pos )
 
-    adm_mom= zero
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( npart, parts, g4_ll, vel_loc, v_l, nu_loc, &
-    !$OMP                     theta_loc, pr_loc, nlrf_loc, u_loc ) &
-    !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g3, lapse_loc, &
-    !$OMP                      shift ) &
-    !$OMP             REDUCTION( +: adm_mom )
-    DO a= 1, npart, 1
-
-      CALL compute_tpo_metric( g4_ll(:,a), lapse_loc, shift, g3 )
-
-      v_u= [one, vel_loc(1:3,a)]
-      CALL lower_index_4vector( v_u, g4_ll(:,a), v_l(:,a) )
-
-      CALL spatial_vector_norm_sym3x3( g3, shift, shift_norm2 )
-
-      DO j= jx, jz, 1
-
-        adm_mom(j)= adm_mom(j) &
-            - ( nu_loc(a)*amu/Msun )*( shift_norm2/(lapse_loc**two) - one ) &
-              *theta_loc(a)*( one + u_loc(a) + pr_loc(a)/nlrf_loc(a) )*v_l(j,a)
-
-      ENDDO
-
-    ENDDO
-    !$OMP END PARALLEL DO
+ !   adm_mom= zero
+ !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+ !   !$OMP             SHARED( npart, parts, g4_ll, vel_loc, v_l, nu_loc, &
+ !   !$OMP                     theta_loc, pr_loc, nlrf_loc, u_loc ) &
+ !   !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g3, lapse_loc, &
+ !   !$OMP                      shift ) &
+ !   !$OMP             REDUCTION( +: adm_mom )
+ !   DO a= 1, npart, 1
+ !
+ !     CALL compute_tpo_metric( g4_ll(:,a), lapse_loc, shift, g3 )
+ !
+ !     v_u= [one, vel_loc(1:3,a)]
+ !     CALL lower_index_4vector( v_u, g4_ll(:,a), v_l(:,a) )
+ !
+ !     CALL spatial_vector_norm_sym3x3( g3, shift, shift_norm2 )
+ !
+ !     DO j= jx, jz, 1
+ !
+ !       adm_mom(j)= adm_mom(j) &
+ !           - ( nu_loc(a)*amu/Msun )*( shift_norm2/(lapse_loc**two) - one ) &
+ !             *theta_loc(a)*( one + u_loc(a) + pr_loc(a)/nlrf_loc(a) )*v_l(j,a)
+ !
+ !     ENDDO
+ !
+ !   ENDDO
+ !   !$OMP END PARALLEL DO
 
     adm_mom= zero
     matter_objects_loop: DO i_matter= 1, parts% get_n_matter(), 1
@@ -199,23 +199,71 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
       !$OMP                     v_l, nu_loc, theta_loc, pr_loc, nlrf_loc, &
       !$OMP                     u_loc, i_matter ) &
       !$OMP             PRIVATE( a, det, v_u, shift_norm2, j, g3, lapse_loc, &
-      !$OMP                      shift ) &
+      !$OMP                      shift, adm_mom_element ) &
       !$OMP             REDUCTION( +: adm_mom_i )
       DO a= parts% get_npart_i(i_matter-1) + 1, &
             parts% get_npart_i(i_matter-1) + parts% get_npart_i(i_matter), 1
 
         CALL compute_tpo_metric( g4_ll(:,a), lapse_loc, shift, g3 )
 
+        DO j= 1, 6, 1
+          IF( .NOT.is_finite_number(g3(j)) )THEN
+            PRINT *, "** ERROR! g3(", j, ") is not a finite number on ", &
+                     "particle ", a, ", in SUBROUTINE ", &
+                     "compute_adm_momentum_fluid_m2p!"
+            PRINT *, " * Stopping..."
+            STOP
+          ENDIF
+        ENDDO
+        IF( .NOT.is_finite_number(lapse_loc) )THEN
+          PRINT *, "** ERROR! lapse_loc is not a finite number on ", &
+                   "particle ", a, ", in SUBROUTINE ", &
+                   "compute_adm_momentum_fluid_m2p!"
+          PRINT *, " * Stopping..."
+          STOP
+        ENDIF
+        DO j= 1, 3, 1
+          IF( .NOT.is_finite_number(shift(j)) )THEN
+            PRINT *, "** ERROR! shift(", j, ") is not a finite number on ", &
+                     "particle ", a, ", in SUBROUTINE ", &
+                     "compute_adm_momentum_fluid_m2p!"
+            PRINT *, " * Stopping..."
+            STOP
+          ENDIF
+        ENDDO
+
         v_u= [one, vel_loc(1:3,a)]
         CALL lower_index_4vector( v_u, g4_ll(:,a), v_l(:,a) )
+        DO j= 0, 3, 1
+          IF( .NOT.is_finite_number(v_l(j,a)) )THEN
+            PRINT *, "** ERROR! v_l(", j, ") is not a finite number on ", &
+                     "particle ", a, ", in SUBROUTINE ", &
+                     "compute_adm_momentum_fluid_m2p!"
+            PRINT *, " * Stopping..."
+            STOP
+          ENDIF
+        ENDDO
 
         CALL spatial_vector_norm_sym3x3( g3, shift, shift_norm2 )
+        IF( .NOT.is_finite_number(shift_norm2) )THEN
+          PRINT *, "** ERROR! shift_norm2 is not a finite number on ", &
+                   "particle ", a, ", in SUBROUTINE ", &
+                   "compute_adm_momentum_fluid_m2p!"
+          PRINT *, " * Stopping..."
+          STOP
+        ENDIF
 
         DO j= jx, jz, 1
 
-          adm_mom_i(i_matter,j)= adm_mom_i(i_matter,j) &
-            - ( nu_loc(a)*amu/Msun )*( shift_norm2/(lapse_loc**two) - one ) &
-              *theta_loc(a)*( one + u_loc(a) + pr_loc(a)/nlrf_loc(a) )*v_l(j,a)
+          adm_mom_element= &
+          - ( nu_loc(a)*amu/Msun )*( shift_norm2/(lapse_loc**two) - one ) &
+            *theta_loc(a)*( one + u_loc(a) + pr_loc(a)/nlrf_loc(a) )*v_l(j,a)
+
+          IF( is_finite_number(adm_mom_element) )THEN
+            adm_mom_i(i_matter,j)= adm_mom_i(i_matter,j) + adm_mom_element
+          ELSE
+            CYCLE
+          ENDIF
 
         ENDDO
 

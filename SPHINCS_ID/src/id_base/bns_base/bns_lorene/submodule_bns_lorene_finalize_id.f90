@@ -79,6 +79,7 @@ SUBMODULE (bns_lorene) finalize_id
 
     !DOUBLE PRECISION, DIMENSION(3):: com_vel
 
+    RETURN
 
     !
     !-- Simply subtract the velocity of the center of mass from the velocity
