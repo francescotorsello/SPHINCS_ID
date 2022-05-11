@@ -919,7 +919,7 @@ MODULE sph_particles
     !  to impose the equatorial-plane symmetry
 
       INTEGER, INTENT(IN):: npart
-      INTEGER, INTENT(IN):: npart_above_xy
+      INTEGER, INTENT(INOUT):: npart_above_xy
       INTEGER, DIMENSION(npart_above_xy), INTENT(IN):: above_xy_plane_a
 
       DOUBLE PRECISION, DIMENSION(3,npart),          INTENT(INOUT) :: pos

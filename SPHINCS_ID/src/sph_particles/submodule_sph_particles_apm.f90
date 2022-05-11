@@ -125,6 +125,8 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
     !INTEGER,          PARAMETER:: print_step       = 15
+    INTEGER,          PARAMETER:: nuratio_max_steps= 50
+
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
     !DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.375D0!0.25D0 !30.0D0
@@ -134,11 +136,13 @@ SUBMODULE (sph_particles) apm
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
     DOUBLE PRECISION, PARAMETER:: max_art_pr_ghost = 1.0D+10
     DOUBLE PRECISION, PARAMETER:: tiny_real        = 1.0D-10
+    DOUBLE PRECISION, PARAMETER:: nuratio_tol      = 0.0025
 
     INTEGER:: a, itr, itr2, n_inc, cnt1!, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
+    INTEGER:: nuratio_cnt
     INTEGER:: dim_seed, rel_sign
     INTEGER:: n_problematic_h, ill, l, itot
     INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
@@ -156,7 +160,7 @@ SUBMODULE (sph_particles) apm
                        err_mean_old, err_n_min, err_N_max, dN, &!dNstar, &
                        nstar_id_err, nstar_sph_err, dN_max, dN_av
     DOUBLE PRECISION:: art_pr_max
-    DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp
+    DOUBLE PRECISION:: nu_tot, nu_ratio, nu_tmp2, nuratio_tmp, nuratio_tmp_prev
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
     DOUBLE PRECISION:: variance_dN, stddev_dN
     DOUBLE PRECISION:: rand_num, rand_num2
@@ -619,8 +623,10 @@ SUBMODULE (sph_particles) apm
     PRINT *, " * The APM iteration starts here."
     PRINT *
 
-    n_inc= 0
-    err_N_mean_min= HUGE(one)
+    n_inc           = 0
+    err_N_mean_min  = HUGE(one)
+    nuratio_cnt     = 0
+    nuratio_tmp_prev= zero
     apm_iteration: DO itr= 1, apm_max_it, 1
 
       PRINT *, "------------------------------------------"
@@ -1141,6 +1147,11 @@ SUBMODULE (sph_particles) apm
       IF( err_N_mean > err_mean_old )THEN
         n_inc= n_inc + 1
       ENDIF
+      IF( ABS(nuratio_tmp - nuratio_tmp_prev)/nuratio_tmp_prev <= nuratio_tol )THEN
+        nuratio_cnt= nuratio_cnt + 1
+      ELSE
+        nuratio_cnt= 0
+      ENDIF
 
       ! POSSIBLE EXIT CONDITION. DEPRECATED?
       !
@@ -1178,6 +1189,8 @@ SUBMODULE (sph_particles) apm
               nuratio_tmp <= nuratio_des*(one + quarter/ten) .AND. &
               nuratio_tmp /= nuratio_thres ) .OR. itr == apm_max_it ) EXIT
 
+        IF( nuratio_cnt >= nuratio_max_steps .OR. itr == apm_max_it ) EXIT
+
       ELSE
 
         PRINT *, " * n_inc= ", n_inc
@@ -1187,6 +1200,7 @@ SUBMODULE (sph_particles) apm
       ENDIF
       err_mean_old      = err_N_mean
       err_N_mean_min_old= err_N_mean_min
+      nuratio_tmp_prev  = nuratio_tmp
 
       !
       !-- If the particle distribution is not yet good enough, update it
@@ -1415,9 +1429,9 @@ SUBMODULE (sph_particles) apm
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
-        IF( (all_pos_prev( 3, a ) > 0 .AND. all_pos( 3, a ) <= 0) &
+        IF( (all_pos_prev( 3, a ) > zero .AND. all_pos( 3, a ) <= zero) &
             .OR. &
-            (all_pos_prev( 3, a ) < 0 .AND. all_pos( 3, a ) >= 0) &
+            (all_pos_prev( 3, a ) < zero .AND. all_pos( 3, a ) >= zero) &
         )THEN
 
           all_pos( 3, a )= all_pos_prev( 3, a )
