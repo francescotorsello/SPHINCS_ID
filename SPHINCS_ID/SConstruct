@@ -80,10 +80,10 @@ default_verbose = 'FALSE'
 #             file, so that the necessary modules are loaded to the user's local
 #             environment on Sunrise:
 #   module load -openmpi3 +openmpi4 +gsl +fftw +scalapack +libgfortran +pgplot
-default_host = 'r3x'
+default_host = 'Sunrise'
 
 # Version of SPHINCS_ID
-version = '_v1.0'
+version = '_v1.5'
 
 ################################################################################
 

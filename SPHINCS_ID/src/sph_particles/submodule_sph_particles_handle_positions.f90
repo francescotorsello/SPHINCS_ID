@@ -75,8 +75,25 @@ SUBMODULE (sph_particles) handle_positions
     ENDDO
     !$OMP END PARALLEL DO
 
+    IF( npart/2 /= npart_above_xy )THEN
+
+      PRINT *, "** WARNING! Mismatch in the number of particles above the xy ",&
+               "plane in SUBROUTINE reflect_particles_xy_plane!"
+      PRINT *, " * npart/2= ", npart/2
+      PRINT *, " * npart_above_xy= ", npart_above_xy
+      PRINT *, " * If you are inside the APM iteration, you're safe since ", &
+               "this is taken care of."
+      PRINT *, "   Otherwise, you may want to double check that ", &
+               "you know what's going on."
+      PRINT *
+
+      npart_above_xy= npart/2
+
+    ENDIF
+
     ALLOCATE(above_xy_plane_a(npart_above_xy))
     above_xy_plane_a= PACK( above_xy_plane, above_xy_plane /= zero )
+    above_xy_plane_a= above_xy_plane_a(1:npart_above_xy)
 
   END PROCEDURE find_particles_above_xy_plane
 
@@ -108,20 +125,6 @@ SUBMODULE (sph_particles) handle_positions
       PRINT *, " * Stopping..."
       PRINT *
       STOP
-    ENDIF
-
-    IF( npart/2 /= npart_above_xy )THEN
-
-      PRINT *, "** WARNING! Mismatch in the number of particles above the xy ",&
-               "plane in SUBROUTINE reflect_particles_xy_plane!"
-      PRINT *, " * npart/2= ", npart/2
-      PRINT *, " * npart_above_xy= ", npart_above_xy
-      PRINT *, " * If you are inside the APM iteration, you're safe since ", &
-               "this is taken care of."
-      PRINT *, "   Otherwise, you may want to double check that ", &
-               "you know what's going on."
-      PRINT *
-
     ENDIF
 
     pos_tmp= pos
