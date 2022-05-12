@@ -1119,6 +1119,7 @@ SUBMODULE (sph_particles) constructor_std
       PRINT *, "** There is no implemented particle placer " &
                // "corresponding to the number", dist
       PRINT *, " * Stopping..."
+      PRINT *
       STOP
 
     END SELECT choose_particle_placer

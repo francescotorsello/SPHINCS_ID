@@ -80,7 +80,7 @@ default_verbose = 'FALSE'
 #             file, so that the necessary modules are loaded to the user's local
 #             environment on Sunrise:
 #   module load -openmpi3 +openmpi4 +gsl +fftw +scalapack +libgfortran +pgplot
-default_host = 'Sunrise'
+default_host = 'r3x'
 
 # Version of SPHINCS_ID
 version = '_v1.5'
@@ -236,10 +236,11 @@ module_bssn_formulation_dir = \
 module_bssn_formulation = [
   'module_bssn_formulation.f90',
   'submodule_bssn_formulation_constructor.f90',
+  'submodule_bssn_formulation_memory.f90',
   'submodule_bssn_formulation_bssn_variables.f90',
   'submodule_bssn_formulation_constraints.f90',
   'submodule_bssn_formulation_ricci.f90',
-  'submodule_bssn_formulation_memory.f90'
+  'submodule_bssn_formulation_landau_lifshitz.f90'
 ]
 
 module_bns_base_dir = ['src/id_base/bns_base/']

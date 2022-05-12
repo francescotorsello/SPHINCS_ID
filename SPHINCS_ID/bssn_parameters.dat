@@ -28,4 +28,11 @@ lapse_threshold= 0.1
 fermi_width= 1.0
 use_spatial_eps= 0
 bssn_cou_fac= 0.35
+!--------------------------------------------------------------------!
+! Choose the ID for the gauge variables                              !
+! N.B. Only applies if ipos=0 in parameter file SPHINCS_fm_input.dat !
+!--------------------------------------------------------------------!
+gauge_id= 0               ! 0: Use the gauge ID provided by SPHINCS_ID
+                          ! 1: Use zero initial shift and lapse equal to
+                          !    the inverse squared BSSN conformal factor
 /

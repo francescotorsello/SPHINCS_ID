@@ -66,43 +66,43 @@ SUBMODULE (bssn_formulation) ricci
 
     DOUBLE PRECISION:: max_ricci, min_lapse
 
-    ALLOCATE ( levels( THIS% nlevels ), STAT=ios )
+    ALLOCATE ( levels( this% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
      PRINT*,'...allocation error for levels'
      STOP
     ENDIF
-    levels = THIS% levels
-    nlevels= THIS% nlevels
+    levels = this% levels
+    nlevels= this% nlevels
 
-    CALL allocate_grid_function( THIS% Ricci_ll, "Ricci_ll_id", 6 )
-    CALL allocate_grid_function( THIS% Ricci_scalar, "Ricci_scalar_id", 1 )
+    CALL allocate_grid_function( this% Ricci_ll, "Ricci_ll_id", 6 )
+    CALL allocate_grid_function( this% Ricci_scalar, "Ricci_scalar_id", 1 )
 
-    DO l= 1, THIS% nlevels, 1
+    DO l= 1, this% nlevels, 1
 
-      ASSOCIATE( lapse        => THIS% lapse% levels(l)% var, &
-                 shift_u      => THIS% shift_u% levels(l)% var, &
-                 phi          => THIS% phi% levels(l)% var, &
-                 trK          => THIS% trK% levels(l)% var, &
-                 g_BSSN3_ll   => THIS% g_BSSN3_ll% levels(l)% var, &
-                 A_BSSN3_ll   => THIS% A_BSSN3_ll% levels(l)% var, &
-                 Gamma_u      => THIS% Gamma_u% levels(l)% var, &
-                 Ricci_ll     => THIS% Ricci_ll% levels(l)% var, &
-                 Ricci_scalar => THIS% Ricci_scalar% levels(l)% var &
+      ASSOCIATE( lapse        => this% lapse% levels(l)% var, &
+                 shift_u      => this% shift_u% levels(l)% var, &
+                 phi          => this% phi% levels(l)% var, &
+                 trK          => this% trK% levels(l)% var, &
+                 g_BSSN3_ll   => this% g_BSSN3_ll% levels(l)% var, &
+                 A_BSSN3_ll   => this% A_BSSN3_ll% levels(l)% var, &
+                 Gamma_u      => this% Gamma_u% levels(l)% var, &
+                 Ricci_ll     => this% Ricci_ll% levels(l)% var, &
+                 Ricci_scalar => this% Ricci_scalar% levels(l)% var &
       )
 
-        imin(1)= THIS% levels(l)% nghost_x
-        imin(2)= THIS% levels(l)% nghost_y
-        imin(3)= THIS% levels(l)% nghost_z
-        imax(1)= THIS% get_ngrid_x(l) - THIS% levels(l)% nghost_x - 1
-        imax(2)= THIS% get_ngrid_y(l) - THIS% levels(l)% nghost_y - 1
-        imax(3)= THIS% get_ngrid_z(l) - THIS% levels(l)% nghost_z - 1
+        imin(1)= this% levels(l)% nghost_x
+        imin(2)= this% levels(l)% nghost_y
+        imin(3)= this% levels(l)% nghost_z
+        imax(1)= this% get_ngrid_x(l) - this% levels(l)% nghost_x - 1
+        imax(2)= this% get_ngrid_y(l) - this% levels(l)% nghost_y - 1
+        imax(3)= this% get_ngrid_z(l) - this% levels(l)% nghost_z - 1
 
         Ricci_ll    = zero
         Ricci_scalar= zero
         CALL bssn_ricci_interior( &
-            THIS% get_ngrid_x(l), THIS% get_ngrid_y(l), THIS% get_ngrid_z(l), &
+            this% get_ngrid_x(l), this% get_ngrid_y(l), this% get_ngrid_z(l), &
             imin, imax, &
-            THIS% get_dx(l), THIS% get_dy(l), THIS% get_dz(l), &
+            this% get_dx(l), this% get_dy(l), this% get_dz(l), &
             g_BSSN3_ll(:,:,:,jxx), g_BSSN3_ll(:,:,:,jxy), &
             g_BSSN3_ll(:,:,:,jxz), g_BSSN3_ll(:,:,:,jyy), &
             g_BSSN3_ll(:,:,:,jyz), g_BSSN3_ll(:,:,:,jzz), &
@@ -129,8 +129,8 @@ SUBMODULE (bssn_formulation) ricci
     ! Find real reference for this.
     max_ricci= zero
     min_lapse= HUGE(one)
-    ASSOCIATE( Ricci_scalar => THIS% Ricci_scalar% levels(THIS% nlevels)% var, &
-               lapse        => THIS% lapse% levels(THIS% nlevels)% var )
+    ASSOCIATE( Ricci_scalar => this% Ricci_scalar% levels(this% nlevels)% var, &
+               lapse        => this% lapse% levels(this% nlevels)% var )
 
       !IF( MAXVAL( ABS(Ricci_scalar) ) > max_ricci )THEN
 
