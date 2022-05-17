@@ -57,8 +57,8 @@ SUBMODULE (standard_tpo_formulation) io
     !
     !************************************************
 
-    USE constants, ONLY: Msun_geo, one, ten
-    USE tensor,    ONLY: jx, jy, jz
+    USE utility,  ONLY: Msun_geo, one, ten
+    USE tensor,   ONLY: jx, jy, jz
 
     IMPLICIT NONE
 

@@ -63,7 +63,8 @@ SUBMODULE (id_base) length_scale
     !
     !************************************************
 
-    USE constants, ONLY: zero, half, two, three, ten, Msun_geo
+    USE utility,    ONLY: zero, two, three, ten, Msun_geo
+    Use constants,  ONLY: half
 
     IMPLICIT NONE
 

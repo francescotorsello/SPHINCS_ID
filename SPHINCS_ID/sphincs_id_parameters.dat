@@ -107,7 +107,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=0                     ! 0: Read particle positions from formatted
+placer(1,:)=2                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object

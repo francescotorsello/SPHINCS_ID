@@ -59,8 +59,20 @@ SUBMODULE (bns_lorene) params
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR
 
-    USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         c_light, cm2km, k_lorene2hydrobase_piecewisepolytrope
+    USE constants, ONLY: c_light, cm2km
+
+    USE utility,   ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
+                         k_lorene2hydrobase_piecewisepolytrope
+
+#if flavour == 1
+
+  USE sphincs_id_full,    ONLY: shorten_eos_name
+
+#elif flavour == 2
+
+  USE sphincs_id_lorene,  ONLY: shorten_eos_name
+
+#endif
 
     IMPLICIT NONE
 
@@ -299,6 +311,9 @@ SUBMODULE (bns_lorene) params
     !DO i= 1, nchars, 1
     !  this% eos2(i:i)= eos2_tmp(i)
     !ENDDO
+
+    this% eos1= shorten_eos_name(this% eos1)
+    this% eos2= shorten_eos_name(this% eos2)
 
     CALL print_id_params( this )
 

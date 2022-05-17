@@ -59,8 +59,10 @@ SUBMODULE (bns_fuka) params
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR
 
-    USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         c_light, cm2km, k_lorene2hydrobase_piecewisepolytrope
+    USE constants,  ONLY: c_light, cm2km
+    USE utility,    ONLY: Msun_geo, km2m, lorene2hydrobase, &
+                          k_lorene2hydrobase, &
+                          k_lorene2hydrobase_piecewisepolytrope
 
     IMPLICIT NONE
   !

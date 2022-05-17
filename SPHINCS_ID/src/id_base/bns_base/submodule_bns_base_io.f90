@@ -56,54 +56,54 @@ SUBMODULE (bns_base) io
     !
     !************************************************
 
-    USE constants,      ONLY: lorene2hydrobase, kg2g, m2cm
+    USE utility,    ONLY: m2cm, lorene2hydrobase, kg2g
 
     IMPLICIT NONE
 
     PRINT *, " * Binary system of neutron stars:"
     PRINT *
-    PRINT *, "   Baryon mass of star 1=", THIS% get_mass1(), "Msun"
-    PRINT *, "   Baryon mass of star 2=", THIS% get_mass2(), "Msun"
-    PRINT *, "   Gravitational mass of star 1=", THIS% get_grav_mass1(), "Msun"
-    PRINT *, "   Gravitational mass of star 2=", THIS% get_grav_mass2(), "Msun"
+    PRINT *, "   Baryon mass of star 1=", this% get_mass1(), "Msun"
+    PRINT *, "   Baryon mass of star 2=", this% get_mass2(), "Msun"
+    PRINT *, "   Gravitational mass of star 1=", this% get_grav_mass1(), "Msun"
+    PRINT *, "   Gravitational mass of star 2=", this% get_grav_mass2(), "Msun"
     PRINT *
     PRINT *, "   Equatorial (not areal) radius of neutron star 1 towards " &
              // "companion= ", &
-                 THIS% get_radius1_x_comp(), "Msun_geo"
+                 this% get_radius1_x_comp(), "Msun_geo"
     PRINT *, "   Equatorial (not areal) radius of neutron star 2 towards " &
              // "companion= ", &
-                 THIS% get_radius2_x_comp(), "Msun_geo"
+                 this% get_radius2_x_comp(), "Msun_geo"
     PRINT *, "   Equatorial (not areal) radius of neutron star 1 opposite to " &
              // "companion= ", &
-                 THIS% get_radius1_x_opp(), "Msun_geo"
+                 this% get_radius1_x_opp(), "Msun_geo"
     PRINT *, "   Equatorial (not areal) radius of neutron star 2 opposite to " &
              // "companion= ", &
-                 THIS% get_radius2_x_opp(), "Msun_geo"
+                 this% get_radius2_x_opp(), "Msun_geo"
     PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
-                 THIS% get_radius1_y(), "Msun_geo"
+                 this% get_radius1_y(), "Msun_geo"
     PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
-                 THIS% get_radius2_y(), "Msun_geo"
+                 this% get_radius2_y(), "Msun_geo"
     PRINT *, "   Radius (not areal) along y of neutron star 1= ", &
-                 THIS% get_radius1_z(), "Msun_geo"
+                 this% get_radius1_z(), "Msun_geo"
     PRINT *, "   Radius (not areal) along y of neutron star 2= ", &
-                 THIS% get_radius2_z(), "Msun_geo"
+                 this% get_radius2_z(), "Msun_geo"
     PRINT *
     PRINT *, "   EOS for neutron star 1= ", &
-                 THIS% get_eos1()
+                 this% get_eos1()
     PRINT *, "   EOS for neutron star 2= ", &
-                 THIS% get_eos2()
+                 this% get_eos2()
     PRINT *
     PRINT *, "   Central baryon mass density for star 1= ", &
-                 THIS% get_rho_center1(), "Msun/Msun_geo**3= ", &
-                 THIS% get_rho_center1() &
+                 this% get_rho_center1(), "Msun/Msun_geo**3= ", &
+                 this% get_rho_center1() &
                  /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
     PRINT *, "   Central baryon mass density for star 2= ", &
-                 THIS% get_rho_center2(), "Msun/Msun_geo**3= ", &
-                 THIS% get_rho_center2() &
+                 this% get_rho_center2(), "Msun/Msun_geo**3= ", &
+                 this% get_rho_center2() &
                  /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
     PRINT *
 
-    CALL THIS% print_summary_derived( filename )
+    CALL this% print_summary_derived( filename )
 
 
   END PROCEDURE print_summary_bnsbase

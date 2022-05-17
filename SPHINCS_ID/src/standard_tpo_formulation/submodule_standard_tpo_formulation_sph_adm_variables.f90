@@ -55,10 +55,11 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
     !************************************************
 
     USE tensor,               ONLY: jx, jy, jz, n_sym4x4, lower_index_4vector
-    USE constants,            ONLY: zero, one, two, amu, MSun
+    USE constants,            ONLY: amu, MSun
     USE utility,              ONLY: compute_g4, determinant_sym4x4, &
                                     spatial_vector_norm_sym3x3, &
-                                    compute_tpo_metric, is_finite_number
+                                    compute_tpo_metric, is_finite_number, &
+                                    zero, one, two
 
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &

@@ -55,8 +55,8 @@ SUBMODULE (standard_tpo_formulation) analysis
     !
     !****************************************************
 
-    USE constants, ONLY: pi, zero, one, two, four, ten
-    USE utility,   ONLY: determinant_sym3x3
+    USE constants, ONLY: pi
+    USE utility,   ONLY: determinant_sym3x3, zero, one, two, four, ten
 
     IMPLICIT NONE
 

@@ -33,6 +33,9 @@ SUBMODULE (bns_fuka) read
   !****************************************************
 
 
+  !USE constants, ONLY: Msun_geo
+
+
   IMPLICIT NONE
 
 
@@ -53,8 +56,6 @@ SUBMODULE (bns_fuka) read
     !  FT 09.02.2022
     !
     !**************************************************
-
-    USE constants, ONLY: Msun_geo
 
     IMPLICIT NONE
 
@@ -192,8 +193,6 @@ SUBMODULE (bns_fuka) read
     !
     !**************************************************
 
-    USE constants, ONLY: Msun_geo
-
     IMPLICIT NONE
 
    ! IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
@@ -307,8 +306,6 @@ SUBMODULE (bns_fuka) read
     !  FT 09.02.2022
     !
     !*******************************************************
-
-    USE constants, ONLY: Msun_geo
 
     USE tensor,    ONLY: jxx, jxy, jxz, &
                          jyy, jyz, jzz, jx, jy, jz, n_sym4x4
@@ -486,7 +483,6 @@ SUBMODULE (bns_fuka) read
     !
     !*******************************************************
 
-    USE constants,  ONLY: Msun_geo
     USE tensor,     ONLY: jx, jy, jz
 
     IMPLICIT NONE
@@ -556,7 +552,8 @@ SUBMODULE (bns_fuka) read
     !
     !****************************************************
 
-    USE constants, ONLY: Msun_geo, km2m, g2kg, amu
+    USE constants,  ONLY: amu
+    USE utility,    ONLY: Msun_geo, km2m, g2kg
 
     IMPLICIT NONE
 
@@ -685,8 +682,8 @@ SUBMODULE (bns_fuka) read
     !
     !****************************************************
 
-    USE constants, ONLY: Msun_geo, lorene2hydrobase
-    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
+    USE utility,  ONLY: lorene2hydrobase
+    USE tensor,   ONLY: jxx, jxy, jxz, jyy, jyz, jzz
 
     IMPLICIT NONE
 
@@ -726,8 +723,6 @@ SUBMODULE (bns_fuka) read
     !  FT 09.02.2022
     !
     !****************************************************
-
-    USE constants, ONLY: Msun_geo
 
     IMPLICIT NONE
 
@@ -813,7 +808,7 @@ SUBMODULE (bns_fuka) read
     !***********************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                   ONLY: Msun_geo, lorene2hydrobase
+    USE utility,                     ONLY: lorene2hydrobase
 
     IMPLICIT NONE
 
@@ -845,7 +840,6 @@ SUBMODULE (bns_fuka) read
     !***********************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                   ONLY: Msun_geo
 
     IMPLICIT NONE
 
@@ -878,7 +872,6 @@ SUBMODULE (bns_fuka) read
     !************************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                   ONLY: Msun_geo
 
     IMPLICIT NONE
 

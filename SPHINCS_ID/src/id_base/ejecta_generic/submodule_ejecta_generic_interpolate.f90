@@ -33,7 +33,7 @@ SUBMODULE (ejecta_generic) interpolate
   !****************************************************
 
 
-  USE constants, ONLY: zero, one
+  USE utility,  ONLY: zero, one
 
 
   IMPLICIT NONE
@@ -158,8 +158,9 @@ SUBMODULE (ejecta_generic) interpolate
     !
     !****************************************************
 
-    USE constants, ONLY: MSun, amu, two
-    USE numerics,  ONLY: trilinear_interpolation
+    USE constants,  ONLY: MSun, amu
+    USE utility,    ONLY: two
+    USE numerics,   ONLY: trilinear_interpolation
 
     IMPLICIT NONE
 
@@ -432,9 +433,9 @@ SUBMODULE (ejecta_generic) interpolate
     !
     !***********************************************
 
-    USE constants, ONLY: pi, two
+    USE constants, ONLY: pi
     USE numerics,  ONLY: trilinear_interpolation
-    USE utility,   ONLY: spherical_from_cartesian
+    USE utility,   ONLY: spherical_from_cartesian, two
 
 
     IMPLICIT NONE

@@ -56,35 +56,35 @@ SUBMODULE (diffstar_base) io
     !
     !************************************************
 
-    USE constants,      ONLY: lorene2hydrobase, kg2g, m2cm
+    USE utility,  ONLY: lorene2hydrobase, kg2g, m2cm
 
     IMPLICIT NONE
 
     PRINT *, " * Differentially rotating star (DRS):"
     PRINT *
-    PRINT *, "   Baryon mass of the DRS=", THIS% mass, "Msun"
-    PRINT *, "   Gravitational mass of the DRS=", THIS% mass_grav, "Msun"
+    PRINT *, "   Baryon mass of the DRS=", this% mass, "Msun"
+    PRINT *, "   Gravitational mass of the DRS=", this% mass_grav, "Msun"
     PRINT *
     PRINT *, "   Equatorial (not areal) radius of the DRS at phi=0 = ", &
-                 THIS% r_eq, "Msun_geo"
+                 this% r_eq, "Msun_geo"
     PRINT *, "   Equatorial (not areal) radius of the DRS at phi=pi/2 = ", &
-                 THIS% r_eq_pi2, "Msun_geo"
+                 this% r_eq_pi2, "Msun_geo"
     PRINT *, "   Equatorial (not areal) radius of the DRS at phi=pi = ", &
-                 THIS% r_eq_pi, "Msun_geo"
+                 this% r_eq_pi, "Msun_geo"
     PRINT *, "   Equatorial (not areal) radius of the DRS at phi=3pi/2 = ", &
-                 THIS% r_eq_3pi2, "Msun_geo"
-    PRINT *, "   Polar radius of the DRS= ", THIS% r_pole, "Msun_geo"
+                 this% r_eq_3pi2, "Msun_geo"
+    PRINT *, "   Polar radius of the DRS= ", this% r_pole, "Msun_geo"
     PRINT *, "   Ratio between polar radius at equatiorial radius at phi=0= ", &
-                 THIS% r_ratio, "Msun_geo"
+                 this% r_ratio, "Msun_geo"
     PRINT *
-    PRINT *, "   EOS for the DRS= ", THIS% eos
+    PRINT *, "   EOS for the DRS= ", this% eos
     PRINT *
     PRINT *, "   Central baryon mass density for the DRS= ", &
-                 THIS% rho_center, "Msun/Msun_geo**3= ", &
-                 THIS% rho_center/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+                 this% rho_center, "Msun/Msun_geo**3= ", &
+                 this% rho_center/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
     PRINT *
     PRINT *, "   Ratio T/|W| between the rotaional kinetic energy and ", &
-             "the gravitational binding energy: ", THIS% tsw
+             "the gravitational binding energy: ", this% tsw
     PRINT *, "   For axisymmetric configurations as this one, the ", &
              "threshold for dynamical bar-mode instability is T/|W|~0.25 ", &
              " [Masaru Shibata et al 2000 ApJ 542 453, ", &

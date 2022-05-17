@@ -64,7 +64,8 @@ SUBMODULE (sph_particles) compose
     !
     !************************************************
 
-    USE constants, ONLY: fm2cm, cm2km, km2Msun_geo
+    USE constants,  ONLY: fm2cm, cm2km
+    USE utility,    ONLY: km2Msun_geo
 
     IMPLICIT NONE
 
@@ -88,10 +89,10 @@ SUBMODULE (sph_particles) compose
 
     PRINT *, "** Executing the read_compose_composition subroutine..."
 
-    ALLOCATE( THIS% nb_table( max_length_eos ) )
-    ALLOCATE( THIS% Ye_table( max_length_eos ) )
-    THIS% nb_table= 0.0D0
-    THIS% Ye_table= 0.0D0
+    ALLOCATE( this% nb_table( max_length_eos ) )
+    ALLOCATE( this% Ye_table( max_length_eos ) )
+    this% nb_table= 0.0D0
+    this% Ye_table= 0.0D0
 
 
     IF( PRESENT(namefile) )THEN
@@ -128,10 +129,10 @@ SUBMODULE (sph_particles) compose
                         ! Variables for .thermo.ns file
                         !i_T, i_nb, i_yq, &
                         !p_nb, s_nb, mub_mn, muq_mn, mul_mn, f_nbmn, e_nbmn, &
-                        !i_ns, THIS% Ye_table(itr), h
+                        !i_ns, this% Ye_table(itr), h
                         ! Variables for .beta file
-                        THIS% nb_table(itr), &
-                        THIS% Ye_table(itr)
+                        this% nb_table(itr), &
+                        this% Ye_table(itr)
                         ! Variables for .compo file
                         !i_T, i_nb, i_yq, &
                         !i_phase, n_pairs, &
@@ -152,12 +153,12 @@ SUBMODULE (sph_particles) compose
     ENDDO read_compose_beta
     !PRINT *, "cntr= ", cntr
     ! Reallocate the arrays to delete the empty elements
-    THIS% nb_table= THIS% nb_table( 1:cntr )/(fm2cm**3*cm2km**3*km2Msun_geo**3)
-    THIS% Ye_table= THIS% Ye_table( 1:cntr )
+    this% nb_table= this% nb_table( 1:cntr )/(fm2cm**3*cm2km**3*km2Msun_geo**3)
+    this% Ye_table= this% Ye_table( 1:cntr )
     !PRINT *, i_T, i_nb, i_yq, i_phase, n_pairs, i_e
-    !PRINT *, "SIZE(n_b)= ", SIZE(THIS% n_b), "SIZE(Y_e)= ", SIZE(THIS% Y_e)
-    !PRINT *, "n_b(1)= ", THIS% n_b(1), "Y_e(1)= ", THIS% Y_e(1)
-    !PRINT *, "n_b(cntr)= ", THIS% n_b(cntr), "Y_e(cntr)= ", THIS% Y_e(cntr)
+    !PRINT *, "SIZE(n_b)= ", SIZE(this% n_b), "SIZE(Y_e)= ", SIZE(this% Y_e)
+    !PRINT *, "n_b(1)= ", this% n_b(1), "Y_e(1)= ", this% Y_e(1)
+    !PRINT *, "n_b(cntr)= ", this% n_b(cntr), "Y_e(cntr)= ", this% Y_e(cntr)
     !STOP
     CLOSE( unit_compose )
 
@@ -186,11 +187,11 @@ SUBMODULE (sph_particles) compose
 
     DOUBLE PRECISION:: min_nb_table, max_nb_table
 
-    d= SIZE(THIS% nb_table)
-    min_nb_table= MINVAL( THIS% nb_table, 1 )
-    max_nb_table= MAXVAL( THIS% nb_table, 1 )
+    d= SIZE(this% nb_table)
+    min_nb_table= MINVAL( this% nb_table, 1 )
+    max_nb_table= MAXVAL( this% nb_table, 1 )
 
-    particle_loop: DO itr= 1, THIS% npart, 1
+    particle_loop: DO itr= 1, this% npart, 1
 
       ! There may be particles with initially negative hydro fields,
       ! close to the surface of the stars. The present
@@ -205,18 +206,18 @@ SUBMODULE (sph_particles) compose
       ! The problem above is solved: particles are not placed if the hydro
       ! is negative or zero.
 
-      !IF( THIS% nlrf(itr) == 0.0D0 )THEN
-        !THIS% Ye(itr)= 0.0D0
+      !IF( this% nlrf(itr) == 0.0D0 )THEN
+        !this% Ye(itr)= 0.0D0
         !CYCLE
       !ELSE
-      IF( THIS% nlrf(itr) < min_nb_table )THEN
-        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
+      IF( this% nlrf(itr) < min_nb_table )THEN
+        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", this% nlrf(itr), &
                  "is lower than the minimum value in the table =", min_nb_table
         PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
                  "If yes, please select a table with a wider range."
         STOP
-      ELSEIF( THIS% nlrf(itr) > max_nb_table )THEN
-        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", THIS% nlrf(itr), &
+      ELSEIF( this% nlrf(itr) > max_nb_table )THEN
+        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", this% nlrf(itr), &
                  "is larger than the maximum value in the table =", max_nb_table
         PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
                  "If yes, please select a table with a wider range."
@@ -225,20 +226,20 @@ SUBMODULE (sph_particles) compose
 
       Ye_linear_interpolation_loop: DO itr2= 1, d - 1, 1
 
-        IF( THIS% nb_table(itr2) < THIS% nlrf(itr) .AND. &
-            THIS% nlrf(itr) < THIS% nb_table(itr2 + 1) )THEN
+        IF( this% nb_table(itr2) < this% nlrf(itr) .AND. &
+            this% nlrf(itr) < this% nb_table(itr2 + 1) )THEN
 
-          THIS% Ye(itr)= THIS% Ye_table(itr2) &
-                         + (THIS% Ye_table(itr2 + 1) - THIS% Ye_table(itr2))/ &
-                         (THIS% nb_table(itr2 + 1) - THIS% nb_table(itr2)) &
-                         *(THIS% nlrf(itr) - THIS% nb_table(itr2))
+          this% Ye(itr)= this% Ye_table(itr2) &
+                         + (this% Ye_table(itr2 + 1) - this% Ye_table(itr2))/ &
+                         (this% nb_table(itr2 + 1) - this% nb_table(itr2)) &
+                         *(this% nlrf(itr) - this% nb_table(itr2))
           EXIT
 
         ENDIF
 
       ENDDO Ye_linear_interpolation_loop
 
-      !PRINT *, "Ye(", itr, ")=", THIS% Ye(itr)
+      !PRINT *, "Ye(", itr, ")=", this% Ye(itr)
       !PRINT *
 
     ENDDO particle_loop

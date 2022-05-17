@@ -57,10 +57,11 @@ SUBMODULE (id_base) mass_profile
     !
     !************************************************
 
-    USE constants, ONLY: pi, zero, two, three, four
+    USE constants, ONLY: pi
+    USE utility,   ONLY: zero, two, three, four
     USE NR,        ONLY: indexx
     USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
-    USe matrix,    ONLY: determinant_3x3_sym_matrix
+    USe utility,   ONLY: determinant_sym3x3
 
     IMPLICIT NONE
 
@@ -76,7 +77,7 @@ SUBMODULE (id_base) mass_profile
     mass_profile( 3, 0 )= four/three*pi*dr**three*central_density
 
     !$OMP PARALLEL DO DEFAULT(NONE) &
-    !$OMP             SHARED(dr,dphi,dth,center,radius,mass_profile,THIS) &
+    !$OMP             SHARED(dr,dphi,dth,center,radius,mass_profile,this) &
     !$OMP             PRIVATE(r,th,phi,rad_coord,long,colat,sq_g,gamma_euler, &
     !$OMP                     g,baryon_density,mass_element,mass)
     radius_loop: DO r= 1, NINT(radius/dr), 1
@@ -95,7 +96,7 @@ SUBMODULE (id_base) mass_profile
           ! The definition of the baryon mass for the LORENE ID is in eq.(69)
           ! of Gourgoulhon et al., PRD 63 064029 (2001)
 
-          CALL THIS% read_id_mass_b( &
+          CALL this% read_id_mass_b( &
                    center + (rad_coord + dr)*SIN(colat)*COS(long), &
                    (rad_coord + dr)*SIN(colat)*SIN(long), &
                    (rad_coord + dr)*COS(colat), &
@@ -145,7 +146,7 @@ SUBMODULE (id_base) mass_profile
   !        !                      + n_y*u_euler_y_l + n_z*u_euler_z_l )
 
           ! Compute square root of the determinant of the spatial metric
-          CALL determinant_3x3_sym_matrix( g, sq_g )
+          CALL determinant_sym3x3( g, sq_g )
           sq_g= SQRT(sq_g)
 
           mass_element= (rad_coord**two)*SIN(colat)*dr*dth*dphi &

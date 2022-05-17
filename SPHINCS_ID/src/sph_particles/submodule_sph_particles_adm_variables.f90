@@ -53,8 +53,9 @@ SUBMODULE (sph_particles) adm_variables
     !************************************************
 
     USE tensor,               ONLY: jx, jy, jz
-    USE constants,            ONLY: zero, one, two, amu, MSun
-    USE utility,              ONLY: spatial_vector_norm_sym3x3
+    USE constants,            ONLY: amu, MSun
+    USE utility,              ONLY: spatial_vector_norm_sym3x3, &
+                                    zero, one, two
 
     IMPLICIT NONE
 
@@ -108,9 +109,9 @@ SUBMODULE (sph_particles) adm_variables
     !************************************************
 
     USE tensor,               ONLY: jx, jy, jz, n_sym4x4, lower_index_4vector
-    USE constants,            ONLY: zero, one, two, amu, MSun
+    USE constants,            ONLY: amu, MSun
     USE utility,              ONLY: compute_g4, determinant_sym4x4, &
-                                    spatial_vector_norm_sym3x3
+                                    spatial_vector_norm_sym3x3, zero, one, two
 
     IMPLICIT NONE
 

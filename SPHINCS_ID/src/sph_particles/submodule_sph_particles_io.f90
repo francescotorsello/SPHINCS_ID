@@ -34,7 +34,8 @@ SUBMODULE (sph_particles) io
   !***************************************************
 
 
-  USE constants, ONLY: amu, c_light2, km2m, m2cm, Msun_geo
+  USE constants,  ONLY: amu, c_light2
+  USE utility,    ONLY: km2m, m2cm, Msun_geo, one
 
 
   IMPLICIT NONE
@@ -220,7 +221,6 @@ SUBMODULE (sph_particles) io
     !USE metric_on_particles, ONLY: allocate_metric_on_particles, &
     !                               deallocate_metric_on_particles
     USE input_output,        ONLY: set_units, read_SPHINCS_dump
-    USE constants,           ONLY: one
     USE alive_flag,          ONLY: alive
 
     IMPLICIT NONE

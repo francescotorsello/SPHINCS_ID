@@ -56,14 +56,12 @@ SUBMODULE (sph_particles) recovery
 
     USE recovery,             ONLY: phys_2_cons, cons_2_phys
     USE tensor,               ONLY: jx, jy, jz, n_sym4x4
-    USE constants,            ONLY: zero, one
     USE deactivate_particles, ONLY: nlrf_fb, u_fb, pr_fb, vel_u_fb, theta_fb, &
                                     cs_fb
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
                                     g4_ll
-    USE utility,              ONLY: compute_g4, determinant_sym4x4
-    !USE tmp,                  ONLY: fill_arrays
+    USE utility,              ONLY: compute_g4, determinant_sym4x4, zero, one
 
     IMPLICIT NONE
 

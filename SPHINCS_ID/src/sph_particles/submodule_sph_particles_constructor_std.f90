@@ -80,18 +80,17 @@ SUBMODULE (sph_particles) constructor_std
     !**************************************************
 
     !USE NaNChecker,    ONLY: Check_Array_for_NAN
-    USE constants,      ONLY: amu, pi, zero, half, third, one, two, ten, &
-                              Msun_geo
-    !USE NR,             ONLY: indexx
-    USE kernel_table,   ONLY: ktable
-    USE input_output,   ONLY: read_options
-    USE units,          ONLY: set_units
-    USE options,        ONLY: ikernel, ndes, eos_str, eos_type
-    USE alive_flag,     ONLY: alive
-    USE pwp_EOS,        ONLY: shorten_eos_name
-    USE analyze,        ONLY: COM
-    USE utility,        ONLY: spherical_from_cartesian, &
-                              spatial_vector_norm_sym3x3
+    USE constants,          ONLY: amu, pi, half, third
+    USE utility,            ONLY: zero, one, two, ten, Msun_geo
+    !USE NR,                 ONLY: indexx
+    USE kernel_table,       ONLY: ktable
+    USE input_output,       ONLY: read_options
+    USE units,              ONLY: set_units
+    USE options,            ONLY: ikernel, ndes, eos_str, eos_type
+    USE alive_flag,         ONLY: alive
+    USE analyze,            ONLY: COM
+    USE utility,            ONLY: spherical_from_cartesian, &
+                                  spatial_vector_norm_sym3x3
 
     IMPLICIT NONE
 
@@ -446,7 +445,7 @@ SUBMODULE (sph_particles) constructor_std
                    "one specified in parameter file SPHINCS_fm_input.dat."
           PRINT *
           PRINT *, " * EOS from the ID: ", &
-                   shorten_eos_name(parts% all_eos(i_matter)% eos_name)
+                   parts% all_eos(i_matter)% eos_name
           PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
                    eos_type
           PRINT *, "Stopping..."
@@ -454,17 +453,16 @@ SUBMODULE (sph_particles) constructor_std
           STOP
         ENDIF
 
-        IF( (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .LT. eos_str)&
+        IF( (parts% all_eos(i_matter)% eos_name .LT. eos_str)&
             .OR. &
-            (shorten_eos_name(parts% all_eos(i_matter)% eos_name) .GT. eos_str)&
+            (parts% all_eos(i_matter)% eos_name .GT. eos_str)&
         )THEN
 
           PRINT *, "** ERROR! On matter object ", i_matter, &
                    ", the EOS taken from the ID is not the same as the ",&
                    "one specified in parameter file SPHINCS_fm_input.dat."
           PRINT *
-          PRINT *, " * EOS from the ID: ", &
-                   shorten_eos_name(parts% all_eos(i_matter)% eos_name)
+          PRINT *, " * EOS from the ID: ", parts% all_eos(i_matter)% eos_name
           PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
                    eos_str
           PRINT *, "Stopping..."
@@ -1693,7 +1691,7 @@ SUBMODULE (sph_particles) constructor_std
                           baryon_density, &
                           gamma_euler )
 
-      USE matrix, ONLY: determinant_3x3_sym_matrix
+      USE utility,  ONLY: determinant_sym3x3
 
       IMPLICIT NONE
 
@@ -1711,7 +1709,7 @@ SUBMODULE (sph_particles) constructor_std
                                baryon_density, &
                                gamma_euler )
 
-      CALL determinant_3x3_sym_matrix(g,sqdetg)
+      CALL determinant_sym3x3(g,sqdetg)
       sqdetg= SQRT(sqdetg)
 
     END SUBROUTINE import_id
@@ -1782,33 +1780,33 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION:: nstar_eul_id(npart)
       DOUBLE PRECISION:: nu_eul(npart)
 
-INTEGER:: a, itr2
+      INTEGER:: a, itr2
 
-PRINT *, "1"
+      PRINT *, "1"
 
-!$OMP PARALLEL DO DEFAULT( NONE ) &
-!$OMP             SHARED( npart, pos ) &
-!$OMP             PRIVATE( a, itr2 )
-find_nan_in_pos: DO a= 1, npart, 1
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart, pos ) &
+      !$OMP             PRIVATE( a, itr2 )
+      find_nan_in_pos: DO a= 1, npart, 1
 
-  DO itr2= 1, 3, 1
-    IF( .NOT.is_finite_number(pos(itr2,a)) )THEN
-      PRINT *, "** ERROR! pos(", itr2, a, ")= ", pos(itr2,a), &
-               " is not a finite number!"
-      PRINT *, " * Stopping.."
-      PRINT *
-      STOP
-    ENDIF
-  ENDDO
+        DO itr2= 1, 3, 1
+          IF( .NOT.is_finite_number(pos(itr2,a)) )THEN
+            PRINT *, "** ERROR! pos(", itr2, a, ")= ", pos(itr2,a), &
+                     " is not a finite number!"
+            PRINT *, " * Stopping.."
+            PRINT *
+            STOP
+          ENDIF
+        ENDDO
 
-ENDDO find_nan_in_pos
-!$OMP END PARALLEL DO
+      ENDDO find_nan_in_pos
+      !$OMP END PARALLEL DO
 
       CALL correct_center_of_mass( npart, pos, nu, import_density, &
                                    validate_position, com_system, &
                                    verbose= .TRUE. )
 
-PRINT *, "4"
+      PRINT *, "4"
 
     END SUBROUTINE correct_center_of_mass_of_system
 
@@ -1871,10 +1869,9 @@ PRINT *, "4"
       !
       !**************************************************************
 
-      USE constants,                    ONLY: zero, one, two
-      USE tensor,                       ONLY: jx, jy, jz, n_sym4x4
-      USE utility,                      ONLY: compute_g4, determinant_sym4x4, &
-                                              spacetime_vector_norm_sym4x4
+      USE tensor,   ONLY: jx, jy, jz, n_sym4x4
+      USE utility,  ONLY: compute_g4, determinant_sym4x4, &
+                          spacetime_vector_norm_sym4x4, zero, one, two
 
       IMPLICIT NONE
 
@@ -1991,10 +1988,9 @@ PRINT *, "4"
       !
       !**************************************************************
 
-      USE constants,                    ONLY: zero, one, two
-      USE tensor,                       ONLY: jx, jy, jz, n_sym4x4
-      USE utility,                      ONLY: compute_g4, determinant_sym3x3, &
-                                              spatial_vector_norm_sym3x3
+      USE tensor,   ONLY: jx, jy, jz, n_sym4x4
+      USE utility,  ONLY: compute_g4, determinant_sym3x3, &
+                          spatial_vector_norm_sym3x3, zero, one, two
 
       IMPLICIT NONE
 

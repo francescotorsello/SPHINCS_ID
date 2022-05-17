@@ -62,7 +62,7 @@ PROGRAM sphincs_id
   !USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
   !                            k_lorene2hydrobase_piecewisepolytrope, &
   !                            MSun_geo, kg2g, m2cm, m0c2
-  USE constants,        ONLY: amu, Msun_geo, km2m, m2cm
+  !USE constants,        ONLY: amu, Msun_geo, km2m, m2cm
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
                               itr4, &

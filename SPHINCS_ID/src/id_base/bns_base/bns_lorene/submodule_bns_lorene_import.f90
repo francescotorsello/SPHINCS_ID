@@ -41,7 +41,7 @@ SUBMODULE (bns_lorene) import
   !****************************************************
 
 
-  USE constants,  ONLY: zero, one, two
+  USE utility,  ONLY: zero, one, two, Msun_geo
 
 
   IMPLICIT NONE
@@ -64,8 +64,6 @@ SUBMODULE (bns_lorene) import
     !  FT 5.10.2020
     !
     !**************************************************
-
-    USE constants, ONLY: Msun_geo
 
     IMPLICIT NONE
 
@@ -205,8 +203,6 @@ SUBMODULE (bns_lorene) import
     !
     !**************************************************
 
-    USE constants, ONLY: Msun_geo
-
     IMPLICIT NONE
 
     IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
@@ -322,8 +318,6 @@ SUBMODULE (bns_lorene) import
     !  FT 22.11.2020
     !
     !*******************************************************
-
-    USE constants, ONLY: Msun_geo
 
     USE tensor,    ONLY: jxx, jxy, jxz, &
                          jyy, jyz, jzz, jx, jy, jz, n_sym4x4
@@ -495,7 +489,6 @@ SUBMODULE (bns_lorene) import
     !
     !*******************************************************
 
-    USE constants,  ONLY: Msun_geo
     USE tensor,     ONLY: jx, jy, jz
 
     IMPLICIT NONE
@@ -565,7 +558,8 @@ SUBMODULE (bns_lorene) import
     !
     !****************************************************
 
-    USE constants, ONLY: Msun_geo, km2m, g2kg, amu
+    USE constants, ONLY: amu
+    USE utility,   ONLY: km2m, g2kg
 
     IMPLICIT NONE
 
@@ -696,8 +690,8 @@ SUBMODULE (bns_lorene) import
     !
     !****************************************************
 
-    USE constants, ONLY: Msun_geo, lorene2hydrobase
-    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
+    USE utility,  ONLY: lorene2hydrobase
+    USE tensor,   ONLY: jxx, jxy, jxz, jyy, jyz, jzz
 
     IMPLICIT NONE
 
@@ -737,8 +731,6 @@ SUBMODULE (bns_lorene) import
     !  FT 25.11.2020
     !
     !****************************************************
-
-    USE constants, ONLY: Msun_geo
 
     IMPLICIT NONE
 
@@ -824,7 +816,7 @@ SUBMODULE (bns_lorene) import
     !***********************************************
 
     USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                  ONLY: Msun_geo, lorene2hydrobase
+    USE utility,                    ONLY: lorene2hydrobase
 
     IMPLICIT NONE
 
@@ -856,7 +848,6 @@ SUBMODULE (bns_lorene) import
     !***********************************************
 
     USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                  ONLY: Msun_geo
 
     IMPLICIT NONE
 
@@ -888,7 +879,6 @@ SUBMODULE (bns_lorene) import
     !***********************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                   ONLY: Msun_geo
 
     IMPLICIT NONE
 
@@ -921,7 +911,6 @@ SUBMODULE (bns_lorene) import
     !************************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE constants,                   ONLY: Msun_geo
 
     IMPLICIT NONE
 

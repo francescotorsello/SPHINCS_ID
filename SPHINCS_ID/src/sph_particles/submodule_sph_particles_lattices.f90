@@ -51,7 +51,8 @@ SUBMODULE (sph_particles) lattices
     !
     !*********************************************************
 
-    USE constants,    ONLY: pi, third, one
+    USE constants,  ONLY: pi, third
+    USE utility,    ONLY: one
 
     IMPLICIT NONE
 

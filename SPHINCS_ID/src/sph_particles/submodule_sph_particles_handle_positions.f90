@@ -49,7 +49,7 @@ SUBMODULE (sph_particles) handle_positions
     !
     !*************************************************************
 
-    USE constants,  ONLY: zero
+    USE utility,  ONLY: zero
 
     IMPLICIT NONE
 
@@ -542,8 +542,7 @@ SUBMODULE (sph_particles) handle_positions
     !***********************************************************
 
     USE analyze,    ONLY: COM
-    USE constants,  ONLY: zero
-    USE utility,    ONLY: is_finite_number
+    USE utility,    ONLY: is_finite_number, zero
 
     IMPLICIT NONE
 

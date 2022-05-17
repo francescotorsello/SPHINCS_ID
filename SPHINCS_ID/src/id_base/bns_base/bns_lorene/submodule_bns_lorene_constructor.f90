@@ -75,7 +75,7 @@ SUBMODULE (bns_lorene) constructor
     !
     !****************************************************
 
-    USE constants, ONLY: ten, Msun_geo
+    USE utility,  ONLY: ten, Msun_geo
 
     IMPLICIT NONE
 

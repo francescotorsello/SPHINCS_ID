@@ -52,11 +52,9 @@ SUBMODULE (sph_particles) constructor_bin
     !**************************************************
 
 
-    USE OMP_LIB
-    USE constants,      ONLY: zero, one
     USE tensor,         ONLY: n_sym4x4
     USE utility,        ONLY: compute_g4, determinant_sym4x4, &
-                              spacetime_vector_norm_sym4x4
+                              spacetime_vector_norm_sym4x4,zero, one
     USE input_output,   ONLY: read_options
     USE options,        ONLY: eos_str
     USE units,          ONLY: set_units

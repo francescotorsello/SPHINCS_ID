@@ -32,7 +32,7 @@
 import sys
 import os
 import glob
-import socket # gethostname
+import socket
 
 ################################################################################
 # DEFAULT OPTIONS
@@ -80,7 +80,16 @@ default_verbose = 'FALSE'
 #             file, so that the necessary modules are loaded to the user's local
 #             environment on Sunrise:
 #   module load -openmpi3 +openmpi4 +gsl +fftw +scalapack +libgfortran +pgplot
-default_host = 'r3x'
+current_host= socket.gethostname()
+
+if current_host == 'r30' or current_host == 'r31' or current_host == 'r32':
+  default_host = 'r3x'
+
+elif current_host == 'sol-login.fysik.su.se':
+  default_host = 'Sunrise'
+
+else:
+  default_host = 'r3x'
 
 # Version of SPHINCS_ID
 version = '_v1.5'
@@ -397,13 +406,14 @@ env['F90PATH'] = [
   '.', '../../BSSN', '../SPHINCS_fix_metric', "../SPHINCS_BSSN"
 ]
 
-mesh_dir         = ['../../BSSN/']
-sphincs_bssn_dir = ['../SPHINCS_BSSN/']
-sphincs_fm_dir   = ['../SPHINCS_fix_metric/']
+#mesh_dir         = ['../../BSSN/']
+#sphincs_bssn_dir = ['../SPHINCS_BSSN/']
+#sphincs_fm_dir   = ['../SPHINCS_fix_metric/']
 
-#sphincs_bssn_dir = ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_BSSN/']
-#sphincs_fm_dir   = \
-#  ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/']
+mesh_dir         = ['../../../SPHINCS_SP/BSSN/']
+sphincs_bssn_dir = ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_BSSN/']
+sphincs_fm_dir   = \
+  ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/']
 
 sources_mesh = [
   'module_mesh_refinement.f90',

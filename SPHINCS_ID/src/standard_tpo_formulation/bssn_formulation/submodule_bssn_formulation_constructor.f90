@@ -59,7 +59,7 @@ SUBMODULE (bssn_formulation) constructor
     USE McLachlan_refine, ONLY: initialize_BSSN, deallocate_BSSN
     USE mesh_refinement,  ONLY: levels, allocate_grid_function
     USE Extract_Mass,     ONLY: radius2
-    USE constants,        ONLY: zero, one
+    USE utility,          ONLY: zero, one
 
     IMPLICIT NONE
 

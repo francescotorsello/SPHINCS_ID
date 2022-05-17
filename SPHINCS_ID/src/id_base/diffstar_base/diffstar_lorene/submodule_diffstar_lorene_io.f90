@@ -55,8 +55,8 @@ SUBMODULE (diffstar_lorene) io
     !
     !****************************************************
 
-    USE constants, ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                         lorene2hydrobase, zero
+    USE utility,  ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
+                        lorene2hydrobase, zero
 
     IMPLICIT NONE
 

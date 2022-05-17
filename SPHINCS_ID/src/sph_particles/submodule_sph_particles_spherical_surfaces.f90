@@ -57,11 +57,11 @@ SUBMODULE (sph_particles) spherical_surfaces
     !
     !**********************************************
 
-    !$ USE OMP_LIB
-    USE constants, ONLY: pi, half, zero, one, two, three, ten
-    USE matrix,    ONLY: determinant_4x4_matrix
-    USE NR,        ONLY: indexx
-    USE APM,       ONLY: assign_h
+    USE constants,  ONLY: pi, half
+    USE utility,    ONLY: zero, one, two, three, ten
+    USE matrix,     ONLY: determinant_4x4_matrix
+    USE NR,         ONLY: indexx
+    USE APM,        ONLY: assign_h
 
     IMPLICIT NONE
 
@@ -1633,8 +1633,8 @@ SUBMODULE (sph_particles) spherical_surfaces
     !
     !************************************************
 
-    USE constants, ONLY: zero, third
-    USE utility,   ONLY: is_finite_number
+    USE constants, ONLY: third
+    USE utility,   ONLY: zero, is_finite_number
 
     IMPLICIT NONE
 
@@ -1787,7 +1787,8 @@ SUBMODULE (sph_particles) spherical_surfaces
     !
     !************************************************
 
-    USE constants,  ONLY: zero, third, two, pi, ten
+    USE constants,  ONLY: third, pi
+    USE utility,    ONLY: zero, two, ten
 
     IMPLICIT NONE
 
@@ -1883,7 +1884,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     !
     !*************************************************
 
-    USE constants,  ONLY: zero
+    USE utility,  ONLY: zero
 
     IMPLICIT NONE
 
@@ -2061,7 +2062,8 @@ SUBMODULE (sph_particles) spherical_surfaces
     !
     !*******************************************
 
-    USE constants,  ONLY: pi, two
+    USE constants,  ONLY: pi
+    USE utility,    ONLY: two
 
     IMPLICIT NONE
 
@@ -2119,7 +2121,8 @@ SUBMODULE (sph_particles) spherical_surfaces
     !
     !**************************************************
 
-    USE constants, ONLY: pi, one, two, four
+    USE constants,  ONLY: pi
+    USE utility,    ONLY: one, two, four
 
     IMPLICIT NONE
 

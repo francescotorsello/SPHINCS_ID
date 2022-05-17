@@ -110,9 +110,9 @@ SUBMODULE (bns_lorene) io
     !
     !****************************************************
 
-    USE constants, ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                         lorene2hydrobase, c_light, cm2km, &
-                         zero, one, two, four, five, ten
+    USE constants, ONLY: c_light, cm2km
+    USE utility,   ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
+                         lorene2hydrobase, zero, one, two, four, five, ten
 
     IMPLICIT NONE
 

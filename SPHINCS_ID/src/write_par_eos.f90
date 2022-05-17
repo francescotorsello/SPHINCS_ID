@@ -23,13 +23,13 @@
 
 PROGRAM write_par_eos
 
-  USE constants, ONLY: lorene2hydrobase, kg2g, m2cm, &
-                       k_lorene2hydrobase_piecewisepolytrope, one, &
-                       k_lorene2hydrobase
-  USE pwp_EOS,   ONLY: Gamma0, K0, select_EOS_parameters, gen_pwp_eos, &
-                       get_rho_0, get_rho_1, get_rho_2, &
-                       get_Gamma1, get_Gamma2, get_Gamma3, &
-                       get_K1, get_K2, get_K3
+  USE utility,  ONLY: lorene2hydrobase, kg2g, m2cm, &
+                      k_lorene2hydrobase_piecewisepolytrope, one, &
+                      k_lorene2hydrobase
+  USE pwp_EOS,  ONLY: Gamma0, K0, select_EOS_parameters, gen_pwp_eos, &
+                      get_rho_0, get_rho_1, get_rho_2, &
+                      get_Gamma1, get_Gamma2, get_Gamma3, &
+                      get_K1, get_K2, get_K3
 
   IMPLICIT NONE
 

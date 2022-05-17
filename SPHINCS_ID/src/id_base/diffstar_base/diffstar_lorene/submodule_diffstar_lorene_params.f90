@@ -58,8 +58,18 @@ SUBMODULE (diffstar_lorene) params
     !***************************************************
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR, C_NULL_CHAR
-    USE constants, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         k_lorene2hydrobase_piecewisepolytrope, zero, two
+    USE utility, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
+                       k_lorene2hydrobase_piecewisepolytrope, zero, two
+
+#if flavour == 1
+
+  USE sphincs_id_full,    ONLY: shorten_eos_name
+
+#elif flavour == 2
+
+  USE sphincs_id_lorene,  ONLY: shorten_eos_name
+
+#endif
 
     IMPLICIT NONE
 
@@ -197,6 +207,8 @@ SUBMODULE (diffstar_lorene) params
        STOP
     ENDIF
     this% eos= TRANSFER( eos_tmp_c(1:nchars), this% eos )
+
+    this% eos= shorten_eos_name(this% eos)
 
     CALL print_diffstar_params( this )
 

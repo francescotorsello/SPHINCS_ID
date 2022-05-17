@@ -30,11 +30,34 @@ MODULE utility
   !***********************************************************************
 
 
-  USE matrix, ONLY: determinant_4x4_matrix
+  USE matrix,     ONLY: determinant_4x4_matrix
+  USE constants,  ONLY: G_Msun, c_light2, MSun
 
 
   IMPLICIT NONE
 
+  ! This should go in MODULE constants
+  DOUBLE PRECISION, PARAMETER :: zero            = 0.D0
+  DOUBLE PRECISION, PARAMETER :: one             = 1.D0
+  DOUBLE PRECISION, PARAMETER :: two             = 2.D0
+  DOUBLE PRECISION, PARAMETER :: three           = 3.D0
+  DOUBLE PRECISION, PARAMETER :: four            = 4.D0
+  DOUBLE PRECISION, PARAMETER :: five            = 5.D0
+  DOUBLE PRECISION, PARAMETER :: ten             = 10.D0
+  DOUBLE PRECISION, PARAMETER :: golden_ratio    = 1.618033988749894D0
+  DOUBLE PRECISION, PARAMETER :: km2m            = 1.D+3
+  DOUBLE PRECISION, PARAMETER :: m2cm            = 1D+2
+  DOUBLE PRECISION, PARAMETER :: g2kg            = 1D-3
+  DOUBLE PRECISION, PARAMETER :: kg2g            = 1D+3
+  DOUBLE PRECISION, PARAMETER :: MSun_geo        = G_Msun/c_light2/1.0D5! in km;
+  !# Msun_geo = 1.47662503825040 km
+  !  see https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
+  DOUBLE PRECISION, PARAMETER :: km2Msun_geo     = 1.0D0/MSun_geo
+  DOUBLE PRECISION, PARAMETER :: lorene2hydrobase= &
+                                              (MSun_geo*km2m)**3/(MSun*g2kg)
+  !# lorene2hydrobase= (1477m)^3 / (2*10^30kg) ! 1.6110591665D-21
+  !  new value 1.6186541582311746851140226630074e-21, different by 0.5%
+  !  lorene2hydrobase is the conversion factor for the baryon mass density
 
   INTEGER:: itr
   !! Iterator for loops
@@ -308,7 +331,6 @@ MODULE utility
     !
     !***********************************************
 
-    USE constants,  ONLY: two
     USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
                           jyy, jyz, jzz, jx, jy, jz
@@ -356,7 +378,6 @@ MODULE utility
     !
     !***********************************************
 
-    USE constants,  ONLY: two
     USE matrix,     ONLY: invert_3x3_matrix
     USE tensor,     ONLY: itt, itx, ity, itz, ixx, ixy, &
                           ixz, iyy, iyz, izz, jxx, jxy, jxz, &
@@ -614,7 +635,6 @@ MODULE utility
 
     USE tensor,    ONLY: itt, itx, ity, itz, ixx, ixy, ixz, iyy, iyz, izz, &
                          it, ix, iy, iz, n_sym4x4
-    USE constants, ONLY: two
 
     IMPLICIT NONE
 
@@ -653,7 +673,6 @@ MODULE utility
     !****************************************************************
 
     USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz, jx, jy, jz, n_sym3x3
-    USE constants, ONLY: two
 
     IMPLICIT NONE
 
@@ -750,7 +769,7 @@ MODULE utility
     !
     !****************************************************************
 
-    USE constants, ONLY: zero, pi
+    USE constants, ONLY: pi
 
     IMPLICIT NONE
 
@@ -800,6 +819,55 @@ MODULE utility
     theta= ACOS( zd/r )
 
   END SUBROUTINE spherical_from_cartesian
+
+
+  FUNCTION k_lorene2hydrobase( gamma )
+
+    DOUBLE PRECISION :: gamma
+    DOUBLE PRECISION :: k_lorene2hydrobase
+
+    ! LORENE's EOS is in terms on number density n = rho/m_nucleon:
+    ! P = K n^Gamma
+    ! to convert to SI units:
+    ! K_SI(n) = K_LORENE rho_nuc c^2 / n_nuc^gamma
+    ! Converting this to be in terms of the mass density rho = n m_nucleon gets
+    ! changes n_nuc to rho_nuc:
+    ! K_SI(rho) = K_LORENE c^2 / rho_nuc^(gamma-1)
+    ! In SI units P has units of M / (L T^2) and rho has units of M/L^3 thus
+    ! K_SI has units of (L^3/M)^Gamma M/(L T^2).
+    ! In Cactus units P and rho have the same units thus K_Cactus is unitless.
+    ! Conversion between K_SI and K_Cactus thus amounts to dividing out the
+    ! units of the SI quantity.
+
+    !k_lorene2hydrobase= ((c_light*cm2m)**6/ &
+    !              ( (G_grav*(cm2m**3)/(g2kg))**3*(MSun*g2kg)**2*(1.66E+17) )) &
+    !              **( gamma - 1.0D0 )
+
+    ! Our testbed cases are gamma= 2.75, k= 30000; and gamma=2, k=100
+    ! in SPHINCS units
+
+    k_lorene2hydrobase= &
+                        ( (MSun*g2kg)/((MSun_geo*km2m)**3*(1.66D+17)) ) &
+                        **( gamma - 1.0D0 )
+
+
+  END FUNCTION
+
+
+  FUNCTION k_lorene2hydrobase_piecewisepolytrope( gamma0 )
+
+    DOUBLE PRECISION :: gamma0
+    DOUBLE PRECISION :: k_lorene2hydrobase_piecewisepolytrope
+
+    ! LORENE has K0 in units of (g cm^{-3})^{1-gamma0} for the piecewise
+    ! polytropes. This factor writes it in SPHINCS units
+
+    k_lorene2hydrobase_piecewisepolytrope= &
+                        ( MSun/((MSun_geo*km2m*m2cm)**3) ) &
+                        **( gamma0 - 1.0D0 )
+
+
+  END FUNCTION
 
 
 END MODULE utility

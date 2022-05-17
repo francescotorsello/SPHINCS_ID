@@ -39,7 +39,8 @@ SUBMODULE (sph_particles) sph_variables
   !****************************************************
 
 
-  USE constants,  ONLY: zero, half, one, two, three, c_light2
+  USE constants,  ONLY: half, c_light2
+  USE utility,    ONLY: zero, one, two, three
   USE options,    ONLY: eos_str
 
 
@@ -66,9 +67,10 @@ SUBMODULE (sph_particles) sph_variables
     !
     !************************************************
 
-    USE constants,           ONLY: km2m, m2cm, amu, MSun_geo, &
-                                   third, Msun, k_lorene2hydrobase, &
-                                   Msun, zero, one
+    USE constants,           ONLY: amu, third, Msun
+    USE utility,             ONLY: MSun_geo, k_lorene2hydrobase, zero, one, &
+                                   compute_g4, determinant_sym4x4, &
+                                   spacetime_vector_norm_sym4x4, km2m, m2cm
     USE units,               ONLY: m0c2_cu, set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -115,8 +117,7 @@ SUBMODULE (sph_particles) sph_variables
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
-                                   gen_pwp_eos, gen_pwp_cold_eos, &
-                                   get_u_pwp, shorten_eos_name, Gamma_th_1
+                                   gen_pwp_eos, gen_pwp_cold_eos, Gamma_th_1
     USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
@@ -125,8 +126,6 @@ SUBMODULE (sph_particles) sph_variables
     USE tensor,              ONLY: n_sym4x4, &
                                    itt, itx, ity, itz, &
                                    ixx, ixy, ixz, iyy, iyz, izz
-    USE utility,             ONLY: compute_g4, determinant_sym4x4, &
-                                   spacetime_vector_norm_sym4x4
 
     IMPLICIT NONE
 
@@ -1179,8 +1178,7 @@ SUBMODULE (sph_particles) sph_variables
           PRINT *, " * Assuming a cold system: no thermal component considered."
           PRINT *
 
-          CALL select_EOS_parameters( &
-                        shorten_eos_name(this% all_eos(i_matter)% eos_name) )
+          CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
 
           DO a= npart_in, npart_fin, 1
 
@@ -1203,8 +1201,7 @@ SUBMODULE (sph_particles) sph_variables
 
           u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
 
-          CALL select_EOS_parameters( &
-                        shorten_eos_name(this% all_eos(i_matter)% eos_name) )
+          CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
 
           DO a= npart_in, npart_fin, 1
 
@@ -1220,8 +1217,7 @@ SUBMODULE (sph_particles) sph_variables
 
         ENDIF
 
-     !   CALL select_EOS_parameters( &
-     !           shorten_eos_name(this% all_eos(i_matter)% eos_name) )
+     !   CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
      !
      !   !CALL gen_pwp_eos_all( this% npart_i(i_matter), &
      !   !                      this% nlrf_int(npart_in:npart_fin)*m0c2_cu, &

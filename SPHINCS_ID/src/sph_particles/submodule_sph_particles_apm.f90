@@ -33,7 +33,8 @@ SUBMODULE (sph_particles) apm
   !
   !***********************************
 
-  USE constants,  ONLY: zero, quarter, one, two, three, ten
+  USE constants,  ONLY: quarter
+  USE utility,    ONLY: zero, one, two, three, ten
 
 
   IMPLICIT NONE
@@ -626,7 +627,7 @@ SUBMODULE (sph_particles) apm
     n_inc           = 0
     err_N_mean_min  = HUGE(one)
     nuratio_cnt     = 0
-    nuratio_tmp_prev= zero
+    nuratio_tmp_prev= 1.D-8
     apm_iteration: DO itr= 1, apm_max_it, 1
 
       PRINT *, "------------------------------------------"
@@ -1147,7 +1148,8 @@ SUBMODULE (sph_particles) apm
       IF( err_N_mean > err_mean_old )THEN
         n_inc= n_inc + 1
       ENDIF
-      IF( ABS(nuratio_tmp - nuratio_tmp_prev)/nuratio_tmp_prev <= nuratio_tol )THEN
+      IF( ABS(nuratio_tmp - nuratio_tmp_prev)/nuratio_tmp_prev &
+          <= nuratio_tol )THEN
         nuratio_cnt= nuratio_cnt + 1
       ELSE
         nuratio_cnt= 0

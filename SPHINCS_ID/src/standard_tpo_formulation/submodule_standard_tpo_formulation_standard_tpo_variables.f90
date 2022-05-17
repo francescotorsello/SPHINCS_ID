@@ -70,8 +70,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
     USE tensor,           ONLY: jxx, jxy, jxz, &
                                 jyy, jyz, jzz, n_sym3x3
-    USE utility,          ONLY: determinant_sym3x3
-    USe constants,        ONLY: one
+    USE utility,          ONLY: determinant_sym3x3, one
 
     IMPLICIT NONE
 

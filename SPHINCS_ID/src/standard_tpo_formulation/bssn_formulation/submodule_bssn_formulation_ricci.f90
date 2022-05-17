@@ -55,7 +55,7 @@ SUBMODULE (bssn_formulation) ricci
     !
     !************************************************
 
-    USE constants,       ONLY: zero, one, two, three, ten, Msun_geo
+    USE utility,         ONLY: zero, one, two, three, ten, Msun_geo
     USE tensor,          ONLY: jx, jy, jz, jxx, jxy, jxz, jyy, jyz, jzz
     USE mesh_refinement, ONLY: allocate_grid_function, levels, nlevels
 

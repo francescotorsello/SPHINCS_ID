@@ -53,7 +53,8 @@ SUBMODULE (bns_lorene) finalize_id
     !
     !***********************************************
 
-    USE constants,  ONLY: zero, one, two, amu, Msun
+    USE constants,  ONLY: amu, Msun
+    USE utility,    ONLY: zero, one, two
     USE tensor,     ONLY: jx, jy, jz, n_sym4x4, itt, itx, ity, itz, ixx, ixy, &
                           ixz, iyy, iyz, izz, raise_index_4vector,  &
                           lower_index_4vector

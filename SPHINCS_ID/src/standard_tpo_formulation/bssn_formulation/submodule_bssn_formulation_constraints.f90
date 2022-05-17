@@ -32,7 +32,7 @@ SUBMODULE (bssn_formulation) constraints
   !
   !************************************************
 
-  USE constants, ONLY: zero, one, two, three, four, five, ten
+  USE utility,  ONLY: zero, one, two, three, four, five, ten
 
   IMPLICIT NONE
 
@@ -59,7 +59,8 @@ SUBMODULE (bssn_formulation) constraints
     !
     !***************************************************
 
-    USE constants,         ONLY: lorene2hydrobase, pi
+    USE constants,         ONLY: pi
+    USE utility,           ONLY: lorene2hydrobase
     USE matrix,            ONLY: invert_4x4_matrix
     USE tensor,            ONLY: itt, itx, ity, itz, ixx, ixy, &
                                  ixz, iyy, iyz, izz, jxx, jxy, jxz, &
