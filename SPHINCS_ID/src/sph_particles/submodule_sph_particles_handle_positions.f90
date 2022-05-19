@@ -53,14 +53,17 @@ SUBMODULE (sph_particles) handle_positions
 
     IMPLICIT NONE
 
-    INTEGER:: a
+    INTEGER:: a, npart_diff
 
-    INTEGER, DIMENSION(npart):: above_xy_plane
+    INTEGER, DIMENSION(npart):: above_xy_plane, below_xy_plane
+
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: above_xy_plane_a_tmp, below_xy_plane_a_tmp
 
     above_xy_plane= zero
+    below_xy_plane= zero
     npart_above_xy= zero
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( pos, above_xy_plane, npart ) &
+    !$OMP             SHARED( pos, above_xy_plane, below_xy_plane, npart ) &
     !$OMP             PRIVATE( a ) &
     !$OMP             REDUCTION(+:npart_above_xy)
     DO a= 1, npart, 1
@@ -70,11 +73,16 @@ SUBMODULE (sph_particles) handle_positions
         npart_above_xy= npart_above_xy + 1
         above_xy_plane(a)= a
 
+      ELSEIF( pos(3,a) < zero )THEN
+
+        below_xy_plane(a)= a
+
       ENDIF
 
     ENDDO
     !$OMP END PARALLEL DO
 
+    npart_diff= 0
     IF( npart/2 /= npart_above_xy )THEN
 
       PRINT *, "** WARNING! Mismatch in the number of particles above the xy ",&
@@ -87,13 +95,60 @@ SUBMODULE (sph_particles) handle_positions
                "you know what's going on."
       PRINT *
 
+      IF( npart/2 > npart_above_xy )THEN
+        npart_diff= npart/2 - npart_above_xy
+      ENDIF
+
       npart_above_xy= npart/2
 
     ENDIF
 
     ALLOCATE(above_xy_plane_a(npart_above_xy))
-    above_xy_plane_a= PACK( above_xy_plane, above_xy_plane /= zero )
-    above_xy_plane_a= above_xy_plane_a(1:npart_above_xy)
+
+    above_xy_plane_a_tmp= PACK( above_xy_plane, above_xy_plane /= zero )
+    below_xy_plane_a_tmp= PACK( below_xy_plane, below_xy_plane /= zero )
+
+    IF( npart_diff > 0 )THEN
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, above_xy_plane_a, above_xy_plane_a_tmp, npart ) &
+      !$OMP             PRIVATE( a )
+      DO a= 1, SIZE(above_xy_plane_a_tmp), 1
+
+         above_xy_plane_a(a)= above_xy_plane_a_tmp(a)
+
+      ENDDO
+      !$OMP END PARALLEL DO
+      IF( npart_above_xy /= SIZE(above_xy_plane_a_tmp) + npart_diff )THEN
+         PRINT *, "** ERROR! Mismatch in the number of particles above the xy ",&
+                  "plane in SUBROUTINE reflect_particles_xy_plane!"
+         PRINT *, " * SIZE(above_xy_plane_a_tmp)= ", SIZE(above_xy_plane_a_tmp)
+         PRINT *, " * npart_diff= ", npart_diff
+         PRINT *, " * npart_above_xy= ", npart_above_xy
+         PRINT *, " * Stopping..."
+         PRINT *
+         STOP
+      ENDIF
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, above_xy_plane_a, above_xy_plane_a_tmp, &
+      !$OMP                     npart_above_xy, below_xy_plane_a_tmp ) &
+      !$OMP             PRIVATE( a )
+      DO a= SIZE(above_xy_plane_a_tmp) + 1, npart_above_xy, 1
+
+         above_xy_plane_a(a)= below_xy_plane_a_tmp(a)
+
+      ENDDO
+      !$OMP END PARALLEL DO
+    ELSE
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( pos, above_xy_plane_a, above_xy_plane_a_tmp, npart_above_xy ) &
+      !$OMP             PRIVATE( a )
+      DO a= 1, npart_above_xy, 1
+
+         above_xy_plane_a(a)= above_xy_plane_a_tmp(a)
+
+      ENDDO
+      !$OMP END PARALLEL DO
+    ENDIF
 
   END PROCEDURE find_particles_above_xy_plane
 

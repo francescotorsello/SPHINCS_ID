@@ -126,7 +126,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: search_pos       = 10
     !INTEGER,          PARAMETER:: print_step       = 15
     INTEGER,          PARAMETER:: nuratio_max_steps= 50
-    INTEGER,          PARAMETER:: nuratio_min_it   = 250
+    INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
@@ -1148,7 +1148,7 @@ SUBMODULE (sph_particles) apm
       IF( err_N_mean > err_mean_old )THEN
         n_inc= n_inc + 1
       ENDIF
-      IF( itr > nuratio_min_it .AND. &
+      IF( itr > nuratio_min_it .AND. nuratio_tmp /= nuratio_thres .AND. &
           ABS(nuratio_tmp - nuratio_tmp_prev)/nuratio_tmp_prev <= nuratio_tol )THEN
         nuratio_cnt= nuratio_cnt + 1
       ELSE

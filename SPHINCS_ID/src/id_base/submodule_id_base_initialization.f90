@@ -111,6 +111,8 @@ SUBMODULE (id_base) initialization
 
         PRINT *, "** ERROR! The size n. ", itr, " of the physical system ", &
                  " is larger than the size n.", itr+1
+        PRINT *, " * total_sizes(", itr, ")=", total_sizes(itr)
+        PRINT *, " * total_sizes(", itr+1, ")=", total_sizes(itr+1)
         PRINT *, "   Please assign the appropriate strictly positive value", &
                  " in the constructor of the TYPE that extends idbase."
         PRINT *, "   Stopping..."

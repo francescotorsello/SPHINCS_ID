@@ -32,7 +32,7 @@
 import sys
 import os
 import glob
-import socket # gethostname
+import socket
 
 ################################################################################
 # DEFAULT OPTIONS
@@ -80,7 +80,16 @@ default_verbose = 'FALSE'
 #             file, so that the necessary modules are loaded to the user's local
 #             environment on Sunrise:
 #   module load -openmpi3 +openmpi4 +gsl +fftw +scalapack +libgfortran +pgplot
-default_host = 'Sunrise'
+current_host= socket.gethostname()
+
+if current_host == 'r30' or current_host == 'r31' or current_host == 'r32':
+  default_host = 'r3x'
+
+elif current_host == 'sol-login.fysik.su.se':
+  default_host = 'Sunrise'
+
+else:
+  default_host = 'r3x'
 
 # Version of SPHINCS_ID
 version = '_v1.5'
