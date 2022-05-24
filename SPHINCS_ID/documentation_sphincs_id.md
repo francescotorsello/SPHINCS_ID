@@ -1,5 +1,5 @@
 Project: SPHINCS_ID
-Version: 1.0
+Version: 1.5
 github: https://github.com/francescotorsello
 linkedin: https://www.linkedin.com/in/francescotorsello
 Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.PNG){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of the SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.2M_\odot\) (left) and \(1.8M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the \(\texttt{CompOSE}\) database. The solution was computed with \(\texttt{LORENE}\) and the \(\texttt{CompOSE}\) software, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with \(\texttt{SPLASH}\) and \(\texttt{GIMP}\). </font>
@@ -39,8 +39,8 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        eos = \(\mathrm{EOS}\)
        ee = Einstein equations
        bns = \(\mathrm{BNS}\)
-graph_dir: doc-graphs
-<!---parallel: 80--->
+<!---graph_dir: doc-graphs--->
+parallel: 80
 <!---Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src--->
 <!---Project_url: https://francescotorsello.github.io/SPHINCS_ID-doc/--->
 
