@@ -406,14 +406,14 @@ env['F90PATH'] = [
   '.', '../../BSSN', '../SPHINCS_fix_metric', "../SPHINCS_BSSN"
 ]
 
-#mesh_dir         = ['../../BSSN/']
-#sphincs_bssn_dir = ['../SPHINCS_BSSN/']
-#sphincs_fm_dir   = ['../SPHINCS_fix_metric/']
+mesh_dir         = ['../../BSSN/']
+sphincs_bssn_dir = ['../SPHINCS_BSSN/']
+sphincs_fm_dir   = ['../SPHINCS_fix_metric/']
 
-mesh_dir         = ['../../../SPHINCS_SP/BSSN/']
-sphincs_bssn_dir = ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_BSSN/']
-sphincs_fm_dir   = \
-  ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/']
+#mesh_dir         = ['../../../SPHINCS_SP/BSSN/']
+#sphincs_bssn_dir = ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_BSSN/']
+#sphincs_fm_dir   = \
+#  ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/']
 
 sources_mesh = [
   'module_mesh_refinement.f90',
