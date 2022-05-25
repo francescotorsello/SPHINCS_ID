@@ -799,12 +799,12 @@ MODULE bns_fuka
                               x, y, z, &
                               lapse, &
                               shift_x, shift_y, shift_z, &
-                              g_diag, &
+                              psi4, &
                               k_xx, k_xy, k_xz, &
                               k_yy, k_yz, k_zz, &
-                              baryon_density, &
+                              mass_density, &
                               energy_density, &
-                              specific_energy, &
+                              pressure, &
                               v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_fuka_id")
 
@@ -845,16 +845,16 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: psi4
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xx
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xy
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xz
       REAL(C_DOUBLE), INTENT(OUT)       :: k_yy
       REAL(C_DOUBLE), INTENT(OUT)       :: k_yz
       REAL(C_DOUBLE), INTENT(OUT)       :: k_zz
-      REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
+      REAL(C_DOUBLE), INTENT(OUT)       :: mass_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
-      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_z
@@ -863,12 +863,12 @@ MODULE bns_fuka
 
 
     SUBROUTINE get_fuka_id_spacetime( optr, &
-                                        x, y, z, &
-                                        lapse, &
-                                        shift_x, shift_y, shift_z, &
-                                        g_diag, &
-                                        k_xx, k_xy, k_xz, &
-                                        k_yy, k_yz, k_zz ) &
+                                      x, y, z, &
+                                      lapse, &
+                                      shift_x, shift_y, shift_z, &
+                                      psi4, &
+                                      k_xx, k_xy, k_xz, &
+                                      k_yy, k_yz, k_zz ) &
       BIND(C, NAME= "get_fuka_id_spacetime")
 
       !*************************************************
@@ -899,7 +899,7 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: psi4
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xx
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xy
       REAL(C_DOUBLE), INTENT(OUT)       :: k_xz
@@ -911,15 +911,15 @@ MODULE bns_fuka
 
 
     SUBROUTINE get_fuka_id_particles( optr, &
-                                        x, y, z, &
-                                        lapse, &
-                                        shift_x, shift_y, shift_z, &
-                                        g_diag, &
-                                        baryon_density, &
-                                        energy_density, &
-                                        specific_energy, &
-                                        pressure, &
-                                        v_euler_x, v_euler_y, v_euler_z ) &
+                                      x, y, z, &
+                                      lapse, &
+                                      shift_x, shift_y, shift_z, &
+                                      psi4, &
+                                      baryon_density, &
+                                      energy_density, &
+                                      specific_energy, &
+                                      pressure, &
+                                      v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_fuka_id_particles")
 
       !**********************************************
@@ -957,7 +957,7 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_x
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: psi4
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
       REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
@@ -1197,81 +1197,33 @@ MODULE bns_fuka
     END FUNCTION positive_hydro
 
 
-    SUBROUTINE get_fuka_id_params( optr, &
-                                     angular_vel, &
-                                     distance, &
-                                     distance_com, &
-                                     mass1, &
-                                     mass2, &
-                                     mass_grav1, &
-                                     mass_grav2, &
-                                     adm_mass, &
-                                     linear_momentum_x, &
-                                     linear_momentum_y, &
-                                     linear_momentum_z, &
-                                     angular_momentum_x, &
-                                     angular_momentum_y, &
-                                     angular_momentum_z, &
-                                     area_radius1, &
-                                     radius1_x_comp, &
-                                     radius1_y, &
-                                     radius1_z, &
-                                     radius1_x_opp, &
-                                     center1_x, &
-                                     barycenter1_x, &
-                                     area_radius2, &
-                                     radius2_x_comp, &
-                                     radius2_y, &
-                                     radius2_z, &
-                                     radius2_x_opp, &
-                                     center2_x, &
-                                     barycenter2_x, &
-                                     ent_center1, &
-                                     nbar_center1, &
-                                     rho_center1, &
-                                     energy_density_center1, &
-                                     specific_energy_center1, &
-                                     pressure_center1, &
-                                     ent_center2, &
-                                     nbar_center2, &
-                                     rho_center2, &
-                                     energy_density_center2, &
-                                     specific_energy_center2, &
-                                     pressure_center2, &
-                                     eos1, &
-                                     eos2, &
-                                     eos1_id, &
-                                     eos2_id, &
-                                     gamma_1, &
-                                     kappa_1, &
-                                     gamma_2, &
-                                     kappa_2, &
-                                     npeos_1, &
-                                     gamma0_1, &
-                                     gamma1_1, &
-                                     gamma2_1, &
-                                     gamma3_1, &
-                                     kappa0_1, &
-                                     kappa1_1, &
-                                     kappa2_1, &
-                                     kappa3_1, &
-                                     logP1_1,  &
-                                     logRho0_1, &
-                                     logRho1_1, &
-                                     logRho2_1, &
-                                     npeos_2,  &
-                                     gamma0_2, &
-                                     gamma1_2, &
-                                     gamma2_2, &
-                                     gamma3_2, &
-                                     kappa0_2, &
-                                     kappa1_2, &
-                                     kappa2_2, &
-                                     kappa3_2, &
-                                     logP1_2,  &
-                                     logRho0_2, &
-                                     logRho1_2, &
-                                     logRho2_2 ) &
+    SUBROUTINE get_fuka_id_params( optr,                   &
+                                   angular_vel,            &
+                                   distance,               &
+                                   mass1,                  &
+                                   mass2,                  &
+                                   massg1,                 &
+                                   massg2,                 &
+                                   adm_mass,               &
+                                   komar_mass,             &
+                                   adm_linear_momentum_x,  &
+                                   adm_linear_momentum_y,  &
+                                   adm_linear_momentum_z,  &
+                                   adm_angular_momentum_z, &
+                                   COMx,                   &
+                                   COMy,                   &
+                                   COMz,                   &
+                                   area_radius1,           &
+                                   center1_x,              &
+                                   area_radius2,           &
+                                   center2_x,              &
+                                   ent_center1,            &
+                                   rho_center1,            &
+                                   energy_density_center1, &
+                                   ent_center2,            &
+                                   rho_center2,            &
+                                   energy_density_center2, &
+                                   eos_type )              &
       BIND(C, NAME= "get_fuka_id_params")
 
       !**********************************************
@@ -1286,82 +1238,34 @@ MODULE bns_fuka
 
       IMPLICIT NONE
 
-      !> C pointer pointing to a |fuka| |binns| object
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
+      !! C pointer pointing to a |fuka| BNS_export object
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_vel
       REAL(C_DOUBLE), INTENT(OUT)       :: distance
-      REAL(C_DOUBLE), INTENT(OUT)       :: distance_com
       REAL(C_DOUBLE), INTENT(OUT)       :: mass1
       REAL(C_DOUBLE), INTENT(OUT)       :: mass2
-      REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav1
-      REAL(C_DOUBLE), INTENT(OUT)       :: mass_grav2
+      REAL(C_DOUBLE), INTENT(OUT)       :: massg1
+      REAL(C_DOUBLE), INTENT(OUT)       :: massg2
       REAL(C_DOUBLE), INTENT(OUT)       :: adm_mass
-      REAL(C_DOUBLE), INTENT(OUT)       :: linear_momentum_x
-      REAL(C_DOUBLE), INTENT(OUT)       :: linear_momentum_y
-      REAL(C_DOUBLE), INTENT(OUT)       :: linear_momentum_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_x
-      REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_y
-      REAL(C_DOUBLE), INTENT(OUT)       :: angular_momentum_z
+      REAL(C_DOUBLE), INTENT(OUT)       :: komar_mass
+      REAL(C_DOUBLE), INTENT(OUT)       :: adm_linear_momentum_x
+      REAL(C_DOUBLE), INTENT(OUT)       :: adm_linear_momentum_y
+      REAL(C_DOUBLE), INTENT(OUT)       :: adm_linear_momentum_z
+      REAL(C_DOUBLE), INTENT(OUT)       :: adm_angular_momentum_z
+      REAL(C_DOUBLE), INTENT(OUT)       :: COMx
+      REAL(C_DOUBLE), INTENT(OUT)       :: COMy
+      REAL(C_DOUBLE), INTENT(OUT)       :: COMz
       REAL(C_DOUBLE), INTENT(OUT)       :: area_radius1
-      REAL(C_DOUBLE), INTENT(OUT)       :: radius1_x_comp
-      REAL(C_DOUBLE), INTENT(OUT)       :: radius1_y
-      REAL(C_DOUBLE), INTENT(OUT)       :: radius1_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: radius1_x_opp
       REAL(C_DOUBLE), INTENT(OUT)       :: center1_x
-      REAL(C_DOUBLE), INTENT(OUT)       :: barycenter1_x
       REAL(C_DOUBLE), INTENT(OUT)       :: area_radius2
-      REAL(C_DOUBLE), INTENT(OUT)       :: radius2_x_comp
-      REAL(C_DOUBLE), INTENT(OUT)       :: radius2_y
-      REAL(C_DOUBLE), INTENT(OUT)       :: radius2_z
-      REAL(C_DOUBLE), INTENT(OUT)       :: radius2_x_opp
       REAL(C_DOUBLE), INTENT(OUT)       :: center2_x
-      REAL(C_DOUBLE), INTENT(OUT)       :: barycenter2_x
       REAL(C_DOUBLE), INTENT(OUT)       :: ent_center1
-      REAL(C_DOUBLE), INTENT(OUT)       :: nbar_center1
       REAL(C_DOUBLE), INTENT(OUT)       :: rho_center1
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center1
-      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy_center1
-      REAL(C_DOUBLE), INTENT(OUT)       :: pressure_center1
       REAL(C_DOUBLE), INTENT(OUT)       :: ent_center2
-      REAL(C_DOUBLE), INTENT(OUT)       :: nbar_center2
       REAL(C_DOUBLE), INTENT(OUT)       :: rho_center2
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center2
-      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy_center2
-      REAL(C_DOUBLE), INTENT(OUT)       :: pressure_center2
-      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos1
-      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos2
-      INTEGER(C_INT)                    :: eos1_id
-      INTEGER(C_INT)                    :: eos2_id
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa_2
-      INTEGER(C_INT)                    :: npeos_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma0_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma1_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma2_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma3_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa0_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa1_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa2_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa3_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: logP1_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: logRho0_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: logRho1_1
-      REAL(C_DOUBLE), INTENT(OUT)       :: logRho2_1
-      INTEGER(C_INT)                    :: npeos_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma0_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma1_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma2_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: gamma3_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa0_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa1_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa2_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: kappa3_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: logP1_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: logRho0_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: logRho1_2
-      REAL(C_DOUBLE), INTENT(OUT)       :: logRho2_2
+      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_type
 
     END SUBROUTINE get_fuka_id_params
 
