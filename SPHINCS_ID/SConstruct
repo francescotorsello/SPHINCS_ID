@@ -60,7 +60,7 @@ default_flavour = full_flavour
 
 # 'TRUE'  : build in DEBUG MODE
 # 'FALSE' : build in PRODUCTION MODE
-default_debug = 'FALSE'
+default_debug = 'TRUE'
 
 # Which compilers to use
 #   Fortran : 'gfortran', 'ifort'
@@ -101,6 +101,7 @@ version = '_v1.5'
 ################################################################################
 
 liblorene_dir = ['../../../Lorene/Lib']
+libkadath_dir = ['../../../Kadath/lib']
 
 ################################################################################
 
@@ -523,19 +524,19 @@ if flavour == full_flavour: #
 
   if host == 'r3x': #
 
-    env['LIBPATH'] = liblorene_dir
+    env['LIBPATH'] = liblorene_dir + libkadath_dir
 
     if debug == 'FALSE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
-                     'lorenef77', 'gsl', 'lapack', 'fftw3', 'blas', \
+                     'lorenef77', 'kadath', 'gsl', 'lapack', 'fftw3', 'blas', \
                      'gslcblas', 'gfortran']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran']
+                     'lorenef77_g', 'kadath', 'gsl', 'lapack', 'fftw3', \
+                     'blas', 'gslcblas', 'gfortran']
 
   if host == 'Sunrise': #
 
@@ -548,13 +549,13 @@ if flavour == full_flavour: #
     if debug == 'FALSE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
-                     'lorenef77', 'gsl', 'scalapack', 'openblas', \
+                     'lorenef77', 'kadath', 'gsl', 'scalapack', 'openblas', \
                      'gslcblas', 'gfortran', 'fftw3']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g', 'gsl', 'scalapack', 'openblas', \
+                     'lorenef77_g', 'kadath', 'gsl', 'scalapack', 'openblas', \
                      'gslcblas', 'gfortran', 'fftw3']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
@@ -616,15 +617,15 @@ if flavour == fuka_flavour: #
 
   build_flavour= '-Dflavour=3'
 
-  #env['LIBPATH'] = ['']
+  env['LIBPATH'] = libkadath_dir
 
   if debug == 'FALSE': #
 
-    env['LIBS'] = ['stdc++', 'm']
+    env['LIBS'] = ['stdc++', 'm', 'kadath']
 
   if debug == 'TRUE': #
 
-    env['LIBS'] = ['stdc++', 'm']
+    env['LIBS'] = ['stdc++', 'm', 'kadath']
 
   sources_flavour = module_bns_fuka \
                     + module_ejecta_generic + module_sphincs_id_fuka

@@ -759,7 +759,7 @@ MODULE bns_fuka
   !------------------------------------------------------------------!
 
 
-  PRIVATE:: construct_bin_ns, get_fuka_id, get_fuka_id_spacetime, &
+  PRIVATE:: construct_bns_fuka, get_fuka_id, get_fuka_id_spacetime, &
             get_fuka_id_particles, get_fuka_id_mass_b, &
             get_fuka_id_hydro, get_fuka_id_k, get_fuka_mass_density, &
             get_fuka_spatial_metric, positive_hydro, get_fuka_id_params, &
@@ -769,8 +769,8 @@ MODULE bns_fuka
   INTERFACE
 
 
-    FUNCTION construct_bin_ns( c_resu_file ) RESULT( optr ) &
-      BIND(C, NAME= "construct_bin_ns")
+    FUNCTION construct_bns_fuka( fuka_file ) RESULT( optr ) &
+      BIND(C, NAME= "construct_bns_fuka")
 
       !***********************************************
       !
@@ -786,14 +786,13 @@ MODULE bns_fuka
 
       IMPLICIT NONE
 
-      !& C string of the name of the |fuka| binary file storing the spectral
+      CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN) :: fuka_file
+      !# C string of the name of the |fuka| binary file storing the spectral
       !  |bns| |id|
-      CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
-                                                              c_resu_file
-      !> C pointer pointing to the constructed |fuka| |binns| object
       TYPE(C_PTR) :: optr
+      !! C pointer pointing to the constructed |fuka| BNS_export object
 
-    END FUNCTION construct_bin_ns
+    END FUNCTION construct_bns_fuka
 
 
     SUBROUTINE get_fuka_id( optr, &
