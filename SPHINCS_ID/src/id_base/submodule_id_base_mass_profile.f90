@@ -97,10 +97,10 @@ SUBMODULE (id_base) mass_profile
           ! of Gourgoulhon et al., PRD 63 064029 (2001)
 
           CALL this% read_id_mass_b( &
-                   center + (rad_coord + dr)*SIN(colat)*COS(long), &
-                   (rad_coord + dr)*SIN(colat)*SIN(long), &
-                   (rad_coord + dr)*COS(colat), &
-                   g, baryon_density, gamma_euler )
+                         center + (rad_coord + dr)*SIN(colat)*COS(long), &
+                         (rad_coord + dr)*SIN(colat)*SIN(long), &
+                         (rad_coord + dr)*COS(colat), &
+                         g, baryon_density, gamma_euler )
 
           IF(      ISNAN( g(jxx) ) .OR. ISNAN( g(jxy) ) .OR. ISNAN( g(jxz) ) &
               .OR. ISNAN( g(jyy) ) .OR. ISNAN( g(jyz) ) .OR. ISNAN( g(jzz) ) &

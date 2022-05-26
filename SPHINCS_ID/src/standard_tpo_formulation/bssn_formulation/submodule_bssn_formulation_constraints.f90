@@ -1027,8 +1027,10 @@ SUBMODULE (bssn_formulation) constraints
 
       !**************************************************
       !
-      !# Compute the components of the fluid \(4\)-velocity
-      !  wrt the Eulerian observer
+      !# Compute the components of the fluid
+      !  \(4\)-velocity wrt the Eulerian observer
+      !  See Sec.7.3 in Alcubierre, "Introduction to
+      !  3+1 Numerical Relativity"
       !
       !  FT 25.04.2022
       !

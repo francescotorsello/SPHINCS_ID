@@ -763,7 +763,7 @@ MODULE bns_fuka
             get_fuka_id_particles, get_fuka_id_mass_b, &
             get_fuka_id_hydro, get_fuka_id_k, get_fuka_mass_density, &
             get_fuka_spatial_metric, positive_hydro, get_fuka_id_params, &
-            destruct_bin_ns
+            destruct_bns_fuka
 
 
   INTERFACE
@@ -917,7 +917,6 @@ MODULE bns_fuka
                                       psi4, &
                                       baryon_density, &
                                       energy_density, &
-                                      specific_energy, &
                                       pressure, &
                                       v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_fuka_id_particles")
@@ -960,7 +959,6 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: psi4
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
-      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
       REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
@@ -970,10 +968,10 @@ MODULE bns_fuka
 
 
     SUBROUTINE get_fuka_id_mass_b( optr, &
-                                     x, y, z, &
-                                     g_diag, &
-                                     baryon_density, &
-                                     gamma_euler ) &
+                                   x, y, z, &
+                                   psi4, &
+                                   mass_density, &
+                                   gamma_euler ) &
       BIND(C, NAME= "get_fuka_id_mass_b")
 
       !************************************************
@@ -1006,9 +1004,9 @@ MODULE bns_fuka
       !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       !> \(g_{xx}=g_{yy}=g_{zz}\) at \(x,y,z\)
-      REAL(C_DOUBLE), INTENT(OUT)       :: g_diag
+      REAL(C_DOUBLE), INTENT(OUT)       :: psi4
       !> Baryon mass density at \(x,y,z\)
-      REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
+      REAL(C_DOUBLE), INTENT(OUT)       :: mass_density
       !& Relative Lorentz factor between the 4-velocity of the fluid
       !  wrt the Eulerian observer and the 4-velocity of the Eulerian observer
       !  at \(x,y,z\)
@@ -1018,12 +1016,11 @@ MODULE bns_fuka
 
 
     SUBROUTINE get_fuka_id_hydro( optr, &
-                                    x, y, z, &
-                                    baryon_density, &
-                                    energy_density, &
-                                    specific_energy, &
-                                    pressure, &
-                                    v_euler_x, v_euler_y, v_euler_z ) &
+                                  x, y, z, &
+                                  mass_density, &
+                                  energy_density, &
+                                  pressure, &
+                                  v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_fuka_id_hydro")
 
       !***********************************************
@@ -1056,9 +1053,8 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(IN), VALUE :: y
       !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
-      REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
+      REAL(C_DOUBLE), INTENT(OUT)       :: mass_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
-      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
       REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
@@ -1108,7 +1104,7 @@ MODULE bns_fuka
 
 
     FUNCTION get_fuka_mass_density( optr, x, y, z ) RESULT( res ) &
-      BIND(C, NAME= "get_mass_density")
+      BIND(C, NAME= "get_fuka_mass_density")
 
       !********************************************
       !
@@ -1138,7 +1134,7 @@ MODULE bns_fuka
 
 
     FUNCTION get_fuka_spatial_metric( optr, x, y, z ) RESULT( res ) &
-      BIND(C, NAME= "get_fuka_id_g")
+      BIND(C, NAME= "get_fuka_g")
 
       !************************************************
       !
@@ -1168,7 +1164,7 @@ MODULE bns_fuka
 
 
     FUNCTION positive_hydro( optr, x, y, z ) RESULT( res ) &
-      BIND(C, NAME= "is_hydro_positive")
+      BIND(C, NAME= "is_fuka_hydro_positive")
 
       !************************************************
       !
@@ -1270,8 +1266,8 @@ MODULE bns_fuka
     END SUBROUTINE get_fuka_id_params
 
 
-    SUBROUTINE destruct_bin_ns( optr ) &
-      BIND(C, NAME= "destruct_bin_ns")
+    SUBROUTINE destruct_bns_fuka( optr ) &
+      BIND(C, NAME= "destruct_bns_fuka")
 
       !**********************************************
       !
@@ -1290,7 +1286,7 @@ MODULE bns_fuka
       !> C pointer pointing to the |fuka| |binns| object to destruct
       TYPE(C_PTR), INTENT(IN), VALUE :: optr
 
-    END SUBROUTINE destruct_bin_ns
+    END SUBROUTINE destruct_bns_fuka
 
 
   END INTERFACE
