@@ -646,7 +646,7 @@ MODULE bns_lorene
     !! Returns the |lorene| pressure at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )         :: this
+      CLASS(bnslorene), INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point

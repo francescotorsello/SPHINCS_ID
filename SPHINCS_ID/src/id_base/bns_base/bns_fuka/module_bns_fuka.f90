@@ -191,6 +191,9 @@ MODULE bns_fuka
     !> Returns the |fuka|'s mass density at the given point
     PROCEDURE:: read_mass_density => read_fuka_mass_density
 
+    !> Returns the |fuka|'s pressure at the desired point
+    PROCEDURE:: read_fuka_pressure
+
     !> Returns the |fuka|'s conformally flat spatial ADM metric
     PROCEDURE:: read_fuka_spatial_metric
 
@@ -322,13 +325,13 @@ MODULE bns_fuka
     !
     !-- SUBROUTINES
     !
-    MODULE SUBROUTINE construct_binary( this, resu_file )
+    MODULE SUBROUTINE construct_binary( this, fukafile )
     !! Interface of the subroutine that constructs the |fuka| |binns| object
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),                     INTENT( IN OUT )      :: this
+      CLASS(bnsfuka),                     INTENT( IN OUT )  :: this
       !> |fuka| binary file containing the spectral |bns| |id|
-      CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
+      CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: fukafile
 
     END SUBROUTINE construct_binary
 
@@ -633,6 +636,23 @@ MODULE bns_fuka
     END FUNCTION read_fuka_mass_density
 
 
+    MODULE FUNCTION read_fuka_pressure( this, x, y, z ) RESULT( res )
+    !! Returns the |fuka| pressure at a point \((x,y,z)\)
+
+      !> [[bnslorene]] object which this PROCEDURE is a member of
+      CLASS(bnsfuka),   INTENT( IN )       :: this
+      !> \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      !> Pressure at \((x,y,z)\)
+      DOUBLE PRECISION:: res
+
+    END FUNCTION read_fuka_pressure
+
+
     MODULE FUNCTION read_fuka_spatial_metric( this, x, y, z ) RESULT( res )
     !# Returns the |fuka| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
@@ -762,8 +782,8 @@ MODULE bns_fuka
   PRIVATE:: construct_bns_fuka, get_fuka_id, get_fuka_id_spacetime, &
             get_fuka_id_particles, get_fuka_id_mass_b, &
             get_fuka_id_hydro, get_fuka_id_k, get_fuka_mass_density, &
-            get_fuka_spatial_metric, positive_hydro, get_fuka_id_params, &
-            destruct_bns_fuka
+            get_fuka_pressure, get_fuka_spatial_metric, &
+            positive_hydro, get_fuka_id_params, destruct_bns_fuka
 
 
   INTERFACE
@@ -1131,6 +1151,40 @@ MODULE bns_fuka
       REAL(C_DOUBLE) :: res
 
     END FUNCTION get_fuka_mass_density
+
+
+    FUNCTION get_fuka_pressure( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "get_fuka_pressure")
+
+      !********************************************
+      !
+      !# Interface to the |fuka| method of class
+      !  bns_export with the same name, that returns
+      !  the pressure \([\mathrm{kg}\,
+      !  c^2 \mathrm{m}^{-3}]\) from |lorene|,
+      !  at the specified point
+      !
+      !  FT 27.05.2022
+      !
+      !********************************************
+
+      IMPORT :: C_DOUBLE, C_PTR
+
+      IMPLICIT NONE
+
+      !> C pointer pointing to a |lorene| |binns| object
+      TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
+      !> \(x\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
+      !> \(y\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: y
+      !> \(z\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
+      !& Pressure \([\mathrm{kg}\,c^2\, \mathrm{m}^{-3}]\) at the desired
+      !  point \((x,y,z)\)
+      REAL(C_DOUBLE) :: res
+
+    END FUNCTION get_fuka_pressure
 
 
     FUNCTION get_fuka_spatial_metric( optr, x, y, z ) RESULT( res ) &

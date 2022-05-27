@@ -150,7 +150,7 @@ SUBMODULE (bns_lorene) access
 
     CASE DEFAULT
 
-      PRINT *, "** There is no field named ", field, "in TYPE bns."
+      PRINT *, "** There is no field named ", field, "in TYPE bnslorene."
       STOP
 
     END SELECT select_field
@@ -264,7 +264,7 @@ SUBMODULE (bns_lorene) access
 
     CASE DEFAULT
 
-      PRINT *, "** There is no field named ", field, "in TYPE bns."
+      PRINT *, "** There is no field named ", field, "in TYPE bnslorene."
       STOP
 
     END SELECT select_field

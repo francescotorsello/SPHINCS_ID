@@ -769,8 +769,8 @@ SUBMODULE (bns_fuka) read
    !   read_fuka_id_loop: DO a= 1, n, 1
    !
    !     ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-   !     ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-   !     ! Msun_geo
+   !     ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
+   !     ! definition of Msun_geo
    !     CALL get_lorene_id_k( this% bns_ptr, &
    !                           x( a )*Msun_geo, &
    !                           y( a )*Msun_geo, &
@@ -842,8 +842,8 @@ SUBMODULE (bns_fuka) read
     IF ( C_ASSOCIATED( this% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-      ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-      ! Msun_geo
+      ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
+      ! definition of Msun_geo
       res= get_fuka_mass_density( this% bns_ptr, &
                                   x*Msun_geo, &
                                   y*Msun_geo, &
@@ -852,6 +852,38 @@ SUBMODULE (bns_fuka) read
     ENDIF
 
   END PROCEDURE read_fuka_mass_density
+
+
+  MODULE PROCEDURE read_fuka_pressure
+
+    !***********************************************
+    !
+    !# Returns the |fuka| pressure at the point
+    !  given as argument, in units of
+    !  \([\mathrm{kg}\,c^2\, \mathrm{m}^{-3}]\).
+    !
+    !  Created:     FT 27.05.2022
+    !  Last update: FT 27.05.2022
+    !
+    !***********************************************
+
+    USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
+
+    IMPLICIT NONE
+
+    IF ( C_ASSOCIATED( this% bns_ptr ) )THEN
+
+      ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+      ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
+      ! definition of Msun_geo
+      res= get_fuka_pressure( this% bns_ptr, &
+                              x*Msun_geo, &
+                              y*Msun_geo, &
+                              z*Msun_geo )
+
+    ENDIF
+
+  END PROCEDURE read_fuka_pressure
 
 
   MODULE PROCEDURE read_fuka_spatial_metric
@@ -874,8 +906,8 @@ SUBMODULE (bns_fuka) read
     IF ( C_ASSOCIATED( this% bns_ptr ) )THEN
 
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-      ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-      ! Msun_geo
+      ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
+      ! definition of Msun_geo
       res= get_fuka_spatial_metric( this% bns_ptr, &
                                     x*Msun_geo, &
                                     y*Msun_geo, &
