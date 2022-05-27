@@ -116,7 +116,7 @@ MODULE bns_fuka
     !
 
     !> 1-D array storing the baryon mass density in the fluid frame [kg m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: baryon_density
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_density
     !> 1-D array storing the energy density [kg c^2 m^{-3}]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
     !> 1-D array storing the specific internal energy [c^2]
@@ -285,10 +285,10 @@ MODULE bns_fuka
     END SUBROUTINE construct_bnsfuka
 
 
-    MODULE SUBROUTINE destruct_bnsfuka( THIS )
+    MODULE SUBROUTINE destruct_bnsfuka( this )
     !! Destruct a [[bnsfuka]] object
 
-      TYPE(bnsfuka), INTENT( IN OUT ):: THIS
+      TYPE(bnsfuka), INTENT( IN OUT ):: this
       !! [[bnsfuka]] object to be destructed
 
     END SUBROUTINE destruct_bnsfuka
@@ -307,13 +307,13 @@ MODULE bns_fuka
     !------------------------------!
 
 
-    MODULE SUBROUTINE print_summary_bnsfuka( THIS, filename )
+    MODULE SUBROUTINE print_summary_bnsfuka( this, filename )
     !# Prints a summary of the physical properties of the |bns| produced by
     !  |fuka| to the standard output and, optionally, to a formatted file
     !  whose name is given as the optional argument `filename`
 
 
-      CLASS(bnsfuka), INTENT( IN ):: THIS
+      CLASS(bnsfuka), INTENT( IN ):: this
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -322,65 +322,65 @@ MODULE bns_fuka
     !
     !-- SUBROUTINES
     !
-    MODULE SUBROUTINE construct_binary( THIS, resu_file )
+    MODULE SUBROUTINE construct_binary( this, resu_file )
     !! Interface of the subroutine that constructs the |fuka| |binns| object
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),                     INTENT( IN OUT )      :: THIS
+      CLASS(bnsfuka),                     INTENT( IN OUT )      :: this
       !> |fuka| binary file containing the spectral |bns| |id|
       CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
 
     END SUBROUTINE construct_binary
 
 
-    MODULE SUBROUTINE destruct_binary( THIS )
+    MODULE SUBROUTINE destruct_binary( this )
     !! Destructs a |fuka| |binns| object
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka), INTENT( IN OUT ):: this
 
     END SUBROUTINE destruct_binary
 
 
-    MODULE SUBROUTINE allocate_bnsfuka_memory( THIS, d )
+    MODULE SUBROUTINE allocate_bnsfuka_memory( this, d )
     !! Allocates allocatable arrays member of a [[bnsfuka]] object
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka), INTENT( IN OUT ):: this
       !> Dimension of the arrays
       INTEGER,    INTENT( IN )    :: d
 
     END SUBROUTINE allocate_bnsfuka_memory
 
 
-    MODULE SUBROUTINE deallocate_bnsfuka_memory( THIS )
+    MODULE SUBROUTINE deallocate_bnsfuka_memory( this )
     !! Deallocates allocatable arrays member of a [[bnsfuka]] object
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka), INTENT( IN OUT ):: this
 
     END SUBROUTINE deallocate_bnsfuka_memory
 
 
-    MODULE SUBROUTINE read_fuka_id_params( THIS )
+    MODULE SUBROUTINE read_fuka_id_params( this )
     !! Imports the |bns| parameters from |fuka|
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka), INTENT( IN OUT ):: this
 
     END SUBROUTINE read_fuka_id_params
 
 
-    MODULE SUBROUTINE print_id_params( THIS )
+    MODULE SUBROUTINE print_id_params( this )
     !! Prints the |bns| parameters to the standard output
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka), INTENT( IN OUT ):: this
 
     END SUBROUTINE print_id_params
 
 
-  !  MODULE SUBROUTINE integrate_baryon_mass_density( THIS, center, radius, &
+  !  MODULE SUBROUTINE integrate_baryon_mass_density( this, center, radius, &
   !                                                   central_density, &
   !                                                   dr, dth, dphi, &
   !                                                   mass, mass_profile, &
@@ -389,7 +389,7 @@ MODULE bns_fuka
   !  !  profile. TODO: Improve integration algorithm.
   !
   !    !> [[bnsfuka]] object which this PROCEDURE is a member of
-  !    CLASS(bnsfuka), INTENT( IN OUT )      :: THIS
+  !    CLASS(bnsfuka), INTENT( IN OUT )      :: this
   !    !& Array to store the indices for array mass_profile, sorted so that
   !    !  mass_profile[mass_profile_idx] is in increasing order
   !    INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
@@ -410,11 +410,11 @@ MODULE bns_fuka
   !  END SUBROUTINE integrate_baryon_mass_density
 
 
-    MODULE SUBROUTINE read_fuka_id_member( THIS, n, x, y, z )
+    MODULE SUBROUTINE read_fuka_id_member( this, n, x, y, z )
     !! Stores the |id| in the [[bnsfuka]] member arrays
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),                     INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka),                 INTENT( IN OUT ):: this
       INTEGER, INTENT( IN ):: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -441,22 +441,22 @@ MODULE bns_fuka
     ! not OUT. The array arguments are not allocatable anymore
 
 
-    MODULE SUBROUTINE read_fuka_id_full( THIS, n, x, y, z,&
-                                      lapse, &
-                                      shift_x, shift_y, shift_z, &
-                                      g_xx, g_xy, g_xz, &
-                                      g_yy, g_yz, g_zz, &
-                                      k_xx, k_xy, k_xz, &
-                                      k_yy, k_yz, k_zz, &
-                                      baryon_density, &
-                                      energy_density, &
-                                      specific_energy, &
-                                      u_euler_x, u_euler_y, u_euler_z )
+    MODULE SUBROUTINE read_fuka_id_full( this, n, x, y, z,&
+                                         lapse, &
+                                         shift_x, shift_y, shift_z, &
+                                         g_xx, g_xy, g_xz, &
+                                         g_yy, g_yz, g_zz, &
+                                         k_xx, k_xy, k_xz, &
+                                         k_yy, k_yz, k_zz, &
+                                         baryon_density, &
+                                         energy_density, &
+                                         specific_energy, &
+                                         u_euler_x, u_euler_y, u_euler_z )
     !# Stores the |id| in non [[bnsfuka]]-member arrays with the same shape as the
     !  [[bnsfuka]] member arrays
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),                     INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka),                 INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -487,7 +487,7 @@ MODULE bns_fuka
     END SUBROUTINE read_fuka_id_full
 
 
-    MODULE SUBROUTINE read_fuka_id_spacetime( THIS, nx, ny, nz, &
+    MODULE SUBROUTINE read_fuka_id_spacetime( this, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
@@ -497,7 +497,7 @@ MODULE bns_fuka
     !  the BSSN variables and constraints
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),                           INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka),                       INTENT( IN OUT ):: this
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -510,18 +510,18 @@ MODULE bns_fuka
     END SUBROUTINE read_fuka_id_spacetime
 
 
-    MODULE SUBROUTINE read_fuka_id_hydro( THIS, nx, ny, nz, &
-                                             pos, &
-                                             baryon_density, &
-                                             energy_density, &
-                                             specific_energy, &
-                                             pressure, &
-                                             u_euler )
+    MODULE SUBROUTINE read_fuka_id_hydro( this, nx, ny, nz, &
+                                          pos, &
+                                          baryon_density, &
+                                          energy_density, &
+                                          specific_energy, &
+                                          pressure, &
+                                          u_euler )
     !# Stores the hydro |id| in the arrays needed to compute the constraints
     !  on the refined mesh
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),                           INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka),                       INTENT( IN OUT ):: this
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -535,20 +535,20 @@ MODULE bns_fuka
     END SUBROUTINE read_fuka_id_hydro
 
 
-    MODULE SUBROUTINE read_fuka_id_particles( THIS, n, x, y, z, &
-                                           lapse, &
-                                           shift_x, shift_y, shift_z, &
-                                           g_xx, g_xy, g_xz, &
-                                           g_yy, g_yz, g_zz, &
-                                           baryon_density, &
-                                           energy_density, &
-                                           specific_energy, &
-                                           pressure, &
-                                           u_euler_x, u_euler_y, u_euler_z )
+    MODULE SUBROUTINE read_fuka_id_particles( this, n, x, y, z, &
+                                              lapse, &
+                                              shift_x, shift_y, shift_z, &
+                                              g_xx, g_xy, g_xz, &
+                                              g_yy, g_yz, g_zz, &
+                                              baryon_density, &
+                                              energy_density, &
+                                              specific_energy, &
+                                              pressure, &
+                                              u_euler_x, u_euler_y, u_euler_z )
     !! Stores the hydro |id| in the arrays needed to compute the |sph| |id|
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),                     INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka),                 INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: x
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: y
@@ -574,14 +574,14 @@ MODULE bns_fuka
     END SUBROUTINE read_fuka_id_particles
 
 
-    MODULE SUBROUTINE read_fuka_id_mass_b( THIS, x, y, z, &
-                                        g, &
-                                        baryon_density, &
-                                        gamma_euler )
+    MODULE SUBROUTINE read_fuka_id_mass_b( this, x, y, z, &
+                                           g, &
+                                           baryon_density, &
+                                           gamma_euler )
     !! Stores the hydro |id| in the arrays needed to compute the baryon mass
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),       INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka),   INTENT( IN OUT ):: this
       DOUBLE PRECISION, INTENT( IN )    :: x
       DOUBLE PRECISION, INTENT( IN )    :: y
       DOUBLE PRECISION, INTENT( IN )    :: z
@@ -592,13 +592,13 @@ MODULE bns_fuka
     END SUBROUTINE read_fuka_id_mass_b
 
 
-    MODULE SUBROUTINE read_fuka_id_k( THIS, n, x, y, z,&
-                                         k_xx, k_xy, k_xz, &
-                                         k_yy, k_yz, k_zz )
+    MODULE SUBROUTINE read_fuka_id_k( this, n, x, y, z,&
+                                      k_xx, k_xy, k_xz, &
+                                      k_yy, k_yz, k_zz )
    !! Stores the components of the extrinsic curvature in arrays
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),                     INTENT( IN OUT ):: THIS
+      CLASS(bnsfuka),                 INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -616,11 +616,11 @@ MODULE bns_fuka
     !
     !-- FUNCTIONS
     !
-    MODULE FUNCTION read_fuka_mass_density( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_fuka_mass_density( this, x, y, z ) RESULT( res )
     !! Returns the |fuka| baryon mass density at a point \((x,y,z)\)
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),     INTENT( IN )         :: THIS
+      CLASS(bnsfuka),     INTENT( IN )         :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -633,12 +633,12 @@ MODULE bns_fuka
     END FUNCTION read_fuka_mass_density
 
 
-    MODULE FUNCTION read_fuka_spatial_metric( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_fuka_spatial_metric( this, x, y, z ) RESULT( res )
     !# Returns the |fuka| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),     INTENT( IN )       :: THIS
+      CLASS(bnsfuka),     INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -670,11 +670,11 @@ MODULE bns_fuka
     END FUNCTION is_hydro_positive
 
 
-    MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
+    MODULE FUNCTION get_field_array( this, field ) RESULT( field_array )
     !! Returns the [[bnsfuka]] member arrays named field
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),          INTENT( IN )             :: THIS
+      CLASS(bnsfuka),          INTENT( IN )             :: this
       !> Name of the desired [[bnsfuka]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       !> Desired [[bnsfuka]] member array
@@ -683,11 +683,11 @@ MODULE bns_fuka
     END FUNCTION get_field_array
 
 
-    MODULE FUNCTION get_field_value( THIS, field, n ) RESULT( field_value )
+    MODULE FUNCTION get_field_value( this, field, n ) RESULT( field_value )
     !! Returns the component n of the [[bnsfuka]] member arrays named field
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka),          INTENT( IN )             :: THIS
+      CLASS(bnsfuka),          INTENT( IN )             :: this
       !> Name of the desired [[bnsfuka]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       !> Component of the desired [[bnsfuka]] member array
@@ -698,40 +698,40 @@ MODULE bns_fuka
     END FUNCTION get_field_value
 
 
-    MODULE FUNCTION get_bns_identifier( THIS )
+    MODULE FUNCTION get_bns_identifier( this )
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN ):: THIS
+      CLASS(bnsfuka), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_bns_identifier
 
     END FUNCTION get_bns_identifier
 
 
-    MODULE FUNCTION get_eos1_fukaid( THIS )
+    MODULE FUNCTION get_eos1_fukaid( this )
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN ):: THIS
+      CLASS(bnsfuka), INTENT( IN ):: this
       ! Result
       INTEGER:: get_eos1_fukaid
 
     END FUNCTION get_eos1_fukaid
 
 
-    MODULE FUNCTION get_eos2_fukaid( THIS )
+    MODULE FUNCTION get_eos2_fukaid( this )
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN ):: THIS
+      CLASS(bnsfuka), INTENT( IN ):: this
       ! Result
       INTEGER:: get_eos2_fukaid
 
     END FUNCTION get_eos2_fukaid
 
 
-    MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
+    MODULE SUBROUTINE get_eos_parameters( this, i_matter, eos_params )
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
-      CLASS(bnsfuka), INTENT( IN ):: THIS
+      CLASS(bnsfuka), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
@@ -741,10 +741,10 @@ MODULE bns_fuka
     END SUBROUTINE get_eos_parameters
 
 
-    !MODULE FUNCTION get_bns_ptr( THIS )
+    !MODULE FUNCTION get_bns_ptr( this )
     !
     !  ! Argument
-    !  CLASS(bnsfuka), INTENT( IN ):: THIS
+    !  CLASS(bnsfuka), INTENT( IN ):: this
     !  ! Result
     !  TYPE(C_PTR):: get_bns_ptr
     !
@@ -915,7 +915,7 @@ MODULE bns_fuka
                                       lapse, &
                                       shift_x, shift_y, shift_z, &
                                       psi4, &
-                                      baryon_density, &
+                                      mass_density, &
                                       energy_density, &
                                       pressure, &
                                       v_euler_x, v_euler_y, v_euler_z ) &
@@ -957,7 +957,7 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_y
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
       REAL(C_DOUBLE), INTENT(OUT)       :: psi4
-      REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
+      REAL(C_DOUBLE), INTENT(OUT)       :: mass_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
       REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
@@ -972,7 +972,7 @@ MODULE bns_fuka
                                    psi4, &
                                    mass_density, &
                                    gamma_euler ) &
-      BIND(C, NAME= "get_fuka_id_mass_b")
+      BIND(C, NAME= "get_fuka_id_massb")
 
       !************************************************
       !
