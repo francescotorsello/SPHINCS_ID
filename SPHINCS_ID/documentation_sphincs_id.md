@@ -41,7 +41,6 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        bns = \(\mathrm{BNS}\)
 parallel: 80
 <!---graph_dir: doc-graphs--->
-<!---Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src--->
 <!---Project_url: https://francescotorsello.github.io/SPHINCS_ID-doc/--->
 
 #### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
@@ -59,6 +58,12 @@ Currently, it produces initial data for:
 The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
 
 SPHINCS_ID needs SPHINCS_BSSN to be compiled.
+
+---
+
+#### Acknowledgements
+
+It is a pleasure to thank Peter Diener and Stephan Rosswog for all the help and support they gave me during the development of SPHINCS_ID.
 
 ---
 

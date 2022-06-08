@@ -58,9 +58,9 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_mass= THIS% mass(i_matter)
+    get_mass= this% mass(i_matter)
 
   END PROCEDURE get_mass
 
@@ -78,9 +78,9 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_radii= THIS% radii(i_matter,:)
+    get_radii= this% radii(i_matter,:)
 
   END PROCEDURE get_radii
 
@@ -98,9 +98,9 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_center= THIS% center(i_matter,:)
+    get_center= this% center(i_matter,:)
 
   END PROCEDURE get_center
 
@@ -118,9 +118,9 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_barycenter= THIS% barycenter(i_matter,:)
+    get_barycenter= this% barycenter(i_matter,:)
 
   END PROCEDURE get_barycenter
 
@@ -138,10 +138,10 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    IF( i_matter == 1 ) get_eos= THIS% eos1
-    IF( i_matter == 2 ) get_eos= THIS% eos2
+    IF( i_matter == 1 ) get_eos= this% eos1
+    IF( i_matter == 2 ) get_eos= this% eos2
 
   END PROCEDURE get_eos
 
@@ -165,7 +165,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma_1= THIS% gamma_1
+    get_gamma_1= this% gamma_1
 
   END PROCEDURE get_gamma_1
 
@@ -184,7 +184,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma_2= THIS% gamma_2
+    get_gamma_2= this% gamma_2
 
   END PROCEDURE get_gamma_2
 
@@ -203,7 +203,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa_1= THIS% kappa_1
+    get_kappa_1= this% kappa_1
 
   END PROCEDURE get_kappa_1
 
@@ -222,7 +222,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa_2= THIS% kappa_2
+    get_kappa_2= this% kappa_2
 
   END PROCEDURE get_kappa_2
 
@@ -239,7 +239,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_angular_vel= THIS% angular_vel
+    get_angular_vel= this% angular_vel
 
   END PROCEDURE get_angular_vel
 
@@ -256,7 +256,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_distance= THIS% distance
+    get_distance= this% distance
 
   END PROCEDURE get_distance
 
@@ -274,7 +274,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_distance_com= THIS% distance_com
+    get_distance_com= this% distance_com
 
   END PROCEDURE get_distance_com
 
@@ -291,7 +291,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_mass1= THIS% mass1
+    get_mass1= this% mass(1)
 
   END PROCEDURE get_mass1
 
@@ -308,7 +308,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_mass2= THIS% mass2
+    get_mass2= this% mass(2)
 
   END PROCEDURE get_mass2
 
@@ -325,7 +325,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_grav_mass1= THIS% mass_grav1
+    get_grav_mass1= this% mass_grav(1)
 
   END PROCEDURE get_grav_mass1
 
@@ -342,7 +342,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_grav_mass2= THIS% mass_grav2
+    get_grav_mass2= this% mass_grav(2)
 
   END PROCEDURE get_grav_mass2
 
@@ -359,7 +359,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_adm_mass= THIS% adm_mass
+    get_adm_mass= this% adm_mass
 
   END PROCEDURE get_adm_mass
 
@@ -376,9 +376,9 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_linear_momentum= [ THIS% linear_momentum_x, &
-                           THIS% linear_momentum_y, &
-                           THIS% linear_momentum_z ]
+    get_linear_momentum= [ this% linear_momentum_x, &
+                           this% linear_momentum_y, &
+                           this% linear_momentum_z ]
 
   END PROCEDURE get_linear_momentum
 
@@ -395,9 +395,9 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_angular_momentum= [ THIS% angular_momentum_x, &
-                            THIS% angular_momentum_y, &
-                            THIS% angular_momentum_z ]
+    get_angular_momentum= [ this% angular_momentum_x, &
+                            this% angular_momentum_y, &
+                            this% angular_momentum_z ]
 
   END PROCEDURE get_angular_momentum
 
@@ -415,7 +415,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_radius1_x_comp= THIS% radius1_x_comp
+    get_radius1_x_comp= this% radius1_x_comp
 
   END PROCEDURE get_radius1_x_comp
 
@@ -432,7 +432,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_radius1_y= THIS% radius1_y
+    get_radius1_y= this% radius1_y
 
   END PROCEDURE get_radius1_y
 
@@ -449,7 +449,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_radius1_z= THIS% radius1_z
+    get_radius1_z= this% radius1_z
 
   END PROCEDURE get_radius1_z
 
@@ -467,7 +467,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_radius1_x_opp= THIS% radius1_x_opp
+    get_radius1_x_opp= this% radius1_x_opp
 
   END PROCEDURE get_radius1_x_opp
 
@@ -485,7 +485,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_center1_x= THIS% center1_x
+    get_center1_x= this% center1_x
 
   END PROCEDURE get_center1_x
 
@@ -502,7 +502,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_barycenter1_x= THIS% barycenter1_x
+    get_barycenter1_x= this% barycenter1_x
 
   END PROCEDURE get_barycenter1_x
 
@@ -520,7 +520,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_radius2_x_comp= THIS% radius2_x_comp
+    get_radius2_x_comp= this% radius2_x_comp
 
   END PROCEDURE get_radius2_x_comp
 
@@ -537,7 +537,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_radius2_y= THIS% radius2_y
+    get_radius2_y= this% radius2_y
 
   END PROCEDURE get_radius2_y
 
@@ -554,7 +554,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_radius2_z= THIS% radius2_z
+    get_radius2_z= this% radius2_z
 
   END PROCEDURE get_radius2_z
 
@@ -572,7 +572,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_radius2_x_opp= THIS% radius2_x_opp
+    get_radius2_x_opp= this% radius2_x_opp
 
   END PROCEDURE get_radius2_x_opp
 
@@ -590,7 +590,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_center2_x= THIS% center2_x
+    get_center2_x= this% center2_x
 
   END PROCEDURE get_center2_x
 
@@ -607,7 +607,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_barycenter2_x= THIS% barycenter2_x
+    get_barycenter2_x= this% barycenter2_x
 
   END PROCEDURE get_barycenter2_x
 
@@ -624,7 +624,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_ent_center1= THIS% ent_center1
+    get_ent_center1= this% ent_center1
 
   END PROCEDURE get_ent_center1
 
@@ -642,7 +642,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_nbar_center1= THIS% nbar_center1
+    get_nbar_center1= this% nbar_center1
 
   END PROCEDURE get_nbar_center1
 
@@ -660,7 +660,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_rho_center1= THIS% rho_center1
+    get_rho_center1= this% rho_center1
 
   END PROCEDURE get_rho_center1
 
@@ -677,7 +677,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_energy_density_center1= THIS% energy_density_center1
+    get_energy_density_center1= this% energy_density_center1
 
   END PROCEDURE get_energy_density_center1
 
@@ -694,7 +694,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_specific_energy_center1= THIS% specific_energy_center1
+    get_specific_energy_center1= this% specific_energy_center1
 
   END PROCEDURE get_specific_energy_center1
 
@@ -711,7 +711,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_pressure_center1= THIS% pressure_center1
+    get_pressure_center1= this% pressure_center1
 
   END PROCEDURE get_pressure_center1
 
@@ -728,7 +728,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_ent_center2= THIS% ent_center2
+    get_ent_center2= this% ent_center2
 
   END PROCEDURE get_ent_center2
 
@@ -746,7 +746,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_nbar_center2= THIS% nbar_center2
+    get_nbar_center2= this% nbar_center2
 
   END PROCEDURE get_nbar_center2
 
@@ -764,7 +764,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_rho_center2= THIS% rho_center2
+    get_rho_center2= this% rho_center2
 
   END PROCEDURE get_rho_center2
 
@@ -781,7 +781,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_energy_density_center2= THIS% energy_density_center2
+    get_energy_density_center2= this% energy_density_center2
 
   END PROCEDURE get_energy_density_center2
 
@@ -798,7 +798,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_specific_energy_center2= THIS% specific_energy_center2
+    get_specific_energy_center2= this% specific_energy_center2
 
   END PROCEDURE get_specific_energy_center2
 
@@ -815,7 +815,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_pressure_center2= THIS% pressure_center2
+    get_pressure_center2= this% pressure_center2
 
   END PROCEDURE get_pressure_center2
 
@@ -832,7 +832,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_eos1= THIS% eos1
+    get_eos1= this% eos1
 
   END PROCEDURE get_eos1
 
@@ -849,7 +849,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_eos2= THIS% eos2
+    get_eos2= this% eos2
 
   END PROCEDURE get_eos2
 
@@ -866,7 +866,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_npeos_1= THIS% npeos_1
+    get_npeos_1= this% npeos_1
 
   END PROCEDURE get_npeos_1
 
@@ -883,7 +883,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_npeos_2= THIS% npeos_2
+    get_npeos_2= this% npeos_2
 
   END PROCEDURE get_npeos_2
 
@@ -902,7 +902,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma0_1= THIS% gamma0_1
+    get_gamma0_1= this% gamma0_1
 
   END PROCEDURE get_gamma0_1
 
@@ -921,7 +921,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma0_2= THIS% gamma0_2
+    get_gamma0_2= this% gamma0_2
 
   END PROCEDURE get_gamma0_2
 
@@ -940,7 +940,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma1_1= THIS% gamma1_1
+    get_gamma1_1= this% gamma1_1
 
   END PROCEDURE get_gamma1_1
 
@@ -959,7 +959,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma1_2= THIS% gamma1_2
+    get_gamma1_2= this% gamma1_2
 
   END PROCEDURE get_gamma1_2
 
@@ -978,7 +978,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma2_1= THIS% gamma2_1
+    get_gamma2_1= this% gamma2_1
 
   END PROCEDURE get_gamma2_1
 
@@ -997,7 +997,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma2_2= THIS% gamma2_2
+    get_gamma2_2= this% gamma2_2
 
   END PROCEDURE get_gamma2_2
 
@@ -1016,7 +1016,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma3_1= THIS% gamma3_1
+    get_gamma3_1= this% gamma3_1
 
   END PROCEDURE get_gamma3_1
 
@@ -1035,7 +1035,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_gamma3_2= THIS% gamma3_2
+    get_gamma3_2= this% gamma3_2
 
   END PROCEDURE get_gamma3_2
 
@@ -1054,7 +1054,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa0_1= THIS% kappa0_1
+    get_kappa0_1= this% kappa0_1
 
   END PROCEDURE get_kappa0_1
 
@@ -1073,7 +1073,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa1_1= THIS% kappa1_1
+    get_kappa1_1= this% kappa1_1
 
   END PROCEDURE get_kappa1_1
 
@@ -1092,7 +1092,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa2_1= THIS% kappa2_1
+    get_kappa2_1= this% kappa2_1
 
   END PROCEDURE get_kappa2_1
 
@@ -1111,7 +1111,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa3_1= THIS% kappa3_1
+    get_kappa3_1= this% kappa3_1
 
   END PROCEDURE get_kappa3_1
 
@@ -1130,7 +1130,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa0_2= THIS% kappa0_2
+    get_kappa0_2= this% kappa0_2
 
   END PROCEDURE get_kappa0_2
 
@@ -1149,7 +1149,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa1_2= THIS% kappa1_2
+    get_kappa1_2= this% kappa1_2
 
   END PROCEDURE get_kappa1_2
 
@@ -1168,7 +1168,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa2_2= THIS% kappa2_2
+    get_kappa2_2= this% kappa2_2
 
   END PROCEDURE get_kappa2_2
 
@@ -1187,7 +1187,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_kappa3_2= THIS% kappa3_2
+    get_kappa3_2= this% kappa3_2
 
   END PROCEDURE get_kappa3_2
 
@@ -1207,7 +1207,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_logp1_1= THIS% logp1_1
+    get_logp1_1= this% logp1_1
 
   END PROCEDURE get_logp1_1
 
@@ -1227,7 +1227,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_logp1_2= THIS% logp1_2
+    get_logp1_2= this% logp1_2
 
   END PROCEDURE get_logp1_2
 
@@ -1247,7 +1247,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_logRho0_1= THIS% logRho0_1
+    get_logRho0_1= this% logRho0_1
 
   END PROCEDURE get_logRho0_1
 
@@ -1267,7 +1267,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_logRho0_2= THIS% logRho0_2
+    get_logRho0_2= this% logRho0_2
 
   END PROCEDURE get_logRho0_2
 
@@ -1287,7 +1287,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_logRho1_1= THIS% logRho1_1
+    get_logRho1_1= this% logRho1_1
 
   END PROCEDURE get_logRho1_1
 
@@ -1307,7 +1307,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_logRho1_2= THIS% logRho1_2
+    get_logRho1_2= this% logRho1_2
 
   END PROCEDURE get_logRho1_2
 
@@ -1327,7 +1327,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_logRho2_1= THIS% logRho2_1
+    get_logRho2_1= this% logRho2_1
 
   END PROCEDURE get_logRho2_1
 
@@ -1347,7 +1347,7 @@ SUBMODULE (bns_base) access
 
     IMPLICIT NONE
 
-    get_logRho2_2= THIS% logRho2_2
+    get_logRho2_2= this% logRho2_2
 
   END PROCEDURE get_logRho2_2
 

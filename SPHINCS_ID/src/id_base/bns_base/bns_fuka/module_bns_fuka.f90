@@ -140,6 +140,12 @@ MODULE bns_fuka
     !      See the last part of the PROGRAM in sphincs_id.f90, for example.
     TYPE(C_PTR):: bns_ptr
 
+    DOUBLE PRECISION:: komar_mass
+    !! Komar mass of the binary system \([M_\odot]\)
+
+    CHARACTER( LEN=: ), ALLOCATABLE:: eos_type
+    !! String containing the type of the |eos|
+
 
     CONTAINS
 
@@ -816,16 +822,16 @@ MODULE bns_fuka
 
 
     SUBROUTINE get_fuka_id( optr, &
-                              x, y, z, &
-                              lapse, &
-                              shift_x, shift_y, shift_z, &
-                              psi4, &
-                              k_xx, k_xy, k_xz, &
-                              k_yy, k_yz, k_zz, &
-                              mass_density, &
-                              energy_density, &
-                              pressure, &
-                              v_euler_x, v_euler_y, v_euler_z ) &
+                            x, y, z, &
+                            lapse, &
+                            shift_x, shift_y, shift_z, &
+                            psi4, &
+                            k_xx, k_xy, k_xz, &
+                            k_yy, k_yz, k_zz, &
+                            mass_density, &
+                            energy_density, &
+                            pressure, &
+                            v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_fuka_id")
 
       !*************************************************
@@ -1254,6 +1260,10 @@ MODULE bns_fuka
                                    mass2,                  &
                                    massg1,                 &
                                    massg2,                 &
+                                   radius1_min,            &
+                                   radius1_max,            &
+                                   radius2_min,            &
+                                   radius2_max,            &
                                    adm_mass,               &
                                    komar_mass,             &
                                    adm_linear_momentum_x,  &
@@ -1289,13 +1299,17 @@ MODULE bns_fuka
       IMPLICIT NONE
 
       TYPE(C_PTR),    INTENT(IN), VALUE :: optr
-      !! C pointer pointing to a |fuka| BNS_export object
+      !! C pointer pointing to a |fuka| bns_export object
       REAL(C_DOUBLE), INTENT(OUT)       :: angular_vel
       REAL(C_DOUBLE), INTENT(OUT)       :: distance
       REAL(C_DOUBLE), INTENT(OUT)       :: mass1
       REAL(C_DOUBLE), INTENT(OUT)       :: mass2
       REAL(C_DOUBLE), INTENT(OUT)       :: massg1
       REAL(C_DOUBLE), INTENT(OUT)       :: massg2
+      REAL(C_DOUBLE), INTENT(OUT)       :: radius1_min
+      REAL(C_DOUBLE), INTENT(OUT)       :: radius1_max
+      REAL(C_DOUBLE), INTENT(OUT)       :: radius2_min
+      REAL(C_DOUBLE), INTENT(OUT)       :: radius2_max
       REAL(C_DOUBLE), INTENT(OUT)       :: adm_mass
       REAL(C_DOUBLE), INTENT(OUT)       :: komar_mass
       REAL(C_DOUBLE), INTENT(OUT)       :: adm_linear_momentum_x

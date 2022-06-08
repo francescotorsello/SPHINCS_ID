@@ -60,7 +60,7 @@ default_flavour = full_flavour
 
 # 'TRUE'  : build in DEBUG MODE
 # 'FALSE' : build in PRODUCTION MODE
-default_debug = 'TRUE'
+default_debug = 'FALSE'
 
 # Which compilers to use
 #   Fortran : 'gfortran', 'ifort'

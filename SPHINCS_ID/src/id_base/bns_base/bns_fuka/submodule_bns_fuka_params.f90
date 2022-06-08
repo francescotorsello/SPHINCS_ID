@@ -62,250 +62,186 @@ SUBMODULE (bns_fuka) params
     USE constants,  ONLY: c_light, cm2km
     USE utility,    ONLY: Msun_geo, km2m, lorene2hydrobase, &
                           k_lorene2hydrobase, &
-                          k_lorene2hydrobase_piecewisepolytrope
+                          k_lorene2hydrobase_piecewisepolytrope, &
+                          two, four, five
 
     IMPLICIT NONE
-  !
-  !  INTEGER:: i, nchars
-  !  INTEGER, PARAMETER:: str_length= 100
-  !
-  !  CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos1_tmp_c
-  !  CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos2_tmp_c
-  !  !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos1_tmp
-  !  !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos2_tmp
-  !
-  !  PRINT *, "** Executing the import_lorene_id_params subroutine..."
-  !
-  !  CALL get_lorene_id_params( THIS% bns_ptr, &
-  !                             THIS% angular_vel, &
-  !                             THIS% distance, &
-  !                             THIS% distance_com, &
-  !                             THIS% mass1, &
-  !                             THIS% mass2, &
-  !                             THIS% mass_grav1, &
-  !                             THIS% mass_grav2, &
-  !                             THIS% adm_mass, &
-  !                             THIS% linear_momentum_x, &
-  !                             THIS% linear_momentum_y, &
-  !                             THIS% linear_momentum_z, &
-  !                             THIS% angular_momentum_x, &
-  !                             THIS% angular_momentum_y, &
-  !                             THIS% angular_momentum_z, &
-  !                             THIS% area_radius1, &
-  !                             THIS% radius1_x_comp, &
-  !                             THIS% radius1_y, &
-  !                             THIS% radius1_z, &
-  !                             THIS% radius1_x_opp, &
-  !                             THIS% center1_x, &
-  !                             THIS% barycenter1_x, &
-  !                             THIS% area_radius2, &
-  !                             THIS% radius2_x_comp, &
-  !                             THIS% radius2_y, &
-  !                             THIS% radius2_z, &
-  !                             THIS% radius2_x_opp, &
-  !                             THIS% center2_x, &
-  !                             THIS% barycenter2_x, &
-  !                             THIS% ent_center1, &
-  !                             THIS% nbar_center1, &
-  !                             THIS% rho_center1, &
-  !                             THIS% energy_density_center1, &
-  !                             THIS% specific_energy_center1, &
-  !                             THIS% pressure_center1, &
-  !                             THIS% ent_center2, &
-  !                             THIS% nbar_center2, &
-  !                             THIS% rho_center2, &
-  !                             THIS% energy_density_center2, &
-  !                             THIS% specific_energy_center2, &
-  !                             THIS% pressure_center2, &
-  !                             eos1_tmp_c, &
-  !                             eos2_tmp_c, &
-  !                             THIS% eos1_loreneid, &
-  !                             THIS% eos2_loreneid, &
-  !                             THIS% gamma_1, &
-  !                             THIS% kappa_1, &
-  !                             THIS% gamma_2, &
-  !                             THIS% kappa_2, &
-  !                             THIS% npeos_1, &
-  !                             THIS% gamma0_1, &
-  !                             THIS% gamma1_1, &
-  !                             THIS% gamma2_1, &
-  !                             THIS% gamma3_1, &
-  !                             THIS% kappa0_1, &
-  !                             THIS% kappa1_1, &
-  !                             THIS% kappa2_1, &
-  !                             THIS% kappa3_1, &
-  !                             THIS% logP1_1,  &
-  !                             THIS% logRho0_1,&
-  !                             THIS% logRho1_1,&
-  !                             THIS% logRho2_1,&
-  !                             THIS% npeos_2,  &
-  !                             THIS% gamma0_2, &
-  !                             THIS% gamma1_2, &
-  !                             THIS% gamma2_2, &
-  !                             THIS% gamma3_2, &
-  !                             THIS% kappa0_2, &
-  !                             THIS% kappa1_2, &
-  !                             THIS% kappa2_2, &
-  !                             THIS% kappa3_2, &
-  !                             THIS% logP1_2,  &
-  !                             THIS% logRho0_2,&
-  !                             THIS% logRho1_2,&
-  !                             THIS% logRho2_2 )
-  !
+
+    INTEGER:: i, nchars
+    INTEGER, PARAMETER:: str_length= 100
+
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_type_tmp_c
+
+
+  !  PRINT *, "** Executing the read_fuka_id_params subroutine..."
+
+    CALL get_fuka_id_params( this% bns_ptr               , &
+                             this% angular_vel           , &
+                             this% distance              , &
+                             this% mass(1)               , &
+                             this% mass(2)               , &
+                             this% mass_grav(1)          , &
+                             this% mass_grav(2)          , &
+                             this% radius1_x_opp         , &
+                             this% radius1_x_comp        , &
+                             this% radius2_x_opp         , &
+                             this% radius2_x_comp        , &
+                             this% adm_mass              , &
+                             this% komar_mass            , &
+                             this% linear_momentum_x     , &
+                             this% linear_momentum_y     , &
+                             this% linear_momentum_z     , &
+                             this% angular_momentum_z    , &
+                             this% barycenter_system(1)  , &
+                             this% barycenter_system(2)  , &
+                             this% barycenter_system(3)  , &
+                             this% area_radius1          , &
+                             this% center1_x             , &
+                             this% area_radius2          , &
+                             this% center2_x             , &
+                             this% ent_center1           , &
+                             this% rho_center1           , &
+                             this% energy_density_center1, &
+                             this% ent_center2           , &
+                             this% rho_center2           , &
+                             this% energy_density_center2, &
+                             eos_type_tmp_c )
+
   !  ! Convert distances from |fuka| units (km) to SPHINCS units (Msun_geo)
   !  ! See MODULE constants for the definition of Msun_geo
-  !  THIS% distance      = THIS% distance/Msun_geo
-  !  THIS% distance_com  = THIS% distance_com/Msun_geo
-  !  THIS% area_radius1  = THIS% area_radius1/Msun_geo
-  !  THIS% radius1_x_comp= THIS% radius1_x_comp/Msun_geo
-  !  THIS% radius1_y     = THIS% radius1_y/Msun_geo
-  !  THIS% radius1_z     = THIS% radius1_z/Msun_geo
-  !  THIS% radius1_x_opp = THIS% radius1_x_opp/Msun_geo
-  !  THIS% center1_x     = THIS% center1_x/Msun_geo
-  !  THIS% barycenter1_x = THIS% barycenter1_x/Msun_geo
-  !  THIS% area_radius2  = THIS% area_radius2/Msun_geo
-  !  THIS% radius2_x_comp= THIS% radius2_x_comp/Msun_geo
-  !  THIS% radius2_y     = THIS% radius2_y/Msun_geo
-  !  THIS% radius2_z     = THIS% radius2_z/Msun_geo
-  !  THIS% radius2_x_opp = THIS% radius2_x_opp/Msun_geo
-  !  THIS% center2_x     = THIS% center2_x/Msun_geo
-  !  THIS% barycenter2_x = THIS% barycenter2_x/Msun_geo
+  !  this% distance      = this% distance/Msun_geo
+  !  this% distance_com  = this% distance_com/Msun_geo
+  !  this% area_radius1  = this% area_radius1/Msun_geo
+  !  this% radius1_x_comp= this% radius1_x_comp/Msun_geo
+  !  this% radius1_y     = this% radius1_y/Msun_geo
+  !  this% radius1_z     = this% radius1_z/Msun_geo
+  !  this% radius1_x_opp = this% radius1_x_opp/Msun_geo
+  !  this% center1_x     = this% center1_x/Msun_geo
+  !  this% barycenter1_x = this% barycenter1_x/Msun_geo
+  !  this% area_radius2  = this% area_radius2/Msun_geo
+  !  this% radius2_x_comp= this% radius2_x_comp/Msun_geo
+  !  this% radius2_y     = this% radius2_y/Msun_geo
+  !  this% radius2_z     = this% radius2_z/Msun_geo
+  !  this% radius2_x_opp = this% radius2_x_opp/Msun_geo
+  !  this% center2_x     = this% center2_x/Msun_geo
+  !  this% barycenter2_x = this% barycenter2_x/Msun_geo
   !
-  !  THIS% mass(1)= THIS% mass1
-  !  THIS% mass(2)= THIS% mass2
+  !  this% mass(1)= this% mass1
+  !  this% mass(2)= this% mass2
   !
-  !  THIS% radii(1,:)= [THIS% radius1_x_opp, THIS% radius1_x_comp, &
-  !                     THIS% radius1_y, THIS% radius1_y, &
-  !                     THIS% radius1_z, THIS% radius1_z]
-  !  THIS% radii(2,:)= [THIS% radius2_x_comp, THIS% radius2_x_opp, &
-  !                     THIS% radius2_y, THIS% radius2_y, &
-  !                     THIS% radius2_z, THIS% radius2_z]
+
+    this% radius1_y= this% radius1_x_opp
+    this% radius1_z= this% radius1_x_opp
+    this% radius2_y= this% radius2_x_opp
+    this% radius2_z= this% radius2_x_opp
+
+    this% radii(1,:)= [this% radius1_x_opp, this% radius1_x_comp, &
+                       this% radius1_y, this% radius1_y, &
+                       this% radius1_z, this% radius1_z]
+    this% radii(2,:)= [this% radius2_x_comp, this% radius2_x_opp, &
+                       this% radius2_y, this% radius2_y, &
+                       this% radius2_z, this% radius2_z]
   !
-  !  THIS% center(1,:)= [THIS% center1_x, 0.0D0, 0.0D0]
-  !  THIS% center(2,:)= [THIS% center2_x, 0.0D0, 0.0D0]
+  !  this% center(1,:)= [this% center1_x, 0.0D0, 0.0D0]
+  !  this% center(2,:)= [this% center2_x, 0.0D0, 0.0D0]
   !
-  !  THIS% barycenter(1,:)= [THIS% barycenter1_x, 0.0D0, 0.0D0]
-  !  THIS% barycenter(2,:)= [THIS% barycenter2_x, 0.0D0, 0.0D0]
+  !  this% barycenter(1,:)= [this% barycenter1_x, 0.0D0, 0.0D0]
+  !  this% barycenter(2,:)= [this% barycenter2_x, 0.0D0, 0.0D0]
   !
   !  ! Convert hydro quantities from |fuka| units to SPHINCS units
-  !  THIS% nbar_center1           = THIS% nbar_center1*(MSun_geo*km2m)**3
-  !  THIS% rho_center1            = THIS% rho_center1*lorene2hydrobase
-  !  THIS% energy_density_center1 = THIS% energy_density_center1*lorene2hydrobase
-  !  THIS% pressure_center1       = THIS% pressure_center1*lorene2hydrobase
-  !  THIS% nbar_center2           = THIS% nbar_center2*(MSun_geo*km2m)**3
-  !  THIS% rho_center2            = THIS% rho_center2*lorene2hydrobase
-  !  THIS% energy_density_center2 = THIS% energy_density_center2*lorene2hydrobase
-  !  THIS% pressure_center2       = THIS% pressure_center2*lorene2hydrobase
+  !  this% nbar_center1           = this% nbar_center1*(MSun_geo*km2m)**3
+  !  this% rho_center1            = this% rho_center1*lorene2hydrobase
+  !  this% energy_density_center1 = this% energy_density_center1*lorene2hydrobase
+  !  this% pressure_center1       = this% pressure_center1*lorene2hydrobase
+  !  this% nbar_center2           = this% nbar_center2*(MSun_geo*km2m)**3
+  !  this% rho_center2            = this% rho_center2*lorene2hydrobase
+  !  this% energy_density_center2 = this% energy_density_center2*lorene2hydrobase
+  !  this% pressure_center2       = this% pressure_center2*lorene2hydrobase
   !
   !  ! Convert polytropic constants from |fuka| units to SPHINCS units
-  !  IF( THIS% eos1_loreneid == 1 )THEN ! If the EOS is polytropic
+  !  IF( this% eos1_loreneid == 1 )THEN ! If the EOS is polytropic
   !
-  !    THIS% kappa_1= THIS% kappa_1*k_lorene2hydrobase( THIS% gamma_1 )
-  !    THIS% kappa_2= THIS% kappa_2*k_lorene2hydrobase( THIS% gamma_2 )
+  !    this% kappa_1= this% kappa_1*k_lorene2hydrobase( this% gamma_1 )
+  !    this% kappa_2= this% kappa_2*k_lorene2hydrobase( this% gamma_2 )
   !
-  !  ELSEIF( THIS% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
+  !  ELSEIF( this% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
   !
-  !    THIS% kappa0_1= THIS% kappa0_1 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma0_1 )
-  !    THIS% kappa1_1= THIS% kappa1_1 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma1_1 )
-  !    THIS% kappa2_1= THIS% kappa2_1 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma2_1 )
-  !    THIS% kappa3_1= THIS% kappa3_1 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3_1 )
-  !    THIS% kappa0_2= THIS% kappa0_2 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma0_2 )
-  !    THIS% kappa1_2= THIS% kappa1_2 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma1_2 )
-  !    THIS% kappa2_2= THIS% kappa2_2 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma2_2 )
-  !    THIS% kappa3_2= THIS% kappa3_2 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( THIS% gamma3_2 )
+  !    this% kappa0_1= this% kappa0_1 &
+  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma0_1 )
+  !    this% kappa1_1= this% kappa1_1 &
+  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma1_1 )
+  !    this% kappa2_1= this% kappa2_1 &
+  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma2_1 )
+  !    this% kappa3_1= this% kappa3_1 &
+  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_1 )
+  !    this% kappa0_2= this% kappa0_2 &
+  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma0_2 )
+  !    this% kappa1_2= this% kappa1_2 &
+  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma1_2 )
+  !    this% kappa2_2= this% kappa2_2 &
+  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma2_2 )
+  !    this% kappa3_2= this% kappa3_2 &
+  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_2 )
   !
-  !  ELSEIF( THIS% eos1_loreneid == 17 .OR. THIS% eos1_loreneid == 20 )THEN
+  !  ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
   !  ! If the EOS is tabulated
   !
   !  ELSE
   !
   !    PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
   !             " The equation of state is unknown! LORENE EOS IDs=", &
-  !             THIS% eos1_loreneid, ", ", THIS% eos2_loreneid
+  !             this% eos1_loreneid, ", ", this% eos2_loreneid
   !    STOP
   !
   !  ENDIF
   !
-  !  ! Compute mOmega
-  !
-  !  THIS% mOmega= THIS% angular_vel/(c_light*cm2km) &
-  !                *(THIS% mass_grav1 + THIS% mass_grav2)*Msun_geo
-  !
-  !  ! Compute t_merger
-  !
-  !  THIS% t_merger= 5.0D0/256.0D0*(THIS% distance**4.0D0) &
-  !                  /( THIS% mass_grav1*THIS% mass_grav2* &
-  !                     ( THIS% mass_grav1 + THIS% mass_grav2 ) )
-  !
-  !  ! Convert C++ strings to FORTRAN strings
-  !  i= 1
-  !  DO
-  !    IF( eos1_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
-  !    i= i + 1
-  !  ENDDO
-  !  nchars = i - 1
-  !
-  !  !ALLOCATE( eos1_tmp( nchars ), STAT= ios, ERRMSG= err_msg )
-  !  !IF( ios > 0 )THEN
-  !  !   PRINT *, "...allocation error for array eos1_tmp. ", &
-  !  !            "The error message is ", err_msg
-  !  !   PRINT *, "The STAT variable is ", ios
-  !  !   STOP
-  !  !ENDIF
-  !  !eos1_tmp = TRANSFER( eos1_tmp_c(1:nchars), eos1_tmp )
-  !
-  !  ALLOCATE( CHARACTER(nchars):: THIS% eos1, STAT= ios, ERRMSG= err_msg )
-  !  IF( ios > 0 )THEN
-  !     PRINT *, "...allocation error for string eos1. ", &
-  !              "The error message is ", err_msg
-  !     PRINT *, "The STAT variable is ", ios
-  !     STOP
-  !  ENDIF
-  !  THIS% eos1= TRANSFER( eos1_tmp_c(1:nchars), THIS% eos1 )
-  !  !DO i= 1, nchars, 1
-  !  !  THIS% eos1(i:i)= eos1_tmp(i)
-  !  !ENDDO
-  !
-  !  i= 1
-  !  DO
-  !    IF( eos2_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
-  !    i= i + 1
-  !  ENDDO
-  !  nchars = i - 1
-  !
-  !  !ALLOCATE( eos2_tmp( nchars ), STAT= ios, ERRMSG= err_msg )
-  !  !IF( ios > 0 )THEN
-  !  !   PRINT *, "...allocation error for array eos2_tmp. ", &
-  !  !            "The error message is ", err_msg
-  !  !   PRINT *, "The STAT variable is ", ios
-  !  !   STOP
-  !  !ENDIF
-  !  !eos2_tmp = TRANSFER( eos2_tmp_c(1:nchars), eos2_tmp )
-  !
-  !  ALLOCATE( CHARACTER(nchars):: THIS% eos2, STAT= ios, ERRMSG= err_msg )
-  !  IF( ios > 0 )THEN
-  !     PRINT *, "...allocation error for string eos2. ", &
-  !              "The error message is ", err_msg
-  !     PRINT *, "The STAT variable is ", ios
-  !     STOP
-  !  ENDIF
-  !  THIS% eos2= TRANSFER( eos2_tmp_c(1:nchars), THIS% eos2 )
-  !  !DO i= 1, nchars, 1
-  !  !  THIS% eos2(i:i)= eos2_tmp(i)
-  !  !ENDDO
-  !
-  !  CALL print_id_params( THIS )
-  !
-  !  PRINT *, "** Subroutine import_lorene_id_params executed."
-  !  PRINT *
+    ! Compute mOmega
+
+    this% mOmega= this% angular_vel/(c_light*cm2km) &
+                  *(this% mass_grav1 + this% mass_grav2)*Msun_geo
+
+    ! Compute t_merger
+
+    this% t_merger= five/(two**(two*four))*(this% distance**four) &
+                    /( this% mass_grav1*this% mass_grav2* &
+                       ( this% mass_grav1 + this% mass_grav2 ) )
+
+    ! Convert C++ strings to FORTRAN strings
+    i= 1
+    DO
+      IF( eos_type_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
+
+    !ALLOCATE( eos1_tmp( nchars ), STAT= ios, ERRMSG= err_msg )
+    !IF( ios > 0 )THEN
+    !   PRINT *, "...allocation error for array eos1_tmp. ", &
+    !            "The error message is ", err_msg
+    !   PRINT *, "The STAT variable is ", ios
+    !   STOP
+    !ENDIF
+    !eos1_tmp = TRANSFER( eos1_tmp_c(1:nchars), eos1_tmp )
+
+    ALLOCATE( CHARACTER(nchars):: this% eos_type, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos_type. ", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       STOP
+    ENDIF
+    this% eos_type= TRANSFER( eos_type_tmp_c(1:nchars), this% eos_type )
+    !DO i= 1, nchars, 1
+    !  this% eos1(i:i)= eos1_tmp(i)
+    !ENDDO
+
+    this% eos1= this% eos_type
+    this% eos2= this% eos_type
+
+  !  CALL print_id_params( this )
+
+    !PRINT *, "** Subroutine read_fuka_id_params executed."
+    !PRINT *
 
   END PROCEDURE read_fuka_id_params
 

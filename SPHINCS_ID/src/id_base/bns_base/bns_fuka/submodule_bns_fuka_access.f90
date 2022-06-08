@@ -63,91 +63,91 @@ SUBMODULE (bns_fuka) access
 
     CASE( "lapse" )
 
-      field_array= THIS% lapse
+      field_array= this% lapse
 
     CASE( "shift_x" )
 
-      field_array= THIS% shift_x
+      field_array= this% shift_x
 
     CASE( "shift_y" )
 
-      field_array= THIS% shift_y
+      field_array= this% shift_y
 
     CASE( "shift_z" )
 
-      field_array= THIS% shift_z
+      field_array= this% shift_z
 
     CASE( "g_xx" )
 
-      field_array= THIS% g_xx
+      field_array= this% g_xx
 
     CASE( "g_xy" )
 
-      field_array= THIS% g_xy
+      field_array= this% g_xy
 
     CASE( "g_xz" )
 
-      field_array= THIS% g_xz
+      field_array= this% g_xz
 
     CASE( "g_yy" )
 
-      field_array= THIS% g_yy
+      field_array= this% g_yy
 
     CASE( "g_yz" )
 
-      field_array= THIS% g_yz
+      field_array= this% g_yz
 
     CASE( "g_zz" )
 
-      field_array= THIS% g_zz
+      field_array= this% g_zz
 
     CASE( "k_xx" )
 
-      field_array= THIS% k_xx
+      field_array= this% k_xx
 
     CASE( "k_xy" )
 
-      field_array= THIS% k_xy
+      field_array= this% k_xy
 
     CASE( "k_xz" )
 
-      field_array= THIS% k_xz
+      field_array= this% k_xz
 
     CASE( "k_yy" )
 
-      field_array= THIS% k_yy
+      field_array= this% k_yy
 
     CASE( "k_yz" )
 
-      field_array= THIS% k_yz
+      field_array= this% k_yz
 
     CASE( "k_zz" )
 
-      field_array= THIS% k_zz
+      field_array= this% k_zz
 
     CASE( "baryon_density" )
 
-      field_array= THIS% mass_density
+      field_array= this% mass_density
 
     CASE( "energy_density" )
 
-      field_array= THIS% energy_density
+      field_array= this% energy_density
 
     CASE( "specific_energy" )
 
-      field_array= THIS% specific_energy
+      field_array= this% specific_energy
 
     CASE( "v_euler_x" )
 
-      field_array= THIS% v_euler_x
+      field_array= this% v_euler_x
 
     CASE( "v_euler_y" )
 
-      field_array= THIS% v_euler_y
+      field_array= this% v_euler_y
 
     CASE( "v_euler_z" )
 
-      field_array= THIS% v_euler_z
+      field_array= this% v_euler_z
 
     CASE DEFAULT
 
@@ -178,91 +178,91 @@ SUBMODULE (bns_fuka) access
 
     CASE( "lapse" )
 
-      field_value= THIS% lapse( n )
+      field_value= this% lapse( n )
 
     CASE( "shift_x" )
 
-      field_value= THIS% shift_x( n )
+      field_value= this% shift_x( n )
 
     CASE( "shift_y" )
 
-      field_value= THIS% shift_y( n )
+      field_value= this% shift_y( n )
 
     CASE( "shift_z" )
 
-      field_value= THIS% shift_z( n )
+      field_value= this% shift_z( n )
 
     CASE( "g_xx" )
 
-      field_value= THIS% g_xx( n )
+      field_value= this% g_xx( n )
 
     CASE( "g_xy" )
 
-      field_value= THIS% g_xy( n )
+      field_value= this% g_xy( n )
 
     CASE( "g_xz" )
 
-      field_value= THIS% g_xz( n )
+      field_value= this% g_xz( n )
 
     CASE( "g_yy" )
 
-      field_value= THIS% g_yy( n )
+      field_value= this% g_yy( n )
 
     CASE( "g_yz" )
 
-      field_value= THIS% g_yz( n )
+      field_value= this% g_yz( n )
 
     CASE( "g_zz" )
 
-      field_value= THIS% g_zz( n )
+      field_value= this% g_zz( n )
 
     CASE( "k_xx" )
 
-      field_value= THIS% k_xx( n )
+      field_value= this% k_xx( n )
 
     CASE( "k_xy" )
 
-      field_value= THIS% k_xy( n )
+      field_value= this% k_xy( n )
 
     CASE( "k_xz" )
 
-      field_value= THIS% k_xz( n )
+      field_value= this% k_xz( n )
 
     CASE( "k_yy" )
 
-      field_value= THIS% k_yy( n )
+      field_value= this% k_yy( n )
 
     CASE( "k_yz" )
 
-      field_value= THIS% k_yz( n )
+      field_value= this% k_yz( n )
 
     CASE( "k_zz" )
 
-      field_value= THIS% k_zz( n )
+      field_value= this% k_zz( n )
 
     CASE( "baryon_density" )
 
-      field_value= THIS% baryon_density( n )
+      field_value= this% mass_density( n )
 
     CASE( "energy_density" )
 
-      field_value= THIS% energy_density( n )
+      field_value= this% energy_density( n )
 
     CASE( "specific_energy" )
 
-      field_value= THIS% specific_energy( n )
+      field_value= this% specific_energy( n )
 
     CASE( "v_euler_x" )
 
-      field_value= THIS% v_euler_x( n )
+      field_value= this% v_euler_x( n )
 
     CASE( "v_euler_y" )
 
-      field_value= THIS% v_euler_y( n )
+      field_value= this% v_euler_y( n )
 
     CASE( "v_euler_z" )
 
-      field_value= THIS% v_euler_z( n )
+      field_value= this% v_euler_z( n )
 
     CASE DEFAULT
 
@@ -288,7 +288,7 @@ SUBMODULE (bns_fuka) access
 
     IMPLICIT NONE
 
-    get_bns_identifier= THIS% bns_identifier
+    get_bns_identifier= this% bns_identifier
 
   END PROCEDURE get_bns_identifier
 
@@ -317,7 +317,7 @@ SUBMODULE (bns_fuka) access
   !
   !  IMPLICIT NONE
   !
-  !  get_bns_ptr= THIS% bns_ptr
+  !  get_bns_ptr= this% bns_ptr
   !
   !END PROCEDURE get_bns_ptr
 
@@ -334,7 +334,7 @@ SUBMODULE (bns_fuka) access
 
     IMPLICIT NONE
 
-  !  get_eos1_fukaid= THIS% eos1_fukaid
+  !  get_eos1_fukaid= this% eos1_fukaid
 
   END PROCEDURE get_eos1_fukaid
 
@@ -351,7 +351,7 @@ SUBMODULE (bns_fuka) access
 
     IMPLICIT NONE
 
-  !  get_eos2_fukaid= THIS% eos2_fukaid
+  !  get_eos2_fukaid= this% eos2_fukaid
 
   END PROCEDURE get_eos2_fukaid
 
@@ -369,58 +369,58 @@ SUBMODULE (bns_fuka) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
     !IF( i_matter == 1 )THEN
     !
-    !  IF( THIS% eos1_fukaid == 1 )THEN
+    !  IF( this% eos1_fukaid == 1 )THEN
     !
-    !    eos_params= [ DBLE(THIS% eos1_fukaid), THIS% gamma_1, THIS% kappa_1 ]
+    !    eos_params= [ DBLE(this% eos1_fukaid), this% gamma_1, this% kappa_1 ]
     !
-    !  ELSEIF( THIS% eos1_fukaid == 110 )THEN
+    !  ELSEIF( this% eos1_fukaid == 110 )THEN
     !
-    !    eos_params= [ DBLE(THIS% eos1_fukaid), DBLE(THIS% npeos_1), &
-    !          THIS% gamma0_1, THIS% gamma1_1, THIS% gamma2_1, THIS% gamma3_1, &
-    !          THIS% kappa0_1, THIS% kappa1_1, THIS% kappa2_1, THIS% kappa3_1, &
-    !          THIS% logP1_1, &
-    !          THIS% logRho0_1, THIS% logRho1_1, THIS% logRho2_1 ]
+    !    eos_params= [ DBLE(this% eos1_fukaid), DBLE(this% npeos_1), &
+    !          this% gamma0_1, this% gamma1_1, this% gamma2_1, this% gamma3_1, &
+    !          this% kappa0_1, this% kappa1_1, this% kappa2_1, this% kappa3_1, &
+    !          this% logP1_1, &
+    !          this% logRho0_1, this% logRho1_1, this% logRho2_1 ]
     !
-    !  ELSEIF( THIS% eos1_fukaid == 17 .OR. THIS% eos1_fukaid == 20 )THEN
+    !  ELSEIF( this% eos1_fukaid == 17 .OR. this% eos1_fukaid == 20 )THEN
     !
-    !    eos_params= [ DBLE(THIS% eos1_fukaid) ]
+    !    eos_params= [ DBLE(this% eos1_fukaid) ]
     !
     !  ELSE
     !
     !    PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
     !             " The EOS on star 1 is unknown! LORENE EOS ID=", &
-    !             THIS% eos1_fukaid
+    !             this% eos1_fukaid
     !    STOP
     !
     !  ENDIF
     !
     !ELSEIF( i_matter == 2 )THEN
     !
-    !  IF( THIS% eos2_fukaid == 1 )THEN
+    !  IF( this% eos2_fukaid == 1 )THEN
     !
-    !    eos_params= [ DBLE(THIS% eos2_fukaid), THIS% gamma_2, THIS% kappa_2 ]
+    !    eos_params= [ DBLE(this% eos2_fukaid), this% gamma_2, this% kappa_2 ]
     !
-    !  ELSEIF( THIS% eos2_fukaid == 110 )THEN
+    !  ELSEIF( this% eos2_fukaid == 110 )THEN
     !
-    !    eos_params= [ DBLE(THIS% eos2_fukaid), DBLE(THIS% npeos_2), &
-    !          THIS% gamma0_2, THIS% gamma1_2, THIS% gamma2_2, THIS% gamma3_2, &
-    !          THIS% kappa0_2, THIS% kappa1_2, THIS% kappa2_2, THIS% kappa3_2, &
-    !          THIS% logP1_2, &
-    !          THIS% logRho0_2, THIS% logRho1_2, THIS% logRho2_2 ]
+    !    eos_params= [ DBLE(this% eos2_fukaid), DBLE(this% npeos_2), &
+    !          this% gamma0_2, this% gamma1_2, this% gamma2_2, this% gamma3_2, &
+    !          this% kappa0_2, this% kappa1_2, this% kappa2_2, this% kappa3_2, &
+    !          this% logP1_2, &
+    !          this% logRho0_2, this% logRho1_2, this% logRho2_2 ]
     !
-    !  ELSEIF( THIS% eos2_fukaid == 17 .OR. THIS% eos2_fukaid == 20 )THEN
+    !  ELSEIF( this% eos2_fukaid == 17 .OR. this% eos2_fukaid == 20 )THEN
     !
-    !    eos_params= [ DBLE(THIS% eos2_fukaid) ]
+    !    eos_params= [ DBLE(this% eos2_fukaid) ]
     !
     !  ELSE
     !
     !    PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
     !             " The EOS on star 2 is unknown! LORENE EOS ID=", &
-    !             THIS% eos2_fukaid
+    !             this% eos2_fukaid
     !    STOP
     !
     !  ENDIF
