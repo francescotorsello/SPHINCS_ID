@@ -152,8 +152,6 @@ SUBMODULE (bns_lorene) read
             this% shift_z( itr )= zero
           ENDIF
 
-          this% lapse( itr )= one/this% g_xx( itr )
-
           !
           !-- Convert the extrinsic curvature from |lorene| units to
           !-- |sphincs| units
@@ -276,8 +274,6 @@ SUBMODULE (bns_lorene) read
           shift_y( itr )= zero
           shift_z( itr )= zero
         ENDIF
-
-        lapse( itr )= one/g_xx( itr )
 
         !
         !-- Convert the extrinsic curvature from |lorene| units to
@@ -409,8 +405,6 @@ SUBMODULE (bns_lorene) read
               shift( i, j, k, jy )= zero
               shift( i, j, k, jz )= zero
             ENDIF
-
-            lapse( i, j, k )= one/g( i, j, k, jxx )
 
             !
             !-- Convert the extrinsic curvature from |lorene| units to
@@ -633,8 +627,6 @@ SUBMODULE (bns_lorene) read
           shift_y( itr )= zero
           shift_z( itr )= zero
         ENDIF
-
-        lapse( itr )= one/g_xx( itr )
 
         detg= 2*g_xy(itr)*g_xz(itr)*g_yz(itr) &
               - g_zz(itr)*g_xy(itr)**2 &

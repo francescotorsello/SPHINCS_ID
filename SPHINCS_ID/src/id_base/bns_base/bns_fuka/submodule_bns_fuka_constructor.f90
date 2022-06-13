@@ -101,7 +101,7 @@ SUBMODULE (bns_fuka) constructor
     ENDIF
 
     ! Assign PROCEDURE POINTER to the desired PROCEDURE
-    !derived_type% finalize_sph_id_ptr => correct_adm_linear_momentum
+    derived_type% finalize_sph_id_ptr => finalize
 
     CONTAINS
 
@@ -122,6 +122,32 @@ SUBMODULE (bns_fuka) constructor
     END FUNCTION get_pressure
 
   END PROCEDURE construct_bnsfuka
+
+
+  MODULE PROCEDURE finalize
+
+    !***********************************************
+    !
+    !#
+    !
+    !  FT 14.04.2022
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+    ! Temporary implementation, to avoid warnings about unused variables
+
+    pos  = pos
+    nlrf = nlrf
+    nu   = nu
+    pr   = pr
+    vel_u= vel_u
+    theta= theta
+    nstar= nstar
+    u    = u
+
+  END PROCEDURE finalize
 
 
   !

@@ -844,10 +844,7 @@ SUBMODULE (bns_fuka) read
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
       ! definition of Msun_geo
-      res= get_fuka_mass_density( this% bns_ptr, &
-                                  x*Msun_geo, &
-                                  y*Msun_geo, &
-                                  z*Msun_geo )*lorene2hydrobase
+      res= get_fuka_mass_density( this% bns_ptr, x, y, z )
 
     ENDIF
 

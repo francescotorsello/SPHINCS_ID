@@ -1253,6 +1253,8 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDDO matter_objects_loop
 
+    STOP
+
     !-------------------!
     ! Assignment of Ye  !
     !-------------------!
@@ -1584,22 +1586,22 @@ SUBMODULE (sph_particles) sph_variables
     IF( ASSOCIATED(this% post_process_sph_id) )THEN
 
       CALL this% post_process_sph_id( this% npart, this% pos, &
-                                      this% nlrf_int, &
-                                      this% u_pwp, &
-                                      this% pressure_cu, this% v(1:3,:), &
-                                      this% theta, this% nstar_int, this% nu, &
-                                      this% g_xx,      &
-                                      this% g_xy,      &
-                                      this% g_xz,      &
-                                      this% g_yy,      &
-                                      this% g_yz,      &
-                                      this% g_zz,      &
-                                      this% lapse,     &
-                                      this% shift_x,   &
-                                      this% shift_y,   &
-                                      this% shift_z,   &
-                                      this% adm_linear_momentum_fluid, &
-                                      this% adm_mass )
+                                    this% nlrf_int, &
+                                    this% u_pwp, &
+                                    this% pressure_cu, this% v(1:3,:), &
+                                    this% theta, this% nstar_int, this% nu, &
+                                    this% g_xx,      &
+                                    this% g_xy,      &
+                                    this% g_xz,      &
+                                    this% g_yy,      &
+                                    this% g_yz,      &
+                                    this% g_zz,      &
+                                    this% lapse,     &
+                                    this% shift_x,   &
+                                    this% shift_y,   &
+                                    this% shift_z,   &
+                                    this% adm_linear_momentum_fluid, &
+                                    this% adm_mass )
 
     ELSE
 

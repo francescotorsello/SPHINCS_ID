@@ -63,7 +63,7 @@ SUBMODULE (bns_fuka) params
     USE utility,    ONLY: Msun_geo, km2m, lorene2hydrobase, &
                           k_lorene2hydrobase, &
                           k_lorene2hydrobase_piecewisepolytrope, &
-                          two, four, five
+                          zero, two, four, five
 
     IMPLICIT NONE
 
@@ -141,13 +141,13 @@ SUBMODULE (bns_fuka) params
     this% radii(2,:)= [this% radius2_x_comp, this% radius2_x_opp, &
                        this% radius2_y, this% radius2_y, &
                        this% radius2_z, this% radius2_z]
-  !
-  !  this% center(1,:)= [this% center1_x, 0.0D0, 0.0D0]
-  !  this% center(2,:)= [this% center2_x, 0.0D0, 0.0D0]
-  !
-  !  this% barycenter(1,:)= [this% barycenter1_x, 0.0D0, 0.0D0]
-  !  this% barycenter(2,:)= [this% barycenter2_x, 0.0D0, 0.0D0]
-  !
+
+    this% center(1,:)= [this% center1_x, zero, zero]
+    this% center(2,:)= [this% center2_x, zero, zero]
+
+  !  this% barycenter(1,:)= [this% barycenter1_x, zero, zero]
+  !  this% barycenter(2,:)= [this% barycenter2_x, zero, zero]
+
   !  ! Convert hydro quantities from |fuka| units to SPHINCS units
   !  this% nbar_center1           = this% nbar_center1*(MSun_geo*km2m)**3
   !  this% rho_center1            = this% rho_center1*lorene2hydrobase

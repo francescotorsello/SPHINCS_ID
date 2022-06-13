@@ -124,7 +124,7 @@ SUBMODULE (sph_particles) lattices
     !-- Set the threshold above which a lattice point is
     !-- promoted to a particle
     !
-    IF( THIS% use_thres )THEN
+    IF( this% use_thres )THEN
       thres_baryon_density= central_density/thres
     ELSE
       thres_baryon_density= 0.0D0
@@ -163,6 +163,9 @@ SUBMODULE (sph_particles) lattices
       sgn= 1
     ENDIF
 
+    PRINT *, "Before calling OpenMP"
+    PRINT *
+
     !
     !-- Place the first half of the particle (above or below the xy plane,
     !-- depending on the variable sgn)
@@ -192,13 +195,9 @@ SUBMODULE (sph_particles) lattices
               (validate_position_final( xtemp, ytemp, ztemp )) &
           )THEN
 
-            !IF( validate_position_final( xtemp, ytemp, ztemp ) )THEN
-
             pos_tmp( 1, i, j, k )= xtemp
             pos_tmp( 2, i, j, k )= ytemp
             pos_tmp( 3, i, j, k )= ztemp
-
-            !ENDIF
 
           ENDIF
 
@@ -413,10 +412,10 @@ SUBMODULE (sph_particles) lattices
 !      zlim2= zmin2
 !    ENDIF
 !
-!    IF( THIS% mass1 > THIS% mass2 )THEN
+!    IF( this% mass1 > this% mass2 )THEN
 !
 !      ! mass_ratio < 1
-!      THIS% mass_ratio= THIS% mass2/THIS% mass1
+!      this% mass_ratio= this% mass2/this% mass1
 !      !
 !      !-- Compute lattices' steps
 !      !
@@ -427,9 +426,9 @@ SUBMODULE (sph_particles) lattices
 !      dy2= ABS(ymax2 - ymin2)/DBLE( ny2 )
 !      dz2= ABS(zlim2)/DBLE( nz2/2 )
 !
-!      dx1= dx2*(THIS% mass_ratio**(1.0D0/3.0D0))
-!      dy1= dy2*(THIS% mass_ratio**(1.0D0/3.0D0))
-!      dz1= dz2*(THIS% mass_ratio**(1.0D0/3.0D0))
+!      dx1= dx2*(this% mass_ratio**(1.0D0/3.0D0))
+!      dy1= dy2*(this% mass_ratio**(1.0D0/3.0D0))
+!      dz1= dz2*(this% mass_ratio**(1.0D0/3.0D0))
 !      nx1= NINT( ABS(xmax1 - xmin1)/dx1 ) + 1
 !      ny1= NINT( ABS(ymax1 - ymin1)/dy1 ) + 1
 !      nz1= NINT( 2*ABS(zlim)/dz1 ) + 1
@@ -437,7 +436,7 @@ SUBMODULE (sph_particles) lattices
 !    ELSE
 !
 !      ! mass_ratio < 1
-!      THIS% mass_ratio= THIS% mass1/THIS% mass2
+!      this% mass_ratio= this% mass1/this% mass2
 !      !
 !      !-- Compute lattices' steps
 !      !
@@ -448,9 +447,9 @@ SUBMODULE (sph_particles) lattices
 !      dy1= ABS(ymax1 - ymin1)/DBLE( ny1 )
 !      dz1= ABS(zlim)/DBLE( nz1/2 )
 !
-!      dx2= dx1*(THIS% mass_ratio**(1.0D0/3.0D0))
-!      dy2= dy1*(THIS% mass_ratio**(1.0D0/3.0D0))
-!      dz2= dz1*(THIS% mass_ratio**(1.0D0/3.0D0))
+!      dx2= dx1*(this% mass_ratio**(1.0D0/3.0D0))
+!      dy2= dy1*(this% mass_ratio**(1.0D0/3.0D0))
+!      dz2= dz1*(this% mass_ratio**(1.0D0/3.0D0))
 !      nx2= NINT( ABS(xmax2 - xmin2)/dx2 ) + 1
 !      ny2= NINT( ABS(ymax2 - ymin2)/dy2 ) + 1
 !      nz2= NINT( 2*ABS(zlim2)/dz2 ) + 1
@@ -497,7 +496,7 @@ SUBMODULE (sph_particles) lattices
 !    !-- Set the thresholds above which a lattice point is
 !    !-- promoted to a particle
 !    !
-!    IF( THIS% use_thres )THEN
+!    IF( this% use_thres )THEN
 !      thres_baryon_density1= max_baryon_density1/thres
 !      thres_baryon_density2= max_baryon_density2/thres
 !    ELSE
@@ -508,8 +507,8 @@ SUBMODULE (sph_particles) lattices
 !    ! Allocating the memory for the array pos( 3, npart_tmp )
 !    ! Note that after determining npart, the array pos is reshaped into
 !    ! pos( 3, npart )
-!    IF(.NOT.ALLOCATED( THIS% pos ))THEN
-!      ALLOCATE( THIS% pos( 3, npart_tmp ), STAT= ios, &
+!    IF(.NOT.ALLOCATED( this% pos ))THEN
+!      ALLOCATE( this% pos( 3, npart_tmp ), STAT= ios, &
 !                ERRMSG= err_msg )
 !      IF( ios > 0 )THEN
 !         PRINT *, "...allocation error for array pos in SUBROUTINE" &
@@ -548,8 +547,8 @@ SUBMODULE (sph_particles) lattices
 !    !
 !    PRINT *, "Placing particles on NS 1..."
 !    PRINT *
-!    THIS% npart= 0
-!    THIS% npart1= 0
+!    this% npart= 0
+!    this% npart1= 0
 !    !
 !    !-- Choose the larger value for the boundary in z
 !    !
@@ -586,11 +585,11 @@ SUBMODULE (sph_particles) lattices
 !              .AND. &
 !              id% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
 !
-!            !THIS% npart = THIS% npart + 1
-!            !THIS% npart1= THIS% npart1 + 1
-!            !THIS% pos( 1, THIS% npart )= xtemp
-!            !THIS% pos( 2, THIS% npart )= ytemp
-!            !THIS% pos( 3, THIS% npart )= ztemp
+!            !this% npart = this% npart + 1
+!            !this% npart1= this% npart1 + 1
+!            !this% pos( 1, this% npart )= xtemp
+!            !this% pos( 2, this% npart )= ytemp
+!            !this% pos( 3, this% npart )= ztemp
 !            pos_tmp( 1, i, j, k )= xtemp
 !            pos_tmp( 2, i, j, k )= ytemp
 !            pos_tmp( 3, i, j, k )= ztemp
@@ -619,18 +618,18 @@ SUBMODULE (sph_particles) lattices
 !
 !          IF( pos_tmp( 1, i, j, k ) < HUGE(0.0D0) )THEN
 !
-!            THIS% npart= THIS% npart + 1
-!            THIS% npart1= THIS% npart1 + 1
-!            THIS% pos( 1, THIS% npart )= pos_tmp( 1, i, j, k )
-!            THIS% pos( 2, THIS% npart )= pos_tmp( 2, i, j, k )
-!            THIS% pos( 3, THIS% npart )= pos_tmp( 3, i, j, k )
+!            this% npart= this% npart + 1
+!            this% npart1= this% npart1 + 1
+!            this% pos( 1, this% npart )= pos_tmp( 1, i, j, k )
+!            this% pos( 2, this% npart )= pos_tmp( 2, i, j, k )
+!            this% pos( 3, this% npart )= pos_tmp( 3, i, j, k )
 !
 !          ENDIF
 !
 !         ENDDO
 !      ENDDO
 !    ENDDO
-!    npart_half= THIS% npart
+!    npart_half= this% npart
 !    IF( npart_half == 0 )THEN
 !      PRINT *, "** There are no particles on star 1! Execution stopped..."
 !      PRINT *
@@ -645,19 +644,19 @@ SUBMODULE (sph_particles) lattices
 !    !
 !    particle_pos_z1_mirror: DO k= 1, npart_half, 1
 !
-!      xtemp=   THIS% pos( 1, k )
-!      ytemp=   THIS% pos( 2, k )
-!      ztemp= - THIS% pos( 3, k )
+!      xtemp=   this% pos( 1, k )
+!      ytemp=   this% pos( 2, k )
+!      ztemp= - this% pos( 3, k )
 !
 !      ! TODO: is this check needed?
 !      !IF( import_mass_density( xtemp, ytemp, ztemp ) &
 !      !                               > thres_baryon_density1 )THEN
 !
-!      THIS% npart = THIS% npart + 1
-!      THIS% npart1= THIS% npart1 + 1
-!      THIS% pos( 1, THIS% npart )= xtemp
-!      THIS% pos( 2, THIS% npart )= ytemp
-!      THIS% pos( 3, THIS% npart )= ztemp
+!      this% npart = this% npart + 1
+!      this% npart1= this% npart1 + 1
+!      this% pos( 1, this% npart )= xtemp
+!      this% pos( 2, this% npart )= ytemp
+!      this% pos( 3, this% npart )= ztemp
 !
 !      !ENDIF
 !
@@ -690,11 +689,11 @@ SUBMODULE (sph_particles) lattices
 !    !    IF( id% import_mass_density( xtemp, ytemp, ztemp ) &
 !    !                          > thres_baryon_density1 )THEN
 !    !
-!    !      THIS% npart = THIS% npart + 1
-!    !      THIS% npart1= THIS% npart1 + 1
-!    !      THIS% pos( 1, THIS% npart )= xtemp
-!    !      THIS% pos( 2, THIS% npart )= ytemp
-!    !      THIS% pos( 3, THIS% npart )= ztemp
+!    !      this% npart = this% npart + 1
+!    !      this% npart1= this% npart1 + 1
+!    !      this% pos( 1, this% npart )= xtemp
+!    !      this% pos( 2, this% npart )= ytemp
+!    !      this% pos( 3, this% npart )= ztemp
 !    !
 !    !    ENDIF
 !    !
@@ -730,7 +729,7 @@ SUBMODULE (sph_particles) lattices
 !    !
 !    PRINT *, "Placing particles on NS 2..."
 !    PRINT *
-!    THIS% npart2= 0
+!    this% npart2= 0
 !    IF( zlim2 == zmin2 )THEN
 !      sgn= - 1
 !    ELSE
@@ -757,11 +756,11 @@ SUBMODULE (sph_particles) lattices
 !              .AND. &
 !              id% test_position( xtemp, ytemp, ztemp ) == 0 )THEN
 !
-!            !THIS% npart = THIS% npart + 1
-!            !THIS% npart2= THIS% npart2 + 1
-!            !THIS% pos( 1, THIS% npart )= xtemp
-!            !THIS% pos( 2, THIS% npart )= ytemp
-!            !THIS% pos( 3, THIS% npart )= ztemp
+!            !this% npart = this% npart + 1
+!            !this% npart2= this% npart2 + 1
+!            !this% pos( 1, this% npart )= xtemp
+!            !this% pos( 2, this% npart )= ytemp
+!            !this% pos( 3, this% npart )= ztemp
 !            pos_tmp( 1, i, j, k )= xtemp
 !            pos_tmp( 2, i, j, k )= ytemp
 !            pos_tmp( 3, i, j, k )= ztemp
@@ -789,18 +788,18 @@ SUBMODULE (sph_particles) lattices
 !
 !          IF( pos_tmp( 1, i, j, k ) < HUGE(0.0D0) )THEN
 !
-!            THIS% npart= THIS% npart + 1
-!            THIS% npart2= THIS% npart2 + 1
-!            THIS% pos( 1, THIS% npart )= pos_tmp( 1, i, j, k )
-!            THIS% pos( 2, THIS% npart )= pos_tmp( 2, i, j, k )
-!            THIS% pos( 3, THIS% npart )= pos_tmp( 3, i, j, k )
+!            this% npart= this% npart + 1
+!            this% npart2= this% npart2 + 1
+!            this% pos( 1, this% npart )= pos_tmp( 1, i, j, k )
+!            this% pos( 2, this% npart )= pos_tmp( 2, i, j, k )
+!            this% pos( 3, this% npart )= pos_tmp( 3, i, j, k )
 !
 !          ENDIF
 !
 !         ENDDO
 !      ENDDO
 !    ENDDO
-!    npart_half2= THIS% npart
+!    npart_half2= this% npart
 !    IF( npart_half2 == 2*npart_half )THEN
 !      PRINT *, "** There are no particles on star 2! Execution stopped..."
 !      PRINT *
@@ -811,18 +810,18 @@ SUBMODULE (sph_particles) lattices
 !
 !    particle_pos_z2_mirror: DO k= 2*npart_half + 1, npart_half2, 1
 !
-!      xtemp=   THIS% pos( 1, k )
-!      ytemp=   THIS% pos( 2, k )
-!      ztemp= - THIS% pos( 3, k )
+!      xtemp=   this% pos( 1, k )
+!      ytemp=   this% pos( 2, k )
+!      ztemp= - this% pos( 3, k )
 !
 !      !IF( import_mass_density( xtemp, ytemp, ztemp ) &
 !      !                               > thres_baryon_density2 )THEN
 !
-!      THIS% npart = THIS% npart + 1
-!      THIS% npart2= THIS% npart2 + 1
-!      THIS% pos( 1, THIS% npart )= xtemp
-!      THIS% pos( 2, THIS% npart )= ytemp
-!      THIS% pos( 3, THIS% npart )= ztemp
+!      this% npart = this% npart + 1
+!      this% npart2= this% npart2 + 1
+!      this% pos( 1, this% npart )= xtemp
+!      this% pos( 2, this% npart )= ytemp
+!      this% pos( 3, this% npart )= ztemp
 !
 !      !ENDIF
 !
@@ -853,11 +852,11 @@ SUBMODULE (sph_particles) lattices
 !    !    IF( id% import_mass_density( xtemp, ytemp, ztemp ) &
 !    !                            > thres_baryon_density2 )THEN
 !    !
-!    !      THIS% npart = THIS% npart + 1
-!    !      THIS% npart2= THIS% npart2 + 1
-!    !      THIS% pos( 1, THIS% npart )= xtemp
-!    !      THIS% pos( 2, THIS% npart )= ytemp
-!    !      THIS% pos( 3, THIS% npart )= ztemp
+!    !      this% npart = this% npart + 1
+!    !      this% npart2= this% npart2 + 1
+!    !      this% pos( 1, this% npart )= xtemp
+!    !      this% pos( 2, this% npart )= ytemp
+!    !      this% pos( 3, this% npart )= ztemp
 !    !
 !    !    ENDIF
 !    !
@@ -875,9 +874,9 @@ SUBMODULE (sph_particles) lattices
 !    !
 !    !-- Consistency checks
 !    !
-!    IF( THIS% npart /= ( 2*( npart_half2 - npart_half ) ) )THEN
+!    IF( this% npart /= ( 2*( npart_half2 - npart_half ) ) )THEN
 !      PRINT *
-!      PRINT *, "** ERROR: The number of particles ", THIS% npart, &
+!      PRINT *, "** ERROR: The number of particles ", this% npart, &
 !               " is not the expected value ", &
 !               2*( npart_half2 - npart_half )
 !      PRINT *
@@ -885,7 +884,7 @@ SUBMODULE (sph_particles) lattices
 !    ENDIF
 !
 !    DO k= 1, npart_half, 1
-!      IF( THIS% pos( 3, k ) /= - THIS% pos( 3, npart_half + k ) )THEN
+!      IF( this% pos( 3, k ) /= - this% pos( 3, npart_half + k ) )THEN
 !        PRINT *
 !        PRINT *, "** ERROR: The lattice around NS 1 are not mirrored " &
 !                 // "by the xy plane."
@@ -894,8 +893,8 @@ SUBMODULE (sph_particles) lattices
 !      ENDIF
 !    ENDDO
 !    DO k= 2*npart_half + 1, npart_half2, 1
-!      IF( THIS% pos( 3, k ) /= &
-!          - THIS% pos( 3, ( npart_half2 - 2*npart_half ) + k ) )THEN
+!      IF( this% pos( 3, k ) /= &
+!          - this% pos( 3, ( npart_half2 - 2*npart_half ) + k ) )THEN
 !        PRINT *
 !        PRINT *, "** ERROR: The lattice around NS 2 are not mirrored " &
 !                 // "by the xy plane."
@@ -904,12 +903,12 @@ SUBMODULE (sph_particles) lattices
 !      ENDIF
 !    ENDDO
 !
-!    IF( THIS% npart1 + THIS% npart2 /= THIS% npart )THEN
+!    IF( this% npart1 + this% npart2 /= this% npart )THEN
 !      PRINT *, "** ERROR: npart1 + npart2 /= npart"
-!      PRINT *, " * npart1=", THIS% npart1
-!      PRINT *, " * npart2=", THIS% npart2
-!      PRINT *, " * npart1 + npart2=", THIS% npart1 + THIS% npart2
-!      PRINT *, " * npart=", THIS% npart
+!      PRINT *, " * npart1=", this% npart1
+!      PRINT *, " * npart2=", this% npart2
+!      PRINT *, " * npart1 + npart2=", this% npart1 + this% npart2
+!      PRINT *, " * npart=", this% npart
 !      STOP
 !    ENDIF
 !
@@ -917,22 +916,22 @@ SUBMODULE (sph_particles) lattices
 !    !-- Printouts
 !    !
 !    PRINT *, " * Particles placed. Number of particles=", &
-!             THIS% npart, "=", DBLE(THIS% npart)/DBLE(npart_tmp), &
+!             this% npart, "=", DBLE(this% npart)/DBLE(npart_tmp), &
 !             " of the points in lattices."
 !    PRINT *
-!    PRINT *, " * Number of particles on NS 1=", THIS% npart1, "=", &
-!             DBLE(THIS% npart1)/DBLE(npart1_temp), &
+!    PRINT *, " * Number of particles on NS 1=", this% npart1, "=", &
+!             DBLE(this% npart1)/DBLE(npart1_temp), &
 !             " of the points in the first lattice."
-!    PRINT *, " * Number of particles on NS 2=", THIS% npart2, "=", &
-!             DBLE(THIS% npart2)/DBLE(npart2_temp), &
+!    PRINT *, " * Number of particles on NS 2=", this% npart2, "=", &
+!             DBLE(this% npart2)/DBLE(npart2_temp), &
 !             " of the points in the second lattice."
 !    PRINT *
 !
 !    !
 !    !-- Computing total volume and volume per particle
 !    !
-!    IF(.NOT.ALLOCATED( THIS% pvol ))THEN
-!      ALLOCATE( THIS% pvol( THIS% npart ), STAT= ios, &
+!    IF(.NOT.ALLOCATED( this% pvol ))THEN
+!      ALLOCATE( this% pvol( this% npart ), STAT= ios, &
 !              ERRMSG= err_msg )
 !      IF( ios > 0 )THEN
 !        PRINT *, "...allocation error for array pvol ", &
@@ -943,42 +942,42 @@ SUBMODULE (sph_particles) lattices
 !      !        "...allocation error for array v_euler_parts_z" )
 !    ENDIF
 !
-!    THIS% vol1_a= dx1*dy1*dz1
-!    THIS% vol1 = (xmax1 - xmin1)*(ymax1 - ymin1)*2*ABS(zlim)
-!    !THIS% vol2 = npart2_temp * THIS% vol_a
-!    !THIS% vol  = THIS% vol1 + THIS% vol2
-!    vol_a_alt1  = THIS% vol1/npart1_temp
+!    this% vol1_a= dx1*dy1*dz1
+!    this% vol1 = (xmax1 - xmin1)*(ymax1 - ymin1)*2*ABS(zlim)
+!    !this% vol2 = npart2_temp * this% vol_a
+!    !this% vol  = this% vol1 + this% vol2
+!    vol_a_alt1  = this% vol1/npart1_temp
 !
-!    THIS% vol2_a= dx2*dy2*dz2
-!    THIS% vol2 =  dx2*nx2*dy2*ny2*dz2*nz2
-!    !THIS% vol2 = (xmax2 - xmin2)*(ymax2 - ymin2)*2*ABS(zlim2)
-!    !THIS% vol2 = npart2_temp * THIS% vol_a2
-!    !THIS% vol  = THIS% vol1 + THIS% vol2
-!    vol_a_alt2  = THIS% vol2/npart2_temp
+!    this% vol2_a= dx2*dy2*dz2
+!    this% vol2 =  dx2*nx2*dy2*ny2*dz2*nz2
+!    !this% vol2 = (xmax2 - xmin2)*(ymax2 - ymin2)*2*ABS(zlim2)
+!    !this% vol2 = npart2_temp * this% vol_a2
+!    !this% vol  = this% vol1 + this% vol2
+!    vol_a_alt2  = this% vol2/npart2_temp
 !
-!    THIS% pvol( 1:THIS% npart1 )              = THIS% vol1_a
-!    THIS% pvol( THIS% npart1 + 1:THIS% npart )= THIS% vol2_a
+!    this% pvol( 1:this% npart1 )              = this% vol1_a
+!    this% pvol( this% npart1 + 1:this% npart )= this% vol2_a
 !
-!    THIS% vol= THIS% vol1 + THIS% vol2
+!    this% vol= this% vol1 + this% vol2
 !
 !    ! Consistency check for the particle volume
-!    IF( ABS( THIS% vol1_a - vol_a_alt1 ) > 1D-7 )THEN
+!    IF( ABS( this% vol1_a - vol_a_alt1 ) > 1D-7 )THEN
 !      PRINT *, " * The particle volume vol_a_alt1=", vol_a_alt1, "Msun_geo^3"
-!      PRINT *, " is not equal to dx1*dy1*dz1=", THIS% vol1_a, "Msun_geo^3."
+!      PRINT *, " is not equal to dx1*dy1*dz1=", this% vol1_a, "Msun_geo^3."
 !      PRINT *
 !      STOP
 !    ENDIF
 !    ! Consistency check for the particle volume
-!    IF( ABS( THIS% vol2_a - vol_a_alt2 ) > 1D-7 )THEN
+!    IF( ABS( this% vol2_a - vol_a_alt2 ) > 1D-7 )THEN
 !      PRINT *, " * The particle volume vol_a_alt2=", vol_a_alt2, "Msun_geo^3"
-!      PRINT *, " is not equal to dx2*dy2*dz2=", THIS% vol2_a, "Msun_geo^3."
+!      PRINT *, " is not equal to dx2*dy2*dz2=", this% vol2_a, "Msun_geo^3."
 !      PRINT *
 !      STOP
 !    ENDIF
 !
-!    PRINT *, " * Total volume of the lattices=", THIS% vol, "Msun_geo^3"
-!    PRINT *, " * Particle volume on NS 1=", THIS% vol1_a, "Msun_geo^3"
-!    PRINT *, " * Particle volume on NS 2=", THIS% vol2_a, "Msun_geo^3"
+!    PRINT *, " * Total volume of the lattices=", this% vol, "Msun_geo^3"
+!    PRINT *, " * Particle volume on NS 1=", this% vol1_a, "Msun_geo^3"
+!    PRINT *, " * Particle volume on NS 2=", this% vol2_a, "Msun_geo^3"
 !    PRINT *
 !
 !    PRINT *, "** Subroutine place_particles_lattices " &

@@ -369,63 +369,30 @@ SUBMODULE (bns_fuka) access
 
     IMPLICIT NONE
 
-    CALL this% check_i_matter(i_matter)
+    IF( this% eos_type == "Cold_PWPoly" )THEN
 
-    !IF( i_matter == 1 )THEN
-    !
-    !  IF( this% eos1_fukaid == 1 )THEN
-    !
-    !    eos_params= [ DBLE(this% eos1_fukaid), this% gamma_1, this% kappa_1 ]
-    !
-    !  ELSEIF( this% eos1_fukaid == 110 )THEN
-    !
-    !    eos_params= [ DBLE(this% eos1_fukaid), DBLE(this% npeos_1), &
-    !          this% gamma0_1, this% gamma1_1, this% gamma2_1, this% gamma3_1, &
-    !          this% kappa0_1, this% kappa1_1, this% kappa2_1, this% kappa3_1, &
-    !          this% logP1_1, &
-    !          this% logRho0_1, this% logRho1_1, this% logRho2_1 ]
-    !
-    !  ELSEIF( this% eos1_fukaid == 17 .OR. this% eos1_fukaid == 20 )THEN
-    !
-    !    eos_params= [ DBLE(this% eos1_fukaid) ]
-    !
-    !  ELSE
-    !
-    !    PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
-    !             " The EOS on star 1 is unknown! LORENE EOS ID=", &
-    !             this% eos1_fukaid
-    !    STOP
-    !
-    !  ENDIF
-    !
-    !ELSEIF( i_matter == 2 )THEN
-    !
-    !  IF( this% eos2_fukaid == 1 )THEN
-    !
-    !    eos_params= [ DBLE(this% eos2_fukaid), this% gamma_2, this% kappa_2 ]
-    !
-    !  ELSEIF( this% eos2_fukaid == 110 )THEN
-    !
-    !    eos_params= [ DBLE(this% eos2_fukaid), DBLE(this% npeos_2), &
-    !          this% gamma0_2, this% gamma1_2, this% gamma2_2, this% gamma3_2, &
-    !          this% kappa0_2, this% kappa1_2, this% kappa2_2, this% kappa3_2, &
-    !          this% logP1_2, &
-    !          this% logRho0_2, this% logRho1_2, this% logRho2_2 ]
-    !
-    !  ELSEIF( this% eos2_fukaid == 17 .OR. this% eos2_fukaid == 20 )THEN
-    !
-    !    eos_params= [ DBLE(this% eos2_fukaid) ]
-    !
-    !  ELSE
-    !
-    !    PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
-    !             " The EOS on star 2 is unknown! LORENE EOS ID=", &
-    !             this% eos2_fukaid
-    !    STOP
-    !
-    !  ENDIF
-    !
-    !ENDIF
+      eos_params= [ 1.D0, 0.D0, 0.D0 ]
+
+   ! ELSEIF( this% eos1_fukaid == 110 )THEN
+   !
+   !   eos_params= [ DBLE(this% eos1_fukaid), DBLE(this% npeos_1), &
+   !         this% gamma0_1, this% gamma1_1, this% gamma2_1, this% gamma3_1, &
+   !         this% kappa0_1, this% kappa1_1, this% kappa2_1, this% kappa3_1, &
+   !         this% logP1_1, &
+   !         this% logRho0_1, this% logRho1_1, this% logRho2_1 ]
+   !
+   ! ELSEIF( this% eos1_fukaid == 17 .OR. this% eos1_fukaid == 20 )THEN
+   !
+   !   eos_params= [ DBLE(this% eos1_fukaid) ]
+   !
+   ! ELSE
+   !
+   !   PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+   !            " The EOS on star 1 is unknown! LORENE EOS ID=", &
+   !            this% eos1_fukaid
+   !   STOP
+
+    ENDIF
 
   END PROCEDURE get_eos_parameters
 

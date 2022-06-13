@@ -95,7 +95,7 @@ estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.FALSE.
+run_sph=.TRUE.
 run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
@@ -108,7 +108,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=2                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object

@@ -864,9 +864,14 @@ SUBMODULE (sph_particles) constructor_std
         ymax= center(itr, 2) + stretch*sizes(itr, 4)
         zmin= center(itr, 3) - stretch*sizes(itr, 5)
         zmax= center(itr, 3) + stretch*sizes(itr, 6)
+
+        !PRINT *, xmin, xmax, ymin, ymax, zmin, zmax
+        !STOP
+
         central_density(itr)= id% read_mass_density( center(itr, 1), &
                                                      center(itr, 2), &
                                                      center(itr, 3) )
+
 
         CALL parts% place_particles_lattice( central_density(itr), &
                                              xmin, xmax, ymin, &
