@@ -1467,8 +1467,9 @@ SUBMODULE (sph_particles) constructor_std
                                 parts% v_euler_z )
     CALL parts% importer_timer% stop_timer()
 
-    PRINT *, MAXVAL( parts% pressure, DIM= 1 )
-    STOP
+    !PRINT *, MAXVAL( parts% baryon_density, DIM= 1 )
+    !PRINT *, MAXVAL( parts% pressure, DIM= 1 )
+    !STOP
 
     IF( debug ) PRINT *, "34"
 

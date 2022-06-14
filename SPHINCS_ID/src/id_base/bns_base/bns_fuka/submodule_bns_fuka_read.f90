@@ -89,33 +89,33 @@ SUBMODULE (bns_fuka) read
     !
     !    !$OMP PARALLEL DO DEFAULT( NONE ) &
     !    !$OMP             SHARED( n, this, x, y, z ) &
-    !    !$OMP             PRIVATE( itr )
+    !    !$OMP             PRIVATE(itr)
     !    read_fuka_id_loop: DO itr= 1, n, 1
     !
     !      ! The coordinates need to be converted from |sphincs| units (Msun_geo)
     !      ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
     !      ! definition of Msun_geo
     !      CALL get_lorene_id( this% bns_ptr, &
-    !                          x( itr ), &
-    !                          y( itr ), &
-    !                          z( itr ), &
-    !                          this% lapse( itr ), &
-    !                          this% shift_x( itr ), &
-    !                          this% shift_y( itr ), &
-    !                          this% shift_z( itr ), &
-    !                          this% g_xx( itr ), &
-    !                          this% k_xx( itr ), &
-    !                          this% k_xy( itr ), &
-    !                          this% k_xz( itr ), &
-    !                          this% k_yy( itr ), &
-    !                          this% k_yz( itr ), &
-    !                          this% k_zz( itr ), &
-    !                          this% baryon_density( itr ), &
-    !                          this% energy_density( itr ), &
-    !                          this% specific_energy( itr ), &
-    !                          this% v_euler_x( itr ), &
-    !                          this% v_euler_y( itr ), &
-    !                          this% v_euler_z( itr ) )
+    !                          x(itr), &
+    !                          y(itr), &
+    !                          z(itr), &
+    !                          this% lapse(itr), &
+    !                          this% shift_x(itr), &
+    !                          this% shift_y(itr), &
+    !                          this% shift_z(itr), &
+    !                          this% g_xx(itr), &
+    !                          this% k_xx(itr), &
+    !                          this% k_xy(itr), &
+    !                          this% k_xz(itr), &
+    !                          this% k_yy(itr), &
+    !                          this% k_yz(itr), &
+    !                          this% k_zz(itr), &
+    !                          this% baryon_density(itr), &
+    !                          this% energy_density(itr), &
+    !                          this% specific_energy(itr), &
+    !                          this% v_euler_x(itr), &
+    !                          this% v_euler_y(itr), &
+    !                          this% v_euler_z(itr) )
     !
     !    ENDDO read_fuka_id_loop
     !    !$OMP END PARALLEL DO
@@ -126,34 +126,34 @@ SUBMODULE (bns_fuka) read
     !      !-- The following follows from the assumption of conformal
     !      !-- flatness in |fuka|
     !      !
-    !      this% g_yy( itr )= this% g_xx( itr )
-    !      this% g_zz( itr )= this% g_xx( itr )
-    !      this% g_xy( itr )= 0.0D0
-    !      this% g_xz( itr )= 0.0D0
-    !      this% g_yz( itr )= 0.0D0
+    !      this% g_yy(itr)= this% g_xx(itr)
+    !      this% g_zz(itr)= this% g_xx(itr)
+    !      this% g_xy(itr)= 0.0D0
+    !      this% g_xz(itr)= 0.0D0
+    !      this% g_yz(itr)= 0.0D0
     !
     !      !
     !      !- Set/unset the geodesic gauge
     !      !
     !      IF( this% get_one_lapse() )THEN
-    !        this% lapse( itr )= 1.0D0
+    !        this% lapse(itr)= 1.0D0
     !      ENDIF
     !      IF( this% get_zero_shift() )THEN
-    !        this% shift_x( itr )= 0.0D0
-    !        this% shift_y( itr )= 0.0D0
-    !        this% shift_z( itr )= 0.0D0
+    !        this% shift_x(itr)= 0.0D0
+    !        this% shift_y(itr)= 0.0D0
+    !        this% shift_z(itr)= 0.0D0
     !      ENDIF
     !
     !      !
     !      !-- Convert the extrinsic curvature from |fuka| units to
     !      !-- |sphincs| units
     !      !
-    !      this% k_xx( itr )= this% k_xx( itr )*Msun_geo
-    !      this% k_xy( itr )= this% k_xy( itr )*Msun_geo
-    !      this% k_xz( itr )= this% k_xz( itr )*Msun_geo
-    !      this% k_yy( itr )= this% k_yy( itr )*Msun_geo
-    !      this% k_yz( itr )= this% k_yz( itr )*Msun_geo
-    !      this% k_zz( itr )= this% k_zz( itr )*Msun_geo
+    !      this% k_xx(itr)= this% k_xx(itr)
+    !      this% k_xy(itr)= this% k_xy(itr)
+    !      this% k_xz(itr)= this% k_xz(itr)
+    !      this% k_yy(itr)= this% k_yy(itr)
+    !      this% k_yz(itr)= this% k_yz(itr)
+    !      this% k_zz(itr)= this% k_zz(itr)
     !
     !      ! Print progress on screen
     !      perc= 100*itr/n
@@ -213,33 +213,33 @@ SUBMODULE (bns_fuka) read
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
-      !$OMP             PRIVATE( itr )
+      !$OMP             PRIVATE(itr)
       read_fuka_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
         ! definition of Msun_geo
         CALL get_fuka_id( this% bns_ptr, &
-                          x( itr ), &
-                          y( itr ), &
-                          z( itr ), &
-                          lapse( itr ), &
-                          shift_x( itr ), &
-                          shift_y( itr ), &
-                          shift_z( itr ), &
-                          g_xx( itr ), &
-                          k_xx( itr ), &
-                          k_xy( itr ), &
-                          k_xz( itr ), &
-                          k_yy( itr ), &
-                          k_yz( itr ), &
-                          k_zz( itr ), &
-                          baryon_density( itr ), &
-                          energy_density( itr ), &
-                          specific_energy( itr ), &
-                          u_euler_x( itr ), &
-                          u_euler_y( itr ), &
-                          u_euler_z( itr ) )
+                          x(itr), &
+                          y(itr), &
+                          z(itr), &
+                          lapse(itr), &
+                          shift_x(itr), &
+                          shift_y(itr), &
+                          shift_z(itr), &
+                          g_xx(itr), &
+                          k_xx(itr), &
+                          k_xy(itr), &
+                          k_xz(itr), &
+                          k_yy(itr), &
+                          k_yz(itr), &
+                          k_zz(itr), &
+                          baryon_density(itr), &
+                          energy_density(itr), &
+                          specific_energy(itr), &
+                          u_euler_x(itr), &
+                          u_euler_y(itr), &
+                          u_euler_z(itr) )
 
       ENDDO read_fuka_id_loop
       !$OMP END PARALLEL DO
@@ -250,34 +250,34 @@ SUBMODULE (bns_fuka) read
         !-- The following follows from the assumption of conformal
         !-- flatness in |fuka|
         !
-        g_yy( itr )= g_xx( itr )
-        g_zz( itr )= g_xx( itr )
-        g_xy( itr )= zero
-        g_xz( itr )= zero
-        g_yz( itr )= zero
+        g_yy(itr)= g_xx(itr)
+        g_zz(itr)= g_xx(itr)
+        g_xy(itr)= zero
+        g_xz(itr)= zero
+        g_yz(itr)= zero
 
         !
         !- Set/unset the geodesic gauge
         !
         IF( this% get_one_lapse() )THEN
-          lapse( itr )= one
+          lapse(itr)= one
         ENDIF
         IF( this% get_zero_shift() )THEN
-          shift_x( itr )= zero
-          shift_y( itr )= zero
-          shift_z( itr )= zero
+          shift_x(itr)= zero
+          shift_y(itr)= zero
+          shift_z(itr)= zero
         ENDIF
 
         !
         !-- Convert the extrinsic curvature from |fuka| units to
         !-- |sphincs| units
         !
-        k_xx( itr )= k_xx( itr )*Msun_geo
-        k_xy( itr )= k_xy( itr )*Msun_geo
-        k_xz( itr )= k_xz( itr )*Msun_geo
-        k_yy( itr )= k_yy( itr )*Msun_geo
-        k_yz( itr )= k_yz( itr )*Msun_geo
-        k_zz( itr )= k_zz( itr )*Msun_geo
+        k_xx(itr)= k_xx(itr)
+        k_xy(itr)= k_xy(itr)
+        k_xz(itr)= k_xz(itr)
+        k_yy(itr)= k_yy(itr)
+        k_yz(itr)= k_yz(itr)
+        k_zz(itr)= k_zz(itr)
 
         ! Print progress on screen
        ! perc= 100*itr/n
@@ -328,28 +328,14 @@ SUBMODULE (bns_fuka) read
 
     IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
-      IF( .FALSE. &!SHAPE( pos(:,:,:,1) ) /= SHAPE( lapse ) .OR. &
-          !SHAPE( pos(:,:,:,1) ) /= SHAPE( shift(:,:,:,jx) ) & ! .OR. &
-        ! SHAPE( pos(:,:,:,1) ) /= SHAPE( g(:,:,:,1) ) .OR. &
-        ! SHAPE( pos(:,:,:,1) ) /= SHAPE( k(:,:,:,1) ) &
-        )THEN
-        PRINT *, "** ERROR: Mismatch in array dimensions" &
-                 // "in read_fuka_id_spacetime."
-        PRINT *
-        STOP
-      ENDIF
-
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nx, ny, nz, this, pos, &
-      !$OMP                     lapse, shift, g, ek ) &
-      !$OMP             PRIVATE( i, j, k )
+      !$OMP                     lapse, shift, g, ek, g4 ) &
+      !$OMP             PRIVATE( i, j, k, detg, detg4 )
       coords_z: DO k= 1, nz, 1
         coords_y: DO j= 1, ny, 1
           coords_x: DO i= 1, nx, 1
 
-            ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-            ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
-            ! definition of Msun_geo
             CALL get_fuka_id_spacetime( this% bns_ptr, &
                                         pos( i, j, k, jx ), &
                                         pos( i, j, k, jy ), &
@@ -365,15 +351,6 @@ SUBMODULE (bns_fuka) read
                                         ek( i, j, k, jyy ), &
                                         ek( i, j, k, jyz ), &
                                         ek( i, j, k, jzz ) )
-
-          ENDDO coords_x
-        ENDDO coords_y
-      ENDDO coords_z
-      !$OMP END PARALLEL DO
-
-      DO k= 1, nz, 1
-        DO j= 1, ny, 1
-          DO i= 1, nx, 1
 
             !
             !-- The following follows from the assumption of
@@ -396,22 +373,6 @@ SUBMODULE (bns_fuka) read
               shift( i, j, k, jy )= zero
               shift( i, j, k, jz )= zero
             ENDIF
-
-            !
-            !-- Convert the extrinsic curvature from |fuka| units to
-            !-- |sphincs| units
-            !
-            ek( i, j, k, jxx )= ek( i, j, k, jxx )*Msun_geo
-            ek( i, j, k, jxy )= ek( i, j, k, jxy )*Msun_geo
-            ek( i, j, k, jxz )= ek( i, j, k, jxz )*Msun_geo
-            ek( i, j, k, jyy )= ek( i, j, k, jyy )*Msun_geo
-            ek( i, j, k, jyz )= ek( i, j, k, jyz )*Msun_geo
-            ek( i, j, k, jzz )= ek( i, j, k, jzz )*Msun_geo
-
-            !detg= two*g(i,j,k,jxy)*g(i,j,k,jxz)*g(i,j,k,jyz) &
-            !      - g(i,j,k,jzz)*g(i,j,k,jxy)**2 + g(i,j,k,jyy) &
-            !       *( g(i,j,k,jxx)*g(i,j,k,jzz) - g(i,j,k,jxz)**2 ) &
-            !      - g(i,j,k,jxx)*g(i,j,k,jyz)**2
 
             CALL determinant_sym3x3( g(i,j,k,:), detg )
 
@@ -466,22 +427,10 @@ SUBMODULE (bns_fuka) read
               STOP
             ENDIF
 
-            ! Print progress on screen
-           ! perc= 100*( nx*ny*(k - 1) + nx*(j - 1) + i )/( nx*ny*nz )
-           ! !perc2= 100.0*DBLE(nx*ny*(iz - 1) + nx*(iy - 1) + ix) &
-           ! !       /DBLE( nx*ny*nz )
-           ! !perc= 100*cnt/( nx*ny*nz )
-           ! IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-           !   WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-           !           creturn//" ", perc, "%"
-           !   !WRITE( *, "(A2,F5.2,A1)", ADVANCE= "NO" ) &
-           !   !        creturn//" ", perc2, "%"
-           ! ENDIF
-
-          ENDDO
-        ENDDO
-      ENDDO
-      !IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
+          ENDDO coords_x
+        ENDDO coords_y
+      ENDDO coords_z
+      !$OMP END PARALLEL DO
 
       PRINT *, "** Subroutine read_lorene_id executed."
       PRINT *
@@ -520,9 +469,6 @@ SUBMODULE (bns_fuka) read
         coords_y: DO j= 1, ny, 1
           coords_x: DO k= 1, nx, 1
 
-            ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-            ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
-            ! definition of Msun_geo
             CALL get_fuka_id_hydro( this% bns_ptr, &
                                     pos( i, j, k, jx ), &
                                     pos( i, j, k, jy ), &
@@ -538,19 +484,6 @@ SUBMODULE (bns_fuka) read
         ENDDO coords_y
       ENDDO coords_z
       !$OMP END PARALLEL DO
-
-      !      ! Print progress on screen
-      !      perc= 100*(nx*ny*(iz - 1) &
-      !            + nx*(iy - 1) + ix)/( nx*ny*nz )
-      !      IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-      !        WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-      !                creturn//" ", perc, "%"
-      !      ENDIF
-      !
-      !    ENDDO coords_x
-      !  ENDDO coords_y
-      !ENDDO coords_z
-      !IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine read_fuka_id_hydro executed."
       PRINT *
@@ -572,7 +505,7 @@ SUBMODULE (bns_fuka) read
     !
     !****************************************************
 
-    USE constants,  ONLY: amu
+    USE constants,  ONLY: Msun, amu
     USE utility,    ONLY: km2m, g2kg, determinant_sym3x3
 
     IMPLICIT NONE
@@ -595,16 +528,13 @@ SUBMODULE (bns_fuka) read
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( n, this, x, y, z, lapse, &
       !$OMP                     shift_x, shift_y, shift_z, &
-      !$OMP                     g_xx, &
+      !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
-      !$OMP             PRIVATE( a )
+      !$OMP             PRIVATE( a, detg )
       read_fuka_id_loop: DO a= 1, n, 1
 
-        ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-        ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
-        ! definition of Msun_geo
         CALL get_fuka_id_particles( this% bns_ptr, &
                                     x(a), y(a), z(a), &
                                     lapse(a), &
@@ -616,11 +546,6 @@ SUBMODULE (bns_fuka) read
                                     u_euler_x(a), &
                                     u_euler_y(a), &
                                     u_euler_z(a) )
-
-      ENDDO read_fuka_id_loop
-      !$OMP END PARALLEL DO
-
-      DO a= 1, n, 1
 
         !
         !-- The following follows from the assumption of conformal
@@ -666,19 +591,13 @@ SUBMODULE (bns_fuka) read
           STOP
         ENDIF
 
-        ! Print progress on screen
-        !perc= 100*a/n
-        !IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-        !  WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-        !          creturn//" ", perc, "%"
-        !ENDIF
+      ENDDO read_fuka_id_loop
+      !$OMP END PARALLEL DO
 
-      ENDDO
-      !IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
-
-      ! Convert the baryon density and pressure to units of amu (|sph| code units)
-      baryon_density= baryon_density/(amu*g2kg)
-      pressure      = pressure/(amu*g2kg)
+      ! Convert the baryon density and pressure to units of amu
+      ! (|sph| code units)
+      baryon_density= baryon_density*Msun/amu
+      pressure      = pressure*MSun/amu
 
       PRINT *, "** Subroutine read_fuka_id_particles executed."
       PRINT *
@@ -711,10 +630,7 @@ SUBMODULE (bns_fuka) read
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |fuka| units (\(\mathrm{km}\)).
       ! See MODULE constants for the definition of Msun_geo
-      CALL get_fuka_id_mass_b( this% bns_ptr, &
-                               x, &
-                               y, &
-                               z, &
+      CALL get_fuka_id_mass_b( this% bns_ptr, x, y, z, &
                                g(jxx), &
                                baryon_density, &
                                gamma_euler )
@@ -746,7 +662,7 @@ SUBMODULE (bns_fuka) read
 
     IMPLICIT NONE
 
-    INTEGER:: a
+   ! INTEGER:: a
 
    ! IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
    !
@@ -787,12 +703,12 @@ SUBMODULE (bns_fuka) read
    !     !-- Convert the extrinsic curvature from |fuka| units to
    !     !-- |sphincs| units
    !     !
-   !     k_xx(a)= k_xx(a)*Msun_geo
-   !     k_xy(a)= k_xy(a)*Msun_geo
-   !     k_xz(a)= k_xz(a)*Msun_geo
-   !     k_yy(a)= k_yy(a)*Msun_geo
-   !     k_yz(a)= k_yz(a)*Msun_geo
-   !     k_zz(a)= k_zz(a)*Msun_geo
+   !     k_xx(a)= k_xx(a)
+   !     k_xy(a)= k_xy(a)
+   !     k_xz(a)= k_xz(a)
+   !     k_yy(a)= k_yy(a)
+   !     k_yz(a)= k_yz(a)
+   !     k_zz(a)= k_zz(a)
    !
    !     ! Print progress on screen
    !     perc= 100*a/n
@@ -823,7 +739,7 @@ SUBMODULE (bns_fuka) read
     !
     !# Returns the |fuka| mass density at the point
     !  given as argument, in units of
-    !  \(M_\odot/L_\odot^3\).
+    !  \(M_\odot/\ell_\odot^3\).
     !
     !  Created:     FT 09.02.2022
     !  Last update: FT 27.05.2022
@@ -869,10 +785,7 @@ SUBMODULE (bns_fuka) read
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
       ! definition of Msun_geo
-      res= get_fuka_pressure( this% bns_ptr, &
-                              x, &
-                              y, &
-                              z )
+      res= get_fuka_pressure( this% bns_ptr, x, y, z )
 
     ENDIF
 
@@ -901,10 +814,7 @@ SUBMODULE (bns_fuka) read
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
       ! definition of Msun_geo
-      res= get_fuka_spatial_metric( this% bns_ptr, &
-                                    x, &
-                                    y, &
-                                    z )
+      res= get_fuka_spatial_metric( this% bns_ptr, x, y, z )
 
     ENDIF
 
@@ -936,9 +846,7 @@ SUBMODULE (bns_fuka) read
       ! The coordinates need to be converted from |sphincs| units (Msun_geo)
       ! to |fuka| units (\(\mathrm{km}\)). See MODULE constants for the
       ! definition of Msun_geo
-      tmp= positive_hydro( this% bns_ptr, x, &
-                                          y, &
-                                          z )
+      tmp= positive_hydro( this% bns_ptr, x, y, z )
 
       IF( tmp == 1 )THEN
         res= .TRUE.

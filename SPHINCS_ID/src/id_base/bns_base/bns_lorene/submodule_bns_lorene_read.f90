@@ -98,7 +98,7 @@ SUBMODULE (bns_lorene) read
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( n, this, x, y, z ) &
         !$OMP             PRIVATE( itr )
-        import_id_loop: DO itr= 1, n, 1
+        read_id_loop: DO itr= 1, n, 1
 
           ! The coordinates need to be converted from |sphincs| units (Msun_geo)
           ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
@@ -125,7 +125,7 @@ SUBMODULE (bns_lorene) read
                               this% v_euler_y( itr ), &
                               this% v_euler_z( itr ) )
 
-        ENDDO import_id_loop
+        ENDDO read_id_loop
         !$OMP END PARALLEL DO
 
         DO itr= 1, n, 1
@@ -221,7 +221,7 @@ SUBMODULE (bns_lorene) read
       !$OMP                     specific_energy, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
       !$OMP             PRIVATE( itr )
-      import_id_loop: DO itr= 1, n, 1
+      read_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
@@ -248,7 +248,7 @@ SUBMODULE (bns_lorene) read
                             u_euler_y( itr ), &
                             u_euler_z( itr ) )
 
-      ENDDO import_id_loop
+      ENDDO read_id_loop
       !$OMP END PARALLEL DO
 
       DO itr= 1, n, 1
@@ -504,16 +504,16 @@ SUBMODULE (bns_lorene) read
             ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
             ! Msun_geo
             CALL get_lorene_id_hydro( this% bns_ptr, &
-                              pos( ix, iy, iz, jx )*Msun_geo, &
-                              pos( ix, iy, iz, jy )*Msun_geo, &
-                              pos( ix, iy, iz, jz )*Msun_geo, &
-                              baryon_density( ix, iy, iz ), &
-                              energy_density( ix, iy, iz ), &
-                              specific_energy( ix, iy, iz ), &
-                              pressure( ix, iy, iz ), &
-                              u_euler( ix, iy, iz, jx ), &
-                              u_euler( ix, iy, iz, jy ), &
-                              u_euler( ix, iy, iz, jz ) )
+                                      pos( ix, iy, iz, jx )*Msun_geo, &
+                                      pos( ix, iy, iz, jy )*Msun_geo, &
+                                      pos( ix, iy, iz, jz )*Msun_geo, &
+                                      baryon_density( ix, iy, iz ), &
+                                      energy_density( ix, iy, iz ), &
+                                      specific_energy( ix, iy, iz ), &
+                                      pressure( ix, iy, iz ), &
+                                      u_euler( ix, iy, iz, jx ), &
+                                      u_euler( ix, iy, iz, jy ), &
+                                      u_euler( ix, iy, iz, jz ) )
 
           ENDDO coords_x
         ENDDO coords_y
@@ -575,16 +575,16 @@ SUBMODULE (bns_lorene) read
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( n, this, x, y, z, lapse, &
       !$OMP                     shift_x, shift_y, shift_z, &
-      !$OMP                     g_xx, &
+      !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
-      !$OMP             PRIVATE( a )
-      import_id_loop: DO a= 1, n, 1
+      !$OMP             PRIVATE( a, detg )
+      read_id_loop: DO a= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-        ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-        ! Msun_geo
+        ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
+        ! definition of Msun_geo
         CALL get_lorene_id_particles( this% bns_ptr, &
                                       x(a)*Msun_geo, &
                                       y(a)*Msun_geo, &
@@ -600,10 +600,10 @@ SUBMODULE (bns_lorene) read
                                       u_euler_y(a), &
                                       u_euler_z(a) )
 
-      ENDDO import_id_loop
-      !$OMP END PARALLEL DO
-
-      DO itr= 1, n, 1
+    !  ENDDO read_id_loop
+    !  !$OMP END PARALLEL DO
+    !
+    !  DO a= 1, n, 1
 
         !
         !-- The following follows from the assumption of conformal
@@ -651,7 +651,8 @@ SUBMODULE (bns_lorene) read
        !           creturn//" ", perc, "%"
        ! ENDIF
 
-      ENDDO
+      ENDDO read_id_loop
+      !$OMP END PARALLEL DO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       ! Convert the baryon density and pressure to units of amu (SPH code units)
@@ -737,7 +738,7 @@ SUBMODULE (bns_lorene) read
       !$OMP             SHARED( n, this, x, y, z, &
       !$OMP                     k_xx, k_xy, k_xz, k_yy, k_yz, k_zz ) &
       !$OMP             PRIVATE( itr )
-      import_id_loop: DO itr= 1, n, 1
+      read_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
@@ -753,7 +754,7 @@ SUBMODULE (bns_lorene) read
                               k_yz( itr ), &
                               k_zz( itr ) )
 
-      ENDDO import_id_loop
+      ENDDO read_id_loop
       !$OMP END PARALLEL DO
 
       DO itr= 1, n, 1
