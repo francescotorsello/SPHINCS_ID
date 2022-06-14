@@ -228,6 +228,10 @@ MODULE sphincs_id_full
 
         eos_str= 'haso'
 
+      CASE( 'Polytropic EOS' )
+
+        eos_str= '   '
+
       CASE DEFAULT
 
         PRINT *, "** ERROR! Unknown EOS name: ", eos_long

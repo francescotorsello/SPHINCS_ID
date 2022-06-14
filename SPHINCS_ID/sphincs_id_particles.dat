@@ -63,9 +63,6 @@ npart_des= 10000 !1200000 !2800000
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
 stretch=1.2     ! Factor by which the lattices around the stars are stretched
-!nx=80           ! Number of particles in the x direction for each lattice
-!ny=80           ! Number of particles in the y direction for each lattice
-!nz=80           ! EVEN number of particles in the z direction for each lattice
 use_thres=.FALSE.
 thres=10      ! (~rho_max)/thres is the minimum mass density considered
                 ! when placing particles. Used only when redistribute_nu is

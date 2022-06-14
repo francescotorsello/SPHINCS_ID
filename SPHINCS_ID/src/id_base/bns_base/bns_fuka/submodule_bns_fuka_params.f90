@@ -105,7 +105,22 @@ SUBMODULE (bns_fuka) params
                              this% ent_center2           , &
                              this% rho_center2           , &
                              this% energy_density_center2, &
-                             eos_type_tmp_c )
+                             eos_type_tmp_c              , &
+                             this% gamma_1               , &
+                             this% kappa_1               , &
+                             this% npeos_1               , &
+                             this% gamma0_1              , &
+                             this% gamma1_1              , &
+                             this% gamma2_1              , &
+                             this% gamma3_1              , &
+                             this% kappa0_1              , &
+                             this% kappa1_1              , &
+                             this% kappa2_1              , &
+                             this% kappa3_1              , &
+                             this% logP1_1               , &
+                             this% logRho0_1             , &
+                             this% logRho1_1             , &
+                             this% logRho2_1 )
 
   !  ! Convert distances from |fuka| units (km) to SPHINCS units (Msun_geo)
   !  ! See MODULE constants for the definition of Msun_geo
@@ -129,6 +144,23 @@ SUBMODULE (bns_fuka) params
   !  this% mass(1)= this% mass1
   !  this% mass(2)= this% mass2
   !
+
+    ! In FUKA, the two stars have the same EOS
+    this% gamma_2  = this% gamma_1
+    this% kappa_2  = this% kappa_1
+    this% npeos_2  = this% npeos_1
+    this% gamma0_2 = this% gamma0_1
+    this% gamma1_2 = this% gamma1_1
+    this% gamma2_2 = this% gamma2_1
+    this% gamma3_2 = this% gamma3_1
+    this% kappa0_2 = this% kappa0_1
+    this% kappa1_2 = this% kappa1_1
+    this% kappa2_2 = this% kappa2_1
+    this% kappa3_2 = this% kappa3_1
+    this% logP1_2  = this% logP1_1
+    this% logRho0_2= this% logRho0_1
+    this% logRho1_2= this% logRho1_1
+    this% logRho2_2= this% logRho2_1
 
     this% radius1_y= this% radius1_x_opp
     this% radius1_z= this% radius1_x_opp

@@ -269,6 +269,9 @@ SUBMODULE (sph_particles) constructor_std
 
     parts% post_process_sph_id => id% finalize_sph_id_ptr
 
+    !PRINT *, parts% all_eos(1)% eos_parameters
+    !STOP
+
     !
     !-- Read the parameters of the particle distributions
     !
@@ -865,13 +868,9 @@ SUBMODULE (sph_particles) constructor_std
         zmin= center(itr, 3) - stretch*sizes(itr, 5)
         zmax= center(itr, 3) + stretch*sizes(itr, 6)
 
-        !PRINT *, xmin, xmax, ymin, ymax, zmin, zmax
-        !STOP
-
         central_density(itr)= id% read_mass_density( center(itr, 1), &
                                                      center(itr, 2), &
                                                      center(itr, 3) )
-
 
         CALL parts% place_particles_lattice( central_density(itr), &
                                              xmin, xmax, ymin, &
@@ -1468,6 +1467,9 @@ SUBMODULE (sph_particles) constructor_std
                                 parts% v_euler_z )
     CALL parts% importer_timer% stop_timer()
 
+    PRINT *, MAXVAL( parts% pressure, DIM= 1 )
+    STOP
+
     IF( debug ) PRINT *, "34"
 
     !-----------------------------------------------------------------------!
@@ -1487,17 +1489,17 @@ SUBMODULE (sph_particles) constructor_std
 
         min_eps= MINVAL( parts% specific_energy(npart_in:npart_fin), &
                          DIM= 1, &
-                MASK= parts% baryon_density(npart_in:npart_fin) > 0.0D0 )
+                MASK= parts% baryon_density(npart_in:npart_fin) > zero )
         min_vel= MINVAL( SQRT( &
                        (parts% v_euler_x(npart_in:npart_fin))**2.0D0 &
                      + (parts% v_euler_y(npart_in:npart_fin))**2.0D0 &
                      + (parts% v_euler_z(npart_in:npart_fin))**2.0D0 ), &
                          DIM= 1, &
-                MASK= parts% baryon_density(npart_in:npart_fin) > 0.0D0 )
+                MASK= parts% baryon_density(npart_in:npart_fin) > zero )
 
         particle_loop2: DO a= npart_in, npart_fin, 1
 
-          IF( parts% baryon_density(a) <= 0.0D0 )THEN
+          IF( parts% baryon_density(a) <= zero )THEN
 
             CALL spherical_from_cartesian( &
                   parts% pos(1,a), parts% pos(2,a), parts% pos(3,a), &

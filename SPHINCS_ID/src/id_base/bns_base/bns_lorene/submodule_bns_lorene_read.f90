@@ -553,10 +553,11 @@ SUBMODULE (bns_lorene) read
     !****************************************************
 
     USE constants, ONLY: amu
-    USE utility,   ONLY: km2m, g2kg
+    USE utility,   ONLY: determinant_sym3x3, km2m, g2kg
 
     IMPLICIT NONE
 
+    INTEGER:: a
     DOUBLE PRECISION:: detg
 
     IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
@@ -578,28 +579,26 @@ SUBMODULE (bns_lorene) read
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
-      !$OMP             PRIVATE( itr )
-      import_id_loop: DO itr= 1, n, 1
+      !$OMP             PRIVATE( a )
+      import_id_loop: DO a= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
         ! Msun_geo
         CALL get_lorene_id_particles( this% bns_ptr, &
-                                      x( itr )*Msun_geo, &
-                                      y( itr )*Msun_geo, &
-                                      z( itr )*Msun_geo, &
-                                      lapse( itr ), &
-                                      shift_x( itr ), &
-                                      shift_y( itr ), &
-                                      shift_z( itr ), &
-                                      g_xx( itr ), &
-                                      baryon_density( itr ), &
-                                      energy_density( itr ), &
-                                      specific_energy( itr ), &
-                                      pressure( itr ), &
-                                      u_euler_x( itr ), &
-                                      u_euler_y( itr ), &
-                                      u_euler_z( itr ) )
+                                      x(a)*Msun_geo, &
+                                      y(a)*Msun_geo, &
+                                      z(a)*Msun_geo, &
+                                      lapse(a), &
+                                      shift_x(a), shift_y(a), shift_z(a), &
+                                      g_xx(a), &
+                                      baryon_density(a), &
+                                      energy_density(a), &
+                                      specific_energy(a), &
+                                      pressure(a), &
+                                      u_euler_x(a), &
+                                      u_euler_y(a), &
+                                      u_euler_z(a) )
 
       ENDDO import_id_loop
       !$OMP END PARALLEL DO
@@ -610,49 +609,47 @@ SUBMODULE (bns_lorene) read
         !-- The following follows from the assumption of conformal
         !-- flatness in |lorene|
         !
-        g_yy( itr )= g_xx( itr )
-        g_zz( itr )= g_xx( itr )
-        g_xy( itr )= zero
-        g_xz( itr )= zero
-        g_yz( itr )= zero
+        g_yy(a)= g_xx(a)
+        g_zz(a)= g_xx(a)
+        g_xy(a)= zero
+        g_xz(a)= zero
+        g_yz(a)= zero
 
         !
         !- Set/unset the geodesic gauge
         !
         IF( this% get_one_lapse() )THEN
-          lapse( itr )= one
+          lapse(a)= one
         ENDIF
         IF( this% get_zero_shift() )THEN
-          shift_x( itr )= zero
-          shift_y( itr )= zero
-          shift_z( itr )= zero
+          shift_x(a)= zero
+          shift_y(a)= zero
+          shift_z(a)= zero
         ENDIF
 
-        detg= 2*g_xy(itr)*g_xz(itr)*g_yz(itr) &
-              - g_zz(itr)*g_xy(itr)**2 &
-              + g_yy(itr)*( g_xx(itr)*g_zz(itr) - g_xz(itr)**2 ) &
-              - g_xx(itr)*g_yz(itr)**2
+        CALL determinant_sym3x3( [g_xx(a),g_xy(a),g_xz(a), &
+                                  g_yy(a),g_yz(a),g_zz(a)], detg )
 
         IF( ABS( detg ) < 1D-10 )THEN
           PRINT *, "The determinant of the spatial metric is " &
-                   // "effectively 0 at the particle ", itr
+                   // "effectively 0 at the particle ", a
           PRINT *, "detg=", detg
           PRINT *
           STOP
         ELSEIF( detg < 0 )THEN
           PRINT *, "The determinant of the spatial metric is " &
-                   // "negative at the particle ", itr
+                   // "negative at the particle ", a
           PRINT *, "detg=", detg
           PRINT *
           STOP
         ENDIF
 
         ! Print progress on screen
-        perc= 100*itr/n
-        IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
-          WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
-                  creturn//" ", perc, "%"
-        ENDIF
+       ! perc= 100*a/n
+       ! IF( show_progress .AND. MOD( perc, 10 ) == 0 )THEN
+       !   WRITE( *, "(A2,I2,A1)", ADVANCE= "NO" ) &
+       !           creturn//" ", perc, "%"
+       ! ENDIF
 
       ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn

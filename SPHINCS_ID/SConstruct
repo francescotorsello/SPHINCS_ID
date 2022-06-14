@@ -515,7 +515,7 @@ for i in range(len(sources_sphincs_fm)):
 ################################################################################
 
 ################################################################################
-# FLAVOUR= 1. Link to LORENE and FUKA libraries, and interpolate from
+# FLAVOUR= 1. Link to LORENE and Kadath libraries, and interpolate from
 #             Cartesian uniform grid
 
 if flavour == full_flavour: #

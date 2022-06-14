@@ -52,7 +52,7 @@ SUBMODULE (sph_particles) lattices
     !*********************************************************
 
     USE constants,  ONLY: pi, third
-    USE utility,    ONLY: one
+    USE utility,    ONLY: one, zero, two, three
 
     IMPLICIT NONE
 
@@ -80,7 +80,7 @@ SUBMODULE (sph_particles) lattices
     !
     !-- Compute number of lattice points (for now, equal in each direction)
     !
-    nx= FLOOR(stretch*(6.0D0*DBLE(npart_des)/pi)**third)
+    nx= FLOOR(stretch*(two*three*DBLE(npart_des)/pi)**third)
     IF( MOD( nx, 2 ) /= 0 ) nx= nx + 1
     ny= nx
     nz= nx
@@ -112,8 +112,12 @@ SUBMODULE (sph_particles) lattices
     dy= ABS(ymax - ymin)/DBLE( ny )
     dz= ABS(zlim)/DBLE( nz/2 )
 
+    PRINT *, " * xmin=", xmin,  ", xmax=", xmax
+    PRINT *, " * ymin=", ymin,  ", ymax=", ymax
+    PRINT *, " * zmin=", zmin,  ", zmax=", zmax
     PRINT *, " * dx=", dx,  ", dy=", dx,  ", dz=", dz
     PRINT *
+    !STOP
 
     npart_tmp = nx*ny*nz
 
@@ -127,7 +131,7 @@ SUBMODULE (sph_particles) lattices
     IF( this% use_thres )THEN
       thres_baryon_density= central_density/thres
     ELSE
-      thres_baryon_density= 0.0D0
+      thres_baryon_density= zero
     ENDIF
 
     IF(.NOT.ALLOCATED( pos_tmp ))THEN
@@ -144,7 +148,7 @@ SUBMODULE (sph_particles) lattices
       !                // "place_particles_3D_lattice." )
     ENDIF
     ! Initializing the array pos to 0
-    pos_tmp= HUGE(0.0D0)
+    pos_tmp= HUGE(zero)
 
     !---------------------------------------------------------!
     !--  Storing the particle positions into the array pos  --!

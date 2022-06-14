@@ -111,13 +111,10 @@ SUBMODULE (sph_particles) io
         min_nlrf_sph= MINVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 )
 
         max_pr_id = MAXVAL( this% pressure(npart_in:npart_fin), DIM= 1 )
-        max_pr_sph= MAXVAL( this% pressure_cu(npart_in:npart_fin), &
-                            DIM= 1 )
-        min_pr_sph= MINVAL( this% pressure_cu(npart_in:npart_fin), &
-                            DIM= 1 )
+        max_pr_sph= MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
+        min_pr_sph= MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
 
-        max_u_id = MAXVAL( this% specific_energy(npart_in:npart_fin), &
-                           DIM= 1 )
+        max_u_id = MAXVAL( this% specific_energy(npart_in:npart_fin), DIM= 1 )
         max_u_sph= MAXVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 )
         min_u_sph= MINVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 )
 

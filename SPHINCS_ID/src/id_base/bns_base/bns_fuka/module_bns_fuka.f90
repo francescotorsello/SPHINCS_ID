@@ -1316,7 +1316,22 @@ MODULE bns_fuka
                                    ent_center2,            &
                                    rho_center2,            &
                                    energy_density_center2, &
-                                   eos_type )              &
+                                   eos_type,               &
+                                   gamma,                  &
+                                   kappa,                  &
+                                   n_poly,                 &
+                                   gamma0,                 &
+                                   gamma1,                 &
+                                   gamma2,                 &
+                                   gamma3,                 &
+                                   kappa0,                 &
+                                   kappa1,                 &
+                                   kappa2,                 &
+                                   kappa3,                 &
+                                   logP1,                  &
+                                   logRho0,                &
+                                   logRho1,                &
+                                   logRho2 )               &
       BIND(C, NAME= "get_fuka_id_params")
 
       !**********************************************
@@ -1363,6 +1378,21 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: rho_center2
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center2
       CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_type
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa
+      INTEGER(C_INT), INTENT(OUT)       :: n_poly
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma0
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma1
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma2
+      REAL(C_DOUBLE), INTENT(OUT)       :: gamma3
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa0
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa1
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa2
+      REAL(C_DOUBLE), INTENT(OUT)       :: kappa3
+      REAL(C_DOUBLE), INTENT(OUT)       :: logP1
+      REAL(C_DOUBLE), INTENT(OUT)       :: logRho0
+      REAL(C_DOUBLE), INTENT(OUT)       :: logRho1
+      REAL(C_DOUBLE), INTENT(OUT)       :: logRho2
 
     END SUBROUTINE get_fuka_id_params
 

@@ -1253,7 +1253,7 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDDO matter_objects_loop
 
-    STOP
+    !STOP
 
     !-------------------!
     ! Assignment of Ye  !
