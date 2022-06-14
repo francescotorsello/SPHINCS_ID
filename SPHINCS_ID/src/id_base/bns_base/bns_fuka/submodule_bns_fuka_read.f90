@@ -598,6 +598,7 @@ SUBMODULE (bns_fuka) read
       ! (|sph| code units)
       baryon_density= baryon_density*Msun/amu
       pressure      = pressure*MSun/amu
+      energy_density= energy_density*MSun/amu
 
       PRINT *, "** Subroutine read_fuka_id_particles executed."
       PRINT *
