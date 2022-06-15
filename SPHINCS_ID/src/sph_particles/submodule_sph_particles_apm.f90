@@ -111,13 +111,15 @@ SUBMODULE (sph_particles) apm
     USE analyze,             ONLY: COM
     USE matrix,              ONLY: determinant_4x4_matrix
 
-    USE sphincs_sph,         ONLY: density, ncand!, all_clists
+    USE sphincs_sph,         ONLY: density, ncand, all_clists
     USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
-    !USE kernel_table,        ONLY: dWdv_no_norm,dv_table,dv_table_1,&
-    !                               W_no_norm,n_tab_entry
+    USE kernel_table,        ONLY: &!dWdv_no_norm, &
+                                   dv_table, dv_table_1,&
+                                   W_no_norm, n_tab_entry, &
+                                   interp_gradW_table,interp_W_gradW_table
 
     IMPLICIT NONE
 
@@ -140,7 +142,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, PARAMETER:: tiny_real        = 1.0D-10
     DOUBLE PRECISION, PARAMETER:: nuratio_tol      = 0.0025
 
-    INTEGER:: a, itr, itr2, n_inc, cnt1!, inde, index1   ! iterators
+    INTEGER:: a, itr, itr2, n_inc, cnt1, b, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
@@ -173,10 +175,15 @@ SUBMODULE (sph_particles) apm
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
     INTEGER, DIMENSION(:), ALLOCATABLE:: seed
 
-    !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
-    !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
-    !DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
-    !                   Wab_ha, Wi, Wi1, dvv
+    DOUBLE PRECISION:: ha, ha_1, ha_3, ha_4, va, xa, ya, za, &
+                       hb, hb_1, hb_3, hb_4, xb, yb, zb, rab, rab2, &
+                       ha2, ha2_4, hb2_4
+    !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy, mat_yz, mat_zz
+    DOUBLE PRECISION:: &!Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
+                       Wab_ha, Wi, Wi1, dvv, &
+                       grW_ha_x, grW_ha_y, grW_ha_z, &
+                       grW_hb_x, grW_hb_y, grW_hb_z, eab(3), &
+                       Wa, grW, grWa, grWb, vb, nlrfa, nlrfb
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
@@ -196,6 +203,8 @@ SUBMODULE (sph_particles) apm
     !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_eul_id
     !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_eul
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_sph
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_sph
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pr_sph
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
 
@@ -515,7 +524,7 @@ SUBMODULE (sph_particles) apm
     CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
                            all_pos(2,1:npart_real), &
                            all_pos(3,1:npart_real), &
-                           nstar_id, &!nstar_eul_id, &
+                           nstar_sph, nstar_id, nlrf_sph, &
                            use_atmosphere )
 
   ! The following test is done inside get_nstar_id_atm. Kept here for paranoia
@@ -831,7 +840,7 @@ SUBMODULE (sph_particles) apm
       CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
                              all_pos(2,1:npart_real), &
                              all_pos(3,1:npart_real), &
-                             nstar_id, &!nstar_eul_id, &
+                             nstar_sph, nstar_id, nlrf_sph, &
                              use_atmosphere )
 
 ! The following test is done inside get_nstar_id_atm. Kept here for paranoia
@@ -1182,6 +1191,139 @@ SUBMODULE (sph_particles) apm
       !ELSE
       !  n_inc= 0
       !ENDIF
+
+      PRINT *, "Before calling exact_nei_tree_update..."
+      PRINT *
+
+      CALL exact_nei_tree_update( nn_des, &
+                                  npart_real, &
+                                  all_pos(:,1:npart_real), &
+                                  nu_tmp(1:npart_real) )
+
+      PRINT *, "Before calling ll_cell_loop..."
+      PRINT *
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic, &
+      !$OMP                     ncand, h, all_pos, all_clists, nlrf_sph, &
+      !$OMP                     pr_sph ) &
+      !$OMP             PRIVATE( ill, itot, a, b, l, &
+      !$OMP                      ha, ha_1, ha_3, ha_4, ha2, ha2_4, &
+      !$OMP                      hb, hb_1, hb_3, hb_4, hb2_4, &
+      !$OMP                      xa, ya, za, xb, yb, zb, dx, dy, dz, rab2, &
+      !$OMP                      inde, va, dv_table_1, index1, Wi, W_no_norm, &
+      !$OMP                      dvv, dv_table, Wab_ha, Wa, grW, Wi1, &
+      !$OMP                      grW_ha_x, grW_ha_y, grW_ha_z, grWa, grWb, &
+      !$OMP                      grW_hb_x, grW_hb_y, grW_hb_z, eab, rab, vb, &
+      !$OMP                      nlrfa, nlrfb )
+      ll_cell_loop2: DO ill= 1, nfinal
+
+        itot= nprev + ill
+        IF( nic(itot) == 0 ) CYCLE
+
+        particle_loop2: DO l= lpart(itot), rpart(itot)
+
+          a=         iorig(l)
+
+          ha=        h(a)
+          ha_1=      one/ha
+          ha_3=      ha_1*ha_1*ha_1
+          ha_4=      ha_3*ha_1
+          ha2=       ha*ha
+          ha2_4=     two*two*ha2
+
+          xa=        all_pos(1,a)
+          ya=        all_pos(2,a)
+          za=        all_pos(3,a)
+
+          nlrfa= nlrf_sph(a)
+
+          cand_loop2: DO k= 1, ncand(ill)
+
+            b= all_clists(ill)%list(k)
+
+            hb=   h(b)
+            hb_1= one/hb
+            hb_3= hb_1*hb_1*hb_1
+            hb_4= hb_3*hb_1
+            hb2_4=     two*two*hb*hb
+
+            xb=   all_pos(1,b)  ! CONTRA-variant
+            yb=   all_pos(1,b)
+            zb=   all_pos(1,b)
+
+            ! potentially bail out
+            dx=        xa  - xb
+            dy=        ya  - yb
+            dz=        za  - zb
+
+            rab2=      dx*dx + dy*dy + dz*dz
+            IF( rab2 > ha2_4 .AND. rab2 > hb2_4 ) CYCLE
+
+            ! get interpolation indices
+            inde=  MIN(INT(va*dv_table_1),n_tab_entry)
+            index1= MIN(inde + 1,n_tab_entry)
+
+            ! get tabulated values
+            Wi=     W_no_norm(inde)
+            Wi1=    W_no_norm(index1)
+
+            ! interpolate
+            dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
+            Wab_ha= Wi + (Wi1 - Wi)*dvv
+
+            !--------!
+            !-- ha --!
+            !--------!
+            va=       rab*ha_1
+
+            ! kernel and its gradient
+            !DIR$ INLINE
+            CALL interp_W_gradW_table(va,Wa,grW)
+            Wa=       Wa*ha_3
+            grW=      grW*ha_4
+
+            ! nabla_a Wab(ha)
+            grW_ha_x= grW*eab(1)
+            grW_ha_y= grW*eab(2)
+            grW_ha_z= grW*eab(3)
+
+            grWa=     grW_ha_x*eab(1) + &
+                      grW_ha_y*eab(2) + &
+                      grW_ha_z*eab(3)
+
+            !--------!
+            !-- hb --!
+            !--------!
+            vb=       rab*hb_1
+
+            ! kernel and its gradient
+            !DIR$ INLINE
+            CALL interp_gradW_table(vb,grW)
+            grW=      grW*hb_4
+
+            ! nabla_a Wab(hb)
+            grW_hb_x= grW*eab(1)
+            grW_hb_y= grW*eab(2)
+            grW_hb_z= grW*eab(3)
+
+            grWb= grW_hb_x*eab(1) + &
+                  grW_hb_y*eab(2) + &
+                  grW_hb_z*eab(3)
+
+            nlrfb= nlrf_sph(b)
+
+          ENDDO cand_loop2
+
+        ENDDO particle_loop2
+
+      ENDDO ll_cell_loop2
+      !$OMP END PARALLEL DO
+
+      PRINT *, "After calling ll_cell_loop..."
+      PRINT *
+
+      STOP
 
       !
       !-- EXIT conditions
@@ -1608,7 +1750,7 @@ SUBMODULE (sph_particles) apm
     IF( debug ) PRINT *, "3"
 
     CALL get_nstar_id_atm( npart_real, pos(1,:), pos(2,:), pos(3,:), &
-                           nstar_id, &!nstar_eul_id, &
+                           nstar_sph, nstar_id, nlrf_sph, &
                            use_atmosphere )
 
     nu= nu_all
@@ -1716,7 +1858,7 @@ SUBMODULE (sph_particles) apm
 
          CALL get_nstar_id_atm( npart_real, pos(1,:), &
                                 pos(2,:), &
-                                pos(3,:), nstar_id, &!nstar_eul_id, &
+                                pos(3,:), nstar_sph, nstar_id, nlrf_sph, &
                                 use_atmosphere )
 
          !nstar_id( npart_real+1:npart_all )= zero
@@ -1928,7 +2070,7 @@ SUBMODULE (sph_particles) apm
 
     CALL get_nstar_id_atm( npart_real, pos(1,:), &
                            pos(2,:), &
-                           pos(3,:), nstar_id, &!nstar_eul_id, &
+                           pos(3,:), nstar_sph, nstar_id, nlrf_sph, &
                            use_atmosphere )
 
     dN_av = zero
@@ -2484,7 +2626,7 @@ SUBMODULE (sph_particles) apm
 
 
     SUBROUTINE get_nstar_id_atm &
-    ( npart_real, x, y, z, nstar_id, use_atmosphere )
+    ( npart_real, x, y, z, nstar_sph, nstar_id, nlrf_sph, use_atmosphere )
     !, nstar_eul_id, use_atmosphere )
 
       !*******************************************************
@@ -2506,8 +2648,13 @@ SUBMODULE (sph_particles) apm
       !! Array of \(y\) coordinates
       DOUBLE PRECISION, INTENT(IN):: z(npart_real)
       !! Array of \(z\) coordinates
-      DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart_real)
+      DOUBLE PRECISION, INTENT(IN):: nstar_sph(npart)
+      !! |sph| proper baryon density
+      DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
       !! Array to store the computed proper baryon number density
+      DOUBLE PRECISION, INTENT(OUT):: nlrf_sph(npart)
+      !# Array to store the local rest frame baryon density computed from
+      !  the |sph| proper baryon density
       !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
       !# Array to store the computed proper baryon number density seen
       !  by the Eulerian observer
@@ -2516,7 +2663,7 @@ SUBMODULE (sph_particles) apm
       !  the real aprticles more freedom to move around and adjust;
       !  `.FALSE.` otherwise
 
-      CALL get_nstar_id( npart_real, x, y, z, nstar_id )!, nstar_eul_id )
+      CALL get_nstar_id( npart_real, x, y, z, nstar_sph, nstar_id, nlrf_sph )
 
       IF( use_atmosphere .EQV. .TRUE. )THEN
 
@@ -2612,6 +2759,24 @@ SUBMODULE (sph_particles) apm
         ALLOCATE( nstar_sph( npart_all ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
            PRINT *, "...allocation error for array nstar_sph in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( nlrf_sph ))THEN
+        ALLOCATE( nlrf_sph( npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nlrf_real in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( pr_sph ))THEN
+        ALLOCATE( pr_sph( npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pr_real in SUBROUTINE ", &
                     "allocate_apm_fields. The error message is",&
                     err_msg
            STOP

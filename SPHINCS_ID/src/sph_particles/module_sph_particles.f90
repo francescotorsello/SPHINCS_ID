@@ -1055,7 +1055,7 @@ MODULE sph_particles
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
-        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id )!, nstar_eul_id )
+        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, nlrf_sph )
         !! Computes the proper baryon number density at the particle positions
           INTEGER, INTENT(IN):: npart
           !! Number of real particles (i.e., no ghost particles included here)
@@ -1065,11 +1065,13 @@ MODULE sph_particles
           !! Array of \(y\) coordinates
           DOUBLE PRECISION, INTENT(IN):: z(npart)
           !! Array of \(z\) coordinates
+          DOUBLE PRECISION, INTENT(IN):: nstar_sph(npart)
+          !! |sph| proper baryon density
           DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
           !! Array to store the computed proper baryon number density
-          !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
-          !# Array to store the computed proper baryon number density seen
-          !  by the Eulerian observer
+          DOUBLE PRECISION, INTENT(OUT):: nlrf_sph(npart)
+          !# Array to store the local rest frame baryon density computed from
+          !  the |sph| proper baryon density
         END SUBROUTINE get_nstar_id
       END INTERFACE
       INTERFACE

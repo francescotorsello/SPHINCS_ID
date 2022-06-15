@@ -13,8 +13,8 @@
 !----------------------------------------------------------------!
 ! n_bns and the number of specified components of filenames must be the same
 n_id=1                          ! Number of physical systems to use
-common_path=!"lorene-id-files/"  ! Path to the directory containing the ID files
-            "fuka-id-files/"
+common_path="lorene-id-files/"  ! Path to the directory containing the ID files
+            !"fuka-id-files/"
             !"eccentric-ejecta-files/"
 filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
@@ -84,8 +84,8 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"DRSLO_apr4.bin"
              !"EJECT_ejecta_apr4_2516.dat"
-             "BNSFU_poly2.00_1.4-1.4_50km.info"
-             !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
+             !"BNSFU_poly2.00_1.4-1.4_50km.info"
+             "BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
 !--------------------------------------------------!
 ! Estimate typical length scales to be resolved    !
 ! for the spacetime and/or the hydro               !

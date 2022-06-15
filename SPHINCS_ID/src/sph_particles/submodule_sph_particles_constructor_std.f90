@@ -1819,7 +1819,7 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE correct_center_of_mass_of_system
 
 
-    SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id )!, nstar_eul_id )
+    SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, nlrf_sph )
 
       IMPLICIT NONE
 
@@ -1827,8 +1827,9 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, INTENT(IN):: x(npart)
       DOUBLE PRECISION, INTENT(IN):: y(npart)
       DOUBLE PRECISION, INTENT(IN):: z(npart)
+      DOUBLE PRECISION, INTENT(IN):: nstar_sph(npart)
       DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
-      !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
+      DOUBLE PRECISION, INTENT(OUT):: nlrf_sph(npart)
 
       DOUBLE PRECISION, DIMENSION(npart):: lapse, &
                                            shift_x, shift_y, shift_z, &
@@ -1853,7 +1854,7 @@ SUBMODULE (sph_particles) constructor_std
       CALL compute_nstar_id( npart, lapse, shift_x, shift_y, &
                              shift_z, v_euler_x, v_euler_y, v_euler_z, &
                              g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                             baryon_density, nstar_id )
+                             baryon_density, nstar_sph, nstar_id, nlrf_sph )
 
       !CALL compute_nstar_eul_id( npart, &
       !                           v_euler_x, v_euler_y, v_euler_z, &
@@ -1866,7 +1867,7 @@ SUBMODULE (sph_particles) constructor_std
     SUBROUTINE compute_nstar_id( npart, lapse, shift_x, shift_y, &
                                  shift_z, v_euler_x, v_euler_y, v_euler_z, &
                                  g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                                 baryon_density, nstar_id )
+                                 baryon_density, nstar_sph, nstar_id, nlrf_sph )
 
       !**************************************************************
       !
@@ -1898,7 +1899,9 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_yz
       DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_zz
       DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: baryon_density
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: nstar_sph
       DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: nstar_id
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: nlrf_sph
 
       INTEGER:: a, i!mus, nus
       DOUBLE PRECISION:: det, sq_g, Theta_a
@@ -1910,15 +1913,16 @@ SUBMODULE (sph_particles) constructor_std
       !$OMP             SHARED( npart, lapse, shift_x, shift_y, shift_z, &
       !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
       !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-      !$OMP                     baryon_density, vel, nstar_id ) &
+      !$OMP                     baryon_density, vel, nstar_id, nstar_sph, &
+      !$OMP                     nlrf_sph ) &
       !$OMP             PRIVATE( a, det, sq_g, Theta_a, g4 )
       DO a= 1, npart, 1
 
         ! Coordinate velocity of the fluid [c]
         vel(0,a) = one
-        vel(jx,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-        vel(jy,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-        vel(jz,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+        vel(jx,a)= lapse(a)*v_euler_x(a) - shift_x(a)
+        vel(jy,a)= lapse(a)*v_euler_y(a) - shift_y(a)
+        vel(jz,a)= lapse(a)*v_euler_z(a) - shift_z(a)
 
         CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
                          [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
@@ -1975,6 +1979,7 @@ SUBMODULE (sph_particles) constructor_std
         ENDIF
 
         nstar_id(a)= sq_g*Theta_a*baryon_density(a)
+        nlrf_sph(a)= nstar_sph(a)/(sq_g*Theta_a)
 
       ENDDO
       !$OMP END PARALLEL DO
