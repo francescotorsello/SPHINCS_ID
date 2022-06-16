@@ -105,7 +105,7 @@ SUBMODULE (sph_particles) apm
     USE set_h,               ONLY: exact_nei_tree_update, posmash
     !USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
     !                               deallocate_RCB_tree_memory_3D
-    USE units,               ONLY: umass
+    USE units,               ONLY: umass, m0c2_cu
 
     USE APM,                 ONLY: density_loop, position_correction, assign_h
     USE analyze,             ONLY: COM
@@ -176,14 +176,14 @@ SUBMODULE (sph_particles) apm
     INTEGER, DIMENSION(:), ALLOCATABLE:: seed
 
     DOUBLE PRECISION:: ha, ha_1, ha_3, ha_4, va, xa, ya, za, &
-                       hb, hb_1, hb_3, hb_4, xb, yb, zb, rab, rab2, &
+                       hb, hb_1, hb_3, hb_4, xb, yb, zb, rab, rab2, rab_1, &
                        ha2, ha2_4, hb2_4
     !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy, mat_yz, mat_zz
     DOUBLE PRECISION:: &!Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
                        Wab_ha, Wi, Wi1, dvv, &
                        grW_ha_x, grW_ha_y, grW_ha_z, &
                        grW_hb_x, grW_hb_y, grW_hb_z, eab(3), &
-                       Wa, grW, grWa, grWb, vb, nlrfa, nlrfb
+                       Wa, grW, grWa, grWb, vb, prgNa, prgNb
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
@@ -205,6 +205,8 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_sph
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_sph
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pr_sph
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: sqg
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: dS
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: art_pr
 
@@ -524,7 +526,7 @@ SUBMODULE (sph_particles) apm
     CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
                            all_pos(2,1:npart_real), &
                            all_pos(3,1:npart_real), &
-                           nstar_sph, nstar_id, nlrf_sph, &
+                           nstar_sph, nstar_id, nlrf_sph, sqg, &
                            use_atmosphere )
 
   ! The following test is done inside get_nstar_id_atm. Kept here for paranoia
@@ -783,11 +785,11 @@ SUBMODULE (sph_particles) apm
       ! find_h_backup, called below, is OMP parallelized, so this loop
       ! should not be parallelized as well
 
-        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
 
           n_problematic_h= n_problematic_h + 1
           h(a)= find_h_backup( a, npart_real, all_pos(:,1:npart_real), nn_des )
-          IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= 0.0D0 )THEN
+          IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
             PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                      " force method."
             PRINT *, "   Particle position: ", all_pos(:,a)
@@ -840,7 +842,7 @@ SUBMODULE (sph_particles) apm
       CALL get_nstar_id_atm( npart_real, all_pos(1,1:npart_real), &
                              all_pos(2,1:npart_real), &
                              all_pos(3,1:npart_real), &
-                             nstar_sph, nstar_id, nlrf_sph, &
+                             nstar_sph, nstar_id, nlrf_sph, sqg, &
                              use_atmosphere )
 
 ! The following test is done inside get_nstar_id_atm. Kept here for paranoia
@@ -1159,7 +1161,8 @@ SUBMODULE (sph_particles) apm
         n_inc= n_inc + 1
       ENDIF
       IF( itr > nuratio_min_it .AND. nuratio_tmp /= nuratio_thres .AND. &
-          ABS(nuratio_tmp - nuratio_tmp_prev)/nuratio_tmp_prev <= nuratio_tol )THEN
+          ABS(nuratio_tmp - nuratio_tmp_prev)/nuratio_tmp_prev &
+          <= nuratio_tol )THEN
         nuratio_cnt= nuratio_cnt + 1
       ELSE
         nuratio_cnt= 0
@@ -1200,13 +1203,26 @@ SUBMODULE (sph_particles) apm
                                   all_pos(:,1:npart_real), &
                                   nu_tmp(1:npart_real) )
 
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( this, nlrf_sph, pr_sph, npart_real, m0c2_cu ) &
+      !$OMP             PRIVATE( a )
+      compute_pressure: DO a= 1, npart_real, 1
+
+        pr_sph(a)= this% all_eos(1)% eos_parameters(poly$kappa)/m0c2_cu &
+                   *(nlrf_sph(a)*m0c2_cu) &
+                   **this% all_eos(1)% eos_parameters(poly$gamma)
+
+      ENDDO compute_pressure
+      !$OMP END PARALLEL DO
+
       PRINT *, "Before calling ll_cell_loop..."
       PRINT *
 
+      dS= zero
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic, &
       !$OMP                     ncand, h, all_pos, all_clists, nlrf_sph, &
-      !$OMP                     pr_sph ) &
+      !$OMP                     pr_sph, dS, sqg, nstar_sph, nu_tmp, m0c2_cu ) &
       !$OMP             PRIVATE( ill, itot, a, b, l, &
       !$OMP                      ha, ha_1, ha_3, ha_4, ha2, ha2_4, &
       !$OMP                      hb, hb_1, hb_3, hb_4, hb2_4, &
@@ -1215,7 +1231,7 @@ SUBMODULE (sph_particles) apm
       !$OMP                      dvv, dv_table, Wab_ha, Wa, grW, Wi1, &
       !$OMP                      grW_ha_x, grW_ha_y, grW_ha_z, grWa, grWb, &
       !$OMP                      grW_hb_x, grW_hb_y, grW_hb_z, eab, rab, vb, &
-      !$OMP                      nlrfa, nlrfb )
+      !$OMP                      prgNa, prgNb, rab_1 )
       ll_cell_loop2: DO ill= 1, nfinal
 
         itot= nprev + ill
@@ -1236,7 +1252,7 @@ SUBMODULE (sph_particles) apm
           ya=        all_pos(2,a)
           za=        all_pos(3,a)
 
-          nlrfa= nlrf_sph(a)
+          prgNa= (pr_sph(a)*sqg(a)/(nstar_sph(a)/m0c2_cu)**2)
 
           cand_loop2: DO k= 1, ncand(ill)
 
@@ -1249,15 +1265,15 @@ SUBMODULE (sph_particles) apm
             hb2_4=     two*two*hb*hb
 
             xb=   all_pos(1,b)  ! CONTRA-variant
-            yb=   all_pos(1,b)
-            zb=   all_pos(1,b)
+            yb=   all_pos(2,b)
+            zb=   all_pos(3,b)
 
             ! potentially bail out
-            dx=        xa  - xb
-            dy=        ya  - yb
-            dz=        za  - zb
+            dx= xa  - xb
+            dy= ya  - yb
+            dz= za  - zb
 
-            rab2=      dx*dx + dy*dy + dz*dz
+            rab2= dx*dx + dy*dy + dz*dz
             IF( rab2 > ha2_4 .AND. rab2 > hb2_4 ) CYCLE
 
             ! get interpolation indices
@@ -1272,6 +1288,15 @@ SUBMODULE (sph_particles) apm
             dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
             Wab_ha= Wi + (Wi1 - Wi)*dvv
 
+
+            rab=       SQRT(rab2) + 1.D-30
+            rab_1=     1.D0/rab
+
+            ! unit vector ("a-b" --> from b to a)
+            eab(1)=    dx*rab_1
+            eab(2)=    dy*rab_1
+            eab(3)=    dz*rab_1
+
             !--------!
             !-- ha --!
             !--------!
@@ -1279,7 +1304,7 @@ SUBMODULE (sph_particles) apm
 
             ! kernel and its gradient
             !DIR$ INLINE
-            CALL interp_W_gradW_table(va,Wa,grW)
+            CALL interp_W_gradW_table( va, Wa, grW )
             Wa=       Wa*ha_3
             grW=      grW*ha_4
 
@@ -1311,7 +1336,11 @@ SUBMODULE (sph_particles) apm
                   grW_hb_y*eab(2) + &
                   grW_hb_z*eab(3)
 
-            nlrfb= nlrf_sph(b)
+            prgNb= pr_sph(b)*sqg(b)/((nstar_sph(b)/m0c2_cu)**2)
+
+            dS(1,a)= dS(1,a) - nu_tmp(b)*( prgNa*grW_ha_x + prgNb*grW_hb_x )
+            dS(2,a)= dS(2,a) - nu_tmp(b)*( prgNa*grW_ha_y + prgNb*grW_hb_y )
+            dS(3,a)= dS(3,a) - nu_tmp(b)*( prgNa*grW_ha_z + prgNb*grW_hb_z )
 
           ENDDO cand_loop2
 
@@ -1322,6 +1351,40 @@ SUBMODULE (sph_particles) apm
 
       PRINT *, "After calling ll_cell_loop..."
       PRINT *
+
+      INQUIRE( FILE= TRIM("momentum.dat"), EXIST= exist )
+
+      IF( exist )THEN
+          OPEN( UNIT= 23, FILE= TRIM("momentum.dat"), STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
+      ELSE
+          OPEN( UNIT= 23, FILE= TRIM("momentum.dat"), STATUS= "NEW", &
+                FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening " // TRIM("momentum.dat"), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      DO a= 1, npart_real, 1
+        WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+          a, &
+          all_pos( 1, a ), &
+          all_pos( 2, a ), &
+          all_pos( 3, a ), &
+          dS( 1, a ), &
+          dS( 2, a ), &
+          dS( 3, a ), &
+          pr_sph(a), &
+          nu_tmp(a), &
+          nstar_sph(a)/m0c2_cu
+      ENDDO
+
+      CLOSE( UNIT= 23 )
 
       STOP
 
@@ -1750,7 +1813,7 @@ SUBMODULE (sph_particles) apm
     IF( debug ) PRINT *, "3"
 
     CALL get_nstar_id_atm( npart_real, pos(1,:), pos(2,:), pos(3,:), &
-                           nstar_sph, nstar_id, nlrf_sph, &
+                           nstar_sph, nstar_id, nlrf_sph, sqg, &
                            use_atmosphere )
 
     nu= nu_all
@@ -1858,7 +1921,7 @@ SUBMODULE (sph_particles) apm
 
          CALL get_nstar_id_atm( npart_real, pos(1,:), &
                                 pos(2,:), &
-                                pos(3,:), nstar_sph, nstar_id, nlrf_sph, &
+                                pos(3,:), nstar_sph, nstar_id, nlrf_sph, sqg, &
                                 use_atmosphere )
 
          !nstar_id( npart_real+1:npart_all )= zero
@@ -2070,7 +2133,7 @@ SUBMODULE (sph_particles) apm
 
     CALL get_nstar_id_atm( npart_real, pos(1,:), &
                            pos(2,:), &
-                           pos(3,:), nstar_sph, nstar_id, nlrf_sph, &
+                           pos(3,:), nstar_sph, nstar_id, nlrf_sph, sqg, &
                            use_atmosphere )
 
     dN_av = zero
@@ -2626,7 +2689,7 @@ SUBMODULE (sph_particles) apm
 
 
     SUBROUTINE get_nstar_id_atm &
-    ( npart_real, x, y, z, nstar_sph, nstar_id, nlrf_sph, use_atmosphere )
+    ( npart_real, x, y, z, nstar_sph, nstar_id, nlrf_sph, sqg, use_atmosphere )
     !, nstar_eul_id, use_atmosphere )
 
       !*******************************************************
@@ -2655,6 +2718,8 @@ SUBMODULE (sph_particles) apm
       DOUBLE PRECISION, INTENT(OUT):: nlrf_sph(npart)
       !# Array to store the local rest frame baryon density computed from
       !  the |sph| proper baryon density
+      DOUBLE PRECISION, INTENT(OUT):: sqg(npart)
+      !# Square root of minus the determinant of the sacetime metric
       !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
       !# Array to store the computed proper baryon number density seen
       !  by the Eulerian observer
@@ -2663,7 +2728,7 @@ SUBMODULE (sph_particles) apm
       !  the real aprticles more freedom to move around and adjust;
       !  `.FALSE.` otherwise
 
-      CALL get_nstar_id( npart_real, x, y, z, nstar_sph, nstar_id, nlrf_sph )
+      CALL get_nstar_id( npart_real, x, y, z, nstar_sph, nstar_id, nlrf_sph, sqg )
 
       IF( use_atmosphere .EQV. .TRUE. )THEN
 
@@ -2777,6 +2842,24 @@ SUBMODULE (sph_particles) apm
         ALLOCATE( pr_sph( npart_real ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
            PRINT *, "...allocation error for array pr_real in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( sqg ))THEN
+        ALLOCATE( sqg( npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array sqg in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( dS ))THEN
+        ALLOCATE( dS( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array dS in SUBROUTINE ", &
                     "allocate_apm_fields. The error message is",&
                     err_msg
            STOP

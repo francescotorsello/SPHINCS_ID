@@ -1819,7 +1819,7 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE correct_center_of_mass_of_system
 
 
-    SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, nlrf_sph )
+    SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, nlrf_sph,sqg )
 
       IMPLICIT NONE
 
@@ -1830,6 +1830,7 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, INTENT(IN):: nstar_sph(npart)
       DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
       DOUBLE PRECISION, INTENT(OUT):: nlrf_sph(npart)
+      DOUBLE PRECISION, INTENT(OUT):: sqg(npart)
 
       DOUBLE PRECISION, DIMENSION(npart):: lapse, &
                                            shift_x, shift_y, shift_z, &
@@ -1854,7 +1855,8 @@ SUBMODULE (sph_particles) constructor_std
       CALL compute_nstar_id( npart, lapse, shift_x, shift_y, &
                              shift_z, v_euler_x, v_euler_y, v_euler_z, &
                              g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                             baryon_density, nstar_sph, nstar_id, nlrf_sph )
+                             baryon_density, nstar_sph, nstar_id, nlrf_sph, &
+                             sqg )
 
       !CALL compute_nstar_eul_id( npart, &
       !                           v_euler_x, v_euler_y, v_euler_z, &
@@ -1867,7 +1869,8 @@ SUBMODULE (sph_particles) constructor_std
     SUBROUTINE compute_nstar_id( npart, lapse, shift_x, shift_y, &
                                  shift_z, v_euler_x, v_euler_y, v_euler_z, &
                                  g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                                 baryon_density, nstar_sph, nstar_id, nlrf_sph )
+                                 baryon_density, nstar_sph, nstar_id, nlrf_sph, &
+                                 sqg )
 
       !**************************************************************
       !
@@ -1902,6 +1905,7 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: nstar_sph
       DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: nstar_id
       DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: nlrf_sph
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: sqg
 
       INTEGER:: a, i!mus, nus
       DOUBLE PRECISION:: det, sq_g, Theta_a
@@ -1914,7 +1918,7 @@ SUBMODULE (sph_particles) constructor_std
       !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
       !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
       !$OMP                     baryon_density, vel, nstar_id, nstar_sph, &
-      !$OMP                     nlrf_sph ) &
+      !$OMP                     nlrf_sph, sqg ) &
       !$OMP             PRIVATE( a, det, sq_g, Theta_a, g4 )
       DO a= 1, npart, 1
 
@@ -1980,6 +1984,7 @@ SUBMODULE (sph_particles) constructor_std
 
         nstar_id(a)= sq_g*Theta_a*baryon_density(a)
         nlrf_sph(a)= nstar_sph(a)/(sq_g*Theta_a)
+        sqg(a)     = sq_g
 
       ENDDO
       !$OMP END PARALLEL DO

@@ -163,7 +163,7 @@ ref_lev=1                     ! Refinement level over which performing the
 !----------------!
 ! Geodesic gauge
 one_lapse=.FALSE.             ! If .TRUE., it sets the lapse equal to 1
-zero_shift=.TRUE.             ! If .TRUE., it sets the shift equal to 0
+zero_shift=.FALSE.             ! If .TRUE., it sets the shift equal to 0
 ! Show loops progress on screen
 show_progress= .FALSE.
 
