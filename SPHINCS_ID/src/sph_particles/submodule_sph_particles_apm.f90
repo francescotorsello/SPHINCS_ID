@@ -1195,196 +1195,19 @@ SUBMODULE (sph_particles) apm
       !  n_inc= 0
       !ENDIF
 
-      PRINT *, "Before calling exact_nei_tree_update..."
-      PRINT *
+      IF( MOD( itr, 10 ) == 0 )THEN
 
-      CALL exact_nei_tree_update( nn_des, &
-                                  npart_real, &
-                                  all_pos(:,1:npart_real), &
-                                  nu_tmp(1:npart_real) )
+        PRINT *, "Before calling exact_nei_tree_update..."
+        PRINT *
 
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( this, nlrf_sph, pr_sph, npart_real, m0c2_cu ) &
-      !$OMP             PRIVATE( a )
-      compute_pressure: DO a= 1, npart_real, 1
+        CALL exact_nei_tree_update( nn_des, &
+                                    npart_real, &
+                                    all_pos(:,1:npart_real), &
+                                    nu_tmp(1:npart_real) )
 
-        pr_sph(a)= this% all_eos(1)% eos_parameters(poly$kappa)/m0c2_cu &
-                   *(nlrf_sph(a)*m0c2_cu) &
-                   **this% all_eos(1)% eos_parameters(poly$gamma)
+        CALL compute_hydro_momentum()
 
-      ENDDO compute_pressure
-      !$OMP END PARALLEL DO
-
-      PRINT *, "Before calling ll_cell_loop..."
-      PRINT *
-
-      dS= zero
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic, &
-      !$OMP                     ncand, h, all_pos, all_clists, nlrf_sph, &
-      !$OMP                     pr_sph, dS, sqg, nstar_sph, nu_tmp, m0c2_cu ) &
-      !$OMP             PRIVATE( ill, itot, a, b, l, &
-      !$OMP                      ha, ha_1, ha_3, ha_4, ha2, ha2_4, &
-      !$OMP                      hb, hb_1, hb_3, hb_4, hb2_4, &
-      !$OMP                      xa, ya, za, xb, yb, zb, dx, dy, dz, rab2, &
-      !$OMP                      inde, va, dv_table_1, index1, Wi, W_no_norm, &
-      !$OMP                      dvv, dv_table, Wab_ha, Wa, grW, Wi1, &
-      !$OMP                      grW_ha_x, grW_ha_y, grW_ha_z, grWa, grWb, &
-      !$OMP                      grW_hb_x, grW_hb_y, grW_hb_z, eab, rab, vb, &
-      !$OMP                      prgNa, prgNb, rab_1 )
-      ll_cell_loop2: DO ill= 1, nfinal
-
-        itot= nprev + ill
-        IF( nic(itot) == 0 ) CYCLE
-
-        particle_loop2: DO l= lpart(itot), rpart(itot)
-
-          a=         iorig(l)
-
-          ha=        h(a)
-          ha_1=      one/ha
-          ha_3=      ha_1*ha_1*ha_1
-          ha_4=      ha_3*ha_1
-          ha2=       ha*ha
-          ha2_4=     two*two*ha2
-
-          xa=        all_pos(1,a)
-          ya=        all_pos(2,a)
-          za=        all_pos(3,a)
-
-          prgNa= (pr_sph(a)*sqg(a)/(nstar_sph(a)/m0c2_cu)**2)
-
-          cand_loop2: DO k= 1, ncand(ill)
-
-            b= all_clists(ill)%list(k)
-
-            hb=   h(b)
-            hb_1= one/hb
-            hb_3= hb_1*hb_1*hb_1
-            hb_4= hb_3*hb_1
-            hb2_4=     two*two*hb*hb
-
-            xb=   all_pos(1,b)  ! CONTRA-variant
-            yb=   all_pos(2,b)
-            zb=   all_pos(3,b)
-
-            ! potentially bail out
-            dx= xa  - xb
-            dy= ya  - yb
-            dz= za  - zb
-
-            rab2= dx*dx + dy*dy + dz*dz
-            IF( rab2 > ha2_4 .AND. rab2 > hb2_4 ) CYCLE
-
-            ! get interpolation indices
-            inde=  MIN(INT(va*dv_table_1),n_tab_entry)
-            index1= MIN(inde + 1,n_tab_entry)
-
-            ! get tabulated values
-            Wi=     W_no_norm(inde)
-            Wi1=    W_no_norm(index1)
-
-            ! interpolate
-            dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
-            Wab_ha= Wi + (Wi1 - Wi)*dvv
-
-
-            rab=       SQRT(rab2) + 1.D-30
-            rab_1=     1.D0/rab
-
-            ! unit vector ("a-b" --> from b to a)
-            eab(1)=    dx*rab_1
-            eab(2)=    dy*rab_1
-            eab(3)=    dz*rab_1
-
-            !--------!
-            !-- ha --!
-            !--------!
-            va=       rab*ha_1
-
-            ! kernel and its gradient
-            !DIR$ INLINE
-            CALL interp_W_gradW_table( va, Wa, grW )
-            Wa=       Wa*ha_3
-            grW=      grW*ha_4
-
-            ! nabla_a Wab(ha)
-            grW_ha_x= grW*eab(1)
-            grW_ha_y= grW*eab(2)
-            grW_ha_z= grW*eab(3)
-
-            grWa=     grW_ha_x*eab(1) + &
-                      grW_ha_y*eab(2) + &
-                      grW_ha_z*eab(3)
-
-            !--------!
-            !-- hb --!
-            !--------!
-            vb=       rab*hb_1
-
-            ! kernel and its gradient
-            !DIR$ INLINE
-            CALL interp_gradW_table(vb,grW)
-            grW=      grW*hb_4
-
-            ! nabla_a Wab(hb)
-            grW_hb_x= grW*eab(1)
-            grW_hb_y= grW*eab(2)
-            grW_hb_z= grW*eab(3)
-
-            grWb= grW_hb_x*eab(1) + &
-                  grW_hb_y*eab(2) + &
-                  grW_hb_z*eab(3)
-
-            prgNb= pr_sph(b)*sqg(b)/((nstar_sph(b)/m0c2_cu)**2)
-
-            dS(1,a)= dS(1,a) - nu_tmp(b)*( prgNa*grW_ha_x + prgNb*grW_hb_x )
-            dS(2,a)= dS(2,a) - nu_tmp(b)*( prgNa*grW_ha_y + prgNb*grW_hb_y )
-            dS(3,a)= dS(3,a) - nu_tmp(b)*( prgNa*grW_ha_z + prgNb*grW_hb_z )
-
-          ENDDO cand_loop2
-
-        ENDDO particle_loop2
-
-      ENDDO ll_cell_loop2
-      !$OMP END PARALLEL DO
-
-      PRINT *, "After calling ll_cell_loop..."
-      PRINT *
-
-      INQUIRE( FILE= TRIM("momentum.dat"), EXIST= exist )
-
-      IF( exist )THEN
-          OPEN( UNIT= 23, FILE= TRIM("momentum.dat"), STATUS= "REPLACE", &
-                FORM= "FORMATTED", &
-                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                IOMSG= err_msg )
-      ELSE
-          OPEN( UNIT= 23, FILE= TRIM("momentum.dat"), STATUS= "NEW", &
-                FORM= "FORMATTED", &
-                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
-      IF( ios > 0 )THEN
-        PRINT *, "...error when opening " // TRIM("momentum.dat"), &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-
-      DO a= 1, npart_real, 1
-        WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-          a, &
-          all_pos( 1, a ), &
-          all_pos( 2, a ), &
-          all_pos( 3, a ), &
-          dS( 1, a ), &
-          dS( 2, a ), &
-          dS( 3, a ), &
-          pr_sph(a), &
-          nu_tmp(a), &
-          nstar_sph(a)/m0c2_cu
-      ENDDO
-
-      CLOSE( UNIT= 23 )
 
       STOP
 
@@ -3413,6 +3236,207 @@ SUBMODULE (sph_particles) apm
 
 
     END SUBROUTINE dump_apm_pos
+
+
+    SUBROUTINE compute_hydro_momentum()
+
+      !*******************************************************
+      !
+      !#
+      !
+      !  FT 17.06.2022
+      !
+      !*******************************************************
+
+
+      IMPLICIT NONE
+
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( this, nlrf_sph, pr_sph, npart_real, m0c2_cu ) &
+      !$OMP             PRIVATE( a )
+      compute_pressure: DO a= 1, npart_real, 1
+
+        pr_sph(a)= this% all_eos(1)% eos_parameters(poly$kappa)/m0c2_cu &
+                   *(nlrf_sph(a)*m0c2_cu) &
+                   **this% all_eos(1)% eos_parameters(poly$gamma)
+
+      ENDDO compute_pressure
+      !$OMP END PARALLEL DO
+
+      PRINT *, "Before calling ll_cell_loop..."
+      PRINT *
+
+      dS= zero
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic, &
+      !$OMP                     ncand, h, all_pos, all_clists, nlrf_sph, &
+      !$OMP                     pr_sph, dS, sqg, nstar_sph, nu_tmp, m0c2_cu ) &
+      !$OMP             PRIVATE( ill, itot, a, b, l, &
+      !$OMP                      ha, ha_1, ha_3, ha_4, ha2, ha2_4, &
+      !$OMP                      hb, hb_1, hb_3, hb_4, hb2_4, &
+      !$OMP                      xa, ya, za, xb, yb, zb, dx, dy, dz, rab2, &
+      !$OMP                      inde, va, dv_table_1, index1, Wi, W_no_norm, &
+      !$OMP                      dvv, dv_table, Wab_ha, Wa, grW, Wi1, &
+      !$OMP                      grW_ha_x, grW_ha_y, grW_ha_z, grWa, grWb, &
+      !$OMP                      grW_hb_x, grW_hb_y, grW_hb_z, eab, rab, vb, &
+      !$OMP                      prgNa, prgNb, rab_1 )
+      ll_cell_loop2: DO ill= 1, nfinal
+
+        itot= nprev + ill
+        IF( nic(itot) == 0 ) CYCLE
+
+        particle_loop2: DO l= lpart(itot), rpart(itot)
+
+          a=         iorig(l)
+
+          ha=        h(a)
+          ha_1=      one/ha
+          ha_3=      ha_1*ha_1*ha_1
+          ha_4=      ha_3*ha_1
+          ha2=       ha*ha
+          ha2_4=     two*two*ha2
+
+          xa=        all_pos(1,a)
+          ya=        all_pos(2,a)
+          za=        all_pos(3,a)
+
+          prgNa= (pr_sph(a)*sqg(a)/(nstar_sph(a)/m0c2_cu)**2)
+
+          cand_loop2: DO k= 1, ncand(ill)
+
+            b= all_clists(ill)%list(k)
+
+            hb=   h(b)
+            hb_1= one/hb
+            hb_3= hb_1*hb_1*hb_1
+            hb_4= hb_3*hb_1
+            hb2_4=     two*two*hb*hb
+
+            xb=   all_pos(1,b)  ! CONTRA-variant
+            yb=   all_pos(2,b)
+            zb=   all_pos(3,b)
+
+            ! potentially bail out
+            dx= xa  - xb
+            dy= ya  - yb
+            dz= za  - zb
+
+            rab2= dx*dx + dy*dy + dz*dz
+            IF( rab2 > ha2_4 .AND. rab2 > hb2_4 ) CYCLE
+
+            ! get interpolation indices
+            inde=  MIN(INT(va*dv_table_1),n_tab_entry)
+            index1= MIN(inde + 1,n_tab_entry)
+
+            ! get tabulated values
+            Wi=     W_no_norm(inde)
+            Wi1=    W_no_norm(index1)
+
+            ! interpolate
+            dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
+            Wab_ha= Wi + (Wi1 - Wi)*dvv
+
+
+            rab=       SQRT(rab2) + 1.D-30
+            rab_1=     1.D0/rab
+
+            ! unit vector ("a-b" --> from b to a)
+            eab(1)=    dx*rab_1
+            eab(2)=    dy*rab_1
+            eab(3)=    dz*rab_1
+
+            !--------!
+            !-- ha --!
+            !--------!
+            va=       rab*ha_1
+
+            ! kernel and its gradient
+            !DIR$ INLINE
+            CALL interp_W_gradW_table( va, Wa, grW )
+            Wa=       Wa*ha_3
+            grW=      grW*ha_4
+
+            ! nabla_a Wab(ha)
+            grW_ha_x= grW*eab(1)
+            grW_ha_y= grW*eab(2)
+            grW_ha_z= grW*eab(3)
+
+            grWa=     grW_ha_x*eab(1) + &
+                      grW_ha_y*eab(2) + &
+                      grW_ha_z*eab(3)
+
+            !--------!
+            !-- hb --!
+            !--------!
+            vb=       rab*hb_1
+
+            ! kernel and its gradient
+            !DIR$ INLINE
+            CALL interp_gradW_table(vb,grW)
+            grW=      grW*hb_4
+
+            ! nabla_a Wab(hb)
+            grW_hb_x= grW*eab(1)
+            grW_hb_y= grW*eab(2)
+            grW_hb_z= grW*eab(3)
+
+            grWb= grW_hb_x*eab(1) + &
+                  grW_hb_y*eab(2) + &
+                  grW_hb_z*eab(3)
+
+            prgNb= pr_sph(b)*sqg(b)/((nstar_sph(b)/m0c2_cu)**2)
+
+            dS(1,a)= dS(1,a) - nu_tmp(b)*( prgNa*grW_ha_x + prgNb*grW_hb_x )
+            dS(2,a)= dS(2,a) - nu_tmp(b)*( prgNa*grW_ha_y + prgNb*grW_hb_y )
+            dS(3,a)= dS(3,a) - nu_tmp(b)*( prgNa*grW_ha_z + prgNb*grW_hb_z )
+
+          ENDDO cand_loop2
+
+        ENDDO particle_loop2
+
+      ENDDO ll_cell_loop2
+      !$OMP END PARALLEL DO
+
+      PRINT *, "After calling ll_cell_loop..."
+      PRINT *
+
+      INQUIRE( FILE= TRIM("momentum.dat"), EXIST= exist )
+
+      IF( exist )THEN
+          OPEN( UNIT= 23, FILE= TRIM("momentum.dat"), STATUS= "REPLACE", &
+                FORM= "FORMATTED", &
+                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                IOMSG= err_msg )
+      ELSE
+          OPEN( UNIT= 23, FILE= TRIM("momentum.dat"), STATUS= "NEW", &
+                FORM= "FORMATTED", &
+                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      IF( ios > 0 )THEN
+        PRINT *, "...error when opening " // TRIM("momentum.dat"), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      DO a= 1, npart_real, 1
+        WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+          a, &
+          all_pos( 1, a ), &
+          all_pos( 2, a ), &
+          all_pos( 3, a ), &
+          dS( 1, a ), &
+          dS( 2, a ), &
+          dS( 3, a ), &
+          pr_sph(a), &
+          nu_tmp(a), &
+          nstar_sph(a)/m0c2_cu
+      ENDDO
+
+      CLOSE( UNIT= 23 )
+
+
+    END SUBROUTINE compute_hydro_momentum
 
 
   END PROCEDURE perform_apm

@@ -116,6 +116,7 @@ SUBMODULE (diffstar_lorene) read
                                   this% baryon_density( itr ), &
                                   this% energy_density( itr ), &
                                   this% specific_energy( itr ), &
+                                  this% pressure( itr ), &
                                   this% v_euler_x( itr ), &
                                   this% v_euler_y( itr ), &
                                   this% v_euler_z( itr ) )
@@ -212,7 +213,7 @@ SUBMODULE (diffstar_lorene) read
       !$OMP                     g_xx, g_yy, g_zz, &
       !$OMP                     k_xx, k_xy, k_xz, k_yy, k_yz, k_zz, &
       !$OMP                     baryon_density, energy_density, &
-      !$OMP                     specific_energy, &
+      !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
       !$OMP             PRIVATE( itr )
       import_id_loop: DO itr= 1, n, 1
@@ -240,6 +241,7 @@ SUBMODULE (diffstar_lorene) read
                                 baryon_density( itr ), &
                                 energy_density( itr ), &
                                 specific_energy( itr ), &
+                                pressure( itr ), &
                                 u_euler_x( itr ), &
                                 u_euler_y( itr ), &
                                 u_euler_z( itr ) )

@@ -59,7 +59,7 @@ PROGRAM sphincs_id
   USE id_base,          ONLY: idbase, initialize
   USE sph_particles,    ONLY: particles
   USE bssn_formulation, ONLY: bssn
-  !USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
+  USE utility,          ONLY: lorene2hydrobase, k_lorene2hydrobase
   !                            k_lorene2hydrobase_piecewisepolytrope, &
   !                            MSun_geo, kg2g, m2cm, m0c2
   !USE constants,        ONLY: amu, Msun_geo, km2m, m2cm

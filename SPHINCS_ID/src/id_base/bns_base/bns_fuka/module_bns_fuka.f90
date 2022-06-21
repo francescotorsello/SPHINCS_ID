@@ -464,6 +464,7 @@ MODULE bns_fuka
                                          baryon_density, &
                                          energy_density, &
                                          specific_energy, &
+                                         pressure, &
                                          u_euler_x, u_euler_y, u_euler_z )
     !# Stores the |id| in non [[bnsfuka]]-member arrays with the same shape as the
     !  [[bnsfuka]] member arrays
@@ -493,6 +494,7 @@ MODULE bns_fuka
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
@@ -862,7 +864,7 @@ MODULE bns_fuka
                             k_xx, k_xy, k_xz, &
                             k_yy, k_yz, k_zz, &
                             mass_density, &
-                            energy_density, &
+                            specific_energy, &
                             pressure, &
                             v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_fuka_id")
@@ -912,7 +914,7 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: k_yz
       REAL(C_DOUBLE), INTENT(OUT)       :: k_zz
       REAL(C_DOUBLE), INTENT(OUT)       :: mass_density
-      REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
+      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
       REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
@@ -975,7 +977,7 @@ MODULE bns_fuka
                                       shift_x, shift_y, shift_z, &
                                       psi4, &
                                       mass_density, &
-                                      energy_density, &
+                                      specific_energy, &
                                       pressure, &
                                       v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_fuka_id_particles")
@@ -1017,7 +1019,7 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: shift_z
       REAL(C_DOUBLE), INTENT(OUT)       :: psi4
       REAL(C_DOUBLE), INTENT(OUT)       :: mass_density
-      REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
+      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
       REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
@@ -1077,7 +1079,7 @@ MODULE bns_fuka
     SUBROUTINE get_fuka_id_hydro( optr, &
                                   x, y, z, &
                                   mass_density, &
-                                  energy_density, &
+                                  specific_energy, &
                                   pressure, &
                                   v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_fuka_id_hydro")
@@ -1113,7 +1115,7 @@ MODULE bns_fuka
       !> \(z\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT(IN), VALUE :: z
       REAL(C_DOUBLE), INTENT(OUT)       :: mass_density
-      REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
+      REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
       REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y

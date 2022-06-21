@@ -466,6 +466,7 @@ MODULE id_base
                                  baryon_density, &
                                  energy_density, &
                                  specific_energy, &
+                                 pressure, &
                                  u_euler_x, u_euler_y, u_euler_z )
      !# INTERFACE or the SUBROUTINE reading the full |id|
 
@@ -495,6 +496,7 @@ MODULE id_base
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z

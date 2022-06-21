@@ -211,9 +211,10 @@ SUBMODULE (bns_fuka) read
       !$OMP                     shift_x, shift_y, shift_z, &
       !$OMP                     g_xx, k_xx, k_xy, k_xz, k_yy, k_yz, k_zz, &
       !$OMP                     baryon_density, energy_density, &
-      !$OMP                     specific_energy, &
-      !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
-      !$OMP             PRIVATE(itr)
+      !$OMP                     specific_energy, pressure, &
+      !$OMP                     u_euler_x, u_euler_y, u_euler_z, &
+      !$OMP                     g_xy, g_xz, g_yy, g_yz, g_zz ) &
+      !$OMP             PRIVATE( itr )
       read_fuka_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
@@ -235,16 +236,18 @@ SUBMODULE (bns_fuka) read
                           k_yz(itr), &
                           k_zz(itr), &
                           baryon_density(itr), &
-                          energy_density(itr), &
                           specific_energy(itr), &
+                          pressure(itr), &
                           u_euler_x(itr), &
                           u_euler_y(itr), &
                           u_euler_z(itr) )
 
-      ENDDO read_fuka_id_loop
-      !$OMP END PARALLEL DO
+        energy_density(itr)= baryon_density(itr)*(one + specific_energy(itr))
 
-      DO itr= 1, n, 1
+    !  ENDDO read_fuka_id_loop
+    !  !$OMP END PARALLEL DO
+    !
+    !  DO itr= 1, n, 1
 
         !
         !-- The following follows from the assumption of conformal
@@ -272,12 +275,12 @@ SUBMODULE (bns_fuka) read
         !-- Convert the extrinsic curvature from |fuka| units to
         !-- |sphincs| units
         !
-        k_xx(itr)= k_xx(itr)
-        k_xy(itr)= k_xy(itr)
-        k_xz(itr)= k_xz(itr)
-        k_yy(itr)= k_yy(itr)
-        k_yz(itr)= k_yz(itr)
-        k_zz(itr)= k_zz(itr)
+       ! k_xx(itr)= k_xx(itr)
+       ! k_xy(itr)= k_xy(itr)
+       ! k_xz(itr)= k_xz(itr)
+       ! k_yy(itr)= k_yy(itr)
+       ! k_yz(itr)= k_yz(itr)
+       ! k_zz(itr)= k_zz(itr)
 
         ! Print progress on screen
        ! perc= 100*itr/n
@@ -286,7 +289,8 @@ SUBMODULE (bns_fuka) read
        !           creturn//" ", perc, "%"
        ! ENDIF
 
-      ENDDO
+      ENDDO read_fuka_id_loop
+      !$OMP END PARALLEL DO
      ! IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
       PRINT *, "** Subroutine read_fuka_id executed."
@@ -463,7 +467,7 @@ SUBMODULE (bns_fuka) read
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nx, ny, nz, this, pos, &
       !$OMP                     baryon_density, energy_density, &
-      !$OMP                     pressure, u_euler ) &
+      !$OMP                     specific_energy, pressure, u_euler ) &
       !$OMP             PRIVATE( i, j, k )
       coords_z: DO i= 1, nz, 1
         coords_y: DO j= 1, ny, 1
@@ -474,11 +478,14 @@ SUBMODULE (bns_fuka) read
                                     pos( i, j, k, jy ), &
                                     pos( i, j, k, jz ), &
                                     baryon_density( i, j, k ), &
-                                    energy_density( i, j, k ), &
+                                    specific_energy( i, j, k ), &
                                     pressure( i, j, k ), &
                                     u_euler( i, j, k, jx ), &
                                     u_euler( i, j, k, jy ), &
                                     u_euler( i, j, k, jz ) )
+
+            energy_density(i, j, k)= baryon_density(i, j, k) &
+                                     *(one + specific_energy(i, j, k))
 
           ENDDO coords_x
         ENDDO coords_y
@@ -541,7 +548,7 @@ SUBMODULE (bns_fuka) read
                                     shift_x(a), shift_y(a), shift_z(a), &
                                     g_xx(a), &
                                     baryon_density(a), &
-                                    energy_density(a), &
+                                    specific_energy(a), &
                                     pressure(a), &
                                     u_euler_x(a), &
                                     u_euler_y(a), &
@@ -591,15 +598,33 @@ SUBMODULE (bns_fuka) read
           STOP
         ENDIF
 
+        ! Convert the baryon density and pressure to units of amu
+        ! (|sph| code units)
+        baryon_density(a)= baryon_density(a)*Msun/amu
+        pressure      (a)= pressure(a)*MSun/amu
+        energy_density(a)= baryon_density(a)*(one + specific_energy(a))
+
       ENDDO read_fuka_id_loop
       !$OMP END PARALLEL DO
 
+     ! PRINT *, "energy_density=", energy_density(100)
+     ! PRINT *, "baryon_density=", baryon_density(100)
+     ! PRINT *, "pressure=", pressure(100)
+     ! PRINT *
+
       ! Convert the baryon density and pressure to units of amu
       ! (|sph| code units)
-      baryon_density = baryon_density*Msun/amu
-      pressure       = pressure*MSun/amu
-      energy_density = energy_density*MSun/amu
-      specific_energy= energy_density/baryon_density - one
+     ! baryon_density= baryon_density*Msun/amu
+     ! pressure      = pressure*MSun/amu
+     ! energy_density= baryon_density*(one + specific_energy)
+
+     ! PRINT *, "energy_density/baryon_density=", &
+     !           specific_energy(100)/baryon_density(100)
+     ! PRINT *, "specific_energy=", energy_density(100)
+     ! PRINT *, "baryon_density=", baryon_density(100)
+     ! PRINT *, "pressure=", pressure(100)
+     ! PRINT *
+     ! STOP
 
       PRINT *, "** Subroutine read_fuka_id_particles executed."
       PRINT *
