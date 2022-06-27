@@ -103,10 +103,10 @@ MODULE bns_fuka
     !-- ID fields on a lattice around each star
     !
 
-    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: id_fields
+    DOUBLE PRECISION, DIMENSION(:,:,:,:,:), ALLOCATABLE:: id_fields
     !# Array storing the |id| fields read from the FUKA binary file.
-    !  The last index runs over the fields, the first three over the
-    !  Cartesian coordinates
+    !  The last index runs over the stars, the second-last over the fields,
+    !  the first three over the Cartesian coordinates
 
     !
     !-- Spacetime fields

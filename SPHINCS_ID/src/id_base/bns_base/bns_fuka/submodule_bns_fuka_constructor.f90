@@ -149,9 +149,9 @@ SUBMODULE (bns_fuka) constructor
 
       IMPLICIT NONE
 
-      INTEGER, PARAMETER:: nx       = 25
-      INTEGER, PARAMETER:: ny       = 25
-      INTEGER, PARAMETER:: nz       = 25
+      INTEGER, PARAMETER:: nx       = 250
+      INTEGER, PARAMETER:: ny       = 250
+      INTEGER, PARAMETER:: nz       = 250
       INTEGER, PARAMETER:: unit_par = 3480
       INTEGER, PARAMETER:: mpi_ranks= 40
 
@@ -330,13 +330,13 @@ SUBMODULE (bns_fuka) constructor
         CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_par))
 
         ! Allocate memory
-        ALLOCATE( derived_type% id_fields( nx, ny, nz, n_fields_fuka ) )
+        ALLOCATE( derived_type% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
         ALLOCATE( grid_tmp( nx*ny*nz, n_fields_fuka) )
 
         ! Read the ID from the ASCII files printed by the reader
         ! (one per MPI rank)
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( grid_tmp ) &
+        !$OMP             SHARED( grid_tmp, i_star ) &
         !$OMP             PRIVATE( i_file, i, filename_rank, mpi_ranks_str, &
         !$OMP                      unit_rank, nlines, ios, nlines_prev, exist, &
         !$OMP                      err_msg, unit_rank_prev )
@@ -410,7 +410,7 @@ SUBMODULE (bns_fuka) constructor
 
           ! Close file and delete it
           CLOSE( unit_rank(i_file + 1) )
-          !CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
+          CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
 
         ENDDO loop_over_id_files
         !$OMP END PARALLEL DO
@@ -419,13 +419,13 @@ SUBMODULE (bns_fuka) constructor
         ! in MODULE numerics)
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( derived_type, grid_tmp ) &
+        !$OMP             SHARED( derived_type, grid_tmp, i_star ) &
         !$OMP             PRIVATE( i, j, k )
         DO k= 1, nz, 1
           DO j= 1, ny, 1
             DO i= 1, nx, 1
 
-              derived_type% id_fields( i, j, k, : )= &
+              derived_type% id_fields( i, j, k, :, i_star )= &
                                   grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, 1 )
 
             ENDDO
