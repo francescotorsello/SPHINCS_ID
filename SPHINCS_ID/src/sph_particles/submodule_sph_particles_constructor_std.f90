@@ -1869,7 +1869,7 @@ SUBMODULE (sph_particles) constructor_std
     SUBROUTINE compute_nstar_id( npart, lapse, shift_x, shift_y, &
                                  shift_z, v_euler_x, v_euler_y, v_euler_z, &
                                  g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                                 baryon_density, nstar_sph, nstar_id, nlrf_sph, &
+                                 baryon_density, nstar_sph, nstar_id, nlrf_sph,&
                                  sqg )
 
       !**************************************************************

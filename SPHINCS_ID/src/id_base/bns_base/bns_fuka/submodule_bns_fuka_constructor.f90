@@ -73,7 +73,7 @@ SUBMODULE (bns_fuka) constructor
     ! Construct |fuka| bns_export object
     CALL derived_type% construct_binary( filename )
 
-    ! Import the parameters of the binary system
+    ! Read the parameters of the binary system
     CALL read_fuka_id_params( derived_type )
 
     ! Assign a unique identifier to the bns_fuka object
@@ -83,6 +83,13 @@ SUBMODULE (bns_fuka) constructor
     ! Do not use the geodesic gauge by default
     CALL derived_type% set_one_lapse ( .FALSE. )
     CALL derived_type% set_zero_shift( .FALSE. )
+
+    ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
+    ! within SPHINCS_ID. Hence, we chose to make a system call to a program
+    ! within Kadath that reads the ID from the FUKA output file and prints it
+    ! on a lattice. The ID on the particles will be interplated from ths fine
+    ! lattice.
+    CALL set_up_lattices_around_stars()
 
     ! Compute typical length scales of the system using the pressure
     IF( derived_type% get_estimate_length_scale() )THEN
@@ -121,7 +128,141 @@ SUBMODULE (bns_fuka) constructor
 
     END FUNCTION get_pressure
 
+
+    SUBROUTINE set_up_lattices_around_stars()
+
+      !***********************************************
+      !
+      !#
+      !
+      !  FT 27.06.2022
+      !
+      !***********************************************
+
+      IMPLICIT NONE
+
+
+      INTEGER, PARAMETER:: nx= 25
+      INTEGER, PARAMETER:: ny= 25
+      INTEGER, PARAMETER:: nz= 25
+      INTEGER, PARAMETER:: unit_par= 3480
+
+      DOUBLE PRECISION, PARAMETER:: stretch= 1.02D0
+      !! The lattices' sizes will be 2% larger than the radii of the stars
+
+      INTEGER:: i_star, ios
+
+      DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
+      DOUBLE PRECISION, DIMENSION(6):: sizes
+      DOUBLE PRECISION, DIMENSION(3):: center
+
+      LOGICAL:: exist
+
+      CHARACTER( LEN= : ), ALLOCATABLE:: filename_par
+
+      loop_over_stars: DO i_star= 1, 2, 1
+
+        sizes = derived_type% return_spatial_extent(i_star)
+        center= derived_type% return_center(i_star)
+
+        ! Determine boundaries of the lattices
+        xmin= center(1) - stretch*sizes(1)
+        xmax= center(1) + stretch*sizes(2)
+        ymin= center(2) - stretch*sizes(3)
+        ymax= center(2) + stretch*sizes(4)
+        zmin= center(3) - stretch*sizes(5)
+        zmax= center(3) + stretch*sizes(6)
+
+        filename_par= "lattice_par.dat"
+
+        INQUIRE( FILE= TRIM(filename_par), EXIST= exist )
+
+        IF( exist )THEN
+            OPEN( UNIT= unit_par, FILE= TRIM(filename_par), STATUS= "REPLACE", &
+                  FORM= "FORMATTED", &
+                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+                  IOMSG= err_msg )
+        ELSE
+            OPEN( UNIT= unit_par, FILE= TRIM(filename_par), STATUS= "NEW", &
+                  FORM= "FORMATTED", &
+                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+        ENDIF
+        IF( ios > 0 )THEN
+          PRINT *, "...error when opening " // TRIM(filename_par), &
+                   ". The error message is", err_msg
+          STOP
+        ENDIF
+
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) xmin
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) xmax
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ymin
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ymax
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) zmin
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) zmax
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) nx
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ny
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) nz
+        IF( ios > 0 )THEN
+          PRINT *, "...error when writing the arrays in ", &
+                   TRIM(filename_par), ". The error message is", err_msg
+          STOP
+        ENDIF
+
+        CLOSE( UNIT= unit_par )
+
+        !CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_par))
+
+        STOP
+
+      ENDDO loop_over_stars
+
+
+    END SUBROUTINE set_up_lattices_around_stars
+
+
   END PROCEDURE construct_bnsfuka
+
+
 
 
   MODULE PROCEDURE finalize
