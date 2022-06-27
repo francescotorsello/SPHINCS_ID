@@ -55,6 +55,37 @@ MODULE bns_fuka
   !                                                       *
   !********************************************************
 
+
+  ! Enumeration-style variables to enumerate the fields read from the
+  ! |fuka| |id|
+  INTEGER, PARAMETER:: id$x             =  1
+  INTEGER, PARAMETER:: id$y             =  2
+  INTEGER, PARAMETER:: id$z             =  3
+  INTEGER, PARAMETER:: id$lapse         =  4
+  INTEGER, PARAMETER:: id$shiftx        =  5
+  INTEGER, PARAMETER:: id$shifty        =  6
+  INTEGER, PARAMETER:: id$shiftz        =  7
+  INTEGER, PARAMETER:: id$gxx           =  8
+  INTEGER, PARAMETER:: id$gxy           =  9
+  INTEGER, PARAMETER:: id$gxz           = 10
+  INTEGER, PARAMETER:: id$gyy           = 11
+  INTEGER, PARAMETER:: id$gyz           = 12
+  INTEGER, PARAMETER:: id$gzz           = 13
+  INTEGER, PARAMETER:: id$kxx           = 14
+  INTEGER, PARAMETER:: id$kxy           = 15
+  INTEGER, PARAMETER:: id$kxz           = 16
+  INTEGER, PARAMETER:: id$kyy           = 17
+  INTEGER, PARAMETER:: id$kyz           = 18
+  INTEGER, PARAMETER:: id$kzz           = 19
+  INTEGER, PARAMETER:: id$massdensity   = 20
+  INTEGER, PARAMETER:: id$specificenergy= 21
+  INTEGER, PARAMETER:: id$pressure      = 22
+  INTEGER, PARAMETER:: id$eulvelx       = 23
+  INTEGER, PARAMETER:: id$eulvely       = 24
+  INTEGER, PARAMETER:: id$eulvelz       = 25
+  INTEGER, PARAMETER:: n_fields_fuka    = 25
+
+
   TYPE, EXTENDS(bnsbase):: bnsfuka
   !# TYPE representing a binary system of neutron stars (|bns|) produced with
   !  |fuka|
@@ -63,10 +94,19 @@ MODULE bns_fuka
     PRIVATE
 
 
-    !> Identifier of the bnsfuka object
     INTEGER:: bns_identifier= 0
-    !> |fuka| identifiers for the EoS
+    !! Identifier of the bnsfuka object
     INTEGER:: eos1_fukaid, eos2_fukaid
+    !! |fuka| identifiers for the |eos|
+
+    !
+    !-- ID fields on a lattice around each star
+    !
+
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: id_fields
+    !# Array storing the |id| fields read from the FUKA binary file.
+    !  The last index runs over the fields, the first three over the
+    !  Cartesian coordinates
 
     !
     !-- Spacetime fields
