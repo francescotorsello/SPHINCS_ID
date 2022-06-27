@@ -279,13 +279,13 @@ SUBMODULE (sph_particles) constructor_std
 
     INQUIRE( FILE= parts% sphincs_id_particles, EXIST= file_exists )
     IF( file_exists )THEN
-     OPEN( 10, FILE= parts% sphincs_id_particles, STATUS= 'OLD' )
+      OPEN( 10, FILE= parts% sphincs_id_particles, STATUS= 'OLD' )
     ELSE
-     PRINT *
-     PRINT *, "** ERROR: ", parts% sphincs_id_particles, &
+      PRINT *
+      PRINT *, "** ERROR: ", parts% sphincs_id_particles, &
               " file not found!"
-     PRINT *
-     STOP
+      PRINT *
+      STOP
     ENDIF
 
     READ( 10, NML= sphincs_id_particles )
