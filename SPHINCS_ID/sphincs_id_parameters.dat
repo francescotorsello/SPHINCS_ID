@@ -96,8 +96,8 @@ estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
-run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_sph=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -117,7 +117,7 @@ placer(1,:)=1                     ! 0: Read particle positions from formatted
 ! Choose to export data to binary and formatted files !
 !-----------------------------------------------------!
 export_bin=.TRUE.                ! Export ID to binary files
-export_form=.TRUE.               ! Export ID to formatted files
+export_form=.FALSE.               ! Export ID to formatted files
 export_form_xy=.FALSE.  ! Export only the ID on the xy plane to formatted files
 export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
                         ! irrespectively on the value of export_form_xy

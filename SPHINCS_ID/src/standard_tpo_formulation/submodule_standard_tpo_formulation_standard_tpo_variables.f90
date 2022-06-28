@@ -198,7 +198,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
     CALL ftpo% importer_timer% stop_timer()
 
-    PRINT *, " * LORENE spacetime ID imported on the gravity grid."
+    PRINT *, " * Spacetime ID imported on the gravity grid."
 
     !
     !-- Check that the imported ID does not contain NaNs

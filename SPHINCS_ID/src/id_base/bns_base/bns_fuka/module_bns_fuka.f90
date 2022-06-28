@@ -171,6 +171,10 @@ MODULE bns_fuka
     !  the Eulerian observer [c]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_z
 
+
+    DOUBLE PRECISION:: komar_mass
+    !! Komar mass of the binary system \([M_\odot]\)
+
     !& C pointer to the |fuka|'s |binns| object
     ! N.B. This variable is global. The pointer to the second |fuka| |binns|
     !      object will overwrite the first one, and so on.
@@ -180,11 +184,11 @@ MODULE bns_fuka
     !      See the last part of the PROGRAM in sphincs_id.f90, for example.
     TYPE(C_PTR):: bns_ptr
 
-    DOUBLE PRECISION:: komar_mass
-    !! Komar mass of the binary system \([M_\odot]\)
-
     CHARACTER( LEN=: ), ALLOCATABLE:: eos_type
     !! String containing the type of the |eos|
+
+    CHARACTER( LEN=: ), ALLOCATABLE:: filename
+    !! String containing the name of the '.info' |id| file output by |fuka|
 
 
     CONTAINS
@@ -334,7 +338,7 @@ MODULE bns_fuka
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL:: filename
       !! |fuka| binary file containing the spectral |bns| |id|
       CLASS(bnsfuka), INTENT( OUT ):: derived_type
       !! Constructed [[bnsfuka]] object
@@ -441,11 +445,12 @@ MODULE bns_fuka
 
 
     MODULE SUBROUTINE run_kadath_reader( &
-      this, mpi_ranks, nx, ny, nz, id_fields, filename_par, dir_id )
+      this, mpi_ranks, nx, ny, nz, xmin, xmax, ymin, ymax, zmin, zmax, &
+      id_fields, filename )
     !# Calls the MPI-parallelized vsion of the function KadathExportBNS
     !  from Kadath
 
-      CLASS(bnsfuka),                 INTENT( IN OUT ):: this
+      CLASS(bnsfuka), INTENT( IN OUT ):: this
       !! [[bnsfuka]] object which this PROCEDURE is a member of
       INTEGER, INTENT(IN):: mpi_ranks
       !! Number of MPI ranks
@@ -455,15 +460,25 @@ MODULE bns_fuka
       !! Number of lattice points in the \(y\) direction
       INTEGER, INTENT(IN):: nz
       !! Number of lattice points in the \(z\) direction
+      DOUBLE PRECISION, INTENT(IN):: xmin
+      !! Minimum value for \(x\) over the lattice
+      DOUBLE PRECISION, INTENT(IN):: xmax
+      !! Maximum value for \(x\) over the lattice
+      DOUBLE PRECISION, INTENT(IN):: ymin
+      !! Minimum value for \(x\) over the lattice
+      DOUBLE PRECISION, INTENT(IN):: ymax
+      !! Maximum value for \(x\) over the lattice
+      DOUBLE PRECISION, INTENT(IN):: zmin
+      !! Minimum value for \(x\) over the lattice
+      DOUBLE PRECISION, INTENT(IN):: zmax
+      !! Maximum value for \(x\) over the lattice
       DOUBLE PRECISION, DIMENSION(nx,ny,nz,n_fields_fuka), INTENT(INOUT):: &
         id_fields
       !# Array containing the |id| on a lattice. First three indices run over
       !  the lattice's dimensions, the fourth one runs ovr the fields
-      CHARACTER( LEN= : ), INTENT(IN), ALLOCATABLE:: filename_par
-      !! Name of the parameter fio be read by KadathExportBNS
-      CHARACTER( LEN= : ), INTENT(IN), ALLOCATABLE:: dir_id
-      !# Name of the directory where the |fuka| |id| file and the Kadath reader
-      !  are stored
+      CHARACTER( LEN= * ), INTENT(IN):: filename
+      !# Path to the |id| file output by |fuka|, as given in the parameter fe
+      !  sphincs_id_parameters.dat
 
     END SUBROUTINE run_kadath_reader
 

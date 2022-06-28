@@ -72,6 +72,7 @@ SUBMODULE (bns_fuka) constructor
 
     ! Construct |fuka| bns_export object
     CALL derived_type% construct_binary( filename )
+    derived_type% filename= filename
 
     ! Read the parameters of the binary system
     CALL read_fuka_id_params( derived_type )
@@ -89,7 +90,7 @@ SUBMODULE (bns_fuka) constructor
     ! within Kadath that reads the ID from the FUKA output file and prints it
     ! on a lattice. The ID on the particles will be interplated from ths fine
     ! lattice.
-    CALL set_up_lattices_around_stars()
+    !CALL set_up_lattices_around_stars( filename )
 
     ! Compute typical length scales of the system using the pressure
     IF( derived_type% get_estimate_length_scale() )THEN
@@ -129,7 +130,7 @@ SUBMODULE (bns_fuka) constructor
     END FUNCTION get_pressure
 
 
-    SUBROUTINE set_up_lattices_around_stars()
+    SUBROUTINE set_up_lattices_around_stars( filename )
 
       !***********************************************
       !
@@ -139,48 +140,23 @@ SUBMODULE (bns_fuka) constructor
       !
       !***********************************************
 
-      !USE OMP_LIB, ONLY: OMP_GET_NUM_PROCS
-
-#ifdef __INTEL_COMPILER
-
-  USE IFPORT, ONLY: CHANGEDIRQQ
-
-#endif
-
       IMPLICIT NONE
+
+      CHARACTER(LEN=*), INTENT(IN):: filename
 
       INTEGER, PARAMETER:: nx       = 25
       INTEGER, PARAMETER:: ny       = 25
       INTEGER, PARAMETER:: nz       = 25
-      INTEGER, PARAMETER:: unit_par = 3480
       INTEGER, PARAMETER:: mpi_ranks= 40
 
       DOUBLE PRECISION, PARAMETER:: stretch= 1.05D0
       !! The lattices' sizes will be 5% larger than the radii of the stars
 
-      INTEGER:: i_star, ios, i_char, i_file, i, j, k
-      INTEGER:: nlines, nlines_prev
-      INTEGER, DIMENSION(mpi_ranks):: unit_rank
-      INTEGER:: unit_rank_prev
+      INTEGER:: i_star
 
       DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
       DOUBLE PRECISION, DIMENSION(6):: sizes
       DOUBLE PRECISION, DIMENSION(3):: center
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: grid_tmp
-
-      LOGICAL:: exist
-      LOGICAL(4):: status
-
-      CHARACTER( LEN= : ), ALLOCATABLE:: filename_par
-      CHARACTER( LEN= : ), ALLOCATABLE:: filename_id
-      CHARACTER( LEN= : ), ALLOCATABLE:: filename_rank
-      CHARACTER( LEN= : ), ALLOCATABLE:: dir_id
-      CHARACTER( LEN= : ), ALLOCATABLE:: working_directory
-      CHARACTER( LEN= 3 ):: mpi_ranks_str
-
-      !num_processors= OMP_GET_NUM_PROCS()
-      !PRINT*, num_processors
-      !STOP
 
       ALLOCATE( derived_type% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
 
@@ -197,145 +173,52 @@ SUBMODULE (bns_fuka) constructor
         zmin= center(3) - stretch*sizes(5)
         zmax= center(3) + stretch*sizes(6)
 
-        filename_par= "lattice_par.dat"
-
-        find_name_loop: DO i_char= LEN(filename), 1, -1
-
-          IF( filename(i_char:i_char) == "/" )THEN
-            filename_id= TRIM(filename(i_char+1:LEN(filename)))
-            dir_id     = TRIM(filename(1:i_char))
-            EXIT
-          ENDIF
-
-        ENDDO find_name_loop
-
-        INQUIRE( FILE= TRIM(dir_id//filename_par), EXIST= exist )
-
-        IF( exist )THEN
-            OPEN( UNIT= unit_par, FILE= TRIM(dir_id//filename_par), &
-                  STATUS= "REPLACE", FORM= "FORMATTED", &
-                  POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                  IOMSG= err_msg )
-        ELSE
-            OPEN( UNIT= unit_par, FILE= TRIM(dir_id//filename_par), &
-                  STATUS= "NEW", FORM= "FORMATTED", &
-                  ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-        ENDIF
-        IF( ios > 0 )THEN
-          PRINT *, "...error when opening " // TRIM(dir_id//filename_par), &
-                   ". The error message is", err_msg
-          STOP
-        ENDIF
-
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-          TRIM(filename_id)
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) xmin
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) xmax
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ymin
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ymax
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) zmin
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) zmax
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) nx
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ny
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-        WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) nz
-        IF( ios > 0 )THEN
-          PRINT *, "...error when writing the arrays in ", &
-                   TRIM(dir_id//filename_par), ". The error message is", err_msg
-          STOP
-        ENDIF
-
-        CLOSE( UNIT= unit_par )
-
         CALL derived_type% run_kadath_reader( mpi_ranks, nx, ny, nz, &
+                                    xmin, xmax, ymin, ymax, zmin, zmax, &
                                     derived_type% id_fields(:,:,:,:,i_star), &
-                                    filename_par, dir_id )
+                                    filename )
 
         PRINT *, "** ID stored on a fine lattice around star ", i_star
         PRINT *
 
       ENDDO loop_over_stars
 
-    !  filename_id= "dbg-id.dat"
-    !
-    !  INQUIRE( FILE= TRIM(filename_id), EXIST= exist )
-    !
-    !  IF( exist )THEN
-    !    OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "REPLACE", &
-    !          FORM= "FORMATTED", &
-    !          POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-    !          IOMSG= err_msg )
-    !  ELSE
-    !    OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "NEW", &
-    !          FORM= "FORMATTED", &
-    !          ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    !  ENDIF
-    !  IF( ios > 0 )THEN
-    !  PRINT *, "...error when opening " // TRIM(filename_id), &
-    !           ". The error message is", err_msg
-    !  STOP
-    !  ENDIF
-    !
-    !  DO i_star= 1, 2, 1
-    !    DO k= 1, nz, 1
-    !      DO j= 1, ny, 1
-    !        DO i= 1, nx, 1
-    !
-    !          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    !            derived_type% id_fields( i, j, k, :, i_star )
-    !
-    !        ENDDO
-    !      ENDDO
-    !    ENDDO
-    !  ENDDO
-    !
-    !  CLOSE( UNIT= 2 )
+     ! filename_id= "dbg-id.dat"
+     !
+     ! INQUIRE( FILE= TRIM(filename_id), EXIST= exist )
+     !
+     ! IF( exist )THEN
+     !   OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "REPLACE", &
+     !         FORM= "FORMATTED", &
+     !         POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+     !         IOMSG= err_msg )
+     ! ELSE
+     !   OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "NEW", &
+     !         FORM= "FORMATTED", &
+     !         ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+     ! ENDIF
+     ! IF( ios > 0 )THEN
+     ! PRINT *, "...error when opening " // TRIM(filename_id), &
+     !          ". The error message is", err_msg
+     ! STOP
+     ! ENDIF
+     !
+     ! DO i_star= 1, 2, 1
+     !   DO k= 1, nz, 1
+     !     DO j= 1, ny, 1
+     !       DO i= 1, nx, 1
+     !
+     !         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+     !           derived_type% id_fields( i, j, k, :, i_star )
+     !
+     !       ENDDO
+     !     ENDDO
+     !   ENDDO
+     ! ENDDO
+     !
+     ! CLOSE( UNIT= 2 )
 
-      STOP
+      !STOP
 
     END SUBROUTINE set_up_lattices_around_stars
 

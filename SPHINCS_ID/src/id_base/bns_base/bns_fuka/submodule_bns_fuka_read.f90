@@ -319,11 +319,185 @@ SUBMODULE (bns_fuka) read
 
     IMPLICIT NONE
 
+    INTEGER, PARAMETER:: mpi_ranks= 40
+    LOGICAL, PARAMETER:: debug= .FALSE.
+
     INTEGER:: i, j, k
+
+    DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
 
     DOUBLE PRECISION:: detg
     DOUBLE PRECISION:: detg4
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: g4
+    DOUBLE PRECISION, DIMENSION(nx, ny, nz, n_fields_fuka):: id_tmp
+
+    LOGICAL:: exist
+
+    CHARACTER(LEN=:), ALLOCATABLE:: filename
+
+    ! TODO: parallelize these ones
+    xmin= MINVAL( pos(:,1,1,jx), DIM= 1 )
+    xmax= MAXVAL( pos(:,1,1,jx), DIM= 1 )
+    ymin= MINVAL( pos(1,:,1,jy), DIM= 1 )
+    ymax= MAXVAL( pos(1,:,1,jy), DIM= 1 )
+    zmin= MINVAL( pos(1,1,:,jz), DIM= 1 )
+    zmax= MAXVAL( pos(1,1,:,jz), DIM= 1 )
+
+    CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
+                                  xmin, xmax, ymin, ymax, zmin, zmax, &
+                                  id_tmp, this% filename )
+
+    ALLOCATE( g4( nx, ny, nz, n_sym4x4 ) )
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nx, ny, nz, this, pos, &
+    !$OMP                     lapse, shift, g, ek, g4, id_tmp ) &
+    !$OMP             PRIVATE( i, j, k, detg, detg4 )
+    DO k= 1, nz, 1
+      DO j= 1, ny, 1
+        DO i= 1, nx, 1
+
+          lapse          = id_tmp(i,j,k,id$lapse)
+
+          shift(i,j,k,jx)= id_tmp(i,j,k,id$shiftx)
+          shift(i,j,k,jy)= id_tmp(i,j,k,id$shifty)
+          shift(i,j,k,jz)= id_tmp(i,j,k,id$shiftz)
+
+          g(i,j,k,jxx)   = id_tmp(i,j,k,id$gxx)
+
+          ek(i,j,k,jxx)  = id_tmp(i,j,k,id$kxx)
+          ek(i,j,k,jxy)  = id_tmp(i,j,k,id$kxy)
+          ek(i,j,k,jxz)  = id_tmp(i,j,k,id$kxz)
+          ek(i,j,k,jyy)  = id_tmp(i,j,k,id$kyy)
+          ek(i,j,k,jyz)  = id_tmp(i,j,k,id$kyz)
+          ek(i,j,k,jzz)  = id_tmp(i,j,k,id$kzz)
+
+          !
+          !-- The following follows from the assumption of
+          !-- conformal flatness in |fuka|
+          !
+          g( i, j, k, jyy )= g( i, j, k, jxx )
+          g( i, j, k, jzz )= g( i, j, k, jxx )
+          g( i, j, k, jxy )= zero
+          g( i, j, k, jxz )= zero
+          g( i, j, k, jyz )= zero
+
+          !
+          !- Set/unset the geodesic gauge
+          !
+          IF( this% get_one_lapse() )THEN
+            lapse( i, j, k )= one
+          ENDIF
+          IF( this% get_zero_shift() )THEN
+            shift( i, j, k, jx )= zero
+            shift( i, j, k, jy )= zero
+            shift( i, j, k, jz )= zero
+          ENDIF
+
+          CALL determinant_sym3x3( g(i,j,k,:), detg )
+
+          IF( ABS( detg ) < 1D-10 )THEN
+            PRINT *, "** ERROR! The determinant of the spatial metric " &
+                     // "is effectively 0 at the grid point " &
+                     // "(i,j,k)= (", i, ",", j,",", k, ")."
+            PRINT *, " * detg=", detg
+            PRINT *
+            STOP
+          ELSEIF( detg < zero )THEN
+            PRINT *, "** ERROR! The determinant of the spatial metric " &
+                     // "is negative at the grid point " &
+                     // "(i,j,k)= (", i, ",", j,",", k, ")."
+            PRINT *, " * detg=", detg
+            PRINT *
+            STOP
+          ELSEIF( .NOT.is_finite_number(detg) )THEN
+            PRINT *, "** ERROR! The determinant of the spatial metric "&
+                     // "is not a finite number at " &
+                     // "(i,j,k)= (", i, ",", j,",", k, ")."
+            PRINT *, " * detg=", detg
+            PRINT *
+            STOP
+          ENDIF
+
+          CALL compute_g4( lapse(i,j,k), shift(i,j,k,:), &
+                           g(i,j,k,:), g4(i,j,k,:) )
+
+          CALL determinant_sym4x4( g4(i,j,k,:), detg4 )
+
+          IF( ABS( detg4 ) < 1D-10 )THEN
+            PRINT *, "** ERROR! The determinant of the spacetime metric "&
+                     // "is effectively 0 at the grid point " &
+                     // "(i,j,k)= (", i, ",", j,",", k, ")."
+            PRINT *, " * detg4=", detg4
+            PRINT *
+            STOP
+          ELSEIF( detg4 > 0 )THEN
+            PRINT *, "** ERROR! The determinant of the spacetime metric "&
+                     // "is positive at the grid point " &
+                     // "(i,j,k)= (", i, ",", j,",", k, ")."
+            PRINT *, " * detg4=", detg4
+            PRINT *
+            STOP
+          ELSEIF( .NOT.is_finite_number(detg4) )THEN
+            PRINT *, "** ERROR! The determinant of the spacetime metric "&
+                     // "is not a finite number at " &
+                     // "(i,j,k)= (", i, ",", j,",", k, ")."
+            PRINT *, " * detg4=", detg4
+            PRINT *
+            STOP
+          ENDIF
+
+        ENDDO
+      ENDDO
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    PRINT *, "** Subroutine read_fuka_id_spacetime executed."
+    PRINT *
+
+    IF( debug )THEN
+
+      filename= "dbg-spaid.dat"
+
+      INQUIRE( FILE= TRIM(filename), EXIST= exist )
+
+      IF( exist )THEN
+        OPEN( UNIT= 2, FILE= TRIM(filename), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+      ELSE
+        OPEN( UNIT= 2, FILE= TRIM(filename), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(filename), &
+               ". The error message is", err_msg
+      STOP
+      ENDIF
+
+      DO k= 1, nz, 1
+        DO j= 1, ny, 1
+          DO i= 1, nx, 1
+
+            WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+              pos(i,j,k,jx), id_tmp(i,j,k,id$x), &
+              pos(i,j,k,jy), id_tmp(i,j,k,id$y), &
+              pos(i,j,k,jz), id_tmp(i,j,k,id$z), &
+              ABS((pos(i,j,k,jx) - id_tmp(i,j,k,id$x))/id_tmp(i,j,k,id$x)), &
+              ABS((pos(i,j,k,jy) - id_tmp(i,j,k,id$y))/id_tmp(i,j,k,id$y)), &
+              ABS((pos(i,j,k,jz) - id_tmp(i,j,k,id$z))/id_tmp(i,j,k,id$z))
+
+          ENDDO
+        ENDDO
+      ENDDO
+
+      CLOSE( UNIT= 2 )
+
+    ENDIF
+
+    RETURN
 
     ! g4 is allocatable to allocate it on the heap
     ! Allocating it on the stack might exceed stack memory,
@@ -436,7 +610,7 @@ SUBMODULE (bns_fuka) read
       ENDDO coords_z
       !$OMP END PARALLEL DO
 
-      PRINT *, "** Subroutine read_lorene_id executed."
+      PRINT *, "** Subroutine read_fuka_id_spacetime executed."
       PRINT *
 
     ENDIF
@@ -460,7 +634,53 @@ SUBMODULE (bns_fuka) read
 
     IMPLICIT NONE
 
+    INTEGER, PARAMETER:: mpi_ranks= 40
+    !LOGICAL, PARAMETER:: debug= .FALSE.
+
     INTEGER:: i, j, k
+
+    DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
+
+    DOUBLE PRECISION, DIMENSION(nx, ny, nz, n_fields_fuka):: id_tmp
+
+    ! TODO: parallelize these ones
+    xmin= MINVAL( pos(:,1,1,jx), DIM= 1 )
+    xmax= MAXVAL( pos(:,1,1,jx), DIM= 1 )
+    ymin= MINVAL( pos(1,:,1,jy), DIM= 1 )
+    ymax= MAXVAL( pos(1,:,1,jy), DIM= 1 )
+    zmin= MINVAL( pos(1,1,:,jz), DIM= 1 )
+    zmax= MAXVAL( pos(1,1,:,jz), DIM= 1 )
+
+    CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
+                                  xmin, xmax, ymin, ymax, zmin, zmax, &
+                                  id_tmp, this% filename )
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nx, ny, nz, this, pos, &
+    !$OMP                     baryon_density, specific_energy, pressure, &
+    !$OMP                     energy_density, u_euler, id_tmp ) &
+    !$OMP             PRIVATE( i, j, k )
+    DO k= 1, nz, 1
+      DO j= 1, ny, 1
+        DO i= 1, nx, 1
+
+          baryon_density(i,j,k) = id_tmp(i,j,k,id$massdensity)
+          specific_energy(i,j,k)= id_tmp(i,j,k,id$specificenergy)
+          pressure(i,j,k)       = id_tmp(i,j,k,id$pressure)
+
+          energy_density(i,j,k) = baryon_density(i,j,k) &
+                                   *(one + specific_energy(i,j,k))
+
+          u_euler(i,j,k,jx)     = id_tmp(i,j,k,id$eulvelx)
+          u_euler(i,j,k,jy)     = id_tmp(i,j,k,id$eulvely)
+          u_euler(i,j,k,jz)     = id_tmp(i,j,k,id$eulvelz)
+
+        ENDDO
+      ENDDO
+    ENDDO
+    !$OMP END PARALLEL DO
+
+    RETURN
 
     IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
 
@@ -906,7 +1126,9 @@ SUBMODULE (bns_fuka) read
 
     IMPLICIT NONE
 
-    INTEGER:: ios, i_file, i, j, k
+    INTEGER, PARAMETER:: unit_par = 3480
+
+    INTEGER:: ios, i_char, i_file, i_field, i, j, k
     INTEGER:: nlines, nlines_prev
     INTEGER, DIMENSION(mpi_ranks):: unit_rank
     INTEGER:: unit_rank_prev
@@ -916,8 +1138,105 @@ SUBMODULE (bns_fuka) read
     LOGICAL:: exist
     LOGICAL(4):: status
 
+    CHARACTER( LEN= : ), ALLOCATABLE:: filename_par
+    CHARACTER( LEN= : ), ALLOCATABLE:: filename_id
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_rank
+    CHARACTER( LEN= : ), ALLOCATABLE:: dir_id
     CHARACTER( LEN= 3 ):: mpi_ranks_str
+
+    find_name_loop: DO i_char= LEN(filename), 1, -1
+
+      IF( filename(i_char:i_char) == "/" )THEN
+        filename_id= TRIM(filename(i_char+1:LEN(filename)))
+        dir_id     = TRIM(filename(1:i_char))
+        EXIT
+      ENDIF
+
+    ENDDO find_name_loop
+
+    filename_par= "lattice_par.dat"
+
+    INQUIRE( FILE= TRIM(dir_id//filename_par), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= unit_par, FILE= TRIM(dir_id//filename_par), &
+              STATUS= "REPLACE", FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= unit_par, FILE= TRIM(dir_id//filename_par), &
+              STATUS= "NEW", FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM(dir_id//filename_par), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      TRIM(filename_id)
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) xmin
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) xmax
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ymin
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ymax
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) zmin
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) zmax
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) nx
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ny
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+    WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) nz
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing the arrays in ", &
+               TRIM(dir_id//filename_par), ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    CLOSE( UNIT= unit_par )
 
     ! Change working directory to where the FUKA ID files and the
     ! Kadath reader are stored (they must be in the same directory)
@@ -926,11 +1245,11 @@ SUBMODULE (bns_fuka) read
 
   status= CHANGEDIRQQ("/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/"//dir_id)
   IF( status == .FALSE. )THEN
-    PRINT *, "** ERROR! Unable to change directory in SUBROUTINE ", &
-             "set_up_lattices_around_stars!"
-    PRINT *, " * Stopping..."
-    PRINT *
-    STOP
+  PRINT *, "** ERROR! Unable to change directory in SUBROUTINE ", &
+           "set_up_lattices_around_stars!"
+  PRINT *, " * Stopping..."
+  PRINT *
+  STOP
   ENDIF
 
 #endif
@@ -1045,9 +1364,12 @@ SUBMODULE (bns_fuka) read
     DO k= 1, nz, 1
       DO j= 1, ny, 1
         DO i= 1, nx, 1
+          DO i_field= 1, n_fields_fuka
 
-          id_fields( i, j, k, : )= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, : )
+            id_fields( i, j, k, i_field )= &
+                  grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, i_field )
 
+          ENDDO
         ENDDO
       ENDDO
     ENDDO
@@ -1073,7 +1395,6 @@ SUBMODULE (bns_fuka) read
   CALL CHDIR("/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/")
 
 #endif
-
 
   END PROCEDURE run_kadath_reader
 
