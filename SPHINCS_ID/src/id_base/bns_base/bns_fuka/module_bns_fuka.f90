@@ -211,6 +211,10 @@ MODULE bns_fuka
     PROCEDURE:: read_fuka_id_params
     !! Imports the parameters of the |bns| from |fuka|
 
+    PROCEDURE:: run_kadath_reader
+    !# Calls the MPI-parallelized version of the function KadathExportBNS
+    !  within Kadath
+
     !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
     !# Integrates the |fuka| baryon mass density and computes the
     !  radial mass profile
@@ -372,9 +376,12 @@ MODULE bns_fuka
 
     END SUBROUTINE print_summary_bnsfuka
 
-    !
-    !-- SUBROUTINES
-    !
+
+    !-------------------!
+    !--  SUBROUTINES  --!
+    !-------------------!
+
+
     MODULE SUBROUTINE construct_binary( this, fukafile )
     !! Interface of the subroutine that constructs the |fuka| |binns| object
 
@@ -433,34 +440,32 @@ MODULE bns_fuka
     END SUBROUTINE print_id_params
 
 
-  !  MODULE SUBROUTINE integrate_baryon_mass_density( this, center, radius, &
-  !                                                   central_density, &
-  !                                                   dr, dth, dphi, &
-  !                                                   mass, mass_profile, &
-  !                                                   mass_profile_idx )
-  !  !# Integrates the |fuka| baryon mass density to compute the radial mass
-  !  !  profile. TODO: Improve integration algorithm.
-  !
-  !    !> [[bnsfuka]] object which this PROCEDURE is a member of
-  !    CLASS(bnsfuka), INTENT( IN OUT )      :: this
-  !    !& Array to store the indices for array mass_profile, sorted so that
-  !    !  mass_profile[mass_profile_idx] is in increasing order
-  !    INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
-  !    !> Center of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: center
-  !    !> Central density of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: central_density
-  !    !> Radius of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: radius
-  !    !> Integration steps
-  !    DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
-  !    !> Integrated mass of the star
-  !    DOUBLE PRECISION, INTENT( IN OUT ):: mass
-  !    !> Array storing the radial mass profile of the star
-  !    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
-  !                                     mass_profile
-  !
-  !  END SUBROUTINE integrate_baryon_mass_density
+    MODULE SUBROUTINE run_kadath_reader( &
+      this, mpi_ranks, nx, ny, nz, id_fields, filename_par, dir_id )
+    !# Calls the MPI-parallelized vsion of the function KadathExportBNS
+    !  from Kadath
+
+      CLASS(bnsfuka),                 INTENT( IN OUT ):: this
+      !! [[bnsfuka]] object which this PROCEDURE is a member of
+      INTEGER, INTENT(IN):: mpi_ranks
+      !! Number of MPI ranks
+      INTEGER, INTENT(IN):: nx
+      !! Number of lattice points in the \(x\) direction
+      INTEGER, INTENT(IN):: ny
+      !! Number of lattice points in the \(y\) direction
+      INTEGER, INTENT(IN):: nz
+      !! Number of lattice points in the \(z\) direction
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz,n_fields_fuka), INTENT(INOUT):: &
+        id_fields
+      !# Array containing the |id| on a lattice. First three indices run over
+      !  the lattice's dimensions, the fourth one runs ovr the fields
+      CHARACTER( LEN= : ), INTENT(IN), ALLOCATABLE:: filename_par
+      !! Name of the parameter fio be read by KadathExportBNS
+      CHARACTER( LEN= : ), INTENT(IN), ALLOCATABLE:: dir_id
+      !# Name of the directory where the |fuka| |id| file and the Kadath reader
+      !  are stored
+
+    END SUBROUTINE run_kadath_reader
 
 
     MODULE SUBROUTINE read_fuka_id_member( this, n, x, y, z )
@@ -474,24 +479,6 @@ MODULE bns_fuka
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
 
     END SUBROUTINE read_fuka_id_member
-
-    ! BE CAREFUL! Look at the following page:
-    !
-    ! https://www.ibm.com/support/knowledgecenter/SSAT4T_15.1.5/com.ibm.xlf1515.lelinux.doc/language_ref/allocobj.html
-
-    ! where you can find the following statement,
-    !
-    ! "On procedure entry, the allocation status of an allocatable dummy
-    !  argument becomes that of the associated actual argument. If the
-    !  dummy argument is INTENT(OUT) and the associated actual argument is
-    !  allocated, the actual argument is deallocated on procedure invocation
-    !  so that the dummy argument has an allocation status of not allocated.
-    !  If the dummy argument is not INTENT(OUT) and the actual argument is
-    !  allocated, the value of the dummy argument is that of the associated
-    !  actual argument."
-
-    ! Hence, the intent of allocatable array arguments  has to be IN OUT,
-    ! not OUT. The array arguments are not allocatable anymore
 
 
     MODULE SUBROUTINE read_fuka_id_full( this, n, x, y, z,&

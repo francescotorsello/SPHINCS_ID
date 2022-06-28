@@ -149,17 +149,17 @@ SUBMODULE (bns_fuka) constructor
 
       IMPLICIT NONE
 
-      INTEGER, PARAMETER:: nx       = 250
-      INTEGER, PARAMETER:: ny       = 250
-      INTEGER, PARAMETER:: nz       = 250
+      INTEGER, PARAMETER:: nx       = 25
+      INTEGER, PARAMETER:: ny       = 25
+      INTEGER, PARAMETER:: nz       = 25
       INTEGER, PARAMETER:: unit_par = 3480
       INTEGER, PARAMETER:: mpi_ranks= 40
 
-      DOUBLE PRECISION, PARAMETER:: stretch= 1.02D0
-      !! The lattices' sizes will be 2% larger than the radii of the stars
+      DOUBLE PRECISION, PARAMETER:: stretch= 1.05D0
+      !! The lattices' sizes will be 5% larger than the radii of the stars
 
       INTEGER:: i_star, ios, i_char, i_file, i, j, k
-      INTEGER:: num_processors, nlines, nlines_prev
+      INTEGER:: nlines, nlines_prev
       INTEGER, DIMENSION(mpi_ranks):: unit_rank
       INTEGER:: unit_rank_prev
 
@@ -181,6 +181,8 @@ SUBMODULE (bns_fuka) constructor
       !num_processors= OMP_GET_NUM_PROCS()
       !PRINT*, num_processors
       !STOP
+
+      ALLOCATE( derived_type% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
 
       loop_over_stars: DO i_star= 1, 2, 1
 
@@ -289,178 +291,51 @@ SUBMODULE (bns_fuka) constructor
 
         CLOSE( UNIT= unit_par )
 
-        !PRINT *, dir_id
-        !STOP
+        CALL derived_type% run_kadath_reader( mpi_ranks, nx, ny, nz, &
+                                    derived_type% id_fields(:,:,:,:,i_star), &
+                                    filename_par, dir_id )
 
-        !CALL EXECUTE_COMMAND_LINE("cd "//dir_id)
-        !STOP
-        !CALL EXECUTE_COMMAND_LINE("ls")
-
-        ! Change working directory to where the FUKA ID files and the
-        ! Kadath reader are stored (they must be in the same directory)
-
-#ifdef __INTEL_COMPILER
-
-  status= CHANGEDIRQQ("/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/"//dir_id)
-  IF( status == .FALSE. )THEN
-    PRINT *, "** ERROR! Unable to change directory in SUBROUTINE ", &
-             "set_up_lattices_around_stars!"
-    PRINT *, " * Stopping..."
-    PRINT *
-    STOP
-  ENDIF
-
-#endif
-
-#ifdef __GFORTRAN__
-
-  CALL CHDIR(dir_id)
-
-#endif
-
-        ! Run the MPI parallelized Kadath reader
-        IF( mpi_ranks <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) mpi_ranks
-        IF( mpi_ranks >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) mpi_ranks
-        IF( mpi_ranks >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) mpi_ranks
-        CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)// &
-                                  " export_bns_test")
-
-        ! Delete the parameter ile that specifies the lattice around the
-        ! i_star-th star
-        CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_par))
-
-        ! Allocate memory
-        ALLOCATE( derived_type% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
-        ALLOCATE( grid_tmp( nx*ny*nz, n_fields_fuka) )
-
-        ! Read the ID from the ASCII files printed by the reader
-        ! (one per MPI rank)
-        !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( grid_tmp, i_star ) &
-        !$OMP             PRIVATE( i_file, i, filename_rank, mpi_ranks_str, &
-        !$OMP                      unit_rank, nlines, ios, nlines_prev, exist, &
-        !$OMP                      err_msg, unit_rank_prev )
-        loop_over_id_files: DO i_file= 0, mpi_ranks - 1, 1
-
-          IF( i_file <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) i_file
-          IF( i_file >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) i_file
-          IF( i_file >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) i_file
-          filename_rank= "id-"//TRIM(mpi_ranks_str)//".dat"
-
-          unit_rank(i_file + 1)= 8346 + i_file
-
-          INQUIRE( FILE= TRIM(filename_rank), EXIST= exist )
-          IF( exist )THEN
-            OPEN( unit_rank(i_file + 1), FILE= TRIM(filename_rank), &
-                  FORM= "FORMATTED", ACTION= "READ" )
-          ELSE
-            PRINT *
-            PRINT *, "** ERROR: ", TRIM(filename_rank), &
-                     " file not found!"
-            PRINT *
-            STOP
-          ENDIF
-
-          ! Get total number of lines in the file
-          nlines = 0
-          DO
-            READ( unit_rank(i_file + 1), * , IOSTAT= ios )
-            IF ( ios /= 0 ) EXIT
-            nlines = nlines + 1
-          ENDDO
-          CLOSE( UNIT= unit_rank(i_file + 1) )
-          OPEN( unit_rank(i_file + 1), FILE= TRIM(filename_rank), &
-                FORM= "FORMATTED", ACTION= "READ" )
-
-          ! Neglect header
-          nlines= nlines - 1
-
-          !
-          IF( i_file == mpi_ranks - 1 )THEN
-
-            unit_rank_prev= unit_rank(i_file + 1) + 1
-
-            OPEN( unit_rank_prev, FILE= TRIM("id-0.dat"), &
-                  FORM= "FORMATTED", ACTION= "READ" )
-
-            nlines_prev = 0
-            DO
-              READ( unit_rank_prev, * , IOSTAT= ios )
-              IF ( ios /= 0 ) EXIT
-              nlines_prev = nlines_prev + 1
-            ENDDO
-
-            CLOSE(unit_rank_prev)
-
-            ! Neglect header
-            nlines_prev= nlines_prev - 1
-
-          ELSE
-
-            nlines_prev= nlines
-
-          ENDIF
-
-          ! Skip header
-          READ( unit_rank(i_file + 1), * )
-          DO i= 1, nlines, 1
-            READ( UNIT= unit_rank(i_file + 1), FMT= *, IOSTAT = ios, &
-                  IOMSG= err_msg ) grid_tmp( nlines_prev*i_file + i, : )
-          ENDDO
-
-          ! Close file and delete it
-          CLOSE( unit_rank(i_file + 1) )
-          CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
-
-        ENDDO loop_over_id_files
-        !$OMP END PARALLEL DO
-
-        ! Store fields in desired format (needed by trilinear_interpolation
-        ! in MODULE numerics)
-
-        !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( derived_type, grid_tmp, i_star ) &
-        !$OMP             PRIVATE( i, j, k )
-        DO k= 1, nz, 1
-          DO j= 1, ny, 1
-            DO i= 1, nx, 1
-
-              derived_type% id_fields( i, j, k, :, i_star )= &
-                                  grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, 1 )
-
-            ENDDO
-          ENDDO
-        ENDDO
-        !$OMP END PARALLEL DO
-
-        PRINT *, "** ID stored within SPHINCS_ID."
+        PRINT *, "** ID stored on a fine lattice around star ", i_star
         PRINT *
-
-        ! Change working directory back to HOME_SPHINCS_ID
-
-#ifdef __INTEL_COMPILER
-
-  status= CHANGEDIRQQ("/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/")
-  IF( status == .FALSE. )THEN
-    PRINT *, "** ERROR! Unable to change directory in SUBROUTINE ", &
-             "set_up_lattices_around_stars!"
-    PRINT *, " * Stopping..."
-    PRINT *
-    STOP
-  ENDIF
-
-#endif
-
-#ifdef __GFORTRAN__
-
-  CALL CHDIR("/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/")
-
-#endif
-
-        STOP
 
       ENDDO loop_over_stars
 
+    !  filename_id= "dbg-id.dat"
+    !
+    !  INQUIRE( FILE= TRIM(filename_id), EXIST= exist )
+    !
+    !  IF( exist )THEN
+    !    OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "REPLACE", &
+    !          FORM= "FORMATTED", &
+    !          POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+    !          IOMSG= err_msg )
+    !  ELSE
+    !    OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "NEW", &
+    !          FORM= "FORMATTED", &
+    !          ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    !  ENDIF
+    !  IF( ios > 0 )THEN
+    !  PRINT *, "...error when opening " // TRIM(filename_id), &
+    !           ". The error message is", err_msg
+    !  STOP
+    !  ENDIF
+    !
+    !  DO i_star= 1, 2, 1
+    !    DO k= 1, nz, 1
+    !      DO j= 1, ny, 1
+    !        DO i= 1, nx, 1
+    !
+    !          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    !            derived_type% id_fields( i, j, k, :, i_star )
+    !
+    !        ENDDO
+    !      ENDDO
+    !    ENDDO
+    !  ENDDO
+    !
+    !  CLOSE( UNIT= 2 )
+
+      STOP
 
     END SUBROUTINE set_up_lattices_around_stars
 
