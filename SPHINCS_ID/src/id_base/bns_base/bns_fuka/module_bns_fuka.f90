@@ -219,6 +219,10 @@ MODULE bns_fuka
     !# Calls the MPI-parallelized version of the function KadathExportBNS
     !  within Kadath
 
+    PROCEDURE:: set_up_lattices_around_stars
+    !# Sets up two fine lattice, one around each star, to be able to interpolate
+    ! the |id| at the particle positions. It calls [[bnsfuka:run_kadath_reader]]
+
     !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
     !# Integrates the |fuka| baryon mass density and computes the
     !  radial mass profile
@@ -481,6 +485,16 @@ MODULE bns_fuka
       !  sphincs_id_parameters.dat
 
     END SUBROUTINE run_kadath_reader
+
+
+    MODULE SUBROUTINE set_up_lattices_around_stars( this )
+    !# Sets up two fine lattice, one around each star, to be able to interpolate
+    ! the |id| at the particle positions. It calls [[bnsfuka:run_kadath_reader]]
+
+      CLASS(bnsfuka), INTENT( IN OUT ):: this
+      !! [[bnsfuka]] object which this PROCEDURE is a member of
+
+    END SUBROUTINE set_up_lattices_around_stars
 
 
     MODULE SUBROUTINE read_fuka_id_member( this, n, x, y, z )

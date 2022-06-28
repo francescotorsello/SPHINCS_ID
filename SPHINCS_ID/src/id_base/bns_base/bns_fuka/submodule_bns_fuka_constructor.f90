@@ -88,7 +88,7 @@ SUBMODULE (bns_fuka) constructor
     ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
     ! within SPHINCS_ID. Hence, we chose to make a system call to a program
     ! within Kadath that reads the ID from the FUKA output file and prints it
-    ! on a lattice. The ID on the particles will be interplated from ths fine
+    ! on a lattice. The ID on the particles will be interplated from this fine
     ! lattice.
     !CALL set_up_lattices_around_stars( filename )
 
@@ -128,99 +128,6 @@ SUBMODULE (bns_fuka) constructor
       val= derived_type% read_fuka_pressure( x, y, z )
 
     END FUNCTION get_pressure
-
-
-    SUBROUTINE set_up_lattices_around_stars( filename )
-
-      !***********************************************
-      !
-      !#
-      !
-      !  FT 27.06.2022
-      !
-      !***********************************************
-
-      IMPLICIT NONE
-
-      CHARACTER(LEN=*), INTENT(IN):: filename
-
-      INTEGER, PARAMETER:: nx       = 25
-      INTEGER, PARAMETER:: ny       = 25
-      INTEGER, PARAMETER:: nz       = 25
-      INTEGER, PARAMETER:: mpi_ranks= 40
-
-      DOUBLE PRECISION, PARAMETER:: stretch= 1.05D0
-      !! The lattices' sizes will be 5% larger than the radii of the stars
-
-      INTEGER:: i_star
-
-      DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
-      DOUBLE PRECISION, DIMENSION(6):: sizes
-      DOUBLE PRECISION, DIMENSION(3):: center
-
-      ALLOCATE( derived_type% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
-
-      loop_over_stars: DO i_star= 1, 2, 1
-
-        sizes = derived_type% return_spatial_extent(i_star)
-        center= derived_type% return_center(i_star)
-
-        ! Determine boundaries of the lattices
-        xmin= center(1) - stretch*sizes(1)
-        xmax= center(1) + stretch*sizes(2)
-        ymin= center(2) - stretch*sizes(3)
-        ymax= center(2) + stretch*sizes(4)
-        zmin= center(3) - stretch*sizes(5)
-        zmax= center(3) + stretch*sizes(6)
-
-        CALL derived_type% run_kadath_reader( mpi_ranks, nx, ny, nz, &
-                                    xmin, xmax, ymin, ymax, zmin, zmax, &
-                                    derived_type% id_fields(:,:,:,:,i_star), &
-                                    filename )
-
-        PRINT *, "** ID stored on a fine lattice around star ", i_star
-        PRINT *
-
-      ENDDO loop_over_stars
-
-     ! filename_id= "dbg-id.dat"
-     !
-     ! INQUIRE( FILE= TRIM(filename_id), EXIST= exist )
-     !
-     ! IF( exist )THEN
-     !   OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "REPLACE", &
-     !         FORM= "FORMATTED", &
-     !         POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-     !         IOMSG= err_msg )
-     ! ELSE
-     !   OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "NEW", &
-     !         FORM= "FORMATTED", &
-     !         ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-     ! ENDIF
-     ! IF( ios > 0 )THEN
-     ! PRINT *, "...error when opening " // TRIM(filename_id), &
-     !          ". The error message is", err_msg
-     ! STOP
-     ! ENDIF
-     !
-     ! DO i_star= 1, 2, 1
-     !   DO k= 1, nz, 1
-     !     DO j= 1, ny, 1
-     !       DO i= 1, nx, 1
-     !
-     !         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-     !           derived_type% id_fields( i, j, k, :, i_star )
-     !
-     !       ENDDO
-     !     ENDDO
-     !   ENDDO
-     ! ENDDO
-     !
-     ! CLOSE( UNIT= 2 )
-
-      !STOP
-
-    END SUBROUTINE set_up_lattices_around_stars
 
 
   END PROCEDURE construct_bnsfuka
