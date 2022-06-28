@@ -227,53 +227,6 @@ SUBMODULE (sph_particles) constructor_std
     parts% empty_object= .FALSE.
 
     !
-    !-- Read needed data from the idbase object
-    !
-
-    parts% nbar_tot       = zero
-    parts% npart          = 0
-    parts% distribution_id= dist
-
-    ALLOCATE( parts% masses (parts% n_matter) )
-    ALLOCATE( parts% all_eos(parts% n_matter) )
-    ALLOCATE( parts% npart_i(0:parts% n_matter) )
-    ALLOCATE( npart_i_tmp(0:parts% n_matter) )
-    ALLOCATE( parts% nbar_i(parts% n_matter) )
-    ALLOCATE( parts% nuratio_i(parts% n_matter) )
-    ALLOCATE( parts% mass_ratios(parts% n_matter) )
-    ALLOCATE( parts% mass_fractions(parts% n_matter) )
-
-    ALLOCATE( parts% barycenter(parts% n_matter,3) )
-
-    parts% npart_i(0)= 0
-    npart_i_tmp(0)   = 0
-    parts% nbar_i    = zero
-    parts% nuratio_i = zero
-
-    DO i_matter= 1, parts% n_matter, 1
-
-      parts% adm_mass          = id% adm_mass
-      parts% masses(i_matter)  = id% return_mass(i_matter)
-      center(i_matter,:)       = id% return_center(i_matter)
-      central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
-                                                        center(i_matter,2), &
-                                                        center(i_matter,3) )
-      barycenter(i_matter,:)   = id% return_barycenter(i_matter)
-      parts% barycenter(i_matter,:)= barycenter(i_matter,:)
-      sizes(i_matter, :)       = id% return_spatial_extent(i_matter)
-
-      parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
-      CALL id% return_eos_parameters( i_matter, &
-                                      parts% all_eos(i_matter)% eos_parameters )
-
-    ENDDO
-
-    parts% post_process_sph_id => id% finalize_sph_id_ptr
-
-    !PRINT *, parts% all_eos(1)% eos_parameters
-    !STOP
-
-    !
     !-- Read the parameters of the particle distributions
     !
     parts% sphincs_id_particles= 'sphincs_id_particles.dat'
@@ -310,26 +263,6 @@ SUBMODULE (sph_particles) constructor_std
     parts% read_nu       = read_nu
 
     parts_pos_namefile= TRIM(parts_pos_path)//TRIM(parts_pos)
-
-    ! Compute desired particle numbers based on mass ratios
-    max_mass  = MAXVAL( parts% masses )
-    total_mass= SUM( parts% masses )
-    DO i_matter= 1, parts% n_matter, 1
-      parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
-      parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
-      npart_des_i(i_matter)          = &
-                          NINT(parts% mass_fractions(i_matter)*DBLE(npart_des))
-      tmp= 2*npart_des_i(i_matter)
-      ALLOCATE( parts_all(i_matter)% pos_i  ( 3, tmp ) )
-      ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
-      ALLOCATE( parts_all(i_matter)% pmass_i( tmp ) )
-      ALLOCATE( parts_all(i_matter)% h_i    ( tmp ) )
-      ALLOCATE( parts_all(i_matter)% nu_i   ( tmp ) )
-    ENDDO
-
- !   IF( parts% redistribute_nu )THEN
- !     thres= 100.0D0*parts% nu_ratio
- !   ENDIF
 
     !
     !-- Check that the parameters are acceptable
@@ -421,6 +354,90 @@ SUBMODULE (sph_particles) constructor_std
       STOP
     ENDIF
 
+    !
+    !-- If the ID has dynamic TYPE bnsfuka, construct the lattices around the
+    !-- stars. TODO: is there a more elegant way to do this? The particle
+    !-- object should not need to know what bnsfuka is
+    !
+    SELECT TYPE( id )
+
+      TYPE IS( bnsfuka )
+
+        ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
+        ! within SPHINCS_ID. Hence, we chose to make a system call to a program
+        ! within Kadath that reads the ID from the FUKA output file and prints
+        ! it on a lattice. The ID on the particles will be interplated from
+        ! this fine lattice.
+        CALL id% set_up_lattices_around_stars()
+
+    END SELECT
+
+    !
+    !-- Read needed data from the idbase object
+    !
+
+    parts% nbar_tot       = zero
+    parts% npart          = 0
+    parts% distribution_id= dist
+
+    ALLOCATE( parts% masses (parts% n_matter) )
+    ALLOCATE( parts% all_eos(parts% n_matter) )
+    ALLOCATE( parts% npart_i(0:parts% n_matter) )
+    ALLOCATE( npart_i_tmp(0:parts% n_matter) )
+    ALLOCATE( parts% nbar_i(parts% n_matter) )
+    ALLOCATE( parts% nuratio_i(parts% n_matter) )
+    ALLOCATE( parts% mass_ratios(parts% n_matter) )
+    ALLOCATE( parts% mass_fractions(parts% n_matter) )
+
+    ALLOCATE( parts% barycenter(parts% n_matter,3) )
+
+    parts% npart_i(0)= 0
+    npart_i_tmp(0)   = 0
+    parts% nbar_i    = zero
+    parts% nuratio_i = zero
+
+    DO i_matter= 1, parts% n_matter, 1
+
+      parts% adm_mass          = id% adm_mass
+      parts% masses(i_matter)  = id% return_mass(i_matter)
+      center(i_matter,:)       = id% return_center(i_matter)
+      central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
+                                                        center(i_matter,2), &
+                                                        center(i_matter,3) )
+      barycenter(i_matter,:)   = id% return_barycenter(i_matter)
+      parts% barycenter(i_matter,:)= barycenter(i_matter,:)
+      sizes(i_matter, :)       = id% return_spatial_extent(i_matter)
+
+      parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
+      CALL id% return_eos_parameters( i_matter, &
+                                      parts% all_eos(i_matter)% eos_parameters )
+
+    ENDDO
+
+    ! Compute desired particle numbers based on mass ratios
+    max_mass  = MAXVAL( parts% masses )
+    total_mass= SUM( parts% masses )
+    DO i_matter= 1, parts% n_matter, 1
+      parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
+      parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
+      npart_des_i(i_matter)          = &
+                          NINT(parts% mass_fractions(i_matter)*DBLE(npart_des))
+      tmp= 2*npart_des_i(i_matter)
+      ALLOCATE( parts_all(i_matter)% pos_i  ( 3, tmp ) )
+      ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
+      ALLOCATE( parts_all(i_matter)% pmass_i( tmp ) )
+      ALLOCATE( parts_all(i_matter)% h_i    ( tmp ) )
+      ALLOCATE( parts_all(i_matter)% nu_i   ( tmp ) )
+    ENDDO
+    !   IF( parts% redistribute_nu )THEN
+    !     thres= 100.0D0*parts% nu_ratio
+    !   ENDIF
+
+    parts% post_process_sph_id => id% finalize_sph_id_ptr
+
+    !PRINT *, parts% all_eos(1)% eos_parameters
+    !STOP
+
     DO i_matter= 1, parts% n_matter, 1
 
       IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
@@ -479,23 +496,6 @@ SUBMODULE (sph_particles) constructor_std
 
     ENDDO
 
-    !
-    !-- If the ID has dynamic TYPE bnsfuka, construct the lattices around the
-    !-- stars. TODO: is there a more elegant way to do this? The particle
-    !-- object should not need to know what bnsfuka is
-    !
-    SELECT TYPE( id )
-
-      TYPE IS( bnsfuka )
-
-        ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
-        ! within SPHINCS_ID. Hence, we chose to make a system call to a program
-        ! within Kadath that reads the ID from the FUKA output file and prints
-        ! it on a lattice. The ID on the particles will be interplated from
-        ! this fine lattice.
-        CALL id% set_up_lattices_around_stars()
-
-    END SELECT
 
     ! TODO: Add check that the number of rows in placer is the same as the
     !       number of bns objects, and that all bns have a value for placer

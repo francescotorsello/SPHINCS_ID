@@ -1413,19 +1413,27 @@ SUBMODULE (bns_fuka) read
     IMPLICIT NONE
 
 
-    INTEGER, PARAMETER:: nx       = 25
-    INTEGER, PARAMETER:: ny       = 25
-    INTEGER, PARAMETER:: nz       = 25
     INTEGER, PARAMETER:: mpi_ranks= 40
-
+    !!
     DOUBLE PRECISION, PARAMETER:: stretch= 1.05D0
     !! The lattices' sizes will be 5% larger than the radii of the stars
 
-    INTEGER:: i_star
+    INTEGER:: nx
+    INTEGER:: ny
+    INTEGER:: nz
+    INTEGER:: i_star, i, j, k
 
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
     DOUBLE PRECISION, DIMENSION(6):: sizes
     DOUBLE PRECISION, DIMENSION(3):: center
+
+    LOGICAL:: exist
+
+    CHARACTER(LEN=:), ALLOCATABLE:: filename_id
+
+    nx= this% nx_grid
+    ny= this% ny_grid
+    nz= this% nz_grid
 
     ALLOCATE( this% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
 
@@ -1443,51 +1451,51 @@ SUBMODULE (bns_fuka) read
       zmax= center(3) + stretch*sizes(6)
 
       CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
-                                  xmin, xmax, ymin, ymax, zmin, zmax, &
-                                  this% id_fields(:,:,:,:,i_star), &
-                                  this% filename )
+                                    xmin, xmax, ymin, ymax, zmin, zmax, &
+                                    this% id_fields(:,:,:,:,i_star), &
+                                    this% filename )
 
       PRINT *, "** ID stored on a fine lattice around star ", i_star
       PRINT *
 
     ENDDO loop_over_stars
 
-   ! filename_id= "dbg-id.dat"
-   !
-   ! INQUIRE( FILE= TRIM(filename_id), EXIST= exist )
-   !
-   ! IF( exist )THEN
-   !   OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "REPLACE", &
-   !         FORM= "FORMATTED", &
-   !         POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-   !         IOMSG= err_msg )
-   ! ELSE
-   !   OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "NEW", &
-   !         FORM= "FORMATTED", &
-   !         ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-   ! ENDIF
-   ! IF( ios > 0 )THEN
-   ! PRINT *, "...error when opening " // TRIM(filename_id), &
-   !          ". The error message is", err_msg
-   ! STOP
-   ! ENDIF
-   !
-   ! DO i_star= 1, 2, 1
-   !   DO k= 1, nz, 1
-   !     DO j= 1, ny, 1
-   !       DO i= 1, nx, 1
-   !
-   !         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-   !           this% id_fields( i, j, k, :, i_star )
-   !
-   !       ENDDO
-   !     ENDDO
-   !   ENDDO
-   ! ENDDO
-   !
-   ! CLOSE( UNIT= 2 )
+    filename_id= "dbg-id.dat"
 
+    INQUIRE( FILE= TRIM(filename_id), EXIST= exist )
+
+    IF( exist )THEN
+      OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "REPLACE", &
+            FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= 2, FILE= TRIM(filename_id), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+    PRINT *, "...error when opening " // TRIM(filename_id), &
+             ". The error message is", err_msg
     STOP
+    ENDIF
+
+    DO i_star= 1, 2, 1
+      DO k= 1, nz, 1
+        DO j= 1, ny, 1
+          DO i= 1, nx, 1
+
+            WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+              this% id_fields( i, j, k, :, i_star )
+
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+
+    CLOSE( UNIT= 2 )
+
+    !STOP
 
   END PROCEDURE set_up_lattices_around_stars
 

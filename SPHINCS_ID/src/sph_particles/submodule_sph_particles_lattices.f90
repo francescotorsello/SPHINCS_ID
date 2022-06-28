@@ -167,9 +167,6 @@ SUBMODULE (sph_particles) lattices
       sgn= 1
     ENDIF
 
-    PRINT *, "Before calling OpenMP"
-    PRINT *
-
     !
     !-- Place the first half of the particle (above or below the xy plane,
     !-- depending on the variable sgn)
@@ -194,9 +191,12 @@ SUBMODULE (sph_particles) lattices
           !-- Promote a lattice point to a particle,
           !-- if the mass density is higher than the threshold
           !
+          !PRINT *, get_density( xtemp, ytemp, ztemp )
+          !PRINT *, get_density( xtemp, ytemp, ztemp )
+          !PRINT *
           IF( (get_density( xtemp, ytemp, ztemp ) > thres_baryon_density) &
-              .AND. &
-              (validate_position_final( xtemp, ytemp, ztemp )) &
+              !.AND. &
+              !(validate_position_final( xtemp, ytemp, ztemp )) &
           )THEN
 
             pos_tmp( 1, i, j, k )= xtemp

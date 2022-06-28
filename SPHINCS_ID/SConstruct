@@ -295,6 +295,7 @@ module_bns_fuka = [
   'module_bns_fuka.f90',
   'submodule_bns_fuka_constructor.f90',
   'submodule_bns_fuka_read.f90',
+  'submodule_bns_fuka_interpolate.f90',
   'submodule_bns_fuka_memory.f90',
   'submodule_bns_fuka_access.f90',
   'submodule_bns_fuka_params.f90',

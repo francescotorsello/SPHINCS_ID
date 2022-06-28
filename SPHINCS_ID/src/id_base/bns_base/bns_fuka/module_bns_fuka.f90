@@ -103,6 +103,9 @@ MODULE bns_fuka
     !-- ID fields on a lattice around each star
     !
 
+    INTEGER:: nx_grid= 100
+    INTEGER:: ny_grid= 100
+    INTEGER:: nz_grid= 100
     DOUBLE PRECISION, DIMENSION(:,:,:,:,:), ALLOCATABLE:: id_fields
     !# Array storing the |id| fields read from the FUKA binary file.
     !  The last index runs over the stars, the second-last over the fields,
@@ -235,10 +238,13 @@ MODULE bns_fuka
 
     PROCEDURE:: read_id_full      => read_fuka_id_full
     PROCEDURE:: read_id_spacetime => read_fuka_id_spacetime
-    PROCEDURE:: read_id_particles => read_fuka_id_particles
     PROCEDURE:: read_id_hydro     => read_fuka_id_hydro
-    PROCEDURE:: read_id_mass_b    => read_fuka_id_mass_b
     PROCEDURE:: read_id_k         => read_fuka_id_k
+
+    PROCEDURE:: read_fuka_id_particles
+    PROCEDURE:: read_fuka_id_mass_b
+    PROCEDURE:: read_id_particles => interpolate_fuka_id_particles
+    PROCEDURE:: read_id_mass_b    => interpolate_fuka_id_mass_b
 
     PROCEDURE:: print_summary_derived => print_summary_bnsfuka
 
@@ -251,17 +257,21 @@ MODULE bns_fuka
     !-----------------!
 
     !> Returns the |fuka|'s mass density at the given point
-    PROCEDURE:: read_mass_density => read_fuka_mass_density
+    PROCEDURE:: read_fuka_mass_density
+    PROCEDURE:: read_mass_density => interpolate_fuka_mass_density
 
     !> Returns the |fuka|'s pressure at the desired point
     PROCEDURE:: read_fuka_pressure
+    PROCEDURE:: interpolate_fuka_pressure
 
     !> Returns the |fuka|'s conformally flat spatial ADM metric
     PROCEDURE:: read_fuka_spatial_metric
+    PROCEDURE:: interpolate_fuka_spatial_metric
 
     !& Returns 1 if the energy density or the specific energy or the pressure
     !  are negative
-    PROCEDURE:: test_position => is_hydro_positive
+    PROCEDURE:: is_hydro_positive
+    PROCEDURE:: test_position => is_hydro_positive_interpolation
 
     !PROCEDURE, NOPASS:: derived_type_constructor => construct_bnsfuka2
 
@@ -645,6 +655,45 @@ MODULE bns_fuka
     END SUBROUTINE read_fuka_id_particles
 
 
+    MODULE SUBROUTINE interpolate_fuka_id_particles( this, n, x, y, z, &
+                                              lapse, &
+                                              shift_x, shift_y, shift_z, &
+                                              g_xx, g_xy, g_xz, &
+                                              g_yy, g_yz, g_zz, &
+                                              baryon_density, &
+                                              energy_density, &
+                                              specific_energy, &
+                                              pressure, &
+                                              u_euler_x, u_euler_y, u_euler_z )
+    !! Stores the hydro |id| in the arrays needed to compute the |sph| |id|
+
+      !> [[bnsfuka]] object which this PROCEDURE is a member of
+      CLASS(bnsfuka),                 INTENT( IN OUT ):: this
+      INTEGER,                        INTENT( IN )    :: n
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: x
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: y
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+
+    END SUBROUTINE interpolate_fuka_id_particles
+
+
     MODULE SUBROUTINE read_fuka_id_mass_b( this, x, y, z, &
                                            g, &
                                            baryon_density, &
@@ -661,6 +710,24 @@ MODULE bns_fuka
       DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
 
     END SUBROUTINE read_fuka_id_mass_b
+
+
+    MODULE SUBROUTINE interpolate_fuka_id_mass_b( this, x, y, z, &
+                                           g, &
+                                           baryon_density, &
+                                           gamma_euler )
+    !! Stores the hydro |id| in the arrays needed to compute the baryon mass
+
+      !> [[bnsfuka]] object which this PROCEDURE is a member of
+      CLASS(bnsfuka),   INTENT( IN OUT ):: this
+      DOUBLE PRECISION, INTENT( IN )    :: x
+      DOUBLE PRECISION, INTENT( IN )    :: y
+      DOUBLE PRECISION, INTENT( IN )    :: z
+      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
+      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
+      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+
+    END SUBROUTINE interpolate_fuka_id_mass_b
 
 
     MODULE SUBROUTINE read_fuka_id_k( this, n, x, y, z,&
@@ -704,6 +771,23 @@ MODULE bns_fuka
     END FUNCTION read_fuka_mass_density
 
 
+    MODULE FUNCTION interpolate_fuka_mass_density( this, x, y, z ) RESULT( res )
+    !! Returns the |fuka| baryon mass density at a point \((x,y,z)\)
+
+      !> [[bnsfuka]] object which this PROCEDURE is a member of
+      CLASS(bnsfuka),     INTENT( IN )         :: this
+      !> \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      !> Baryon mass density at \((x,y,z)\)
+      DOUBLE PRECISION:: res
+
+    END FUNCTION interpolate_fuka_mass_density
+
+
     MODULE FUNCTION read_fuka_pressure( this, x, y, z ) RESULT( res )
     !! Returns the |fuka| pressure at a point \((x,y,z)\)
 
@@ -719,6 +803,23 @@ MODULE bns_fuka
       DOUBLE PRECISION:: res
 
     END FUNCTION read_fuka_pressure
+
+
+    MODULE FUNCTION interpolate_fuka_pressure( this, x, y, z ) RESULT( res )
+    !! Returns the |fuka| pressure at a point \((x,y,z)\)
+
+      !> [[bnslorene]] object which this PROCEDURE is a member of
+      CLASS(bnsfuka),   INTENT( IN )       :: this
+      !> \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      !> Pressure at \((x,y,z)\)
+      DOUBLE PRECISION:: res
+
+    END FUNCTION interpolate_fuka_pressure
 
 
     MODULE FUNCTION read_fuka_spatial_metric( this, x, y, z ) RESULT( res )
@@ -739,6 +840,24 @@ MODULE bns_fuka
     END FUNCTION read_fuka_spatial_metric
 
 
+    MODULE FUNCTION interpolate_fuka_spatial_metric( this, x, y, z ) RESULT( res )
+    !# Returns the |fuka| conformally flat spatial metric component
+    !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
+
+      !> [[bnsfuka]] object which this PROCEDURE is a member of
+      CLASS(bnsfuka),     INTENT( IN )       :: this
+      !> \(x\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT( IN ), VALUE:: z
+      !> \(g_{xx}=g_{yy}=g_{zz}\) at \((x,y,z)\)
+      REAL(C_DOUBLE):: res
+
+    END FUNCTION interpolate_fuka_spatial_metric
+
+
     MODULE FUNCTION is_hydro_positive( this, x, y, z ) RESULT( res )
     !# Returns 1 if the energy density or the specific energy or the pressure
     !  are negative, 0 otherwise
@@ -756,6 +875,26 @@ MODULE bns_fuka
       LOGICAL:: res
 
     END FUNCTION is_hydro_positive
+
+
+    MODULE FUNCTION is_hydro_positive_interpolation( this, x, y, z ) &
+      RESULT( res )
+    !# Returns 1 if the energy density or the specific energy or the pressure
+    !  are negative, 0 otherwise
+
+      !> [[bnsfuka]] object which this PROCEDURE is a member of
+      CLASS(bnsfuka),     INTENT( IN )       :: this
+      !> \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      !> \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      !> \(z\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      !& `.TRUE.` if the energy density or the specific energy or the pressure
+      !  are negative, `.FALSE.` otherwise
+      LOGICAL:: res
+
+    END FUNCTION is_hydro_positive_interpolation
 
 
     MODULE FUNCTION get_field_array( this, field ) RESULT( field_array )
