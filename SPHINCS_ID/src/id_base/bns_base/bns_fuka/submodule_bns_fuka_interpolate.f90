@@ -66,21 +66,12 @@ SUBMODULE (bns_fuka) interpolate
     IMPLICIT NONE
 
     LOGICAL, PARAMETER:: debug= .FALSE.
-    !
+    INTEGER:: a, star
+    DOUBLE PRECISION:: zp
+    DOUBLE PRECISION, &
+      DIMENSION(this% nx_grid, this% ny_grid, this% nz_grid, 3):: coords
 
-    INTEGER:: a, i_star, star!, j, k
-    DOUBLE PRECISION:: zp!, xtmp, ytmp, ztmp
 
-    !CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
-    !LOGICAL:: exist
-
-    !DOUBLE PRECISION:: foo(n), foo_exact(n), &
-    !                   foo_grid(this% nx_grid, this% ny_grid, this% nz_grid), &
-    !                   grid_coords(this%nx_grid,this%ny_grid,this%nz_grid,3), &
-    !                   coords(n,3)
-
-    DOUBLE PRECISION, DIMENSION(3):: center
-    DOUBLE PRECISION, DIMENSION(6):: sizes
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( n, this, x, y, z, lapse, &
@@ -89,56 +80,81 @@ SUBMODULE (bns_fuka) interpolate
     !$OMP                     baryon_density, energy_density, &
     !$OMP                     specific_energy, pressure, &
     !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
-    !$OMP             PRIVATE( a, i_star, star, sizes, center, zp )
+    !$OMP             PRIVATE( a, star, zp, coords )
     DO a= 1, n, 1
 
-      loop_over_stars: DO i_star= 1, 2, 1
+      IF( (this% center(1,1) - this% radii(1,1) <= x(a)) &
+          .AND. &
+          (x(a) <= this% center(1,1) + this% radii(1,2)) )THEN
 
-        sizes = this% return_spatial_extent(i_star)
-        center= this% return_center(i_star)
+        star= 1
 
-        IF( center(1) - sizes(1) < x(a) .AND. x(a) < center(1) + sizes(2) ) &
-          star= i_star
+      ELSEIF( (this% center(2,1) - this% radii(2,1) <= x(a)) &
+              .AND. &
+              (x(a) <= this% center(2,1) + this% radii(2,2)) )THEN
 
-      ENDDO loop_over_stars
+        star= 2
+
+      ELSE
+
+        star= -1
+
+      ENDIF
+
+      IF( star == -1 )THEN
+        baryon_density(a) = zero
+        specific_energy(a)= zero
+        pressure(a)       = zero
+        u_euler_x(a)      = zero
+        u_euler_y(a)      = zero
+        u_euler_z(a)      = zero
+        energy_density(a) = zero
+        g_xx(a)           = zero
+        g_yy(a)           = zero
+        g_zz(a)           = zero
+        g_xy(a)           = zero
+        g_xz(a)           = zero
+        g_yz(a)           = zero
+        lapse(a)          = zero
+        shift_x(a)        = zero
+        shift_y(a)        = zero
+        shift_z(a)        = zero
+        CYCLE
+      ENDIF
+
+      coords= this% id_fields(:,:,:,id$x:id$z,star)
 
       zp= z(a)
 
       baryon_density(a) = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$massdensity,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. ) &
+                                coords, &
+                                this% id_fields(:,:,:,id$massdensity,star) ) &
                                 *MSun/amu
 
       specific_energy(a)= trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$specificenergy,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$specificenergy,star) )
 
       pressure(a)       = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$pressure,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. ) &
+                                coords, &
+                                this% id_fields(:,:,:,id$pressure,star) ) &
                                 *MSun/amu
 
       u_euler_x(a)      = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$eulvelx,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$eulvelx,star) )
       u_euler_y(a)      = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$eulvely,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$eulvely,star) )
       u_euler_z(a)      = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$eulvelz,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$eulvelz,star) )
 
       IF( baryon_density(a) == zero )THEN
         specific_energy(a)= zero
@@ -151,9 +167,8 @@ SUBMODULE (bns_fuka) interpolate
 
       g_xx(a)           = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$gxx,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$gxx,star) )
 
       g_yy(a)= g_xx(a)
       g_zz(a)= g_xx(a)
@@ -163,24 +178,20 @@ SUBMODULE (bns_fuka) interpolate
 
       lapse(a)          = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$lapse,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$lapse,star) )
       shift_x(a)        = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$shiftx,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$shiftx,star) )
       shift_y(a)        = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$shifty,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$shifty,star) )
       shift_z(a)        = trilinear_interpolation( x(a), y(a), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
-                                this% id_fields(:,:,:,id$x:id$z,star), &
-                                this% id_fields(:,:,:,id$shiftz,star), &
-                                equator_symmetry= .FALSE., debug= .FALSE. )
+                                coords, &
+                                this% id_fields(:,:,:,id$shiftz,star) )
 
     ENDDO
     !$OMP END PARALLEL DO
@@ -207,36 +218,54 @@ SUBMODULE (bns_fuka) interpolate
 
     IMPLICIT NONE
 
-    INTEGER:: i_star, star
-
+    INTEGER:: star
     DOUBLE PRECISION:: zp, veuler_x, veuler_y, veuler_z
+    DOUBLE PRECISION, &
+      DIMENSION(this% nx_grid, this% ny_grid, this% nz_grid, 3):: coords
 
-    DOUBLE PRECISION, DIMENSION(6):: sizes
-    DOUBLE PRECISION, DIMENSION(3):: center
+    IF( (this% center(1,1) - this% radii(1,1) <= x) &
+        .AND. &
+        (x <= this% center(1,1) + this% radii(1,2)) )THEN
 
-    loop_over_stars: DO i_star= 1, 2, 1
+      star= 1
 
-      sizes = this% return_spatial_extent(i_star)
-      center= this% return_center(i_star)
+    ELSEIF( (this% center(2,1) - this% radii(2,1) <= x) &
+            .AND. &
+            (x <= this% center(2,1) + this% radii(2,2)) )THEN
 
-      IF( (center(1) - sizes(1) < x) .AND. (x < center(1) + sizes(2)) ) &
-        star= i_star
+      star= 2
 
-    ENDDO loop_over_stars
+    ELSE
+
+      star= -1
+
+    ENDIF
+
+    IF( star == -1 )THEN
+      baryon_density= zero
+      g(jxx)        = zero
+      g(jyy)        = zero
+      g(jzz)        = zero
+      g(jxy)        = zero
+      g(jxz)        = zero
+      g(jyz)        = zero
+      gamma_euler   = zero
+      RETURN
+    ENDIF
+
+    coords= this% id_fields(:,:,:,id$x:id$z,star)
 
     zp= z
 
     baryon_density= trilinear_interpolation( x, y, zp, &
                           this% nx_grid, this% ny_grid, this% nz_grid, &
-                          this% id_fields(:,:,:,id$x:id$z,star), &
-                          this% id_fields(:,:,:,id$massdensity,star), &
-                          equator_symmetry= .FALSE., debug= .FALSE. )
+                          coords, &
+                          this% id_fields(:,:,:,id$massdensity,star) )
 
     g(jxx)= trilinear_interpolation( x, y, zp, &
                   this% nx_grid, this% ny_grid, this% nz_grid, &
-                  this% id_fields(:,:,:,id$x:id$z,star), &
-                  this% id_fields(:,:,:,id$gxx,star), &
-                  equator_symmetry= .FALSE., debug= .FALSE. )
+                  coords, &
+                  this% id_fields(:,:,:,id$gxx,star) )
     g(jyy)= g(jxx)
     g(jzz)= g(jxx)
     g(jxy)= zero
@@ -245,19 +274,16 @@ SUBMODULE (bns_fuka) interpolate
 
     veuler_x= trilinear_interpolation( x, y, zp, &
                      this% nx_grid, this% ny_grid, this% nz_grid, &
-                     this% id_fields(:,:,:,id$x:id$z,star), &
-                     this% id_fields(:,:,:,id$eulvelx,star), &
-                     equator_symmetry= .FALSE., debug= .FALSE. )
+                     coords, &
+                     this% id_fields(:,:,:,id$eulvelx,star) )
     veuler_y= trilinear_interpolation( x, y, zp, &
                      this% nx_grid, this% ny_grid, this% nz_grid, &
-                     this% id_fields(:,:,:,id$x:id$z,star), &
-                     this% id_fields(:,:,:,id$eulvely,star), &
-                     equator_symmetry= .FALSE., debug= .FALSE. )
+                     coords, &
+                     this% id_fields(:,:,:,id$eulvely,star) )
     veuler_z= trilinear_interpolation( x, y, zp, &
                      this% nx_grid, this% ny_grid, this% nz_grid, &
-                     this% id_fields(:,:,:,id$x:id$z,star), &
-                     this% id_fields(:,:,:,id$eulvelz,star), &
-                     equator_symmetry= .FALSE., debug= .FALSE. )
+                     coords, &
+                     this% id_fields(:,:,:,id$eulvelz,star) )
 
     ! See eq.(7.3.13) in Alcubierre, "Introduction to 3+1 Numerical Relativity"
     ! The following formula assumes a conformally flat metric in Cartesian
@@ -293,73 +319,37 @@ SUBMODULE (bns_fuka) interpolate
 
     IMPLICIT NONE
 
-    INTEGER:: i_star, star
+    INTEGER:: star
+    DOUBLE PRECISION:: zp
 
-    DOUBLE PRECISION:: zp!, x_ell, y_ell, z_ell, theta, phi, r
+    IF( (this% center(1,1) - this% radii(1,1) <= x) &
+        .AND. &
+        (x <= this% center(1,1) + this% radii(1,2)) )THEN
 
-    DOUBLE PRECISION, DIMENSION(6):: sizes
-    DOUBLE PRECISION, DIMENSION(3):: center
+      star= 1
 
-    loop_over_stars: DO i_star= 1, 2, 1
+    ELSEIF( (this% center(2,1) - this% radii(2,1) <= x) &
+            .AND. &
+            (x <= this% center(2,1) + this% radii(2,2)) )THEN
 
-      sizes = this% return_spatial_extent(i_star)
-      center= this% return_center(i_star)
+      star= 2
 
-      !PRINT *, center(1) - sizes(1)
-      !PRINT *, x
-      !PRINT *, center(1) + sizes(2)
+    ELSE
 
-      IF( (center(1) - sizes(1) < x) .AND. (x < center(1) + sizes(2)) )THEN
+      star= -1
 
-        star= i_star
-        !PRINT *, star
-
-      ELSE
-
-        star= -1
-
-      ENDIF
-
-    ENDDO loop_over_stars
+    ENDIF
 
     IF( star == -1 )THEN
       res= zero
       RETURN
     ENDIF
 
-    !PRINT *, star
-    !STOP
-
     zp= z
     res= trilinear_interpolation( x, y, zp, &
                                   this% nx_grid, this% ny_grid, this% nz_grid, &
                                   this% id_fields(:,:,:,id$x:id$z,star), &
-                                  this% id_fields(:,:,:,id$massdensity,star), &
-                                  equator_symmetry= .TRUE., parity= one, &
-                                  debug= .FALSE. )
-
-    !PRINT *, this% id_fields(:,:,:,id$massdensity,star)
-    !STOP
-
-  !  CALL spherical_from_cartesian( x, y, z, &
-  !                this% centers(1,1), this% centers(1,2), this% centers(1,3), &
-  !                                 r, theta, phi )
-  !
-  !  x_ell= this% centers(1,1) &
-  !         + MAX(this% sizes(1,1),this% sizes(1,2))*COS(phi)*SIN(theta)
-  !
-  !  y_ell= this% centers(1,2) &
-  !         + MAX(this% sizes(1,3),this% sizes(1,4))*SIN(phi)*SIN(theta)
-  !
-  !  z_ell= this% centers(1,3) &
-  !         + MAX(this% sizes(1,5),this% sizes(1,6))*COS(theta)
-  !
-  !  IF( r >= SQRT( ( x_ell - this% centers(1,1) )**two &
-  !               + ( y_ell - this% centers(1,2) )**two &
-  !               + ( z_ell - this% centers(1,3) )**two ) ) res= zero
-  !
-  !  IF( res < zero ) res= zero
-
+                                  this% id_fields(:,:,:,id$massdensity,star) )
 
   END PROCEDURE interpolate_fuka_mass_density
 
@@ -380,29 +370,37 @@ SUBMODULE (bns_fuka) interpolate
 
     IMPLICIT NONE
 
-    INTEGER:: i_star, star
+    INTEGER:: star
+    DOUBLE PRECISION:: zp
 
-    DOUBLE PRECISION:: zp!, x_ell, y_ell, z_ell, theta, phi, r
+    IF( (this% center(1,1) - this% radii(1,1) <= x) &
+        .AND. &
+        (x <= this% center(1,1) + this% radii(1,2)) )THEN
 
-    DOUBLE PRECISION, DIMENSION(6):: sizes
-    DOUBLE PRECISION, DIMENSION(3):: center
+      star= 1
 
-    loop_over_stars: DO i_star= 1, 2, 1
+    ELSEIF( (this% center(2,1) - this% radii(2,1) <= x) &
+            .AND. &
+            (x <= this% center(2,1) + this% radii(2,2)) )THEN
 
-      sizes = this% return_spatial_extent(i_star)
-      center= this% return_center(i_star)
+      star= 2
 
-      IF( (center(1) - sizes(1) < x) .AND. (x < center(1) + sizes(2)) ) &
-        star= i_star
+    ELSE
 
-    ENDDO loop_over_stars
+      star= -1
+
+    ENDIF
+
+    IF( star == -1 )THEN
+      res= zero
+      RETURN
+    ENDIF
 
     zp= z
     res= trilinear_interpolation( x, y, zp, &
                                   this% nx_grid, this% ny_grid, this% nz_grid, &
                                   this% id_fields(:,:,:,id$x:id$z,star), &
-                                  this% id_fields(:,:,:,id$gxx,star), &
-                                  equator_symmetry= .FALSE., debug= .FALSE. )
+                                  this% id_fields(:,:,:,id$gxx,star) )
 
   END PROCEDURE interpolate_fuka_spatial_metric
 
@@ -423,29 +421,37 @@ SUBMODULE (bns_fuka) interpolate
 
     IMPLICIT NONE
 
-    INTEGER:: i_star, star
+    INTEGER:: star
+    DOUBLE PRECISION:: zp
 
-    DOUBLE PRECISION:: zp!, x_ell, y_ell, z_ell, theta, phi, r
+    IF( (this% center(1,1) - this% radii(1,1) <= x) &
+        .AND. &
+        (x <= this% center(1,1) + this% radii(1,2)) )THEN
 
-    DOUBLE PRECISION, DIMENSION(6):: sizes
-    DOUBLE PRECISION, DIMENSION(3):: center
+      star= 1
 
-    loop_over_stars: DO i_star= 1, 2, 1
+    ELSEIF( (this% center(2,1) - this% radii(2,1) <= x) &
+            .AND. &
+            (x <= this% center(2,1) + this% radii(2,2)) )THEN
 
-      sizes = this% return_spatial_extent(i_star)
-      center= this% return_center(i_star)
+      star= 2
 
-      IF( (center(1) - sizes(1) < x) .AND. (x < center(1) + sizes(2)) ) &
-        star= i_star
+    ELSE
 
-    ENDDO loop_over_stars
+      star= -1
+
+    ENDIF
+
+    IF( star == -1 )THEN
+      res= zero
+      RETURN
+    ENDIF
 
     zp= z
     res= trilinear_interpolation( x, y, zp, &
                                   this% nx_grid, this% ny_grid, this% nz_grid, &
                                   this% id_fields(:,:,:,id$x:id$z,star), &
-                                  this% id_fields(:,:,:,id$pressure,star), &
-                                  equator_symmetry= .FALSE., debug= .FALSE. )
+                                  this% id_fields(:,:,:,id$pressure,star) )
 
   END PROCEDURE interpolate_fuka_pressure
 
@@ -465,18 +471,54 @@ SUBMODULE (bns_fuka) interpolate
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, DIMENSION(3):: center
-    DOUBLE PRECISION, DIMENSION(6):: sizes
+    LOGICAL:: outside_y, outside_z!, outside_x
 
-    center= this% return_center(1)
-    sizes = this% return_spatial_extent(1)
+    !outside_x=.NOT.( &
+    !            (
+    !              this% center(1,1) - this% radii(1,1) <= x &
+    !              .AND. &
+    !              x <= this% center(1,1) + this% radii(1,2) &
+    !            ) &
+    !            .OR. &
+    !            ( &
+    !              this% center(2,1) - this% radii(2,1) <= x &
+    !              .AND. &
+    !              x <= this% center(2,1) + this% radii(2,2) &
+    !            ) &
+    !          )
+
+    outside_y=.NOT.( &
+                ( &
+                  this% center(1,2) - this% radii(1,3) <= y &
+                  .AND. &
+                  y <= this% center(1,2) + this% radii(1,4) &
+                ) &
+                .OR. &
+                ( &
+                  this% center(2,2) - this% radii(2,3) <= y &
+                  .AND. &
+                  y <= this% center(2,2) + this% radii(2,4) &
+                ) &
+              )
+
+    outside_z=.NOT.( &
+                ( &
+                  this% center(1,3) - this% radii(1,5) <= z &
+                  .AND. &
+                  z <= this% center(1,3) + this% radii(1,6) &
+                ) &
+                .OR. &
+                ( &
+                  this% center(2,3) - this% radii(2,5) <= z &
+                  .AND. &
+                  z <= this% center(2,3) + this% radii(2,6) &
+                ) &
+              )
 
     IF( this% read_mass_density( x, y, z ) <= zero &
-        .OR. x > center(1) + sizes(1) &
-        .OR. x < center(1) - sizes(2) &
-        .OR. y > center(2) + sizes(3) &
-        .OR. y < center(2) - sizes(4) &
-        .OR. ABS(z) > center(3) + sizes(5) &
+        !.OR. outsize_x &
+        .OR. outside_y &
+        .OR. outside_z &
     )THEN
       res= .FALSE.
     ELSE

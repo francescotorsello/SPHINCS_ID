@@ -125,7 +125,7 @@ SUBMODULE (bns_fuka) constructor
       DOUBLE PRECISION:: val
       !! Pressure at \((x,y,z)\)
 
-      val= derived_type% read_fuka_pressure( x, y, z )
+      val= derived_type% interpolate_fuka_pressure( x, y, z )
 
     END FUNCTION get_pressure
 

@@ -357,7 +357,10 @@ SUBMODULE (sph_particles) constructor_std
     !
     !-- If the ID has dynamic TYPE bnsfuka, construct the lattices around the
     !-- stars. TODO: is there a more elegant way to do this? The particle
-    !-- object should not need to know what bnsfuka is
+    !-- object should not need to know what bnsfuka is. One can add a deferred
+    !-- procedure initialize_id to idbase, that points to
+    !-- set_up_lattices_around_stars in bnsfuka, and to nothing in the other
+    !-- derived types
     !
     SELECT TYPE( id )
 
@@ -411,6 +414,8 @@ SUBMODULE (sph_particles) constructor_std
       parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
       CALL id% return_eos_parameters( i_matter, &
                                       parts% all_eos(i_matter)% eos_parameters )
+
+      !PRINT *, central_density(i_matter)
 
     ENDDO
 

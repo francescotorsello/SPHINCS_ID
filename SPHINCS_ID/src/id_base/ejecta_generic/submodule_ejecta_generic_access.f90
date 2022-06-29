@@ -135,7 +135,7 @@ SUBMODULE (ejecta_generic) access
 
     CALL THIS% check_i_matter(i_matter)
 
-    get_eos= "Multipolytropic APR4 EOS"
+    get_eos= "APR4"
 
   END PROCEDURE get_eos
 

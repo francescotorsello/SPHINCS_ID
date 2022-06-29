@@ -103,9 +103,9 @@ MODULE bns_fuka
     !-- ID fields on a lattice around each star
     !
 
-    INTEGER:: nx_grid= 100
-    INTEGER:: ny_grid= 100
-    INTEGER:: nz_grid= 100
+    INTEGER:: nx_grid= 50
+    INTEGER:: ny_grid= 50
+    INTEGER:: nz_grid= 50
     DOUBLE PRECISION, DIMENSION(:,:,:,:,:), ALLOCATABLE:: id_fields
     !# Array storing the |id| fields read from the FUKA binary file.
     !  The last index runs over the stars, the second-last over the fields,
@@ -315,37 +315,11 @@ MODULE bns_fuka
 
   END TYPE bnsfuka
 
-  !
-  !-- Interface of the TYPE bnsfuka (i.e., declaration of the constructor)
-  !-- (see https://dannyvanpoucke.be/oop-fortran-tut4-en/)
-  !
-  !INTERFACE bnsfuka
-  !!! Interface of TYPE [[bnsfuka]]
-  !
-  !  !MODULE PROCEDURE:: construct_bnsfuka
-  !  MODULE PROCEDURE:: construct_bnsfuka
-  !  !! Constructs a [[bnsfuka]] object
-  !
-  !END INTERFACE bnsfuka
 
   !
   !-- Interfaces of the constructor and destructor of the TYPE bnsfuka
   !
   INTERFACE
-
-
-   ! MODULE FUNCTION construct_bnsfuka( &!derived_type,
-   ! filename ) RESULT( foo )
-   ! !! Constructs a [[bnsfuka]] object
-   !
-   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-   !   !! |fuka| binary file containing the spectral |bns| |id|
-   !   !CLASS(bnsfuka):: derived_type
-   !   !! Constructed [[bnsfuka]] object
-   !   CLASS(idbase), ALLOCATABLE:: foo
-   !
-   ! END FUNCTION construct_bnsfuka
-
 
     MODULE SUBROUTINE construct_bnsfuka( derived_type, filename )
     !# Prints a summary of the physical properties the system
