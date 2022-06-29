@@ -433,6 +433,7 @@ SUBMODULE (ejecta_generic) interpolate
     !
     !***********************************************
 
+    USE timing,    ONLY: timer
     USE constants, ONLY: pi
     USE numerics,  ONLY: trilinear_interpolation
     USE utility,   ONLY: spherical_from_cartesian, two
@@ -441,6 +442,11 @@ SUBMODULE (ejecta_generic) interpolate
     IMPLICIT NONE
 
     DOUBLE PRECISION:: zp, x_ell, y_ell, z_ell, theta, phi, r
+
+    TYPE(timer):: dbg_timer
+
+    dbg_timer= timer("dbg_timer")
+    CALL dbg_timer% start_timer()
 
     zp= z
     res= trilinear_interpolation( x, y, zp, &
@@ -479,6 +485,10 @@ SUBMODULE (ejecta_generic) interpolate
   !       .OR. y > this% yR_grid &
   !       .OR. y < this% yL_grid &
   !       .OR. zp > this% zR_grid ) res= zero
+
+    CALL dbg_timer% stop_timer()
+    CALL dbg_timer% print_timer( 2 )
+    STOP
 
   END PROCEDURE interpolate_mass_density
 

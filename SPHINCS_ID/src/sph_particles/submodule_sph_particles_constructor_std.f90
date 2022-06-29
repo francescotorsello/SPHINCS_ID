@@ -415,8 +415,6 @@ SUBMODULE (sph_particles) constructor_std
       CALL id% return_eos_parameters( i_matter, &
                                       parts% all_eos(i_matter)% eos_parameters )
 
-      !PRINT *, central_density(i_matter)
-
     ENDDO
 
     ! Compute desired particle numbers based on mass ratios

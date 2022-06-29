@@ -85,6 +85,38 @@ MODULE bns_fuka
   INTEGER, PARAMETER:: id$eulvelz       = 25
   INTEGER, PARAMETER:: n_fields_fuka    = 25
 
+  TYPE id_lattice
+
+    DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: coords
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: lapse
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: shift_x
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: shift_y
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: shift_z
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: g_xx
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: g_xy
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: g_xz
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: g_yy
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: g_yz
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: g_zz
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: k_xx
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: k_xy
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: k_xz
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: k_yy
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: k_yz
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: k_zz
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: mass_density
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: specific_energy
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: pressure
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: v_eul_x
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: v_eul_y
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: v_eul_z
+
+    CONTAINS
+
+    PROCEDURE:: allocate_memory, deallocate_memory
+
+  END TYPE id_lattice
+
 
   TYPE, EXTENDS(bnsbase):: bnsfuka
   !# TYPE representing a binary system of neutron stars (|bns|) produced with
@@ -106,10 +138,15 @@ MODULE bns_fuka
     INTEGER:: nx_grid= 50
     INTEGER:: ny_grid= 50
     INTEGER:: nz_grid= 50
-    DOUBLE PRECISION, DIMENSION(:,:,:,:,:), ALLOCATABLE:: id_fields
-    !# Array storing the |id| fields read from the FUKA binary file.
-    !  The last index runs over the stars, the second-last over the fields,
-    !  the first three over the Cartesian coordinates
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:,:), ALLOCATABLE:: id_fields
+    TYPE(id_lattice), DIMENSION(2):: star_lattice
+    !# Array storing the Cartesian coordinates for the lattice around star 1.
+    !  The last index runs over the coordinates, the first three over the grid
+    !  points
+    !DOUBLE PRECISION, DIMENSION(nx_grid,nx_grid,nx_grid,3):: lattice2
+    !# Array storing the Cartesian coordinates for the lattice around star 2.
+    !  The last index runs over the coordinates, the first three over the grid
+    !  points
 
     !
     !-- Spacetime fields
@@ -159,7 +196,7 @@ MODULE bns_fuka
     !
 
     !> 1-D array storing the baryon mass density in the fluid frame [kg m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_density
+    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: mass_density
     !> 1-D array storing the energy density [kg c^2 m^{-3}]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
     !> 1-D array storing the specific internal energy [c^2]
@@ -434,7 +471,10 @@ MODULE bns_fuka
 
     MODULE SUBROUTINE run_kadath_reader( &
       this, mpi_ranks, nx, ny, nz, xmin, xmax, ymin, ymax, zmin, zmax, &
-      id_fields, filename )
+      coords, lapse, shift_x, shift_y, shift_z, g_xx, g_xy, g_xz, g_yy, g_yz, &
+      g_zz, k_xx, k_xy, k_xz, k_yy, k_yz, k_zz, &
+      mass_density, specific_energy, pressure, v_eul_x, v_eul_y, v_eul_z, &
+      filename )
     !# Calls the MPI-parallelized vsion of the function KadathExportBNS
     !  from Kadath
 
@@ -460,10 +500,31 @@ MODULE bns_fuka
       !! Minimum value for \(x\) over the lattice
       DOUBLE PRECISION, INTENT(IN):: zmax
       !! Maximum value for \(x\) over the lattice
-      DOUBLE PRECISION, DIMENSION(nx,ny,nz,n_fields_fuka), INTENT(INOUT):: &
-        id_fields
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz,3), INTENT(INOUT):: coords
       !# Array containing the |id| on a lattice. First three indices run over
-      !  the lattice's dimensions, the fourth one runs ovr the fields
+      !  the lattice's dimensions, the fourth one runs ovr the fields    
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: k_zz
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: mass_density
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: v_eul_x
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: v_eul_y
+      DOUBLE PRECISION, DIMENSION(nx,ny,nz), INTENT(INOUT):: v_eul_z
       CHARACTER( LEN= * ), INTENT(IN):: filename
       !# Path to the |id| file output by |fuka|, as given in the parameter fe
       !  sphincs_id_parameters.dat
@@ -1592,6 +1653,416 @@ MODULE bns_fuka
 
 
   END INTERFACE
+
+
+
+  CONTAINS
+
+
+
+  SUBROUTINE allocate_memory( this, nx, ny, nz )
+
+    IMPLICIT NONE
+
+    CLASS(id_lattice), INTENT(INOUT):: this
+    INTEGER, INTENT(IN):: nx, ny, nz
+
+    IF(.NOT.ALLOCATED( this% coords ))THEN
+      ALLOCATE( this% coords( nx, ny, nz, 3 ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array coords. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% lapse ))THEN
+      ALLOCATE( this% lapse( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array lapse. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% shift_x ))THEN
+      ALLOCATE( this% shift_x( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array shift_x. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% shift_y ))THEN
+      ALLOCATE( this% shift_y( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array shift_y. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% shift_z ))THEN
+      ALLOCATE( this% shift_z( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array shift_z. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% g_xx ))THEN
+      ALLOCATE( this% g_xx( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_xx. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% g_xy ))THEN
+      ALLOCATE( this% g_xy( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_xy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% g_xz ))THEN
+      ALLOCATE( this% g_xz( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_xz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% g_yy ))THEN
+      ALLOCATE( this% g_yy( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_yy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% g_yz ))THEN
+      ALLOCATE( this% g_yz( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_yz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% g_zz ))THEN
+      ALLOCATE( this% g_zz( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array g_zz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% k_xx ))THEN
+      ALLOCATE( this% k_xx( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_xx. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% k_xy ))THEN
+      ALLOCATE( this% k_xy( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_xy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% k_xz ))THEN
+      ALLOCATE( this% k_xz( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_xz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% k_yy ))THEN
+      ALLOCATE( this% k_yy( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_yy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% k_yz ))THEN
+      ALLOCATE( this% k_yz( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_yz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% k_zz ))THEN
+      ALLOCATE( this% k_zz( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array k_zz. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% mass_density ))THEN
+      ALLOCATE( this% mass_density( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array mass_density. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% specific_energy ))THEN
+      ALLOCATE( this% specific_energy( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array specific_energy. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% pressure ))THEN
+      ALLOCATE( this% pressure( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array pressure. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% v_eul_x ))THEN
+      ALLOCATE( this% v_eul_x( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array v_eul_x. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% v_eul_y ))THEN
+      ALLOCATE( this% v_eul_y( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array v_eul_y. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( this% v_eul_z ))THEN
+      ALLOCATE( this% v_eul_z( nx, ny, nz ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array v_eul_z. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+
+
+  END SUBROUTINE allocate_memory
+
+
+  SUBROUTINE deallocate_memory( this )
+
+    IMPLICIT NONE
+
+    CLASS(id_lattice), INTENT(INOUT):: this
+
+    IF(ALLOCATED( this% lapse ))THEN
+      DEALLOCATE( this% lapse, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array lapse ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% shift_x ))THEN
+      DEALLOCATE( this% shift_x, STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_x ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% shift_y ))THEN
+      DEALLOCATE( this% shift_y, STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_y ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% shift_z ))THEN
+      DEALLOCATE( this% shift_z, STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array shift_z ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% g_xx ))THEN
+      DEALLOCATE( this% g_xx, STAT= ios, ERRMSG = err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xx ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% g_xy ))THEN
+      DEALLOCATE( this% g_xy, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% g_xz ))THEN
+      DEALLOCATE( this% g_xz, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_xz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% g_yy ))THEN
+      DEALLOCATE( this% g_yy, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_yy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% g_yz ))THEN
+      DEALLOCATE( this% g_yz, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_yz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% g_zz ))THEN
+      DEALLOCATE( this% g_zz, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array g_zz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% k_xx ))THEN
+      DEALLOCATE( this% k_xx, STAT= ios, ERRMSG = err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_xx ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% k_xy ))THEN
+      DEALLOCATE( this% k_xy, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_xy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% k_xz ))THEN
+      DEALLOCATE( this% k_xz, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_xz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% k_yy ))THEN
+      DEALLOCATE( this% k_yy, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_yy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% k_yz ))THEN
+      DEALLOCATE( this% k_yz, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_yz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% k_zz ))THEN
+      DEALLOCATE( this% k_zz, STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array k_zz ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% mass_density ))THEN
+      DEALLOCATE( this% mass_density, STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array mass_density ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% specific_energy ))THEN
+      DEALLOCATE( this% specific_energy, STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array specific_energy ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% v_eul_x ))THEN
+      DEALLOCATE( this% v_eul_x, STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_eul_x ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% v_eul_y ))THEN
+      DEALLOCATE( this% v_eul_y, STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_eul_y ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(ALLOCATED( this% v_eul_z ))THEN
+      DEALLOCATE( this% v_eul_z, STAT= ios, &
+              ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...deallocation error for array v_eul_z ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+
+  END SUBROUTINE deallocate_memory
 
 
 END MODULE bns_fuka

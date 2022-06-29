@@ -329,7 +329,7 @@ SUBMODULE (bns_fuka) read
     DOUBLE PRECISION:: detg
     DOUBLE PRECISION:: detg4
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: g4
-    DOUBLE PRECISION, DIMENSION(nx, ny, nz, n_fields_fuka):: id_tmp
+    DOUBLE PRECISION, DIMENSION(nx, ny, nz, 9):: id_tmp
 
     LOGICAL:: exist
 
@@ -345,7 +345,30 @@ SUBMODULE (bns_fuka) read
 
     CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
-                                  id_tmp, this% filename )
+                                  id_tmp(:,:,:,id$x:id$z), &
+                                  lapse, &
+                                  shift(:,:,:,jx), &
+                                  shift(:,:,:,jy), &
+                                  shift(:,:,:,jz), &
+                                  g(:,:,:,jxx), &
+                                  g(:,:,:,jyy), &
+                                  g(:,:,:,jzz), &
+                                  g(:,:,:,jxy), &
+                                  g(:,:,:,jxz), &
+                                  g(:,:,:,jyz), &
+                                  ek(:,:,:,jxx), &
+                                  ek(:,:,:,jyy), &
+                                  ek(:,:,:,jzz), &
+                                  ek(:,:,:,jxy), &
+                                  ek(:,:,:,jxz), &
+                                  ek(:,:,:,jyz), &
+                                  id_tmp(:,:,:,4), &
+                                  id_tmp(:,:,:,5), &
+                                  id_tmp(:,:,:,6), &
+                                  id_tmp(:,:,:,7), &
+                                  id_tmp(:,:,:,8), &
+                                  id_tmp(:,:,:,9), &
+                                  this% filename )
 
     ALLOCATE( g4( nx, ny, nz, n_sym4x4 ) )
 
@@ -357,30 +380,30 @@ SUBMODULE (bns_fuka) read
       DO j= 1, ny, 1
         DO i= 1, nx, 1
 
-          lapse          = id_tmp(i,j,k,id$lapse)
-
-          shift(i,j,k,jx)= id_tmp(i,j,k,id$shiftx)
-          shift(i,j,k,jy)= id_tmp(i,j,k,id$shifty)
-          shift(i,j,k,jz)= id_tmp(i,j,k,id$shiftz)
-
-          g(i,j,k,jxx)   = id_tmp(i,j,k,id$gxx)
-
-          ek(i,j,k,jxx)  = id_tmp(i,j,k,id$kxx)
-          ek(i,j,k,jxy)  = id_tmp(i,j,k,id$kxy)
-          ek(i,j,k,jxz)  = id_tmp(i,j,k,id$kxz)
-          ek(i,j,k,jyy)  = id_tmp(i,j,k,id$kyy)
-          ek(i,j,k,jyz)  = id_tmp(i,j,k,id$kyz)
-          ek(i,j,k,jzz)  = id_tmp(i,j,k,id$kzz)
-
+          !lapse          = id_tmp(i,j,k,id$lapse)
           !
-          !-- The following follows from the assumption of
-          !-- conformal flatness in |fuka|
+          !shift(i,j,k,jx)= id_tmp(i,j,k,id$shiftx)
+          !shift(i,j,k,jy)= id_tmp(i,j,k,id$shifty)
+          !shift(i,j,k,jz)= id_tmp(i,j,k,id$shiftz)
           !
-          g( i, j, k, jyy )= g( i, j, k, jxx )
-          g( i, j, k, jzz )= g( i, j, k, jxx )
-          g( i, j, k, jxy )= zero
-          g( i, j, k, jxz )= zero
-          g( i, j, k, jyz )= zero
+          !g(i,j,k,jxx)   = id_tmp(i,j,k,id$gxx)
+          !
+          !ek(i,j,k,jxx)  = id_tmp(i,j,k,id$kxx)
+          !ek(i,j,k,jxy)  = id_tmp(i,j,k,id$kxy)
+          !ek(i,j,k,jxz)  = id_tmp(i,j,k,id$kxz)
+          !ek(i,j,k,jyy)  = id_tmp(i,j,k,id$kyy)
+          !ek(i,j,k,jyz)  = id_tmp(i,j,k,id$kyz)
+          !ek(i,j,k,jzz)  = id_tmp(i,j,k,id$kzz)
+          !
+          !!
+          !!-- The following follows from the assumption of
+          !!-- conformal flatness in |fuka|
+          !!
+          !g( i, j, k, jyy )= g( i, j, k, jxx )
+          !g( i, j, k, jzz )= g( i, j, k, jxx )
+          !g( i, j, k, jxy )= zero
+          !g( i, j, k, jxz )= zero
+          !g( i, j, k, jyz )= zero
 
           !
           !- Set/unset the geodesic gauge
@@ -641,7 +664,7 @@ SUBMODULE (bns_fuka) read
 
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
 
-    DOUBLE PRECISION, DIMENSION(nx, ny, nz, n_fields_fuka):: id_tmp
+    DOUBLE PRECISION, DIMENSION(nx, ny, nz, 19):: id_tmp
 
     ! TODO: parallelize these ones
     xmin= MINVAL( pos(:,1,1,jx), DIM= 1 )
@@ -653,32 +676,55 @@ SUBMODULE (bns_fuka) read
 
     CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
-                                  id_tmp, this% filename )
+                                  id_tmp(:,:,:,id$x:id$z), &
+                                  id_tmp(:,:,:,id$lapse), &
+                                  id_tmp(:,:,:,id$shiftx), &
+                                  id_tmp(:,:,:,id$shifty), &
+                                  id_tmp(:,:,:,id$shiftz), &
+                                  id_tmp(:,:,:,id$gxx), &
+                                  id_tmp(:,:,:,id$gxy), &
+                                  id_tmp(:,:,:,id$gxz), &
+                                  id_tmp(:,:,:,id$gyy), &
+                                  id_tmp(:,:,:,id$gyz), &
+                                  id_tmp(:,:,:,id$gzz), &
+                                  id_tmp(:,:,:,id$kxx), &
+                                  id_tmp(:,:,:,id$kxy), &
+                                  id_tmp(:,:,:,id$kxz), &
+                                  id_tmp(:,:,:,id$kyy), &
+                                  id_tmp(:,:,:,id$kyz), &
+                                  id_tmp(:,:,:,id$kzz), &
+                                  baryon_density, &
+                                  specific_energy, &
+                                  pressure, &
+                                  u_euler(:,:,:,jx), &
+                                  u_euler(:,:,:,jy), &
+                                  u_euler(:,:,:,jz), &
+                                  this% filename )
 
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( nx, ny, nz, this, pos, &
-    !$OMP                     baryon_density, specific_energy, pressure, &
-    !$OMP                     energy_density, u_euler, id_tmp ) &
-    !$OMP             PRIVATE( i, j, k )
-    DO k= 1, nz, 1
-      DO j= 1, ny, 1
-        DO i= 1, nx, 1
-
-          baryon_density(i,j,k) = id_tmp(i,j,k,id$massdensity)
-          specific_energy(i,j,k)= id_tmp(i,j,k,id$specificenergy)
-          pressure(i,j,k)       = id_tmp(i,j,k,id$pressure)
-
-          energy_density(i,j,k) = baryon_density(i,j,k) &
-                                   *(one + specific_energy(i,j,k))
-
-          u_euler(i,j,k,jx)     = id_tmp(i,j,k,id$eulvelx)
-          u_euler(i,j,k,jy)     = id_tmp(i,j,k,id$eulvely)
-          u_euler(i,j,k,jz)     = id_tmp(i,j,k,id$eulvelz)
-
-        ENDDO
-      ENDDO
-    ENDDO
-    !$OMP END PARALLEL DO
+  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !  !$OMP             SHARED( nx, ny, nz, this, pos, &
+  !  !$OMP                     baryon_density, specific_energy, pressure, &
+  !  !$OMP                     energy_density, u_euler, id_tmp ) &
+  !  !$OMP             PRIVATE( i, j, k )
+  !  DO k= 1, nz, 1
+  !    DO j= 1, ny, 1
+  !      DO i= 1, nx, 1
+  !
+  !        baryon_density(i,j,k) = id_tmp(i,j,k,id$massdensity)
+  !        specific_energy(i,j,k)= id_tmp(i,j,k,id$specificenergy)
+  !        pressure(i,j,k)       = id_tmp(i,j,k,id$pressure)
+  !
+  !        energy_density(i,j,k) = baryon_density(i,j,k) &
+  !                                 *(one + specific_energy(i,j,k))
+  !
+  !        u_euler(i,j,k,jx)     = id_tmp(i,j,k,id$eulvelx)
+  !        u_euler(i,j,k,jy)     = id_tmp(i,j,k,id$eulvely)
+  !        u_euler(i,j,k,jz)     = id_tmp(i,j,k,id$eulvelz)
+  !
+  !      ENDDO
+  !    ENDDO
+  !  ENDDO
+  !  !$OMP END PARALLEL DO
 
     RETURN
 
@@ -1359,17 +1405,56 @@ SUBMODULE (bns_fuka) read
     ! in MODULE numerics)
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( this, grid_tmp, nx, ny, nz, id_fields ) &
+    !$OMP             SHARED( this, grid_tmp, nx, ny, nz, coords, lapse, &
+    !$OMP                     shift_x, shift_y, shift_z, g_xx, g_xy, g_xz, &
+    !$OMP                     g_yy, g_yz, g_zz, k_xx, k_xy, k_xz, k_yy, k_yz, &
+    !$OMP                     k_zz, mass_density, specific_energy, pressure, &
+    !$OMP                     v_eul_x, v_eul_y, v_eul_z ) &
     !$OMP             PRIVATE( i, j, k )
     DO k= 1, nz, 1
       DO j= 1, ny, 1
         DO i= 1, nx, 1
-          DO i_field= 1, n_fields_fuka
-
-            id_fields( i, j, k, i_field )= &
-                  grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, i_field )
-
-          ENDDO
+          !DO i_field= 1, n_fields_fuka
+          !
+          !  id_fields( i, j, k, i_field )= &
+          !        grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, i_field )
+          !
+          !ENDDO
+          coords    (i,j,k,id$x)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, id$x )
+          coords    (i,j,k,id$y)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, id$y )
+          coords    (i,j,k,id$z)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, id$z )
+          lapse          (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$lapse )
+          shift_x        (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$shiftx )
+          shift_y        (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$shifty )
+          shift_z        (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$shiftz )
+          g_xx           (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$gxx )
+          g_xy           (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$gxy )
+          g_xz           (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$gxz )
+          g_yy           (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$gyy )
+          g_yz           (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$gyz )
+          g_zz           (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$gzz )
+          mass_density   (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$massdensity )
+          specific_energy(i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$specificenergy )
+          pressure       (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$pressure  )
+          v_eul_x        (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$eulvelx )
+          v_eul_y        (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$eulvely )
+          v_eul_z        (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
+            id$eulvelz )
         ENDDO
       ENDDO
     ENDDO
@@ -1435,9 +1520,12 @@ SUBMODULE (bns_fuka) read
     ny= this% ny_grid
     nz= this% nz_grid
 
-    ALLOCATE( this% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
+    ! Allocate and initialize member arrays
+    !ALLOCATE( this% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
 
     loop_over_stars: DO i_star= 1, 2, 1
+
+      CALL this% star_lattice(i_star)% allocate_memory(nx,ny,nz)
 
       sizes = this% return_spatial_extent(i_star)
       center= this% return_center(i_star)
@@ -1451,9 +1539,31 @@ SUBMODULE (bns_fuka) read
       zmax= center(3) + stretch*sizes(6)
 
       CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
-                                    xmin, xmax, ymin, ymax, zmin, zmax, &
-                                    this% id_fields(:,:,:,:,i_star), &
-                                    this% filename )
+                                  xmin, xmax, ymin, ymax, zmin, zmax, &
+                                  this% star_lattice(i_star)% coords, &
+                                  this% star_lattice(i_star)% lapse          , &
+                                  this% star_lattice(i_star)% shift_x        , &
+                                  this% star_lattice(i_star)% shift_y        , &
+                                  this% star_lattice(i_star)% shift_z        , &
+                                  this% star_lattice(i_star)% g_xx           , &
+                                  this% star_lattice(i_star)% g_xy           , &
+                                  this% star_lattice(i_star)% g_xz           , &
+                                  this% star_lattice(i_star)% g_yy           , &
+                                  this% star_lattice(i_star)% g_yz           , &
+                                  this% star_lattice(i_star)% g_zz           , &
+                                  this% star_lattice(i_star)% k_xx           , &
+                                  this% star_lattice(i_star)% k_xy           , &
+                                  this% star_lattice(i_star)% k_xz           , &
+                                  this% star_lattice(i_star)% k_yy           , &
+                                  this% star_lattice(i_star)% k_yz           , &
+                                  this% star_lattice(i_star)% k_zz           , &
+                                  this% star_lattice(i_star)% mass_density   , &
+                                  this% star_lattice(i_star)% specific_energy, &
+                                  this% star_lattice(i_star)% pressure       , &
+                                  this% star_lattice(i_star)% v_eul_x        , &
+                                  this% star_lattice(i_star)% v_eul_y        , &
+                                  this% star_lattice(i_star)% v_eul_z        , &
+                                  this% filename )
 
       PRINT *, "** ID stored on a fine lattice around star ", i_star
       PRINT *

@@ -127,7 +127,7 @@ SUBMODULE (bns_fuka) access
 
     CASE( "baryon_density" )
 
-      field_array= this% mass_density
+      !field_array= this% mass_density
 
     CASE( "energy_density" )
 
@@ -242,7 +242,7 @@ SUBMODULE (bns_fuka) access
 
     CASE( "baryon_density" )
 
-      field_value= this% mass_density( n )
+      !field_value= this% mass_density( n )
 
     CASE( "energy_density" )
 
