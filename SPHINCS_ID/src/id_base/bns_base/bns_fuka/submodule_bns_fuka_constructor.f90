@@ -171,14 +171,19 @@ SUBMODULE (bns_fuka) constructor
     !# Destructs an object of TYPE [[bnsfuka]]
     !
     !  Created:     FT 09.02.2022
-    !  Last update: FT 27.05.2022
+    !  Last update: FT 30.06.2022
     !
     !***********************************************
 
     IMPLICIT NONE
 
+    INTEGER:: i_star
+
     ! Deallocate memory
     CALL this% deallocate_bnsfuka_memory()
+    DO i_star=1, 2, 1
+      CALL this% star_lattice(i_star)% deallocate_lattice_memory()
+    ENDDO
 
   END PROCEDURE destruct_bnsfuka
 

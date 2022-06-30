@@ -1195,19 +1195,19 @@ SUBMODULE (sph_particles) apm
       !  n_inc= 0
       !ENDIF
 
-      IF( MOD( itr, 10 ) == 0 )THEN
-
-        !PRINT *, "Before calling exact_nei_tree_update..."
-        !PRINT *
-
-        CALL exact_nei_tree_update( nn_des, &
-                                    npart_real, &
-                                    all_pos(:,1:npart_real), &
-                                    nu_tmp(1:npart_real) )
-
-        CALL compute_hydro_momentum()
-
-      ENDIF
+     ! IF( MOD( itr, 10 ) == 0 )THEN
+     !
+     !   !PRINT *, "Before calling exact_nei_tree_update..."
+     !   !PRINT *
+     !
+     !   CALL exact_nei_tree_update( nn_des, &
+     !                               npart_real, &
+     !                               all_pos(:,1:npart_real), &
+     !                               nu_tmp(1:npart_real) )
+     !
+     !   CALL compute_hydro_momentum()
+     !
+     ! ENDIF
 
       !STOP
 

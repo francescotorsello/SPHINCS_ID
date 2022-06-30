@@ -113,7 +113,7 @@ MODULE bns_fuka
 
     CONTAINS
 
-    PROCEDURE:: allocate_memory, deallocate_memory
+    PROCEDURE:: allocate_lattice_memory, deallocate_lattice_memory
 
   END TYPE id_lattice
 
@@ -135,18 +135,11 @@ MODULE bns_fuka
     !-- ID fields on a lattice around each star
     !
 
-    INTEGER:: nx_grid= 150
-    INTEGER:: ny_grid= 150
-    INTEGER:: nz_grid= 150
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:,:), ALLOCATABLE:: id_fields
+    INTEGER:: nx_grid= 250
+    INTEGER:: ny_grid= 250
+    INTEGER:: nz_grid= 250
     TYPE(id_lattice), DIMENSION(2):: star_lattice
-    !# Array storing the Cartesian coordinates for the lattice around star 1.
-    !  The last index runs over the coordinates, the first three over the grid
-    !  points
-    !DOUBLE PRECISION, DIMENSION(nx_grid,nx_grid,nx_grid,3):: lattice2
-    !# Array storing the Cartesian coordinates for the lattice around star 2.
-    !  The last index runs over the coordinates, the first three over the grid
-    !  points
+    !# Array storing two [[id_lattice]], one per star
 
     !
     !-- Spacetime fields
@@ -1660,7 +1653,7 @@ MODULE bns_fuka
 
 
 
-  SUBROUTINE allocate_memory( this, nx, ny, nz )
+  SUBROUTINE allocate_lattice_memory( this, nx, ny, nz )
 
     IMPLICIT NONE
 
@@ -1876,10 +1869,10 @@ MODULE bns_fuka
     ENDIF
 
 
-  END SUBROUTINE allocate_memory
+  END SUBROUTINE allocate_lattice_memory
 
 
-  SUBROUTINE deallocate_memory( this )
+  SUBROUTINE deallocate_lattice_memory( this )
 
     IMPLICIT NONE
 
@@ -2062,7 +2055,7 @@ MODULE bns_fuka
       ENDIF
     ENDIF
 
-  END SUBROUTINE deallocate_memory
+  END SUBROUTINE deallocate_lattice_memory
 
 
 END MODULE bns_fuka

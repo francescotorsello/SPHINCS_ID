@@ -1539,7 +1539,7 @@ SUBMODULE (bns_fuka) read
 
     loop_over_stars: DO i_star= 1, 2, 1
 
-      CALL this% star_lattice(i_star)% allocate_memory(nx,ny,nz)
+      CALL this% star_lattice(i_star)% allocate_lattice_memory(nx,ny,nz)
 
       sizes = this% return_spatial_extent(i_star)
       center= this% return_center(i_star)
@@ -1552,9 +1552,9 @@ SUBMODULE (bns_fuka) read
       zmin= center(3) - stretch*sizes(5)
       zmax= center(3) + stretch*sizes(6)
 
-      CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
-                                  xmin, xmax, ymin, ymax, zmin, zmax, &
-                                  this% star_lattice(i_star)% coords, &
+      CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz                    , &
+                                  xmin, xmax, ymin, ymax, zmin, zmax         , &
+                                  this% star_lattice(i_star)% coords         , &
                                   this% star_lattice(i_star)% lapse          , &
                                   this% star_lattice(i_star)% shift_x        , &
                                   this% star_lattice(i_star)% shift_y        , &

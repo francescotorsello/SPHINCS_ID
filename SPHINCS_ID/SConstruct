@@ -100,6 +100,15 @@ version = '_v1.5'
 ################################################################################
 
 ################################################################################
+# USEFUL VARIABLES
+################################################################################
+
+# Home directory for SPHINCS_ID
+working_dir = os.getcwd()
+
+################################################################################
+
+################################################################################
 # EXTERNAL LIBRARIES
 ################################################################################
 
@@ -654,6 +663,7 @@ if flavour == interpolate_flavour: #
 env['F90FILESUFFIXES']=['.f90','.f']
 
 build_mpi = '-DMPI_ranks=' + MPI_ranks
+build_dir = '-Dwork_dir=' + working_dir
 
 # Fortran compiler
 env['F90'] = fortran_compiler
@@ -669,12 +679,12 @@ if debug == 'FALSE': #
     # FORTRAN PRODUCTION BUILD OPTIONS
     ############################################################################
     if fortran_compiler == 'ifort':
-#, '-qoverride-limits'
-      env['F90FLAGS'] = [ '-O0', '-qopenmp', '-xHOST', \
+
+      env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \
-                          build_flavour, build_mpi ]
+                          build_flavour, build_mpi, build_dir ]
 
     if fortran_compiler == 'gfortran':
 
@@ -683,7 +693,8 @@ if debug == 'FALSE': #
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
-                          '-Wall', '-Wextra', build_flavour, build_mpi ]
+                          '-Wall', '-Wextra', build_flavour, build_mpi, \
+                          build_dir ]
 
     ############################################################################
     # C++ PRODUCTION BUILD OPTIONS
@@ -724,7 +735,7 @@ if debug == 'FALSE': #
                           '-diag-disable=10346', '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
                           '-align array64byte', \
-                          build_flavour, build_mpi ]
+                          build_flavour, build_mpi, build_dir ]
 
     if fortran_compiler == 'gfortran':
 
@@ -733,7 +744,8 @@ if debug == 'FALSE': #
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
-                          '-Wall', '-Wextra', build_flavour, build_mpi ]
+                          '-Wall', '-Wextra', build_flavour, build_mpi, \
+                          build_dir ]
 
     ############################################################################
     # C++ PRODUCTION BUILD OPTIONS
@@ -774,7 +786,8 @@ if debug == 'TRUE': #
                           '-xHOST', '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-CB', '-CS', '-traceback', '-fpe0', '-warn', \
-                          '-debug extended', '-fpp', build_flavour, build_mpi ]
+                          '-debug extended', '-fpp', build_flavour, build_mpi, \
+                          build_dir ]
 
       # More F90 flags for debugging
       #env['F90FLAGS'] = [ '-r8','-g','-qopenmp','-O0', '-ftz', \
@@ -802,7 +815,7 @@ if debug == 'TRUE': #
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', '-fdollar-ok', \
-                          build_flavour, build_mpi ]
+                          build_flavour, build_mpi, build_dir ]
 
     ############################################################################
     # C++ DEBUG BUILD OPTIONS
@@ -850,7 +863,8 @@ if debug == 'TRUE': #
                           '-debug extended', '-fpp', '-diag-disable=10346', \
                           '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
-                          '-align array64byte', build_flavour, build_mpi ]
+                          '-align array64byte', build_flavour, build_mpi, \
+                          build_dir ]
 
       # More F90 flags for debugging
       #env['F90FLAGS'] = [ '-r8','-g','-qopenmp','-O0', '-ftz', \
@@ -878,7 +892,7 @@ if debug == 'TRUE': #
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', '-fdollar-ok', \
-                          build_flavour, build_mpi ]
+                          build_flavour, build_mpi, build_dir ]
 
     ############################################################################
     # C++ DEBUG BUILD OPTIONS
