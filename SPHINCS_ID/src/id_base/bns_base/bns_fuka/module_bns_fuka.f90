@@ -135,9 +135,9 @@ MODULE bns_fuka
     !-- ID fields on a lattice around each star
     !
 
-    INTEGER:: nx_grid= 50
-    INTEGER:: ny_grid= 50
-    INTEGER:: nz_grid= 50
+    INTEGER:: nx_grid= 150
+    INTEGER:: ny_grid= 150
+    INTEGER:: nz_grid= 150
     !DOUBLE PRECISION, DIMENSION(:,:,:,:,:), ALLOCATABLE:: id_fields
     TYPE(id_lattice), DIMENSION(2):: star_lattice
     !# Array storing the Cartesian coordinates for the lattice around star 1.
@@ -196,7 +196,7 @@ MODULE bns_fuka
     !
 
     !> 1-D array storing the baryon mass density in the fluid frame [kg m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: mass_density
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_density
     !> 1-D array storing the energy density [kg c^2 m^{-3}]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
     !> 1-D array storing the specific internal energy [c^2]

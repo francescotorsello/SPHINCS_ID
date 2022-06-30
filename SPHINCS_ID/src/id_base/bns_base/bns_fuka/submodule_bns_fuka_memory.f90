@@ -204,15 +204,15 @@ SUBMODULE (bns_fuka) memory
          STOP
       ENDIF
     ENDIF
-    !IF(.NOT.ALLOCATED( this% mass_density ))THEN
-    !  ALLOCATE( this% mass_density( d ), STAT= ios, &
-    !      ERRMSG= err_msg )
-    !  IF( ios > 0 )THEN
-    !     PRINT *, "...allocation error for array mass_density ", &
-    !              "The error message is", err_msg
-    !     STOP
-    !  ENDIF
-    !ENDIF
+    IF(.NOT.ALLOCATED( this% mass_density ))THEN
+      ALLOCATE( this% mass_density( d ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array mass_density ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
     IF(.NOT.ALLOCATED( this% energy_density ))THEN
       ALLOCATE( this% energy_density( d ), STAT= ios, &
           ERRMSG= err_msg )

@@ -129,7 +129,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
@@ -140,7 +140,7 @@ print_step= 50          ! Evey print_step steps, print the particle positions
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
                         ! Set to 0 to not print positions at all
-apm_max_it= 1         ! Maximum number of iterations, irrespective of the
+apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
@@ -149,7 +149,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.225D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.8D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc

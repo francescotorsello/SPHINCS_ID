@@ -1498,8 +1498,6 @@ SUBMODULE (bns_fuka) read
     IMPLICIT NONE
 
 
-    INTEGER, PARAMETER:: mpi_ranks= 40
-    !!
     DOUBLE PRECISION, PARAMETER:: stretch= 1.05D0
     !! The lattices' sizes will be 5% larger than the radii of the stars
 
@@ -1507,6 +1505,8 @@ SUBMODULE (bns_fuka) read
     INTEGER:: ny
     INTEGER:: nz
     INTEGER:: i_star, i, j, k
+    INTEGER:: mpi_ranks
+    !
 
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
     DOUBLE PRECISION, DIMENSION(6):: sizes
@@ -1515,6 +1515,20 @@ SUBMODULE (bns_fuka) read
     LOGICAL:: exist
 
     CHARACTER(LEN=:), ALLOCATABLE:: filename_id
+
+#ifdef MPI_ranks
+
+  mpi_ranks= MPI_ranks
+
+#else
+
+  PRINT *, "** ERROR! No value assigned to the variable MPI_ranks in the ", &
+           "SConstruct file! Please assign a value to it!"
+  PRINT *, " * Stopping..."
+  PRINT *
+  STOP
+
+#endif
 
     nx= this% nx_grid
     ny= this% ny_grid
