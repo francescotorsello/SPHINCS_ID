@@ -1,14 +1,14 @@
 &gravity_grid
-ngrid_x=51      ! Number of grid points in the x-direction for the coarse grid.
-ngrid_y=51      ! Number of grid points in the y-direction for the coarse grid.
-ngrid_z=51      ! Number of grid points in the z-direction for the coarse grid.
-xL=-150                    ! Lower x coordinate for the coarse grid.
-xR= 150                    ! Upper x coordinate for the coarse grid.
-yL=-150                    ! Lower y coordinate for the coarse grid.
-yR= 150                    ! Upper y coordinate for the coarse grid.
-zL=-150                    ! Lower z coordinate for the coarse grid.
-zR= 150                    ! Upper z coordinate for the coarse grid.
-nlevels= 3                  ! Number of refinement levels.
+ngrid_x=291      ! Number of grid points in the x-direction for the coarse grid.
+ngrid_y=291      ! Number of grid points in the y-direction for the coarse grid.
+ngrid_z=291      ! Number of grid points in the z-direction for the coarse grid.
+xL=-1600                    ! Lower x coordinate for the coarse grid.
+xR= 1600                    ! Upper x coordinate for the coarse grid.
+yL=-1600                    ! Lower y coordinate for the coarse grid.
+yR= 1600                    ! Upper y coordinate for the coarse grid.
+zL=-1600                    ! Lower z coordinate for the coarse grid.
+zR= 1600                    ! Upper z coordinate for the coarse grid.
+nlevels= 7                  ! Number of refinement levels.
 nghost_x= 4                 ! FD/2+1 Number of ghost zones in the x-direction.
 nghost_y= 4           	    ! Number of ghost zones in the y-direction.
 nghost_z= 4                 ! Number of ghost zones in the z-direction.

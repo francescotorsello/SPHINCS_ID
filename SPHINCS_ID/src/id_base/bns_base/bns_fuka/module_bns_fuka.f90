@@ -85,7 +85,10 @@ MODULE bns_fuka
   INTEGER, PARAMETER:: id$eulvelz       = 25
   INTEGER, PARAMETER:: n_fields_fuka    = 25
 
+
   TYPE id_lattice
+  !! Type representing the |id| on a 3D lattice
+
 
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: coords
     DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: lapse
@@ -111,9 +114,16 @@ MODULE bns_fuka
     DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: v_eul_y
     DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: v_eul_z
 
+
     CONTAINS
 
-    PROCEDURE:: allocate_lattice_memory, deallocate_lattice_memory
+
+    PROCEDURE:: allocate_lattice_memory
+    !! Allocates memory for all the member arrays
+
+    PROCEDURE:: deallocate_lattice_memory
+    !! Deallocates memory for all the member arrays
+
 
   END TYPE id_lattice
 
@@ -135,11 +145,12 @@ MODULE bns_fuka
     !-- ID fields on a lattice around each star
     !
 
-    INTEGER:: nx_grid= 250
-    INTEGER:: ny_grid= 250
-    INTEGER:: nz_grid= 250
+    ! TODO: change "grid" to "lattice" for consistency
+    INTEGER:: nx_grid= 300
+    INTEGER:: ny_grid= 300
+    INTEGER:: nz_grid= 300
     TYPE(id_lattice), DIMENSION(2):: star_lattice
-    !# Array storing two [[id_lattice]], one per star
+    !# Array storing two [[bns_fuka:id_lattice]] objects, one per star
 
     !
     !-- Spacetime fields

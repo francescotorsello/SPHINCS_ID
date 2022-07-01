@@ -319,7 +319,7 @@ SUBMODULE (bns_fuka) read
 
     IMPLICIT NONE
 
-    INTEGER, PARAMETER:: mpi_ranks= 40
+    INTEGER:: mpi_ranks
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     INTEGER:: i, j, k
@@ -335,6 +335,20 @@ SUBMODULE (bns_fuka) read
 
     CHARACTER(LEN=:), ALLOCATABLE:: filename
 
+#ifdef MPI_ranks
+
+  mpi_ranks= MPI_ranks
+
+#else
+
+  PRINT *, "** ERROR! No value assigned to the variable MPI_ranks in the ", &
+           "SConstruct file! Please assign a value to it!"
+  PRINT *, " * Stopping..."
+  PRINT *
+  STOP
+
+#endif
+
     ! TODO: parallelize these ones
     xmin= MINVAL( pos(:,1,1,jx), DIM= 1 )
     xmax= MAXVAL( pos(:,1,1,jx), DIM= 1 )
@@ -342,6 +356,8 @@ SUBMODULE (bns_fuka) read
     ymax= MAXVAL( pos(1,:,1,jy), DIM= 1 )
     zmin= MINVAL( pos(1,1,:,jz), DIM= 1 )
     zmax= MAXVAL( pos(1,1,:,jz), DIM= 1 )
+
+    IF( nz < mpi_ranks ) mpi_ranks= nz
 
     CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
@@ -351,17 +367,17 @@ SUBMODULE (bns_fuka) read
                                   shift(:,:,:,jy), &
                                   shift(:,:,:,jz), &
                                   g(:,:,:,jxx), &
-                                  g(:,:,:,jyy), &
-                                  g(:,:,:,jzz), &
                                   g(:,:,:,jxy), &
                                   g(:,:,:,jxz), &
+                                  g(:,:,:,jyy), &
                                   g(:,:,:,jyz), &
+                                  g(:,:,:,jzz), &
                                   ek(:,:,:,jxx), &
-                                  ek(:,:,:,jyy), &
-                                  ek(:,:,:,jzz), &
                                   ek(:,:,:,jxy), &
                                   ek(:,:,:,jxz), &
+                                  ek(:,:,:,jyy), &
                                   ek(:,:,:,jyz), &
+                                  ek(:,:,:,jzz), &
                                   id_tmp(:,:,:,4), &
                                   id_tmp(:,:,:,5), &
                                   id_tmp(:,:,:,6), &
@@ -1174,8 +1190,9 @@ SUBMODULE (bns_fuka) read
 
     INTEGER, PARAMETER:: unit_par = 3480
 
-    INTEGER:: ios, i_char, i_file, i_field, i, j, k
-    INTEGER:: nlines, nlines_prev
+    INTEGER:: ios, i_char, i_file, i_field, i, j, k, i_rank
+    INTEGER:: nlines, npoints_prev, nz_rem, nz_prev, n_first_ranks, &
+              n_last_rank, nz_rank(mpi_ranks)
     INTEGER, DIMENSION(mpi_ranks):: unit_rank
     INTEGER:: unit_rank_prev
 
@@ -1319,12 +1336,29 @@ SUBMODULE (bns_fuka) read
     ! Allocate memory
     IF(.NOT.ALLOCATED(grid_tmp)) ALLOCATE(grid_tmp(nx*ny*nz, n_fields_fuka))
 
+    nz_rank      = nz/mpi_ranks
+    nz_rem       = MOD(nz,mpi_ranks)
+    n_last_rank  = mpi_ranks - 1;
+    n_first_ranks= n_last_rank - nz_rem + 1;
+    IF( nz_rem > 0 )THEN
+      DO i_rank= n_first_ranks + 1, mpi_ranks, 1
+        nz_rank(i_rank)= nz_rank(i_rank) + 1
+      ENDDO
+    ENDIF
+
+    !PRINT *, "nz_rank=", nz_rank
+    !PRINT *, "nz_rem=", nz_rem
+    !PRINT *, "n_last_rank=", n_last_rank
+    !PRINT *, "n_first_ranks=", n_first_ranks
+    !STOP
+
     ! Read the ID from the ASCII files printed by the reader
     ! (one per MPI rank)
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( grid_tmp, mpi_ranks ) &
+    !$OMP             SHARED( grid_tmp, mpi_ranks, nx, ny, nz_rank, &
+    !$OMP                     n_first_ranks ) &
     !$OMP             PRIVATE( i_file, i, filename_rank, mpi_ranks_str, &
-    !$OMP                      unit_rank, nlines, ios, nlines_prev, exist, &
+    !$OMP                      unit_rank, nlines, ios, npoints_prev, exist, &
     !$OMP                      err_msg, unit_rank_prev )
     loop_over_id_files: DO i_file= 0, mpi_ranks - 1, 1
 
@@ -1348,50 +1382,60 @@ SUBMODULE (bns_fuka) read
       ENDIF
 
       ! Get total number of lines in the file
-      nlines = 0
-      DO
-        READ( unit_rank(i_file + 1), * , IOSTAT= ios )
-        IF ( ios /= 0 ) EXIT
-        nlines = nlines + 1
-      ENDDO
-      CLOSE( UNIT= unit_rank(i_file + 1) )
-      OPEN( unit_rank(i_file + 1), FILE= TRIM(filename_rank), &
-            FORM= "FORMATTED", ACTION= "READ" )
-
-      ! Neglect header
-      nlines= nlines - 1
-
-      !
-      IF( i_file == mpi_ranks - 1 )THEN
-
-        unit_rank_prev= unit_rank(i_file + 1) + 1
-
-        OPEN( unit_rank_prev, FILE= TRIM("id-0.dat"), &
-              FORM= "FORMATTED", ACTION= "READ" )
-
-        nlines_prev = 0
-        DO
-          READ( unit_rank_prev, * , IOSTAT= ios )
-          IF ( ios /= 0 ) EXIT
-          nlines_prev = nlines_prev + 1
-        ENDDO
-
-        CLOSE(unit_rank_prev)
-
-        ! Neglect header
-        nlines_prev= nlines_prev - 1
-
-      ELSE
-
-        nlines_prev= nlines
-
+      nlines = nx*ny*nz_rank(i_file+1)
+    ! DO
+    !   READ( unit_rank(i_file + 1), * , IOSTAT= ios )
+    !   IF ( ios /= 0 ) EXIT
+    !   nlines = nlines + 1
+    ! ENDDO
+    ! CLOSE( UNIT= unit_rank(i_file + 1) )
+    ! OPEN( unit_rank(i_file + 1), FILE= TRIM(filename_rank), &
+    !       FORM= "FORMATTED", ACTION= "READ" )
+    !
+    ! ! Neglect header
+    ! nlines= nlines - 1
+    !
+    ! !
+    ! IF( i_file == mpi_ranks - 1 )THEN
+    !
+    !   unit_rank_prev= unit_rank(i_file + 1) + 1
+    !
+    !   OPEN( unit_rank_prev, FILE= TRIM("id-0.dat"), &
+    !         FORM= "FORMATTED", ACTION= "READ" )
+    !
+    !   nlines_prev = 0
+    !   DO
+    !     READ( unit_rank_prev, * , IOSTAT= ios )
+    !     IF ( ios /= 0 ) EXIT
+    !     nlines_prev = nlines_prev + 1
+    !   ENDDO
+    !
+    !   CLOSE(unit_rank_prev)
+    !
+    !    ! Neglect header
+    !    nlines_prev= nlines_prev - 1
+    !
+    !  ELSE
+    !
+    !    nlines_prev= nlines
+    !
+    !  ENDIF
+      IF( i_file < n_first_ranks )THEN
+        npoints_prev= i_file*nx*ny*nz_rank(i_file+1)
+      ELSEIF( i_file == n_first_ranks )THEN
+        npoints_prev= i_file*nx*ny*nz_rank(1)
+      ELSEIF( i_file > n_first_ranks )THEN
+        npoints_prev= n_first_ranks*nx*ny*nz_rank(1) &
+                    + (i_file- n_first_ranks)*nx*ny*nz_rank(i_file+1)
       ENDIF
+      !PRINT *, "from rank ", i_file, ": npoints_prev=", npoints_prev
+      !PRINT *
 
       ! Skip header
       READ( unit_rank(i_file + 1), * )
       DO i= 1, nlines, 1
         READ( UNIT= unit_rank(i_file + 1), FMT= *, IOSTAT = ios, &
-              IOMSG= err_msg ) grid_tmp( nlines_prev*i_file + i, : )
+              IOMSG= err_msg ) grid_tmp( npoints_prev + i, : )
       ENDDO
 
       ! Close file and delete it
@@ -1534,6 +1578,8 @@ SUBMODULE (bns_fuka) read
     ny= this% ny_grid
     nz= this% nz_grid
 
+    IF( nz < mpi_ranks ) mpi_ranks= nz
+
     ! Allocate and initialize member arrays
     !ALLOCATE( this% id_fields( nx, ny, nz, n_fields_fuka, 2 ) )
 
@@ -1610,7 +1656,31 @@ SUBMODULE (bns_fuka) read
   !        DO i= 1, nx, 1
   !
   !          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  !            this% id_fields( i, j, k, :, i_star )
+  !            this% star_lattice(i_star)% coords         (i,j,k,id$x), &
+  !            this% star_lattice(i_star)% coords         (i,j,k,id$y), &
+  !            this% star_lattice(i_star)% coords         (i,j,k,id$z), &
+  !            this% star_lattice(i_star)% lapse          (i,j,k), &
+  !            this% star_lattice(i_star)% shift_x        (i,j,k), &
+  !            this% star_lattice(i_star)% shift_y        (i,j,k), &
+  !            this% star_lattice(i_star)% shift_z        (i,j,k), &
+  !            this% star_lattice(i_star)% g_xx           (i,j,k), &
+  !            this% star_lattice(i_star)% g_xy           (i,j,k), &
+  !            this% star_lattice(i_star)% g_xz           (i,j,k), &
+  !            this% star_lattice(i_star)% g_yy           (i,j,k), &
+  !            this% star_lattice(i_star)% g_yz           (i,j,k), &
+  !            this% star_lattice(i_star)% g_zz           (i,j,k), &
+  !            this% star_lattice(i_star)% k_xx           (i,j,k), &
+  !            this% star_lattice(i_star)% k_xy           (i,j,k), &
+  !            this% star_lattice(i_star)% k_xz           (i,j,k), &
+  !            this% star_lattice(i_star)% k_yy           (i,j,k), &
+  !            this% star_lattice(i_star)% k_yz           (i,j,k), &
+  !            this% star_lattice(i_star)% k_zz           (i,j,k), &
+  !            this% star_lattice(i_star)% mass_density   (i,j,k), &
+  !            this% star_lattice(i_star)% specific_energy(i,j,k), &
+  !            this% star_lattice(i_star)% pressure       (i,j,k), &
+  !            this% star_lattice(i_star)% v_eul_x        (i,j,k), &
+  !            this% star_lattice(i_star)% v_eul_y        (i,j,k), &
+  !            this% star_lattice(i_star)% v_eul_z        (i,j,k)
   !
   !        ENDDO
   !      ENDDO
