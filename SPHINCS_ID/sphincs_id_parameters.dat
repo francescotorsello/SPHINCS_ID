@@ -97,7 +97,7 @@ estimate_length_scale=.FALSE.
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -109,7 +109,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=1                     ! 0: Read particle positions from formatted
+placer(1,:)=0                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object
@@ -117,8 +117,8 @@ placer(1,:)=1                     ! 0: Read particle positions from formatted
 ! Choose to export data to binary and formatted files !
 !-----------------------------------------------------!
 export_bin=.TRUE.                ! Export ID to binary files
-export_form=.FALSE.               ! Export ID to formatted files
-export_form_xy=.FALSE.  ! Export only the ID on the xy plane to formatted files
+export_form=.TRUE.               ! Export ID to formatted files
+export_form_xy=.TRUE.  ! Export only the ID on the xy plane to formatted files
 export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
                         ! irrespectively on the value of export_form_xy
 !----------------------------------------------!
@@ -127,14 +127,14 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping
                                    ! it to the grid
-export_constraints=.FALSE.         ! Export constraints and stress-energy tensor
+export_constraints=.TRUE.         ! Export constraints and stress-energy tensor
                                    ! to a formatted file
-export_constraints_details=.FALSE. ! Write a formatted file whose rows contain
+export_constraints_details=.TRUE. ! Write a formatted file whose rows contain
                                    ! the points at which the constraints
                                    ! have values within (-oo,1D-7], [1D-7,1D-6],
                                    ! [1D-6,1D-5], [1D-5,1D-4], [1D-4,1D-3],

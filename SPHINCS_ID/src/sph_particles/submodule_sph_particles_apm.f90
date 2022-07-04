@@ -1218,15 +1218,40 @@ SUBMODULE (sph_particles) apm
 
         IF( ( nuratio_tmp >= nuratio_des*(one - quarter/ten) .AND. &
               nuratio_tmp <= nuratio_des*(one + quarter/ten) .AND. &
-              nuratio_tmp /= nuratio_thres ) .OR. itr == apm_max_it ) EXIT
+              nuratio_tmp /= nuratio_thres ) .OR. itr == apm_max_it )THEN
 
-        IF( nuratio_cnt >= nuratio_max_steps .OR. itr == apm_max_it ) EXIT
+          PRINT *, " * Exit condition satisfied: the baryon number ratio is ", &
+                   nuratio_tmp, " <= ", nuratio_des, "*1.025= ", &
+                   nuratio_des*(one - quarter/ten)
+          PRINT *
+          EXIT
+
+        ENDIF
+
+        IF( nuratio_cnt >= nuratio_max_steps .OR. itr == apm_max_it )THEN
+
+          PRINT *, " * Exit condition satisfied: the baryon number ratio ", &
+                   "did not change by more than ", nuratio_tol, &
+                   "% for ", nuratio_max_steps, "steps."
+          PRINT *
+          EXIT
+
+        ENDIF
 
       ELSE
 
         PRINT *, " * n_inc= ", n_inc
         PRINT *
-        IF( n_inc == max_inc .OR. itr == apm_max_it ) EXIT
+        IF( n_inc == max_inc .OR. itr == apm_max_it )THEN
+
+          PRINT *, " * Exit condition satisfied: the average over the ", &
+                   "particles of the relative difference between the ID  ", &
+                   "baryon mass density and its SPH estimate, grew ", &
+                   "for ", max_inc, "steps."
+          PRINT *
+          EXIT
+
+        ENDIF
 
       ENDIF
       err_mean_old      = err_N_mean

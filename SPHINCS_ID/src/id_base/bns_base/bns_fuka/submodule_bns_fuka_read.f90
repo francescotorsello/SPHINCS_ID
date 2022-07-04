@@ -313,9 +313,9 @@ SUBMODULE (bns_fuka) read
     !
     !*******************************************************
 
-    USE tensor,   ONLY: jxx, jxy, jxz, &
-                        jyy, jyz, jzz, jx, jy, jz, n_sym4x4
-    USE utility,  ONLY: determinant_sym3x3, determinant_sym4x4
+    USE tensor,          ONLY: jxx, jxy, jxz, &
+                               jyy, jyz, jzz, jx, jy, jz, n_sym4x4
+    USE utility,         ONLY: determinant_sym3x3, determinant_sym4x4
 
     IMPLICIT NONE
 
@@ -378,12 +378,12 @@ SUBMODULE (bns_fuka) read
                                   ek(:,:,:,jyy), &
                                   ek(:,:,:,jyz), &
                                   ek(:,:,:,jzz), &
-                                  id_tmp(:,:,:,4), &
-                                  id_tmp(:,:,:,5), &
-                                  id_tmp(:,:,:,6), &
-                                  id_tmp(:,:,:,7), &
-                                  id_tmp(:,:,:,8), &
-                                  id_tmp(:,:,:,9), &
+                            this% mass_density   % levels(this% l_curr)% var, &
+                            this% specific_energy% levels(this% l_curr)% var, &
+                            this% pressure       % levels(this% l_curr)% var, &
+                            this% v_euler_x      % levels(this% l_curr)% var, &
+                            this% v_euler_y      % levels(this% l_curr)% var, &
+                            this% v_euler_z      % levels(this% l_curr)% var, &
                                   this% filename )
 
     ALLOCATE( g4( nx, ny, nz, n_sym4x4 ) )
@@ -676,71 +676,88 @@ SUBMODULE (bns_fuka) read
     INTEGER, PARAMETER:: mpi_ranks= 40
     !LOGICAL, PARAMETER:: debug= .FALSE.
 
-    INTEGER:: i, j, k
+    INTEGER:: i, j, k, l
 
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
 
-    DOUBLE PRECISION, DIMENSION(nx, ny, nz, 19):: id_tmp
+    !DOUBLE PRECISION, DIMENSION(nx, ny, nz, 19):: id_tmp
 
     ! TODO: parallelize these ones
-    xmin= MINVAL( pos(:,1,1,jx), DIM= 1 )
-    xmax= MAXVAL( pos(:,1,1,jx), DIM= 1 )
-    ymin= MINVAL( pos(1,:,1,jy), DIM= 1 )
-    ymax= MAXVAL( pos(1,:,1,jy), DIM= 1 )
-    zmin= MINVAL( pos(1,1,:,jz), DIM= 1 )
-    zmax= MAXVAL( pos(1,1,:,jz), DIM= 1 )
+  !  xmin= MINVAL( pos(:,1,1,jx), DIM= 1 )
+  !  xmax= MAXVAL( pos(:,1,1,jx), DIM= 1 )
+  !  ymin= MINVAL( pos(1,:,1,jy), DIM= 1 )
+  !  ymax= MAXVAL( pos(1,:,1,jy), DIM= 1 )
+  !  zmin= MINVAL( pos(1,1,:,jz), DIM= 1 )
+  !  zmax= MAXVAL( pos(1,1,:,jz), DIM= 1 )
 
-    CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
-                                  xmin, xmax, ymin, ymax, zmin, zmax, &
-                                  id_tmp(:,:,:,id$x:id$z), &
-                                  id_tmp(:,:,:,id$lapse), &
-                                  id_tmp(:,:,:,id$shiftx), &
-                                  id_tmp(:,:,:,id$shifty), &
-                                  id_tmp(:,:,:,id$shiftz), &
-                                  id_tmp(:,:,:,id$gxx), &
-                                  id_tmp(:,:,:,id$gxy), &
-                                  id_tmp(:,:,:,id$gxz), &
-                                  id_tmp(:,:,:,id$gyy), &
-                                  id_tmp(:,:,:,id$gyz), &
-                                  id_tmp(:,:,:,id$gzz), &
-                                  id_tmp(:,:,:,id$kxx), &
-                                  id_tmp(:,:,:,id$kxy), &
-                                  id_tmp(:,:,:,id$kxz), &
-                                  id_tmp(:,:,:,id$kyy), &
-                                  id_tmp(:,:,:,id$kyz), &
-                                  id_tmp(:,:,:,id$kzz), &
-                                  baryon_density, &
-                                  specific_energy, &
-                                  pressure, &
-                                  u_euler(:,:,:,jx), &
-                                  u_euler(:,:,:,jy), &
-                                  u_euler(:,:,:,jz), &
-                                  this% filename )
+   ! CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz, &
+   !                               xmin, xmax, ymin, ymax, zmin, zmax, &
+   !                               id_tmp(:,:,:,id$x:id$z), &
+   !                               id_tmp(:,:,:,id$lapse), &
+   !                               id_tmp(:,:,:,id$shiftx), &
+   !                               id_tmp(:,:,:,id$shifty), &
+   !                               id_tmp(:,:,:,id$shiftz), &
+   !                               id_tmp(:,:,:,id$gxx), &
+   !                               id_tmp(:,:,:,id$gxy), &
+   !                               id_tmp(:,:,:,id$gxz), &
+   !                               id_tmp(:,:,:,id$gyy), &
+   !                               id_tmp(:,:,:,id$gyz), &
+   !                               id_tmp(:,:,:,id$gzz), &
+   !                               id_tmp(:,:,:,id$kxx), &
+   !                               id_tmp(:,:,:,id$kxy), &
+   !                               id_tmp(:,:,:,id$kxz), &
+   !                               id_tmp(:,:,:,id$kyy), &
+   !                               id_tmp(:,:,:,id$kyz), &
+   !                               id_tmp(:,:,:,id$kzz), &
+   !                               baryon_density, &
+   !                               specific_energy, &
+   !                               pressure, &
+   !                               u_euler(:,:,:,jx), &
+   !                               u_euler(:,:,:,jy), &
+   !                               u_euler(:,:,:,jz), &
+   !                               this% filename )
 
-  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-  !  !$OMP             SHARED( nx, ny, nz, this, pos, &
-  !  !$OMP                     baryon_density, specific_energy, pressure, &
-  !  !$OMP                     energy_density, u_euler, id_tmp ) &
-  !  !$OMP             PRIVATE( i, j, k )
-  !  DO k= 1, nz, 1
-  !    DO j= 1, ny, 1
-  !      DO i= 1, nx, 1
-  !
-  !        baryon_density(i,j,k) = id_tmp(i,j,k,id$massdensity)
-  !        specific_energy(i,j,k)= id_tmp(i,j,k,id$specificenergy)
-  !        pressure(i,j,k)       = id_tmp(i,j,k,id$pressure)
-  !
-  !        energy_density(i,j,k) = baryon_density(i,j,k) &
-  !                                 *(one + specific_energy(i,j,k))
-  !
-  !        u_euler(i,j,k,jx)     = id_tmp(i,j,k,id$eulvelx)
-  !        u_euler(i,j,k,jy)     = id_tmp(i,j,k,id$eulvely)
-  !        u_euler(i,j,k,jz)     = id_tmp(i,j,k,id$eulvelz)
-  !
-  !      ENDDO
-  !    ENDDO
-  !  ENDDO
-  !  !$OMP END PARALLEL DO
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nx, ny, nz, this, pos, &
+    !$OMP                     baryon_density, specific_energy, pressure, &
+    !$OMP                     energy_density, u_euler, l ) &
+    !$OMP             PRIVATE( i, j, k )
+    DO k= 1, nz, 1
+      DO j= 1, ny, 1
+        DO i= 1, nx, 1
+
+          !baryon_density(i,j,k) = this% mass_density(i,j,k)
+          !specific_energy(i,j,k)= this% specific_energy(i,j,k)
+          !pressure(i,j,k)       = this% pressure(i,j,k)
+          !
+          !energy_density(i,j,k) = baryon_density(i,j,k) &
+          !                         *(one + specific_energy(i,j,k))
+          !
+          !u_euler(i,j,k,jx)     = this% v_euler_x(i,j,k)
+          !u_euler(i,j,k,jy)     = this% v_euler_y(i,j,k)
+          !u_euler(i,j,k,jz)     = this% v_euler_z(i,j,k)
+
+          baryon_density(i,j,k) = this% mass_density  %   &
+                                  levels(this% l_curr)% var(i,j,k)
+          specific_energy(i,j,k)= this% specific_energy% &
+                                  levels(this% l_curr)% var(i,j,k)
+          pressure(i,j,k)       = this% pressure       % &
+                                  levels(this% l_curr)% var(i,j,k)
+
+          energy_density(i,j,k) = baryon_density(i,j,k) &
+                                   *(one + specific_energy(i,j,k))
+
+          u_euler(i,j,k,jx)     = this% v_euler_x% &
+                                  levels(this% l_curr)% var(i,j,k)
+          u_euler(i,j,k,jy)     = this% v_euler_y% &
+                                  levels(this% l_curr)% var(i,j,k)
+          u_euler(i,j,k,jz)     = this% v_euler_z% &
+                                  levels(this% l_curr)% var(i,j,k)
+
+        ENDDO
+      ENDDO
+    ENDDO
+    !$OMP END PARALLEL DO
 
     RETURN
 
@@ -1188,7 +1205,9 @@ SUBMODULE (bns_fuka) read
 
     IMPLICIT NONE
 
-    INTEGER, PARAMETER:: unit_par = 3480
+    INTEGER, PARAMETER:: unit_par= 3480
+
+    LOGICAL, PARAMETER:: debug= .TRUE.
 
     INTEGER:: ios, i_char, i_file, i_field, i, j, k, i_rank
     INTEGER:: nlines, npoints_prev, nz_rem, nz_prev, n_first_ranks, &
@@ -1346,11 +1365,16 @@ SUBMODULE (bns_fuka) read
       ENDDO
     ENDIF
 
-    !PRINT *, "nz_rank=", nz_rank
-    !PRINT *, "nz_rem=", nz_rem
-    !PRINT *, "n_last_rank=", n_last_rank
-    !PRINT *, "n_first_ranks=", n_first_ranks
-    !STOP
+    IF( debug )THEN
+      PRINT *, "nx=", nx
+      PRINT *, "ny=", ny
+      PRINT *, "nz=", nz
+      PRINT *, "nz_rank=", nz_rank
+      PRINT *, "nz_rem=", nz_rem
+      PRINT *, "n_last_rank=", n_last_rank
+      PRINT *, "n_first_ranks=", n_first_ranks
+      !STOP
+    ENDIF
 
     ! Read the ID from the ASCII files printed by the reader
     ! (one per MPI rank)
@@ -1428,8 +1452,11 @@ SUBMODULE (bns_fuka) read
         npoints_prev= n_first_ranks*nx*ny*nz_rank(1) &
                     + (i_file- n_first_ranks)*nx*ny*nz_rank(i_file+1)
       ENDIF
-      !PRINT *, "from rank ", i_file, ": npoints_prev=", npoints_prev
-      !PRINT *
+      IF( debug )THEN
+        PRINT *, "from rank ", i_file, ": npoints_prev=", npoints_prev, &
+                 ", nlines=", nlines
+        PRINT *
+      ENDIF
 
       ! Skip header
       READ( unit_rank(i_file + 1), * )

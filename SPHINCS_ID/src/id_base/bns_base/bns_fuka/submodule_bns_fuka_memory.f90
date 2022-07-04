@@ -204,66 +204,136 @@ SUBMODULE (bns_fuka) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( this% mass_density ))THEN
-      ALLOCATE( this% mass_density( d ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array mass_density ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% energy_density ))THEN
-      ALLOCATE( this% energy_density( d ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array energy_density ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% specific_energy ))THEN
-      ALLOCATE( this% specific_energy( d ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array specific_energy ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% v_euler_x ))THEN
-      ALLOCATE( this% v_euler_x( d ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array v_euler_x ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% v_euler_y ))THEN
-      ALLOCATE( this% v_euler_y( d ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array v_euler_y ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% v_euler_z ))THEN
-      ALLOCATE( this% v_euler_z( d ), STAT= ios, &
-          ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array v_euler_z ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
+    !IF(.NOT.ALLOCATED( this% mass_density ))THEN
+    !  ALLOCATE( this% mass_density( d ), STAT= ios, &
+    !      ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array mass_density ", &
+    !              "The error message is", err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
+    !IF(.NOT.ALLOCATED( this% energy_density ))THEN
+    !  ALLOCATE( this% energy_density( d ), STAT= ios, &
+    !      ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array energy_density ", &
+    !              "The error message is", err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
+    !IF(.NOT.ALLOCATED( this% specific_energy ))THEN
+    !  ALLOCATE( this% specific_energy( d ), STAT= ios, &
+    !      ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array specific_energy ", &
+    !              "The error message is", err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
+    !IF(.NOT.ALLOCATED( this% v_euler_x ))THEN
+    !  ALLOCATE( this% v_euler_x( d ), STAT= ios, &
+    !      ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array v_euler_x ", &
+    !              "The error message is", err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
+    !IF(.NOT.ALLOCATED( this% v_euler_y ))THEN
+    !  ALLOCATE( this% v_euler_y( d ), STAT= ios, &
+    !      ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array v_euler_y ", &
+    !              "The error message is", err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
+    !IF(.NOT.ALLOCATED( this% v_euler_z ))THEN
+    !  ALLOCATE( this% v_euler_z( d ), STAT= ios, &
+    !      ERRMSG= err_msg )
+    !  IF( ios > 0 )THEN
+    !     PRINT *, "...allocation error for array v_euler_z ", &
+    !              "The error message is", err_msg
+    !     STOP
+    !  ENDIF
+    !ENDIF
 
     IF( SIZE( this% lapse ) /= d )THEN
       PRINT *, "** ERROR in memory allocation in allocate_bnsfuka_memory"
     ENDIF
 
   END PROCEDURE allocate_bnsfuka_memory
+
+
+  MODULE PROCEDURE allocate_bnsfuka_hydro_memory
+
+    !***********************************************
+    !
+    !# Allocate memory for the |fuka| hydro fields
+    !  on a 3D grid
+    !
+    !  Created:     FT 02.07.2022
+    !  Last update: FT 02.07.2022
+    !
+    !***********************************************
+
+  !  IF(.NOT.ALLOCATED( this% mass_density ))THEN
+  !    ALLOCATE( this% mass_density( nx, ny, nz ), STAT= ios, &
+  !        ERRMSG= err_msg )
+  !    IF( ios > 0 )THEN
+  !       PRINT *, "...allocation error for array mass_density ", &
+  !                "The error message is", err_msg
+  !       STOP
+  !    ENDIF
+  !  ENDIF
+  !  IF(.NOT.ALLOCATED( this% pressure ))THEN
+  !    ALLOCATE( this% pressure( nx, ny, nz ), STAT= ios, &
+  !        ERRMSG= err_msg )
+  !    IF( ios > 0 )THEN
+  !       PRINT *, "...allocation error for array pressure ", &
+  !                "The error message is", err_msg
+  !       STOP
+  !    ENDIF
+  !  ENDIF
+  !  IF(.NOT.ALLOCATED( this% specific_energy ))THEN
+  !    ALLOCATE( this% specific_energy( nx, ny, nz ), STAT= ios, &
+  !        ERRMSG= err_msg )
+  !    IF( ios > 0 )THEN
+  !       PRINT *, "...allocation error for array specific_energy ", &
+  !                "The error message is", err_msg
+  !       STOP
+  !    ENDIF
+  !  ENDIF
+  !  IF(.NOT.ALLOCATED( this% v_euler_x ))THEN
+  !    ALLOCATE( this% v_euler_x( nx, ny, nz ), STAT= ios, &
+  !        ERRMSG= err_msg )
+  !    IF( ios > 0 )THEN
+  !       PRINT *, "...allocation error for array v_euler_x ", &
+  !                "The error message is", err_msg
+  !       STOP
+  !    ENDIF
+  !  ENDIF
+  !  IF(.NOT.ALLOCATED( this% v_euler_y ))THEN
+  !    ALLOCATE( this% v_euler_y( nx, ny, nz ), STAT= ios, &
+  !        ERRMSG= err_msg )
+  !    IF( ios > 0 )THEN
+  !       PRINT *, "...allocation error for array v_euler_y ", &
+  !                "The error message is", err_msg
+  !       STOP
+  !    ENDIF
+  !  ENDIF
+  !  IF(.NOT.ALLOCATED( this% v_euler_z ))THEN
+  !    ALLOCATE( this% v_euler_z( nx, ny, nz ), STAT= ios, &
+  !        ERRMSG= err_msg )
+  !    IF( ios > 0 )THEN
+  !       PRINT *, "...allocation error for array v_euler_z ", &
+  !                "The error message is", err_msg
+  !       STOP
+  !    ENDIF
+  !  ENDIF
+
+  END PROCEDURE allocate_bnsfuka_hydro_memory
 
 
   MODULE PROCEDURE deallocate_bnsfuka_memory
@@ -410,60 +480,60 @@ SUBMODULE (bns_fuka) memory
          STOP
       ENDIF
     ENDIF
-    IF(ALLOCATED( this% mass_density ))THEN
-      DEALLOCATE( this% mass_density, STAT= ios, &
-              ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array mass_density ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(ALLOCATED( this% energy_density ))THEN
-      DEALLOCATE( this% energy_density, STAT= ios, &
-              ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array energy_density ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(ALLOCATED( this% specific_energy ))THEN
-      DEALLOCATE( this% specific_energy, STAT= ios, &
-              ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array specific_energy ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(ALLOCATED( this% v_euler_x ))THEN
-      DEALLOCATE( this% v_euler_x, STAT= ios, &
-              ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_x ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(ALLOCATED( this% v_euler_y ))THEN
-      DEALLOCATE( this% v_euler_y, STAT= ios, &
-              ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_y ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
-    IF(ALLOCATED( this% v_euler_z ))THEN
-      DEALLOCATE( this% v_euler_z, STAT= ios, &
-              ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-         PRINT *, "...deallocation error for array v_euler_z ", &
-                  "The error message is", err_msg
-         STOP
-      ENDIF
-    ENDIF
+ !   IF(ALLOCATED( this% mass_density ))THEN
+ !     DEALLOCATE( this% mass_density, STAT= ios, &
+ !             ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...deallocation error for array mass_density ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
+ !   IF(ALLOCATED( this% pressure ))THEN
+ !     DEALLOCATE( this% pressure, STAT= ios, &
+ !             ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...deallocation error for array pressure ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
+ !   IF(ALLOCATED( this% specific_energy ))THEN
+ !     DEALLOCATE( this% specific_energy, STAT= ios, &
+ !             ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...deallocation error for array specific_energy ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
+ !   IF(ALLOCATED( this% v_euler_x ))THEN
+ !     DEALLOCATE( this% v_euler_x, STAT= ios, &
+ !             ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...deallocation error for array v_euler_x ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
+ !   IF(ALLOCATED( this% v_euler_y ))THEN
+ !     DEALLOCATE( this% v_euler_y, STAT= ios, &
+ !             ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...deallocation error for array v_euler_y ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
+ !   IF(ALLOCATED( this% v_euler_z ))THEN
+ !     DEALLOCATE( this% v_euler_z, STAT= ios, &
+ !             ERRMSG= err_msg )
+ !     IF( ios > 0 )THEN
+ !        PRINT *, "...deallocation error for array v_euler_z ", &
+ !                 "The error message is", err_msg
+ !        STOP
+ !     ENDIF
+ !   ENDIF
 
   END PROCEDURE deallocate_bnsfuka_memory
 

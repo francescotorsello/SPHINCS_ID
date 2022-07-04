@@ -125,29 +125,29 @@ SUBMODULE (bns_fuka) access
 
       field_array= this% k_zz
 
-    CASE( "baryon_density" )
-
-      !field_array= this% mass_density
-
-    CASE( "energy_density" )
-
-      field_array= this% energy_density
-
-    CASE( "specific_energy" )
-
-      field_array= this% specific_energy
-
-    CASE( "v_euler_x" )
-
-      field_array= this% v_euler_x
-
-    CASE( "v_euler_y" )
-
-      field_array= this% v_euler_y
-
-    CASE( "v_euler_z" )
-
-      field_array= this% v_euler_z
+    !CASE( "baryon_density" )
+    !
+    !  !field_array= this% mass_density
+    !
+    !CASE( "pressure" )
+    !
+    !  field_array= this% pressure
+    !
+    !CASE( "specific_energy" )
+    !
+    !  field_array= this% specific_energy
+    !
+    !CASE( "v_euler_x" )
+    !
+    !  field_array= this% v_euler_x
+    !
+    !CASE( "v_euler_y" )
+    !
+    !  field_array= this% v_euler_y
+    !
+    !CASE( "v_euler_z" )
+    !
+    !  field_array= this% v_euler_z
 
     CASE DEFAULT
 
@@ -240,29 +240,29 @@ SUBMODULE (bns_fuka) access
 
       field_value= this% k_zz( n )
 
-    CASE( "baryon_density" )
-
-      !field_value= this% mass_density( n )
-
-    CASE( "energy_density" )
-
-      field_value= this% energy_density( n )
-
-    CASE( "specific_energy" )
-
-      field_value= this% specific_energy( n )
-
-    CASE( "v_euler_x" )
-
-      field_value= this% v_euler_x( n )
-
-    CASE( "v_euler_y" )
-
-      field_value= this% v_euler_y( n )
-
-    CASE( "v_euler_z" )
-
-      field_value= this% v_euler_z( n )
+    !CASE( "baryon_density" )
+    !
+    !  !field_value= this% mass_density( n )
+    !
+    !CASE( "pressure" )
+    !
+    !  field_value= this% pressure( n )
+    !
+    !CASE( "specific_energy" )
+    !
+    !  field_value= this% specific_energy( n )
+    !
+    !CASE( "v_euler_x" )
+    !
+    !  field_value= this% v_euler_x( n )
+    !
+    !CASE( "v_euler_y" )
+    !
+    !  field_value= this% v_euler_y( n )
+    !
+    !CASE( "v_euler_z" )
+    !
+    !  field_value= this% v_euler_z( n )
 
     CASE DEFAULT
 

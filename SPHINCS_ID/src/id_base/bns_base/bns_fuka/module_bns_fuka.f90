@@ -38,6 +38,7 @@ MODULE bns_fuka
                                          C_PTR, C_NULL_PTR, C_ASSOCIATED
   USE bns_base,                    ONLY: bnsbase
   USE id_base,                     ONLY: idbase
+  USE mesh_refinement,             ONLY: grid_function_scalar
   USE utility,                     ONLY: itr, ios, err_msg, test_status, &
                                          perc, creturn, compute_g4, &
                                          determinant_sym4x4, show_progress
@@ -146,9 +147,9 @@ MODULE bns_fuka
     !
 
     ! TODO: change "grid" to "lattice" for consistency
-    INTEGER:: nx_grid= 300
-    INTEGER:: ny_grid= 300
-    INTEGER:: nz_grid= 300
+    INTEGER:: nx_grid= 200
+    INTEGER:: ny_grid= 200
+    INTEGER:: nz_grid= 200
     TYPE(id_lattice), DIMENSION(2):: star_lattice
     !# Array storing two [[bns_fuka:id_lattice]] objects, one per star
 
@@ -196,24 +197,31 @@ MODULE bns_fuka
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_zz
 
     !
-    !-- Hydro fields
+    !-- Hydro fields stored on a refined mesh
     !
 
-    !> 1-D array storing the baryon mass density in the fluid frame [kg m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: mass_density
-    !> 1-D array storing the energy density [kg c^2 m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
-    !> 1-D array storing the specific internal energy [c^2]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: specific_energy
-    !> 1-D array storing the x component of the fluid 3-velocity with respect to
+    INTEGER, PUBLIC:: l_curr
+    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: mass_density
+    TYPE(grid_function_scalar), PUBLIC:: mass_density
+    !! 1-D array storing the baryon mass density in the fluid frame
+    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: pressure
+    TYPE(grid_function_scalar), PUBLIC:: pressure
+    !! 1-D array storing the pressure
+    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: specific_energy
+    TYPE(grid_function_scalar), PUBLIC:: specific_energy
+    !! 1-D array storing the specific internal energy
+    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: v_euler_x
+    TYPE(grid_function_scalar), PUBLIC:: v_euler_x
+    !# 1-D array storing the x component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_x
-    !> 1-D array storing the y component of the fluid 3-velocity with respect to
+    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: v_euler_y
+    TYPE(grid_function_scalar), PUBLIC:: v_euler_y
+    !# 1-D array storing the y component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_y
-    !> 1-D array storing the z component of the fluid 3-velocity with respect to
+    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: v_euler_z
+    TYPE(grid_function_scalar), PUBLIC:: v_euler_z
+    !# 1-D array storing the z component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_z
 
 
     DOUBLE PRECISION:: komar_mass
@@ -252,6 +260,10 @@ MODULE bns_fuka
 
     PROCEDURE:: allocate_bnsfuka_memory
     !! Allocates memory for the [[bnsfuka]] member arrays
+
+    PROCEDURE:: allocate_bnsfuka_hydro_memory
+    !# Allocates memory for the [[bnsfuka]] member 3D arrays storing the
+    !  hydrofields
 
     PROCEDURE:: deallocate_bnsfuka_memory
     !! Deallocates memory for the [[bnsfuka]] member arrays
@@ -446,6 +458,17 @@ MODULE bns_fuka
     END SUBROUTINE allocate_bnsfuka_memory
 
 
+    MODULE SUBROUTINE allocate_bnsfuka_hydro_memory( this, nx, ny, nz )
+    !! Allocates allocatable arrays member of a [[bnsfuka]] object
+
+      !> [[bnsfuka]] object which this PROCEDURE is a member of
+      CLASS(bnsfuka), INTENT( IN OUT ):: this
+      !> Dimensions of the arrays
+      INTEGER,    INTENT( IN )    :: nx, ny, nz
+
+    END SUBROUTINE allocate_bnsfuka_hydro_memory
+
+
     MODULE SUBROUTINE deallocate_bnsfuka_memory( this )
     !! Deallocates allocatable arrays member of a [[bnsfuka]] object
 
@@ -571,8 +594,8 @@ MODULE bns_fuka
                                          specific_energy, &
                                          pressure, &
                                          u_euler_x, u_euler_y, u_euler_z )
-    !# Stores the |id| in non [[bnsfuka]]-member arrays with the same shape as the
-    !  [[bnsfuka]] member arrays
+    !# Stores the |id| in non [[bnsfuka]]-member arrays with the same shape as
+    !  the [[bnsfuka]] member arrays
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
       CLASS(bnsfuka),                 INTENT( IN OUT ):: this
