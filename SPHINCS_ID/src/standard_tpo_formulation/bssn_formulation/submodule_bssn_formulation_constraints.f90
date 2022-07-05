@@ -45,7 +45,7 @@ SUBMODULE (bssn_formulation) constraints
   !-------------------!
 
 
-  MODULE PROCEDURE compute_and_export_bssn_constraints_grid
+  MODULE PROCEDURE compute_and_print_bssn_constraints_grid
 
     !***************************************************
     !
@@ -846,8 +846,8 @@ SUBMODULE (bssn_formulation) constraints
             ENDDO
           ENDDO
 
-          min_abs_y= 1D+20
-          min_abs_z= 1D+20
+          min_abs_y= HUGE(one)
+          min_abs_z= HUGE(one)
           DO k= 1, this% get_ngrid_z(l), 1
             DO j= 1, this% get_ngrid_y(l), 1
               DO i= 1, this% get_ngrid_x(l), 1
@@ -1352,10 +1352,10 @@ SUBMODULE (bssn_formulation) constraints
     END SUBROUTINE compute_stress_energy
 
 
-  END PROCEDURE compute_and_export_bssn_constraints_grid
+  END PROCEDURE compute_and_print_bssn_constraints_grid
 
 
-  MODULE PROCEDURE compute_and_export_bssn_constraints_particles
+  MODULE PROCEDURE compute_and_print_bssn_constraints_particles
 
     !**************************************************
     !
@@ -2385,7 +2385,7 @@ SUBMODULE (bssn_formulation) constraints
     ! kernel has to be tabulated only once in the present implementation
     counter= counter+ 1
 
-  END PROCEDURE compute_and_export_bssn_constraints_particles
+  END PROCEDURE compute_and_print_bssn_constraints_particles
 
 
 END SUBMODULE constraints

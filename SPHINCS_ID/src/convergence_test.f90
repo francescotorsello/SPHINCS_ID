@@ -344,7 +344,7 @@ PROGRAM convergence_test
     bssn_forms( itr3 )% export_form_xy= export_form_xy
     bssn_forms( itr3 )% export_form_x = export_form_x
     CALL bssn_forms( itr3 )% &
-                        compute_and_export_tpo_variables( namefile_bssn_bin )
+                        compute_and_print_tpo_variables( namefile_bssn_bin )
   ENDDO compute_export_bssn_loop
 
   !
@@ -436,7 +436,7 @@ PROGRAM convergence_test
       name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
       CALL bssn_forms( itr3 )% &
-                  compute_and_export_tpo_constraints( idata, &
+                  compute_and_print_tpo_constraints( idata, &
                                                       namefile_bssn, &
                                                       name_logfile )
 
@@ -463,7 +463,7 @@ PROGRAM convergence_test
       name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
       CALL bssn_forms( itr3 )% &
-                  compute_and_export_tpo_constraints( particles_dist, &
+                  compute_and_print_tpo_constraints( particles_dist, &
                                                       namefile_bssn, &
                                                       name_logfile )
 

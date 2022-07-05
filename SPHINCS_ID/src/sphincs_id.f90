@@ -361,7 +361,7 @@ PROGRAM sphincs_id
       bssn_forms( itr3 )% export_bin    = export_bin
 
       CALL bssn_forms( itr3 )% &
-                          compute_and_export_tpo_variables( namefile_bssn_bin )
+                          compute_and_print_tpo_variables( namefile_bssn_bin )
       !IF( bssn_forms( itr3 )% export_bin )THEN
       !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
       !  CALL bssn_forms( itr3 )% &
@@ -548,7 +548,7 @@ PROGRAM sphincs_id
           name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
           CALL bssn_forms( itr3 )% &
-                      compute_and_export_tpo_constraints( ids(itr3)% idata, &
+                      compute_and_print_tpo_constraints( ids(itr3)% idata, &
                                                           namefile_bssn, &
                                                           name_logfile )
 
@@ -586,7 +586,7 @@ PROGRAM sphincs_id
               name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
               CALL bssn_forms( itr3 )% &
-                          compute_and_export_tpo_constraints( &
+                          compute_and_print_tpo_constraints( &
                                                 particles_dist( itr3, itr4 ), &
                                                 namefile_bssn, &
                                                 name_logfile )

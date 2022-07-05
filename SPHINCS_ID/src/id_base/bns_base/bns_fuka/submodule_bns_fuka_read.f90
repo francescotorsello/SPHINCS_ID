@@ -1197,9 +1197,11 @@ SUBMODULE (bns_fuka) read
     !
     !************************************************
 
+    USE utility, ONLY: run_id
+
 #ifdef __INTEL_COMPILER
 
-  USE IFPORT, ONLY: CHANGEDIRQQ
+  USE IFPORT, ONLY: CHANGEDIRQQ, MAKEDIRQQ
 
 #endif
 
@@ -1217,13 +1219,14 @@ SUBMODULE (bns_fuka) read
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: grid_tmp
 
-    LOGICAL:: exist
+    LOGICAL:: exist, dir_out
     LOGICAL(4):: status
 
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_par
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_id
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_rank
     CHARACTER( LEN= : ), ALLOCATABLE:: dir_id
+    CHARACTER( LEN= : ), ALLOCATABLE:: run_id_str
     CHARACTER( LEN= 3 ):: mpi_ranks_str
 
     find_name_loop: DO i_char= LEN(filename), 1, -1
@@ -1352,6 +1355,31 @@ SUBMODULE (bns_fuka) read
     ! Delete the parameter file that specifies the lattice
     CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_par))
 
+    ! Create temporary directory to store the temporary ID files
+    ! (needed if multiple jobs are run at the same time, to not mix the files)
+!#ifdef __INTEL_COMPILER
+!
+!  INQUIRE( DIRECTORY= TRIM(run_id), EXIST= exist )
+!  IF( .NOT.exist )THEN
+!    dir_out= MAKEDIRQQ( TRIM(run_id) )
+!  ELSE
+!    dir_out= .TRUE.
+!  ENDIF
+!  IF( .NOT.dir_out )THEN
+!    PRINT *, "** ERROR! Failed to temporary subdirectory ", TRIM(run_id)
+!    PRINT *, "Stopping..."
+!    PRINT *
+!    STOP
+!  ENDIF
+!
+!#endif
+!
+!#ifdef __GFORTRAN__
+!
+!  CALL EXECUTE_COMMAND_LINE("mkdir "//TRIM(run_id))
+!
+!#endif
+
     ! Allocate memory
     IF(.NOT.ALLOCATED(grid_tmp)) ALLOCATE(grid_tmp(nx*ny*nz, n_fields_fuka))
 
@@ -1467,10 +1495,28 @@ SUBMODULE (bns_fuka) read
 
       ! Close file and delete it
       CLOSE( unit_rank(i_file + 1) )
-      CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
+      !CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
 
     ENDDO loop_over_id_files
     !$OMP END PARALLEL DO
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( mpi_ranks ) &
+    !$OMP             PRIVATE( i_file, filename_rank, mpi_ranks_str )
+    delete_id_files_loop: DO i_file= 0, mpi_ranks - 1, 1
+
+      IF( i_file <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) i_file
+      IF( i_file >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) i_file
+      IF( i_file >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) i_file
+      filename_rank= "id-"//TRIM(mpi_ranks_str)//".dat"
+
+      CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
+
+    ENDDO delete_id_files_loop
+    !$OMP END PARALLEL DO
+
+    ! Delete temporary directory
+    !CALL EXECUTE_COMMAND_LINE("rm -rf "//TRIM(run_id))
 
     ! Store fields in desired format (needed by trilinear_interpolation
     ! in MODULE numerics)

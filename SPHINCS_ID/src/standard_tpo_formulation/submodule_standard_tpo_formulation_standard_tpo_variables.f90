@@ -60,6 +60,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     !  spacings.                                     *
     !                                                *
     !  FT 22.10.2020                                 *
+    !  Last updated: FT 05.07.2022                   *
     !                                                *
     !*************************************************
 
@@ -268,6 +269,9 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     !-- strictly positive
     !
     DO l= 1, ftpo% nlevels, 1
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( ftpo, l ) &
+      !$OMP             PRIVATE( i, j, k, detg )
       DO k= 1, ftpo% get_ngrid_z(l), 1
         DO j= 1, ftpo% get_ngrid_y(l), 1
           DO i= 1, ftpo% get_ngrid_x(l), 1
@@ -328,6 +332,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
           ENDDO
         ENDDO
       ENDDO
+      !$OMP END PARALLEL DO
     ENDDO
 
     IF( .NOT.ALLOCATED( ftpo% HC_int ))THEN
