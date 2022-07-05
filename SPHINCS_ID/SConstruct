@@ -259,6 +259,7 @@ module_bssn_formulation = [
   'module_bssn_formulation.f90',
   'submodule_bssn_formulation_constructor.f90',
   'submodule_bssn_formulation_memory.f90',
+  'submodule_bssn_formulation_io.f90',
   'submodule_bssn_formulation_bssn_variables.f90',
   'submodule_bssn_formulation_constraints.f90',
   'submodule_bssn_formulation_ricci.f90',
