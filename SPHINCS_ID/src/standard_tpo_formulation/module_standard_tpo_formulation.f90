@@ -323,32 +323,32 @@ MODULE standard_tpo_formulation
   END TYPE tpo
 
   !
-  !-- Interface of the cores of the constructors and destructos of TYPES
+  !-- Interface of the cores of the constructors and destructors of TYPES
   !-- derived from tpo
   !-- Their implementations are in submodule tpo_methods.f90
   !
   INTERFACE
 
-    MODULE SUBROUTINE setup_standard_tpo_variables( ftpo, id, dx, dy, dz )
+    MODULE SUBROUTINE setup_standard_tpo_variables( tpof, id, dx, dy, dz )
 
       CLASS(idbase),    INTENT( IN OUT ):: id
-      CLASS(tpo), INTENT( IN OUT ):: ftpo
+      CLASS(tpo), INTENT( IN OUT ):: tpof
       DOUBLE PRECISION, OPTIONAL         :: dx, dy, dz
 
     END SUBROUTINE setup_standard_tpo_variables
 
- !   MODULE SUBROUTINE construct_tpo_bns_spacings( ftpo, id, &
+ !   MODULE SUBROUTINE construct_tpo_bns_spacings( tpof, id, &
  !                                                        dx, dy, dz )
  !
  !     CLASS(bns),        INTENT( IN OUT ):: id
- !     CLASS(tpo), INTENT( IN OUT ):: ftpo
+ !     CLASS(tpo), INTENT( IN OUT ):: tpof
  !     DOUBLE PRECISION,  INTENT( IN )    :: dx, dy, dz
  !
  !   END SUBROUTINE construct_tpo_bns_spacings
 
-    MODULE SUBROUTINE deallocate_standard_tpo_variables( ftpo )
+    MODULE SUBROUTINE deallocate_standard_tpo_variables( tpof )
 
-      CLASS(tpo), INTENT( IN OUT ):: ftpo
+      CLASS(tpo), INTENT( IN OUT ):: tpof
 
     END SUBROUTINE deallocate_standard_tpo_variables
 

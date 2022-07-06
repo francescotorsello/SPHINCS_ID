@@ -319,9 +319,10 @@ SUBMODULE (bns_fuka) read
 
     IMPLICIT NONE
 
-    INTEGER:: mpi_ranks
+    DOUBLE PRECISION, PARAMETER:: tol= 1.D-10
     LOGICAL, PARAMETER:: debug= .FALSE.
 
+    INTEGER:: mpi_ranks
     INTEGER:: i, j, k
 
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
@@ -420,6 +421,34 @@ SUBMODULE (bns_fuka) read
           !g( i, j, k, jxy )= zero
           !g( i, j, k, jxz )= zero
           !g( i, j, k, jyz )= zero
+
+          IF(     ABS((pos(i,j,k,jx)-id_tmp(i,j,k,id$x))) > tol &
+             .OR. ABS((pos(i,j,k,jy)-id_tmp(i,j,k,id$y))) > tol &
+             .OR. ABS((pos(i,j,k,jz)-id_tmp(i,j,k,id$z))) > tol &
+          )THEN
+
+            PRINT *, "** ERROR! The grid points of the gravity grid are not ", &
+                     "the same as those at which the FUKA ID was read!"
+            PRINT *, " * Please check the implementation of SUBROUTINE ", &
+                     "read_fuka_id_spacetime."
+            PRINT *, " * indices= (i,j,k)= (", i, ",", j,",", k, ")"
+            PRINT *, " * gravity grid point= ",  pos(i,j,k,:)
+            PRINT *, " * Kadath reader point= ", id_tmp(i,j,k,id$x:id$z)
+            PRINT *, " * Absolute differences between the components: "
+            PRINT *, "   ", &
+                     ABS((pos(i,j,k,jx)-id_tmp(i,j,k,id$x)))
+            PRINT *, "   ", &
+                     ABS((pos(i,j,k,jy)-id_tmp(i,j,k,id$y)))
+            PRINT *, "   ", &
+                     ABS((pos(i,j,k,jz)-id_tmp(i,j,k,id$z)))
+            PRINT *, "   (Absolute differences are used rather than ", &
+                     "relative ones, so that points with coordinates ", &
+                     "equal, or very close to, zero can be compared.)"
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
+
+          ENDIF
 
           !
           !- Set/unset the geodesic gauge
@@ -1209,7 +1238,7 @@ SUBMODULE (bns_fuka) read
 
     INTEGER, PARAMETER:: unit_par= 3480
 
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     INTEGER:: ios, i_char, i_file, i_field, i, j, k, i_rank
     INTEGER:: nlines, npoints_prev, nz_rem, nz_prev, n_first_ranks, &
@@ -1495,7 +1524,6 @@ SUBMODULE (bns_fuka) read
 
       ! Close file and delete it
       CLOSE( unit_rank(i_file + 1) )
-      !CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
 
     ENDDO loop_over_id_files
     !$OMP END PARALLEL DO
@@ -1611,12 +1639,12 @@ SUBMODULE (bns_fuka) read
     !
     !***********************************************
 
+    USE utility, ONLY: Msun_geo
 
     IMPLICIT NONE
 
-
-    DOUBLE PRECISION, PARAMETER:: stretch= 1.05D0
-    !! The lattices' sizes will be 5% larger than the radii of the stars
+    DOUBLE PRECISION, PARAMETER:: stretch= 1.02D0
+    !! The lattices' sizes will be 2% larger than the radii of the stars
 
     INTEGER:: nx
     INTEGER:: ny
@@ -1625,7 +1653,7 @@ SUBMODULE (bns_fuka) read
     INTEGER:: mpi_ranks
     !
 
-    DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
+    DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, dx, dy, dz
     DOUBLE PRECISION, DIMENSION(6):: sizes
     DOUBLE PRECISION, DIMENSION(3):: center
 
@@ -1670,6 +1698,21 @@ SUBMODULE (bns_fuka) read
       ymax= center(2) + stretch*sizes(4)
       zmin= center(3) - stretch*sizes(5)
       zmax= center(3) + stretch*sizes(6)
+
+      dx = ( xmax - xmin )/( nx - 1 );
+      dy = ( ymax - ymin )/( ny - 1 );
+      dz = ( zmax - zmin )/( nz - 1 );
+
+      PRINT *, "** Reading FUKA BNS ID on a lattice around star ", i_star
+      PRINT *, " * The lattice has (nx,ny,nz)= (", nx, ", ", ny, ", ", nz, ")",&
+               " points,"
+      PRINT *, "   with spacings (dx,dy,dz)= (", dx, ", ", dy, ", ", &
+               dz, ") Msun_geo= (", dx*Msun_geo, ", ", dy*Msun_geo, ", ", &
+               dz*Msun_geo, ") km."
+      PRINT *, " * There are ", &
+               FLOOR( ABS(center(1) + sizes(2) - center(1) + sizes(1))/dx ), &
+               " points across the x-diameter of the star."
+      PRINT *
 
       CALL this% run_kadath_reader( mpi_ranks, nx, ny, nz                    , &
                                   xmin, xmax, ymin, ymax, zmin, zmax         , &

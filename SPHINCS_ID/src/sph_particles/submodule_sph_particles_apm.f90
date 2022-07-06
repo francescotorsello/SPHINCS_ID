@@ -1231,7 +1231,7 @@ SUBMODULE (sph_particles) apm
         IF( nuratio_cnt >= nuratio_max_steps .OR. itr == apm_max_it )THEN
 
           PRINT *, " * Exit condition satisfied: the baryon number ratio ", &
-                   "did not change by more than ", nuratio_tol, &
+                   "did not change by more than ", nuratio_tol*ten*ten, &
                    "% for ", nuratio_max_steps, "steps."
           PRINT *
           EXIT
