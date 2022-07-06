@@ -1254,9 +1254,28 @@ SUBMODULE (bns_fuka) read
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_par
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_id
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_rank
+    CHARACTER( LEN= : ), ALLOCATABLE:: work_dir
     CHARACTER( LEN= : ), ALLOCATABLE:: dir_id
-    CHARACTER( LEN= : ), ALLOCATABLE:: run_id_str
+    CHARACTER( LEN= 3 ):: size_run_id_str
     CHARACTER( LEN= 3 ):: mpi_ranks_str
+
+#ifdef working_dir
+
+#define _STRINGIZE(x) #x
+#define STRINGIZE(x) _STRINGIZE(x)
+
+  work_dir= STRINGIZE(working_dir)
+
+#else
+
+  PRINT *, "** ERROR! No value assigned to the variable working_dir in the ", &
+           "SConstruct file! Please assign a value to it!"
+  PRINT *, " * Stopping..."
+  PRINT *
+  STOP
+
+#endif
+
 
     find_name_loop: DO i_char= LEN(filename), 1, -1
 
@@ -1268,22 +1287,67 @@ SUBMODULE (bns_fuka) read
 
     ENDDO find_name_loop
 
-    filename_par= "lattice_par.dat"
 
-    INQUIRE( FILE= TRIM(dir_id//filename_par), EXIST= exist )
+! Change working directory to where the FUKA ID files and the
+! Kadath reader are stored (they must be in the same directory)
+#ifdef __INTEL_COMPILER
+
+  status= CHANGEDIRQQ(work_dir//"/"//dir_id)!"/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/"//dir_id)
+  IF( status == .FALSE. )THEN
+    PRINT *, "** ERROR! Unable to change directory to ", work_dir//dir_id, &
+           "in SUBROUTINE set_up_lattices_around_stars!"
+    PRINT *, " * Stopping..."
+    PRINT *
+    STOP
+  ENDIF
+
+#endif
+#ifdef __GFORTRAN__
+
+  CALL CHDIR(dir_id)
+
+#endif
+
+! Create temporary directory to store the temporary ID files
+! (needed if multiple jobs are run at the same time, to not mix the files)
+#ifdef __INTEL_COMPILER
+
+  INQUIRE( DIRECTORY= TRIM(run_id), EXIST= exist )
+  IF( .NOT.exist )THEN
+    dir_out= MAKEDIRQQ( TRIM(run_id) )
+  ELSE
+    dir_out= .TRUE.
+  ENDIF
+  IF( .NOT.dir_out )THEN
+    PRINT *, "** ERROR! Failed to temporary subdirectory ", TRIM(run_id)
+    PRINT *, "Stopping..."
+    PRINT *
+    STOP
+  ENDIF
+
+#endif
+#ifdef __GFORTRAN__
+
+  CALL EXECUTE_COMMAND_LINE("mkdir "//TRIM(run_id))
+
+#endif
+
+    filename_par= TRIM(run_id)//"/lattice_par.dat"
+
+    INQUIRE( FILE= TRIM(filename_par), EXIST= exist )
 
     IF( exist )THEN
-        OPEN( UNIT= unit_par, FILE= TRIM(dir_id//filename_par), &
+        OPEN( UNIT= unit_par, FILE= TRIM(filename_par), &
               STATUS= "REPLACE", FORM= "FORMATTED", &
               POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
               IOMSG= err_msg )
     ELSE
-        OPEN( UNIT= unit_par, FILE= TRIM(dir_id//filename_par), &
+        OPEN( UNIT= unit_par, FILE= TRIM(filename_par), &
               STATUS= "NEW", FORM= "FORMATTED", &
               ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
     IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM(dir_id//filename_par), &
+      PRINT *, "...error when opening " // TRIM(filename_par), &
                ". The error message is", err_msg
       STOP
     ENDIF
@@ -1292,122 +1356,79 @@ SUBMODULE (bns_fuka) read
       TRIM(filename_id)
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) xmin
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) xmax
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ymin
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ymax
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) zmin
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) zmax
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) nx
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) ny
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
     WRITE( UNIT = unit_par, IOSTAT = ios, IOMSG = err_msg, FMT = * ) nz
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in ", &
-               TRIM(dir_id//filename_par), ". The error message is", err_msg
+               TRIM(filename_par), ". The error message is", err_msg
       STOP
     ENDIF
 
     CLOSE( UNIT= unit_par )
 
-    ! Change working directory to where the FUKA ID files and the
-    ! Kadath reader are stored (they must be in the same directory)
-
-#ifdef __INTEL_COMPILER
-
-  status= CHANGEDIRQQ("/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/"//dir_id)
-  IF( status == .FALSE. )THEN
-  PRINT *, "** ERROR! Unable to change directory in SUBROUTINE ", &
-           "set_up_lattices_around_stars!"
-  PRINT *, " * Stopping..."
-  PRINT *
-  STOP
-  ENDIF
-
-#endif
-
-#ifdef __GFORTRAN__
-
-  CALL CHDIR(dir_id)
-
-#endif
-
     ! Run the MPI parallelized Kadath reader
     IF( mpi_ranks <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) mpi_ranks
     IF( mpi_ranks >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) mpi_ranks
     IF( mpi_ranks >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) mpi_ranks
+    IF( mpi_ranks <= 9   ) WRITE( size_run_id_str, '(I1)' ) LEN(run_id)
+    IF( mpi_ranks >= 10  ) WRITE( size_run_id_str, '(I2)' ) LEN(run_id)
+    IF( mpi_ranks >= 100 ) WRITE( size_run_id_str, '(I3)' ) LEN(run_id)
+
     CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)// &
-                              " export_bns_test")
+                              " export_bns_test "//TRIM(run_id))
 
     ! Delete the parameter file that specifies the lattice
     CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_par))
-
-    ! Create temporary directory to store the temporary ID files
-    ! (needed if multiple jobs are run at the same time, to not mix the files)
-!#ifdef __INTEL_COMPILER
-!
-!  INQUIRE( DIRECTORY= TRIM(run_id), EXIST= exist )
-!  IF( .NOT.exist )THEN
-!    dir_out= MAKEDIRQQ( TRIM(run_id) )
-!  ELSE
-!    dir_out= .TRUE.
-!  ENDIF
-!  IF( .NOT.dir_out )THEN
-!    PRINT *, "** ERROR! Failed to temporary subdirectory ", TRIM(run_id)
-!    PRINT *, "Stopping..."
-!    PRINT *
-!    STOP
-!  ENDIF
-!
-!#endif
-!
-!#ifdef __GFORTRAN__
-!
-!  CALL EXECUTE_COMMAND_LINE("mkdir "//TRIM(run_id))
-!
-!#endif
 
     ! Allocate memory
     IF(.NOT.ALLOCATED(grid_tmp)) ALLOCATE(grid_tmp(nx*ny*nz, n_fields_fuka))
@@ -1437,7 +1458,7 @@ SUBMODULE (bns_fuka) read
     ! (one per MPI rank)
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( grid_tmp, mpi_ranks, nx, ny, nz_rank, &
-    !$OMP                     n_first_ranks ) &
+    !$OMP                     n_first_ranks, run_id ) &
     !$OMP             PRIVATE( i_file, i, filename_rank, mpi_ranks_str, &
     !$OMP                      unit_rank, nlines, ios, npoints_prev, exist, &
     !$OMP                      err_msg, unit_rank_prev )
@@ -1446,7 +1467,7 @@ SUBMODULE (bns_fuka) read
       IF( i_file <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) i_file
       IF( i_file >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) i_file
       IF( i_file >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) i_file
-      filename_rank= "id-"//TRIM(mpi_ranks_str)//".dat"
+      filename_rank= TRIM(run_id)//"/id-"//TRIM(mpi_ranks_str)//".dat"
 
       unit_rank(i_file + 1)= 8346 + i_file
 
@@ -1529,14 +1550,14 @@ SUBMODULE (bns_fuka) read
     !$OMP END PARALLEL DO
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( mpi_ranks ) &
+    !$OMP             SHARED( mpi_ranks, run_id ) &
     !$OMP             PRIVATE( i_file, filename_rank, mpi_ranks_str )
     delete_id_files_loop: DO i_file= 0, mpi_ranks - 1, 1
 
       IF( i_file <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) i_file
       IF( i_file >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) i_file
       IF( i_file >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) i_file
-      filename_rank= "id-"//TRIM(mpi_ranks_str)//".dat"
+      filename_rank= TRIM(run_id)//"/id-"//TRIM(mpi_ranks_str)//".dat"
 
       CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
 
@@ -1544,7 +1565,7 @@ SUBMODULE (bns_fuka) read
     !$OMP END PARALLEL DO
 
     ! Delete temporary directory
-    !CALL EXECUTE_COMMAND_LINE("rm -rf "//TRIM(run_id))
+    CALL EXECUTE_COMMAND_LINE("rm -rf "//TRIM(run_id))
 
     ! Store fields in desired format (needed by trilinear_interpolation
     ! in MODULE numerics)
@@ -1609,7 +1630,7 @@ SUBMODULE (bns_fuka) read
 
 #ifdef __INTEL_COMPILER
 
-  status= CHANGEDIRQQ("/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/")
+  status= CHANGEDIRQQ(work_dir)!"/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/")
   IF( status == .FALSE. )THEN
   PRINT *, "** ERROR! Unable to change directory in SUBROUTINE ", &
        "set_up_lattices_around_stars!"

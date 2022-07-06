@@ -664,7 +664,7 @@ if flavour == interpolate_flavour: #
 env['F90FILESUFFIXES']=['.f90','.f']
 
 build_mpi = '-DMPI_ranks=' + MPI_ranks
-build_dir = '-Dwork_dir=' + working_dir
+build_dir = '-Dworking_dir=' + working_dir
 
 # Fortran compiler
 env['F90'] = fortran_compiler
