@@ -1259,6 +1259,7 @@ SUBMODULE (bns_fuka) read
     CHARACTER( LEN= 3 ):: size_run_id_str
     CHARACTER( LEN= 3 ):: mpi_ranks_str
 
+! Get the path to the working directory from the precompiler variable
 #ifdef working_dir
 
 #define _STRINGIZE(x) #x
@@ -1276,7 +1277,8 @@ SUBMODULE (bns_fuka) read
 
 #endif
 
-
+    ! Get the names of the ID file and the directory where it is stored,
+    ! relative to the working directory
     find_name_loop: DO i_char= LEN(filename), 1, -1
 
       IF( filename(i_char:i_char) == "/" )THEN
@@ -1304,7 +1306,7 @@ SUBMODULE (bns_fuka) read
 #endif
 #ifdef __GFORTRAN__
 
-  CALL CHDIR(dir_id)
+  CALL CHDIR(work_dir//"/"//dir_id)
 
 #endif
 
@@ -1332,6 +1334,8 @@ SUBMODULE (bns_fuka) read
 
 #endif
 
+    ! Print the parameter file to be read by the Kadath reader, to produce
+    ! the desired lattice in Kadath
     filename_par= TRIM(run_id)//"/lattice_par.dat"
 
     INQUIRE( FILE= TRIM(filename_par), EXIST= exist )
@@ -1416,7 +1420,7 @@ SUBMODULE (bns_fuka) read
 
     CLOSE( UNIT= unit_par )
 
-    ! Run the MPI parallelized Kadath reader
+    ! Define the parameters for the Kadath reader
     IF( mpi_ranks <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) mpi_ranks
     IF( mpi_ranks >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) mpi_ranks
     IF( mpi_ranks >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) mpi_ranks
@@ -1424,6 +1428,7 @@ SUBMODULE (bns_fuka) read
     IF( mpi_ranks >= 10  ) WRITE( size_run_id_str, '(I2)' ) LEN(run_id)
     IF( mpi_ranks >= 100 ) WRITE( size_run_id_str, '(I3)' ) LEN(run_id)
 
+    ! Run the MPI parallelized Kadath reader
     CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)// &
                               " export_bns_test "//TRIM(run_id))
 
@@ -1433,6 +1438,8 @@ SUBMODULE (bns_fuka) read
     ! Allocate memory
     IF(.NOT.ALLOCATED(grid_tmp)) ALLOCATE(grid_tmp(nx*ny*nz, n_fields_fuka))
 
+    ! Get sizes of the ID files printed by each MPI rank of the Kadath reader
+    ! (the same quantities are defined in the Kadath reader itself)
     nz_rank      = nz/mpi_ranks
     nz_rem       = MOD(nz,mpi_ranks)
     n_last_rank  = mpi_ranks - 1;
@@ -1483,45 +1490,10 @@ SUBMODULE (bns_fuka) read
         STOP
       ENDIF
 
-      ! Get total number of lines in the file
+      ! Compute total number of lines in the file
       nlines = nx*ny*nz_rank(i_file+1)
-    ! DO
-    !   READ( unit_rank(i_file + 1), * , IOSTAT= ios )
-    !   IF ( ios /= 0 ) EXIT
-    !   nlines = nlines + 1
-    ! ENDDO
-    ! CLOSE( UNIT= unit_rank(i_file + 1) )
-    ! OPEN( unit_rank(i_file + 1), FILE= TRIM(filename_rank), &
-    !       FORM= "FORMATTED", ACTION= "READ" )
-    !
-    ! ! Neglect header
-    ! nlines= nlines - 1
-    !
-    ! !
-    ! IF( i_file == mpi_ranks - 1 )THEN
-    !
-    !   unit_rank_prev= unit_rank(i_file + 1) + 1
-    !
-    !   OPEN( unit_rank_prev, FILE= TRIM("id-0.dat"), &
-    !         FORM= "FORMATTED", ACTION= "READ" )
-    !
-    !   nlines_prev = 0
-    !   DO
-    !     READ( unit_rank_prev, * , IOSTAT= ios )
-    !     IF ( ios /= 0 ) EXIT
-    !     nlines_prev = nlines_prev + 1
-    !   ENDDO
-    !
-    !   CLOSE(unit_rank_prev)
-    !
-    !    ! Neglect header
-    !    nlines_prev= nlines_prev - 1
-    !
-    !  ELSE
-    !
-    !    nlines_prev= nlines
-    !
-    !  ENDIF
+
+      ! Compute location of each rank in the temporary array
       IF( i_file < n_first_ranks )THEN
         npoints_prev= i_file*nx*ny*nz_rank(i_file+1)
       ELSEIF( i_file == n_first_ranks )THEN
@@ -1538,6 +1510,7 @@ SUBMODULE (bns_fuka) read
 
       ! Skip header
       READ( unit_rank(i_file + 1), * )
+      ! Read the ID
       DO i= 1, nlines, 1
         READ( UNIT= unit_rank(i_file + 1), FMT= *, IOSTAT = ios, &
               IOMSG= err_msg ) grid_tmp( npoints_prev + i, : )
@@ -1549,6 +1522,8 @@ SUBMODULE (bns_fuka) read
     ENDDO loop_over_id_files
     !$OMP END PARALLEL DO
 
+    ! Delete the temporary ID files (if done in the previous parallel loop,
+    ! conflicts between the various files appear)
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( mpi_ranks, run_id ) &
     !$OMP             PRIVATE( i_file, filename_rank, mpi_ranks_str )
@@ -1569,7 +1544,6 @@ SUBMODULE (bns_fuka) read
 
     ! Store fields in desired format (needed by trilinear_interpolation
     ! in MODULE numerics)
-
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( this, grid_tmp, nx, ny, nz, coords, lapse, &
     !$OMP                     shift_x, shift_y, shift_z, g_xx, g_xy, g_xz, &
@@ -1580,12 +1554,7 @@ SUBMODULE (bns_fuka) read
     DO k= 1, nz, 1
       DO j= 1, ny, 1
         DO i= 1, nx, 1
-          !DO i_field= 1, n_fields_fuka
-          !
-          !  id_fields( i, j, k, i_field )= &
-          !        grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, i_field )
-          !
-          !ENDDO
+
           coords    (i,j,k,id$x)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, id$x )
           coords    (i,j,k,id$y)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, id$y )
           coords    (i,j,k,id$z)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, id$z )
@@ -1621,16 +1590,16 @@ SUBMODULE (bns_fuka) read
             id$eulvely )
           v_eul_z        (i,j,k)= grid_tmp( (k-1)*ny*nx + (j-1)*nx + i, &
             id$eulvelz )
+
         ENDDO
       ENDDO
     ENDDO
     !$OMP END PARALLEL DO
 
-    ! Change working directory back to HOME_SPHINCS_ID
-
+! Change working directory back to the original path
 #ifdef __INTEL_COMPILER
 
-  status= CHANGEDIRQQ(work_dir)!"/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/")
+  status= CHANGEDIRQQ(work_dir)
   IF( status == .FALSE. )THEN
   PRINT *, "** ERROR! Unable to change directory in SUBROUTINE ", &
        "set_up_lattices_around_stars!"
@@ -1643,7 +1612,7 @@ SUBMODULE (bns_fuka) read
 
 #ifdef __GFORTRAN__
 
-  CALL CHDIR("/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/")
+  CALL CHDIR(work_dir)
 
 #endif
 
