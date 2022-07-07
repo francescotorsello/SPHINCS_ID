@@ -13,10 +13,12 @@
 !----------------------------------------------------------------!
 ! n_bns and the number of specified components of filenames must be the same
 n_id=1                          ! Number of physical systems to use
-common_path=!"lorene-id-files/"  ! Path to the directory containing the ID files
-            "fuka-id-files/"
+common_path="fuka-id-files/"
+            !"lorene-id-files/"  ! Path to the directory containing the ID files
+            !"fuka-id-files/"
             !"eccentric-ejecta-files/"
-filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
+filenames(1)="BNSFU_poly2.00_1.4-1.4_50km.info"
+             !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_mpa1_1.6-2_45km_1e-9.bin"
              !"BNSLO_apr3_1.4-2_35km.bin"
@@ -84,7 +86,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"DRSLO_apr4.bin"
              !"EJECT_ejecta_apr4_2516.dat"
-             "BNSFU_poly2.00_1.4-1.4_50km.info"
+             !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
 !--------------------------------------------------!
 ! Estimate typical length scales to be resolved    !
@@ -97,7 +99,7 @@ estimate_length_scale=.FALSE.
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -117,7 +119,7 @@ placer(1,:)=2                     ! 0: Read particle positions from formatted
 ! Choose to export data to binary and formatted files !
 !-----------------------------------------------------!
 export_bin=.TRUE.                ! Export ID to binary files
-export_form=.FALSE.               ! Export ID to formatted files
+export_form=.TRUE.               ! Export ID to formatted files
 export_form_xy=.TRUE.  ! Export only the ID on the xy plane to formatted files
 export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
                         ! irrespectively on the value of export_form_xy
@@ -132,9 +134,9 @@ compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping
                                    ! it to the grid
-export_constraints=.FALSE.         ! Export constraints and stress-energy tensor
+export_constraints=.TRUE.         ! Export constraints and stress-energy tensor
                                    ! to a formatted file
-export_constraints_details=.FALSE. ! Write a formatted file whose rows contain
+export_constraints_details=.TRUE. ! Write a formatted file whose rows contain
                                    ! the points at which the constraints
                                    ! have values within (-oo,1D-7], [1D-7,1D-6],
                                    ! [1D-6,1D-5], [1D-5,1D-4], [1D-4,1D-3],

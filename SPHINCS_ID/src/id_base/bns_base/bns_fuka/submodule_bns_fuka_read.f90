@@ -1240,7 +1240,7 @@ SUBMODULE (bns_fuka) read
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    INTEGER:: ios, i_char, i_file, i_field, i, j, k, i_rank
+    INTEGER:: ios, i_char, i_file, i_field, i, j, k, i_rank, nchars
     INTEGER:: nlines, npoints_prev, nz_rem, nz_prev, n_first_ranks, &
               n_last_rank, nz_rank(mpi_ranks)
     INTEGER, DIMENSION(mpi_ranks):: unit_rank
@@ -1253,19 +1253,36 @@ SUBMODULE (bns_fuka) read
 
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_par
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_id
-    CHARACTER( LEN= : ), ALLOCATABLE:: filename_rank
     CHARACTER( LEN= : ), ALLOCATABLE:: work_dir
     CHARACTER( LEN= : ), ALLOCATABLE:: dir_id
+    CHARACTER( LEN= 255 ):: tmp
     CHARACTER( LEN= 3 ):: size_run_id_str
     CHARACTER( LEN= 3 ):: mpi_ranks_str
+
+    TYPE namefile
+      CHARACTER( LEN= : ), ALLOCATABLE:: name
+    END TYPE namefile
+    TYPE(namefile), DIMENSION(mpi_ranks):: filenames_ranks
 
 ! Get the path to the working directory from the precompiler variable
 #ifdef working_dir
 
-#define _STRINGIZE(x) #x
-#define STRINGIZE(x) _STRINGIZE(x)
+#ifdef __GFORTRAN__
 
-  work_dir= STRINGIZE(working_dir)
+# define stringize_start(x) "&
+# define stringize_end(x) &x"
+
+  work_dir= stringize_start(working_dir)
+stringize_end(working_dir)
+
+#else
+
+#define stringize(x) tostring(x)
+#define tostring(x) #x
+
+  work_dir= stringize(working_dir)
+
+#endif
 
 #else
 
@@ -1289,6 +1306,8 @@ SUBMODULE (bns_fuka) read
 
     ENDDO find_name_loop
 
+PRINT *, filename_id
+PRINT *, dir_id
 
 ! Change working directory to where the FUKA ID files and the
 ! Kadath reader are stored (they must be in the same directory)
@@ -1307,6 +1326,12 @@ SUBMODULE (bns_fuka) read
 #ifdef __GFORTRAN__
 
   CALL CHDIR(work_dir//"/"//dir_id)
+
+  IF( debug )THEN
+    CALL GETCWD(tmp)
+    PRINT *, tmp
+    !STOP
+  ENDIF
 
 #endif
 
@@ -1424,9 +1449,9 @@ SUBMODULE (bns_fuka) read
     IF( mpi_ranks <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) mpi_ranks
     IF( mpi_ranks >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) mpi_ranks
     IF( mpi_ranks >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) mpi_ranks
-    IF( mpi_ranks <= 9   ) WRITE( size_run_id_str, '(I1)' ) LEN(run_id)
-    IF( mpi_ranks >= 10  ) WRITE( size_run_id_str, '(I2)' ) LEN(run_id)
-    IF( mpi_ranks >= 100 ) WRITE( size_run_id_str, '(I3)' ) LEN(run_id)
+    !IF( mpi_ranks <= 9   ) WRITE( size_run_id_str, '(I1)' ) LEN(run_id)
+    !IF( mpi_ranks >= 10  ) WRITE( size_run_id_str, '(I2)' ) LEN(run_id)
+    !IF( mpi_ranks >= 100 ) WRITE( size_run_id_str, '(I3)' ) LEN(run_id)
 
     ! Run the MPI parallelized Kadath reader
     CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)// &
@@ -1458,33 +1483,57 @@ SUBMODULE (bns_fuka) read
       PRINT *, "nz_rem=", nz_rem
       PRINT *, "n_last_rank=", n_last_rank
       PRINT *, "n_first_ranks=", n_first_ranks
+      PRINT *, "mpi_ranks=", mpi_ranks
       !STOP
     ENDIF
+
+    !CALL OMP_SET_NUM_THREADS(2)
+
+    !nchars= LEN(run_id) + 4 + FLOOR( LOG10( i_file ) ) + 1 + 4
+    !ALLOCATE( CHARACTER(nchars):: filename_rank(mpi_ranks) )
+
+    ! Write the names of the ASCII files printed by the reader
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( mpi_ranks, run_id, filenames_ranks ) &
+    !$OMP             PRIVATE( i_file, mpi_ranks_str, nchars )
+    write_filenames_loop: DO i_file= 0, mpi_ranks - 1, 1
+
+      IF( i_file <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) i_file
+      IF( i_file >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) i_file
+      IF( i_file >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) i_file
+
+      ! FLOOR(LOG10(x)) + 1 is the number of digits of x
+      nchars= LEN(run_id) + 4 + NINT(FLOOR(LOG10(DBLE(i_file+1)))+1.D0) + 4
+      ALLOCATE( CHARACTER(nchars):: filenames_ranks(i_file+1)% name )
+
+      filenames_ranks(i_file+1)% name= &
+        TRIM(run_id)//"/id-"//TRIM(mpi_ranks_str)//".dat"
+
+    ENDDO write_filenames_loop
+    !$OMP END PARALLEL DO
 
     ! Read the ID from the ASCII files printed by the reader
     ! (one per MPI rank)
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( grid_tmp, mpi_ranks, nx, ny, nz_rank, &
-    !$OMP                     n_first_ranks, run_id ) &
-    !$OMP             PRIVATE( i_file, i, filename_rank, mpi_ranks_str, &
+    !$OMP                     n_first_ranks, run_id, filenames_ranks ) &
+    !$OMP             PRIVATE( i_file, i, mpi_ranks_str, &
     !$OMP                      unit_rank, nlines, ios, npoints_prev, exist, &
     !$OMP                      err_msg, unit_rank_prev )
     loop_over_id_files: DO i_file= 0, mpi_ranks - 1, 1
 
-      IF( i_file <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) i_file
-      IF( i_file >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) i_file
-      IF( i_file >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) i_file
-      filename_rank= TRIM(run_id)//"/id-"//TRIM(mpi_ranks_str)//".dat"
-
       unit_rank(i_file + 1)= 8346 + i_file
 
-      INQUIRE( FILE= TRIM(filename_rank), EXIST= exist )
+      INQUIRE( FILE= TRIM(filenames_ranks(i_file+1)% name), EXIST= exist )
+      iF( debug ) PRINT *, exist
       IF( exist )THEN
-        OPEN( unit_rank(i_file + 1), FILE= TRIM(filename_rank), &
+        IF( debug ) PRINT *, TRIM(filenames_ranks(i_file+1)% name)
+        OPEN( unit_rank(i_file + 1), &
+              FILE= TRIM(filenames_ranks(i_file+1)% name), &
               FORM= "FORMATTED", ACTION= "READ" )
       ELSE
         PRINT *
-        PRINT *, "** ERROR: ", TRIM(filename_rank), &
+        PRINT *, "** ERROR: ", TRIM(filenames_ranks(i_file+1)% name), &
                  " file not found!"
         PRINT *
         STOP
@@ -1525,16 +1574,14 @@ SUBMODULE (bns_fuka) read
     ! Delete the temporary ID files (if done in the previous parallel loop,
     ! conflicts between the various files appear)
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( mpi_ranks, run_id ) &
-    !$OMP             PRIVATE( i_file, filename_rank, mpi_ranks_str )
+    !$OMP             SHARED( mpi_ranks, run_id, filenames_ranks ) &
+    !$OMP             PRIVATE( i_file, mpi_ranks_str )
     delete_id_files_loop: DO i_file= 0, mpi_ranks - 1, 1
 
-      IF( i_file <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) i_file
-      IF( i_file >= 10  ) WRITE( mpi_ranks_str, '(I2)' ) i_file
-      IF( i_file >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) i_file
-      filename_rank= TRIM(run_id)//"/id-"//TRIM(mpi_ranks_str)//".dat"
+      CALL EXECUTE_COMMAND_LINE("rm -f "// &
+                                TRIM(filenames_ranks(i_file+1)% name))
 
-      CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_rank))
+      DEALLOCATE( filenames_ranks(i_file+1)% name )
 
     ENDDO delete_id_files_loop
     !$OMP END PARALLEL DO
@@ -1613,6 +1660,12 @@ SUBMODULE (bns_fuka) read
 #ifdef __GFORTRAN__
 
   CALL CHDIR(work_dir)
+
+  IF( debug )THEN
+    CALL GETCWD(tmp)
+    PRINT *, tmp
+    !STOP
+  ENDIF
 
 #endif
 

@@ -80,6 +80,7 @@ default_verbose = 'FALSE'
 #             file, so that the necessary modules are loaded to the user's local
 #             environment on Sunrise:
 #   module load -openmpi3 +openmpi4 +gsl +fftw +scalapack +libgfortran +pgplot
+#   TODO: add modules needed by FUKA
 current_host= socket.gethostname()
 
 if current_host == 'r30' or current_host == 'r31' or current_host == 'r32':

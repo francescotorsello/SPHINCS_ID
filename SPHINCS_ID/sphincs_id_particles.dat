@@ -12,7 +12,7 @@
 !------------------------------------------------------------------------!
 parts_pos_path="pos-archive/"     ! Path to the directory containing the
                                   ! formatted files with the particle positions
-parts_pos=!"apm-pos-nu_1215_45km_mpa1_2M.dat"
+parts_pos="apm-pos-nu_1215_45km_mpa1_2M.dat"
           !"apm-pos-nu_1215_45km_mpa1_500k.dat"
           !"apm-pos-nu_1313_45km_ms1b_500k.dat"
           !"apm-pos-nu_1313_45km_ms1b_2M.dat"
@@ -37,7 +37,7 @@ parts_pos=!"apm-pos-nu_1215_45km_mpa1_2M.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm200-atm.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
-          "apm-pos-nu_BNSFU_1.4-1.4_50km_poly2.00_500k.dat"
+          !"apm-pos-nu_BNSFU_1.4-1.4_50km_poly2.00_500k.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
