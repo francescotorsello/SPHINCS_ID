@@ -1294,9 +1294,9 @@ SUBMODULE (bns_fuka) read
 ! Kadath reader are stored (they must be in the same directory)
 #ifdef __INTEL_COMPILER
 
-  status= CHANGEDIRQQ(work_dir//"/"//dir_id)!"/disk/stero-1/ftors/SPHINCS/sphincs_repository/SPHINCS_ID/"//dir_id)
+  status= CHANGEDIRQQ(work_dir//"/"//dir_id)
   IF( status == .FALSE. )THEN
-    PRINT *, "** ERROR! Unable to change directory to ", work_dir//dir_id, &
+    PRINT *, "** ERROR! Unable to change directory to ", work_dir//"/"//dir_id,&
            "in SUBROUTINE set_up_lattices_around_stars!"
     PRINT *, " * Stopping..."
     PRINT *
