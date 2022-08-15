@@ -60,6 +60,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     !  spacings.                                     *
     !                                                *
     !  FT 22.10.2020                                 *
+    !  Last updated: FT 05.07.2022                   *
     !                                                *
     !*************************************************
 
@@ -67,6 +68,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                                 allocate_grid_function, &
                                 deallocate_grid_function, &
                                 coords, rad_coord
+    USE bns_fuka,         ONLY: bnsfuka
     !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
     USE tensor,           ONLY: jxx, jxy, jxz, &
                                 jyy, jyz, jzz, n_sym3x3
@@ -86,15 +88,15 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),6):: sizes
 
     ! Get the number of matter objects in the physical system
-    ftpo% n_matter= id% get_n_matter()
+    tpof% n_matter= id% get_n_matter()
 
     !
     !-- Initialize timers
     !
-    ftpo% grid_timer    = timer( "grid_timer" )
-    ftpo% importer_timer= timer( "importer_timer" )
+    tpof% grid_timer    = timer( "grid_timer" )
+    tpof% importer_timer= timer( "importer_timer" )
 
-    CALL ftpo% grid_timer% start_timer()
+    CALL tpof% grid_timer% start_timer()
 
     IF( PRESENT(dx) .AND. PRESENT(dy) .AND. PRESENT(dz) )THEN
 
@@ -134,28 +136,28 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
     ENDIF
 
-    CALL allocate_grid_function( ftpo% coords,    "coords_id", 3 )
-    CALL allocate_grid_function( ftpo% rad_coord, 'rad_coord_id', 1 )
+    CALL allocate_grid_function( tpof% coords,    "coords_id", 3 )
+    CALL allocate_grid_function( tpof% rad_coord, 'rad_coord_id', 1 )
 
-    ftpo% nlevels= nlevels
-    ftpo% levels = levels
+    tpof% nlevels= nlevels
+    tpof% levels = levels
 
-    ALLOCATE( ftpo% npoints_xaxis( ftpo% n_matter ) )
+    ALLOCATE( tpof% npoints_xaxis( tpof% n_matter ) )
 
-    DO i_matter= 1, ftpo% n_matter, 1
+    DO i_matter= 1, tpof% n_matter, 1
 
       sizes(i_matter,:)= id% return_spatial_extent(i_matter)
 
-      ftpo% npoints_xaxis(i_matter)= FLOOR( ( sizes(i_matter,1) &
+      tpof% npoints_xaxis(i_matter)= FLOOR( ( sizes(i_matter,1) &
                                             + sizes(i_matter,2) ) &
-                                              /ftpo% get_dx( ftpo% nlevels ) )
+                                              /tpof% get_dx( tpof% nlevels ) )
 
     ENDDO
 
-    ref_levels: DO l= 1, ftpo% nlevels
+    ref_levels: DO l= 1, tpof% nlevels
 
-      ftpo% coords%    levels(l)% var= coords%    levels(l)% var
-      ftpo% rad_coord% levels(l)% var= rad_coord% levels(l)% var
+      tpof% coords%    levels(l)% var= coords%    levels(l)% var
+      tpof% rad_coord% levels(l)% var= rad_coord% levels(l)% var
 
     ENDDO ref_levels
     CALL deallocate_grid_function ( coords, 'coords' )
@@ -165,12 +167,26 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     !-- Allocating the memory for the grid functions
     !-- storing the spacetime ID at the grid points
     !
-    CALL allocate_grid_function( ftpo% lapse,      "lapse_id",      1 )
-    CALL allocate_grid_function( ftpo% shift_u,    "shift_u_id",    3 )
-    CALL allocate_grid_function( ftpo% g_phys3_ll, "g_phys3_ll_id", 6 )
-    CALL allocate_grid_function( ftpo% K_phys3_ll, "K_phys3_ll_id", 6 )
+    CALL allocate_grid_function( tpof% lapse,      "lapse_id",      1 )
+    CALL allocate_grid_function( tpof% shift_u,    "shift_u_id",    3 )
+    CALL allocate_grid_function( tpof% g_phys3_ll, "g_phys3_ll_id", 6 )
+    CALL allocate_grid_function( tpof% K_phys3_ll, "K_phys3_ll_id", 6 )
 
-    CALL ftpo% grid_timer% stop_timer()
+    CALL tpof% grid_timer% stop_timer()
+
+    SELECT TYPE( id )
+
+      TYPE IS( bnsfuka )
+
+        CALL allocate_grid_function( id% mass_density,"mass_density_fuka", 1 )
+        CALL allocate_grid_function( id% specific_energy, &
+                                     "specific_energy_fuka", 1 )
+        CALL allocate_grid_function( id% pressure, "pressure_fuka", 1 )
+        CALL allocate_grid_function( id% v_euler_x, "v_euler_x_fuka", 1 )
+        CALL allocate_grid_function( id% v_euler_y, "v_euler_y_fuka", 1 )
+        CALL allocate_grid_function( id% v_euler_z, "v_euler_z_fuka", 1 )
+
+    END SELECT
 
     !
     !-- Import the spacetime ID on the refined mesh,
@@ -179,73 +195,89 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     PRINT *
     PRINT *, "** Importing the spacetime ID on the refined mesh..."
     PRINT *
-    CALL ftpo% importer_timer% start_timer()
+    CALL tpof% importer_timer% start_timer()
 
-    ref_levels2: DO l= 1, ftpo% nlevels, 1
+    ref_levels2: DO l= 1, tpof% nlevels, 1
 
       PRINT *, " * Importing on refinement level l=", l, "..."
 
-      CALL id% read_id_spacetime( ftpo% get_ngrid_x(l), &
-                                  ftpo% get_ngrid_y(l), &
-                                  ftpo% get_ngrid_z(l), &
-                                  ftpo% coords%     levels(l)% var, &
-                                  ftpo% lapse%      levels(l)% var, &
-                                  ftpo% shift_u%    levels(l)% var, &
-                                  ftpo% g_phys3_ll% levels(l)% var, &
-                                  ftpo% K_phys3_ll% levels(l)% var )
+      SELECT TYPE( id )
+
+        TYPE IS( bnsfuka )
+
+          ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
+          ! within SPHINCS_ID. Hence, we chose to make a system call to a program
+          ! within Kadath that reads the ID from the FUKA output file and prints
+          ! it on a lattice. The ID on the particles will be interplated from
+          ! this fine lattice.
+          id% l_curr= l
+
+      END SELECT
+
+      CALL id% read_id_spacetime( tpof% get_ngrid_x(l), &
+                                  tpof% get_ngrid_y(l), &
+                                  tpof% get_ngrid_z(l), &
+                                  tpof% coords%     levels(l)% var, &
+                                  tpof% lapse%      levels(l)% var, &
+                                  tpof% shift_u%    levels(l)% var, &
+                                  tpof% g_phys3_ll% levels(l)% var, &
+                                  tpof% K_phys3_ll% levels(l)% var )
 
     ENDDO ref_levels2
 
-    CALL ftpo% importer_timer% stop_timer()
+    CALL tpof% importer_timer% stop_timer()
 
-    PRINT *, " * LORENE spacetime ID imported on the gravity grid."
+    PRINT *, " * Spacetime ID imported on the gravity grid."
 
     !
     !-- Check that the imported ID does not contain NaNs
     !
-    !CALL Check_Grid_Function_for_NAN( ftpo% lapse, "lapse" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% shift_u(:,:,:,jx), &
+    !CALL Check_Grid_Function_for_NAN( tpof% lapse, "lapse" )
+    !CALL Check_Grid_Function_for_NAN( tpof% shift_u(:,:,:,jx), &
     !                                                    "shift_u_x" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% shift_u(:,:,:,jy), &
+    !CALL Check_Grid_Function_for_NAN( tpof% shift_u(:,:,:,jy), &
     !                                                    "shift_u_y" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% shift_u(:,:,:,jz), &
+    !CALL Check_Grid_Function_for_NAN( tpof% shift_u(:,:,:,jz), &
     !                                                    "shift_u_z" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% g_phys3_ll(:,:,:,jxx), &
+    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jxx), &
     !                                                    "g_phys3_ll_jxx" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% g_phys3_ll(:,:,:,jxy), &
+    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jxy), &
     !                                                    "g_phys3_ll_jxy" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% g_phys3_ll(:,:,:,jxz), &
+    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jxz), &
     !                                                    "g_phys3_ll_jxz" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% g_phys3_ll(:,:,:,jyy), &
+    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jyy), &
     !                                                    "g_phys3_ll_jyy" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% g_phys3_ll(:,:,:,jyz), &
+    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jyz), &
     !                                                    "g_phys3_ll_jyz" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% g_phys3_ll(:,:,:,jzz), &
+    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jzz), &
     !                                                    "g_phys3_ll_jzz" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% K_phys3_ll(:,:,:,jxx), &
+    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jxx), &
     !                                                    "K_phys3_ll_jxx" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% K_phys3_ll(:,:,:,jxy), &
+    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jxy), &
     !                                                    "K_phys3_ll_jxy" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% K_phys3_ll(:,:,:,jxz), &
+    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jxz), &
     !                                                    "K_phys3_ll_jxz" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% K_phys3_ll(:,:,:,jyy), &
+    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jyy), &
     !                                                    "K_phys3_ll_jyy" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% K_phys3_ll(:,:,:,jyz), &
+    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jyz), &
     !                                                    "K_phys3_ll_jyz" )
-    !CALL Check_Grid_Function_for_NAN( ftpo% K_phys3_ll(:,:,:,jzz), &
+    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jzz), &
     !                                                    "K_phys3_ll_jzz" )
 
     !
     !-- Check that the determinant of the spatial metric is
     !-- strictly positive
     !
-    DO l= 1, ftpo% nlevels, 1
-      DO k= 1, ftpo% get_ngrid_z(l), 1
-        DO j= 1, ftpo% get_ngrid_y(l), 1
-          DO i= 1, ftpo% get_ngrid_x(l), 1
+    DO l= 1, tpof% nlevels, 1
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( tpof, l ) &
+      !$OMP             PRIVATE( i, j, k, detg )
+      DO k= 1, tpof% get_ngrid_z(l), 1
+        DO j= 1, tpof% get_ngrid_y(l), 1
+          DO i= 1, tpof% get_ngrid_x(l), 1
 
             CALL determinant_sym3x3( &
-                              ftpo% g_phys3_ll% levels(l)% var(i,j,k,:), detg )
+                              tpof% g_phys3_ll% levels(l)% var(i,j,k,:), detg )
 
             IF( detg < 1D-10 )THEN
 
@@ -254,21 +286,21 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                        // "effectively 0 at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
-                       ftpo% coords% levels(l)% var( i, j, k, 1 ), ",", &
-                       ftpo% coords% levels(l)% var( i, j, k, 2 ), ",", &
-                       ftpo% coords% levels(l)% var( i, j, k, 3 ), ")."
+                       tpof% coords% levels(l)% var( i, j, k, 1 ), ",", &
+                       tpof% coords% levels(l)% var( i, j, k, 2 ), ",", &
+                       tpof% coords% levels(l)% var( i, j, k, 3 ), ")."
               PRINT *
-              PRINT *, ftpo% get_ngrid_x(l), ftpo% get_ngrid_y(l), &
-                       ftpo% get_ngrid_z(l)
+              PRINT *, tpof% get_ngrid_x(l), tpof% get_ngrid_y(l), &
+                       tpof% get_ngrid_z(l)
               PRINT *
               PRINT *, "detg=", detg
               PRINT *
-              PRINT *, "g_xx=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jxx)
-              PRINT *, "g_xy=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jxy)
-              PRINT *, "g_xz=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jxz)
-              PRINT *, "g_yy=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jyy)
-              PRINT *, "g_yz=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jyz)
-              PRINT *, "g_zz=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jzz)
+              PRINT *, "g_xx=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxx)
+              PRINT *, "g_xy=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxy)
+              PRINT *, "g_xz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxz)
+              PRINT *, "g_yy=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jyy)
+              PRINT *, "g_yz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jyz)
+              PRINT *, "g_zz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jzz)
               STOP
 
             ELSEIF( detg < 0 )THEN
@@ -278,21 +310,21 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                        // "negative at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
-                       ftpo% coords% levels(l)% var( i, j, k, 1 ), ",", &
-                       ftpo% coords% levels(l)% var( i, j, k, 2 ), ",", &
-                       ftpo% coords% levels(l)% var( i, j, k, 3 ), ")."
+                       tpof% coords% levels(l)% var( i, j, k, 1 ), ",", &
+                       tpof% coords% levels(l)% var( i, j, k, 2 ), ",", &
+                       tpof% coords% levels(l)% var( i, j, k, 3 ), ")."
               PRINT *
-              PRINT *, ftpo% get_ngrid_x(l), ftpo% get_ngrid_y(l), &
-                       ftpo% get_ngrid_z(l)
+              PRINT *, tpof% get_ngrid_x(l), tpof% get_ngrid_y(l), &
+                       tpof% get_ngrid_z(l)
               PRINT *
               PRINT *, "detg=", detg
               PRINT *
-              PRINT *, "g_xx=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jxx)
-              PRINT *, "g_xy=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jxy)
-              PRINT *, "g_xz=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jxz)
-              PRINT *, "g_yy=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jyy)
-              PRINT *, "g_yz=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jyz)
-              PRINT *, "g_zz=", ftpo% g_phys3_ll% levels(l)% var(i,j,k,jzz)
+              PRINT *, "g_xx=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxx)
+              PRINT *, "g_xy=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxy)
+              PRINT *, "g_xz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxz)
+              PRINT *, "g_yy=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jyy)
+              PRINT *, "g_yz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jyz)
+              PRINT *, "g_zz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jzz)
               STOP
 
             ENDIF
@@ -300,10 +332,15 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
           ENDDO
         ENDDO
       ENDDO
+      !$OMP END PARALLEL DO
     ENDDO
 
-    IF( .NOT.ALLOCATED( ftpo% HC_int ))THEN
-      ALLOCATE( ftpo% HC_int( ftpo% nlevels ), &
+    PRINT *, " * Checked that the determinant of the spatial metric is", &
+             " strictly positive."
+    PRINT *
+
+    IF( .NOT.ALLOCATED( tpof% HC_int ))THEN
+      ALLOCATE( tpof% HC_int( tpof% nlevels ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array HC_loo. ", &
@@ -311,8 +348,8 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
         STOP
       ENDIF
     ENDIF
-    IF( .NOT.ALLOCATED( ftpo% MC_int ))THEN
-      ALLOCATE( ftpo% MC_int( ftpo% nlevels, 3 ), &
+    IF( .NOT.ALLOCATED( tpof% MC_int ))THEN
+      ALLOCATE( tpof% MC_int( tpof% nlevels, 3 ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array MC_loo. ", &
@@ -320,11 +357,11 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
         STOP
       ENDIF
     ENDIF
-    ftpo% HC_int= HUGE(one)
-    ftpo% MC_int= HUGE(one)
+    tpof% HC_int= HUGE(one)
+    tpof% MC_int= HUGE(one)
 
-    IF( .NOT.ALLOCATED( ftpo% HC_parts_int ))THEN
-      ALLOCATE( ftpo% HC_parts_int( ftpo% nlevels ), &
+    IF( .NOT.ALLOCATED( tpof% HC_parts_int ))THEN
+      ALLOCATE( tpof% HC_parts_int( tpof% nlevels ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array MC_loo. ", &
@@ -332,8 +369,8 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
         STOP
       ENDIF
     ENDIF
-    IF( .NOT.ALLOCATED( ftpo% MC_parts_int ))THEN
-      ALLOCATE( ftpo% MC_parts_int( ftpo% nlevels, 3 ), &
+    IF( .NOT.ALLOCATED( tpof% MC_parts_int ))THEN
+      ALLOCATE( tpof% MC_parts_int( tpof% nlevels, 3 ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array MC_loo. ", &
@@ -341,12 +378,8 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
         STOP
       ENDIF
     ENDIF
-    ftpo% HC_parts_int= HUGE(one)
-    ftpo% MC_parts_int= HUGE(one)
-
-    PRINT *, " * Checked that the determinant of the spatial metric is", &
-             " strictly positive."
-    PRINT *
+    tpof% HC_parts_int= HUGE(one)
+    tpof% MC_parts_int= HUGE(one)
 
   END PROCEDURE setup_standard_tpo_variables
 
@@ -367,44 +400,44 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
     IMPLICIT NONE
 
-    IF( ALLOCATED( ftpo% coords% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% coords, "coords_id" )
+    IF( ALLOCATED( tpof% coords% levels ) )THEN
+      CALL deallocate_grid_function( tpof% coords, "coords_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% rad_coord% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% rad_coord, "rad_coord_id" )
+    IF( ALLOCATED( tpof% rad_coord% levels ) )THEN
+      CALL deallocate_grid_function( tpof% rad_coord, "rad_coord_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% lapse% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% lapse, "lapse_id" )
+    IF( ALLOCATED( tpof% lapse% levels ) )THEN
+      CALL deallocate_grid_function( tpof% lapse, "lapse_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% shift_u% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% shift_u, "shift_u_id" )
+    IF( ALLOCATED( tpof% shift_u% levels ) )THEN
+      CALL deallocate_grid_function( tpof% shift_u, "shift_u_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% g_phys3_ll% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% g_phys3_ll, "g_phys3_ll_id" )
+    IF( ALLOCATED( tpof% g_phys3_ll% levels ) )THEN
+      CALL deallocate_grid_function( tpof% g_phys3_ll, "g_phys3_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% K_phys3_ll% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% K_phys3_ll, "K_phys3_ll_id" )
+    IF( ALLOCATED( tpof% K_phys3_ll% levels ) )THEN
+      CALL deallocate_grid_function( tpof% K_phys3_ll, "K_phys3_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% HC% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% HC, "HC_id" )
+    IF( ALLOCATED( tpof% HC% levels ) )THEN
+      CALL deallocate_grid_function( tpof% HC, "HC_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% HC_parts% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% HC_parts, "HC_parts_id" )
+    IF( ALLOCATED( tpof% HC_parts% levels ) )THEN
+      CALL deallocate_grid_function( tpof% HC_parts, "HC_parts_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% MC% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% MC, "MC_id" )
+    IF( ALLOCATED( tpof% MC% levels ) )THEN
+      CALL deallocate_grid_function( tpof% MC, "MC_id" )
     ENDIF
 
-    IF( ALLOCATED( ftpo% MC_parts% levels ) )THEN
-      CALL deallocate_grid_function( ftpo% MC_parts, "MC_parts_id" )
+    IF( ALLOCATED( tpof% MC_parts% levels ) )THEN
+      CALL deallocate_grid_function( tpof% MC_parts, "MC_parts_id" )
     ENDIF
 
   END PROCEDURE deallocate_standard_tpo_variables

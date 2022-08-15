@@ -84,7 +84,7 @@ MODULE bns_base
     DOUBLE PRECISION:: mass2
 
     DOUBLE PRECISION, DIMENSION(2):: mass_grav
-    !! Array containing the gravitatil masses \([M_\odot]\)
+    !! Array containing the gravitational masses \([M_\odot]\)
 
     !> Gravitational mass of star 1 \([M_\odot]\)
     DOUBLE PRECISION:: mass_grav1
@@ -162,6 +162,10 @@ MODULE bns_base
     !  @todo add details
 
     DOUBLE PRECISION, DIMENSION(2,3):: barycenter
+    !# Array containing the barycenters of the stars
+    !  @todo add details
+
+    DOUBLE PRECISION, DIMENSION(3):: barycenter_system
     !# Array containing the barycenters of the stars
     !  @todo add details
 
@@ -546,23 +550,23 @@ MODULE bns_base
 
   ABSTRACT INTERFACE
 
-    SUBROUTINE print_summary_derived_int( THIS, filename )
+    SUBROUTINE print_summary_derived_int( this, filename )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
       IMPORT:: bnsbase
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
     END SUBROUTINE print_summary_derived_int
 
-    FUNCTION get_eos_id_int( THIS )
+    FUNCTION get_eos_id_int( this )
 
       IMPORT:: bnsbase
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       INTEGER:: get_eos_id_int
 
@@ -578,13 +582,13 @@ MODULE bns_base
     !------------------------------!
 
 
-    MODULE SUBROUTINE print_summary_bnsbase( THIS, filename )
+    MODULE SUBROUTINE print_summary_bnsbase( this, filename )
     !# Prints a summary of the physical properties the |bns| system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
 
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -596,10 +600,10 @@ MODULE bns_base
     !----------------------------!
 
 
-    MODULE FUNCTION get_mass( THIS, i_matter )
+    MODULE FUNCTION get_mass( this, i_matter )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       ! Result
       DOUBLE PRECISION:: get_mass
@@ -607,20 +611,20 @@ MODULE bns_base
     END FUNCTION get_mass
 
 
-    MODULE FUNCTION get_radii( THIS, i_matter )
+    MODULE FUNCTION get_radii( this, i_matter )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose string is to return
       DOUBLE PRECISION, DIMENSION(6):: get_radii
 
     END FUNCTION get_radii
 
-    MODULE FUNCTION get_center( THIS, i_matter )
+    MODULE FUNCTION get_center( this, i_matter )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: get_center
@@ -628,10 +632,10 @@ MODULE bns_base
     END FUNCTION get_center
 
 
-    MODULE FUNCTION get_barycenter( THIS, i_matter )
+    MODULE FUNCTION get_barycenter( this, i_matter )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: get_barycenter
@@ -639,10 +643,10 @@ MODULE bns_base
     END FUNCTION get_barycenter
 
 
-    MODULE FUNCTION get_eos( THIS, i_matter )
+    MODULE FUNCTION get_eos( this, i_matter )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose string is to return
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
@@ -655,661 +659,661 @@ MODULE bns_base
     !-----------------!
 
 
-    MODULE PURE FUNCTION get_gamma_1( THIS )
+    MODULE PURE FUNCTION get_gamma_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma_1
 
     END FUNCTION get_gamma_1
 
 
-    MODULE PURE FUNCTION get_gamma_2( THIS )
+    MODULE PURE FUNCTION get_gamma_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma_2
 
     END FUNCTION get_gamma_2
 
 
-    MODULE PURE FUNCTION get_kappa_1( THIS )
+    MODULE PURE FUNCTION get_kappa_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa_1
 
     END FUNCTION get_kappa_1
 
 
-    MODULE PURE FUNCTION get_kappa_2( THIS )
+    MODULE PURE FUNCTION get_kappa_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa_2
 
     END FUNCTION get_kappa_2
 
 
-    MODULE PURE FUNCTION get_angular_vel( THIS )
+    MODULE PURE FUNCTION get_angular_vel( this )
     !! Returns angular_vel
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_angular_vel
 
     END FUNCTION get_angular_vel
 
 
-    MODULE PURE FUNCTION get_distance( THIS )
+    MODULE PURE FUNCTION get_distance( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_distance
 
     END FUNCTION get_distance
 
 
-    MODULE PURE FUNCTION get_distance_com( THIS )
+    MODULE PURE FUNCTION get_distance_com( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_distance_com
 
     END FUNCTION get_distance_com
 
 
-    MODULE PURE FUNCTION get_mass1( THIS )
+    MODULE PURE FUNCTION get_mass1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_mass1
 
     END FUNCTION get_mass1
 
 
-    MODULE PURE FUNCTION get_mass2( THIS )
+    MODULE PURE FUNCTION get_mass2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_mass2
 
     END FUNCTION get_mass2
 
 
-    MODULE PURE FUNCTION get_grav_mass1( THIS )
+    MODULE PURE FUNCTION get_grav_mass1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_grav_mass1
 
     END FUNCTION get_grav_mass1
 
 
-    MODULE PURE FUNCTION get_grav_mass2( THIS )
+    MODULE PURE FUNCTION get_grav_mass2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_grav_mass2
 
     END FUNCTION get_grav_mass2
 
 
-    MODULE PURE FUNCTION get_adm_mass( THIS )
+    MODULE PURE FUNCTION get_adm_mass( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_adm_mass
 
     END FUNCTION get_adm_mass
 
 
-    MODULE PURE FUNCTION get_linear_momentum( THIS )
+    MODULE PURE FUNCTION get_linear_momentum( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_linear_momentum(3)
 
     END FUNCTION get_linear_momentum
 
 
-    MODULE PURE FUNCTION get_angular_momentum( THIS )
+    MODULE PURE FUNCTION get_angular_momentum( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_angular_momentum(3)
 
     END FUNCTION get_angular_momentum
 
 
-    MODULE PURE FUNCTION get_radius1_x_comp( THIS )
+    MODULE PURE FUNCTION get_radius1_x_comp( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_radius1_x_comp
 
     END FUNCTION get_radius1_x_comp
 
 
-    MODULE PURE FUNCTION get_radius1_y( THIS )
+    MODULE PURE FUNCTION get_radius1_y( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_radius1_y
 
     END FUNCTION get_radius1_y
 
 
-    MODULE PURE FUNCTION get_radius1_z( THIS )
+    MODULE PURE FUNCTION get_radius1_z( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_radius1_z
 
     END FUNCTION get_radius1_z
 
 
-    MODULE PURE FUNCTION get_radius1_x_opp( THIS )
+    MODULE PURE FUNCTION get_radius1_x_opp( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_radius1_x_opp
 
     END FUNCTION get_radius1_x_opp
 
 
-    MODULE PURE FUNCTION get_center1_x( THIS )
+    MODULE PURE FUNCTION get_center1_x( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_center1_x
 
     END FUNCTION get_center1_x
 
 
-    MODULE PURE FUNCTION get_barycenter1_x( THIS )
+    MODULE PURE FUNCTION get_barycenter1_x( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_barycenter1_x
 
     END FUNCTION get_barycenter1_x
 
 
-    MODULE PURE FUNCTION get_radius2_x_comp( THIS )
+    MODULE PURE FUNCTION get_radius2_x_comp( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_radius2_x_comp
 
     END FUNCTION get_radius2_x_comp
 
 
-    MODULE PURE FUNCTION get_radius2_y( THIS )
+    MODULE PURE FUNCTION get_radius2_y( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_radius2_y
 
     END FUNCTION get_radius2_y
 
 
-    MODULE PURE FUNCTION get_radius2_z( THIS )
+    MODULE PURE FUNCTION get_radius2_z( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_radius2_z
 
     END FUNCTION get_radius2_z
 
 
-    MODULE PURE FUNCTION get_radius2_x_opp( THIS )
+    MODULE PURE FUNCTION get_radius2_x_opp( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_radius2_x_opp
 
     END FUNCTION get_radius2_x_opp
 
 
-    MODULE PURE FUNCTION get_center2_x( THIS )
+    MODULE PURE FUNCTION get_center2_x( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_center2_x
 
     END FUNCTION get_center2_x
 
 
-    MODULE PURE FUNCTION get_barycenter2_x( THIS )
+    MODULE PURE FUNCTION get_barycenter2_x( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_barycenter2_x
 
     END FUNCTION get_barycenter2_x
 
 
-    MODULE PURE FUNCTION get_ent_center1( THIS )
+    MODULE PURE FUNCTION get_ent_center1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_ent_center1
 
     END FUNCTION get_ent_center1
 
 
-    MODULE PURE FUNCTION get_nbar_center1( THIS )
+    MODULE PURE FUNCTION get_nbar_center1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_nbar_center1
 
     END FUNCTION get_nbar_center1
 
 
-    MODULE PURE FUNCTION get_rho_center1( THIS )
+    MODULE PURE FUNCTION get_rho_center1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_rho_center1
 
     END FUNCTION get_rho_center1
 
 
-    MODULE PURE FUNCTION get_energy_density_center1( THIS )
+    MODULE PURE FUNCTION get_energy_density_center1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_energy_density_center1
 
     END FUNCTION get_energy_density_center1
 
 
-    MODULE PURE FUNCTION get_specific_energy_center1( THIS )
+    MODULE PURE FUNCTION get_specific_energy_center1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_specific_energy_center1
 
     END FUNCTION get_specific_energy_center1
 
 
-    MODULE PURE FUNCTION get_pressure_center1( THIS )
+    MODULE PURE FUNCTION get_pressure_center1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_pressure_center1
 
     END FUNCTION get_pressure_center1
 
 
-    MODULE PURE FUNCTION get_ent_center2( THIS )
+    MODULE PURE FUNCTION get_ent_center2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_ent_center2
 
     END FUNCTION get_ent_center2
 
 
-    MODULE PURE FUNCTION get_nbar_center2( THIS )
+    MODULE PURE FUNCTION get_nbar_center2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_nbar_center2
 
     END FUNCTION get_nbar_center2
 
 
-    MODULE PURE FUNCTION get_rho_center2( THIS )
+    MODULE PURE FUNCTION get_rho_center2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_rho_center2
 
     END FUNCTION get_rho_center2
 
 
-    MODULE PURE FUNCTION get_energy_density_center2( THIS )
+    MODULE PURE FUNCTION get_energy_density_center2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_energy_density_center2
 
     END FUNCTION get_energy_density_center2
 
 
-    MODULE PURE FUNCTION get_specific_energy_center2( THIS )
+    MODULE PURE FUNCTION get_specific_energy_center2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_specific_energy_center2
 
     END FUNCTION get_specific_energy_center2
 
 
-    MODULE PURE FUNCTION get_pressure_center2( THIS )
+    MODULE PURE FUNCTION get_pressure_center2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_pressure_center2
 
     END FUNCTION get_pressure_center2
 
 
-    MODULE PURE FUNCTION get_eos1( THIS )
+    MODULE PURE FUNCTION get_eos1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos1
 
     END FUNCTION get_eos1
 
 
-    MODULE PURE FUNCTION get_eos2( THIS )
+    MODULE PURE FUNCTION get_eos2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos2
 
     END FUNCTION get_eos2
 
 
-    MODULE PURE FUNCTION get_npeos_1( THIS )
+    MODULE PURE FUNCTION get_npeos_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       INTEGER:: get_npeos_1
 
     END FUNCTION get_npeos_1
 
 
-    MODULE PURE FUNCTION get_npeos_2( THIS )
+    MODULE PURE FUNCTION get_npeos_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       INTEGER:: get_npeos_2
 
     END FUNCTION get_npeos_2
 
 
-    MODULE PURE FUNCTION get_gamma0_1( THIS )
+    MODULE PURE FUNCTION get_gamma0_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma0_1
 
     END FUNCTION get_gamma0_1
 
 
-    MODULE PURE FUNCTION get_gamma1_1( THIS )
+    MODULE PURE FUNCTION get_gamma1_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma1_1
 
     END FUNCTION get_gamma1_1
 
 
-    MODULE PURE FUNCTION get_gamma2_1( THIS )
+    MODULE PURE FUNCTION get_gamma2_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma2_1
 
     END FUNCTION get_gamma2_1
 
 
-    MODULE PURE FUNCTION get_gamma3_1( THIS )
+    MODULE PURE FUNCTION get_gamma3_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma3_1
 
     END FUNCTION get_gamma3_1
 
 
-    MODULE PURE FUNCTION get_kappa0_1( THIS )
+    MODULE PURE FUNCTION get_kappa0_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa0_1
 
     END FUNCTION get_kappa0_1
 
 
-    MODULE PURE FUNCTION get_kappa1_1( THIS )
+    MODULE PURE FUNCTION get_kappa1_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa1_1
 
     END FUNCTION get_kappa1_1
 
 
-    MODULE PURE FUNCTION get_kappa2_1( THIS )
+    MODULE PURE FUNCTION get_kappa2_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa2_1
 
     END FUNCTION get_kappa2_1
 
 
-    MODULE PURE FUNCTION get_kappa3_1( THIS )
+    MODULE PURE FUNCTION get_kappa3_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa3_1
 
     END FUNCTION get_kappa3_1
 
 
-    MODULE PURE FUNCTION get_logP1_1( THIS )
+    MODULE PURE FUNCTION get_logP1_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logP1_1
 
     END FUNCTION get_logP1_1
 
 
-    MODULE PURE FUNCTION get_logRho0_1( THIS )
+    MODULE PURE FUNCTION get_logRho0_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho0_1
 
     END FUNCTION get_logRho0_1
 
 
-    MODULE PURE FUNCTION get_logRho1_1( THIS )
+    MODULE PURE FUNCTION get_logRho1_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho1_1
 
     END FUNCTION get_logRho1_1
 
 
-    MODULE PURE FUNCTION get_logRho2_1( THIS )
+    MODULE PURE FUNCTION get_logRho2_1( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho2_1
 
     END FUNCTION get_logRho2_1
 
 
-    MODULE PURE FUNCTION get_gamma0_2( THIS )
+    MODULE PURE FUNCTION get_gamma0_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma0_2
 
     END FUNCTION get_gamma0_2
 
 
-    MODULE PURE FUNCTION get_gamma1_2( THIS )
+    MODULE PURE FUNCTION get_gamma1_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma1_2
 
     END FUNCTION get_gamma1_2
 
 
-    MODULE PURE FUNCTION get_gamma2_2( THIS )
+    MODULE PURE FUNCTION get_gamma2_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma2_2
 
     END FUNCTION get_gamma2_2
 
 
-    MODULE PURE FUNCTION get_gamma3_2( THIS )
+    MODULE PURE FUNCTION get_gamma3_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_gamma3_2
 
     END FUNCTION get_gamma3_2
 
 
-    MODULE PURE FUNCTION get_kappa0_2( THIS )
+    MODULE PURE FUNCTION get_kappa0_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa0_2
 
     END FUNCTION get_kappa0_2
 
 
-    MODULE PURE FUNCTION get_kappa1_2( THIS )
+    MODULE PURE FUNCTION get_kappa1_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa1_2
 
     END FUNCTION get_kappa1_2
 
 
-    MODULE PURE FUNCTION get_kappa2_2( THIS )
+    MODULE PURE FUNCTION get_kappa2_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa2_2
 
     END FUNCTION get_kappa2_2
 
 
-    MODULE PURE FUNCTION get_kappa3_2( THIS )
+    MODULE PURE FUNCTION get_kappa3_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_kappa3_2
 
     END FUNCTION get_kappa3_2
 
 
-    MODULE PURE FUNCTION get_logP1_2( THIS )
+    MODULE PURE FUNCTION get_logP1_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logP1_2
 
     END FUNCTION get_logP1_2
 
 
-    MODULE PURE FUNCTION get_logRho0_2( THIS )
+    MODULE PURE FUNCTION get_logRho0_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho0_2
 
     END FUNCTION get_logRho0_2
 
 
-    MODULE PURE FUNCTION get_logRho1_2( THIS )
+    MODULE PURE FUNCTION get_logRho1_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho1_2
 
     END FUNCTION get_logRho1_2
 
 
-    MODULE PURE FUNCTION get_logRho2_2( THIS )
+    MODULE PURE FUNCTION get_logRho2_2( this )
 
       !> [[bnsbase]] object which this PROCEDURE is a member of
-      CLASS(bnsbase), INTENT( IN ):: THIS
+      CLASS(bnsbase), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_logRho2_2
 

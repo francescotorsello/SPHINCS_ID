@@ -1,5 +1,5 @@
 Project: SPHINCS_ID
-Version: 1.5
+Version: 1.6
 github: https://github.com/francescotorsello
 linkedin: https://www.linkedin.com/in/francescotorsello
 Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.PNG){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of the SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.2M_\odot\) (left) and \(1.8M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the \(\texttt{CompOSE}\) database. The solution was computed with \(\texttt{LORENE}\) and the \(\texttt{CompOSE}\) software, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with \(\texttt{SPLASH}\) and \(\texttt{GIMP}\). </font>
@@ -33,15 +33,15 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        bssnok = \(\mathrm{BSSNOK}\)
        bssn = \(\mathrm{BSSNOK}\)
        fuka = \(\texttt{FUKA}\)
+       kadath = \(\texttt{Kadath}\)
        binns = \(\texttt{Bin_NS}\)
        etrotdiff = \(\texttt{Et_rot_diff}\)
        etdiffrot = \(\texttt{Et_diffrot}\)
        eos = \(\mathrm{EOS}\)
        ee = Einstein equations
        bns = \(\mathrm{BNS}\)
-<!---graph_dir: doc-graphs--->
 parallel: 80
-<!---Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src--->
+<!---graph_dir: doc-graphs--->
 <!---Project_url: https://francescotorsello.github.io/SPHINCS_ID-doc/--->
 
 #### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
@@ -59,6 +59,12 @@ Currently, it produces initial data for:
 The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
 
 SPHINCS_ID needs SPHINCS_BSSN to be compiled.
+
+---
+
+#### Acknowledgements
+
+It is a pleasure to thank Peter Diener and Stephan Rosswog for all the help and support they gave me during the development of SPHINCS_ID.
 
 ---
 

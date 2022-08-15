@@ -59,7 +59,7 @@ PROGRAM sphincs_id
   USE id_base,          ONLY: idbase, initialize
   USE sph_particles,    ONLY: particles
   USE bssn_formulation, ONLY: bssn
-  !USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
+  USE utility,          ONLY: lorene2hydrobase, k_lorene2hydrobase
   !                            k_lorene2hydrobase_piecewisepolytrope, &
   !                            MSun_geo, kg2g, m2cm, m0c2
   !USE constants,        ONLY: amu, Msun_geo, km2m, m2cm
@@ -361,7 +361,7 @@ PROGRAM sphincs_id
       bssn_forms( itr3 )% export_bin    = export_bin
 
       CALL bssn_forms( itr3 )% &
-                          compute_and_export_tpo_variables( namefile_bssn_bin )
+                          compute_and_print_tpo_variables( namefile_bssn_bin )
       !IF( bssn_forms( itr3 )% export_bin )THEN
       !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
       !  CALL bssn_forms( itr3 )% &
@@ -548,7 +548,7 @@ PROGRAM sphincs_id
           name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
           CALL bssn_forms( itr3 )% &
-                      compute_and_export_tpo_constraints( ids(itr3)% idata, &
+                      compute_and_print_tpo_constraints( ids(itr3)% idata, &
                                                           namefile_bssn, &
                                                           name_logfile )
 
@@ -586,7 +586,7 @@ PROGRAM sphincs_id
               name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
               CALL bssn_forms( itr3 )% &
-                          compute_and_export_tpo_constraints( &
+                          compute_and_print_tpo_constraints( &
                                                 particles_dist( itr3, itr4 ), &
                                                 namefile_bssn, &
                                                 name_logfile )

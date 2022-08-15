@@ -122,6 +122,8 @@ MODULE bns_lorene
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
     !> 1-D array storing the specific internal energy [c^2]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: specific_energy
+    !> 1-D array storing the pressure
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
     !> 1-D array storing the x component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_x
@@ -450,7 +452,7 @@ MODULE bns_lorene
     ! not OUT. The array arguments are not allocatable anymore
 
 
-    MODULE SUBROUTINE import_id_full( this, n, x, y, z,&
+    MODULE SUBROUTINE import_id_full( this, n, x, y, z, &
                                       lapse, &
                                       shift_x, shift_y, shift_z, &
                                       g_xx, g_xy, g_xz, &
@@ -460,6 +462,7 @@ MODULE bns_lorene
                                       baryon_density, &
                                       energy_density, &
                                       specific_energy, &
+                                      pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
     !# Stores the ID in non [[bnslorene]]-member arrays with the same shape as the
     !  [[bnslorene]] member arrays
@@ -489,6 +492,7 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
@@ -646,7 +650,7 @@ MODULE bns_lorene
     !! Returns the |lorene| pressure at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )         :: this
+      CLASS(bnslorene), INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -874,6 +878,7 @@ MODULE bns_lorene
                               baryon_density, &
                               energy_density, &
                               specific_energy, &
+                              pressure, &
                               v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_lorene_id")
 
@@ -924,6 +929,7 @@ MODULE bns_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
       REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_z

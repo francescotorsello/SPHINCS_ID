@@ -45,7 +45,7 @@ SUBMODULE (bssn_formulation) constraints
   !-------------------!
 
 
-  MODULE PROCEDURE compute_and_export_bssn_constraints_grid
+  MODULE PROCEDURE compute_and_print_bssn_constraints_grid
 
     !***************************************************
     !
@@ -69,6 +69,7 @@ SUBMODULE (bssn_formulation) constraints
     USE mesh_refinement,   ONLY: allocate_grid_function, &
                                  levels, nlevels
     USE McLachlan_refine,  ONLY: BSSN_CONSTRAINTS_INTERIOR
+    USE bns_fuka,          ONLY: bnsfuka
 
     IMPLICIT NONE
 
@@ -159,6 +160,19 @@ SUBMODULE (bssn_formulation) constraints
     ref_levels: DO l= 1, this% nlevels, 1
 
       PRINT *, " * Importing on refinement level l=", l, "..."
+
+      SELECT TYPE( id )
+
+        TYPE IS( bnsfuka )
+
+          ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
+          ! within SPHINCS_ID. Hence, we chose to make a system call to a program
+          ! within Kadath that reads the ID from the FUKA output file and prints
+          ! it on a lattice. The ID on the particles will be interplated from
+          ! this fine lattice.
+          id% l_curr= l
+
+      END SELECT
 
       CALL id% read_id_hydro( this% get_ngrid_x(l), &
                               this% get_ngrid_y(l), &
@@ -832,8 +846,8 @@ SUBMODULE (bssn_formulation) constraints
             ENDDO
           ENDDO
 
-          min_abs_y= 1D+20
-          min_abs_z= 1D+20
+          min_abs_y= HUGE(one)
+          min_abs_z= HUGE(one)
           DO k= 1, this% get_ngrid_z(l), 1
             DO j= 1, this% get_ngrid_y(l), 1
               DO i= 1, this% get_ngrid_x(l), 1
@@ -1027,8 +1041,10 @@ SUBMODULE (bssn_formulation) constraints
 
       !**************************************************
       !
-      !# Compute the components of the fluid \(4\)-velocity
-      !  wrt the Eulerian observer
+      !# Compute the components of the fluid
+      !  \(4\)-velocity wrt the Eulerian observer
+      !  See Sec.7.3 in Alcubierre, "Introduction to
+      !  3+1 Numerical Relativity"
       !
       !  FT 25.04.2022
       !
@@ -1336,10 +1352,10 @@ SUBMODULE (bssn_formulation) constraints
     END SUBROUTINE compute_stress_energy
 
 
-  END PROCEDURE compute_and_export_bssn_constraints_grid
+  END PROCEDURE compute_and_print_bssn_constraints_grid
 
 
-  MODULE PROCEDURE compute_and_export_bssn_constraints_particles
+  MODULE PROCEDURE compute_and_print_bssn_constraints_particles
 
     !**************************************************
     !
@@ -2369,7 +2385,7 @@ SUBMODULE (bssn_formulation) constraints
     ! kernel has to be tabulated only once in the present implementation
     counter= counter+ 1
 
-  END PROCEDURE compute_and_export_bssn_constraints_particles
+  END PROCEDURE compute_and_print_bssn_constraints_particles
 
 
 END SUBMODULE constraints

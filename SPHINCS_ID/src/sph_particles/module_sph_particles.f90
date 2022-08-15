@@ -438,7 +438,7 @@ MODULE sph_particles
     !# Reflects the positions of the particles on a matter object with respect
     !  to the \(xy\) plane
 
-    PROCEDURE, NOPASS:: perform_apm
+    PROCEDURE:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
   !  GENERIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
@@ -1019,7 +1019,7 @@ MODULE sph_particles
 
     END SUBROUTINE compute_and_print_sph_variables
 
-    MODULE SUBROUTINE perform_apm( get_density, get_nstar_id, &
+    MODULE SUBROUTINE perform_apm( this, get_density, get_nstar_id, &
                                    npart_output, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
@@ -1039,8 +1039,8 @@ MODULE sph_particles
                                    validate_position )
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
-      !> [[particles]] object which this PROCEDURE is a member of
-      !CLASS(particles),                 INTENT( INOUT ):: this
+      CLASS(particles),     INTENT( INOUT ):: this
+      !! [[particles]] object which this PROCEDURE is a member of
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
           !! Returns the baryon mass density at the desired point
@@ -1055,7 +1055,8 @@ MODULE sph_particles
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
-        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id )!, nstar_eul_id )
+        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, &
+                                 nlrf_sph, sqg )
         !! Computes the proper baryon number density at the particle positions
           INTEGER, INTENT(IN):: npart
           !! Number of real particles (i.e., no ghost particles included here)
@@ -1065,11 +1066,15 @@ MODULE sph_particles
           !! Array of \(y\) coordinates
           DOUBLE PRECISION, INTENT(IN):: z(npart)
           !! Array of \(z\) coordinates
+          DOUBLE PRECISION, INTENT(IN):: nstar_sph(npart)
+          !! |sph| proper baryon density
           DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
           !! Array to store the computed proper baryon number density
-          !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
-          !# Array to store the computed proper baryon number density seen
-          !  by the Eulerian observer
+          DOUBLE PRECISION, INTENT(OUT):: nlrf_sph(npart)
+          !# Array to store the local rest frame baryon density computed from
+          !  the |sph| proper baryon density
+          DOUBLE PRECISION, INTENT(OUT):: sqg(npart)
+          !# Square root of minus the determinant of the spacetime metric
         END SUBROUTINE get_nstar_id
       END INTERFACE
       INTERFACE

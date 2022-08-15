@@ -120,6 +120,8 @@ MODULE diffstar_lorene
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
     !> 1-D array storing the specific internal energy [c^2]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: specific_energy
+    !> 1-D array storing the pressure
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
     !> 1-D array storing the x component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_x
@@ -260,10 +262,10 @@ MODULE diffstar_lorene
    !
    ! END FUNCTION construct_diffstarlorene
 
-    MODULE SUBROUTINE destruct_diffstarlorene( THIS )
+    MODULE SUBROUTINE destruct_diffstarlorene( this )
     !! Destruct a [[diffstarlorene]] object
 
-      TYPE(diffstarlorene), INTENT( IN OUT ):: THIS
+      TYPE(diffstarlorene), INTENT( IN OUT ):: this
       !! [[diffstarlorene]] object to be destructed
 
     END SUBROUTINE destruct_diffstarlorene
@@ -295,69 +297,69 @@ MODULE diffstar_lorene
     END SUBROUTINE construct_diffstarlorene
 
 
-    MODULE SUBROUTINE construct_drs( THIS, resu_file )
+    MODULE SUBROUTINE construct_drs( this, resu_file )
     !! Interface of the subroutine that constructs the |lorene| Etdiffrot object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT )      :: THIS
+      CLASS(diffstarlorene),                     INTENT( IN OUT )      :: this
       !> |lorene| binary file containing the spectral DRS ID
       CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
 
     END SUBROUTINE construct_drs
 
 
-    MODULE SUBROUTINE destruct_drs( THIS )
+    MODULE SUBROUTINE destruct_drs( this )
     !! Destructs a |lorene| Etdiffrot object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT( IN OUT ):: this
 
     END SUBROUTINE destruct_drs
 
 
-    MODULE SUBROUTINE allocate_diffstar_memory( THIS, d )
+    MODULE SUBROUTINE allocate_diffstar_memory( this, d )
     !! Allocates allocatable arrays member of a [[diffstarlorene]] object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT( IN OUT ):: this
       !> Dimension of the arrays
       INTEGER,    INTENT( IN )    :: d
 
     END SUBROUTINE allocate_diffstar_memory
 
 
-    MODULE SUBROUTINE deallocate_diffstar_memory( THIS )
+    MODULE SUBROUTINE deallocate_diffstar_memory( this )
     !! Deallocates allocatable arrays member of a [[diffstarlorene]] object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT( IN OUT ):: this
 
     END SUBROUTINE deallocate_diffstar_memory
 
 
-    MODULE SUBROUTINE import_diffstar_params( THIS )
+    MODULE SUBROUTINE import_diffstar_params( this )
     !! Imports the DRS parameters from |lorene|
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT( IN OUT ):: this
 
     END SUBROUTINE import_diffstar_params
 
 
-    MODULE SUBROUTINE print_diffstar_params( THIS )
+    MODULE SUBROUTINE print_diffstar_params( this )
     !! Prints the DRS parameters to the standard output
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT( IN OUT ):: this
 
     END SUBROUTINE print_diffstar_params
 
 
-    MODULE SUBROUTINE import_id_int( THIS, n, x, y, z )
+    MODULE SUBROUTINE import_id_int( this, n, x, y, z )
     !! Stores the ID in the [[diffstarlorene]] member arrays
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene),          INTENT( IN OUT ):: this
       INTEGER, INTENT( IN ):: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -366,7 +368,7 @@ MODULE diffstar_lorene
     END SUBROUTINE import_id_int
 
 
-    MODULE SUBROUTINE import_id_full( THIS, n, x, y, z,&
+    MODULE SUBROUTINE import_id_full( this, n, x, y, z,&
                                       lapse, &
                                       shift_x, shift_y, shift_z, &
                                       g_xx, g_xy, g_xz, &
@@ -376,12 +378,13 @@ MODULE diffstar_lorene
                                       baryon_density, &
                                       energy_density, &
                                       specific_energy, &
+                                      pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
     !# Stores the ID in non [[diffstarlorene]]-member arrays with the same
     !  shape as the [[diffstarlorene]] member arrays
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene),          INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -405,6 +408,7 @@ MODULE diffstar_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
@@ -412,7 +416,7 @@ MODULE diffstar_lorene
     END SUBROUTINE import_id_full
 
 
-    MODULE SUBROUTINE import_id_spacetime( THIS, nx, ny, nz, &
+    MODULE SUBROUTINE import_id_spacetime( this, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
@@ -422,7 +426,7 @@ MODULE diffstar_lorene
     !  the BSSN variables and constraints
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                           INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene),                INTENT( IN OUT ):: this
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -435,7 +439,7 @@ MODULE diffstar_lorene
     END SUBROUTINE import_id_spacetime
 
 
-    MODULE SUBROUTINE import_id_hydro( THIS, nx, ny, nz, &
+    MODULE SUBROUTINE import_id_hydro( this, nx, ny, nz, &
                                              pos, &
                                              baryon_density, &
                                              energy_density, &
@@ -446,7 +450,7 @@ MODULE diffstar_lorene
     !  on the refined mesh
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                           INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene),                INTENT( IN OUT ):: this
       INTEGER,                              INTENT( IN )    :: nx
       INTEGER,                              INTENT( IN )    :: ny
       INTEGER,                              INTENT( IN )    :: nz
@@ -460,7 +464,7 @@ MODULE diffstar_lorene
     END SUBROUTINE import_id_hydro
 
 
-    MODULE SUBROUTINE import_id_particles( THIS, n, x, y, z, &
+    MODULE SUBROUTINE import_id_particles( this, n, x, y, z, &
                                            lapse, &
                                            shift_x, shift_y, shift_z, &
                                            g_xx, g_xy, g_xz, &
@@ -473,7 +477,7 @@ MODULE diffstar_lorene
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene),          INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: x
       REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: y
@@ -499,31 +503,31 @@ MODULE diffstar_lorene
     END SUBROUTINE import_id_particles
 
 
-    MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
+    MODULE SUBROUTINE import_id_mass_b( this, x, y, z, &
                                         g, &
                                         baryon_density, &
                                         gamma_euler )
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),       INTENT( IN OUT ):: THIS
-      DOUBLE PRECISION, INTENT( IN )    :: x
-      DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN)     :: z
-      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
-      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+      CLASS(diffstarlorene),          INTENT( IN OUT ):: this
+      DOUBLE PRECISION,               INTENT( IN )    :: x
+      DOUBLE PRECISION,               INTENT( IN )    :: y
+      DOUBLE PRECISION,               INTENT( IN)     :: z
+      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT )   :: g
+      DOUBLE PRECISION,               INTENT( OUT )   :: baryon_density
+      DOUBLE PRECISION,               INTENT( OUT )   :: gamma_euler
 
     END SUBROUTINE import_id_mass_b
 
 
-    MODULE SUBROUTINE import_id_k( THIS, n, x, y, z,&
+    MODULE SUBROUTINE import_id_k( this, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
    !! Stores the components of the extrinsic curvature in arrays
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene),          INTENT( IN OUT ):: this
       INTEGER,                        INTENT( IN )    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
@@ -541,11 +545,11 @@ MODULE diffstar_lorene
     !
     !-- FUNCTIONS
     !
-    MODULE FUNCTION import_mass_density( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION import_mass_density( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),     INTENT( IN )         :: THIS
+      CLASS(diffstarlorene), INTENT( IN ):: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -558,12 +562,12 @@ MODULE diffstar_lorene
     END FUNCTION import_mass_density
 
 
-    MODULE FUNCTION import_spatial_metric( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION import_spatial_metric( this, x, y, z ) RESULT( res )
     !# Returns the |lorene| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),     INTENT( IN )       :: THIS
+      CLASS(diffstarlorene),     INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -576,12 +580,12 @@ MODULE diffstar_lorene
     END FUNCTION import_spatial_metric
 
 
-    MODULE FUNCTION is_hydro_positive( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION is_hydro_positive( this, x, y, z ) RESULT( res )
     !# Returns .TRUE. if the energy density or the specific energy or the
     !  pressure are positive, .FALSE. otherwise
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),     INTENT( IN )       :: THIS
+      CLASS(diffstarlorene),     INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -595,11 +599,11 @@ MODULE diffstar_lorene
     END FUNCTION is_hydro_positive
 
 
-    MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
+    MODULE FUNCTION get_field_array( this, field ) RESULT( field_array )
     !! Returns the [[diffstarlorene]] member arrays named field
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),          INTENT( IN )             :: THIS
+      CLASS(diffstarlorene),          INTENT( IN )             :: this
       !> Name of the desired [[diffstarlorene]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       !> Desired [[diffstarlorene]] member array
@@ -608,11 +612,11 @@ MODULE diffstar_lorene
     END FUNCTION get_field_array
 
 
-    MODULE FUNCTION get_field_value( THIS, field, n ) RESULT( field_value )
+    MODULE FUNCTION get_field_value( this, field, n ) RESULT( field_value )
     !! Returns the component n of the [[diffstarlorene]] member arrays named field
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),          INTENT( IN )             :: THIS
+      CLASS(diffstarlorene),          INTENT( IN )             :: this
       !> Name of the desired [[diffstarlorene]] member array
       CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
       !> Component of the desired [[diffstarlorene]] member array
@@ -623,30 +627,30 @@ MODULE diffstar_lorene
     END FUNCTION get_field_value
 
 
-    MODULE FUNCTION get_diffstar_identifier( THIS )
+    MODULE FUNCTION get_diffstar_identifier( this )
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN ):: THIS
+      CLASS(diffstarlorene), INTENT( IN ):: this
       ! Result
       DOUBLE PRECISION:: get_diffstar_identifier
 
     END FUNCTION get_diffstar_identifier
 
 
-    MODULE FUNCTION get_eos_loreneid( THIS )
+    MODULE FUNCTION get_eos_loreneid( this )
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN ):: THIS
+      CLASS(diffstarlorene), INTENT( IN ):: this
       ! Result
       INTEGER:: get_eos_loreneid
 
     END FUNCTION get_eos_loreneid
 
 
-    MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
+    MODULE SUBROUTINE get_eos_parameters( this, i_matter, eos_params )
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN ):: THIS
+      CLASS(diffstarlorene), INTENT( IN ):: this
       INTEGER, INTENT( IN ):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
@@ -684,10 +688,10 @@ MODULE diffstar_lorene
     END SUBROUTINE finalize
 
 
-    !MODULE FUNCTION get_diffstar_ptr( THIS )
+    !MODULE FUNCTION get_diffstar_ptr( this )
     !
     !  ! Argument
-    !  CLASS(diffstarlorene), INTENT( IN ):: THIS
+    !  CLASS(diffstarlorene), INTENT( IN ):: this
     !  ! Result
     !  TYPE(C_PTR):: get_diffstar_ptr
     !
@@ -749,6 +753,7 @@ MODULE diffstar_lorene
                                   baryon_density, &
                                   energy_density, &
                                   specific_energy, &
+                                  pressure, &
                                   v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_rotdiff_id")
 
@@ -799,6 +804,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
       REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_z

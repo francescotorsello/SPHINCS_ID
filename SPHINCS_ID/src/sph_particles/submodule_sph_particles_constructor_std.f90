@@ -91,6 +91,7 @@ SUBMODULE (sph_particles) constructor_std
     USE analyze,            ONLY: COM
     USE utility,            ONLY: spherical_from_cartesian, &
                                   spatial_vector_norm_sym3x3
+    USE bns_fuka,           ONLY: bnsfuka
 
     IMPLICIT NONE
 
@@ -226,63 +227,19 @@ SUBMODULE (sph_particles) constructor_std
     parts% empty_object= .FALSE.
 
     !
-    !-- Read needed data from the idbase object
-    !
-
-    parts% nbar_tot       = zero
-    parts% npart          = 0
-    parts% distribution_id= dist
-
-    ALLOCATE( parts% masses (parts% n_matter) )
-    ALLOCATE( parts% all_eos(parts% n_matter) )
-    ALLOCATE( parts% npart_i(0:parts% n_matter) )
-    ALLOCATE( npart_i_tmp(0:parts% n_matter) )
-    ALLOCATE( parts% nbar_i(parts% n_matter) )
-    ALLOCATE( parts% nuratio_i(parts% n_matter) )
-    ALLOCATE( parts% mass_ratios(parts% n_matter) )
-    ALLOCATE( parts% mass_fractions(parts% n_matter) )
-
-    ALLOCATE( parts% barycenter(parts% n_matter,3) )
-
-    parts% npart_i(0)= 0
-    npart_i_tmp(0)   = 0
-    parts% nbar_i    = zero
-    parts% nuratio_i = zero
-
-    DO i_matter= 1, parts% n_matter, 1
-
-      parts% adm_mass          = id% adm_mass
-      parts% masses(i_matter)  = id% return_mass(i_matter)
-      center(i_matter,:)       = id% return_center(i_matter)
-      central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
-                                                        center(i_matter,2), &
-                                                        center(i_matter,3) )
-      barycenter(i_matter,:)   = id% return_barycenter(i_matter)
-      parts% barycenter(i_matter,:)= barycenter(i_matter,:)
-      sizes(i_matter, :)       = id% return_spatial_extent(i_matter)
-
-      parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
-      CALL id% return_eos_parameters( i_matter, &
-                                      parts% all_eos(i_matter)% eos_parameters )
-
-    ENDDO
-
-    parts% post_process_sph_id => id% finalize_sph_id_ptr
-
-    !
     !-- Read the parameters of the particle distributions
     !
     parts% sphincs_id_particles= 'sphincs_id_particles.dat'
 
     INQUIRE( FILE= parts% sphincs_id_particles, EXIST= file_exists )
     IF( file_exists )THEN
-     OPEN( 10, FILE= parts% sphincs_id_particles, STATUS= 'OLD' )
+      OPEN( 10, FILE= parts% sphincs_id_particles, STATUS= 'OLD' )
     ELSE
-     PRINT *
-     PRINT *, "** ERROR: ", parts% sphincs_id_particles, &
+      PRINT *
+      PRINT *, "** ERROR: ", parts% sphincs_id_particles, &
               " file not found!"
-     PRINT *
-     STOP
+      PRINT *
+      STOP
     ENDIF
 
     READ( 10, NML= sphincs_id_particles )
@@ -306,26 +263,6 @@ SUBMODULE (sph_particles) constructor_std
     parts% read_nu       = read_nu
 
     parts_pos_namefile= TRIM(parts_pos_path)//TRIM(parts_pos)
-
-    ! Compute desired particle numbers based on mass ratios
-    max_mass  = MAXVAL( parts% masses )
-    total_mass= SUM( parts% masses )
-    DO i_matter= 1, parts% n_matter, 1
-      parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
-      parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
-      npart_des_i(i_matter)          = &
-                          NINT(parts% mass_fractions(i_matter)*DBLE(npart_des))
-      tmp= 2*npart_des_i(i_matter)
-      ALLOCATE( parts_all(i_matter)% pos_i  ( 3, tmp ) )
-      ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
-      ALLOCATE( parts_all(i_matter)% pmass_i( tmp ) )
-      ALLOCATE( parts_all(i_matter)% h_i    ( tmp ) )
-      ALLOCATE( parts_all(i_matter)% nu_i   ( tmp ) )
-    ENDDO
-
- !   IF( parts% redistribute_nu )THEN
- !     thres= 100.0D0*parts% nu_ratio
- !   ENDIF
 
     !
     !-- Check that the parameters are acceptable
@@ -417,6 +354,93 @@ SUBMODULE (sph_particles) constructor_std
       STOP
     ENDIF
 
+    !
+    !-- If the ID has dynamic TYPE bnsfuka, construct the lattices around the
+    !-- stars. TODO: is there a more elegant way to do this? The particle
+    !-- object should not need to know what bnsfuka is. One can add a deferred
+    !-- procedure initialize_id to idbase, that points to
+    !-- set_up_lattices_around_stars in bnsfuka, and to nothing in the other
+    !-- derived types
+    !
+    SELECT TYPE( id )
+
+      TYPE IS( bnsfuka )
+
+        ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
+        ! within SPHINCS_ID. Hence, we chose to make a system call to a program
+        ! within Kadath that reads the ID from the FUKA output file and prints
+        ! it on a lattice. The ID on the particles will be interplated from
+        ! this fine lattice.
+        CALL id% set_up_lattices_around_stars()
+
+    END SELECT
+
+    !
+    !-- Read needed data from the idbase object
+    !
+
+    parts% nbar_tot       = zero
+    parts% npart          = 0
+    parts% distribution_id= dist
+
+    ALLOCATE( parts% masses (parts% n_matter) )
+    ALLOCATE( parts% all_eos(parts% n_matter) )
+    ALLOCATE( parts% npart_i(0:parts% n_matter) )
+    ALLOCATE( npart_i_tmp(0:parts% n_matter) )
+    ALLOCATE( parts% nbar_i(parts% n_matter) )
+    ALLOCATE( parts% nuratio_i(parts% n_matter) )
+    ALLOCATE( parts% mass_ratios(parts% n_matter) )
+    ALLOCATE( parts% mass_fractions(parts% n_matter) )
+
+    ALLOCATE( parts% barycenter(parts% n_matter,3) )
+
+    parts% npart_i(0)= 0
+    npart_i_tmp(0)   = 0
+    parts% nbar_i    = zero
+    parts% nuratio_i = zero
+
+    DO i_matter= 1, parts% n_matter, 1
+
+      parts% adm_mass          = id% adm_mass
+      parts% masses(i_matter)  = id% return_mass(i_matter)
+      center(i_matter,:)       = id% return_center(i_matter)
+      central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
+                                                        center(i_matter,2), &
+                                                        center(i_matter,3) )
+      barycenter(i_matter,:)   = id% return_barycenter(i_matter)
+      parts% barycenter(i_matter,:)= barycenter(i_matter,:)
+      sizes(i_matter, :)       = id% return_spatial_extent(i_matter)
+
+      parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
+      CALL id% return_eos_parameters( i_matter, &
+                                      parts% all_eos(i_matter)% eos_parameters )
+
+    ENDDO
+
+    ! Compute desired particle numbers based on mass ratios
+    max_mass  = MAXVAL( parts% masses )
+    total_mass= SUM( parts% masses )
+    DO i_matter= 1, parts% n_matter, 1
+      parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
+      parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
+      npart_des_i(i_matter)          = &
+                          NINT(parts% mass_fractions(i_matter)*DBLE(npart_des))
+      tmp= 2*npart_des_i(i_matter)
+      ALLOCATE( parts_all(i_matter)% pos_i  ( 3, tmp ) )
+      ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
+      ALLOCATE( parts_all(i_matter)% pmass_i( tmp ) )
+      ALLOCATE( parts_all(i_matter)% h_i    ( tmp ) )
+      ALLOCATE( parts_all(i_matter)% nu_i   ( tmp ) )
+    ENDDO
+    !   IF( parts% redistribute_nu )THEN
+    !     thres= 100.0D0*parts% nu_ratio
+    !   ENDIF
+
+    parts% post_process_sph_id => id% finalize_sph_id_ptr
+
+    !PRINT *, parts% all_eos(1)% eos_parameters
+    !STOP
+
     DO i_matter= 1, parts% n_matter, 1
 
       IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
@@ -474,6 +498,7 @@ SUBMODULE (sph_particles) constructor_std
       ENDIF
 
     ENDDO
+
 
     ! TODO: Add check that the number of rows in placer is the same as the
     !       number of bns objects, and that all bns have a value for placer
@@ -864,6 +889,7 @@ SUBMODULE (sph_particles) constructor_std
         ymax= center(itr, 2) + stretch*sizes(itr, 4)
         zmin= center(itr, 3) - stretch*sizes(itr, 5)
         zmax= center(itr, 3) + stretch*sizes(itr, 6)
+
         central_density(itr)= id% read_mass_density( center(itr, 1), &
                                                      center(itr, 2), &
                                                      center(itr, 3) )
@@ -1463,6 +1489,10 @@ SUBMODULE (sph_particles) constructor_std
                                 parts% v_euler_z )
     CALL parts% importer_timer% stop_timer()
 
+    !PRINT *, MAXVAL( parts% baryon_density, DIM= 1 )
+    !PRINT *, MAXVAL( parts% pressure, DIM= 1 )
+    !STOP
+
     IF( debug ) PRINT *, "34"
 
     !-----------------------------------------------------------------------!
@@ -1482,17 +1512,17 @@ SUBMODULE (sph_particles) constructor_std
 
         min_eps= MINVAL( parts% specific_energy(npart_in:npart_fin), &
                          DIM= 1, &
-                MASK= parts% baryon_density(npart_in:npart_fin) > 0.0D0 )
+                MASK= parts% baryon_density(npart_in:npart_fin) > zero )
         min_vel= MINVAL( SQRT( &
                        (parts% v_euler_x(npart_in:npart_fin))**2.0D0 &
                      + (parts% v_euler_y(npart_in:npart_fin))**2.0D0 &
                      + (parts% v_euler_z(npart_in:npart_fin))**2.0D0 ), &
                          DIM= 1, &
-                MASK= parts% baryon_density(npart_in:npart_fin) > 0.0D0 )
+                MASK= parts% baryon_density(npart_in:npart_fin) > zero )
 
         particle_loop2: DO a= npart_in, npart_fin, 1
 
-          IF( parts% baryon_density(a) <= 0.0D0 )THEN
+          IF( parts% baryon_density(a) <= zero )THEN
 
             CALL spherical_from_cartesian( &
                   parts% pos(1,a), parts% pos(2,a), parts% pos(3,a), &
@@ -1811,7 +1841,7 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE correct_center_of_mass_of_system
 
 
-    SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id )!, nstar_eul_id )
+    SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, nlrf_sph,sqg )
 
       IMPLICIT NONE
 
@@ -1819,8 +1849,10 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, INTENT(IN):: x(npart)
       DOUBLE PRECISION, INTENT(IN):: y(npart)
       DOUBLE PRECISION, INTENT(IN):: z(npart)
+      DOUBLE PRECISION, INTENT(IN):: nstar_sph(npart)
       DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
-      !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
+      DOUBLE PRECISION, INTENT(OUT):: nlrf_sph(npart)
+      DOUBLE PRECISION, INTENT(OUT):: sqg(npart)
 
       DOUBLE PRECISION, DIMENSION(npart):: lapse, &
                                            shift_x, shift_y, shift_z, &
@@ -1845,7 +1877,8 @@ SUBMODULE (sph_particles) constructor_std
       CALL compute_nstar_id( npart, lapse, shift_x, shift_y, &
                              shift_z, v_euler_x, v_euler_y, v_euler_z, &
                              g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                             baryon_density, nstar_id )
+                             baryon_density, nstar_sph, nstar_id, nlrf_sph, &
+                             sqg )
 
       !CALL compute_nstar_eul_id( npart, &
       !                           v_euler_x, v_euler_y, v_euler_z, &
@@ -1858,7 +1891,8 @@ SUBMODULE (sph_particles) constructor_std
     SUBROUTINE compute_nstar_id( npart, lapse, shift_x, shift_y, &
                                  shift_z, v_euler_x, v_euler_y, v_euler_z, &
                                  g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-                                 baryon_density, nstar_id )
+                                 baryon_density, nstar_sph, nstar_id, nlrf_sph,&
+                                 sqg )
 
       !**************************************************************
       !
@@ -1890,7 +1924,10 @@ SUBMODULE (sph_particles) constructor_std
       DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_yz
       DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: g_zz
       DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: baryon_density
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(IN):: nstar_sph
       DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: nstar_id
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: nlrf_sph
+      DOUBLE PRECISION, DIMENSION(npart), INTENT(OUT):: sqg
 
       INTEGER:: a, i!mus, nus
       DOUBLE PRECISION:: det, sq_g, Theta_a
@@ -1902,15 +1939,16 @@ SUBMODULE (sph_particles) constructor_std
       !$OMP             SHARED( npart, lapse, shift_x, shift_y, shift_z, &
       !$OMP                     v_euler_x, v_euler_y, v_euler_z, &
       !$OMP                     g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-      !$OMP                     baryon_density, vel, nstar_id ) &
+      !$OMP                     baryon_density, vel, nstar_id, nstar_sph, &
+      !$OMP                     nlrf_sph, sqg ) &
       !$OMP             PRIVATE( a, det, sq_g, Theta_a, g4 )
       DO a= 1, npart, 1
 
         ! Coordinate velocity of the fluid [c]
         vel(0,a) = one
-        vel(jx,a)= lapse(a)*v_euler_x(a)- shift_x(a)
-        vel(jy,a)= lapse(a)*v_euler_y(a)- shift_y(a)
-        vel(jz,a)= lapse(a)*v_euler_z(a)- shift_z(a)
+        vel(jx,a)= lapse(a)*v_euler_x(a) - shift_x(a)
+        vel(jy,a)= lapse(a)*v_euler_y(a) - shift_y(a)
+        vel(jz,a)= lapse(a)*v_euler_z(a) - shift_z(a)
 
         CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
                          [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], g4 )
@@ -1967,6 +2005,8 @@ SUBMODULE (sph_particles) constructor_std
         ENDIF
 
         nstar_id(a)= sq_g*Theta_a*baryon_density(a)
+        nlrf_sph(a)= nstar_sph(a)/(sq_g*Theta_a)
+        sqg(a)     = sq_g
 
       ENDDO
       !$OMP END PARALLEL DO

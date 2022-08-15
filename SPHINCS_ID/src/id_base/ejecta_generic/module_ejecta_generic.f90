@@ -433,6 +433,7 @@ MODULE ejecta_generic
                                            baryon_density, &
                                            energy_density, &
                                            specific_energy, &
+                                           pressure, &
                                            u_euler_x, u_euler_y, u_euler_z )
     !# Stores the ID in non [[ejecta]]-member arrays with the same
     !  shape as the [[ejecta]] member arrays
@@ -462,6 +463,7 @@ MODULE ejecta_generic
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z

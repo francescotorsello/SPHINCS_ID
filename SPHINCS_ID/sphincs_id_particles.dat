@@ -37,6 +37,7 @@ parts_pos="apm-pos-nu_1215_45km_mpa1_2M.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm200-atm.dat"
           !"apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
+          !"apm-pos-nu_BNSFU_1.4-1.4_50km_poly2.00_500k.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -58,14 +59,11 @@ reflect_particles_x= .TRUE.
 !----------------------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers;
 ! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 1000000 !1200000 !2800000
+npart_des= 500000 !1200000 !2800000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
 stretch=1.2     ! Factor by which the lattices around the stars are stretched
-!nx=80           ! Number of particles in the x direction for each lattice
-!ny=80           ! Number of particles in the y direction for each lattice
-!nz=80           ! EVEN number of particles in the z direction for each lattice
 use_thres=.FALSE.
 thres=10      ! (~rho_max)/thres is the minimum mass density considered
                 ! when placing particles. Used only when redistribute_nu is
@@ -138,12 +136,12 @@ apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
-print_step= 50          ! Evey print_step steps, print the particle positions
+print_step= 50          ! Every print_step steps, print the particle positions
                         ! at the current step, and the particle positions at
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
                         ! Set to 0 to not print positions at all
-apm_max_it= 1         ! Maximum number of iterations, irrespective of the
+apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 400            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
@@ -152,7 +150,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.225D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.55D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc

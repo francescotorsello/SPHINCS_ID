@@ -147,7 +147,7 @@ MODULE sphincs_id_lorene
     CHARACTER(4):: eos_str
     CHARACTER( LEN=* ), INTENT(IN):: eos_long
 
-    SELECT CASE( eos_long )
+    SELECT CASE( TRIM(eos_long) )
 
       CASE( 'Multipolytropic SLy  EOS' )
 
@@ -217,9 +217,13 @@ MODULE sphincs_id_lorene
 
         eos_str= 'haso'
 
+      CASE( 'Polytropic EOS' )
+
+        eos_str= '   '
+
       CASE DEFAULT
 
-        PRINT *, "** ERROR! Unknown EOS name: ", eos_long
+        PRINT *, "** ERROR! Unknown EOS name: ", TRIM(eos_long)
         PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. ", &
                  "   This SUBROUTINE exists mostly for backward compatibility."
         PRINT *, " * Stopping..."

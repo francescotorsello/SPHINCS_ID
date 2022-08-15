@@ -457,16 +457,17 @@ MODULE id_base
 
 
     SUBROUTINE read_id_full_int( this, n, x, y, z, &
-                                      lapse, &
-                                      shift_x, shift_y, shift_z, &
-                                      g_xx, g_xy, g_xz, &
-                                      g_yy, g_yz, g_zz, &
-                                      k_xx, k_xy, k_xz, &
-                                      k_yy, k_yz, k_zz, &
-                                      baryon_density, &
-                                      energy_density, &
-                                      specific_energy, &
-                                      u_euler_x, u_euler_y, u_euler_z )
+                                 lapse, &
+                                 shift_x, shift_y, shift_z, &
+                                 g_xx, g_xy, g_xz, &
+                                 g_yy, g_yz, g_zz, &
+                                 k_xx, k_xy, k_xz, &
+                                 k_yy, k_yz, k_zz, &
+                                 baryon_density, &
+                                 energy_density, &
+                                 specific_energy, &
+                                 pressure, &
+                                 u_euler_x, u_euler_y, u_euler_z )
      !# INTERFACE or the SUBROUTINE reading the full |id|
 
       IMPORT:: idbase
@@ -495,6 +496,7 @@ MODULE id_base
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z

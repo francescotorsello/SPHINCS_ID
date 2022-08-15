@@ -105,6 +105,7 @@ SUBMODULE (bns_lorene) constructor
     CALL derived_type% set_one_lapse ( .FALSE. )
     CALL derived_type% set_zero_shift( .FALSE. )
 
+    ! Compute typical length scales of the system using the pressure
     IF( derived_type% get_estimate_length_scale() )THEN
 
       ALLOCATE( length_scale_pressure(derived_type% get_n_matter()) )
@@ -120,6 +121,7 @@ SUBMODULE (bns_lorene) constructor
 
     ENDIF
 
+    ! Assign PROCEDURE POINTER to the desired PROCEDURE
     derived_type% finalize_sph_id_ptr => correct_adm_linear_momentum
 
     CONTAINS

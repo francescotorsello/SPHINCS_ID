@@ -1084,9 +1084,7 @@ SUBMODULE (sph_particles) sph_variables
 
           ! Using this internal energy gives machine-precision relative errors
           ! after the recovery, since it is computed from nlrf_int
-          ! Using the internal energy from the ID gives largr errors
-          ! For the piecewise polytropes, we have (?) to use the energy
-          ! from the ID
+          ! Using the internal energy from the ID gives larger errors
           u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
             /(this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
             *( this% all_eos(i_matter)% eos_parameters(poly$gamma) - one ) ) )
@@ -1252,6 +1250,8 @@ SUBMODULE (sph_particles) sph_variables
       END ASSOCIATE
 
     ENDDO matter_objects_loop
+
+    !STOP
 
     !-------------------!
     ! Assignment of Ye  !
@@ -1477,6 +1477,27 @@ SUBMODULE (sph_particles) sph_variables
                               this% theta,       &
                               this% nstar_int )
 
+    !
+    !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN
+    !
+    IF( this% export_bin )THEN
+
+      IF( PRESENT(namefile) )THEN
+
+        finalnamefile= TRIM( namefile ) // "00000"
+        dcount= -1 ! since it is increased before writing
+        CALL write_SPHINCS_dump( finalnamefile )
+
+      ELSE
+
+        basename= "NSNS."
+        dcount= -1 ! since it is increased before writing
+        CALL write_SPHINCS_dump()
+
+      ENDIF
+
+    ENDIF
+
     ! Test the recovery on ech matter object separately
     ! DO i_matter= 1, this% n_matter, 1
     !
@@ -1584,22 +1605,22 @@ SUBMODULE (sph_particles) sph_variables
     IF( ASSOCIATED(this% post_process_sph_id) )THEN
 
       CALL this% post_process_sph_id( this% npart, this% pos, &
-                                      this% nlrf_int, &
-                                      this% u_pwp, &
-                                      this% pressure_cu, this% v(1:3,:), &
-                                      this% theta, this% nstar_int, this% nu, &
-                                      this% g_xx,      &
-                                      this% g_xy,      &
-                                      this% g_xz,      &
-                                      this% g_yy,      &
-                                      this% g_yz,      &
-                                      this% g_zz,      &
-                                      this% lapse,     &
-                                      this% shift_x,   &
-                                      this% shift_y,   &
-                                      this% shift_z,   &
-                                      this% adm_linear_momentum_fluid, &
-                                      this% adm_mass )
+                                    this% nlrf_int, &
+                                    this% u_pwp, &
+                                    this% pressure_cu, this% v(1:3,:), &
+                                    this% theta, this% nstar_int, this% nu, &
+                                    this% g_xx,      &
+                                    this% g_xy,      &
+                                    this% g_xz,      &
+                                    this% g_yy,      &
+                                    this% g_yz,      &
+                                    this% g_zz,      &
+                                    this% lapse,     &
+                                    this% shift_x,   &
+                                    this% shift_y,   &
+                                    this% shift_z,   &
+                                    this% adm_linear_momentum_fluid, &
+                                    this% adm_mass )
 
     ELSE
 
@@ -1668,23 +1689,23 @@ SUBMODULE (sph_particles) sph_variables
     !
     !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN
     !
-    IF( this% export_bin )THEN
-
-      IF( PRESENT(namefile) )THEN
-
-        finalnamefile= TRIM( namefile ) // "00000"
-        dcount= -1 ! since it is increased before writing
-        CALL write_SPHINCS_dump( finalnamefile )
-
-      ELSE
-
-        basename= "NSNS."
-        dcount= -1 ! since it is increased before writing
-        CALL write_SPHINCS_dump()
-
-      ENDIF
-
-    ENDIF
+ !   IF( this% export_bin )THEN
+ !
+ !     IF( PRESENT(namefile) )THEN
+ !
+ !       finalnamefile= TRIM( namefile ) // "00000"
+ !       dcount= -1 ! since it is increased before writing
+ !       CALL write_SPHINCS_dump( finalnamefile )
+ !
+ !     ELSE
+ !
+ !       basename= "NSNS."
+ !       dcount= -1 ! since it is increased before writing
+ !       CALL write_SPHINCS_dump()
+ !
+ !     ENDIF
+ !
+ !   ENDIF
 
     !
     !-- Compute particle number density
