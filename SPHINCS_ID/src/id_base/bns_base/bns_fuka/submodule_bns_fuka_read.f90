@@ -1306,8 +1306,8 @@ stringize_end(working_dir)
 
     ENDDO find_name_loop
 
-PRINT *, filename_id
-PRINT *, dir_id
+!PRINT *, filename_id
+!PRINT *, dir_id
 
 ! Change working directory to where the FUKA ID files and the
 ! Kadath reader are stored (they must be in the same directory)
@@ -1454,8 +1454,9 @@ PRINT *, dir_id
     !IF( mpi_ranks >= 100 ) WRITE( size_run_id_str, '(I3)' ) LEN(run_id)
 
     ! Run the MPI parallelized Kadath reader
-    CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)// &
-                              " export_bns_test "//TRIM(run_id))
+    CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)//" "// &
+                              TRIM(work_dir)//"/"//TRIM(dir_id)//"export_bns_test "// &
+                              TRIM(work_dir)//"/"//TRIM(dir_id)//" "//TRIM(run_id))
 
     ! Delete the parameter file that specifies the lattice
     CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_par))
@@ -1494,7 +1495,7 @@ PRINT *, dir_id
 
     ! Write the names of the ASCII files printed by the reader
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( mpi_ranks, run_id, filenames_ranks ) &
+    !$OMP             SHARED( mpi_ranks, work_dir, dir_id, run_id, filenames_ranks ) &
     !$OMP             PRIVATE( i_file, mpi_ranks_str, nchars )
     write_filenames_loop: DO i_file= 0, mpi_ranks - 1, 1
 
@@ -1507,7 +1508,7 @@ PRINT *, dir_id
       ALLOCATE( CHARACTER(nchars):: filenames_ranks(i_file+1)% name )
 
       filenames_ranks(i_file+1)% name= &
-        TRIM(run_id)//"/id-"//TRIM(mpi_ranks_str)//".dat"
+        TRIM(work_dir)//"/"//TRIM(dir_id)//TRIM(run_id)//"/id-"//TRIM(mpi_ranks_str)//".dat"
 
     ENDDO write_filenames_loop
     !$OMP END PARALLEL DO

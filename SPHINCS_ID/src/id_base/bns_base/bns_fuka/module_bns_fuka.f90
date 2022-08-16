@@ -27,7 +27,7 @@ MODULE bns_fuka
   !
   !#  This module contains the definition of TYPE bnsfuka,
   !   and the SUBROUTINES that bind to the methods
-  !   of |fuka|'s class |binns|
+  !   of |fuka|'s procedures
   !
   !   [|fuka| official site](https://kadath.obspm.fr/fuka/#){:target="_blank"}
   !
