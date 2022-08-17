@@ -1455,8 +1455,8 @@ stringize_end(working_dir)
 
     ! Run the MPI parallelized Kadath reader
     CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)//" "// &
-                              TRIM(work_dir)//"/"//TRIM(dir_id)//"export_bns_test "// &
-                              TRIM(work_dir)//"/"//TRIM(dir_id)//" "//TRIM(run_id))
+                      TRIM(work_dir)//"/"//TRIM(dir_id)//"export_bns_test "// &
+                      TRIM(work_dir)//"/"//TRIM(dir_id)//" "//TRIM(run_id))
 
     ! Delete the parameter file that specifies the lattice
     CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_par))

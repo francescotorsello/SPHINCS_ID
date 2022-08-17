@@ -1504,7 +1504,7 @@ SUBMODULE (bssn_formulation) constraints
 
     CALL allocate_grid_function( rad_coord, 'rad_coord', 1 )
 
-    ! Initialize the stress-energy tensor to 0
+    ! Initialize the fields
     DO l= 1, this% nlevels, 1
       Tmunu_ll%   levels(l)% var= zero
       rad_coord%  levels(l)% var= this% rad_coord%  levels(l)% var
