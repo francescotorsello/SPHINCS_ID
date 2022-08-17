@@ -1230,7 +1230,7 @@ SUBMODULE (bns_fuka) read
 
 #ifdef __INTEL_COMPILER
 
-  USE IFPORT, ONLY: CHANGEDIRQQ, MAKEDIRQQ
+  USE IFPORT, ONLY: CHANGEDIRQQ, MAKEDIRQQ!, GETDRIVEDIRQQ, FILE$CURDRIVE
 
 #endif
 
@@ -1245,6 +1245,7 @@ SUBMODULE (bns_fuka) read
               n_last_rank, nz_rank(mpi_ranks)
     INTEGER, DIMENSION(mpi_ranks):: unit_rank
     INTEGER:: unit_rank_prev
+    INTEGER:: length_work_dir
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: grid_tmp
 
@@ -1277,10 +1278,10 @@ stringize_end(working_dir)
 
 #else
 
-#define stringize(x) tostring(x)
-#define tostring(x) #x
+!#define stringize(x) tostring(x)
+!#define tostring(x) #x
 
-  work_dir= stringize(working_dir)
+!  work_dir= stringize(working_dir)
 
 #endif
 
@@ -1291,6 +1292,42 @@ stringize_end(working_dir)
   PRINT *, " * Stopping..."
   PRINT *
   STOP
+
+#endif
+
+#ifdef __INTEL_COMPILER
+
+  !PRINT *, FILE$CURDRIVE
+  !length_work_dir = GETDRIVEDIRQQ(FILE$CURDRIVE)
+  CALL EXECUTE_COMMAND_LINE("(pwd | wc -m > pwd.dat; pwd >> pwd.dat)")
+
+  INQUIRE( FILE= "pwd.dat", EXIST= exist )
+  IF( debug ) PRINT *, exist
+  IF( exist )THEN
+    OPEN( 87654321, &
+          FILE= "pwd.dat", &
+          FORM= "FORMATTED", ACTION= "READ" )
+  ELSE
+    PRINT *
+    PRINT *, "** ERROR: pwd.dat file not found!"
+    PRINT *
+    STOP
+  ENDIF
+
+  READ( UNIT= 87654321, FMT= * ) length_work_dir
+  
+  ALLOCATE( CHARACTER(length_work_dir-1)::work_dir )
+
+  READ( UNIT= 87654321, FMT= '(A)' ) work_dir
+
+  CLOSE( UNIT= 87654321 )
+
+  CALL EXECUTE_COMMAND_LINE("rm -rf pwd.dat")
+
+#endif
+#ifdef __GFORTRAN__
+
+  CALL GETCWD(work_dir)
 
 #endif
 
@@ -1307,7 +1344,9 @@ stringize_end(working_dir)
     ENDDO find_name_loop
 
 !PRINT *, filename_id
+!PRINT *, work_dir
 !PRINT *, dir_id
+!STOP
 
 ! Change working directory to where the FUKA ID files and the
 ! Kadath reader are stored (they must be in the same directory)
