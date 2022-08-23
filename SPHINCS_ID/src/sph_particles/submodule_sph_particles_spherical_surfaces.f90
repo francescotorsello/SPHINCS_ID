@@ -58,7 +58,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     !**********************************************
 
     USE constants,  ONLY: pi, half
-    USE utility,    ONLY: zero, one, two, three, ten
+    USE utility,    ONLY: zero, one, two, three, five, seven, ten
     USE matrix,     ONLY: determinant_4x4_matrix
     USE NR,         ONLY: indexx
     USE APM,        ONLY: assign_h
@@ -69,7 +69,7 @@ SUBMODULE (sph_particles) spherical_surfaces
               r, th, phi, i_shell, npart_test, npart_shell_tmp, &
               cnt2, rel_sign, dim_seed, r_cnt, prev_shell, first_r, &
               npart_discard, npart_shell_cnt, size_pos_shell
-    !INTEGER, PARAMETER:: max_length= 5D+6
+
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx, seed
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
 
@@ -133,6 +133,9 @@ SUBMODULE (sph_particles) spherical_surfaces
       seed( itr )= seed( itr - 1 ) + seed( itr - 2 )
     ENDDO
     CALL RANDOM_SEED( PUT= seed )
+
+    IF(debug) PRINT *, dim_seed
+    IF(debug) PRINT *, seed
 
     !-----------------------------------!
     !-- Compute desired particle mass --!
@@ -276,14 +279,14 @@ SUBMODULE (sph_particles) spherical_surfaces
         DEALLOCATE( colatitude_pos( r )% colatitudes )
       ALLOCATE( colatitude_pos( r )% colatitudes( npart_shelleq( r )/4 ) )
 
-      IF( surface_radii(r) < 0.95D0*last_r*radius )THEN
+      IF( surface_radii(r) < (one - five/(ten*ten))*last_r*radius )THEN
 
-        CALL compute_colatitudes_uniformly_in( pi/two, 9.5D0/ten*pi, &
+        CALL compute_colatitudes_uniformly_in( pi/two, (ten - five/ten)/ten*pi,&
                                       colatitude_pos( r )% colatitudes( : ) )
 
       ELSE
 
-        CALL compute_colatitudes_uniformly_in( pi/two, 9.5D0/ten*pi, &
+        CALL compute_colatitudes_uniformly_in( pi/two, (ten - five/ten)/ten*pi,&
                                       colatitude_pos( r )% colatitudes( : ) )
         !CALL compute_colatitudes_uniformly_in( pi/two, two/3.0D0*pi, &
         !                              colatitude_pos( r )% colatitudes( : ) )
@@ -335,7 +338,7 @@ SUBMODULE (sph_particles) spherical_surfaces
       !$OMP                      th, phi, rand_num2, phase_th, rel_sign ), &
       !$OMP             SHARED( r, npart_shelleq, center, rad, alpha, &
       !$OMP                     pos_surfaces, colatitude_pos, n_surfaces, &
-      !$OMP                     dr_shells, surface_radii, shell_thickness, THIS, &
+      !$OMP                     dr_shells, surface_radii, shell_thickness, this, &
       !$OMP                     sqdetg_tmp, bar_density_tmp, gam_euler_tmp, &
       !$OMP                     pos_shell_tmp, pvol_tmp, dphi_shells, radius, &
       !$OMP                     npart_discarded, npart_surface_tmp, last_r )
@@ -349,7 +352,7 @@ SUBMODULE (sph_particles) spherical_surfaces
           !-- Randomize positions, if specified by the user in the
           !-- parameter file lorene_bns_id_particles.par
           !
-          IF( THIS% randomize_phi )THEN
+          IF( this% randomize_phi )THEN
 
             CALL RANDOM_NUMBER( phase )
             phase= phase*alpha(r)
@@ -369,14 +372,14 @@ SUBMODULE (sph_particles) spherical_surfaces
 
 
           col= colatitude_pos(r)% colatitudes(th)
-          IF( THIS% randomize_theta )THEN
+          IF( this% randomize_theta )THEN
 
             CALL RANDOM_NUMBER( phase_th )
             CALL RANDOM_NUMBER( rand_num2 )
             IF( rand_num2 >= half ) rel_sign=  1
             IF( rand_num2 < half )  rel_sign= -1
 
-            col_tmp= col*( one + rel_sign*0.05D0*phase_th )
+            col_tmp= col*( one + rel_sign*five/ten/ten*phase_th )
 
             IF( col_tmp < pi .AND. col_tmp > pi/two )THEN
 
@@ -387,18 +390,19 @@ SUBMODULE (sph_particles) spherical_surfaces
           ENDIF
 
           rad= surface_radii(r)
-          IF( THIS% randomize_r )THEN
+          IF( this% randomize_r )THEN
 
             CALL RANDOM_NUMBER( delta_r )
             CALL RANDOM_NUMBER( rand_num2 )
             IF( rand_num2 >= half ) rel_sign=  1
             IF( rand_num2 < half )  rel_sign= -1
 
-            IF( r/n_surfaces < 0.95D0 )THEN
-              rad= rad + rel_sign*delta_r*0.35D0*dr_shells
+            IF( r/n_surfaces < (one - five/(ten*ten)) )THEN
+              rad= rad + rel_sign*delta_r*(seven*five/(ten*ten))*dr_shells
             ELSE
               !rad= rad - ( one + delta_r )*0.35D0*dr_shells
-              rad= rad + ( - delta_r*0.35D0 - 0.5D0 )*dr_shells
+              rad= rad + ( - delta_r*(seven*five/(ten*ten)) &
+                   - five/ten )*dr_shells
             ENDIF
 
           ENDIF
@@ -583,9 +587,9 @@ SUBMODULE (sph_particles) spherical_surfaces
 
         ! This speeds up the iteration considerably, since the inner layers
         ! seem to always want a larger tolerance
-        IF( r <= 0.45D0*n_surfaces )THEN
-          upper_bound_tmp= upper_bound_tmp*1.1D0
-          lower_bound_tmp= lower_bound_tmp*0.9D0
+        IF( r <= (five*three*three/(ten*ten))*n_surfaces )THEN
+          upper_bound_tmp= upper_bound_tmp*(one + one/ten)
+          lower_bound_tmp= lower_bound_tmp*(one - one/ten)
         ENDIF
 
         ! Is the particle mass too high?
@@ -617,14 +621,14 @@ SUBMODULE (sph_particles) spherical_surfaces
 
             ! If the range of particle masses is getting too generous
             ! near the surface
-            IF( r > 0.8D0*n_surfaces .AND. &
-                m_parts( r )/m_parts( prev_shell ) > 1.1D0*upper_bound &
+            IF( r > (one - two/ten)*n_surfaces .AND. &
+              m_parts( r )/m_parts( prev_shell ) > (one + one/ten)*upper_bound &
             )THEN
 
               ! Increase the number of positions on this surface
               ! by a factor between 5 and 10
               CALL RANDOM_NUMBER( rand_num2 )
-              rand_num= NINT( 5.0D0*( rand_num2 + one ) )
+              rand_num= NINT( five*( rand_num2 + one ) )
               npart_shelleq( r )= NINT( rand_num*npart_shelleq( r ) )
                                 !  npart_shelleq( r - 1 ) &
                                 !+ rel_sign*NINT( 1 + rand_num )
@@ -659,8 +663,8 @@ SUBMODULE (sph_particles) spherical_surfaces
           ! More particles = lower particle mass, with fixed surface mass
           CALL RANDOM_NUMBER( rand_num )
           CALL RANDOM_NUMBER( rand_num2 )
-          npart_shelleq( r )= npart_shelleq( r ) + 1*NINT( 1 + 1.0*rand_num ) &
-                                                 + 1*NINT( 1 + 1.0*rand_num2 )
+          npart_shelleq( r )= npart_shelleq( r ) + 1*NINT( one + one*rand_num )&
+                                                 + 1*NINT( one + one*rand_num2 )
 
           ! Treat pathological cases
           IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
@@ -685,11 +689,11 @@ SUBMODULE (sph_particles) spherical_surfaces
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( r > 0.8D0*n_surfaces .AND. &
-                m_parts( r )/m_parts( prev_shell ) < 0.9D0*lower_bound &
+            IF( r > (one - two/ten)*n_surfaces .AND. &
+              m_parts( r )/m_parts( prev_shell ) < (one - one/ten)*lower_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
-              rand_num= NINT( 5.0D0*( rand_num2 + one ) )
+              rand_num= NINT( five*( rand_num2 + one ) )
               npart_shelleq( r )= NINT( npart_shelleq( r )/rand_num )
                                 !  npart_shelleq( r - 1 ) &
                                 !+ rel_sign*NINT( 1 + rand_num )
@@ -706,8 +710,8 @@ SUBMODULE (sph_particles) spherical_surfaces
 
           CALL RANDOM_NUMBER( rand_num )
           CALL RANDOM_NUMBER( rand_num2 )
-          npart_shelleq( r )= npart_shelleq( r ) - 1*NINT( 1 + 1.0*rand_num ) &
-                                                 - 1*NINT( 1 + 1.0*rand_num2 )
+          npart_shelleq( r )= npart_shelleq( r ) - 1*NINT( one + one*rand_num )&
+                                                 - 1*NINT( one + one*rand_num2 )
 
           IF( npart_shelleq( r ) == 0 .OR. npart_shell( r ) == 0 )THEN
             CALL RANDOM_NUMBER( rand_num )
@@ -728,12 +732,12 @@ SUBMODULE (sph_particles) spherical_surfaces
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( r > 0.8D0*n_surfaces .AND. &
-                m_parts( r )/m_parts( prev_shell ) > 1.1D0*upper_bound &
+            IF( r > (one - two/ten)*n_surfaces .AND. &
+              m_parts( r )/m_parts( prev_shell ) > (one + one/ten)*upper_bound &
                 !upper_bound_tmp > 1.1D0*upper_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
-              rand_num= NINT( 5.0D0*( rand_num2 + one ) )
+              rand_num= NINT( five*( rand_num2 + one ) )
               npart_shelleq( r )= NINT( rand_num*npart_shelleq( r ) )
                                 !  npart_shelleq( r - 1 ) &
                                 !+ rel_sign*NINT( 1 + rand_num )
@@ -780,12 +784,12 @@ SUBMODULE (sph_particles) spherical_surfaces
           IF( cnt2 > max_steps )THEN
             upper_bound_tmp= upper_bound_tmp*upper_factor
             lower_bound_tmp= lower_bound_tmp*lower_factor
-            IF( r > 0.8D0*n_surfaces .AND. &
-                m_parts( r )/m_parts( prev_shell ) < 0.9D0*lower_bound &
+            IF( r > (one - two/ten)*n_surfaces .AND. &
+              m_parts( r )/m_parts( prev_shell ) < (one - one/ten)*lower_bound &
                 !lower_bound_tmp < 0.9D0*lower_bound &
             )THEN
               CALL RANDOM_NUMBER( rand_num2 )
-              rand_num= NINT( 5.0D0*( rand_num2 + one ) )
+              rand_num= NINT( five*( rand_num2 + one ) )
               npart_shelleq( r )= NINT( npart_shelleq( r )/rand_num )
                                 !  npart_shelleq( r - 1 ) &
                                 !+ rel_sign*NINT( 1 + rand_num )
