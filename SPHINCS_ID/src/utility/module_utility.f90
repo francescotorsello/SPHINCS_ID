@@ -36,27 +36,28 @@ MODULE utility
 
   IMPLICIT NONE
 
-  ! This should go in MODULE constants
-  DOUBLE PRECISION, PARAMETER :: zero            = 0.D0
-  DOUBLE PRECISION, PARAMETER :: one             = 1.D0
-  DOUBLE PRECISION, PARAMETER :: two             = 2.D0
-  DOUBLE PRECISION, PARAMETER :: three           = 3.D0
-  DOUBLE PRECISION, PARAMETER :: four            = 4.D0
-  DOUBLE PRECISION, PARAMETER :: five            = 5.D0
-  DOUBLE PRECISION, PARAMETER :: ten             = 10.D0
-  DOUBLE PRECISION, PARAMETER :: golden_ratio    = 1.618033988749894D0
-  DOUBLE PRECISION, PARAMETER :: km2m            = 1.D+3
-  DOUBLE PRECISION, PARAMETER :: m2cm            = 1D+2
-  DOUBLE PRECISION, PARAMETER :: g2kg            = 1D-3
-  DOUBLE PRECISION, PARAMETER :: kg2g            = 1D+3
-  DOUBLE PRECISION, PARAMETER :: MSun_geo        = G_Msun/c_light2/1.0D5! in km;
+
+  DOUBLE PRECISION, PARAMETER:: zero        = 0.D0
+  DOUBLE PRECISION, PARAMETER:: one         = 1.D0
+  DOUBLE PRECISION, PARAMETER:: two         = 2.D0
+  DOUBLE PRECISION, PARAMETER:: three       = 3.D0
+  DOUBLE PRECISION, PARAMETER:: four        = 4.D0
+  DOUBLE PRECISION, PARAMETER:: five        = 5.D0
+  DOUBLE PRECISION, PARAMETER:: seven       = 7.D0
+  DOUBLE PRECISION, PARAMETER:: ten         = 10.D0
+  DOUBLE PRECISION, PARAMETER:: golden_ratio= 1.618033988749894D0
+  DOUBLE PRECISION, PARAMETER:: km2m        = ten*ten*ten
+  DOUBLE PRECISION, PARAMETER:: m2cm        = ten*ten
+  DOUBLE PRECISION, PARAMETER:: g2kg        = one/(ten*ten*ten)
+  DOUBLE PRECISION, PARAMETER:: kg2g        = ten*ten*ten
+  DOUBLE PRECISION, PARAMETER:: MSun_geo    = G_Msun/c_light2/ &
+                                               (ten*ten*ten*ten*ten)
   !# Msun_geo = 1.47662503825040 km
   !  see https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
-  DOUBLE PRECISION, PARAMETER :: km2Msun_geo     = 1.0D0/MSun_geo
-  DOUBLE PRECISION, PARAMETER :: lorene2hydrobase= &
-                                              (MSun_geo*km2m)**3/(MSun*g2kg)
-  !# lorene2hydrobase= (1477m)^3 / (2*10^30kg) ! 1.6110591665D-21
-  !  new value 1.6186541582311746851140226630074e-21, different by 0.5%
+  DOUBLE PRECISION, PARAMETER:: km2Msun_geo     = one/MSun_geo
+  DOUBLE PRECISION, PARAMETER:: lorene2hydrobase= (MSun_geo*km2m)**3/(MSun*g2kg)
+  !# lorene2hydrobase= (1477m)^3 / (2*10^30kg)=
+  !  1.6186541582311746851140226630074e-21
   !  lorene2hydrobase is the conversion factor for the baryon mass density
 
   INTEGER:: itr

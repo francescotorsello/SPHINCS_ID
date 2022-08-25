@@ -1315,7 +1315,7 @@ SUBMODULE (bns_fuka) read
   ENDIF
 
   READ( UNIT= 87654321, FMT= * ) length_work_dir
-  
+
   ALLOCATE( CHARACTER(length_work_dir-1)::work_dir )
 
   READ( UNIT= 87654321, FMT= '(A)' ) work_dir
@@ -1494,8 +1494,8 @@ SUBMODULE (bns_fuka) read
 
     ! Run the MPI parallelized Kadath reader
     CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)//" "// &
-                              TRIM(work_dir)//"/"//TRIM(dir_id)//"export_bns_test "// &
-                              TRIM(work_dir)//"/"//TRIM(dir_id)//" "//TRIM(run_id))
+                      TRIM(work_dir)//"/"//TRIM(dir_id)//"export_bns_test "// &
+                      TRIM(work_dir)//"/"//TRIM(dir_id)//" "//TRIM(run_id))
 
     ! Delete the parameter file that specifies the lattice
     CALL EXECUTE_COMMAND_LINE("rm -f "//TRIM(filename_par))
