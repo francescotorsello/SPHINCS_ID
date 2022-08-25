@@ -1268,22 +1268,22 @@ SUBMODULE (bns_fuka) read
 ! Get the path to the working directory from the precompiler variable
 #ifdef working_dir
 
-#ifdef __GFORTRAN__
+!#ifdef __GFORTRAN__
 
-# define stringize_start(x) "&
-# define stringize_end(x) &x"
+!# define stringize_start(x) "&
+!# define stringize_end(x) &x"
 
-  work_dir= stringize_start(working_dir)
-stringize_end(working_dir)
+!  work_dir= stringize_start(working_dir)
+!stringize_end(working_dir)
 
-#else
+!#else
 
 !#define stringize(x) tostring(x)
 !#define tostring(x) #x
 
 !  work_dir= stringize(working_dir)
 
-#endif
+!#endif
 
 #else
 
@@ -1295,7 +1295,7 @@ stringize_end(working_dir)
 
 #endif
 
-#ifdef __INTEL_COMPILER
+!#ifdef __INTEL_COMPILER
 
   !PRINT *, FILE$CURDRIVE
   !length_work_dir = GETDRIVEDIRQQ(FILE$CURDRIVE)
@@ -1324,12 +1324,12 @@ stringize_end(working_dir)
 
   CALL EXECUTE_COMMAND_LINE("rm -rf pwd.dat")
 
-#endif
-#ifdef __GFORTRAN__
+!#endif
+!#ifdef __GFORTRAN__
 
-  CALL GETCWD(work_dir)
+!  CALL GETCWD(work_dir)
 
-#endif
+!#endif
 
     ! Get the names of the ID file and the directory where it is stored,
     ! relative to the working directory
@@ -1533,9 +1533,10 @@ stringize_end(working_dir)
     !ALLOCATE( CHARACTER(nchars):: filename_rank(mpi_ranks) )
 
     ! Write the names of the ASCII files printed by the reader
-    !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( mpi_ranks, work_dir, dir_id, run_id, filenames_ranks ) &
-    !$OMP             PRIVATE( i_file, mpi_ranks_str, nchars )
+    ! gfortran modifies work_dir and dir_id if OMP is used. Disabling OMP for now
+!    !$OMP PARALLEL DO DEFAULT( NONE ) &
+!    !$OMP             SHARED( mpi_ranks, work_dir, dir_id, run_id, filenames_ranks ) &
+!    !$OMP             PRIVATE( i_file, mpi_ranks_str, nchars )
     write_filenames_loop: DO i_file= 0, mpi_ranks - 1, 1
 
       IF( i_file <= 9   ) WRITE( mpi_ranks_str, '(I1)' ) i_file
@@ -1543,14 +1544,15 @@ stringize_end(working_dir)
       IF( i_file >= 100 ) WRITE( mpi_ranks_str, '(I3)' ) i_file
 
       ! FLOOR(LOG10(x)) + 1 is the number of digits of x
-      nchars= LEN(run_id) + 4 + NINT(FLOOR(LOG10(DBLE(i_file+1)))+1.D0) + 4
+      nchars= LEN(TRIM(work_dir)//"/"//TRIM(dir_id)//TRIM(run_id)) &
+              + 4 + NINT(FLOOR(LOG10(DBLE(i_file+1)))+1.D0) + 4
       ALLOCATE( CHARACTER(nchars):: filenames_ranks(i_file+1)% name )
 
       filenames_ranks(i_file+1)% name= &
         TRIM(work_dir)//"/"//TRIM(dir_id)//TRIM(run_id)//"/id-"//TRIM(mpi_ranks_str)//".dat"
 
     ENDDO write_filenames_loop
-    !$OMP END PARALLEL DO
+!    !$OMP END PARALLEL DO
 
     ! Read the ID from the ASCII files printed by the reader
     ! (one per MPI rank)

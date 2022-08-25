@@ -555,7 +555,7 @@ if flavour == full_flavour: #
 
   if host == 'Sunrise': #
 
-    env['LIBPATH'] = liblorene_dir + \
+    env['LIBPATH'] = liblorene_dir + libkadath_dir + \
                      ['/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/scalapack/2.1.0/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/fftw/3.3.8/lib', \
