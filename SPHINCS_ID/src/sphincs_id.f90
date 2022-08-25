@@ -375,7 +375,7 @@ PROGRAM sphincs_id
     IF( export_form )THEN
       export_bssn_loop: DO itr3 = 1, n_id, 1
         WRITE( namefile_bssn, "(A24,I1,A4)" ) &
-                              "lorene-bns-id-bssn-form_", itr3, ".dat"
+                              "bssn-id_", itr3, ".dat"
 
         namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
 
@@ -503,7 +503,7 @@ PROGRAM sphincs_id
               !particles_dist( itr, itr2 )= particles()
             ELSE
               WRITE( namefile_parts, "(A29,I1,A1,I1,A4)" ) &
-                                     "lorene-bns-id-particles-form_", &
+                                     "sph-id_", &
                                      itr3, "-", itr4, ".dat"
               namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
               CALL particles_dist( itr3, itr4 )% &
