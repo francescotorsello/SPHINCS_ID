@@ -145,7 +145,7 @@ MODULE sphincs_id_full
 
     !*********************************************
     !                                            *
-    ! Converts the longer names from LORENE      *
+    ! Converts the longer names from |lorene|    *
     ! to the 4-character strings needed by       *
     ! select_EOS_parameters                      *
     !                                            *
@@ -238,11 +238,112 @@ MODULE sphincs_id_full
         PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. ", &
                  "   This SUBROUTINE exists mostly for backward compatibility."
         PRINT *, " * Stopping..."
+        PRINT *
         STOP
 
     END SELECT
 
   END FUNCTION shorten_eos_name
+
+
+  FUNCTION shorten_eos_name_fuka( eos_long ) RESULT( eos_str )
+
+    !*********************************************
+    !                                            *
+    ! Converts the longer names from |fuka|      *
+    ! to the 4-character strings needed by       *
+    ! select_EOS_parameters                      *
+    !                                            *
+    ! FT 26.08.2022                              *
+    !                                            *
+    !*********************************************
+
+    IMPLICIT NONE
+
+    CHARACTER(4):: eos_str
+    CHARACTER( LEN=* ), INTENT(IN):: eos_long
+
+    SELECT CASE( TRIM(eos_long) )
+
+      CASE( 'sly4.pwpoly' )
+
+        eos_str= 'SLy '
+
+      CASE( 'alf2.pwpoly' )
+
+        eos_str= 'ALF2'
+
+      CASE( 'alf4.pwpoly' )
+
+        eos_str= 'ALF4'
+
+      CASE( 'eng.pwpoly' )
+
+        eos_str= 'ENG '
+
+      CASE( 'h4.pwpoly' )
+
+        eos_str= 'H4  '
+
+      CASE( 'mpa1.pwpoly' )
+
+        eos_str= 'MPA1'
+
+      CASE( 'ms1.pwpoly' )
+
+        eos_str= 'MS1 '
+
+      CASE( 'ms1b.pwpoly' )
+
+        eos_str= 'MS1b'
+
+      CASE( 'apr3.pwpoly' )
+
+        eos_str= 'AP3 '
+
+      CASE( 'ap3.pwpoly' )
+
+        eos_str= 'AP3 '
+
+      CASE( 'wff1.pwpoly' )
+
+        eos_str= 'WFF1'
+
+      CASE( 'wff2.pwpoly' )
+
+        eos_str= 'WFF2'
+
+      CASE( 'gnh3.pwpoly' )
+
+        eos_str= 'GNH3'
+
+      CASE( 'apr4.pwpoly' )
+
+        eos_str= 'APR4'
+
+      CASE( 'ap4.pwpoly' )
+
+        eos_str= 'APR4'
+
+      CASE( 'haso.pwpoly' )
+
+        eos_str= 'haso'
+
+      CASE( 'gam2.polytr' )
+
+        eos_str= '   '
+
+      CASE DEFAULT
+
+        PRINT *, "** ERROR! Unknown EOS name: ", TRIM(eos_long)
+        PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. "
+        PRINT *, " * Stopping..."
+        PRINT *
+        STOP
+
+    END SELECT
+
+  END FUNCTION shorten_eos_name_fuka
 
 
 END MODULE sphincs_id_full
