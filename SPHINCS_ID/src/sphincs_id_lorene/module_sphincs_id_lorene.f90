@@ -227,6 +227,7 @@ MODULE sphincs_id_lorene
         PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. ", &
                  "   This SUBROUTINE exists mostly for backward compatibility."
         PRINT *, " * Stopping..."
+        PRINT *
         STOP
 
     END SELECT

@@ -26,11 +26,11 @@ SUBMODULE (bns_lorene) read
   !****************************************************
   !
   !# Implementation of the methods of TYPE bnslorene that
-  !  import |bns| data using |lorene|
+  !  read |bns| data using |lorene|
   !
   !  FT 23.10.2020
   !
-  !  Renamed from bns_methods to bns_import upon
+  !  Renamed from bns_methods to bns_read upon
   !  improving modularity
   !
   !  OMP parallelized loops that call |lorene|
@@ -55,7 +55,7 @@ SUBMODULE (bns_lorene) read
   !-------------------!
 
 
-  MODULE PROCEDURE import_id_int
+  MODULE PROCEDURE read_id_int
 
     !**************************************************
     !
@@ -72,7 +72,7 @@ SUBMODULE (bns_lorene) read
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
             .OR. SIZE( y ) /= SIZE( z ) )THEN
         PRINT *, "** ERROR: The sizes of the arrays of positions" &
-                 // "passed to import_lorene_id are not the same."
+                 // "passed to read_id are not the same."
         PRINT *
         STOP
       ENDIF
@@ -177,21 +177,21 @@ SUBMODULE (bns_lorene) read
       ELSE
 
         PRINT *, "** ERROR: Memory was not allocated before calling " &
-                 // "import_id in import_lorene_id (TYPE particles)."
+                 // "read_id in read_id (TYPE particles)."
         PRINT *
         STOP
 
       ENDIF
 
-      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *, "** Subroutine read_id executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_int
+  END PROCEDURE read_id_int
 
 
-  MODULE PROCEDURE import_id_full
+  MODULE PROCEDURE read_id_full
 
     !**************************************************
     !
@@ -209,7 +209,7 @@ SUBMODULE (bns_lorene) read
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
             .OR. SIZE( y ) /= SIZE( z ) )THEN
         PRINT *, "** ERROR: The sizes of the arrays of positions" &
-                 // "passed to import_lorene_id are not the same."
+                 // "passed to read_id are not the same."
         PRINT *
         STOP
       ENDIF
@@ -298,15 +298,15 @@ SUBMODULE (bns_lorene) read
       ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *, "** Subroutine read_id executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_full
+  END PROCEDURE read_id_full
 
 
-  MODULE PROCEDURE import_id_spacetime
+  MODULE PROCEDURE read_id_spacetime
 
     !*******************************************************
     !
@@ -341,7 +341,7 @@ SUBMODULE (bns_lorene) read
         ! SHAPE( pos(:,:,:,1) ) /= SHAPE( k(:,:,:,1) ) &
         )THEN
         PRINT *, "** ERROR: Mismatch in array dimensions" &
-                 // "in import_id_spacetime."
+                 // "in read_id_spacetime."
         PRINT *
         STOP
       ENDIF
@@ -466,15 +466,15 @@ SUBMODULE (bns_lorene) read
       ENDDO
       !$OMP END PARALLEL DO
 
-      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *, "** Subroutine read_id executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_spacetime
+  END PROCEDURE read_id_spacetime
 
 
-  MODULE PROCEDURE import_id_hydro
+  MODULE PROCEDURE read_id_hydro
 
     !*******************************************************
     !
@@ -535,15 +535,15 @@ SUBMODULE (bns_lorene) read
       !ENDDO coords_z
       !IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-      PRINT *, "** Subroutine import_lorene_id_hydro executed."
+      PRINT *, "** Subroutine read_id_hydro executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_hydro
+  END PROCEDURE read_id_hydro
 
 
-  MODULE PROCEDURE import_id_particles
+  MODULE PROCEDURE read_id_particles
 
     !****************************************************
     !
@@ -567,7 +567,7 @@ SUBMODULE (bns_lorene) read
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
               .OR. SIZE( y ) /= SIZE( z ) )THEN
         PRINT *, "** ERROR: The sizes of the arrays of positions" &
-                 // "passed to import_lorene_id are not the same."
+                 // "passed to read_id are not the same."
         PRINT *
         STOP
       ENDIF
@@ -661,22 +661,22 @@ SUBMODULE (bns_lorene) read
       baryon_density= baryon_density*((Msun_geo*km2m)**3)/(amu*g2kg)
       pressure      = pressure*((Msun_geo*km2m)**3)/(amu*g2kg)
 
-      PRINT *, "** Subroutine import_id_particles executed."
+      PRINT *, "** Subroutine read_id_particles executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_particles
+  END PROCEDURE read_id_particles
 
 
-  MODULE PROCEDURE import_id_mass_b
+  MODULE PROCEDURE read_id_mass_b
 
     !****************************************************
     !
     !# Stores the hydro ID in the arrays needed to
     !  compute the baryon mass, storing it to variables
     !  (not arrays as the others SUBROUTINES in
-    !  the [[bns_import]] SUBMODULE).
+    !  the [[bns_read]] SUBMODULE).
     !
     !  FT 15.04.2021
     !
@@ -710,10 +710,10 @@ SUBMODULE (bns_lorene) read
 
     ENDIF
 
-  END PROCEDURE import_id_mass_b
+  END PROCEDURE read_id_mass_b
 
 
-  MODULE PROCEDURE import_id_k
+  MODULE PROCEDURE read_id_k
 
     !****************************************************
     !
@@ -731,7 +731,7 @@ SUBMODULE (bns_lorene) read
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
               .OR. SIZE( y ) /= SIZE( z ) )THEN
         PRINT *, "** ERROR: The sizes of the arrays of positions" &
-                 // "passed to import_lorene_id are not the same."
+                 // "passed to read_id are not the same."
         PRINT *
         STOP
       ENDIF
@@ -782,12 +782,12 @@ SUBMODULE (bns_lorene) read
       ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-      PRINT *, "** Subroutine import_lorene_id_k executed."
+      PRINT *, "** Subroutine read_id_k executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_k
+  END PROCEDURE read_id_k
 
 
   !-----------------!
@@ -795,7 +795,7 @@ SUBMODULE (bns_lorene) read
   !-----------------!
 
 
-  MODULE PROCEDURE import_mass_density
+  MODULE PROCEDURE read_mass_density
 
     !***********************************************
     !
@@ -824,10 +824,10 @@ SUBMODULE (bns_lorene) read
 
     ENDIF
 
-  END PROCEDURE import_mass_density
+  END PROCEDURE read_mass_density
 
 
-  MODULE PROCEDURE import_pressure
+  MODULE PROCEDURE read_pressure
 
     !***********************************************
     !
@@ -855,10 +855,10 @@ SUBMODULE (bns_lorene) read
 
     ENDIF
 
-  END PROCEDURE import_pressure
+  END PROCEDURE read_pressure
 
 
-  MODULE PROCEDURE import_spatial_metric
+  MODULE PROCEDURE read_spatial_metric
 
     !***********************************************
     !
@@ -886,7 +886,7 @@ SUBMODULE (bns_lorene) read
 
     ENDIF
 
-  END PROCEDURE import_spatial_metric
+  END PROCEDURE read_spatial_metric
 
 
   MODULE PROCEDURE is_hydro_positive

@@ -52,7 +52,7 @@ MODULE bns_lorene
   !                                                      *
   !            Definition of TYPE bnslorene              *
   !                                                      *
-  !   This class imports and stores the |lorene| BNS ID  *
+  !   This class reads and stores the |lorene| BNS ID    *
   !                                                      *
   !*******************************************************
 
@@ -165,7 +165,7 @@ MODULE bns_lorene
     PROCEDURE:: deallocate_bnslorene_memory
     !! Deallocates memory for the [[bnslorene]] member arrays
 
-    PROCEDURE:: import_id_params
+    PROCEDURE:: read_id_params
     !! Imports the parameters of the BNS from |lorene|
 
     !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
@@ -175,15 +175,15 @@ MODULE bns_lorene
     PROCEDURE, PUBLIC:: print_id_params
     !! Prints the parameters of the BNS to the standard output
 
-    PROCEDURE:: import_id_int
+    PROCEDURE:: read_id_int
     !! Stores the ID in the [[bnslorene]] member arrays
 
-    PROCEDURE:: read_id_full      => import_id_full
-    PROCEDURE:: read_id_spacetime => import_id_spacetime
-    PROCEDURE:: read_id_particles => import_id_particles
-    PROCEDURE:: read_id_hydro     => import_id_hydro
-    PROCEDURE:: read_id_mass_b    => import_id_mass_b
-    PROCEDURE:: read_id_k         => import_id_k
+    PROCEDURE:: read_id_full      => read_id_full
+    PROCEDURE:: read_id_spacetime => read_id_spacetime
+    PROCEDURE:: read_id_particles => read_id_particles
+    PROCEDURE:: read_id_hydro     => read_id_hydro
+    PROCEDURE:: read_id_mass_b    => read_id_mass_b
+    PROCEDURE:: read_id_k         => read_id_k
 
     PROCEDURE:: print_summary_derived => print_summary_bnslorene
 
@@ -196,14 +196,14 @@ MODULE bns_lorene
     !-----------------!
 
     !> Returns the |lorene|'s mass density at the desired point
-    PROCEDURE:: read_mass_density => import_mass_density
+    PROCEDURE:: read_mass_density => read_mass_density
 
     !> Returns the |lorene|'s pressure at the desired point
-    !PROCEDURE:: read_pressure => import_pressure
-    PROCEDURE:: import_pressure
+    !PROCEDURE:: read_pressure => read_pressure
+    PROCEDURE:: read_pressure
 
     !> Returns the |lorene|'s conformally flat spatial ADM metric
-    PROCEDURE:: import_spatial_metric
+    PROCEDURE:: read_spatial_metric
 
     !& Returns 1 if the energy density or the specific energy or the pressure
     !  are negative
@@ -373,13 +373,13 @@ MODULE bns_lorene
     END SUBROUTINE deallocate_bnslorene_memory
 
 
-    MODULE SUBROUTINE import_id_params( this )
+    MODULE SUBROUTINE read_id_params( this )
     !! Imports the BNS parameters from |lorene|
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT( IN OUT ):: this
 
-    END SUBROUTINE import_id_params
+    END SUBROUTINE read_id_params
 
 
     MODULE SUBROUTINE print_id_params( this )
@@ -421,7 +421,7 @@ MODULE bns_lorene
   !  END SUBROUTINE integrate_baryon_mass_density
 
 
-    MODULE SUBROUTINE import_id_int( this, n, x, y, z )
+    MODULE SUBROUTINE read_id_int( this, n, x, y, z )
     !! Stores the ID in the [[bnslorene]] member arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -431,7 +431,7 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
 
-    END SUBROUTINE import_id_int
+    END SUBROUTINE read_id_int
 
     ! BE CAREFUL! Look at the following page:
     !
@@ -452,7 +452,7 @@ MODULE bns_lorene
     ! not OUT. The array arguments are not allocatable anymore
 
 
-    MODULE SUBROUTINE import_id_full( this, n, x, y, z, &
+    MODULE SUBROUTINE read_id_full( this, n, x, y, z, &
                                       lapse, &
                                       shift_x, shift_y, shift_z, &
                                       g_xx, g_xy, g_xz, &
@@ -497,10 +497,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
 
-    END SUBROUTINE import_id_full
+    END SUBROUTINE read_id_full
 
 
-    MODULE SUBROUTINE import_id_spacetime( this, nx, ny, nz, &
+    MODULE SUBROUTINE read_id_spacetime( this, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
@@ -520,10 +520,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
 
-    END SUBROUTINE import_id_spacetime
+    END SUBROUTINE read_id_spacetime
 
 
-    MODULE SUBROUTINE import_id_hydro( this, nx, ny, nz, &
+    MODULE SUBROUTINE read_id_hydro( this, nx, ny, nz, &
                                              pos, &
                                              baryon_density, &
                                              energy_density, &
@@ -545,10 +545,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: u_euler
 
-    END SUBROUTINE import_id_hydro
+    END SUBROUTINE read_id_hydro
 
 
-    MODULE SUBROUTINE import_id_particles( this, n, x, y, z, &
+    MODULE SUBROUTINE read_id_particles( this, n, x, y, z, &
                                            lapse, &
                                            shift_x, shift_y, shift_z, &
                                            g_xx, g_xy, g_xz, &
@@ -584,10 +584,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
 
-    END SUBROUTINE import_id_particles
+    END SUBROUTINE read_id_particles
 
 
-    MODULE SUBROUTINE import_id_mass_b( this, x, y, z, &
+    MODULE SUBROUTINE read_id_mass_b( this, x, y, z, &
                                         g, &
                                         baryon_density, &
                                         gamma_euler )
@@ -602,10 +602,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, INTENT( OUT ):: baryon_density
       DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
 
-    END SUBROUTINE import_id_mass_b
+    END SUBROUTINE read_id_mass_b
 
 
-    MODULE SUBROUTINE import_id_k( this, n, x, y, z,&
+    MODULE SUBROUTINE read_id_k( this, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
    !! Stores the components of the extrinsic curvature in arrays
@@ -623,13 +623,13 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
 
-    END SUBROUTINE import_id_k
+    END SUBROUTINE read_id_k
 
 
     !
     !-- FUNCTIONS
     !
-    MODULE FUNCTION import_mass_density( this, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_mass_density( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -643,10 +643,10 @@ MODULE bns_lorene
       !> Baryon mass density at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
-    END FUNCTION import_mass_density
+    END FUNCTION read_mass_density
 
 
-    MODULE FUNCTION import_pressure( this, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_pressure( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| pressure at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -660,10 +660,10 @@ MODULE bns_lorene
       !> Pressure at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
-    END FUNCTION import_pressure
+    END FUNCTION read_pressure
 
 
-    MODULE FUNCTION import_spatial_metric( this, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_spatial_metric( this, x, y, z ) RESULT( res )
     !# Returns the |lorene| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
@@ -678,7 +678,7 @@ MODULE bns_lorene
       !> \(g_{xx}=g_{yy}=g_{zz}\) at \((x,y,z)\)
       REAL(C_DOUBLE):: res
 
-    END FUNCTION import_spatial_metric
+    END FUNCTION read_spatial_metric
 
 
     MODULE FUNCTION is_hydro_positive( this, x, y, z ) RESULT( res )
@@ -887,7 +887,7 @@ MODULE bns_lorene
       !# Interface to the |lorene| method of class
       !  |binns| with the same name, that reads the full
       !  |lorene| ID at the specified point.
-      !  That is, imports the metric fields, the
+      !  That is, reads the metric fields, the
       !  components of the extrinsic curvature [c/km],
       !  and the hydro fields.
       !

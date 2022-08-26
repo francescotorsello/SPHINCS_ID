@@ -147,9 +147,9 @@ MODULE bns_fuka
     !
 
     ! TODO: change "grid" to "lattice" for consistency
-    INTEGER:: nx_grid= 400
-    INTEGER:: ny_grid= 400
-    INTEGER:: nz_grid= 400
+    INTEGER:: nx_grid= 40
+    INTEGER:: ny_grid= 40
+    INTEGER:: nz_grid= 40
     TYPE(id_lattice), DIMENSION(2):: star_lattice
     !# Array storing two [[bns_fuka:id_lattice]] objects, one per star
 
@@ -238,6 +238,8 @@ MODULE bns_fuka
 
     CHARACTER( LEN=: ), ALLOCATABLE:: eos_type
     !! String containing the type of the |eos|
+    CHARACTER( LEN=: ), ALLOCATABLE:: eos_file
+    !! String containing the name of the |eos| file used by |fuka|
 
     CHARACTER( LEN=: ), ALLOCATABLE:: filename
     !! String containing the name of the '.info' |id| file output by |fuka|
@@ -1576,6 +1578,7 @@ MODULE bns_fuka
                                    rho_center2,            &
                                    energy_density_center2, &
                                    eos_type,               &
+                                   eos_file,               &
                                    gamma,                  &
                                    kappa,                  &
                                    n_poly,                 &
@@ -1637,6 +1640,7 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: rho_center2
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center2
       CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_type
+      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_file
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma
       REAL(C_DOUBLE), INTENT(OUT)       :: kappa
       INTEGER(C_INT), INTENT(OUT)       :: n_poly

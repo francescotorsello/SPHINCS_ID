@@ -26,7 +26,7 @@ SUBMODULE (bns_lorene) params
   !********************************************
   !
   !# Implementation of the methods of TYPE bns
-  !  that import from |lorene| the
+  !  that read from |lorene| the
   !  parameters of the binary system,
   !  and print them to the standard output.
   !
@@ -46,7 +46,7 @@ SUBMODULE (bns_lorene) params
   !-------------------!
 
 
-  MODULE PROCEDURE import_id_params
+  MODULE PROCEDURE read_id_params
 
     !***************************************************
     !
@@ -84,7 +84,7 @@ SUBMODULE (bns_lorene) params
     !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos1_tmp
     !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos2_tmp
 
-    PRINT *, "** Executing the import_lorene_id_params subroutine..."
+    PRINT *, "** Executing the read_id_params subroutine..."
 
     CALL get_lorene_id_params( this% bns_ptr, &
                                this% angular_vel, &
@@ -237,7 +237,7 @@ SUBMODULE (bns_lorene) params
 
     ELSE
 
-      PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+      PRINT *, "** ERROR in SUBROUTINE read_id_params!", &
                " The equation of state is unknown! LORENE EOS IDs=", &
                this% eos1_loreneid, ", ", this% eos2_loreneid
       STOP
@@ -317,10 +317,10 @@ SUBMODULE (bns_lorene) params
 
     CALL print_id_params( this )
 
-    PRINT *, "** Subroutine import_lorene_id_params executed."
+    PRINT *, "** Subroutine read_id_params executed."
     PRINT *
 
-  END PROCEDURE import_id_params
+  END PROCEDURE read_id_params
 
 
 END SUBMODULE params

@@ -95,7 +95,7 @@ SUBMODULE (bns_lorene) constructor
         CALL derived_type% construct_binary()
     ENDIF
     ! Import the parameters of the binary system
-    CALL import_id_params( derived_type )
+    CALL read_id_params( derived_type )
 
     ! Assign a unique identifier to the bnslorene object
     derived_type% bns_identifier= bns_counter
@@ -138,7 +138,7 @@ SUBMODULE (bns_lorene) constructor
       DOUBLE PRECISION:: val
       !! Pressure at \((x,y,z)\)
 
-      val= derived_type% import_pressure( x, y, z )
+      val= derived_type% read_pressure( x, y, z )
 
     END FUNCTION get_pressure
 

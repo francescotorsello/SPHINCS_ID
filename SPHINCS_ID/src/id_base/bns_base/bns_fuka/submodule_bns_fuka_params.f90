@@ -65,12 +65,23 @@ SUBMODULE (bns_fuka) params
                           k_lorene2hydrobase_piecewisepolytrope, &
                           zero, two, four, five
 
+#if flavour == 1
+
+  USE sphincs_id_full,  ONLY: shorten_eos_name_fuka
+
+#elif flavour == 3
+
+  USE sphincs_id_fuka,  ONLY: shorten_eos_name_fuka
+
+#endif
+
     IMPLICIT NONE
 
     INTEGER:: i, nchars
     INTEGER, PARAMETER:: str_length= 100
 
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_type_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_file_tmp_c
 
 
   !  PRINT *, "** Executing the read_fuka_id_params subroutine..."
@@ -106,6 +117,7 @@ SUBMODULE (bns_fuka) params
                              this% rho_center2           , &
                              this% energy_density_center2, &
                              eos_type_tmp_c              , &
+                             eos_file_tmp_c              , &
                              this% gamma_1               , &
                              this% kappa_1               , &
                              this% npeos_1               , &
@@ -267,8 +279,23 @@ SUBMODULE (bns_fuka) params
     !  this% eos1(i:i)= eos1_tmp(i)
     !ENDDO
 
-    this% eos1= this% eos_type
-    this% eos2= this% eos_type
+    i= 1
+    DO
+      IF( eos_file_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
+
+    ALLOCATE( CHARACTER(nchars):: this% eos_file, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos_type. ", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       STOP
+    ENDIF
+    this% eos_file= TRANSFER( eos_file_tmp_c(1:nchars), this% eos_type )
+    this% eos1= shorten_eos_name_fuka(this% eos_file)
+    this% eos2= shorten_eos_name_fuka(this% eos_file)
 
   !  CALL print_id_params( this )
 
