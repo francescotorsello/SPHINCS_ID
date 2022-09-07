@@ -61,7 +61,7 @@ The modular and hierarchical structure of the code makes it easy to extend it to
 
 SPHINCS_ID needs SPHINCS_BSSN to be compiled.
 
-The User Manual for SPHINCS_ID is [SPHINCS_ID](|pages|/user_manual.pdf){:target="_blank"}
+The User Manual for SPHINCS_ID is <a href="doc-pages/user_manual.pdf" target="_blank">doc-pages/user_manual.pdf</a>
 
 ---
 
