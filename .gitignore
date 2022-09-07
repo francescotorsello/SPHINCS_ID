@@ -2,12 +2,12 @@
 **/doc/
 **/prototypes/
 !.gitattributes
-!.gitignore
 !.gitkeep
 !*/
 !*.f90
 !SConstruct
 !**/doc-pages/**/*.md
+!**/doc-pages/**/*.pdf
 !**/doc-media/*
 !documentation_*.md
 !gravity_grid_parameters.dat
