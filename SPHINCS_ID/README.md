@@ -14,7 +14,7 @@ The modular and hierarchical structure of the code makes it easy to extend it to
 
 SPHINCS_ID needs SPHINCS_BSSN to be compiled.
 
-The User Manual for SPHINCS_ID can be found in doc-pages/user_manual.pdf
+The User Manual for SPHINCS_ID is doc-pages/SPHINCS_ID-User_Manual.pdf
 
 ---
 

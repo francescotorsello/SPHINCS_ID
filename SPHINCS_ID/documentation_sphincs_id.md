@@ -11,7 +11,7 @@ docmark_alt: #
 predocmark: >
 predocmark_alt: &
 source: true
-graph: false
+graph: true
 sort: alpha
 src_dir: ./src
 media_dir: ./doc-media
@@ -61,7 +61,7 @@ The modular and hierarchical structure of the code makes it easy to extend it to
 
 SPHINCS_ID needs SPHINCS_BSSN to be compiled.
 
-The User Manual for SPHINCS_ID is <a href="doc-pages/user_manual.pdf" target="_blank">doc-pages/user_manual.pdf</a>
+The User Manual for SPHINCS_ID is <a href="page/SPHINCS_ID-User_Manual.pdf" target="_blank">SPHINCS_ID-User_Manual.pdf</a>
 
 ---
 
