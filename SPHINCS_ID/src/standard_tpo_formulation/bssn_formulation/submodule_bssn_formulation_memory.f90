@@ -25,7 +25,7 @@ SUBMODULE (bssn_formulation) memory
 
   !************************************************
   !
-  !# Implementation of the methods of TYPE bssn
+  !# Implementation of the methods of TYPE [[bssn]]
   !  that (de)allocate memory
   !
   !  FT 9.07.2021

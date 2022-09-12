@@ -25,7 +25,7 @@ PROGRAM sphincs_id
 
   !*****************************************************
   !
-  !# Set up the |sph| and spacetime |id| t be read
+  !# Set up the |sph| and |bssn| |id| to be read
   !  by |sphincsbssn|.
   !
   !  FT 28.10.2020

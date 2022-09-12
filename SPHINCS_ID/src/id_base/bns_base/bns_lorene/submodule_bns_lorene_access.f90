@@ -26,8 +26,8 @@ SUBMODULE (bns_lorene) access
   !***************************************************
   !
   !# The module contains the implementation of the
-  !  methods of TYPE bns that allow to access PRIVATE
-  !  members.
+  !  methods of TYPE [[bnslorene that allow to access
+  !  PRIVATE members.
   !
   !  FT 12.07.2021
   !

@@ -26,7 +26,7 @@ SUBMODULE (bns_base) access
   !***************************************************
   !
   !# The module contains the implementation of the
-  !  methods of TYPE bnsbase that allow to access
+  !  methods of TYPE [[bnsbase]] that allow to access
   !  PRIVATE members.
   !
   !  FT 12.07.2021

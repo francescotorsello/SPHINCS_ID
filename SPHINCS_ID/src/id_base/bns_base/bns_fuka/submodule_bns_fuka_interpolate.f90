@@ -25,7 +25,7 @@ SUBMODULE (bns_fuka) interpolate
 
   !****************************************************
   !
-  !# Implementation of the methods of TYPE bnsfuka that
+  !# Implementation of the methods of TYPE [[bnsfuka]] that
   !  interpolate the data on a lattice, at a particle
   !  position
   !

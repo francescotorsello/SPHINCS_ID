@@ -26,7 +26,7 @@ SUBMODULE (bssn_formulation) constructor
   !************************************************
   !
   !# Implementation of the constructor and
-  !  destructor of TYPE bssn
+  !  destructor of TYPE [[bssn]]
   !
   !  FT 23.10.2020
   !

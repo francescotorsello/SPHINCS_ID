@@ -25,7 +25,7 @@ SUBMODULE (bns_fuka) read
 
   !****************************************************
   !
-  !# Implementation of the methods of TYPE bnsfuka that
+  !# Implementation of the methods of TYPE [[bnsfuka]] that
   !  read |bns| data using |fuka|
   !
   !  FT 09.02.2022

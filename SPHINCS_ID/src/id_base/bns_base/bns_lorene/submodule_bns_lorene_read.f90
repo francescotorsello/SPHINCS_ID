@@ -25,7 +25,7 @@ SUBMODULE (bns_lorene) read
 
   !****************************************************
   !
-  !# Implementation of the methods of TYPE bnslorene that
+  !# Implementation of the methods of TYPE [[bnslorene]] that
   !  read |bns| data using |lorene|
   !
   !  FT 23.10.2020

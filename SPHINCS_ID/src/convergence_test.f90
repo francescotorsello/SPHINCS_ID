@@ -25,8 +25,8 @@ PROGRAM convergence_test
 
   !*****************************************************
   !
-  !# Make a convergence test to check the validity of
-  !  the code |sphincsid|.
+  !# Make a Cauchy convergence test to check the
+  !  validity of the |id| set up by |sphincsid|.
   !
   !  FT 8.12.2020
   !

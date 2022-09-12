@@ -25,7 +25,7 @@ SUBMODULE (bns_lorene) params
 
   !********************************************
   !
-  !# Implementation of the methods of TYPE bns
+  !# Implementation of the methods of TYPE [[bnslorene]
   !  that read from |lorene| the
   !  parameters of the binary system,
   !  and print them to the standard output.

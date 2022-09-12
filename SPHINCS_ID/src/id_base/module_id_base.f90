@@ -721,34 +721,6 @@ MODULE id_base
   INTERFACE
 
 
-!MODULE SUBROUTINE post_process_sph_id &
-!  ( this, npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu )
-!!# Post-process the |sph| |id|; for example, correct for the residual
-!!  ADM linear momentum.
-!
-!  CLASS(idbase),                        INTENT(IN)   :: this
-!  INTEGER,                              INTENT(IN)   :: npart
-!  !! Particle number
-!  DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
-!  !! Particle positions
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nlrf
-!  !! Baryon density in the local rest frame on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: u
-!  !! Specific internal energy on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: pr
-!  !! Pressure on the particles
-!  DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: vel_u
-!  !! Spatial velocity in the computing frame on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: theta
-!  !! Generalized Lorentz factor on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nstar
-!  !! Proper baryon density in the local rest frame on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
-!  !! Baryon number per particle
-!
-!END SUBROUTINE post_process_sph_id
-
-
     MODULE SUBROUTINE sanity_check( derived_type )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name

@@ -25,8 +25,10 @@ SUBMODULE (bssn_formulation) landau_lifshitz
 
   !************************************************
   !
-  !# Implementation of the method of TYPE bssn
-  !  that computes the Ricci tensor and scalar
+  !# Implementation of the method of TYPE [[bssn]]
+  !  that computes the Landau--Lifshitz pseudo-tensor
+  !
+  !  @note Perhaps not needed anymore?
   !
   !  FT 10.02.2022
   !

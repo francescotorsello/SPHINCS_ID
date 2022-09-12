@@ -23,6 +23,16 @@
 
 PROGRAM write_par_eos
 
+  !*****************************************************
+  !
+  !# Write the \(\mathrm{par\_eos.d}\) parameter file
+  !  to specify the |eos| when computing |bns| or |drs|
+  !  with |lorene|
+  !
+  !  FT
+  !
+  !*****************************************************
+
   USE utility,  ONLY: lorene2hydrobase, kg2g, m2cm, &
                       k_lorene2hydrobase_piecewisepolytrope, one, &
                       k_lorene2hydrobase

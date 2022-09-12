@@ -28,7 +28,7 @@ MODULE sphincs_id_full
   !
   !# This module contains data and PROCEDURES
   !  needed to set up all the supported
-  !  |id| in PROGRAM sphincs_id
+  !  |id| in PROGRAM [[sphincs_id]]
   !
   !  FT 09.02.2022
   !

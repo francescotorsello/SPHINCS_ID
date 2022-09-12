@@ -1,5 +1,6 @@
-!& File:         submodule_sph_particles_apm.f90
-! Authors:      Francesco Torsello (FT)
+!# File:         submodule_sph_particles_apm.f90
+!  Authors:      Francesco Torsello (FT)
+
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
 !                                                                       *

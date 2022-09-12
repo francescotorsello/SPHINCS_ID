@@ -24,13 +24,13 @@
 SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
   !****************************************************
-  !                                                   *
-  !# Implementation of the methods of TYPE formul_tpo *
-  !  that are called from the constructors and        *
-  !  destructors of its EXTENDED TYPES                *
-  !                                                   *
-  !  FT 22.10.2020                                    *
-  !                                                   *
+  !
+  !# Implementation of the methods of TYPE formul_tpo
+  !  that are called from the constructors and
+  !  destructors of its EXTENDED TYPES
+  !
+  !  FT 22.10.2020
+  !
   !****************************************************
 
 
@@ -48,20 +48,20 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
   MODULE PROCEDURE setup_standard_tpo_variables
 
     !*************************************************
-    !                                                *
-    !# Read the gravity grid parameters, computes    *
-    !  gravity grid coordinates, imports the         *
-    !  spacetime ID on the gravity grid, and         *
-    !  performs some checks on it.                   *
-    !  Its input includes the numbers of grid points *
-    !  per axis, contrary to                         *
-    !  construct_formul_tpo_bns_grid                 *
-    !  where those numbers are replaced by the grid  *
-    !  spacings.                                     *
-    !                                                *
-    !  FT 22.10.2020                                 *
-    !  Last updated: FT 05.07.2022                   *
-    !                                                *
+    !
+    !# Read the gravity grid parameters, computes
+    !  gravity grid coordinates, imports the
+    !  spacetime ID on the gravity grid, and
+    !  performs some checks on it.
+    !  Its input includes the numbers of grid points
+    !  per axis, contrary to
+    !  construct_formul_tpo_bns_grid
+    !  where those numbers are replaced by the grid
+    !  spacings.
+    !
+    !  FT 22.10.2020
+    !  Last updated: FT 05.07.2022
+    !
     !*************************************************
 
     USE mesh_refinement,  ONLY: levels, nlevels, initialize_grid, &
@@ -387,13 +387,13 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
   MODULE PROCEDURE deallocate_standard_tpo_variables
 
     !***************************************************
-    !                                                  *
-    !# Core of the destructors of TYPES derived from   *
-    !  formul_tpo. Their destructors should call this  *
-    !  SUBROUTINE. It deallocates memory.              *
-    !                                                  *
-    !  FT                                              *
-    !                                                  *
+    !
+    !# Core of the destructors of TYPES derived from
+    !  formul_tpo. Their destructors should call this
+    !  SUBROUTINE. It deallocates memory.
+    !
+    !  FT
+    !
     !***************************************************
 
     USE mesh_refinement, ONLY: deallocate_grid_function

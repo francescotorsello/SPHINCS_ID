@@ -26,8 +26,8 @@ SUBMODULE (bns_fuka) access
   !***************************************************
   !
   !# The module contains the implementation of the
-  !  methods of TYPE bns that allow to access PRIVATE
-  !  members.
+  !  methods of TYPE [[bnsfuka]] that allow to access
+  !  PRIVATE members.
   !
   !  FT 09.02.2022
   !

@@ -17,6 +17,7 @@ src_dir: ./src
 media_dir: ./doc-media
 exclude_dir: ./src/prototypes
 exclude: ./src/sph_particles/submodule_sph_particles_redistribute_nu.f90
+         ./src/sph_particles/submodule_bns_base_mass_profile.f90
 output_dir: ./doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S
@@ -37,9 +38,11 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        binns = \(\texttt{Bin_NS}\)
        etrotdiff = \(\texttt{Et_rot_diff}\)
        etdiffrot = \(\texttt{Et_diffrot}\)
+       bnsexp = \(\texttt{bns_export}\)
        eos = \(\mathrm{EOS}\)
        ee = Einstein equations
        bns = \(\mathrm{BNS}\)
+       drs = \(\mathrm{DRS}\)
 parallel: 80
 <!---graph_dir: doc-graphs--->
 <!---Project_url: https://francescotorsello.github.io/SPHINCS_ID-doc/--->

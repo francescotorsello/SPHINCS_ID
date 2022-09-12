@@ -25,7 +25,7 @@ SUBMODULE (bns_lorene) memory
 
   !***********************************************
   !
-  !# Implementation of the methods of TYPE bns
+  !# Implementation of the methods of TYPE [[bnslorene]]
   !  that (de)allocate memory
   !
   ! FT 9.07.2021
@@ -48,7 +48,7 @@ SUBMODULE (bns_lorene) memory
 
     !***********************************************
     !
-    !# Allocate the memory to store the LORENE ID
+    !# Allocate the memory to store the \lorene| |id|
     !  in the member arrays
     !
     !  FT 17.09.2020

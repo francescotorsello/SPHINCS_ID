@@ -25,7 +25,7 @@ SUBMODULE (bssn_formulation) bssn_variables
 
   !************************************************
   !
-  !# Implementation of the methods of TYPE bssn
+  !# Implementation of the methods of TYPE [[bssn]]
   !  that compute the |bssn| variables
   !
   !  FT 23.10.2020

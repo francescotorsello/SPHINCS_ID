@@ -30,7 +30,7 @@ SUBMODULE (bns_fuka) constructor
   !  [[bnsfuka]]-member
   !  PROCEDURES that call the C-bound PROCEDURES
   !  constructig and destructing the |fuka|
-  !  |binns| object
+  !  |bnsexp| object
   !
   !  FT 23.10.2020
   !
@@ -70,7 +70,7 @@ SUBMODULE (bns_fuka) constructor
 
     derived_type% construction_timer= timer( "binary_construction_timer" )
 
-    ! Construct |fuka| bns_export object
+    ! Construct |fuka| |bnsexp| object
     CALL derived_type% construct_binary( filename )
     derived_type% filename= filename
 
@@ -192,7 +192,7 @@ SUBMODULE (bns_fuka) constructor
 
     !***********************************************
     !
-    !# Construct the |fuka| bns_export object
+    !# Construct the |fuka| |bnsexp| object
     !
     !  Created:     FT 09.02.2022
     !  Last update: FT 27.05.2022
@@ -238,7 +238,7 @@ SUBMODULE (bns_fuka) constructor
 
     !************************************************
     !
-    !# Destructs the |fuka| bns_export object and frees
+    !# Destructs the |fuka| |bnsexp| object and frees
     !  the pointer [[bns:bns_ptr]] pointing to it
     !
     !  Created:     FT 09.02.2022

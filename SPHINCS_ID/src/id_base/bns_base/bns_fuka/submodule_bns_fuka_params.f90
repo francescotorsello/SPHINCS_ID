@@ -25,7 +25,7 @@ SUBMODULE (bns_fuka) params
 
   !********************************************
   !
-  !# Implementation of the methods of TYPE bns
+  !# Implementation of the methods of TYPE [[bnsfuka]]
   !  that import from |fuka| the
   !  parameters of the binary system,
   !  and print them to the standard output.

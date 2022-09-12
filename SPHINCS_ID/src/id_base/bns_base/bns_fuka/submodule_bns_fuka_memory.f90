@@ -25,7 +25,7 @@ SUBMODULE (bns_fuka) memory
 
   !***********************************************
   !
-  !# Implementation of the methods of TYPE bns
+  !# Implementation of the methods of TYPE [[bnsfuka]]
   !  that (de)allocate memory
   !
   ! FT 9.02.2022
@@ -48,7 +48,7 @@ SUBMODULE (bns_fuka) memory
 
     !***********************************************
     !
-    !# Allocate the memory to store the LORENE ID
+    !# Allocate the memory to store the |fuka| |id|
     !  in the member arrays
     !
     !  Created:     FT 27.05.2022

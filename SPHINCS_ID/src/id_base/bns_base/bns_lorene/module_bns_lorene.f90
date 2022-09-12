@@ -25,10 +25,10 @@ MODULE bns_lorene
 
   !***********************************************************
   !
-  !#  This module contains the definition of TYPE bnslorene,
+  !#  This module contains the definition of TYPE [[bnslorene]],
   !   and the SUBROUTINES that bind to the methods
   !   of |lorene|'s class |binns|, defined in
-  !   Lorene/Export/BinNS
+  !   \(\mathrm{\$HOME\_LORENE/Export/BinNS}\)
   !
   !   [|lorene| official repository](https://lorene.obspm.fr/index.html){:target="_blank"}
   !

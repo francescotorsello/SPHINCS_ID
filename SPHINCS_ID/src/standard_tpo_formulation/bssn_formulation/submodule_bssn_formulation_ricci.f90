@@ -25,7 +25,7 @@ SUBMODULE (bssn_formulation) ricci
 
   !************************************************
   !
-  !# Implementation of the method of TYPE bssn
+  !# Implementation of the method of TYPE [[bssn]]
   !  that computes the Ricci tensor and scalar
   !
   !  FT 10.02.2022

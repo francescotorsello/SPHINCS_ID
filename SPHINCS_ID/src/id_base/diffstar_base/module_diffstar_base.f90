@@ -55,9 +55,9 @@ MODULE diffstar_base
   !********************************************************************
 
   TYPE, ABSTRACT, EXTENDS(idbase):: diffstarbase
-  !# Base TYPE for DRS ID for |sphincsbssn| (produced with |lorene|, or with
+  !# ABSTRACT TYPE for |drs| |id| (produced with |lorene|, or with
   !  |fuka|, etc.; or produced with the same tool, but read in different ways,
-  !  for example by linking to the |lorene| library, or reading the ID from
+  !  for example by linking to the |lorene| library, or reading the |id| from
   !  a lattice, etc.)
 
 

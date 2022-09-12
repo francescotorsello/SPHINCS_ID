@@ -26,7 +26,7 @@ SUBMODULE (bns_fuka) io
   !********************************************
   !
   !# This submodule contains the implementation of the
-  !  methods of TYPE bnsfuka that handle I/O (input/output)
+  !  methods of TYPE [[bnsfuka]] that handle I/O (input/output)
   !
   !  FT 05.11.2021
   !

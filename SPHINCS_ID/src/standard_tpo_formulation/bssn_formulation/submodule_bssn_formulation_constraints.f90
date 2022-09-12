@@ -25,7 +25,7 @@ SUBMODULE (bssn_formulation) constraints
 
   !************************************************
   !
-  !# Implementation of the methods of TYPE bssn
+  !# Implementation of the methods of TYPE [[bssn]]
   !  that compute the constraints
   !
   !  FT 9.07.2021
