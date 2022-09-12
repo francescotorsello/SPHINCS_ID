@@ -945,7 +945,6 @@ program_write_par_eos    = ['src/write_par_eos.f90']
 ################################################################################
 # BUILD COMMANDS
 ################################################################################
-#lorene_sources + lorene_sources_bin_ns
 
 Progress('Evaluating $TARGET\n')
 

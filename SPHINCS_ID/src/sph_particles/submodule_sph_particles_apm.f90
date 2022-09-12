@@ -142,7 +142,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, PARAMETER:: tiny_real        = 1.0D-10
     DOUBLE PRECISION, PARAMETER:: nuratio_tol      = 0.0025
 
-    INTEGER:: a, itr, itr2, n_inc, cnt1, b, inde, index1   ! iterators
+    INTEGER:: a, itr, itr2, i_shell, n_inc, cnt1, b, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
     INTEGER:: nx, ny, nz, i, j, k
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
@@ -170,6 +170,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION:: rand_num, rand_num2
     DOUBLE PRECISION:: r, theta, phi
     DOUBLE PRECISION:: r_ell, theta_ell, phi_ell
+    DOUBLE PRECISION:: dS_norm_av
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
@@ -1032,14 +1033,14 @@ SUBMODULE (sph_particles) apm
                    + ( y_ell - center(2) )**two &
                    + ( z_ell - center(3) )**two )
 
-        shell_loop: DO itr2= 1, 10, 1
+        shell_loop: DO i_shell= 1, 10, 1
 
-          IF( r <= ( one + ( ellipse_thickness - one )*DBLE(itr)/ten )*r_ell &
+          IF( r <= ( one + ( ellipse_thickness - one )*DBLE(i_shell)/ten )*r_ell &
               .AND. &
-              r >= ( one + ( ellipse_thickness - one )*DBLE(itr-1)/ten )*r_ell &
+              r >= ( one + ( ellipse_thickness - one )*DBLE(i_shell-1)/ten )*r_ell &
           )THEN
 
-            art_pr(a)= DBLE(3*itr)*art_pr_max
+            art_pr(a)= DBLE(3*i_shell)*art_pr_max
             IF( .NOT.is_finite_number(art_pr(a)) &
                 .OR. &
                 art_pr(a) > max_art_pr_ghost &
@@ -1195,19 +1196,23 @@ SUBMODULE (sph_particles) apm
       !  n_inc= 0
       !ENDIF
 
-     ! IF( MOD( itr, 10 ) == 0 )THEN
-     !
-     !   !PRINT *, "Before calling exact_nei_tree_update..."
-     !   !PRINT *
-     !
-     !   CALL exact_nei_tree_update( nn_des, &
-     !                               npart_real, &
-     !                               all_pos(:,1:npart_real), &
-     !                               nu_tmp(1:npart_real) )
-     !
-     !   CALL compute_hydro_momentum()
-     !
-     ! ENDIF
+      !
+      !-- Estimating the particle contribution to the SPH momentum equation
+      !
+
+      IF( MOD( itr, 5 ) == 0 )THEN
+
+        !PRINT *, "Before calling exact_nei_tree_update..."
+        !PRINT *
+
+        CALL exact_nei_tree_update( nn_des, &
+                                    npart_real, &
+                                    all_pos(:,1:npart_real), &
+                                    nu_tmp(1:npart_real) )
+
+        CALL compute_hydro_momentum()
+
+      ENDIF
 
       !STOP
 
@@ -1222,7 +1227,7 @@ SUBMODULE (sph_particles) apm
 
           PRINT *, " * Exit condition satisfied: the baryon number ratio is ", &
                    nuratio_tmp, " <= ", nuratio_des, "*1.025= ", &
-                   nuratio_des*(one - quarter/ten)
+                   nuratio_des*(one + quarter/ten)
           PRINT *
           EXIT
 
@@ -2444,7 +2449,7 @@ SUBMODULE (sph_particles) apm
     CALL deallocate_SPH_memory()
 
     !
-    !-- Check that there aren't particles with the same positions
+    !-- Check that there aren't multiple particles at the same position
     !
     !IF( debug ) finalnamefile= "negative_hydro.dat"
     !IF( debug ) CALL THIS% analyze_hydro( finalnamefile )
@@ -2453,6 +2458,8 @@ SUBMODULE (sph_particles) apm
     PRINT *
 
     CALL check_particle_positions( npart_real, pos )
+
+    !STOP
 
 
 
@@ -3289,10 +3296,11 @@ SUBMODULE (sph_particles) apm
       ENDDO compute_pressure
       !$OMP END PARALLEL DO
 
-      PRINT *, "Before calling ll_cell_loop..."
-      PRINT *
+      !PRINT *, "Before calling ll_cell_loop..."
+      !PRINT *
 
       dS= zero
+      dS_norm_av= zero
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic, &
       !$OMP                     ncand, h, all_pos, all_clists, nlrf_sph, &
@@ -3423,8 +3431,25 @@ SUBMODULE (sph_particles) apm
       ENDDO ll_cell_loop2
       !$OMP END PARALLEL DO
 
-      PRINT *, "After calling ll_cell_loop..."
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( dS, npart_real ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION(+: dS_norm_av)
+      particle_loop3: DO a= 1, npart_real, 1
+
+         dS_norm_av= dS_norm_av + SQRT(dS(1,a)**2 + dS(2,a)**2 + dS(3,a)**2)
+
+      END DO particle_loop3
+      !$OMP END PARALLEL DO
+      dS_norm_av= dS_norm_av/npart_real
+
+      PRINT *, " * The average over the particles, of the norm of the", &
+               " canonical momentum due to the particle distribution only is:",&
+               dS_norm_av
       PRINT *
+
+      !PRINT *, "After calling ll_cell_loop..."
+      !PRINT *
 
       INQUIRE( FILE= TRIM("momentum.dat"), EXIST= exist )
 
@@ -3453,12 +3478,15 @@ SUBMODULE (sph_particles) apm
           dS( 1, a ), &
           dS( 2, a ), &
           dS( 3, a ), &
-          pr_sph(a), &
-          nu_tmp(a), &
-          nstar_sph(a)/m0c2_cu
+          pr_sph(a)!, &
+          !nu_tmp(a), &
+          !nstar_sph(a)/m0c2_cu
       ENDDO
 
       CLOSE( UNIT= 23 )
+
+
+      !STOP
 
 
     END SUBROUTINE compute_hydro_momentum
