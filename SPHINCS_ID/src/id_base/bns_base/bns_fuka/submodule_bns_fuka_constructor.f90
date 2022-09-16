@@ -175,7 +175,7 @@ SUBMODULE (bns_fuka) constructor
     !    grid functions.
     !  - If `flag`= [[utility:flag$rl]]= \(3\),
     !    assign the value of the
-    !    refinement level to [[l_curr]].
+    !    refinement level to [[bnsfuka:l_curr]].
     !
     !  FT 16.09.2022
     !
