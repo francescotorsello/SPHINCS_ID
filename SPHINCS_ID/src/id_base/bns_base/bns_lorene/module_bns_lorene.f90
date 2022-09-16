@@ -187,6 +187,14 @@ MODULE bns_lorene
 
     PROCEDURE:: print_summary_derived => print_summary_bnslorene
 
+    PROCEDURE:: nothing
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[bnslorene]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+    PROCEDURE:: initialize_id => nothing
+
     PROCEDURE, NOPASS:: correct_adm_linear_momentum
     !# Corrects the |sph| |id| so that the linear \(\mathrm{ADM}\) momentum
     !  is zero
@@ -811,6 +819,19 @@ MODULE bns_lorene
       DOUBLE PRECISION,                     INTENT(IN)   :: adm_mass
 
     END SUBROUTINE correct_adm_linear_momentum
+
+
+    MODULE SUBROUTINE nothing( this, flag )
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[bnslorene]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+      CLASS(bnslorene), INTENT(INOUT):: this
+      INTEGER,       INTENT(IN)   :: flag
+      !! Identifies what kind of initialization has to be done
+
+    END SUBROUTINE nothing
 
 
     !MODULE FUNCTION get_bns_ptr( this )

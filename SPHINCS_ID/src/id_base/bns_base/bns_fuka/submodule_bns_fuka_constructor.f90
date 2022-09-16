@@ -161,6 +161,68 @@ SUBMODULE (bns_fuka) constructor
   END PROCEDURE finalize
 
 
+  MODULE PROCEDURE initialize_id_bnsfuka
+
+    !***********************************************
+    !
+    !# Initialize the |fuka| |bns| |id|.
+    !
+    !  - If `flag`= [[utility:flag$sph]]= \(1\), set
+    !    up the lattices around the
+    !    stars for the |bns| produced with |fuka|.
+    !  - If `flag`= [[utility:flag$tpo]]= \(2\),
+    !    allocate memory for the hydro
+    !    grid functions.
+    !  - If `flag`= [[utility:flag$rl]]= \(3\),
+    !    assign the value of the
+    !    refinement level to [[l_curr]].
+    !
+    !  FT 16.09.2022
+    !
+    !***********************************************
+
+    USE utility,          ONLY: flag$sph, flag$tpo
+    USE mesh_refinement,  ONLY: allocate_grid_function
+
+    IMPLICIT NONE
+
+    IF( flag /= flag$sph .AND. flag /= flag$tpo .AND. flag <= 0 )THEN
+
+      PRINT *, "** ERROR in SUBROUTINE initialize_id_bnsfuka! The INTEGER ", &
+               "argument 'flag' should be in the set [1,nlevels], or ", &
+               "it should be equal to either flag$sph or flag$tpo, defined ", &
+               "in MODULE utility."
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+    SELECT CASE( flag )
+
+    CASE( flag$sph )
+
+      CALL this% set_up_lattices_around_stars()
+
+    CASE( flag$tpo )
+
+      CALL allocate_grid_function( this% mass_density,"mass_density_fuka", 1 )
+      CALL allocate_grid_function( this% specific_energy, &
+                                   "specific_energy_fuka", 1 )
+      CALL allocate_grid_function( this% pressure, "pressure_fuka", 1 )
+      CALL allocate_grid_function( this% v_euler_x, "v_euler_x_fuka", 1 )
+      CALL allocate_grid_function( this% v_euler_y, "v_euler_y_fuka", 1 )
+      CALL allocate_grid_function( this% v_euler_z, "v_euler_z_fuka", 1 )
+
+    CASE DEFAULT
+
+      this% l_curr= flag
+
+    END SELECT
+
+  END PROCEDURE initialize_id_bnsfuka
+
+
   !
   !-- Implementation of the destructor of the bns object
   !

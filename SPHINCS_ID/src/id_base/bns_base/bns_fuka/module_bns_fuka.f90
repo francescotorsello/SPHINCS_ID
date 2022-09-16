@@ -303,6 +303,8 @@ MODULE bns_fuka
 
     PROCEDURE:: print_summary_derived => print_summary_bnsfuka
 
+    PROCEDURE:: initialize_id => initialize_id_bnsfuka
+
     PROCEDURE, NOPASS:: finalize
     !# Corrects the |sph| |id| so that the linear \(\mathrm{ADM}\) momentum
     !  is zero
@@ -1059,6 +1061,23 @@ MODULE bns_fuka
       !! Baryon number per particle
 
     END SUBROUTINE finalize
+
+
+    MODULE SUBROUTINE initialize_id_bnsfuka( this, flag )
+    !# Initialize the |fuka| |bns| |id|.
+    !
+    !  - If `flag`= [[utility:flag$sph]]= \(1\), set up the lattices around the
+    !    stars for the |bns| produced with |fuka|.
+    !  - If `flag`= [[utility:flag$tpo]]= \(2\), allocate memory for the hydro
+    !    grid functions.
+    !  - If `flag`= [[utility:flag$rl]]= \(3\), assign the value of the
+    !    refinement level to [[l_curr]].
+
+      CLASS(bnsfuka), INTENT(INOUT):: this
+      INTEGER,       INTENT(IN)    :: flag
+      !! Identifies what kind of initialization has to be done
+
+    END SUBROUTINE initialize_id_bnsfuka
 
 
     !MODULE FUNCTION get_bns_ptr( this )

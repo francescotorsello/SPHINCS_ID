@@ -80,6 +80,7 @@ PROGRAM convergence_test
                                       run_sph, run_spacetime, sph_path, &
                                       spacetime_path, estimate_length_scale, &
                                       test_int, max_n_parts, ref_lev
+  USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
 
   IMPLICIT NONE
 
@@ -110,6 +111,8 @@ PROGRAM convergence_test
   CHARACTER( LEN= 500 ):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
+  CHARACTER( LEN= 500 ):: hostname
+  !# String storing the name of the host machine
 
   LOGICAL, PARAMETER:: debug= .FALSE.
   LOGICAL:: exist
@@ -147,6 +150,8 @@ PROGRAM convergence_test
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time
 
+  !CALL HOSTNM( hostname )
+
   PRINT *, "  ________________________________________________________________ "
   PRINT *, "             ____________  ________  __________    __ ___          "
   PRINT *, "            / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \         "
@@ -172,6 +177,16 @@ PROGRAM convergence_test
   PRINT *, "  along with SPHINCS_ID. If not, see https://www.gnu.org/licenses/."
   PRINT *, "  The copy of the GNU General Public License should be in the file "
   PRINT *, "  'COPYING'.                                                       "
+  PRINT *, "  ________________________________________________________________ "
+  PRINT *
+  PRINT *, "  SPHINCS_ID was compiled with: "
+  PRINT *, COMPILER_VERSION()
+  PRINT *
+  PRINT *, "  using the options: "
+  PRINT *, COMPILER_OPTIONS()
+  !PRINT *
+  !PRINT *, "  This run was done on: "
+  !PRINT *, TRIM(hostname)
   PRINT *, "  ________________________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id

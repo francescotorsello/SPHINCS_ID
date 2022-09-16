@@ -68,13 +68,14 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                                 allocate_grid_function, &
                                 deallocate_grid_function, &
                                 coords, rad_coord
-    USE bns_fuka,         ONLY: bnsfuka
     !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
     USE tensor,           ONLY: jxx, jxy, jxz, &
                                 jyy, jyz, jzz, n_sym3x3
-    USE utility,          ONLY: determinant_sym3x3, one
+    USE utility,          ONLY: determinant_sym3x3, one, flag$tpo
+
 
     IMPLICIT NONE
+
 
     ! Index running over the refinement levels
     INTEGER:: l
@@ -174,19 +175,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
     CALL tpof% grid_timer% stop_timer()
 
-    SELECT TYPE( id )
-
-      TYPE IS( bnsfuka )
-
-        CALL allocate_grid_function( id% mass_density,"mass_density_fuka", 1 )
-        CALL allocate_grid_function( id% specific_energy, &
-                                     "specific_energy_fuka", 1 )
-        CALL allocate_grid_function( id% pressure, "pressure_fuka", 1 )
-        CALL allocate_grid_function( id% v_euler_x, "v_euler_x_fuka", 1 )
-        CALL allocate_grid_function( id% v_euler_y, "v_euler_y_fuka", 1 )
-        CALL allocate_grid_function( id% v_euler_z, "v_euler_z_fuka", 1 )
-
-    END SELECT
+    CALL id% initialize_id( flag$tpo )
 
     !
     !-- Import the spacetime ID on the refined mesh,
@@ -201,18 +190,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
       PRINT *, " * Importing on refinement level l=", l, "..."
 
-      SELECT TYPE( id )
-
-        TYPE IS( bnsfuka )
-
-          ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
-          ! within SPHINCS_ID. Hence, we chose to make a system call to a program
-          ! within Kadath that reads the ID from the FUKA output file and prints
-          ! it on a lattice. The ID on the particles will be interplated from
-          ! this fine lattice.
-          id% l_curr= l
-
-      END SELECT
+      CALL id% initialize_id( l )
 
       CALL id% read_id_spacetime( tpof% get_ngrid_x(l), &
                                   tpof% get_ngrid_y(l), &

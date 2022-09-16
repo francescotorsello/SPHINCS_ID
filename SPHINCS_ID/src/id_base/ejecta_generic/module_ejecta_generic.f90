@@ -229,6 +229,13 @@ MODULE ejecta_generic
     !# Corrects the |sph| |id| so that the linear \(\mathrm{ADM}\) momentum
     !  is zero
 
+    PROCEDURE:: nothing
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[ejecta]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+    PROCEDURE:: initialize_id => nothing
 
     !-----------------!
     !--  FUNCTIONS  --!
@@ -877,6 +884,19 @@ MODULE ejecta_generic
       !! Baryon number per particle
 
     END SUBROUTINE finalize
+
+
+    MODULE SUBROUTINE nothing( this, flag )
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[ejecta]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+      CLASS(ejecta), INTENT(INOUT):: this
+      INTEGER,       INTENT(IN)   :: flag
+      !! Identifies what kind of initialization has to be done
+
+    END SUBROUTINE nothing
 
 
   END INTERFACE

@@ -124,7 +124,9 @@ SUBMODULE (bns_lorene) constructor
     ! Assign PROCEDURE POINTER to the desired PROCEDURE
     derived_type% finalize_sph_id_ptr => correct_adm_linear_momentum
 
+
     CONTAINS
+
 
     FUNCTION get_pressure( x, y, z ) RESULT( val )
     !! Returns the value of the pressure at the desired point
@@ -143,6 +145,24 @@ SUBMODULE (bns_lorene) constructor
     END FUNCTION get_pressure
 
   END PROCEDURE construct_bnslorene
+
+
+  MODULE PROCEDURE nothing
+
+    !***********************************************
+    !
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[ejecta_generic]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+    !
+    !  FT 15.09.2022
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+  END PROCEDURE nothing
 
 
   !

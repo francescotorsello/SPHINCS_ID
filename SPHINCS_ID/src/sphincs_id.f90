@@ -113,6 +113,8 @@ PROGRAM sphincs_id
   CHARACTER( LEN= 500 ):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
+  CHARACTER( LEN= 500 ):: hostname
+  !# String storing the name of the host machine
 
   LOGICAL:: exist
 #ifdef __INTEL_COMPILER
@@ -183,6 +185,8 @@ PROGRAM sphincs_id
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time
 
+  !CALL HOSTNM( hostname )
+
   PRINT *, "  ________________________________________________________________ "
   PRINT *, "             ____________  ________  __________    __ ___          "
   PRINT *, "            / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \         "
@@ -215,6 +219,9 @@ PROGRAM sphincs_id
   PRINT *
   PRINT *, "  using the options: "
   PRINT *, COMPILER_OPTIONS()
+  !PRINT *
+  !PRINT *, "  This run was done on: "
+  !PRINT *, TRIM(hostname)
   PRINT *, "  ________________________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id

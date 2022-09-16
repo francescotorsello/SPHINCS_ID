@@ -37,6 +37,10 @@ MODULE utility
   IMPLICIT NONE
 
 
+  INTEGER, PARAMETER:: flag$sph= -37
+  INTEGER, PARAMETER:: flag$tpo= -43
+
+
   DOUBLE PRECISION, PARAMETER:: zero        = 0.D0
   DOUBLE PRECISION, PARAMETER:: one         = 1.D0
   DOUBLE PRECISION, PARAMETER:: two         = 2.D0

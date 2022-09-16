@@ -495,6 +495,24 @@ SUBMODULE (ejecta_generic) constructor
   END PROCEDURE finalize
 
 
+  MODULE PROCEDURE nothing
+
+    !***********************************************
+    !
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[ejecta_generic]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+    !
+    !  FT 15.09.2022
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+  END PROCEDURE nothing
+
+
   !
   !-- Implementation of the destructor of the bns object
   !
@@ -510,7 +528,7 @@ SUBMODULE (ejecta_generic) constructor
 
     IMPLICIT NONE
 
-    CALL THIS% deallocate_gridid_memory()
+    CALL this% deallocate_gridid_memory()
 
 
   END PROCEDURE destruct_ejecta

@@ -81,7 +81,7 @@ SUBMODULE (sph_particles) constructor_std
 
     !USE NaNChecker,    ONLY: Check_Array_for_NAN
     USE constants,          ONLY: amu, pi, half, third
-    USE utility,            ONLY: zero, one, two, ten, Msun_geo
+    USE utility,            ONLY: zero, one, two, ten, Msun_geo, flag$sph
     !USE NR,                 ONLY: indexx
     USE kernel_table,       ONLY: ktable
     USE input_output,       ONLY: read_options
@@ -91,7 +91,6 @@ SUBMODULE (sph_particles) constructor_std
     USE analyze,            ONLY: COM
     USE utility,            ONLY: spherical_from_cartesian, &
                                   spatial_vector_norm_sym3x3
-    USE bns_fuka,           ONLY: bnsfuka
 
     IMPLICIT NONE
 
@@ -354,26 +353,7 @@ SUBMODULE (sph_particles) constructor_std
       STOP
     ENDIF
 
-    !
-    !-- If the ID has dynamic TYPE bnsfuka, construct the lattices around the
-    !-- stars. TODO: is there a more elegant way to do this? The particle
-    !-- object should not need to know what bnsfuka is. One can add a deferred
-    !-- procedure initialize_id to idbase, that points to
-    !-- set_up_lattices_around_stars in bnsfuka, and to nothing in the other
-    !-- derived types
-    !
-    SELECT TYPE( id )
-
-      TYPE IS( bnsfuka )
-
-        ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
-        ! within SPHINCS_ID. Hence, we chose to make a system call to a program
-        ! within Kadath that reads the ID from the FUKA output file and prints
-        ! it on a lattice. The ID on the particles will be interplated from
-        ! this fine lattice.
-        CALL id% set_up_lattices_around_stars()
-
-    END SELECT
+    CALL id% initialize_id( flag$sph )
 
     !
     !-- Read needed data from the idbase object

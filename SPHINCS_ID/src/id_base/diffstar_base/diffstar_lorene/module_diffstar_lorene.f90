@@ -179,6 +179,14 @@ MODULE diffstar_lorene
     PROCEDURE:: read_id_mass_b    => import_id_mass_b
     PROCEDURE:: read_id_k         => import_id_k
 
+    PROCEDURE:: nothing
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[diffstarlorene]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+    PROCEDURE:: initialize_id => nothing
+
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
@@ -686,6 +694,19 @@ MODULE diffstar_lorene
       !! Baryon number per particle
 
     END SUBROUTINE finalize
+
+
+    MODULE SUBROUTINE nothing( this, flag )
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[diffstarlorene]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+      CLASS(diffstarlorene), INTENT(INOUT):: this
+      INTEGER,       INTENT(IN)   :: flag
+      !! Identifies what kind of initialization has to be done
+
+    END SUBROUTINE nothing
 
 
     !MODULE FUNCTION get_diffstar_ptr( this )
