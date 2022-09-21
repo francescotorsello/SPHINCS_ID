@@ -194,7 +194,7 @@ PROGRAM sphincs_id
   PRINT *, "          /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/          "
   PRINT *
   PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime              "
-  PRINT *, "  Initial Data builder, v1.0                                       "
+  PRINT *, "  Initial Data builder, v1.6                                       "
   PRINT *
   PRINT *, "  SPHINCS_ID  Copyright (C) 2020, 2021, 2022  Francesco Torsello   "
   PRINT *

@@ -60,11 +60,12 @@ PROGRAM convergence_test
   USE sph_particles,            ONLY: particles
   USE bssn_formulation,         ONLY: bssn
   USE standard_tpo_formulation, ONLY: tpo
+  USE tensor,                   ONLY: jy, jz
   USE timing,                   ONLY: timer
   USE utility,                  ONLY: date, time, zone, values, run_id, &
                                       itr3, ios, err_msg, &
                                       test_status, show_progress, end_time, &
-                                      read_sphincs_id_parameters, &
+                                      read_sphincs_id_parameters, one, &
                                       !----------
                                       n_id, common_path, filenames, placer, &
                                       export_bin, export_form, export_form_xy, &
@@ -88,10 +89,22 @@ PROGRAM convergence_test
   INTEGER, PARAMETER:: min_bssn= 1
   INTEGER, PARAMETER:: max_bssn= 3
 
+  DOUBLE PRECISION, PARAMETER:: tol_dx= 1.D-10
+  DOUBLE PRECISION, PARAMETER:: tol_coord= 1.D-10
+
+  INTEGER:: i, j, k, min_abs_i, min_abs_j, min_abs_k, &
+            min_shared_i, min_shared_j, min_shared_k, nx, ny, nz
+
   ! Grid spacing for the first BSSN object; the other two will have
   ! original_dx/2 and original_dx/4 as grid spacings
   DOUBLE PRECISION:: original_dx
   DOUBLE PRECISION:: ratio_dx
+  DOUBLE PRECISION:: min_abs_y
+  DOUBLE PRECISION:: min_abs_z
+
+  DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: shared_grid
+  DOUBLE PRECISION, DIMENSION(3):: point_dx2
+  DOUBLE PRECISION, DIMENSION(3):: point_dx4
 
   CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
@@ -159,7 +172,7 @@ PROGRAM convergence_test
   PRINT *, "          /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/          "
   PRINT *
   PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime              "
-  PRINT *, "  Initial Data builder, v1.0 - Cauchy convergence test             "
+  PRINT *, "  Initial Data builder, v1.6 - Cauchy convergence test             "
   PRINT *
   PRINT *, "  SPHINCS_ID  Copyright (C) 2020, 2021, 2022  Francesco Torsello   "
   PRINT *
@@ -303,12 +316,14 @@ PROGRAM convergence_test
 
       ENDIF
       bssn_forms( itr3 )= bssn( idata, &
-                                   original_dx/( ratio_dx**( itr3 - 1 ) ), &
-                                   original_dx/( ratio_dx**( itr3 - 1 ) ), &
-                                   original_dx/( ratio_dx**( itr3 - 1 ) ) )
+                                original_dx/( ratio_dx**( itr3 - 1 ) ), &
+                                original_dx/( ratio_dx**( itr3 - 1 ) ), &
+                                original_dx/( ratio_dx**( itr3 - 1 ) ) )
 
-      IF( bssn_forms( itr3 )% get_dx(ref_lev) /= &
-          original_dx/( ratio_dx**( itr3 - 1 ) ) )THEN
+      IF( ABS( bssn_forms( itr3 )% get_dx(ref_lev) - &
+          original_dx/( ratio_dx**( itr3 - 1 ) ) ) &
+          /(original_dx/( ratio_dx**( itr3 - 1 ) )) > tol_dx &
+      )THEN
         PRINT *, " ** ERROR! The grid spacing #", itr3, ",", &
                  bssn_forms( itr3 )% get_dx(ref_lev), &
                  " is not equal to dx/", ratio_dx**( itr3 - 1 ), "= ", &
@@ -323,6 +338,166 @@ PROGRAM convergence_test
     PRINT *
 
   ENDDO construct_bssn_loop
+
+!  !
+!  !-- Get the smallest absolute values of the y and z coordinates of the points
+!  !-- shared by the meshes
+!  !
+!  !bssn_forms(itr3)% get_dx(ref_lev)
+!  min_abs_y= HUGE(one)
+!  min_abs_z= HUGE(one)
+!!  !$OMP PARALLEL DEFAULT( NONE ) &
+!!  !$OMP          SHARED( bssn_forms, ref_lev ) &
+!!  !$OMP          PRIVATE( j, k ) &
+!!  !$OMP          REDUCTION( MIN: min_abs_y, min_abs_z )
+!!
+!!  !$OMP DO
+!  DO j= 1, bssn_forms(max_bssn)% get_ngrid_y(ref_lev), 1
+!
+!    !min_abs_y= MIN( min_abs_y_tmp, ABS(bssn_forms(max_bssn)% coords% &
+!    !                                   levels(ref_lev)% var( 1, j, 1, jy )) )
+!    IF( ABS(bssn_forms(max_bssn)% coords% &
+!            levels(ref_lev)% var( 1, j, 1, jy )) < min_abs_y )THEN
+!
+!      min_abs_y= ABS(bssn_forms(max_bssn)% coords% &
+!                     levels(ref_lev)% var( 1, j, 1, jy ))
+!      min_abs_j= j
+!    ENDIF
+!
+!  ENDDO
+!!  !$OMP END DO NOWAIT
+!
+!!  !$OMP DO
+!  DO k= 1, bssn_forms(max_bssn)% get_ngrid_z(ref_lev), 1
+!
+!    !min_abs_z= MIN( min_abs_z, ABS(bssn_forms(max_bssn)% coords% &
+!    !                               levels(ref_lev)% var( 1, 1, k, jz )) )
+!    IF( ABS(bssn_forms(max_bssn)% coords% &
+!            levels(ref_lev)% var( 1, 1, k, jz )) < min_abs_z )THEN
+!
+!     min_abs_z= ABS(bssn_forms(max_bssn)% coords% &
+!                    levels(ref_lev)% var( 1, 1, k, jz ))
+!     min_abs_k= k
+!
+!    ENDIF
+!
+!  ENDDO
+!!  !$OMP END DO
+!
+!!  !$OMP END PARALLEL
+!
+!  loop_over_bssn_formulations: DO itr3 = max_bssn - 1, min_bssn, 1
+!
+!    !$OMP PARALLEL DO DEFAULT( NONE ) &
+!    !$OMP             SHARED( bssn_forms, itr3, ref_lev ) &
+!    !$OMP             PRIVATE( i, j, k )
+!    DO j= 1, bssn_forms(itr3)% get_ngrid_y(ref_lev), 1
+!
+!        IF( ABS( bssn_forms(max_bssn)% coords% &
+!                 levels(ref_lev)% var( 1, min_abs_j, 1, jy ) &
+!               - bssn_forms(itr3)% coords% &
+!                 levels(ref_lev)% var( 1, j, 1, jy ) ) &
+!                 /ABS( bssn_forms(itr3)% coords% &
+!                 levels(ref_lev)% var( 1, j, 1, jy ) ) < tol_coord &
+!        )THEN
+!
+!          DO i= 1, bssn_forms(itr3)% get_ngrid_x(ref_lev), 1
+!
+!            IF( ABS( bssn_forms(max_bssn)% coords% &
+!                     levels(ref_lev)% var( 1, min_abs_j, 1, jx ) &
+!                   - bssn_forms(itr3)% coords% &
+!                     levels(ref_lev)% var( 1, j, 1, jx ) ) &
+!                     /ABS( bssn_forms(itr3)% coords% &
+!                     levels(ref_lev)% var( 1, j, 1, jx ) ) < tol_coord &
+!            )THEN
+!              IF( ABS( bssn_forms(max_bssn)% coords% &
+!                       levels(ref_lev)% var( 1, min_abs_j, 1, jz ) &
+!                     - bssn_forms(itr3)% coords% &
+!                       levels(ref_lev)% var( 1, j, 1, jz ) ) &
+!                       /ABS( bssn_forms(itr3)% coords% &
+!                       levels(ref_lev)% var( 1, j, 1, jz ) ) < tol_coord &
+!              )THEN
+!              ENDIF
+!            ENDIF
+!
+!        ENDIF
+!
+!    ENDDO
+!    !$OMP END PARALLEL DO
+!
+!  ENDDO loop_over_bssn_formulations
+
+  nx= bssn_forms(min_bssn)% get_ngrid_x(ref_lev)
+  ny= bssn_forms(min_bssn)% get_ngrid_y(ref_lev)
+  nz= bssn_forms(min_bssn)% get_ngrid_z(ref_lev)
+
+  nx= FLOOR( DBLE( nx - 1 )/denominator_ratio_dx**2 ) + 1
+  ny= FLOOR( DBLE( ny - 1 )/denominator_ratio_dx**2 ) + 1
+  nz= FLOOR( DBLE( nz - 1 )/denominator_ratio_dx**2 ) + 1
+
+  ALLOCATE( shared_grid( nx, ny, nz, 3 ) )
+
+  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !$OMP             SHARED( bssn_forms, ref_lev, shared_grid, &
+  !$OMP                     denominator_ratio_dx, numerator_ratio_dx, &
+  !$OMP                     nx, ny, nz ) &
+  !$OMP             PRIVATE( i, j, k, point_dx2, point_dx4 )
+  DO k= 0, nz - 1, 1
+    DO j= 0, ny - 1, 1
+      DO i= 0, nx - 1, 1
+
+        shared_grid( 1 + i, 1 + j, 1 + k, : ) = &
+                   bssn_forms(min_bssn)%  get_grid_point(  &
+                            1 + INT(denominator_ratio_dx**2)*i, &
+                            1 + INT(denominator_ratio_dx**2)*j, &
+                            1 + INT(denominator_ratio_dx**2)*k, ref_lev )
+
+        point_dx2= bssn_forms(min_bssn + 1)% get_grid_point( &
+                            1 + INT(numerator_ratio_dx &
+                                    *denominator_ratio_dx)*i, &
+                            1 + INT(numerator_ratio_dx &
+                                    *denominator_ratio_dx)*j, &
+                            1 + INT(numerator_ratio_dx &
+                                    *denominator_ratio_dx)*k, ref_lev )
+
+        point_dx4= bssn_forms(min_bssn + 2)% get_grid_point( &
+                            1 + INT(numerator_ratio_dx**2)*i, &
+                            1 + INT(numerator_ratio_dx**2)*j, &
+                            1 + INT(numerator_ratio_dx**2)*k, ref_lev )
+
+        IF(  ABS(shared_grid( 1 + i, 1 + j, 1 + k, 1 )-point_dx2(1)) > 1D-10 &
+        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 1 )-point_dx4(1)) > 1D-10 &
+        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 2 )-point_dx2(2)) > 1D-10 &
+        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 2 )-point_dx4(2)) > 1D-10 &
+        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 3 )-point_dx2(3)) > 1D-10 &
+        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 3 )-point_dx4(3)) > 1D-10 &
+
+        )THEN
+
+          PRINT *, "**ERROR! The grid functions in the Cauchy ", &
+                   "convergence test are not evaluated at the ", &
+                   "same grid point at (i,j,k)=(", i, j, k, ")."
+          PRINT *, shared_grid( 1, 1 + i, 1 + j, 1 + k ), point_dx2(1), &
+                   point_dx4(1)
+          PRINT *, shared_grid( 2, 1 + i, 1 + j, 1 + k ), point_dx2(2), &
+                   point_dx4(2)
+          PRINT *, shared_grid( 3, 1 + i, 1 + j, 1 + k ), point_dx2(3), &
+                   point_dx4(3)
+          PRINT *
+          STOP
+
+        ENDIF
+
+      ENDDO
+    ENDDO
+  ENDDO
+  !$OMP END PARALLEL DO
+
+  PRINT *
+  PRINT *, "The points are the same!"
+  PRINT *
+
+  STOP
 
   IF( debug )THEN
     PRINT *, "bssn_forms( 1 )% get_ngrid_x=", bssn_forms( 1 )% get_ngrid_x(ref_lev)

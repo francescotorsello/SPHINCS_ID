@@ -1071,7 +1071,7 @@ MODULE bns_fuka
     !  - If `flag`= [[utility:flag$tpo]]= \(2\), allocate memory for the hydro
     !    grid functions.
     !  - If `flag`= [[utility:flag$rl]]= \(3\), assign the value of the
-    !    refinement level to [[l_curr]].
+    !    refinement level to [[bnsfuka:l_curr]].
 
       CLASS(bnsfuka), INTENT(INOUT):: this
       INTEGER,       INTENT(IN)    :: flag
