@@ -36,6 +36,7 @@ SUBMODULE (bssn_formulation) constraints
 
   IMPLICIT NONE
 
+  DOUBLE PRECISION, PARAMETER:: tol= 1.D-5
 
   CONTAINS
 
@@ -72,14 +73,17 @@ SUBMODULE (bssn_formulation) constraints
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k, fd_lim, l
+    INTEGER:: i, j, k, fd_lim, l, nx, ny, nz
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, &
               min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
-    DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: abs_grid
+    DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_x
+    DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_y
+    DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_z
 
     TYPE(grid_function_scalar):: baryon_density
     TYPE(grid_function_scalar):: energy_density
@@ -810,54 +814,42 @@ SUBMODULE (bssn_formulation) constraints
                    pressure        => pressure% levels(l)% var &
         )
 
+          IF( PRESENT(points) )THEN
           ! Being abs_grid a local array, it is good practice to allocate it on
           ! the heap, otherwise it will be stored on the stack which has a very
           ! limited size. This results in a segmentation fault.
-          IF( ALLOCATED( abs_grid ) )THEN
-            DEALLOCATE( abs_grid )
+
+            nx= SIZE(points(:,1,1,jx))
+            ny= SIZE(points(1,:,1,jy))
+            nz= SIZE(points(1,1,:,jz))
+
+            pts_x => points(:,:,:,jx)
+            pts_y => points(:,:,:,jy)
+            pts_z => points(:,:,:,jz)
+
+          ELSE
+
+            nx= this% get_ngrid_x(l)
+            ny= this% get_ngrid_y(l)
+            nz= this% get_ngrid_z(l)
+
+            pts_x => this% coords% levels(l)% var(:,:,:,jx)
+            pts_y => this% coords% levels(l)% var(:,:,:,jy)
+            pts_z => this% coords% levels(l)% var(:,:,:,jz)
+
           ENDIF
-          ALLOCATE( abs_grid( this% get_ngrid_x(l), this% get_ngrid_y(l), &
-                              this% get_ngrid_z(l), 3 ) )
-
-          DO k= 1, this% get_ngrid_z(l), 1
-            DO j= 1, this% get_ngrid_y(l), 1
-              DO i= 1, this% get_ngrid_x(l), 1
-
-                abs_grid( i, j, k, jx )= &
-                            ABS( this% coords% levels(l)% var( i, j, k, jx ) )
-                abs_grid( i, j, k, jy )= &
-                            ABS( this% coords% levels(l)% var( i, j, k, jy ) )
-                abs_grid( i, j, k, jz )= &
-                            ABS( this% coords% levels(l)% var( i, j, k, jz ) )
-
-              ENDDO
-            ENDDO
-          ENDDO
 
           min_abs_y= HUGE(one)
           min_abs_z= HUGE(one)
-          DO k= 1, this% get_ngrid_z(l), 1
-            DO j= 1, this% get_ngrid_y(l), 1
-              DO i= 1, this% get_ngrid_x(l), 1
-
-                IF( ABS( this% coords% levels(l)% var( i, j, k, jy ) ) &
-                    < min_abs_y )THEN
-                  min_abs_y= ABS( this% coords% levels(l)% var( i, j, k, jy ) )
-                  min_ix_y= i
-                  min_iy_y= j
-                  min_iz_y= k
-                ENDIF
-
-                IF( ABS( this% coords% levels(l)% var( i, j, k, jz ) ) &
-                    < min_abs_z )THEN
-                  min_abs_z= ABS( this% coords% levels(l)% var( i, j, k, jz ) )
-                  min_ix_z= i
-                  min_iy_z= j
-                  min_iz_z= k
-                ENDIF
-
-              ENDDO
-            ENDDO
+          DO j= 1, ny, 1
+            IF( ABS( pts_y(1,j,1) ) < ABS( min_abs_y ) )THEN
+              min_abs_y= pts_y(1,j,1)
+            ENDIF
+          ENDDO
+          DO k= 1, nz, 1
+            IF( ABS( pts_z(1,1,k) ) < ABS( min_abs_z ) )THEN
+              min_abs_z= pts_z(1,1,k)
+            ENDIF
           ENDDO
 
           DO k= 1, this% get_ngrid_z(l), 1
@@ -872,26 +864,30 @@ SUBMODULE (bssn_formulation) constraints
 
                 IF( MOD( i, this% cons_step ) /= 0 ) CYCLE
 
-                IF( this% export_constraints_xy .AND. &
-                    ( this% coords% levels(l)% var( i, j, k, jz ) /= &
-                      this% coords% levels(l)% var( min_ix_z, min_iy_z, &
-                                                    min_iz_z, jz ) ) )THEN
+                IF( this% export_constraints_xy &
+                    .AND. &
+                    ABS(this% coords% levels(l)% var(i,j,k,jz) - min_abs_z) &
+                    /ABS(min_abs_z) > tol &
+                )THEN
+
                   CYCLE
+
                 ENDIF
-                IF( this% export_constraints_x .AND. &
-                    ( this% coords% levels(l)% var( i, j, k, jz ) /= &
-                      this% coords% levels(l)% var( min_ix_z, min_iy_z, &
-                                                    min_iz_z, jz ) &
+                IF( this% export_constraints_x &
+                    .AND. &
+                    ( ABS(this% coords% levels(l)% var(i,j,k,jz) - min_abs_z) &
+                      /ABS(min_abs_z) > tol &
                       .OR. &
-                      this% coords% levels(l)% var( i, j, k, jy ) /= &
-                      this% coords% levels(l)% var( min_ix_y, min_iy_y, &
-                                                    min_iz_y, jy ) ) )THEN
+                      ABS(this% coords% levels(l)% var(i,j,k,jy) - min_abs_y) &
+                      /ABS(min_abs_y) > tol & ) &
+                )THEN
+
                   CYCLE
+
                 ENDIF
 
                 IF( debug )THEN
-                  WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, &
-                           FMT = * )&
+                  WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
                     l, &
                     this% coords% levels(l)% var( i, j, k, jx ), &
                     this% coords% levels(l)% var( i, j, k, jy ), &
@@ -962,7 +958,7 @@ SUBMODULE (bssn_formulation) constraints
                     Gamma_u( i, j, k, 2 ), &
                     Gamma_u( i, j, k, 3 )
                 ELSE
-                  WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
+                  WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
                     l, &
                     this% coords% levels(l)% var( i, j, k, jx ), &
                     this% coords% levels(l)% var( i, j, k, jy ), &
@@ -1422,7 +1418,7 @@ SUBMODULE (bssn_formulation) constraints
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k, l, a, allocation_status
+    INTEGER:: i, j, k, l, a, allocation_status, nx, ny, nz
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y, &
               min_ix_z, min_iy_z, min_iz_z
@@ -1430,7 +1426,10 @@ SUBMODULE (bssn_formulation) constraints
 
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
-    DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
+    !DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
+    DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_x
+    DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_y
+    DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_z
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_loc
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_loc
@@ -2154,54 +2153,42 @@ SUBMODULE (bssn_formulation) constraints
                    GC_parts        => this% GC_parts% levels(l)% var &
         )
 
+          IF( PRESENT(points) )THEN
           ! Being abs_grid a local array, it is good practice to allocate it on
           ! the heap, otherwise it will be stored on the stack which has a very
           ! limited size. This results in a segmentation fault.
-          IF( ALLOCATED( abs_grid ) )THEN
-            DEALLOCATE( abs_grid )
+
+            nx= SIZE(points(:,1,1,jx))
+            ny= SIZE(points(1,:,1,jy))
+            nz= SIZE(points(1,1,:,jz))
+
+            pts_x => points(:,:,:,jx)
+            pts_y => points(:,:,:,jy)
+            pts_z => points(:,:,:,jz)
+
+          ELSE
+
+            nx= this% get_ngrid_x(l)
+            ny= this% get_ngrid_y(l)
+            nz= this% get_ngrid_z(l)
+
+            pts_x => this% coords% levels(l)% var(:,:,:,jx)
+            pts_y => this% coords% levels(l)% var(:,:,:,jy)
+            pts_z => this% coords% levels(l)% var(:,:,:,jz)
+
           ENDIF
-          ALLOCATE( abs_grid( this% get_ngrid_x(l), this% get_ngrid_y(l), &
-                              this% get_ngrid_z(l), 3 ) )
 
-          DO k= 1, this% get_ngrid_z(l), 1
-            DO j= 1, this% get_ngrid_y(l), 1
-              DO i= 1, this% get_ngrid_x(l), 1
-
-                abs_grid( i, j, k, jx )= &
-                            ABS( this% coords% levels(l)% var( i, j, k, jx ) )
-                abs_grid( i, j, k, jy )= &
-                            ABS( this% coords% levels(l)% var( i, j, k, jy ) )
-                abs_grid( i, j, k, jz )= &
-                            ABS( this% coords% levels(l)% var( i, j, k, jz ) )
-
-              ENDDO
-            ENDDO
+          min_abs_y= HUGE(one)
+          min_abs_z= HUGE(one)
+          DO j= 1, ny, 1
+            IF( ABS( pts_y(1,j,1) ) < ABS( min_abs_y ) )THEN
+              min_abs_y= pts_y(1,j,1)
+            ENDIF
           ENDDO
-
-          min_abs_y= 1D+20
-          min_abs_z= 1D+20
-          DO k= 1, this% get_ngrid_z(l), 1
-            DO j= 1, this% get_ngrid_y(l), 1
-              DO i= 1, this% get_ngrid_x(l), 1
-
-                IF( ABS( this% coords% levels(l)% var( i, j, k, jy ) ) &
-                    < min_abs_y )THEN
-                  min_abs_y= ABS( this% coords% levels(l)% var( i, j, k, jy ) )
-                  min_ix_y= i
-                  min_iy_y= j
-                  min_iz_y= k
-                ENDIF
-
-                IF( ABS( this% coords% levels(l)% var( i, j, k, jz ) ) &
-                    < min_abs_z )THEN
-                  min_abs_z= ABS( this% coords% levels(l)% var( i, j, k, jz ) )
-                  min_ix_z= i
-                  min_iy_z= j
-                  min_iz_z= k
-                ENDIF
-
-              ENDDO
-            ENDDO
+          DO k= 1, nz, 1
+            IF( ABS( pts_z(1,1,k) ) < ABS( min_abs_z ) )THEN
+              min_abs_z= pts_z(1,1,k)
+            ENDIF
           ENDDO
 
           DO k= 1, this% get_ngrid_z(l), 1
@@ -2216,21 +2203,26 @@ SUBMODULE (bssn_formulation) constraints
 
                 IF( MOD( i, this% cons_step ) /= 0 ) CYCLE
 
-                IF( this% export_constraints_xy .AND. &
-                    ( this% coords% levels(l)% var( i, j, k, jz ) /= &
-                      this% coords% levels(l)% var( min_ix_z, min_iy_z, &
-                                                    min_iz_z, jz ) ) )THEN
+                IF( this% export_constraints_xy &
+                    .AND. &
+                    ABS(this% coords% levels(l)% var(i,j,k,jz) - min_abs_z) &
+                    /ABS(min_abs_z) > tol &
+                )THEN
+
                   CYCLE
+
                 ENDIF
-                IF( this% export_constraints_x .AND. &
-                    ( this% coords% levels(l)% var( i, j, k, jz ) /= &
-                      this% coords% levels(l)% var( min_ix_z, min_iy_z, &
-                                                    min_iz_z, jz ) &
+                IF( this% export_constraints_x &
+                    .AND. &
+                    ( ABS(this% coords% levels(l)% var(i,j,k,jz) - min_abs_z) &
+                      /ABS(min_abs_z) > tol &
                       .OR. &
-                      this% coords% levels(l)% var( i, j, k, jy ) /= &
-                      this% coords% levels(l)% var( min_ix_y, min_iy_y, &
-                                                    min_iz_y, jy ) ) )THEN
+                      ABS(this% coords% levels(l)% var(i,j,k,jy) - min_abs_y) &
+                      /ABS(min_abs_y) > tol & ) &
+                )THEN
+
                   CYCLE
+
                 ENDIF
 
                 IF( debug )THEN

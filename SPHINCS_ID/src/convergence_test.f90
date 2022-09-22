@@ -81,7 +81,8 @@ PROGRAM convergence_test
                                       run_sph, run_spacetime, sph_path, &
                                       spacetime_path, estimate_length_scale, &
                                       test_int, max_n_parts, ref_lev
-  USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
+  USE cauchy_convergence_test,  ONLY: find_shared_grid
+  USE ISO_FORTRAN_ENV,          ONLY: COMPILER_VERSION, COMPILER_OPTIONS
 
   IMPLICIT NONE
 
@@ -339,165 +340,11 @@ PROGRAM convergence_test
 
   ENDDO construct_bssn_loop
 
-!  !
-!  !-- Get the smallest absolute values of the y and z coordinates of the points
-!  !-- shared by the meshes
-!  !
-!  !bssn_forms(itr3)% get_dx(ref_lev)
-!  min_abs_y= HUGE(one)
-!  min_abs_z= HUGE(one)
-!!  !$OMP PARALLEL DEFAULT( NONE ) &
-!!  !$OMP          SHARED( bssn_forms, ref_lev ) &
-!!  !$OMP          PRIVATE( j, k ) &
-!!  !$OMP          REDUCTION( MIN: min_abs_y, min_abs_z )
-!!
-!!  !$OMP DO
-!  DO j= 1, bssn_forms(max_bssn)% get_ngrid_y(ref_lev), 1
-!
-!    !min_abs_y= MIN( min_abs_y_tmp, ABS(bssn_forms(max_bssn)% coords% &
-!    !                                   levels(ref_lev)% var( 1, j, 1, jy )) )
-!    IF( ABS(bssn_forms(max_bssn)% coords% &
-!            levels(ref_lev)% var( 1, j, 1, jy )) < min_abs_y )THEN
-!
-!      min_abs_y= ABS(bssn_forms(max_bssn)% coords% &
-!                     levels(ref_lev)% var( 1, j, 1, jy ))
-!      min_abs_j= j
-!    ENDIF
-!
-!  ENDDO
-!!  !$OMP END DO NOWAIT
-!
-!!  !$OMP DO
-!  DO k= 1, bssn_forms(max_bssn)% get_ngrid_z(ref_lev), 1
-!
-!    !min_abs_z= MIN( min_abs_z, ABS(bssn_forms(max_bssn)% coords% &
-!    !                               levels(ref_lev)% var( 1, 1, k, jz )) )
-!    IF( ABS(bssn_forms(max_bssn)% coords% &
-!            levels(ref_lev)% var( 1, 1, k, jz )) < min_abs_z )THEN
-!
-!     min_abs_z= ABS(bssn_forms(max_bssn)% coords% &
-!                    levels(ref_lev)% var( 1, 1, k, jz ))
-!     min_abs_k= k
-!
-!    ENDIF
-!
-!  ENDDO
-!!  !$OMP END DO
-!
-!!  !$OMP END PARALLEL
-!
-!  loop_over_bssn_formulations: DO itr3 = max_bssn - 1, min_bssn, 1
-!
-!    !$OMP PARALLEL DO DEFAULT( NONE ) &
-!    !$OMP             SHARED( bssn_forms, itr3, ref_lev ) &
-!    !$OMP             PRIVATE( i, j, k )
-!    DO j= 1, bssn_forms(itr3)% get_ngrid_y(ref_lev), 1
-!
-!        IF( ABS( bssn_forms(max_bssn)% coords% &
-!                 levels(ref_lev)% var( 1, min_abs_j, 1, jy ) &
-!               - bssn_forms(itr3)% coords% &
-!                 levels(ref_lev)% var( 1, j, 1, jy ) ) &
-!                 /ABS( bssn_forms(itr3)% coords% &
-!                 levels(ref_lev)% var( 1, j, 1, jy ) ) < tol_coord &
-!        )THEN
-!
-!          DO i= 1, bssn_forms(itr3)% get_ngrid_x(ref_lev), 1
-!
-!            IF( ABS( bssn_forms(max_bssn)% coords% &
-!                     levels(ref_lev)% var( 1, min_abs_j, 1, jx ) &
-!                   - bssn_forms(itr3)% coords% &
-!                     levels(ref_lev)% var( 1, j, 1, jx ) ) &
-!                     /ABS( bssn_forms(itr3)% coords% &
-!                     levels(ref_lev)% var( 1, j, 1, jx ) ) < tol_coord &
-!            )THEN
-!              IF( ABS( bssn_forms(max_bssn)% coords% &
-!                       levels(ref_lev)% var( 1, min_abs_j, 1, jz ) &
-!                     - bssn_forms(itr3)% coords% &
-!                       levels(ref_lev)% var( 1, j, 1, jz ) ) &
-!                       /ABS( bssn_forms(itr3)% coords% &
-!                       levels(ref_lev)% var( 1, j, 1, jz ) ) < tol_coord &
-!              )THEN
-!              ENDIF
-!            ENDIF
-!
-!        ENDIF
-!
-!    ENDDO
-!    !$OMP END PARALLEL DO
-!
-!  ENDDO loop_over_bssn_formulations
-
-  nx= bssn_forms(min_bssn)% get_ngrid_x(ref_lev)
-  ny= bssn_forms(min_bssn)% get_ngrid_y(ref_lev)
-  nz= bssn_forms(min_bssn)% get_ngrid_z(ref_lev)
-
-  nx= FLOOR( DBLE( nx - 1 )/denominator_ratio_dx**2 ) + 1
-  ny= FLOOR( DBLE( ny - 1 )/denominator_ratio_dx**2 ) + 1
-  nz= FLOOR( DBLE( nz - 1 )/denominator_ratio_dx**2 ) + 1
-
-  ALLOCATE( shared_grid( nx, ny, nz, 3 ) )
-
-  !$OMP PARALLEL DO DEFAULT( NONE ) &
-  !$OMP             SHARED( bssn_forms, ref_lev, shared_grid, &
-  !$OMP                     denominator_ratio_dx, numerator_ratio_dx, &
-  !$OMP                     nx, ny, nz ) &
-  !$OMP             PRIVATE( i, j, k, point_dx2, point_dx4 )
-  DO k= 0, nz - 1, 1
-    DO j= 0, ny - 1, 1
-      DO i= 0, nx - 1, 1
-
-        shared_grid( 1 + i, 1 + j, 1 + k, : ) = &
-                   bssn_forms(min_bssn)%  get_grid_point(  &
-                            1 + INT(denominator_ratio_dx**2)*i, &
-                            1 + INT(denominator_ratio_dx**2)*j, &
-                            1 + INT(denominator_ratio_dx**2)*k, ref_lev )
-
-        point_dx2= bssn_forms(min_bssn + 1)% get_grid_point( &
-                            1 + INT(numerator_ratio_dx &
-                                    *denominator_ratio_dx)*i, &
-                            1 + INT(numerator_ratio_dx &
-                                    *denominator_ratio_dx)*j, &
-                            1 + INT(numerator_ratio_dx &
-                                    *denominator_ratio_dx)*k, ref_lev )
-
-        point_dx4= bssn_forms(min_bssn + 2)% get_grid_point( &
-                            1 + INT(numerator_ratio_dx**2)*i, &
-                            1 + INT(numerator_ratio_dx**2)*j, &
-                            1 + INT(numerator_ratio_dx**2)*k, ref_lev )
-
-        IF(  ABS(shared_grid( 1 + i, 1 + j, 1 + k, 1 )-point_dx2(1)) > 1D-10 &
-        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 1 )-point_dx4(1)) > 1D-10 &
-        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 2 )-point_dx2(2)) > 1D-10 &
-        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 2 )-point_dx4(2)) > 1D-10 &
-        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 3 )-point_dx2(3)) > 1D-10 &
-        .OR. ABS(shared_grid( 1 + i, 1 + j, 1 + k, 3 )-point_dx4(3)) > 1D-10 &
-
-        )THEN
-
-          PRINT *, "**ERROR! The grid functions in the Cauchy ", &
-                   "convergence test are not evaluated at the ", &
-                   "same grid point at (i,j,k)=(", i, j, k, ")."
-          PRINT *, shared_grid( 1, 1 + i, 1 + j, 1 + k ), point_dx2(1), &
-                   point_dx4(1)
-          PRINT *, shared_grid( 2, 1 + i, 1 + j, 1 + k ), point_dx2(2), &
-                   point_dx4(2)
-          PRINT *, shared_grid( 3, 1 + i, 1 + j, 1 + k ), point_dx2(3), &
-                   point_dx4(3)
-          PRINT *
-          STOP
-
-        ENDIF
-
-      ENDDO
-    ENDDO
-  ENDDO
-  !$OMP END PARALLEL DO
-
-  PRINT *
-  PRINT *, "The points are the same!"
-  PRINT *
-
-  STOP
+  ! Find the grid points shared by the grids
+  CALL find_shared_grid( bssn_forms(min_bssn), bssn_forms(min_bssn + 1), &
+                         bssn_forms(min_bssn + 2), &
+                         numerator_ratio_dx, denominator_ratio_dx, ref_lev, &
+                         shared_grid )
 
   IF( debug )THEN
     PRINT *, "bssn_forms( 1 )% get_ngrid_x=", bssn_forms( 1 )% get_ngrid_x(ref_lev)
@@ -547,10 +394,9 @@ PROGRAM convergence_test
       namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
 
       CALL bssn_forms( itr3 )% &
-                  print_formatted_id_tpo_variables( namefile_bssn )
+                  print_formatted_id_tpo_variables( namefile= namefile_bssn )
     ENDDO export_bssn_loop
   ENDIF
-
 
   !
   !-- Construct the particles object from the idbase object
@@ -627,8 +473,9 @@ PROGRAM convergence_test
 
       CALL bssn_forms( itr3 )% &
                   compute_and_print_tpo_constraints( idata, &
-                                                      namefile_bssn, &
-                                                      name_logfile )
+                                                     namefile_bssn, &
+                                                     name_logfile, &
+                                                     shared_grid )
 
     ENDIF
 
@@ -654,8 +501,9 @@ PROGRAM convergence_test
 
       CALL bssn_forms( itr3 )% &
                   compute_and_print_tpo_constraints( particles_dist, &
-                                                      namefile_bssn, &
-                                                      name_logfile )
+                                                     namefile_bssn, &
+                                                     name_logfile, &
+                                                     shared_grid )
 
     ENDIF
 

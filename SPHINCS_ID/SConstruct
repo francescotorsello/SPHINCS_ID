@@ -115,7 +115,7 @@ working_dir = os.getcwd()
 
 liblorene_dir = [os.environ['HOME_LORENE'] + '/Lib']
 libkadath_dir = [os.environ['HOME_KADATH'] + '/lib']
-sphincs_dir   = os.environ['HOME_SPHINCS']
+home_sphincs  = os.environ['HOME_SPHINCS']
 
 ################################################################################
 
@@ -347,6 +347,11 @@ module_sphincs_id_interpolate = [
   'module_sphincs_id_interpolate.f90'
 ]
 
+module_cauchy_convergence_test_dir = ['src/cauchy_convergence_test/']
+module_cauchy_convergence_test = [
+  'module_cauchy_convergence_test.f90'
+]
+
 module_utility_dir = ['src/utility/']
 module_utility = [
   'module_utility.f90'
@@ -404,12 +409,17 @@ for i in range(len(module_sphincs_id_interpolate)):
   module_sphincs_id_interpolate[i] = module_sphincs_id_interpolate_dir[0] \
                                    + module_sphincs_id_interpolate[i]
 
+for i in range(len(module_cauchy_convergence_test)):
+  module_cauchy_convergence_test[i] = module_cauchy_convergence_test_dir[0] \
+                                    + module_cauchy_convergence_test[i]
+
 for i in range(len(module_utility)):
   module_utility[i] = module_utility_dir[0] + module_utility[i]
 
 sources_base = module_id_base + module_bns_base + module_diffstar_base \
              + module_sph_particles + module_standard_tpo_formulation \
-             + module_bssn_formulation + module_utility
+             + module_bssn_formulation + module_cauchy_convergence_test \
+             + module_utility
 
 #all_modules = [ module_id_base, module_utility, module_sphincs_id_interpolate ]
 
@@ -418,14 +428,17 @@ sources_base = module_id_base + module_bns_base + module_diffstar_base \
 ################################################################################
 # SOURCE FILES FROM SPHINCS_BSSN
 ################################################################################
-
+#'../../../SPHINCS_SP'
 env['F90PATH'] = [
-  '.', sphincs_dir + '/BSSN', sphincs_dir + '/sphincs_repository/SPHINCS_fix_metric', sphincs_dir + '/sphincs_repository/SPHINCS_BSSN'
+  '.',
+  home_sphincs + '/BSSN',
+  home_sphincs + '/sphincs_repository/SPHINCS_fix_metric',
+  home_sphincs + '/sphincs_repository/SPHINCS_BSSN'
 ]
 
-mesh_dir         = [sphincs_dir + '/BSSN/']
-sphincs_bssn_dir = [sphincs_dir + '/sphincs_repository/SPHINCS_BSSN/']
-sphincs_fm_dir   = [sphincs_dir + '/sphincs_repository/SPHINCS_fix_metric/']
+mesh_dir         = [home_sphincs + '/BSSN/']
+sphincs_bssn_dir = [home_sphincs + '/sphincs_repository/SPHINCS_BSSN/']
+sphincs_fm_dir   = [home_sphincs + '/sphincs_repository/SPHINCS_fix_metric/']
 
 sources_mesh = [
   'module_mesh_refinement.f90',
@@ -701,9 +714,9 @@ if debug == 'FALSE': #
       env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                          '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \
+                          '-warn', '-fpp', \
                           build_flavour, build_mpi, build_dir ]
-
+#, '-g', '-CB', '-CS', '-traceback',
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \

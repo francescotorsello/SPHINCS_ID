@@ -224,7 +224,7 @@ MODULE bssn_formulation
     !# Constructs the [[bssn]] object from the number of grid points
     !  along each axis
 
-      CLASS(idbase), INTENT( INOUT ):: id
+      CLASS(idbase), INTENT(INOUT):: id
       !! [[idbase]] object to use to construct the [[bssn]] object
       TYPE(bssn)              :: bssnid
       !! [[bssn]] object to be constructed
@@ -245,7 +245,7 @@ MODULE bssn_formulation
     MODULE SUBROUTINE allocate_bssn_fields( this )
     !! Interface to [[bssn:define_allocate_fields]]
 
-      CLASS(bssn), INTENT( IN OUT ):: this
+      CLASS(bssn), INTENT(INOUT):: this
       !! [[bssn]] object to which this PROCEDURE is bound
 
     END SUBROUTINE allocate_bssn_fields
@@ -254,9 +254,9 @@ MODULE bssn_formulation
     MODULE SUBROUTINE compute_and_print_bssn_variables( this, namefile )
     !! Interface to [[bssn:compute_and_print_tpo_variables]]
 
-      CLASS(bssn),      INTENT( IN OUT )           :: this
+      CLASS(bssn),         INTENT(INOUT)           :: this
       !! [[bssn]] object to which this PROCEDURE is bound
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_print_bssn_variables
 
@@ -265,53 +265,54 @@ MODULE bssn_formulation
                                                             namefile )
     !! Interface to [[bssn:read_bssn_dump_print_formatted]]
 
-      CLASS(bssn),      INTENT( IN OUT )           :: this
+      CLASS(bssn),         INTENT(INOUT)           :: this
       !! [[bssn]] object to which this PROCEDURE is bound
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile_bin
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile_bin
+      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE read_bssn_dump_print_formatted
 
 
-    MODULE SUBROUTINE print_formatted_id_bssn_variables( this, &
-                                                                namefile )
+    MODULE SUBROUTINE print_formatted_id_bssn_variables &
+      ( this, points, namefile )
     !! Interface to [[bssn:print_formatted_id_tpo_variables]]
 
-      CLASS(bssn),      INTENT( IN OUT )           :: this
+      CLASS(bssn),         INTENT(INOUT)           :: this
       !! [[bssn]] object to which this PROCEDURE is bound
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      DOUBLE PRECISION,    DIMENSION(:,:,:,:),  INTENT(IN), OPTIONAL:: points
+      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE print_formatted_id_bssn_variables
 
 
-    MODULE SUBROUTINE compute_and_print_bssn_constraints_grid( this, &
-                                                           id, &
-                                                           namefile, &
-                                                           name_logfile )
+    MODULE SUBROUTINE compute_and_print_bssn_constraints_grid &
+      ( this, id, namefile, name_logfile, points )
     !! Interface to [[bssn:compute_and_print_tpo_constraints_grid]]
 
-      CLASS(bssn),      INTENT( IN OUT ):: this
+      CLASS(bssn),         INTENT(INOUT), TARGET:: this
       !! [[bssn]] object to which this PROCEDURE is bound
-      CLASS(idbase),      INTENT( IN OUT ):: id
+      CLASS(idbase),       INTENT(INOUT):: id
       !! [[idbase]] object used to read the hydrodynamical |id| to the mesh
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
+      CHARACTER( LEN= * ), INTENT(INOUT):: namefile
+      CHARACTER( LEN= * ), INTENT(INOUT):: name_logfile
+      DOUBLE PRECISION,    DIMENSION(:,:,:,:), INTENT(IN), TARGET, OPTIONAL:: &
+      points
 
     END SUBROUTINE compute_and_print_bssn_constraints_grid
 
 
-    MODULE SUBROUTINE compute_and_print_bssn_constraints_particles( this, &
-                                                           parts_obj, &
-                                                           namefile, &
-                                                           name_logfile )
+    MODULE SUBROUTINE compute_and_print_bssn_constraints_particles &
+      ( this, parts_obj, namefile, name_logfile, points )
     !! Interface to [[bssn:compute_and_print_tpo_constraints_particles]]
 
-      CLASS(bssn),      INTENT( IN OUT ):: this
+      CLASS(bssn),         INTENT(INOUT), TARGET:: this
       !! [[bssn]] object to which this PROCEDURE is bound
-      CLASS(particles),    INTENT( IN OUT ):: parts_obj
+      CLASS(particles),    INTENT(INOUT):: parts_obj
       !! [[particles]] object used to map the hydrodynamical |id| to the mesh
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
+      CHARACTER( LEN= * ), INTENT(INOUT):: namefile
+      CHARACTER( LEN= * ), INTENT(INOUT):: name_logfile
+      DOUBLE PRECISION,    DIMENSION(:,:,:,:),  INTENT(IN), TARGET, OPTIONAL:: &
+      points
 
     END SUBROUTINE compute_and_print_bssn_constraints_particles
 
@@ -324,7 +325,7 @@ MODULE bssn_formulation
                                      !R11, R12, R13, R22, R23, R33, R ) &
     !! Computes the Ricci tensor and the Ricci scalar on the mesh
 
-      CLASS(bssn),      INTENT( IN OUT ):: this
+      CLASS(bssn),      INTENT(INOUT):: this
       !! [[bssn]] object to which this PROCEDURE is bound
     !  INTEGER, INTENT(IN):: nx
     !  !! Number of mesh points in the \(x\) direction
@@ -427,7 +428,7 @@ MODULE bssn_formulation
     MODULE SUBROUTINE deallocate_bssn_fields( this )
     !! Interface to [[bssn:deallocate_fields]]
 
-      CLASS(bssn), INTENT( IN OUT ):: this
+      CLASS(bssn), INTENT(INOUT):: this
       !! [[bssn]] object to which this PROCEDURE is bound
 
     END SUBROUTINE deallocate_bssn_fields
@@ -436,7 +437,7 @@ MODULE bssn_formulation
     MODULE SUBROUTINE destruct_bssn( this )
     !! Interface to [[bssn:destruct_bssn]]
 
-      CLASS(bssn), INTENT( IN OUT ):: this
+      CLASS(bssn), INTENT(INOUT):: this
       !! [[bssn]] object to which this PROCEDURE is bound
 
     END SUBROUTINE destruct_bssn
@@ -445,7 +446,7 @@ MODULE bssn_formulation
     MODULE SUBROUTINE destructor( this )
     !! Interface to [[bssn:destructor]]
 
-      TYPE(bssn), INTENT( IN OUT ):: this
+      TYPE(bssn), INTENT(INOUT):: this
       !! [[bssn]] object to which this PROCEDURE is bound, to be destructed
 
     END SUBROUTINE destructor
