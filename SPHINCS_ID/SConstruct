@@ -350,7 +350,8 @@ module_sphincs_id_interpolate = [
 module_cauchy_convergence_test_dir = ['src/cauchy_convergence_test/']
 module_cauchy_convergence_test = [
   'module_cauchy_convergence_test.f90',
-  'submodule_cauchy_convergence_test_shared_grid.f90'
+  'submodule_cauchy_convergence_test_shared_grid.f90',
+  'submodule_cauchy_convergence_test_perform_test.f90'
 ]
 
 module_utility_dir = ['src/utility/']

@@ -37,10 +37,16 @@ MODULE cauchy_convergence_test
 
 
   USE standard_tpo_formulation, ONLY: tpo
+  USE utility,                  ONLY: spacetime_path, ios, err_msg, &
+                                      export_constraints_xy, &
+                                      export_constraints_x, run_id
 
 
   IMPLICIT NONE
 
+
+  INTEGER, PARAMETER:: use_constraints_on_mesh          = 1
+  INTEGER, PARAMETER:: use_constraints_with_mapped_hydro= 2
 
   DOUBLE PRECISION, PARAMETER:: tol= 1.D-10
   !# Tolerance used as an upper bound for the relative difference between
@@ -49,10 +55,11 @@ MODULE cauchy_convergence_test
 
   INTERFACE find_shared_grid
   !# Generic PROCEDURE to compute the grid points shared by all the grids
-  !  used to perform a Cauchy convergence t
+  !  used to perform a Cauchy convergence test
+
 
     MODULE SUBROUTINE find_shared_grid_unknown_sol &
-    ( tpo_coarse, tpo_medium, tpo_fine, num, den, ref_lev, shared_grid )
+      ( tpo_coarse, tpo_medium, tpo_fine, num, den, ref_lev, shared_grid )
     !# Find the grid points shared by the 3 grids used in the
     !  Cauchy convergence test, when the exact solution is not
     !  known. The ratio between the grid spacings is `num/den`
@@ -71,14 +78,14 @@ MODULE cauchy_convergence_test
 
 
     MODULE SUBROUTINE find_shared_grid_known_sol &
-    ( tpo_coarse, tpo_fine, num, den, ref_lev, shared_grid )
+      ( tpo_coarse, tpo_fine, num, den, ref_lev, shared_grid )
     !# Find the grid points shared by the 2 grids used in the
     !  Cauchy convergence test, when the exact solution is
     !  known. The ratio between the grid spacings is `num/den`
 
       CLASS(tpo),       INTENT(INOUT):: tpo_coarse
       CLASS(tpo),       INTENT(INOUT):: tpo_fine
-      DOUBLE PRECISION, INTENT(INOUT):: num
+      DOUBLE PRECISION, INTENT(IN)   :: num
       DOUBLE PRECISION, INTENT(IN)   :: den
       INTEGER,          INTENT(IN)   :: ref_lev
 
@@ -89,6 +96,44 @@ MODULE cauchy_convergence_test
 
 
   END INTERFACE find_shared_grid
+
+
+  INTERFACE perform_cauchy_convergence_test
+  !#
+
+
+    MODULE SUBROUTINE perform_cauchy_convergence_test_unknown_sol &
+      ( tpo_coarse, tpo_medium, tpo_fine, use_constraints, num, den, ref_lev )
+    !#
+
+      CLASS(tpo),       INTENT(INOUT):: tpo_coarse
+      CLASS(tpo),       INTENT(INOUT):: tpo_medium
+      CLASS(tpo),       INTENT(INOUT):: tpo_fine
+      INTEGER,          INTENT(IN)   :: use_constraints
+      DOUBLE PRECISION, INTENT(IN)   :: num
+      DOUBLE PRECISION, INTENT(IN)   :: den
+      INTEGER,          INTENT(IN)   :: ref_lev
+
+    END SUBROUTINE perform_cauchy_convergence_test_unknown_sol
+
+
+    MODULE SUBROUTINE perform_cauchy_convergence_test_known_sol &
+      ( tpo_coarse, tpo_fine, use_constraints, num, den, ref_lev )
+    !#
+
+      IMPLICIT NONE
+
+      CLASS(tpo),       INTENT(INOUT):: tpo_coarse
+      CLASS(tpo),       INTENT(INOUT):: tpo_fine
+      INTEGER,          INTENT(IN)   :: use_constraints
+      DOUBLE PRECISION, INTENT(IN)   :: num
+      DOUBLE PRECISION, INTENT(IN)   :: den
+      INTEGER,          INTENT(IN)   :: ref_lev
+
+    END SUBROUTINE perform_cauchy_convergence_test_known_sol
+
+
+  END INTERFACE perform_cauchy_convergence_test
 
 
 END MODULE cauchy_convergence_test
