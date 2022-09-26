@@ -493,7 +493,8 @@ sources_sphincs_bssn = [
   'module_debug_output.f90',
   'module_dyn_metric_on_particles.f90',
   'module_alive_flag.f90',
-  'module_quadrup_GW_extraction.f90'
+  'module_quadrup_GW_extraction.f90',
+  'module_LRE.f90'
 ]
 
 sources_sphincs_fm = [
