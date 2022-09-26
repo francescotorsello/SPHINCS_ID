@@ -47,8 +47,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
 
   INTERFACE
-    MODULE FUNCTION get_scalar_at_grid_point( tpof, i, j, k, l ) &
-      RESULT( scalar )
+    MODULE SUBROUTINE get_scalar_at_grid_point( tpof, i, j, k, l, scalar )
     !! Returns the value of a scalar field at the desired point
       CLASS(tpo), INTENT(INOUT):: tpof
       INTEGER, INTENT(IN):: i
@@ -59,10 +58,11 @@ SUBMODULE (cauchy_convergence_test) perform_test
       !! \(z\) index of the desired point
       INTEGER, INTENT(IN):: l
       !! Index of the refinement level
-      DOUBLE PRECISION:: scalar
+      DOUBLE PRECISION, INTENT(OUT):: scalar
       !! Value of the scalar field at \((i,j,k)\)
-    END FUNCTION get_scalar_at_grid_point
+    END SUBROUTINE get_scalar_at_grid_point
   END INTERFACE
+  PROCEDURE(get_scalar_at_grid_point), POINTER:: get_ham_ptr
 
   INTERFACE compute_convergence_factor
   !#
@@ -107,15 +107,13 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
   END INTERFACE compute_convergence_factor
 
-  PROCEDURE(get_scalar_at_grid_point), POINTER:: get_ham_ptr
-
 
 
   CONTAINS
 
 
 
-  FUNCTION get_ham( tpof, i, j, k, l ) RESULT( hc )
+  SUBROUTINE get_ham( tpof, i, j, k, l, hc )
 
     IMPLICIT NONE
 
@@ -133,15 +131,15 @@ SUBMODULE (cauchy_convergence_test) perform_test
     !# \(1\) if the constraints cuted only on the mesh are to be used,
     !  \(2\) if the constraints computed using the mapped hydro data from the
     !  particles to the mesh are to be used
-    DOUBLE PRECISION:: hc
+    DOUBLE PRECISION, INTENT(OUT):: hc
     !! Value of the scalar field at \((i,j,k)\)
 
     hc= tpof% get_HC( i, j, k, l )
 
-  END FUNCTION get_ham
+  END SUBROUTINE get_ham
 
 
-  FUNCTION get_ham_parts( tpof, i, j, k, l ) RESULT( hc )
+  SUBROUTINE get_ham_parts( tpof, i, j, k, l, hc )
 
     IMPLICIT NONE
 
@@ -159,12 +157,12 @@ SUBMODULE (cauchy_convergence_test) perform_test
     !# \(1\) if the constraints cuted only on the mesh are to be used,
     !  \(2\) if the constraints computed using the mapped hydro data from the
     !  particles to the mesh are to be used
-    DOUBLE PRECISION:: hc
+    DOUBLE PRECISION, INTENT(OUT):: hc
     !! Value of the scalar field at \((i,j,k)\)
 
     hc= tpof% get_HC_parts( i, j, k, l )
 
-  END FUNCTION get_ham_parts
+  END SUBROUTINE get_ham_parts
 
 
   MODULE PROCEDURE compute_convergence_factor_unknown_sol
@@ -173,7 +171,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
     IMPLICIT NONE
 
     INTEGER:: i, j, k
-    DOUBLE PRECISION:: ratio_dx
+    DOUBLE PRECISION:: ratio_dx, hc_coarse, hc_medium, hc_fine
 
     PRINT *, "** Computing convergence factor..."
 
@@ -185,30 +183,33 @@ SUBMODULE (cauchy_convergence_test) perform_test
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( tpo_coarse, tpo_medium, tpo_fine, ref_lev, &
     !$OMP                     convergence_factor, den, num, nx, ny, nz, &
-    !$OMP                     ratio_dx ) &
-    !$OMP             PRIVATE( i, j, k )
+    !$OMP                     ratio_dx, get_ham_ptr ) &
+    !$OMP             PRIVATE( i, j, k, hc_coarse, hc_medium, hc_fine )
     shared_grid_loop: DO k= 0, nz - 1, 1
       DO j= 0, ny - 1, 1
         DO i= 0, nx - 1, 1
 
+          CALL get_ham_ptr( tpo_coarse, 1 + INT(den)*i, &
+                            1 + INT(den)*j, &
+                            1 + INT(den)*k, ref_lev, hc_coarse )
+
+          CALL get_ham_ptr( tpo_medium, 1 + INT(den)*i, &
+                            1 + INT(den)*j, &
+                            1 + INT(den)*k, ref_lev, hc_medium )
+
+          CALL get_ham_ptr( tpo_coarse, 1 + INT(den)*i, &
+                            1 + INT(den)*j, &
+                            1 + INT(den)*k, ref_lev, hc_fine )
+
           convergence_factor( 1 + i, 1 + j, 1 + k )= &
-           LOG( &
-             ABS( &
-               ( ABS(get_ham_ptr( tpo_coarse, 1 + INT(den**2)*i, &
-                                  1 + INT(den**2)*j, 1 + INT(den**2)*k, &
-                                  ref_lev )) &
-               - ABS(get_ham_ptr( tpo_medium, 1 + INT(num*den)*i, &
-                                  1 + INT(num*den)*j, 1 + INT(num*den)*k, &
-                                  ref_lev ))) &
-              /( ABS(get_ham_ptr( tpo_medium, 1 + INT(num*den)*i, &
-                                  1 + INT(num*den)*j, 1 + INT(num*den)*k, &
-                                  ref_lev )) &
-               - ABS(get_ham_ptr( tpo_fine, 1 + INT(num**2)*i, &
-                                  1 + INT(num**2)*j, 1 + INT(num**2)*k, &
-                                  ref_lev ) ) &
-               + tiny_real ) &
-             ) + tiny_real &
+           LOG( ABS( ( hc_coarse - hc_medium ) &
+                    /( hc_medium - hc_fine + tiny_real ) ) &
+                + tiny_real &
            )/LOG(ratio_dx)
+           !LOG( ABS( ( ABS(hc_coarse) - ABS(hc_medium) ) &
+           !         /( ABS(hc_medium) - ABS(hc_fine) + tiny_real ) ) &
+           !     + tiny_real &
+           !)/LOG(ratio_dx)
 
         ENDDO
       ENDDO
@@ -226,7 +227,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
     IMPLICIT NONE
 
     INTEGER:: i, j, k
-    DOUBLE PRECISION:: ratio_dx
+    DOUBLE PRECISION:: ratio_dx, hc_coarse, hc_fine
 
     PRINT *, "** Computing convergence factor..."
 
@@ -238,23 +239,23 @@ SUBMODULE (cauchy_convergence_test) perform_test
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( tpo_coarse, tpo_fine, ref_lev, &
     !$OMP                     convergence_factor, den, num, nx, ny, nz, &
-    !$OMP                     ratio_dx ) &
-    !$OMP             PRIVATE( i, j, k )
+    !$OMP                     ratio_dx, get_ham_ptr ) &
+    !$OMP             PRIVATE( i, j, k, hc_coarse, hc_fine )
     shared_grid_loop: DO k= 0, nz - 1, 1
       DO j= 0, ny - 1, 1
         DO i= 0, nx - 1, 1
 
+          CALL get_ham_ptr( tpo_coarse, 1 + INT(den)*i, &
+                            1 + INT(den)*j, &
+                            1 + INT(den)*k, ref_lev, hc_coarse )
+
+          CALL get_ham_ptr( tpo_coarse, 1 + INT(den)*i, &
+                            1 + INT(den)*j, &
+                            1 + INT(den)*k, ref_lev, hc_fine )
+
           convergence_factor( 1 + i, 1 + j, 1 + k )= &
-           LOG( &
-           ABS( &
-           ( get_ham_ptr( tpo_coarse, 1 + INT(den)*i, &
-                                  1 + INT(den)*j, &
-                                  1 + INT(den)*k, ref_lev ))&
-          /( get_ham_ptr( tpo_fine, 1 + INT(num)*i, &
-                               1 + INT(num)*j, &
-                               1 + INT(num)*k, ref_lev ) &
-           + tiny_real ) &
-           ) + tiny_real)/LOG(ratio_dx)
+           LOG( ABS( hc_coarse/(hc_fine + tiny_real) ) + tiny_real ) &
+           /LOG(ratio_dx)
 
         ENDDO
       ENDDO
@@ -499,7 +500,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
               .AND. &
               ( ABS(shared_grid(i,j,k,jz) - min_abs_z)/ABS(min_abs_z) > tol &
               .OR. &
-              ABS(shared_grid(i,j,k,jy) - min_abs_y)/ABS(min_abs_y) > tol & ) &
+              ABS(shared_grid(i,j,k,jy) - min_abs_y)/ABS(min_abs_y) > tol ) &
           )THEN
 
             CYCLE

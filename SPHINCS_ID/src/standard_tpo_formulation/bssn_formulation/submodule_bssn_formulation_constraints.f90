@@ -32,7 +32,7 @@ SUBMODULE (bssn_formulation) constraints
   !
   !************************************************
 
-  USE utility,  ONLY: zero, one, two, three, four, five, ten
+  USE utility,  ONLY: zero, one, two, three, four, five, ten, spacetime_path
 
   IMPLICIT NONE
 
@@ -76,8 +76,7 @@ SUBMODULE (bssn_formulation) constraints
     INTEGER:: i, j, k, fd_lim, l, nx, ny, nz
     INTEGER, DIMENSION(3) :: imin, imax
     INTEGER:: unit_logfile, &
-              min_ix_y, min_iy_y, min_iz_y, &
-              min_ix_z, min_iy_z, min_iz_z
+              min_ix_y, min_iy_y, min_iz_y
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
     !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: abs_grid
@@ -658,14 +657,16 @@ SUBMODULE (bssn_formulation) constraints
 
         PRINT *, "** Analyzing constraints on refinement level ", l, "..."
 
-        name_analysis= "bssn-hc-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                       //"bssn-hc-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the Hamiltonian constraint"
         CALL this% analyze_constraint( &
              l, &
              HC, name_constraint, unit_logfile, name_analysis, &
              this% HC_l2(l), this% HC_loo(l), this% HC_int(l), rho )
 
-        name_analysis= "bssn-mc1-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                       //"bssn-mc1-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the momentum constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -673,7 +674,8 @@ SUBMODULE (bssn_formulation) constraints
              this% MC_l2(l,jx), this% MC_loo(l,jx), this% MC_int(l,jx), &
              S(:,:,:,jx) )
 
-        name_analysis= "bssn-mc2-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                       //"bssn-mc2-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the momentum constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -681,7 +683,8 @@ SUBMODULE (bssn_formulation) constraints
              this% MC_l2(l,jy), this% MC_loo(l,jy), this% MC_int(l,jy), &
              S(:,:,:,jy) )
 
-        name_analysis= "bssn-mc3-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                       //"bssn-mc3-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the momentum constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -689,21 +692,24 @@ SUBMODULE (bssn_formulation) constraints
              this% MC_l2(l,jz), this% MC_loo(l,jz), this% MC_int(l,jz), &
              S(:,:,:,jz) )
 
-        name_analysis= "bssn-gc1-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                       //"bssn-gc1-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the connection constraint"
         CALL this% analyze_constraint( &
              l, &
              GC(:,:,:,jx), name_constraint, unit_logfile, name_analysis, &
              this% GC_l2(l,jx), this% GC_loo(l,jx), this% GC_int(l,jx) )
 
-        name_analysis= "bssn-gc2-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                       //"bssn-gc2-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the connection constraint"
         CALL this% analyze_constraint( &
              l, &
              GC(:,:,:,jy), name_constraint, unit_logfile, name_analysis, &
              this% GC_l2(l,jy), this% GC_loo(l,jy), this% GC_int(l,jy) )
 
-        name_analysis= "bssn-gc3-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                       //"bssn-gc3-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the connection constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -879,7 +885,7 @@ SUBMODULE (bssn_formulation) constraints
                       /ABS(min_abs_z) > tol &
                       .OR. &
                       ABS(this% coords% levels(l)% var(i,j,k,jy) - min_abs_y) &
-                      /ABS(min_abs_y) > tol & ) &
+                      /ABS(min_abs_y) > tol ) &
                 )THEN
 
                   CYCLE
@@ -1420,8 +1426,7 @@ SUBMODULE (bssn_formulation) constraints
 
     INTEGER:: i, j, k, l, a, allocation_status, nx, ny, nz
     INTEGER, DIMENSION(3) :: imin, imax
-    INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y, &
-              min_ix_z, min_iy_z, min_iz_z
+    INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y
     INTEGER, SAVE:: counter= 1
 
 
@@ -1658,8 +1663,6 @@ SUBMODULE (bssn_formulation) constraints
     IF( debug .AND. .TRUE. ) PRINT *, "pressure_loc= ", pressure_loc(npart/2)
     IF( debug .AND. .TRUE. ) PRINT *
 
-    !IF( counter == 2 ) STOP
-
     PRINT *, " * Mapping stress-energy tensor from the particles to the grid..."
     PRINT *
     CALL map_2_grid_hash( npart        , &
@@ -1670,14 +1673,6 @@ SUBMODULE (bssn_formulation) constraints
                           nlrf_loc     , &
                           theta_loc    , &
                           pressure_loc )
-
-    !IF( counter == 2 )THEN
-    !  STOP
-    !ENDIF
-
-    IF( debug ) PRINT *, "6.5"
-
-    !IF( counter == 2 ) STOP
 
     IF( debug ) PRINT *, "7"
 
@@ -2000,7 +1995,8 @@ SUBMODULE (bssn_formulation) constraints
 
         PRINT *, "** Analyzing constraints on refinement level ", l, "..."
 
-        name_analysis= "bssn-hc-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                       //"bssn-hc-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the Hamiltonian constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -2009,7 +2005,8 @@ SUBMODULE (bssn_formulation) constraints
              this% HC_parts_int(l), rho_parts )
 
 
-        name_analysis= "bssn-mc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                      //"bssn-mc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the momentum constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -2017,7 +2014,8 @@ SUBMODULE (bssn_formulation) constraints
              this% MC_parts_l2(l,jx), this% MC_parts_loo(l,jx), &
              this% MC_parts_int(l,jx), S_parts(:,:,:,jx) )
 
-        name_analysis= "bssn-mc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                      //"bssn-mc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the momentum constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -2025,7 +2023,8 @@ SUBMODULE (bssn_formulation) constraints
              this% MC_parts_l2(l,jy), this% MC_parts_loo(l,jy), &
              this% MC_parts_int(l,jy), S_parts(:,:,:,jy) )
 
-        name_analysis= "bssn-mc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                      //"bssn-mc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the momentum constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -2033,7 +2032,8 @@ SUBMODULE (bssn_formulation) constraints
              this% MC_parts_l2(l,jz), this% MC_parts_loo(l,jz), &
              this% MC_parts_int(l,jz), S_parts(:,:,:,jz) )
 
-        name_analysis= "bssn-gc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                      //"bssn-gc1-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the first component of the connection constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -2041,7 +2041,8 @@ SUBMODULE (bssn_formulation) constraints
              this% GC_parts_l2(l,jx), this% GC_parts_loo(l,jx), &
              this% GC_parts_int(l,jx) )
 
-        name_analysis= "bssn-gc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                      //"bssn-gc2-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the second component of the connection constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -2049,7 +2050,8 @@ SUBMODULE (bssn_formulation) constraints
              this% GC_parts_l2(l,jy), this% GC_parts_loo(l,jy), &
              this% GC_parts_int(l,jy) )
 
-        name_analysis= "bssn-gc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
+        name_analysis= TRIM(spacetime_path) &
+                      //"bssn-gc3-parts-analysis-reflev"//TRIM(n_reflev)//".dat"
         name_constraint= "the third component of the connection constraint"
         CALL this% analyze_constraint( &
              l, &
@@ -2218,7 +2220,7 @@ SUBMODULE (bssn_formulation) constraints
                       /ABS(min_abs_z) > tol &
                       .OR. &
                       ABS(this% coords% levels(l)% var(i,j,k,jy) - min_abs_y) &
-                      /ABS(min_abs_y) > tol & ) &
+                      /ABS(min_abs_y) > tol ) &
                 )THEN
 
                   CYCLE

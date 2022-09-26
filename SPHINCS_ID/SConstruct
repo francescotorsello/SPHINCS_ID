@@ -717,9 +717,9 @@ if debug == 'FALSE': #
       env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                          '-warn', '-fpp', \
+                          '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \
                           build_flavour, build_mpi, build_dir ]
-#, '-g', '-CB', '-CS', '-traceback',
+#, '-CB', '-CS', '-g', '-traceback',
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
@@ -727,7 +727,8 @@ if debug == 'FALSE': #
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
-                          '-Wall', '-Wextra', build_flavour, build_mpi, \
+                          '-Wall', '-Wextra', '-Wimplicit-interface', \
+                          '-Wimplicit-procedure', build_flavour, build_mpi, \
                           build_dir ]
 
     ############################################################################
@@ -765,12 +766,12 @@ if debug == 'FALSE': #
       env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                          '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \
+                          '-warn', '-CB', '-CS', '-fpp', \
                           '-diag-disable=10346', '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
                           '-align array64byte', \
                           build_flavour, build_mpi, build_dir ]
-
+#, '-g', '-CB', '-CS', '-traceback'
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
@@ -778,7 +779,8 @@ if debug == 'FALSE': #
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
-                          '-Wall', '-Wextra', build_flavour, build_mpi, \
+                          '-Wall', '-Wextra', '-Wimplicit-interface', \
+                          '-Wimplicit-procedure', build_flavour, build_mpi, \
                           build_dir ]
 
     ############################################################################
