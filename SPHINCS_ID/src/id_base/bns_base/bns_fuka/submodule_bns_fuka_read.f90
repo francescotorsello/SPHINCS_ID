@@ -1102,7 +1102,6 @@ SUBMODULE (bns_fuka) read
     !***********************************************
 
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE utility,                     ONLY: lorene2hydrobase
 
     IMPLICIT NONE
 

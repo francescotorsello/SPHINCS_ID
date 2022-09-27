@@ -382,10 +382,15 @@ MODULE bns_base
     !  is given as optional argument. Printse information relative to
     !  the derived type oly
 
+
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
 
+    PROCEDURE, NON_OVERRIDABLE:: find_radius
+    !# Finds the radius of a matter object, relative to a center and along
+    !  a direction. The radius is determined as the first point where the
+    !  density is zero.
 
     !
     !-- FUNCTIONS that access PRIVATE member variables
@@ -657,6 +662,36 @@ MODULE bns_base
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
+
+
+    MODULE FUNCTION find_radius( this, center, vector, get_density ) &
+      RESULT( radius )
+    !# Finds the radius of a matter object, relative to a center and along
+    !  a direction. The radius is determined as the first point where the
+    !  density is zero.
+
+
+      CLASS(bnsbase), INTENT(IN):: this
+      !! [[bnsbase]] object owning this PROCEDURE
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: center
+      !! Center point relative to which the radius is measured
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: vector
+      !# Vector that defines the direction along which to measure the radius.
+      !  If not normalized, it will be normalized.
+      INTERFACE
+        FUNCTION get_density_at_pos(x, y, z) RESULT(rho)
+          DOUBLE PRECISION, INTENT(IN):: x
+          DOUBLE PRECISION, INTENT(IN):: y
+          DOUBLE PRECISION, INTENT(IN):: z
+          DOUBLE PRECISION:: rho
+        END FUNCTION get_density_at_pos
+      END INTERFACE
+      PROCEDURE(get_density_at_pos), OPTIONAL:: get_density
+      DOUBLE PRECISION                       :: radius
+      !# Radius of the star relative to `center`, along the direction
+      !  specified by `vector`
+
+    END FUNCTION find_radius
 
 
     MODULE PURE FUNCTION get_gamma_1( this )
