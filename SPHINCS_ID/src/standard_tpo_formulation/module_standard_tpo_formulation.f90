@@ -331,24 +331,24 @@ MODULE standard_tpo_formulation
 
     MODULE SUBROUTINE setup_standard_tpo_variables( tpof, id, dx, dy, dz )
 
-      CLASS(idbase),    INTENT( IN OUT ):: id
-      CLASS(tpo), INTENT( IN OUT ):: tpof
-      DOUBLE PRECISION, OPTIONAL         :: dx, dy, dz
+      CLASS(idbase),    INTENT(INOUT)       :: id
+      CLASS(tpo),       INTENT(INOUT)       :: tpof
+      DOUBLE PRECISION, INTENT(IN), OPTIONAL:: dx, dy, dz
 
     END SUBROUTINE setup_standard_tpo_variables
 
  !   MODULE SUBROUTINE construct_tpo_bns_spacings( tpof, id, &
  !                                                        dx, dy, dz )
  !
- !     CLASS(bns),        INTENT( IN OUT ):: id
- !     CLASS(tpo), INTENT( IN OUT ):: tpof
- !     DOUBLE PRECISION,  INTENT( IN )    :: dx, dy, dz
+ !     CLASS(bns),        INTENT(INOUT):: id
+ !     CLASS(tpo), INTENT(INOUT):: tpof
+ !     DOUBLE PRECISION,  INTENT(IN)    :: dx, dy, dz
  !
  !   END SUBROUTINE construct_tpo_bns_spacings
 
     MODULE SUBROUTINE deallocate_standard_tpo_variables( tpof )
 
-      CLASS(tpo), INTENT( IN OUT ):: tpof
+      CLASS(tpo), INTENT(INOUT):: tpof
 
     END SUBROUTINE deallocate_standard_tpo_variables
 
@@ -372,16 +372,16 @@ MODULE standard_tpo_formulation
                                           integral, &
                                           source )
 
-      CLASS(tpo),                  INTENT( IN OUT ):: this
-      INTEGER,                            INTENT( IN ) :: l
-      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN ) :: constraint
-      CHARACTER( LEN= * ),                INTENT( IN ) :: name_constraint
-      CHARACTER( LEN= * ),                INTENT( IN ) :: name_analysis
-      INTEGER,                            INTENT( IN ) :: unit_logfile
-      DOUBLE PRECISION,                   INTENT( OUT ):: l2_norm
-      DOUBLE PRECISION,                   INTENT( OUT ):: loo_norm
-      DOUBLE PRECISION,                   INTENT( OUT ):: integral
-      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN ), OPTIONAL:: source
+      CLASS(tpo),                         INTENT(INOUT):: this
+      INTEGER,                            INTENT(IN) :: l
+      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT(IN) :: constraint
+      CHARACTER( LEN= * ),                INTENT(IN) :: name_constraint
+      CHARACTER( LEN= * ),                INTENT(IN) :: name_analysis
+      INTEGER,                            INTENT(IN) :: unit_logfile
+      DOUBLE PRECISION,                   INTENT(OUT):: l2_norm
+      DOUBLE PRECISION,                   INTENT(OUT):: loo_norm
+      DOUBLE PRECISION,                   INTENT(OUT):: integral
+      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT(IN), OPTIONAL:: source
 
     END SUBROUTINE analyze_constraint
 
@@ -428,7 +428,7 @@ MODULE standard_tpo_formulation
     !  is given as the optional argument `filename`
 
 
-      CLASS(tpo), INTENT( IN OUT ):: this
+      CLASS(tpo), INTENT(INOUT):: this
       !CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -439,14 +439,14 @@ MODULE standard_tpo_formulation
                                      constraint, l, &
                                      export, unit_analysis, cnt )
 
-      CLASS(tpo),                  INTENT( IN OUT ):: this
-      DOUBLE PRECISION                                    :: lower_bound, &
-                                                             upper_bound
-      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT( IN )    :: constraint
-      INTEGER,                            INTENT( IN )    :: l
-      LOGICAL,                            INTENT( IN )    :: export
-      INTEGER,                            INTENT( IN )    :: unit_analysis
-      INTEGER,                            INTENT( OUT )   :: cnt
+      CLASS(tpo),                         INTENT(INOUT):: this
+      DOUBLE PRECISION,                   INTENT(IN)   :: lower_bound, &
+                                                          upper_bound
+      DOUBLE PRECISION, DIMENSION(:,:,:), INTENT(IN)   :: constraint
+      INTEGER,                            INTENT(IN)   :: l
+      LOGICAL,                            INTENT(IN)   :: export
+      INTEGER,                            INTENT(IN)   :: unit_analysis
+      INTEGER,                            INTENT(OUT)  :: cnt
 
     END SUBROUTINE abs_values_in
 
@@ -454,8 +454,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_grid_point( this, i, j, k, l ) RESULT( grid_point )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: i, j, k, l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: grid_point
 
@@ -465,7 +465,7 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_nlevels( this ) RESULT( nlevels )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
+      CLASS(tpo), INTENT(INOUT):: this
       ! Result
       INTEGER:: nlevels
 
@@ -475,7 +475,7 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_levels( this ) RESULT( levels )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
+      CLASS(tpo), INTENT(INOUT):: this
       ! Result
       TYPE(level), DIMENSION(:), ALLOCATABLE:: levels
 
@@ -485,8 +485,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_dx( this, l ) RESULT( dx )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       DOUBLE PRECISION:: dx
 
@@ -496,8 +496,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_dy( this, l ) RESULT( dy )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       DOUBLE PRECISION:: dy
 
@@ -507,8 +507,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_dz( this, l ) RESULT( dz )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       DOUBLE PRECISION:: dz
 
@@ -518,8 +518,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_ngrid_x( this, l ) RESULT( ngrid_x )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       INTEGER:: ngrid_x
 
@@ -529,8 +529,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_ngrid_y( this, l ) RESULT( ngrid_y )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       INTEGER:: ngrid_y
 
@@ -540,8 +540,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_ngrid_z( this, l ) RESULT( ngrid_z )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       INTEGER:: ngrid_z
 
@@ -551,8 +551,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_xR( this, l ) RESULT( xR )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       DOUBLE PRECISION:: xR
 
@@ -562,8 +562,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_yR( this, l ) RESULT( yR )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       DOUBLE PRECISION:: yR
 
@@ -573,8 +573,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_zR( this, l ) RESULT( zR )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: l
       ! Result
       DOUBLE PRECISION:: zR
 
@@ -584,8 +584,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_HC( this, i, j, k, l ) RESULT( HC_value )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: i, j, k, l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
 
@@ -595,8 +595,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_MC( this, i, j, k, l ) RESULT( MC_value )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: i, j, k, l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 
@@ -606,8 +606,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_HC_parts( this, i, j, k, l ) RESULT( HC_value )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: i, j, k, l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: i, j, k, l
       ! Result
       DOUBLE PRECISION                   :: HC_value
 
@@ -617,8 +617,8 @@ MODULE standard_tpo_formulation
     MODULE FUNCTION get_MC_parts( this, i, j, k, l ) RESULT( MC_value )
 
       ! Arguments
-      CLASS(tpo), INTENT( IN OUT ):: this
-      INTEGER,    INTENT( IN )    :: i, j, k, l
+      CLASS(tpo), INTENT(INOUT):: this
+      INTEGER,    INTENT(IN)    :: i, j, k, l
       ! Result
       DOUBLE PRECISION, DIMENSION(3)     :: MC_value
 
@@ -633,62 +633,69 @@ MODULE standard_tpo_formulation
   !
   ABSTRACT INTERFACE
 
+
     SUBROUTINE define_allocate_fields_interface( this )
 
       IMPORT:: tpo
-      CLASS(tpo), INTENT( IN OUT ):: this
+      CLASS(tpo), INTENT(INOUT):: this
 
     END SUBROUTINE define_allocate_fields_interface
+
 
     SUBROUTINE compute_and_print_tpo_variables_interface( this, namefile )
 
       IMPORT:: tpo
-      CLASS(tpo),   INTENT( IN OUT )           :: this
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CLASS(tpo),          INTENT(INOUT)           :: this
+      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_print_tpo_variables_interface
 
+
     SUBROUTINE print_formatted_id_tpo_variables_interface &
-                                                    ( this, namefile )
+      ( this, points, namefile )
 
       IMPORT:: tpo
-      CLASS(tpo),   INTENT( IN OUT )           :: this
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CLASS(tpo),          INTENT(INOUT)                      :: this
+      DOUBLE PRECISION,    DIMENSION(:,:,:,:),  INTENT(IN), OPTIONAL:: points
+      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL            :: namefile
 
     END SUBROUTINE print_formatted_id_tpo_variables_interface
 
-    SUBROUTINE compute_and_print_tpo_constraints_grid_interface( this, &
-                                                             id, &
-                                                             namefile, &
-                                                             name_logfile )
+
+    SUBROUTINE compute_and_print_tpo_constraints_grid_interface &
+      ( this, id, namefile, name_logfile, points )
 
       IMPORT:: tpo
       IMPORT:: idbase
-      CLASS(tpo),   INTENT( IN OUT ):: this
-      CLASS(idbase),       INTENT( IN OUT ):: id
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
+      CLASS(tpo),          INTENT(INOUT), TARGET:: this
+      CLASS(idbase),       INTENT(INOUT):: id
+      CHARACTER( LEN= * ), INTENT(INOUT):: namefile
+      CHARACTER( LEN= * ), INTENT(INOUT):: name_logfile
+      DOUBLE PRECISION,    DIMENSION(:,:,:,:),  INTENT(IN), TARGET, OPTIONAL:: &
+      points
 
     END SUBROUTINE compute_and_print_tpo_constraints_grid_interface
 
-    SUBROUTINE compute_and_print_tpo_constraints_particles_interface( this, &
-                                                             parts_obj, &
-                                                             namefile, &
-                                                             name_logfile )
+
+    SUBROUTINE compute_and_print_tpo_constraints_particles_interface &
+      ( this, parts_obj, namefile, name_logfile, points )
 
       IMPORT:: tpo
       IMPORT:: particles
-      CLASS(tpo),   INTENT( IN OUT ):: this
-      CLASS(particles),    INTENT( IN OUT ):: parts_obj
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: namefile
-      CHARACTER( LEN= * ), INTENT( IN OUT ):: name_logfile
+      CLASS(tpo),          INTENT(INOUT), TARGET:: this
+      CLASS(particles),    INTENT(INOUT):: parts_obj
+      CHARACTER( LEN= * ), INTENT(INOUT):: namefile
+      CHARACTER( LEN= * ), INTENT(INOUT):: name_logfile
+      DOUBLE PRECISION,    DIMENSION(:,:,:,:),  INTENT(IN), TARGET, OPTIONAL:: &
+      points
 
     END SUBROUTINE compute_and_print_tpo_constraints_particles_interface
+
 
     SUBROUTINE deallocate_fields_interface( this )
 
       IMPORT:: tpo
-      CLASS(tpo), INTENT( IN OUT ):: this
+      CLASS(tpo), INTENT(INOUT):: this
 
     END SUBROUTINE deallocate_fields_interface
 

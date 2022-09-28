@@ -194,7 +194,7 @@ PROGRAM sphincs_id
   PRINT *, "          /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/          "
   PRINT *
   PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime              "
-  PRINT *, "  Initial Data builder, v1.0                                       "
+  PRINT *, "  Initial Data builder, v1.6                                       "
   PRINT *
   PRINT *, "  SPHINCS_ID  Copyright (C) 2020, 2021, 2022  Francesco Torsello   "
   PRINT *
@@ -387,7 +387,7 @@ PROGRAM sphincs_id
         namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
 
         CALL bssn_forms( itr3 )% &
-                    print_formatted_id_tpo_variables( namefile_bssn )
+                    print_formatted_id_tpo_variables( namefile= namefile_bssn )
       ENDDO export_bssn_loop
     ENDIF
 

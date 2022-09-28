@@ -684,7 +684,7 @@ MODULE id_base
 
       IMPORT:: idbase
       CLASS(idbase), INTENT(IN):: this
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL:: filename
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
     END SUBROUTINE print_summary_int

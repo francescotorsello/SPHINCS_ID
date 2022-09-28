@@ -136,7 +136,6 @@ SUBMODULE (bns_fuka) params
                              this% logRho1_1             , &
                              this% logRho2_1 )
 
-    ! In FUKA, the two stars have the same EOS
     this% gamma_2  = this% gamma_1
     this% kappa_2  = this% kappa_1
     this% npeos_2  = this% npeos_1

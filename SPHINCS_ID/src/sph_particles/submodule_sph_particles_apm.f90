@@ -35,7 +35,7 @@ SUBMODULE (sph_particles) apm
   !***********************************
 
   USE constants,  ONLY: quarter
-  USE utility,    ONLY: zero, one, two, three, ten
+  USE utility,    ONLY: zero, one, two, three, ten, sph_path
 
 
   IMPLICIT NONE
@@ -723,7 +723,7 @@ SUBMODULE (sph_particles) apm
                  ABS( com_x-com_star )/ABS( com_star + 1 )
         PRINT *
 
-        finalnamefile= "dbg-pos.dat"
+        finalnamefile= TRIM(sph_path)//"dbg-pos.dat"
 
         INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -1576,7 +1576,7 @@ SUBMODULE (sph_particles) apm
     IF( PRESENT(namefile_pos) )THEN
       finalnamefile= namefile_pos
     ELSE
-      finalnamefile= "apm_pos.dat"
+      finalnamefile= TRIM(sph_path)//"apm_pos.dat"
     ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
@@ -1890,7 +1890,7 @@ SUBMODULE (sph_particles) apm
     ENDIF
 
 
-  !  finalnamefile= "dbg_apm_pos1.dat"
+  !  finalnamefile= TRIM(sph_path)//"dbg_apm_pos1.dat"
   !
   !  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
   !
@@ -1945,7 +1945,7 @@ SUBMODULE (sph_particles) apm
     CALL impose_equatorial_plane_symmetry( npart_real, pos, nu )
 
 
-  !  finalnamefile= "dbg_apm_pos2.dat"
+  !  finalnamefile= TRIM(sph_path)//"dbg_apm_pos2.dat"
   !
   !  INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
   !
@@ -2376,7 +2376,7 @@ SUBMODULE (sph_particles) apm
     IF( PRESENT(namefile_results) )THEN
       finalnamefile= namefile_results
     ELSE
-      finalnamefile= "apm_results.dat"
+      finalnamefile= TRIM(sph_path)//"apm_results.dat"
     ENDIF
 
     PRINT *, "** Printing results to file ", TRIM(namefile_results), "..."
@@ -2452,7 +2452,7 @@ SUBMODULE (sph_particles) apm
     !
     !-- Check that there aren't multiple particles at the same position
     !
-    !IF( debug ) finalnamefile= "negative_hydro.dat"
+    !IF( debug ) finalnamefile= TRIM(sph_path)//"negative_hydro.dat"
     !IF( debug ) CALL THIS% analyze_hydro( finalnamefile )
 
     PRINT *, "** Checking that there aren't particles with the same position..."
@@ -3142,7 +3142,7 @@ SUBMODULE (sph_particles) apm
       IF( PRESENT(namefile_pos_id) )THEN
         finalnamefile= namefile_pos_id
       ELSE
-        finalnamefile= "apm_pos_id.dat"
+        finalnamefile= TRIM(sph_path)//"apm_pos_id.dat"
       ENDIF
 
       INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
@@ -3223,7 +3223,7 @@ SUBMODULE (sph_particles) apm
       IF( PRESENT(namefile_pos) )THEN
         finalnamefile= namefile_pos
       ELSE
-        finalnamefile= "apm_pos.dat"
+        finalnamefile= TRIM(sph_path)//"apm_pos.dat"
       ENDIF
 
       INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
