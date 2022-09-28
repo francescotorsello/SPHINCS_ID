@@ -1493,7 +1493,7 @@ SUBMODULE (bns_fuka) read
 
     ! Run the MPI parallelized Kadath reader
     CALL EXECUTE_COMMAND_LINE("mpirun -np "//TRIM(mpi_ranks_str)//" "// &
-                      TRIM(work_dir)//"/"//TRIM(dir_id)//"export_bns_test "// &
+                      TRIM(work_dir)//"/"//TRIM(dir_id)//"export_bns "// &
                       TRIM(work_dir)//"/"//TRIM(dir_id)//" "//TRIM(run_id))
 
     ! Delete the parameter file that specifies the lattice

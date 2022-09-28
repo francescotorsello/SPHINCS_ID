@@ -122,6 +122,10 @@ SUBMODULE(bns_base) find_radii
           x_right= x_mean
         ENDIF
 
+      ELSEIF( rho_left > min_dens .AND. rho_right > min_dens )THEN
+
+        x_right= two*x_right
+
       ELSE
 
         PRINT *

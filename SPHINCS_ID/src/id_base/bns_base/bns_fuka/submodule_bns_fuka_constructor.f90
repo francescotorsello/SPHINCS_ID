@@ -186,6 +186,12 @@ SUBMODULE (bns_fuka) constructor
 
     IMPLICIT NONE
 
+    INTEGER, SAVE:: counter= 1
+    !! Counts how many times the PROCEDURE construct_particles_idase is called
+
+    CHARACTER(LEN= 3):: cnt_i
+    CHARACTER(LEN= :), ALLOCATABLE:: name_mass_density
+
     IF( flag /= flag$sph .AND. flag /= flag$tpo .AND. flag <= 0 )THEN
 
       PRINT *, "** ERROR in SUBROUTINE initialize_id_bnsfuka! The INTEGER ", &
@@ -206,13 +212,38 @@ SUBMODULE (bns_fuka) constructor
 
     CASE( flag$tpo )
 
-      CALL allocate_grid_function( this% mass_density,"mass_density_fuka", 1 )
+      PRINT *
+      PRINT *, "counter=", counter
+      PRINT *
+
+      IF( counter <= 9 ) WRITE( cnt_i, "(I1)" ) counter
+      IF( counter >= 10 .AND. counter <= 99 ) WRITE( cnt_i, "(I2)" ) counter
+      IF( counter >= 100 .AND. counter <= 999 ) WRITE( cnt_i, "(I3)" ) counter
+
+      PRINT *
+      PRINT *, "cnt_i=", TRIM(cnt_i)
+      PRINT *
+
+      name_mass_density= "mass_density_fuka"//TRIM(cnt_i)
+
+      PRINT *
+      PRINT *, "name_mass_density=", name_mass_density
+      PRINT *
+
+      CALL allocate_grid_function( this% mass_density, &
+                                   TRIM(name_mass_density), 1 )
       CALL allocate_grid_function( this% specific_energy, &
-                                   "specific_energy_fuka", 1 )
-      CALL allocate_grid_function( this% pressure, "pressure_fuka", 1 )
-      CALL allocate_grid_function( this% v_euler_x, "v_euler_x_fuka", 1 )
-      CALL allocate_grid_function( this% v_euler_y, "v_euler_y_fuka", 1 )
-      CALL allocate_grid_function( this% v_euler_z, "v_euler_z_fuka", 1 )
+                                   "specific_energy_fuka"//TRIM(cnt_i), 1 )
+      CALL allocate_grid_function( this% pressure, &
+                                   "pressure_fuka"//TRIM(cnt_i), 1 )
+      CALL allocate_grid_function( this% v_euler_x, &
+                                   "v_euler_x_fuka"//TRIM(cnt_i), 1 )
+      CALL allocate_grid_function( this% v_euler_y, &
+                                   "v_euler_y_fuka"//TRIM(cnt_i), 1 )
+      CALL allocate_grid_function( this% v_euler_z, &
+                                   "v_euler_z_fuka"//TRIM(cnt_i), 1 )
+
+      counter= counter + 1
 
     CASE DEFAULT
 

@@ -147,9 +147,9 @@ MODULE bns_fuka
     !
 
     ! TODO: change "grid" to "lattice" for consistency
-    INTEGER:: nx_grid= 100
-    INTEGER:: ny_grid= 100
-    INTEGER:: nz_grid= 100
+    INTEGER:: nx_grid= 400
+    INTEGER:: ny_grid= 400
+    INTEGER:: nz_grid= 400
     TYPE(id_lattice), DIMENSION(2):: star_lattice
     !# Array storing two [[bns_fuka:id_lattice]] objects, one per star
 

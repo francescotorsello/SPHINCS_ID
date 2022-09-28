@@ -190,7 +190,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
       PRINT *, " * Importing on refinement level l=", l, "..."
 
-      CALL id% initialize_id( l )
+      CALL id% initialize_id(l)
 
       CALL id% read_id_spacetime( tpof% get_ngrid_x(l), &
                                   tpof% get_ngrid_y(l), &

@@ -37,7 +37,7 @@ NSM
 Poly
 
 #Gamma (only used if EOS= "Poly"):
-2.0
+2.00
 
 #which pwp-EOS (only used if eos_type= pwp)
 MPA1
