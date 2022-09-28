@@ -75,8 +75,7 @@ SUBMODULE (bssn_formulation) constraints
 
     INTEGER:: i, j, k, fd_lim, l, nx, ny, nz
     INTEGER, DIMENSION(3) :: imin, imax
-    INTEGER:: unit_logfile, &
-              min_ix_y, min_iy_y, min_iz_y
+    INTEGER:: unit_logfile
 
     DOUBLE PRECISION:: min_abs_y, min_abs_z
     !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: abs_grid
@@ -1426,7 +1425,7 @@ SUBMODULE (bssn_formulation) constraints
 
     INTEGER:: i, j, k, l, a, allocation_status, nx, ny, nz
     INTEGER, DIMENSION(3) :: imin, imax
-    INTEGER:: unit_logfile, min_ix_y, min_iy_y, min_iz_y
+    INTEGER:: unit_logfile
     INTEGER, SAVE:: counter= 1
 
 
@@ -1665,6 +1664,7 @@ SUBMODULE (bssn_formulation) constraints
 
     PRINT *, " * Mapping stress-energy tensor from the particles to the grid..."
     PRINT *
+
     CALL map_2_grid_hash( npart        , &
                           nu_loc       , &
                           pos_loc      , &
