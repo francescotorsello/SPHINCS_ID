@@ -63,7 +63,7 @@ SUBMODULE (bns_fuka) params
     USE utility,    ONLY: Msun_geo, km2m, lorene2hydrobase, &
                           k_lorene2hydrobase, &
                           k_lorene2hydrobase_piecewisepolytrope, &
-                          zero, two, four, five
+                          zero, one, two, four, five
 
 #if flavour == 1
 
@@ -77,8 +77,10 @@ SUBMODULE (bns_fuka) params
 
     IMPLICIT NONE
 
-    INTEGER:: i, nchars
     INTEGER, PARAMETER:: str_length= 100
+    LOGICAL, PARAMETER:: debug= .FALSE.
+
+    INTEGER:: i, nchars
 
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_type_tmp_c
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_file_tmp_c
@@ -134,29 +136,6 @@ SUBMODULE (bns_fuka) params
                              this% logRho1_1             , &
                              this% logRho2_1 )
 
-  !  ! Convert distances from |fuka| units (km) to SPHINCS units (Msun_geo)
-  !  ! See MODULE constants for the definition of Msun_geo
-  !  this% distance      = this% distance/Msun_geo
-  !  this% distance_com  = this% distance_com/Msun_geo
-  !  this% area_radius1  = this% area_radius1/Msun_geo
-  !  this% radius1_x_comp= this% radius1_x_comp/Msun_geo
-  !  this% radius1_y     = this% radius1_y/Msun_geo
-  !  this% radius1_z     = this% radius1_z/Msun_geo
-  !  this% radius1_x_opp = this% radius1_x_opp/Msun_geo
-  !  this% center1_x     = this% center1_x/Msun_geo
-  !  this% barycenter1_x = this% barycenter1_x/Msun_geo
-  !  this% area_radius2  = this% area_radius2/Msun_geo
-  !  this% radius2_x_comp= this% radius2_x_comp/Msun_geo
-  !  this% radius2_y     = this% radius2_y/Msun_geo
-  !  this% radius2_z     = this% radius2_z/Msun_geo
-  !  this% radius2_x_opp = this% radius2_x_opp/Msun_geo
-  !  this% center2_x     = this% center2_x/Msun_geo
-  !  this% barycenter2_x = this% barycenter2_x/Msun_geo
-  !
-  !  this% mass(1)= this% mass1
-  !  this% mass(2)= this% mass2
-  !
-
     this% gamma_2  = this% gamma_1
     this% kappa_2  = this% kappa_1
     this% npeos_2  = this% npeos_1
@@ -173,10 +152,44 @@ SUBMODULE (bns_fuka) params
     this% logRho1_2= this% logRho1_1
     this% logRho2_2= this% logRho2_1
 
-    this% radius1_y= this% radius1_x_opp
-    this% radius1_z= this% radius1_x_opp
-    this% radius2_y= this% radius2_x_opp
-    this% radius2_z= this% radius2_x_opp
+    IF(debug) PRINT *, "Finding radii..."
+    IF(debug) PRINT *
+    IF(debug) PRINT *, "max radius 1=", this% radius1_x_comp
+    IF(debug) PRINT *, "min radius 1=", this% radius1_x_opp
+    IF(debug) PRINT *, "max radius 2=", this% radius2_x_comp
+    IF(debug) PRINT *, "min radius 2=", this% radius2_x_opp
+    IF(debug) PRINT *
+
+    ! Find the radii of the stars
+    this% radius1_x_comp= this% find_radius([this% center1_x,zero,zero], &
+                                       [one,zero,zero], read_density)
+    this% radius1_x_opp= this% find_radius([this% center1_x,zero,zero], &
+                                       [-one,zero,zero], read_density)
+    this% radius1_y= this% find_radius([this% center1_x,zero,zero], &
+                                       [zero,one,zero], read_density)
+    this% radius1_z= this% find_radius([this% center1_x,zero,zero], &
+                                       [zero,zero,one], read_density)
+
+    this% radius2_x_comp= this% find_radius([this% center2_x,zero,zero], &
+                                       [-one,zero,zero], read_density)
+    this% radius2_x_opp= this% find_radius([this% center2_x,zero,zero], &
+                                       [one,zero,zero], read_density)
+    this% radius2_y= this% find_radius([this% center2_x,zero,zero], &
+                                       [zero,one,zero], read_density)
+    this% radius2_z= this% find_radius([this% center2_x,zero,zero], &
+                                       [zero,zero,one], read_density)
+
+    IF(debug) PRINT *
+    IF(debug) PRINT *, "x radius 1, comp=", this% radius1_x_comp
+    IF(debug) PRINT *, "x radius 1, opp=", this% radius1_x_opp
+    IF(debug) PRINT *, "y radius 1=", this% radius1_y
+    IF(debug) PRINT *, "z radius 1=", this% radius1_z
+    IF(debug) PRINT *, "x radius 2, comp=", this% radius2_x_comp
+    IF(debug) PRINT *, "x radius 2, opp=", this% radius2_x_opp
+    IF(debug) PRINT *, "y radius 2=", this% radius2_y
+    IF(debug) PRINT *, "z radius 2=", this% radius2_z
+    IF(debug) PRINT *
+    !IF(debug) STOP
 
     this% radii(1,:)= [this% radius1_x_opp, this% radius1_x_comp, &
                        this% radius1_y, this% radius1_y, &
@@ -300,6 +313,23 @@ SUBMODULE (bns_fuka) params
 
     !PRINT *, "** Subroutine read_fuka_id_params executed."
     !PRINT *
+
+
+
+    CONTAINS
+
+
+    FUNCTION read_density(x, y, z) RESULT(rho)
+
+      DOUBLE PRECISION, INTENT(IN):: x
+      DOUBLE PRECISION, INTENT(IN):: y
+      DOUBLE PRECISION, INTENT(IN):: z
+      DOUBLE PRECISION:: rho
+
+      rho= this% read_fuka_mass_density(x, y, z)
+
+    END FUNCTION read_density
+
 
   END PROCEDURE read_fuka_id_params
 
