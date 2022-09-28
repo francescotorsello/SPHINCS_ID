@@ -116,8 +116,8 @@ SUBMODULE (sph_particles) sph_variables
                                    !all_clists!, flag_dead_ll_cells
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
-    USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_eos_all, &
-                                   gen_pwp_eos, gen_pwp_cold_eos, Gamma_th_1
+    USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_cold_eos, &
+                                   gen_pwp_eos, Gamma_th_1
     USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
                                    rpart, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
