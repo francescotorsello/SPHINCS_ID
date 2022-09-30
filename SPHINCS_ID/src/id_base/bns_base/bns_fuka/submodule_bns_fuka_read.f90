@@ -379,12 +379,12 @@ SUBMODULE (bns_fuka) read
                                   ek(:,:,:,jyy), &
                                   ek(:,:,:,jyz), &
                                   ek(:,:,:,jzz), &
-                            this% mass_density   % levels(this% l_curr)% var, &
-                            this% specific_energy% levels(this% l_curr)% var, &
-                            this% pressure       % levels(this% l_curr)% var, &
-                            this% v_euler_x      % levels(this% l_curr)% var, &
-                            this% v_euler_y      % levels(this% l_curr)% var, &
-                            this% v_euler_z      % levels(this% l_curr)% var, &
+            this% mass_density   (this% tpo_curr)% levels(this% l_curr)% var, &
+            this% specific_energy(this% tpo_curr)% levels(this% l_curr)% var, &
+            this% pressure       (this% tpo_curr)% levels(this% l_curr)% var, &
+            this% v_euler_x      (this% tpo_curr)% levels(this% l_curr)% var, &
+            this% v_euler_y      (this% tpo_curr)% levels(this% l_curr)% var, &
+            this% v_euler_z      (this% tpo_curr)% levels(this% l_curr)% var, &
                                   this% filename )
 
     ALLOCATE( g4( nx, ny, nz, n_sym4x4 ) )
@@ -766,21 +766,21 @@ SUBMODULE (bns_fuka) read
           !u_euler(i,j,k,jy)     = this% v_euler_y(i,j,k)
           !u_euler(i,j,k,jz)     = this% v_euler_z(i,j,k)
 
-          baryon_density(i,j,k) = this% mass_density  %   &
+          baryon_density(i,j,k) = this% mass_density(this% tpo_curr)%   &
                                   levels(this% l_curr)% var(i,j,k)
-          specific_energy(i,j,k)= this% specific_energy% &
+          specific_energy(i,j,k)= this% specific_energy(this% tpo_curr)% &
                                   levels(this% l_curr)% var(i,j,k)
-          pressure(i,j,k)       = this% pressure       % &
+          pressure(i,j,k)       = this% pressure(this% tpo_curr)% &
                                   levels(this% l_curr)% var(i,j,k)
 
           energy_density(i,j,k) = baryon_density(i,j,k) &
                                    *(one + specific_energy(i,j,k))
 
-          u_euler(i,j,k,jx)     = this% v_euler_x% &
+          u_euler(i,j,k,jx)     = this% v_euler_x(this% tpo_curr)% &
                                   levels(this% l_curr)% var(i,j,k)
-          u_euler(i,j,k,jy)     = this% v_euler_y% &
+          u_euler(i,j,k,jy)     = this% v_euler_y(this% tpo_curr)% &
                                   levels(this% l_curr)% var(i,j,k)
-          u_euler(i,j,k,jz)     = this% v_euler_z% &
+          u_euler(i,j,k,jz)     = this% v_euler_z(this% tpo_curr)% &
                                   levels(this% l_curr)% var(i,j,k)
 
         ENDDO

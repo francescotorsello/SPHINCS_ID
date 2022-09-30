@@ -375,7 +375,7 @@ PROGRAM convergence_test
     PRINT *, "===================================================" &
              // "==============="
     PRINT *
-    WRITE( namefile_bssn_bin, "(A6,I1,A4)" ) "BSSN_l", itr3, ".bin"
+    WRITE( namefile_bssn_bin, "(A10,I1,A4)" ) "BSSN_vars-", itr3, ".bin"
     namefile_bssn_bin= TRIM( spacetime_path ) // TRIM( namefile_bssn_bin )
 
     bssn_forms( itr3 )% export_bin= export_bin
@@ -390,7 +390,7 @@ PROGRAM convergence_test
   !
   IF( export_form )THEN
     export_bssn_loop: DO itr3 = min_bssn, max_bssn, 1
-      WRITE( namefile_bssn, "(A24,I1,A4)" ) &
+      WRITE( namefile_bssn, "(A10,I1,A4)" ) &
                             "bssn-form_", itr3, ".dat"
       namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
 

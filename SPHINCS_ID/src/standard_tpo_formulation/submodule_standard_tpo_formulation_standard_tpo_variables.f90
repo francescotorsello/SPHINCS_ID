@@ -77,6 +77,9 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     IMPLICIT NONE
 
 
+    INTEGER, SAVE:: tpo_id_number= -1
+    !! Negative integer that identifies the [[tpo]] object
+
     ! Index running over the refinement levels
     INTEGER:: l
     ! Indices running over the grids
@@ -87,6 +90,10 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
     DOUBLE PRECISION, DIMENSION(6):: system_size
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),6):: sizes
+
+
+    tpof% tpo_id_number= tpo_id_number
+    tpo_id_number      = tpo_id_number - 1
 
     ! Get the number of matter objects in the physical system
     tpof% n_matter= id% get_n_matter()
@@ -175,7 +182,8 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
     CALL tpof% grid_timer% stop_timer()
 
-    CALL id% initialize_id( flag$tpo )
+    CALL id% initialize_id(tpof% tpo_id_number, switch=.TRUE.)
+    !CALL id% initialize_id(flag$tpo)
 
     !
     !-- Import the spacetime ID on the refined mesh,

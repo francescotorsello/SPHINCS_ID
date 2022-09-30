@@ -87,6 +87,9 @@ MODULE bns_fuka
   INTEGER, PARAMETER:: n_fields_fuka    = 25
 
 
+  INTEGER, PARAMETER:: max$tpo= 20
+
+
   TYPE id_lattice
   !! Type representing the |id| on a 3D lattice
 
@@ -147,9 +150,9 @@ MODULE bns_fuka
     !
 
     ! TODO: change "grid" to "lattice" for consistency
-    INTEGER:: nx_grid= 400
-    INTEGER:: ny_grid= 400
-    INTEGER:: nz_grid= 400
+    INTEGER:: nx_grid= 100
+    INTEGER:: ny_grid= 100
+    INTEGER:: nz_grid= 100
     TYPE(id_lattice), DIMENSION(2):: star_lattice
     !# Array storing two [[bns_fuka:id_lattice]] objects, one per star
 
@@ -200,26 +203,25 @@ MODULE bns_fuka
     !-- Hydro fields stored on a refined mesh
     !
 
+    INTEGER, DIMENSION(max$tpo):: tpo$log= 0
+    !!
+    INTEGER, PUBLIC:: tpo_curr= 0
     INTEGER, PUBLIC:: l_curr
-    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: mass_density
-    TYPE(grid_function_scalar), PUBLIC:: mass_density
+    !# Variable set to the current refinement level to consider, when reading
+    !  the hydro |id| on the refined mesh in computing the constraints
+    TYPE(grid_function_scalar), DIMENSION(max$tpo), PUBLIC:: mass_density
     !! 1-D array storing the baryon mass density in the fluid frame
-    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: pressure
-    TYPE(grid_function_scalar), PUBLIC:: pressure
+    TYPE(grid_function_scalar), DIMENSION(max$tpo), PUBLIC:: pressure
     !! 1-D array storing the pressure
-    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: specific_energy
-    TYPE(grid_function_scalar), PUBLIC:: specific_energy
+    TYPE(grid_function_scalar), DIMENSION(max$tpo), PUBLIC:: specific_energy
     !! 1-D array storing the specific internal energy
-    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: v_euler_x
-    TYPE(grid_function_scalar), PUBLIC:: v_euler_x
+    TYPE(grid_function_scalar), DIMENSION(max$tpo), PUBLIC:: v_euler_x
     !# 1-D array storing the x component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
-    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: v_euler_y
-    TYPE(grid_function_scalar), PUBLIC:: v_euler_y
+    TYPE(grid_function_scalar), DIMENSION(max$tpo), PUBLIC:: v_euler_y
     !# 1-D array storing the y component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
-    !DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: v_euler_z
-    TYPE(grid_function_scalar), PUBLIC:: v_euler_z
+    TYPE(grid_function_scalar), DIMENSION(max$tpo), PUBLIC:: v_euler_z
     !# 1-D array storing the z component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
 
@@ -1063,19 +1065,22 @@ MODULE bns_fuka
     END SUBROUTINE finalize
 
 
-    MODULE SUBROUTINE initialize_id_bnsfuka( this, flag )
+    MODULE RECURSIVE SUBROUTINE initialize_id_bnsfuka( this, flag, switch )
     !# Initialize the |fuka| |bns| |id|.
     !
-    !  - If `flag`= [[utility:flag$sph]]= \(1\), set up the lattices around the
+    !  - If `flag`= [[utility:flag$sph]], set up the lattices around the
     !    stars for the |bns| produced with |fuka|.
-    !  - If `flag`= [[utility:flag$tpo]]= \(2\), allocate memory for the hydro
+    !  - If `flag`= [[utility:flag$tpo]], allocate memory for the hydro
     !    grid functions.
-    !  - If `flag`= [[utility:flag$rl]]= \(3\), assign the value of the
-    !    refinement level to [[bnsfuka:l_curr]].
+    !  - If `flag` > 0, assign its value to [[bnsfuka:l_curr]].
+    !  - If [[utility:flag$tpo]] < `flag` < 0, assign its value to
+    !    [[bnsfuka:tpo_curr]].
 
-      CLASS(bnsfuka), INTENT(INOUT):: this
-      INTEGER,       INTENT(IN)    :: flag
+      CLASS(bnsfuka), INTENT(INOUT)       :: this
+      INTEGER,        INTENT(IN)          :: flag
       !! Identifies what kind of initialization has to be done
+      LOGICAL,        INTENT(IN), OPTIONAL:: switch
+      !! If `.TRUE.`, switch to a different initialization
 
     END SUBROUTINE initialize_id_bnsfuka
 

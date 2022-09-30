@@ -158,6 +158,7 @@ SUBMODULE (bssn_formulation) constraints
     !
     PRINT *, "** Importing the hydro ID on the mesh..."
     PRINT *
+    CALL id% initialize_id(this% tpo_id_number)
     ref_levels: DO l= 1, this% nlevels, 1
 
       PRINT *, " * Importing on refinement level l=", l, "..."

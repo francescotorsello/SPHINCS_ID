@@ -690,14 +690,16 @@ MODULE id_base
     END SUBROUTINE print_summary_int
 
 
-    SUBROUTINE initialize_id_int( this, flag )
+    SUBROUTINE initialize_id_int( this, flag, switch )
     !# Initialize the |id|; for example, set up the lattices around the
     !  stars for the |bns| produced with |fuka|.
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT(INOUT):: this
-      INTEGER,       INTENT(IN)   :: flag
+      CLASS(idbase), INTENT(INOUT)       :: this
+      INTEGER,       INTENT(IN)          :: flag
       !! Identifies what kind of initialization has to be done
+      LOGICAL,       INTENT(IN), OPTIONAL:: switch
+      !! If `.TRUE.`, switch to a different initialization
 
     END SUBROUTINE initialize_id_int
 

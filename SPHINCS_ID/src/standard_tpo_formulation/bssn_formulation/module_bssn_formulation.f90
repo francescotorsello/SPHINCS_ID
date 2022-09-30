@@ -61,8 +61,7 @@ MODULE bssn_formulation
   !********************************************************
 
   TYPE, EXTENDS(tpo):: bssn
-  !# TYPE representing the |id| for the |bssn| formulation
-  !  of the Einstein equations
+  !# TYPE representing the |bssn| formulation of the |ee|
 
 
     INTEGER:: call_flag= 0
@@ -70,7 +69,7 @@ MODULE bssn_formulation
     !  compute_and_print_bssn_variables is called
 
     !
-    !-- Arrays storing the BSSN variables for the LORENE ID on the grid
+    !-- Arrays storing the BSSN variables for the |id| on the grid
     !
 
     TYPE(grid_function):: Gamma_u

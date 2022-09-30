@@ -57,13 +57,24 @@ SUBMODULE (bns_fuka) constructor
     !
     !****************************************************
 
-    USE utility,  ONLY: ten, Msun_geo
+    USE utility,  ONLY: ten, Msun_geo, flag$tpo
 
     IMPLICIT NONE
 
     INTEGER, SAVE:: bns_counter= 1
 
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: length_scale_pressure
+
+
+    IF(max$tpo < flag$tpo)THEN
+      PRINT *, "** ERROR in MODULE bns_fuka! It must hold max$tpo > flag$tpo,",&
+               "where both variables are negative integers. Instead:"
+      PRINT *, " * max$tpo=", max$tpo
+      PRINT *, " * flag$tpo=", flag$tpo
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+    ENDIF
 
     CALL derived_type% set_n_matter(2)
     CALL derived_type% set_cold_system(.TRUE.)
@@ -167,15 +178,14 @@ SUBMODULE (bns_fuka) constructor
     !
     !# Initialize the |fuka| |bns| |id|.
     !
-    !  - If `flag`= [[utility:flag$sph]]= \(1\), set
-    !    up the lattices around the
-    !    stars for the |bns| produced with |fuka|.
-    !  - If `flag`= [[utility:flag$tpo]]= \(2\),
-    !    allocate memory for the hydro
-    !    grid functions.
-    !  - If `flag`= [[utility:flag$rl]]= \(3\),
-    !    assign the value of the
-    !    refinement level to [[bnsfuka:l_curr]].
+    !  - If `flag`= [[utility:flag$sph]], set up the
+    !    lattices around the stars for the |bns|
+    !    produced with |fuka|.
+    !  - If `flag`= [[utility:flag$tpo]], allocate
+    !    memory for the hydro grid functions.
+    !  - If `flag` > 0, assign its value to [[bnsfuka:l_curr]].
+    !  - If [[utility:flag$tpo]] < `flag` < 0,
+    !    assign its value to [[bnsfuka:tpo_curr]].
     !
     !  FT 16.09.2022
     !
@@ -186,13 +196,35 @@ SUBMODULE (bns_fuka) constructor
 
     IMPLICIT NONE
 
-    INTEGER, SAVE:: counter= 1
+    INTEGER, SAVE:: tpo_counter= 1
     !! Counts how many times the PROCEDURE construct_particles_idase is called
+
+    INTEGER:: i
 
     CHARACTER(LEN= 3):: cnt_i
     CHARACTER(LEN= :), ALLOCATABLE:: name_mass_density
+    CHARACTER(LEN= :), ALLOCATABLE:: name_specific_energy
+    CHARACTER(LEN= :), ALLOCATABLE:: name_pressure
+    CHARACTER(LEN= :), ALLOCATABLE:: name_v_euler_x
+    CHARACTER(LEN= :), ALLOCATABLE:: name_v_euler_y
+    CHARACTER(LEN= :), ALLOCATABLE:: name_v_euler_z
 
-    IF( flag /= flag$sph .AND. flag /= flag$tpo .AND. flag <= 0 )THEN
+    LOGICAL:: wanted_tpo
+
+    IF( PRESENT(switch) )THEN
+      IF( switch .EQV. .TRUE. )THEN
+
+        this% tpo$log(tpo_counter)= flag
+        this% tpo_curr= tpo_counter
+
+        tpo_counter= tpo_counter + 1
+
+        CALL initialize_id_bnsfuka(this, flag$tpo)
+
+      ENDIF
+    ENDIF
+
+    IF( flag /= flag$sph .AND. flag /= flag$tpo .AND. flag < -max$tpo )THEN
 
       PRINT *, "** ERROR in SUBROUTINE initialize_id_bnsfuka! The INTEGER ", &
                "argument 'flag' should be in the set [1,nlevels], or ", &
@@ -204,52 +236,79 @@ SUBMODULE (bns_fuka) constructor
 
     ENDIF
 
-    SELECT CASE( flag )
-
-    CASE( flag$sph )
+    IF( flag == flag$sph )THEN
 
       CALL this% set_up_lattices_around_stars()
 
-    CASE( flag$tpo )
+    ELSEIF( flag >= flag$tpo .AND. flag <= -1 )THEN
 
-      PRINT *
-      PRINT *, "counter=", counter
-      PRINT *
+      wanted_tpo= .FALSE.
+      DO i= 1, max$tpo, 1
 
-      IF( counter <= 9 ) WRITE( cnt_i, "(I1)" ) counter
-      IF( counter >= 10 .AND. counter <= 99 ) WRITE( cnt_i, "(I2)" ) counter
-      IF( counter >= 100 .AND. counter <= 999 ) WRITE( cnt_i, "(I3)" ) counter
+        IF(this% tpo$log(i) == flag)THEN
 
-      PRINT *
-      PRINT *, "cnt_i=", TRIM(cnt_i)
-      PRINT *
+          wanted_tpo= .TRUE.
+          this% tpo_curr= i
 
-      name_mass_density= "mass_density_fuka"//TRIM(cnt_i)
+        ENDIF
 
-      PRINT *
-      PRINT *, "name_mass_density=", name_mass_density
-      PRINT *
+      ENDDO
 
-      CALL allocate_grid_function( this% mass_density, &
-                                   TRIM(name_mass_density), 1 )
-      CALL allocate_grid_function( this% specific_energy, &
-                                   "specific_energy_fuka"//TRIM(cnt_i), 1 )
-      CALL allocate_grid_function( this% pressure, &
-                                   "pressure_fuka"//TRIM(cnt_i), 1 )
-      CALL allocate_grid_function( this% v_euler_x, &
-                                   "v_euler_x_fuka"//TRIM(cnt_i), 1 )
-      CALL allocate_grid_function( this% v_euler_y, &
-                                   "v_euler_y_fuka"//TRIM(cnt_i), 1 )
-      CALL allocate_grid_function( this% v_euler_z, &
-                                   "v_euler_z_fuka"//TRIM(cnt_i), 1 )
+      IF(flag == flag$tpo)THEN
 
-      counter= counter + 1
+        IF( this% tpo_curr <= 9 ) WRITE( cnt_i, "(I1)" ) this% tpo_curr
+        IF( this% tpo_curr >= 10 .AND. flag <= 99 ) WRITE( cnt_i, "(I2)" ) &
+          this% tpo_curr
+        IF( this% tpo_curr >= 100 .AND. flag <= 999 ) WRITE( cnt_i, "(I3)" ) &
+          this% tpo_curr
 
-    CASE DEFAULT
+        PRINT *
+        PRINT *, "cnt_i=", TRIM(cnt_i)
+        PRINT *
+
+        name_mass_density   = "mass_density_fuka-"//TRIM(cnt_i)
+        name_specific_energy= "specific_energy_fuka-"//TRIM(cnt_i)
+        name_pressure       = "pressure_fuka-"//TRIM(cnt_i)
+        name_v_euler_x      = "v_euler_x_fuka-"//TRIM(cnt_i)
+        name_v_euler_y      = "v_euler_y_fuka-"//TRIM(cnt_i)
+        name_v_euler_z      = "v_euler_z_fuka-"//TRIM(cnt_i)
+
+        PRINT *
+        PRINT *, "name_mass_density=", name_mass_density
+        PRINT *
+
+        CALL allocate_grid_function( this% mass_density(this% tpo_curr), &
+                                     TRIM(name_mass_density), 1 )
+        CALL allocate_grid_function( this% specific_energy(this% tpo_curr), &
+                                     TRIM(name_specific_energy), 1 )
+        CALL allocate_grid_function( this% pressure(this% tpo_curr), &
+                                     TRIM(name_pressure), 1 )
+        CALL allocate_grid_function( this% v_euler_x(this% tpo_curr), &
+                                     TRIM(name_v_euler_x), 1 )
+        CALL allocate_grid_function( this% v_euler_y(this% tpo_curr), &
+                                     TRIM(name_v_euler_y), 1 )
+        CALL allocate_grid_function( this% v_euler_z(this% tpo_curr), &
+                                     TRIM(name_v_euler_z), 1 )
+
+      ELSE
+
+        IF(.NOT.wanted_tpo)THEN
+          PRINT *, "** ERROR! Mismatch between bns_fuka and bssn objects!"
+          PRINT *, " * This should never happen: there is most likely a bug ", &
+                   "in SUBROUTINE initialize_id_bnsfuka, or a bug in the ", &
+                   "places where it is called."
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDIF
+
+    ELSE
 
       this% l_curr= flag
 
-    END SELECT
+    ENDIF
 
   END PROCEDURE initialize_id_bnsfuka
 

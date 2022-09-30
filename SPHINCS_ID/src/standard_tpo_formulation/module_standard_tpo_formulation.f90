@@ -55,7 +55,10 @@ MODULE standard_tpo_formulation
   !*******************************************************
 
   TYPE, ABSTRACT:: tpo
-  !! ABSTRACT TYPE representing a generic \(3+1\) formulation of the |ee|
+  !! ABSTRACT TYPE representing the standard \(3+1\) formulation of the |ee|
+
+    INTEGER:: tpo_id_number
+    !! Negative integer that identifies the [[tpo]] object
 
     INTEGER:: n_matter
     !! Number of matter objects in the physical system

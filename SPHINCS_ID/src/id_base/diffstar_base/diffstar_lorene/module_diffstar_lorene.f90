@@ -696,15 +696,17 @@ MODULE diffstar_lorene
     END SUBROUTINE finalize
 
 
-    MODULE SUBROUTINE nothing( this, flag )
+    MODULE SUBROUTINE nothing( this, flag, switch )
     !# Procedure that does nothing. It is used to instantiate a deferred
     !  idbase procedure which s not needed in TYPE [[diffstarlorene]].
     !  It also serves as a placeholder in case the idbase procedure
     !  will be needed in the future.
 
-      CLASS(diffstarlorene), INTENT(INOUT):: this
-      INTEGER,       INTENT(IN)   :: flag
+      CLASS(diffstarlorene), INTENT(INOUT)       :: this
+      INTEGER,               INTENT(IN)          :: flag
       !! Identifies what kind of initialization has to be done
+      LOGICAL,               INTENT(IN), OPTIONAL:: switch
+      !! If `.TRUE.`, switch to a different initialization
 
     END SUBROUTINE nothing
 
