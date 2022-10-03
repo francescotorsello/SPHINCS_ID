@@ -97,14 +97,10 @@ PROGRAM convergence_test
   DOUBLE PRECISION, PARAMETER:: tol_dx= 1.D-10
   DOUBLE PRECISION, PARAMETER:: tol_coord= 1.D-10
 
-  INTEGER:: i, j, k, nx, ny, nz
-
   ! Grid spacing for the first BSSN object; the other two will have
   ! original_dx/2 and original_dx/4 as grid spacings
   DOUBLE PRECISION:: original_dx
   DOUBLE PRECISION:: ratio_dx
-  DOUBLE PRECISION:: min_abs_y
-  DOUBLE PRECISION:: min_abs_z
 
   DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: shared_grid
 

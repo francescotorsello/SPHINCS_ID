@@ -277,7 +277,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k, nx, ny, nz, unit_cauchy_ct
+    INTEGER:: nx, ny, nz, unit_cauchy_ct
 
     DOUBLE PRECISION:: ratio_dx
 
@@ -353,7 +353,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
     IMPLICIT NONE
 
-    INTEGER:: i, j, k, nx, ny, nz, unit_cauchy_ct
+    INTEGER:: nx, ny, nz, unit_cauchy_ct
 
     DOUBLE PRECISION:: ratio_dx
 

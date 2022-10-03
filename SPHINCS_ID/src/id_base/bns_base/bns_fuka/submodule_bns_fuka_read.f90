@@ -707,8 +707,6 @@ SUBMODULE (bns_fuka) read
 
     INTEGER:: i, j, k, l
 
-    DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax
-
     !DOUBLE PRECISION, DIMENSION(nx, ny, nz, 19):: id_tmp
 
     ! TODO: parallelize these ones
@@ -1239,8 +1237,8 @@ SUBMODULE (bns_fuka) read
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    INTEGER:: ios, i_char, i_file, i_field, i, j, k, i_rank, nchars
-    INTEGER:: nlines, npoints_prev, nz_rem, nz_prev, n_first_ranks, &
+    INTEGER:: ios, i_char, i_file, i, j, k, i_rank, nchars
+    INTEGER:: nlines, npoints_prev, nz_rem, n_first_ranks, &
               n_last_rank, nz_rank(mpi_ranks)
     INTEGER, DIMENSION(mpi_ranks):: unit_rank
     INTEGER:: unit_rank_prev
@@ -1255,8 +1253,7 @@ SUBMODULE (bns_fuka) read
     CHARACTER( LEN= : ), ALLOCATABLE:: filename_id
     CHARACTER( LEN= : ), ALLOCATABLE:: work_dir
     CHARACTER( LEN= : ), ALLOCATABLE:: dir_id
-    CHARACTER( LEN= 255 ):: tmp
-    CHARACTER( LEN= 3 ):: size_run_id_str
+    !CHARACTER( LEN= 3 ):: size_run_id_str
     CHARACTER( LEN= 3 ):: mpi_ranks_str
 
     TYPE namefile
@@ -1733,7 +1730,7 @@ SUBMODULE (bns_fuka) read
     INTEGER:: nx
     INTEGER:: ny
     INTEGER:: nz
-    INTEGER:: i_star, i, j, k
+    INTEGER:: i_star
     INTEGER:: mpi_ranks
     !
 
@@ -1741,9 +1738,7 @@ SUBMODULE (bns_fuka) read
     DOUBLE PRECISION, DIMENSION(6):: sizes
     DOUBLE PRECISION, DIMENSION(3):: center
 
-    LOGICAL:: exist
-
-    CHARACTER(LEN=:), ALLOCATABLE:: filename_id
+    !CHARACTER(LEN=:), ALLOCATABLE:: filename_id
 
 #ifdef MPI_ranks
 
