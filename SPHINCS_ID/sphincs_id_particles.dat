@@ -108,9 +108,9 @@ max_steps= 100        ! If, after max_steps, the iteration did not converge,
                       ! by lower_factor. max_steps >= 10. 100 is a nice value
 upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
 lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
-randomize_phi=  .FALSE.  ! Randomize particle positions in phi
-randomize_theta=.FALSE.  ! Randomize particle positions in theta
-randomize_r=    .FALSE.  ! Randomize particle positions in r and push inside
+randomize_phi=  .TRUE.  ! Randomize particle positions in phi
+randomize_theta=.TRUE.  ! Randomize particle positions in theta
+randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
                         ! the outer layers by a little random displacement
 !----------------------------------------------------------!
 ! Parameters for the Artificial Pressure Method (APM)      !
@@ -130,13 +130,13 @@ randomize_r=    .FALSE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
-print_step= 50          ! Every print_step steps, print the particle positions
+print_step= 25          ! Every print_step steps, print the particle positions
                         ! at the current step, and the particle positions at
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
@@ -150,7 +150,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.55D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.35D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc

@@ -34,7 +34,7 @@ NSM
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
 #EOS type ("eos_type", e.g. 'pwp' or 'Poly')                          
-Poly
+pwp
 
 #Gamma (only used if EOS= "Poly"):
 2.00

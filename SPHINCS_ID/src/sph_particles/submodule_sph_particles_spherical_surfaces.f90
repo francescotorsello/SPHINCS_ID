@@ -2180,7 +2180,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     ENDDO
 
-  END SUBROUTINE
+  END SUBROUTINE compute_colatitudes_uniformly_in
 
 
 END SUBMODULE spherical_surfaces

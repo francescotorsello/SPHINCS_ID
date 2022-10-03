@@ -129,7 +129,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
     !INTEGER,          PARAMETER:: print_step       = 15
-    INTEGER,          PARAMETER:: nuratio_max_steps= 50
+    INTEGER,          PARAMETER:: nuratio_max_steps= 250
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
@@ -1218,13 +1218,14 @@ SUBMODULE (sph_particles) apm
       !STOP
 
       !
-      !-- EXIT conditions
+      !-- Exit conditions
       !
       IF( nuratio_des > zero )THEN
 
-        IF( ( nuratio_tmp >= nuratio_des*(one - quarter/ten) .AND. &
-              nuratio_tmp <= nuratio_des*(one + quarter/ten) .AND. &
-              nuratio_tmp /= nuratio_thres ) .OR. itr == apm_max_it )THEN
+        IF( (nuratio_tmp >= nuratio_des*(one - quarter/ten) .AND. &
+             nuratio_tmp <= nuratio_des*(one + quarter/ten) .AND. &
+             nuratio_tmp /= nuratio_thres) .OR. &
+             itr == apm_max_it )THEN
 
           PRINT *, " * Exit condition satisfied: the baryon number ratio is ", &
                    nuratio_tmp, " <= ", nuratio_des, "*1.025= ", &
@@ -1234,7 +1235,9 @@ SUBMODULE (sph_particles) apm
 
         ENDIF
 
-        IF( nuratio_cnt >= nuratio_max_steps .OR. itr == apm_max_it )THEN
+        IF( (nuratio_cnt >= nuratio_max_steps .AND. &
+             nuratio_tmp /= nuratio_thres) .OR. itr == apm_max_it &
+        )THEN
 
           PRINT *, " * Exit condition satisfied: the baryon number ratio ", &
                    "did not change by more than ", nuratio_tol*ten*ten, &

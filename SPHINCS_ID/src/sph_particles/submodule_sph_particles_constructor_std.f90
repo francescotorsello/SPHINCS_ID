@@ -90,7 +90,7 @@ SUBMODULE (sph_particles) constructor_std
     USE alive_flag,         ONLY: alive
     USE analyze,            ONLY: COM
     USE utility,            ONLY: spherical_from_cartesian, &
-                                  spatial_vector_norm_sym3x3
+                                  spatial_vector_norm_sym3x3, sph_path
 
     IMPLICIT NONE
 
@@ -970,10 +970,12 @@ SUBMODULE (sph_particles) constructor_std
         IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
                                               WRITE( str_i, '(I3)' ) i_matter
 
-        filename_mass_profile= "spherical_surfaces_mass_profile"//TRIM(str_i)//&
-                               ".dat"
-        filename_shells_radii= "spherical_surfaces_radii"//TRIM(str_i)//".dat"
-        filename_shells_pos  = "spherical_surfaces_pos"//TRIM(str_i)//".dat"
+        filename_mass_profile= &
+          TRIM(sph_path)//"spherical_surfaces_mass_profile"//TRIM(str_i)//".dat"
+        filename_shells_radii= &
+          TRIM(sph_path)//"spherical_surfaces_radii"//TRIM(str_i)//".dat"
+        filename_shells_pos  = &
+          TRIM(sph_path)//"spherical_surfaces_pos"//TRIM(str_i)//".dat"
 
         CALL parts% place_particles_spherical_surfaces( &
                                               parts% masses(i_matter), &
@@ -1165,9 +1167,9 @@ SUBMODULE (sph_particles) constructor_std
         IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
                                               WRITE( str_i, '(I3)' ) i_matter
 
-        filename_apm_pos_id = "apm_pos_id"//TRIM(str_i)//".dat"
-        filename_apm_pos    = "apm_pos"//TRIM(str_i)//".dat"
-        filename_apm_results= "apm_results"//TRIM(str_i)//".dat"
+        filename_apm_pos_id = TRIM(sph_path)//"apm_pos_id"//TRIM(str_i)//".dat"
+        filename_apm_pos    = TRIM(sph_path)//"apm_pos"//TRIM(str_i)//".dat"
+        filename_apm_results= TRIM(sph_path)//"apm_results"//TRIM(str_i)//".dat"
 
         ! Matter object 1
         CALL parts% apm_timers(i_matter)% start_timer()

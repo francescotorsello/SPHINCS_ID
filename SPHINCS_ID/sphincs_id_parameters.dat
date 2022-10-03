@@ -14,10 +14,12 @@
 ! n_bns and the number of specified components of filenames must be the same
 n_id=1                          ! Number of physical systems to use
 ! Path to the directory containing the ID files
-common_path="fuka-id-files/"!"lorene-id-files/"
+common_path="lorene-id-files/"
             !"fuka-id-files/"
             !"eccentric-ejecta-files/"
-filenames(1)="BNSFU_poly2.00_1.4-1.4_50km.info"!"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"!"BNSLO_mpa1_1.2-1.5_45km.bin"
+filenames(1)="BNSLO_1.3-1.3_mpa1_45km.bin"
+             !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
+             !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSFU_1.4-1.4_poly2.00_45km.info"
              !"BNSFU_1.4-1.4_MS1b_45km.info"
@@ -102,7 +104,7 @@ estimate_length_scale=.FALSE.
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.TRUE.
+run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -114,7 +116,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=1                     ! 0: Read particle positions from formatted
+placer(1,:)=2                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object
@@ -129,17 +131,17 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 !----------------------------------------------!
 ! Choose to compute and export the constraints !
 !----------------------------------------------!
-compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
+compute_constraints=.FALSE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping
                                    ! it to the grid
-export_constraints=.TRUE.         ! Export constraints and stress-energy tensor
+export_constraints=.FALSE.         ! Export constraints and stress-energy tensor
                                    ! to a formatted file
-export_constraints_details=.TRUE. ! Write a formatted file whose rows contain
+export_constraints_details=.FALSE. ! Write a formatted file whose rows contain
                                    ! the points at which the constraints
                                    ! have values within (-oo,1D-7], [1D-7,1D-6],
                                    ! [1D-6,1D-5], [1D-5,1D-4], [1D-4,1D-3],
@@ -156,8 +158,8 @@ constraints_step=1            ! Export the constraints every step-th grid point
 ! Parameters for the convergence test performed by the PROGRAM  !
 ! convergence_test in file convergence_test.f90                 !
 !---------------------------------------------------------------!
-numerator_ratio_dx=4.0D0!4.0D0      ! Numerator of ratio_dx
-denominator_ratio_dx=3.0D0!3.0D0    ! Denominator of ratio_dx
+numerator_ratio_dx=4.0D0      ! Numerator of ratio_dx
+denominator_ratio_dx=3.0D0    ! Denominator of ratio_dx
                               ! ratio_dx > 1 is the ratio between the first and
                               ! second grid step, and between the second and
                               ! third
