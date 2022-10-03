@@ -8,6 +8,7 @@
 !*.f90
 !SConstruct
 !**/doc-pages/**/*.md
+!**/doc-pages/SPHINCS_ID-User_Manual.pdf
 !**/doc-media/*
 !documentation_*.md
 !gravity_grid_parameters.dat
