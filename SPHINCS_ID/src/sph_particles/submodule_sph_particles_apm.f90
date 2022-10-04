@@ -1036,9 +1036,9 @@ SUBMODULE (sph_particles) apm
 
         shell_loop: DO i_shell= 1, 10, 1
 
-          IF( r <= ( one + ( ellipse_thickness - one )*DBLE(i_shell)/ten )*r_ell &
+          IF( r <= ( one + (ellipse_thickness - one)*DBLE(i_shell)/ten )*r_ell &
               .AND. &
-              r >= ( one + ( ellipse_thickness - one )*DBLE(i_shell-1)/ten )*r_ell &
+          r >= ( one + (ellipse_thickness - one)*DBLE(i_shell - 1)/ten )*r_ell &
           )THEN
 
             art_pr(a)= DBLE(3*i_shell)*art_pr_max
@@ -1201,19 +1201,19 @@ SUBMODULE (sph_particles) apm
       !-- Estimating the particle contribution to the SPH momentum equation
       !
 
-      IF( MOD( itr, 5 ) == 0 )THEN
-
-        !PRINT *, "Before calling exact_nei_tree_update..."
-        !PRINT *
-
-        CALL exact_nei_tree_update( nn_des, &
-                                    npart_real, &
-                                    all_pos(:,1:npart_real), &
-                                    nu_tmp(1:npart_real) )
-
-        CALL compute_hydro_momentum()
-
-      ENDIF
+      !IF( MOD( itr, 5 ) == 0 )THEN
+      !
+      !  !PRINT *, "Before calling exact_nei_tree_update..."
+      !  !PRINT *
+      !
+      !  CALL exact_nei_tree_update( nn_des, &
+      !                              npart_real, &
+      !                              all_pos(:,1:npart_real), &
+      !                              nu_tmp(1:npart_real) )
+      !
+      !  CALL compute_hydro_momentum()
+      !
+      !ENDIF
 
       !STOP
 
