@@ -2,7 +2,7 @@
 **/doc/
 **/prototypes/
 !.gitattributes
-!.gitignore
+!./.gitignore
 !.gitkeep
 !*/
 !*.f90
