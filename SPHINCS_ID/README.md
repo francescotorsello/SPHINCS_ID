@@ -7,7 +7,8 @@ Presently, SPHINCS_ID does not solve any equations for the initial data, but act
 
 Currently, it produces initial data for:
 
-  - binary neutron star mergers and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([3][3]{:target="_blank"},[4][4]{:target="_blank"})
+  - binary systems of neutron stars and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([3][3]{:target="_blank"},[4][4]{:target="_blank"})
+  - binary systems of neutron stars, using the data computed by the FUKA solvers within the C++ library Kadath ([5][5]{:target="_blank"},[6][6]{:target="_blank"})
   - data on a Cartesian, uniform grid, representing a generic physical system
 
 The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
@@ -22,4 +23,6 @@ The User Manual for SPHINCS_ID is doc-pages/SPHINCS_ID-User_Manual.pdf
 [2]: <https://academic.oup.com/mnras/article/498/3/4230/5897370>
 [3]: <https://lorene.obspm.fr/>
 [4]: <https://arxiv.org/abs/gr-qc/0007028>
-[5]: <https://www.gnu.org/licenses/gpl-3.0.en.html>
+[5]: <https://kadath.obspm.fr/fuka/>
+[6]: <https://arxiv.org/abs/2103.09911>
+[7]: <https://www.gnu.org/licenses/gpl-3.0.en.html>

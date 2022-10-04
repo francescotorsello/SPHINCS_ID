@@ -128,7 +128,7 @@ SUBMODULE (bns_fuka) interpolate
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% mass_density, &
-                                debug= .TRUE. ) &
+                                debug= .FALSE. ) &
                                 *MSun/amu
 
       specific_energy(a)= trilinear_interpolation( x(a), y(a), zp, &
