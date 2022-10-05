@@ -241,7 +241,8 @@ module_sph_particles = [
   'submodule_sph_particles_apm.f90',
   'submodule_sph_particles_recovery.f90',
   'submodule_sph_particles_handle_positions.f90',
-  'submodule_sph_particles_adm_variables.f90'
+  'submodule_sph_particles_adm_variables.f90',
+  'submodule_sph_particles_quality_indicators.f90'
 ]
 
 module_standard_tpo_formulation_dir = ['src/standard_tpo_formulation/']
@@ -718,7 +719,7 @@ if debug == 'FALSE': #
       env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                          '-warn', '-CB', '-CS', '-fpp', \
+                          '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \
                           build_flavour, build_mpi, build_dir ]
 #, '-CB', '-CS', '-g', '-traceback',
     if fortran_compiler == 'gfortran':

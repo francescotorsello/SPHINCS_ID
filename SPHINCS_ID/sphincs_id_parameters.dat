@@ -14,11 +14,11 @@
 ! n_bns and the number of specified components of filenames must be the same
 n_id=1                          ! Number of physical systems to use
 ! Path to the directory containing the ID files
-common_path=!"lorene-id-files/"
+common_path="lorene-id-files/"
             !"fuka-id-files/"
-            "eccentric-ejecta-files/"
+            !"eccentric-ejecta-files/"
 filenames(1)=!"BNSLO_1.3-1.3_mpa1_45km.bin"
-             !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
+             "BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSFU_1.4-1.4_poly2.00_45km.info"
@@ -91,7 +91,7 @@ filenames(1)=!"BNSLO_1.3-1.3_mpa1_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"DRSLO_apr4.bin"
-             "EJECT_ejecta_apr4_2516.dat"
+             !"EJECT_ejecta_apr4_2516.dat"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
 !--------------------------------------------------!
@@ -105,7 +105,7 @@ estimate_length_scale=.FALSE.
 ! Produce only the SPH ID or only the spacetime ID !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.TRUE.
+run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !

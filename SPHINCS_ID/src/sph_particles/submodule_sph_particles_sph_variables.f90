@@ -25,7 +25,7 @@ SUBMODULE (sph_particles) sph_variables
 
   !****************************************************
   !
-  !# THIS SUBMODULE contains the implementation of
+  !# This SUBMODULE contains the implementation of
   !  the method of TYPE sph_particles
   !  that computes the |sph| variables.
   !
@@ -127,6 +127,8 @@ SUBMODULE (sph_particles) sph_variables
                                    itt, itx, ity, itz, &
                                    ixx, ixy, ixz, iyy, iyz, izz
 
+    USE quality_indicators,  ONLY: compute_interpolation_qi1
+
     IMPLICIT NONE
 
     ! The flag call_flag is set different than 0 if the SUBROUTINE
@@ -154,6 +156,8 @@ SUBMODULE (sph_particles) sph_variables
     !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
     !DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, dx, dy, dz, Wab, &
     !                   Wab_ha, Wi, Wi1, dvv
+
+    DOUBLE PRECISION, DIMENSION(this% npart):: qi1
 
     LOGICAL:: few_ncand!, invertible_matrix
 
@@ -1528,6 +1532,15 @@ SUBMODULE (sph_particles) sph_variables
     !   END ASSOCIATE
     !
     ! ENDDO
+
+    CALL exact_nei_tree_update( ndes,        &
+                                this% npart, &
+                                this% pos,   &
+                                this% nu )
+    this% h= h
+
+    CALL compute_interpolation_qi1(this% npart, this% pos, this% h, &
+                                   this% nu, this% nlrf_int, qi1)
 
     !CALL compute_adm_momentum_fluid_fields( this% npart,       &
     !                                        this% g_xx,        &

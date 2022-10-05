@@ -471,6 +471,7 @@ MODULE sph_particles
     !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum using
     !  the canonical momentum per baryon on the particles
 
+
     !
     !-- PUBLIC SUBROUTINES
     !

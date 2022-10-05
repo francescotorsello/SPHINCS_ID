@@ -303,7 +303,7 @@ SUBMODULE (sph_particles) memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                  // " allocate_lorene_id_memory. ", &
+                  // " allocate_particles_memory. ", &
                   "The STAT variable is", ios, ". ", &
                   "The error message is", err_msg
          STOP
@@ -314,7 +314,7 @@ SUBMODULE (sph_particles) memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array u_pwp in SUBROUTINE" &
-                  // "allocate_lorene_id_memory. ", &
+                  // "allocate_particles_memory. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
@@ -324,7 +324,7 @@ SUBMODULE (sph_particles) memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array nlrf_int in SUBROUTINE" &
-                  // "allocate_lorene_id_memory. ", &
+                  // "allocate_particles_memory. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
@@ -334,7 +334,7 @@ SUBMODULE (sph_particles) memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array enthalpy in SUBROUTINE" &
-                  // "allocate_lorene_id_memory. ", &
+                  // "allocate_particles_memory. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
@@ -344,13 +344,13 @@ SUBMODULE (sph_particles) memory
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array v in SUBROUTINE" &
-                  // "allocate_lorene_id_memory. ", &
+                  // "allocate_particles_memory. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
     ENDIF
 
-    PRINT *, "** Subroutine allocate_lorene_id_memory executed."
+    PRINT *, "** Subroutine allocate_particles_memory executed."
     PRINT *
 
   END PROCEDURE allocate_particles_memory

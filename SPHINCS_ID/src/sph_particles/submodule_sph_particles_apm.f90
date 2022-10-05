@@ -113,14 +113,14 @@ SUBMODULE (sph_particles) apm
     USE matrix,              ONLY: determinant_4x4_matrix
 
     USE sphincs_sph,         ONLY: density, ncand, all_clists
-    USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
-                                   rpart, allocate_RCB_tree_memory_3D, &
-                                   deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
     USE kernel_table,        ONLY: &!dWdv_no_norm, &
                                    dv_table, dv_table_1,&
                                    W_no_norm, n_tab_entry, &
                                    interp_gradW_table,interp_W_gradW_table
+    USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
+                                   rpart, allocate_RCB_tree_memory_3D, &
+                                   deallocate_RCB_tree_memory_3D
 
     IMPLICIT NONE
 
@@ -176,16 +176,6 @@ SUBMODULE (sph_particles) apm
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
     INTEGER, DIMENSION(:), ALLOCATABLE:: seed
-
-    DOUBLE PRECISION:: ha, ha_1, ha_3, ha_4, va, xa, ya, za, &
-                       hb, hb_1, hb_3, hb_4, xb, yb, zb, rab, rab2, rab_1, &
-                       ha2, ha2_4, hb2_4
-    !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy, mat_yz, mat_zz
-    DOUBLE PRECISION:: &!Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
-                       Wab_ha, Wi, Wi1, dvv, &
-                       grW_ha_x, grW_ha_y, grW_ha_z, &
-                       grW_hb_x, grW_hb_y, grW_hb_z, eab(3), &
-                       Wa, grW, grWa, grWb, vb, prgNa, prgNb
 
     DOUBLE PRECISION, DIMENSION(3):: pos_corr_tmp
     DOUBLE PRECISION, DIMENSION(3):: pos_maxerr
@@ -3285,7 +3275,20 @@ SUBMODULE (sph_particles) apm
       !*******************************************************
 
 
+      USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
+                                     rpart
+
       IMPLICIT NONE
+
+      DOUBLE PRECISION:: ha, ha_1, ha_3, ha_4, va, xa, ya, za, &
+                         hb, hb_1, hb_3, hb_4, xb, yb, zb, rab, rab2, rab_1, &
+                         ha2, ha2_4, hb2_4
+      !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy, mat_yz, mat_zz
+      DOUBLE PRECISION:: &!Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
+                         Wab_ha, Wi, Wi1, dvv, &
+                         grW_ha_x, grW_ha_y, grW_ha_z, &
+                         grW_hb_x, grW_hb_y, grW_hb_z, eab(3), &
+                         Wa, grW, grWa, grWb, vb, prgNa, prgNb
 
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -3359,11 +3362,18 @@ SUBMODULE (sph_particles) apm
             dy= ya  - yb
             dz= za  - zb
 
-            rab2= dx*dx + dy*dy + dz*dz
+            rab2 = dx*dx + dy*dy + dz*dz
+            rab  = SQRT(rab2) + 1.D-30
+            rab_1= 1.D0/rab
             IF( rab2 > ha2_4 .AND. rab2 > hb2_4 ) CYCLE
 
+            !--------!
+            !-- ha --!
+            !--------!
+            va= rab*ha_1
+
             ! get interpolation indices
-            inde=  MIN(INT(va*dv_table_1),n_tab_entry)
+            inde  = MIN(INT(va*dv_table_1),n_tab_entry)
             index1= MIN(inde + 1,n_tab_entry)
 
             ! get tabulated values
@@ -3374,19 +3384,10 @@ SUBMODULE (sph_particles) apm
             dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
             Wab_ha= Wi + (Wi1 - Wi)*dvv
 
-
-            rab=       SQRT(rab2) + 1.D-30
-            rab_1=     1.D0/rab
-
             ! unit vector ("a-b" --> from b to a)
             eab(1)=    dx*rab_1
             eab(2)=    dy*rab_1
             eab(3)=    dz*rab_1
-
-            !--------!
-            !-- ha --!
-            !--------!
-            va=       rab*ha_1
 
             ! kernel and its gradient
             !DIR$ INLINE
