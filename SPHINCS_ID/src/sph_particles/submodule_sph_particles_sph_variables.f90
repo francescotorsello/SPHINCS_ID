@@ -1090,7 +1090,7 @@ SUBMODULE (sph_particles) sph_variables
             *( this% all_eos(i_matter)% eos_parameters(poly$gamma) - one ) ) )
 
           this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
-            + this% nlrf_int(npart_in:npart_fin)*m0c2_cu/Pr(npart_in:npart_fin)
+           + Pr(npart_in:npart_fin)/(this% nlrf_int(npart_in:npart_fin)*m0c2_cu)
 
           cs(npart_in:npart_fin)= SQRT( &
             this% all_eos(i_matter)% eos_parameters(poly$gamma) &
@@ -1147,7 +1147,7 @@ SUBMODULE (sph_particles) sph_variables
 
           ENDDO
           this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
-            + this% nlrf_int(npart_in:npart_fin)*m0c2_cu/Pr(npart_in:npart_fin)
+           + Pr(npart_in:npart_fin)/(this% nlrf_int(npart_in:npart_fin)*m0c2_cu)
 
           cs(npart_in:npart_fin)= SQRT( &
             this% all_eos(i_matter)% eos_parameters(poly$gamma) &
