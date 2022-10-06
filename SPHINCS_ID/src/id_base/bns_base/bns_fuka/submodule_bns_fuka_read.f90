@@ -1262,34 +1262,34 @@ SUBMODULE (bns_fuka) read
     TYPE(namefile), DIMENSION(mpi_ranks):: filenames_ranks
 
 ! Get the path to the working directory from the precompiler variable
-#ifdef working_dir
-
-!#ifdef __GFORTRAN__
-
-!# define stringize_start(x) "&
-!# define stringize_end(x) &x"
-
-!  work_dir= stringize_start(working_dir)
-!stringize_end(working_dir)
-
+!#ifdef working_dir
+!
+!!#ifdef __GFORTRAN__
+!
+!!# define stringize_start(x) "&
+!!# define stringize_end(x) &x"
+!
+!!  work_dir= stringize_start(working_dir)
+!!stringize_end(working_dir)
+!
+!!#else
+!
+!!#define stringize(x) tostring(x)
+!!#define tostring(x) #x
+!
+!!  work_dir= stringize(working_dir)
+!
+!!#endif
+!
 !#else
-
-!#define stringize(x) tostring(x)
-!#define tostring(x) #x
-
-!  work_dir= stringize(working_dir)
-
+!
+!  PRINT *, "** ERROR! No value assigned to the variable working_dir in the ", &
+!           "SConstruct file! Please assign a value to it!"
+!  PRINT *, " * Stopping..."
+!  PRINT *
+!  STOP
+!
 !#endif
-
-#else
-
-  PRINT *, "** ERROR! No value assigned to the variable working_dir in the ", &
-           "SConstruct file! Please assign a value to it!"
-  PRINT *, " * Stopping..."
-  PRINT *
-  STOP
-
-#endif
 
 !#ifdef __INTEL_COMPILER
 
@@ -1362,11 +1362,11 @@ SUBMODULE (bns_fuka) read
 
   CALL CHDIR(work_dir//"/"//dir_id)
 
-  IF( debug )THEN
-    CALL GETCWD(tmp)
-    PRINT *, tmp
-    !STOP
-  ENDIF
+  !IF( debug )THEN
+  !  CALL GETCWD(tmp)
+  !  PRINT *, tmp
+  !  !STOP
+  !ENDIF
 
 #endif
 
@@ -1699,11 +1699,11 @@ SUBMODULE (bns_fuka) read
 
   CALL CHDIR(work_dir)
 
-  IF( debug )THEN
-    CALL GETCWD(tmp)
-    PRINT *, tmp
-    !STOP
-  ENDIF
+  !IF( debug )THEN
+  !  CALL GETCWD(tmp)
+  !  PRINT *, tmp
+  !  !STOP
+  !ENDIF
 
 #endif
 

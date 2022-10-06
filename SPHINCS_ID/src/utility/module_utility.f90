@@ -95,6 +95,9 @@ MODULE utility
   CHARACTER( LEN= : ), ALLOCATABLE:: err_msg
   !! String storing error messages
 
+  CHARACTER( LEN= 500 ):: hostname
+  !# String storing the name of the host machine
+
   !
   !-- Variables used to set the run_id
   !

@@ -698,8 +698,9 @@ if flavour == interpolate_flavour: #
 
 env['F90FILESUFFIXES']=['.f90','.f']
 
-build_mpi = '-DMPI_ranks=' + MPI_ranks
-build_dir = '-Dworking_dir=' + working_dir
+build_mpi  = '-DMPI_ranks='   + MPI_ranks
+build_dir  = '-Dworking_dir=' + working_dir
+build_host = '-Dhost='        + host
 
 # Fortran compiler
 env['F90'] = fortran_compiler
@@ -720,7 +721,7 @@ if debug == 'FALSE': #
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \
-                          build_flavour, build_mpi, build_dir ]
+                          build_flavour, build_mpi, build_dir, build_host ]
 #, '-CB', '-CS', '-g', '-traceback',
     if fortran_compiler == 'gfortran':
 
@@ -731,7 +732,7 @@ if debug == 'FALSE': #
                           '-ffixed-line-length-none', \
                           '-Wall', '-Wextra', '-Wimplicit-interface', \
                           '-Wimplicit-procedure', build_flavour, build_mpi, \
-                          build_dir ]
+                          build_dir, build_host ]
 
     ############################################################################
     # C++ PRODUCTION BUILD OPTIONS
@@ -772,7 +773,7 @@ if debug == 'FALSE': #
                           '-diag-disable=10346', '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
                           '-align array64byte', \
-                          build_flavour, build_mpi, build_dir ]
+                          build_flavour, build_mpi, build_dir, build_host ]
 #, '-g', '-CB', '-CS', '-traceback'
     if fortran_compiler == 'gfortran':
 
@@ -783,7 +784,7 @@ if debug == 'FALSE': #
                           '-ffixed-line-length-none', \
                           '-Wall', '-Wextra', '-Wimplicit-interface', \
                           '-Wimplicit-procedure', build_flavour, build_mpi, \
-                          build_dir ]
+                          build_dir, build_host ]
 
     ############################################################################
     # C++ PRODUCTION BUILD OPTIONS
@@ -825,7 +826,7 @@ if debug == 'TRUE': #
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-CB', '-CS', '-traceback', '-fpe0', '-warn', \
                           '-debug extended', '-fpp', build_flavour, build_mpi, \
-                          build_dir ]
+                          build_dir, build_host ]
 
       # More F90 flags for debugging
       #env['F90FLAGS'] = [ '-r8','-g','-qopenmp','-O0', '-ftz', \
@@ -853,7 +854,7 @@ if debug == 'TRUE': #
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', '-fdollar-ok', \
-                          build_flavour, build_mpi, build_dir ]
+                          build_flavour, build_mpi, build_dir, build_host ]
 
     ############################################################################
     # C++ DEBUG BUILD OPTIONS
@@ -902,7 +903,7 @@ if debug == 'TRUE': #
                           '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
                           '-align array64byte', build_flavour, build_mpi, \
-                          build_dir ]
+                          build_dir, build_host ]
 
       # More F90 flags for debugging
       #env['F90FLAGS'] = [ '-r8','-g','-qopenmp','-O0', '-ftz', \
@@ -930,7 +931,7 @@ if debug == 'TRUE': #
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', '-fdollar-ok', \
-                          build_flavour, build_mpi, build_dir ]
+                          build_flavour, build_mpi, build_dir, build_host ]
 
     ############################################################################
     # C++ DEBUG BUILD OPTIONS

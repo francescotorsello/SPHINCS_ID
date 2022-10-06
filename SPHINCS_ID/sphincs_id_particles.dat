@@ -12,7 +12,8 @@
 !------------------------------------------------------------------------!
 parts_pos_path="pos-archive/"     ! Path to the directory containing the
                                   ! formatted files with the particle positions
-parts_pos="apm-pos-nu_1215_45km_mpa1_2M.dat"
+parts_pos="apm-pos-nu_BNSLO_1.4-1.4_45km_poly2.00_500k.dat"
+          !"apm-pos-nu_1215_45km_mpa1_2M.dat"
           !"apm-pos-nu_1215_45km_mpa1_500k.dat"
           !"apm-pos-nu_1313_45km_ms1b_500k.dat"
           !"apm-pos-nu_1313_45km_ms1b_2M.dat"
@@ -130,7 +131,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz

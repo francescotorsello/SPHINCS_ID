@@ -65,7 +65,7 @@ PROGRAM sphincs_id
   !USE constants,        ONLY: amu, Msun_geo, km2m, m2cm
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
-                              itr4, &
+                              itr4, hostname, &
                               test_status, show_progress, end_time, &
                               read_sphincs_id_parameters, &
                               !----------
@@ -113,8 +113,6 @@ PROGRAM sphincs_id
   CHARACTER( LEN= 500 ):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
-  CHARACTER( LEN= 500 ):: hostname
-  !# String storing the name of the host machine
 
   LOGICAL:: exist
 #ifdef __INTEL_COMPILER
@@ -186,6 +184,30 @@ PROGRAM sphincs_id
   run_id= date // "-" // time
 
   !CALL HOSTNM( hostname )
+#ifdef host
+
+#ifdef __GFORTRAN__
+
+# define stringize_start(x) "&
+# define stringize_end(x) &x"
+
+  hostname= stringize_start(host)
+stringize_end(host)
+
+#else
+
+#define stringize(x) tostring(x)
+#define tostring(x) #x
+
+  hostname= stringize(host)
+
+#endif
+
+#else
+
+  hostname= "unspecified host."
+
+#endif
 
   PRINT *, "  ________________________________________________________________ "
   PRINT *, "             ____________  ________  __________    __ ___          "
@@ -219,9 +241,8 @@ PROGRAM sphincs_id
   PRINT *
   PRINT *, "  using the options: "
   PRINT *, COMPILER_OPTIONS()
-  !PRINT *
-  !PRINT *, "  This run was done on: "
-  !PRINT *, TRIM(hostname)
+  PRINT *
+  PRINT *, "  SPHINCS_ID was run on: ", TRIM(hostname)
   PRINT *, "  ________________________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id

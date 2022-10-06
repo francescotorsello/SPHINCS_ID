@@ -63,7 +63,7 @@ PROGRAM convergence_test
   USE tensor,                   ONLY: jy, jz
   USE timing,                   ONLY: timer
   USE utility,                  ONLY: date, time, zone, values, run_id, &
-                                      itr3, &
+                                      itr3, hostname, &
                                       test_status, show_progress, end_time, &
                                       read_sphincs_id_parameters, one, &
                                       !----------
@@ -122,8 +122,6 @@ PROGRAM convergence_test
   CHARACTER( LEN= 500 ):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
-  CHARACTER( LEN= 500 ):: hostname
-  !# String storing the name of the host machine
 
   LOGICAL, PARAMETER:: debug= .FALSE.
   LOGICAL:: exist
@@ -162,6 +160,30 @@ PROGRAM convergence_test
   run_id= date // "-" // time
 
   !CALL HOSTNM( hostname )
+#ifdef host
+
+#ifdef __GFORTRAN__
+
+# define stringize_start(x) "&
+# define stringize_end(x) &x"
+
+  hostname= stringize_start(host)
+stringize_end(host)
+
+#else
+
+#define stringize(x) tostring(x)
+#define tostring(x) #x
+
+  hostname= stringize(host)
+
+#endif
+
+#else
+
+  hostname= "unspecified host."
+
+#endif
 
   PRINT *, "  ________________________________________________________________ "
   PRINT *, "             ____________  ________  __________    __ ___          "
@@ -195,9 +217,8 @@ PROGRAM convergence_test
   PRINT *
   PRINT *, "  using the options: "
   PRINT *, COMPILER_OPTIONS()
-  !PRINT *
-  !PRINT *, "  This run was done on: "
-  !PRINT *, TRIM(hostname)
+  PRINT *
+  PRINT *, "  SPHINCS_ID was run on: ", TRIM(hostname)
   PRINT *, "  ________________________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id

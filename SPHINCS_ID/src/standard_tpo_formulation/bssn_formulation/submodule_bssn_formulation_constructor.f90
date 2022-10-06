@@ -56,7 +56,7 @@ SUBMODULE (bssn_formulation) constructor
     !
     !****************************************************
 
-    USE McLachlan_refine, ONLY: initialize_BSSN, deallocate_BSSN
+    USE McLachlan_refine, ONLY: initialize_bssn, deallocate_bssn
     USE mesh_refinement,  ONLY: levels, allocate_grid_function
     USE Extract_Mass,     ONLY: radius2
     USE utility,          ONLY: zero, one
@@ -66,7 +66,7 @@ SUBMODULE (bssn_formulation) constructor
     ! Initialize the timer
     bssnid% bssn_computer_timer= timer( "bssn_computer_timer" )
 
-    ! Construct the gravity grid and import the LORENE ID on it,
+    ! Construct the gravity grid and read the ID on it,
     ! in standard 3+1 formulation
     IF( PRESENT(dx) .AND. PRESENT(dy) .AND. PRESENT(dz) )THEN
 
@@ -79,14 +79,9 @@ SUBMODULE (bssn_formulation) constructor
     ENDIF
 
     ! Read and store the BSSN parameters
-    CALL initialize_BSSN()
-    CALL deallocate_BSSN()
-
-    ! The construct_formul_3p1 SUBROUTINE constructs the grid,
-    ! hence the dimensions of the arrays imported from the module BSSN
-    ! are know and the arrays can be allocated
+    CALL initialize_bssn()
+    CALL deallocate_bssn()
     !CALL allocate_bssn_fields( bssnid )
-
     DEALLOCATE( levels )
 
     IF( .NOT.ALLOCATED( bssnid% GC_int ))THEN
@@ -112,7 +107,7 @@ SUBMODULE (bssn_formulation) constructor
     bssnid% GC_parts_int= HUGE(one)
 
     ! radius2 is the extraction radius. If not set here, then it is 0 by default
-    ! and the metric is not interpolate on the particle in
+    ! and the metric is not interpolated on the particle in
     ! get_metric_on_particles
     radius2= HUGE(DBLE(1.0D0))
 
@@ -138,7 +133,7 @@ SUBMODULE (bssn_formulation) constructor
 
     IMPLICIT NONE
 
-    CALL deallocate_bssn_fields( THIS )
+    CALL deallocate_bssn_fields(this)
 
   END PROCEDURE destruct_bssn
 
@@ -155,20 +150,20 @@ SUBMODULE (bssn_formulation) constructor
 
     IMPLICIT NONE
 
-    CALL destruct_bssn( THIS )
+    CALL destruct_bssn(this)
 
 #if host == Sunrise
 
-  CALL THIS% deallocate_standard_tpo_variables
+  CALL this% deallocate_standard_tpo_variables
 
 #else
 
 #ifdef __INTEL_COMPILER
-  CALL deallocate_standard_tpo_variables( THIS )
+  CALL deallocate_standard_tpo_variables(this)
 #endif
 
 #ifdef __GFORTRAN__
-  CALL THIS% deallocate_standard_tpo_variables
+  CALL this% deallocate_standard_tpo_variables
 #endif
 
 #endif

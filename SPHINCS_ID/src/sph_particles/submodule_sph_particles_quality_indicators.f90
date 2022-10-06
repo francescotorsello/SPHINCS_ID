@@ -27,12 +27,20 @@ MODULE quality_indicators
   !
   !# This SUBMODULE contains the implementation of
   !  the methods of TYPE particles
-  !  that computes the quality indicators, defined in
+  !  that computes the quality indicators, referring to
+  !
+  !  Daniel J. Price, Smoothed Particle Hydrodynamics and
+  !  Magnetohydrodynamics.
+  !  Journal of Computational Physics, 231, 3, 759-794 (2012)
+  !  DOI: 10.1016/j.jcp.2010.12.011
+  !  http://arxiv.org/abs/1012.1885
+  !  eqs.(64) and (67)
   !
   !  Rosswog, S. SPH Methods in the Modelling of Compact Objects.
   !  Living Rev Comput Astrophys 1, 1 (2015).
   !  https://doi.org/10.1007/lrca-2015-1.
   !  https://arxiv.org/abs/1406.4224.
+  !  eqs.(6) and (9)
   !
   !  FT 05.10.2022
   !
@@ -78,7 +86,7 @@ MODULE quality_indicators
     DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nu
     DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nlrf
     DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: qi
-    DOUBLE PRECISION, DIMENSION(npart):: qi2
+    DOUBLE PRECISION, DIMENSION(npart):: qi2, qi3, qi4, ham_qi
 
     INTEGER:: a, b, ill, l, itot, inde, index1, k
 
@@ -98,11 +106,15 @@ MODULE quality_indicators
     LOGICAL                      :: exist
     CHARACTER(LEN=:), ALLOCATABLE:: namefile, err_msg
 
-    qi= zero
-    qi2= zero
+    qi    = zero
+    qi2   = zero
+    qi3   = zero
+    qi4   = zero
+    ham_qi= zero
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic,nu,nlrf, &
-    !$OMP                     ncand, all_clists, W_no_norm, pos, h, qi, qi2 ) &
+    !$OMP                     ncand, all_clists, W_no_norm, pos, h, qi, qi2, &
+    !$OMP                     qi3, qi4, ham_qi ) &
     !$OMP             PRIVATE( ill, itot, a, b, l, &
     !$OMP                      ha, ha_1, ha_3, ha_4, ha2, ha2_4, &
     !$OMP                      hb, hb_1, hb_3, hb_4, hb2_4, &
@@ -187,57 +199,54 @@ MODULE quality_indicators
           dvv   = (va - DBLE(inde)*dv_table)*dv_table_1
           Wab_ha= Wi + (Wi1 - Wi)*dvv
 
-    !      ! unit vector ("a-b" --> from b to a)
-    !      eab(1)= dx*rab_1
-    !      eab(2)= dy*rab_1
-    !      eab(3)= dz*rab_1
-    !
-    !      !--------!
-    !      !-- ha --!
-    !      !--------!
-    !
-    !      ! kernel and its gradient
-    !      !DIR$ INLINE
-    !      CALL interp_W_gradW_table( va, Wa, grW )
-    !      Wa = Wa*ha_3
-    !      grW= grW*ha_4
-    !
-    !      ! nabla_a Wab(ha)
-    !      grW_ha_x= grW*eab(1)
-    !      grW_ha_y= grW*eab(2)
-    !      grW_ha_z= grW*eab(3)
-    !
+          ! unit vector ("a-b" --> from b to a)
+          eab(1)= dx*rab_1
+          eab(2)= dy*rab_1
+          eab(3)= dz*rab_1
+
+          !--------!
+          !-- ha --!
+          !--------!
+
+          ! kernel and its gradient
+          !DIR$ INLINE
+          CALL interp_W_gradW_table( va, Wa, grW )
+          Wa = Wa*ha_3
+          grW= grW*ha_4
+
+          ! nabla_a Wab(ha)
+          grW_ha_x= grW*eab(1)
+          grW_ha_y= grW*eab(2)
+          grW_ha_z= grW*eab(3)
+
     !      grWa= grW_ha_x*eab(1) + &
     !            grW_ha_y*eab(2) + &
     !            grW_ha_z*eab(3)
-    !
-    !      !--------!
-    !      !-- hb --!
-    !      !--------!
-    !      vb= rab*hb_1
-    !
-    !      ! kernel and its gradient
-    !      !DIR$ INLINE
-    !      CALL interp_gradW_table(vb,grW)
-    !      grW= grW*hb_4
-    !
-    !      ! nabla_a Wab(hb)
-    !      grW_hb_x= grW*eab(1)
-    !      grW_hb_y= grW*eab(2)
-    !      grW_hb_z= grW*eab(3)
-    !
+
+          !--------!
+          !-- hb --!
+          !--------!
+          vb= rab*hb_1
+
+          ! kernel and its gradient
+          !DIR$ INLINE
+          CALL interp_gradW_table(vb,grW)
+          grW= grW*hb_4
+
+          ! nabla_a Wab(hb)
+          grW_hb_x= grW*eab(1)
+          grW_hb_y= grW*eab(2)
+          grW_hb_z= grW*eab(3)
+
     !      grWb= grW_hb_x*eab(1) + &
     !            grW_hb_y*eab(2) + &
     !            grW_hb_z*eab(3)
-    !
-          !prgNb= pr_sph(b)*sqg(b)/((nstar_sph(b)/m0c2_cu)**2)
 
-          !dS(1,a)= dS(1,a) - nu_tmp(b)*( prgNa*grW_ha_x + prgNb*grW_hb_x )
-          !dS(2,a)= dS(2,a) - nu_tmp(b)*( prgNa*grW_ha_y + prgNb*grW_hb_y )
-          !dS(3,a)= dS(3,a) - nu_tmp(b)*( prgNa*grW_ha_z + prgNb*grW_hb_z )
-
-          qi(a)= qi(a) + Wab_ha*(nu(b)/nlrf(b))!/hb_3
-          qi2(a)= qi2(a) + (-dx)*Wab_ha*(nu(b)/nlrf(b))!/hb_3
+          qi(a)    = qi(a)  + Wab_ha*(nu(b)/nlrf(b))!/hb_3
+          qi2(a)   = qi2(a) + (-dx)*Wab_ha*(nu(b)/nlrf(b))!/hb_3
+          qi3(a)   = qi3(a) + grW_ha_x*(nu(b)/nlrf(b))
+          qi4(a)   = qi4(a) + (-dx)*grW_ha_x*(nu(b)/nlrf(b))
+          ham_qi(a)= ham_qi(a) + nu(b)*grW_ha_x*(one/nlrf(a) + nlrf(a)/nlrf(b)**2)
 
         ENDDO cand_loop
 
@@ -251,7 +260,7 @@ MODULE quality_indicators
     PRINT *
     PRINT *, " * Printing the interpolation quality indicator Q_1 to file..."
 
-    namefile= TRIM(sph_path)//"interpolation_quality_indicator_1.dat"
+    namefile= TRIM(sph_path)//"quality_indicators.dat"
     unit_qi= 279465
 
     INQUIRE( FILE= TRIM(namefile), EXIST= exist )
@@ -278,7 +287,7 @@ MODULE quality_indicators
         pos(1, a), &
         pos(2, a), &
         pos(3, a), &
-        qi(a), qi2(a)
+        qi(a), qi2(a), qi3(a), qi4(a), ham_qi(a)
     ENDDO
 
     CLOSE( UNIT= unit_qi )

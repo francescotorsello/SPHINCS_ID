@@ -990,22 +990,11 @@ SUBMODULE (sph_particles) apm
       !$OMP                     dNstar, art_pr, rad_x, rad_y, rad_z, &
       !$OMP                     art_pr_max, itr ) &
       !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
-      !$OMP                      itr2 )
+      !$OMP                      i_shell )
       assign_artificial_pressure_on_ghost_particles: &
       !
-      !-- This way of assigning the artificial pressure comes from a bug.
-      !-- In the loop shell_loop below, the running index should be itr2.
-      !-- However, due to human error, the index is itr; the index itr
-      !-- counts the APM step, hence the artificial pressure increases with the
-      !-- APM step, and a pressure gradient is not imposed. Building a pressure
-      !-- gradient was the intended purpose for loop shell_loop.
-      !-- So, what happens now is that the pressure is assigned gradually,
-      !-- starting from the ghost particles closer to the surface of the
-      !-- matter object, and proceeding towards those which are farer away.
-      !-- From APM step=10, a uniform pressure is assigned to all the ghost
-      !-- particles, which increases with the APM step.
-      !-- All the tried alternatives (uniform constant pressure,
-      !-- constant pressure gradient) perform worse than the current one.
+      !-- Assign a pressure to the ghosts, that grows linearly with the
+      !-- distance from the center of the matter object
       !
       DO a= npart_real + 1, npart_all, 1
 
