@@ -127,7 +127,7 @@ SUBMODULE (sph_particles) sph_variables
                                    itt, itx, ity, itz, &
                                    ixx, ixy, ixz, iyy, iyz, izz
 
-    USE quality_indicators,  ONLY: compute_interpolation_qi1
+    USE quality_indicators,  ONLY: compute_and_print_quality_indicators
 
     IMPLICIT NONE
 
@@ -157,7 +157,7 @@ SUBMODULE (sph_particles) sph_variables
     !DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, dx, dy, dz, Wab, &
     !                   Wab_ha, Wi, Wi1, dvv
 
-    DOUBLE PRECISION, DIMENSION(this% npart):: qi1
+    !DOUBLE PRECISION, DIMENSION(this% npart):: qi1
 
     LOGICAL:: few_ncand!, invertible_matrix
 
@@ -1436,42 +1436,10 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDIF
 
-    !
-    !-- Exporting the SPH ID to a binary file, for evolution
-    !
- !   IF( this% export_bin )THEN
- !
- !     IF( PRESENT(namefile) )THEN
- !
- !       finalnamefile= TRIM( namefile ) // "00000"
- !       dcount= -1 ! since it is increased before writing
- !       CALL write_SPHINCS_dump( finalnamefile )
- !
- !     ELSE
- !
- !       basename= "NSNS."
- !       dcount= -1 ! since it is increased before writing
- !       CALL write_SPHINCS_dump()
- !
- !     ENDIF
- !
- !   ENDIF
 
     !
     !-- Test the recovery
     !
-
-    ! Assign values to the MODULE variable
-    !  DO itr= 1, this% npart, 1
-    !
-    !    CALL compute_g4( this% lapse(itr), &
-    !          [this% shift_x(itr), this% shift_y(itr), this% shift_z(itr)], &
-    !          [this% g_xx(itr), this% g_xy(itr), this% g_xz(itr), &
-    !           this% g_yy(itr), this% g_yz(itr), this% g_zz(itr)], &
-    !           g4_ll(1:n_sym4x4,itr) )
-    !
-    !  ENDDO
-
     CALL this% test_recovery( this% npart,       &
                               this% pos,         &
                               this% nlrf_int,    &
@@ -1481,6 +1449,7 @@ SUBMODULE (sph_particles) sph_variables
                               this% theta,       &
                               this% nstar_int )
 
+
     !
     !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN
     !
@@ -1488,9 +1457,9 @@ SUBMODULE (sph_particles) sph_variables
 
       IF( PRESENT(namefile) )THEN
 
-        finalnamefile= TRIM( namefile ) // "00000"
+        finalnamefile= TRIM(namefile)//"00000"
         dcount= -1 ! since it is increased before writing
-        CALL write_SPHINCS_dump( finalnamefile )
+        CALL write_SPHINCS_dump(finalnamefile)
 
       ELSE
 
@@ -1539,27 +1508,9 @@ SUBMODULE (sph_particles) sph_variables
                                 this% nu )
     this% h= h
 
-    CALL compute_interpolation_qi1(this% npart, this% pos, this% h, &
-                                   this% nu, this% nlrf_int, qi1)
+    CALL compute_and_print_quality_indicators &
+      (this% npart, this% pos, this% h, this% nu, this% nlrf_int)
 
-    !CALL compute_adm_momentum_fluid_fields( this% npart,       &
-    !                                        this% g_xx,        &
-    !                                        this% g_xy,        &
-    !                                        this% g_xz,        &
-    !                                        this% g_yy,        &
-    !                                        this% g_yz,        &
-    !                                        this% g_zz,        &
-    !                                        this% lapse,       &
-    !                                        this% shift_x,     &
-    !                                        this% shift_y,     &
-    !                                        this% shift_z,     &
-    !                                        this% nu,          &
-    !                                        this% Theta,       &
-    !                                        this% nlrf_int,    &
-    !                                        this% pressure_cu, &
-    !                                        this% u_pwp,       &
-    !                                        this% v(1:3,:),    &
-    !                                        this% adm_linear_momentum_fluid )
 
     ALLOCATE( this% adm_linear_momentum_i( this% n_matter, 3 ) )
     this% adm_linear_momentum_fluid= zero

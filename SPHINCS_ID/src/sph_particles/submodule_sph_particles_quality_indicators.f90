@@ -34,7 +34,7 @@ MODULE quality_indicators
   !  Journal of Computational Physics, 231, 3, 759-794 (2012)
   !  DOI: 10.1016/j.jcp.2010.12.011
   !  http://arxiv.org/abs/1012.1885
-  !  eqs.(64) and (67)
+  !  eqs.(64), (67) and (74-75)
   !
   !  Rosswog, S. SPH Methods in the Modelling of Compact Objects.
   !  Living Rev Comput Astrophys 1, 1 (2015).
@@ -58,7 +58,7 @@ MODULE quality_indicators
   !-------------------!
 
 
-  SUBROUTINE compute_interpolation_qi1(npart, pos, h, nu, nlrf, qi)
+  SUBROUTINE compute_and_print_quality_indicators(npart, pos, h, nu, nlrf)
 
     !****************************************************
     !
@@ -68,37 +68,38 @@ MODULE quality_indicators
     !
     !****************************************************
 
-    USE kernel_table, ONLY: &!dWdv_no_norm, &
-                            dv_table, dv_table_1,&
-                            W_no_norm, n_tab_entry, &
+    USE kernel_table, ONLY: dv_table, dv_table_1,&
+                            W_no_norm, n_tab_entry, &!dWdv_no_norm, &
                             interp_gradW_table,interp_W_gradW_table
     USE sphincs_sph,  ONLY: ncand, all_clists
-    USE RCB_tree_3D,  ONLY: iorig, nic, nfinal, nprev, lpart, &
-                            rpart
+    USE RCB_tree_3D,  ONLY: iorig, nic, nfinal, nprev, lpart, rpart
     USE utility,      ONLY: zero, one, two, sph_path
 
     IMPLICIT NONE
 
     INTEGER, INTENT(IN):: npart
 
-    DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN)   :: pos
-    DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: h
-    DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nu
-    DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: nlrf
-    DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: qi
-    DOUBLE PRECISION, DIMENSION(npart):: qi2, qi3, qi4, ham_qi
+    DOUBLE PRECISION, DIMENSION(3,npart),   INTENT(IN)   :: pos
+    DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: h
+    DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: nu
+    DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: nlrf
+
+    DOUBLE PRECISION, DIMENSION(npart)    :: qi_1
+    DOUBLE PRECISION, DIMENSION(3,npart)  :: qi_2
+    DOUBLE PRECISION, DIMENSION(3,npart)  :: qi_3
+    DOUBLE PRECISION, DIMENSION(3,3,npart):: qi_4
+    DOUBLE PRECISION, DIMENSION(3,npart)  :: qi_ham
 
     INTEGER:: a, b, ill, l, itot, inde, index1, k
 
     DOUBLE PRECISION:: ha, ha_1, ha_3, ha_4, va, xa, ya, za, &
                        hb, hb_1, hb_3, hb_4, xb, yb, zb, rab, rab2, rab_1, &
                        ha2, ha2_4, hb2_4, dx, dy, dz
-    !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy, mat_yz, mat_zz
-    DOUBLE PRECISION:: &!Wdx, Wdy, Wdz, ddx, ddy, ddz, Wab, &
-                       Wab_ha, Wi, Wi1, dvv, &
+
+    DOUBLE PRECISION:: Wab_ha, Wi, Wi1, dvv, &
                        grW_ha_x, grW_ha_y, grW_ha_z, &
                        grW_hb_x, grW_hb_y, grW_hb_z, eab(3), &
-                       Wa, grW, grWa, grWb, vb
+                       Wa, grW, grWa, grWb, vb, vol_b
 
     LOGICAL, PARAMETER:: debug= .TRUE.
 
@@ -106,15 +107,15 @@ MODULE quality_indicators
     LOGICAL                      :: exist
     CHARACTER(LEN=:), ALLOCATABLE:: namefile, err_msg
 
-    qi    = zero
-    qi2   = zero
-    qi3   = zero
-    qi4   = zero
-    ham_qi= zero
+    qi_1  = zero
+    qi_2  = zero
+    qi_3  = zero
+    qi_4  = zero
+    qi_ham= zero
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic,nu,nlrf, &
-    !$OMP                     ncand, all_clists, W_no_norm, pos, h, qi, qi2, &
-    !$OMP                     qi3, qi4, ham_qi ) &
+    !$OMP                     ncand, all_clists, W_no_norm, pos, h, &
+    !$OMP                     qi_1, qi_2, qi_3, qi_4, qi_ham ) &
     !$OMP             PRIVATE( ill, itot, a, b, l, &
     !$OMP                      ha, ha_1, ha_3, ha_4, ha2, ha2_4, &
     !$OMP                      hb, hb_1, hb_3, hb_4, hb2_4, &
@@ -123,7 +124,7 @@ MODULE quality_indicators
     !$OMP                      dvv, dv_table, Wab_ha, Wa, grW, Wi1, &
     !$OMP                      grW_ha_x, grW_ha_y, grW_ha_z, grWa, grWb, &
     !$OMP                      grW_hb_x, grW_hb_y, grW_hb_z, eab, rab, vb, &
-    !$OMP                      rab_1 )
+    !$OMP                      rab_1, vol_b )
     ll_cell_loop: DO ill= 1, nfinal
 
       itot= nprev + ill
@@ -147,18 +148,6 @@ MODULE quality_indicators
         !prgNa= (pr_sph(a)*sqg(a)/(nstar_sph(a)/m0c2_cu)**2)
 
         cand_loop: DO k= 1, ncand(ill)
-
-          IF(debug .AND. .NOT.ALLOCATED(all_clists))THEN
-            PRINT *, "all_clists is not allocated"
-            PRINT *, "nfinal"
-            STOP
-          ENDIF
-          IF(debug .AND. .NOT.ALLOCATED(all_clists(ill)% list))THEN
-            PRINT *, "list is not allocated"
-            PRINT *, "ill=", ill
-            PRINT *, "nfinal"
-            STOP
-          ENDIF
 
           b= all_clists(ill)% list(k)
 
@@ -238,15 +227,38 @@ MODULE quality_indicators
           grW_hb_y= grW*eab(2)
           grW_hb_z= grW*eab(3)
 
+          vol_b= nu(b)/nlrf(b)
+
     !      grWb= grW_hb_x*eab(1) + &
     !            grW_hb_y*eab(2) + &
     !            grW_hb_z*eab(3)
 
-          qi(a)    = qi(a)  + Wab_ha*(nu(b)/nlrf(b))!/hb_3
-          qi2(a)   = qi2(a) + (-dx)*Wab_ha*(nu(b)/nlrf(b))!/hb_3
-          qi3(a)   = qi3(a) + grW_ha_x*(nu(b)/nlrf(b))
-          qi4(a)   = qi4(a) + (-dx)*grW_ha_x*(nu(b)/nlrf(b))
-          ham_qi(a)= ham_qi(a) + nu(b)*grW_ha_x*(one/nlrf(a) + nlrf(a)/nlrf(b)**2)
+          qi_1(a)= qi_1(a) + Wab_ha*vol_b
+
+          qi_2(1,a)= qi_2(1,a) + (-dx)*Wab_ha*vol_b
+          qi_2(2,a)= qi_2(2,a) + (-dy)*Wab_ha*vol_b
+          qi_2(3,a)= qi_2(3,a) + (-dz)*Wab_ha*vol_b
+
+          qi_3(1,a)= qi_3(1,a) + grW_ha_x*vol_b
+          qi_3(2,a)= qi_3(2,a) + grW_ha_y*vol_b
+          qi_3(3,a)= qi_3(3,a) + grW_ha_z*vol_b
+
+          qi_4(1,1,a)= qi_4(1,1,a) + (-dx)*grW_ha_x*vol_b
+          qi_4(1,2,a)= qi_4(1,2,a) + (-dx)*grW_ha_y*vol_b
+          qi_4(1,3,a)= qi_4(1,3,a) + (-dx)*grW_ha_z*vol_b
+          qi_4(2,1,a)= qi_4(2,1,a) + (-dy)*grW_ha_x*vol_b
+          qi_4(2,2,a)= qi_4(2,2,a) + (-dy)*grW_ha_y*vol_b
+          qi_4(2,3,a)= qi_4(2,3,a) + (-dy)*grW_ha_z*vol_b
+          qi_4(3,1,a)= qi_4(3,1,a) + (-dz)*grW_ha_x*vol_b
+          qi_4(3,2,a)= qi_4(3,2,a) + (-dz)*grW_ha_y*vol_b
+          qi_4(3,3,a)= qi_4(3,3,a) + (-dz)*grW_ha_z*vol_b
+
+          qi_ham(1,a)= qi_ham(1,a) &
+                       + nu(b)*grW_ha_x*(one/nlrf(a) + nlrf(a)/nlrf(b)**2)
+          qi_ham(2,a)= qi_ham(2,a) &
+                       + nu(b)*grW_ha_y*(one/nlrf(a) + nlrf(a)/nlrf(b)**2)
+          qi_ham(3,a)= qi_ham(3,a) &
+                       + nu(b)*grW_ha_z*(one/nlrf(a) + nlrf(a)/nlrf(b)**2)
 
         ENDDO cand_loop
 
@@ -258,7 +270,7 @@ MODULE quality_indicators
     !$OMP END PARALLEL DO
 
     PRINT *
-    PRINT *, " * Printing the interpolation quality indicator Q_1 to file..."
+    PRINT *, " * Printing the quality indicators to file..."
 
     namefile= TRIM(sph_path)//"quality_indicators.dat"
     unit_qi= 279465
@@ -283,65 +295,38 @@ MODULE quality_indicators
 
     DO a= 1, npart, 1
       WRITE( UNIT = unit_qi, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        a, &
-        pos(1, a), &
-        pos(2, a), &
-        pos(3, a), &
-        qi(a), qi2(a), qi3(a), qi4(a), ham_qi(a)
+        a, &           ! 1
+        pos(1,a), &    ! 2
+        pos(2,a), &    ! 3
+        pos(3,a), &    ! 4
+        qi_1(a), &     ! 5
+        qi_2(1,a), &   ! 6
+        qi_2(2,a), &   ! 7
+        qi_2(3,a), &   ! 8
+        qi_3(1,a), &   ! 9
+        qi_3(2,a), &   ! 10
+        qi_3(3,a), &   ! 11
+        qi_4(1,1,a), & ! 12
+        qi_4(1,2,a), & ! 13
+        qi_4(1,3,a), & ! 14
+        qi_4(2,1,a), & ! 15
+        qi_4(2,2,a), & ! 16
+        qi_4(2,3,a), & ! 17
+        qi_4(3,1,a), & ! 18
+        qi_4(3,2,a), & ! 19
+        qi_4(3,3,a), & ! 20
+        qi_ham(1,a), & ! 21
+        qi_ham(2,a), & ! 22
+        qi_ham(3,a)    ! 23
     ENDDO
 
     CLOSE( UNIT= unit_qi )
 
-    PRINT *, "   interpolation quality indicator Q_1 printed to file ", namefile
+    PRINT *, "   quality indicators printed to file ", namefile
     PRINT *
 
 
-  END SUBROUTINE compute_interpolation_qi1
-
-
-  SUBROUTINE compute_interpolation_qi2
-
-    !****************************************************
-    !
-    !#
-    !
-    !  FT 05.10.2022
-    !
-    !****************************************************
-
-    IMPLICIT NONE
-
-  END SUBROUTINE compute_interpolation_qi2
-
-
-  SUBROUTINE compute_interpolation_qi3
-
-    !****************************************************
-    !
-    !#
-    !
-    !  FT 05.10.2022
-    !
-    !****************************************************
-
-    IMPLICIT NONE
-
-  END SUBROUTINE compute_interpolation_qi3
-
-
-  SUBROUTINE compute_gradient_qi4
-
-    !****************************************************
-    !
-    !#
-    !
-    !  FT 05.10.2022
-    !
-    !****************************************************
-
-    IMPLICIT NONE
-
-  END SUBROUTINE compute_gradient_qi4
+  END SUBROUTINE compute_and_print_quality_indicators
 
 
 END MODULE quality_indicators
