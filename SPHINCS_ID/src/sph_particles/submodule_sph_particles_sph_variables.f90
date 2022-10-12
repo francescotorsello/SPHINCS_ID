@@ -112,7 +112,7 @@ SUBMODULE (sph_particles) sph_variables
     USE options,             ONLY: ndes
     USE set_h,               ONLY: exact_nei_tree_update
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE sphincs_sph,         ONLY: density, ncand!, &
+    USE sphincs_sph,         ONLY: ncand!, density,  &
                                    !all_clists!, flag_dead_ll_cells
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
@@ -126,8 +126,6 @@ SUBMODULE (sph_particles) sph_variables
     USE tensor,              ONLY: n_sym4x4, &
                                    itt, itx, ity, itz, &
                                    ixx, ixy, ixz, iyy, iyz, izz
-
-    USE quality_indicators,  ONLY: compute_and_print_quality_indicators
 
     IMPLICIT NONE
 
@@ -1049,7 +1047,7 @@ SUBMODULE (sph_particles) sph_variables
     !-------------------------------------------------------------------------!
     !-------------------------------------------------------------------------!
 
-    this% nlrf_int= ( this% nstar_int/this% Theta )/sq_det_g4
+    this% nlrf_int= (this% nstar_int/this% Theta)/sq_det_g4
     nlrf= this% nlrf_int
 
     !-----------------------------------------------------------------------!

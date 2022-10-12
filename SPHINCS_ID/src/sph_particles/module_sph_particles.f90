@@ -1550,6 +1550,11 @@ MODULE sph_particles
   END INTERFACE
 
 
+  !---------------------------------!
+  !--  NON-TYPE-BOUND PROCEDURES  --!
+  !---------------------------------!
+
+
   INTERFACE
 
 
@@ -1625,6 +1630,35 @@ MODULE sph_particles
       INTEGER,          INTENT(OUT):: nnei, neilist(npart)
 
     END SUBROUTINE get_neighbours_bf
+
+
+    MODULE SUBROUTINE compute_and_print_quality_indicators &
+    (npart, pos, h, nu, nstar)
+    !# Compute the quality indicators, referring to
+    !
+    !  Daniel J. Price, Smoothed Particle Hydrodynamics and
+    !  Magnetohydrodynamics.
+    !  Journal of Computational Physics, 231, 3, 759-794 (2012)
+    !  DOI: 10.1016/j.jcp.2010.12.011
+    !  http://arxiv.org/abs/1012.1885
+    !  eqs.(64), (67) and (74-75)
+    !
+    !  Rosswog, S. SPH Methods in the Modelling of Compact Objects.
+    !  Living Rev Comput Astrophys 1, 1 (2015).
+    !  https://doi.org/10.1007/lrca-2015-1.
+    !  https://arxiv.org/abs/1406.4224.
+    !  eqs.(6) and (9)
+
+      IMPLICIT NONE
+
+      INTEGER,                                INTENT(IN):: npart
+      DOUBLE PRECISION, DIMENSION(3,npart),   INTENT(IN):: pos
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: h
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: nu
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: nstar
+
+
+    END SUBROUTINE compute_and_print_quality_indicators
 
 
   END INTERFACE

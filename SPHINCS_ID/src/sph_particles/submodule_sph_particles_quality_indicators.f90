@@ -21,7 +21,7 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-MODULE quality_indicators
+SUBMODULE(sph_particles) quality_indicators
 
   !****************************************************
   !
@@ -58,11 +58,24 @@ MODULE quality_indicators
   !-------------------!
 
 
-  SUBROUTINE compute_and_print_quality_indicators(npart, pos, h, nu, nlrf)
+  MODULE PROCEDURE compute_and_print_quality_indicators
 
     !****************************************************
     !
-    !#
+    !# Compute the quality indicators, referring to
+    !
+    !  Daniel J. Price, Smoothed Particle Hydrodynamics and
+    !  Magnetohydrodynamics.
+    !  Journal of Computational Physics, 231, 3, 759-794 (2012)
+    !  DOI: 10.1016/j.jcp.2010.12.011
+    !  http://arxiv.org/abs/1012.1885
+    !  eqs.(64), (67) and (74-75)
+    !
+    !  Rosswog, S. SPH Methods in the Modelling of Compact Objects.
+    !  Living Rev Comput Astrophys 1, 1 (2015).
+    !  https://doi.org/10.1007/lrca-2015-1.
+    !  https://arxiv.org/abs/1406.4224.
+    !  eqs.(6) and (9)
     !
     !  FT 05.10.2022
     !
@@ -76,13 +89,6 @@ MODULE quality_indicators
     USE utility,      ONLY: zero, one, two, sph_path
 
     IMPLICIT NONE
-
-    INTEGER, INTENT(IN):: npart
-
-    DOUBLE PRECISION, DIMENSION(3,npart),   INTENT(IN)   :: pos
-    DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: h
-    DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: nu
-    DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: nlrf
 
     DOUBLE PRECISION, DIMENSION(npart)    :: qi_1
     DOUBLE PRECISION, DIMENSION(3,npart)  :: qi_2
@@ -113,7 +119,7 @@ MODULE quality_indicators
     qi_4  = zero
     qi_ham= zero
     !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic,nu,nlrf, &
+    !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic,nu,nstar, &
     !$OMP                     ncand, all_clists, W_no_norm, pos, h, &
     !$OMP                     qi_1, qi_2, qi_3, qi_4, qi_ham ) &
     !$OMP             PRIVATE( ill, itot, a, b, l, &
@@ -227,7 +233,7 @@ MODULE quality_indicators
           grW_hb_y= grW*eab(2)
           grW_hb_z= grW*eab(3)
 
-          vol_b= nu(b)/nlrf(b)
+          vol_b= nu(b)/nstar(b)
 
     !      grWb= grW_hb_x*eab(1) + &
     !            grW_hb_y*eab(2) + &
@@ -254,15 +260,15 @@ MODULE quality_indicators
           qi_4(3,3,a)= qi_4(3,3,a) + (-dz)*grW_ha_z*vol_b
 
           qi_ham(1,a)= qi_ham(1,a) &
-                       + nu(b)*grW_ha_x*(one/nlrf(a) + nlrf(a)/nlrf(b)**2)
+                       + nu(b)*grW_ha_x*(one/nstar(a) + nstar(a)/nstar(b)**2)
           qi_ham(2,a)= qi_ham(2,a) &
-                       + nu(b)*grW_ha_y*(one/nlrf(a) + nlrf(a)/nlrf(b)**2)
+                       + nu(b)*grW_ha_y*(one/nstar(a) + nstar(a)/nstar(b)**2)
           qi_ham(3,a)= qi_ham(3,a) &
-                       + nu(b)*grW_ha_z*(one/nlrf(a) + nlrf(a)/nlrf(b)**2)
+                       + nu(b)*grW_ha_z*(one/nstar(a) + nstar(a)/nstar(b)**2)
 
         ENDDO cand_loop
 
-        !qi(a)= qi(a)/(nu(a)/nlrf(a))
+        !qi(a)= qi(a)/(nu(a)/nstar(a))
 
       ENDDO particle_loop
 
@@ -272,7 +278,7 @@ MODULE quality_indicators
     PRINT *
     PRINT *, " * Printing the quality indicators to file..."
 
-    namefile= TRIM(sph_path)//"quality_indicators.dat"
+    namefile= "quality_indicators.dat"
     unit_qi= 279465
 
     INQUIRE( FILE= TRIM(namefile), EXIST= exist )
@@ -326,8 +332,8 @@ MODULE quality_indicators
     PRINT *
 
 
-  END SUBROUTINE compute_and_print_quality_indicators
+  END PROCEDURE compute_and_print_quality_indicators
 
 
-END MODULE quality_indicators
+END SUBMODULE quality_indicators
 
