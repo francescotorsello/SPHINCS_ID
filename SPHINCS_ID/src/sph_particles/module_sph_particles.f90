@@ -1633,7 +1633,7 @@ MODULE sph_particles
 
 
     MODULE SUBROUTINE compute_and_print_quality_indicators &
-    (npart, pos, h, nu, nstar)
+    (npart, pos, h, nu, nstar, path)
     !# Compute the quality indicators, referring to
     !
     !  Daniel J. Price, Smoothed Particle Hydrodynamics and
@@ -1651,12 +1651,14 @@ MODULE sph_particles
 
       IMPLICIT NONE
 
-      INTEGER,                                INTENT(IN):: npart
-      DOUBLE PRECISION, DIMENSION(3,npart),   INTENT(IN):: pos
-      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: h
-      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: nu
-      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: nstar
-
+      INTEGER,                                INTENT(IN)   :: npart
+      DOUBLE PRECISION, DIMENSION(3,npart),   INTENT(IN)   :: pos
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: h
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: nu
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN)   :: nstar
+      CHARACTER(LEN=*), OPTIONAL,             INTENT(INOUT):: path
+      !# Path to which saving the output file containing the quality
+      !  indicators.
 
     END SUBROUTINE compute_and_print_quality_indicators
 

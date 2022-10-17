@@ -11,6 +11,7 @@ docmark_alt: #
 predocmark: >
 predocmark_alt: &
 source: true
+incl_src: false
 graph: true
 sort: alpha
 src_dir: ./src

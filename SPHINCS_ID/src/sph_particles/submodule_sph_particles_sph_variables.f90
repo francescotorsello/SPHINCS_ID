@@ -70,7 +70,8 @@ SUBMODULE (sph_particles) sph_variables
     USE constants,           ONLY: amu, third, Msun
     USE utility,             ONLY: MSun_geo, k_lorene2hydrobase, zero, one, &
                                    compute_g4, determinant_sym4x4, &
-                                   spacetime_vector_norm_sym4x4, km2m, m2cm
+                                   spacetime_vector_norm_sym4x4, km2m, m2cm, &
+                                   sph_path
     USE units,               ONLY: m0c2_cu, set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
@@ -1507,7 +1508,7 @@ SUBMODULE (sph_particles) sph_variables
     this% h= h
 
     CALL compute_and_print_quality_indicators &
-      (this% npart, this% pos, this% h, this% nu, this% nlrf_int)
+      (this% npart, this% pos, this% h, this% nu, this% nstar_int, sph_path)
 
 
     ALLOCATE( this% adm_linear_momentum_i( this% n_matter, 3 ) )

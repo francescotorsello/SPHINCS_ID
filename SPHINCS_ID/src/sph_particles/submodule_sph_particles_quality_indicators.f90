@@ -86,7 +86,7 @@ SUBMODULE(sph_particles) quality_indicators
                             interp_gradW_table,interp_W_gradW_table
     USE sphincs_sph,  ONLY: ncand, all_clists
     USE RCB_tree_3D,  ONLY: iorig, nic, nfinal, nprev, lpart, rpart
-    USE utility,      ONLY: zero, one, two, sph_path
+    USE utility,      ONLY: zero, one, two
 
     IMPLICIT NONE
 
@@ -278,7 +278,11 @@ SUBMODULE(sph_particles) quality_indicators
     PRINT *
     PRINT *, " * Printing the quality indicators to file..."
 
-    namefile= "quality_indicators.dat"
+    IF(PRESENT(path))THEN
+      namefile= path//"quality_indicators.dat"
+    ELSE
+      namefile= "quality_indicators.dat"
+    ENDIF
     unit_qi= 279465
 
     INQUIRE( FILE= TRIM(namefile), EXIST= exist )
