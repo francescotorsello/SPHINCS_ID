@@ -51,7 +51,7 @@ SUBMODULE (sph_particles) lattices
     !
     !*********************************************************
 
-    USE constants,  ONLY: pi, third
+    USE constants,  ONLY: pi, third, Msun, amu
     USE utility,    ONLY: one, zero, two, three
 
     IMPLICIT NONE
@@ -63,6 +63,11 @@ SUBMODULE (sph_particles) lattices
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, zlim
     DOUBLE PRECISION:: thres_baryon_density
     DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: pos_tmp
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: sqdetg_tmp
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: bar_density_tmp
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: gam_euler_tmp
+    DOUBLE PRECISION, DIMENSION(:,:,:),   ALLOCATABLE:: nstar_tmp
+    DOUBLE PRECISION, DIMENSION(:),       ALLOCATABLE:: nstar
 
     PRINT *, "** Executing the place_particles_lattice " &
              // "subroutine..."
@@ -139,16 +144,69 @@ SUBMODULE (sph_particles) lattices
                 ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array pos_tmp in SUBROUTINE" &
-                  // "place_particles_3D_lattice. ", &
+                  // " place_particles_3D_lattice. ", &
                   "The error message is", err_msg
          STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array pos in SUBROUTINE" &
-      !                // "place_particles_3D_lattice." )
     ENDIF
     ! Initializing the array pos to 0
     pos_tmp= HUGE(zero)
+
+    IF(.NOT.ALLOCATED( sqdetg_tmp ))THEN
+      ALLOCATE( sqdetg_tmp( nx, ny, nz ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array sqdetg_tmp in SUBROUTINE" &
+                  // " place_particles_3D_lattice. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( bar_density_tmp ))THEN
+      ALLOCATE( bar_density_tmp( nx, ny, nz ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array bar_density_tmp in" &
+                  // " SUBROUTINE place_particles_3D_lattice. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( gam_euler_tmp ))THEN
+      ALLOCATE( gam_euler_tmp( nx, ny, nz ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array gam_euler_tmp in SUBROUTINE" &
+                  // " place_particles_3D_lattice. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( nstar_tmp ))THEN
+      ALLOCATE( nstar_tmp( nx, ny, nz ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array gam_euler_tmp in SUBROUTINE" &
+                  // " place_particles_3D_lattice. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( nstar ))THEN
+      ALLOCATE( nstar( npart_tmp ), STAT= ios, &
+                ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array nstar in SUBROUTINE" &
+                  // " place_particles_3D_lattice. ", &
+                  "The error message is", err_msg
+         STOP
+      ENDIF
+    ENDIF
+    sqdetg_tmp     = zero
+    bar_density_tmp= zero
+    gam_euler_tmp  = zero
+    nstar_tmp      = zero
+    nstar          = zero
 
     !---------------------------------------------------------!
     !--  Storing the particle positions into the array pos  --!
@@ -173,7 +231,9 @@ SUBMODULE (sph_particles) lattices
     !
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( nx, ny, nz, dx, dy, dz, sgn, &
-    !$OMP                     pos_tmp, thres_baryon_density, xmin, ymin ) &
+    !$OMP                     pos_tmp, thres_baryon_density, xmin, ymin, &
+    !$OMP                     sqdetg_tmp, bar_density_tmp, gam_euler_tmp, &
+    !$OMP                     nstar_tmp ) &
     !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp )
     particle_pos_z: DO k= 1, nz/2, 1
 
@@ -187,11 +247,18 @@ SUBMODULE (sph_particles) lattices
 
           xtemp= xmin + dx/2 + ( i - 1 )*dx
 
+          ! Import ID needed to compute the particle masses
+          CALL get_id( xtemp, ytemp, ztemp, &
+                       sqdetg_tmp( i, j, k ), &
+                       bar_density_tmp( i, j, k ), &
+                       gam_euler_tmp( i, j, k ) )
+
           !
           !-- Promote a lattice point to a particle,
           !-- if the mass density is higher than the threshold
           !
-          IF( (get_density( xtemp, ytemp, ztemp ) > thres_baryon_density) &
+          !IF( (get_density( xtemp, ytemp, ztemp ) > thres_baryon_density) &
+          IF( (bar_density_tmp( i, j, k ) > thres_baryon_density) &
               .AND. &
               (validate_position_final( xtemp, ytemp, ztemp )) &
           )THEN
@@ -199,6 +266,8 @@ SUBMODULE (sph_particles) lattices
             pos_tmp( 1, i, j, k )= xtemp
             pos_tmp( 2, i, j, k )= ytemp
             pos_tmp( 3, i, j, k )= ztemp
+            nstar_tmp( i, j, k ) = &
+             bar_density_tmp(i, j, k)*sqdetg_tmp(i, j, k)*gam_euler_tmp(i, j, k)
 
           ENDIF
 
@@ -221,6 +290,7 @@ SUBMODULE (sph_particles) lattices
             pos( 1, npart_out )= pos_tmp( 1, i, j, k )
             pos( 2, npart_out )= pos_tmp( 2, i, j, k )
             pos( 3, npart_out )= pos_tmp( 3, i, j, k )
+            nstar( npart_out ) = nstar_tmp( i, j, k )
 
           ENDIF
 
@@ -242,14 +312,15 @@ SUBMODULE (sph_particles) lattices
     !
     particle_pos_z_mirror: DO k= 1, npart_half, 1
 
-      xtemp=   pos( 1, k )
-      ytemp=   pos( 2, k )
-      ztemp= - pos( 3, k )
+      xtemp    =   pos( 1, k )
+      ytemp    =   pos( 2, k )
+      ztemp    = - pos( 3, k )
 
       npart_out= npart_out + 1
       pos( 1, npart_out )= xtemp
       pos( 2, npart_out )= ytemp
       pos( 3, npart_out )= ztemp
+      nstar( npart_out ) = nstar(k)
 
       !ENDIF
 
@@ -292,21 +363,36 @@ SUBMODULE (sph_particles) lattices
     !-- Computing total volume and volume per particle
     !
     IF(.NOT.ALLOCATED( pvol ))THEN
-      ALLOCATE( pvol( npart_out ), STAT= ios, &
-              ERRMSG= err_msg )
+      ALLOCATE( pvol( npart_out ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
         PRINT *, "...allocation error for array pvol ", &
                  ". The error message is", err_msg
         STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !        "...allocation error for array v_euler_parts_z" )
+    ENDIF
+    IF(.NOT.ALLOCATED( nu ))THEN
+      ALLOCATE( nu( npart_out ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array nu ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+    ENDIF
+    IF(.NOT.ALLOCATED( h ))THEN
+      ALLOCATE( h( npart_out ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array h ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
     ENDIF
 
     vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
     vol_a= vol/npart_tmp
 
     pvol= vol_a
+    nu  = vol_a*nstar*Msun/amu
+    h   = vol_a**third
 
     ! Consistency check for the particle volume
     IF( ABS( vol_a - dx*dy*dz ) > 1.0D-9 )THEN

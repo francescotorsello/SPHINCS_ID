@@ -143,7 +143,7 @@ SUBMODULE (sph_particles) sph_variables
 
     DOUBLE PRECISION:: g4(n_sym4x4)
     !DOUBLE PRECISION:: gg4(n_sym4x4,this% npart)
-    DOUBLE PRECISION:: sq_detg4(this% npart)
+    !DOUBLE PRECISION:: sq_detg4(this% npart)
     DOUBLE PRECISION:: det, sq_g, Theta_a, tmp
     !DOUBLE PRECISION:: com_x_newt, com_y_newt, com_z_newt, com_d_newt, mass_newt
     !DOUBLE PRECISION:: com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn
@@ -179,7 +179,7 @@ SUBMODULE (sph_particles) sph_variables
     !-- (used by write_SPHINCS_dump)
     !
     npart= this% npart
-    n1= this% npart_i(1)
+    n1   = this% npart_i(1)
     IF( this% n_matter == 2 ) n2= this% npart_i(2)
 
     CALL set_units('NSM')
@@ -187,6 +187,9 @@ SUBMODULE (sph_particles) sph_variables
 
     CALL allocate_SPH_memory
     CALL allocate_metric_on_particles( this% npart )
+
+    h    = this% h
+    nu   = this% nu
 
     IF( debug ) PRINT *, "1"
 
@@ -198,8 +201,6 @@ SUBMODULE (sph_particles) sph_variables
                  ". The error message is", err_msg
         STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array nu" )
     ENDIF
     IF(.NOT.ALLOCATED( this% nlrf ))THEN
       ALLOCATE( this% nlrf( this% npart ), STAT= ios, &
@@ -209,8 +210,6 @@ SUBMODULE (sph_particles) sph_variables
                  ". The error message is", err_msg
         STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array nlrf" )
     ENDIF
     IF(.NOT.ALLOCATED( this% Theta ))THEN
       ALLOCATE( this% Theta( this% npart ), STAT= ios, &
@@ -220,8 +219,6 @@ SUBMODULE (sph_particles) sph_variables
                  ". The error message is", err_msg
         STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array Theta" )
     ENDIF
     IF(.NOT.ALLOCATED( this% v ))THEN
       ALLOCATE( this% v( 0:3, this% npart ), STAT= ios, &
@@ -231,8 +228,6 @@ SUBMODULE (sph_particles) sph_variables
                  ". The error message is", err_msg
         STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array v" )
     ENDIF
     IF(.NOT.ALLOCATED( this% h ))THEN
       ALLOCATE( this% h( this% npart ), STAT= ios, &
@@ -242,28 +237,122 @@ SUBMODULE (sph_particles) sph_variables
                  ". The error message is", err_msg
         STOP
       ENDIF
-      !CALL test_status( ios, err_msg, &
-      !                "...allocation error for array h" )
     ENDIF
 
-    IF( debug ) PRINT *, "2"
+    IF( debug ) PRINT *, "1"
+
+    !------------------------------------------------------------------------!
+    ! Compute SPH density estimate (nu has to be assigned before this step)  !
+    !------------------------------------------------------------------------!
+
+    CALL allocate_RCB_tree_memory_3D(npart)
+    iorig(1:npart)= (/ (a,a=1,npart) /)
+
+    CALL allocate_gradient( npart )
+
+    IF( debug ) PRINT *, "-1"
+
+    PRINT *, " * Assigning h..."
+    PRINT *
+
+    ! Determine smoothing length so that each particle has exactly
+    ! 300 neighbours inside 2h
+    CALL assign_h( ndes, &
+                   this% npart, &
+                   this% pos, this% h, & ! Input
+                   h )             ! Output
+
+    IF( debug ) PRINT *, "101.5"
+
+    CALL find_h_bruteforce_timer% start_timer()
+    n_problematic_h= 0
+    check_h: DO a= 1, this% npart, 1
+
+      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+
+        n_problematic_h= n_problematic_h + 1
+
+        h(a)= find_h_backup( a, this% npart, this% pos, ndes )
+
+        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", this% pos(:,a)
+          STOP
+        ENDIF
+
+      ENDIF
+
+    ENDDO check_h
+    CALL find_h_bruteforce_timer% stop_timer()
+    CALL find_h_bruteforce_timer% print_timer( 2 )
+
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
+
+    PRINT *, " * Computing neighbours' tree..."
+    PRINT *
+
+    IF( SUM(this% nu, DIM= 1)/SIZE(this% nu) == zero )THEN
+      PRINT *, "** ERROR! Average nu= 0. Are you assigning values to the ", &
+               "TYPE-bound array?"
+      PRINT *, "Stopping..."
+      STOP
+    ENDIF
+
+    CALL exact_nei_tree_update( ndes,        &
+                                this% npart, &
+                                this% pos,   &
+                                this% nu )
+
+    CALL find_h_bruteforce_timer% start_timer()
+    n_problematic_h= 0
+    check_h2: DO a= 1, this% npart, 1
+
+      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+
+        n_problematic_h= n_problematic_h + 1
+        h(a)= find_h_backup( a, this% npart, this% pos, ndes )
+        PRINT *, h(a)
+        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
+          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                   " force method."
+          PRINT *, "   Particle position: ", this% pos(:,a)
+          STOP
+        ENDIF
+
+      ENDIF
+
+    ENDDO check_h2
+    CALL find_h_bruteforce_timer% stop_timer()
+    CALL find_h_bruteforce_timer% print_timer( 2 )
+
+    PRINT *, " * The smoothing length was found brute-force for ", &
+             n_problematic_h, " particles."
+    PRINT *
+
+    ! Update the member variable storing smoothing length
+    this% h= h
+
+    pos_u= this% pos
 
     !
-    !-- Compute SPH quantities
+    !-- Compute square root of minus the metric determinant,
+    !-- and the generalized Lorentz factor.
+    !-- They are needed to compute nlrf from the SPH estimate of nstar
     !
-
     CALL this% sph_computer_timer% start_timer()
 !    !$OMP PARALLEL DO DEFAULT( NONE ) &
-!    !$OMP             SHARED( THIS, pos_u, vel_u, sq_det_g4, Theta, nlrf, &
+!    !$OMP             SHARED( this, pos_u, vel_u, sq_det_g4, Theta, nlrf, &
 !    !$OMP                     Pr, u, temp, av, divv ) &
-!    !$OMP             PRIVATE( itr, g4, gg4, det, sq_g, Theta_a, &
-!    !$OMP                      nus, mus )
-    compute_SPH_variables_on_particles: DO itr= 1, this% npart, 1
+!    !$OMP             PRIVATE( itr, g4, det, sq_g, Theta_a )
+    compute_sph_variables_on_particles: DO itr= 1, this% npart, 1
 
       ! Particle positions [Msun_geo]
-      pos_u(1,itr)= this% pos(1,itr)
-      pos_u(2,itr)= this% pos(2,itr)
-      pos_u(3,itr)= this% pos(3,itr)
+      !pos_u(1,itr)= this% pos(1,itr)
+      !pos_u(2,itr)= this% pos(2,itr)
+      !pos_u(3,itr)= this% pos(3,itr)
 
       ! Coordinate velocity of the fluid [c]
       this% v(0,itr)= one
@@ -296,7 +385,7 @@ SUBMODULE (sph_particles) sph_variables
       ENDIF
       sq_g= SQRT(-det)
       sq_det_g4(itr)= sq_g
-      sq_detg4(itr)= sq_g
+      !sq_detg4(itr)= sq_g
 
       !
       !-- Generalized Lorentz factor
@@ -322,22 +411,57 @@ SUBMODULE (sph_particles) sph_variables
       Theta(itr)      = Theta_a
       this% Theta(itr)= Theta_a
 
-      ! Baryon density in the local rest frame [baryon (Msun_geo)^{-3}]
-      ! Computed from the LORENE baryon mass density in [kg/m^3]
-      nlrf(itr)= this% baryon_density(itr)
-      this% nlrf(itr)= this% baryon_density(itr)
+    !   ! Specific internal energy [c^2]
+    !   u(itr)= this% specific_energy(itr)
+    !
+    !   ! Pressure [amu*c**2/(Msun_geo**3)]
+    !   !          dimensions: [(M/L**3)*L**2/T**2]= [M/(L*T**2)], same as
+    !   !                      energy density
+    !   Pr(itr)= this% pressure(itr)
+    !   this% pressure_cu(itr)= Pr(itr)
 
-      ! Specific internal energy [c^2]
-      u(itr)= this% specific_energy(itr)
-
-      ! Pressure [amu*c**2/(Msun_geo**3)]
-      !          dimensions: [(M/L**3)*L**2/T**2]= [M/(L*T**2)], same as
-      !                      energy density
-      Pr(itr)= this% pressure(itr)
-      this% pressure_cu(itr)= Pr(itr)
-
-    ENDDO compute_SPH_variables_on_particles
+    ENDDO compute_sph_variables_on_particles
 !    !$OMP END PARALLEL DO
+
+    !
+    !-- Compute the proper baryon number density with kernel interpolation
+    !
+
+    PRINT *, " * Computing SPH proper baryon number density with kernel", &
+             " interpolation..."
+    PRINT *
+
+    ! density calls dens_ll_cell, which computes nstar on particle a as
+    ! Na=     Na + nu(b)*Wab_ha, so this is nstar= nlrf*sq_g*Theta
+    ! It has to be compared with nstar= nlrf*sq_g*Theta
+    CALL density_loop( this% npart,     &
+                       this% pos,       &
+                       this% nu,        &
+                       this% h,         &
+                       this% nstar_sph )
+
+    ! Update the member variable storing the particle volume
+    this% pvol= this% nu/this% nstar_sph
+
+    !-------------------------------------------------------------------------!
+    !-------------------------------------------------------------------------!
+    ! This point here is CRUCIAL: the particle distribution may NOT resolve   !
+    ! properly the steep density gradient at the surface, even if the APM     !
+    ! is used. This implies that the kernel interpolated nstar_sph will be    !
+    ! different than nstar close to the surface.                              !
+    ! The error can be such that the recovery fails in SPHINCS_BSSN, and      !
+    ! this is of course a problem. Now, the density used in SPHINCS_BSSN      !
+    ! during the evolution is not the one given in the ID. Hence, once        !
+    ! nstar_sph is computed, nlrf should be recomputed from it, so that the   !
+    ! density on the particles corresponds to the density that "they see",    !
+    ! that is, the kernel interpolated density that uses these values of nu.  !
+    !-------------------------------------------------------------------------!
+    !-------------------------------------------------------------------------!
+
+    this% nlrf_sph= (this% nstar_sph/this% Theta)/sq_det_g4
+    nlrf= this% nlrf_sph
+
+    this% particle_density= this% nstar_sph/this% nu
 
     ! Temperature: here dummy
     temp= zero
@@ -350,69 +474,702 @@ SUBMODULE (sph_particles) sph_variables
 
     IF( debug ) PRINT *, "3"
 
-
-    ! Compute nstar (proper baryon number density) from the ID
+    ! Compute nlrf and nstar from the ID (for diagnostics)
+    this% nlrf = this% baryon_density
     this% nstar= ( this% nlrf*this% Theta )*sq_det_g4
 
+    !-----------------------------------------------------------------------!
+    ! For single and piecewise polytropes, do not use the pressure          !
+    ! and specific internal energy from the ID.                             !
+    ! Compute them using the exact formulas for piecewise                   !
+    ! polytropic instead, starting from the kernel interpolated density     !
+    !-----------------------------------------------------------------------!
+
+    matter_objects_loop: DO i_matter= 1, this% n_matter, 1
+
+      ASSOCIATE( npart_in  => this% npart_i(i_matter-1) + 1, &
+                 npart_fin => this% npart_i(i_matter-1) +    &
+                              this% npart_i(i_matter) )
+
+      IF( this% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
+      ! If the |eos| is polytropic
+
+        PRINT *, " * Computing pressure and specific internal energy from", &
+                 " the baryon mass density, using the exact formulas for", &
+                 " single polytropic EOS, on matter object", i_matter,"..."
+
+        ! Formulas from Read et al. (2009), https://arxiv.org/abs/0812.2163
+
+        IF( this% cold_system )THEN
+        ! If the system is cold, compute pressure and specific energy
+        ! exactly using the polytropic EOS
+
+          PRINT *, " * Assuming a cold system: no thermal component considered."
+          PRINT *
+
+          Pr(npart_in:npart_fin)= &
+            this% all_eos(i_matter)% eos_parameters(poly$kappa) &
+            *( this% nlrf_sph(npart_in:npart_fin)*m0c2_cu ) &
+            **this% all_eos(i_matter)% eos_parameters(poly$gamma)
+
+          ! Using this internal energy gives machine-precision relative errors
+          ! after the recovery, since it is computed from nlrf_sph
+          ! Using the internal energy from the ID gives larger errors
+          u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
+            /(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
+            *( this% all_eos(i_matter)% eos_parameters(poly$gamma) - one ) ) )
+
+          this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
+           + Pr(npart_in:npart_fin)/(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu)
+
+          cs(npart_in:npart_fin)= SQRT( &
+            this% all_eos(i_matter)% eos_parameters(poly$gamma) &
+              *Pr(npart_in:npart_fin)/ &
+            (this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
+            *this% enthalpy(npart_in:npart_fin)) )
+
+          !
+          !-- Leaving the following code here, commented, because it allows
+          !-- to test the pwp_eos MODULE using single polytropes
+          !-- All tests were passed on 23.02.2022
+          !
+    !      CALL select_EOS_parameters( 'soft' )
     !
-    !-- Compute the particle proper mass, if not computed yet
+    !      DO a= npart_in, npart_fin, 1
     !
-    IF( .NOT.ALLOCATED( this% pvol ) )THEN
-      PRINT *, "** ERROR! The array pvol is not allocated. ", &
-               "Stopping..."
-      PRINT *
-      STOP
-    ENDIF
-    IF( .NOT.( this% distribution_id == id_particles_on_spherical_surfaces &
-        .OR. &
-        ( this% distribution_id == id_particles_from_file &
-          .AND. this% read_nu ) ) )THEN
-
-      this% pmass= this% nstar*this% pvol
-
-    ENDIF
-
-    ! Compute particle number density from the ID
-    this% particle_density= ( this% nstar )/( this% pmass )
-
-    IF( debug ) PRINT *, "4"
-
+    !        CALL gen_pwp_cold_eos( this% nlrf_sph(a)*m0c2_cu, &
+    !                               Pr(a), u(a), cs(a) )
     !
-    !-- Compute the first guess for the smoothing length, if the APM was not
-    !-- used
-    !
-    DO i_matter= 1, this% n_matter, 1
+    !        !CALL gen_pwp_eos( this% nlrf_sph(a)*m0c2_cu, &
+    !        !                  this% u_sph(a), tmp, &
+    !        !                  u(a), &
+    !        !                  Pr(a), cs(a) )
+    !      ENDDO
 
-      IF( .NOT.this% apm_iterate(i_matter) )THEN
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
-        IF( debug ) PRINT *, "Compute first guess for the smoothing length ", &
-                             "h, for particles on matter object", itr,"..."
+        ELSE
+        ! If the system is hot, that is, has a thermal component, then
+        ! the density and the specific energy (the latter including both
+        ! cold and thermal part) should be supplied in the ID.
+        ! The pressure is computed using them (see pwp_EOS MODULE).
 
-        compute_h_guess: &
-        DO itr= this% npart_i(i_matter-1) + 1, &
-                this% npart_i(i_matter-1) + this% npart_i(i_matter), 1
+          PRINT *, " * Assuming a hot system: thermal component considered."
+          PRINT *
 
-          this% h(itr)= three*(this% pvol(itr))**third
-          h(itr)= this% h(itr)
-          ! /(Msun_geo**3)
-          IF( debug .AND. this% h(itr) <= zero )THEN
-            PRINT *, "** ERROR! h(", itr, ")=", this% h(itr)
-            PRINT *, "Stopping..."
-            PRINT *
-            STOP
-          ENDIF
+          u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
 
-        ENDDO compute_h_guess
+          DO a= npart_in, npart_fin, 1
+
+            Pr(a)= &
+            ! cold pressure
+            this% all_eos(i_matter)% eos_parameters(poly$kappa) &
+              *( this% nlrf_sph(a)*m0c2_cu ) &
+              **this% all_eos(i_matter)% eos_parameters(poly$gamma) &
+            + &
+            ! thermal pressure
+            Gamma_th_1*( this% nlrf_sph(a)*m0c2_cu )* &
+              MAX(u(a) - ( Pr(a)/(this% nlrf_sph(a)*m0c2_cu &
+                *( this% all_eos(i_matter)% eos_parameters(poly$gamma) &
+                   - one ) ) ), zero)
+
+          ENDDO
+          this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
+           + Pr(npart_in:npart_fin)/(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu)
+
+          cs(npart_in:npart_fin)= SQRT( &
+            this% all_eos(i_matter)% eos_parameters(poly$gamma) &
+              *Pr(npart_in:npart_fin)/ &
+            (this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
+            *this% enthalpy(npart_in:npart_fin)) )
+
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
+
+        ENDIF
+
+      ELSEIF( this% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
+      ! If the |eos| is piecewise polytropic
+
+        PRINT *, " * Computing pressure and specific internal energy from", &
+                 " the baryon mass density, using the exact formulas for", &
+                 " piecewise polytropic EOS..."
+        PRINT *
+
+        IF( this% cold_system )THEN
+        ! If the system is cold, compute pressure and specific energy
+        ! exactly using the piecewise polytropic EOS
+
+          PRINT *, " * Assuming a cold system: no thermal component considered."
+          PRINT *
+
+          CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
+
+          DO a= npart_in, npart_fin, 1
+
+            CALL gen_pwp_cold_eos( this% nlrf_sph(a)*m0c2_cu, &
+                                   Pr(a), u(a), cs(a) )
+
+          ENDDO
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
+
+        ELSE
+        ! If the system is hot, that is, has a thermal component, then
+        ! the density and the specific energy (the latter including both
+        ! cold and thermal part) should be supplied in the ID.
+        ! The pressure is computed using them (see pwp_EOS MODULE).
+
+          PRINT *, " * Assuming a hot system: thermal component considered."
+          PRINT *
+
+          u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
+
+          CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
+
+          DO a= npart_in, npart_fin, 1
+
+            CALL gen_pwp_eos( this% nlrf_sph(a)*m0c2_cu, &
+                              this% u_sph(a), tmp, &
+                              u(a), &
+                              Pr(a), cs(a) )
+
+          ENDDO
+          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
+          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
+
+        ENDIF
 
       ENDIF
 
+      END ASSOCIATE
+
+    ENDDO matter_objects_loop
+
+    !-------------------!
+    ! Assignment of Ye  !
+    !-------------------!
+
+    IF(.NOT.ALLOCATED( this% Ye ))THEN
+      ALLOCATE( this% Ye( this% npart ), STAT= ios, ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+        PRINT *, "...allocation error for array Ye ", &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+    ENDIF
+
+    assign_ye_on_particles: IF( this% compose_eos )THEN
+
+      PRINT *, "Assigning electron fraction using the CompOSE file ", &
+               TRIM(this% compose_path)//TRIM(this% compose_filename)
+
+      compose_namefile= TRIM(this% compose_path)//TRIM(this% compose_filename)
+      CALL this% read_compose_composition( compose_namefile )
+      CALL this% compute_Ye()
+
+      PRINT *, "Electron fraction assigned."
+      PRINT *
+
+    ELSE
+
+      this% Ye= zero
+
+    ENDIF assign_ye_on_particles
+    Ye= this% Ye
+
+    CALL this% sph_computer_timer% stop_timer()
+
+    !
+    !-- Printouts
+    !
+    !"(A28,E15.8,A10)"
+    DO i_matter= 1, this% n_matter, 1
+
+      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
+                 npart_fin  => this% npart_i(i_matter-1) +    &
+                               this% npart_i(i_matter) )
+
+      PRINT *, " * Maximum baryon density on object", i_matter, "=", &
+                MAXVAL(this% baryon_density(npart_in:npart_fin), DIM=1) &
+                /((Msun_geo*km2m*m2cm)**3)*(amu), " g cm^{-3}"
+                !*amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
+      PRINT *, " * Minimum baryon density on object", i_matter, "=", &
+                MINVAL( this% baryon_density(npart_in:npart_fin), DIM=1) &
+                /((Msun_geo*km2m*m2cm)**3)*(amu), " g cm^{-3}"
+                !*amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
+      PRINT *, " * Ratio between the two=", &
+               MAXVAL(this% baryon_density(npart_in:npart_fin), DIM=1)/ &
+               MINVAL(this% baryon_density(npart_in:npart_fin), DIM=1)
+      PRINT *
+
+      PRINT *, " * Maximum interpolated nlrf on object", i_matter, "=", &
+               MAXVAL( this% nlrf_sph(npart_in:npart_fin), DIM= 1 ) &
+               /((Msun_geo*km2m*m2cm)**3), " baryon cm^{-3}"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Minimum interpolated nlrf on object", i_matter, "=", &
+               MINVAL( this% nlrf_sph(npart_in:npart_fin), DIM= 1 ) &
+               /((Msun_geo*km2m*m2cm)**3), " baryon cm^{-3}"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Ratio between the two=", &
+               MAXVAL( this% nlrf_sph(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( this% nlrf_sph(npart_in:npart_fin), DIM= 1 )
+      PRINT *
+
+      PRINT *, " * Maximum pressure", i_matter, "=", &
+               MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 ) &
+               *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Minimum pressure", i_matter, "=", &
+               MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 ) &
+               *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Ratio between the two=", &
+               MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
+      PRINT *
+
+      PRINT *, " * Maximum specific internal energy", i_matter, "=", &
+               MAXVAL( this% u_sph(npart_in:npart_fin), DIM= 1 ), " c^2"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Minimum specific internal energy", i_matter, "=", &
+               MINVAL( this% u_sph(npart_in:npart_fin), DIM= 1 ), " c^2"
+               !" m0c2_cu (TODO: CHECK UNITS)"!, &
+               !"baryon Msun_geo^{-3}"
+      PRINT *, " * Ratio between the two=", &
+               MAXVAL( this% u_sph(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( this% u_sph(npart_in:npart_fin), DIM= 1 )
+      PRINT *
+
+      this% nuratio_i(i_matter)= MAXVAL( this% nu(npart_in:npart_fin), DIM= 1 )&
+                                /MINVAL( this% nu(npart_in:npart_fin), DIM= 1 )
+      PRINT *, " * Maximum n. baryon per particle (nu) on object", i_matter, &
+                          "=", MAXVAL( this% nu(npart_in:npart_fin), DIM= 1 )
+      PRINT *, " * Minimum n. baryon per particle (nu) on object", i_matter, &
+                          "=", MINVAL( this% nu(npart_in:npart_fin), DIM= 1 )
+      PRINT *, " * Ratio between the two=", this% nuratio_i(i_matter)
+      PRINT *
+
+      PRINT *, " * Number of baryons on object", i_matter, "=", &
+               this% nbar_i(i_matter)
+      PRINT *, " * Total mass of the baryons on object", i_matter, "=", &
+               this% nbar_i(i_matter)*amu/Msun, "Msun =", &
+               this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter), &
+               "of the baryon mass of object", i_matter, "."
+      PRINT *
+
+      END ASSOCIATE
+
     ENDDO
 
-    IF( debug ) PRINT *, "1"
+    this% nuratio= MAXVAL( this% nu, DIM= 1 )/MINVAL( this% nu, DIM= 1 )
+    PRINT *, " * Baryon number ratio across the stars=", this% nuratio
+    PRINT *
+    PRINT *, " * Total mass of the baryons=", &
+             this% nbar_tot*amu/Msun, "Msun =", &
+             this% nbar_tot*amu/Msun/(SUM(this% masses, DIM=1)), &
+             "of the total baryon mass."
+    PRINT *
 
-    !-------------------------------------!
-    !--  Assignment of nu on the stars. --!
-    !-------------------------------------!
+    !
+    !-- Adjusting the baryon number per particle uniformly so that
+    !-- the baryon mass is correct, but the ratio between nu_max and nu_min
+    !-- does not change.
+    !-- nlrf is not to be rescaled, according to Stephan, since:
+    !--   (i)  it is directly computed from the LORENE ID and should therefore
+    !--        be consistent with it
+    !--   (ii) it is anyway immediately recomputed in SPHINCS_BSSN
+    !
+    IF( this% correct_nu )THEN
+
+      this% nbar_tot= zero
+      DO i_matter= 1, this% n_matter, 1
+
+        ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
+                   npart_fin  => this% npart_i(i_matter-1) +    &
+                                 this% npart_i(i_matter) )
+
+        this% nu( npart_in:npart_fin )= this% nu( npart_in:npart_fin ) &
+                      /(this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter))
+        nu( npart_in:npart_fin )= this% nu( npart_in:npart_fin )
+
+        this% nbar_i(i_matter)= this% nbar_i(i_matter) &
+                      /(this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter))
+
+        this% nbar_tot= this% nbar_tot + this% nbar_i(i_matter)
+
+        PRINT *, " * Number of corrected baryons on object", i_matter, "=", &
+                 this% nbar_i(i_matter)
+        PRINT *, " * Total mass of the corrected baryons object", i_matter, &
+                 "=", this% nbar_i(i_matter)*amu/Msun, "Msun =", &
+                 this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter), &
+                 "of the baryon mass of object", i_matter, "."
+
+        END ASSOCIATE
+
+      ENDDO
+
+      PRINT *, " * Total number of corrected baryons=", this% nbar_tot
+      PRINT *, " * Total mass of the corrected baryons=", &
+               this% nbar_tot*amu/Msun, "Msun =", &
+               this% nbar_tot*amu/Msun/(SUM(this% masses, DIM=1)), &
+               "of the total baryon mass."
+      PRINT *
+
+    ENDIF
+
+    !
+    !-- Printing the SPH ID to a binary file, for SPHINCS_BSSN
+    !
+    IF( this% export_bin )THEN
+
+      IF( PRESENT(namefile) )THEN
+
+        finalnamefile= TRIM(namefile)//"00000"
+        dcount= -1 ! since it is increased before writing
+        CALL write_SPHINCS_dump(finalnamefile)
+
+      ELSE
+
+        basename= "NSNS."
+        dcount= -1 ! since it is increased before writing
+        CALL write_SPHINCS_dump()
+
+      ENDIF
+
+    ENDIF
+
+    !-------------!
+    ! Diagnostics !
+    !-------------!
+
+    !
+    !-- Test the recovery
+    !
+    CALL this% test_recovery( this% npart,       &
+                              this% pos,         &
+                              this% nlrf_sph,    &
+                              this% u_sph,       &
+                              this% pressure_cu, &
+                              this% v(1:3,:),    &
+                              this% theta,       &
+                              this% nstar_sph )
+
+    !CALL this% test_recovery( npart,       &
+    !                          pos_u,         &
+    !                          nlrf,    &
+    !                          u,       &
+    !                          Pr, &
+    !                          vel_u,    &
+    !                          Theta,       &
+    !                          this% nstar_sph )
+
+
+    ! Test the recovery on ech matter object separately
+    ! DO i_matter= 1, this% n_matter, 1
+    !
+    !   PRINT *, " * Testing recovery on matter object", i_matter, "..."
+    !   PRINT *
+    !
+    !   IF( i_matter > 9 )THEN
+    !     WRITE( i_mat, "(I2)" ) i_matter
+    !   ELSE
+    !     WRITE( i_mat, "(I1)" ) i_matter
+    !   ENDIF
+    !   finalnamefile= "recovery_test-"//TRIM(i_mat)//".dat"
+    !
+    !   ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
+    !              npart_fin  => this% npart_i(i_matter-1) +    &
+    !                            this% npart_i(i_matter) )
+    !
+    !   CALL this% test_recovery( this% npart_i    (i_matter),               &
+    !                             this% pos        (:,npart_in:npart_fin),   &
+    !                             this% nlrf_sph   (npart_in:npart_fin),     &
+    !                             this% u_sph      (npart_in:npart_fin),     &
+    !                             this% pressure_cu(npart_in:npart_fin),     &
+    !                             this% v          (1:3,npart_in:npart_fin), &
+    !                             this% theta      (npart_in:npart_fin),     &
+    !                             this% nstar_sph  (npart_in:npart_fin),     &
+    !                             finalnamefile )
+    !
+    !   END ASSOCIATE
+    !
+    ! ENDDO
+
+    CALL exact_nei_tree_update( ndes,        &
+                                this% npart, &
+                                this% pos,   &
+                                this% nu )
+    this% h= h
+
+    CALL compute_and_print_quality_indicators &
+      (this% npart, this% pos, this% h, this% nu, this% nstar_sph, &
+       TRIM(sph_path))
+
+
+    ALLOCATE( this% adm_linear_momentum_i( this% n_matter, 3 ) )
+    this% adm_linear_momentum_fluid= zero
+    DO i_matter= 1, this% n_matter, 1
+
+      PRINT *, " * Estimating the ADM linear momentum using the canonical ", &
+               "SPH momentum per baryon on the particles, ", &
+               "on matter object ", i_matter, "..."
+      PRINT *
+
+      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
+                 npart_fin  => this% npart_i(i_matter-1) +    &
+                               this% npart_i(i_matter) )
+
+      CALL compute_adm_momentum_fluid_fields(                             &
+                                  npart_fin - npart_in + 1,               &
+                                  this% g_xx(npart_in:npart_fin),         &
+                                  this% g_xy(npart_in:npart_fin),         &
+                                  this% g_xz(npart_in:npart_fin),         &
+                                  this% g_yy(npart_in:npart_fin),         &
+                                  this% g_yz(npart_in:npart_fin),         &
+                                  this% g_zz(npart_in:npart_fin),         &
+                                  this% lapse(npart_in:npart_fin),        &
+                                  this% shift_x(npart_in:npart_fin),      &
+                                  this% shift_y(npart_in:npart_fin),      &
+                                  this% shift_z(npart_in:npart_fin),      &
+                                  this% nu(npart_in:npart_fin),           &
+                                  this% Theta(npart_in:npart_fin),        &
+                                  this% nlrf_sph(npart_in:npart_fin),     &
+                                  this% pressure_cu(npart_in:npart_fin),  &
+                                  this% u_sph(npart_in:npart_fin),        &
+                                  this% v(1:3,npart_in:npart_fin),        &
+                                  this% adm_linear_momentum_i(i_matter,:) )
+
+      PRINT *, "   SPH estimate of the ADM linear momentum computed using ", &
+               "the canonical momentum per baryon, on matter object", &
+               i_matter,"= "
+      PRINT *, "   (", this% adm_linear_momentum_i(i_matter, 1), ","
+      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 2), ","
+      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 3), ") Msun*c"
+      PRINT *
+      this% adm_linear_momentum_fluid= this% adm_linear_momentum_fluid + &
+                                       this% adm_linear_momentum_i(i_matter,:)
+
+      END ASSOCIATE
+
+    ENDDO
+    PRINT *, "   SPH estimate of the ADM momentum of the fluid ", &
+             "computed using the canonical momentum per baryon= "
+    PRINT *, "   (", this% adm_linear_momentum_fluid(1), ","
+    PRINT *, "    ", this% adm_linear_momentum_fluid(2), ","
+    PRINT *, "    ", this% adm_linear_momentum_fluid(3), ") Msun*c"
+    PRINT *
+
+
+    IF( ASSOCIATED(this% post_process_sph_id) )THEN
+
+      CALL this% post_process_sph_id( this% npart, this% pos, &
+                                    this% nlrf_sph, &
+                                    this% u_sph, &
+                                    this% pressure_cu, this% v(1:3,:), &
+                                    this% theta, this% nstar_sph, this% nu, &
+                                    this% g_xx,      &
+                                    this% g_xy,      &
+                                    this% g_xz,      &
+                                    this% g_yy,      &
+                                    this% g_yz,      &
+                                    this% g_zz,      &
+                                    this% lapse,     &
+                                    this% shift_x,   &
+                                    this% shift_y,   &
+                                    this% shift_z,   &
+                                    this% adm_linear_momentum_fluid, &
+                                    this% adm_mass )
+
+    ELSE
+
+      PRINT *, "** ERROR! The PROCEDURE POINTER post_process_sph_id ", &
+               "is not associated with any PROCEDURE!"
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+    vel_u= this% v(1:3,:)
+
+    this% adm_linear_momentum_fluid= zero
+    DO i_matter= 1, this% n_matter, 1
+
+      PRINT *, " * Estimating the ADM linear momentum using the canonical ", &
+               "SPH momentum per baryon on the particles, ", &
+               "on matter object ", i_matter, "..."
+      PRINT *
+
+      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
+                 npart_fin  => this% npart_i(i_matter-1) +    &
+                               this% npart_i(i_matter) )
+
+      CALL compute_adm_momentum_fluid_fields(                             &
+                                  npart_fin - npart_in + 1,               &
+                                  this% g_xx(npart_in:npart_fin),         &
+                                  this% g_xy(npart_in:npart_fin),         &
+                                  this% g_xz(npart_in:npart_fin),         &
+                                  this% g_yy(npart_in:npart_fin),         &
+                                  this% g_yz(npart_in:npart_fin),         &
+                                  this% g_zz(npart_in:npart_fin),         &
+                                  this% lapse(npart_in:npart_fin),        &
+                                  this% shift_x(npart_in:npart_fin),      &
+                                  this% shift_y(npart_in:npart_fin),      &
+                                  this% shift_z(npart_in:npart_fin),      &
+                                  this% nu(npart_in:npart_fin),           &
+                                  this% Theta(npart_in:npart_fin),        &
+                                  this% nlrf_sph(npart_in:npart_fin),     &
+                                  this% pressure_cu(npart_in:npart_fin),  &
+                                  this% u_sph(npart_in:npart_fin),        &
+                                  vel_u(1:3,npart_in:npart_fin),        &
+                                  this% adm_linear_momentum_i(i_matter,:) )
+
+      PRINT *, "   SPH estimate of the ADM linear momentum computed using ", &
+               "the canonical momentum per baryon, on matter object", &
+               i_matter,"= "
+      PRINT *, "   (", this% adm_linear_momentum_i(i_matter, 1), ","
+      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 2), ","
+      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 3), ") Msun*c"
+      PRINT *
+      this% adm_linear_momentum_fluid= this% adm_linear_momentum_fluid + &
+                                       this% adm_linear_momentum_i(i_matter,:)
+
+      END ASSOCIATE
+
+    ENDDO
+    PRINT *, "   SPH estimate of the ADM momentum of the fluid ", &
+             "computed using the canonical momentum per baryon= "
+    PRINT *, "   (", this% adm_linear_momentum_fluid(1), ","
+    PRINT *, "    ", this% adm_linear_momentum_fluid(2), ","
+    PRINT *, "    ", this% adm_linear_momentum_fluid(3), ") Msun*c"
+    PRINT *
+
+    !
+    !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN
+    !
+ !   IF( this% export_bin )THEN
+ !
+ !     IF( PRESENT(namefile) )THEN
+ !
+ !       finalnamefile= TRIM( namefile ) // "00000"
+ !       dcount= -1 ! since it is increased before writing
+ !       CALL write_SPHINCS_dump( finalnamefile )
+ !
+ !     ELSE
+ !
+ !       basename= "NSNS."
+ !       dcount= -1 ! since it is increased before writing
+ !       CALL write_SPHINCS_dump()
+ !
+ !     ENDIF
+ !
+ !   ENDIF
+
+    !
+    !-- Compute particle number density
+    !
+
+    PRINT *, " * Computing particle number density by kernel interpolation..."
+    PRINT *
+    nu= one
+    CALL density_loop( this% npart, this% pos, nu, h, &
+                       this% particle_density_sph )
+
+    IF( debug ) PRINT *, "100"
+
+    !CALL COM( this% npart, this% pos, this% nu, &
+    !          com_x_newt, com_y_newt, com_z_newt, com_d_newt )
+    !CALL COM( this% npart_i(1), this% pos(:,1:this% npart_i(1)), &
+    !          this% nu(1:this% npart_i(1)), &
+    !          com_x_newt, com_y_newt, com_z_newt, com_d_newt )
+
+    !CALL COM_1PN( this% npart, this% pos, this% v, &
+    !              !this% v_euler_x, &
+    !              this% nu, this% baryon_density, &
+    !              this% specific_energy, this% nstar_sph, sq_detg4, gg4, &
+    !              com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn )
+    !CALL COM_1PN( this% npart_i(1), this% pos(:,1:this% npart_i(1)), &
+    !              this% v(1:3,1:this% npart_i(1)), &
+    !              !this% v_euler_x, &
+    !              this% nu(1:this% npart_i(1)), &!/sq_det_g4(1:this% npart_i(1))/this% Theta(1:this% npart_i(1)), &
+    !              !this% baryon_density(1:this% npart_i(1)), &
+    !              this% nlrf_sph(1:this% npart_i(1)), &
+    !              this% u_sph(1:this% npart_i(1)), &
+    !              this% nstar_sph(1:this% npart_i(1)), &
+    !              sq_det_g4(1:this% npart_i(1)), &
+    !              gg4(:,1:this% npart_i(1)), &
+    !              com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn )
+
+    IF( debug ) PRINT *, "101"
+
+    !nu   = this% nu
+    !vel_u= this% v(1:3,:)
+    !CALL lin_mom( pnorm_newt, px_newt, py_newt, pz_newt )
+    !CALL momentum_1pn( this% npart, this% pos, &
+    !                   this% v, &
+    !                   !this% v_euler_x, &
+    !                   this% nu, this% baryon_density, &
+    !                   this% specific_energy, this% pressure_cu, &
+    !                   this% nstar_sph, this% h, &
+    !                   sq_detg4, gg4, px, py, pz )
+    !CALL momentum_1pn( this% npart, this% pos, &
+    !                   this% v, &
+    !                   !this% v_euler_x, &
+    !                   this% nu, &
+    !                   this% nlrf_sph, &
+    !                   this% u_sph, &
+    !                   this% pressure_cu, &
+    !                   this% nstar_sph, &
+    !                   this% h, &
+    !                   sq_detg4, gg4, px, py, pz )
+
+    !PRINT *, "LORENE mass:            ", this% masses(1), mass_1pn*amu/Msun
+    !PRINT *, "LORENE COM:            ", &
+    !         this% barycenter(1,:)! + this% barycenter(2,:)
+    !PRINT *, "Newtonian COM:         ", &
+    !         com_x_newt, com_y_newt, com_z_newt!, com_d_newt
+    !PRINT *, "1PN COM:               ", &
+    !         com_x_1pn, com_y_1pn, com_z_1pn!, com_d_1pn
+    !PRINT *, "Newtonian spacetime momentum:", px_newt/SUM(nu,DIM=1), py_newt/SUM(nu,DIM=1), pz_newt/SUM(nu,DIM=1), pnorm_newt/SUM(nu,DIM=1)
+    !PRINT *, "1PN spacetime momentum:", px/mass_1pn, py/mass_1pn, pz/mass_1pn, pnorm/mass_1pn
+    !PRINT *
+    !PRINT *
+
+    !
+    !-- Deallocate MODULE variables
+    !
+    PRINT *, " * Deallocating MODULE variables..."
+    PRINT *
+    IF( ALLOCATED(g4_ll) ) CALL deallocate_metric_on_particles
+    CALL deallocate_gradient
+    DEALLOCATE( alive )
+    CALL deallocate_RCB_tree_memory_3D
+    CALL deallocate_SPH_memory
+
+    !STOP
+
+    call_flag= call_flag + 1
+    this% call_flag= call_flag
+
+    PRINT *, "** Subroutine compute_and_print_sph_variables executed."
+    PRINT *
+
+  END PROCEDURE compute_and_print_sph_variables
+
+
+END SUBMODULE sph_variables
+
 
 !    IF( this% redistribute_nu )THEN
 !
@@ -648,1134 +1405,4 @@ SUBMODULE (sph_particles) sph_variables
 !      PRINT *, " * Number of particles on NS 1=", this% npart1
 !      PRINT *, " * Number of particles on NS 2=", this% npart2
 !      PRINT *
-
-    !----------------------------------------------!
-    !--  Assignment of nu on the matter objects. --!
-    !----------------------------------------------!
-
-    ! TODO: The code would be much cleaner if nu and h were assigned in the
-    !       constructor for all the particle placers (now only the lattices
-    !       and the particles ad from file without nu don't assign them)
-    !       If that was the case, then this SUBROUTINE could start out by
-    !       estimating the SPH density, and compute everything from there.
-
-    DO i_matter= 1, this% n_matter, 1
-
-      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
-                 npart_fin  => this% npart_i(i_matter-1) +    &
-                               this% npart_i(i_matter) )
-
-        IF( this% apm_iterate(i_matter) )THEN
-
-          ! If the APM was used...
-
-          ! Do nothing, nu is already computed and reflected in the constructor
-          nu( npart_in : npart_fin )= this% nu( npart_in : npart_fin )
-          this% nbar_i(i_matter)= SUM( this% nu( npart_in : npart_fin ), DIM=1 )
-
-        ELSEIF( this% distribution_id == id_particles_from_file &
-                .AND. this% read_nu )THEN
-
-          ! If the particle positions and nu were read from formatted file...
-
-          ! Do nothing, nu is already read from file
-          nu( npart_in : npart_fin )= this% nu( npart_in : npart_fin )
-          this% nbar_i(i_matter)= SUM( this% nu( npart_in : npart_fin ), DIM=1 )
-
-        ELSEIF( this% distribution_id== id_particles_on_spherical_surfaces )THEN
-        !ELSE
-
-          ! If the APM was not used...
-
-          ! Set nu based on the particle mass...
-
-          DO itr= npart_in, npart_fin, 1
-            nu(itr)= this% pmass(itr)*MSun/amu
-            this% nu(itr)= nu(itr)
-            this% nbar_i(i_matter)= this% nbar_i(i_matter) + nu(itr)
-          ENDDO
-
-        ELSE
-
-          ! If the APM was not used and the particles are on lattices...
-
-          DO itr= npart_in, npart_fin, 1
-            nu(itr)= nlrf(itr)*this% pvol(itr)*Theta( itr )*sq_det_g4( itr )
-            this% nu(itr)= nu(itr)
-            this% nbar_i(i_matter)= this% nbar_i(i_matter) + nu(itr)
-          ENDDO
-
-        ENDIF
-        this% nbar_tot= this% nbar_tot + this% nbar_i(i_matter)
-
-        equal_mass_binary: &
-        IF( i_matter == 1 .AND. this% n_matter == 2 )THEN
-
-          IF( ABS(this% mass_ratios(1) - this% mass_ratios(2)) &
-            /this% mass_ratios(2) <= 0.005 .AND. this% reflect_particles_x &
-            .AND. &
-            this% distribution_id /= id_particles_from_file )THEN
-
-            ! Consistency check
-            IF( this% npart_i(i_matter) +      &
-            this% npart_i(i_matter+1) /= this% npart )THEN
-              PRINT *, "** ERROR! npart_next /= this% npart! "
-              PRINT *, "   npart_next=", this% npart_i(i_matter) +      &
-              this% npart_i(i_matter+1)
-              PRINT *, "   this% npart=", this% npart
-              PRINT *, "   Stopping..."
-              PRINT *
-              STOP
-            ENDIF
-
-            nu( npart_fin + 1:this% npart_i(i_matter) +      &
-            this% npart_i(i_matter+1) )= nu( npart_in : npart_fin )
-            this% nu( npart_fin + 1:this% npart_i(i_matter) +      &
-            this% npart_i(i_matter+1) )= nu( npart_in : npart_fin )
-            this% nbar_i(i_matter + 1)= this% nbar_i(i_matter)
-
-            this% nbar_tot= this% nbar_tot + this% nbar_i(i_matter + 1)
-
-            ! Consistency check
-            IF( this% nbar_tot /= 2*this% nbar_i(i_matter + 1) )THEN
-              PRINT *, "** ERROR! this% nbar_tot /= 2*this% nbar(i_matter + 1) ",&
-                       "   when reflecting particles or a binary system"
-              PRINT *, "   this% nbar_tot=", this% nbar_tot
-              PRINT *, "   2*this% nbar(", i_matter + 1, ")=", &
-                           2*this% nbar_i(i_matter + 1)
-              PRINT *, "   Stopping..."
-              PRINT *
-              STOP
-            ENDIF
-
-            EXIT
-
-          ENDIF
-
-        ENDIF equal_mass_binary
-
-      END ASSOCIATE
-
-    ENDDO
-
-    !------------------------------------------------------------------------!
-    ! Compute SPH density estimate (nu has to be assigned before this step)  !
-    !------------------------------------------------------------------------!
-
-    CALL allocate_RCB_tree_memory_3D(npart)
-    iorig(1:npart)= (/ (a,a=1,npart) /)
-
-    CALL allocate_gradient( npart )
-
-    IF( debug ) PRINT *, "-1"
-
-    PRINT *, " * Assigning h..."
-    PRINT *
-
-    ! Determine smoothing length so that each particle has exactly
-    ! 300 neighbours inside 2h
-    CALL assign_h( ndes, &
-                   this% npart, &
-                   this% pos, this% h, & ! Input
-                   h )             ! Output
-
-    IF( debug ) PRINT *, "101.5"
-
-    CALL find_h_bruteforce_timer% start_timer()
-    n_problematic_h= 0
-    check_h: DO a= 1, this% npart, 1
-
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
-
-        n_problematic_h= n_problematic_h + 1
-
-        h(a)= find_h_backup( a, this% npart, this% pos, ndes )
-
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
-          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
-                   " force method."
-          PRINT *, "   Particle position: ", this% pos(:,a)
-          STOP
-        ENDIF
-
-      ENDIF
-
-    ENDDO check_h
-    CALL find_h_bruteforce_timer% stop_timer()
-    CALL find_h_bruteforce_timer% print_timer( 2 )
-
-    PRINT *, " * The smoothing length was found brute-force for ", &
-             n_problematic_h, " particles."
-    PRINT *
-
-    PRINT *, " * Computing neighbours' tree..."
-    PRINT *
-
-    IF( SUM(this% nu, DIM= 1)/SIZE(this% nu) == zero )THEN
-      PRINT *, "** ERROR! Average nu= 0. Are you assigning values to the ", &
-               "TYPE member array?"
-      PRINT *, "Stopping..."
-      STOP
-    ENDIF
-
-    cnt1= 0
-    DO
-
-      few_ncand= .FALSE.
-
-      ! Redo the previous step slightly different (it's built-in;
-      ! exact_nei_tree_update does not work if I don't call assign_h first),
-      ! then update the neighbour-tree and fill the neighbour-data
-      CALL exact_nei_tree_update( ndes,        &
-                                  this% npart, &
-                                  this% pos,   &
-                                  this% nu )
-
-      EXIT
-
-      ll_cell_loop2: DO ill= 1, nfinal
-
-        itot= nprev + ill
-        IF( nic(itot) == 0 ) CYCLE
-
-        IF( ncand(ill) < ndes - 1 )THEN
-
-          ! Increase the smoothing lengths of the paricles inside the cell,
-          ! and rebuild the tree
-          few_ncand= .TRUE.
-
-          particle_in_cell_loop: DO l= lpart(itot), rpart(itot)
-
-            h(l)= three*h(l)
-
-          ENDDO particle_in_cell_loop
-
-        ELSE
-
-          few_ncand= .FALSE.
-
-        ENDIF
-
-      ENDDO ll_cell_loop2
-
-      cnt1= cnt1 + 1
-
-      IF( .NOT.few_ncand .OR. cnt1 >= max_it_tree )THEN
-        PRINT *, " * Smoothing lengths assigned and neighbours' tree is built."
-        EXIT
-      ENDIF
-
-    ENDDO
-
-    CALL find_h_bruteforce_timer% start_timer()
-    n_problematic_h= 0
-    check_h2: DO a= 1, this% npart, 1
-
-      IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
-
-        n_problematic_h= n_problematic_h + 1
-        h(a)= find_h_backup( a, this% npart, this% pos, ndes )
-        PRINT *, h(a)
-        IF( ISNAN( h(a) ) .OR. h(a) <= zero )THEN
-          PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
-                   " force method."
-          PRINT *, "   Particle position: ", this% pos(:,a)
-          STOP
-        ENDIF
-
-      ENDIF
-
-    ENDDO check_h2
-    CALL find_h_bruteforce_timer% stop_timer()
-    CALL find_h_bruteforce_timer% print_timer( 2 )
-
-    PRINT *, " * The smoothing length was found brute-force for ", &
-             n_problematic_h, " particles."
-    PRINT *
-
-    ! Update the member variables storing smoothing length and particle volume
-    this% h= h
-    this% pvol= ( this% h/three )**three
-
- !   !PRINT *
- !   !PRINT *, "nfinal= ", nfinal
- !   ll_cell_loop: DO ill= 1, nfinal
- !
- !     itot= nprev + ill
- !     IF( nic(itot) == 0 ) CYCLE
- !
- !     particle_loop: DO l= lpart(itot), rpart(itot)
- !
- !       a=         iorig(l)
- !
- !       ha=        h(a)
- !       ha_1=      one/ha
- !       ha_3=      ha_1*ha_1*ha_1
- !
- !       xa=        pos_u(1,a)
- !       ya=        pos_u(2,a)
- !       za=        pos_u(3,a)
- !
- !       ! initialize correction matrix
- !       mat_xx=    zero
- !       mat_xy=    zero
- !       mat_xz=    zero
- !       mat_yy=    zero
- !       mat_yz=    zero
- !       mat_zz=    zero
- !
- !       cnt1= 0
- !       cnt2= 0
- !       cand_loop: DO k= 1, ncand(ill)
- !
- !         b=      all_clists(ill)%list(k)
- !
- !         IF( b == a )THEN
- !           cnt1= cnt1 + 1
- !         ENDIF
- !         IF( xa == pos_u(1,b) .AND. ya == pos_u(2,b) .AND. za == pos_u(3,b) &
- !         )THEN
- !           cnt2= cnt2 + 1
- !         ENDIF
- !
- !         ! Distances (ATTENTION: flatspace version !!!)
- !         dx=     xa - pos_u(1,b)
- !         dy=     ya - pos_u(2,b)
- !         dz=     za - pos_u(3,b)
- !         va=     SQRT(dx*dx + dy*dy + dz*dz)*ha_1
- !
- !         !IF( dx == 0 .AND. dy == 0 .AND. dz == 0 )THEN
- !         !  PRINT *, "va=", va
- !         !  PRINT *, "dz=", dx
- !         !  PRINT *, "dy=", dy
- !         !  PRINT *, "dz=", dz
- !         !  PRINT *, "xa=", xa
- !         !  PRINT *, "ya=", ya
- !         !  PRINT *, "za=", za
- !         !  PRINT *, "pos_u(1,b)", pos_u(1,b)
- !         !  PRINT *, "pos_u(2,b)", pos_u(2,b)
- !         !  PRINT *, "pos_u(3,b)", pos_u(3,b)
- !         !  STOP
- !         !ENDIF
- !
- !         ! get interpolation indices
- !         inde=  MIN(INT(va*dv_table_1),n_tab_entry)
- !         index1= MIN(inde + 1,n_tab_entry)
- !
- !         ! get tabulated values
- !         Wi=     W_no_norm(inde)
- !         Wi1=    W_no_norm(index1)
- !
- !         ! interpolate
- !         dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
- !         Wab_ha= Wi + (Wi1 - Wi)*dvv
- !
- !         ! "correction matrix" for derivs
- !         Wdx=    Wab_ha*dx
- !         Wdy=    Wab_ha*dy
- !         Wdz=    Wab_ha*dz
- !         mat_xx= mat_xx + Wdx*dx
- !         mat_xy= mat_xy + Wdx*dy
- !         mat_xz= mat_xz + Wdx*dz
- !         mat_yy= mat_yy + Wdy*dy
- !         mat_yz= mat_yz + Wdy*dz
- !         mat_zz= mat_zz + Wdz*dz
- !
- !       ENDDO cand_loop
- !
- !       ! correction matrix
- !       mat(1,1)= mat_xx
- !       mat(2,1)= mat_xy
- !       mat(3,1)= mat_xz
- !
- !       mat(1,2)= mat_xy
- !       mat(2,2)= mat_yy
- !       mat(3,2)= mat_yz
- !
- !       mat(1,3)= mat_xz
- !       mat(2,3)= mat_yz
- !       mat(3,3)= mat_zz
- !
- !       ! invert it
- !       CALL invert_3x3_matrix(mat,mat_1,invertible_matrix)
- !
- !      ! IF( .NOT.invertible_matrix )THEN
- !      !   PRINT *, "a= ", a
- !      !   PRINT *, "h(a)= ", h(a)
- !      !   PRINT *, "pos_u= ", pos_u(1,b), pos_u(2,b), pos_u(3,b)
- !      !   PRINT *, "nprev= ", nprev
- !      !   PRINT *, "ill= ", ill
- !      !   PRINT *, "itot= ", itot
- !      !   PRINT *, "ncand(ill)= ", ncand(ill)
- !      !   PRINT *, "cnt1= ", cnt1
- !      !   PRINT *, "cnt2= ", cnt2
- !      !   PRINT *
- !      !   STOP
- !      ! ENDIF
- !
- !     ENDDO particle_loop
- !
- !   ENDDO ll_cell_loop
-
-    !
-    !-- Compute the proper baryon number density with kernel interpolation
-    !
-
-    PRINT *, " * Computing SPH proper baryon number density with kernel", &
-             " interpolation..."
-    PRINT *
-    ! density calls dens_ll_cell, which computes nstar on particle a as
-    ! Na=     Na + nu(b)*Wab_ha, so this is nstar= nlrf*sq_g*Theta
-    ! It has to be compared with nstar= nlrf*sq_g*Theta
-    CALL density_loop( this% npart,     &
-                       this% pos,       &
-                       this% nu,        &
-                       this% h,         &
-                       this% nstar_int )
-
-    !-------------------------------------------------------------------------!
-    !-------------------------------------------------------------------------!
-    ! This point here is CRUCIAL: the particle distribution may NOT resolve   !
-    ! properly the steep density gradient at the surface, even if the APM     !
-    ! is used. This implies that the kernel interpolated nstar_int will be    !
-    ! different than nstar close to the surface.                              !
-    ! The error can be such that the recovery fails in SPHINCS_BSSN, and      !
-    ! this is of course a problem. Now, the density used in SPHINCS_BSSN      !
-    ! during the evolution is not the one given in the ID. Hence, once        !
-    ! nstar_int is computed, nlrf should be recomputed from it, so that the   !
-    ! density on the particles corresponds to the density that "they see",    !
-    ! that is, the kernel interpolated density that uses these values of nu.  !
-    !-------------------------------------------------------------------------!
-    !-------------------------------------------------------------------------!
-
-    this% nlrf_int= (this% nstar_int/this% Theta)/sq_det_g4
-    nlrf= this% nlrf_int
-
-    !-----------------------------------------------------------------------!
-    ! For single and piecewise polytropes, do not use the pressure          !
-    ! and specific internal energy from the ID.                             !
-    ! Compute them using the exact formulas for piecewise                   !
-    ! polytropic instead, starting from the kernel interpolated density     !
-    !-----------------------------------------------------------------------!
-
-    matter_objects_loop: DO i_matter= 1, this% n_matter, 1
-
-      ASSOCIATE( npart_in  => this% npart_i(i_matter-1) + 1, &
-                 npart_fin => this% npart_i(i_matter-1) +    &
-                              this% npart_i(i_matter) )
-
-      IF( this% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
-      ! If the |eos| is polytropic
-
-        PRINT *, " * Computing pressure and specific internal energy from", &
-                 " the baryon mass density, using the exact formulas for", &
-                 " single polytropic EOS, on matter object", i_matter,"..."
-
-        ! Formulas from Read et al. (2009), https://arxiv.org/abs/0812.2163
-
-        IF( this% cold_system )THEN
-        ! If the system is cold, compute pressure and specific energy
-        ! exactly using the polytropic EOS
-
-          PRINT *, " * Assuming a cold system: no thermal component considered."
-          PRINT *
-
-          Pr(npart_in:npart_fin)= &
-            this% all_eos(i_matter)% eos_parameters(poly$kappa) &
-            *( this% nlrf_int(npart_in:npart_fin)*m0c2_cu ) &
-            **this% all_eos(i_matter)% eos_parameters(poly$gamma)
-
-          ! Using this internal energy gives machine-precision relative errors
-          ! after the recovery, since it is computed from nlrf_int
-          ! Using the internal energy from the ID gives larger errors
-          u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
-            /(this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
-            *( this% all_eos(i_matter)% eos_parameters(poly$gamma) - one ) ) )
-
-          this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
-           + Pr(npart_in:npart_fin)/(this% nlrf_int(npart_in:npart_fin)*m0c2_cu)
-
-          cs(npart_in:npart_fin)= SQRT( &
-            this% all_eos(i_matter)% eos_parameters(poly$gamma) &
-              *Pr(npart_in:npart_fin)/ &
-            (this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
-            *this% enthalpy(npart_in:npart_fin)) )
-
-          !
-          !-- Leaving the following code here, commented, because it allows
-          !-- to test the pwp_eos MODULE using single polytropes
-          !-- All tests were passed on 23.02.2022
-          !
-    !      CALL select_EOS_parameters( 'soft' )
-    !
-    !      DO a= npart_in, npart_fin, 1
-    !
-    !        CALL gen_pwp_cold_eos( this% nlrf_int(a)*m0c2_cu, &
-    !                               Pr(a), u(a), cs(a) )
-    !
-    !        !CALL gen_pwp_eos( this% nlrf_int(a)*m0c2_cu, &
-    !        !                  this% u_pwp(a), tmp, &
-    !        !                  u(a), &
-    !        !                  Pr(a), cs(a) )
-    !      ENDDO
-
-          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-          this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
-
-        ELSE
-        ! If the system is hot, that is, has a thermal component, then
-        ! the density and the specific energy (the latter including both
-        ! cold and thermal part) should be supplied in the ID.
-        ! The pressure is computed using them (see pwp_EOS MODULE).
-
-          PRINT *, " * Assuming a hot system: thermal component considered."
-          PRINT *
-
-          u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
-
-          DO a= npart_in, npart_fin, 1
-
-            Pr(a)= &
-            ! cold pressure
-            this% all_eos(i_matter)% eos_parameters(poly$kappa) &
-              *( this% nlrf_int(a)*m0c2_cu ) &
-              **this% all_eos(i_matter)% eos_parameters(poly$gamma) &
-            + &
-            ! thermal pressure
-            Gamma_th_1*( this% nlrf_int(a)*m0c2_cu )* &
-              MAX(u(a) - ( Pr(a)/(this% nlrf_int(a)*m0c2_cu &
-                *( this% all_eos(i_matter)% eos_parameters(poly$gamma) &
-                   - one ) ) ), zero)
-
-          ENDDO
-          this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
-           + Pr(npart_in:npart_fin)/(this% nlrf_int(npart_in:npart_fin)*m0c2_cu)
-
-          cs(npart_in:npart_fin)= SQRT( &
-            this% all_eos(i_matter)% eos_parameters(poly$gamma) &
-              *Pr(npart_in:npart_fin)/ &
-            (this% nlrf_int(npart_in:npart_fin)*m0c2_cu &
-            *this% enthalpy(npart_in:npart_fin)) )
-
-          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-          this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
-
-        ENDIF
-
-      ELSEIF( this% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
-      ! If the |eos| is piecewise polytropic
-
-        PRINT *, " * Computing pressure and specific internal energy from", &
-                 " the baryon mass density, using the exact formulas for", &
-                 " piecewise polytropic EOS..."
-        PRINT *
-
-        IF( this% cold_system )THEN
-        ! If the system is cold, compute pressure and specific energy
-        ! exactly using the piecewise polytropic EOS
-
-          PRINT *, " * Assuming a cold system: no thermal component considered."
-          PRINT *
-
-          CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
-
-          DO a= npart_in, npart_fin, 1
-
-            CALL gen_pwp_cold_eos( this% nlrf_int(a)*m0c2_cu, &
-                                   Pr(a), u(a), cs(a) )
-
-          ENDDO
-          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-          this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
-
-        ELSE
-        ! If the system is hot, that is, has a thermal component, then
-        ! the density and the specific energy (the latter including both
-        ! cold and thermal part) should be supplied in the ID.
-        ! The pressure is computed using them (see pwp_EOS MODULE).
-
-          PRINT *, " * Assuming a hot system: thermal component considered."
-          PRINT *
-
-          u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
-
-          CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
-
-          DO a= npart_in, npart_fin, 1
-
-            CALL gen_pwp_eos( this% nlrf_int(a)*m0c2_cu, &
-                              this% u_pwp(a), tmp, &
-                              u(a), &
-                              Pr(a), cs(a) )
-
-          ENDDO
-          Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-          this% u_pwp(npart_in:npart_fin)= u(npart_in:npart_fin)
-
-        ENDIF
-
-     !   CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
-     !
-     !   !CALL gen_pwp_eos_all( this% npart_i(i_matter), &
-     !   !                      this% nlrf_int(npart_in:npart_fin)*m0c2_cu, &
-     !   !                      u(npart_in:npart_fin) )
-     !
-     !   DO a= npart_in, npart_fin, 1
-     !
-     !     CALL gen_pwp_eos( this% nlrf_int(a)*m0c2_cu, &
-     !                       this% u_pwp(a), tmp, &
-     !                       this% specific_energy(a), Pr(a), cs(a) )
-     !
-     !   ENDDO
-     !
-     !   Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-     !   this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-     !
-     !   IF( this% cold_system )THEN
-     !   ! If the system is cold, get the specific internal energy computed
-     !   ! exactly using the piecewise polytropic EOS
-     !     PRINT *, " * Assuming a cold system: no thermal component."
-     !     PRINT *
-     !     u(npart_in:npart_fin)= this% u_pwp(npart_in:npart_fin)
-     !   ELSE
-     !   ! Otherwise, get the specific nternal nergy from the ID
-     !     PRINT *, " * Assuming a hot system: thermal component added."
-     !     PRINT *
-     !     u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
-     !   ENDIF
-
-      ENDIF
-
-      END ASSOCIATE
-
-    ENDDO matter_objects_loop
-
-    !a= NINT(DBLE(this% npart/2))
-
-    !PRINT *, "nlrf_int(npart/2)=",         this% nlrf_int(a)
-    !PRINT *, "nlrf_int(npart/2)*m0c2_cu=", this% nlrf_int(a)*m0c2_cu
-    !PRINT *, "Pr(npart/2)=",               Pr(a)
-    !PRINT *, "Pr(npart/2)/m0c2_cu=",       Pr(a)/m0c2_cu
-
-    !STOP
-
-    !-------------------!
-    ! Assignment of Ye  !
-    !-------------------!
-
-    IF(.NOT.ALLOCATED( this% Ye ))THEN
-      ALLOCATE( this% Ye( this% npart ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array Ye ", &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !            "...allocation error for array lapse" )
-    ENDIF
-
-    assign_ye_on_particles: IF( this% compose_eos )THEN
-
-      PRINT *, "Assigning electron fraction using the CompOSE file ", &
-               TRIM(this% compose_path)//TRIM(this% compose_filename)
-
-      compose_namefile= TRIM(this% compose_path)//TRIM(this% compose_filename)
-      CALL this% read_compose_composition( compose_namefile )
-      CALL this% compute_Ye()
-
-      PRINT *, "Electron fraction assigned."
-      PRINT *
-
-    ELSE
-
-      this% Ye= zero
-
-    ENDIF assign_ye_on_particles
-    Ye= this% Ye
-
-    CALL this% sph_computer_timer% stop_timer()
-
-    !
-    !-- Printouts
-    !
-    !"(A28,E15.8,A10)"
-    DO i_matter= 1, this% n_matter, 1
-
-      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
-                 npart_fin  => this% npart_i(i_matter-1) +    &
-                               this% npart_i(i_matter) )
-
-      PRINT *, " * Maximum baryon density on object", i_matter, "=", &
-                MAXVAL(this% baryon_density(npart_in:npart_fin), DIM=1) &
-                /((Msun_geo*km2m*m2cm)**3)*(amu), " g cm^{-3}"
-                !*amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
-      PRINT *, " * Minimum baryon density on object", i_matter, "=", &
-                MINVAL( this% baryon_density(npart_in:npart_fin), DIM=1) &
-                /((Msun_geo*km2m*m2cm)**3)*(amu), " g cm^{-3}"
-                !*amu/(m2cm**3), " amu cm^{-3} (TODO: CHECK UNITS)"
-      PRINT *, " * Ratio between the two=", &
-               MAXVAL(this% baryon_density(npart_in:npart_fin), DIM=1)/ &
-               MINVAL(this% baryon_density(npart_in:npart_fin), DIM=1)
-      PRINT *
-
-      PRINT *, " * Maximum interpolated nlrf on object", i_matter, "=", &
-               MAXVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 ) &
-               /((Msun_geo*km2m*m2cm)**3), " baryon cm^{-3}"
-               !" m0c2_cu (TODO: CHECK UNITS)"!, &
-               !"baryon Msun_geo^{-3}"
-      PRINT *, " * Minimum interpolated nlrf on object", i_matter, "=", &
-               MINVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 ) &
-               /((Msun_geo*km2m*m2cm)**3), " baryon cm^{-3}"
-               !" m0c2_cu (TODO: CHECK UNITS)"!, &
-               !"baryon Msun_geo^{-3}"
-      PRINT *, " * Ratio between the two=", &
-               MAXVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 )/ &
-               MINVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 )
-      PRINT *
-
-      PRINT *, " * Maximum pressure", i_matter, "=", &
-               MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 ) &
-               *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
-               !" m0c2_cu (TODO: CHECK UNITS)"!, &
-               !"baryon Msun_geo^{-3}"
-      PRINT *, " * Minimum pressure", i_matter, "=", &
-               MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 ) &
-               *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
-               !" m0c2_cu (TODO: CHECK UNITS)"!, &
-               !"baryon Msun_geo^{-3}"
-      PRINT *, " * Ratio between the two=", &
-               MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )/ &
-               MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
-      PRINT *
-
-      PRINT *, " * Maximum specific internal energy", i_matter, "=", &
-               MAXVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 ), " c^2"
-               !" m0c2_cu (TODO: CHECK UNITS)"!, &
-               !"baryon Msun_geo^{-3}"
-      PRINT *, " * Minimum specific internal energy", i_matter, "=", &
-               MINVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 ), " c^2"
-               !" m0c2_cu (TODO: CHECK UNITS)"!, &
-               !"baryon Msun_geo^{-3}"
-      PRINT *, " * Ratio between the two=", &
-               MAXVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 )/ &
-               MINVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 )
-      PRINT *
-
-      this% nuratio_i(i_matter)= MAXVAL( this% nu(npart_in:npart_fin), DIM= 1 )&
-                                /MINVAL( this% nu(npart_in:npart_fin), DIM= 1 )
-      PRINT *, " * Maximum n. baryon per particle (nu) on object", i_matter, &
-                          "=", MAXVAL( this% nu(npart_in:npart_fin), DIM= 1 )
-      PRINT *, " * Minimum n. baryon per particle (nu) on object", i_matter, &
-                          "=", MINVAL( this% nu(npart_in:npart_fin), DIM= 1 )
-      PRINT *, " * Ratio between the two=", this% nuratio_i(i_matter)
-      PRINT *
-
-      PRINT *, " * Number of baryons on object", i_matter, "=", &
-               this% nbar_i(i_matter)
-      PRINT *, " * Total mass of the baryons on object", i_matter, "=", &
-               this% nbar_i(i_matter)*amu/Msun, "Msun =", &
-               this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter), &
-               "of the baryon mass of object", i_matter, "."
-      PRINT *
-
-      END ASSOCIATE
-
-    ENDDO
-
-    this% nuratio= MAXVAL( this% nu, DIM= 1 )/MINVAL( this% nu, DIM= 1 )
-    PRINT *, " * Baryon number ratio across the stars=", this% nuratio
-    PRINT *
-    PRINT *, " * Total mass of the baryons=", &
-             this% nbar_tot*amu/Msun, "Msun =", &
-             this% nbar_tot*amu/Msun/(SUM(this% masses, DIM=1)), &
-             "of the total baryon mass."
-    PRINT *
-
-    !
-    !-- Adjusting the baryon number per particle uniformly so that
-    !-- the baryon mass is correct, but the ratio between nu_max and nu_min
-    !-- does not change.
-    !-- nlrf is not to be rescaled, according to Stephan, since:
-    !--   (i)  it is directly computed from the LORENE ID and should therefore
-    !--        be consistent with it
-    !--   (ii) it is anyway immediately recomputed in SPHINCS_BSSN
-    !
-    IF( this% correct_nu )THEN
-
-      this% nbar_tot= zero
-      DO i_matter= 1, this% n_matter, 1
-
-        ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
-                   npart_fin  => this% npart_i(i_matter-1) +    &
-                                 this% npart_i(i_matter) )
-
-        this% nu( npart_in:npart_fin )= this% nu( npart_in:npart_fin ) &
-                      /(this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter))
-        nu( npart_in:npart_fin )= this% nu( npart_in:npart_fin )
-
-        this% nbar_i(i_matter)= this% nbar_i(i_matter) &
-                      /(this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter))
-
-        this% nbar_tot= this% nbar_tot + this% nbar_i(i_matter)
-
-        PRINT *, " * Number of corrected baryons on object", i_matter, "=", &
-                 this% nbar_i(i_matter)
-        PRINT *, " * Total mass of the corrected baryons object", i_matter, &
-                 "=", this% nbar_i(i_matter)*amu/Msun, "Msun =", &
-                 this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter), &
-                 "of the baryon mass of object", i_matter, "."
-
-        END ASSOCIATE
-
-      ENDDO
-
-      PRINT *, " * Total number of corrected baryons=", this% nbar_tot
-      PRINT *, " * Total mass of the corrected baryons=", &
-               this% nbar_tot*amu/Msun, "Msun =", &
-               this% nbar_tot*amu/Msun/(SUM(this% masses, DIM=1)), &
-               "of the total baryon mass."
-      PRINT *
-
-    ENDIF
-
-
-    !
-    !-- Test the recovery
-    !
-    CALL this% test_recovery( this% npart,       &
-                              this% pos,         &
-                              this% nlrf_int,    &
-                              this% u_pwp,       &
-                              this% pressure_cu, &
-                              this% v(1:3,:),    &
-                              this% theta,       &
-                              this% nstar_int )
-
-    !CALL this% test_recovery( npart,       &
-    !                          pos_u,         &
-    !                          nlrf,    &
-    !                          u,       &
-    !                          Pr, &
-    !                          vel_u,    &
-    !                          Theta,       &
-    !                          this% nstar_int )
-
-    !
-    !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN
-    !
-    IF( this% export_bin )THEN
-
-      IF( PRESENT(namefile) )THEN
-
-        finalnamefile= TRIM(namefile)//"00000"
-        dcount= -1 ! since it is increased before writing
-        CALL write_SPHINCS_dump(finalnamefile)
-
-      ELSE
-
-        basename= "NSNS."
-        dcount= -1 ! since it is increased before writing
-        CALL write_SPHINCS_dump()
-
-      ENDIF
-
-    ENDIF
-
-    ! Test the recovery on ech matter object separately
-    ! DO i_matter= 1, this% n_matter, 1
-    !
-    !   PRINT *, " * Testing recovery on matter object", i_matter, "..."
-    !   PRINT *
-    !
-    !   IF( i_matter > 9 )THEN
-    !     WRITE( i_mat, "(I2)" ) i_matter
-    !   ELSE
-    !     WRITE( i_mat, "(I1)" ) i_matter
-    !   ENDIF
-    !   finalnamefile= "recovery_test-"//TRIM(i_mat)//".dat"
-    !
-    !   ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
-    !              npart_fin  => this% npart_i(i_matter-1) +    &
-    !                            this% npart_i(i_matter) )
-    !
-    !   CALL this% test_recovery( this% npart_i    (i_matter),               &
-    !                             this% pos        (:,npart_in:npart_fin),   &
-    !                             this% nlrf_int   (npart_in:npart_fin),     &
-    !                             this% u_pwp      (npart_in:npart_fin),     &
-    !                             this% pressure_cu(npart_in:npart_fin),     &
-    !                             this% v          (1:3,npart_in:npart_fin), &
-    !                             this% theta      (npart_in:npart_fin),     &
-    !                             this% nstar_int  (npart_in:npart_fin),     &
-    !                             finalnamefile )
-    !
-    !   END ASSOCIATE
-    !
-    ! ENDDO
-
-    CALL exact_nei_tree_update( ndes,        &
-                                this% npart, &
-                                this% pos,   &
-                                this% nu )
-    this% h= h
-
-    CALL compute_and_print_quality_indicators &
-      (this% npart, this% pos, this% h, this% nu, this% nstar_int, sph_path)
-
-
-    ALLOCATE( this% adm_linear_momentum_i( this% n_matter, 3 ) )
-    this% adm_linear_momentum_fluid= zero
-    DO i_matter= 1, this% n_matter, 1
-
-      PRINT *, " * Estimating the ADM linear momentum using the canonical ", &
-               "SPH momentum per baryon on the particles, ", &
-               "on matter object ", i_matter, "..."
-      PRINT *
-
-      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
-                 npart_fin  => this% npart_i(i_matter-1) +    &
-                               this% npart_i(i_matter) )
-
-      CALL compute_adm_momentum_fluid_fields(                             &
-                                  npart_fin - npart_in + 1,               &
-                                  this% g_xx(npart_in:npart_fin),         &
-                                  this% g_xy(npart_in:npart_fin),         &
-                                  this% g_xz(npart_in:npart_fin),         &
-                                  this% g_yy(npart_in:npart_fin),         &
-                                  this% g_yz(npart_in:npart_fin),         &
-                                  this% g_zz(npart_in:npart_fin),         &
-                                  this% lapse(npart_in:npart_fin),        &
-                                  this% shift_x(npart_in:npart_fin),      &
-                                  this% shift_y(npart_in:npart_fin),      &
-                                  this% shift_z(npart_in:npart_fin),      &
-                                  this% nu(npart_in:npart_fin),           &
-                                  this% Theta(npart_in:npart_fin),        &
-                                  this% nlrf_int(npart_in:npart_fin),     &
-                                  this% pressure_cu(npart_in:npart_fin),  &
-                                  this% u_pwp(npart_in:npart_fin),        &
-                                  this% v(1:3,npart_in:npart_fin),        &
-                                  this% adm_linear_momentum_i(i_matter,:) )
-
-      PRINT *, "   SPH estimate of the ADM linear momentum computed using ", &
-               "the canonical momentum per baryon, on matter object", &
-               i_matter,"= "
-      PRINT *, "   (", this% adm_linear_momentum_i(i_matter, 1), ","
-      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 2), ","
-      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 3), ") Msun*c"
-      PRINT *
-      this% adm_linear_momentum_fluid= this% adm_linear_momentum_fluid + &
-                                       this% adm_linear_momentum_i(i_matter,:)
-
-      END ASSOCIATE
-
-    ENDDO
-    PRINT *, "   SPH estimate of the ADM momentum of the fluid ", &
-             "computed using the canonical momentum per baryon= "
-    PRINT *, "   (", this% adm_linear_momentum_fluid(1), ","
-    PRINT *, "    ", this% adm_linear_momentum_fluid(2), ","
-    PRINT *, "    ", this% adm_linear_momentum_fluid(3), ") Msun*c"
-    PRINT *
-
-
-    IF( ASSOCIATED(this% post_process_sph_id) )THEN
-
-      CALL this% post_process_sph_id( this% npart, this% pos, &
-                                    this% nlrf_int, &
-                                    this% u_pwp, &
-                                    this% pressure_cu, this% v(1:3,:), &
-                                    this% theta, this% nstar_int, this% nu, &
-                                    this% g_xx,      &
-                                    this% g_xy,      &
-                                    this% g_xz,      &
-                                    this% g_yy,      &
-                                    this% g_yz,      &
-                                    this% g_zz,      &
-                                    this% lapse,     &
-                                    this% shift_x,   &
-                                    this% shift_y,   &
-                                    this% shift_z,   &
-                                    this% adm_linear_momentum_fluid, &
-                                    this% adm_mass )
-
-    ELSE
-
-      PRINT *, "** ERROR! The PROCEDURE POINTER post_process_sph_id ", &
-               "is not associated with any PROCEDURE!"
-      PRINT *, " * Stopping..."
-      PRINT *
-      STOP
-
-    ENDIF
-
-    vel_u= this% v(1:3,:)
-
-    this% adm_linear_momentum_fluid= zero
-    DO i_matter= 1, this% n_matter, 1
-
-      PRINT *, " * Estimating the ADM linear momentum using the canonical ", &
-               "SPH momentum per baryon on the particles, ", &
-               "on matter object ", i_matter, "..."
-      PRINT *
-
-      ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
-                 npart_fin  => this% npart_i(i_matter-1) +    &
-                               this% npart_i(i_matter) )
-
-      CALL compute_adm_momentum_fluid_fields(                             &
-                                  npart_fin - npart_in + 1,               &
-                                  this% g_xx(npart_in:npart_fin),         &
-                                  this% g_xy(npart_in:npart_fin),         &
-                                  this% g_xz(npart_in:npart_fin),         &
-                                  this% g_yy(npart_in:npart_fin),         &
-                                  this% g_yz(npart_in:npart_fin),         &
-                                  this% g_zz(npart_in:npart_fin),         &
-                                  this% lapse(npart_in:npart_fin),        &
-                                  this% shift_x(npart_in:npart_fin),      &
-                                  this% shift_y(npart_in:npart_fin),      &
-                                  this% shift_z(npart_in:npart_fin),      &
-                                  this% nu(npart_in:npart_fin),           &
-                                  this% Theta(npart_in:npart_fin),        &
-                                  this% nlrf_int(npart_in:npart_fin),     &
-                                  this% pressure_cu(npart_in:npart_fin),  &
-                                  this% u_pwp(npart_in:npart_fin),        &
-                                  vel_u(1:3,npart_in:npart_fin),        &
-                                  this% adm_linear_momentum_i(i_matter,:) )
-
-      PRINT *, "   SPH estimate of the ADM linear momentum computed using ", &
-               "the canonical momentum per baryon, on matter object", &
-               i_matter,"= "
-      PRINT *, "   (", this% adm_linear_momentum_i(i_matter, 1), ","
-      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 2), ","
-      PRINT *, "    ", this% adm_linear_momentum_i(i_matter, 3), ") Msun*c"
-      PRINT *
-      this% adm_linear_momentum_fluid= this% adm_linear_momentum_fluid + &
-                                       this% adm_linear_momentum_i(i_matter,:)
-
-      END ASSOCIATE
-
-    ENDDO
-    PRINT *, "   SPH estimate of the ADM momentum of the fluid ", &
-             "computed using the canonical momentum per baryon= "
-    PRINT *, "   (", this% adm_linear_momentum_fluid(1), ","
-    PRINT *, "    ", this% adm_linear_momentum_fluid(2), ","
-    PRINT *, "    ", this% adm_linear_momentum_fluid(3), ") Msun*c"
-    PRINT *
-
-    !
-    !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN
-    !
- !   IF( this% export_bin )THEN
- !
- !     IF( PRESENT(namefile) )THEN
- !
- !       finalnamefile= TRIM( namefile ) // "00000"
- !       dcount= -1 ! since it is increased before writing
- !       CALL write_SPHINCS_dump( finalnamefile )
- !
- !     ELSE
- !
- !       basename= "NSNS."
- !       dcount= -1 ! since it is increased before writing
- !       CALL write_SPHINCS_dump()
- !
- !     ENDIF
- !
- !   ENDIF
-
-    !
-    !-- Compute particle number density
-    !
-
-    PRINT *, " * Computing particle number density by kernel interpolation..."
-    PRINT *
-    nu= one
-    CALL density_loop( this% npart, this% pos, nu, h, &
-                       this% particle_density_int )
-
-    IF( debug ) PRINT *, "100"
-
-    !CALL COM( this% npart, this% pos, this% nu, &
-    !          com_x_newt, com_y_newt, com_z_newt, com_d_newt )
-    !CALL COM( this% npart_i(1), this% pos(:,1:this% npart_i(1)), &
-    !          this% nu(1:this% npart_i(1)), &
-    !          com_x_newt, com_y_newt, com_z_newt, com_d_newt )
-
-    !CALL COM_1PN( this% npart, this% pos, this% v, &
-    !              !this% v_euler_x, &
-    !              this% nu, this% baryon_density, &
-    !              this% specific_energy, this% nstar_int, sq_detg4, gg4, &
-    !              com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn )
-    !CALL COM_1PN( this% npart_i(1), this% pos(:,1:this% npart_i(1)), &
-    !              this% v(1:3,1:this% npart_i(1)), &
-    !              !this% v_euler_x, &
-    !              this% nu(1:this% npart_i(1)), &!/sq_det_g4(1:this% npart_i(1))/this% Theta(1:this% npart_i(1)), &
-    !              !this% baryon_density(1:this% npart_i(1)), &
-    !              this% nlrf_int(1:this% npart_i(1)), &
-    !              this% u_pwp(1:this% npart_i(1)), &
-    !              this% nstar_int(1:this% npart_i(1)), &
-    !              sq_det_g4(1:this% npart_i(1)), &
-    !              gg4(:,1:this% npart_i(1)), &
-    !              com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn )
-
-    IF( debug ) PRINT *, "101"
-
-    !nu   = this% nu
-    !vel_u= this% v(1:3,:)
-    !CALL lin_mom( pnorm_newt, px_newt, py_newt, pz_newt )
-    !CALL momentum_1pn( this% npart, this% pos, &
-    !                   this% v, &
-    !                   !this% v_euler_x, &
-    !                   this% nu, this% baryon_density, &
-    !                   this% specific_energy, this% pressure_cu, &
-    !                   this% nstar_int, this% h, &
-    !                   sq_detg4, gg4, px, py, pz )
-    !CALL momentum_1pn( this% npart, this% pos, &
-    !                   this% v, &
-    !                   !this% v_euler_x, &
-    !                   this% nu, &
-    !                   this% nlrf_int, &
-    !                   this% u_pwp, &
-    !                   this% pressure_cu, &
-    !                   this% nstar_int, &
-    !                   this% h, &
-    !                   sq_detg4, gg4, px, py, pz )
-
-    !PRINT *, "LORENE mass:            ", this% masses(1), mass_1pn*amu/Msun
-    !PRINT *, "LORENE COM:            ", &
-    !         this% barycenter(1,:)! + this% barycenter(2,:)
-    !PRINT *, "Newtonian COM:         ", &
-    !         com_x_newt, com_y_newt, com_z_newt!, com_d_newt
-    !PRINT *, "1PN COM:               ", &
-    !         com_x_1pn, com_y_1pn, com_z_1pn!, com_d_1pn
-    !PRINT *, "Newtonian spacetime momentum:", px_newt/SUM(nu,DIM=1), py_newt/SUM(nu,DIM=1), pz_newt/SUM(nu,DIM=1), pnorm_newt/SUM(nu,DIM=1)
-    !PRINT *, "1PN spacetime momentum:", px/mass_1pn, py/mass_1pn, pz/mass_1pn, pnorm/mass_1pn
-    !PRINT *
-    !PRINT *
-
-    !
-    !-- Deallocate MODULE variables
-    !
-    PRINT *, " * Deallocating MODULE variables..."
-    PRINT *
-    IF( ALLOCATED(g4_ll) ) CALL deallocate_metric_on_particles
-    CALL deallocate_gradient
-    DEALLOCATE( alive )
-    CALL deallocate_RCB_tree_memory_3D
-    CALL deallocate_SPH_memory
-
-    !STOP
-
-    call_flag= call_flag + 1
-    this% call_flag= call_flag
-
-    PRINT *, "** Subroutine compute_and_print_sph_variables executed."
-    PRINT *
-
-  END PROCEDURE compute_and_print_sph_variables
-
-
-END SUBMODULE sph_variables
 

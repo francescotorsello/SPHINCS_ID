@@ -296,7 +296,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    nstar_sph= this% nstar_int
+    nstar_sph= this% nstar_sph
 
 END PROCEDURE get_nstar_sph
 
@@ -332,7 +332,7 @@ END PROCEDURE get_nstar_sph
 
     IMPLICIT NONE
 
-    nlrf_sph= this% nlrf_int
+    nlrf_sph= this% nlrf_sph
 
   END PROCEDURE get_nlrf_sph
 
@@ -388,7 +388,7 @@ END PROCEDURE get_nstar_sph
 
     IMPLICIT NONE
 
-    u_sph= this% u_pwp
+    u_sph= this% u_sph
 
   END PROCEDURE get_u_sph
 

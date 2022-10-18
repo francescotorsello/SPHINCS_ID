@@ -113,6 +113,8 @@ SUBMODULE(sph_particles) quality_indicators
     LOGICAL                      :: exist
     CHARACTER(LEN=:), ALLOCATABLE:: namefile, err_msg
 
+    PRINT *, " * Computing the quality indicators..."
+
     qi_1  = zero
     qi_2  = zero
     qi_3  = zero
@@ -275,8 +277,8 @@ SUBMODULE(sph_particles) quality_indicators
     ENDDO ll_cell_loop
     !$OMP END PARALLEL DO
 
-    PRINT *
     PRINT *, " * Printing the quality indicators to file..."
+    PRINT *
 
     IF(PRESENT(path))THEN
       namefile= path//"quality_indicators.dat"

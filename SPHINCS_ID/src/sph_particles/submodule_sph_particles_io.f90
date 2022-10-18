@@ -107,16 +107,16 @@ SUBMODULE (sph_particles) io
                                this% npart_i(i_matter) )
 
         max_nlrf_id = MAXVAL( this% nlrf(npart_in:npart_fin), DIM= 1 )
-        max_nlrf_sph= MAXVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 )
-        min_nlrf_sph= MINVAL( this% nlrf_int(npart_in:npart_fin), DIM= 1 )
+        max_nlrf_sph= MAXVAL( this% nlrf_sph(npart_in:npart_fin), DIM= 1 )
+        min_nlrf_sph= MINVAL( this% nlrf_sph(npart_in:npart_fin), DIM= 1 )
 
         max_pr_id = MAXVAL( this% pressure(npart_in:npart_fin), DIM= 1 )
         max_pr_sph= MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
         min_pr_sph= MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
 
         max_u_id = MAXVAL( this% specific_energy(npart_in:npart_fin), DIM= 1 )
-        max_u_sph= MAXVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 )
-        min_u_sph= MINVAL( this% u_pwp(npart_in:npart_fin), DIM= 1 )
+        max_u_sph= MAXVAL( this% u_sph(npart_in:npart_fin), DIM= 1 )
+        min_u_sph= MINVAL( this% u_sph(npart_in:npart_fin), DIM= 1 )
 
         PRINT *, "   * On matter object ", i_matter, ":"
         PRINT *
@@ -308,10 +308,10 @@ SUBMODULE (sph_particles) io
       this% pos        = pos_u(:,1:npart)
       this% v(0,:)     = one
       this% v(1:3,:)   = vel_u(:,1:npart)
-      this% u_pwp      = u(1:npart)
+      this% u_sph      = u(1:npart)
       this% nu         = nu(1:npart)
       this% h          = h(1:npart)
-      this% nlrf_int   = nlrf(1:npart)
+      this% nlrf_sph   = nlrf(1:npart)
       this% pressure_cu= Pr(1:npart)
       this% Ye         = Ye(1:npart)
       this% theta      = Theta(1:npart)
@@ -420,32 +420,32 @@ SUBMODULE (sph_particles) io
         vel_u( 1, itr ), &                      ! 5     37
         vel_u( 2, itr ), &                      ! 6     38
         vel_u( 3, itr ), &                      ! 7     39
-        h( itr ), &                             ! 8     40
-        u( itr ), &                             ! 9     41
-        nu( itr ), &                            ! 10    42
-        nlrf( itr ), &                          ! 11    43
-        temp( itr ), &                          ! 12    44
-        av( itr ), &                            ! 13    45
-        ye( itr ), &                            ! 14    46
-        divv( itr ), &                          ! 15    47
-        Theta( itr ), &                         ! 16    48
-        Pr( itr )                               ! 17    49
+        h(itr), &                             ! 8     40
+        u(itr), &                             ! 9     41
+        nu(itr), &                            ! 10    42
+        nlrf(itr), &                          ! 11    43
+        temp(itr), &                          ! 12    44
+        av(itr), &                            ! 13    45
+        ye(itr), &                            ! 14    46
+        divv(itr), &                          ! 15    47
+        Theta(itr), &                         ! 16    48
+        Pr(itr)                               ! 17    49
         !this% pos( 1, itr ), &                  ! 2     34
         !this% pos( 2, itr ), &                  ! 3     35
         !this% pos( 3, itr ), &                  ! 4     36
         !this% v( 1, itr ), &                    ! 5     37
         !this% v( 2, itr ), &                    ! 6     38
         !this% v( 3, itr ), &                    ! 7     39
-        !this% h( itr ), &                       ! 8     40
-        !this% u_pwp( itr ), &                   ! 9     41
-        !this% nu( itr ), &                      ! 10    42
-        !this% nlrf_int( itr ), &                ! 11    43
-        !temp( itr ), &                          ! 12    44
-        !av( itr ), &                            ! 13    45
-        !ye( itr ), &                            ! 14    46
-        !divv( itr ), &                          ! 15    47
-        !this% theta( itr ), &                   ! 16    48
-        !this% pressure_cu( itr )                ! 17    49
+        !this% h(itr), &                       ! 8     40
+        !this% u_sph(itr), &                   ! 9     41
+        !this% nu(itr), &                      ! 10    42
+        !this% nlrf_sph(itr), &                ! 11    43
+        !temp(itr), &                          ! 12    44
+        !av(itr), &                            ! 13    45
+        !ye(itr), &                            ! 14    46
+        !divv(itr), &                          ! 15    47
+        !this% theta(itr), &                   ! 16    48
+        !this% pressure_cu(itr)                ! 17    49
 
       IF( ios > 0 )THEN
         PRINT *, "...error when writing the arrays in " &
@@ -464,7 +464,7 @@ SUBMODULE (sph_particles) io
     !CALL deallocate_metric_on_particles
     CALL deallocate_SPH_memory
 
-    PRINT *, " * LORENE SPH ID on the particles saved to formatted " &
+    PRINT *, " * SPH ID on the particles saved to formatted " &
              // "file ", TRIM(namefile)
 
     PRINT *, "** Subroutine read_sphincs_dump_print_formatted " &
@@ -478,7 +478,7 @@ SUBMODULE (sph_particles) io
 
     !************************************************
     !
-    !# Print the LORENE ID on the particles in a
+    !# Print the SPH ID on the particles in a
     !  formatted file
     !
     !  FT 18.09.2020
@@ -543,7 +543,7 @@ SUBMODULE (sph_particles) io
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "# Values of the fields (including coordinates) exported by LORENE "&
+    "# Values of the fields (including coordinates) "&
     // "on each grid point"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
@@ -640,34 +640,33 @@ SUBMODULE (sph_particles) io
         this% pos( 1, itr ), &                                       ! 2
         this% pos( 2, itr ), &                                       ! 3
         this% pos( 3, itr ), &                                       ! 4
-        this% lapse( itr ), &                                        ! 5
-        this% shift_x( itr ), &                                      ! 6
-        this% shift_y( itr ), &                                      ! 7
-        this% shift_z( itr ), &                                      ! 8
-        this% baryon_density( itr ), &                               ! 9
-        this% energy_density( itr ), &                               ! 10
-        this% specific_energy( itr ), &                              ! 11
-        this% pressure( itr ), &                                     ! 12
-        this% pressure_cu( itr ), &                                  ! 13
-        this% v_euler_x( itr ), &                                    ! 14
-        this% v_euler_y( itr ), &                                    ! 15
-        this% v_euler_z( itr ), &                                    ! 16
+        this% lapse(itr), &                                        ! 5
+        this% shift_x(itr), &                                      ! 6
+        this% shift_y(itr), &                                      ! 7
+        this% shift_z(itr), &                                      ! 8
+        this% baryon_density(itr), &                               ! 9
+        this% energy_density(itr), &                               ! 10
+        this% specific_energy(itr), &                              ! 11
+        this% pressure(itr), &                                     ! 12
+        this% pressure_cu(itr), &                                  ! 13
+        this% v_euler_x(itr), &                                    ! 14
+        this% v_euler_y(itr), &                                    ! 15
+        this% v_euler_z(itr), &                                    ! 16
         this% v( 1, itr ), &                                         ! 17
         this% v( 2, itr ), &                                         ! 18
         this% v( 3, itr ), &                                         ! 19
-        this% nu( itr ), &                                           ! 20
-        this% nlrf( itr ), &                                         ! 21
-        this% Ye( itr ), &                                           ! 22
-        this% Theta( itr ), &                                        ! 23
-        this% nstar( itr ), &                                        ! 24
-        this% nstar_int( itr ), &                                    ! 25
-        this% h( itr ), &                                            ! 26
-        this% particle_density( itr ), &                             ! 27
-        this% particle_density_int( itr ), &                         ! 28
-        this% pvol( itr ), &                                         ! 29
-        this% pmass( itr ), &                                        ! 30
-        this% u_pwp( itr ), &                                        ! 31
-        this% nlrf_int( itr )                                        ! 32
+        this% nu(itr), &                                           ! 20
+        this% nlrf(itr), &                                         ! 21
+        this% Ye(itr), &                                           ! 22
+        this% Theta(itr), &                                        ! 23
+        this% nstar(itr), &                                        ! 24
+        this% nstar_sph(itr), &                                    ! 25
+        this% h(itr), &                                            ! 26
+        this% particle_density(itr), &                             ! 27
+        this% particle_density_sph(itr), &                         ! 28
+        this% pvol(itr), &                                         ! 29
+        this% u_sph(itr), &                                        ! 30
+        this% nlrf_sph(itr)                                        ! 31
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &
@@ -680,7 +679,7 @@ SUBMODULE (sph_particles) io
 
     CLOSE( UNIT= 2 )
 
-    PRINT *, " * LORENE ID on particles saved to formatted file ", &
+    PRINT *, " * SPH ID on particles saved to formatted file ", &
              TRIM(finalnamefile)
     PRINT *
 
@@ -756,10 +755,10 @@ SUBMODULE (sph_particles) io
 
     DO itr= 1, this% npart, 1
 
-      IF( this% baryon_density ( itr ) < 0 .OR. &
-          this% energy_density ( itr ) < 0 .OR. &
-          this% specific_energy( itr ) < 0 .OR. &
-          this% pressure       ( itr ) < 0 )THEN
+      IF( this% baryon_density (itr) < 0 .OR. &
+          this% energy_density (itr) < 0 .OR. &
+          this% specific_energy(itr) < 0 .OR. &
+          this% pressure       (itr) < 0 )THEN
 
         negative_hydro= .TRUE.
 
@@ -796,7 +795,7 @@ SUBMODULE (sph_particles) io
   END PROCEDURE analyze_hydro
 
 
-  !MODULE PROCEDURE write_lorene_bns_id_dump
+  !MODULE PROCEDURE write_sph_id_dump
   !
   !    !*************************************************
   !    !
@@ -894,7 +893,7 @@ SUBMODULE (sph_particles) io
   !
   !    CLOSE( UNIT= 3 )
   !
-  !END PROCEDURE write_lorene_bns_id_dump
+  !END PROCEDURE write_sph_id_dump
 
 
 END SUBMODULE io

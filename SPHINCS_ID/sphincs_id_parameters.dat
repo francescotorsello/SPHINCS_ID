@@ -14,15 +14,15 @@
 ! n_bns and the number of specified components of filenames must be the same
 n_id=1                          ! Number of physical systems to use
 ! Path to the directory containing the ID files
-common_path=!"lorene-id-files/"
-            "fuka-id-files/"
+common_path="lorene-id-files/"
+            !"fuka-id-files/"
             !"eccentric-ejecta-files/"
 filenames(1)=!"BNSLO_1.3-1.3_mpa1_45km.bin"
-             !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
+             "BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSFU_1.4-1.4_poly2.00_45km.info"
-	     "BNSFU_1.2-1.5_MPA1_45km_ECC_RED.info"
+             !"BNSFU_1.2-1.5_MPA1_45km_ECC_RED.info"
              !"BNSFU_1.4-1.4_MS1b_45km.info"
              !"BNSFU_1.3-1.3_MPA1_45km_ECC_RED.info"
              !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
@@ -33,7 +33,7 @@ filenames(1)=!"BNSLO_1.3-1.3_mpa1_45km.bin"
              !!!"BNSLO_apr4_1.2-1.5_60km.bin"
              !!!"BNSLO_apr4_1.4-1.4_43.75km.bin"
              !"BNSLO_apr4_1.35-1.35_42km.bin"
-             "BNSLO_mpa1_1.3-1.3_45km.bin"
+             !"BNSLO_mpa1_1.3-1.3_45km.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-73inside.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
@@ -118,7 +118,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_lorene_bns_particles.par parameter file                !
 !------------------------------------------------------------------!
-placer(1,:)=2                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object

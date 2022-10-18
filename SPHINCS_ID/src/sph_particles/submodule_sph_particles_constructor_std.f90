@@ -146,7 +146,7 @@ SUBMODULE (sph_particles) constructor_std
     TYPE parts_i
       DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: pos_i
       DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pvol_i
-      DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pmass_i
+      !DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: pmass_i
       DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: h_i
       DOUBLE PRECISION, DIMENSION( : ),    ALLOCATABLE:: nu_i
     END TYPE
@@ -408,7 +408,7 @@ SUBMODULE (sph_particles) constructor_std
       tmp= 2*npart_des_i(i_matter)
       ALLOCATE( parts_all(i_matter)% pos_i  ( 3, tmp ) )
       ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
-      ALLOCATE( parts_all(i_matter)% pmass_i( tmp ) )
+      !ALLOCATE( parts_all(i_matter)% pmass_i( tmp ) )
       ALLOCATE( parts_all(i_matter)% h_i    ( tmp ) )
       ALLOCATE( parts_all(i_matter)% nu_i   ( tmp ) )
     ENDDO
@@ -541,8 +541,8 @@ SUBMODULE (sph_particles) constructor_std
       ENDDO
 
       ! Allocate the temporary array, with fixed size, to store data
-      ALLOCATE( tmp_pos( n_cols, 2*npart_tmp ) )
-      tmp_pos= 0.0D0
+      ALLOCATE( tmp_pos( 4, 2*npart_tmp ) )
+      tmp_pos= zero
 
       ! Read the number of matter objects and the particle numbers on each
       ! matter object
@@ -584,8 +584,17 @@ SUBMODULE (sph_particles) constructor_std
       ! Read the data into the temporary array
       DO itr= 1, npart_tmp, 1
 
-        READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
-          tmp_pos( :, itr )
+        IF(read_nu)THEN
+
+          READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+            tmp_pos( :, itr )
+
+        ELSE
+
+          READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+            tmp_pos( 1:3, itr )
+
+        ENDIF
 
         IF( ios > 0 )THEN
           PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
@@ -597,6 +606,78 @@ SUBMODULE (sph_particles) constructor_std
       ENDDO
 
       CLOSE( UNIT= unit_pos )
+
+
+      ! First guess of the particle volume and mass (the first will be computed
+      ! exactly later, as the cube of the exact smoothing length). The particle
+      ! volume guess determines the first guess for the smoothing length
+      ! The particle mass is computed if nu is read from the file
+      DO itr= 1, parts% n_matter, 1
+
+        ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
+                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+
+          DEALLOCATE( parts_all(itr)% h_i )
+          IF(.NOT.ALLOCATED( parts_all(itr)% h_i ))THEN
+            ALLOCATE( parts_all(itr)% h_i( npart_i_tmp(itr) ), &
+                      STAT= ios, ERRMSG= err_msg )
+            IF( ios > 0 )THEN
+              PRINT *, "...allocation error for array h_i ", &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, &
+            !        "...allocation error for array v_euler_z" )
+          ENDIF
+          DEALLOCATE( parts_all(itr)% pvol_i )
+          IF(.NOT.ALLOCATED( parts_all(itr)% pvol_i ))THEN
+            ALLOCATE( parts_all(itr)% pvol_i( npart_i_tmp(itr) ), &
+                      STAT= ios, ERRMSG= err_msg )
+            IF( ios > 0 )THEN
+              PRINT *, "...allocation error for array pvol_i ", &
+                       ". The error message is", err_msg
+              STOP
+            ENDIF
+            !CALL test_status( ios, err_msg, &
+            !        "...allocation error for array v_euler_z" )
+          ENDIF
+
+          pvol_tmp= zero
+         !DO a= npart_in, npart_fin - 1, 1
+         !
+         !  pvol_tmp= pvol_tmp + ABS( parts% pos(3,a + 1) &
+         !                          - parts% pos(3,a) )
+         !
+         !ENDDO
+          DO a= npart_in, npart_fin - 1, 1
+
+            pvol_tmp= pvol_tmp + ABS( tmp_pos(3,a + 1) - tmp_pos(3,a) )
+
+          ENDDO
+          pvol_tmp= pvol_tmp/( npart_i_tmp(itr) - 1 )
+
+          !parts% pvol(npart_in:npart_fin)= 2.D0*pvol_tmp**3.D0
+          parts_all(itr)% pvol_i= 2.D0*pvol_tmp**3.D0
+
+          DO a= npart_in, npart_fin, 1
+            parts_all(itr)% h_i(a)= (parts_all(itr)% pvol_i(a))**third
+          ENDDO
+
+          IF(.NOT.read_nu) parts_all(itr)% nu_i= &
+            parts% masses(itr)/npart_i_tmp(itr)
+
+        END ASSOCIATE
+
+        PRINT *, " * Maximum n. baryon per particle (nu) on object", itr, &
+                            "=", MAXVAL( parts_all(itr)% nu_i, DIM= 1 )
+        PRINT *, " * Minimum n. baryon per particle (nu) on object", itr, &
+                            "=", MINVAL( parts_all(itr)% nu_i, DIM= 1 )
+        PRINT *, " * Ratio between the two=", &
+                 MAXVAL( parts_all(itr)% nu_i, DIM= 1 )&
+                /MINVAL( parts_all(itr)% nu_i, DIM= 1 )
+        PRINT *
+
+      ENDDO
 
 
       ! Check that the positions are within the sizes of the matter objects.
@@ -685,18 +766,18 @@ SUBMODULE (sph_particles) constructor_std
             PRINT *
           ENDIF
 
-          IF( read_nu )THEN
+          !IF( read_nu )THEN
 
             CALL impose_equatorial_plane_symmetry( npart_i_tmp(itr), &
                                             tmp_pos(1:3,npart_in:npart_fin), &
                                             tmp_pos(4,npart_in:npart_fin) )
 
-          ELSE
-
-            CALL impose_equatorial_plane_symmetry( npart_i_tmp(itr), &
-                                            tmp_pos(1:3,npart_in:npart_fin) )
-
-          ENDIF
+          !ELSE
+          !
+          !  CALL impose_equatorial_plane_symmetry( npart_i_tmp(itr), &
+          !                                  tmp_pos(1:3,npart_in:npart_fin) )
+          !
+          !ENDIF
 
           !parts% npart_i(itr)= 2*parts% npart_i(itr)
           parts_all(itr)% pos_i= &
@@ -732,18 +813,18 @@ SUBMODULE (sph_particles) constructor_std
           DEALLOCATE(parts_all(2)% pos_i)
           DEALLOCATE(parts_all(2)% pvol_i)
           DEALLOCATE(parts_all(2)% h_i)
-          DEALLOCATE(parts_all(2)% pmass_i)
+          !DEALLOCATE(parts_all(2)% pmass_i)
           DEALLOCATE(parts_all(2)% nu_i)
 
           CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
                                            parts_all(1)% pvol_i,  &
-                                           parts_all(1)% pmass_i, &
+                                           !parts_all(1)% pmass_i, &
                                            parts_all(1)% nu_i,    &
                                            parts_all(1)% h_i,     &
                                            parts% npart_i(1),     &
                                            parts_all(2)% pos_i,   &
                                            parts_all(2)% pvol_i,  &
-                                           parts_all(2)% pmass_i, &
+                                           !parts_all(2)% pmass_i, &
                                            parts_all(2)% nu_i,    &
                                            parts_all(2)% h_i,     &
                                            parts% npart_i(2) )
@@ -780,78 +861,6 @@ SUBMODULE (sph_particles) constructor_std
    !     !        "...allocation error for array v_euler_z" )
    !   ENDIF                                                  
 
-      ! First guess of the particle volume and mass (the first will be computed
-      ! exactly later, as the cube of the exact smoothing length). The particle
-      ! volume guess determines the first guess for the smoothing length
-      ! The particle mass is computed if nu is read from the file
-      DO itr= 1, parts% n_matter, 1
-
-        ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
-                   npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
-
-          DEALLOCATE( parts_all(itr)% h_i )
-          IF(.NOT.ALLOCATED( parts_all(itr)% h_i ))THEN
-            ALLOCATE( parts_all(itr)% h_i( npart_i_tmp(itr) ), &
-                      STAT= ios, ERRMSG= err_msg )
-            IF( ios > 0 )THEN
-              PRINT *, "...allocation error for array h_i ", &
-                       ". The error message is", err_msg
-              STOP
-            ENDIF
-            !CALL test_status( ios, err_msg, &
-            !        "...allocation error for array v_euler_z" )
-          ENDIF
-          DEALLOCATE( parts_all(itr)% pvol_i )
-          IF(.NOT.ALLOCATED( parts_all(itr)% pvol_i ))THEN
-            ALLOCATE( parts_all(itr)% pvol_i( npart_i_tmp(itr) ), &
-                      STAT= ios, ERRMSG= err_msg )
-            IF( ios > 0 )THEN
-              PRINT *, "...allocation error for array pvol_i ", &
-                       ". The error message is", err_msg
-              STOP
-            ENDIF
-            !CALL test_status( ios, err_msg, &
-            !        "...allocation error for array v_euler_z" )
-          ENDIF
-
-          pvol_tmp= 0.D0
-         !DO a= npart_in, npart_fin - 1, 1
-         !
-         !  pvol_tmp= pvol_tmp + ABS( parts% pos(3,a + 1) &
-         !                          - parts% pos(3,a) )
-         !
-         !ENDDO
-          DO a= 1, npart_i_tmp(itr) - 1, 1
-
-            pvol_tmp= pvol_tmp + ABS( parts_all(itr)% pos_i(3,a + 1) &
-                                    - parts_all(itr)% pos_i(3,a) )
-
-          ENDDO
-          pvol_tmp= pvol_tmp/( npart_i_tmp(itr) - 1 )
-
-          !parts% pvol(npart_in:npart_fin)= 2.D0*pvol_tmp**3.D0
-          parts_all(itr)% pvol_i= 2.D0*pvol_tmp**3.D0
-          DO a= 1, npart_i_tmp(itr), 1
-            parts_all(itr)% h_i(a)   = (parts_all(itr)% pvol_i(a))**third
-          ENDDO
-
-          !IF( read_nu ) parts% pmass(npart_in:npart_fin)= &
-          !              parts% nu(npart_in:npart_fin)*amu
-          IF( read_nu ) parts_all(itr)% pmass_i= parts_all(itr)% nu_i*amu
-
-        END ASSOCIATE
-
-        PRINT *, " * Maximum n. baryon per particle (nu) on object", itr, &
-                            "=", MAXVAL( parts_all(itr)% nu_i, DIM= 1 )
-        PRINT *, " * Minimum n. baryon per particle (nu) on object", itr, &
-                            "=", MINVAL( parts_all(itr)% nu_i, DIM= 1 )
-        PRINT *, " * Ratio between the two=", &
-                 MAXVAL( parts_all(itr)% nu_i, DIM= 1 )&
-                /MINVAL( parts_all(itr)% nu_i, DIM= 1 )
-        PRINT *
-
-      ENDDO
-
 
     CASE( id_particles_on_lattice )
 
@@ -863,53 +872,60 @@ SUBMODULE (sph_particles) constructor_std
       ! Place particles, and time the process
 
       CALL parts% placer_timer% start_timer()
-      matter_objects_lattices_loop: DO itr= 1, parts% n_matter, 1
+      matter_objects_lattices_loop: DO i_matter= 1, parts% n_matter, 1
 
         ! Determine boundaries of the lattices
-        xmin= center(itr, 1) - stretch*sizes(itr, 1)
-        xmax= center(itr, 1) + stretch*sizes(itr, 2)
-        ymin= center(itr, 2) - stretch*sizes(itr, 3)
-        ymax= center(itr, 2) + stretch*sizes(itr, 4)
-        zmin= center(itr, 3) - stretch*sizes(itr, 5)
-        zmax= center(itr, 3) + stretch*sizes(itr, 6)
+        xmin= center(i_matter, 1) - stretch*sizes(i_matter, 1)
+        xmax= center(i_matter, 1) + stretch*sizes(i_matter, 2)
+        ymin= center(i_matter, 2) - stretch*sizes(i_matter, 3)
+        ymax= center(i_matter, 2) + stretch*sizes(i_matter, 4)
+        zmin= center(i_matter, 3) - stretch*sizes(i_matter, 5)
+        zmax= center(i_matter, 3) + stretch*sizes(i_matter, 6)
 
-        central_density(itr)= id% read_mass_density( center(itr, 1), &
-                                                     center(itr, 2), &
-                                                     center(itr, 3) )
+        central_density(i_matter)= id% read_mass_density &
+          ( center(i_matter, 1), center(i_matter, 2), center(i_matter, 3) )
 
-        CALL parts% place_particles_lattice( central_density(itr), &
+        CALL parts% place_particles_lattice( central_density(i_matter), &
                                              xmin, xmax, ymin, &
                                              ymax, zmin, zmax, &
-                                             npart_des_i(itr), &
-                                             parts% npart_i(itr), &
+                                             npart_des_i(i_matter), &
+                                             parts% npart_i(i_matter), &
                                              stretch, thres, &
-                                             parts_all(itr)% pos_i, &
-                                             parts_all(itr)% pvol_i, &
+                                             parts_all(i_matter)% pos_i, &
+                                             parts_all(i_matter)% pvol_i, &
+                                             parts_all(i_matter)% nu_i, &
+                                             parts_all(i_matter)% h_i, &
                                              import_density, &
+                                             import_id, &
                                              validate_position )
 
         ! Now that the real particle numbers are known, reallocate the arrays
         ! to the appropriate sizes. Note that, if the APM is performed,
         ! this step will be done after it as well
-        parts_all(itr)% pos_i = &
-                          parts_all(itr)% pos_i( :, 1:parts% npart_i(itr) )
-        parts_all(itr)% pvol_i = &
-                          parts_all(itr)% pvol_i( 1:parts% npart_i(itr) )
+        ! TODO: maybe this is not necessary for the arrays pvol_i, nu_i and h_i?
+        parts_all(i_matter)% pos_i = &
+                    parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% pvol_i = &
+                    parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% nu_i = &
+                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% h_i = &
+                    parts_all(i_matter)% h_i( 1:parts% npart_i(i_matter) )
 
-        IF(.NOT.ALLOCATED( parts_all(itr)% h_i ))THEN
-          ALLOCATE( parts_all(itr)% h_i( parts% npart_i(itr) ), &
-                    STAT= ios, ERRMSG= err_msg )
-          IF( ios > 0 )THEN
-            PRINT *, "...allocation error for array h_i ", &
-                     ". The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, &
-          !        "...allocation error for array v_euler_z" )
-        ENDIF
-        DO a= 1, parts% npart_i(itr), 1
-          parts_all(itr)% h_i(a)   = (parts_all(itr)% pvol_i(a))**third
-        ENDDO
+      !  IF(.NOT.ALLOCATED( parts_all(itr)% h_i ))THEN
+      !    ALLOCATE( parts_all(itr)% h_i( parts% npart_i(itr) ), &
+      !              STAT= ios, ERRMSG= err_msg )
+      !    IF( ios > 0 )THEN
+      !      PRINT *, "...allocation error for array h_i ", &
+      !               ". The error message is", err_msg
+      !      STOP
+      !    ENDIF
+      !    !CALL test_status( ios, err_msg, &
+      !    !        "...allocation error for array v_euler_z" )
+      !  ENDIF
+      !  DO a= 1, parts% npart_i(itr), 1
+      !    parts_all(itr)% h_i(a)   = (parts_all(itr)% pvol_i(a))**third
+      !  ENDDO
 
         ! If there are 2 matter objects...
         equal_masses_lattices: &
@@ -919,17 +935,15 @@ SUBMODULE (sph_particles) constructor_std
           ! symmetric wrt the yz plane (in which case the user should
           ! set reflect_particles_x in the parameter file)...
           IF( ABS(parts% masses(1) - parts% masses(2)) &
-              /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
+            /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
 
             CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
                                              parts_all(1)% pvol_i,  &
-                                             parts_all(1)% pmass_i, &
                                              parts_all(1)% nu_i,    &
                                              parts_all(1)% h_i,     &
                                              parts% npart_i(1),     &
                                              parts_all(2)% pos_i,   &
                                              parts_all(2)% pvol_i,  &
-                                             parts_all(2)% pmass_i, &
                                              parts_all(2)% nu_i,    &
                                              parts_all(2)% h_i,     &
                                              parts% npart_i(2) )
@@ -989,7 +1003,8 @@ SUBMODULE (sph_particles) constructor_std
                                               parts% npart_i(i_matter), &
                                               parts_all(i_matter)% pos_i, &
                                               parts_all(i_matter)% pvol_i, &
-                                              parts_all(i_matter)% pmass_i, &
+                                              parts_all(i_matter)% nu_i, &
+                                              parts_all(i_matter)% h_i, &
                                               last_r, &
                                               upper_bound, lower_bound, &
                                               upper_factor, lower_factor,&
@@ -1002,66 +1017,35 @@ SUBMODULE (sph_particles) constructor_std
                                               import_id, &
                                               validate_position )
 
-      !
-      !-- Experimental code to get the desired number of particles for
-      !-- matter objects which have an irregular geometry
-      !-- Right now, the desired and real particle numbers are almost the same
-      !-- only if the geometry of the system is elliptical
-      !
+        ! Now that the real particle numbers are known, reallocate the arrays
+        ! to the appropriate sizes. Note that, if the APM is performed,
+        ! this step will be done after it as well
+        ! TODO: maybe this is not necessary for the arrays pvol_i, nu_i and h_i?
+     !   parts_all(itr)% pos_i = &
+     !                     parts_all(itr)% pos_i( :, 1:parts% npart_i(itr) )
+     !   parts_all(itr)% pvol_i = &
+     !                     parts_all(itr)% pvol_i( 1:parts% npart_i(itr) )
+     !   parts_all(itr)% nu_i = &
+     !                     parts_all(itr)% nu_i( 1:parts% npart_i(itr) )
+     !   !parts_all(itr)% pmass_i = &
+     !   !                  parts_all(itr)% nu_i( 1:parts% npart_i(itr) )*amu/Msun
+     !   parts_all(itr)% h_i = &
+     !                     parts_all(itr)% h_i( 1:parts% npart_i(itr) )
 
-      !  DO
-      !
-      !    ratio_npart_des_real= &
-      !          ABS( DBLE(parts% npart_i(i_matter) - npart_des_i(i_matter)) ) &
-      !          /DBLE(npart_des_i(i_matter))
-      !
-      !    IF( ratio_npart_des_real <= 0.15D0 )THEN
-      !      EXIT
-      !    ELSE
-      !      pmass_des= SUM(parts_all(i_matter)% pmass_i) &
-      !                 /SIZE(parts_all(i_matter)% pmass_i) &
-      !                 *parts% npart_i(i_matter)/npart_des_i(i_matter)
+      !  IF(.NOT.ALLOCATED( parts_all(i_matter)% h_i ))THEN
+      !    ALLOCATE( parts_all(i_matter)% h_i( parts% npart_i(i_matter) ), &
+      !              STAT= ios, ERRMSG= err_msg )
+      !    IF( ios > 0 )THEN
+      !      PRINT *, "...allocation error for array h_i ", &
+      !               ". The error message is", err_msg
+      !      STOP
       !    ENDIF
-      !
-      !    CALL parts% place_particles_spherical_surfaces( &
-      !                                          parts% masses(i_matter), &
-      !                                          MAXVAL(sizes(i_matter,1:2)), &
-      !                                          center(i_matter,1), &
-      !                                          central_density(i_matter), &
-      !                                          npart_des_i(i_matter), &
-      !                                          parts% npart_i(i_matter), &
-      !                                          parts_all(i_matter)% pos_i, &
-      !                                          parts_all(i_matter)% pvol_i, &
-      !                                          parts_all(i_matter)% pmass_i, &
-      !                                          last_r, &
-      !                                          upper_bound, lower_bound, &
-      !                                          upper_factor, lower_factor,&
-      !                                          max_steps, &
-      !                                          filename_mass_profile, &
-      !                                          filename_shells_radii, &
-      !                                          filename_shells_pos, &
-      !                                          import_density, &
-      !                                          integrate_mass_density, &
-      !                                          import_id, &
-      !                                          validate_position, &
-      !                                          pmass_des )
-      !
+      !    !CALL test_status( ios, err_msg, &
+      !    !        "...allocation error for array v_euler_z" )
+      !  ENDIF
+      !  DO a= 1, parts% npart_i(i_matter), 1
+      !    parts_all(i_matter)% h_i(a)= (parts_all(i_matter)% pvol_i(a))**third
       !  ENDDO
-
-        IF(.NOT.ALLOCATED( parts_all(i_matter)% h_i ))THEN
-          ALLOCATE( parts_all(i_matter)% h_i( parts% npart_i(i_matter) ), &
-                    STAT= ios, ERRMSG= err_msg )
-          IF( ios > 0 )THEN
-            PRINT *, "...allocation error for array h_i ", &
-                     ". The error message is", err_msg
-            STOP
-          ENDIF
-          !CALL test_status( ios, err_msg, &
-          !        "...allocation error for array v_euler_z" )
-        ENDIF
-        DO a= 1, parts% npart_i(i_matter), 1
-          parts_all(i_matter)% h_i(a)= (parts_all(i_matter)% pvol_i(a))**third
-        ENDDO
 
         ! If there are 2 matter objects...
         equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
@@ -1074,13 +1058,13 @@ SUBMODULE (sph_particles) constructor_std
 
             CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
                                              parts_all(1)% pvol_i,  &
-                                             parts_all(1)% pmass_i, &
+                                             !parts_all(1)% pmass_i, &
                                              parts_all(1)% nu_i,    &
                                              parts_all(1)% h_i,     &
                                              parts% npart_i(1),     &
                                              parts_all(2)% pos_i,   &
                                              parts_all(2)% pvol_i,  &
-                                             parts_all(2)% pmass_i, &
+                                             !parts_all(2)% pmass_i, &
                                              parts_all(2)% nu_i,    &
                                              parts_all(2)% h_i,     &
                                              parts% npart_i(2) )
@@ -1100,18 +1084,18 @@ SUBMODULE (sph_particles) constructor_std
                     parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
         parts_all(i_matter)% pvol_i = &
                     parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
-        parts_all(i_matter)% pmass_i = &
-                    parts_all(i_matter)% pmass_i( 1:parts% npart_i(i_matter) )
+        !parts_all(i_matter)% pmass_i = &
+        !            parts_all(i_matter)% pmass_i( 1:parts% npart_i(i_matter) )
         parts_all(i_matter)% nu_i = &
-                    parts_all(i_matter)% pmass_i( 1:parts% npart_i(i_matter) )
+                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )
       ENDDO
 
       parts% npart= SUM( parts% npart_i )
 
       PRINT *, " * Particles placed. Number of particles=", parts% npart
-      DO itr= 1, parts% n_matter, 1
-        PRINT *, " * Number of particles on object ", itr, "=", &
-                 parts% npart_i(itr)
+      DO i_matter= 1, parts% n_matter, 1
+        PRINT *, " * Number of particles on object ", i_matter, "=", &
+                 parts% npart_i(i_matter)
         PRINT *
       ENDDO
       PRINT *
@@ -1188,8 +1172,8 @@ SUBMODULE (sph_particles) constructor_std
                     filename_apm_results, validate_position )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
-        parts_all(i_matter)% pmass_i = &
-                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )*amu
+        !parts_all(i_matter)% pmass_i = &
+        !            parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )*amu
 
         IF( debug ) PRINT *, "average nu= ", &
           SUM(parts_all(i_matter)% nu_i, DIM= 1)/SIZE(parts_all(i_matter)% nu_i)
@@ -1213,18 +1197,18 @@ SUBMODULE (sph_particles) constructor_std
             DEALLOCATE(parts_all(2)% pos_i)
             DEALLOCATE(parts_all(2)% pvol_i)
             DEALLOCATE(parts_all(2)% h_i)
-            DEALLOCATE(parts_all(2)% pmass_i)
+            !DEALLOCATE(parts_all(2)% pmass_i)
             DEALLOCATE(parts_all(2)% nu_i)
 
             CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
                                              parts_all(1)% pvol_i,  &
-                                             parts_all(1)% pmass_i, &
+                                             !parts_all(1)% pmass_i, &
                                              parts_all(1)% nu_i,    &
                                              parts_all(1)% h_i,     &
                                              parts% npart_i(1),     &
                                              parts_all(2)% pos_i,   &
                                              parts_all(2)% pvol_i,  &
-                                             parts_all(2)% pmass_i, &
+                                             !parts_all(2)% pmass_i, &
                                              parts_all(2)% nu_i,    &
                                              parts_all(2)% h_i,     &
                                              parts% npart_i(2) )
@@ -1249,27 +1233,19 @@ SUBMODULE (sph_particles) constructor_std
     parts% npart= SUM( parts% npart_i )
 
     !
-    !-- Reassign TYPE member variables after the APM iteration
+    !-- Assign particle properties to the TYPE-bound variables
     !
 
     IF( ALLOCATED(parts% h) ) DEALLOCATE( parts% h )
     ALLOCATE( parts% h( parts% npart ), &
               STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+       PRINT *, "...allocation error for array h in SUBROUTINE" &
                 // "place_particles_. ", &
                 "The error message is", err_msg
        STOP
     ENDIF
-
-    DO i_matter= 1, parts% n_matter, 1
-      !IF( apm_iterate(i_matter) )THEN
-        parts% h( parts% npart_i(i_matter-1) + 1: &
-                  parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                  parts_all(i_matter)% h_i(1:parts% npart_i(i_matter))
-      !ENDIF
-    ENDDO
-
+    IF( ALLOCATED(parts% pvol) ) DEALLOCATE( parts% pvol )
     ALLOCATE( parts% pvol( parts% npart ), &
               STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
@@ -1278,41 +1254,16 @@ SUBMODULE (sph_particles) constructor_std
                 "The error message is", err_msg
        STOP
     ENDIF
-
-    DO i_matter= 1, parts% n_matter, 1
-      parts% pvol( parts% npart_i(i_matter-1) + 1: &
-                   parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                   (parts_all(i_matter)% h_i(1:parts% npart_i(i_matter)))**3.0D0
-    ENDDO
-
     IF( ALLOCATED(parts% nu) ) DEALLOCATE( parts% nu )
       ALLOCATE( parts% nu( parts% npart ), &
                 STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+       PRINT *, "...allocation error for array nu in SUBROUTINE" &
                 // "place_particles_. ", &
                 "The error message is", err_msg
        STOP
     ENDIF
-
-    DO i_matter= 1, parts% n_matter, 1
-
-      ! If nu is known already at this stage, either because computed by the APM
-      ! or because it is read from file, assign it to the TYPE member array
-      IF( apm_iterate(i_matter) &
-          .OR. &
-          ( parts% distribution_id == id_particles_from_file .AND. read_nu ) &
-          .OR. &
-          ( parts% distribution_id == id_particles_on_spherical_surfaces ) &
-      )THEN
-        parts% nu( parts% npart_i(i_matter-1) + 1: &
-                   parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                   parts_all(i_matter)% nu_i
-      ENDIF
-
-    ENDDO
-
-    !DEALLOCATE( parts% pos )
+    IF( ALLOCATED(parts% pos) ) DEALLOCATE( parts% pos )
     ALLOCATE( parts% pos( 3, parts% npart ), &
               STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
@@ -1322,39 +1273,81 @@ SUBMODULE (sph_particles) constructor_std
        STOP
     ENDIF
 
-    DO i_matter= 1, parts% n_matter, 1
-      parts% pos( :, parts% npart_i(i_matter-1) + 1: &
-                     parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                     parts_all(i_matter)% pos_i
-    ENDDO
-
-    ALLOCATE( parts% pmass( parts% npart ), &
-              STAT= ios, ERRMSG= err_msg )
-    IF( ios > 0 )THEN
-       PRINT *, "...allocation error for array pmass in SUBROUTINE" &
-                // "place_particles_. ", &
-                "The error message is", err_msg
-       STOP
-    ENDIF
-    parts% pmass= zero
-
+    parts% nbar_tot= zero
     DO i_matter= 1, parts% n_matter, 1
 
-      particles_not_on_lattice_or_apm: &
-      IF( parts% distribution_id == id_particles_on_spherical_surfaces &
-          .OR. ( parts% distribution_id == id_particles_from_file &
-                 .AND. read_nu ) &
-          .OR. apm_iterate(i_matter) )THEN
-      ! If the particles are not placed on lattices, or the APM was performed...
+      ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
+                 npart_fin  => parts% npart_i(i_matter-1) +    &
+                               parts% npart_i(i_matter) )
 
-            ! ...assign pmass to the TYPE member array
-            parts% pmass( parts% npart_i(i_matter-1) + 1: &
-                      parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
-                      parts_all(i_matter)% pmass_i
+        parts% pos( :, npart_in : npart_fin )= parts_all(i_matter)% pos_i
 
-      ENDIF particles_not_on_lattice_or_apm
+        parts% nu( npart_in : npart_fin )= parts_all(i_matter)% nu_i
+
+        parts% h( npart_in : npart_fin )= &
+                  parts_all(i_matter)% h_i(1:parts% npart_i(i_matter))
+
+        parts% pvol( npart_in : npart_fin )= &
+                (parts_all(i_matter)% pvol_i(1:parts% npart_i(i_matter)))
+
+        parts% nbar_i(i_matter)= SUM( parts% nu( npart_in : npart_fin ), DIM=1 )
+
+        parts% nbar_tot= parts% nbar_tot + parts% nbar_i(i_matter)
+
+      END ASSOCIATE
 
     ENDDO
+
+  !  DO i_matter= 1, parts% n_matter, 1
+  !
+  !  ENDDO
+  !
+  !  DO i_matter= 1, parts% n_matter, 1
+  !
+  !    ! If nu is known already at this stage, either because computed by the APM
+  !    ! or because it is read from file, assign it to the TYPE member array
+  !    IF( apm_iterate(i_matter) &
+  !        .OR. &
+  !        ( parts% distribution_id == id_particles_from_file .AND. read_nu ) &
+  !        .OR. &
+  !        ( parts% distribution_id == id_particles_on_spherical_surfaces ) &
+  !    )THEN
+  !
+  !    ENDIF
+  !
+  !  ENDDO
+  !
+  !  DO i_matter= 1, parts% n_matter, 1
+  !
+  !  ENDDO
+
+ !   ALLOCATE( parts% pmass( parts% npart ), &
+ !             STAT= ios, ERRMSG= err_msg )
+ !   IF( ios > 0 )THEN
+ !      PRINT *, "...allocation error for array pmass in SUBROUTINE" &
+ !               // "place_particles_. ", &
+ !               "The error message is", err_msg
+ !      STOP
+ !   ENDIF
+ !   parts% pmass= zero
+ !
+ !   DO i_matter= 1, parts% n_matter, 1
+ !
+ !     particles_not_on_lattice_or_apm: &
+ !     IF( parts% distribution_id == id_particles_on_spherical_surfaces &
+ !         .OR. ( parts% distribution_id == id_particles_from_file &
+ !                .AND. read_nu ) &
+ !         .OR. apm_iterate(i_matter) )THEN
+ !     ! If the particles are not placed on lattices, or the APM was performed...
+ !
+ !           ! ...assign pmass to the TYPE member array
+ !           parts% pmass( parts% npart_i(i_matter-1) + 1: &
+ !                     parts% npart_i(i_matter-1) + parts% npart_i(i_matter) )= &
+ !                     parts_all(i_matter)% pmass_i
+ !
+ !     ENDIF particles_not_on_lattice_or_apm
+ !
+ !   ENDDO
 
   !  !$OMP PARALLEL DO DEFAULT( NONE ) &
   !  !$OMP             SHARED( parts ) &
@@ -2100,9 +2093,9 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE compute_nstar_eul_id
 
 
-    SUBROUTINE reflect_particles_yz_plane( pos_star1, pvol_star1, pmass_star1, &
+    SUBROUTINE reflect_particles_yz_plane( pos_star1, pvol_star1, &
                                            nu_star1, h_star1, npart_star1,     &
-                                           pos_star2, pvol_star2, pmass_star2, &
+                                           pos_star2, pvol_star2, &
                                            nu_star2, h_star2, npart_star2 )
 
       !**************************************************************
@@ -2120,7 +2113,7 @@ SUBMODULE (sph_particles) constructor_std
       !! Array where to store the particle positions for star 1
       DOUBLE PRECISION, DIMENSION(:),   INTENT(IN):: pvol_star1
       !! Array where to store the particle volumes for star 1
-      DOUBLE PRECISION, DIMENSION(:),   INTENT(IN):: pmass_star1
+      !DOUBLE PRECISION, DIMENSION(:),   INTENT(IN):: pmass_star1
       !! Array where to store the particle masses for star 1
       DOUBLE PRECISION, DIMENSION(:),   INTENT(IN):: nu_star1
       !! Array where to store the particle baryon number for star 1
@@ -2132,7 +2125,7 @@ SUBMODULE (sph_particles) constructor_std
       !! Array where to store the particle positions for star 2
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: pvol_star2
       !! Array where to store the particle volumes for star 2
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: pmass_star2
+      !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: pmass_star2
       !! Array where to store the particle masses for star 2
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: nu_star2
       !! Array where to store the particle baryon number for star 2
@@ -2160,15 +2153,15 @@ SUBMODULE (sph_particles) constructor_std
            STOP
         ENDIF
       ENDIF
-      IF(.NOT.ALLOCATED( pmass_star2 ))THEN
-        ALLOCATE( pmass_star2( npart_star1 ), STAT= ios, ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array pmass_star2 in SUBROUTINE" &
-                    // "reflect_particles_yz_plane. ", &
-                    "The error message is", err_msg
-           STOP
-        ENDIF
-      ENDIF
+      !IF(.NOT.ALLOCATED( pmass_star2 ))THEN
+      !  ALLOCATE( pmass_star2( npart_star1 ), STAT= ios, ERRMSG= err_msg )
+      !  IF( ios > 0 )THEN
+      !     PRINT *, "...allocation error for array pmass_star2 in SUBROUTINE" &
+      !              // "reflect_particles_yz_plane. ", &
+      !              "The error message is", err_msg
+      !     STOP
+      !  ENDIF
+      !ENDIF
       IF(.NOT.ALLOCATED( nu_star2 ))THEN
         ALLOCATE( nu_star2( npart_star1 ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
@@ -2197,7 +2190,7 @@ SUBMODULE (sph_particles) constructor_std
       pos_star2(2,:)=   pos_star1(2,:)
       pos_star2(3,:)=   pos_star1(3,:)
       pvol_star2    =   pvol_star1
-      pmass_star2   =   pmass_star1
+      !pmass_star2   =   pmass_star1
       nu_star2      =   nu_star1
       h_star2       =   h_star1
       npart_star2   =   npart_star1
