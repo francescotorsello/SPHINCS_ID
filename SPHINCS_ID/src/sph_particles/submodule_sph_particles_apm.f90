@@ -129,7 +129,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
     !INTEGER,          PARAMETER:: print_step       = 15
-    INTEGER,          PARAMETER:: nuratio_max_steps= 250
+    INTEGER,          PARAMETER:: nuratio_max_steps= 100
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
     DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1

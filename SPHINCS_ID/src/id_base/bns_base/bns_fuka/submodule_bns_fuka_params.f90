@@ -152,13 +152,17 @@ SUBMODULE (bns_fuka) params
     this% logRho1_2= this% logRho1_1
     this% logRho2_2= this% logRho2_1
 
-    IF(debug) PRINT *, "Finding radii..."
-    IF(debug) PRINT *
+    PRINT *, "Finding centers and radii of the stars..."
+    PRINT *
     IF(debug) PRINT *, "max radius 1=", this% radius1_x_comp
     IF(debug) PRINT *, "min radius 1=", this% radius1_x_opp
     IF(debug) PRINT *, "max radius 2=", this% radius2_x_comp
     IF(debug) PRINT *, "min radius 2=", this% radius2_x_opp
     IF(debug) PRINT *
+
+    ! Find the centers of the stars
+    this% center1_x= this% find_center(this% distance, -one, read_density)
+    this% center2_x= this% find_center(this% distance, one, read_density)
 
     ! Find the radii of the stars
     this% radius1_x_comp= this% find_radius([this% center1_x,zero,zero], &
@@ -180,16 +184,23 @@ SUBMODULE (bns_fuka) params
                                        [zero,zero,one], read_density)
 
     IF(debug) PRINT *
-    IF(debug) PRINT *, "x radius 1, comp=", this% radius1_x_comp
-    IF(debug) PRINT *, "x radius 1, opp=", this% radius1_x_opp
+    IF(debug) PRINT *, "x radius 1+=", this% radius1_x_comp
+    IF(debug) PRINT *, "x radius 1-=", this% radius1_x_opp
     IF(debug) PRINT *, "y radius 1=", this% radius1_y
     IF(debug) PRINT *, "z radius 1=", this% radius1_z
-    IF(debug) PRINT *, "x radius 2, comp=", this% radius2_x_comp
-    IF(debug) PRINT *, "x radius 2, opp=", this% radius2_x_opp
+    IF(debug) PRINT *, "x radius 2-=", this% radius2_x_comp
+    IF(debug) PRINT *, "x radius 2+=", this% radius2_x_opp
     IF(debug) PRINT *, "y radius 2=", this% radius2_y
     IF(debug) PRINT *, "z radius 2=", this% radius2_z
     IF(debug) PRINT *
-    !IF(debug) STOP
+    IF(debug) PRINT *, "this% center1_x=", this% center1_x
+    IF(debug) PRINT *, "this% center2_x=", this% center2_x
+    IF(debug) PRINT *, "this% distance=", this% distance
+    IF(debug) PRINT *
+    IF(debug) PRINT *, "this% rho_center1=", this% rho_center1
+    IF(debug) PRINT *, "this% rho_center2=", this% rho_center2
+    IF(debug) PRINT *
+    IF(debug) STOP
 
     this% radii(1,:)= [this% radius1_x_opp, this% radius1_x_comp, &
                        this% radius1_y, this% radius1_y, &

@@ -571,9 +571,12 @@ SUBMODULE (sph_particles) constructor_std
       ! Check that the numbers of particles are consistent
       IF( npart_tmp /= SUM(npart_i_tmp) )THEN
         PRINT *, "** ERROR! The numbers of particles on each matter object", &
-                 " do not add up to the total number of particles, in file", &
+                 " do not add up to the total number of particles, in file ", &
                  TRIM(parts_pos_namefile)
-        PRINT *, "   Stopping..."
+        PRINT *, " * npart_tmp= ", npart_tmp
+        PRINT *, " * npart_i_tmp=", npart_i_tmp
+        PRINT *, " * SUM(npart_i_tmp)=", SUM(npart_i_tmp) 
+        PRINT *, " * Stopping..."
         PRINT *
         STOP
       ENDIF
@@ -857,7 +860,7 @@ SUBMODULE (sph_particles) constructor_std
                "matter object."
       PRINT *
 
-      ! Place particles, and time the proces
+      ! Place particles, and time the process
 
       CALL parts% placer_timer% start_timer()
       matter_objects_lattices_loop: DO itr= 1, parts% n_matter, 1
@@ -1088,12 +1091,6 @@ SUBMODULE (sph_particles) constructor_std
 
         ENDIF equal_masses
 
-        ! Now that the real particle numbers are known, reallocate the arrays
-        ! with the appropriate sizes. If the APM is performed, this step is
-        ! done after it too
-        !PRINT *, "parts% npart_i(i_matter)=", parts% npart_i(i_matter)
-        !STOP
-
       ENDDO matter_objects_sphersurfaces_loop
       CALL parts% placer_timer% stop_timer()
 
@@ -1130,13 +1127,9 @@ SUBMODULE (sph_particles) constructor_std
 
     END SELECT choose_particle_placer
 
-    !--------------------------------------------------------------!
-    !--  At this point,the particles are placed without the APM  --!
-    !--------------------------------------------------------------!
-
-    ! Reshape the arrays pos and pvol by deleting the unnecessary elements
-  !  parts% pos = parts% pos( :, 1:parts% npart )
-  !  parts% pvol= parts% pvol( 1:parts% npart )
+    !---------------------------------------------------------------!
+    !--  At this point, the particles are placed without the APM  --!
+    !---------------------------------------------------------------!
 
     ! Check that there aren't particles with the same coordinates
     CALL parts% same_particle_timer% start_timer()
@@ -1145,8 +1138,6 @@ SUBMODULE (sph_particles) constructor_std
                                      parts_all(i_matter)% pos_i )
     ENDDO check_particles_loop
     CALL parts% same_particle_timer% stop_timer()
-
-    ! TODO: make the following an idbase type-bound procedure
 
 
     !
@@ -1159,6 +1150,10 @@ SUBMODULE (sph_particles) constructor_std
         PRINT *
         PRINT *, "** Placing particles on matter object", i_matter, &
                  "using the APM..."
+        PRINT *
+
+        PRINT *, " * Particle number on object ", i_matter," before the APM=", &
+                 parts% npart_i(i_matter)
         PRINT *
 
         IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ) i_matter
@@ -1247,6 +1242,43 @@ SUBMODULE (sph_particles) constructor_std
       ENDIF run_apm
 
     ENDDO matter_objects_apm_loop
+
+PRINT *, "1"
+
+    INQUIRE( FILE= TRIM("dbg-pos-before-npart.dat"), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-before-npart.dat"), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-before-npart.dat"), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM("dbg-pos-before-id.dat"), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO a= 1, parts% npart_i(1), 1
+      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        a, &
+        parts_all(1)% pos_i(1, a), &
+        parts_all(1)% pos_i(2, a), &
+        parts_all(1)% pos_i(3, a)
+    ENDDO
+
+    CLOSE( UNIT= 23 )
+
+    PRINT *, "parts% npart_i(1)=", parts% npart_i(1)
+    PRINT *, "SIZE(parts_all(1)% pos_i(1, :))=", SIZE(parts_all(1)% pos_i(1, :))
+    PRINT *
+
+    PRINT *, " * Particle numbers after the APM=", parts% npart_i
+    PRINT *
 
     parts% npart= SUM( parts% npart_i )
 
@@ -1358,6 +1390,34 @@ SUBMODULE (sph_particles) constructor_std
 
     ENDDO
 
+    INQUIRE( FILE= TRIM("dbg-pos-after-alloc.dat"), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-after-alloc.dat"), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-after-alloc.dat"), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM("dbg-pos-after-alloc.dat"), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO a= 1, parts% npart, 1
+      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        a, &
+        parts% pos(1, a), &
+        parts% pos(2, a), &
+        parts% pos(3, a)
+    ENDDO
+
+    CLOSE( UNIT= 23 )
+
   !  !$OMP PARALLEL DO DEFAULT( NONE ) &
   !  !$OMP             SHARED( parts ) &
   !  !$OMP             PRIVATE( a, itr2 )
@@ -1390,34 +1450,31 @@ SUBMODULE (sph_particles) constructor_std
    ! PRINT *, parts% barycenter_system(1:3)
    ! STOP
 
-    IF( dist /= id_particles_on_lattice )THEN
+    !IF( dist /= id_particles_on_lattice )THEN
+!
+!      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
+!                                   import_density, &
+!                                   validate_position, [zero,zero,zero], &
+!                                   verbose= .FALSE. )
+!
+!      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
+!                                   import_density, &
+!                                   validate_position, [zero,zero,zero], &
+!                                   verbose= .FALSE. )
+!
+!      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
+!                                   import_density, &
+!                                   validate_position, [zero,zero,zero], &
+!                                   verbose= .TRUE. )
+!
+!      CALL COM( & ! input
+!                parts% npart, parts% pos, parts% nu, &
+!                ! output
+!                parts% barycenter_system(1), parts% barycenter_system(2), &
+!                parts% barycenter_system(3), parts% barycenter_system(4) )
 
-      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-                                   import_density, &
-                                   validate_position, [zero,zero,zero], &
-                                   verbose= .FALSE. )
+!    ENDIF
 
-      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-                                   import_density, &
-                                   validate_position, [zero,zero,zero], &
-                                   verbose= .FALSE. )
-
-      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-                                   import_density, &
-                                   validate_position, [zero,zero,zero], &
-                                   verbose= .TRUE. )
-
-      CALL COM( & ! input
-                parts% npart, parts% pos, parts% nu, &
-                ! output
-                parts% barycenter_system(1), parts% barycenter_system(2), &
-                parts% barycenter_system(3), parts% barycenter_system(4) )
-
-    ENDIF
-
-    !PRINT *, com_x, com_y, com_z, com_d
-
-    !STOP
 
     PRINT *, " * Final particle distribution prepared. Number of particles=", &
              parts% npart
@@ -1428,9 +1485,37 @@ SUBMODULE (sph_particles) constructor_std
     ENDDO
     PRINT *
 
-    !-----------------------------------------------------------------------!
-    !--  At this point, the particles are placed with or without the APM  --!
-    !-----------------------------------------------------------------------!
+    !--------------------------------------------------------------------!
+    !--  At this point, the final particle distribution is determined  --!
+    !--------------------------------------------------------------------!
+
+    INQUIRE( FILE= TRIM("dbg-pos-before-id.dat"), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-before-id.dat"), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-before-id.dat"), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM("dbg-pos-before-id.dat"), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO a= 1, parts% npart, 1
+      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        a, &
+        parts% pos(1, a), &
+        parts% pos(2, a), &
+        parts% pos(3, a)
+    ENDDO
+
+    CLOSE( UNIT= 23 )
 
     ! Allocate needed memory
     CALL allocate_particles_memory( parts )
@@ -1677,6 +1762,35 @@ SUBMODULE (sph_particles) constructor_std
   !                                                    parts% npart )
   !
   !  ENDIF
+
+
+    INQUIRE( FILE= TRIM("dbg-pos-costr.dat"), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-costr.dat"), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-costr.dat"), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM("dbg-pos-costr.dat"), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO a= 1, parts% npart, 1
+      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        a, &
+        parts% pos(1, a), &
+        parts% pos(2, a), &
+        parts% pos(3, a)
+    ENDDO
+
+    CLOSE( UNIT= 23 )
 
 
 

@@ -387,8 +387,12 @@ MODULE bns_base
     !--  FUNCTIONS  --!
     !-----------------!
 
+    PROCEDURE, NON_OVERRIDABLE:: find_center
+    !# Finds the center of a matter object, as the point where the
+    !  density is maximal.
+
     PROCEDURE, NON_OVERRIDABLE:: find_radius
-    !# Finds the radius of a matter object, relative to a center and along
+    !# Finds the radius of a star, relative to a center and along
     !  a direction. The radius is determined as the first point where the
     !  density is zero.
 
@@ -662,6 +666,32 @@ MODULE bns_base
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
+
+
+    MODULE FUNCTION find_center( this, separation, x_sign, get_density ) &
+       RESULT( center )
+    !# Finds the center of a star, as the point where the
+    !  density is maximal.
+
+      CLASS(bnsbase), INTENT(IN):: this
+      !! [[bnsbase]] object owning this PROCEDURE
+      DOUBLE PRECISION, INTENT(IN):: separation
+      !! Separation between the stars
+      DOUBLE PRECISION, INTENT(IN):: x_sign
+      !! Sign of the x coordinates of the point inside the star
+      INTERFACE
+        FUNCTION get_density_at_pos(x, y, z) RESULT(rho)
+          DOUBLE PRECISION, INTENT(IN):: x
+          DOUBLE PRECISION, INTENT(IN):: y
+          DOUBLE PRECISION, INTENT(IN):: z
+          DOUBLE PRECISION:: rho
+        END FUNCTION get_density_at_pos
+      END INTERFACE
+      PROCEDURE(get_density_at_pos), OPTIONAL:: get_density
+      DOUBLE PRECISION                       :: center
+      !# Center of a star, as the point where the density is maximal.
+
+    END FUNCTION find_center
 
 
     MODULE FUNCTION find_radius( this, center, vector, get_density ) &

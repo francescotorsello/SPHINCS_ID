@@ -158,7 +158,7 @@ SUBMODULE (sph_particles) sph_variables
 
     !DOUBLE PRECISION, DIMENSION(this% npart):: qi1
 
-    LOGICAL:: few_ncand!, invertible_matrix
+    LOGICAL:: few_ncand, exist!, invertible_matrix
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -1254,6 +1254,13 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDDO matter_objects_loop
 
+    !a= NINT(DBLE(this% npart/2))
+
+    !PRINT *, "nlrf_int(npart/2)=",         this% nlrf_int(a)
+    !PRINT *, "nlrf_int(npart/2)*m0c2_cu=", this% nlrf_int(a)*m0c2_cu
+    !PRINT *, "Pr(npart/2)=",               Pr(a)
+    !PRINT *, "Pr(npart/2)/m0c2_cu=",       Pr(a)/m0c2_cu
+
     !STOP
 
     !-------------------!
@@ -1448,6 +1455,42 @@ SUBMODULE (sph_particles) sph_variables
                               this% theta,       &
                               this% nstar_int )
 
+    !CALL this% test_recovery( npart,       &
+    !                          pos_u,         &
+    !                          nlrf,    &
+    !                          u,       &
+    !                          Pr, &
+    !                          vel_u,    &
+    !                          Theta,       &
+    !                          this% nstar_int )
+
+    INQUIRE( FILE= TRIM("dbg-pos.dat"), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos.dat"), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= 23, FILE= TRIM("dbg-pos.dat"), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // TRIM("dbg-pos.dat"), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO a= 1, this% npart, 1
+      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+        a, &
+        this% pos(1, a), &
+        this% pos(2, a), &
+        this% pos(3, a)
+    ENDDO
+
+    CLOSE( UNIT= 23 )
 
     !
     !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN

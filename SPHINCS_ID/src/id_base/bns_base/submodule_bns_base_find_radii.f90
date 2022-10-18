@@ -58,10 +58,10 @@ SUBMODULE(bns_base) find_radii
     !
     !********************************************************
 
-    INTEGER,          PARAMETER:: n_pts   = 1.5D+3
-    DOUBLE PRECISION, PARAMETER:: min_dist= 1.D-2
+    !INTEGER,          PARAMETER:: n_pts   = 5D+4
+    DOUBLE PRECISION, PARAMETER:: min_dist= 1.D-6
     DOUBLE PRECISION, PARAMETER:: x_ini   = 130.D0
-    DOUBLE PRECISION, PARAMETER:: min_dens= 1.D-8
+    DOUBLE PRECISION, PARAMETER:: min_dens= 1.D-12
     LOGICAL,          PARAMETER:: debug= .FALSE.
 
     INTEGER:: i
@@ -71,15 +71,6 @@ SUBMODULE(bns_base) find_radii
     DOUBLE PRECISION:: rho, rho_left, rho_right, x_left, x_right, x_mean, &
                        rho_mean
   
-
-    !INTERFACE
-    !  FUNCTION get_density_at_pos(x, y, z) RESULT(rho)
-    !    DOUBLE PRECISION, INTENT(IN):: x
-    !    DOUBLE PRECISION, INTENT(IN):: y
-    !    DOUBLE PRECISION, INTENT(IN):: z
-    !    DOUBLE PRECISION:: rho
-    !  END FUNCTION get_density_at_pos
-    !END INTERFACE
     PROCEDURE(), POINTER:: return_density
 
     IF(PRESENT(get_density))THEN
@@ -92,7 +83,7 @@ SUBMODULE(bns_base) find_radii
 
     ENDIF
 
-    radius= 1.45D0
+    radius= 0.D0
 
     vector_norm= NORM2(vector - center)
     versor= vector/vector_norm
@@ -149,18 +140,22 @@ SUBMODULE(bns_base) find_radii
     IF(debug) PRINT *, point_left - center
     IF(debug) PRINT *, point_right - center
 
-    DO i= 0, n_pts, 1
+    radius= NORM2(point_left - center)
 
-       x= x_left + DBLE(i/n_pts)*(x_right - x_left)
-       point= line(x)
-       CALL return_density(point(1), point(2), point(3), rho)
+!    DO i= 0, n_pts, 1
+!    ! This loop cannot be OMP-parallelized because FUKA is not thread-safe
+!    ! Luckily, it does not take too long, unless n_pts is set too large
 
-       IF( rho <= min_dens )THEN
-         radius= NORM2(point - center)
-         EXIT
-       ENDIF
+!       x= x_left + DBLE(i)/DBLE(n_pts)*(x_right - x_left)
+!       point= line(x)
+!       CALL return_density(point(1), point(2), point(3), rho)
 
-    ENDDO
+!       IF( rho <= min_dens )THEN
+!         radius= NORM2(point - center)
+!         EXIT
+!       ENDIF
+
+!    ENDDO
 
 
     CONTAINS
@@ -209,6 +204,92 @@ SUBMODULE(bns_base) find_radii
 
 
   END PROCEDURE find_radius
+
+
+  MODULE PROCEDURE find_center
+
+    !********************************************************
+    !
+    !# 
+    !
+    !  FT 27.09.2022
+    !
+    !********************************************************
+
+    INTEGER, PARAMETER:: n_pts= 5000
+    LOGICAL, PARAMETER:: debug= .FALSE.
+
+    INTEGER:: i
+    DOUBLE PRECISION:: x
+    DOUBLE PRECISION:: rho, rho_max, x_left, x_right
+  
+    PROCEDURE(), POINTER:: return_density
+
+    IF( x_sign /= one .AND. x_sign /= -one )THEN
+       PRINT *, "** ERROR in FUNCTION find_center! The argument x_sign ", &
+                "should be a DOUBLE PRECISION 1 or -1."
+       PRINT *, " * Stopping..."
+       PRINT *
+    ENDIF
+
+    IF(PRESENT(get_density))THEN
+
+       return_density => read_density_opt
+      
+    ELSE
+
+       return_density => read_density
+
+    ENDIF
+
+    x_left = (x_sign - one)*separation
+    x_right= (x_sign + one)*separation
+    rho_max= -HUGE(one)
+    DO i= 0, n_pts, 1
+
+      x= x_left + DBLE(i)/DBLE(n_pts)*(x_right - x_left)
+      CALL return_density(x, zero, zero, rho)
+
+      IF( rho >= rho_max )THEN
+        rho_max= rho
+        center = x
+      ENDIF
+
+    ENDDO
+
+
+    CONTAINS
+
+
+    SUBROUTINE read_density(x, y, z, rho)
+    !# Reads the density using the method [[id_base:read_mass_density]].
+    !  This is a wrapper needed as the TARGET of a PROCEDURE POINTER
+    !  (PROCEDURE POINTERS cannot point to TYPE-BOUND PROCEDURES unfortunately)
+
+      DOUBLE PRECISION, INTENT(IN) :: x
+      DOUBLE PRECISION, INTENT(IN) :: y
+      DOUBLE PRECISION, INTENT(IN) :: z
+      DOUBLE PRECISION, INTENT(OUT):: rho
+
+      rho= this% read_mass_density(x, y, z)
+
+    END SUBROUTINE read_density
+
+
+    SUBROUTINE read_density_opt(x, y, z, rho)
+    !# Reads the density using the method passed optionally as an argument.
+
+      DOUBLE PRECISION, INTENT(IN) :: x
+      DOUBLE PRECISION, INTENT(IN) :: y
+      DOUBLE PRECISION, INTENT(IN) :: z
+      DOUBLE PRECISION, INTENT(OUT):: rho
+
+      rho= get_density(x, y, z)
+
+    END SUBROUTINE read_density_opt
+
+
+  END PROCEDURE find_center
 
 
 END SUBMODULE find_radii
