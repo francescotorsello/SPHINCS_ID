@@ -1464,34 +1464,6 @@ SUBMODULE (sph_particles) sph_variables
     !                          Theta,       &
     !                          this% nstar_int )
 
-    INQUIRE( FILE= TRIM("dbg-pos.dat"), EXIST= exist )
-
-    IF( exist )THEN
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos.dat"), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos.dat"), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM("dbg-pos.dat"), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO a= 1, this% npart, 1
-      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        a, &
-        this% pos(1, a), &
-        this% pos(2, a), &
-        this% pos(3, a)
-    ENDDO
-
-    CLOSE( UNIT= 23 )
-
     !
     !-- Exporting the SPH ID to a binary file, for SPHINCS_BSSN
     !

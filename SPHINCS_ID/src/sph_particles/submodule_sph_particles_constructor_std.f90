@@ -1243,40 +1243,6 @@ SUBMODULE (sph_particles) constructor_std
 
     ENDDO matter_objects_apm_loop
 
-PRINT *, "1"
-
-    INQUIRE( FILE= TRIM("dbg-pos-before-npart.dat"), EXIST= exist )
-
-    IF( exist )THEN
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-before-npart.dat"), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-before-npart.dat"), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM("dbg-pos-before-id.dat"), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO a= 1, parts% npart_i(1), 1
-      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        a, &
-        parts_all(1)% pos_i(1, a), &
-        parts_all(1)% pos_i(2, a), &
-        parts_all(1)% pos_i(3, a)
-    ENDDO
-
-    CLOSE( UNIT= 23 )
-
-    PRINT *, "parts% npart_i(1)=", parts% npart_i(1)
-    PRINT *, "SIZE(parts_all(1)% pos_i(1, :))=", SIZE(parts_all(1)% pos_i(1, :))
-    PRINT *
-
     PRINT *, " * Particle numbers after the APM=", parts% npart_i
     PRINT *
 
@@ -1390,34 +1356,6 @@ PRINT *, "1"
 
     ENDDO
 
-    INQUIRE( FILE= TRIM("dbg-pos-after-alloc.dat"), EXIST= exist )
-
-    IF( exist )THEN
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-after-alloc.dat"), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-after-alloc.dat"), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM("dbg-pos-after-alloc.dat"), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO a= 1, parts% npart, 1
-      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        a, &
-        parts% pos(1, a), &
-        parts% pos(2, a), &
-        parts% pos(3, a)
-    ENDDO
-
-    CLOSE( UNIT= 23 )
-
   !  !$OMP PARALLEL DO DEFAULT( NONE ) &
   !  !$OMP             SHARED( parts ) &
   !  !$OMP             PRIVATE( a, itr2 )
@@ -1488,34 +1426,6 @@ PRINT *, "1"
     !--------------------------------------------------------------------!
     !--  At this point, the final particle distribution is determined  --!
     !--------------------------------------------------------------------!
-
-    INQUIRE( FILE= TRIM("dbg-pos-before-id.dat"), EXIST= exist )
-
-    IF( exist )THEN
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-before-id.dat"), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-before-id.dat"), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM("dbg-pos-before-id.dat"), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO a= 1, parts% npart, 1
-      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        a, &
-        parts% pos(1, a), &
-        parts% pos(2, a), &
-        parts% pos(3, a)
-    ENDDO
-
-    CLOSE( UNIT= 23 )
 
     ! Allocate needed memory
     CALL allocate_particles_memory( parts )
@@ -1762,35 +1672,6 @@ PRINT *, "1"
   !                                                    parts% npart )
   !
   !  ENDIF
-
-
-    INQUIRE( FILE= TRIM("dbg-pos-costr.dat"), EXIST= exist )
-
-    IF( exist )THEN
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-costr.dat"), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
-    ELSE
-        OPEN( UNIT= 23, FILE= TRIM("dbg-pos-costr.dat"), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF( ios > 0 )THEN
-      PRINT *, "...error when opening " // TRIM("dbg-pos-costr.dat"), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
-
-    DO a= 1, parts% npart, 1
-      WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        a, &
-        parts% pos(1, a), &
-        parts% pos(2, a), &
-        parts% pos(3, a)
-    ENDDO
-
-    CLOSE( UNIT= 23 )
 
 
 
