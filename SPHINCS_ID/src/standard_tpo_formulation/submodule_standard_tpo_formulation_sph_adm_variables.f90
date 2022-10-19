@@ -111,9 +111,9 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
     pos      = parts% get_pos()
     vel_loc  = parts% get_vel()
     nu_loc   = parts% get_nu()
-    nlrf_loc = parts% get_nlrf()
-    u_loc    = parts% get_u()
-    pr_loc   = parts% get_pressure_cu()
+    nlrf_loc = parts% get_nlrf_sph()
+    u_loc    = parts% get_u_sph()
+    pr_loc   = parts% get_pressure_sph()
     theta_loc= parts% get_theta()
 
     ALLOCATE ( levels( this% nlevels ), STAT=ios )

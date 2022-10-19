@@ -184,6 +184,9 @@ SUBMODULE (bns_lorene) params
     this% mass(1)= this% mass1
     this% mass(2)= this% mass2
 
+    this% mass_grav(1)= this% mass_grav1
+    this% mass_grav(2)= this% mass_grav2
+
     this% radii(1,:)= [this% radius1_x_opp, this% radius1_x_comp, &
                        this% radius1_y, this% radius1_y, &
                        this% radius1_z, this% radius1_z]

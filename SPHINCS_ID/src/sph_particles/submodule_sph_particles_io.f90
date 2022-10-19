@@ -111,8 +111,8 @@ SUBMODULE (sph_particles) io
         min_nlrf_sph= MINVAL( this% nlrf_sph(npart_in:npart_fin), DIM= 1 )
 
         max_pr_id = MAXVAL( this% pressure(npart_in:npart_fin), DIM= 1 )
-        max_pr_sph= MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
-        min_pr_sph= MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
+        max_pr_sph= MAXVAL( this% pressure_sph(npart_in:npart_fin), DIM= 1 )
+        min_pr_sph= MINVAL( this% pressure_sph(npart_in:npart_fin), DIM= 1 )
 
         max_u_id = MAXVAL( this% specific_energy(npart_in:npart_fin), DIM= 1 )
         max_u_sph= MAXVAL( this% u_sph(npart_in:npart_fin), DIM= 1 )
@@ -312,7 +312,7 @@ SUBMODULE (sph_particles) io
       this% nu         = nu(1:npart)
       this% h          = h(1:npart)
       this% nlrf_sph   = nlrf(1:npart)
-      this% pressure_cu= Pr(1:npart)
+      this% pressure_sph= Pr(1:npart)
       this% Ye         = Ye(1:npart)
       this% theta      = Theta(1:npart)
 
@@ -445,7 +445,7 @@ SUBMODULE (sph_particles) io
         !ye(itr), &                            ! 14    46
         !divv(itr), &                          ! 15    47
         !this% theta(itr), &                   ! 16    48
-        !this% pressure_cu(itr)                ! 17    49
+        !this% pressure_sph(itr)                ! 17    49
 
       IF( ios > 0 )THEN
         PRINT *, "...error when writing the arrays in " &
@@ -648,7 +648,7 @@ SUBMODULE (sph_particles) io
         this% energy_density(itr), &                               ! 10
         this% specific_energy(itr), &                              ! 11
         this% pressure(itr), &                                     ! 12
-        this% pressure_cu(itr), &                                  ! 13
+        this% pressure_sph(itr), &                                  ! 13
         this% v_euler_x(itr), &                                    ! 14
         this% v_euler_y(itr), &                                    ! 15
         this% v_euler_z(itr), &                                    ! 16
@@ -687,6 +687,259 @@ SUBMODULE (sph_particles) io
     PRINT *
 
   END PROCEDURE print_formatted_id_particles
+
+
+  MODULE PROCEDURE read_particles_formatted_file
+
+    !************************************************
+    !
+    !# Read particle positions and nu from a
+    !  formatted file with the following format:
+    !
+    !   1. The first line must contain the integer
+    !      number of objects for the system, and
+    !      the particle numbers on each object;
+    !      each column separated by one tab.
+    !   2. The other lines must contain at least
+    !      3 columns with the x, y, z coordinates
+    !      of the particle positions. An optional
+    !      4th column can contain the values of nu
+    !      on the particles. If the 4th column is
+    !      not present, nu will be roughly estimated
+    !      using the density read from the ID and the
+    !      average volume per particle; the latter is
+    !      computed by computing the average particle
+    !      separation along the z direction.
+    !
+    !  FT 19.10.2022
+    !
+    !************************************************
+
+
+    USE utility,   ONLY: zero
+    USe constants, ONLY: third
+
+
+    IMPLICIT NONE
+
+
+    LOGICAL, PARAMETER:: debug= .TRUE.
+
+    INTEGER:: a, ios, npart_tmp
+
+    DOUBLE PRECISION:: pvol_tmp
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: tmp_pos
+
+    LOGICAL:: exist
+
+    CHARACTER(LEN=:), ALLOCATABLE:: err_msg
+
+    npart_tmp= (nline_fin - nline_in + 1)
+
+    IF(debug) PRINT *, "npart_tmp=", npart_tmp
+
+    ! Allocate the temporary array, with fixed size, to store data
+    ALLOCATE( tmp_pos( 4, 2*npart_tmp ) )
+    tmp_pos= zero
+
+    ! Read the data into the temporary array
+    DO a= 1, npart_tmp, 1
+
+      IF(this% read_nu)THEN
+
+        READ( UNIT= parts_pos_unit, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+          tmp_pos( :, a )
+
+      ELSE
+
+        READ( UNIT= parts_pos_unit, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+          tmp_pos( 1:3, a )
+
+      ENDIF
+
+      IF( ios > 0 )THEN
+        PRINT *, "...error when reading the file containing the particle", &
+                " positions, at particle ", a, &
+                ". The status variable is ", ios, &
+                ". The error message is", err_msg
+        STOP
+      ENDIF
+
+    ENDDO
+
+
+ !   ! First guess of the particle volume and mass (the first will be computed
+ !   ! exactly later, as the cube of the exact smoothing length). The particle
+ !   ! volume guess determines the first guess for the smoothing length
+ !   ! The particle mass is computed if nu is read from the file
+ !   DO itr= 1, this% n_matter, 1
+ !
+ !     ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
+ !                npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+
+  !      DEALLOCATE( h )
+  !      IF(.NOT.ALLOCATED( h ))THEN
+  !        ALLOCATE( h( npart_i_tmp(itr) ), &
+  !                  STAT= ios, ERRMSG= err_msg )
+  !        IF( ios > 0 )THEN
+  !          PRINT *, "...allocation error for array h_i ", &
+  !                   ". The error message is", err_msg
+  !          STOP
+  !        ENDIF
+  !        !CALL test_status( ios, err_msg, &
+  !        !        "...allocation error for array v_euler_z" )
+  !      ENDIF
+  !      DEALLOCATE( pvol )
+  !      IF(.NOT.ALLOCATED( pvol ))THEN
+  !        ALLOCATE( pvol( npart_i_tmp(itr) ), &
+  !                  STAT= ios, ERRMSG= err_msg )
+  !        IF( ios > 0 )THEN
+  !          PRINT *, "...allocation error for array pvol_i ", &
+  !                   ". The error message is", err_msg
+  !          STOP
+  !        ENDIF
+  !        !CALL test_status( ios, err_msg, &
+  !        !        "...allocation error for array v_euler_z" )
+  !      ENDIF
+
+        pvol_tmp= zero
+       !DO a= npart_in, npart_fin - 1, 1
+       !
+       !  pvol_tmp= pvol_tmp + ABS( this% pos(3,a + 1) &
+       !                          - this% pos(3,a) )
+       !
+       !ENDDO
+        DO a= 1, npart_tmp, 1
+
+          pvol_tmp= pvol_tmp + ABS( tmp_pos(3,a + 1) - tmp_pos(3,a) )
+
+        ENDDO
+        pvol_tmp= pvol_tmp/( npart_tmp - 1 )
+
+        !this% pvol(npart_in:npart_fin)= 2.D0*pvol_tmp**3.D0
+        pvol= 2.D0*pvol_tmp**3.D0
+
+        DO a= 1, npart_tmp, 1
+          h(a)= (pvol(a))**third
+        ENDDO
+
+
+
+  !    END ASSOCIATE
+
+  !  ENDDO
+
+     IF(debug) PRINT *, "xmin=", xmin
+     IF(debug) PRINT *, "xmax=", xmax
+     IF(debug) PRINT *, "ymin=", ymin
+     IF(debug) PRINT *, "ymax=", ymax
+     IF(debug) PRINT *, "zmin=", zmin
+     IF(debug) PRINT *, "zmax=", zmax
+
+    ! Check that the positions are within the sizes of the matter objects.
+    ! This checks that the positions read from the formatted
+    ! file are compatible with the sizes given by the idbase object
+
+ !   DO itr= 1, this% n_matter, 1
+
+      IF( .NOT.this% use_atmosphere(itr) )THEN
+
+  !      ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
+  !                 npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+
+        !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+        !          ABS(center(itr,1)) + sizes(itr, 1)
+        !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+        !          ABS(center(itr,1)) + sizes(itr, 2)
+        !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+        !          ABS(center(itr,2)) + sizes(itr, 3)
+        !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+        !          ABS(center(itr,2)) + sizes(itr, 4)
+        !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+        !          ABS(center(itr,3)) + sizes(itr, 5)
+        !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+        !          ABS(center(itr,3)) + sizes(itr, 6)
+        !
+        !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
+        !  PRINT *, ABS(center(itr,1)) + sizes(itr, 1)
+        !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
+        !  PRINT *, ABS(center(itr,1)) + sizes(itr, 2)
+        !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
+        !  PRINT *, ABS(center(itr,2)) + sizes(itr, 3)
+        !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
+        !  PRINT *, ABS(center(itr,2)) + sizes(itr, 4)
+        !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
+        !  PRINT *, ABS(center(itr,3)) + sizes(itr, 5)
+        !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
+        !  PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
+
+          IF( ABS( MINVAL( tmp_pos(1,:) ) ) > xmin &
+              .OR. &
+              ABS( MAXVAL( tmp_pos(1,:) ) ) > xmax &
+              .OR. &
+              ABS( MINVAL( tmp_pos(2,:) ) ) > ymin &
+              .OR. &
+              ABS( MAXVAL( tmp_pos(2,:) ) ) > ymax &
+              .OR. &
+              ABS( MINVAL( tmp_pos(3,:) ) ) > zmin &
+              .OR. &
+              ABS( MAXVAL( tmp_pos(3,:) ) ) > zmax &
+
+          )THEN
+
+            PRINT *, "** ERROR! The positions of the particles on object ", &
+                     itr, ", read from formatted file, ", &
+                     " are not compatible with the ", &
+                     "physical system read from file. Stopping..."
+            PRINT *
+            STOP
+
+          ENDIF
+
+   !     END ASSOCIATE
+
+      ENDIF
+  !  ENDDO
+
+    IF( debug ) PRINT *, "npart_tmp=", npart_tmp
+
+    ! Impose equatorial plane symmetry on each object
+    ! @TODO: make this optional
+  !  DO itr= 1, this% n_matter, 1
+  !
+  !    ASSOCIATE( npart_in   => npart_i_tmp(itr-1) + 1, &
+  !               npart_fin  => npart_i_tmp(itr-1) + npart_i_tmp(itr) )
+
+  !      IF( debug )THEN
+  !        PRINT *, "npart_in=", npart_in
+  !        PRINT *, "npart_fin=", npart_fin
+  !        PRINT *
+  !      ENDIF
+
+        !IF( this% read_nu )THEN
+
+          CALL impose_equatorial_plane_symmetry( npart_tmp, &
+                                          tmp_pos(1:3,:), &
+                                          tmp_pos(4,:) )
+
+        !ELSE
+        !
+        !  CALL impose_equatorial_plane_symmetry( npart_i_tmp(itr), &
+        !                                  tmp_pos(1:3,npart_in:npart_fin) )
+        !
+        !ENDIF
+
+        !this% npart_i(itr)= 2*this% npart_i(itr)
+        pos= tmp_pos(1:3,:)
+        IF( this% read_nu ) nu= tmp_pos(4,:)
+
+ !     END ASSOCIATE
+ !
+ !   ENDDO
+
+
+
+  END PROCEDURE read_particles_formatted_file
 
 
   MODULE PROCEDURE analyze_hydro

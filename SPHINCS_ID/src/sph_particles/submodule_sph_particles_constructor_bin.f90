@@ -207,7 +207,7 @@ SUBMODULE (sph_particles) constructor_bin
                                parts% pos,         &
                                parts% nlrf_sph,    &
                                parts% u_sph,       &
-                               parts% pressure_cu, &
+                               parts% pressure_sph, &
                                parts% v(1:3,:),    &
                                parts% theta,       &
                                parts% nstar_sph )

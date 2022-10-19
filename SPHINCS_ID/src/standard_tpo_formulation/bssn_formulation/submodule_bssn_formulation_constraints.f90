@@ -1591,10 +1591,10 @@ SUBMODULE (bssn_formulation) constraints
     nu_loc      = parts_obj% get_nu()
     pos_loc     = parts_obj% get_pos()
     vel_loc     = parts_obj% get_vel()
-    u_loc       = parts_obj% get_u()
-    nlrf_loc    = parts_obj% get_nlrf()
+    u_loc       = parts_obj% get_u_sph()
+    nlrf_loc    = parts_obj% get_nlrf_sph()
     theta_loc   = parts_obj% get_theta()
-    pressure_loc= parts_obj% get_pressure_cu()
+    pressure_loc= parts_obj% get_pressure_sph()
 
     IF( debug ) PRINT *, "1"
 

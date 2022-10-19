@@ -86,6 +86,8 @@ SUBMODULE(sph_particles) quality_indicators
                             interp_gradW_table,interp_W_gradW_table
     USE sphincs_sph,  ONLY: ncand, all_clists
     USE RCB_tree_3D,  ONLY: iorig, nic, nfinal, nprev, lpart, rpart
+    USE options,      ONLY: ndes
+    USE set_h,        ONLY: exact_nei_tree_update
     USE utility,      ONLY: zero, one, two
 
     IMPLICIT NONE
@@ -114,6 +116,9 @@ SUBMODULE(sph_particles) quality_indicators
     CHARACTER(LEN=:), ALLOCATABLE:: namefile, err_msg
 
     PRINT *, " * Computing the quality indicators..."
+
+    CALL exact_nei_tree_update( ndes, npart, pos, nu )
+    ! exact_nei_tree_update updates h
 
     qi_1  = zero
     qi_2  = zero
@@ -278,7 +283,6 @@ SUBMODULE(sph_particles) quality_indicators
     !$OMP END PARALLEL DO
 
     PRINT *, " * Printing the quality indicators to file..."
-    PRINT *
 
     IF(PRESENT(path))THEN
       namefile= path//"quality_indicators.dat"

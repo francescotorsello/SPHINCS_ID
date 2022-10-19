@@ -720,7 +720,7 @@ if debug == 'FALSE': #
       env['F90FLAGS'] = [ '-O0', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                          '-warn', '-g', '-traceback', '-fpp', \
+                          '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \
                           build_flavour, build_mpi, build_dir, build_host ]
 #, '-CB', '-CS', '-g', '-traceback',
     if fortran_compiler == 'gfortran':

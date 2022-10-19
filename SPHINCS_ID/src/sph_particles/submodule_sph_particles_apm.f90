@@ -1224,6 +1224,12 @@ SUBMODULE (sph_particles) apm
           PRINT *
           EXIT
 
+        ELSE
+
+          PRINT *, " * nuratio_cnt/nuratio_max_steps= ", &
+                   nuratio_cnt, "/", nuratio_max_steps
+          PRINT *
+
         ENDIF
 
       ELSE

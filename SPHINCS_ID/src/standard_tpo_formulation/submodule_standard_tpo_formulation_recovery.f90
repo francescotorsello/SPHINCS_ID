@@ -238,7 +238,7 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     nstar   = parts% get_nstar_sph()
     nlrf_fb = parts% get_nlrf_sph()
     u_fb    = parts% get_u_sph()
-    pr_fb   = parts% get_pressure_cu()
+    pr_fb   = parts% get_pressure_sph()
     vel_u_fb= parts% get_vel()
     theta_fb= parts% get_theta()
     ! TODO: set the sound speed properly. From pwp_eos MODULE:

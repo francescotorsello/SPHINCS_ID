@@ -103,18 +103,12 @@ SUBMODULE (sph_particles) sph_variables
     USE options,             ONLY: basename
     USE input_output,        ONLY: dcount, write_SPHINCS_dump, read_options
     USE NR,                  ONLY: indexx
-
-    !USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D,&
-    !                               deallocate_RCB_tree_memory_3D, iorig
     USE APM,                 ONLY: density_loop
-    USE kernel_table,        ONLY: ktable!, dWdv_no_norm, &
-                                   !dv_table, dv_table_1, &
-                                   !W_no_norm, n_tab_entry
+    USE kernel_table,        ONLY: ktable
     USE options,             ONLY: ndes
     USE set_h,               ONLY: exact_nei_tree_update
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE sphincs_sph,         ONLY: ncand!, density,  &
-                                   !all_clists!, flag_dead_ll_cells
+    USE sphincs_sph,         ONLY: ncand
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_cold_eos, &
@@ -134,35 +128,17 @@ SUBMODULE (sph_particles) sph_variables
     ! compute_and_print_sph_variables is called
     INTEGER, SAVE:: call_flag= 0
 
-    !INTEGER, PARAMETER:: max_it_h= 1
-
-    ! Spacetime indices \mu and \nu
-    INTEGER:: cnt1, a, i_matter!, itr2, inde, index1!, cnt2
+    INTEGER:: cnt1, a, i_matter
     INTEGER:: n_problematic_h
-    INTEGER:: itot, l, ill!, b, k
+    INTEGER:: itot, l, ill
 
     DOUBLE PRECISION:: g4(n_sym4x4)
-    !DOUBLE PRECISION:: gg4(n_sym4x4,this% npart)
-    !DOUBLE PRECISION:: sq_detg4(this% npart)
-    DOUBLE PRECISION:: det, sq_g, Theta_a, tmp
-    !DOUBLE PRECISION:: com_x_newt, com_y_newt, com_z_newt, com_d_newt, mass_newt
-    !DOUBLE PRECISION:: com_x_1pn, com_y_1pn, com_z_1pn, com_d_1pn, mass_1pn
-    !DOUBLE PRECISION:: px_newt, py_newt, pz_newt, pnorm_newt
-    !DOUBLE PRECISION:: px, py, pz, pnorm, tmp
-    !DOUBLE PRECISION, DIMENSION(3):: tmp2
+    DOUBLE PRECISION:: det, Theta_a, tmp
 
-    !DOUBLE PRECISION:: ha, ha_1, ha_3, va, mat(3,3), mat_1(3,3), xa, ya, za
-    !DOUBLE PRECISION:: mat_xx, mat_xy, mat_xz, mat_yy
-    !DOUBLE PRECISION:: mat_yz, mat_zz, Wdx, Wdy, Wdz, dx, dy, dz, Wab, &
-    !                   Wab_ha, Wi, Wi1, dvv
-
-    !DOUBLE PRECISION, DIMENSION(this% npart):: qi1
-
-    LOGICAL:: few_ncand, exist!, invertible_matrix
+    LOGICAL:: few_ncand, exist
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    !CHARACTER( LEN= 2 ):: i_mat
     CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
@@ -170,13 +146,18 @@ SUBMODULE (sph_particles) sph_variables
 
     find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
 
+    CALL this% sph_computer_timer% start_timer()
+
     PRINT *, "** Executing the compute_and_print_sph_variables " &
              // "subroutine..."
     PRINT *
 
     !
-    !-- Set up the MODULE variables in MODULE sph_variables
-    !-- (used by write_SPHINCS_dump)
+    !-- Set up the MODULE variables from MODULE sph_variables
+    !-- (used by write_SPHINCS_dump).
+    !-- If write_SPHINCS_dump had arguments, it would not be needed
+    !-- to assign values to the MODULE variables.
+    !-- The TYPE-bound variables could be passed as arguments.
     !
     npart= this% npart
     n1   = this% npart_i(1)
@@ -188,62 +169,22 @@ SUBMODULE (sph_particles) sph_variables
     CALL allocate_SPH_memory
     CALL allocate_metric_on_particles( this% npart )
 
-    h    = this% h
-    nu   = this% nu
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( this, pos_u, h, nu ) &
+    !$OMP             PRIVATE( a )
+    assign_module_variables: DO a= 1, this% npart, 1
+      pos_u(:,a)= this% pos(:,a)
+      h    (a)  = this% h  (a)
+      nu   (a)  = this% nu (a)
+    ENDDO assign_module_variables
+    !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "1"
 
-    IF(.NOT.ALLOCATED( this% nu ))THEN
-      ALLOCATE( this% nu( this% npart ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array nu ", &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% nlrf ))THEN
-      ALLOCATE( this% nlrf( this% npart ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array nlrf ", &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% Theta ))THEN
-      ALLOCATE( this% Theta( this% npart ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array Theta ", &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% v ))THEN
-      ALLOCATE( this% v( 0:3, this% npart ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array v ", &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-    ENDIF
-    IF(.NOT.ALLOCATED( this% h ))THEN
-      ALLOCATE( this% h( this% npart ), STAT= ios, &
-                ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array h ", &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-    ENDIF
-
-    IF( debug ) PRINT *, "1"
-
-    !------------------------------------------------------------------------!
-    ! Compute SPH density estimate (nu has to be assigned before this step)  !
-    !------------------------------------------------------------------------!
+    !---------------------------------------------------------------!
+    ! Compute SPH density estimate after updating the neighbor tree !
+    ! (nu has to be assigned before this step)  !                   !
+    !---------------------------------------------------------------!
 
     CALL allocate_RCB_tree_memory_3D(npart)
     iorig(1:npart)= (/ (a,a=1,npart) /)
@@ -256,11 +197,11 @@ SUBMODULE (sph_particles) sph_variables
     PRINT *
 
     ! Determine smoothing length so that each particle has exactly
-    ! 300 neighbours inside 2h
+    ! ndes neighbours
     CALL assign_h( ndes, &
                    this% npart, &
                    this% pos, this% h, & ! Input
-                   h )             ! Output
+                   h )                   ! Output
 
     IF( debug ) PRINT *, "101.5"
 
@@ -332,116 +273,88 @@ SUBMODULE (sph_particles) sph_variables
              n_problematic_h, " particles."
     PRINT *
 
-    ! Update the member variable storing smoothing length
+    ! Update the member variable storing the smoothing length
     this% h= h
 
-    pos_u= this% pos
-
     !
-    !-- Compute square root of minus the metric determinant,
-    !-- and the generalized Lorentz factor.
-    !-- They are needed to compute nlrf from the SPH estimate of nstar
+    !-- Compute the SPH estimate of the relativistic density variable nstar
     !
-    CALL this% sph_computer_timer% start_timer()
-!    !$OMP PARALLEL DO DEFAULT( NONE ) &
-!    !$OMP             SHARED( this, pos_u, vel_u, sq_det_g4, Theta, nlrf, &
-!    !$OMP                     Pr, u, temp, av, divv ) &
-!    !$OMP             PRIVATE( itr, g4, det, sq_g, Theta_a )
-    compute_sph_variables_on_particles: DO itr= 1, this% npart, 1
-
-      ! Particle positions [Msun_geo]
-      !pos_u(1,itr)= this% pos(1,itr)
-      !pos_u(2,itr)= this% pos(2,itr)
-      !pos_u(3,itr)= this% pos(3,itr)
-
-      ! Coordinate velocity of the fluid [c]
-      this% v(0,itr)= one
-      this% v(1,itr)= this% lapse(itr)*this% v_euler_x(itr) &
-                    - this% shift_x(itr)
-      this% v(2,itr)= this% lapse(itr)*this% v_euler_y(itr) &
-                    - this% shift_y(itr)
-      this% v(3,itr)= this% lapse(itr)*this% v_euler_z(itr) &
-                    - this% shift_z(itr)
-      vel_u(1,itr)  = this% v(1,itr)
-      vel_u(2,itr)  = this% v(2,itr)
-      vel_u(3,itr)  = this% v(3,itr)
-
-      CALL compute_g4( this% lapse(itr), &
-            [this% shift_x(itr), this% shift_y(itr), this% shift_z(itr)], &
-            [this% g_xx(itr), this% g_xy(itr), this% g_xz(itr), &
-             this% g_yy(itr), this% g_yz(itr), this% g_zz(itr)], g4 )
-
-      CALL determinant_sym4x4( g4, det )
-      IF( ABS(det) < 1D-10 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "effectively 0 at particle ", itr
-          PRINT *
-          STOP
-      ELSEIF( det > 0 )THEN
-          PRINT *, "The determinant of the spacetime metric is " &
-                   // "positive at particle ", itr
-          PRINT *
-          STOP
-      ENDIF
-      sq_g= SQRT(-det)
-      sq_det_g4(itr)= sq_g
-      !sq_detg4(itr)= sq_g
-
-      !
-      !-- Generalized Lorentz factor
-      !
-      Theta_a= zero
-      CALL spacetime_vector_norm_sym4x4( g4, this% v(:,itr), Theta_a )
-      IF( Theta_a > zero )THEN
-        PRINT *, "** ERROR! The computing frame particle 4-velocity is ", &
-                 "spacelike at particle ", itr
-        PRINT *, " * Its norm is ", Theta_a
-        PRINT *, " * Stopping.."
-        PRINT *
-        STOP
-      ELSEIF( Theta_a == zero )THEN
-        PRINT *, "** ERROR! The computing frame particle 4-velocity is ", &
-                 "null at particle ", itr
-        PRINT *, " * Its norm is ", Theta_a
-        PRINT *, " * Stopping.."
-        PRINT *
-        STOP
-      ENDIF
-      Theta_a         = one/SQRT(-Theta_a)
-      Theta(itr)      = Theta_a
-      this% Theta(itr)= Theta_a
-
-    !   ! Specific internal energy [c^2]
-    !   u(itr)= this% specific_energy(itr)
-    !
-    !   ! Pressure [amu*c**2/(Msun_geo**3)]
-    !   !          dimensions: [(M/L**3)*L**2/T**2]= [M/(L*T**2)], same as
-    !   !                      energy density
-    !   Pr(itr)= this% pressure(itr)
-    !   this% pressure_cu(itr)= Pr(itr)
-
-    ENDDO compute_sph_variables_on_particles
-!    !$OMP END PARALLEL DO
-
-    !
-    !-- Compute the proper baryon number density with kernel interpolation
-    !
-
-    PRINT *, " * Computing SPH proper baryon number density with kernel", &
-             " interpolation..."
+    PRINT *, " * Computing the SPH estimate of the relativistic density ", &
+             "variable nstar..."
     PRINT *
 
-    ! density calls dens_ll_cell, which computes nstar on particle a as
-    ! Na=     Na + nu(b)*Wab_ha, so this is nstar= nlrf*sq_g*Theta
-    ! It has to be compared with nstar= nlrf*sq_g*Theta
     CALL density_loop( this% npart,     &
                        this% pos,       &
                        this% nu,        &
                        this% h,         &
                        this% nstar_sph )
 
-    ! Update the member variable storing the particle volume
-    this% pvol= this% nu/this% nstar_sph
+    IF( debug ) PRINT *, "20"
+
+    !
+    !-- Compute square root of minus the metric determinant,
+    !-- and the generalized Lorentz factor.
+    !-- They are needed to compute nlrf from the SPH estimate of nstar
+    !
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( this, sq_det_g4 ) &
+    !$OMP             PRIVATE( a, g4, det )
+    compute_sph_variables_on_particles: DO a= 1, this% npart, 1
+
+      ! Coordinate velocity of the fluid [c]
+      this% v(0,a)= one
+      this% v(1,a)= this% lapse(a)*this% v_euler_x(a) &
+                    - this% shift_x(a)
+      this% v(2,a)= this% lapse(a)*this% v_euler_y(a) &
+                    - this% shift_y(a)
+      this% v(3,a)= this% lapse(a)*this% v_euler_z(a) &
+                    - this% shift_z(a)
+
+      CALL compute_g4( this% lapse(a), &
+                       [this% shift_x(a), this% shift_y(a), this% shift_z(a)], &
+                       [this% g_xx(a), this% g_xy(a), this% g_xz(a), &
+                        this% g_yy(a), this% g_yz(a), this% g_zz(a)], g4 )
+
+      CALL determinant_sym4x4( g4, det )
+      IF( ABS(det) < 1D-10 )THEN
+        PRINT *, "The determinant of the spacetime metric is " &
+                 // "effectively 0 at particle ", a
+        PRINT *
+        STOP
+      ELSEIF( det > 0 )THEN
+        PRINT *, "The determinant of the spacetime metric is " &
+                 // "positive at particle ", a
+        PRINT *
+        STOP
+      ENDIF
+      sq_det_g4(a)= SQRT(-det)
+
+      !
+      !-- Generalized Lorentz factor
+      !
+      this% Theta(a)= zero
+      CALL spacetime_vector_norm_sym4x4( g4, this% v(:,a), this% Theta(a) )
+      IF( this% Theta(a) > zero )THEN
+        PRINT *, "** ERROR! The computing frame particle 4-velocity is ", &
+                 "spacelike at particle ", a
+        PRINT *, " * Its norm is ",this% Theta(a)
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ELSEIF( this% Theta(a) == zero )THEN
+        PRINT *, "** ERROR! The computing frame particle 4-velocity is ", &
+                 "null at particle ", a
+        PRINT *, " * Its norm is ", this% Theta(a)
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+      this% Theta(a)= one/SQRT(-this% Theta(a))
+
+    ENDDO compute_sph_variables_on_particles
+    !$OMP END PARALLEL DO
+
+    IF( debug ) PRINT *, "21"
 
     !-------------------------------------------------------------------------!
     !-------------------------------------------------------------------------!
@@ -458,27 +371,63 @@ SUBMODULE (sph_particles) sph_variables
     !-------------------------------------------------------------------------!
     !-------------------------------------------------------------------------!
 
-    this% nlrf_sph= (this% nstar_sph/this% Theta)/sq_det_g4
-    nlrf= this% nlrf_sph
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( this, nlrf, sq_det_g4 ) &
+    !$OMP             PRIVATE( a )
+    compute_nlrf: DO a= 1, this% npart, 1
 
-    this% particle_density= this% nstar_sph/this% nu
+      ! Baryon mass density in the local rest frame
+      this% nlrf_sph(a)= (this% nstar_sph(a)/this% Theta(a))/sq_det_g4(a)
+      nlrf(a)          = this% nlrf_sph(a)
+      ! Particle volume
+      this% pvol(a)            = this% nu(a)/this% nstar_sph(a)
+      ! Particle number density
+      this% particle_density(a)= this% nstar_sph(a)/this% nu(a)
 
-    ! Temperature: here dummy
-    temp= zero
+    ENDDO compute_nlrf
+    !$OMP END PARALLEL DO
 
-    ! Dissipation parameter
-    av= one
+    IF( debug ) PRINT *, "22"
 
-    ! Velocity divergence
-    divv= zero
+    !
+    !-- Assign remaining particle properties to MODULE variables
+    !
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( this, vel_u, Theta, temp, av, divv ) &
+    !$OMP             PRIVATE( a )
+    assign_module_variables2: DO a= 1, this% npart, 1
+      ! Computing frame spatial velocity
+      vel_u(:,a)= this% v(1:3,a)
+      ! Generalized Lorentz factor
+      Theta(a)  = this% Theta(a)
+      ! Temperature
+      temp(a)   = zero
+      ! Disspation parameter
+      av(a)     = zero
+      ! Velocity divergence
+      divv(a)   = zero
+    ENDDO assign_module_variables2
+    !$OMP END PARALLEL DO
 
     IF( debug ) PRINT *, "3"
 
-    ! Compute nlrf and nstar from the ID (for diagnostics)
-    this% nlrf = this% baryon_density
-    this% nstar= ( this% nlrf*this% Theta )*sq_det_g4
+    !
+    !-- Compute nlrf and nstar from the ID (for diagnostics)
+    !-- pressure and specific internal energy are already assigned
+    !
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( this, sq_det_g4 ) &
+    !$OMP             PRIVATE( a )
+    compute_densities_from_id: DO a= 1, this% npart, 1
+      this% nlrf (a)= this% baryon_density(a)
+      this% nstar(a)= ( this% nlrf(a)*this% Theta(a) )*sq_det_g4(a)
+    ENDDO compute_densities_from_id
+    !$OMP END PARALLEL DO
+
+    IF( debug ) PRINT *, "4"
 
     !-----------------------------------------------------------------------!
+    ! Computation of the pressure.                                          !
     ! For single and piecewise polytropes, do not use the pressure          !
     ! and specific internal energy from the ID.                             !
     ! Compute them using the exact formulas for piecewise                   !
@@ -547,7 +496,7 @@ SUBMODULE (sph_particles) sph_variables
     !      ENDDO
 
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
           this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ELSE
@@ -586,7 +535,7 @@ SUBMODULE (sph_particles) sph_variables
             *this% enthalpy(npart_in:npart_fin)) )
 
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
           this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ENDIF
@@ -615,7 +564,7 @@ SUBMODULE (sph_particles) sph_variables
 
           ENDDO
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
           this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ELSE
@@ -640,7 +589,7 @@ SUBMODULE (sph_particles) sph_variables
 
           ENDDO
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_cu(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+          this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
           this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ENDIF
@@ -651,18 +600,9 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDDO matter_objects_loop
 
-    !-------------------!
-    ! Assignment of Ye  !
-    !-------------------!
-
-    IF(.NOT.ALLOCATED( this% Ye ))THEN
-      ALLOCATE( this% Ye( this% npart ), STAT= ios, ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array Ye ", &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-    ENDIF
+    !------------------!
+    ! Assignment of Ye !
+    !------------------!
 
     assign_ye_on_particles: IF( this% compose_eos )THEN
 
@@ -724,18 +664,18 @@ SUBMODULE (sph_particles) sph_variables
       PRINT *
 
       PRINT *, " * Maximum pressure", i_matter, "=", &
-               MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 ) &
+               MAXVAL( this% pressure_sph(npart_in:npart_fin), DIM= 1 ) &
                *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
                !" m0c2_cu (TODO: CHECK UNITS)"!, &
                !"baryon Msun_geo^{-3}"
       PRINT *, " * Minimum pressure", i_matter, "=", &
-               MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 ) &
+               MINVAL( this% pressure_sph(npart_in:npart_fin), DIM= 1 ) &
                *amu*c_light2/((Msun_geo*km2m*m2cm)**3), " Ba"
                !" m0c2_cu (TODO: CHECK UNITS)"!, &
                !"baryon Msun_geo^{-3}"
       PRINT *, " * Ratio between the two=", &
-               MAXVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )/ &
-               MINVAL( this% pressure_cu(npart_in:npart_fin), DIM= 1 )
+               MAXVAL( this% pressure_sph(npart_in:npart_fin), DIM= 1 )/ &
+               MINVAL( this% pressure_sph(npart_in:npart_fin), DIM= 1 )
       PRINT *
 
       PRINT *, " * Maximum specific internal energy", i_matter, "=", &
@@ -783,12 +723,7 @@ SUBMODULE (sph_particles) sph_variables
 
     !
     !-- Adjusting the baryon number per particle uniformly so that
-    !-- the baryon mass is correct, but the ratio between nu_max and nu_min
-    !-- does not change.
-    !-- nlrf is not to be rescaled, according to Stephan, since:
-    !--   (i)  it is directly computed from the LORENE ID and should therefore
-    !--        be consistent with it
-    !--   (ii) it is anyway immediately recomputed in SPHINCS_BSSN
+    !-- the baryon mass is correct.
     !
     IF( this% correct_nu )THEN
 
@@ -849,6 +784,7 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDIF
 
+
     !-------------!
     ! Diagnostics !
     !-------------!
@@ -860,7 +796,7 @@ SUBMODULE (sph_particles) sph_variables
                               this% pos,         &
                               this% nlrf_sph,    &
                               this% u_sph,       &
-                              this% pressure_cu, &
+                              this% pressure_sph, &
                               this% v(1:3,:),    &
                               this% theta,       &
                               this% nstar_sph )
@@ -896,7 +832,7 @@ SUBMODULE (sph_particles) sph_variables
     !                             this% pos        (:,npart_in:npart_fin),   &
     !                             this% nlrf_sph   (npart_in:npart_fin),     &
     !                             this% u_sph      (npart_in:npart_fin),     &
-    !                             this% pressure_cu(npart_in:npart_fin),     &
+    !                             this% pressure_sph(npart_in:npart_fin),     &
     !                             this% v          (1:3,npart_in:npart_fin), &
     !                             this% theta      (npart_in:npart_fin),     &
     !                             this% nstar_sph  (npart_in:npart_fin),     &
@@ -906,11 +842,11 @@ SUBMODULE (sph_particles) sph_variables
     !
     ! ENDDO
 
-    CALL exact_nei_tree_update( ndes,        &
-                                this% npart, &
-                                this% pos,   &
-                                this% nu )
-    this% h= h
+    !CALL exact_nei_tree_update( ndes,        &
+    !                            this% npart, &
+    !                            this% pos,   &
+    !                            this% nu )
+    !this% h= h
 
     CALL compute_and_print_quality_indicators &
       (this% npart, this% pos, this% h, this% nu, this% nstar_sph, &
@@ -945,7 +881,7 @@ SUBMODULE (sph_particles) sph_variables
                                   this% nu(npart_in:npart_fin),           &
                                   this% Theta(npart_in:npart_fin),        &
                                   this% nlrf_sph(npart_in:npart_fin),     &
-                                  this% pressure_cu(npart_in:npart_fin),  &
+                                  this% pressure_sph(npart_in:npart_fin),  &
                                   this% u_sph(npart_in:npart_fin),        &
                                   this% v(1:3,npart_in:npart_fin),        &
                                   this% adm_linear_momentum_i(i_matter,:) )
@@ -976,7 +912,7 @@ SUBMODULE (sph_particles) sph_variables
       CALL this% post_process_sph_id( this% npart, this% pos, &
                                     this% nlrf_sph, &
                                     this% u_sph, &
-                                    this% pressure_cu, this% v(1:3,:), &
+                                    this% pressure_sph, this% v(1:3,:), &
                                     this% theta, this% nstar_sph, this% nu, &
                                     this% g_xx,      &
                                     this% g_xy,      &
@@ -1030,7 +966,7 @@ SUBMODULE (sph_particles) sph_variables
                                   this% nu(npart_in:npart_fin),           &
                                   this% Theta(npart_in:npart_fin),        &
                                   this% nlrf_sph(npart_in:npart_fin),     &
-                                  this% pressure_cu(npart_in:npart_fin),  &
+                                  this% pressure_sph(npart_in:npart_fin),  &
                                   this% u_sph(npart_in:npart_fin),        &
                                   vel_u(1:3,npart_in:npart_fin),        &
                                   this% adm_linear_momentum_i(i_matter,:) )
@@ -1120,7 +1056,7 @@ SUBMODULE (sph_particles) sph_variables
     !                   this% v, &
     !                   !this% v_euler_x, &
     !                   this% nu, this% baryon_density, &
-    !                   this% specific_energy, this% pressure_cu, &
+    !                   this% specific_energy, this% pressure_sph, &
     !                   this% nstar_sph, this% h, &
     !                   sq_detg4, gg4, px, py, pz )
     !CALL momentum_1pn( this% npart, this% pos, &
@@ -1129,7 +1065,7 @@ SUBMODULE (sph_particles) sph_variables
     !                   this% nu, &
     !                   this% nlrf_sph, &
     !                   this% u_sph, &
-    !                   this% pressure_cu, &
+    !                   this% pressure_sph, &
     !                   this% nstar_sph, &
     !                   this% h, &
     !                   sq_detg4, gg4, px, py, pz )
@@ -1345,7 +1281,7 @@ END SUBMODULE sph_variables
 !      CALL this% reshape_sph_field( this% pressure, cnt1, cnt2, &
 !                                    this% baryon_density_index )
 !
-!      CALL this% reshape_sph_field( this% pressure_cu, cnt1, cnt2, &
+!      CALL this% reshape_sph_field( this% pressure_sph, cnt1, cnt2, &
 !                                    this% baryon_density_index )
 !
 !      CALL this% reshape_sph_field( this% nu, cnt1, cnt2, &
