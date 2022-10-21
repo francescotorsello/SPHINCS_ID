@@ -491,197 +491,8 @@ SUBMODULE (sph_particles) constructor_std
     CASE( id_particles_from_file )
     ! Read particles from formatted file, and time the process
 
-      PRINT *, " * Reading particle positions from formatted file " &
-               // TRIM(parts_pos_namefile)
-      PRINT *
 
-      INQUIRE( FILE= TRIM(parts_pos_namefile), EXIST= exist )
-
-      IF( exist )THEN
-        OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
-              FORM= "FORMATTED", ACTION= "READ", IOSTAT= ios, &
-              IOMSG= err_msg )
-        IF( ios > 0 )THEN
-          PRINT *, "...error when opening " // TRIM(parts_pos_namefile), &
-                  ". The error message is", err_msg
-          STOP
-        ENDIF
-      ELSE
-        PRINT *, "** ERROR! Unable to find file " // TRIM(parts_pos_namefile)
-        STOP
-      ENDIF
-
-      ! Get total number of lines in the file
-      nlines = 0
-      DO
-        READ( unit_pos, * , IOSTAT= ios )
-        IF ( ios /= 0 ) EXIT
-        nlines = nlines + 1
-      ENDDO
-
-      IF( debug ) PRINT *, "nlines=", nlines
-
-      CLOSE( UNIT= unit_pos )
-
-      ! Set the total number of particles to the number of lines in the file,
-      ! minus the number of header lines, minus the line containing the number
-      ! of particles on each matter object
-      npart_tmp= nlines - header_lines - 1
-
-      IF( debug ) PRINT *, "npart_tmp=", npart_tmp
-
-      ! Read all particle positions, and nu, if present
-      OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
-            FORM= "FORMATTED", ACTION= "READ" )
-
-      ! Skip header
-      DO itr= 1, header_lines, 1
-        READ( unit_pos, * )
-      ENDDO
-
-      ! Read the number of matter objects and the particle numbers on each
-      ! matter object
-      READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
-              n_matter_tmp, npart_i_tmp(1:parts% n_matter)
-
-      IF( ios > 0 )THEN
-        PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
-                " at particle ", itr,". The status variable is ", ios, &
-                ". The error message is", err_msg
-        STOP
-      ENDIF
-
-      ! Check that the numbers of matter objects is consistent
-      IF( n_matter_tmp /= parts% n_matter )THEN
-        PRINT *, "** ERROR! The numbers of matter objects", &
-                 " in file ", TRIM(parts_pos_namefile), ", equal to ", &
-                 n_matter_tmp, ", is not consistent", &
-                 " with the one corresponding to ID file, equal to", &
-                 parts% n_matter
-        PRINT *, "   Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-
-      ! Check that the numbers of particles are consistent
-      IF( npart_tmp /= SUM(npart_i_tmp) )THEN
-        PRINT *, "** ERROR! The numbers of particles on each matter object", &
-                 " do not add up to the total number of particles, in file ", &
-                 TRIM(parts_pos_namefile)
-        PRINT *, " * npart_tmp= ", npart_tmp
-        PRINT *, " * npart_i_tmp=", npart_i_tmp
-        PRINT *, " * SUM(npart_i_tmp)=", SUM(npart_i_tmp)
-        PRINT *, " * Stopping..."
-        PRINT *
-        STOP
-      ENDIF
-
-      parts% npart_i(1:parts% n_matter)= npart_i_tmp(1:parts% n_matter)
-      parts% npart = SUM(parts% npart_i)
-
-      CALL parts% placer_timer% start_timer()
-      matter_objects_formatted_file_loop: DO i_matter= 1, parts% n_matter, 1
-
-        ASSOCIATE( nline_in   => header_lines + 1 + &
-                                 npart_i_tmp(i_matter)*(i_matter-1) + 1, &
-                   nline_fin  => header_lines + 1 + &
-                                 npart_i_tmp(i_matter) + &
-                                 npart_i_tmp(i_matter)*(i_matter-1) )
-
-          ! Determine boundaries of the lattices
-          xmin= ABS(center(i_matter, 1)) + sizes(i_matter, 1)
-          xmax= ABS(center(i_matter, 1)) + sizes(i_matter, 2)
-          ymin= ABS(center(i_matter, 2)) + sizes(i_matter, 3)
-          ymax= ABS(center(i_matter, 2)) + sizes(i_matter, 4)
-          zmin= ABS(center(i_matter, 3)) + sizes(i_matter, 5)
-          zmax= ABS(center(i_matter, 3)) + sizes(i_matter, 6)
-
-          CALL parts% read_particles_formatted_file &
-            ( unit_pos, nline_in, nline_fin, &
-              xmin, xmax, ymin, ymax, zmin, zmax, &
-              parts_all(i_matter)% pos_i, &
-              parts_all(i_matter)% pvol_i, &
-              parts_all(i_matter)% nu_i, &
-              parts_all(i_matter)% h_i )
-
-          IF(.NOT.parts% read_nu) parts_all(i_matter)% nu_i= &
-              parts% masses(i_matter)/npart_i_tmp(i_matter)
-
-          ! Now that the real particle numbers are known, reallocate the arrays
-          ! to the appropriate sizes. Note that, if the APM is performed,
-          ! this step will be done after it as well
-          ! TODO: maybe it is not necessary for the arrays pvol_i, nu_i and h_i?
-          parts_all(i_matter)% pos_i = &
-                    parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
-          parts_all(i_matter)% pvol_i = &
-                      parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
-          parts_all(i_matter)% nu_i = &
-                      parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )
-          parts_all(i_matter)% h_i = &
-                      parts_all(i_matter)% h_i( 1:parts% npart_i(i_matter) )
-
-          PRINT *, " * Maximum n. baryon per particle (nu) on object", &
-                   i_matter, "=", MAXVAL( parts_all(i_matter)% nu_i, DIM= 1 )
-          PRINT *, " * Minimum n. baryon per particle (nu) on object", &
-                   i_matter, "=", MINVAL( parts_all(i_matter)% nu_i, DIM= 1 )
-          PRINT *, " * Ratio between the two=", &
-                   MAXVAL( parts_all(i_matter)% nu_i, DIM= 1 )&
-                  /MINVAL( parts_all(i_matter)% nu_i, DIM= 1 )
-          PRINT *
-
-          two_matter_objects_read: &
-          IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
-
-            ! with practically the same mass, and the physical system
-            ! is symmetric wrt the yz plane (in which case the user should set
-            ! the reflect_particles_x to .TRUE. in the parameter file)
-            equal_masses_read: &
-            IF( ABS(parts% masses(1) - parts% masses(2)) &
-               /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
-
-              ! ...reflect particles
-
-              DEALLOCATE(parts_all(2)% pos_i)
-              DEALLOCATE(parts_all(2)% pvol_i)
-              DEALLOCATE(parts_all(2)% h_i)
-              DEALLOCATE(parts_all(2)% nu_i)
-
-              CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
-                                               parts_all(1)% pvol_i,  &
-                                               parts_all(1)% nu_i,    &
-                                               parts_all(1)% h_i,     &
-                                               parts% npart_i(1),     &
-                                               parts_all(2)% pos_i,   &
-                                               parts_all(2)% pvol_i,  &
-                                               parts_all(2)% nu_i,    &
-                                               parts_all(2)% h_i,     &
-                                               parts% npart_i(2) )
-
-
-
-              PRINT *, "** Particles placed on star 1, read from formatted ", &
-                       " file and reflected about the yz plane onto star 2."
-              PRINT *
-
-              EXIT
-
-            ENDIF equal_masses_read
-
-          ENDIF two_matter_objects_read
-
-        END ASSOCIATE
-
-      ENDDO matter_objects_formatted_file_loop
-      CALL parts% placer_timer% stop_timer()
-
-      CLOSE( unit= unit_pos )
-
-      IF( debug )THEN
-        PRINT *, "parts% npart_i_tmp=", npart_i_tmp
-        PRINT *, "parts% npart_i=", parts% npart_i
-        PRINT *, "parts% npart=", parts% npart
-        PRINT *
-      ENDIF
+      CALL read_particles_from_formatted_file()
 
       PRINT *, " * Particle positions read. Number of particles=", &
                parts% npart
@@ -1814,6 +1625,213 @@ SUBMODULE (sph_particles) constructor_std
       !$OMP END PARALLEL DO
 
     END SUBROUTINE compute_nstar_id
+
+
+    SUBROUTINE read_particles_from_formatted_file
+
+      !**************************************************************
+      !
+      !# Read particles from formatted file
+      !
+      !  FT 21.10.2022
+      !
+      !**************************************************************
+
+      IMPLICIT NONE
+
+      PRINT *, " * Reading particle positions from formatted file " &
+               // TRIM(parts_pos_namefile)
+      PRINT *
+
+      INQUIRE( FILE= TRIM(parts_pos_namefile), EXIST= exist )
+
+      IF( exist )THEN
+        OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
+              FORM= "FORMATTED", ACTION= "READ", IOSTAT= ios, &
+              IOMSG= err_msg )
+        IF( ios > 0 )THEN
+          PRINT *, "...error when opening " // TRIM(parts_pos_namefile), &
+                  ". The error message is", err_msg
+          STOP
+        ENDIF
+      ELSE
+        PRINT *, "** ERROR! Unable to find file " // TRIM(parts_pos_namefile)
+        STOP
+      ENDIF
+
+      ! Get total number of lines in the file
+      nlines = 0
+      DO
+        READ( unit_pos, * , IOSTAT= ios )
+        IF ( ios /= 0 ) EXIT
+        nlines = nlines + 1
+      ENDDO
+
+      IF( debug ) PRINT *, "nlines=", nlines
+
+      CLOSE( UNIT= unit_pos )
+
+      ! Set the total number of particles to the number of lines in the file,
+      ! minus the number of header lines, minus the line containing the number
+      ! of particles on each matter object
+      npart_tmp= nlines - header_lines - 1
+
+      IF( debug ) PRINT *, "npart_tmp=", npart_tmp
+
+      ! Read all particle positions, and nu, if present
+      OPEN( UNIT= unit_pos, FILE= TRIM(parts_pos_namefile), &
+            FORM= "FORMATTED", ACTION= "READ" )
+
+      ! Skip header
+      DO itr= 1, header_lines, 1
+        READ( unit_pos, * )
+      ENDDO
+
+      ! Read the number of matter objects and the particle numbers on each
+      ! matter object
+      READ( UNIT= unit_pos, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
+              n_matter_tmp, npart_i_tmp(1:parts% n_matter)
+
+      IF( ios > 0 )THEN
+        PRINT *, "...error when reading " // TRIM(parts_pos_namefile), &
+                " at particle ", itr,". The status variable is ", ios, &
+                ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      ! Check that the numbers of matter objects is consistent
+      IF( n_matter_tmp /= parts% n_matter )THEN
+        PRINT *, "** ERROR! The numbers of matter objects", &
+                 " in file ", TRIM(parts_pos_namefile), ", equal to ", &
+                 n_matter_tmp, ", is not consistent", &
+                 " with the one corresponding to ID file, equal to", &
+                 parts% n_matter
+        PRINT *, "   Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+      ! Check that the numbers of particles are consistent
+      IF( npart_tmp /= SUM(npart_i_tmp) )THEN
+        PRINT *, "** ERROR! The numbers of particles on each matter object", &
+                 " do not add up to the total number of particles, in file ", &
+                 TRIM(parts_pos_namefile)
+        PRINT *, " * npart_tmp= ", npart_tmp
+        PRINT *, " * npart_i_tmp=", npart_i_tmp
+        PRINT *, " * SUM(npart_i_tmp)=", SUM(npart_i_tmp)
+        PRINT *, " * Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+      parts% npart_i(1:parts% n_matter)= npart_i_tmp(1:parts% n_matter)
+      parts% npart = SUM(parts% npart_i)
+
+      CALL parts% placer_timer% start_timer()
+      matter_objects_formatted_file_loop: DO i_matter= 1, parts% n_matter, 1
+
+        ASSOCIATE( nline_in   => header_lines + 1 + &
+                                 npart_i_tmp(i_matter)*(i_matter-1) + 1, &
+                   nline_fin  => header_lines + 1 + &
+                                 npart_i_tmp(i_matter) + &
+                                 npart_i_tmp(i_matter)*(i_matter-1) )
+
+          ! Determine boundaries of the lattices
+          xmin= ABS(center(i_matter, 1)) + sizes(i_matter, 1)
+          xmax= ABS(center(i_matter, 1)) + sizes(i_matter, 2)
+          ymin= ABS(center(i_matter, 2)) + sizes(i_matter, 3)
+          ymax= ABS(center(i_matter, 2)) + sizes(i_matter, 4)
+          zmin= ABS(center(i_matter, 3)) + sizes(i_matter, 5)
+          zmax= ABS(center(i_matter, 3)) + sizes(i_matter, 6)
+
+          CALL parts% read_particles_formatted_file &
+            ( unit_pos, nline_in, nline_fin, &
+              xmin, xmax, ymin, ymax, zmin, zmax, &
+              parts_all(i_matter)% pos_i, &
+              parts_all(i_matter)% pvol_i, &
+              parts_all(i_matter)% nu_i, &
+              parts_all(i_matter)% h_i )
+
+          IF(.NOT.parts% read_nu) parts_all(i_matter)% nu_i= &
+              parts% masses(i_matter)/npart_i_tmp(i_matter)
+
+          ! Now that the real particle numbers are known, reallocate the arrays
+          ! to the appropriate sizes. Note that, if the APM is performed,
+          ! this step will be done after it as well
+          ! TODO: maybe it is not necessary for the arrays pvol_i, nu_i and h_i?
+          parts_all(i_matter)% pos_i = &
+                    parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
+          parts_all(i_matter)% pvol_i = &
+                      parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
+          parts_all(i_matter)% nu_i = &
+                      parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )
+          parts_all(i_matter)% h_i = &
+                      parts_all(i_matter)% h_i( 1:parts% npart_i(i_matter) )
+
+          PRINT *, " * Maximum n. baryon per particle (nu) on object", &
+                   i_matter, "=", MAXVAL( parts_all(i_matter)% nu_i, DIM= 1 )
+          PRINT *, " * Minimum n. baryon per particle (nu) on object", &
+                   i_matter, "=", MINVAL( parts_all(i_matter)% nu_i, DIM= 1 )
+          PRINT *, " * Ratio between the two=", &
+                   MAXVAL( parts_all(i_matter)% nu_i, DIM= 1 )&
+                  /MINVAL( parts_all(i_matter)% nu_i, DIM= 1 )
+          PRINT *
+
+          two_matter_objects_read: &
+          IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
+
+            ! with practically the same mass, and the physical system
+            ! is symmetric wrt the yz plane (in which case the user should set
+            ! the reflect_particles_x to .TRUE. in the parameter file)
+            equal_masses_read: &
+            IF( ABS(parts% masses(1) - parts% masses(2)) &
+               /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
+
+              ! ...reflect particles
+
+              DEALLOCATE(parts_all(2)% pos_i)
+              DEALLOCATE(parts_all(2)% pvol_i)
+              DEALLOCATE(parts_all(2)% h_i)
+              DEALLOCATE(parts_all(2)% nu_i)
+
+              CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
+                                               parts_all(1)% pvol_i,  &
+                                               parts_all(1)% nu_i,    &
+                                               parts_all(1)% h_i,     &
+                                               parts% npart_i(1),     &
+                                               parts_all(2)% pos_i,   &
+                                               parts_all(2)% pvol_i,  &
+                                               parts_all(2)% nu_i,    &
+                                               parts_all(2)% h_i,     &
+                                               parts% npart_i(2) )
+
+
+
+              PRINT *, "** Particles placed on star 1, read from formatted ", &
+                       " file and reflected about the yz plane onto star 2."
+              PRINT *
+
+              EXIT
+
+            ENDIF equal_masses_read
+
+          ENDIF two_matter_objects_read
+
+        END ASSOCIATE
+
+      ENDDO matter_objects_formatted_file_loop
+      CALL parts% placer_timer% stop_timer()
+
+      CLOSE( unit= unit_pos )
+
+      IF( debug )THEN
+        PRINT *, "parts% npart_i_tmp=", npart_i_tmp
+        PRINT *, "parts% npart_i=", parts% npart_i
+        PRINT *, "parts% npart=", parts% npart
+        PRINT *
+      ENDIF
+
+    END SUBROUTINE read_particles_from_formatted_file
 
 
     SUBROUTINE compute_nstar_eul_id( npart, &
