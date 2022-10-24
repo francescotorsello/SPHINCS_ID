@@ -200,6 +200,10 @@ MODULE sphincs_id_full
 
         eos_str= 'AP3 '
 
+      CASE( 'Star 1  Multipolytropic APR3 EOS' )
+
+        eos_str= 'AP3 '
+
       CASE( 'Multipolytropic AP3  EOS' )
 
         eos_str= 'AP3 '

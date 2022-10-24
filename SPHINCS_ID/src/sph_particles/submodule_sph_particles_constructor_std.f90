@@ -79,10 +79,8 @@ SUBMODULE (sph_particles) constructor_std
     !
     !**************************************************
 
-    !USE NaNChecker,    ONLY: Check_Array_for_NAN
     USE constants,          ONLY: amu, pi, half, third
     USE utility,            ONLY: zero, one, two, ten, Msun_geo, flag$sph
-    !USE NR,                 ONLY: indexx
     USE kernel_table,       ONLY: ktable
     USE input_output,       ONLY: read_options
     USE units,              ONLY: set_units
@@ -90,9 +88,11 @@ SUBMODULE (sph_particles) constructor_std
     USE alive_flag,         ONLY: alive
     USE analyze,            ONLY: COM
     USE utility,            ONLY: spherical_from_cartesian, &
-                                  spatial_vector_norm_sym3x3, sph_path
+                                  spatial_vector_norm_sym3x3, sph_path, &
+                                  scan_1d_array_for_nans
 
     IMPLICIT NONE
+
 
     INTEGER, PARAMETER:: unit_pos= 2289
     INTEGER, PARAMETER:: unit_pos_out= 8754
@@ -185,8 +185,7 @@ SUBMODULE (sph_particles) constructor_std
 
     NAMELIST /sphincs_id_particles/ &
               parts_pos_path, parts_pos, columns, header_lines, n_cols, &
-              read_nu, column_nu, &
-              stretch, &
+              read_nu, column_nu, stretch, &
               use_thres, thres, nu_ratio_des, redistribute_nu, correct_nu, &
               compose_eos, compose_path, compose_filename, &
               npart_des, last_r, upper_bound, lower_bound, &
@@ -269,35 +268,35 @@ SUBMODULE (sph_particles) constructor_std
 
     IF( upper_bound <= lower_bound )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "upper_bound should be greater than lower_bound!"
       PRINT *
       STOP
     ENDIF
     IF( upper_factor < 1.0D0 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "upper_factor should be greater than or equal to 1!"
       PRINT *
       STOP
     ENDIF
     IF( lower_factor > 1 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "lower_factor should be smaller than or equal to 1!"
       PRINT *
       STOP
     ENDIF
     IF( max_steps < 10 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "max_steps should be an integer greater than or equal to 10!"
       PRINT *
       STOP
     ENDIF
     IF( last_r < 0.95D0 .OR. last_r > 1.0D0 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "last_r should be greater than or equal to 0.95, ", &
                "and lower than or equal to 1!"
       PRINT *
@@ -306,59 +305,36 @@ SUBMODULE (sph_particles) constructor_std
     IF( apm_max_it < 0 .OR. max_inc < 0 .OR. nuratio_thres < 0 &
         .OR. nuratio_des < 0 .OR. nx_gh < 0 .OR. ny_gh < 0 .OR. nz_gh < 0 )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "the numeric parameters for the APM method should be positive!"
       PRINT *
       STOP
     ENDIF
     IF( nuratio_des >= nuratio_thres )THEN
       PRINT *
-      PRINT *, "** ERROR in lorene_bns_id_particles.par: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "nuratio_des has to be stricly lower than nuratio_thres!"
       PRINT *
       STOP
     ENDIF
     IF( print_step < 0 )THEN
       PRINT *
-      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "print_step has to be a positive integer or zero!"
       PRINT *
       STOP
     ENDIF
     IF( ghost_dist < zero )THEN
       PRINT *
-      PRINT *, "** ERROR in sphincs_id_particles.dat: ", &
+      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
                "ghost_dist has to be a positive double precision or zero!"
       PRINT *
       STOP
     ENDIF
 
-    ! setup unit system
-    CALL set_units('NSM')
-    CALL read_options
-
-    ! tabulate kernel, get ndes
-    CALL ktable( ikernel, ndes )
-
-    IF( (eos_type /= 'Poly') .AND. (eos_type /= 'pwp') )THEN
-      PRINT *, "** ERROR! Unkown EOS specified in parameter file ", &
-               "SPHINCS_fm_input.dat."
-      PRINT *, " * The currently supported EOS types are 'Poly' for a ", &
-               "polytropic EOS, and 'pwp' for a piecewise polytropic EOS."
-      PRINT *
-      PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
-               eos_type
-      PRINT *, " * Stopping..."
-      PRINT *
-      STOP
-    ENDIF
-
-    CALL id% initialize_id( flag$sph )
-
     !
     !-- Read needed data from the idbase object
     !
-
     parts% nbar_tot       = zero
     parts% npart          = 0
     parts% distribution_id= dist
@@ -371,7 +347,6 @@ SUBMODULE (sph_particles) constructor_std
     ALLOCATE( parts% nuratio_i(parts% n_matter) )
     ALLOCATE( parts% mass_ratios(parts% n_matter) )
     ALLOCATE( parts% mass_fractions(parts% n_matter) )
-
     ALLOCATE( parts% barycenter(parts% n_matter,3) )
 
     parts% npart_i(0)= 0
@@ -401,6 +376,7 @@ SUBMODULE (sph_particles) constructor_std
     max_mass  = MAXVAL( parts% masses )
     total_mass= SUM( parts% masses )
     DO i_matter= 1, parts% n_matter, 1
+
       parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
       parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
       npart_des_i(i_matter)          = &
@@ -410,6 +386,7 @@ SUBMODULE (sph_particles) constructor_std
       ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
       ALLOCATE( parts_all(i_matter)% h_i    ( tmp ) )
       ALLOCATE( parts_all(i_matter)% nu_i   ( tmp ) )
+
     ENDDO
     !   IF( parts% redistribute_nu )THEN
     !     thres= 100.0D0*parts% nu_ratio
@@ -417,8 +394,28 @@ SUBMODULE (sph_particles) constructor_std
 
     parts% post_process_sph_id => id% finalize_sph_id_ptr
 
-    !PRINT *, parts% all_eos(1)% eos_parameters
-    !STOP
+
+    ! setup unit system
+    CALL set_units('NSM')
+    CALL read_options
+
+    ! tabulate kernel, get ndes
+    CALL ktable( ikernel, ndes )
+
+    IF( (eos_type /= 'Poly') .AND. (eos_type /= 'pwp') )THEN
+      PRINT *, "** ERROR! Unkown EOS specified in parameter file ", &
+               "SPHINCS_fm_input.dat."
+      PRINT *, " * The currently supported EOS types are 'Poly' for a ", &
+               "polytropic EOS, and 'pwp' for a piecewise polytropic EOS."
+      PRINT *
+      PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+               eos_type
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+    ENDIF
+
+    CALL id% initialize_id( flag$sph )
 
     DO i_matter= 1, parts% n_matter, 1
 
@@ -507,211 +504,7 @@ SUBMODULE (sph_particles) constructor_std
     CASE( id_particles_on_lattice )
 
 
-      PRINT *, " * Placing particles on lattices, one around each ", &
-               "matter object."
-      PRINT *
-
-      ! Place particles, and time the process
-
-      CALL parts% placer_timer% start_timer()
-      matter_objects_lattices_loop: DO i_matter= 1, parts% n_matter, 1
-
-        ! Determine boundaries of the lattices
-        xmin= center(i_matter, 1) - stretch*sizes(i_matter, 1)
-        xmax= center(i_matter, 1) + stretch*sizes(i_matter, 2)
-        ymin= center(i_matter, 2) - stretch*sizes(i_matter, 3)
-        ymax= center(i_matter, 2) + stretch*sizes(i_matter, 4)
-        zmin= center(i_matter, 3) - stretch*sizes(i_matter, 5)
-        zmax= center(i_matter, 3) + stretch*sizes(i_matter, 6)
-
-        central_density(i_matter)= id% read_mass_density &
-          ( center(i_matter, 1), center(i_matter, 2), center(i_matter, 3) )
-
-        CALL parts% place_particles_lattice( central_density(i_matter), &
-                                             xmin, xmax, ymin, &
-                                             ymax, zmin, zmax, &
-                                             npart_des_i(i_matter), &
-                                             parts% npart_i(i_matter), &
-                                             stretch, thres, &
-                                             parts_all(i_matter)% pos_i, &
-                                             parts_all(i_matter)% pvol_i, &
-                                             parts_all(i_matter)% nu_i, &
-                                             parts_all(i_matter)% h_i, &
-                                             import_density, &
-                                             import_id, &
-                                             validate_position )
-
-        ! Now that the real particle numbers are known, reallocate the arrays
-        ! to the appropriate sizes. Note that, if the APM is performed,
-        ! this step will be done after it as well
-        ! TODO: maybe this is not necessary for the arrays pvol_i, nu_i and h_i?
-        parts_all(i_matter)% pos_i = &
-                    parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
-        parts_all(i_matter)% pvol_i = &
-                    parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
-        parts_all(i_matter)% nu_i = &
-                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )
-        parts_all(i_matter)% h_i = &
-                    parts_all(i_matter)% h_i( 1:parts% npart_i(i_matter) )
-
-        ! If there are 2 matter objects...
-        equal_masses_lattices: &
-        IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
-
-          ! ...with practically the same mass, and the physical system is
-          ! symmetric wrt the yz plane (in which case the user should
-          ! set reflect_particles_x in the parameter file)...
-          IF( ABS(parts% masses(1) - parts% masses(2)) &
-            /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
-
-            CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
-                                             parts_all(1)% pvol_i,  &
-                                             parts_all(1)% nu_i,    &
-                                             parts_all(1)% h_i,     &
-                                             parts% npart_i(1),     &
-                                             parts_all(2)% pos_i,   &
-                                             parts_all(2)% pvol_i,  &
-                                             parts_all(2)% nu_i,    &
-                                             parts_all(2)% h_i,     &
-                                             parts% npart_i(2) )
-
-            EXIT
-
-          ENDIF
-
-        ENDIF equal_masses_lattices
-
-      ENDDO matter_objects_lattices_loop
-      CALL parts% placer_timer% stop_timer()
-
-      parts% npart= SUM( parts% npart_i )
-
-      IF( debug ) PRINT *, "10"
-
-
-    CASE( id_particles_on_spherical_surfaces )
-
-
-      PRINT *, "** Placing equal-mass particles on spherical surfaces, " &
-               // "taking into account the mass profile of the stars."
-      PRINT *
-
-      ! Here the particle mass is computed using the radial mass profile
-      ! of the star, so nu should not be redistributed to achieve a given
-      ! particle mass ratio
-  !    IF( parts% redistribute_nu .EQV. .TRUE. )THEN
-  !        parts% redistribute_nu= .FALSE.
-  !    ENDIF
-
-      ! Place particles, and time the process
-      CALL parts% placer_timer% start_timer()
-
-      matter_objects_sphersurfaces_loop: DO i_matter= 1, parts% n_matter, 1
-
-        IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ) i_matter
-        IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) &
-                                              WRITE( str_i, '(I2)' ) i_matter
-        IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
-                                              WRITE( str_i, '(I3)' ) i_matter
-
-        filename_mass_profile= &
-          TRIM(sph_path)//"spherical_surfaces_mass_profile"//TRIM(str_i)//".dat"
-        filename_shells_radii= &
-          TRIM(sph_path)//"spherical_surfaces_radii"//TRIM(str_i)//".dat"
-        filename_shells_pos  = &
-          TRIM(sph_path)//"spherical_surfaces_pos"//TRIM(str_i)//".dat"
-
-        CALL parts% place_particles_spherical_surfaces( &
-                                              parts% masses(i_matter), &
-                                              MAXVAL(sizes(i_matter,1:2)), &
-                                              center(i_matter,1), &
-                                              central_density(i_matter), &
-                                              npart_des_i(i_matter), &
-                                              parts% npart_i(i_matter), &
-                                              parts_all(i_matter)% pos_i, &
-                                              parts_all(i_matter)% pvol_i, &
-                                              parts_all(i_matter)% nu_i, &
-                                              parts_all(i_matter)% h_i, &
-                                              last_r, &
-                                              upper_bound, lower_bound, &
-                                              upper_factor, lower_factor,&
-                                              max_steps, &
-                                              filename_mass_profile, &
-                                              filename_shells_radii, &
-                                              filename_shells_pos, &
-                                              import_density, &
-                                              integrate_mass_density, &
-                                              import_id, &
-                                              validate_position )
-
-        ! Now that the real particle numbers are known, reallocate the arrays
-        ! to the appropriate sizes. Note that, if the APM is performed,
-        ! this step will be done after it as well
-        ! TODO: maybe this is not necessary for the arrays pvol_i, nu_i and h_i?
-     !   parts_all(itr)% pos_i = &
-     !                     parts_all(itr)% pos_i( :, 1:parts% npart_i(itr) )
-     !   parts_all(itr)% pvol_i = &
-     !                     parts_all(itr)% pvol_i( 1:parts% npart_i(itr) )
-     !   parts_all(itr)% nu_i = &
-     !                     parts_all(itr)% nu_i( 1:parts% npart_i(itr) )
-     !   parts_all(itr)% h_i = &
-     !                     parts_all(itr)% h_i( 1:parts% npart_i(itr) )
-
-      !  IF(.NOT.ALLOCATED( parts_all(i_matter)% h_i ))THEN
-      !    ALLOCATE( parts_all(i_matter)% h_i( parts% npart_i(i_matter) ), &
-      !              STAT= ios, ERRMSG= err_msg )
-      !    IF( ios > 0 )THEN
-      !      PRINT *, "...allocation error for array h_i ", &
-      !               ". The error message is", err_msg
-      !      STOP
-      !    ENDIF
-      !    !CALL test_status( ios, err_msg, &
-      !    !        "...allocation error for array v_euler_z" )
-      !  ENDIF
-      !  DO a= 1, parts% npart_i(i_matter), 1
-      !    parts_all(i_matter)% h_i(a)= (parts_all(i_matter)% pvol_i(a))**third
-      !  ENDDO
-
-        ! If there are 2 matter objects...
-        equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
-
-          ! ...with practically the same mass, and the physical system is
-          ! symmetric wrt the yz plane (in which case the user should
-          ! set reflect_particles_x in the parameter file)...
-          IF( ABS(parts% masses(1) - parts% masses(2)) &
-              /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
-
-            CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
-                                             parts_all(1)% pvol_i,  &
-                                             parts_all(1)% nu_i,    &
-                                             parts_all(1)% h_i,     &
-                                             parts% npart_i(1),     &
-                                             parts_all(2)% pos_i,   &
-                                             parts_all(2)% pvol_i,  &
-                                             parts_all(2)% nu_i,    &
-                                             parts_all(2)% h_i,     &
-                                             parts% npart_i(2) )
-
-            EXIT
-
-          ENDIF
-
-        ENDIF equal_masses
-
-      ENDDO matter_objects_sphersurfaces_loop
-      CALL parts% placer_timer% stop_timer()
-
-      DO i_matter= 1, parts% n_matter, 1
-
-        parts_all(i_matter)% pos_i = &
-                    parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
-        parts_all(i_matter)% pvol_i = &
-                    parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
-        parts_all(i_matter)% nu_i = &
-                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )
-      ENDDO
-
-      parts% npart= SUM( parts% npart_i )
+      CALL place_particles_on_lattices()
 
       PRINT *, " * Particles placed. Number of particles=", parts% npart
       DO i_matter= 1, parts% n_matter, 1
@@ -720,7 +513,19 @@ SUBMODULE (sph_particles) constructor_std
         PRINT *
       ENDDO
       PRINT *
-      !STOP
+
+    CASE( id_particles_on_spherical_surfaces )
+
+
+      CALL place_particles_on_spherical_surfaces()
+
+      PRINT *, " * Particles placed. Number of particles=", parts% npart
+      DO i_matter= 1, parts% n_matter, 1
+        PRINT *, " * Number of particles on object ", i_matter, "=", &
+                 parts% npart_i(i_matter)
+        PRINT *
+      ENDDO
+      PRINT *
 
     CASE DEFAULT
 
@@ -739,8 +544,10 @@ SUBMODULE (sph_particles) constructor_std
     ! Check that there aren't particles with the same coordinates
     CALL parts% same_particle_timer% start_timer()
     check_particles_loop: DO i_matter= 1, parts% n_matter, 1
+
       CALL check_particle_positions( parts% npart_i(i_matter), &
                                      parts_all(i_matter)% pos_i )
+
     ENDDO check_particles_loop
     CALL parts% same_particle_timer% stop_timer()
 
@@ -914,102 +721,6 @@ SUBMODULE (sph_particles) constructor_std
 
     ENDDO
 
-  !  DO i_matter= 1, parts% n_matter, 1
-  !
-  !  ENDDO
-  !
-  !  DO i_matter= 1, parts% n_matter, 1
-  !
-  !    ! If nu is known already at this stage, either because computed by the APM
-  !    ! or because it is read from file, assign it to the TYPE member array
-  !    IF( apm_iterate(i_matter) &
-  !        .OR. &
-  !        ( parts% distribution_id == id_particles_from_file .AND. read_nu ) &
-  !        .OR. &
-  !        ( parts% distribution_id == id_particles_on_spherical_surfaces ) &
-  !    )THEN
-  !
-  !    ENDIF
-  !
-  !  ENDDO
-  !
-  !  DO i_matter= 1, parts% n_matter, 1
-  !
-  !  ENDDO
-
- !
- !   DO i_matter= 1, parts% n_matter, 1
- !
- !     particles_not_on_lattice_or_apm: &
- !     IF( parts% distribution_id == id_particles_on_spherical_surfaces &
- !         .OR. ( parts% distribution_id == id_particles_from_file &
- !                .AND. read_nu ) &
- !         .OR. apm_iterate(i_matter) )THEN
- !     ! If the particles are not placed on lattices, or the APM was performed...
- !
- !
- !     ENDIF particles_not_on_lattice_or_apm
- !
- !   ENDDO
-
-  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-  !  !$OMP             SHARED( parts ) &
-  !  !$OMP             PRIVATE( a, itr2 )
-  !  find_nan_in_pos: DO a= 1, parts% npart, 1
-  !
-  !    DO itr2= 1, 3, 1
-  !      IF( .NOT.is_finite_number(parts% pos(itr2,a)) )THEN
-  !        PRINT *, "** ERROR! pos(", itr2, a, ")= ", parts% pos(itr2,a), &
-  !                 " is not a finite number!"
-  !        PRINT *, " * Stopping.."
-  !        PRINT *
-  !        STOP
-  !      ENDIF
-  !    ENDDO
-  !
-  !  ENDDO find_nan_in_pos
-  !  !$OMP END PARALLEL DO
-
-    !
-    !-- Set the total center of mass of the system at the
-    !-- Cartesian origin
-    !
-    ! TODO: The idbase object should tell the location of the total
-    !       computing frame center of mass to the particle object
-
-   ! DO i_matter= 1, parts% n_matter, 1
-   !   parts% barycenter_system(1:3)= &
-   !           parts% barycenter_system(1:3) + barycenter(i_matter,1:3)
-   ! ENDDO
-   ! PRINT *, parts% barycenter_system(1:3)
-   ! STOP
-
-    !IF( dist /= id_particles_on_lattice )THEN
-!
-!      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-!                                   import_density, &
-!                                   validate_position, [zero,zero,zero], &
-!                                   verbose= .FALSE. )
-!
-!      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-!                                   import_density, &
-!                                   validate_position, [zero,zero,zero], &
-!                                   verbose= .FALSE. )
-!
-!      CALL correct_center_of_mass( parts% npart, parts% pos, parts% nu, &
-!                                   import_density, &
-!                                   validate_position, [zero,zero,zero], &
-!                                   verbose= .TRUE. )
-!
-!      CALL COM( & ! input
-!                parts% npart, parts% pos, parts% nu, &
-!                ! output
-!                parts% barycenter_system(1), parts% barycenter_system(2), &
-!                parts% barycenter_system(3), parts% barycenter_system(4) )
-
-!    ENDIF
-
-
     PRINT *, " * Final particle distribution determined. Number of particles=",&
              parts% npart
     DO i_matter= 1, parts% n_matter, 1
@@ -1080,9 +791,9 @@ SUBMODULE (sph_particles) constructor_std
 
     CALL parts% importer_timer% start_timer()
     CALL id% read_id_particles( parts% npart, &
-                                parts% pos( 1, : ), &
-                                parts% pos( 2, : ), &
-                                parts% pos( 3, : ), &
+                                parts% pos(1,:), &
+                                parts% pos(2,:), &
+                                parts% pos(3,:), &
                                 parts% lapse, &
                                 parts% shift_x, &
                                 parts% shift_y, &
@@ -1102,16 +813,12 @@ SUBMODULE (sph_particles) constructor_std
                                 parts% v_euler_z )
     CALL parts% importer_timer% stop_timer()
 
-    !PRINT *, MAXVAL( parts% baryon_density, DIM= 1 )
-    !PRINT *, MAXVAL( parts% pressure, DIM= 1 )
-    !STOP
-
     IF( debug ) PRINT *, "34"
 
     !-----------------------------------------------------------------------!
     ! If an atmosphere was used during the APM iteration, and kept, assign  !
     ! the minimum specific internal energy and the minimum velocity, to it. !
-    ! N.B. The velocity has an hard-wired direction to reproduce counter-   !
+    ! N.B. The velocity has a hard-wired direction to reproduce counter-    !
     !      clockwise rotation.                                              !
     !-----------------------------------------------------------------------!
 
@@ -1165,56 +872,43 @@ SUBMODULE (sph_particles) constructor_std
     ENDDO matter_objects_atmo_loop
 
     !
-    !-- Check that the imported ID does not contain NaNs
+    !-- Ensure that the ID does not contain NaNs or infinities
     !
-    !CALL Check_Array_for_NAN( parts% npart, parts% lapse, &
-    !                                         "lapse" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% shift_x, &
-    !                                         "shift_x" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% shift_y, &
-    !                                         "shift_y" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% shift_z, &
-    !                                         "shift_z" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% g_xx, &
-    !                                         "g_xx" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% g_xy, &
-    !                                         "g_xy" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% g_xz, &
-    !                                         "g_xz" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% g_yy, &
-    !                                         "g_yy" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% g_yz, &
-    !                                         "g_yz" )
-    !CALL Check_Array_for_NAN( parts% npart, parts% g_zz, &
-    !                                         "g_zz" )
-    !CALL Check_Array_for_NAN( parts% npart, &
-    !        parts% baryon_density, "baryon_density" )
-    !CALL Check_Array_for_NAN( parts% npart, &
-    !        parts% energy_density, "energy_density" )
-    !CALL Check_Array_for_NAN( parts% npart, &
-    !        parts% specific_energy, "specific_energy" )
-    !CALL Check_Array_for_NAN( parts% npart, &
-    !               parts% pressure, "pressure" )
-    !CALL Check_Array_for_NAN( parts% npart, &
-    !              parts% v_euler_x, "v_euler_x" )
-    !CALL Check_Array_for_NAN( parts% npart, &
-    !              parts% v_euler_y, "v_euler_y" )
-    !CALL Check_Array_for_NAN( parts% npart, &
-    !              parts% v_euler_z, "v_euler_z" )
+    PRINT *, "** Ensuring that the ID does not have any NaNs or infinities..."
 
-   ! IF(.NOT.ALLOCATED( parts% baryon_density_index ))THEN
-   !   ALLOCATE( parts% baryon_density_index( parts% npart ), &
-   !             STAT= ios, ERRMSG= err_msg )
-   !   IF( ios > 0 )THEN
-   !      PRINT *, "...allocation error for array baryon_density_index in " &
-   !               // "SUBROUTINE construct_particles_idase. ", &
-   !               "The error message is", err_msg
-   !      STOP
-   !   ENDIF
-   !   !CALL test_status( ios, err_msg, &
-   !   !                "...allocation error for array pos in SUBROUTINE" &
-   !   !                // "place_particles_3D_lattice." )
-   ! ENDIF
+    CALL scan_1d_array_for_nans( parts% npart, parts% lapse, "lapse" )
+
+    CALL scan_1d_array_for_nans( parts% npart, parts% shift_x, "shift_x" )
+    CALL scan_1d_array_for_nans( parts% npart, parts% shift_y, "shift_y" )
+    CALL scan_1d_array_for_nans( parts% npart, parts% shift_z, "shift_z" )
+
+    CALL scan_1d_array_for_nans( parts% npart, parts% g_xx, "g_xx" )
+    CALL scan_1d_array_for_nans( parts% npart, parts% g_xy, "g_xy" )
+    CALL scan_1d_array_for_nans( parts% npart, parts% g_xz, "g_xz" )
+    CALL scan_1d_array_for_nans( parts% npart, parts% g_yy, "g_yy" )
+    CALL scan_1d_array_for_nans( parts% npart, parts% g_yz, "g_yz" )
+    CALL scan_1d_array_for_nans( parts% npart, parts% g_zz, "g_zz" )
+
+    CALL scan_1d_array_for_nans( parts% npart, &
+                                 parts% baryon_density, "baryon_density" )
+    CALL scan_1d_array_for_nans( parts% npart, &
+                                 parts% energy_density, "energy_density" )
+    CALL scan_1d_array_for_nans( parts% npart, &
+                                 parts% specific_energy, "specific_energy" )
+    CALL scan_1d_array_for_nans( parts% npart, &
+                                 parts% pressure, "pressure" )
+
+    CALL scan_1d_array_for_nans( parts% npart, &
+                                 parts% v_euler_x, "v_euler_x" )
+    CALL scan_1d_array_for_nans( parts% npart, &
+                                 parts% v_euler_y, "v_euler_y" )
+    CALL scan_1d_array_for_nans( parts% npart, &
+                                 parts% v_euler_z, "v_euler_z" )
+
+    PRINT *, "...the ID does not ahve NaNs or infinities."
+    PRINT *
+
+
 
     !
     !-- Compute typical length-scale approximating g_00 with the Newtonian
@@ -1415,7 +1109,7 @@ SUBMODULE (sph_particles) constructor_std
       IMPLICIT NONE
 
       INTEGER, INTENT(IN):: npart
-      DOUBLE PRECISION, INTENT(IN):: com_system(3)
+      DOUBLE PRECISION, INTENT(IN)   :: com_system(3)
       DOUBLE PRECISION, INTENT(INOUT):: nu(npart)
       DOUBLE PRECISION, INTENT(INOUT):: pos(3,npart)
 
@@ -1492,11 +1186,6 @@ SUBMODULE (sph_particles) constructor_std
                              g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
                              baryon_density, nstar_sph, nstar_id, nlrf_sph, &
                              sqg )
-
-      !CALL compute_nstar_eul_id( npart, &
-      !                           v_euler_x, v_euler_y, v_euler_z, &
-      !                           g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, &
-      !                           baryon_density, nstar_eul_id )
 
     END SUBROUTINE get_nstar_id
 
@@ -1631,7 +1320,9 @@ SUBMODULE (sph_particles) constructor_std
 
       !**************************************************************
       !
-      !# Read particles from formatted file
+      !# Read particles from formatted file, and
+      !  reflect  particles with respect to the yz plane in the case
+      !  of equal-mass binaries
       !
       !  FT 21.10.2022
       !
@@ -1768,6 +1459,10 @@ SUBMODULE (sph_particles) constructor_std
           parts_all(i_matter)% h_i = &
                       parts_all(i_matter)% h_i( 1:parts% npart_i(i_matter) )
 
+          CALL impose_equatorial_plane_symmetry &
+            ( npart_i_tmp(i_matter), parts_all(i_matter)% pos_i, &
+                                     parts_all(i_matter)% nu_i )
+
           PRINT *, " * Maximum n. baryon per particle (nu) on object", &
                    i_matter, "=", MAXVAL( parts_all(i_matter)% nu_i, DIM= 1 )
           PRINT *, " * Minimum n. baryon per particle (nu) on object", &
@@ -1832,6 +1527,229 @@ SUBMODULE (sph_particles) constructor_std
       ENDIF
 
     END SUBROUTINE read_particles_from_formatted_file
+
+
+    SUBROUTINE place_particles_on_lattices
+
+      !**************************************************************
+      !
+      !# Place particles on lattices, one per matter object, and
+      !  reflect  particles with respect to the yz plane in the case
+      !  of equal-mass binaries
+      !
+      !  FT 24.10.2022
+      !
+      !**************************************************************
+
+      IMPLICIT NONE
+
+      PRINT *, " * Placing particles on lattices, one around each ", &
+               "matter object."
+      PRINT *
+
+      ! Place particles, and time the process
+
+      CALL parts% placer_timer% start_timer()
+      matter_objects_lattices_loop: DO i_matter= 1, parts% n_matter, 1
+
+        ! Determine boundaries of the lattices
+        xmin= center(i_matter, 1) - stretch*sizes(i_matter, 1)
+        xmax= center(i_matter, 1) + stretch*sizes(i_matter, 2)
+        ymin= center(i_matter, 2) - stretch*sizes(i_matter, 3)
+        ymax= center(i_matter, 2) + stretch*sizes(i_matter, 4)
+        zmin= center(i_matter, 3) - stretch*sizes(i_matter, 5)
+        zmax= center(i_matter, 3) + stretch*sizes(i_matter, 6)
+
+        central_density(i_matter)= id% read_mass_density &
+          ( center(i_matter, 1), center(i_matter, 2), center(i_matter, 3) )
+
+        CALL parts% place_particles_lattice( central_density(i_matter), &
+                                             xmin, xmax, ymin, &
+                                             ymax, zmin, zmax, &
+                                             npart_des_i(i_matter), &
+                                             parts% npart_i(i_matter), &
+                                             stretch, thres, &
+                                             parts_all(i_matter)% pos_i, &
+                                             parts_all(i_matter)% pvol_i, &
+                                             parts_all(i_matter)% nu_i, &
+                                             parts_all(i_matter)% h_i, &
+                                             import_density, &
+                                             import_id, &
+                                             validate_position )
+
+        ! Now that the real particle numbers are known, reallocate the arrays
+        ! to the appropriate sizes. Note that, if the APM is performed,
+        ! this step will be done after it as well
+        ! TODO: maybe this is not necessary for the arrays pvol_i, nu_i and h_i?
+        parts_all(i_matter)% pos_i = &
+                    parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% pvol_i = &
+                    parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% nu_i = &
+                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% h_i = &
+                    parts_all(i_matter)% h_i( 1:parts% npart_i(i_matter) )
+
+        ! If there are 2 matter objects...
+        equal_masses_lattices: &
+        IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
+
+          ! ...with practically the same mass, and the physical system is
+          ! symmetric wrt the yz plane (in which case the user should
+          ! set reflect_particles_x in the parameter file)...
+          IF( ABS(parts% masses(1) - parts% masses(2)) &
+            /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
+
+            CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
+                                             parts_all(1)% pvol_i,  &
+                                             parts_all(1)% nu_i,    &
+                                             parts_all(1)% h_i,     &
+                                             parts% npart_i(1),     &
+                                             parts_all(2)% pos_i,   &
+                                             parts_all(2)% pvol_i,  &
+                                             parts_all(2)% nu_i,    &
+                                             parts_all(2)% h_i,     &
+                                             parts% npart_i(2) )
+
+            EXIT
+
+          ENDIF
+
+        ENDIF equal_masses_lattices
+
+      ENDDO matter_objects_lattices_loop
+      CALL parts% placer_timer% stop_timer()
+
+      parts% npart= SUM( parts% npart_i )
+
+      IF( debug ) PRINT *, "10"
+
+
+    END SUBROUTINE place_particles_on_lattices
+
+
+    SUBROUTINE place_particles_on_spherical_surfaces
+
+      !**************************************************************
+      !
+      !# Place particles on spherical surfaces, and
+      !  reflect  particles with respect to the yz plane in the case
+      !  of equal-mass binaries
+      !
+      !  FT 24.10.2022
+      !
+      !**************************************************************
+
+      IMPLICIT NONE
+
+      PRINT *, "** Placing equal-mass particles on spherical surfaces, " &
+               // "taking into account the mass profile of the stars."
+      PRINT *
+
+      ! Here the particle mass is computed using the radial mass profile
+      ! of the star, so nu should not be redistributed to achieve a given
+      ! particle mass ratio
+      !    IF( parts% redistribute_nu .EQV. .TRUE. )THEN
+      !        parts% redistribute_nu= .FALSE.
+      !    ENDIF
+
+      ! Place particles, and time the process
+      CALL parts% placer_timer% start_timer()
+
+      matter_objects_sphersurfaces_loop: DO i_matter= 1, parts% n_matter, 1
+
+        IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ) i_matter
+        IF( i_matter >= 10 .AND. parts% n_matter <= 99 ) &
+                                              WRITE( str_i, '(I2)' ) i_matter
+        IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
+                                              WRITE( str_i, '(I3)' ) i_matter
+
+        filename_mass_profile= &
+          TRIM(sph_path)//"spherical_surfaces_mass_profile"//TRIM(str_i)//".dat"
+        filename_shells_radii= &
+          TRIM(sph_path)//"spherical_surfaces_radii"//TRIM(str_i)//".dat"
+        filename_shells_pos  = &
+          TRIM(sph_path)//"spherical_surfaces_pos"//TRIM(str_i)//".dat"
+
+        CALL parts% place_particles_spherical_surfaces( &
+                                              parts% masses(i_matter), &
+                                              MAXVAL(sizes(i_matter,1:2)), &
+                                              center(i_matter,1), &
+                                              central_density(i_matter), &
+                                              npart_des_i(i_matter), &
+                                              parts% npart_i(i_matter), &
+                                              parts_all(i_matter)% pos_i, &
+                                              parts_all(i_matter)% pvol_i, &
+                                              parts_all(i_matter)% nu_i, &
+                                              parts_all(i_matter)% h_i, &
+                                              last_r, &
+                                              upper_bound, lower_bound, &
+                                              upper_factor, lower_factor,&
+                                              max_steps, &
+                                              filename_mass_profile, &
+                                              filename_shells_radii, &
+                                              filename_shells_pos, &
+                                              import_density, &
+                                              integrate_mass_density, &
+                                              import_id, &
+                                              validate_position )
+
+        ! Now that the real particle numbers are known, reallocate the arrays
+        ! to the appropriate sizes. Note that, if the APM is performed,
+        ! this step will be done after it as well
+        ! TODO: maybe this is not necessary for the arrays pvol_i, nu_i and h_i?
+      !   parts_all(itr)% pos_i = &
+      !                     parts_all(itr)% pos_i( :, 1:parts% npart_i(itr) )
+      !   parts_all(itr)% pvol_i = &
+      !                     parts_all(itr)% pvol_i( 1:parts% npart_i(itr) )
+      !   parts_all(itr)% nu_i = &
+      !                     parts_all(itr)% nu_i( 1:parts% npart_i(itr) )
+      !   parts_all(itr)% h_i = &
+      !                     parts_all(itr)% h_i( 1:parts% npart_i(itr) )
+
+        ! If there are 2 matter objects...
+        equal_masses: IF( i_matter == 1 .AND. parts% n_matter == 2 )THEN
+
+          ! ...with practically the same mass, and the physical system is
+          ! symmetric wrt the yz plane (in which case the user should
+          ! set reflect_particles_x in the parameter file)...
+          IF( ABS(parts% masses(1) - parts% masses(2)) &
+              /parts% masses(2) <= tol_equal_mass .AND. reflect_particles_x )THEN
+
+            CALL reflect_particles_yz_plane( parts_all(1)% pos_i,   &
+                                             parts_all(1)% pvol_i,  &
+                                             parts_all(1)% nu_i,    &
+                                             parts_all(1)% h_i,     &
+                                             parts% npart_i(1),     &
+                                             parts_all(2)% pos_i,   &
+                                             parts_all(2)% pvol_i,  &
+                                             parts_all(2)% nu_i,    &
+                                             parts_all(2)% h_i,     &
+                                             parts% npart_i(2) )
+
+            EXIT
+
+          ENDIF
+
+        ENDIF equal_masses
+
+      ENDDO matter_objects_sphersurfaces_loop
+      CALL parts% placer_timer% stop_timer()
+
+      DO i_matter= 1, parts% n_matter, 1
+
+        parts_all(i_matter)% pos_i = &
+                    parts_all(i_matter)% pos_i( :, 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% pvol_i = &
+                    parts_all(i_matter)% pvol_i( 1:parts% npart_i(i_matter) )
+        parts_all(i_matter)% nu_i = &
+                    parts_all(i_matter)% nu_i( 1:parts% npart_i(i_matter) )
+      ENDDO
+
+      parts% npart= SUM( parts% npart_i )
+
+
+    END SUBROUTINE place_particles_on_spherical_surfaces
 
 
     SUBROUTINE compute_nstar_eul_id( npart, &

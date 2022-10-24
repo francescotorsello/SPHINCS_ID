@@ -189,6 +189,10 @@ MODULE sphincs_id_lorene
 
         eos_str= 'AP3 '
 
+      CASE( 'Star 1  Multipolytropic APR3 EOS' )
+
+        eos_str= 'AP3 '
+
       CASE( 'Multipolytropic AP3  EOS' )
 
         eos_str= 'AP3 '

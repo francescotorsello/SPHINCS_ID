@@ -324,6 +324,82 @@ MODULE utility
   END FUNCTION is_finite_number
 
 
+  SUBROUTINE scan_1d_array_for_nans( array_size, array, name )
+
+    !***********************************************
+    !
+    !# Test if a double precision is a finite number
+    !
+    !  FT 11.02.2022
+    !
+    !***********************************************
+
+    INTEGER,                        INTENT(IN):: array_size
+    DOUBLE PRECISION, DIMENSION(:), INTENT(IN):: array
+    CHARACTER(LEN=*),               INTENT(IN):: name
+
+    INTEGER:: i
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( array, array_size, name ) &
+    !$OMP             PRIVATE( i )
+    DO i= 1, array_size, 1
+
+      IF(.NOT.is_finite_number(array(i)))THEN
+        PRINT *, "** ERROR! The array ", name, "does not contain a finite", &
+                 " number at position ", i
+        PRINT *, " * ", name, "(", i, ")=", array(i)
+        PRINT *
+        STOP
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+  END SUBROUTINE scan_1d_array_for_nans
+
+
+  SUBROUTINE scan_3d_array_for_nans( size_1, size_2, size_3, array, name )
+
+    !***********************************************
+    !
+    !# Test if a double precision is a finite number
+    !
+    !  FT 11.02.2022
+    !
+    !***********************************************
+
+    INTEGER,                            INTENT(IN):: size_1
+    INTEGER,                            INTENT(IN):: size_2
+    INTEGER,                            INTENT(IN):: size_3
+    DOUBLE PRECISION, DIMENSION(:,:,:), INTENT(IN):: array
+    CHARACTER(LEN=*),                   INTENT(IN):: name
+
+    INTEGER:: i, j, k
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( array, size_1, size_2, size_3, name ) &
+    !$OMP             PRIVATE( i, j, k )
+    DO k= 1, size_3, 1
+      DO j= 1, size_2, 1
+        DO i= 1, size_1, 1
+
+          IF(.NOT.is_finite_number(array(i,j,k)))THEN
+            PRINT *, "** ERROR! The array ", name, "does not contain a ", &
+                     "finite number at position ", "(", i, ",", j, ",", k, ")"
+            PRINT *, " * ", name, "(", i, ",", j, ",", k, ")=", array(i,j,k)
+            PRINT *
+            STOP
+          ENDIF
+
+        ENDDO
+      ENDDO
+    ENDDO
+    !$OMP END PARALLEL DO
+
+  END SUBROUTINE scan_3d_array_for_nans
+
+
   PURE SUBROUTINE compute_g4( lapse, shift, g3, g4 )
 
     !***********************************************

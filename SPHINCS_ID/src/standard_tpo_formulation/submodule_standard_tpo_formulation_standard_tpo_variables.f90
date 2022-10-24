@@ -68,10 +68,10 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                                 allocate_grid_function, &
                                 deallocate_grid_function, &
                                 coords, rad_coord
-    !USE NaNChecker, ONLY: Check_Grid_Function_for_NAN
-    USE tensor,           ONLY: jxx, jxy, jxz, &
+    USE tensor,           ONLY: jx, jy, jz, jxx, jxy, jxz, &
                                 jyy, jyz, jzz, n_sym3x3
-    USE utility,          ONLY: determinant_sym3x3, one, flag$tpo
+    USE utility,          ONLY: determinant_sym3x3, one, flag$tpo, &
+                                scan_3d_array_for_nans
 
 
     IMPLICIT NONE
@@ -216,54 +216,68 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     PRINT *, " * Spacetime ID imported on the gravity grid."
 
     !
-    !-- Check that the imported ID does not contain NaNs
-    !
-    !CALL Check_Grid_Function_for_NAN( tpof% lapse, "lapse" )
-    !CALL Check_Grid_Function_for_NAN( tpof% shift_u(:,:,:,jx), &
-    !                                                    "shift_u_x" )
-    !CALL Check_Grid_Function_for_NAN( tpof% shift_u(:,:,:,jy), &
-    !                                                    "shift_u_y" )
-    !CALL Check_Grid_Function_for_NAN( tpof% shift_u(:,:,:,jz), &
-    !                                                    "shift_u_z" )
-    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jxx), &
-    !                                                    "g_phys3_ll_jxx" )
-    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jxy), &
-    !                                                    "g_phys3_ll_jxy" )
-    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jxz), &
-    !                                                    "g_phys3_ll_jxz" )
-    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jyy), &
-    !                                                    "g_phys3_ll_jyy" )
-    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jyz), &
-    !                                                    "g_phys3_ll_jyz" )
-    !CALL Check_Grid_Function_for_NAN( tpof% g_phys3_ll(:,:,:,jzz), &
-    !                                                    "g_phys3_ll_jzz" )
-    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jxx), &
-    !                                                    "K_phys3_ll_jxx" )
-    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jxy), &
-    !                                                    "K_phys3_ll_jxy" )
-    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jxz), &
-    !                                                    "K_phys3_ll_jxz" )
-    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jyy), &
-    !                                                    "K_phys3_ll_jyy" )
-    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jyz), &
-    !                                                    "K_phys3_ll_jyz" )
-    !CALL Check_Grid_Function_for_NAN( tpof% K_phys3_ll(:,:,:,jzz), &
-    !                                                    "K_phys3_ll_jzz" )
-
-    !
-    !-- Check that the determinant of the spatial metric is
+    !-- Ensure that the standard 3+1 ID does not contain NaNs,
+    !-- and that the determinant of the spatial metric is
     !-- strictly positive
     !
+    PRINT *, "** Ensuring that the ID does not have any NaNs or infinities, ", &
+             "and that the determinant of the spatial metric is strictly ", &
+             "positive..."
+
     DO l= 1, tpof% nlevels, 1
+
+      ASSOCIATE( nx     => tpof% get_ngrid_x(l), &
+                 ny     => tpof% get_ngrid_y(l), &
+                 nz     => tpof% get_ngrid_z(l), &
+                 coords => tpof% coords%     levels(l)% var, &
+                 lapse  => tpof% lapse%      levels(l)% var, &
+                 shift  => tpof% shift_u%    levels(l)% var, &
+                 g      => tpof% g_phys3_ll% levels(l)% var, &
+                 eK     => tpof% K_phys3_ll% levels(l)% var )
+
+      CALL scan_3d_array_for_nans( nx, ny, nz, lapse, "lapse" )
+
+      CALL scan_3d_array_for_nans( nx, ny, nz, shift(:,:,:,jx), &
+                                   "shift(:,:,:,jx)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, shift(:,:,:,jy), &
+                                   "shift(:,:,:,jy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, shift(:,:,:,jz), &
+                                   "shift(:,:,:,jz)" )
+
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jxx), &
+                                   "g_phys3_ll(:,:,:,jxx)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jxy), &
+                                   "g_phys3_ll(:,:,:,jxy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jxz), &
+                                   "g_phys3_ll(:,:,:,jxz)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jyy), &
+                                   "g_phys3_ll(:,:,:,jyy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jyz), &
+                                   "g_phys3_ll(:,:,:,jyz)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jzz), &
+                                   "g_phys3_ll(:,:,:,jzz)" )
+
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jxx), &
+                                   "K_phys3_ll(:,:,:,jxx)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jxy), &
+                                   "K_phys3_ll(:,:,:,jxy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jxz), &
+                                   "K_phys3_ll(:,:,:,jxz)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jyy), &
+                                   "K_phys3_ll(:,:,:,jyy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jyz), &
+                                   "K_phys3_ll(:,:,:,jyz)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jzz), &
+                                   "K_phys3_ll(:,:,:,jzz)" )
+
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( tpof, l ) &
       !$OMP             PRIVATE( i, j, k, detg )
-      DO k= 1, tpof% get_ngrid_z(l), 1
-        DO j= 1, tpof% get_ngrid_y(l), 1
-          DO i= 1, tpof% get_ngrid_x(l), 1
+      DO k= 1, nz, 1
+        DO j= 1, ny, 1
+          DO i= 1, nx, 1
 
-            CALL determinant_sym3x3( &
-                              tpof% g_phys3_ll% levels(l)% var(i,j,k,:), detg )
+            CALL determinant_sym3x3( g(i,j,k,:), detg )
 
             IF( detg < 1D-10 )THEN
 
@@ -272,21 +286,21 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                        // "effectively 0 at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
-                       tpof% coords% levels(l)% var( i, j, k, 1 ), ",", &
-                       tpof% coords% levels(l)% var( i, j, k, 2 ), ",", &
-                       tpof% coords% levels(l)% var( i, j, k, 3 ), ")."
+                       coords( i, j, k, 1 ), ",", &
+                       coords( i, j, k, 2 ), ",", &
+                       coords( i, j, k, 3 ), ")."
               PRINT *
-              PRINT *, tpof% get_ngrid_x(l), tpof% get_ngrid_y(l), &
-                       tpof% get_ngrid_z(l)
+              PRINT *, "   nx, ny, nz =", nx, ny, nz
               PRINT *
-              PRINT *, "detg=", detg
+              PRINT *, "   detg=", detg
               PRINT *
-              PRINT *, "g_xx=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxx)
-              PRINT *, "g_xy=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxy)
-              PRINT *, "g_xz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxz)
-              PRINT *, "g_yy=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jyy)
-              PRINT *, "g_yz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jyz)
-              PRINT *, "g_zz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jzz)
+              PRINT *, "   g_xx=", g(i,j,k,jxx)
+              PRINT *, "   g_xy=", g(i,j,k,jxy)
+              PRINT *, "   g_xz=", g(i,j,k,jxz)
+              PRINT *, "   g_yy=", g(i,j,k,jyy)
+              PRINT *, "   g_yz=", g(i,j,k,jyz)
+              PRINT *, "   g_zz=", g(i,j,k,jzz)
+              PRINT *
               STOP
 
             ELSEIF( detg < 0 )THEN
@@ -296,21 +310,24 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                        // "negative at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
-                       tpof% coords% levels(l)% var( i, j, k, 1 ), ",", &
-                       tpof% coords% levels(l)% var( i, j, k, 2 ), ",", &
-                       tpof% coords% levels(l)% var( i, j, k, 3 ), ")."
+                       coords( i, j, k, 1 ), ",", &
+                       coords( i, j, k, 2 ), ",", &
+                       coords( i, j, k, 3 ), ")."
               PRINT *
               PRINT *, tpof% get_ngrid_x(l), tpof% get_ngrid_y(l), &
                        tpof% get_ngrid_z(l)
               PRINT *
-              PRINT *, "detg=", detg
+              PRINT *, "   nx, ny, nz =", nx, ny, nz
               PRINT *
-              PRINT *, "g_xx=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxx)
-              PRINT *, "g_xy=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxy)
-              PRINT *, "g_xz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jxz)
-              PRINT *, "g_yy=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jyy)
-              PRINT *, "g_yz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jyz)
-              PRINT *, "g_zz=", tpof% g_phys3_ll% levels(l)% var(i,j,k,jzz)
+              PRINT *, "   detg=", detg
+              PRINT *
+              PRINT *, "   g_xx=", g(i,j,k,jxx)
+              PRINT *, "   g_xy=", g(i,j,k,jxy)
+              PRINT *, "   g_xz=", g(i,j,k,jxz)
+              PRINT *, "   g_yy=", g(i,j,k,jyy)
+              PRINT *, "   g_yz=", g(i,j,k,jyz)
+              PRINT *, "   g_zz=", g(i,j,k,jzz)
+              PRINT *
               STOP
 
             ENDIF
@@ -319,17 +336,25 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
         ENDDO
       ENDDO
       !$OMP END PARALLEL DO
+
+      END ASSOCIATE
+
     ENDDO
 
-    PRINT *, " * Checked that the determinant of the spatial metric is", &
-             " strictly positive."
+    PRINT *, "...the standard 3+1 ID does not contain NaNs or infinites, ", &
+             "and the determinant of the spatial metric is strictly positive."
     PRINT *
+
+    !
+    !-- Initialize the arrays containing the integrals of the constarints over
+    !-- the refined mesh
+    !
 
     IF( .NOT.ALLOCATED( tpof% HC_int ))THEN
       ALLOCATE( tpof% HC_int( tpof% nlevels ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array HC_loo. ", &
+        PRINT *, "...allocation error for array HC_int. ", &
                  "The error message is", err_msg
         STOP
       ENDIF
@@ -338,7 +363,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
       ALLOCATE( tpof% MC_int( tpof% nlevels, 3 ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array MC_loo. ", &
+        PRINT *, "...allocation error for array MC_int. ", &
                  "The error message is", err_msg
         STOP
       ENDIF
@@ -350,7 +375,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
       ALLOCATE( tpof% HC_parts_int( tpof% nlevels ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array MC_loo. ", &
+        PRINT *, "...allocation error for array MC_int. ", &
                  "The error message is", err_msg
         STOP
       ENDIF
@@ -359,7 +384,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
       ALLOCATE( tpof% MC_parts_int( tpof% nlevels, 3 ), &
                 STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array MC_loo. ", &
+        PRINT *, "...allocation error for array MC_int. ", &
                  "The error message is", err_msg
         STOP
       ENDIF

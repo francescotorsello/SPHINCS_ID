@@ -723,7 +723,7 @@ SUBMODULE (sph_particles) io
     IMPLICIT NONE
 
 
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     INTEGER:: a, ios, npart_tmp
 
@@ -768,175 +768,91 @@ SUBMODULE (sph_particles) io
     ENDDO
 
 
- !   ! First guess of the particle volume and mass (the first will be computed
- !   ! exactly later, as the cube of the exact smoothing length). The particle
- !   ! volume guess determines the first guess for the smoothing length
- !   ! The particle mass is computed if nu is read from the file
- !   DO itr= 1, this% n_matter, 1
- !
- !     ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
- !                npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+    ! First guess of the particle volume and mass (the first will be computed
+    ! exactly later, as the cube of the exact smoothing length). The particle
+    ! volume guess determines the first guess for the smoothing length
+    ! The particle mass is computed if nu is read from the file
+    pvol_tmp= zero
+    DO a= 1, npart_tmp, 1
 
-  !      DEALLOCATE( h )
-  !      IF(.NOT.ALLOCATED( h ))THEN
-  !        ALLOCATE( h( npart_i_tmp(itr) ), &
-  !                  STAT= ios, ERRMSG= err_msg )
-  !        IF( ios > 0 )THEN
-  !          PRINT *, "...allocation error for array h_i ", &
-  !                   ". The error message is", err_msg
-  !          STOP
-  !        ENDIF
-  !        !CALL test_status( ios, err_msg, &
-  !        !        "...allocation error for array v_euler_z" )
-  !      ENDIF
-  !      DEALLOCATE( pvol )
-  !      IF(.NOT.ALLOCATED( pvol ))THEN
-  !        ALLOCATE( pvol( npart_i_tmp(itr) ), &
-  !                  STAT= ios, ERRMSG= err_msg )
-  !        IF( ios > 0 )THEN
-  !          PRINT *, "...allocation error for array pvol_i ", &
-  !                   ". The error message is", err_msg
-  !          STOP
-  !        ENDIF
-  !        !CALL test_status( ios, err_msg, &
-  !        !        "...allocation error for array v_euler_z" )
-  !      ENDIF
+      pvol_tmp= pvol_tmp + ABS( tmp_pos(3,a + 1) - tmp_pos(3,a) )
 
-        pvol_tmp= zero
-       !DO a= npart_in, npart_fin - 1, 1
-       !
-       !  pvol_tmp= pvol_tmp + ABS( this% pos(3,a + 1) &
-       !                          - this% pos(3,a) )
-       !
-       !ENDDO
-        DO a= 1, npart_tmp, 1
+    ENDDO
+    pvol_tmp= pvol_tmp/( npart_tmp - 1 )
 
-          pvol_tmp= pvol_tmp + ABS( tmp_pos(3,a + 1) - tmp_pos(3,a) )
+    pvol= 2.D0*pvol_tmp**3.D0
 
-        ENDDO
-        pvol_tmp= pvol_tmp/( npart_tmp - 1 )
+    DO a= 1, npart_tmp, 1
+      h(a)= (pvol(a))**third
+    ENDDO
 
-        !this% pvol(npart_in:npart_fin)= 2.D0*pvol_tmp**3.D0
-        pvol= 2.D0*pvol_tmp**3.D0
-
-        DO a= 1, npart_tmp, 1
-          h(a)= (pvol(a))**third
-        ENDDO
-
-
-
-  !    END ASSOCIATE
-
-  !  ENDDO
-
-     IF(debug) PRINT *, "xmin=", xmin
-     IF(debug) PRINT *, "xmax=", xmax
-     IF(debug) PRINT *, "ymin=", ymin
-     IF(debug) PRINT *, "ymax=", ymax
-     IF(debug) PRINT *, "zmin=", zmin
-     IF(debug) PRINT *, "zmax=", zmax
+    IF(debug) PRINT *, "xmin=", xmin
+    IF(debug) PRINT *, "xmax=", xmax
+    IF(debug) PRINT *, "ymin=", ymin
+    IF(debug) PRINT *, "ymax=", ymax
+    IF(debug) PRINT *, "zmin=", zmin
+    IF(debug) PRINT *, "zmax=", zmax
 
     ! Check that the positions are within the sizes of the matter objects.
     ! This checks that the positions read from the formatted
     ! file are compatible with the sizes given by the idbase object
+    IF( .NOT.this% use_atmosphere(itr) )THEN
 
- !   DO itr= 1, this% n_matter, 1
+      !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+      !          ABS(center(itr,1)) + sizes(itr, 1)
+      !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+      !          ABS(center(itr,1)) + sizes(itr, 2)
+      !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+      !          ABS(center(itr,2)) + sizes(itr, 3)
+      !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+      !          ABS(center(itr,2)) + sizes(itr, 4)
+      !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+      !          ABS(center(itr,3)) + sizes(itr, 5)
+      !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+      !          ABS(center(itr,3)) + sizes(itr, 6)
+      !
+      !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
+      !  PRINT *, ABS(center(itr,1)) + sizes(itr, 1)
+      !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
+      !  PRINT *, ABS(center(itr,1)) + sizes(itr, 2)
+      !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
+      !  PRINT *, ABS(center(itr,2)) + sizes(itr, 3)
+      !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
+      !  PRINT *, ABS(center(itr,2)) + sizes(itr, 4)
+      !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
+      !  PRINT *, ABS(center(itr,3)) + sizes(itr, 5)
+      !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
+      !  PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
 
-      IF( .NOT.this% use_atmosphere(itr) )THEN
+      IF( ABS( MINVAL( tmp_pos(1,:) ) ) > xmin &
+          .OR. &
+          ABS( MAXVAL( tmp_pos(1,:) ) ) > xmax &
+          .OR. &
+          ABS( MINVAL( tmp_pos(2,:) ) ) > ymin &
+          .OR. &
+          ABS( MAXVAL( tmp_pos(2,:) ) ) > ymax &
+          .OR. &
+          ABS( MINVAL( tmp_pos(3,:) ) ) > zmin &
+          .OR. &
+          ABS( MAXVAL( tmp_pos(3,:) ) ) > zmax &
 
-  !      ASSOCIATE( npart_in   => npart_i_tmp(itr)*(itr-1) + 1, &
-  !                 npart_fin  => npart_i_tmp(itr) + npart_i_tmp(itr)*(itr-1) )
+      )THEN
 
-        !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-        !          ABS(center(itr,1)) + sizes(itr, 1)
-        !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-        !          ABS(center(itr,1)) + sizes(itr, 2)
-        !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-        !          ABS(center(itr,2)) + sizes(itr, 3)
-        !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-        !          ABS(center(itr,2)) + sizes(itr, 4)
-        !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-        !          ABS(center(itr,3)) + sizes(itr, 5)
-        !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-        !          ABS(center(itr,3)) + sizes(itr, 6)
-        !
-        !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
-        !  PRINT *, ABS(center(itr,1)) + sizes(itr, 1)
-        !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
-        !  PRINT *, ABS(center(itr,1)) + sizes(itr, 2)
-        !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
-        !  PRINT *, ABS(center(itr,2)) + sizes(itr, 3)
-        !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
-        !  PRINT *, ABS(center(itr,2)) + sizes(itr, 4)
-        !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
-        !  PRINT *, ABS(center(itr,3)) + sizes(itr, 5)
-        !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
-        !  PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
-
-          IF( ABS( MINVAL( tmp_pos(1,:) ) ) > xmin &
-              .OR. &
-              ABS( MAXVAL( tmp_pos(1,:) ) ) > xmax &
-              .OR. &
-              ABS( MINVAL( tmp_pos(2,:) ) ) > ymin &
-              .OR. &
-              ABS( MAXVAL( tmp_pos(2,:) ) ) > ymax &
-              .OR. &
-              ABS( MINVAL( tmp_pos(3,:) ) ) > zmin &
-              .OR. &
-              ABS( MAXVAL( tmp_pos(3,:) ) ) > zmax &
-
-          )THEN
-
-            PRINT *, "** ERROR! The positions of the particles on object ", &
-                     itr, ", read from formatted file, ", &
-                     " are not compatible with the ", &
-                     "physical system read from file. Stopping..."
-            PRINT *
-            STOP
-
-          ENDIF
-
-   !     END ASSOCIATE
+        PRINT *, "** ERROR! The positions of the particles on object ", &
+                 itr, ", read from formatted file, ", &
+                 " are not compatible with the ", &
+                 "physical system read from file. Stopping..."
+        PRINT *
+        STOP
 
       ENDIF
-  !  ENDDO
+
+    ENDIF
 
     IF( debug ) PRINT *, "npart_tmp=", npart_tmp
 
-    ! Impose equatorial plane symmetry on each object
-    ! @TODO: make this optional
-  !  DO itr= 1, this% n_matter, 1
-  !
-  !    ASSOCIATE( npart_in   => npart_i_tmp(itr-1) + 1, &
-  !               npart_fin  => npart_i_tmp(itr-1) + npart_i_tmp(itr) )
-
-  !      IF( debug )THEN
-  !        PRINT *, "npart_in=", npart_in
-  !        PRINT *, "npart_fin=", npart_fin
-  !        PRINT *
-  !      ENDIF
-
-        !IF( this% read_nu )THEN
-
-          CALL impose_equatorial_plane_symmetry( npart_tmp, &
-                                          tmp_pos(1:3,:), &
-                                          tmp_pos(4,:) )
-
-        !ELSE
-        !
-        !  CALL impose_equatorial_plane_symmetry( npart_i_tmp(itr), &
-        !                                  tmp_pos(1:3,npart_in:npart_fin) )
-        !
-        !ENDIF
-
-        !this% npart_i(itr)= 2*this% npart_i(itr)
-        pos= tmp_pos(1:3,:)
-        IF( this% read_nu ) nu= tmp_pos(4,:)
-
- !     END ASSOCIATE
- !
- !   ENDDO
-
+    pos= tmp_pos(1:3,:)
+    IF( this% read_nu ) nu= tmp_pos(4,:)
 
 
   END PROCEDURE read_particles_formatted_file
