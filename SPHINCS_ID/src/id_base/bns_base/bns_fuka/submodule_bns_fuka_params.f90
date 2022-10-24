@@ -152,7 +152,7 @@ SUBMODULE (bns_fuka) params
     this% logRho1_2= this% logRho1_1
     this% logRho2_2= this% logRho2_1
 
-    PRINT *, "Finding centers and radii of the stars..."
+    PRINT *, "** Finding centers and radii of the stars..."
     PRINT *
     IF(debug) PRINT *, "max radius 1=", this% radius1_x_comp
     IF(debug) PRINT *, "min radius 1=", this% radius1_x_opp

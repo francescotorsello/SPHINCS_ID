@@ -332,6 +332,8 @@ SUBMODULE (sph_particles) constructor_std
       STOP
     ENDIF
 
+    CALL id% initialize_id( flag$sph )
+
     !
     !-- Read needed data from the idbase object
     !
@@ -414,8 +416,6 @@ SUBMODULE (sph_particles) constructor_std
       PRINT *
       STOP
     ENDIF
-
-    CALL id% initialize_id( flag$sph )
 
     DO i_matter= 1, parts% n_matter, 1
 
