@@ -168,10 +168,10 @@ SUBMODULE (sph_particles) constructor_std
     CHARACTER(LEN= max_length):: compose_filename
 
     CHARACTER(LEN= max_length):: filename_apm_pos_id, filename_apm_pos, &
-                                   filename_apm_results
+                                 filename_apm_results
 
     CHARACTER(LEN= max_length):: filename_mass_profile, &
-                                   filename_shells_radii, filename_shells_pos
+                                 filename_shells_radii, filename_shells_pos
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
@@ -183,19 +183,6 @@ SUBMODULE (sph_particles) constructor_std
     LOGICAL, DIMENSION(id% get_n_matter()):: apm_iterate, use_atmosphere, &
                                              remove_atmosphere
 
-    NAMELIST /sphincs_id_particles/ &
-              parts_pos_path, parts_pos, columns, header_lines, n_cols, &
-              read_nu, column_nu, stretch, &
-              use_thres, thres, nu_ratio_des, redistribute_nu, correct_nu, &
-              compose_eos, compose_path, compose_filename, &
-              npart_des, last_r, upper_bound, lower_bound, &
-              upper_factor, lower_factor, max_steps, &
-              randomize_phi, randomize_theta, randomize_r, &
-              apm_iterate, apm_max_it, max_inc, mass_it, &
-              nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
-              use_atmosphere, remove_atmosphere, nuratio_des, print_step, &
-              ghost_dist
-
     ! Get the number of matter objects in the physical system
     parts% n_matter= id% get_n_matter()
 
@@ -203,11 +190,10 @@ SUBMODULE (sph_particles) constructor_std
     ! (no thermal component)
     parts% cold_system= id% get_cold_system()
 
-    ALLOCATE( parts% apm_timers(parts% n_matter) )
-
     !
     !-- Initialize the timers
     !
+    ALLOCATE( parts% apm_timers(parts% n_matter) )
     parts% placer_timer       = timer( "placer_timer" )
     parts% importer_timer     = timer( "importer_timer" )
     parts% sph_computer_timer = timer( "sph_computer_timer" )
@@ -225,114 +211,9 @@ SUBMODULE (sph_particles) constructor_std
     parts% empty_object= .FALSE.
 
     !
-    !-- Read the parameters of the particle distributions
+    !-- Read the options and parameters for the particle distributions
     !
-    parts% sphincs_id_particles= 'sphincs_id_particles.dat'
-
-    INQUIRE( FILE= parts% sphincs_id_particles, EXIST= file_exists )
-    IF( file_exists )THEN
-      OPEN( 10, FILE= parts% sphincs_id_particles, STATUS= 'OLD' )
-    ELSE
-      PRINT *
-      PRINT *, "** ERROR: ", parts% sphincs_id_particles, &
-              " file not found!"
-      PRINT *
-      STOP
-    ENDIF
-
-    READ( 10, NML= sphincs_id_particles )
-    CLOSE( 10 )
-
-    parts% use_thres          = use_thres
-    parts% correct_nu         = correct_nu
-    parts% compose_eos        = compose_eos
-    parts% compose_path       = compose_path
-    parts% compose_filename   = compose_filename
-    parts% redistribute_nu    = redistribute_nu
-    parts% nu_ratio_des       = nu_ratio_des
-    parts% reflect_particles_x= reflect_particles_x
-    parts% randomize_phi      = randomize_phi
-    parts% randomize_theta    = randomize_theta
-    parts% randomize_r        = randomize_r
-    ! APM parameters
-    ALLOCATE( parts% apm_iterate( parts% n_matter ) )
-    parts% apm_iterate   = apm_iterate
-    parts% use_atmosphere= use_atmosphere
-    parts% read_nu       = read_nu
-
-    parts_pos_namefile= TRIM(parts_pos_path)//TRIM(parts_pos)
-
-    !
-    !-- Check that the parameters are acceptable
-    !
-
-    IF( upper_bound <= lower_bound )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "upper_bound should be greater than lower_bound!"
-      PRINT *
-      STOP
-    ENDIF
-    IF( upper_factor < 1.0D0 )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "upper_factor should be greater than or equal to 1!"
-      PRINT *
-      STOP
-    ENDIF
-    IF( lower_factor > 1 )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "lower_factor should be smaller than or equal to 1!"
-      PRINT *
-      STOP
-    ENDIF
-    IF( max_steps < 10 )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "max_steps should be an integer greater than or equal to 10!"
-      PRINT *
-      STOP
-    ENDIF
-    IF( last_r < 0.95D0 .OR. last_r > 1.0D0 )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "last_r should be greater than or equal to 0.95, ", &
-               "and lower than or equal to 1!"
-      PRINT *
-      STOP
-    ENDIF
-    IF( apm_max_it < 0 .OR. max_inc < 0 .OR. nuratio_thres < 0 &
-        .OR. nuratio_des < 0 .OR. nx_gh < 0 .OR. ny_gh < 0 .OR. nz_gh < 0 )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "the numeric parameters for the APM method should be positive!"
-      PRINT *
-      STOP
-    ENDIF
-    IF( nuratio_des >= nuratio_thres )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "nuratio_des has to be stricly lower than nuratio_thres!"
-      PRINT *
-      STOP
-    ENDIF
-    IF( print_step < 0 )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "print_step has to be a positive integer or zero!"
-      PRINT *
-      STOP
-    ENDIF
-    IF( ghost_dist < zero )THEN
-      PRINT *
-      PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
-               "ghost_dist has to be a positive double precision or zero!"
-      PRINT *
-      STOP
-    ENDIF
-
-    CALL id% initialize_id( flag$sph )
+    CALL read_particles_options()
 
     !
     !-- Read needed data from the idbase object
@@ -361,12 +242,12 @@ SUBMODULE (sph_particles) constructor_std
       parts% adm_mass          = id% adm_mass
       parts% masses(i_matter)  = id% return_mass(i_matter)
       center(i_matter,:)       = id% return_center(i_matter)
-      central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
-                                                        center(i_matter,2), &
-                                                        center(i_matter,3) )
-      barycenter(i_matter,:)   = id% return_barycenter(i_matter)
+      !central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
+      !                                                  center(i_matter,2), &
+      !                                                  center(i_matter,3) )
+      barycenter(i_matter,:)       = id% return_barycenter(i_matter)
       parts% barycenter(i_matter,:)= barycenter(i_matter,:)
-      sizes(i_matter, :)       = id% return_spatial_extent(i_matter)
+      sizes(i_matter, :)           = id% return_spatial_extent(i_matter)
 
       parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
       CALL id% return_eos_parameters( i_matter, &
@@ -394,86 +275,24 @@ SUBMODULE (sph_particles) constructor_std
     !     thres= 100.0D0*parts% nu_ratio
     !   ENDIF
 
-    parts% post_process_sph_id => id% finalize_sph_id_ptr
 
+    !
+    !-- Check that the EOS specified in the ID file is the same as the one
+    !-- specified in the parameter file SPHINCS_fm_input.dat
+    !
+    CALL check_eos()
 
-    ! setup unit system
-    CALL set_units('NSM')
-    CALL read_options
-
-    ! tabulate kernel, get ndes
-    CALL ktable( ikernel, ndes )
-
-    IF( (eos_type /= 'Poly') .AND. (eos_type /= 'pwp') )THEN
-      PRINT *, "** ERROR! Unkown EOS specified in parameter file ", &
-               "SPHINCS_fm_input.dat."
-      PRINT *, " * The currently supported EOS types are 'Poly' for a ", &
-               "polytropic EOS, and 'pwp' for a piecewise polytropic EOS."
-      PRINT *
-      PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
-               eos_type
-      PRINT *, " * Stopping..."
-      PRINT *
-      STOP
-    ENDIF
+    CALL id% initialize_id( flag$sph )
 
     DO i_matter= 1, parts% n_matter, 1
 
-      IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
-
-        IF( eos_type == 'pwp' )THEN
-          PRINT *, "** ERROR! On matter object ", i_matter, &
-                   ", the EOS taken from the ID is not the same as the ",&
-                   "one specified in parameter file SPHINCS_fm_input.dat."
-          PRINT *
-          PRINT *, " * EOS from the ID: ", &
-                   parts% all_eos(i_matter)% eos_name
-          PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
-                   eos_type
-          PRINT *, "Stopping..."
-          PRINT *
-          STOP
-        ENDIF
-
-      ENDIF
-
-      IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
-
-        IF( eos_type == 'Poly' )THEN
-          PRINT *, "** ERROR! On matter object ", i_matter, &
-                   ", the EOS taken from the ID is not the same as the ",&
-                   "one specified in parameter file SPHINCS_fm_input.dat."
-          PRINT *
-          PRINT *, " * EOS from the ID: ", &
-                   parts% all_eos(i_matter)% eos_name
-          PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
-                   eos_type
-          PRINT *, "Stopping..."
-          PRINT *
-          STOP
-        ENDIF
-
-        IF( (parts% all_eos(i_matter)% eos_name .LT. eos_str)&
-            .OR. &
-            (parts% all_eos(i_matter)% eos_name .GT. eos_str)&
-        )THEN
-
-          PRINT *, "** ERROR! On matter object ", i_matter, &
-                   ", the EOS taken from the ID is not the same as the ",&
-                   "one specified in parameter file SPHINCS_fm_input.dat."
-          PRINT *
-          PRINT *, " * EOS from the ID: ", parts% all_eos(i_matter)% eos_name
-          PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
-                   eos_str
-          PRINT *, "Stopping..."
-          PRINT *
-          STOP
-
-        ENDIF
-
-      ENDIF
+      central_density(i_matter)= id% read_mass_density( center(i_matter,1), &
+                                                        center(i_matter,2), &
+                                                        center(i_matter,3) )
 
     ENDDO
+
+    parts% post_process_sph_id => id% finalize_sph_id_ptr
 
 
     ! TODO: Add check that the number of rows in placer is the same as the
@@ -482,23 +301,13 @@ SUBMODULE (sph_particles) constructor_std
     !
     !-- Choose particle placer
     !
-
     choose_particle_placer: SELECT CASE( dist )
 
-    CASE( id_particles_from_file )
+    CASE( id_particles_from_formatted_file )
     ! Read particles from formatted file, and time the process
 
 
-      CALL read_particles_from_formatted_file()
-
-      PRINT *, " * Particle positions read. Number of particles=", &
-               parts% npart
-      PRINT *
-      DO itr= 1, parts% n_matter, 1
-        PRINT *, " * Number of particles on matter object ", itr, "=", &
-                 parts% npart_i(itr)
-      ENDDO
-      PRINT *                                                
+      CALL read_particles_from_formatted_file()                                        
 
 
     CASE( id_particles_on_lattice )
@@ -506,26 +315,12 @@ SUBMODULE (sph_particles) constructor_std
 
       CALL place_particles_on_lattices()
 
-      PRINT *, " * Particles placed. Number of particles=", parts% npart
-      DO i_matter= 1, parts% n_matter, 1
-        PRINT *, " * Number of particles on object ", i_matter, "=", &
-                 parts% npart_i(i_matter)
-        PRINT *
-      ENDDO
-      PRINT *
 
     CASE( id_particles_on_spherical_surfaces )
 
 
       CALL place_particles_on_spherical_surfaces()
 
-      PRINT *, " * Particles placed. Number of particles=", parts% npart
-      DO i_matter= 1, parts% n_matter, 1
-        PRINT *, " * Number of particles on object ", i_matter, "=", &
-                 parts% npart_i(i_matter)
-        PRINT *
-      ENDDO
-      PRINT *
 
     CASE DEFAULT
 
@@ -536,6 +331,14 @@ SUBMODULE (sph_particles) constructor_std
       STOP
 
     END SELECT choose_particle_placer
+
+    PRINT *, " * Particles placed. Number of particles=", parts% npart
+    DO i_matter= 1, parts% n_matter, 1
+      PRINT *, " * Number of particles on object ", i_matter, "=", &
+               parts% npart_i(i_matter)
+      PRINT *
+    ENDDO
+    PRINT *
 
     !---------------------------------------------------------------!
     !--  At this point, the particles are placed without the APM  --!
@@ -1314,6 +1117,216 @@ SUBMODULE (sph_particles) constructor_std
       !$OMP END PARALLEL DO
 
     END SUBROUTINE compute_nstar_id
+
+
+    SUBROUTINE read_particles_options
+
+      IMPLICIT NONE
+
+      INTEGER, PARAMETER:: unit_particles= 6534
+
+      NAMELIST /sphincs_id_particles/ &
+                parts_pos_path, parts_pos, columns, header_lines, n_cols, &
+                read_nu, column_nu, stretch, &
+                use_thres, thres, nu_ratio_des, redistribute_nu, correct_nu, &
+                compose_eos, compose_path, compose_filename, &
+                npart_des, last_r, upper_bound, lower_bound, &
+                upper_factor, lower_factor, max_steps, &
+                randomize_phi, randomize_theta, randomize_r, &
+                apm_iterate, apm_max_it, max_inc, mass_it, &
+                nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
+                use_atmosphere, remove_atmosphere, nuratio_des, print_step, &
+                ghost_dist
+
+      parts% sphincs_id_particles= 'sphincs_id_particles.dat'
+
+      INQUIRE( FILE= parts% sphincs_id_particles, EXIST= file_exists )
+      IF( file_exists )THEN
+        OPEN( unit_particles, FILE= parts% sphincs_id_particles, STATUS= 'OLD' )
+      ELSE
+        PRINT *
+        PRINT *, "** ERROR: ", parts% sphincs_id_particles, " file not found!"
+        PRINT *
+        STOP
+      ENDIF
+
+      READ( unit_particles, NML= sphincs_id_particles )
+      CLOSE( unit_particles )
+
+      parts% use_thres          = use_thres
+      parts% correct_nu         = correct_nu
+      parts% compose_eos        = compose_eos
+      parts% compose_path       = compose_path
+      parts% compose_filename   = compose_filename
+      parts% redistribute_nu    = redistribute_nu
+      parts% nu_ratio_des       = nu_ratio_des
+      parts% reflect_particles_x= reflect_particles_x
+      parts% randomize_phi      = randomize_phi
+      parts% randomize_theta    = randomize_theta
+      parts% randomize_r        = randomize_r
+      ! APM parameters
+      ALLOCATE( parts% apm_iterate( parts% n_matter ) )
+      parts% apm_iterate   = apm_iterate
+      parts% use_atmosphere= use_atmosphere
+      parts% read_nu       = read_nu
+
+      parts_pos_namefile= TRIM(parts_pos_path)//TRIM(parts_pos)
+
+      !
+      !-- Check that the parameters are acceptable
+      !
+      IF( upper_bound <= lower_bound )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "upper_bound should be greater than lower_bound!"
+        PRINT *
+        STOP
+      ENDIF
+      IF( upper_factor < 1.0D0 )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "upper_factor should be greater than or equal to 1!"
+        PRINT *
+        STOP
+      ENDIF
+      IF( lower_factor > 1 )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "lower_factor should be smaller than or equal to 1!"
+        PRINT *
+        STOP
+      ENDIF
+      IF( max_steps < 10 )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "max_steps should be an integer greater than or equal to 10!"
+        PRINT *
+        STOP
+      ENDIF
+      IF( last_r < 0.95D0 .OR. last_r > 1.0D0 )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "last_r should be greater than or equal to 0.95, ", &
+                 "and lower than or equal to 1!"
+        PRINT *
+        STOP
+      ENDIF
+      IF( apm_max_it < 0 .OR. max_inc < 0 .OR. nuratio_thres < 0 &
+          .OR. nuratio_des < 0 .OR. nx_gh < 0 .OR. ny_gh < 0 .OR. nz_gh < 0 )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "the numeric parameters for the APM method should be positive!"
+        PRINT *
+        STOP
+      ENDIF
+      IF( nuratio_des >= nuratio_thres )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "nuratio_des has to be stricly lower than nuratio_thres!"
+        PRINT *
+        STOP
+      ENDIF
+      IF( print_step < 0 )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "print_step has to be a positive integer or zero!"
+        PRINT *
+        STOP
+      ENDIF
+      IF( ghost_dist < zero )THEN
+        PRINT *
+        PRINT *, "** ERROR in ", parts% sphincs_id_particles, &
+                 "ghost_dist has to be a positive double precision or zero!"
+        PRINT *
+        STOP
+      ENDIF
+
+      ! setup unit system
+      CALL set_units('NSM')
+      CALL read_options
+
+      ! tabulate kernel, get ndes
+      CALL ktable( ikernel, ndes )
+
+    END SUBROUTINE read_particles_options
+
+
+    SUBROUTINE check_eos
+
+      IMPLICIT NONE
+
+      IF( (eos_type /= 'Poly') .AND. (eos_type /= 'pwp') )THEN
+        PRINT *, "** ERROR! Unkown EOS specified in parameter file ", &
+                 "SPHINCS_fm_input.dat."
+        PRINT *, " * The currently supported EOS types are 'Poly' for a ", &
+                 "polytropic EOS, and 'pwp' for a piecewise polytropic EOS."
+        PRINT *
+        PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+                 eos_type
+        PRINT *, " * Stopping..."
+        PRINT *
+        STOP
+      ENDIF
+
+      DO i_matter= 1, parts% n_matter, 1
+
+        IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
+
+          IF( eos_type == 'pwp' )THEN
+            PRINT *, "** ERROR! On matter object ", i_matter, &
+                     ", the EOS taken from the ID is not the same as the ",&
+                     "one specified in parameter file SPHINCS_fm_input.dat."
+            PRINT *
+            PRINT *, " * EOS from the ID: ", &
+                     parts% all_eos(i_matter)% eos_name
+            PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+                     eos_type
+            PRINT *, "Stopping..."
+            PRINT *
+            STOP
+          ENDIF
+
+        ENDIF
+
+        IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
+
+          IF( eos_type == 'Poly' )THEN
+            PRINT *, "** ERROR! On matter object ", i_matter, &
+                     ", the EOS taken from the ID is not the same as the ",&
+                     "one specified in parameter file SPHINCS_fm_input.dat."
+            PRINT *
+            PRINT *, " * EOS from the ID: ", &
+                     parts% all_eos(i_matter)% eos_name
+            PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+                     eos_type
+            PRINT *, "Stopping..."
+            PRINT *
+            STOP
+          ENDIF
+
+          IF( (parts% all_eos(i_matter)% eos_name .LT. eos_str)&
+              .OR. &
+              (parts% all_eos(i_matter)% eos_name .GT. eos_str)&
+          )THEN
+
+            PRINT *, "** ERROR! On matter object ", i_matter, &
+                     ", the EOS taken from the ID is not the same as the ",&
+                     "one specified in parameter file SPHINCS_fm_input.dat."
+            PRINT *
+            PRINT *, " * EOS from the ID: ", parts% all_eos(i_matter)% eos_name
+            PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
+                     eos_str
+            PRINT *, "Stopping..."
+            PRINT *
+            STOP
+
+          ENDIF
+
+        ENDIF
+
+      ENDDO
+
+    END SUBROUTINE check_eos
 
 
     SUBROUTINE read_particles_from_formatted_file

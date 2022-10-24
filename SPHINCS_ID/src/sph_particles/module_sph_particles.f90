@@ -42,7 +42,7 @@ MODULE sph_particles
   IMPLICIT NONE
 
 
-  INTEGER, PARAMETER:: id_particles_from_file            = 0
+  INTEGER, PARAMETER:: id_particles_from_formatted_file  = 0
   !! Identifier for a particle distribution read from formatted file
   INTEGER, PARAMETER:: id_particles_on_lattice           = 1
   !! Identifier for a particle distribution on a lattice
