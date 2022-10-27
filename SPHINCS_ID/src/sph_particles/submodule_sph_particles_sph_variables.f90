@@ -691,77 +691,9 @@ SUBMODULE (sph_particles) sph_variables
                MINVAL( this% u_sph(npart_in:npart_fin), DIM= 1 )
       PRINT *
 
-      this% nuratio_i(i_matter)= MAXVAL( this% nu(npart_in:npart_fin), DIM= 1 )&
-                                /MINVAL( this% nu(npart_in:npart_fin), DIM= 1 )
-      PRINT *, " * Maximum n. baryon per particle (nu) on object", i_matter, &
-                          "=", MAXVAL( this% nu(npart_in:npart_fin), DIM= 1 )
-      PRINT *, " * Minimum n. baryon per particle (nu) on object", i_matter, &
-                          "=", MINVAL( this% nu(npart_in:npart_fin), DIM= 1 )
-      PRINT *, " * Ratio between the two=", this% nuratio_i(i_matter)
-      PRINT *
-
-      PRINT *, " * Number of baryons on object", i_matter, "=", &
-               this% nbar_i(i_matter)
-      PRINT *, " * Total mass of the baryons on object", i_matter, "=", &
-               this% nbar_i(i_matter)*amu/Msun, "Msun =", &
-               this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter), &
-               "of the baryon mass of object", i_matter, "."
-      PRINT *
-
       END ASSOCIATE
 
     ENDDO
-
-    this% nuratio= MAXVAL( this% nu, DIM= 1 )/MINVAL( this% nu, DIM= 1 )
-    PRINT *, " * Baryon number ratio across the stars=", this% nuratio
-    PRINT *
-    PRINT *, " * Total mass of the baryons=", &
-             this% nbar_tot*amu/Msun, "Msun =", &
-             this% nbar_tot*amu/Msun/(SUM(this% masses, DIM=1)), &
-             "of the total baryon mass."
-    PRINT *
-
-    !
-    !-- Adjusting the baryon number per particle uniformly so that
-    !-- the baryon mass is correct.
-    !
-    IF( this% correct_nu )THEN
-
-      this% nbar_tot= zero
-      DO i_matter= 1, this% n_matter, 1
-
-        ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
-                   npart_fin  => this% npart_i(i_matter-1) +    &
-                                 this% npart_i(i_matter) )
-
-        this% nu( npart_in:npart_fin )= this% nu( npart_in:npart_fin ) &
-                      /(this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter))
-        nu( npart_in:npart_fin )= this% nu( npart_in:npart_fin )
-
-        this% nbar_i(i_matter)= this% nbar_i(i_matter) &
-                      /(this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter))
-
-        this% nbar_tot= this% nbar_tot + this% nbar_i(i_matter)
-
-        PRINT *, " * Number of corrected baryons on object", i_matter, "=", &
-                 this% nbar_i(i_matter)
-        PRINT *, " * Total mass of the corrected baryons object", i_matter, &
-                 "=", this% nbar_i(i_matter)*amu/Msun, "Msun =", &
-                 this% nbar_i(i_matter)*amu/Msun/this% masses(i_matter), &
-                 "of the baryon mass of object", i_matter, "."
-
-        END ASSOCIATE
-
-      ENDDO
-
-      PRINT *, " * Total number of corrected baryons=", this% nbar_tot
-      PRINT *, " * Total mass of the corrected baryons=", &
-               this% nbar_tot*amu/Msun, "Msun =", &
-               this% nbar_tot*amu/Msun/(SUM(this% masses, DIM=1)), &
-               "of the total baryon mass."
-      PRINT *
-
-    ENDIF
 
     !
     !-- Printing the SPH ID to a binary file, for SPHINCS_BSSN

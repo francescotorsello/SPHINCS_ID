@@ -79,7 +79,7 @@ SUBMODULE (sph_particles) constructor_std
     !
     !**************************************************
 
-    USE constants,          ONLY: amu, pi, half, third
+    USE constants,          ONLY: amu, Msun, pi, half, third
     USE utility,            ONLY: zero, one, two, ten, Msun_geo, flag$sph
     USE kernel_table,       ONLY: ktable
     USE input_output,       ONLY: read_options
@@ -573,8 +573,90 @@ SUBMODULE (sph_particles) constructor_std
              TRIM(sph_path)//TRIM(parts_out_namefile)
     PRINT *
 
+    !
+    !-- Printouts about the baryon number ratios
+    !
+    DO i_matter= 1, parts% n_matter, 1
+
+      ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
+                 npart_fin  => parts% npart_i(i_matter-1) +    &
+                               parts% npart_i(i_matter) )
+
+        parts% nuratio_i(i_matter)= &
+          MAXVAL( parts% nu(npart_in:npart_fin), DIM= 1 ) &
+         /MINVAL( parts% nu(npart_in:npart_fin), DIM= 1 )
+        PRINT *, " * Maximum n. baryon per particle (nu) on object", i_matter, &
+                            "=", MAXVAL( parts% nu(npart_in:npart_fin), DIM= 1 )
+        PRINT *, " * Minimum n. baryon per particle (nu) on object", i_matter, &
+                            "=", MINVAL( parts% nu(npart_in:npart_fin), DIM= 1 )
+        PRINT *, " * Ratio between the two=", parts% nuratio_i(i_matter)
+        PRINT *
+
+        PRINT *, " * Number of baryons on object", i_matter, "=", &
+                 parts% nbar_i(i_matter)
+        PRINT *, " * Total mass of the baryons on object", i_matter, "=", &
+                 parts% nbar_i(i_matter)*amu/Msun, "Msun =", &
+                 parts% nbar_i(i_matter)*amu/Msun/parts% masses(i_matter), &
+                 "of the baryon mass of object", i_matter, "."
+        PRINT *
+
+      END ASSOCIATE
+
+    ENDDO
+
+    parts% nuratio= MAXVAL( parts% nu, DIM= 1 )/MINVAL( parts% nu, DIM= 1 )
+    PRINT *, " * Baryon number ratio across the stars=", parts% nuratio
+    PRINT *
+    PRINT *, " * Total mass of the baryons=", &
+             parts% nbar_tot*amu/Msun, "Msun =", &
+             parts% nbar_tot*amu/Msun/(SUM(parts% masses, DIM=1)), &
+             "of the total baryon mass."
+    PRINT *
+
+    !
+    !-- Adjusting the baryon number per particle uniformly so that
+    !-- the baryon mass is correct.
+    !
+    IF( parts% correct_nu )THEN
+
+      parts% nbar_tot= zero
+      DO i_matter= 1, parts% n_matter, 1
+
+        ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
+                   npart_fin  => parts% npart_i(i_matter-1) +    &
+                                 parts% npart_i(i_matter) )
+
+        parts% nu( npart_in:npart_fin )= parts% nu( npart_in:npart_fin ) &
+                    /(parts% nbar_i(i_matter)*amu/Msun/parts% masses(i_matter))
+
+        parts% nbar_i(i_matter)= parts% nbar_i(i_matter) &
+                      /(parts% nbar_i(i_matter)*amu/Msun/parts% masses(i_matter))
+
+        parts% nbar_tot= parts% nbar_tot + parts% nbar_i(i_matter)
+
+        PRINT *, " * Number of corrected baryons on object", i_matter, "=", &
+                 parts% nbar_i(i_matter)
+        PRINT *, " * Total mass of the corrected baryons object", i_matter, &
+                 "=", parts% nbar_i(i_matter)*amu/Msun, "Msun =", &
+                 parts% nbar_i(i_matter)*amu/Msun/parts% masses(i_matter), &
+                 "of the baryon mass of object", i_matter, "."
+
+        END ASSOCIATE
+
+      ENDDO
+
+      PRINT *, " * Total number of corrected baryons=", parts% nbar_tot
+      PRINT *, " * Total mass of the corrected baryons=", &
+               parts% nbar_tot*amu/Msun, "Msun =", &
+               parts% nbar_tot*amu/Msun/(SUM(parts% masses, DIM=1)), &
+               "of the total baryon mass."
+      PRINT *
+
+    ENDIF
+
     !--------------------------------------------------------------------!
-    !--  At this point, the final particle distribution is determined  --!
+    !--  At this point, the final particle distribution is determined, --!
+    !--  and nu and the first guess for h are assigned.                --!
     !--------------------------------------------------------------------!
 
     ! Allocate needed memory
