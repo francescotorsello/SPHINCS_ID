@@ -63,6 +63,9 @@ MODULE sph_particles
   !  the smoothing lengths are computed brute-force using the SUBROUTINE
   !  [[sph_particles:find_h_backup]], so that such particles have exactly
   !  300 neighbours.
+  !
+  !  @warning This is DEPRECATED because the problem in the neighbor's tree
+  !           was solved.
 
 
   !
