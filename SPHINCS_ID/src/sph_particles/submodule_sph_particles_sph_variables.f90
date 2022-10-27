@@ -36,12 +36,13 @@ SUBMODULE (sph_particles) sph_variables
   !
   !  FT 12.07.2021
   !
+  !  @note Last updated: FT 27.10.2022
+  !
   !****************************************************
 
 
   USE constants,  ONLY: half, c_light2
   USE utility,    ONLY: zero, one, two, three
-  USE options,    ONLY: eos_str
 
 
   IMPLICIT NONE
@@ -108,13 +109,11 @@ SUBMODULE (sph_particles) sph_variables
     USE options,             ONLY: ndes
     USE set_h,               ONLY: exact_nei_tree_update
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
-    USE sphincs_sph,         ONLY: ncand
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
     USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_cold_eos, &
                                    gen_pwp_eos, Gamma_th_1
-    USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
-                                   rpart, allocate_RCB_tree_memory_3D, &
+    USE RCB_tree_3D,         ONLY: iorig, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
     USE matrix,              ONLY: invert_3x3_matrix
     USE analyze,             ONLY: COM, lin_mom
@@ -128,14 +127,11 @@ SUBMODULE (sph_particles) sph_variables
     ! compute_and_print_sph_variables is called
     INTEGER, SAVE:: call_flag= 0
 
-    INTEGER:: cnt1, a, i_matter
+    INTEGER:: a, i_matter
     INTEGER:: n_problematic_h
-    INTEGER:: itot, l, ill
 
     DOUBLE PRECISION:: g4(n_sym4x4)
-    DOUBLE PRECISION:: det, Theta_a, tmp
-
-    LOGICAL:: few_ncand, exist
+    DOUBLE PRECISION:: det, tmp
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 

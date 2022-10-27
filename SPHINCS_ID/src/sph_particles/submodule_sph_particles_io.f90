@@ -730,8 +730,6 @@ SUBMODULE (sph_particles) io
     DOUBLE PRECISION:: pvol_tmp
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: tmp_pos
 
-    LOGICAL:: exist
-
     CHARACTER(LEN=:), ALLOCATABLE:: err_msg
 
     npart_tmp= (nline_fin - nline_in + 1)

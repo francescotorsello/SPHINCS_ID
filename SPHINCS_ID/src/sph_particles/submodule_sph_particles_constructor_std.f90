@@ -65,17 +65,22 @@ SUBMODULE (sph_particles) constructor_std
 
     !**************************************************
     !
-    !# The constructor performs all the tasks needed
-    !  to set up the particle distribution with the
-    !  |id| evaluated on it. It calls all the PROCEDURES
-    !  that rely on an object of STATIC TYPE idbase.
+    !# The constructor of TYPE particles is supposed
+    !  to set up aparticle distribution by assigning
+    !  the particle positions, their baryon numbers
+    !  nu and first guesses for their smoothing lengths h.
+    !  It also sets up the unit system and the kernel.
     !
-    !  @todo assign sub-tasks to separate SUBROUTINES
-    !        contained in this SUBMODULE
+    !  After the particle distribution is set up,
+    !  it assigns the |id| to the particles.
+    !  It does NOT compute the |sph| variables and it
+    !  does NOT set up the neighbors' tree. The latter
+    !  two things are delegated to the specific methods
+    !  of TYPE particles that need them.
     !
     !  FT 17.10.2020
     !
-    !  @note Last updated: FT 25.04.2022
+    !  @note Last updated: FT 27.10.2022
     !
     !**************************************************
 

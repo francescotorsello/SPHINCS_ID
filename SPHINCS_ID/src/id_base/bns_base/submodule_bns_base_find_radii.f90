@@ -64,12 +64,9 @@ SUBMODULE(bns_base) find_radii
     DOUBLE PRECISION, PARAMETER:: min_dens= 1.D-12
     LOGICAL,          PARAMETER:: debug= .FALSE.
 
-    INTEGER:: i
-    DOUBLE PRECISION:: vector_norm, x
-    DOUBLE PRECISION, DIMENSION(3):: point_left, point_right, point, versor, &
-                                     point_mean
-    DOUBLE PRECISION:: rho, rho_left, rho_right, x_left, x_right, x_mean, &
-                       rho_mean
+    DOUBLE PRECISION:: vector_norm
+    DOUBLE PRECISION, DIMENSION(3):: point_left, point_right, versor, point_mean
+    DOUBLE PRECISION:: rho_left, rho_right, x_left, x_right, x_mean, rho_mean
   
     PROCEDURE(), POINTER:: return_density
 
