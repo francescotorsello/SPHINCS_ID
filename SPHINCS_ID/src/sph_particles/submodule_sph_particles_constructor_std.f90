@@ -657,10 +657,11 @@ SUBMODULE (sph_particles) constructor_std
     !--------------------------------------------------------------------!
     !--  At this point, the final particle distribution is determined, --!
     !--  and nu and the first guess for h are assigned.                --!
+    !--  Now the ID can be read on the particle positions.             --!
     !--------------------------------------------------------------------!
 
     ! Allocate needed memory
-    CALL allocate_particles_memory( parts )
+    CALL parts% allocate_particles_memory()
 
     ! flag that particles are 'alive'
     ALLOCATE( alive( parts% npart ) )
@@ -756,6 +757,7 @@ SUBMODULE (sph_particles) constructor_std
 
     ENDDO matter_objects_atmo_loop
 
+
     !
     !-- Ensure that the ID does not contain NaNs or infinities
     !
@@ -790,9 +792,8 @@ SUBMODULE (sph_particles) constructor_std
     CALL scan_1d_array_for_nans( parts% npart, &
                                  parts% v_euler_z, "v_euler_z" )
 
-    PRINT *, "...the ID does not ahve NaNs or infinities."
+    PRINT *, " * the ID does not have NaNs or infinities."
     PRINT *
-
 
 
     !
@@ -859,8 +860,8 @@ SUBMODULE (sph_particles) constructor_std
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1
 
-    !PRINT *, "End of particle constructor"
-
+  !  DEPRECATED? This is a relic from when nu was re-assigned to the particles
+  !
   !  IF( parts% redistribute_nu )THEN
   !
   !    ! Index particles on star 1 in increasing order of nu
@@ -2079,3 +2080,244 @@ SUBMODULE (sph_particles) constructor_std
 
 
 END SUBMODULE constructor_std
+
+
+
+
+!  DEPRECATED? This is a relic from when nu was re-assigned to the particles
+!
+!    IF( this% redistribute_nu )THEN
+!
+!      !---------------------------------------------------------------------!
+!      !--  Assignment of nu on the stars, with the purpose                --!
+!      !--  of having a more uniform nu over the particles without losing  --!
+!      !--  baryon mass. This is used only on the lattice, optionally.     --!
+!      !---------------------------------------------------------------------!
+!
+!      IF( this% distribution_id == id_particles_on_spherical_surfaces )THEN
+!        PRINT *, "** ERROR! Particle placer ", this% distribution_id, &
+!                 " is not compatible with redistribute_nu= .TRUE."
+!        PRINT *, " * Check the parameter file lorene_bns_id_particles.par. ", &
+!                 "Stopping..."
+!        PRINT *
+!        STOP
+!      ENDIF
+!
+!      nu_max1= nlrf( this% baryon_density_index( this% npart1 ) )&
+!              *this% pvol( this% npart1 ) &
+!              *Theta( this% baryon_density_index( this% npart1 ) )&
+!              *sq_det_g4( this% baryon_density_index( this% npart1 ) )
+!      nu_max2= nlrf( this% baryon_density_index( this% npart ) )&
+!              *this% pvol( this% npart ) &
+!              *Theta( this% baryon_density_index( this% npart ) )&
+!              *sq_det_g4( this% baryon_density_index( this% npart ) )
+!
+!      nu_thres1= nu_max1/this% nu_ratio
+!      nu_thres2= nu_max2/this% nu_ratio
+!
+!      ! Reset the total baryon number to 0 (necessary), and nu to an arbitrary
+!      ! value (to make debugging easier)
+!
+!      nu= one
+!      this% nu= one
+!      this% nbar_tot= zero
+!      this% nbar1= zero
+!      this% nbar2= zero
+!
+!      cnt1= 0
+!      compute_nu_on_particles_star1: DO itr= this% npart1, 1, -1
+!
+!        cnt1= cnt1 + 1
+!
+!        nu_tmp= nlrf( this% baryon_density_index( itr ) ) &
+!                *this% pvol(itr) &
+!                *Theta( this% baryon_density_index( itr ) )&
+!                *sq_det_g4( this% baryon_density_index( itr ) )
+!
+!        !IF( itr == this% npart1 ) nu_max= nu_tmp ! move this out of the loop
+!
+!        IF( nu_tmp > nu_thres1 )THEN
+!          nu( this% baryon_density_index( itr ) )      = nu_tmp
+!          this% nu( this% baryon_density_index( itr ) )= nu_tmp
+!        ELSE
+!          nu( this% baryon_density_index( itr ) )      = nu_thres1
+!          this% nu( this% baryon_density_index( itr ) )= nu_thres1
+!        ENDIF
+!
+!        this% nbar1= this% nbar1 + &
+!                     this% nu( this% baryon_density_index( itr ) )
+!
+!        IF( this% nbar1*amu/MSun > this% masses(1) )THEN
+!          EXIT
+!        ENDIF
+!
+!      ENDDO compute_nu_on_particles_star1
+!
+!      cnt2= 0
+!      compute_nu_on_particles_star2: DO itr= this% npart, this% npart1 + 1, -1
+!
+!        cnt2= cnt2 + 1
+!
+!        nu_tmp= nlrf( this% baryon_density_index( itr ) ) &
+!                *this% pvol(itr) &
+!                *Theta( this% baryon_density_index( itr ) ) &
+!                *sq_det_g4( this% baryon_density_index( itr ) )
+!
+!        !IF( itr == this% npart ) nu_max= nu_tmp
+!
+!        IF( nu_tmp > nu_thres2 )THEN
+!          nu( this% baryon_density_index( itr ) )      = nu_tmp
+!          this% nu( this% baryon_density_index( itr ) )= nu_tmp
+!        ELSE
+!          nu( this% baryon_density_index( itr ) )      = nu_thres2
+!          this% nu( this% baryon_density_index( itr ) )= nu_thres2
+!        ENDIF
+!
+!        this% nbar2= this% nbar2 + &
+!                     this% nu( this% baryon_density_index( itr ) )
+!
+!        IF( this% nbar2*amu/MSun > this% masses(2) )THEN
+!          EXIT
+!        ENDIF
+!
+!      ENDDO compute_nu_on_particles_star2
+!      this% nbar_tot= this% nbar1 + this% nbar2
+!
+!      !
+!      !-- Reshape MODULE variables
+!      !
+!
+!      CALL this% reshape_sph_field( pos_u, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( vel_u, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( Theta, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( h, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( nlrf, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( u, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( Pr, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( nu, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( temp, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( av, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( divv, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      !
+!      !-- Reshape TYPE member SPH variables
+!      !
+!
+!      CALL this% reshape_sph_field( this% pos, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% v, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% v_euler_x, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% v_euler_y, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% v_euler_z, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% Theta, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% h, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% baryon_density, cnt1, &
+!                                    cnt2, this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% nlrf, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% energy_density, cnt1, &
+!                                    cnt2, this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% specific_energy, cnt1, &
+!                                    cnt2, this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% pressure, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% pressure_sph, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% nu, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% pvol, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      !
+!      !-- Reshape TYPE member spacetime variables
+!      !
+!
+!      CALL this% reshape_sph_field( this% lapse, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% shift_x, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% shift_y, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% shift_z, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% g_xx, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% g_xy, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% g_xz, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% g_yy, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% g_yz, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      CALL this% reshape_sph_field( this% g_zz, cnt1, cnt2, &
+!                                    this% baryon_density_index )
+!
+!      !
+!      !-- Reassign particle numbers
+!      !
+!
+!      npart= cnt1 + cnt2
+!      this% npart= npart
+!      this% npart1= cnt1
+!      this% npart2= cnt2
+!      n1= this% npart1
+!      n2= this% npart2
+!
+!      PRINT *, " * Particles replaced after reassigning nu."
+!      PRINT *, " * New number of particles=", this% npart
+!      PRINT *
+!      PRINT *, " * Number of particles on NS 1=", this% npart1
+!      PRINT *, " * Number of particles on NS 2=", this% npart2
+!      PRINT *
+

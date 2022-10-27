@@ -700,7 +700,7 @@ SUBMODULE (sph_particles) apm
 
         PRINT *, "** After center of mass correction:"
         PRINT *, " * x coordinate of the center of mass of the star, ", &
-                 "from LORENE: com_star= ", com_star, "Msun_geo"
+                 "from ID: com_star= ", com_star, "Msun_geo"
         PRINT *, " * x coordinate of the center of mass of the particle ", &
                  "distribution: com_x= ", com_x, "Msun_geo"
         PRINT *, " * y coordinate of the center of mass of the particle ", &
@@ -1669,7 +1669,7 @@ SUBMODULE (sph_particles) apm
 
     PRINT *, " * Total baryon number nu_tot=", nu_tot
     PRINT *, " * Total baryon mass= ", nu_tot*amu/MSun, "=", &
-             ten*ten*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
+             ten*ten*nu_tot*amu/MSun/mass, "% of the ID baryon mass"
     PRINT *
 
     IF( debug ) PRINT *, "4"
@@ -1857,7 +1857,7 @@ SUBMODULE (sph_particles) apm
     PRINT *
     PRINT *, "nu_tot=", nu_tot
     PRINT *, "mass estimate= ", nu_tot*amu/MSun, "=", &
-             ten*ten*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
+             ten*ten*nu_tot*amu/MSun/mass, "% of the ID baryon mass"
     PRINT *
 
     IF( correct_nu )THEN
@@ -1872,7 +1872,7 @@ SUBMODULE (sph_particles) apm
       PRINT *
       PRINT *, "nu_tot=", nu_tot
       PRINT *, "mass estimate= ", nu_tot*amu/MSun, "=", &
-               ten*ten*nu_tot*amu/MSun/mass, "% of the LORENE baryon mass"
+               ten*ten*nu_tot*amu/MSun/mass, "% of the ID baryon mass"
       PRINT *
 
     ENDIF
