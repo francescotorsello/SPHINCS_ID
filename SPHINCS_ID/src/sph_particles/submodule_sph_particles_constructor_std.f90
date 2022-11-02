@@ -901,6 +901,7 @@ SUBMODULE (sph_particles) constructor_std
 
 
     FUNCTION import_density( x, y, z ) RESULT( density )
+    !! Wrapper function to read the baryon mass density from the ID
 
       IMPLICIT NONE
 
@@ -918,17 +919,19 @@ SUBMODULE (sph_particles) constructor_std
                           sqdetg, &
                           baryon_density, &
                           gamma_euler )
+    !# Wrapper function to read the ID necessary to compute the relativistic
+    !  baryonic mass
 
       USE utility,  ONLY: determinant_sym3x3
 
       IMPLICIT NONE
 
-      DOUBLE PRECISION, INTENT( IN ) :: x
-      DOUBLE PRECISION, INTENT( IN ) :: y
-      DOUBLE PRECISION, INTENT( IN ) :: z
-      DOUBLE PRECISION, INTENT( OUT ):: sqdetg
-      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+      DOUBLE PRECISION, INTENT(IN) :: x
+      DOUBLE PRECISION, INTENT(IN) :: y
+      DOUBLE PRECISION, INTENT(IN) :: z
+      DOUBLE PRECISION, INTENT(OUT):: sqdetg
+      DOUBLE PRECISION, INTENT(OUT):: baryon_density
+      DOUBLE PRECISION, INTENT(OUT):: gamma_euler
 
       DOUBLE PRECISION, DIMENSION(6) :: g
 
@@ -948,28 +951,29 @@ SUBMODULE (sph_particles) constructor_std
                                        dr, dth, dphi, &
                                        mass, mass_profile, &
                                        mass_profile_idx )
+    !# Wrapper function to integrate the relativistic baryonic mass density
 
       IMPLICIT NONE
 
       !> Center of the star
-      DOUBLE PRECISION, INTENT( IN )    :: center
+      DOUBLE PRECISION, INTENT(IN)    :: center
       !> Central density of the star
-      DOUBLE PRECISION, INTENT( IN )    :: central_density
+      DOUBLE PRECISION, INTENT(IN)    :: central_density
       !> Radius of the star
-      DOUBLE PRECISION, INTENT( IN )    :: radius
+      DOUBLE PRECISION, INTENT(IN)    :: radius
       !> Integration steps
-      DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+      DOUBLE PRECISION, INTENT(IN)    :: dr, dth, dphi
       !> Integrated mass of the star
-      DOUBLE PRECISION, INTENT( IN OUT ):: mass
+      DOUBLE PRECISION, INTENT(INOUT):: mass
       !> Array storing the radial mass profile of the star
-      !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
+      !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: &
       !                                 mass_profile
-      DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT( OUT ):: &
+      DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT(OUT):: &
                                            mass_profile
       !& Array to store the indices for array mass_profile, sorted so that
       !  mass_profile[mass_profile_idx] is in increasing order
-      !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
-      INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT( OUT ):: mass_profile_idx
+      !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
+      INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
 
       CALL id% integrate_baryon_mass_density( center, radius, &
                                               central_density, &
@@ -981,6 +985,7 @@ SUBMODULE (sph_particles) constructor_std
 
 
     FUNCTION validate_position( x, y, z ) RESULT( answer )
+    !! Wrapper function to validate a position
 
       IMPLICIT NONE
 
@@ -996,6 +1001,7 @@ SUBMODULE (sph_particles) constructor_std
 
     SUBROUTINE correct_center_of_mass_of_system( npart, pos, nu, &
                                                  com_system )
+    !! Set the \(COM\) of the system to `com_system`
 
       IMPLICIT NONE
 
@@ -1040,6 +1046,7 @@ SUBMODULE (sph_particles) constructor_std
 
 
     SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, nlrf_sph,sqg )
+    !! Wrapper function to compute the relativistic baryon mass density
 
       IMPLICIT NONE
 
@@ -1089,8 +1096,8 @@ SUBMODULE (sph_particles) constructor_std
 
       !**************************************************************
       !
-      !# Compute nstar_id, the proper baryon mass density, given the
-      !  |id|
+      !# Compute nstar_id, the relativistic baryon mass density,
+      !  given the required |id| as input
       !
       !  FT 31.08.2021
       !
@@ -1208,6 +1215,15 @@ SUBMODULE (sph_particles) constructor_std
 
 
     SUBROUTINE read_particles_options
+
+      !**************************************************************
+      !
+      !# Read the options and parameters needed to set up the
+      !  |sph| |id|
+      !
+      !  FT xx.09.2022
+      !
+      !**************************************************************
 
       IMPLICIT NONE
 
