@@ -46,7 +46,13 @@ MODULE cauchy_convergence_test
 
 
   INTEGER, PARAMETER:: use_constraints_on_mesh          = 1
+  !# Parameter that identifies the case where the Cauchy convergence test
+  !  is performed using the constraints computed using ID read on the
+  !  refined mesh. Neither the particle ID nor the mapping are used.
   INTEGER, PARAMETER:: use_constraints_with_mapped_hydro= 2
+  !# Parameter that identifies the case where the Cauchy convergence test
+  !  is performed using the constraints computed using the hydro ID mapped from
+  !  the particles to the refined mesh.
 
   DOUBLE PRECISION, PARAMETER:: tol= 1.D-10
   !# Tolerance used as an upper bound for the relative difference between
@@ -99,12 +105,13 @@ MODULE cauchy_convergence_test
 
 
   INTERFACE perform_cauchy_convergence_test
-  !#
+  !# Generic PROCEDURE to perform the Cauchy convergence test
 
 
     MODULE SUBROUTINE perform_cauchy_convergence_test_unknown_sol &
       ( tpo_coarse, tpo_medium, tpo_fine, use_constraints, num, den, ref_lev )
-    !#
+    !# Perform the Cauchy convergence test when the exact solution is not
+    !  known. The ratio between the grid spacings is `num/den`.
 
       CLASS(tpo),       INTENT(INOUT):: tpo_coarse
       CLASS(tpo),       INTENT(INOUT):: tpo_medium
@@ -119,7 +126,8 @@ MODULE cauchy_convergence_test
 
     MODULE SUBROUTINE perform_cauchy_convergence_test_known_sol &
       ( tpo_coarse, tpo_fine, use_constraints, num, den, ref_lev )
-    !#
+    !# Perform the Cauchy convergence test when the exact solution is
+    !  known. The ratio between the grid spacings is `num/den`.
 
       IMPLICIT NONE
 

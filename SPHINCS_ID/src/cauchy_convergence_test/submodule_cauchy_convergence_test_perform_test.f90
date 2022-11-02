@@ -65,13 +65,14 @@ SUBMODULE (cauchy_convergence_test) perform_test
   PROCEDURE(get_scalar_at_grid_point), POINTER:: get_ham_ptr
 
   INTERFACE compute_convergence_factor
-  !#
+  !# Generic PROCEDURE to compute the Cauchy convergence factor
 
 
     MODULE SUBROUTINE compute_convergence_factor_unknown_sol &
       ( nx, ny, nz, num, den, ref_lev, tpo_coarse, tpo_medium, tpo_fine, &
         get_hc, convergence_factor )
-    !#
+    !# Compute the Cauchy convergence factor when the exact solution is not
+    !  known.
 
       INTEGER,                               INTENT(IN)   :: nx, ny, nz
       DOUBLE PRECISION,                      INTENT(IN)   :: num
@@ -90,7 +91,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
     MODULE SUBROUTINE compute_convergence_factor_known_sol &
       ( nx, ny, nz, num, den, ref_lev, tpo_coarse, tpo_fine, &
         get_hc, convergence_factor )
-    !#
+    !# Compute the Cauchy convergence factor when the exact solution is known.
 
       INTEGER,                               INTENT(IN)   :: nx, ny, nz
       DOUBLE PRECISION,                      INTENT(IN)   :: num
@@ -114,11 +115,15 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
 
   SUBROUTINE get_ham( tpof, i, j, k, l, hc )
+  !# Wrapper SUBROUTINE to get the value of the Hamiltonian constraint
+  !  computed using ID read on the refined mesh,
+  !  at a given mesh point `(i,j,k)`, on the refinement level `l`, for the
+  !  [[tpo]] object `tpof`
 
     IMPLICIT NONE
 
     CLASS(tpo), INTENT(INOUT):: tpof
-    !! Returns the value of a scalar field at the desired point
+    !! [[tpo]] object to use
     INTEGER, INTENT(IN):: i
     !! \(x\) index of the desired point
     INTEGER, INTENT(IN):: j
@@ -127,12 +132,8 @@ SUBMODULE (cauchy_convergence_test) perform_test
     !! \(z\) index of the desired point
     INTEGER, INTENT(IN):: l
     !! Index of the refinement level
-    !INTEGER, INTENT(IN):: which_constraints
-    !# \(1\) if the constraints cuted only on the mesh are to be used,
-    !  \(2\) if the constraints computed using the mapped hydro data from the
-    !  particles to the mesh are to be used
     DOUBLE PRECISION, INTENT(OUT):: hc
-    !! Value of the scalar field at \((i,j,k)\)
+    !! Value of the Hamiltonian constraint at \((i,j,k)\)
 
     hc= tpof% get_HC( i, j, k, l )
 
@@ -140,11 +141,15 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
 
   SUBROUTINE get_ham_parts( tpof, i, j, k, l, hc )
+  !# Wrapper SUBROUTINE to get the value of the Hamiltonian constraint
+  !  computed using using the hydro ID mapped from the particles to the refined
+  !  mesh, at a given mesh point `(i,j,k)`, on the refinement level `l`, for the
+  !  [[tpo]] object `tpof`
 
     IMPLICIT NONE
 
     CLASS(tpo), INTENT(INOUT):: tpof
-    !! Returns the value of a scalar field at the desired point
+    !! [[tpo]] object to use
     INTEGER, INTENT(IN):: i
     !! \(x\) index of the desired point
     INTEGER, INTENT(IN):: j
@@ -153,12 +158,8 @@ SUBMODULE (cauchy_convergence_test) perform_test
     !! \(z\) index of the desired point
     INTEGER, INTENT(IN):: l
     !! Index of the refinement level
-    !INTEGER, INTENT(IN):: which_constraints
-    !# \(1\) if the constraints cuted only on the mesh are to be used,
-    !  \(2\) if the constraints computed using the mapped hydro data from the
-    !  particles to the mesh are to be used
     DOUBLE PRECISION, INTENT(OUT):: hc
-    !! Value of the scalar field at \((i,j,k)\)
+    !! Value of the Hamiltonian constraint at \((i,j,k)\)
 
     hc= tpof% get_HC_parts( i, j, k, l )
 
@@ -166,7 +167,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
 
   MODULE PROCEDURE compute_convergence_factor_unknown_sol
-  !#
+  !# Compute the Cauchy convergence factor when the exact solution is not known.
 
     IMPLICIT NONE
 
@@ -222,7 +223,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
 
   MODULE PROCEDURE compute_convergence_factor_known_sol
-  !#
+  !# Compute the Cauchy convergence factor when the exact solution is known.
 
     IMPLICIT NONE
 
@@ -271,7 +272,8 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
     !***********************************************************
     !
-    !#
+    !# Perform the Cauchy convergence test when the exact solution is not
+    !  known. The ratio between the grid spacings is `num/den`.
     !
     !***********************************************************
 
@@ -347,7 +349,8 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
     !***********************************************************
     !
-    !#
+    !# Perform the Cauchy convergence test when the exact solution is
+    !  known. The ratio between the grid spacings is `num/den`.
     !
     !***********************************************************
 
@@ -427,7 +430,7 @@ SUBMODULE (cauchy_convergence_test) perform_test
 
     !***********************************************************
     !
-    !#
+    !# Print the Cauchy convergence factor to a formatted file
     !
     !***********************************************************
 
