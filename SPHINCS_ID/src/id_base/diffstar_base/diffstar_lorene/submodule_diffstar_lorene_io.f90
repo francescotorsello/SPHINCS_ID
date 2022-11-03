@@ -60,7 +60,7 @@ SUBMODULE (diffstar_lorene) io
 
     IMPLICIT NONE
 
-    IF( THIS% angular_momentum == zero )THEN
+    IF( this% angular_momentum == zero )THEN
 
       PRINT *
       PRINT *, " ** The parameters have not ben read yet. ", &
@@ -72,63 +72,63 @@ SUBMODULE (diffstar_lorene) io
       PRINT *
       PRINT *, " ** The parameters of the differentially rotating star are:"
       PRINT *
-      PRINT *, " Baryonic mass = ", THIS% mass, " M_sun"
-      PRINT *, " Gravitational mass = ", THIS% mass_grav, " M_sun"
-      PRINT *, " Angular momentum = ", THIS% angular_momentum, " G M_sun^2 /c"
-      PRINT *, " Surface area = ", THIS% surface_area, " M_sun^2", &
-                                   THIS% surface_area*Msun_geo**2.0D0, " km^2"
+      PRINT *, " Baryonic mass = ", this% mass, " M_sun"
+      PRINT *, " Gravitational mass = ", this% mass_grav, " M_sun"
+      PRINT *, " Angular momentum = ", this% angular_momentum, " G M_sun^2 /c"
+      PRINT *, " Surface area = ", this% surface_area, " M_sun^2", &
+                                   this% surface_area*Msun_geo**2.0D0, " km^2"
       PRINT *
       PRINT *, " Radii: "
       PRINT *, "  Areal (or circumferential) radius for the star in the", &
                "  binary system [the one used in the", &
                "  (gravitational)mass-(areal)radius diagrams",&
                "  is for a TOV star], x direction:", &
-               THIS% area_radius, " M_sun^geo = ", &
-               THIS% area_radius*Msun_geo, " km", &
-               THIS% r_circ, " M_sun^geo = ", &
-               THIS% r_circ*Msun_geo, " km"
-      PRINT *, "  Mean radius = ", THIS% r_mean, " M_sun^geo"
-      PRINT *, "  Equatorial radius at phi=0 = ",  THIS% r_eq, " M_sun^geo"
-      PRINT *, "  Equatorial radius at phi=pi/2 = ",  THIS% r_eq_pi2, &
+               this% area_radius, " M_sun^geo = ", &
+               this% area_radius*Msun_geo, " km", &
+               this% r_circ, " M_sun^geo = ", &
+               this% r_circ*Msun_geo, " km"
+      PRINT *, "  Mean radius = ", this% r_mean, " M_sun^geo"
+      PRINT *, "  Equatorial radius at phi=0 = ",  this% r_eq, " M_sun^geo"
+      PRINT *, "  Equatorial radius at phi=pi/2 = ",  this% r_eq_pi2, &
                " M_sun^geo"
-      PRINT *, "  Equatorial radius at phi=pi = ",  THIS% r_eq_pi, " M_sun^geo"
-      PRINT *, "  Equatorial radius at phi=3pi/2 = ",  THIS% r_eq_3pi2, &
+      PRINT *, "  Equatorial radius at phi=pi = ",  this% r_eq_pi, " M_sun^geo"
+      PRINT *, "  Equatorial radius at phi=3pi/2 = ",  this% r_eq_3pi2, &
                " M_sun^geo"
-      PRINT *, "  Polar radius = ",  THIS% r_pole, " M_sun^geo"
+      PRINT *, "  Polar radius = ",  this% r_pole, " M_sun^geo"
       PRINT *, "  Polar radius/(Equatorial radius at phi=0) = ", &
-               THIS% r_ratio
+               this% r_ratio
       PRINT *, " Radius of the Innermost Stable Circular Orbit (ISCO) = ", &
-               THIS% r_isco, " M_sun^geo"
+               this% r_isco, " M_sun^geo"
       PRINT *, " Orbital frequency of the Innermost Stable Circular Orbit ", &
-               "(ISCO) = ", THIS% f_isco, " M_sun^geo"
+               "(ISCO) = ", this% f_isco, " M_sun^geo"
       PRINT *, " Specific energy of a test particle at the Innermost Stable ", &
-               "Circular Orbit (ISCO) ", THIS% specific_energy_isco, &
+               "Circular Orbit (ISCO) ", this% specific_energy_isco, &
                " c^2"
       PRINT *, " Specific angular momentum of a test particle at the ", &
                "Innermost Stable Circular Orbit (ISCO) ", &
-               THIS% specific_angular_momentum_isco, " G M_sun /c"
+               this% specific_angular_momentum_isco, " G M_sun /c"
       PRINT *
       PRINT *, " Hydro quantities at the center of the star: "
-      PRINT *, "  Central enthalpy = ", THIS% ent_center, " c^2"
-      PRINT *, "  Central baryon number density = ", THIS% nbar_center, &
+      PRINT *, "  Central enthalpy = ", this% ent_center, " c^2"
+      PRINT *, "  Central baryon number density = ", this% nbar_center, &
                " (M_sun^geo)^{-3} =", &
-               THIS% nbar_center/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
-      PRINT *, "  Central baryon mass density = ", THIS% rho_center, &
+               this% nbar_center/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
+      PRINT *, "  Central baryon mass density = ", this% rho_center, &
                " M_sun^geo (M_sun^geo)^{-3} =", &
-               THIS% rho_center/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
-      PRINT *, "  Central energy density = ", THIS% energy_density_center, &
+               this% rho_center/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+      PRINT *, "  Central energy density = ", this% energy_density_center, &
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
-               THIS% energy_density_center/lorene2hydrobase*kg2g/(m2cm**3), &
+               this% energy_density_center/lorene2hydrobase*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
-      PRINT *, "  Central specific energy = ", THIS% specific_energy_center, &
+      PRINT *, "  Central specific energy = ", this% specific_energy_center, &
                " c^2"
-      PRINT *, "  Central pressure = ", THIS% pressure_center, &
+      PRINT *, "  Central pressure = ", this% pressure_center, &
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
-               THIS% pressure_center/lorene2hydrobase*kg2g/(m2cm**3), &
+               this% pressure_center/lorene2hydrobase*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *
       PRINT *, " Ratio T/|W| between the rotational kinetic energy and ", &
-               "the gravitational binding energy: ", THIS% tsw
+               "the gravitational binding energy: ", this% tsw
       PRINT *, "   For axisymmetric configurations as this one, the ", &
                "threshold for dynamical bar-mode instability is T/|W|~0.25 ", &
                " [Masaru Shibata et al 2000 ApJ 542 453, ", &
@@ -142,54 +142,54 @@ SUBMODULE (diffstar_lorene) io
                "https://link.springer.com/article/10.1007%2Fs41114-017-0008-x]."
       PRINT *
 
-      PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(THIS% eos)
+      PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(this% eos)
 
-      IF( THIS% eos_loreneid == 1 )THEN ! If the EOS is polytropic
+      IF( this% eos_loreneid == 1 )THEN ! If the EOS is polytropic
 
         PRINT *, " Parameters for EOS: "
-        PRINT *, "  Polytopic index gamma = ", THIS% gamma
+        PRINT *, "  Polytopic index gamma = ", this% gamma
         PRINT *, "  Pressure coefficient = ",&
-                 THIS% kappa/k_lorene2hydrobase( THIS% gamma ), &
-                 "rho_nuc c^2 / n_nuc^gamma = ", THIS% kappa, &
+                 this% kappa/k_lorene2hydrobase( this% gamma ), &
+                 "rho_nuc c^2 / n_nuc^gamma = ", this% kappa, &
                  "[pure number]"
         PRINT *
 
-      ELSEIF( THIS% gamma0 /= 0 )THEN ! If the EOS is piecewise polytropic
+      ELSEIF( this% gamma0 /= 0 )THEN ! If the EOS is piecewise polytropic
 
         PRINT *, " Parameters for EOS1: "
-        PRINT *, "  Number of polytropic indexes = ", THIS% npeos
-        PRINT *, "  Polytopic index gamma0 = ", THIS% gamma0
-        PRINT *, "  Polytopic index gamma1 = ", THIS% gamma1
-        PRINT *, "  Polytopic index gamma2 = ", THIS% gamma2
-        PRINT *, "  Polytopic index gamma3 = ", THIS% gamma3
+        PRINT *, "  Number of polytropic indexes = ", this% npeos
+        PRINT *, "  Polytopic index gamma0 = ", this% gamma0
+        PRINT *, "  Polytopic index gamma1 = ", this% gamma1
+        PRINT *, "  Polytopic index gamma2 = ", this% gamma2
+        PRINT *, "  Polytopic index gamma3 = ", this% gamma3
         PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
-                 THIS% kappa0/k_lorene2hydrobase( THIS% gamma0 ), &
-                 "rho_nuc c^2 / n_nuc^gamma0 = ", THIS% kappa0, &
+                 this% kappa0/k_lorene2hydrobase( this% gamma0 ), &
+                 "rho_nuc c^2 / n_nuc^gamma0 = ", this% kappa0, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the first polytrope = ",&
-                 THIS% kappa1/k_lorene2hydrobase( THIS% gamma1 ), &
-                 "rho_nuc c^2 / n_nuc^gamma1", THIS% kappa1, &
+                 this% kappa1/k_lorene2hydrobase( this% gamma1 ), &
+                 "rho_nuc c^2 / n_nuc^gamma1", this% kappa1, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the second polytrope = ",&
-                 THIS% kappa2/k_lorene2hydrobase( THIS% gamma2 ), &
-                 "rho_nuc c^2 / n_nuc^gamma2", THIS% kappa2, &
+                 this% kappa2/k_lorene2hydrobase( this% gamma2 ), &
+                 "rho_nuc c^2 / n_nuc^gamma2", this% kappa2, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the third polytrope = ",&
-                 THIS% kappa3/k_lorene2hydrobase( THIS% gamma3 ), &
-                 "rho_nuc c^2 / n_nuc^gamma3", THIS% kappa3, &
+                 this% kappa3/k_lorene2hydrobase( this% gamma3 ), &
+                 "rho_nuc c^2 / n_nuc^gamma3", this% kappa3, &
                  "[pure number]"
         PRINT *, "  Base 10 exponent of the pressure at the first fiducial " &
                  // "density (between gamma_0 and gamma_1) (dyne/cm^2)= ", &
-                 THIS% logP1
+                 this% logP1
         PRINT *, "  Base 10 exponent of first fiducial density (g/cm^3) = ", &
-                 THIS% logRho0
+                 this% logRho0
         PRINT *, "  Base 10 exponent of second fiducial density (g/cm^3) = ",&
-                 THIS% logRho1
+                 this% logRho1
         PRINT *, "  Base 10 exponent of third fiducial density (g/cm^3) = ", &
-                 THIS% logRho2
+                 this% logRho2
         PRINT *
 
-      ELSEIF( THIS% eos_loreneid == 17 .OR. THIS% eos_loreneid == 20 )THEN
+      ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
       ! If the EOS is tabulated
 
       ELSE

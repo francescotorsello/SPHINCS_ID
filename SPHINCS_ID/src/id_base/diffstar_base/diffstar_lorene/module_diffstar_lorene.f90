@@ -181,7 +181,7 @@ MODULE diffstar_lorene
 
     PROCEDURE:: nothing
     !# Procedure that does nothing. It is used to instantiate a deferred
-    !  idbase procedure which s not needed in TYPE [[diffstarlorene]].
+    !  idbase procedure which is not needed in TYPE [[diffstarlorene]].
     !  It also serves as a placeholder in case the idbase procedure
     !  will be needed in the future.
 
@@ -698,7 +698,7 @@ MODULE diffstar_lorene
 
     MODULE SUBROUTINE nothing( this, flag, switch )
     !# Procedure that does nothing. It is used to instantiate a deferred
-    !  idbase procedure which s not needed in TYPE [[diffstarlorene]].
+    !  idbase procedure which is not needed in TYPE [[diffstarlorene]].
     !  It also serves as a placeholder in case the idbase procedure
     !  will be needed in the future.
 

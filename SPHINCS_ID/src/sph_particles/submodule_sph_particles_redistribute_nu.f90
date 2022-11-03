@@ -81,23 +81,23 @@ SUBMODULE (sph_particles) redistribute_nu
       STOP
     ENDIF
     i_tmp= 0
-    DO itr= THIS% npart1, THIS% npart1 - new_size1 + 1, -1
+    DO itr= this% npart1, this% npart1 - new_size1 + 1, -1
 
       i_tmp= i_tmp + 1
       tmp( i_tmp )= field( index_array( itr ) )
-      !IF( itr == THIS% npart1 - new_size1 + 1 )THEN
+      !IF( itr == this% npart1 - new_size1 + 1 )THEN
       !  PRINT *, i_tmp
       !ENDIF
 
     ENDDO
-    DO itr= THIS% npart, THIS% npart - new_size2 + 1, -1
+    DO itr= this% npart, this% npart - new_size2 + 1, -1
 
       i_tmp= i_tmp + 1
       tmp( i_tmp )= field( index_array( itr ) )
-      !IF( itr == THIS% npart )THEN
+      !IF( itr == this% npart )THEN
       !  PRINT *, i_tmp
       !ENDIF
-      !IF( itr == THIS% npart - new_size2 + 1 )THEN
+      !IF( itr == this% npart - new_size2 + 1 )THEN
       !  PRINT *, i_tmp
       !  PRINT *, new_size1 + new_size2
       !ENDIF
@@ -149,7 +149,7 @@ SUBMODULE (sph_particles) redistribute_nu
     ENDIF
     DO itr2= 1, 3, 1
       i_tmp= 0
-      DO itr= THIS% npart1, THIS% npart1 - new_size1 + 1, -1
+      DO itr= this% npart1, this% npart1 - new_size1 + 1, -1
 
         i_tmp= i_tmp + 1
         tmp( itr2, i_tmp )= field( itr2, index_array( itr ) )
@@ -161,7 +161,7 @@ SUBMODULE (sph_particles) redistribute_nu
       ENDDO
       !PRINT *, i_tmp
       !PRINT *, new_size1
-      DO itr= THIS% npart, THIS% npart - new_size2 + 1, -1
+      DO itr= this% npart, this% npart - new_size2 + 1, -1
 
         i_tmp= i_tmp + 1
         tmp( itr2, i_tmp )= field( itr2, index_array( itr ) )

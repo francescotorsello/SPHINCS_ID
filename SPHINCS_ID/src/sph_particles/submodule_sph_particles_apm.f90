@@ -2441,7 +2441,7 @@ SUBMODULE (sph_particles) apm
     !-- Check that there aren't multiple particles at the same position
     !
     !IF( debug ) finalnamefile= TRIM(sph_path)//"negative_hydro.dat"
-    !IF( debug ) CALL THIS% analyze_hydro( finalnamefile )
+    !IF( debug ) CALL this% analyze_hydro( finalnamefile )
 
     PRINT *, "** Checking that there aren't particles with the same position..."
     PRINT *

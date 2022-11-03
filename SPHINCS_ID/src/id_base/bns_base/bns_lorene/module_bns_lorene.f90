@@ -189,7 +189,7 @@ MODULE bns_lorene
 
     PROCEDURE:: nothing
     !# Procedure that does nothing. It is used to instantiate a deferred
-    !  idbase procedure which s not needed in TYPE [[bnslorene]].
+    !  idbase procedure which is not needed in TYPE [[bnslorene]].
     !  It also serves as a placeholder in case the idbase procedure
     !  will be needed in the future.
 
@@ -823,7 +823,7 @@ MODULE bns_lorene
 
     MODULE SUBROUTINE nothing( this, flag, switch )
     !# Procedure that does nothing. It is used to instantiate a deferred
-    !  idbase procedure which s not needed in TYPE [[bnslorene]].
+    !  idbase procedure which is not needed in TYPE [[bnslorene]].
     !  It also serves as a placeholder in case the idbase procedure
     !  will be needed in the future.
 

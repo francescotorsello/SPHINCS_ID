@@ -69,9 +69,6 @@ MODULE id_base
     !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
 
-    DOUBLE PRECISION, PUBLIC:: adm_mass
-    !! ADM mass of the BNS \([M_\odot]\)
-
     LOGICAL:: one_lapse
     !# Logical variable that determines if the lapse function \(\alpha=1\),
     !  i.e., if the geodesic gauge is to be used
@@ -155,6 +152,9 @@ MODULE id_base
     PROCEDURE(return_double_parameter),   DEFERRED:: return_mass
     !! Returns the masses of the matter objects.
 
+    PROCEDURE(return_double_number),      DEFERRED:: return_adm_mass
+    !! Returns the ADM mass of the system
+
     PROCEDURE(return_position),           DEFERRED:: return_center
     !! Returns the centers of the matter objects.
 
@@ -167,6 +167,7 @@ MODULE id_base
 
     PROCEDURE(return_string_parameter),   DEFERRED:: return_eos_name
     !! Returns the name of the |eos| of the matter objects.
+
 
     PROCEDURE(initialize_id_int), DEFERRED:: initialize_id
     !# Initialize the |id|; for example, set up the lattices around the
@@ -383,6 +384,17 @@ MODULE id_base
       !! Real number. Parameter of the `i_matter`-th matter object
 
     END FUNCTION return_double_parameter
+
+
+    FUNCTION return_double_number( this ) RESULT( res )
+    !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT(IN):: this
+      DOUBLE PRECISION:: res
+      !! Real number
+
+    END FUNCTION return_double_number
 
 
     FUNCTION return_position( this, i_matter ) RESULT( res )

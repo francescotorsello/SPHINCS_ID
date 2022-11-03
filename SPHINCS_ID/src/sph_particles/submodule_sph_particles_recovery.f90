@@ -283,13 +283,13 @@ SUBMODULE (sph_particles) recovery
 
       print_data_loop: DO a = npart_in, npart_fin, 1
 
-        IF( THIS% export_form_xy .AND. &
+        IF( this% export_form_xy .AND. &
             ( pos( 3, a ) >=  0.5D0 .OR. &
               pos( 3, a ) <= -0.5D0 ) &
         )THEN
           CYCLE
         ENDIF
-        IF( THIS% export_form_x .AND. &
+        IF( this% export_form_x .AND. &
             ( pos( 3, a ) >=  0.5D0 .OR. &
               pos( 3, a ) <= -0.5D0 .OR. &
               pos( 2, a ) >=  0.5D0 .OR. &

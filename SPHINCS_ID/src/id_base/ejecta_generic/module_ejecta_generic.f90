@@ -116,6 +116,9 @@ MODULE ejecta_generic
     !  The first three indices specify the grid point; the last index
     !  specifies the \(x,y,z\) components of the velocity.
 
+    DOUBLE PRECISION:: adm_mass
+    !! ADM mass of the system \([M_\odot]\)
+
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
     !! Masses of the matter objects
 
@@ -231,7 +234,7 @@ MODULE ejecta_generic
 
     PROCEDURE:: nothing
     !# Procedure that does nothing. It is used to instantiate a deferred
-    !  idbase procedure which s not needed in TYPE [[ejecta]].
+    !  idbase procedure which is not needed in TYPE [[ejecta]].
     !  It also serves as a placeholder in case the idbase procedure
     !  will be needed in the future.
 
@@ -257,6 +260,7 @@ MODULE ejecta_generic
     !
 
     PROCEDURE:: return_mass                 => get_mass
+    PROCEDURE:: return_adm_mass             => get_adm_mass
     PROCEDURE:: return_center               => get_center
     PROCEDURE:: return_barycenter           => get_barycenter
     PROCEDURE:: return_eos_name             => get_eos
@@ -326,8 +330,8 @@ MODULE ejecta_generic
     !  is given as the optional argument `filename`
 
 
-      CLASS(ejecta), INTENT( IN ):: this
-      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      CLASS(ejecta),    INTENT(IN):: this
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
     END SUBROUTINE print_summary_ejecta
@@ -342,19 +346,30 @@ MODULE ejecta_generic
     !! Returns [[ejecta:masses]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(ejecta), INTENT(IN):: this
+      INTEGER,       INTENT(IN):: i_matter
       ! Result
       DOUBLE PRECISION:: get_mass
 
     END FUNCTION get_mass
 
 
+    MODULE FUNCTION get_adm_mass( this )
+    !! Returns 0 (the ADM mass is not necessarily known for this TYPE)
+
+      !> [[ejecta]] object which this PROCEDURE is a member of
+      CLASS(ejecta), INTENT(IN):: this
+      ! Result
+      DOUBLE PRECISION:: get_adm_mass
+
+    END FUNCTION get_adm_mass
+
+
     MODULE FUNCTION get_center( this, i_matter )
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(ejecta), INTENT(IN):: this
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: get_center
 
@@ -364,8 +379,8 @@ MODULE ejecta_generic
     MODULE FUNCTION get_barycenter( this, i_matter )
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(ejecta), INTENT(IN):: this
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: get_barycenter
 
@@ -375,8 +390,8 @@ MODULE ejecta_generic
     MODULE FUNCTION get_radii( this, i_matter )
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(ejecta), INTENT(IN):: this
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose string is to return
       DOUBLE PRECISION, DIMENSION(6):: get_radii
 
@@ -393,9 +408,9 @@ MODULE ejecta_generic
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
       !! |lorene| binary file containing the spectral DRS ID
-      CLASS(ejecta), INTENT( OUT ):: derived_type
+      CLASS(ejecta),    INTENT(OUT):: derived_type
       !! Constructed [[ejecta]] object
 
     END SUBROUTINE construct_ejecta
@@ -404,7 +419,7 @@ MODULE ejecta_generic
     MODULE SUBROUTINE destruct_ejecta( this )
     !! Destruct a [[ejecta]] object
 
-      TYPE(ejecta), INTENT( IN OUT ):: this
+      TYPE(ejecta), INTENT(INOUT):: this
       !! [[ejecta]] object to be destructed
 
     END SUBROUTINE destruct_ejecta
@@ -413,9 +428,9 @@ MODULE ejecta_generic
     MODULE SUBROUTINE allocate_gridid_memory( this, n_matter )
     !! Allocates allocatable arrays member of a [[ejecta]] object
 
-      CLASS(ejecta), INTENT( IN OUT ):: this
+      CLASS(ejecta), INTENT(INOUT):: this
       !! [[ejecta]] object which this PROCEDURE is a member of
-      INTEGER, INTENT( IN ):: n_matter
+      INTEGER,       INTENT(IN):: n_matter
       !! Number of matter objects
 
     END SUBROUTINE allocate_gridid_memory
@@ -424,7 +439,7 @@ MODULE ejecta_generic
     MODULE SUBROUTINE deallocate_gridid_memory( this )
     !! Deallocates allocatable arrays member of a [[ejecta]] object
 
-      CLASS(ejecta), INTENT( IN OUT ):: this
+      CLASS(ejecta), INTENT(INOUT):: this
       !! [[ejecta]] object which this PROCEDURE is a member of
 
     END SUBROUTINE deallocate_gridid_memory
@@ -446,34 +461,34 @@ MODULE ejecta_generic
     !  shape as the [[ejecta]] member arrays
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                     INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+      CLASS(ejecta),                  INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_z
 
     END SUBROUTINE interpolate_id_full
 
@@ -484,15 +499,15 @@ MODULE ejecta_generic
     !  the BSSN variables and constraints
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                           INTENT( IN OUT ):: this
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: shift
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
+      CLASS(ejecta),                        INTENT(INOUT):: this
+      INTEGER,                              INTENT(IN)    :: nx
+      INTEGER,                              INTENT(IN)    :: ny
+      INTEGER,                              INTENT(IN)    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN)    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: shift
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: g
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: ek
 
     END SUBROUTINE interpolate_id_spacetime
 
@@ -508,16 +523,16 @@ MODULE ejecta_generic
     !  on the refined mesh
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                           INTENT( IN OUT ):: this
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: u_euler
+      CLASS(ejecta),                        INTENT(INOUT):: this
+      INTEGER,                              INTENT(IN)    :: nx
+      INTEGER,                              INTENT(IN)    :: ny
+      INTEGER,                              INTENT(IN)    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN)    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: u_euler
 
     END SUBROUTINE interpolate_id_hydro
 
@@ -529,28 +544,28 @@ MODULE ejecta_generic
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                  INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+      CLASS(ejecta),                  INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_z
 
     END SUBROUTINE interpolate_id_particles
 
@@ -562,13 +577,13 @@ MODULE ejecta_generic
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),    INTENT( IN OUT ):: this
-      DOUBLE PRECISION, INTENT( IN )    :: x
-      DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
-      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+      CLASS(ejecta),    INTENT(INOUT):: this
+      DOUBLE PRECISION, INTENT(IN)    :: x
+      DOUBLE PRECISION, INTENT(IN)    :: y
+      DOUBLE PRECISION, INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(6), INTENT(OUT):: g
+      DOUBLE PRECISION, INTENT(OUT):: baryon_density
+      DOUBLE PRECISION, INTENT(OUT):: gamma_euler
 
     END SUBROUTINE interpolate_id_mass_b
 
@@ -579,17 +594,17 @@ MODULE ejecta_generic
     !! Stores the components of the extrinsic curvature in arrays
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),                  INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
+      CLASS(ejecta),                  INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_zz
 
     END SUBROUTINE interpolate_id_k
 
@@ -601,13 +616,13 @@ MODULE ejecta_generic
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),    INTENT( IN ):: this
+      CLASS(ejecta),    INTENT(IN):: this
       !> \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !> Baryon mass density at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
@@ -619,13 +634,13 @@ MODULE ejecta_generic
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),     INTENT( IN )       :: this
+      CLASS(ejecta),    INTENT(IN)       :: this
       !> \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !> \(g_{xx}=g_{yy}=g_{zz}\) at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
@@ -637,13 +652,13 @@ MODULE ejecta_generic
     !  pressure are positivee, `.FALSE.` otherwise
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta),     INTENT( IN )       :: this
+      CLASS(ejecta),    INTENT(IN)       :: this
       !> \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !& `.FALSE.` if the energy density or the specific energy or the pressure
       !  are negative, `.TRUE.` otherwise
       LOGICAL:: res
@@ -660,7 +675,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_gamma]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_gamma
 
@@ -671,7 +686,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_kappa]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_kappa
 
@@ -682,8 +697,8 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_eos]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(ejecta), INTENT(IN):: this
+      INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object whose string is to return
       CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
 
@@ -694,7 +709,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_npeos]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       INTEGER:: get_npeos
 
@@ -705,7 +720,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_gamma0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_gamma0
 
@@ -716,7 +731,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_gamma1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_gamma1
 
@@ -727,7 +742,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_gamma2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_gamma2
 
@@ -738,7 +753,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_gamma3]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_gamma3
 
@@ -749,7 +764,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_kappa0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_kappa0
 
@@ -760,7 +775,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_kappa1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_kappa1
 
@@ -771,7 +786,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_kappa2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_kappa2
 
@@ -782,7 +797,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_kappa3]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_kappa3
 
@@ -793,7 +808,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_logP1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_logP1
 
@@ -804,7 +819,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_logRho0]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_logRho0
 
@@ -815,7 +830,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_logRho1]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_logRho1
 
@@ -826,7 +841,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_logRho2]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_logRho2
 
@@ -837,7 +852,7 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_eos_ejectaid]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
+      CLASS(ejecta), INTENT(IN):: this
       ! Result
       INTEGER:: get_eos_ejectaid
 
@@ -848,8 +863,8 @@ MODULE ejecta_generic
     !! Interface to [[ejecta_generic:get_eos_parameters]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
-      CLASS(ejecta), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(ejecta), INTENT(IN):: this
+      INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
       !# Array containing the parameters of the |eos| for the DRS
@@ -888,14 +903,14 @@ MODULE ejecta_generic
 
     MODULE SUBROUTINE nothing( this, flag, switch )
     !# Procedure that does nothing. It is used to instantiate a deferred
-    !  idbase procedure which s not needed in TYPE [[ejecta]].
+    !  idbase procedure which is not needed in TYPE [[ejecta]].
     !  It also serves as a placeholder in case the idbase procedure
     !  will be needed in the future.
 
       CLASS(ejecta), INTENT(INOUT):: this
       INTEGER,       INTENT(IN)   :: flag
       !! Identifies what kind of initialization has to be done
-      LOGICAL,          INTENT(IN), OPTIONAL:: switch
+      LOGICAL,       INTENT(IN), OPTIONAL:: switch
       !! If `.TRUE.`, switch to a different initialization
 
     END SUBROUTINE nothing

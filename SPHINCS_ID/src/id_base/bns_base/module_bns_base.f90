@@ -77,6 +77,9 @@ MODULE bns_base
     DOUBLE PRECISION, DIMENSION(2):: mass
     !! Array containing the baryonic masses \([M_\odot]\)
 
+    DOUBLE PRECISION:: adm_mass
+    !! ADM mass of the system \([M_\odot]\)
+
     !> Baryonic mass of star 1 \([M_\odot]\)
     DOUBLE PRECISION:: mass1
 
@@ -403,6 +406,7 @@ MODULE bns_base
     !PROCEDURE, PUBLIC:: get_bns_identifier
     !PROCEDURE, PUBLIC:: get_bns_ptr
     PROCEDURE:: return_mass                 => get_mass
+    PROCEDURE:: return_adm_mass             => get_adm_mass
     PROCEDURE:: return_center               => get_center
     PROCEDURE:: return_barycenter           => get_barycenter
     PROCEDURE:: return_eos_name             => get_eos

@@ -62,7 +62,8 @@ SUBMODULE (bns_lorene) params
     USE constants, ONLY: c_light, cm2km
 
     USE utility,   ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         k_lorene2hydrobase_piecewisepolytrope
+                         k_lorene2hydrobase_piecewisepolytrope, &
+                         zero, two, four, five
 
 #if flavour == 1
 
@@ -194,11 +195,11 @@ SUBMODULE (bns_lorene) params
                        this% radius2_y, this% radius2_y, &
                        this% radius2_z, this% radius2_z]
 
-    this% center(1,:)= [this% center1_x, 0.0D0, 0.0D0]
-    this% center(2,:)= [this% center2_x, 0.0D0, 0.0D0]
+    this% center(1,:)= [this% center1_x, zero, zero]
+    this% center(2,:)= [this% center2_x, zero, zero]
 
-    this% barycenter(1,:)= [this% barycenter1_x, 0.0D0, 0.0D0]
-    this% barycenter(2,:)= [this% barycenter2_x, 0.0D0, 0.0D0]
+    this% barycenter(1,:)= [this% barycenter1_x, zero, zero]
+    this% barycenter(2,:)= [this% barycenter2_x, zero, zero]
 
     ! Convert hydro quantities from |lorene| units to SPHINCS units
     this% nbar_center1           = this% nbar_center1*(MSun_geo*km2m)**3
@@ -254,7 +255,7 @@ SUBMODULE (bns_lorene) params
 
     ! Compute t_merger
 
-    this% t_merger= 5.0D0/256.0D0*(this% distance**4.0D0) &
+    this% t_merger= five/(two**8)*( this% distance**four ) &
                     /( this% mass_grav1*this% mass_grav2* &
                        ( this% mass_grav1 + this% mass_grav2 ) )
 
