@@ -97,7 +97,7 @@ Permission is granted to copy, distribute and/or modify this documentation
 under the terms of the GNU Free Documentation License, Version 1.3
 or any later version published by the Free Software Foundation;
 with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
-A copy of the license is included in the section entitled "License", reachable by clicking "More" at the top of the webpage, or at <https://www.gnu.org/licenses/fdl-1.3.html/>.
+A copy of the license is included in the section entitled "License", reachable by clicking "About" at the top of the webpage, or at <https://www.gnu.org/licenses/fdl-1.3.html/>.
 ---
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>

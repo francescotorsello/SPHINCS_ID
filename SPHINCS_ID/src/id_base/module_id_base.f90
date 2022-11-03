@@ -149,10 +149,10 @@ MODULE id_base
     !  returning the array of 6 numbers
     !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
 
-    PROCEDURE(return_double_parameter),   DEFERRED:: return_mass
+    PROCEDURE(return_double_at_object),   DEFERRED:: return_mass
     !! Returns the masses of the matter objects.
 
-    PROCEDURE(return_double_number),      DEFERRED:: return_adm_mass
+    PROCEDURE(return_double),             DEFERRED:: return_adm_mass
     !! Returns the ADM mass of the system
 
     PROCEDURE(return_position),           DEFERRED:: return_center
@@ -198,7 +198,7 @@ MODULE id_base
 
     PROCEDURE, NON_OVERRIDABLE:: sanity_check
     !# Checks that [[idbase:n_matter]] and the sizes returned by
-    ![[idbase:return_spatial_extent]] and [[idbase:get_total_spatial_extent]]
+    !  [[idbase:return_spatial_extent]] and [[idbase:get_total_spatial_extent]]
     !  are acceptable. It is called by initialize, after the constructor of the
     !  derived type.
 
@@ -292,18 +292,6 @@ MODULE id_base
   ABSTRACT INTERFACE
 
 
-   ! FUNCTION derived_type_constructor_int( &!derived_type,
-   ! filename ) RESULT( foo )
-   ! !#
-   !
-   !   IMPORT:: idbase
-   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-   !   !CLASS(idbase):: derived_type
-   !   CLASS(idbase), ALLOCATABLE:: foo
-   !
-   ! END FUNCTION derived_type_constructor_int
-
-
     SUBROUTINE derived_type_constructor_int( derived_type, filename )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
@@ -312,7 +300,7 @@ MODULE id_base
       IMPORT:: idbase
       CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
       !! |lorene| binary file containing the spectral DRS |id|
-      CLASS(idbase), INTENT(OUT):: derived_type
+      CLASS(idbase),    INTENT(OUT)          :: derived_type
       !! Constructed [[diffstarlorene]] object
 
     END SUBROUTINE derived_type_constructor_int
@@ -323,7 +311,7 @@ MODULE id_base
     !  position
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT(IN)          :: this
+      CLASS(idbase),    INTENT(IN)       :: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !! \(x\) coordinate of the desired point
@@ -341,7 +329,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns an INTEGER at a given position
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT(IN)          :: this
+      CLASS(idbase),    INTENT(IN)       :: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !! \(x\) coordinate of the desired point
@@ -359,7 +347,7 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns a LOGICAL at a given position
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT(IN)          :: this
+      CLASS(idbase),    INTENT(IN)       :: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !! \(x\) coordinate of the desired point
@@ -373,20 +361,20 @@ MODULE id_base
     END FUNCTION read_logical_at_pos
 
 
-    FUNCTION return_double_parameter( this, i_matter ) RESULT( res )
+    FUNCTION return_double_at_object( this, i_matter ) RESULT( res )
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
 
       IMPORT:: idbase
       CLASS(idbase), INTENT(IN):: this
-      INTEGER, INTENT(IN):: i_matter
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION:: res
       !! Real number. Parameter of the `i_matter`-th matter object
 
-    END FUNCTION return_double_parameter
+    END FUNCTION return_double_at_object
 
 
-    FUNCTION return_double_number( this ) RESULT( res )
+    FUNCTION return_double( this ) RESULT( res )
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
 
       IMPORT:: idbase
@@ -394,7 +382,7 @@ MODULE id_base
       DOUBLE PRECISION:: res
       !! Real number
 
-    END FUNCTION return_double_number
+    END FUNCTION return_double
 
 
     FUNCTION return_position( this, i_matter ) RESULT( res )
@@ -402,7 +390,7 @@ MODULE id_base
 
       IMPORT:: idbase
       CLASS(idbase), INTENT(IN):: this
-      INTEGER, INTENT(IN):: i_matter
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: res
       !# Centers of the matter objects. The first index runs over the matter
@@ -416,7 +404,7 @@ MODULE id_base
 
       IMPORT:: idbase
       CLASS(idbase), INTENT(IN):: this
-      INTEGER, INTENT(IN):: i_matter
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       INTEGER:: res
       !! Real number. Parameter of the `i_matter`-th matter object
@@ -430,7 +418,7 @@ MODULE id_base
 
       IMPORT:: idbase
       CLASS(idbase), INTENT(IN):: this
-      INTEGER, INTENT(IN):: i_matter
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
       !# Array containing the parameters of the |eos| for the `i_matter`-th
@@ -440,14 +428,14 @@ MODULE id_base
 
 
     FUNCTION return_string_parameter( this, i_matter ) RESULT( string )
-    !# INTERFACE for a PROCEDURE that returns a CHARACTER( LEN= : )
+    !# INTERFACE for a PROCEDURE that returns a CHARACTER(LEN=:)
 
       IMPORT:: idbase
       CLASS(idbase), INTENT(IN):: this
       !! [[idbase]] object which this PROCEDURE is a member of
       INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object whose string is to return
-      CHARACTER( LEN= : ), ALLOCATABLE:: string
+      CHARACTER(LEN=:), ALLOCATABLE:: string
 
     END FUNCTION return_string_parameter
 
@@ -584,7 +572,7 @@ MODULE id_base
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
-      CLASS(idbase),                     INTENT(INOUT):: this
+      CLASS(idbase),                  INTENT(INOUT):: this
       INTEGER,                        INTENT(IN)    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
@@ -618,7 +606,7 @@ MODULE id_base
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
-      CLASS(idbase),                     INTENT(INOUT):: this
+      CLASS(idbase),                  INTENT(INOUT):: this
       INTEGER,                        INTENT(IN)    :: n
       DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
       DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
@@ -633,40 +621,6 @@ MODULE id_base
     END SUBROUTINE read_id_k_int
 
 
-  !  SUBROUTINE integrate_field_int( this, center, radius, &
-  !                                  central_density, &
-  !                                  dr, dth, dphi, &
-  !                                  mass, mass_profile, &
-  !                                  mass_profile_idx )
-  !  !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
-  !  !  compute the radial mass profile of a single star.
-  !
-  !    IMPORT:: idbase
-  !    !> Object of class [[idbase]] which this PROCEDURE is a member of
-  !    CLASS(idbase), INTENT(INOUT)   :: this
-  !    !> Center of the star
-  !    DOUBLE PRECISION, INTENT(IN)    :: center
-  !    !> Central density of the star
-  !    DOUBLE PRECISION, INTENT(IN)    :: central_density
-  !    !> Radius of the star
-  !    DOUBLE PRECISION, INTENT(IN)    :: radius
-  !    !> Integration steps
-  !    DOUBLE PRECISION, INTENT(IN)    :: dr, dth, dphi
-  !    !> Integrated mass of the star
-  !    DOUBLE PRECISION, INTENT(INOUT):: mass
-  !    !> Array storing the radial mass profile of the star
-  !    !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: &
-  !    !                                 mass_profile
-  !    DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT(OUT):: &
-  !                                         mass_profile
-  !    !& Array to store the indices for array mass_profile, sorted so that
-  !    !  mass_profile[mass_profile_idx] is in increasing order
-  !    !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
-  !    INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
-  !
-  !  END SUBROUTINE integrate_field_int
-
-
     FUNCTION return_spatial_extent_int( this, i_matter ) RESULT( box )
     !# INTERFACE to the SUBROUTINE that detects the spatial extent of the
     !  matter objects, and returns a 6-dimensional array
@@ -678,7 +632,7 @@ MODULE id_base
       IMPORT:: idbase
       CLASS(idbase), INTENT(IN)   :: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
-      INTEGER, INTENT(IN):: i_matter
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose string is to return
       DOUBLE PRECISION, DIMENSION(6):: box
       !# 6-dimensional array containing the coordinates
@@ -695,7 +649,7 @@ MODULE id_base
     !  is given as the optional argument `filename`
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT(IN):: this
+      CLASS(idbase),    INTENT(IN):: this
       CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -769,7 +723,7 @@ MODULE id_base
 
       CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
       !! |lorene| binary file containing the spectral DRS ID
-      CLASS(idbase), INTENT(OUT):: derived_type
+      CLASS(idbase),    INTENT(OUT)          :: derived_type
       !! Constructed [[diffstarlorene]] object
 
     END SUBROUTINE initialize
@@ -784,7 +738,7 @@ MODULE id_base
     !  compute the radial mass profile of a single star.
 
       !> Object of class [[idbase]] which this PROCEDURE is a member of
-      CLASS(idbase), INTENT(INOUT)   :: this
+      CLASS(idbase),    INTENT(INOUT) :: this
       !> Center of the star
       DOUBLE PRECISION, INTENT(IN)    :: center
       !> Central density of the star
