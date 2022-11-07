@@ -132,10 +132,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: nuratio_max_steps= 100
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
-    DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
     DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
-    !DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.375D0!0.25D0 !30.0D0
-    DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 1.0D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
@@ -2964,16 +2961,19 @@ SUBMODULE (sph_particles) apm
 
       IMPLICIT NONE
 
+      DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
+      !DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.375D0!0.25D0 !30.0D0
+      DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 1.0D0
+
       DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
 
       IF(.NOT.ALLOCATED( ghost_pos ))THEN
-        ALLOCATE( ghost_pos( 3, max_npart ), STAT= ios, &
-            ERRMSG= err_msg )
+        ALLOCATE( ghost_pos( 3, max_npart ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
-                    "perform_apm. The error message is",&
-                    err_msg
-           STOP
+          PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
+                  "perform_apm. The error message is",&
+                  err_msg
+          STOP
         ENDIF
       ENDIF
 
