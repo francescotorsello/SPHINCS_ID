@@ -1050,7 +1050,7 @@ SUBMODULE (sph_particles) constructor_std
 
       IMPLICIT NONE
 
-      INTEGER, INTENT(IN):: npart
+      INTEGER,          INTENT(IN):: npart
       DOUBLE PRECISION, INTENT(IN):: x(npart)
       DOUBLE PRECISION, INTENT(IN):: y(npart)
       DOUBLE PRECISION, INTENT(IN):: z(npart)

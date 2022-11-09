@@ -722,7 +722,7 @@ if debug == 'FALSE': #
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \
                           build_flavour, build_mpi, build_dir, build_host ]
-
+#, '-CB', '-CS', '-g', '-traceback'
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \

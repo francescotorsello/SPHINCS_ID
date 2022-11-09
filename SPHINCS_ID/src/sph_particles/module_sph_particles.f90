@@ -658,7 +658,7 @@ MODULE sph_particles
         CLASS(idbase), INTENT(INOUT):: id
         !# [[idbase]] object representing the BNS for which we want to place
         !  particles
-        CHARACTER( LEN= * ), INTENT(INOUT) :: namefile
+        CHARACTER(LEN=*), INTENT(INOUT) :: namefile
         !! Name of the |id| binary file
         TYPE(particles):: parts
         !! Constructed [[particles]] object
@@ -891,13 +891,13 @@ MODULE sph_particles
       !! Array storing the particle baryon masses
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: h
       !! Array storing the initial guess for the particle smoothing lengths
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: filename_mass_profile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: filename_mass_profile
       !& Name of the file to store the surface radii
       !  @TODO change name of variable to filename_surfaces_radii
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: filename_shells_radii
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: filename_shells_radii
       !& Name of the file to store the final particle positions
       !  @TODO change name of variable to filename_surfaces_pos
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: filename_shells_pos
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: filename_shells_pos
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
           !! Returns the baryon mass density at the desired point
@@ -1093,7 +1093,7 @@ MODULE sph_particles
       CLASS(particles),    INTENT(INOUT):: this
       !& Name of the formatted file where the particle positions at which
       !  some of the hydro fields are negative or zero are printed to
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE analyze_hydro
 
@@ -1107,7 +1107,7 @@ MODULE sph_particles
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT(INOUT):: this
       !> Name of the formatted file where the SPH ID is printed to
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_print_sph_variables
 
@@ -1195,13 +1195,13 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: pvol
       !& Array to store the smoothing lengths computed at the end of the
       !  APM iteration
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(OUT)  :: h_output
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: h_output
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(OUT)  :: nu_output
-      !> Center of the star (point of highest density), computed by |lorene|
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: nu_output
+      !> Center of the star (point of highest density), from the |id|
       DOUBLE PRECISION, DIMENSION(3),   INTENT(IN)   :: center
-      !> Center of mass of the star, computed by |lorene|
+      !> Center of mass of the star, from the |id|
       DOUBLE PRECISION, DIMENSION(3),   INTENT(INOUT):: com_star
       !> Mass of the star
       DOUBLE PRECISION,                 INTENT(IN)   :: mass
@@ -1240,7 +1240,7 @@ MODULE sph_particles
       INTEGER,                          INTENT(IN)   :: nz_gh
       !& Distance between the ghost particles and the surface
       !  of the matter object considered (star, ejecta, etc...)
-      DOUBLE PRECISION,                 INTENT(IN)   :: ghost_dist
+      DOUBLE PRECISION,                 INTENT(INOUT):: ghost_dist
       !& If .TRUE., allows particles to move where the density
       !  is 0, and displace them using only the smoothing term.
       !  This can be useful when the system has an irregular
@@ -1251,17 +1251,17 @@ MODULE sph_particles
       LOGICAL,                          INTENT(INOUT):: remove_atmosphere
       !& Name for the formatted file where the initial particle positions
       !  and the ghost positions will be printed
-      CHARACTER( LEN= * ),              INTENT(INOUT), OPTIONAL :: &
+      CHARACTER(LEN=*),              INTENT(INOUT), OPTIONAL :: &
                                                             namefile_pos_id
       !& Name for the formatted file where the particle positions
       !  and the ghost positions will be printed every 15 iterations
-      CHARACTER( LEN= * ),              INTENT(INOUT), OPTIONAL :: &
+      CHARACTER(LEN=*),              INTENT(INOUT), OPTIONAL :: &
                                                             namefile_pos
       !& Name for the formatted file where various quantities related
       !  to the particle distribution, the baryon number particle and the
       !  kernel estimate of the density will be printed at the end of
       !  the APM iteration
-      CHARACTER( LEN= * ),              INTENT(INOUT), OPTIONAL :: &
+      CHARACTER(LEN=*),              INTENT(INOUT), OPTIONAL :: &
                                                             namefile_results
 
 
@@ -1297,7 +1297,7 @@ MODULE sph_particles
       !! Canonical momentum on the particles
       !DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: e_hat
       !! Canonical energy on the particles
-      !CHARACTER( LEN= * ),                  INTENT(INOUT), OPTIONAL :: namefile
+      !CHARACTER(LEN=*),                  INTENT(INOUT), OPTIONAL :: namefile
       !! Name of the formatted file where the data is printed
 
     END SUBROUTINE test_recovery
@@ -1311,9 +1311,9 @@ MODULE sph_particles
 
       CLASS(particles),    INTENT(INOUT)           :: this
       !! [[particles]] object which this PROCEDURE is a member of
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile_bin
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile_bin
       !! Name of the binary file to be read
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
       !! Name of the formatted file to be printed
       LOGICAL,             INTENT(IN),    OPTIONAL :: save_data
       !! If `.TRUE.`, saves the read data into the TYPE member variables
@@ -1327,7 +1327,7 @@ MODULE sph_particles
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles),    INTENT(INOUT)           :: this
       !> Name of the formatted output file
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE print_formatted_id_particles
 
@@ -1339,7 +1339,7 @@ MODULE sph_particles
       CLASS(particles),    INTENT(INOUT)           :: this
       !& To read the file great_eos.beta in directory compose_path/GREAT_EoS,
       !  namefile="GREAT_EoS/great_eos"
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE read_compose_composition
 
@@ -1363,7 +1363,7 @@ MODULE sph_particles
 
 
       CLASS(particles), INTENT(INOUT):: this
-      !CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL:: filename
+      !CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
     END SUBROUTINE print_summary
@@ -1398,7 +1398,7 @@ MODULE sph_particles
    !MODULE SUBROUTINE write_lorene_bns_id_dump( this, namefile )
    !
    !    CLASS(particles),    INTENT(IN)               :: this
-   !    CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
+   !    CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
    !
    !END SUBROUTINE write_lorene_bns_id_dump
 
