@@ -161,9 +161,9 @@ mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
                         ! the star density better. The mass ratio grows very
                         ! fast in all the tried experiments, hence the
                         ! suggested value is .FALSE.
-nx_gh=250               ! Number of lattice points in the x direction for ghosts
-ny_gh=250               ! Number of lattice points in the y direction for ghosts
-nz_gh=250               ! Number of lattice points in the z direction for ghosts
+nx_gh=200               ! Number of lattice points in the x direction for ghosts
+ny_gh=200               ! Number of lattice points in the y direction for ghosts
+nz_gh=200               ! Number of lattice points in the z direction for ghosts
 ghost_dist=0.35D0       ! Distance between the ghost particles and the surface
                         ! of the matter object considered (star, ejecta, etc...)
 use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density

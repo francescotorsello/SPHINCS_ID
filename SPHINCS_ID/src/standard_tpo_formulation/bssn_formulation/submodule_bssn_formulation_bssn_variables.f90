@@ -519,6 +519,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     !
     !************************************************
 
+    USE utility,          ONLY: zero
     USE tensor,           ONLY: jx, jy, jz, jxx, jxy, jxz, jyy, jyz, jzz
     USE BSSN_refine,      ONLY: g_BSSN3_ll, A_BSSN3_ll, lapse_A_BSSN, &
                                 shift_B_BSSN_u, Theta_Z4, Gamma_u, phi, trK
@@ -565,18 +566,18 @@ SUBMODULE (bssn_formulation) bssn_variables
                                  gxx, gxy, gxz, gyy, gyz, gzz, &
                                  kxx, kxy, kxz, kyy, kyz, kzz, &
                                  alp, betax, betay, betaz, &
-                                 g_BSSN3_ll%levels(l)%var(:,:,:,jxx), &
-                                 g_BSSN3_ll%levels(l)%var(:,:,:,jxy), &
-                                 g_BSSN3_ll%levels(l)%var(:,:,:,jxz), &
-                                 g_BSSN3_ll%levels(l)%var(:,:,:,jyy), &
-                                 g_BSSN3_ll%levels(l)%var(:,:,:,jyz), &
-                                 g_BSSN3_ll%levels(l)%var(:,:,:,jzz), &
-                                 A_BSSN3_ll%levels(l)%var(:,:,:,jxx), &
-                                 A_BSSN3_ll%levels(l)%var(:,:,:,jxy), &
-                                 A_BSSN3_ll%levels(l)%var(:,:,:,jxz), &
-                                 A_BSSN3_ll%levels(l)%var(:,:,:,jyy), &
-                                 A_BSSN3_ll%levels(l)%var(:,:,:,jyz), &
-                                 A_BSSN3_ll%levels(l)%var(:,:,:,jzz), &
+                                 g_BSSN3_ll% levels(l)% var(:,:,:,jxx), &
+                                 g_BSSN3_ll% levels(l)% var(:,:,:,jxy), &
+                                 g_BSSN3_ll% levels(l)% var(:,:,:,jxz), &
+                                 g_BSSN3_ll% levels(l)% var(:,:,:,jyy), &
+                                 g_BSSN3_ll% levels(l)% var(:,:,:,jyz), &
+                                 g_BSSN3_ll% levels(l)% var(:,:,:,jzz), &
+                                 A_BSSN3_ll% levels(l)% var(:,:,:,jxx), &
+                                 A_BSSN3_ll% levels(l)% var(:,:,:,jxy), &
+                                 A_BSSN3_ll% levels(l)% var(:,:,:,jxz), &
+                                 A_BSSN3_ll% levels(l)% var(:,:,:,jyy), &
+                                 A_BSSN3_ll% levels(l)% var(:,:,:,jyz), &
+                                 A_BSSN3_ll% levels(l)% var(:,:,:,jzz), &
                                  tmp1(:,:,:), tmp2(:,:,:), &
                                  tmp3(:,:,:), tmp4(:,:,:), &
                                  phi%levels(l)%var(:,:,:), &
@@ -585,10 +586,27 @@ SUBMODULE (bssn_formulation) bssn_variables
 
     DEALLOCATE( tmp1, tmp2, tmp3, tmp4 )
 
-    imin = [ ngx, ngy, ngz ]
-    imax(1) = nx - ngx - 1
-    imax(2) = ny - ngy - 1
-    imax(3) = nz - ngz - 1
+   imin = [ ngx, ngy, ngz ]
+   imax(1) = nx - ngx - 1
+   imax(2) = ny - ngy - 1
+   imax(3) = nz - ngz - 1
+
+   !!$OMP PARALLEL DO DEFAULT( NONE ) &
+   !!$OMP             SHARED( Gamma_u, l ) &
+   !!$OMP             PRIVATE( i, j, k )
+   !DO k= 1, nz, 1
+   !  DO j= 1, ny, 1
+   !    DO i= 1, nx, 1
+   !
+   !      Gamma_u% levels(l)% var(i,j,k,jx)= zero
+   !      Gamma_u% levels(l)% var(i,j,k,jy)= zero
+   !      Gamma_u% levels(l)% var(i,j,k,jz)= zero
+   !
+   !    ENDDO
+   !  ENDDO
+   !ENDDO
+   !!$OMP END PARALLEL DO
+    Gamma_u% levels(l)% var= zero
 
     CALL ADM_TO_BSSN_INTERIOR( nx, ny, nz, imin, imax, dx, dy, dz, &
                                gxx, gxy, gxz, gyy, gyz, gzz, &
@@ -610,6 +628,7 @@ SUBMODULE (bssn_formulation) bssn_variables
                                Gamma_u% levels(l)% var(:,:,:,jx), &
                                Gamma_u% levels(l)% var(:,:,:,jy), &
                                Gamma_u% levels(l)% var(:,:,:,jz) )
+
 
   END SUBROUTINE standard_tpo_to_bssn
 
