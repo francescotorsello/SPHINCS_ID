@@ -3052,15 +3052,15 @@ SUBMODULE (sph_particles) apm
       !$OMP                      r_ell, theta_ell, phi_ell )
       DO k= 1, nz, 1
 
-        ztemp= zmin + dz/two + DBLE( k - 1 )*dz
+        ztemp= zmin + dz/two + DBLE(k - 1)*dz
 
         DO j= 1, ny, 1
 
-          ytemp= ymin + dy/two + DBLE( j - 1 )*dy
+          ytemp= ymin + dy/two + DBLE(j - 1)*dy
 
           DO i= 1, nx, 1
 
-            xtemp= xmin + dx/two + DBLE( i - 1 )*dx
+            xtemp= xmin + dx/two + DBLE(i - 1)*dx
 
             CALL spherical_from_cartesian( xtemp, ytemp, ztemp, &
                                            center(1), center(2), center(3), &
@@ -3076,12 +3076,12 @@ SUBMODULE (sph_particles) apm
 
             IF( ( r <= ellipse_thickness*r_ell .AND. r >= r_ell &
                   .AND. &
-                  get_density( xtemp, ytemp, ztemp ) <= zero ) &
+                  get_density(xtemp, ytemp, ztemp) <= zero ) &
             )THEN
 
-              ghost_pos_tmp( 1, i, j, k )= xtemp
-              ghost_pos_tmp( 2, i, j, k )= ytemp
-              ghost_pos_tmp( 3, i, j, k )= ztemp
+              ghost_pos_tmp(1, i, j, k)= xtemp
+              ghost_pos_tmp(2, i, j, k)= ytemp
+              ghost_pos_tmp(3, i, j, k)= ztemp
 
             ENDIF
 
@@ -3097,12 +3097,12 @@ SUBMODULE (sph_particles) apm
 
           DO i= 1, nx, 1
 
-            IF( ghost_pos_tmp( 1, i, j, k ) < HUGE(zero) )THEN
+            IF( ghost_pos_tmp(1, i, j, k) < HUGE(zero) )THEN
 
               itr= itr + 1
-              ghost_pos( 1, itr )= ghost_pos_tmp( 1, i, j, k )
-              ghost_pos( 2, itr )= ghost_pos_tmp( 2, i, j, k )
-              ghost_pos( 3, itr )= ghost_pos_tmp( 3, i, j, k )
+              ghost_pos(1, itr)= ghost_pos_tmp(1, i, j, k)
+              ghost_pos(2, itr)= ghost_pos_tmp(2, i, j, k)
+              ghost_pos(3, itr)= ghost_pos_tmp(3, i, j, k)
 
             ENDIF
 
@@ -3114,6 +3114,19 @@ SUBMODULE (sph_particles) apm
         PRINT *, "** ERROR: No ghost particles were placed. Is the ", &
                  "PARAMETER 'ghost_dist' appropriate for the physical system?"
         PRINT *, "Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+      IF( npart_ghost > max_npart )THEN
+        PRINT *
+        PRINT *, "** ERROR! Too many ghost particles placed!"
+        PRINT *, " * npart_ghost= ", npart_ghost
+        PRINT *, " * npart_ghost should not be larger than max_npart= ", &
+                 max_npart
+        PRINT *, " * How are the ghost particles placed? Does the algorithm ", &
+                 "make reasonable sense? Perhaps try to set a smaller ", &
+                 "parameter eps."
+        PRINT *, " * Stopping..."
         PRINT *
         STOP
       ENDIF

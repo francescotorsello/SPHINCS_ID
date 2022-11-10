@@ -519,6 +519,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     !
     !************************************************
 
+    USE utility,          ONLY: zero
     USE tensor,           ONLY: jx, jy, jz, jxx, jxy, jxz, jyy, jyz, jzz
     USE BSSN_refine,      ONLY: g_BSSN3_ll, A_BSSN3_ll, lapse_A_BSSN, &
                                 shift_B_BSSN_u, Theta_Z4, Gamma_u, phi, trK
@@ -589,6 +590,13 @@ SUBMODULE (bssn_formulation) bssn_variables
     imax(1) = nx - ngx - 1
     imax(2) = ny - ngy - 1
     imax(3) = nz - ngz - 1
+
+    ! ADM_TO_BSSN_INTERIOR does not compute Gamma_u on the ghost zones,
+    ! because it needs the BSSN right-hand-sides (RHS) to do that, and the RHS
+    ! need the ID. Hence, we initialize Gamma_u to zero over the entire
+    ! grid, included the ghost zones. It then stays zero on the ghost zones at
+    ! the level of the ID.
+    Gamma_u% levels(l)% var= zero
 
     CALL ADM_TO_BSSN_INTERIOR( nx, ny, nz, imin, imax, dx, dy, dz, &
                                gxx, gxy, gxz, gyy, gyz, gzz, &
