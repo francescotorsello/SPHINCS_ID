@@ -145,14 +145,14 @@ print_step= 25          ! Every print_step steps, print the particle positions
                         ! Set to 0 to not print positions at all
 apm_max_it= 1500         ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
-max_inc= 1500            ! Sets the EXIT condition: If the average over all the
+max_inc= 200            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
                         ! grows max_inc times, exit the iteration.
 nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 0!1.35D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.35D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc

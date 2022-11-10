@@ -132,7 +132,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: nuratio_max_steps= 100
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
-    DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0 !5.D0
+    DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.3D0 !5.D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
@@ -399,6 +399,89 @@ SUBMODULE (sph_particles) apm
     all_pos(:, 1:npart_real)          = pos_input
     all_pos(:, npart_real+1:npart_all)= ghost_pos
 
+    CALL allocate_apm_fields( npart_real, npart_ghost )
+
+    IF(debug)THEN
+      !
+      !-- Estimate ghost density
+      !
+
+      npart= npart_all
+
+      CALL allocate_SPH_memory
+
+      CALL allocate_RCB_tree_memory_3D(npart)
+      iorig(1:npart)= (/ (a,a=1,npart) /)
+
+      IF( debug ) PRINT *, "10"
+
+      CALL allocate_gradient( npart )
+      CALL allocate_metric_on_particles( npart )
+
+      ! Determine smoothing length so that each particle has exactly
+      ! 300 neighbours inside 2h
+      CALL assign_h( nn_des, &
+                     npart_all, &
+                     all_pos, &
+                     h_guess, &
+                     h )
+
+      find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
+      CALL find_h_bruteforce_timer% start_timer()
+      n_problematic_h= 0
+      DO a= 1, npart_all, 1
+      ! find_h_backup, called below, is OMP parallelized, so this loop
+      ! should not be parallelized as well
+
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
+
+          n_problematic_h= n_problematic_h + 1
+          h(a)= find_h_backup( a, npart_all, all_pos(:,:), nn_des)
+          IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
+            PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                     " force method."
+            PRINT *, "   Particle position: ", all_pos(:,a)
+            STOP
+          ENDIF
+
+        ENDIF
+
+      ENDDO
+      CALL find_h_bruteforce_timer% stop_timer()
+      CALL find_h_bruteforce_timer% print_timer( 2 )
+
+      PRINT *, " * The smoothing length was found brute-force for ", &
+               n_problematic_h, " particles."
+      PRINT *
+
+      PRINT *, " * Measure SPH particle number density..."
+      PRINT *
+
+      nu(1:npart_real)          = (mass/DBLE(npart_real))*umass/amu
+      nu(npart_real+1:npart_all)= nu_ghost
+      PRINT *, "npart_all         =", npart_all
+      PRINT *, "SIZE(all_pos(1,:))=", SIZE(all_pos(1,:))
+      PRINT *, "SIZE(nu)          =", SIZE(nu)
+      PRINT *, "SIZE(h)           =", SIZE(h)
+      PRINT *, "SIZE(nstar_sph)   =", SIZE(nstar_sph)
+      PRINT *
+      CALL density_loop( npart_all, all_pos, &
+                         nu, h, nstar_sph )
+
+      !nstar_sph_ghost_av= SUM(nstar_sph_ghost)/npart_ghost
+      PRINT *, "nstar_sph_ghost_max=", MAXVAL(nstar_sph(npart_real+1:npart_all), DIM=1)
+      PRINT *, "nstar_sph_ghost_av=", SUM(nstar_sph(npart_real+1:npart_all))/npart_ghost
+      PRINT *, "nstar_sph_ghost_min=", MINVAL(nstar_sph(npart_real+1:npart_all), DIM=1)
+
+      CALL deallocate_metric_on_particles()
+      CALL deallocate_gradient()
+      CALL deallocate_RCB_tree_memory_3D()
+      CALL deallocate_SPH_memory()
+
+    ENDIF
+
+    STOP
+
     !----------------------------!
     !-- Allocate needed memory --!
     !----------------------------!
@@ -414,8 +497,6 @@ SUBMODULE (sph_particles) apm
 
     CALL allocate_gradient( npart )
     CALL allocate_metric_on_particles( npart )
-
-    CALL allocate_apm_fields( npart_real, npart_ghost )
 
     !-------------------------------------!
     !-- Setting up ID for APM iteration --!
@@ -2970,7 +3051,7 @@ SUBMODULE (sph_particles) apm
 
       INTEGER:: a, a_nu_min
 
-      DOUBLE PRECISION, PARAMETER:: eps          = 2.0D-1 !5.0D0
+      DOUBLE PRECISION, PARAMETER:: eps          = 1.D0 !2.0D-1 !5.0D0
       !DOUBLE PRECISION, PARAMETER:: multiple_h_av= 1.0D0
 
       DOUBLE PRECISION:: nu_av, max_r_real, nstar_sph_ghost_av
@@ -3079,12 +3160,13 @@ SUBMODULE (sph_particles) apm
       nu_av    = zero
       nstar_id_av = zero
       nstar_sph_av= zero
+      ! TODO: Parallelize this loop
       DO a= 1, npart_real, 1
 
         IF( SQRT( ( pos_input( 1, a ) - center(1) )**two &
                 + ( pos_input( 2, a ) - center(2) )**two &
                 + ( pos_input( 3, a ) - center(3) )**two ) &
-                  > 0.99D0*max_z_real )THEN
+                  > 0.999D0*max_z_real )THEN
 
           itr      = itr + 1
           nu_av    = nu_av + nu_output(a)
@@ -3118,10 +3200,11 @@ SUBMODULE (sph_particles) apm
       ny= NINT( ABS( ymax - ymin )/dy )
       nz= NINT( ABS( zmax - zmin )/dz )
 
+      IF(debug) PRINT*, "# particles over which the averages are taken=", itr
       IF(debug) PRINT*, "nstar_id_av=", nstar_id_av
       IF(debug) PRINT*, "nstar_sph_av=", nstar_sph_av
       IF(debug) PRINT*, "(1.D+12g/cm**3)=", &
-        1.D+12*g2kg*m2cm**3*lorene2hydrobase*umass/amu
+        1.D+12*(g2kg*m2cm**3)*lorene2hydrobase*umass/amu
       IF(debug) PRINT*, "nu_all", (mass/DBLE(npart_real))*umass/amu
       IF(debug) PRINT*, "nu_av=", nu_av
       IF(debug) PRINT*, "nu_av/nstar_id_av=", nu_av/nstar_id_av
