@@ -132,7 +132,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: nuratio_max_steps= 100
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
-    DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
+    DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0 !5.D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
@@ -2970,7 +2970,7 @@ SUBMODULE (sph_particles) apm
 
       INTEGER:: a, a_nu_min
 
-      DOUBLE PRECISION, PARAMETER:: eps          = 2.0D-1
+      DOUBLE PRECISION, PARAMETER:: eps          = 2.0D-1 !5.0D0
       !DOUBLE PRECISION, PARAMETER:: multiple_h_av= 1.0D0
 
       DOUBLE PRECISION:: nu_av, max_r_real, nstar_sph_ghost_av
@@ -3094,7 +3094,7 @@ SUBMODULE (sph_particles) apm
         ENDIF
 
       ENDDO
-      nu_av   = nu_av/itr
+      nu_av      = nu_av/itr
       nstar_id_av= nstar_id_av/itr
 
       xmin= center(1) - sizes(1)*( one + eps )
