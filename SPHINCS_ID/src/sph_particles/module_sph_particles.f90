@@ -1121,7 +1121,7 @@ MODULE sph_particles
                                    sizes, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
-                                   nuratio_des, &
+                                   nuratio_des, adapt_ghost, &
                                    nx_gh, ny_gh, nz_gh, ghost_dist, &
                                    use_atmosphere, &
                                    remove_atmosphere, &
@@ -1232,6 +1232,13 @@ MODULE sph_particles
       !  Set nuratio_des to 0 to deactivate and exit the APM
       !  iteration using max_inc
       DOUBLE PRECISION,                 INTENT(IN)   :: nuratio_des
+      !& If .TRUE., the ghost particles will be placed and have
+      !  a baryon number such to reproduce the density of the
+      !  outermost layers (r > 99% of the minimum radius) of
+      !  the object. If .TRUE., the arguments nx_gh, ny_gh,
+      !  nz_gh, ghost_dist are ignored; if .FALSE., they are
+      !  instead used to place the ghost particles
+      LOGICAL,                          INTENT(IN)   :: adapt_ghost
       !> Number of lattice points in the x direction for ghosts
       INTEGER,                          INTENT(IN)   :: nx_gh
       !> Number of lattice points in the y direction for ghosts

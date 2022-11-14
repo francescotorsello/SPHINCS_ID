@@ -65,7 +65,7 @@ PROGRAM sphincs_id
   !USE constants,        ONLY: amu, Msun_geo, km2m, m2cm
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
-                              itr4, hostname, &
+                              itr4, hostname, version, &
                               test_status, show_progress, end_time, &
                               read_sphincs_id_parameters, &
                               !----------
@@ -209,6 +209,31 @@ stringize_end(host)
 
 #endif
 
+#ifdef vers
+
+#ifdef __GFORTRAN__
+
+# define stringize_start(x) "&
+# define stringize_end(x) &x"
+
+  version= stringize_start(vers)
+stringize_end(vers)
+
+#else
+
+#define stringize(x) tostring(x)
+#define tostring(x) #x
+
+  version= stringize(vers)
+
+#endif
+
+#else
+
+  hostname= "unspecified version."
+
+#endif
+
   PRINT *, "  ________________________________________________________________ "
   PRINT *, "             ____________  ________  __________    __ ___          "
   PRINT *, "            / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \         "
@@ -216,7 +241,7 @@ stringize_end(host)
   PRINT *, "          /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/          "
   PRINT *
   PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime              "
-  PRINT *, "  Initial Data builder, v1.6                                       "
+  PRINT *, "  Initial Data builder, ", TRIM(version)
   PRINT *
   PRINT *, "  SPHINCS_ID  Copyright (C) 2020, 2021, 2022  Francesco Torsello   "
   PRINT *

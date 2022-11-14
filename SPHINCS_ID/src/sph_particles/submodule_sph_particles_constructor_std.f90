@@ -180,7 +180,7 @@ SUBMODULE (sph_particles) constructor_std
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
-              randomize_r, mass_it, &
+              randomize_r, mass_it, adapt_ghost, &
               read_nu, reflect_particles_x
 
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -386,10 +386,11 @@ SUBMODULE (sph_particles) constructor_std
         filename_apm_pos    = TRIM(sph_path)//"apm_pos"//TRIM(str_i)//".dat"
         filename_apm_results= TRIM(sph_path)//"apm_results"//TRIM(str_i)//".dat"
 
-        ! Matter object 1
         CALL parts% apm_timers(i_matter)% start_timer()
         CALL parts% perform_apm( &
+                    ! PROCEDURES to get the density
                     import_density, get_nstar_id, &
+                    ! Arguments pertaining to the matter object
                     parts% npart_i(i_matter), &
                     parts_all(i_matter)% pos_i, &
                     parts_all(i_matter)% pvol_i, &
@@ -398,14 +399,19 @@ SUBMODULE (sph_particles) constructor_std
                     center(i_matter,:), barycenter(i_matter,:), &
                     parts% masses(i_matter), &
                     sizes(i_matter, :), &
+                    ! Steering parameters for the APM iteration
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
-                    nuratio_thres, nuratio_des, nx_gh, ny_gh, nz_gh, &
-                    ghost_dist, &
+                    nuratio_thres, nuratio_des, &
+                    ! Arguments pertaining to the ghost articles
+                    adapt_ghost, nx_gh, ny_gh, nz_gh, ghost_dist, &
+                    ! Arguments pertaining to the atmosphere
                     use_atmosphere(i_matter), &
                     remove_atmosphere(i_matter), &
-                    print_step, &
-                    filename_apm_pos_id, filename_apm_pos, &
-                    filename_apm_results, validate_position )
+                    ! Arguments pertaining to input/output
+                    print_step, filename_apm_pos_id, &
+                    filename_apm_pos, filename_apm_results, &
+                    ! Optional argument
+                    validate_position )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
         IF( debug ) PRINT *, "average nu= ", &
@@ -1240,7 +1246,7 @@ SUBMODULE (sph_particles) constructor_std
                 apm_iterate, apm_max_it, max_inc, mass_it, &
                 nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
                 use_atmosphere, remove_atmosphere, nuratio_des, print_step, &
-                ghost_dist
+                ghost_dist, adapt_ghost
 
       parts% sphincs_id_particles= 'sphincs_id_particles.dat'
 

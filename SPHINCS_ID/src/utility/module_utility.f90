@@ -98,6 +98,9 @@ MODULE utility
   CHARACTER( LEN= 500 ):: hostname
   !# String storing the name of the host machine
 
+  CHARACTER( LEN= 10 ):: version
+  !# String storing the version of |sphincsid|
+
   !
   !-- Variables used to set the run_id
   !
@@ -126,7 +129,7 @@ MODULE utility
   !! Time when the run ends
 
 
-  INTEGER, PARAMETER:: max_length= 50
+  INTEGER, PARAMETER:: max_length= 100
   !! Maximum length for strings
   INTEGER, PARAMETER:: max_n_id= 50
   ! Maximum number of physical systems
