@@ -72,7 +72,7 @@ thres=10      ! (~rho_max)/thres is the minimum mass density considered
                 ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
 redistribute_nu=.FALSE. ! If .TRUE., nu is reassigned on the particles such that
                        ! the baryon number ratio does not exceed nu_ratio on
-                       ! each star
+                       ! each star (DEPRECATED)
 nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
                        ! redistribute_nu is .TRUE.
 !---------------------------------------------------------------!
@@ -84,7 +84,7 @@ nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-last_r= 0.999D0     ! The radius of the last spherical surface is
+last_r= 0.992D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -132,7 +132,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
@@ -170,7 +170,7 @@ adapt_ghost=.FALSE.     ! If .TRUE., the ghost particles will be placed and have
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
-ghost_dist=0.35D0       ! Distance between the ghost particles and the surface
+ghost_dist=0.5D0       ! Distance between the ghost particles and the surface
                         ! of the matter object considered (star, ejecta, etc...)
 use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term

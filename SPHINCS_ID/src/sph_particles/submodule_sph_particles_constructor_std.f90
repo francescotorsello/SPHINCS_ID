@@ -321,10 +321,10 @@ SUBMODULE (sph_particles) constructor_std
       CALL place_particles_on_lattices()
 
 
-    CASE( id_particles_on_spherical_surfaces )
+    CASE( id_particles_on_ellipsoidal_surfaces )
 
 
-      CALL place_particles_on_spherical_surfaces()
+      CALL place_particles_on_ellipsoidal_surfaces()
 
 
     CASE DEFAULT
@@ -388,7 +388,7 @@ SUBMODULE (sph_particles) constructor_std
 
         CALL parts% apm_timers(i_matter)% start_timer()
         CALL parts% perform_apm( &
-                    ! PROCEDURES to get the density
+                    ! PROCEDURES to get the density at a point
                     import_density, get_nstar_id, &
                     ! Arguments pertaining to the matter object
                     parts% npart_i(i_matter), &
@@ -952,17 +952,15 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE import_id
 
 
-    SUBROUTINE integrate_mass_density( center, radius, &
-                                       central_density, &
-                                       dr, dth, dphi, &
-                                       mass, mass_profile, &
-                                       mass_profile_idx )
+    SUBROUTINE integrate_mass_density &
+      ( center, radius, central_density, dr, dth, dphi, mass, mass_profile, &
+        mass_profile_idx, radii )
     !# Wrapper function to integrate the relativistic baryonic mass density
 
       IMPLICIT NONE
 
       !> Center of the star
-      DOUBLE PRECISION, INTENT(IN)    :: center
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN)    :: center
       !> Central density of the star
       DOUBLE PRECISION, INTENT(IN)    :: central_density
       !> Radius of the star
@@ -980,12 +978,11 @@ SUBMODULE (sph_particles) constructor_std
       !  mass_profile[mass_profile_idx] is in increasing order
       !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
       INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
+      DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
 
-      CALL id% integrate_baryon_mass_density( center, radius, &
-                                              central_density, &
-                                              dr, dth, dphi, &
-                                              mass, mass_profile, &
-                                              mass_profile_idx )
+      CALL id% integrate_baryon_mass_density &
+        ( center, radius, central_density, dr, dth, dphi, &
+          mass, mass_profile, mass_profile_idx, radii )
 
     END SUBROUTINE integrate_mass_density
 
@@ -1751,11 +1748,11 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE place_particles_on_lattices
 
 
-    SUBROUTINE place_particles_on_spherical_surfaces
+    SUBROUTINE place_particles_on_ellipsoidal_surfaces
 
       !**************************************************************
       !
-      !# Place particles on spherical surfaces, and
+      !# Place particles on ellipsoidal surfaces, and
       !  reflect  particles with respect to the yz plane in the case
       !  of equal-mass binaries
       !
@@ -1765,7 +1762,7 @@ SUBMODULE (sph_particles) constructor_std
 
       IMPLICIT NONE
 
-      PRINT *, "** Placing equal-mass particles on spherical surfaces, " &
+      PRINT *, "** Placing equal-mass particles on ellipsoidal surfaces, " &
                // "taking into account the mass profile of the stars."
       PRINT *
 
@@ -1788,16 +1785,16 @@ SUBMODULE (sph_particles) constructor_std
                                               WRITE( str_i, '(I3)' ) i_matter
 
         filename_mass_profile= &
-          TRIM(sph_path)//"spherical_surfaces_mass_profile"//TRIM(str_i)//".dat"
+        TRIM(sph_path)//"ellipsoidal_surfaces_mass_profile"//TRIM(str_i)//".dat"
         filename_shells_radii= &
-          TRIM(sph_path)//"spherical_surfaces_radii"//TRIM(str_i)//".dat"
+          TRIM(sph_path)//"ellipsoidal_surfaces_radii"//TRIM(str_i)//".dat"
         filename_shells_pos  = &
-          TRIM(sph_path)//"spherical_surfaces_pos"//TRIM(str_i)//".dat"
+          TRIM(sph_path)//"ellipsoidal_surfaces_pos"//TRIM(str_i)//".dat"
 
-        CALL parts% place_particles_spherical_surfaces( &
+        CALL parts% place_particles_ellipsoidal_surfaces( &
                                               parts% masses(i_matter), &
                                               MAXVAL(sizes(i_matter,1:2)), &
-                                              center(i_matter,1), &
+                                              center(i_matter,:), &
                                               central_density(i_matter), &
                                               npart_des_i(i_matter), &
                                               parts% npart_i(i_matter), &
@@ -1815,7 +1812,8 @@ SUBMODULE (sph_particles) constructor_std
                                               import_density, &
                                               integrate_mass_density, &
                                               import_id, &
-                                              validate_position )
+                                        validate_position= validate_position, &
+            radii= [MAXVAL(sizes(i_matter,3:4)),MAXVAL(sizes(i_matter,5:6))] )
 
         ! Now that the real particle numbers are known, reallocate the arrays
         ! to the appropriate sizes. Note that, if the APM is performed,
@@ -1856,6 +1854,8 @@ SUBMODULE (sph_particles) constructor_std
 
         ENDIF equal_masses
 
+        !STOP
+
       ENDDO matter_objects_sphersurfaces_loop
       CALL parts% placer_timer% stop_timer()
 
@@ -1872,7 +1872,7 @@ SUBMODULE (sph_particles) constructor_std
       parts% npart= SUM( parts% npart_i )
 
 
-    END SUBROUTINE place_particles_on_spherical_surfaces
+    END SUBROUTINE place_particles_on_ellipsoidal_surfaces
 
 
     SUBROUTINE compute_nstar_eul_id( npart, &
@@ -2121,7 +2121,7 @@ END SUBMODULE constructor_std
 !      !--  baryon mass. This is used only on the lattice, optionally.     --!
 !      !---------------------------------------------------------------------!
 !
-!      IF( this% distribution_id == id_particles_on_spherical_surfaces )THEN
+!      IF( this% distribution_id == id_particles_on_ellipsoidal_surfaces )THEN
 !        PRINT *, "** ERROR! Particle placer ", this% distribution_id, &
 !                 " is not compatible with redistribute_nu= .TRUE."
 !        PRINT *, " * Check the parameter file lorene_bns_id_particles.par. ", &

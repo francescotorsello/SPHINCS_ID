@@ -13,7 +13,8 @@
 !----------------------------------------------------------------!
 ! n_bns and the number of specified components of filenames must be the same
 n_id=1                          ! Number of physical systems to use
-! Path to the directory containing the ID files
+! Path to the directory containing the ID files, RELATIVE to where the code
+! is executed
 common_path="lorene-id-files/"
             !"fuka-id-files/"
             !"eccentric-ejecta-files/"

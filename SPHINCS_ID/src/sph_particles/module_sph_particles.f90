@@ -46,8 +46,8 @@ MODULE sph_particles
   !! Identifier for a particle distribution read from formatted file
   INTEGER, PARAMETER:: id_particles_on_lattice           = 1
   !! Identifier for a particle distribution on a lattice
-  INTEGER, PARAMETER:: id_particles_on_spherical_surfaces= 2
-  !! Identifier for particle distribution on spherical surfaces
+  INTEGER, PARAMETER:: id_particles_on_ellipsoidal_surfaces= 2
+  !! Identifier for particle distribution on ellipsoidal surfaces
 
   INTEGER, PARAMETER:: max_it_tree= 1
   !# When computing the neighbours' tree with the SUBROUTINE
@@ -377,13 +377,13 @@ MODULE sph_particles
     !  @todo Chamge name of this variable to assign_Ye_compose. Check that
     !        the used EOS is indeed the one used to read \(Y_e\)
     LOGICAL:: compose_eos
-    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !& `.TRUE.` if the particle positions on ellipsoidal surfaces are randomized
     !  in the \(\phi\) direction, `.FALSE.` otherwise
     LOGICAL:: randomize_phi
-    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !& `.TRUE.` if the particle positions on ellipsoidal surfaces are randomized
     !  in the \(\theta\) direction, `.FALSE.` otherwise
     LOGICAL:: randomize_theta
-    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !& `.TRUE.` if the particle positions on ellipsoidal surfaces are randomized
     !  in the \(r\) direction, `.FALSE.` otherwise
     LOGICAL:: randomize_r
     !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
@@ -447,8 +447,8 @@ MODULE sph_particles
     PROCEDURE:: place_particles_lattice
     !! Places particles on a single lattice that surrounds both stars
 
-    PROCEDURE:: place_particles_spherical_surfaces
-    !! Places particles on spherical surfaces on one star
+    PROCEDURE:: place_particles_ellipsoidal_surfaces
+    !! Places particles on ellipsoidal surfaces on one star
 
     PROCEDURE, NOPASS:: impose_equatorial_plane_symmetry
     !# Reflects the positions of the particles on a matter object with respect
@@ -644,7 +644,7 @@ MODULE sph_particles
         !  - 1: Place particles on several lattices, each one surrounding a
         !       matter object
         !
-        !  - 3: Place particles on spherical surfaces inside each matter object
+        !  - 3: Place particles on ellipsoidal surfaces inside each matter object
         !
         TYPE(particles):: parts
         !! Constructed [[particles]] object
@@ -831,7 +831,7 @@ MODULE sph_particles
     END SUBROUTINE place_particles_lattice
 
 
-    MODULE SUBROUTINE place_particles_spherical_surfaces( this, &
+    MODULE SUBROUTINE place_particles_ellipsoidal_surfaces( this, &
                                   mass_star, radius, center, &
                                   central_density, npart_des, &
                                   npart_out, pos, pvol, nu, h, &
@@ -841,8 +841,9 @@ MODULE sph_particles
                                   filename_shells_radii, &
                                   filename_shells_pos, &
                                   get_density, integrate_density, &
-                                  get_id, validate_position, pmass_des )
-    !! Places particles on spherical surfaces on one star
+                                  get_id, validate_position, &
+                                  radii )
+    !! Places particles on ellipsoidal surfaces on one star
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT(INOUT):: this
@@ -863,10 +864,10 @@ MODULE sph_particles
       DOUBLE PRECISION, INTENT(IN)    :: radius
       !& \(x|) coordinate of the center of the star, i.e.,
       !  of the point with highest density
-      DOUBLE PRECISION, INTENT(IN)    :: center
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: center
       !> Central density of the star, i.e., highest density
       DOUBLE PRECISION, INTENT(IN)    :: central_density
-      !> Radius of the last spherical surface
+      !> Radius of the last ellipsoidal surface
       DOUBLE PRECISION, INTENT(IN)    :: last_r
       !& If, after max_steps, the iteration did not converge,
       !  multiply upper_bound by upper_factor, and lower_bound
@@ -877,10 +878,10 @@ MODULE sph_particles
       !  by lower_factor. lower_factor <= 1, usually a decrease of 1% works
       DOUBLE PRECISION, INTENT(IN)    :: lower_factor
       !& Desired upper bound for the differences between particle
-      !  masses on neighbouring spherical surfaces
+      !  masses on neighbouring ellipsoidal surfaces
       DOUBLE PRECISION, INTENT(INOUT) :: upper_bound
       !& Desired lower bound for the differences between particle
-      !  masses on neighbouring spherical surfaces
+      !  masses on neighbouring ellipsoidal surfaces
       DOUBLE PRECISION, INTENT(INOUT) :: lower_bound
       !> Array string the final positions
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
@@ -926,13 +927,11 @@ MODULE sph_particles
         END SUBROUTINE get_id
       END INTERFACE
       INTERFACE
-        SUBROUTINE integrate_density( center, radius, &
-                                      central_density, &
-                                      dr, dth, dphi, &
-                                      mass, mass_profile, &
-                                      mass_profile_idx )
+        SUBROUTINE integrate_density &
+          ( center, radius, central_density, dr, dth, dphi, &
+            mass, mass_profile, mass_profile_idx, radii )
           !> Center of the star
-          DOUBLE PRECISION, INTENT(IN)    :: center
+          DOUBLE PRECISION, DIMENSION(3), INTENT(IN)    :: center
           !> Central density of the star
           DOUBLE PRECISION, INTENT(IN)    :: central_density
           !> Radius of the star
@@ -951,6 +950,8 @@ MODULE sph_particles
           !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT)::mass_profile_idx
           INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: &
                                                mass_profile_idx
+
+          DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
         END SUBROUTINE integrate_density
       END INTERFACE
       INTERFACE
@@ -968,9 +969,10 @@ MODULE sph_particles
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
-      DOUBLE PRECISION, INTENT(IN),   OPTIONAL:: pmass_des
+      !DOUBLE PRECISION, INTENT(IN),   OPTIONAL:: pmass_des
+      DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
 
-    END SUBROUTINE place_particles_spherical_surfaces
+    END SUBROUTINE place_particles_ellipsoidal_surfaces
 
 
     MODULE SUBROUTINE impose_equatorial_plane_symmetry( npart, pos, &

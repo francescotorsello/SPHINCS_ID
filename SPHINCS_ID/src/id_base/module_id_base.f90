@@ -89,7 +89,6 @@ MODULE id_base
     !! Timer that times the construction of the appropriate object
 
 
-    !PROCEDURE(finalize_sph_id_int), NOPASS, POINTER, PUBLIC::finalize_sph_id_ptr
     PROCEDURE(), POINTER, NOPASS, PUBLIC:: finalize_sph_id_ptr
     !# Pointer to a procedure that finalize the |sph| |id|; for example,
     !  correct for the residual ADM linear momentum.
@@ -729,26 +728,24 @@ MODULE id_base
     END SUBROUTINE initialize
 
 
-    MODULE SUBROUTINE integrate_baryon_mass_density( this, center, radius, &
-                                                     central_density, &
-                                                     dr, dth, dphi, &
-                                                     mass, mass_profile, &
-                                                     mass_profile_idx )
+    MODULE SUBROUTINE integrate_baryon_mass_density &
+      ( this, center, radius, central_density, dr, dth, dphi, &
+        mass, mass_profile, mass_profile_idx, radii )
     !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
     !  compute the radial mass profile of a single star.
 
       !> Object of class [[idbase]] which this PROCEDURE is a member of
-      CLASS(idbase),    INTENT(INOUT) :: this
+      CLASS(idbase),                  INTENT(INOUT):: this
       !> Center of the star
-      DOUBLE PRECISION, INTENT(IN)    :: center
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN)   :: center
       !> Central density of the star
-      DOUBLE PRECISION, INTENT(IN)    :: central_density
+      DOUBLE PRECISION,               INTENT(IN)   :: central_density
       !> Radius of the star
-      DOUBLE PRECISION, INTENT(IN)    :: radius
+      DOUBLE PRECISION,               INTENT(IN)   :: radius
       !> Integration steps
-      DOUBLE PRECISION, INTENT(IN)    :: dr, dth, dphi
+      DOUBLE PRECISION,               INTENT(IN)   :: dr, dth, dphi
       !> Integrated mass of the star
-      DOUBLE PRECISION, INTENT(INOUT):: mass
+      DOUBLE PRECISION,               INTENT(INOUT):: mass
       !> Array storing the radial mass profile of the star
       !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: &
       !                                 mass_profile
@@ -758,6 +755,7 @@ MODULE id_base
       !  mass_profile[mass_profile_idx] is in increasing order
       !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
       INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
+      DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
 
     END SUBROUTINE integrate_baryon_mass_density
 

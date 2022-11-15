@@ -1758,7 +1758,7 @@ SUBMODULE (sph_particles) apm
                            nstar_sph, nstar_id, nlrf_sph, sqg, &
                            use_atmosphere )
 
-    nu= nu_all
+    nu(1:npart_real)= nu_all
     PRINT *, " * Baryon number on all particles before correction nu_all= ", &
              nu_all
 
@@ -2861,7 +2861,7 @@ SUBMODULE (sph_particles) apm
         nstar_sph_ghost, h_ghost
 
       IF(adapt_ghost .EQV. .TRUE.)THEN
-        ellipse_thickness= 1.3D0
+        ellipse_thickness= 1.4D0
       ELSE
         ellipse_thickness= 1.1D0
       ENDIF
@@ -3312,7 +3312,7 @@ SUBMODULE (sph_particles) apm
       PRINT *, " * Positions of ghost and real particles printed to ", &
                TRIM(finalnamefile), " ."
 
-      STOP
+      !STOP
 
 
     END SUBROUTINE place_and_print_ghost_particles
