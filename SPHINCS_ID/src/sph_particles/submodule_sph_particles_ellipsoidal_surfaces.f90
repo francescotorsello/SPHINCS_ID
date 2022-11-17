@@ -1,4 +1,4 @@
-!# File:         submodule_sph_particles_spherical_surfaces.f90
+!# File:         submodule_sph_particles_ellipsoidal_surfaces.f90
 !  Authors:      Francesco Torsello (FT)
 
 !************************************************************************
@@ -22,13 +22,13 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-SUBMODULE (sph_particles) spherical_surfaces
+SUBMODULE (sph_particles) ellipsoidal_surfaces
 
   !************************************************
   !
   !# This SUBMODULE contains the implementation
   !  of the method of TYPE sph_particles that places
-  !  particles on spherical surfaces inside
+  !  particles on ellipsoidal surfaces inside
   !  a star
   !
   !  FT 19.04.2021
@@ -47,7 +47,7 @@ SUBMODULE (sph_particles) spherical_surfaces
   CONTAINS
 
 
-  MODULE PROCEDURE place_particles_spherical_surfaces
+  MODULE PROCEDURE place_particles_ellipsoidal_surfaces
 
     !**********************************************
     !
@@ -55,6 +55,12 @@ SUBMODULE (sph_particles) spherical_surfaces
     !  inside a star
     !
     !  FT 19.04.2021
+    !
+    !  Upgraded to ellipsoidal surfaces. The user can
+    !  choose to place prticles on ellipsoidal or
+    !  spherical surfaces
+    !
+    !  FT 15.11.2022
     !
     !**********************************************
 
@@ -74,7 +80,8 @@ SUBMODULE (sph_particles) spherical_surfaces
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx, seed
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_shell, npart_shelleq
 
-    DOUBLE PRECISION:: xtemp, ytemp, ztemp, m_p, &
+    DOUBLE PRECISION:: a_x, a_y, a_z, max_radius, max_center, &
+                       xtemp, ytemp, ztemp, m_p, &
                        dr, dth, dphi, phase, phase_th, mass, &
                        dr_shells, dth_shells, dphi_shells, col, long, rad, &
                        proper_volume, mass_test, mass_test2,&
@@ -92,7 +99,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     LOGICAL:: exist, high_mass, low_mass, kept_all
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile, finalnamefile2
+    CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile, finalnamefile2
 
     TYPE:: colatitude_pos_shell
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: colatitudes
@@ -121,9 +128,11 @@ SUBMODULE (sph_particles) spherical_surfaces
     INTEGER, DIMENSION(:,:), ALLOCATABLE:: npart_surface_tmp
     INTEGER, DIMENSION(:,:), ALLOCATABLE:: npart_discarded
 
+    CHARACTER(LEN=:), ALLOCATABLE:: surface_type
+
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    PRINT *, "** Executing the place_particles_spherical_surfaces SUBROUTINE..."
+    PRINT *, "** Executing the place_particles_ellipsoidal_surfaces SUBROUTINE..."
     PRINT *
 
     CALL RANDOM_SEED( SIZE= dim_seed )
@@ -138,25 +147,66 @@ SUBMODULE (sph_particles) spherical_surfaces
     IF(debug) PRINT *, dim_seed
     IF(debug) PRINT *, seed
 
+    IF(PRESENT(radii))THEN
+
+      surface_type="ellipsoidal"
+
+      max_radius= MAXVAL([radius,radii(1),radii(2)])
+
+      IF(max_radius == radius)THEN
+
+        a_x= one
+        a_y= radii(1)/max_radius
+        a_z= radii(2)/max_radius
+        max_center= center(1)
+
+      ELSEIF(max_radius == radii(1))THEN
+
+        a_x= radius/max_radius
+        a_y= one
+        a_z= radii(2)/max_radius
+        max_center= center(2)
+
+      ELSEIF(max_radius == radii(2))THEN
+
+        a_x= radius/max_radius
+        a_y= radii(1)/max_radius
+        a_z= one
+        max_center= center(3)
+
+      ENDIF
+
+    ELSE
+
+      surface_type="spherical"
+
+      max_radius= radius
+      a_x= one
+      a_y= one
+      a_z= one
+      max_center= center(1)
+
+    ENDIF
+
     !-----------------------------------!
     !-- Compute desired particle mass --!
     !-----------------------------------!
 
-    IF( PRESENT(pmass_des) )THEN
-      m_p= pmass_des
-    ELSE
+    !IF( PRESENT(pmass_des) )THEN
+    !  m_p= pmass_des
+    !ELSE
       m_p= mass_star/DBLE(npart_des)
-    ENDIF
+    !ENDIF
 
-    !------------------------------------------!
-    !-- Compute number of spherical surfaces --!
-    !------------------------------------------!
+    !--------------------------------!
+    !-- Compute number of surfaces --!
+    !--------------------------------!
 
-    n_surfaces= number_surfaces( m_p, center, radius, get_density )
+    n_surfaces= number_surfaces( m_p, max_center, max_radius, get_density )
 
-    !------------------------------------------------!
-    !-- Allocate memory for the spherical surfaces --!
-    !------------------------------------------------!
+    !--------------------------------------!
+    !-- Allocate memory for the surfaces --!
+    !--------------------------------------!
 
     CALL allocate_surface_memory()
 
@@ -164,14 +214,15 @@ SUBMODULE (sph_particles) spherical_surfaces
     !-- Place surfaces based on mass density at that point --!
     !--------------------------------------------------------!
 
-    CALL place_surfaces( central_density, center, radius, m_p, n_surfaces, &
+    CALL place_surfaces( central_density, max_center, max_radius, m_p, &
+                         n_surfaces, &
                          surface_radii, last_r, get_density )
 
     ! Printout
-    PRINT *, " * Number of the spherical surfaces= ", n_surfaces
+    PRINT *, " * Number of the ", surface_type, " surfaces= ", n_surfaces
     PRINT *, " * Radii of the surfaces in units of the equatorial radius", &
              " of the star, towards the companion= "
-    PRINT *, surface_radii/radius
+    PRINT *, surface_radii/max_radius
     PRINT *
 
     !---------------------------------!
@@ -181,26 +232,28 @@ SUBMODULE (sph_particles) spherical_surfaces
     PRINT *, " * Integrating the baryon mass density to get the mass profile..."
     PRINT *
 
-    dr  = radius/(three*ten*ten)
+    dr  = max_radius/(three*ten*ten)
     dth = pi/two/(two*ten*ten)
     dphi= two*pi/(two*ten*ten)
 
-    ALLOCATE( mass_profile( 3, 0:NINT(radius/dr) ), STAT= ios, ERRMSG= err_msg )
-    ALLOCATE( mass_profile_idx( 0:NINT(radius/dr) ),STAT= ios, ERRMSG= err_msg )
+    ALLOCATE( mass_profile( 3, 0:NINT(max_radius/dr) ), &
+              STAT= ios, ERRMSG= err_msg )
+    ALLOCATE( mass_profile_idx( 0:NINT(max_radius/dr) ),&
+              STAT= ios, ERRMSG= err_msg )
 
-    CALL integrate_density( center, radius, &
+    CALL integrate_density( center, max_radius, &
                             central_density, &
                             dr, dth, dphi, &
                             mass, mass_profile, &
-                            mass_profile_idx )
+                            mass_profile_idx, radii )
 
     mass_profile( 2:3, : )= mass_profile( 2:3, : )*mass_star/mass
 
-    !---------------------------------------------!
-    !-- Assign masses to each spherical surface --!
-    !---------------------------------------------!
+    !-----------------------------------!
+    !-- Assign masses to each surface --!
+    !-----------------------------------!
 
-    CALL assign_surfaces_mass( surface_masses, surface_radii, radius, dr, &
+    CALL assign_surfaces_mass( surface_masses, surface_radii, max_radius, dr, &
                                n_surfaces, mass_profile_idx, mass_profile, &
                                mass_star )
 
@@ -221,7 +274,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     ENDIF
 
     CALL print_mass_profile_surface_radii( mass_profile, mass_profile_idx, &
-                                           surface_radii, radius, dr, &
+                                           surface_radii, max_radius, dr, &
                                            n_surfaces, &
                                            filename_mass_profile, &
                                            filename_shells_radii )
@@ -235,9 +288,9 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     CALL initialize_surfaces()
 
-    !--------------------------------------------------!
-    !--  Main iteration over the spherical surfaces  --!
-    !--------------------------------------------------!
+    !----------------------------------------!
+    !--  Main iteration over the surfaces  --!
+    !----------------------------------------!
 
     PRINT *, " * Assigning first half of particle positions..."
     PRINT *
@@ -264,7 +317,7 @@ SUBMODULE (sph_particles) spherical_surfaces
         STOP
       ENDIF
 
-      ! Compute number of particles on the spherical surface
+      ! Compute number of particles on the surface
       npart_shell(r)= NINT(( npart_shelleq(r)**two )/two)
 
       ! Compute angular step in azimuth phi (constant on each shell)
@@ -280,7 +333,7 @@ SUBMODULE (sph_particles) spherical_surfaces
         DEALLOCATE( colatitude_pos(r)% colatitudes )
       ALLOCATE( colatitude_pos(r)% colatitudes( npart_shelleq(r)/4 ) )
 
-      IF( surface_radii(r) < (one - five/(ten*ten))*last_r*radius )THEN
+      IF( surface_radii(r) < (one - five/(ten*ten))*last_r*max_radius )THEN
 
         CALL compute_colatitudes_uniformly_in( pi/two, (ten - five/ten)/ten*pi,&
                                       colatitude_pos(r)% colatitudes( : ) )
@@ -339,9 +392,10 @@ SUBMODULE (sph_particles) spherical_surfaces
       !$OMP                      th, phi, rand_num2, phase_th, rel_sign ), &
       !$OMP             SHARED( r, npart_shelleq, center, rad, alpha, &
       !$OMP                     pos_surfaces, colatitude_pos, n_surfaces, &
-      !$OMP                     dr_shells, surface_radii, shell_thickness, this, &
+      !$OMP                     dr_shells, surface_radii, shell_thickness, &
+      !$OMP                     a_x, a_y, a_z, this, &
       !$OMP                     sqdetg_tmp, bar_density_tmp, gam_euler_tmp, &
-      !$OMP                     pos_shell_tmp, pvol_tmp, dphi_shells, radius, &
+      !$OMP                  pos_shell_tmp, pvol_tmp, dphi_shells, max_radius, &
       !$OMP                     npart_discarded, npart_surface_tmp, last_r )
       DO phi= 1, npart_shelleq(r), 1
 
@@ -360,7 +414,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
           ENDIF
 
-        !  IF( surface_radii(r) < 0.95D0*last_r*radius )THEN
+        !  IF( surface_radii(r) < 0.95D0*last_r*max_radius )THEN
         !
         !    long= phase + phi*alpha(r)
         !
@@ -417,9 +471,9 @@ SUBMODULE (sph_particles) spherical_surfaces
           !
           !-- Compute Cartesian coordinates of the candidate particle positions
           !
-          xtemp= rad*COS(long)*SIN(col) + center
-          ytemp= rad*SIN(long)*SIN(col)
-          ztemp= rad*COS(col)
+          xtemp= a_x*rad*COS(long)*SIN(col) + center(1)
+          ytemp= a_y*rad*SIN(long)*SIN(col) + center(2)
+          ztemp= a_z*rad*COS(col) + center(3)
 
           IF( ISNAN( xtemp ) )THEN
             PRINT *, "** ERROR when placing first half of the particles! ", &
@@ -514,28 +568,31 @@ SUBMODULE (sph_particles) spherical_surfaces
       IF( npart_shell(r) == 0 )THEN
         IF( r == first_r )THEN
           PRINT *, " ** ERROR! No particles were placed on the first ", &
-                   "spherical surface! Maybe the system has a geometry such ", &
-                   "that there is no matter on the spherical surface with ", &
+                   "", surface_type, &
+                   " surface! Maybe the system has a geometry such ", &
+                   "that there is no matter on the ", surface_type, &
+                   " surface with ", &
                    "radius r ~ R/2, with R its radial size?"
-          PRINT *, "    If so, the first spherical surface to be populated ", &
+          PRINT *, "    If so, the first ", surface_type, &
+                   " surface to be populated ", &
                    "has to be changed by changing the variable first_r ", &
                    "in the (internal) SUBROUTINE initialize_surfaces in ", &
-                   "SUBMODULE sph_particles spherical_surfaces."
+                   "SUBMODULE sph_particles@ellipsoidal_surfaces."
           PRINT *, "    Another possibility is that the FUNCTION ", &
                    "validate_position given as argument to the SUBROUTINE ", &
-                   "place_particles_spherical_surfaces, does not return ", &
+                   "place_particles_ellipsoidal_surfaces, does not return ", &
                    ".TRUE. when a position is acceptable, and .FALSE. when ", &
                    "it is not."
           PRINT *, "    Yet another possibility is that the (internal) ", &
                    "FUNCTION validate_position_final is not set up ", &
-                   "properly in SUBMODULE sph_particles spherical_surfaces."
+                   "properly in SUBMODULE sph_particles@ellipsoidal_surfaces."
           PRINT *, " * Stopping..."
           PRINT *
           STOP
         ENDIF
         m_parts(r)= m_parts( prev_shell )
         PRINT *, " * Placed", npart_shell(r)/2, &
-                 " particles on one emisphere of spherical surface ", r, &
+                 " particles on one emisphere of ", surface_type, " surface ", r, &
                  " out of ", n_surfaces
         IF( r == 1 )THEN
           EXIT
@@ -856,10 +913,10 @@ SUBMODULE (sph_particles) spherical_surfaces
       ! At this point, the particles are placed on this surface
       ! Print out the result
       PRINT *, " * Placed", npart_shell(r)/2, &
-               " particles on one emisphere of spherical surface ", r, &
+               " particles on one emisphere of ", surface_type, " surface ", r, &
                " out of ", n_surfaces
-      PRINT *, "   Surface radius= ", surface_radii(r)/radius*ten*ten, &
-              "% of the radius of the star"
+      PRINT *, "   Surface radius= ", surface_radii(r)/max_radius*ten*ten, &
+              "% of the smaller radius of the matter object"
       PRINT *, "   Placed", npart_out, " particles overall, so far."
       IF( r /= first_r ) PRINT *, &
                "   Ratio of particle masses on last 2 surfaces: ", &
@@ -893,9 +950,9 @@ SUBMODULE (sph_particles) spherical_surfaces
         DO phi= 1, npart_shelleq(r), 1
 
           IF( pos_shell_tmp( 1, th, phi ) /= huge_real &
-              !pos_shell_tmp( 1, th, phi ) < center + 1.2D0*radius &
+              !pos_shell_tmp( 1, th, phi ) < center + 1.2D0*max_radius &
               !.AND. &
-              !pos_shell_tmp( 1, th, phi ) > center - 1.2D0*radius
+              !pos_shell_tmp( 1, th, phi ) > center - 1.2D0*max_radius
           )THEN
 
             itr= itr + 1
@@ -1224,7 +1281,7 @@ SUBMODULE (sph_particles) spherical_surfaces
       PRINT *
       PRINT *, "masses of the star:", mass_test, mass_test2, mass_star
       PRINT *, "volumes of the star:", proper_volume, proper_volume_test, &
-                                       4.0D0/3.0D0*pi*radius**3.0D0
+                                       4.0D0/3.0D0*pi*max_radius**3.0D0
       PRINT *
 
       !STOP
@@ -1310,7 +1367,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     IF( PRESENT(filename_shells_pos) )THEN
       finalnamefile= filename_shells_pos
     ELSE
-      finalnamefile= "spherical_surfaces_pos.dat"
+      finalnamefile= surface_type//"_surfaces_pos.dat"
     ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
@@ -1363,7 +1420,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     CLOSE( UNIT= 2 )
 
-    PRINT *, " * SUBROUTINE place_particles_spherical_surfaces executed."
+    PRINT *, " * SUBROUTINE place_particles_ellipsoidal_surfaces executed."
     PRINT *
 
     IF( debug ) PRINT *, "20"
@@ -1414,8 +1471,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
       !**************************************
       !
-      !# Allocates memory for the spherical
-      !  surfaces
+      !# Allocates memory for the surfaces
       !
       !  FT 21.04.2022
       !
@@ -1593,7 +1649,7 @@ SUBMODULE (sph_particles) spherical_surfaces
       proper_volume  = zero
       surface_vol    = zero
       surface_vol2   = zero
-      dr_shells      = radius/n_surfaces
+      dr_shells      = max_radius/n_surfaces
       npart_out      = 0
       upper_bound_tmp= upper_bound
       lower_bound_tmp= lower_bound
@@ -1621,7 +1677,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     END SUBROUTINE initialize_surfaces
 
 
-  END PROCEDURE place_particles_spherical_surfaces
+  END PROCEDURE place_particles_ellipsoidal_surfaces
 
 
   FUNCTION number_surfaces( m_p, center, radius, get_dens ) &
@@ -1629,7 +1685,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     !************************************************
     !
-    !# Compute the number of spherical surfaces
+    !# Compute the number of surfaces
     !  by integrating the linear particle density
     !  along the larger equatorial radius
     !
@@ -1783,7 +1839,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     !************************************************
     !
-    !# Place the spherical surface, according to
+    !# Place the surfaces, according to
     !  the baryon mass density of the star
     !  along the larger equatorial radius
     !
@@ -1880,7 +1936,7 @@ SUBMODULE (sph_particles) spherical_surfaces
 
     !*************************************************
     !
-    !# Assign a mass to each spherical surface,
+    !# Assign a mass to each surface,
     !  based on the radial mass profile of the star
     !  (computed along the larger equatorial radius)
     !
@@ -1953,7 +2009,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     !*************************************************
     !
     !# Print star's radial mass profile and radii of
-    !  spherical surfaces to different ASCII files
+    !  surfaces to different ASCII files
     !
     !  FT 23.07.2021
     !
@@ -2115,7 +2171,7 @@ SUBMODULE (sph_particles) spherical_surfaces
     !**************************************************
     !
     !# Compute the colatitudes according to a
-    !  uniform distribution over a spherical
+    !  uniform distribution over a
     !  surface, between alpha and beta, with
     !  pi/2 < alpha < beta < pi.
     !  The values are stored in the array colatitudes
@@ -2182,4 +2238,4 @@ SUBMODULE (sph_particles) spherical_surfaces
   END SUBROUTINE compute_colatitudes_uniformly_in
 
 
-END SUBMODULE spherical_surfaces
+END SUBMODULE ellipsoidal_surfaces

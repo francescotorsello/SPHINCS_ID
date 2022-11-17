@@ -55,10 +55,14 @@ SUBMODULE (id_base) mass_profile
     !
     !  FT 19.02.2021
     !
+    !  Upgraded to ellipsoidal grid
+    !
+    !  FT 15.11.2022
+    !
     !************************************************
 
     USE constants, ONLY: pi
-    USE utility,   ONLY: zero, two, three, four
+    USE utility,   ONLY: zero, one, two, three, four
     USE NR,        ONLY: indexx
     USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
     USe utility,   ONLY: determinant_sym3x3
@@ -66,21 +70,56 @@ SUBMODULE (id_base) mass_profile
     IMPLICIT NONE
 
     INTEGER:: r, th, phi
-    DOUBLE PRECISION:: rad_coord, colat, long, mass_element
+    DOUBLE PRECISION:: rad_coord, colat, long, mass_element, max_radius
     DOUBLE PRECISION:: sq_g, baryon_density, gamma_euler
+    DOUBLE PRECISION:: a_x, a_y, a_z
     DOUBLE PRECISION, DIMENSION(6):: g
 
     !LOGICAL, PARAMETER:: debug= .TRUE.
+
+    IF(PRESENT(radii))THEN
+
+      max_radius= MAXVAL([radius,radii(1),radii(2)])
+
+      IF(max_radius == radius)THEN
+
+        a_x= one
+        a_y= radii(1)/max_radius
+        a_z= radii(2)/max_radius
+
+      ELSEIF(max_radius == radii(1))THEN
+
+        a_x= radius/max_radius
+        a_y= one
+        a_z= radii(2)/max_radius
+
+      ELSEIF(max_radius == radii(2))THEN
+
+        a_x= radius/max_radius
+        a_y= radii(1)/max_radius
+        a_z= one
+
+      ENDIF
+
+    ELSE
+
+      max_radius= radius
+      a_x= one
+      a_y= one
+      a_z= one
+
+    ENDIF
 
     mass_profile( 1, 0 )= zero
     mass_profile( 2, 0 )= four/three*pi*dr**three*central_density
     mass_profile( 3, 0 )= four/three*pi*dr**three*central_density
 
     !$OMP PARALLEL DO DEFAULT(NONE) &
-    !$OMP             SHARED(dr,dphi,dth,center,radius,mass_profile,this) &
-    !$OMP             PRIVATE(r,th,phi,rad_coord,long,colat,sq_g,gamma_euler, &
-    !$OMP                     g,baryon_density,mass_element,mass)
-    radius_loop: DO r= 1, NINT(radius/dr), 1
+    !$OMP             SHARED(dr, dphi, dth, center, max_radius, &
+    !$OMP                    mass_profile, this, a_x, a_y, a_z) &
+    !$OMP             PRIVATE(r, th, phi, rad_coord, long, colat, sq_g, &
+    !$OMP                   gamma_euler, g, baryon_density, mass_element, mass)
+    radius_loop: DO r= 1, NINT(max_radius/dr), 1
 
       mass= zero
       rad_coord= r*dr
@@ -97,59 +136,21 @@ SUBMODULE (id_base) mass_profile
           ! of Gourgoulhon et al., PRD 63 064029 (2001)
 
           CALL this% read_id_mass_b( &
-                         center + (rad_coord + dr)*SIN(colat)*COS(long), &
-                         (rad_coord + dr)*SIN(colat)*SIN(long), &
-                         (rad_coord + dr)*COS(colat), &
-                         g, baryon_density, gamma_euler )
+                       center(1) + a_x*(rad_coord + dr)*SIN(colat)*COS(long), &
+                       center(2) + a_y*(rad_coord + dr)*SIN(colat)*SIN(long), &
+                       center(3) + a_z*(rad_coord + dr)*COS(colat),           &
+                       g, baryon_density, gamma_euler )
 
           IF(      ISNAN( g(jxx) ) .OR. ISNAN( g(jxy) ) .OR. ISNAN( g(jxz) ) &
               .OR. ISNAN( g(jyy) ) .OR. ISNAN( g(jyz) ) .OR. ISNAN( g(jzz) ) &
               .OR. ISNAN( baryon_density ) .OR. ISNAN( gamma_euler ) ) &
               CYCLE
 
-  !        CALL bns_obj% import_id( &
-  !                 center1 + rad_coord*SIN(lat)*COS(long), &
-  !                 rad_coord*SIN(lat)*SIN(long), &
-  !                 rad_coord*COS(lat), &
-  !                 g_xx, baryon_density, &
-  !                 gamma_euler )
-  !
-  !        ! Compute covariant spatial fluid velocity (metric is diagonal and
-  !        ! conformally flat)
-  !        !v_euler_x_l= g_xx*v_euler_x
-  !        !v_euler_y_l= g_xx*v_euler_y
-  !        !v_euler_z_l= g_xx*v_euler_z
-  !        !
-  !        !! Compute the corresponding Lorentz factor
-  !        !lorentz_factor= 1.0D0/SQRT( 1.0D0 - ( v_euler_x_l*v_euler_x &
-  !        !                                    + v_euler_y_l*v_euler_y &
-  !        !                                    + v_euler_z_l*v_euler_z ) )
-  !        !
-  !        !! Compute covariant fluid 4-velocity
-  !        !u_euler_t_l= lorentz_factor *( - lapse + v_euler_x_l*shift_x &
-  !        !                                       + v_euler_y_l*shift_y &
-  !        !                                       + v_euler_z_l*shift_z )
-  !        !u_euler_x_l= lorentz_factor*v_euler_x_l
-  !        !u_euler_y_l= lorentz_factor*v_euler_y_l
-  !        !u_euler_z_l= lorentz_factor*v_euler_z_l
-  !        !
-  !        !! Compute vector normal to spacelike hypersurface
-  !        !! (4-velocity of the Eulerian observer)
-  !        !n_t= 1.0D0/lapse
-  !        !n_x= - shift_x/lapse
-  !        !n_y= - shift_y/lapse
-  !        !n_z= - shift_z/lapse
-  !        !
-  !        !! Compute relative Lorentz factor between 4-velocity of the fluid
-  !        !! wrt the Eulerian observer and the 4-velocity of the Eulerian observer
-  !        !lorentz_factor_rel= - ( n_t*u_euler_t_l + n_x*u_euler_x_l &
-  !        !                      + n_y*u_euler_y_l + n_z*u_euler_z_l )
-
           ! Compute square root of the determinant of the spatial metric
           CALL determinant_sym3x3( g, sq_g )
           sq_g= SQRT(sq_g)
 
-          mass_element= (rad_coord**two)*SIN(colat)*dr*dth*dphi &
+          mass_element= a_x*a_y*a_z*(rad_coord**two)*SIN(colat)*dr*dth*dphi &
                         *sq_g*gamma_euler*baryon_density
 
           mass= mass + two*mass_element
@@ -192,3 +193,44 @@ SUBMODULE (id_base) mass_profile
 
 
 END SUBMODULE mass_profile
+
+! TODO:  deprecated? It computes the relative Lorentz factor between the fluid
+!        and the Eulerian observer from the velocity
+!
+!        CALL bns_obj% import_id( &
+!                 center1 + rad_coord*SIN(lat)*COS(long), &
+!                 rad_coord*SIN(lat)*SIN(long), &
+!                 rad_coord*COS(lat), &
+!                 g_xx, baryon_density, &
+!                 gamma_euler )
+!
+!        ! Compute covariant spatial fluid velocity (metric is diagonal and
+!        ! conformally flat)
+!        !v_euler_x_l= g_xx*v_euler_x
+!        !v_euler_y_l= g_xx*v_euler_y
+!        !v_euler_z_l= g_xx*v_euler_z
+!        !
+!        !! Compute the corresponding Lorentz factor
+!        !lorentz_factor= 1.0D0/SQRT( 1.0D0 - ( v_euler_x_l*v_euler_x &
+!        !                                    + v_euler_y_l*v_euler_y &
+!        !                                    + v_euler_z_l*v_euler_z ) )
+!        !
+!        !! Compute covariant fluid 4-velocity
+!        !u_euler_t_l= lorentz_factor *( - lapse + v_euler_x_l*shift_x &
+!        !                                       + v_euler_y_l*shift_y &
+!        !                                       + v_euler_z_l*shift_z )
+!        !u_euler_x_l= lorentz_factor*v_euler_x_l
+!        !u_euler_y_l= lorentz_factor*v_euler_y_l
+!        !u_euler_z_l= lorentz_factor*v_euler_z_l
+!        !
+!        !! Compute vector normal to spacelike hypersurface
+!        !! (4-velocity of the Eulerian observer)
+!        !n_t= 1.0D0/lapse
+!        !n_x= - shift_x/lapse
+!        !n_y= - shift_y/lapse
+!        !n_z= - shift_z/lapse
+!        !
+!        !! Compute relative Lorentz factor between 4-velocity of the fluid
+!        !! wrt the Eulerian observer and the 4-velocity of the Eulerian observer
+!        !lorentz_factor_rel= - ( n_t*u_euler_t_l + n_x*u_euler_x_l &
+!        !                      + n_y*u_euler_y_l + n_z*u_euler_z_l )

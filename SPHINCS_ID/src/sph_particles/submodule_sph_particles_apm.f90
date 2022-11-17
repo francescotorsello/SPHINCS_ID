@@ -124,15 +124,14 @@ SUBMODULE (sph_particles) apm
 
     IMPLICIT NONE
 
-    INTEGER,          PARAMETER:: max_npart        = 10D+6
+    INTEGER,          PARAMETER:: max_npart        = 20D+6
     INTEGER,          PARAMETER:: nn_des           = 301
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
     !INTEGER,          PARAMETER:: print_step       = 15
-    INTEGER,          PARAMETER:: nuratio_max_steps= 100
+    INTEGER,          PARAMETER:: nuratio_max_steps= 150
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
-    DOUBLE PRECISION, PARAMETER:: ellipse_thickness= 1.1D0
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
     !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
     !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
@@ -149,15 +148,16 @@ SUBMODULE (sph_particles) apm
     INTEGER:: n_problematic_h, ill, l, itot
     INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
-    DOUBLE PRECISION:: smaller_radius, larger_radius, radius_y, radius_z
+    DOUBLE PRECISION:: ellipse_thickness
+    DOUBLE PRECISION:: radius_x, radius_y, radius_z
     DOUBLE PRECISION:: h_max, h_av, tmp, dens_min, atmosphere_density!, delta
     DOUBLE PRECISION:: xmin, xmax, ymin, ymax, zmin, zmax, dx, dy, dz, &
                        rad_x, rad_y, rad_z, com_x, com_y, com_z, com_d
-    DOUBLE PRECISION:: max_r_real, r_real, max_z_real
+    DOUBLE PRECISION:: max_z_real
     DOUBLE PRECISION:: xtemp, ytemp, ztemp, x_ell, y_ell, z_ell
     DOUBLE PRECISION:: min_nu, max_nu, min_nu2, max_nu2
     ! The value of nu equal for all the particles, used during the APM iteration
-    DOUBLE PRECISION:: nu_all
+    DOUBLE PRECISION:: nu_all, nu_ghost
     DOUBLE PRECISION:: err_N_mean_min, err_N_mean_min_old, err_N_mean, &
                        err_mean_old, err_n_min, err_N_max, dN, &!dNstar, &
                        nstar_id_err, nstar_sph_err, dN_max, dN_av
@@ -169,6 +169,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION:: r, theta, phi
     DOUBLE PRECISION:: r_ell, theta_ell, phi_ell
     DOUBLE PRECISION:: dS_norm_av
+    DOUBLE PRECISION:: nstar_id_av, nstar_sph_av
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
@@ -272,9 +273,13 @@ SUBMODULE (sph_particles) apm
     ENDIF
 
     h_guess= zero
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( h_guess, pvol, npart_real ) &
+    !$OMP             PRIVATE( a )
     DO a= 1, npart_real, 1
       h_guess(a)= three*(pvol(a)**third)
     ENDDO
+    !$OMP END PARALLEL DO
 
     find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
@@ -344,39 +349,14 @@ SUBMODULE (sph_particles) apm
     !-- outside than the surface of the particles.                     --!
     !--------------------------------------------------------------------!
 
-    !smaller_radius= ABS( MINVAL( pos_input( 1, : ), DIM= 1 ) - center )
-    !larger_radius = ABS( center - MAXVAL( pos_input( 1, : ), DIM= 1 ) )
-    !radius_y= ABS( MAXVAL( pos_input( 2, : ), DIM= 1 ) )
-    !radius_z= ABS( MAXVAL( pos_input( 3, : ), DIM= 1 ) )
-
-  !  IF( pos_input( 1, 10 ) < 0 )THEN
-  !
-  !    smaller_radius= MIN( binary% get_radius1_x_comp(), &
-  !                         binary% get_radius1_x_opp() )
-  !    larger_radius = MAX( binary% get_radius1_x_comp(), &
-  !                         binary% get_radius1_x_opp() )
-  !    radius_y= binary% get_radius1_y()
-  !    radius_z= binary% get_radius1_z()
-  !
-  !  ELSE
-  !
-  !    smaller_radius= MIN( binary% get_radius2_x_comp(), &
-  !                         binary% get_radius2_x_opp() )
-  !    larger_radius = MAX( binary% get_radius2_x_comp(), &
-  !                         binary% get_radius2_x_opp() )
-  !    radius_y= binary% get_radius2_y()
-  !    radius_z= binary% get_radius2_z()
-  !
-  !  ENDIF
-    smaller_radius= MIN( sizes(1), sizes(2) )
-    larger_radius = MAX( sizes(1), sizes(2) )
-    radius_y= sizes(3)
-    radius_z= sizes(5)
+    radius_x= MAX( sizes(1), sizes(2) )
+    radius_y= MAX( sizes(3), sizes(4) )
+    radius_z= MAX( sizes(5), sizes(6) )
 
     h_max= zero
     h_av = zero
     itr  = 0
-    max_z_real= ABS( MAXVAL( pos_input( 3, : ), DIM= 1 ) )
+    max_z_real= ABS( MAXVAL( ABS(pos_input(3,:) - center(3)), DIM= 1 ) )
     DO a= 1, npart_real, 1
 
       IF( SQRT( ( pos_input( 1, a ) - center(1) )**two &
@@ -405,11 +385,102 @@ SUBMODULE (sph_particles) apm
 
     CALL place_and_print_ghost_particles()
 
-    all_pos( :, 1:npart_real )          = pos_input
-    all_pos( :, npart_real+1:npart_all )= ghost_pos
+    ! Assign values to all_pos
+    IF(.NOT.ALLOCATED( all_pos ))THEN
+      ALLOCATE( all_pos( 3, npart_all ), STAT= ios, &
+          ERRMSG= err_msg )
+      IF( ios > 0 )THEN
+         PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
+                  "perform_apm. The error message is",&
+                  err_msg
+         STOP
+      ENDIF
+    ENDIF
+    all_pos(:, 1:npart_real)          = pos_input
+    all_pos(:, npart_real+1:npart_all)= ghost_pos
 
-    h_guess= h_guess(1:npart_all)
-    h_guess(npart_real+1:npart_all)= ( dx*dy*dz )**third
+    CALL allocate_apm_fields( npart_real, npart_ghost )
+
+    IF(debug)THEN
+      !
+      !-- Estimate ghost density considering also the real particles
+      !
+
+      npart= npart_all
+
+      CALL allocate_SPH_memory
+
+      CALL allocate_RCB_tree_memory_3D(npart)
+      iorig(1:npart)= (/ (a,a=1,npart) /)
+
+      IF( debug ) PRINT *, "10"
+
+      CALL allocate_gradient( npart )
+      CALL allocate_metric_on_particles( npart )
+
+      ! Determine smoothing length so that each particle has exactly
+      ! 300 neighbours inside 2h
+      CALL assign_h( nn_des, &
+                     npart_all, &
+                     all_pos, &
+                     h_guess, &
+                     h )
+
+      find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
+      CALL find_h_bruteforce_timer% start_timer()
+      n_problematic_h= 0
+      DO a= 1, npart_all, 1
+      ! find_h_backup, called below, is OMP parallelized, so this loop
+      ! should not be parallelized as well
+
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
+
+          n_problematic_h= n_problematic_h + 1
+          h(a)= find_h_backup( a, npart_all, all_pos(:,:), nn_des)
+          IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
+            PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                     " force method."
+            PRINT *, "   Particle position: ", all_pos(:,a)
+            STOP
+          ENDIF
+
+        ENDIF
+
+      ENDDO
+      CALL find_h_bruteforce_timer% stop_timer()
+      CALL find_h_bruteforce_timer% print_timer( 2 )
+
+      PRINT *, " * The smoothing length was found brute-force for ", &
+               n_problematic_h, " particles."
+      PRINT *
+
+      PRINT *, " * Measure SPH particle number density..."
+      PRINT *
+
+      nu(1:npart_real)          = (mass/DBLE(npart_real))*umass/amu
+      nu(npart_real+1:npart_all)= nu_ghost
+      PRINT *, "npart_all         =", npart_all
+      PRINT *, "SIZE(all_pos(1,:))=", SIZE(all_pos(1,:))
+      PRINT *, "SIZE(nu)          =", SIZE(nu)
+      PRINT *, "SIZE(h)           =", SIZE(h)
+      PRINT *, "SIZE(nstar_sph)   =", SIZE(nstar_sph)
+      PRINT *
+      CALL density_loop( npart_all, all_pos, &
+                         nu, h, nstar_sph )
+
+      !nstar_sph_ghost_av= SUM(nstar_sph_ghost)/npart_ghost
+      PRINT *, "nstar_sph_ghost_max=", MAXVAL(nstar_sph(npart_real+1:npart_all), DIM=1)
+      PRINT *, "nstar_sph_ghost_av=", SUM(nstar_sph(npart_real+1:npart_all))/npart_ghost
+      PRINT *, "nstar_sph_ghost_min=", MINVAL(nstar_sph(npart_real+1:npart_all), DIM=1)
+
+      CALL deallocate_metric_on_particles()
+      CALL deallocate_gradient()
+      CALL deallocate_RCB_tree_memory_3D()
+      CALL deallocate_SPH_memory()
+
+    ENDIF
+
+    !STOP
 
     !----------------------------!
     !-- Allocate needed memory --!
@@ -458,7 +529,7 @@ SUBMODULE (sph_particles) apm
         IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
           PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                    " force method."
-          PRINT *, "   Particle position: ", pos(:,a)
+          PRINT *, "   Particle position: ", all_pos(:,a)
           STOP
         ENDIF
 
@@ -474,8 +545,6 @@ SUBMODULE (sph_particles) apm
 
     PRINT *, " * Measure SPH particle number density..."
     PRINT *
-
-    CALL allocate_apm_fields( npart_real, npart_ghost )
 
     nu= one
     CALL density_loop( npart_all, all_pos, &    ! input
@@ -606,15 +675,9 @@ SUBMODULE (sph_particles) apm
 
     ! Set the particles to be equal-mass
     nu_all= (mass/DBLE(npart_real))*umass/amu
-    nu= nu_all
-
-  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-  !  !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-  !  !$OMP             PRIVATE( a )
-  !  compute_nu_eul2: DO a= 1, npart_real, 1
-  !    nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-  !  ENDDO compute_nu_eul2
-  !  !$OMP END PARALLEL DO
+    nu(1:npart_real)          = nu_all
+    nu(npart_real+1:npart_all)= nu_ghost
+    ! nu_ghost is set in place_and_print_ghost_particles
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
                                  nu, get_density, &
@@ -671,14 +734,6 @@ SUBMODULE (sph_particles) apm
 
       IF( debug ) PRINT *, "enforcing center of mass..."
 
-   !   !$OMP PARALLEL DO DEFAULT( NONE ) &
-   !   !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-   !   !$OMP             PRIVATE( a )
-   !   compute_nu_eul3: DO a= 1, npart_real, 1
-   !     nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-   !   ENDDO compute_nu_eul3
-   !   !$OMP END PARALLEL DO
-
       CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
                                    nu, get_density, &
                                    validate_position_final, com_star )
@@ -689,7 +744,7 @@ SUBMODULE (sph_particles) apm
                                              all_pos(:,1:npart_real), &
                                              nu(1:npart_real) )
 
-      IF( debug )THEN
+      IF( debug .AND. .FALSE. )THEN
 
         CALL COM( npart_real, all_pos(:,1:npart_real), &  !
                   nu(1:npart_real), &                     ! input
@@ -706,8 +761,12 @@ SUBMODULE (sph_particles) apm
                  "distribution: com_z= ", com_z, "Msun_geo"
         PRINT *, " * Distance of the center of mass of the particle ", &
                  "distribution from the  origin: com_d= ", com_d
-        PRINT *, " * |com_x-com_star/com_star|=", &
-                 ABS( com_x-com_star )/ABS( com_star + 1 )
+        PRINT *, " * |com_x-com_star(1)|/|com_star(1)+1|=", &
+                 ABS( com_x-com_star(1) )/ABS( com_star(1) + 1 )
+        PRINT *, " * |com_y-com_star(2)|/|com_star(2)+1|=", &
+                 ABS( com_y-com_star(2) )/ABS( com_star(2) + 1 )
+        PRINT *, " * |com_z-com_star(3)|/|com_star(3)+1|=", &
+                 ABS( com_z-com_star(3) )/ABS( com_star(3) + 1 )
         PRINT *
 
         finalnamefile= TRIM(sph_path)//"dbg-pos.dat"
@@ -978,60 +1037,82 @@ SUBMODULE (sph_particles) apm
       !
       !-- Assign artificial pressure to the ghost particles
       !
+      IF(adapt_ghost .EQV. .TRUE.)THEN
 
-      nstar_id( npart_real+1:npart_all )= zero
-      !art_pr ( npart_real+1:npart_all )= 6.0D0*art_pr_max
+        nstar_id( npart_real+1:npart_all )= nstar_id_av
+        IF(debug) PRINT*, "nstar_id_av=", nstar_id_av
 
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, npart_all, npart_real, center, &
-      !$OMP                     dNstar, art_pr, rad_x, rad_y, rad_z, &
-      !$OMP                     art_pr_max, itr ) &
-      !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
-      !$OMP                      i_shell )
-      assign_artificial_pressure_on_ghost_particles: &
-      !
-      !-- Assign a pressure to the ghosts, that grows linearly with the
-      !-- distance from the center of the matter object
-      !
-      DO a= npart_real + 1, npart_all, 1
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( npart_real, npart_all, nstar_sph, nstar_id, &
+        !$OMP                     dNstar, art_pr, nstar_id_av ) &
+        !$OMP             PRIVATE( a )
+        assign_artificial_pressure_on_ghost_particles_adapt: &
+        DO a= npart_real + 1, npart_all, 1
 
-        CALL spherical_from_cartesian( &
-                              all_pos(1,a), all_pos(2,a), all_pos(3,a), &
-                              center(1), center(2), center(3), &
-                              r, theta, phi )
+          art_pr(a)= MAX(one + (nstar_sph(a) - nstar_id_av)/nstar_id_av, zero)
 
-        x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
+        ENDDO assign_artificial_pressure_on_ghost_particles_adapt
+        !$OMP END PARALLEL DO
 
-        y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
+      ELSE
 
-        z_ell= center(3) + rad_z*COS(theta)
+        nstar_id( npart_real+1:npart_all )= zero
+        !art_pr ( npart_real+1:npart_all )= 6.0D0*art_pr_max
 
-        r_ell= SQRT( ( x_ell - center(1) )**two &
-                   + ( y_ell - center(2) )**two &
-                   + ( z_ell - center(3) )**two )
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( all_pos, npart_all, npart_real, center, &
+        !$OMP                     dNstar, art_pr, rad_x, rad_y, rad_z, &
+        !$OMP                     art_pr_max, itr, ellipse_thickness ) &
+        !$OMP             PRIVATE( a, r, theta, phi, x_ell, y_ell, z_ell, r_ell, &
+        !$OMP                      i_shell )
+        assign_artificial_pressure_on_ghost_particles: &
+        !
+        !-- Assign a pressure to the ghosts, that grows linearly with the
+        !-- distance from the center of the matter object
+        !
+        DO a= npart_real + 1, npart_all, 1
 
-        shell_loop: DO i_shell= 1, 10, 1
+          CALL spherical_from_cartesian( &
+                                all_pos(1,a), all_pos(2,a), all_pos(3,a), &
+                                center(1), center(2), center(3), &
+                                r, theta, phi )
 
-          IF( r <= ( one + (ellipse_thickness - one)*DBLE(i_shell)/ten )*r_ell &
-              .AND. &
-          r >= ( one + (ellipse_thickness - one)*DBLE(i_shell - 1)/ten )*r_ell &
-          )THEN
+          x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
 
-            art_pr(a)= DBLE(3*i_shell)*art_pr_max
-            IF( .NOT.is_finite_number(art_pr(a)) &
-                .OR. &
-                art_pr(a) > max_art_pr_ghost &
+          y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
+
+          z_ell= center(3) + rad_z*COS(theta)
+
+          r_ell= SQRT( ( x_ell - center(1) )**two &
+                     + ( y_ell - center(2) )**two &
+                     + ( z_ell - center(3) )**two )
+
+          shell_loop: DO i_shell= 1, 10, 1
+
+            IF( r <= (one + (ellipse_thickness - one)*DBLE(i_shell)/ten)*r_ell &
+                .AND. &
+            r >= (one + (ellipse_thickness - one)*DBLE(i_shell - 1)/ten)*r_ell &
             )THEN
-              art_pr(a)= max_art_pr_ghost
+
+              art_pr(a)= DBLE(3*i_shell)*art_pr_max
+              IF( .NOT.is_finite_number(art_pr(a)) &
+                  .OR. &
+                  art_pr(a) > max_art_pr_ghost &
+              )THEN
+                art_pr(a)= max_art_pr_ghost
+              ENDIF
+              EXIT
+
             ENDIF
-            EXIT
 
-          ENDIF
+          ENDDO shell_loop
 
-        ENDDO shell_loop
+        ENDDO assign_artificial_pressure_on_ghost_particles
+        !$OMP END PARALLEL DO
 
-      ENDDO assign_artificial_pressure_on_ghost_particles
-      !$OMP END PARALLEL DO
+      ENDIF
+
+      !STOP
 
       IF( debug ) PRINT *, "Before calling position_correction"
 
@@ -1101,7 +1182,9 @@ SUBMODULE (sph_particles) apm
       nu= one
       CALL density_loop( npart_all, all_pos, &    ! input
                          nu, h, nstar_sph )      ! output
-      nu= nu_all
+      ! Reset nu to its values immediately
+      nu(1:npart_real)          = nu_all
+      nu(npart_real+1:npart_all)= nu_ghost
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nu_tmp, nu, nstar_id, nstar_sph, &
@@ -1175,6 +1258,10 @@ SUBMODULE (sph_particles) apm
 
       !
       !-- Estimating the particle contribution to the SPH momentum equation
+      !-- TODO: this works only for single polytropes now. The pressure is
+      !--       computed for the single polytrope only.
+      !--       However, it is much easier to compute the momentum in
+      !--       SPHINCS_BSSN, so this feature will most likely be deleted
       !
 
       !IF( MOD( itr, 5 ) == 0 )THEN
@@ -1197,11 +1284,17 @@ SUBMODULE (sph_particles) apm
       !-- Exit conditions
       !
       IF( nuratio_des > zero )THEN
+      ! If there is a desired baryon number ratio...
 
         IF( (nuratio_tmp >= nuratio_des*(one - quarter/ten) .AND. &
              nuratio_tmp <= nuratio_des*(one + quarter/ten) .AND. &
              nuratio_tmp /= nuratio_thres) .OR. &
              itr == apm_max_it )THEN
+        ! ...and the actual baryon number ratio differs from it by 2.5% at the
+        ! most, but it's not equal to the baryon number ratio threshold
+        ! (the 'cap' on nu), then EXIT the APM iteration. Also, EXIT if
+        ! the hard limit on the number of APM steps (equal to apm_max_it)
+        ! is reached.
 
           PRINT *, " * Exit condition satisfied: the baryon number ratio is ", &
                    nuratio_tmp, " <= ", nuratio_des, "*1.025= ", &
@@ -1214,6 +1307,11 @@ SUBMODULE (sph_particles) apm
         IF( (nuratio_cnt >= nuratio_max_steps .AND. &
              nuratio_tmp /= nuratio_thres) .OR. itr == apm_max_it &
         )THEN
+        ! ...and the actual baryon number ratio did not change significantly
+        ! for more than nuratio_max_steps steps, but it's not equal to the
+        ! baryon number ratio threshold (the 'cap' on nu), then EXIT the APM
+        ! iteration. Also, EXIT if the hard limit on the number of APM steps
+        ! (equal to apm_max_it) is reached.
 
           PRINT *, " * Exit condition satisfied: the baryon number ratio ", &
                    "did not change by more than ", nuratio_tol*ten*ten, &
@@ -1222,6 +1320,7 @@ SUBMODULE (sph_particles) apm
           EXIT
 
         ELSE
+        ! Print the counter
 
           PRINT *, " * nuratio_cnt/nuratio_max_steps= ", &
                    nuratio_cnt, "/", nuratio_max_steps
@@ -1230,6 +1329,10 @@ SUBMODULE (sph_particles) apm
         ENDIF
 
       ELSE
+      ! else if there is NOT a desired baryon number ratio, EXIT the APM
+      ! iteration if the relative error on the density increases max_inc times.
+      ! Also, EXIT if the hard limit on the number of APM steps
+      ! (equal to apm_max_it) is reached.
 
         PRINT *, " * n_inc= ", n_inc
         PRINT *
@@ -1250,7 +1353,8 @@ SUBMODULE (sph_particles) apm
       nuratio_tmp_prev  = nuratio_tmp
 
       !
-      !-- If the particle distribution is not yet good enough, update it
+      !-- If the EXIT conditions are not satisfied, update the the particle
+      !-- distribution
       !
       PRINT *, " * Updating positions..."
 
@@ -1265,7 +1369,7 @@ SUBMODULE (sph_particles) apm
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_all, correction_pos, all_pos, center, &
-      !$OMP                     larger_radius ) &
+      !$OMP                     radius_x ) &
       !$OMP             PRIVATE( a, itr2, r, theta, phi )
       find_nan_in_correction_pos: DO a= 1, npart_all, 1
 
@@ -1299,7 +1403,7 @@ SUBMODULE (sph_particles) apm
             !             ( all_pos(3,a) - center(3) )**two )
 
             PRINT *, " *        Particle radius: r=", r, &
-                     "=", r/larger_radius*ten*ten, &
+                     "=", r/radius_x*ten*ten, &
                      "% of the larger radius of the star."
             PRINT *, " *        Particle colatitude: theta=", theta/pi," pi"
             PRINT *, " *        Particle longitude: phi=", phi/pi, " pi"
@@ -1356,7 +1460,7 @@ SUBMODULE (sph_particles) apm
 
           all_pos(:,a)= pos_corr_tmp
           cnt_move(a)= 1
-          !...move the particle without any validation, and exit the loop
+          !...move the particle without any validation
 
         ELSE
 
@@ -1386,10 +1490,14 @@ SUBMODULE (sph_particles) apm
 
             ELSEIF( cnt <= search_pos )THEN
             ! ...else if the new position is invalid,
-            !    and the current step is lower than search_pos
+            !    and the current step is lower than search_pos, change the new
+            !    position randomly, independently in x, y, z
 
               cnt= cnt + 1
 
+              !
+              !-- Add random noise to x coordinate
+              !
               CALL RANDOM_NUMBER( rand_num )
               CALL RANDOM_NUMBER( rand_num2 )
 
@@ -1399,6 +1507,9 @@ SUBMODULE (sph_particles) apm
               pos_corr_tmp(1)= all_pos(1,a) + &
                 correction_pos(1,a)*( one + DBLE(rel_sign)*rand_num*half )
 
+              !
+              !-- Add random noise to y coordinate
+              !
               CALL RANDOM_NUMBER( rand_num )
               CALL RANDOM_NUMBER( rand_num2 )
 
@@ -1408,6 +1519,9 @@ SUBMODULE (sph_particles) apm
               pos_corr_tmp(2)= all_pos(2,a) + &
                 correction_pos(2,a)*( one + DBLE(rel_sign)*rand_num*half )
 
+              !
+              !-- Add random noise to z coordinate
+              !
               CALL RANDOM_NUMBER( rand_num )
               CALL RANDOM_NUMBER( rand_num2 )
 
@@ -1418,9 +1532,6 @@ SUBMODULE (sph_particles) apm
                 correction_pos(3,a)*( one + DBLE(rel_sign)*rand_num*half )
 
               !pos_corr_tmp*( one + DBLE(rel_sign)*rand_num*half*third )
-
-              ! ...change the new position randomly, independently in x, y, z,
-              !    and repeat the test
 
             ELSEIF( cnt == search_pos + 1 )THEN
             ! ...else if the new position was changed randomly search_pos
@@ -1536,14 +1647,6 @@ SUBMODULE (sph_particles) apm
     !-- enforce centre of mass --!
     !----------------------------!
 
-  !  !$OMP PARALLEL DO DEFAULT( NONE ) &
-  !  !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-  !  !$OMP             PRIVATE( a )
-  !  compute_nu_eul4: DO a= 1, npart_real, 1
-  !    nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-  !  ENDDO compute_nu_eul4
-  !  !$OMP END PARALLEL DO
-
     CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
@@ -1604,9 +1707,9 @@ SUBMODULE (sph_particles) apm
 
     CLOSE( UNIT= 2 )
 
-    !-------------------------------------------------------------------!
-    !-- now assign baryon number to match profile as good as possible --!
-    !-------------------------------------------------------------------!
+    !---------------------------------------------------------------!
+    !-- Assign baryon number to match profile as good as possible --!
+    !---------------------------------------------------------------!
 
     PRINT *, " * Assign baryon number..."
     PRINT *
@@ -1655,14 +1758,19 @@ SUBMODULE (sph_particles) apm
                            nstar_sph, nstar_id, nlrf_sph, sqg, &
                            use_atmosphere )
 
-    nu= nu_all
+    nu(1:npart_real)= nu_all
     PRINT *, " * Baryon number on all particles before correction nu_all= ", &
              nu_all
 
     nu_tot= zero
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nu, npart_real ) &
+    !$OMP             PRIVATE( a ) &
+    !$OMP             REDUCTION(+: nu_tot)
     DO a= 1, npart_real, 1
       nu_tot= nu_tot + nu(a)
     ENDDO
+    !$OMP END PARALLEL DO
 
     PRINT *, " * Total baryon number nu_tot=", nu_tot
     PRINT *, " * Total baryon mass= ", nu_tot*amu/MSun, "=", &
@@ -1679,9 +1787,9 @@ SUBMODULE (sph_particles) apm
     IF( debug ) PRINT *, " * nu_ratio before correction = ", nu_ratio
     IF( debug ) PRINT *
 
-    !----------------------!
-    !-- Correcting nu... --!
-    !----------------------!
+    !-----------------------------------------!
+    !-- Cap nu by the desired nuratio_thres --!
+    !-----------------------------------------!
 
     PRINT *, " * Correcting nu..."
     PRINT *
@@ -1706,6 +1814,9 @@ SUBMODULE (sph_particles) apm
     !
     !-- Check that nu is acceptable
     !
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( nu, nstar_id, nstar_sph, npart_real ) &
+    !$OMP             PRIVATE( a )
     DO a= 1, npart_real, 1
 
       IF( .NOT.is_finite_number( nu(a) ) )THEN
@@ -1727,6 +1838,7 @@ SUBMODULE (sph_particles) apm
       ENDIF
 
     ENDDO
+    !$OMP END PARALLEL DO
 
     nu_ratio= MAXVAL( nu, DIM= 1 )/MINVAL( nu, DIM= 1 )
     PRINT *, " * nu_ratio after correction = ", nu_ratio
@@ -1735,19 +1847,22 @@ SUBMODULE (sph_particles) apm
     max_nu= zero
     min_nu= HUGE(one)
     DO a= 1, npart_real, 1
-       IF( nu(a) > max_nu )THEN
-         max_nu= nu(a)
-         a_numax= a
-       ENDIF
-       IF( nu(a) < min_nu )THEN
-         min_nu= nu(a)
-         a_numin= a
-       ENDIF
+      IF( nu(a) > max_nu )THEN
+        max_nu= nu(a)
+        a_numax= a
+      ENDIF
+      IF( nu(a) < min_nu )THEN
+        min_nu= nu(a)
+        a_numin= a
+      ENDIF
     ENDDO
 
     PRINT *, " * Baryon number assigned."
     PRINT *
 
+    !
+    !-- Optionally change baryon number without moving the particles
+    !
     IF( mass_it )THEN
 
       ! just a few iterations to NOT get the nu-ratio too large
@@ -1791,14 +1906,6 @@ SUBMODULE (sph_particles) apm
 
     ENDIF
 
-  !  PRINT *, "max_nu=", max_nu
-  !  PRINT *, "        at ", pos(:, a_numax), " r= ", &
-  !           NORM2( pos(:, a_numax) )/larger_radius
-  !  PRINT *, "min_nu=", min_nu
-  !  PRINT *, "        at ", pos(:, a_numin), " r= ", &
-  !           NORM2( pos(:, a_numin) )/larger_radius
-  !  PRINT *, "max_nu/min_nu=", max_nu/min_nu
-  !  PRINT *
     PRINT *, " * CORRECTED maximum baryon number at this step=", &
              max_nu
     PRINT *, " * CORRECTED minimum baryon number at this step=", &
@@ -1824,10 +1931,10 @@ SUBMODULE (sph_particles) apm
     PRINT *
     PRINT *, "   max_nu=", max_nu2
     PRINT *, "        at ", pos(:, a_numax2), " r= ", &
-             NORM2( pos(:, a_numax2) )/larger_radius
+             NORM2( pos(:, a_numax2) )/radius_x
     PRINT *, "   min_nu=", min_nu2
     PRINT *, "        at ", pos(:, a_numin2), " r= ", &
-             NORM2( pos(:, a_numin2) )/larger_radius
+             NORM2( pos(:, a_numin2) )/radius_x
     PRINT *, "   max_nu/min_nu=", max_nu2/min_nu2
     PRINT *
 
@@ -1910,14 +2017,6 @@ SUBMODULE (sph_particles) apm
     !----------------------------!
     !-- enforce centre of mass --!
     !----------------------------!
-
- !   !$OMP PARALLEL DO DEFAULT( NONE ) &
- !   !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
- !   !$OMP             PRIVATE( a )
- !   compute_nu_eul5: DO a= 1, npart_real, 1
- !     nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
- !   ENDDO compute_nu_eul5
- !   !$OMP END PARALLEL DO
 
     CALL correct_center_of_mass( npart_real, pos, nu, get_density, &
                                  validate_position_final, com_star, &
@@ -2070,51 +2169,51 @@ SUBMODULE (sph_particles) apm
     PRINT *, "** Building neighbors tree..."
     PRINT *
     cnt1= 0
-    DO
-
-      few_ncand= .FALSE.
-
-      ! Redo the previous step slightly different (it's built-in;
-      ! exact_nei_tree_update does not work if I don't call assign_h first),
-      ! then update the neighbour-tree and fill the neighbour-data
+ !   DO
+ !
+ !     few_ncand= .FALSE.
+ !
+ !     ! Redo the previous step slightly different (it's built-in;
+ !     ! exact_nei_tree_update does not work if I don't call assign_h first),
+ !     ! then update the neighbour-tree and fill the neighbour-data
       CALL exact_nei_tree_update( nn_des, &
                                   npart_real, &
                                   pos, nu )
 
-      ll_cell_loop: DO ill= 1, nfinal
-
-        itot= nprev + ill
-        IF( nic(itot) == 0 ) CYCLE
-
-        IF( ncand(ill) < nn_des - 1 )THEN
-
-          ! Increase the smoothing lengths of the paricles inside the cell,
-          ! and rebuild the tree
-          few_ncand= .TRUE.
-
-          particle_in_cell_loop: DO l= lpart(itot), rpart(itot)
-
-            h(l)= three*h(l)
-
-          ENDDO particle_in_cell_loop
-
-        ELSE
-
-          few_ncand= .FALSE.
-
-        ENDIF
-
-      ENDDO ll_cell_loop
-
-      cnt1= cnt1 + 1
-
-      IF( debug ) PRINT *, cnt1
-
-      IF( .NOT.few_ncand .OR. cnt1 >= max_it_tree )THEN
-        EXIT
-      ENDIF
-
-    ENDDO
+  !    ll_cell_loop: DO ill= 1, nfinal
+  !
+  !      itot= nprev + ill
+  !      IF( nic(itot) == 0 ) CYCLE
+  !
+  !      IF( ncand(ill) < nn_des - 1 )THEN
+  !
+  !        ! Increase the smoothing lengths of the paricles inside the cell,
+  !        ! and rebuild the tree
+  !        few_ncand= .TRUE.
+  !
+  !        particle_in_cell_loop: DO l= lpart(itot), rpart(itot)
+  !
+  !          h(l)= three*h(l)
+  !
+  !        ENDDO particle_in_cell_loop
+  !
+  !      ELSE
+  !
+  !        few_ncand= .FALSE.
+  !
+  !      ENDIF
+  !
+  !    ENDDO ll_cell_loop
+  !
+  !    cnt1= cnt1 + 1
+  !
+  !    IF( debug ) PRINT *, cnt1
+  !
+  !    IF( .NOT.few_ncand .OR. cnt1 >= max_it_tree )THEN
+  !      EXIT
+  !    ENDIF
+  !
+  !  ENDDO
 
     find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
     CALL find_h_bruteforce_timer% start_timer()
@@ -2147,165 +2246,6 @@ SUBMODULE (sph_particles) apm
     PRINT *, " * Smoothing lengths assigned and tree is built."
     PRINT *
 
-    !
-    !-- Check that the smoothing length is acceptable
-    !
-
-!    PRINT *
-!    PRINT *, "nfinal= ", nfinal
-!    ll_cell_loop: DO ill= 1, nfinal
-!
-!      itot= nprev + ill
-!      IF( nic(itot) == 0 ) CYCLE
-!
-!      particle_loop: DO l= lpart(itot), rpart(itot)
-!
-!        a=         iorig(l)
-!
-!        ha=        h(a)
-!        ha_1=      one/ha
-!        ha_3=      ha_1*ha_1*ha_1
-!
-!        xa=        pos(1,a)
-!        ya=        pos(2,a)
-!        za=        pos(3,a)
-!
-!        ! initialize correction matrix
-!        mat_xx=    0.D0
-!        mat_xy=    0.D0
-!        mat_xz=    0.D0
-!        mat_yy=    0.D0
-!        mat_yz=    0.D0
-!        mat_zz=    0.D0
-!
-!        cnt1= 0
-!        cnt2= 0
-!
-!        !finalnamefile= "mat.dat"
-!        !
-!        !INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
-!        !
-!        !IF( exist )THEN
-!        !  OPEN( UNIT= 20, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-!        !        FORM= "FORMATTED", &
-!        !        POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-!        !        IOMSG= err_msg )
-!        !ELSE
-!        !  OPEN( UNIT= 20, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-!        !  FORM= "FORMATTED", &
-!        !        ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-!        !ENDIF
-!        !IF( ios > 0 )THEN
-!        !  PRINT *, "...error when opening ", TRIM(finalnamefile), &
-!        !           ". The error message is", err_msg
-!        !  STOP
-!        !ENDIF
-!        cand_loop: DO k= 1, ncand(ill)
-!
-!          b=      all_clists(ill)%list(k)
-!
-!          IF( b == a )THEN
-!            cnt1= cnt1 + 1
-!          ENDIF
-!          IF( xa == pos(1,b) .AND. ya == pos(2,b) .AND. za == pos(3,b) &
-!          )THEN
-!            cnt2= cnt2 + 1
-!          ENDIF
-!
-!          ! Distances (ATTENTION: flatspace version !!!)
-!          ddx=     xa - pos(1,b)
-!          ddy=     ya - pos(2,b)
-!          ddz=     za - pos(3,b)
-!          va=     SQRT(ddx*ddx + ddy*ddy + ddz*ddz)*ha_1
-!
-!          !IF( dx == 0 .AND. dy == 0 .AND. dz == 0 )THEN
-!          !  PRINT *, "va=", va
-!          !  PRINT *, "dz=", dx
-!          !  PRINT *, "dy=", dy
-!          !  PRINT *, "dz=", dz
-!          !  PRINT *, "xa=", xa
-!          !  PRINT *, "ya=", ya
-!          !  PRINT *, "za=", za
-!          !  PRINT *, "pos_u(1,b)", pos_u(1,b)
-!          !  PRINT *, "pos_u(2,b)", pos_u(2,b)
-!          !  PRINT *, "pos_u(3,b)", pos_u(3,b)
-!          !  STOP
-!          !ENDIF
-!
-!          ! get interpolation indices
-!          inde=  MIN(INT(va*dv_table_1),n_tab_entry)
-!          index1= MIN(inde + 1,n_tab_entry)
-!
-!          ! get tabulated values
-!          Wi=     W_no_norm(inde)
-!          Wi1=    W_no_norm(index1)
-!
-!          ! interpolate
-!          dvv=    (va - DBLE(inde)*dv_table)*dv_table_1
-!          Wab_ha= Wi + (Wi1 - Wi)*dvv
-!
-!          ! "correction matrix" for derivs
-!          Wdx=    Wab_ha*ddx
-!          Wdy=    Wab_ha*ddy
-!          Wdz=    Wab_ha*ddz
-!          mat_xx= mat_xx + Wdx*ddx
-!          mat_xy= mat_xy + Wdx*ddy
-!          mat_xz= mat_xz + Wdx*ddz
-!          mat_yy= mat_yy + Wdy*ddy
-!          mat_yz= mat_yz + Wdy*ddz
-!          mat_zz= mat_zz + Wdz*ddz
-!
-!          !WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-!          !  mat_xx, mat_xy, mat_xz, mat_yy, mat_yz, mat_zz
-!
-!        ENDDO cand_loop
-!
-!        !CLOSE( UNIT= 20 )
-!
-!        ! correction matrix
-!        mat(1,1)= mat_xx
-!        mat(2,1)= mat_xy
-!        mat(3,1)= mat_xz
-!
-!        mat(1,2)= mat_xy
-!        mat(2,2)= mat_yy
-!        mat(3,2)= mat_yz
-!
-!        mat(1,3)= mat_xz
-!        mat(2,3)= mat_yz
-!        mat(3,3)= mat_zz
-!
-!        ! invert it
-!        CALL invert_3x3_matrix( mat, mat_1, invertible_matrix )
-!        !PRINT *, invertible_matrix
-!
-!        IF( .NOT.invertible_matrix )THEN
-!          PRINT *, "a= ", a
-!          PRINT *, "h(a)= ", h(a)
-!          PRINT *, "pos_u= ", pos(1,b), pos(2,b), pos(3,b)
-!          PRINT *, "nprev= ", nprev
-!          PRINT *, "ill= ", ill
-!          PRINT *, "itot= ", itot
-!          PRINT *, "nfinal= ", nfinal
-!          PRINT *, "ncand(ill)= ", ncand(ill)
-!          PRINT *, "cnt1= ", cnt1
-!          PRINT *, "cnt2= ", cnt2
-!          PRINT *
-!          STOP
-!        ENDIF
-!
-!      ENDDO particle_loop
-!
-!    ENDDO ll_cell_loop
-
-    PRINT *, " * Smoothing lengths assigned and tree is built."
-    PRINT *, " * The smoothing length was found brute-force for ", &
-             n_problematic_h, " particles."
-    PRINT *
-
-    !
-    !-- Check that the smoothing length is acceptable
-    !
     IF( debug ) PRINT *, "102"
 
     CALL density( npart_real, pos, nstar_int )
@@ -2358,6 +2298,9 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "0"
 
+    !
+    !-- Print final results of the APM to file
+    !
     IF( PRESENT(namefile_results) )THEN
       finalnamefile= namefile_results
     ELSE
@@ -2411,6 +2354,9 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "2"
 
+    !
+    !-- Finalize output of the APM iteration
+    !
     CALL reallocate_output_fields( npart_real )
 
     pos_input(:,1:npart_real)= pos(:,1:npart_real)
@@ -2424,7 +2370,6 @@ SUBMODULE (sph_particles) apm
     !
     !-- Deallocate global variables
     !
-
     IF( ALLOCATED( posmash ) ) DEALLOCATE( posmash )
     CALL deallocate_metric_on_particles()
     IF( debug ) PRINT *, "4"
@@ -2437,9 +2382,6 @@ SUBMODULE (sph_particles) apm
     !
     !-- Check that there aren't multiple particles at the same position
     !
-    !IF( debug ) finalnamefile= TRIM(sph_path)//"negative_hydro.dat"
-    !IF( debug ) CALL this% analyze_hydro( finalnamefile )
-
     PRINT *, "** Checking that there aren't particles with the same position..."
     PRINT *
 
@@ -2488,45 +2430,6 @@ SUBMODULE (sph_particles) apm
       ENDIF
 
     END FUNCTION validate_position_final
-
-
-  !  FUNCTION get_density_atm( x, y, z, use_atmosphere ) RESULT( res )
-  !
-  !    !*******************************************************
-  !    !
-  !    !#
-  !    !
-  !    !
-  !    !  FT 5.12.2021
-  !    !
-  !    !*******************************************************
-  !
-  !    IMPLICIT NONE
-  !
-  !    DOUBLE PRECISION, INTENT(IN):: x
-  !    !! \(x\) coordinate of the desired point
-  !    DOUBLE PRECISION, INTENT(IN):: y
-  !    !! \(y\) coordinate of the desired point
-  !    DOUBLE PRECISION, INTENT(IN):: z
-  !    !! \(z\) coordinate of the desired point
-  !    INTEGER:: res
-  !    !# Equal to get_density( x, y, z ) if use_atmosphere is `.FALSE.`;
-  !    !  equal to atmosphere_density if use_atmosphere is `.TRUE.`
-  !
-  !    IF( use_atmosphere == .TRUE. )THEN
-  !
-  !      res= get_density( x, y, z )
-  !      IF( res == zero )THEN
-  !        res= atmosphere_density
-  !      ENDIF
-  !
-  !    ELSE
-  !
-  !      res= get_density( x, y, z )
-  !
-  !    ENDIF
-  !
-  !  END FUNCTION get_density_atm
 
 
     SUBROUTINE get_nstar_id_atm &
@@ -2715,24 +2618,6 @@ SUBMODULE (sph_particles) apm
            STOP
         ENDIF
       ENDIF
-      !IF(.NOT.ALLOCATED( nstar_eul_id ))THEN
-      !  ALLOCATE( nstar_eul_id( npart_all ), STAT= ios, ERRMSG= err_msg )
-      !  IF( ios > 0 )THEN
-      !     PRINT *, "...allocation error for array nstar_eul_id in SUBROUTINE ", &
-      !              "allocate_apm_fields. The error message is",&
-      !              err_msg
-      !     STOP
-      !  ENDIF
-      !ENDIF
-      !IF(.NOT.ALLOCATED( nu_eul ))THEN
-      !  ALLOCATE( nu_eul( npart_real ), STAT= ios, ERRMSG= err_msg )
-      !  IF( ios > 0 )THEN
-      !     PRINT *, "...allocation error for array nu_eul in SUBROUTINE ", &
-      !              "allocate_apm_fields. The error message is",&
-      !              err_msg
-      !     STOP
-      !  ENDIF
-      !ENDIF
       IF(.NOT.ALLOCATED( art_pr ))THEN
         ALLOCATE( art_pr( npart_all ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
@@ -2919,28 +2804,28 @@ SUBMODULE (sph_particles) apm
       IF( ALLOCATED( pos_input ) ) DEALLOCATE( pos_input )
       ALLOCATE( pos_input( 3, npart_real ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array pos_input in ", &
-                  "SUBROUTINE reallocate_output_fields. The error message is", &
-                  err_msg
-         STOP
+        PRINT *, "...allocation error for array pos_input in ", &
+                 "SUBROUTINE reallocate_output_fields. The error message is", &
+                 err_msg
+        STOP
       ENDIF
 
       IF( ALLOCATED( h_output ) ) DEALLOCATE( h_output )
       ALLOCATE( h_output( npart_real ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array h_output in ", &
-                  "SUBROUTINE reallocate_output_fields. The error message is", &
-                  err_msg
-         STOP
+        PRINT *, "...allocation error for array h_output in ", &
+                 "SUBROUTINE reallocate_output_fields. The error message is", &
+                 err_msg
+        STOP
       ENDIF
 
       IF( ALLOCATED( nu_output ) ) DEALLOCATE( nu_output )
       ALLOCATE( nu_output( npart_real ), STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
-         PRINT *, "...allocation error for array nu_output in ", &
-                  "SUBROUTINE reallocate_output_fields. The error message is", &
-                  err_msg
-         STOP
+        PRINT *, "...allocation error for array nu_output in ", &
+                 "SUBROUTINE reallocate_output_fields. The error message is", &
+                 err_msg
+        STOP
       ENDIF
 
 
@@ -2959,13 +2844,39 @@ SUBMODULE (sph_particles) apm
       !
       !*******************************************************
 
+      USE utility, ONLY: g2kg, m2cm, lorene2hydrobase
+
       IMPLICIT NONE
 
-      DOUBLE PRECISION, PARAMETER:: eps              = 5.0D-1
-      !DOUBLE PRECISION, PARAMETER:: ghost_dist       = 0.375D0!0.25D0 !30.0D0
-      DOUBLE PRECISION, PARAMETER:: multiple_h_av    = 1.0D0
+      INTEGER:: a, a_nu_min
 
+      DOUBLE PRECISION, PARAMETER:: eps          = 1.D0 !2.0D-1 !5.0D0
+      !DOUBLE PRECISION, PARAMETER:: multiple_h_av= 1.0D0
+
+      DOUBLE PRECISION:: nu_av, max_r_real, nstar_sph_ghost_av
+      DOUBLE PRECISION, DIMENSION(npart_real):: tmp, tmp2, tmp3, &
+        nstar_id_arr, nstar_sph_arr
       DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nu_ghost_arr, &
+        nstar_sph_ghost, h_ghost
+
+      IF(adapt_ghost .EQV. .TRUE.)THEN
+        ellipse_thickness= 1.4D0
+      ELSE
+        ellipse_thickness= 1.1D0
+      ENDIF
+
+      npart= npart_real
+
+      CALL allocate_SPH_memory
+
+      CALL allocate_RCB_tree_memory_3D(npart)
+      iorig(1:npart)= (/ (a,a=1,npart) /)
+
+      IF( debug ) PRINT *, "10"
+
+      CALL allocate_gradient( npart )
+      CALL allocate_metric_on_particles( npart )
 
       IF(.NOT.ALLOCATED( ghost_pos ))THEN
         ALLOCATE( ghost_pos( 3, max_npart ), STAT= ios, ERRMSG= err_msg )
@@ -2985,34 +2896,149 @@ SUBMODULE (sph_particles) apm
 
       IF( debug ) PRINT *, "npart_real= ", npart_real
 
-      max_r_real= zero
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( npart_real, pos_input, center ) &
-      !$OMP             PRIVATE( itr, r_real ) &
-      !$OMP             REDUCTION( MAX: max_r_real )
-      DO itr= 1, npart_real, 1
+      ! Find the maximum radial coordinate over the real particles
+   !   max_r_real= zero
+   !   !$OMP PARALLEL DO DEFAULT( NONE ) &
+   !   !$OMP             SHARED( npart_real, pos_input, center ) &
+   !   !$OMP             PRIVATE( a, r_real ) &
+   !   !$OMP             REDUCTION( MAX: max_r_real )
+   !   DO a= 1, npart_real, 1
+   !
+   !     r_real= SQRT( ( pos_input( 1, a ) - center(1) )**two &
+   !                 + ( pos_input( 2, a ) - center(2) )**two &
+   !                 + ( pos_input( 3, a ) - center(3) )**two )
+   !     !IF( r_real > max_r_real ) max_r_real= r_real
+   !     max_r_real= MAX( max_r_real, r_real )
+   !
+   !   ENDDO
+   !   !$OMP END PARALLEL DO
 
-        r_real= SQRT( ( pos_input( 1, itr ) - center(1) )**two &
-                    + ( pos_input( 2, itr ) - center(2) )**two &
-                    + ( pos_input( 3, itr ) - center(3) )**two )
-        !IF( r_real > max_r_real ) max_r_real= r_real
-        max_r_real= MAX( max_r_real, r_real )
+      IF(debug) PRINT *, "max_z_real =", max_z_real
+
+      CALL get_nstar_id( npart_real, pos_input(1,1:npart_real), &
+                                     pos_input(2,1:npart_real), &
+                                     pos_input(3,1:npart_real), tmp, &
+                                     nstar_id_arr, tmp2, tmp3 )
+
+      ! Determine smoothing length so that each particle has exactly
+      ! 300 neighbours inside 2h
+      CALL assign_h( nn_des, &
+                     npart_real, &
+                     pos_input(:,1:npart_real), h_guess(1:npart_real), &
+                     h(1:npart_real) )
+
+      find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
+      CALL find_h_bruteforce_timer% start_timer()
+      n_problematic_h= 0
+      check_h1: DO a= 1, npart_real, 1
+      ! find_h_backup, called below, is OMP parallelized, so this loop
+      ! should not be parallelized as well
+
+        IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
+
+          n_problematic_h= n_problematic_h + 1
+          h(a)= find_h_backup( a, npart_real, pos_input(:,1:npart_real), nn_des)
+          IF( .NOT.is_finite_number( h(a) ) .OR. h(a) <= zero )THEN
+            PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                     " force method."
+            PRINT *, "   Particle position: ", pos_input(:,a)
+            STOP
+          ENDIF
+
+        ENDIF
+
+      ENDDO check_h1
+      CALL find_h_bruteforce_timer% stop_timer()
+      CALL find_h_bruteforce_timer% print_timer( 2 )
+
+      PRINT *, " * The smoothing length was found brute-force for ", &
+               n_problematic_h, " particles."
+      PRINT *
+
+      PRINT *, " * Measure SPH particle number density..."
+      PRINT *
+
+      CALL density_loop( npart_real, pos_input(:,1:npart_real), &
+        nu_output(1:npart_real), h(1:npart_real), nstar_sph_arr(1:npart_real) )
+
+      itr      = 0
+      nu_av    = zero
+      nstar_id_av = zero
+      nstar_sph_av= zero
+      ! TODO: Parallelize this loop
+      DO a= 1, npart_real, 1
+
+        IF( SQRT( ( pos_input( 1, a ) - center(1) )**two &
+                + ( pos_input( 2, a ) - center(2) )**two &
+                + ( pos_input( 3, a ) - center(3) )**two ) &
+                  > 0.99D0*max_z_real )THEN
+
+          itr      = itr + 1
+          nu_av    = nu_av + nu_output(a)
+          nstar_id_av = nstar_id_av + nstar_id_arr(a)
+          nstar_sph_av= nstar_sph_av + nstar_sph_arr(a)
+
+        ENDIF
 
       ENDDO
-      !$OMP END PARALLEL DO
+      nu_av      = nu_av/itr
+      nstar_id_av= nstar_id_av/itr
 
-      nx= nx_gh
-      ny= ny_gh
-      nz= nz_gh
       xmin= center(1) - sizes(1)*( one + eps )
       xmax= center(1) + sizes(2)*( one + eps )
       ymin= center(2) - sizes(3)*( one + eps )
       ymax= center(2) + sizes(4)*( one + eps )
       zmin= center(3) - sizes(5)*( one + eps )
       zmax= center(3) + sizes(6)*( one + eps )
-      dx= ABS( xmax - xmin )/DBLE( nx )
-      dy= ABS( ymax - ymin )/DBLE( ny )
-      dz= ABS( zmax - zmin )/DBLE( nz )
+
+      IF(adapt_ghost .EQV. .TRUE.)THEN
+
+        !
+        !-- Determine dx,dy,dz from desired density from the ID, and compute
+        !-- nx,ny,nz,ghost_dist,nu_ghost from them
+        !
+        dx        = ( nu_av/nstar_id_av )**third
+        dy        = dx
+        dz        = dx
+        ghost_dist= dx
+        nu_ghost  = dx*dy*dz*nstar_id_av
+        ghost_dist= dx
+        nx= NINT( ABS( xmax - xmin )/dx )
+        ny= NINT( ABS( ymax - ymin )/dy )
+        nz= NINT( ABS( zmax - zmin )/dz )
+
+        IF(debug) PRINT*, "# particles over which the averages are taken=", itr
+        IF(debug) PRINT*, "nstar_id_av=", nstar_id_av
+        IF(debug) PRINT*, "nstar_sph_av=", nstar_sph_av
+        IF(debug) PRINT*, "(1.D+12g/cm**3)=", &
+          1.D+12*(g2kg*m2cm**3)*lorene2hydrobase*umass/amu
+        IF(debug) PRINT*, "nu_all", (mass/DBLE(npart_real))*umass/amu
+        IF(debug) PRINT*, "nu_av=", nu_av
+        IF(debug) PRINT*, "nu_av/nstar_id_av=", nu_av/nstar_id_av
+
+      ELSE
+
+        !
+        !-- Read nx,ny,nz from parameter file, and compute dx,dy,dz from them.
+        !-- The ghosts have the same mass as the real particles
+        !
+        nx= nx_gh
+        ny= ny_gh
+        nz= nz_gh
+        dx= ABS( xmax - xmin )/DBLE( nx )
+        dy= ABS( ymax - ymin )/DBLE( ny )
+        dz= ABS( zmax - zmin )/DBLE( nz )
+        nu_ghost= (mass/DBLE(npart_real))*umass/amu
+
+      ENDIF
+
+      IF(debug) PRINT *, "dx =", dx
+      IF(debug) PRINT *, "dy =", dy
+      IF(debug) PRINT *, "dz =", dz
+      IF(debug) PRINT *, "nx =", nx
+      IF(debug) PRINT *, "ny =", ny
+      IF(debug) PRINT *, "nz =", nz
+      IF(debug) PRINT *, "nu_ghost =", nu_ghost
 
       IF(.NOT.ALLOCATED( ghost_pos_tmp ))THEN
         ALLOCATE( ghost_pos_tmp( 3, nx, ny, nz ), STAT= ios, &
@@ -3025,15 +3051,19 @@ SUBMODULE (sph_particles) apm
         ENDIF
       ENDIF
 
-      rad_x= larger_radius + ghost_dist !+ multiple_h_av*h_av
-      rad_y= radius_y      + ghost_dist !+ multiple_h_av*h_av
-      rad_z= radius_z      + ghost_dist !+ multiple_h_av*h_av
+      rad_x= radius_x + ghost_dist !+ multiple_h_av*h_av
+      rad_y= radius_y + ghost_dist !+ multiple_h_av*h_av
+      rad_z= radius_z + ghost_dist !+ multiple_h_av*h_av
+
+      rad_x= ABS( MAXVAL( ABS(pos_input(1,:) - center(1)), DIM= 1 ) )
+      rad_y= ABS( MAXVAL( ABS(pos_input(2,:) - center(2)), DIM= 1 ) )
+      rad_z= ABS( MAXVAL( ABS(pos_input(3,:) - center(3)), DIM= 1 ) )
 
       PRINT *, "** Distance between the size of the object and the ghost ", &
                "particles: ghost_dist =", ghost_dist
       PRINT *
 
-      IF( debug ) PRINT *, "larger_radius= ", larger_radius
+      IF( debug ) PRINT *, "radius_x= ", radius_x
       IF( debug ) PRINT *, "radius_y= ", radius_y
       IF( debug ) PRINT *, "radius_z= ", radius_z
       IF( debug ) PRINT *, "rad_x= ", rad_x
@@ -3045,7 +3075,7 @@ SUBMODULE (sph_particles) apm
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nx, ny, nz, xmin, ymin, zmin, dx, dy, dz, &
-      !$OMP                     ghost_pos_tmp, &
+      !$OMP                     ghost_pos_tmp, ellipse_thickness, &
       !$OMP                     center, rad_x, rad_y, rad_z ) &
       !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp, &
       !$OMP                      x_ell, y_ell, z_ell, r, theta, phi, &
@@ -3090,7 +3120,7 @@ SUBMODULE (sph_particles) apm
       ENDDO
       !$OMP END PARALLEL DO
 
-      itr= 0
+      a= 0
       DO k= 1, nz, 1
 
         DO j= 1, ny, 1
@@ -3099,21 +3129,34 @@ SUBMODULE (sph_particles) apm
 
             IF( ghost_pos_tmp(1, i, j, k) < HUGE(zero) )THEN
 
-              itr= itr + 1
-              ghost_pos(1, itr)= ghost_pos_tmp(1, i, j, k)
-              ghost_pos(2, itr)= ghost_pos_tmp(2, i, j, k)
-              ghost_pos(3, itr)= ghost_pos_tmp(3, i, j, k)
+              a= a + 1
+              ghost_pos( 1, a )= ghost_pos_tmp( 1, i, j, k )
+              ghost_pos( 2, a )= ghost_pos_tmp( 2, i, j, k )
+              ghost_pos( 3, a )= ghost_pos_tmp( 3, i, j, k )
 
             ENDIF
 
            ENDDO
         ENDDO
       ENDDO
-      npart_ghost= itr
+      npart_ghost= a
       IF( npart_ghost == 0 )THEN
         PRINT *, "** ERROR: No ghost particles were placed. Is the ", &
                  "PARAMETER 'ghost_dist' appropriate for the physical system?"
-        PRINT *, "Stopping.."
+        PRINT *, " * Stopping.."
+        PRINT *
+        STOP
+      ENDIF
+      IF( npart_ghost > max_npart )THEN
+        PRINT *
+        PRINT *, "** ERROR! Too many ghost particles placed!"
+        PRINT *, " * npart_ghost= ", npart_ghost
+        PRINT *, " * npart_ghost should not be larger than max_npart= ", &
+                 max_npart
+        PRINT *, " * How are the ghost particles placed? Does the algorithm ", &
+                 "make reasonable sense? Perhaps try to set a smaller ", &
+                 "parameter eps."
+        PRINT *, " * Stopping..."
         PRINT *
         STOP
       ENDIF
@@ -3138,6 +3181,103 @@ SUBMODULE (sph_particles) apm
 
       DEALLOCATE( ghost_pos_tmp )
 
+      npart_all= npart_real + npart_ghost
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( h_guess, npart_real, npart_all, dx, dy, dz ) &
+      !$OMP             PRIVATE( a )
+      DO a= npart_real + 1, npart_all, 1
+        h_guess(a)= ( dx*dy*dz )**third
+      ENDDO
+      !$OMP END PARALLEL DO
+
+      CALL deallocate_metric_on_particles()
+      CALL deallocate_gradient()
+      CALL deallocate_RCB_tree_memory_3D()
+      CALL deallocate_SPH_memory()
+
+      IF(debug)THEN
+        !
+        !-- Estimate ghost density
+        !
+
+        npart= npart_ghost
+
+        CALL allocate_SPH_memory
+
+        CALL allocate_RCB_tree_memory_3D(npart)
+        iorig(1:npart)= (/ (a,a=1,npart) /)
+
+        IF( debug ) PRINT *, "10"
+
+        CALL allocate_gradient( npart )
+        CALL allocate_metric_on_particles( npart )
+
+        ALLOCATE( nu_ghost_arr(npart_ghost) )
+        ALLOCATE( nstar_sph_ghost(npart_ghost) )
+        ALLOCATE( h_ghost(npart_ghost) )
+
+        ! Determine smoothing length so that each particle has exactly
+        ! 300 neighbours inside 2h
+        CALL assign_h( nn_des, &
+                       npart_ghost, &
+                       ghost_pos(:,1:npart_real), &
+                       h_guess(npart_real+1:npart_all), &
+                       h_ghost )
+
+        find_h_bruteforce_timer= timer( "find_h_bruteforce_timer" )
+        CALL find_h_bruteforce_timer% start_timer()
+        n_problematic_h= 0
+        DO a= 1, npart_ghost, 1
+        ! find_h_backup, called below, is OMP parallelized, so this loop
+        ! should not be parallelized as well
+
+          IF( .NOT.is_finite_number( h(a) ) .OR. h_ghost(a) <= zero )THEN
+
+            n_problematic_h= n_problematic_h + 1
+            h_ghost(a)= find_h_backup( a, npart_ghost, ghost_pos(:,1:npart_ghost), nn_des)
+            IF( .NOT.is_finite_number( h_ghost(a) ) .OR. h_ghost(a) <= zero )THEN
+              PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
+                       " force method."
+              PRINT *, "   Particle position: ", ghost_pos(:,a)
+              STOP
+            ENDIF
+
+          ENDIF
+
+        ENDDO
+        CALL find_h_bruteforce_timer% stop_timer()
+        CALL find_h_bruteforce_timer% print_timer( 2 )
+
+        PRINT *, " * The smoothing length was found brute-force for ", &
+                 n_problematic_h, " particles."
+        PRINT *
+
+        PRINT *, " * Measure SPH particle number density..."
+        PRINT *
+
+        nu_ghost_arr= nu_ghost
+        CALL density_loop( npart_ghost, ghost_pos, &
+                           nu_ghost_arr, h_ghost, nstar_sph_ghost )
+
+        !nstar_sph_ghost_av= SUM(nstar_sph_ghost)/npart_ghost
+        PRINT *, "nstar_sph_ghost_max=", MAXVAL(nstar_sph_ghost, DIM=1)
+        PRINT *, "nstar_sph_ghost_av=", SUM(nstar_sph_ghost)/npart_ghost
+        PRINT *, "nstar_sph_ghost_min=", MINVAL(nstar_sph_ghost, DIM=1)
+
+        CALL deallocate_metric_on_particles()
+        CALL deallocate_gradient()
+        CALL deallocate_RCB_tree_memory_3D()
+        CALL deallocate_SPH_memory()
+
+        npart= npart_real
+
+      ENDIF
+
+      !--------------------------------------------------!
+      !--  Printing ghost particles to formatted file  --!
+      !--------------------------------------------------!
+
       PRINT *, " * Printing ghost particles to file..."
 
       IF( PRESENT(namefile_pos_id) )THEN
@@ -3149,14 +3289,14 @@ SUBMODULE (sph_particles) apm
       INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
       IF( exist )THEN
-          OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-                FORM= "FORMATTED", &
-                POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-                IOMSG= err_msg )
+        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+              FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
       ELSE
-          OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-                FORM= "FORMATTED", &
-                ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+        OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
       IF( ios > 0 )THEN
         PRINT *, "...error when opening " // TRIM(finalnamefile), &
@@ -3186,19 +3326,6 @@ SUBMODULE (sph_particles) apm
                TRIM(finalnamefile), " ."
 
       !STOP
-
-      npart_all= npart_real + npart_ghost
-
-      IF(.NOT.ALLOCATED( all_pos ))THEN
-        ALLOCATE( all_pos( 3, npart_all ), STAT= ios, &
-            ERRMSG= err_msg )
-        IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array ghost_pos in SUBROUTINE ", &
-                    "perform_apm. The error message is",&
-                    err_msg
-           STOP
-        ENDIF
-      ENDIF
 
 
     END SUBROUTINE place_and_print_ghost_particles
@@ -3263,7 +3390,8 @@ SUBMODULE (sph_particles) apm
           all_pos( 1, a ), &
           all_pos( 2, a ), &
           all_pos( 3, a ), &
-          tmp
+          tmp, &
+          art_pr(a), nstar_sph(a), nstar_id_av
       ENDDO
 
       CLOSE( UNIT= unit_dump )

@@ -1,5 +1,5 @@
 Project: SPHINCS_ID
-Version: 1.6
+Version: 1.7
 github: https://github.com/francescotorsello
 linkedin: https://www.linkedin.com/in/francescotorsello
 Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.PNG){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of the SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.2M_\odot\) (left) and \(1.8M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the \(\texttt{CompOSE}\) database. The solution was computed with \(\texttt{LORENE}\) and the \(\texttt{CompOSE}\) software, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with \(\texttt{SPLASH}\) and \(\texttt{GIMP}\). </font>
@@ -61,7 +61,7 @@ Currently, it produces initial data for:
   - binary systems of neutron stars, using the data computed by the FUKA solvers within the C++ library Kadath ([5][5]{:target="_blank"},[6][6]{:target="_blank"})
   - data on a Cartesian, uniform grid, representing a generic physical system
 
-The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
+The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations.
 
 SPHINCS_ID needs SPHINCS_BSSN to be compiled.
 
