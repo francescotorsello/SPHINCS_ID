@@ -84,7 +84,7 @@ nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-last_r= 0.992D0     ! The radius of the last spherical surface is
+last_r= 0.99D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -132,7 +132,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.TRUE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
@@ -161,7 +161,7 @@ mass_it= .FALSE.        ! If .TRUE. performs a second iteration without moving
                         ! the star density better. The mass ratio grows very
                         ! fast in all the tried experiments, hence the
                         ! suggested value is .FALSE.
-adapt_ghost=.FALSE.     ! If .TRUE., the ghost particles will be placed and have
+adapt_ghost=.TRUE.     ! If .TRUE., the ghost particles will be placed and have
                         ! a baryon number such to reproduce the density of the
                         ! outermost layers (r > 99% of the minimum radius) of
                         ! the object. If .TRUE., the parameters nx_gh, ny_gh,
