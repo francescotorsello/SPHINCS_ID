@@ -887,11 +887,11 @@ MODULE utility
     yd= y - yo
     zd= z - zo
 
-    IF( x > zero )THEN
+    IF( xd > zero )THEN
 
       phi= ATAN( yd/xd )
 
-    ELSEIF( x < zero )THEN
+    ELSEIF( xd < zero )THEN
 
       phi= ATAN( yd/xd ) + pi
 
