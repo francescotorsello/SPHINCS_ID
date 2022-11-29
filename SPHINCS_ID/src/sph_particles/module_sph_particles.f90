@@ -1123,7 +1123,8 @@ MODULE sph_particles
                                    sizes, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
-                                   nuratio_des, adapt_ghost, &
+                                   nuratio_des, adapt_ghosts, &
+                                   move_away_ghosts, &
                                    nx_gh, ny_gh, nz_gh, ghost_dist, &
                                    use_atmosphere, &
                                    remove_atmosphere, &
@@ -1240,7 +1241,13 @@ MODULE sph_particles
       !  the object. If .TRUE., the arguments nx_gh, ny_gh,
       !  nz_gh, ghost_dist are ignored; if .FALSE., they are
       !  instead used to place the ghost particles
-      LOGICAL,                          INTENT(IN)   :: adapt_ghost
+      LOGICAL,                          INTENT(IN)   :: adapt_ghosts
+      !& If .TRUE., the ghost particles will slowly move away
+      !  from the surface of the star during the iteration
+      !  (depending on the EXIT condition chosen, this happens
+      !  in slightly different ways), to allow for the real
+      !  particles to get closer to the surface
+      LOGICAL,                          INTENT(IN)   :: move_away_ghosts
       !> Number of lattice points in the x direction for ghosts
       INTEGER,                          INTENT(IN)   :: nx_gh
       !> Number of lattice points in the y direction for ghosts

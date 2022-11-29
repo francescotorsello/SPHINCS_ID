@@ -35,7 +35,7 @@ SUBMODULE (sph_particles) apm
   !***********************************
 
   USE constants,  ONLY: quarter
-  USE utility,    ONLY: zero, one, two, three, ten, sph_path
+  USE utility,    ONLY: zero, one, two, three, five, ten, sph_path
 
 
   IMPLICIT NONE
@@ -95,7 +95,8 @@ SUBMODULE (sph_particles) apm
     !
     !*****************************************************
 
-    USE utility,             ONLY: cnt, spherical_from_cartesian
+    USE utility,             ONLY: cnt, spherical_from_cartesian, &
+                                   cartesian_from_spherical
     USE constants,           ONLY: half, third, Msun, amu, pi
 
     USE sph_variables,       ONLY: allocate_sph_memory, deallocate_sph_memory, &
@@ -129,15 +130,15 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
     !INTEGER,          PARAMETER:: print_step       = 15
-    INTEGER,          PARAMETER:: nuratio_max_steps= 150
+    INTEGER,          PARAMETER:: nuratio_max_steps= 200
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
-    DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
-    !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
-    !DOUBLE PRECISION, PARAMETER:: backup_h         = 0.25D0
-    DOUBLE PRECISION, PARAMETER:: max_art_pr_ghost = 1.0D+10
-    DOUBLE PRECISION, PARAMETER:: tiny_real        = 1.0D-10
-    DOUBLE PRECISION, PARAMETER:: nuratio_tol      = 0.0025
+    DOUBLE PRECISION, PARAMETER:: tol               = 1.0D-3
+    !DOUBLE PRECISION, PARAMETER:: iter_tol          = 2.0D-2
+    !DOUBLE PRECISION, PARAMETER:: backup_h          = 0.25D0
+    DOUBLE PRECISION, PARAMETER:: max_art_pr_ghost  = 1.0D+10
+    DOUBLE PRECISION, PARAMETER:: tiny_real         = 1.0D-10
+    DOUBLE PRECISION, PARAMETER:: nuratio_tol       = 2.5D-3
 
     INTEGER:: a, itr, itr2, i_shell, n_inc, cnt1, b, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
@@ -148,6 +149,7 @@ SUBMODULE (sph_particles) apm
     INTEGER:: n_problematic_h, ill, l, itot
     INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
+    DOUBLE PRECISION:: ghost_displacement, min_radius
     DOUBLE PRECISION:: ellipse_thickness
     DOUBLE PRECISION:: radius_x, radius_y, radius_z
     DOUBLE PRECISION:: h_max, h_av, tmp, dens_min, atmosphere_density!, delta
@@ -215,6 +217,7 @@ SUBMODULE (sph_particles) apm
 
     LOGICAL, PARAMETER:: debug= .FALSE.
     LOGICAL:: few_ncand!, invertible_matrix
+    LOGICAL:: push_away_ghosts
 
     TYPE(timer):: find_h_bruteforce_timer
 
@@ -234,6 +237,21 @@ SUBMODULE (sph_particles) apm
     npart_real= SIZE( pos_input(1,:) )
 
     IF( debug ) PRINT *, "npart_real= ", npart_real
+
+    !---------------------------------------------------------------!
+    !-- Tune the displacement the ghosts depending on the desired --!
+    !-- EXIT condition for the APM iteration                      --!
+    !---------------------------------------------------------------!
+
+    IF( nuratio_des > zero )THEN
+
+      ghost_displacement= third/DBLE(nuratio_max_steps)/ten
+
+    ELSE
+
+      ghost_displacement= third/DBLE(max_inc)/ten
+
+    ENDIF
 
     !------------------------------------------------!
     !-- If desired, compute the atmosphere density --!
@@ -1037,7 +1055,7 @@ SUBMODULE (sph_particles) apm
       !
       !-- Assign artificial pressure to the ghost particles
       !
-      IF(adapt_ghost .EQV. .TRUE.)THEN
+      IF(adapt_ghosts .EQV. .TRUE.)THEN
 
         nstar_id( npart_real+1:npart_all )= nstar_id_av
         IF(debug) PRINT*, "nstar_id_av=", nstar_id_av
@@ -1073,15 +1091,17 @@ SUBMODULE (sph_particles) apm
         DO a= npart_real + 1, npart_all, 1
 
           CALL spherical_from_cartesian( &
-                                all_pos(1,a), all_pos(2,a), all_pos(3,a), &
-                                center(1), center(2), center(3), &
-                                r, theta, phi )
+            all_pos(1,a), all_pos(2,a), all_pos(3,a), &
+            center(1), center(2), center(3), &
+            r, theta, phi )
 
-          x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
-
-          y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
-
-          z_ell= center(3) + rad_z*COS(theta)
+          !x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
+          !y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
+          !z_ell= center(3) + rad_z*COS(theta)
+          CALL cartesian_from_spherical( &
+            rad_x, theta, phi, &
+            center(1), center(2), center(3), &
+            all_pos(1,a), all_pos(2,a), all_pos(3,a), rad_y/rad_x, rad_z/rad_x )
 
           r_ell= SQRT( ( x_ell - center(1) )**two &
                      + ( y_ell - center(2) )**two &
@@ -1217,14 +1237,21 @@ SUBMODULE (sph_particles) apm
                nuratio_tmp
       PRINT *
 
-      ! Exit condition
+      !
+      !-- Setting variables to steer the APM iteration
+      !
+      push_away_ghosts= .FALSE.
       IF( err_N_mean > err_mean_old )THEN
         n_inc= n_inc + 1
+        IF( n_inc >= max_inc*half )THEN
+          push_away_ghosts= .TRUE.
+        ENDIF
       ENDIF
       IF( itr > nuratio_min_it .AND. nuratio_tmp /= nuratio_thres .AND. &
           ABS(nuratio_tmp - nuratio_tmp_prev)/nuratio_tmp_prev &
           <= nuratio_tol )THEN
         nuratio_cnt= nuratio_cnt + 1
+        push_away_ghosts= .TRUE.
       ELSE
         nuratio_cnt= 0
       ENDIF
@@ -1353,7 +1380,7 @@ SUBMODULE (sph_particles) apm
       nuratio_tmp_prev  = nuratio_tmp
 
       !
-      !-- If the EXIT conditions are not satisfied, update the the particle
+      !-- If the EXIT conditions are not satisfied, update the particle
       !-- distribution
       !
       PRINT *, " * Updating positions..."
@@ -1426,7 +1453,7 @@ SUBMODULE (sph_particles) apm
       !$OMP                     dNstar, npart_real, nstar_id, cnt_move ) &
       !$OMP             PRIVATE( pos_corr_tmp, a, cnt, rand_num, rand_num2, &
       !$OMP                      rel_sign )
-      particle_loop: DO a= 1, npart_real, 1
+      real_particle_loop: DO a= 1, npart_real, 1
 
         adapt_displacement_to_error: &
         IF( dNstar(a) >= ten*ten &
@@ -1556,11 +1583,55 @@ SUBMODULE (sph_particles) apm
 
         ENDIF if_atmosphere
 
-      ENDDO particle_loop
+      ENDDO real_particle_loop
       !$OMP END PARALLEL DO
       PRINT *, " * The fraction of particles that moved at this step is", &
                DBLE(SUM(cnt_move))/DBLE(npart_real)
       PRINT *
+
+      IF( push_away_ghosts .AND. move_away_ghosts )THEN
+
+        min_radius = MINVAL([radius_x, radius_y, radius_z])
+        !max_r_ghost= (one + third)*MAXVAL([radius_x, radius_y, radius_z])
+
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( all_pos, npart_real, npart_all, center, &
+        !$OMP                     ghost_displacement, min_radius, rad_x, &
+        !$OMP                     rad_y, rad_z, nuratio_cnt ) &
+        !$OMP             PRIVATE( a, r, theta, phi )
+        ghost_particle_loop: DO a= npart_real + 1, npart_all, 1
+
+          CALL spherical_from_cartesian( &
+            all_pos(1,a), all_pos(2,a), all_pos(3,a), &
+            center(1), center(2), center(3), &
+            r, theta, phi )
+
+          r= r + min_radius*ghost_displacement
+
+          CALL cartesian_from_spherical( &
+            r, theta, phi, &
+            center(1), center(2), center(3), &
+            all_pos(1,a), all_pos(2,a), all_pos(3,a) )
+
+          !all_pos(1,a)= center(1) + r*SIN(theta)*COS(phi)
+          !all_pos(2,a)= center(2) + r*SIN(theta)*SIN(phi)
+          !all_pos(3,a)= center(3) + r*COS(theta)
+
+         ! all_pos(:,a)= center + ghost_displacement*(all_pos(:,a) - center)
+
+         ! This will break the ghost ellipsoid into eight disconnected pieces,
+         ! one per quadrant in the 3D space
+         ! all_pos(1,a)= all_pos(1,a) &
+         !       + SIGN(min_radius*ghost_displacement, all_pos(1,a) - center(1))
+         ! all_pos(2,a)= all_pos(2,a) &
+         !       + SIGN(min_radius*ghost_displacement, all_pos(2,a) - center(2))
+         ! all_pos(3,a)= all_pos(3,a) &
+         !       + SIGN(min_radius*ghost_displacement, all_pos(3,a) - center(3))
+
+        ENDDO ghost_particle_loop
+        !$OMP END PARALLEL DO
+
+      ENDIF
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_all, all_pos ) &
@@ -2860,7 +2931,7 @@ SUBMODULE (sph_particles) apm
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nu_ghost_arr, &
         nstar_sph_ghost, h_ghost
 
-      IF(adapt_ghost .EQV. .TRUE.)THEN
+      IF(adapt_ghosts .EQV. .TRUE.)THEN
         ellipse_thickness= 1.4D0
       ELSE
         ellipse_thickness= 1.1D0
@@ -2991,7 +3062,7 @@ SUBMODULE (sph_particles) apm
       zmin= center(3) - sizes(5)*( one + eps )
       zmax= center(3) + sizes(6)*( one + eps )
 
-      IF(adapt_ghost .EQV. .TRUE.)THEN
+      IF(adapt_ghosts .EQV. .TRUE.)THEN
 
         !
         !-- Determine dx,dy,dz from desired density from the ID, and compute

@@ -65,7 +65,8 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     !**********************************************
 
     USE constants,  ONLY: pi, half, amu, Msun
-    USE utility,    ONLY: zero, one, two, three, five, seven, ten
+    USE utility,    ONLY: zero, one, two, three, five, seven, ten, &
+                          cartesian_from_spherical, is_finite_number
     USE matrix,     ONLY: determinant_4x4_matrix
     USE NR,         ONLY: indexx
     USE APM,        ONLY: assign_h
@@ -457,7 +458,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
             ELSE
               !rad= rad - ( one + delta_r )*0.35D0*dr_shells
               rad= rad + ( - delta_r*(seven*five/(ten*ten)) &
-                   - five/ten )*dr_shells
+                           - five/ten )*dr_shells
             ENDIF
 
           ENDIF
@@ -471,21 +472,25 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
           !
           !-- Compute Cartesian coordinates of the candidate particle positions
           !
-          xtemp= a_x*rad*COS(long)*SIN(col) + center(1)
-          ytemp= a_y*rad*SIN(long)*SIN(col) + center(2)
-          ztemp= a_z*rad*COS(col) + center(3)
+          !xtemp= center(1) + a_x*rad*SIN(col)*COS(long)
+          !ytemp= center(2) + a_y*rad*SIN(col)*SIN(long)
+          !ztemp= center(3) + a_z*rad*COS(col)
+          CALL cartesian_from_spherical( &
+            a_x*rad, col, long, &
+            center(1), center(2), center(3), &
+            xtemp, ytemp, ztemp, a_y/a_x, a_z/a_x )
 
-          IF( ISNAN( xtemp ) )THEN
+          IF( .NOT.is_finite_number( xtemp ) )THEN
             PRINT *, "** ERROR when placing first half of the particles! ", &
                      "xtemp is a NaN. Stopping.."
             STOP
           ENDIF
-          IF( ISNAN( ytemp ) )THEN
+          IF( .NOT.is_finite_number( ytemp ) )THEN
             PRINT *, "** ERROR when placing first half of the particles! ", &
                      "ytemp is a NaN. Stopping.."
             STOP
           ENDIF
-          IF( ISNAN( ztemp ) )THEN
+          IF( .NOT.is_finite_number( ztemp ) )THEN
             PRINT *, "** ERROR when placing first half of the particles! ", &
                      "ztemp is a NaN. Stopping.."
             STOP
@@ -540,7 +545,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
       npart_discard   = SUM( SUM( npart_discarded, DIM= 1 ), DIM= 1 )
       npart_shell_cnt = SUM( SUM( npart_surface_tmp, DIM= 1 ), DIM= 1 )
-      npart_shell(r)= MAX( npart_shell(r) - npart_discard, 0 )
+      npart_shell(r)  = MAX( npart_shell(r) - npart_discard, 0 )
       npart_out       = npart_out + npart_shell(r)/2
 
     !  PRINT *, 'r=', r
@@ -2222,7 +2227,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
       !PRINT *, "colatitudes(", i, ")", colatitudes(i)/pi, "pi"
 
-      IF( ISNAN( colatitudes(i) ) )THEN
+      IF( .NOT.is_finite_number( colatitudes(i) ) )THEN
         PRINT *, "** ERROR in SUBROUTINE compute_colatitudes_uniformly_in! ", &
                  "colatitudes(", i, ") is a NaN! Stopping.."
         PRINT *, DBLE( i + 1 )*( COS(alpha) + one )/two

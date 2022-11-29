@@ -60,9 +60,11 @@ MODULE utility
   !  see https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
   DOUBLE PRECISION, PARAMETER:: km2Msun_geo     = one/MSun_geo
   DOUBLE PRECISION, PARAMETER:: lorene2hydrobase= (MSun_geo*km2m)**3/(MSun*g2kg)
-  !# lorene2hydrobase= (1477m)^3 / (2*10^30kg)=
-  !  1.6186541582311746851140226630074e-21
-  !  lorene2hydrobase is the conversion factor for the baryon mass density
+  !# Conversion factor for the baryon mass density, from the units used in
+  !  |lorene| to the units used in |sphincs|, but NOT measured in units of
+  !  \(m_0c^2\)
+  !
+  !  `lorene2hydrobase`\(\simeq\dfrac{(1477\mathrm{m})^3}{2*10^30\mathrm{kg}}=1.6186541582311746851140226630074e-21\dfrac{\mathrm{m}^3}{\mathrm{kg}}\)
 
   INTEGER:: itr
   !! Iterator for loops
@@ -908,9 +910,83 @@ MODULE utility
   END SUBROUTINE spherical_from_cartesian
 
 
-  FUNCTION k_lorene2hydrobase( gamma )
+  PURE SUBROUTINE cartesian_from_spherical &
+    ( r, theta, phi, xo, yo, zo, x, y, z, a_y, a_z )
 
-    DOUBLE PRECISION :: gamma
+    !****************************************************************
+    !
+    !# Compute the Cartesian coordinates of a points \(p\),
+    !  starting from the spherical, or optionally elliptical, polar
+    !  coordinates of the point \(p\) relative to a point \(O\)
+    !
+    !  FT 28.11.2022
+    !
+    !****************************************************************
+
+    USE constants, ONLY: pi
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN):: r
+    !! \(r\) coordinate of the point \(p\), relative to \(O\)
+    DOUBLE PRECISION, INTENT(IN):: theta
+    !! \(\theta\) coordinate (colatitude) of the point \(p\), relative to \(O\)
+    DOUBLE PRECISION, INTENT(IN):: phi
+    !! \(\phi\) coordinate (azimuth) of the point \(p\), relative to \(O\)
+
+    DOUBLE PRECISION, INTENT(IN):: xo
+    !! \(x\) coordinate of the point \(O\)
+    DOUBLE PRECISION, INTENT(IN):: yo
+    !! \(y\) coordinate of the point \(O\)
+    DOUBLE PRECISION, INTENT(IN):: zo
+    !! \(z\) coordinate of the point \(O\)
+
+    DOUBLE PRECISION, INTENT(OUT):: x
+    !! \(x\) coordinate of the point \(p\)
+    DOUBLE PRECISION, INTENT(OUT):: y
+    !! \(y\) coordinate of the point \(p\)
+    DOUBLE PRECISION, INTENT(OUT):: z
+    !! \(z\) coordinate of the point \(p\)
+
+    DOUBLE PRECISION, INTENT(IN), OPTIONAL:: a_y
+    !! Ratio between the y and x semiaxes of the ellipse
+    DOUBLE PRECISION, INTENT(IN), OPTIONAL:: a_z
+    !! Ratio between the z and x semiaxes of the ellipse
+
+    DOUBLE PRECISION:: ay, az
+
+    IF(PRESENT(a_y))THEN
+      ay= a_y
+    ELSE
+      ay= one
+    ENDIF
+    IF(PRESENT(a_z))THEN
+      az= a_z
+    ELSE
+      az= one
+    ENDIF
+
+    x= xo +    r*SIN(theta)*COS(phi)
+    y= yo + ay*r*SIN(theta)*SIN(phi)
+    z= zo + az*r*COS(theta)
+
+  END SUBROUTINE cartesian_from_spherical
+
+
+  PURE FUNCTION k_lorene2hydrobase( gam )
+
+    !****************************************************************
+    !
+    !# Compute the constant to convert the polytropic constant \(K\)
+    !  from the units used in |lorene| for the single polytropic |eos|,
+    !  to the units used in |sphincs|
+    !
+    !  FT xx.xx.2020
+    !
+    !****************************************************************
+
+    DOUBLE PRECISION, INTENT(IN) :: gam
+    !! Polytropic exponent \(\gamma\)
     DOUBLE PRECISION :: k_lorene2hydrobase
 
     ! LORENE's EOS is in terms on number density n = rho/m_nucleon:
@@ -935,15 +1011,26 @@ MODULE utility
 
     k_lorene2hydrobase= &
                         ( (MSun*g2kg)/((MSun_geo*km2m)**3*(1.66D+17)) ) &
-                        **( gamma - 1.0D0 )
+                        **( gam - one )
 
 
   END FUNCTION
 
 
-  FUNCTION k_lorene2hydrobase_piecewisepolytrope( gamma0 )
+  PURE FUNCTION k_lorene2hydrobase_piecewisepolytrope( gamma0 )
 
-    DOUBLE PRECISION :: gamma0
+    !****************************************************************
+    !
+    !# Compute the constant to convert the polytropic constant \(K\)
+    !  from the units used in |lorene| for the piecewise polytropic
+    !  |eos|, to the units used in |sphincs|
+    !
+    !  FT xx.xx.2020
+    !
+    !****************************************************************
+
+    DOUBLE PRECISION, INTENT(IN) :: gamma0
+    !! Polytropic exponent \(\gamma_0\)
     DOUBLE PRECISION :: k_lorene2hydrobase_piecewisepolytrope
 
     ! LORENE has K0 in units of (g cm^{-3})^{1-gamma0} for the piecewise
@@ -951,7 +1038,7 @@ MODULE utility
 
     k_lorene2hydrobase_piecewisepolytrope= &
                         ( MSun/((MSun_geo*km2m*m2cm)**3) ) &
-                        **( gamma0 - 1.0D0 )
+                        **( gamma0 - one )
 
 
   END FUNCTION

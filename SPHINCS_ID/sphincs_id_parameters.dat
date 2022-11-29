@@ -4,23 +4,22 @@
 !-------------------------------------------------------------------------!
 
 !----------------------------------------------------------------!
-! Parameters to specify the number of binary systems of neutron  !
-! stars, the paths to the LORENE binary files containing the     !
-! spectral initial data (ID) to be read by SPHINCS_LORENE, how   !
-! to place particles, if and how to export the SPHINCS ID, if    !
-! and how to compute/export the constraint violations, and other !
-! features of the code.                                          !
+! Parameters to specify the number of physical systems, the      !
+! paths to the files containing the initial data (ID) to be read !
+! by SPHINCS_ID, how to place particles, if and how to print     !
+! the SPH and spacetime ID, if and how to compute/print the      !
+! constraint violations, and other features of the code.         !
 !----------------------------------------------------------------!
-! n_bns and the number of specified components of filenames must be the same
+! n_id and the number of specified components of filenames must be the same
 n_id=1                          ! Number of physical systems to use
 ! Path to the directory containing the ID files, RELATIVE to the path where the
 ! code is executed
 common_path="lorene-id-files/"
             !"fuka-id-files/"
             !"eccentric-ejecta-files/"
-filenames(1)=!"BNSLO_1.3-1.3_mpa1_45km.bin"
+filenames(1)="BNSLO_1.3-1.3_mpa1_45km.bin"
              !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
-             "BNSLO_mpa1_1.2-1.5_45km.bin"
+             !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSFU_1.4-1.4_poly2.00_45km.info"
              !"BNSFU_1.2-1.5_MPA1_45km_ECC_RED.info"
@@ -115,9 +114,9 @@ run_spacetime=.FALSE.
 sph_path="sph-output/"
 spacetime_path="spacetime-output/"
 !------------------------------------------------------------------!
-! Choose how to place particles for each BNS                       !
+! Choose how to place particles for each system                    !
 !   Please specify the details of the particle distribution in the !
-!   sphincs_lorene_bns_particles.par parameter file                !
+!   sphincs_id_particles.par parameter file                        !
 !------------------------------------------------------------------!
 placer(1,:)=2                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file

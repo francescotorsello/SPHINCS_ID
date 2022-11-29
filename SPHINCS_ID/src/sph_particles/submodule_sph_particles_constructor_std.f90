@@ -180,7 +180,7 @@ SUBMODULE (sph_particles) constructor_std
 
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
-              randomize_r, mass_it, adapt_ghost, &
+              randomize_r, mass_it, adapt_ghosts, move_away_ghosts, &
               read_nu, reflect_particles_x
 
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -402,8 +402,9 @@ SUBMODULE (sph_particles) constructor_std
                     ! Steering parameters for the APM iteration
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
                     nuratio_thres, nuratio_des, &
-                    ! Arguments pertaining to the ghost articles
-                    adapt_ghost, nx_gh, ny_gh, nz_gh, ghost_dist, &
+                    ! Arguments pertaining to the ghost particles
+                    adapt_ghosts, move_away_ghosts, &
+                    nx_gh, ny_gh, nz_gh, ghost_dist, &
                     ! Arguments pertaining to the atmosphere
                     use_atmosphere(i_matter), &
                     remove_atmosphere(i_matter), &
@@ -1243,7 +1244,7 @@ SUBMODULE (sph_particles) constructor_std
                 apm_iterate, apm_max_it, max_inc, mass_it, &
                 nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
                 use_atmosphere, remove_atmosphere, nuratio_des, print_step, &
-                ghost_dist, adapt_ghost
+                ghost_dist, adapt_ghosts, move_away_ghosts
 
       parts% sphincs_id_particles= 'sphincs_id_particles.dat'
 
