@@ -61,7 +61,7 @@ reflect_particles_x= .TRUE.
 !----------------------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers;
 ! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 10000000
+npart_des= 500000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
@@ -167,7 +167,7 @@ adapt_ghosts=.FALSE.    ! If .TRUE., the ghost particles will be placed and have
                         ! the object. If .TRUE., the parameters nx_gh, ny_gh,
                         ! nz_gh, ghost_dist below are ignored; if .FALSE., they
                         ! are instead used to place the ghost particles       
-move_away_ghosts=.TRUE.! If .TRUE., the ghost particles will slowly move away
+move_away_ghosts=.FALSE.! If .TRUE., the ghost particles will slowly move away
                         ! from the surface of the star during the iteration
                         ! (depending on the EXIT condition chosen, this happens
                         ! in slightly different ways), to allow for the real

@@ -105,8 +105,6 @@ SUBMODULE (sph_particles) apm
                                    deallocate_metric_on_particles
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
     USE set_h,               ONLY: exact_nei_tree_update, posmash
-    !USE RCB_tree_3D,         ONLY: allocate_RCB_tree_memory_3D, iorig, &
-    !                               deallocate_RCB_tree_memory_3D
     USE units,               ONLY: umass, m0c2_cu
 
     USE APM,                 ONLY: density_loop, position_correction, assign_h
@@ -119,8 +117,9 @@ SUBMODULE (sph_particles) apm
                                    dv_table, dv_table_1,&
                                    W_no_norm, n_tab_entry, &
                                    interp_gradW_table,interp_W_gradW_table
-    USE RCB_tree_3D,         ONLY: iorig, nic, nfinal, nprev, lpart, &
-                                   rpart, allocate_RCB_tree_memory_3D, &
+    USE RCB_tree_3D,         ONLY: iorig, &
+                                   !nic, nfinal, nprev, lpart, rpart, &
+                                   allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
 
     IMPLICIT NONE
@@ -216,7 +215,7 @@ SUBMODULE (sph_particles) apm
     CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
-    LOGICAL:: few_ncand!, invertible_matrix
+    !LOGICAL:: few_ncand!, invertible_matrix
     LOGICAL:: push_away_ghosts
 
     TYPE(timer):: find_h_bruteforce_timer
@@ -339,20 +338,20 @@ SUBMODULE (sph_particles) apm
     itr= 0
 
     DO a= 1, npart_real, 1
-      IF( pos_tmp( 3, a ) > zero )THEN
+      IF( pos_tmp(3,a) > zero )THEN
         itr= itr + 1
-        pos_input( 1, itr )= pos_tmp( 1, a )
-        pos_input( 2, itr )= pos_tmp( 2, a )
-        pos_input( 3, itr )= pos_tmp( 3, a )
+        pos_input(1,itr)= pos_tmp(1,a)
+        pos_input(2,itr)= pos_tmp(2,a)
+        pos_input(3,itr)= pos_tmp(3,a)
         h_guess( itr )     = h_tmp( itr )
       ENDIF
     ENDDO
     npart_real_half= itr
 
     DO a= 1, npart_real_half, 1
-      pos_input( 1, npart_real_half + a )=   pos_input( 1, a )
-      pos_input( 2, npart_real_half + a )=   pos_input( 2, a )
-      pos_input( 3, npart_real_half + a )= - pos_input( 3, a )
+      pos_input(1, npart_real_half + a)=   pos_input(1,a)
+      pos_input(2, npart_real_half + a)=   pos_input(2,a)
+      pos_input(3, npart_real_half + a)= - pos_input(3,a)
       h_guess( npart_real_half + a )     =   h_guess( a )
     ENDDO
     npart_real= 2*npart_real_half
@@ -370,6 +369,7 @@ SUBMODULE (sph_particles) apm
     radius_x= MAX( sizes(1), sizes(2) )
     radius_y= MAX( sizes(3), sizes(4) )
     radius_z= MAX( sizes(5), sizes(6) )
+    min_radius = MINVAL([radius_x, radius_y, radius_z])
 
     h_max= zero
     h_av = zero
@@ -377,9 +377,9 @@ SUBMODULE (sph_particles) apm
     max_z_real= ABS( MAXVAL( ABS(pos_input(3,:) - center(3)), DIM= 1 ) )
     DO a= 1, npart_real, 1
 
-      IF( SQRT( ( pos_input( 1, a ) - center(1) )**two &
-              + ( pos_input( 2, a ) - center(2) )**two &
-              + ( pos_input( 3, a ) - center(3) )**two ) &
+      IF( SQRT( ( pos_input(1,a) - center(1) )**two &
+              + ( pos_input(2,a) - center(2) )**two &
+              + ( pos_input(3,a) - center(3) )**two ) &
                 > 0.99D0*max_z_real )THEN
 
         itr= itr + 1
@@ -487,9 +487,12 @@ SUBMODULE (sph_particles) apm
                          nu, h, nstar_sph )
 
       !nstar_sph_ghost_av= SUM(nstar_sph_ghost)/npart_ghost
-      PRINT *, "nstar_sph_ghost_max=", MAXVAL(nstar_sph(npart_real+1:npart_all), DIM=1)
-      PRINT *, "nstar_sph_ghost_av=", SUM(nstar_sph(npart_real+1:npart_all))/npart_ghost
-      PRINT *, "nstar_sph_ghost_min=", MINVAL(nstar_sph(npart_real+1:npart_all), DIM=1)
+      PRINT *, "nstar_sph_ghost_max=", &
+               MAXVAL(nstar_sph(npart_real+1:npart_all), DIM=1)
+      PRINT *, "nstar_sph_ghost_av=", &
+               SUM(nstar_sph(npart_real+1:npart_all))/npart_ghost
+      PRINT *, "nstar_sph_ghost_min=", &
+               MINVAL(nstar_sph(npart_real+1:npart_all), DIM=1)
 
       CALL deallocate_metric_on_particles()
       CALL deallocate_gradient()
@@ -649,16 +652,8 @@ SUBMODULE (sph_particles) apm
 
     ENDIF
 
-   ! !$OMP PARALLEL DO DEFAULT( NONE ) &
-   ! !$OMP             SHARED( npart_real, nu, nu_eul, nstar_eul_id, nstar_id ) &
-   ! !$OMP             PRIVATE( a )
-   ! compute_nu_eul1: DO a= 1, npart_real, 1
-   !   nu_eul(a)= nu(a)*nstar_eul_id(a)/nstar_id(a)
-   ! ENDDO compute_nu_eul1
-   ! !$OMP END PARALLEL DO
-
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                 nu, get_density, &
+                                 nu(1:npart_real), get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -672,8 +667,6 @@ SUBMODULE (sph_particles) apm
 
     PRINT *, " * ID set up for the APM iteration."
     PRINT *
-
-
 
     !-----------------------------------------------------------------------!
     !-----------------------------------------------------------------------!
@@ -698,7 +691,7 @@ SUBMODULE (sph_particles) apm
     ! nu_ghost is set in place_and_print_ghost_particles
 
     CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                 nu, get_density, &
+                                 nu(1:npart_real), get_density, &
                                  validate_position_final, com_star, &
                                  verbose= .TRUE. )
 
@@ -753,7 +746,7 @@ SUBMODULE (sph_particles) apm
       IF( debug ) PRINT *, "enforcing center of mass..."
 
       CALL correct_center_of_mass( npart_real, all_pos(:,1:npart_real), &
-                                   nu, get_density, &
+                                   nu(1:npart_real), get_density, &
                                    validate_position_final, com_star )
 
       IF( debug ) PRINT *, "mirroring particles..."
@@ -762,7 +755,7 @@ SUBMODULE (sph_particles) apm
                                              all_pos(:,1:npart_real), &
                                              nu(1:npart_real) )
 
-      IF( debug .AND. .FALSE. )THEN
+      IF( debug )THEN
 
         CALL COM( npart_real, all_pos(:,1:npart_real), &  !
                   nu(1:npart_real), &                     ! input
@@ -807,28 +800,20 @@ SUBMODULE (sph_particles) apm
           STOP
         ENDIF
 
-        DO a= 1, npart_real/2, 1
+        DO a= 1, npart_real, 1
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             1, a, &
-            all_pos( 1, a ), &
-            all_pos( 2, a ), &
-            all_pos( 3, a )
-        ENDDO
-
-        DO a= npart_real/2+1, npart_real, 1
-          WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-            2, a, &
-            all_pos( 1, a ), &
-            all_pos( 2, a ), &
-            all_pos( 3, a )
+            all_pos(1,a), &
+            all_pos(2,a), &
+            all_pos(3,a)
         ENDDO
 
         DO a= npart_real+1, npart_all, 1
           WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-            3, a, &
-            all_pos( 1, a ), &
-            all_pos( 2, a ), &
-            all_pos( 3, a )
+            2, a, &
+            all_pos(1,a), &
+            all_pos(2,a), &
+            all_pos(3,a)
         ENDDO
 
         CLOSE( UNIT= 2 )
@@ -1055,7 +1040,9 @@ SUBMODULE (sph_particles) apm
       !
       !-- Assign artificial pressure to the ghost particles
       !
-      IF(adapt_ghosts .EQV. .TRUE.)THEN
+      IF(debug) PRINT *, "adapt_ghosts=", adapt_ghosts
+      IF(debug) PRINT *
+      IF(adapt_ghosts)THEN
 
         nstar_id( npart_real+1:npart_all )= nstar_id_av
         IF(debug) PRINT*, "nstar_id_av=", nstar_id_av
@@ -1101,7 +1088,7 @@ SUBMODULE (sph_particles) apm
           CALL cartesian_from_spherical( &
             rad_x, theta, phi, &
             center(1), center(2), center(3), &
-            all_pos(1,a), all_pos(2,a), all_pos(3,a), rad_y/rad_x, rad_z/rad_x )
+            x_ell, y_ell, z_ell, rad_y/rad_x, rad_z/rad_x )
 
           r_ell= SQRT( ( x_ell - center(1) )**two &
                      + ( y_ell - center(2) )**two &
@@ -1409,9 +1396,9 @@ SUBMODULE (sph_particles) apm
                                            center(1), center(2), center(3), &
                                            r, theta, phi )
 
-          !  correction_pos( 1, a )= - one/(two*ten)*SIN(theta)*COS(phi)
-          !  correction_pos( 2, a )= - one/(two*ten)*SIN(theta)*SIN(phi)
-          !  correction_pos( 3, a )= - one/(two*ten)*COS(theta)
+          !  correction_pos(1,a)= - one/(two*ten)*SIN(theta)*COS(phi)
+          !  correction_pos(2,a)= - one/(two*ten)*SIN(theta)*SIN(phi)
+          !  correction_pos(3,a)= - one/(two*ten)*COS(theta)
             !correction_pos( itr2, a )= zero
 
             PRINT *, "** ERROR! correction_pos(", itr2, ",", a, ") is a NaN!"
@@ -1589,15 +1576,17 @@ SUBMODULE (sph_particles) apm
                DBLE(SUM(cnt_move))/DBLE(npart_real)
       PRINT *
 
+      IF(debug) PRINT *, push_away_ghosts
+      IF(debug) PRINT *, move_away_ghosts
+      IF(debug) PRINT *, push_away_ghosts .AND. move_away_ghosts
+
       IF( push_away_ghosts .AND. move_away_ghosts )THEN
 
-        min_radius = MINVAL([radius_x, radius_y, radius_z])
         !max_r_ghost= (one + third)*MAXVAL([radius_x, radius_y, radius_z])
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( all_pos, npart_real, npart_all, center, &
-        !$OMP                     ghost_displacement, min_radius, rad_x, &
-        !$OMP                     rad_y, rad_z, nuratio_cnt ) &
+        !$OMP                     ghost_displacement, min_radius ) &
         !$OMP             PRIVATE( a, r, theta, phi )
         ghost_particle_loop: DO a= npart_real + 1, npart_all, 1
 
@@ -1607,6 +1596,10 @@ SUBMODULE (sph_particles) apm
             r, theta, phi )
 
           r= r + min_radius*ghost_displacement
+
+          PRINT *, "ghost_displacement=", ghost_displacement
+          PRINT *, "min_radius=", min_radius
+          STOP
 
           CALL cartesian_from_spherical( &
             r, theta, phi, &
@@ -1658,12 +1651,12 @@ SUBMODULE (sph_particles) apm
       !$OMP             PRIVATE( a )
       DO a= 1, npart_real, 1
 
-        IF( (all_pos_prev( 3, a ) > zero .AND. all_pos( 3, a ) <= zero) &
+        IF( (all_pos_prev(3,a) > zero .AND. all_pos(3,a) <= zero) &
             .OR. &
-            (all_pos_prev( 3, a ) < zero .AND. all_pos( 3, a ) >= zero) &
+            (all_pos_prev(3,a) < zero .AND. all_pos(3,a) >= zero) &
         )THEN
 
-          all_pos( 3, a )= all_pos_prev( 3, a )
+          all_pos(3,a)= all_pos_prev(3,a)
 
         ENDIF
 
@@ -1691,7 +1684,7 @@ SUBMODULE (sph_particles) apm
     !-- Discard ghost particles --!
     !-----------------------------!
 
-    pos= all_pos( :, 1:npart_real )
+    pos= all_pos(:, 1:npart_real)
     IF( debug ) PRINT *, npart
 
     h      = h(1:npart_real)
@@ -1733,7 +1726,7 @@ SUBMODULE (sph_particles) apm
     !-----------------------------!
 
     IF( PRESENT(namefile_pos) )THEN
-      finalnamefile= namefile_pos
+      finalnamefile= TRIM(sph_path)//"apm_pos_final.dat"!namefile_pos
     ELSE
       finalnamefile= TRIM(sph_path)//"apm_pos.dat"
     ENDIF
@@ -1757,26 +1750,27 @@ SUBMODULE (sph_particles) apm
     ENDIF
 
     DO a= 1, npart_real, 1
-      tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
+      tmp= get_density( pos(1,a), pos(2,a), pos(3,a) )
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         1, a, &
-        pos( 1, a ), &
-        pos( 2, a ), &
-        pos( 3, a ), &
+        pos(1,a), &
+        pos(2,a), &
+        pos(3,a), &
         tmp, cnt_move(a)
     ENDDO
 
     DO a= npart_real + 1, npart_all, 1
-      tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+      tmp= get_density( all_pos(1,a), all_pos(2,a), all_pos(3,a) )
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         2, a, &
-        all_pos( 1, a ), &
-        all_pos( 2, a ), &
-        all_pos( 3, a ), &
+        all_pos(1,a), &
+        all_pos(2,a), &
+        all_pos(3,a), &
         tmp
     ENDDO
 
     CLOSE( UNIT= 2 )
+    STOP
 
     !---------------------------------------------------------------!
     !-- Assign baryon number to match profile as good as possible --!
@@ -2074,12 +2068,12 @@ SUBMODULE (sph_particles) apm
   !  ENDIF
   !
   !  DO a= 1, npart_real, 1
-  !  tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
+  !  tmp= get_density( pos(1,a), pos(2,a), pos(3,a) )
   !  WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
   !    a, &
-  !    pos( 1, a ), &
-  !    pos( 2, a ), &
-  !    pos( 3, a ), &
+  !    pos(1,a), &
+  !    pos(2,a), &
+  !    pos(3,a), &
   !    tmp
   !  ENDDO
   !
@@ -2121,12 +2115,12 @@ SUBMODULE (sph_particles) apm
   !  ENDIF
   !
   !  DO a= 1, npart_real, 1
-  !    tmp= get_density( pos( 1, a ), pos( 2, a ), pos( 3, a ) )
+  !    tmp= get_density( pos(1,a), pos(2,a), pos(3,a) )
   !    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
   !      a, &
-  !      pos( 1, a ), &
-  !      pos( 2, a ), &
-  !      pos( 3, a ), &
+  !      pos(1,a), &
+  !      pos(2,a), &
+  !      pos(3,a), &
   !      tmp
   !  ENDDO
   !
@@ -2411,7 +2405,7 @@ SUBMODULE (sph_particles) apm
     DO a= 1, npart_real, 1
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         a, &
-        pos( 1, a ), pos( 2, a ), pos( 3, a ), &
+        pos(1,a), pos(2,a), pos(3,a), &
         nstar_id( a ), &
         nstar_int( a ), &
         particle_density_final( a ), &
@@ -2975,9 +2969,9 @@ SUBMODULE (sph_particles) apm
    !   !$OMP             REDUCTION( MAX: max_r_real )
    !   DO a= 1, npart_real, 1
    !
-   !     r_real= SQRT( ( pos_input( 1, a ) - center(1) )**two &
-   !                 + ( pos_input( 2, a ) - center(2) )**two &
-   !                 + ( pos_input( 3, a ) - center(3) )**two )
+   !     r_real= SQRT( ( pos_input(1,a) - center(1) )**two &
+   !                 + ( pos_input(2,a) - center(2) )**two &
+   !                 + ( pos_input(3,a) - center(3) )**two )
    !     !IF( r_real > max_r_real ) max_r_real= r_real
    !     max_r_real= MAX( max_r_real, r_real )
    !
@@ -3039,9 +3033,9 @@ SUBMODULE (sph_particles) apm
       ! TODO: Parallelize this loop
       DO a= 1, npart_real, 1
 
-        IF( SQRT( ( pos_input( 1, a ) - center(1) )**two &
-                + ( pos_input( 2, a ) - center(2) )**two &
-                + ( pos_input( 3, a ) - center(3) )**two ) &
+        IF( SQRT( ( pos_input(1,a) - center(1) )**two &
+                + ( pos_input(2,a) - center(2) )**two &
+                + ( pos_input(3,a) - center(3) )**two ) &
                   > 0.99D0*max_z_real )THEN
 
           itr      = itr + 1
@@ -3201,9 +3195,9 @@ SUBMODULE (sph_particles) apm
             IF( ghost_pos_tmp(1, i, j, k) < HUGE(zero) )THEN
 
               a= a + 1
-              ghost_pos( 1, a )= ghost_pos_tmp( 1, i, j, k )
-              ghost_pos( 2, a )= ghost_pos_tmp( 2, i, j, k )
-              ghost_pos( 3, a )= ghost_pos_tmp( 3, i, j, k )
+              ghost_pos(1,a)= ghost_pos_tmp( 1, i, j, k )
+              ghost_pos(2,a)= ghost_pos_tmp( 2, i, j, k )
+              ghost_pos(3,a)= ghost_pos_tmp( 3, i, j, k )
 
             ENDIF
 
@@ -3378,17 +3372,17 @@ SUBMODULE (sph_particles) apm
       DO a= 1, npart_real, 1
         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
           1, a, &
-          pos_input( 1, a ), &
-          pos_input( 2, a ), &
-          pos_input( 3, a )
+          pos_input(1,a), &
+          pos_input(2,a), &
+          pos_input(3,a)
       ENDDO
 
       DO a= 1, npart_ghost, 1
         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
           2, a, &
-          ghost_pos( 1, a ), &
-          ghost_pos( 2, a ), &
-          ghost_pos( 3, a )
+          ghost_pos(1,a), &
+          ghost_pos(2,a), &
+          ghost_pos(3,a)
       ENDDO
 
       CLOSE( UNIT= 2 )
@@ -3444,23 +3438,23 @@ SUBMODULE (sph_particles) apm
       ENDIF
 
       DO a= 1, npart_real, 1
-        tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+        tmp= get_density( all_pos(1,a), all_pos(2,a), all_pos(3,a) )
         WRITE( UNIT = unit_dump, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
           1, a, &
-          all_pos( 1, a ), &
-          all_pos( 2, a ), &
-          all_pos( 3, a ), &
+          all_pos(1,a), &
+          all_pos(2,a), &
+          all_pos(3,a), &
           nu_tmp(a), &
           tmp, cnt_move(a)
       ENDDO
 
       DO a= npart_real + 1, npart_all, 1
-        tmp= get_density( all_pos( 1, a ), all_pos( 2, a ), all_pos( 3, a ) )
+        tmp= get_density( all_pos(1,a), all_pos(2,a), all_pos(3,a) )
         WRITE( UNIT = unit_dump, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
           2, a, &
-          all_pos( 1, a ), &
-          all_pos( 2, a ), &
-          all_pos( 3, a ), &
+          all_pos(1,a), &
+          all_pos(2,a), &
+          all_pos(3,a), &
           tmp, &
           art_pr(a), nstar_sph(a), nstar_id_av
       ENDDO
@@ -3684,12 +3678,12 @@ SUBMODULE (sph_particles) apm
       DO a= 1, npart_real, 1
         WRITE( UNIT = 23, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
           a, &
-          all_pos( 1, a ), &
-          all_pos( 2, a ), &
-          all_pos( 3, a ), &
-          dS( 1, a ), &
-          dS( 2, a ), &
-          dS( 3, a ), &
+          all_pos(1,a), &
+          all_pos(2,a), &
+          all_pos(3,a), &
+          dS(1,a), &
+          dS(2,a), &
+          dS(3,a), &
           pr_sph(a)!, &
           !nu_tmp(a), &
           !nstar_sph(a)/m0c2_cu
