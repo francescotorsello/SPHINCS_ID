@@ -66,10 +66,13 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
     USE constants,  ONLY: pi, half, amu, Msun
     USE utility,    ONLY: zero, one, two, three, five, seven, ten, &
-                          cartesian_from_spherical, is_finite_number
+                          cartesian_from_spherical, is_finite_number, &
+                          g2kg, m2cm, lorene2hydrobase
     USE matrix,     ONLY: determinant_4x4_matrix
     USE NR,         ONLY: indexx
     USE APM,        ONLY: assign_h
+    USE options,    ONLY: ndes
+    USE units,      ONLY: umass
 
     IMPLICIT NONE
 
@@ -88,7 +91,8 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
                        proper_volume, mass_test, mass_test2,&
                        proper_volume_test, npart_shell_kept, &
                        rand_num, rand_num2, delta_r, shell_thickness, &
-                       upper_bound_tmp, lower_bound_tmp, col_tmp
+                       upper_bound_tmp, lower_bound_tmp, col_tmp, &
+                       rho_to_be_resolved
 
     DOUBLE PRECISION, PARAMETER:: huge_real= 1.0D30!ABS( HUGE(0.0D0) )
 
@@ -121,13 +125,13 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
     TYPE(pos_on_surfaces), DIMENSION(:), ALLOCATABLE:: pos_surfaces
 
+    INTEGER,          DIMENSION(:,:),   ALLOCATABLE:: npart_surface_tmp
+    INTEGER,          DIMENSION(:,:),   ALLOCATABLE:: npart_discarded
     DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: pos_shell_tmp
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: sqdetg_tmp
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: bar_density_tmp
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: gam_euler_tmp
-    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pvol_tmp
-    INTEGER, DIMENSION(:,:), ALLOCATABLE:: npart_surface_tmp
-    INTEGER, DIMENSION(:,:), ALLOCATABLE:: npart_discarded
+    DOUBLE PRECISION, DIMENSION(:,:),   ALLOCATABLE:: sqdetg_tmp
+    DOUBLE PRECISION, DIMENSION(:,:),   ALLOCATABLE:: bar_density_tmp
+    DOUBLE PRECISION, DIMENSION(:,:),   ALLOCATABLE:: gam_euler_tmp
+    DOUBLE PRECISION, DIMENSION(:,:),   ALLOCATABLE:: pvol_tmp
 
     CHARACTER(LEN=:), ALLOCATABLE:: surface_type
 
@@ -198,6 +202,18 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     !ELSE
       m_p= mass_star/DBLE(npart_des)
     !ENDIF
+
+    !PRINT *, "std m_p             =", m_p
+    !PRINT *, "std npart           =", npart_des
+    !rho_to_be_resolved= 1.D+13*(g2kg*m2cm**3)*lorene2hydrobase!1.0D-5
+    !!rho_to_be_resolved= 1.138065390333111E-004
+    !m_p= rho_to_be_resolved/(ndes/two)
+    !!PRINT *, "average rho_id on the outer layers for 1.3 MPA1=", &
+    !!         1.363246651849556D+53*amu/umass !=1.138065390333111E-004
+    !PRINT *, "rho to be resolved  =", rho_to_be_resolved
+    !PRINT *, "m_p to resolve rho  =", m_p
+    !PRINT *, "npart to resolve rho=", NINT(mass_star/m_p)
+    !STOP
 
     !--------------------------------!
     !-- Compute number of surfaces --!

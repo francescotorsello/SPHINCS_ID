@@ -1297,13 +1297,20 @@ SUBMODULE (sph_particles) apm
       !
       !-- Exit conditions
       !
-      IF( nuratio_des > zero )THEN
+      IF(itr == apm_max_it)THEN
+
+        PRINT *, " * Exit condition satisfied: the APM reached the maximum ", &
+                 "number of iterations apm_max_it=", apm_max_it
+        PRINT *
+        EXIT
+
+      ENDIF
+      IF(nuratio_des > zero)THEN
       ! If there is a desired baryon number ratio...
 
         IF( (nuratio_tmp >= nuratio_des*(one - quarter/ten) .AND. &
              nuratio_tmp <= nuratio_des*(one + quarter/ten) .AND. &
-             nuratio_tmp /= nuratio_thres) .OR. &
-             itr == apm_max_it )THEN
+             nuratio_tmp /= nuratio_thres) )THEN
         ! ...and the actual baryon number ratio differs from it by 2.5% at the
         ! most, but it's not equal to the baryon number ratio threshold
         ! (the 'cap' on nu), then EXIT the APM iteration. Also, EXIT if
@@ -1319,7 +1326,7 @@ SUBMODULE (sph_particles) apm
         ENDIF
 
         IF( (nuratio_cnt >= nuratio_max_steps .AND. &
-             nuratio_tmp /= nuratio_thres) .OR. itr == apm_max_it &
+             nuratio_tmp /= nuratio_thres) &
         )THEN
         ! ...and the actual baryon number ratio did not change significantly
         ! for more than nuratio_max_steps steps, but it's not equal to the
@@ -1350,7 +1357,7 @@ SUBMODULE (sph_particles) apm
 
         PRINT *, " * n_inc= ", n_inc
         PRINT *
-        IF( n_inc == max_inc .OR. itr == apm_max_it )THEN
+        IF(n_inc == max_inc)THEN
 
           PRINT *, " * Exit condition satisfied: the average over the ", &
                    "particles of the relative difference between the ID  ", &
@@ -1597,10 +1604,6 @@ SUBMODULE (sph_particles) apm
 
           r= r + min_radius*ghost_displacement
 
-          PRINT *, "ghost_displacement=", ghost_displacement
-          PRINT *, "min_radius=", min_radius
-          STOP
-
           CALL cartesian_from_spherical( &
             r, theta, phi, &
             center(1), center(2), center(3), &
@@ -1726,7 +1729,7 @@ SUBMODULE (sph_particles) apm
     !-----------------------------!
 
     IF( PRESENT(namefile_pos) )THEN
-      finalnamefile= TRIM(sph_path)//"apm_pos_final.dat"!namefile_pos
+      finalnamefile= namefile_pos
     ELSE
       finalnamefile= TRIM(sph_path)//"apm_pos.dat"
     ENDIF
@@ -1770,7 +1773,6 @@ SUBMODULE (sph_particles) apm
     ENDDO
 
     CLOSE( UNIT= 2 )
-    STOP
 
     !---------------------------------------------------------------!
     !-- Assign baryon number to match profile as good as possible --!
@@ -2925,7 +2927,7 @@ SUBMODULE (sph_particles) apm
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nu_ghost_arr, &
         nstar_sph_ghost, h_ghost
 
-      IF(adapt_ghosts .EQV. .TRUE.)THEN
+      IF(adapt_ghosts)THEN
         ellipse_thickness= 1.4D0
       ELSE
         ellipse_thickness= 1.1D0
@@ -3056,7 +3058,7 @@ SUBMODULE (sph_particles) apm
       zmin= center(3) - sizes(5)*( one + eps )
       zmax= center(3) + sizes(6)*( one + eps )
 
-      IF(adapt_ghosts .EQV. .TRUE.)THEN
+      IF(adapt_ghosts)THEN
 
         !
         !-- Determine dx,dy,dz from desired density from the ID, and compute
@@ -3073,13 +3075,14 @@ SUBMODULE (sph_particles) apm
         nz= NINT( ABS( zmax - zmin )/dz )
 
         IF(debug) PRINT*, "# particles over which the averages are taken=", itr
-        IF(debug) PRINT*, "nstar_id_av=", nstar_id_av
-        IF(debug) PRINT*, "nstar_sph_av=", nstar_sph_av
-        IF(debug) PRINT*, "(1.D+12g/cm**3)=", &
+        IF(debug) PRINT*, "nstar_id_av      =", nstar_id_av
+        IF(debug) PRINT*, "nstar_sph_av     =", nstar_sph_av
+        IF(debug) PRINT*, "(1.D+12g/cm**3)  =", &
           1.D+12*(g2kg*m2cm**3)*lorene2hydrobase*umass/amu
-        IF(debug) PRINT*, "nu_all", (mass/DBLE(npart_real))*umass/amu
-        IF(debug) PRINT*, "nu_av=", nu_av
+        IF(debug) PRINT*, "nu_all           =",(mass/DBLE(npart_real))*umass/amu
+        IF(debug) PRINT*, "nu_av            =", nu_av
         IF(debug) PRINT*, "nu_av/nstar_id_av=", nu_av/nstar_id_av
+        !STOP
 
       ELSE
 
