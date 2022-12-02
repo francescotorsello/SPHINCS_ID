@@ -70,19 +70,18 @@ SUBMODULE (bssn_formulation) constructor
     ! in standard 3+1 formulation
     IF( PRESENT(dx) .AND. PRESENT(dy) .AND. PRESENT(dz) )THEN
 
-      CALL bssnid% setup_standard_tpo_variables( id, dx, dy, dz )
+      CALL bssnid% setup_standard_tpo_variables(id, dx, dy, dz)
 
     ELSE
 
-      CALL bssnid% setup_standard_tpo_variables( id )
+      CALL bssnid% setup_standard_tpo_variables(id)
 
     ENDIF
 
     ! Read and store the BSSN parameters
     CALL initialize_bssn()
     CALL deallocate_bssn()
-    !CALL allocate_bssn_fields( bssnid )
-    DEALLOCATE( levels )
+    DEALLOCATE(levels)
 
     IF( .NOT.ALLOCATED( bssnid% GC_int ))THEN
       ALLOCATE( bssnid% GC_int( bssnid% nlevels, 3 ), &

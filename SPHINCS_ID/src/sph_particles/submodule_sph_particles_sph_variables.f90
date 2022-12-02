@@ -42,7 +42,7 @@ SUBMODULE (sph_particles) sph_variables
 
 
   USE constants,  ONLY: half, c_light2
-  USE utility,    ONLY: zero, one, two, three
+  USE utility,    ONLY: zero, one, two, three, eos$poly, eos$pwpoly
 
 
   IMPLICIT NONE
@@ -54,6 +54,36 @@ SUBMODULE (sph_particles) sph_variables
   !-------------------!
   !--  SUBROUTINES  --!
   !-------------------!
+
+
+  MODULE PROCEDURE compute_sph_hydro
+
+    !************************************************
+    !
+    !# Computes the hydro fields on a section of the particles specified as
+    !  input.
+    !  First, computes the |sph| pressure starting from the |sph| baryon mass
+    !  density, and the specific internal
+    !  energy. The pressure is computed differently for different |eos|, and
+    !  for cold and hot systems.
+    !  Then computes the enthalpy and the sound speed accordingly.
+    !
+    !  FT 02.12.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+  !  ASSOCIATE( eos_id     => this% all_eos(i_matter)% eos_parameters(1), &
+  !          kappa_poly => this% all_eos(i_matter)% eos_parameters(poly$kappa), &
+  !          gamma_poly => this% all_eos(i_matter)% eos_parameters(poly$gamma) &
+  !  )
+  !
+  !
+  !
+  !  END ASSOCIATE
+
+  END PROCEDURE compute_sph_hydro
 
 
   MODULE PROCEDURE compute_and_print_sph_variables
@@ -434,11 +464,21 @@ SUBMODULE (sph_particles) sph_variables
 
     matter_objects_loop: DO i_matter= 1, this% n_matter, 1
 
-      ASSOCIATE( npart_in  => this% npart_i(i_matter-1) + 1, &
-                 npart_fin => this% npart_i(i_matter-1) +    &
-                              this% npart_i(i_matter) )
+      ASSOCIATE( npart_in => this% npart_i(i_matter-1) + 1, &
+                 npart_fin=> this% npart_i(i_matter-1) + &
+                             this% npart_i(i_matter), &
+            eos_id     => this% all_eos(i_matter)% eos_parameters(1), &
+            kappa_poly => this% all_eos(i_matter)% eos_parameters(poly$kappa), &
+            gamma_poly => this% all_eos(i_matter)% eos_parameters(poly$gamma) &
+      )
 
-      IF( this% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
+      CALL this% compute_sph_hydro(npart_in, npart_fin, &
+        this% nlrf_sph(npart_in:npart_fin), u(npart_in:npart_fin), &
+        Pr(npart_in:npart_fin), this% enthalpy(npart_in:npart_fin), &
+        cs(npart_in:npart_fin) &
+      )
+
+      IF( eos_id == eos$poly )THEN
       ! If the |eos| is polytropic
 
         PRINT *, " * Computing pressure and specific internal energy from", &
@@ -455,25 +495,21 @@ SUBMODULE (sph_particles) sph_variables
           PRINT *
 
           Pr(npart_in:npart_fin)= &
-            this% all_eos(i_matter)% eos_parameters(poly$kappa) &
-            *( this% nlrf_sph(npart_in:npart_fin)*m0c2_cu ) &
-            **this% all_eos(i_matter)% eos_parameters(poly$gamma)
+            kappa_poly*( this% nlrf_sph(npart_in:npart_fin)*m0c2_cu ) &
+            **gamma_poly
 
           ! Using this internal energy gives machine-precision relative errors
           ! after the recovery, since it is computed from nlrf_sph
           ! Using the internal energy from the ID gives larger errors
           u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
-            /(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
-            *( this% all_eos(i_matter)% eos_parameters(poly$gamma) - one ) ) )
+            /(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu*(gamma_poly - one) ) )
 
           this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
            + Pr(npart_in:npart_fin)/(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu)
 
-          cs(npart_in:npart_fin)= SQRT( &
-            this% all_eos(i_matter)% eos_parameters(poly$gamma) &
-              *Pr(npart_in:npart_fin)/ &
-            (this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
-            *this% enthalpy(npart_in:npart_fin)) )
+          cs(npart_in:npart_fin)= SQRT( gamma_poly*Pr(npart_in:npart_fin)/ &
+                                   (this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
+                                   *this% enthalpy(npart_in:npart_fin)) )
 
           !
           !-- Leaving the following code here, commented, because it allows
@@ -494,8 +530,6 @@ SUBMODULE (sph_particles) sph_variables
     !      ENDDO
 
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-          this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ELSE
         ! If the system is hot, that is, has a thermal component, then
@@ -508,37 +542,34 @@ SUBMODULE (sph_particles) sph_variables
 
           u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
 
+          !$OMP PARALLEL DO DEFAULT( NONE ) &
+          !$OMP             SHARED( this, Pr, m0c2_cu, u ) &
+          !$OMP             PRIVATE( a )
           DO a= npart_in, npart_fin, 1
 
             Pr(a)= &
             ! cold pressure
-            this% all_eos(i_matter)% eos_parameters(poly$kappa) &
-              *( this% nlrf_sph(a)*m0c2_cu ) &
-              **this% all_eos(i_matter)% eos_parameters(poly$gamma) &
+            kappa_poly*( this% nlrf_sph(a)*m0c2_cu )**gamma_poly &
             + &
             ! thermal pressure
             Gamma_th_1*( this% nlrf_sph(a)*m0c2_cu )* &
-              MAX(u(a) - ( Pr(a)/(this% nlrf_sph(a)*m0c2_cu &
-                *( this% all_eos(i_matter)% eos_parameters(poly$gamma) &
-                   - one ) ) ), zero)
+            MAX( u(a) - ( Pr(a)/(this% nlrf_sph(a)*m0c2_cu &
+                          *(gamma_poly - one) ) ), zero )
 
           ENDDO
+          !$OMP END PARALLEL DO
           this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
            + Pr(npart_in:npart_fin)/(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu)
 
-          cs(npart_in:npart_fin)= SQRT( &
-            this% all_eos(i_matter)% eos_parameters(poly$gamma) &
-              *Pr(npart_in:npart_fin)/ &
+          cs(npart_in:npart_fin)= SQRT( gamma_poly*Pr(npart_in:npart_fin)/ &
             (this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
             *this% enthalpy(npart_in:npart_fin)) )
 
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-          this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ENDIF
 
-      ELSEIF( this% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
+      ELSEIF( eos_id == eos$pwpoly )THEN
       ! If the |eos| is piecewise polytropic
 
         PRINT *, " * Computing pressure and specific internal energy from", &
@@ -555,15 +586,17 @@ SUBMODULE (sph_particles) sph_variables
 
           CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
 
+          !$OMP PARALLEL DO DEFAULT( NONE ) &
+          !$OMP             SHARED( this, Pr, m0c2_cu, u, cs ) &
+          !$OMP             PRIVATE( a )
           DO a= npart_in, npart_fin, 1
 
             CALL gen_pwp_cold_eos( this% nlrf_sph(a)*m0c2_cu, &
                                    Pr(a), u(a), cs(a) )
 
           ENDDO
+          !$OMP END PARALLEL DO
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-          this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ELSE
         ! If the system is hot, that is, has a thermal component, then
@@ -578,6 +611,9 @@ SUBMODULE (sph_particles) sph_variables
 
           CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
 
+          !$OMP PARALLEL DO DEFAULT( NONE ) &
+          !$OMP             SHARED( this, Pr, m0c2_cu, u, cs ) &
+          !$OMP             PRIVATE( a, tmp )
           DO a= npart_in, npart_fin, 1
 
             CALL gen_pwp_eos( this% nlrf_sph(a)*m0c2_cu, &
@@ -586,13 +622,15 @@ SUBMODULE (sph_particles) sph_variables
                               Pr(a), cs(a) )
 
           ENDDO
+          !$OMP END PARALLEL DO
           Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-          this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-          this% u_sph(npart_in:npart_fin)= u(npart_in:npart_fin)
 
         ENDIF
 
       ENDIF
+
+      this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
+      this% u_sph(npart_in:npart_fin)       = u(npart_in:npart_fin)
 
       END ASSOCIATE
 

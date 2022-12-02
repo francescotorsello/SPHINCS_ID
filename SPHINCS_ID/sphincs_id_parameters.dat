@@ -20,6 +20,8 @@ common_path="lorene-id-files/"
 filenames(1)="BNSLO_1.3-1.3_mpa1_45km.bin"
              !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !"BNSLO_mpa1_1.2-1.5_45km.bin"
+             !"DRSLO_apr4.bin"
+             !"EJECT_ejecta_apr4_2516.dat"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSFU_1.4-1.4_poly2.00_45km.info"
              !"BNSFU_1.2-1.5_MPA1_45km_ECC_RED.info"
@@ -91,8 +93,6 @@ filenames(1)="BNSLO_1.3-1.3_mpa1_45km.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr-new.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
-             !"DRSLO_apr4.bin"
-             !"EJECT_ejecta_apr4_2516.dat"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
 !--------------------------------------------------!
@@ -104,6 +104,8 @@ filenames(1)="BNSLO_1.3-1.3_mpa1_45km.bin"
 estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
+!   If both are set to .FALSE., the code will only !
+!   read the ID and print info about it.           !
 !--------------------------------------------------!
 run_sph=.TRUE.
 run_spacetime=.FALSE.
@@ -118,7 +120,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_id_particles.par parameter file                        !
 !------------------------------------------------------------------!
-placer(1,:)=2                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object
@@ -133,7 +135,7 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 !----------------------------------------------!
 ! Choose to compute and export the constraints !
 !----------------------------------------------!
-compute_constraints=.FALSE.        ! Compute constraints on the gravity grid,
+compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
 compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,

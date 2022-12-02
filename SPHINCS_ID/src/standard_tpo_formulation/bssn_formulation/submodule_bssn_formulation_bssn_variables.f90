@@ -123,19 +123,13 @@ SUBMODULE (bssn_formulation) bssn_variables
     PRINT *, " * Allocating needed memory..."
     PRINT *
 
-    ALLOCATE ( levels( this% nlevels ), STAT=ios )
+    ALLOCATE ( levels( this% nlevels ), STAT= ios )
     IF( ios > 0 )THEN
      PRINT*,'...allocation error for levels'
      STOP
     ENDIF
     levels = this% levels
     nlevels= this% nlevels
-
-    !DO l= 1, this% nlevels, 1
-    !  levels(l)% ngrid_x= this% levels(l)% ngrid_x
-    !  levels(l)% ngrid_x= this% levels(l)% ngrid_x
-    !  levels(l)% ngrid_x= this% levels(l)% ngrid_x
-    !ENDDO
 
     !CALL allocate_ADM()
     CALL allocate_BSSN()
@@ -146,7 +140,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     ! Allocate memory for the stress-energy tensor (used in write_BSSN_dump)
     CALL allocate_Tmunu()
 
-    ! Allocate memory for the derivatives of the ADM variables
+    ! Allocate memory for the derivatives of the standard 3+1 variables
     CALL allocate_GravityAcceleration()
 
     !CALL allocate_grid_function( rad_coord, 'rad_coord' )
@@ -246,7 +240,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     !
     !-- Setting the TYPE variables equal to the MODULE variables
     !
-    CALL allocate_bssn_fields( this )
+    CALL allocate_bssn_fields(this)
     ref_levels4: DO l= 1, this% nlevels
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -305,7 +299,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     CALL deallocate_BSSN()
     !CALL deallocate_grid_function( rad_coord, 'rad_coord' )
     !CALL deallocate_gravity_grid()
-    DEALLOCATE( levels )
+    DEALLOCATE(levels)
 
     call_flag= call_flag + 1
     this% call_flag= call_flag
@@ -586,10 +580,10 @@ SUBMODULE (bssn_formulation) bssn_variables
 
     DEALLOCATE( tmp1, tmp2, tmp3, tmp4 )
 
-   imin = [ ngx, ngy, ngz ]
-   imax(1) = nx - ngx - 1
-   imax(2) = ny - ngy - 1
-   imax(3) = nz - ngz - 1
+    imin = [ ngx, ngy, ngz ]
+    imax(1) = nx - ngx - 1
+    imax(2) = ny - ngy - 1
+    imax(3) = nz - ngz - 1
 
    !!$OMP PARALLEL DO DEFAULT( NONE ) &
    !!$OMP             SHARED( Gamma_u, l ) &

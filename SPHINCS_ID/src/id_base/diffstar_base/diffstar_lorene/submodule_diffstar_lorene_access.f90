@@ -346,31 +346,33 @@ SUBMODULE (diffstar_lorene) access
     !
     !**************************************************
 
+    USE utility,  ONLY: eos$poly, eos$pwpoly
+
     IMPLICIT NONE
 
     CALL this% check_i_matter(i_matter)
 
-    IF( this% eos_loreneid == 1 )THEN
+    IF( this% eos_id == eos$poly )THEN
 
-      eos_params= [ DBLE(this% eos_loreneid), this% gamma, this% kappa ]
+      eos_params= [ DBLE(this% eos_id), this% gamma, this% kappa ]
 
-    ELSEIF( this% eos_loreneid == 110 )THEN
+    ELSEIF( this% eos_id == eos$pwpoly )THEN
 
-      eos_params= [ DBLE(this% eos_loreneid), DBLE(this% npeos), &
+      eos_params= [ DBLE(this% eos_id), DBLE(this% npeos), &
             this% gamma0, this% gamma1, this% gamma2, this% gamma3, &
             this% kappa0, this% kappa1, this% kappa2, this% kappa3, &
             this% logP1, &
             this% logRho0, this% logRho1, this% logRho2 ]
 
-    ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
-
-      eos_params= [ DBLE(this% eos_loreneid) ]
+    !ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
+    !
+    !  eos_params= [ DBLE(this% eos_loreneid) ]
 
     ELSE
 
       PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
-               " The EOS on the DRS is unknown! LORENE EOS ID=", &
-               this% eos_loreneid
+               " The EOS on the DRS is unknown! SPHINCS_ID EOS ID=", &
+               this% eos_id
       STOP
 
     ENDIF

@@ -104,8 +104,9 @@ MODULE sph_particles
   !  polytropic |eos|
 
   TYPE eos
+
   !! Data structure representing an |eos|
-    CHARACTER( LEN= : ), ALLOCATABLE:: eos_name
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_name
     !! The |eos| name
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: eos_parameters
     !# Array containing the |eos| parameters, in the following order:
@@ -123,6 +124,7 @@ MODULE sph_particles
     ! polytropic constant in units of
     ! \(\left(M_\odot L_\odot^{-3}\right)^{1-\gamma}\). Pressure and baryon
     ! mass density have the same units \(M_\odot L_\odot^{-3}\) since \(c^2=1\).
+
   END TYPE
 
 
@@ -323,10 +325,10 @@ MODULE sph_particles
     CHARACTER( LEN= 50 ):: sphincs_id_particles
     !! String containing the name of the particles parameter file
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: compose_path
+    CHARACTER(LEN=:), ALLOCATABLE:: compose_path
     !# String storing the local path to the directory containing the
     !  CompOSE |eos|
-    CHARACTER( LEN= : ), ALLOCATABLE:: compose_filename
+    CHARACTER(LEN=:), ALLOCATABLE:: compose_filename
     !# String storing the subpath of compose_path to the CompOSE file with
     !  .beta extension
 
@@ -470,6 +472,15 @@ MODULE sph_particles
 
     PROCEDURE:: deallocate_particles_memory
     !! Deallocates memory for the [[particles]] member arrays
+
+    PROCEDURE:: compute_sph_hydro
+    !# Computes the hydro fields on a section of the particles specified as
+    !  input.
+    !  First, computes the |sph| pressure starting from the |sph| baryon mass
+    !  density, and the specific internal
+    !  energy. The pressure is computed differently for different |eos|, and
+    !  for cold and hot systems.
+    !  Then computes the enthalpy and the sound speed accordingly.
 
     PROCEDURE:: read_compose_composition
     !! Reads the \(Y_e(n_b)\) table in the CompOSE file with extension .beta
@@ -1112,6 +1123,37 @@ MODULE sph_particles
       CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_print_sph_variables
+
+    MODULE SUBROUTINE compute_sph_hydro( this, npart_in, npart_fin, &
+      nlrf, u, pr, enthalpy, cs )
+    !# Computes the hydro fields on a section of the particles specified as
+    !  input.
+    !  First, computes the |sph| pressure starting from the |sph| baryon mass
+    !  density, and the specific internal
+    !  energy. The pressure is computed differently for different |eos|, and
+    !  for cold and hot systems.
+    !  Then computes the enthalpy and the sound speed accordingly.
+
+      CLASS(particles), INTENT(INOUT):: this
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER, INTENT(IN):: npart_in
+      !! First index of the desired section of the particles
+      INTEGER, INTENT(IN):: npart_fin
+      !! Last index of the desired section of the particles
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(IN)   :: &
+      nlrf
+      !! Baryon mass density in the local rest frame
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: u
+      !! Specific internal energy
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: Pr
+      !! Pressure
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: &
+      enthalpy
+      !! Enthalpy
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: cs
+      !! Speed of sound
+
+    END SUBROUTINE compute_sph_hydro
 
     MODULE SUBROUTINE perform_apm( this, get_density, get_nstar_id, &
                                    npart_output, &

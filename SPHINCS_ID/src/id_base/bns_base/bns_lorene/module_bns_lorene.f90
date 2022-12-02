@@ -64,53 +64,12 @@ MODULE bns_lorene
     PRIVATE
 
 
-    !> Identifier of the bnslorene object
     INTEGER:: bns_identifier= 0
-    !> |lorene| identifiers for the EoS
-    INTEGER:: eos1_loreneid, eos2_loreneid
-
-    !
-    !-- Spacetime fields
-    !
-
-    !> 1-D array storing the lapse function
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse
-    !> 1-D array storing the x component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_x
-    !> 1-D array storing the y component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_y
-    !> 1-D array storing the z component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_z
-    !> 1-D array storing the xx component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xx
-    !> 1-D array storing the xy component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xy
-    !> 1-D array storing the xz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xz
-    !> 1-D array storing the yy component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yy
-    !> 1-D array storing the yz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yz
-    !> 1-D array storing the zz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_zz
-    !& 1-D array storing the xx component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xx
-    !& 1-D array storing the xy component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xy
-    !& 1-D array storing the xz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xz
-    !& 1-D array storing the yy component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yy
-    !& 1-D array storing the yz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yz
-    !& 1-D array storing the zz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_zz
+    !! Identifier of the bnslorene object
+    INTEGER:: eos1_loreneid
+    !! |lorene| identifier for the |eos| of star 1
+    INTEGER:: eos2_loreneid
+    !! |lorene| identifier for the |eos| of star 2
 
     !
     !-- Hydro fields

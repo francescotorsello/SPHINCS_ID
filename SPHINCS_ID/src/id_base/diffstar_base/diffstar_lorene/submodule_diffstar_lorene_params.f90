@@ -59,7 +59,8 @@ SUBMODULE (diffstar_lorene) params
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR, C_NULL_CHAR
     USE utility, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                       k_lorene2hydrobase_piecewisepolytrope, zero, two
+                       k_lorene2hydrobase_piecewisepolytrope, zero, two, &
+                       eos$poly, eos$pwpoly
 
 #if flavour == 1
 
@@ -164,12 +165,16 @@ SUBMODULE (diffstar_lorene) params
     this% pressure_center       = this% pressure_center*lorene2hydrobase
 
     ! Convert polytropic constants from |lorene| units to SPHINCS units
-    IF( this% eos_loreneid == 1 )THEN ! If the EOS is polytropic
+    IF( this% eos_loreneid == 1 )THEN
+    ! If the EOS is polytropic
 
+      this% eos_id= eos$poly
       this% kappa= this% kappa*k_lorene2hydrobase( this% gamma )
 
-    ELSEIF( this% gamma0 /= 0 )THEN ! If the EOS is piecewise polytropic
+    ELSEIF( this% gamma0 /= 0 )THEN
+    ! If the EOS is piecewise polytropic
 
+      this% eos_id = eos$pwpoly
       this% kappa0= this% kappa0 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma0 )
       this% kappa1= this% kappa1 &
@@ -179,7 +184,7 @@ SUBMODULE (diffstar_lorene) params
       this% kappa3= this% kappa3 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma3 )
 
-    ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
+    !ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
     ! If the EOS is tabulated
 
     ELSE

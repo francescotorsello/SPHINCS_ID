@@ -40,6 +40,12 @@ MODULE utility
   INTEGER, PARAMETER:: flag$sph= -37457
   INTEGER, PARAMETER:: flag$tpo= -6543
 
+  !
+  !-- Identifiers for the supported equations of state
+  !
+  INTEGER, PARAMETER:: eos$poly  = 1
+  INTEGER, PARAMETER:: eos$pwpoly= 2
+
 
   DOUBLE PRECISION, PARAMETER:: zero        = 0.D0
   DOUBLE PRECISION, PARAMETER:: one         = 1.D0

@@ -165,6 +165,26 @@ SUBMODULE (diffstar_base) access
   !-----------------!
 
 
+  MODULE PROCEDURE get_eos_id
+
+    !************************************************
+    !
+    !# Returns the |eos| identifier of the
+    !  `i_matter`-th star
+    !
+    !  FT 2.12.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL this% check_i_matter(i_matter)
+
+    get_eos_id= this% eos_id
+
+  END PROCEDURE get_eos_id
+
+
   MODULE PROCEDURE get_gamma
 
     !************************************************

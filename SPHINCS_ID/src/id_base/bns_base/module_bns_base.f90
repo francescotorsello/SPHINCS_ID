@@ -237,10 +237,16 @@ MODULE bns_base
     DOUBLE PRECISION:: pressure_center2
 
     !> Name of the equation of state (|eos|) of star 1
-    CHARACTER( LEN=: ), ALLOCATABLE:: eos1
+    CHARACTER(LEN=:), ALLOCATABLE:: eos1
 
     !> Name of the equation of state (|eos|) of star 2
-    CHARACTER( LEN=: ), ALLOCATABLE:: eos2
+    CHARACTER(LEN=:), ALLOCATABLE:: eos2
+
+    INTEGER:: eos1_id
+    !! |sphincsid| identifier for the |eos| of star 1
+
+    INTEGER:: eos2_id
+    !! |sphincsid| identifier for the |eos| of star 2
 
     !
     !-- Parameters of single polytropic equations of state for the two NSs
@@ -362,6 +368,49 @@ MODULE bns_base
     !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\) for star 2
     DOUBLE PRECISION:: logRho2_2
 
+
+    !
+    !-- Spacetime fields
+    !
+
+    !> 1-D array storing the lapse function
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse
+    !> 1-D array storing the x component of the shift vector [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_x
+    !> 1-D array storing the y component of the shift vector [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_y
+    !> 1-D array storing the z component of the shift vector [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_z
+    !> 1-D array storing the xx component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xx
+    !> 1-D array storing the xy component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xy
+    !> 1-D array storing the xz component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xz
+    !> 1-D array storing the yy component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yy
+    !> 1-D array storing the yz component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yz
+    !> 1-D array storing the zz component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_zz
+    !& 1-D array storing the xx component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xx
+    !& 1-D array storing the xy component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xy
+    !& 1-D array storing the xz component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xz
+    !& 1-D array storing the yy component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yy
+    !& 1-D array storing the yz component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yz
+    !& 1-D array storing the zz component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_zz
 
 
     CONTAINS
@@ -488,6 +537,8 @@ MODULE bns_base
     !! Returns [[bnsbase:eos1]]
     PROCEDURE, PUBLIC:: get_eos2
     !! Returns [[bnsbase:eos2]]
+    PROCEDURE, PUBLIC:: get_eos_id
+    !! Returns [[bnsbase:eos1_id]] or [[bnsbase:eos2_id]]
 
     !
     !-- PROCEDURES to be used for single polytropic EOS
@@ -733,6 +784,18 @@ MODULE bns_base
       !  specified by `vector`
 
     END FUNCTION find_radius
+
+
+    MODULE FUNCTION get_eos_id( this, i_matter )
+
+      CLASS(bnsbase), INTENT(IN):: this
+      !! [[bnsbase]] object owning this PROCEDURE
+      INTEGER,        INTENT(IN):: i_matter
+      !! Index of the matter object whose string is to return
+      INTEGER:: get_eos_id
+      !! Result
+
+    END FUNCTION get_eos_id
 
 
     MODULE PURE FUNCTION get_gamma_1( this )

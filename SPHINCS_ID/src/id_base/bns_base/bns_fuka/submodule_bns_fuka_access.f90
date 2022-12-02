@@ -367,17 +367,19 @@ SUBMODULE (bns_fuka) access
     !
     !**************************************************
 
+    USE utility,  ONLY: eos$poly, eos$pwpoly
+
     IMPLICIT NONE
 
-    IF( this% eos_type == "Cold_PWPoly" )THEN
+    IF( i_matter == 1 )THEN
 
-      IF( this% npeos_1 == 1 )THEN
+      IF( this% eos1_id == eos$poly )THEN
 
-        eos_params= [ 1.D0, this% gamma_1, this% kappa_1 ]
+        eos_params= [ DBLE(eos$poly), this% gamma_1, this% kappa_1 ]
 
-      ELSEIF( this% npeos_1 > 1 )THEN
+      ELSEIF( this% eos1_id == eos$pwpoly )THEN
 
-        eos_params= [ DBLE(110), DBLE(this% npeos_1), &
+        eos_params= [ DBLE(eos$pwpoly), DBLE(this% npeos_1), &
               this% gamma0_1, this% gamma1_1, this% gamma2_1, this% gamma3_1, &
               this% kappa0_1, this% kappa1_1, this% kappa2_1, this% kappa3_1, &
               this% logP1_1, &
@@ -386,8 +388,31 @@ SUBMODULE (bns_fuka) access
       ELSE
 
         PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
-                 " The EOS on star 1 is unknown! LORENE EOS ID=", &
-                 this% eos1_fukaid
+                 " The EOS on star 1 is unknown! FUKA EOS type=", &
+                 this% eos_type_1
+        STOP
+
+      ENDIF
+
+    ELSEIF( i_matter == 2 )THEN
+
+      IF( this% eos1_id == eos$poly )THEN
+
+        eos_params= [ DBLE(eos$poly), this% gamma_1, this% kappa_1 ]
+
+      ELSEIF( this% eos1_id == eos$pwpoly )THEN
+
+        eos_params= [ DBLE(eos$pwpoly), DBLE(this% npeos_1), &
+              this% gamma0_1, this% gamma1_1, this% gamma2_1, this% gamma3_1, &
+              this% kappa0_1, this% kappa1_1, this% kappa2_1, this% kappa3_1, &
+              this% logP1_1, &
+              this% logRho0_1, this% logRho1_1, this% logRho2_1 ]
+
+      ELSE
+
+        PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+                 " The EOS on star 1 is unknown! FUKA EOS type=", &
+                 this% eos_type_2
         STOP
 
       ENDIF

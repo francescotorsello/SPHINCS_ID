@@ -151,62 +151,21 @@ MODULE bns_fuka
 
     INTEGER:: bns_identifier= 0
     !! Identifier of the bnsfuka object
-    INTEGER:: eos1_fukaid, eos2_fukaid
-    !! |fuka| identifiers for the |eos|
+    INTEGER:: eos1_fukaid
+    !! |fuka| identifier for the |eos| of star 1
+    INTEGER:: eos2_fukaid
+    !! |fuka| identifier for the |eos| of star 2
 
     !
     !-- ID fields on a lattice around each star
     !
 
     ! TODO: change "grid" to "lattice" for consistency
-    INTEGER:: nx_grid= 400
-    INTEGER:: ny_grid= 400
-    INTEGER:: nz_grid= 400
+    INTEGER:: nx_grid= 100
+    INTEGER:: ny_grid= 100
+    INTEGER:: nz_grid= 100
     TYPE(id_lattice), DIMENSION(2):: star_lattice
     !# Array storing two [[bns_fuka:id_lattice]] objects, one per star
-
-    !
-    !-- Spacetime fields
-    !
-
-    !> 1-D array storing the lapse function
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse
-    !> 1-D array storing the x component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_x
-    !> 1-D array storing the y component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_y
-    !> 1-D array storing the z component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_z
-    !> 1-D array storing the xx component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xx
-    !> 1-D array storing the xy component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xy
-    !> 1-D array storing the xz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xz
-    !> 1-D array storing the yy component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yy
-    !> 1-D array storing the yz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yz
-    !> 1-D array storing the zz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_zz
-    !& 1-D array storing the xx component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xx
-    !& 1-D array storing the xy component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xy
-    !& 1-D array storing the xz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xz
-    !& 1-D array storing the yy component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yy
-    !& 1-D array storing the yz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yz
-    !& 1-D array storing the zz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_zz
 
     !
     !-- Hydro fields stored on a refined mesh
@@ -247,10 +206,14 @@ MODULE bns_fuka
     !      See the last part of the PROGRAM in sphincs_id.f90, for example.
     TYPE(C_PTR):: bns_ptr
 
-    CHARACTER(LEN=:), ALLOCATABLE:: eos_type
-    !! String containing the type of the |eos|
-    CHARACTER(LEN=:), ALLOCATABLE:: eos_file
-    !! String containing the name of the |eos| file used by |fuka|
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_type_1
+    !! String containing the type of the |eos| of star 1
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_file_1
+    !! String containing the name of the |eos| file used by |fuka| of star 1
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_type_2
+    !! String containing the type of the |eos| of star 2
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_file_2
+    !! String containing the name of the |eos| file used by |fuka| of star 2
 
     CHARACTER(LEN=:), ALLOCATABLE:: filename
     !! String containing the name of the '.info' |id| file output by |fuka|
@@ -266,10 +229,10 @@ MODULE bns_fuka
     PROCEDURE:: derived_type_constructor => construct_bnsfuka
 
     PROCEDURE:: construct_binary
-    !! Constructs the |fuka| |binns| object
+    !! Constructs the |fuka| bns_export object
 
     PROCEDURE:: destruct_binary
-    !! Destructs the |fuka| |binns| object
+    !! Destructs the |fuka| bns_export object
 
     PROCEDURE:: allocate_bnsfuka_memory
     !! Allocates memory for the [[bnsfuka]] member arrays
@@ -1608,8 +1571,10 @@ MODULE bns_fuka
                                    ent_center2,            &
                                    rho_center2,            &
                                    energy_density_center2, &
-                                   eos_type,               &
-                                   eos_file,               &
+                                   eos_type_1,             &
+                                   eos_file_1,             &
+                                   eos_type_2,             &
+                                   eos_file_2,             &
                                    gamma,                  &
                                    kappa,                  &
                                    n_poly,                 &
@@ -1670,8 +1635,10 @@ MODULE bns_fuka
       REAL(C_DOUBLE), INTENT(OUT)       :: ent_center2
       REAL(C_DOUBLE), INTENT(OUT)       :: rho_center2
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density_center2
-      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_type
-      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_file
+      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_type_1
+      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_file_1
+      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_type_2
+      CHARACTER(KIND=C_CHAR), DIMENSION(100), INTENT(OUT):: eos_file_2
       REAL(C_DOUBLE), INTENT(OUT)       :: gamma
       REAL(C_DOUBLE), INTENT(OUT)       :: kappa
       INTEGER(C_INT), INTENT(OUT)       :: n_poly

@@ -192,8 +192,11 @@ MODULE diffstar_base
     DOUBLE PRECISION:: redshift_pole
     !! Redshift factor at North pole
 
-    CHARACTER( LEN=: ), ALLOCATABLE:: eos
+    CHARACTER(LEN=:), ALLOCATABLE:: eos
     !! Name of the equation of state (EoS) of star 1
+
+    INTEGER:: eos_id
+    !! |sphincsid| identifier for the |eos| of star 1
 
 
     !
@@ -258,6 +261,71 @@ MODULE diffstar_base
     !# Piecewise polytrope: Base 10 exponent of the third fiducial density
     !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\)
 
+
+    !
+    !-- Spacetime fields
+    !
+
+    !> 1-D array storing the lapse function
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse
+    !> 1-D array storing the x component of the shift vector [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_x
+    !> 1-D array storing the y component of the shift vector [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_y
+    !> 1-D array storing the z component of the shift vector [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_z
+    !> 1-D array storing the xx component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xx
+    !> 1-D array storing the xy component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xy
+    !> 1-D array storing the xz component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xz
+    !> 1-D array storing the yy component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yy
+    !> 1-D array storing the yz component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yz
+    !> 1-D array storing the zz component of the spatial metric [pure number]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_zz
+    !& 1-D array storing the xx component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xx
+    !& 1-D array storing the xy component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xy
+    !& 1-D array storing the xz component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xz
+    !& 1-D array storing the yy component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yy
+    !& 1-D array storing the yz component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yz
+    !& 1-D array storing the zz component of the extrinsic curvature
+    !  [c/MSun_geo]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_zz
+
+    !
+    !-- Hydro fields
+    !
+
+    !> 1-D array storing the baryon mass density in the fluid frame [kg m^{-3}]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: baryon_density
+    !> 1-D array storing the energy density [kg c^2 m^{-3}]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
+    !> 1-D array storing the specific internal energy [c^2]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: specific_energy
+    !> 1-D array storing the pressure
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
+    !> 1-D array storing the x component of the fluid 3-velocity with respect to
+    !  the Eulerian observer [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_x
+    !> 1-D array storing the y component of the fluid 3-velocity with respect to
+    !  the Eulerian observer [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_y
+    !> 1-D array storing the z component of the fluid 3-velocity with respect to
+    !  the Eulerian observer [c]
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_z
 
 
     CONTAINS
@@ -492,7 +560,7 @@ MODULE diffstar_base
       CLASS(diffstarbase), INTENT(IN):: this
       INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object whose string is to return
-      CHARACTER( LEN= : ), ALLOCATABLE:: get_eos
+      CHARACTER(LEN=:), ALLOCATABLE:: get_eos
 
     END FUNCTION get_eos
 
@@ -500,6 +568,18 @@ MODULE diffstar_base
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
+
+
+    MODULE FUNCTION get_eos_id( this, i_matter )
+
+      CLASS(diffstarbase), INTENT(IN):: this
+      !! [[diffstarbase]] object owning this PROCEDURE
+      INTEGER,             INTENT(IN):: i_matter
+      !! Index of the matter object whose string is to return
+      INTEGER:: get_eos_id
+      !! Result
+
+    END FUNCTION get_eos_id
 
 
     MODULE PURE FUNCTION get_gamma( this )

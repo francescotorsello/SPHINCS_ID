@@ -202,8 +202,8 @@ MODULE ejecta_generic
     !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\)
 
 
-    INTEGER:: eos_ejectaid
-    !! Identification number for the |eos|
+    INTEGER:: eos_id
+    !! |sphincsid| identifier for the |eos|
 
 
     CONTAINS
@@ -267,7 +267,7 @@ MODULE ejecta_generic
     PROCEDURE:: return_spatial_extent       => get_radii
     PROCEDURE:: print_summary               => print_summary_ejecta
 
-    PROCEDURE:: get_eos_id => get_eos_ejectaid
+    !PROCEDURE:: get_eos_id => get_eos_ejectaid
     !! Returns the identifier for the EOS
 
     PROCEDURE:: return_eos_parameters => get_eos_parameters
@@ -848,15 +848,15 @@ MODULE ejecta_generic
     END FUNCTION get_logRho2
 
 
-    MODULE FUNCTION get_eos_ejectaid( this )
-    !! Interface to [[ejecta_generic:get_eos_ejectaid]]
+    MODULE FUNCTION get_eos_id( this )
+    !! Interface to [[ejecta_generic:get_eos_id]]
 
       !> [[ejecta]] object which this PROCEDURE is a member of
       CLASS(ejecta), INTENT(IN):: this
       ! Result
-      INTEGER:: get_eos_ejectaid
+      INTEGER:: get_eos_id
 
-    END FUNCTION get_eos_ejectaid
+    END FUNCTION get_eos_id
 
 
     MODULE SUBROUTINE get_eos_parameters( this, i_matter, eos_params )

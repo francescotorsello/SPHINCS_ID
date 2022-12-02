@@ -453,11 +453,12 @@ SUBMODULE (ejecta_generic) access
   END PROCEDURE get_logRho2
 
 
-  MODULE PROCEDURE get_eos_ejectaid
+  MODULE PROCEDURE get_eos_id
 
     !**************************************************
     !
-    !# Returns the |lorene| ID-number of the EOS of the system
+    !# Returns the |sphincsid| identifier of the |eos|
+    !  of the system
     !
     !  FT 19.11.2021
     !
@@ -465,9 +466,9 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_eos_ejectaid= this% eos_ejectaid
+    get_eos_id= this% eos_id
 
-  END PROCEDURE get_eos_ejectaid
+  END PROCEDURE get_eos_id
 
 
   MODULE PROCEDURE get_eos_parameters
@@ -483,7 +484,9 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    eos_params= [ DBLE(this% eos_ejectaid), DBLE(this% npeos), &
+    ! TODO: Implement single polytropes. Only piecewise polytropes are
+    !       supported so far.
+    eos_params= [ DBLE(this% eos_id), DBLE(this% npeos), &
           this% gamma0, this% gamma1, this% gamma2, this% gamma3, &
           this% kappa0, this% kappa1, this% kappa2, this% kappa3, &
           this% logP1, &

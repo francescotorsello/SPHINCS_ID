@@ -63,7 +63,7 @@ SUBMODULE (bns_fuka) params
     USE utility,    ONLY: Msun_geo, km2m, lorene2hydrobase, &
                           k_lorene2hydrobase, &
                           k_lorene2hydrobase_piecewisepolytrope, &
-                          zero, one, two, four, five
+                          zero, one, two, four, five, eos$poly, eos$pwpoly
 
 #if flavour == 1
 
@@ -82,8 +82,10 @@ SUBMODULE (bns_fuka) params
 
     INTEGER:: i, nchars
 
-    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_type_tmp_c
-    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_file_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_type_1_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_file_1_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_type_2_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_file_2_tmp_c
 
 
   !  PRINT *, "** Executing the read_fuka_id_params subroutine..."
@@ -118,8 +120,10 @@ SUBMODULE (bns_fuka) params
                              this% ent_center2           , &
                              this% rho_center2           , &
                              this% energy_density_center2, &
-                             eos_type_tmp_c              , &
-                             eos_file_tmp_c              , &
+                             eos_type_1_tmp_c            , &
+                             eos_file_1_tmp_c            , &
+                             eos_type_2_tmp_c            , &
+                             eos_file_2_tmp_c            , &
                              this% gamma_1               , &
                              this% kappa_1               , &
                              this% npeos_1               , &
@@ -215,116 +219,147 @@ SUBMODULE (bns_fuka) params
   !  this% barycenter(1,:)= [this% barycenter1_x, zero, zero]
   !  this% barycenter(2,:)= [this% barycenter2_x, zero, zero]
 
-  !  ! Convert hydro quantities from |fuka| units to SPHINCS units
-  !  this% nbar_center1           = this% nbar_center1*(MSun_geo*km2m)**3
-  !  this% rho_center1            = this% rho_center1*lorene2hydrobase
-  !  this% energy_density_center1 = this% energy_density_center1*lorene2hydrobase
-  !  this% pressure_center1       = this% pressure_center1*lorene2hydrobase
-  !  this% nbar_center2           = this% nbar_center2*(MSun_geo*km2m)**3
-  !  this% rho_center2            = this% rho_center2*lorene2hydrobase
-  !  this% energy_density_center2 = this% energy_density_center2*lorene2hydrobase
-  !  this% pressure_center2       = this% pressure_center2*lorene2hydrobase
-  !
-  !  ! Convert polytropic constants from |fuka| units to SPHINCS units
-  !  IF( this% eos1_loreneid == 1 )THEN ! If the EOS is polytropic
-  !
-  !    this% kappa_1= this% kappa_1*k_lorene2hydrobase( this% gamma_1 )
-  !    this% kappa_2= this% kappa_2*k_lorene2hydrobase( this% gamma_2 )
-  !
-  !  ELSEIF( this% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
-  !
-  !    this% kappa0_1= this% kappa0_1 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma0_1 )
-  !    this% kappa1_1= this% kappa1_1 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma1_1 )
-  !    this% kappa2_1= this% kappa2_1 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma2_1 )
-  !    this% kappa3_1= this% kappa3_1 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_1 )
-  !    this% kappa0_2= this% kappa0_2 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma0_2 )
-  !    this% kappa1_2= this% kappa1_2 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma1_2 )
-  !    this% kappa2_2= this% kappa2_2 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma2_2 )
-  !    this% kappa3_2= this% kappa3_2 &
-  !                    *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_2 )
-  !
-  !  ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
-  !  ! If the EOS is tabulated
-  !
-  !  ELSE
-  !
-  !    PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-  !             " The equation of state is unknown! LORENE EOS IDs=", &
-  !             this% eos1_loreneid, ", ", this% eos2_loreneid
-  !    STOP
-  !
-  !  ENDIF
-  !
-    ! Compute mOmega
-
+    ! Compute mOmega (see documentation for details)
     this% mOmega= this% angular_vel/(c_light*cm2km) &
                   *(this% mass_grav1 + this% mass_grav2)*Msun_geo
 
-    ! Compute t_merger
-
+    ! Compute t_merger (see documentation for details)
     this% t_merger= five/(two**(two*four))*(this% distance**four) &
                     /( this% mass_grav1*this% mass_grav2* &
                        ( this% mass_grav1 + this% mass_grav2 ) )
 
-    ! Convert C++ strings to FORTRAN strings
+    !
+    !-- Convert C++ strings to FORTRAN strings
+    !
+
+    ! Star 1
     i= 1
     DO
-      IF( eos_type_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      IF( eos_type_1_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
       i= i + 1
     ENDDO
     nchars = i - 1
 
-    !ALLOCATE( eos1_tmp( nchars ), STAT= ios, ERRMSG= err_msg )
-    !IF( ios > 0 )THEN
-    !   PRINT *, "...allocation error for array eos1_tmp. ", &
-    !            "The error message is ", err_msg
-    !   PRINT *, "The STAT variable is ", ios
-    !   STOP
-    !ENDIF
-    !eos1_tmp = TRANSFER( eos1_tmp_c(1:nchars), eos1_tmp )
-
-    ALLOCATE( CHARACTER(nchars):: this% eos_type, STAT= ios, ERRMSG= err_msg )
+    ALLOCATE( CHARACTER(nchars):: this% eos_type_1, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos_type. ", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        STOP
     ENDIF
-    this% eos_type= TRANSFER( eos_type_tmp_c(1:nchars), this% eos_type )
-    !DO i= 1, nchars, 1
-    !  this% eos1(i:i)= eos1_tmp(i)
-    !ENDDO
+    this% eos_type_1= TRANSFER( eos_type_1_tmp_c(1:nchars), this% eos_type_1 )
 
     i= 1
     DO
-      IF( eos_file_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      IF( eos_file_1_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
       i= i + 1
     ENDDO
     nchars = i - 1
 
-    ALLOCATE( CHARACTER(nchars):: this% eos_file, STAT= ios, ERRMSG= err_msg )
+    ALLOCATE( CHARACTER(nchars):: this% eos_file_1, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos_type. ", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        STOP
     ENDIF
-    this% eos_file= TRANSFER( eos_file_tmp_c(1:nchars), this% eos_type )
-    this% eos1= shorten_eos_name_fuka(this% eos_file)
-    this% eos2= shorten_eos_name_fuka(this% eos_file)
+    this% eos_file_1= TRANSFER( eos_file_1_tmp_c(1:nchars), this% eos_file_1 )
+    IF(debug) PRINT *, "this% eos_file_1=", this% eos_file_1
+    this% eos1= shorten_eos_name_fuka(this% eos_file_1)
 
-  !  CALL print_id_params( this )
+    ! Star 2
+    i= 1
+    DO
+      IF( eos_type_2_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
 
-    !PRINT *, "** Subroutine read_fuka_id_params executed."
-    !PRINT *
+    ALLOCATE( CHARACTER(nchars):: this% eos_type_2, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos_type. ", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       STOP
+    ENDIF
+    this% eos_type_2= TRANSFER( eos_type_2_tmp_c(1:nchars), this% eos_type_2 )
+    this% eos_type_2= this% eos_type_1
+    ! this% eos_type_1 is used because eos_type_2_tmp_c is empty...check if
+    ! FUKA actually prints it
 
+    i= 1
+    DO
+      IF( eos_file_2_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
+
+    ALLOCATE( CHARACTER(nchars):: this% eos_file_2, STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos_type. ", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       STOP
+    ENDIF
+    this% eos_file_2= TRANSFER( eos_file_2_tmp_c(1:nchars), this% eos_file_2 )
+    this% eos_file_2= this% eos_file_1
+    ! this% eos_file_1 is used because eos_file_2_tmp_c is empty...check if
+    ! FUKA actually prints it
+    IF(debug) PRINT *, "this% eos_file_2=", this% eos_file_2
+    this% eos2= shorten_eos_name_fuka(this% eos_file_2)
+
+    !
+    !-- Assign |sphincsid| identifiers to the |eos|
+    !
+
+    ! Star 1
+    IF( this% eos_type_1 == "Cold_PWPoly" )THEN
+
+      IF( this% npeos_1 == 1 )THEN
+
+        this% eos1_id= eos$poly
+
+      ELSEIF( this% npeos_1 > 1 )THEN
+
+        this% eos1_id = eos$pwpoly
+
+      ENDIF
+
+    ELSE
+
+      PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+               " The EOS on star 1 is unknown! FUKA EOS type=", &
+               this% eos_type_1
+      STOP
+
+    ENDIF
+
+    ! Star 2
+    IF( this% eos_type_2 == "Cold_PWPoly" )THEN
+
+      IF( this% npeos_2 == 1 )THEN
+
+        this% eos2_id= eos$poly
+
+      ELSEIF( this% npeos_2 > 1 )THEN
+
+        this% eos2_id = eos$pwpoly
+
+      ENDIF
+
+    ELSE
+
+      PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+               " The EOS on star 2 is unknown! FUKA EOS type=", &
+               this% eos_type_2
+      STOP
+
+    ENDIF
+
+    !  CALL print_id_params( this )
+
+      !PRINT *, "** Subroutine read_fuka_id_params executed."
+      !PRINT *
 
 
     CONTAINS

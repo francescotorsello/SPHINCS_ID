@@ -134,7 +134,7 @@ MODULE sphincs_id_fuka
     IMPLICIT NONE
 
     CHARACTER(4):: eos_str
-    CHARACTER( LEN=* ), INTENT(IN):: eos_long
+    CHARACTER(LEN=*), INTENT(IN):: eos_long
 
     SELECT CASE( TRIM(eos_long) )
 
@@ -206,10 +206,14 @@ MODULE sphincs_id_fuka
 
         eos_str= '   '
 
+      CASE( 'gam2.polytrope' )
+
+        eos_str= '   '
+
       CASE DEFAULT
 
         PRINT *, "** ERROR! Unknown EOS name: ", TRIM(eos_long)
-        PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. "
+        PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name_fuka. "
         PRINT *, " * Stopping..."
         PRINT *
         STOP

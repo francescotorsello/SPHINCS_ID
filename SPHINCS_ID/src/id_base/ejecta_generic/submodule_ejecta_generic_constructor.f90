@@ -54,7 +54,8 @@ SUBMODULE (ejecta_generic) constructor
     !****************************************************
 
     USE constants, ONLY: pi
-    USE utility,   ONLY: zero, one, two, four, ten, sph_path
+    USE utility,   ONLY: zero, one, two, four, ten, eos$poly, eos$pwpoly, &
+                         sph_path
     USE NR,        ONLY: indexx
     USE pwp_EOS,   ONLY: get_Gamma0, get_Gamma1, get_Gamma2, get_Gamma3, &
                          get_K0, get_K1, get_K2, get_K3, get_p1, &
@@ -444,7 +445,7 @@ SUBMODULE (ejecta_generic) constructor
                             mass_profile_idx )
 
     ! Set the EOS parameters
-    derived_type% eos_ejectaid= 110
+    derived_type% eos_id= eos$pwpoly
 
     CALL select_EOS_parameters("APR4")
 

@@ -151,6 +151,27 @@ SUBMODULE (bns_base) access
   !-----------------!
 
 
+  MODULE PROCEDURE get_eos_id
+
+    !************************************************
+    !
+    !# Returns the |eos| identifier of the
+    !  `i_matter`-th star
+    !
+    !  FT 2.12.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL this% check_i_matter(i_matter)
+
+    IF( i_matter == 1 ) get_eos_id= this% eos1_id
+    IF( i_matter == 2 ) get_eos_id= this% eos2_id
+
+  END PROCEDURE get_eos_id
+
+
   MODULE PROCEDURE get_gamma_1
 
     !************************************************

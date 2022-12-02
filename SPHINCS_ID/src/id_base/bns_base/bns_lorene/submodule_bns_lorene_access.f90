@@ -364,60 +364,62 @@ SUBMODULE (bns_lorene) access
     !
     !**************************************************
 
+    USE utility,  ONLY: eos$poly, eos$pwpoly
+
     IMPLICIT NONE
 
     CALL this% check_i_matter(i_matter)
 
     IF( i_matter == 1 )THEN
 
-      IF( this% eos1_loreneid == 1 )THEN
+      IF( this% eos1_id == eos$poly )THEN
 
-        eos_params= [ DBLE(this% eos1_loreneid), this% gamma_1, this% kappa_1 ]
+        eos_params= [ DBLE(this% eos1_id), this% gamma_1, this% kappa_1 ]
 
-      ELSEIF( this% eos1_loreneid == 110 )THEN
+      ELSEIF( this% eos1_id == eos$pwpoly )THEN
 
-        eos_params= [ DBLE(this% eos1_loreneid), DBLE(this% npeos_1), &
+        eos_params= [ DBLE(this% eos1_id), DBLE(this% npeos_1), &
               this% gamma0_1, this% gamma1_1, this% gamma2_1, this% gamma3_1, &
               this% kappa0_1, this% kappa1_1, this% kappa2_1, this% kappa3_1, &
               this% logP1_1, &
               this% logRho0_1, this% logRho1_1, this% logRho2_1 ]
 
-      ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
+      !ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
 
-        eos_params= [ DBLE(this% eos1_loreneid) ]
+      !  eos_params= [ DBLE(this% eos1_id) ]
 
       ELSE
 
         PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
-                 " The EOS on star 1 is unknown! LORENE EOS ID=", &
-                 this% eos1_loreneid
+                 " The EOS on star 1 is unknown! SPHINCS_ID EOS ID=", &
+                 this% eos1_id
         STOP
 
       ENDIF
 
     ELSEIF( i_matter == 2 )THEN
 
-      IF( this% eos2_loreneid == 1 )THEN
+      IF( this% eos2_id == eos$poly )THEN
 
-        eos_params= [ DBLE(this% eos2_loreneid), this% gamma_2, this% kappa_2 ]
+        eos_params= [ DBLE(this% eos2_id), this% gamma_2, this% kappa_2 ]
 
-      ELSEIF( this% eos2_loreneid == 110 )THEN
+      ELSEIF( this% eos2_id == eos$pwpoly )THEN
 
-        eos_params= [ DBLE(this% eos2_loreneid), DBLE(this% npeos_2), &
+        eos_params= [ DBLE(this% eos2_id), DBLE(this% npeos_2), &
               this% gamma0_2, this% gamma1_2, this% gamma2_2, this% gamma3_2, &
               this% kappa0_2, this% kappa1_2, this% kappa2_2, this% kappa3_2, &
               this% logP1_2, &
               this% logRho0_2, this% logRho1_2, this% logRho2_2 ]
 
-      ELSEIF( this% eos2_loreneid == 17 .OR. this% eos2_loreneid == 20 )THEN
+      !ELSEIF( this% eos2_loreneid == 17 .OR. this% eos2_loreneid == 20 )THEN
 
-        eos_params= [ DBLE(this% eos2_loreneid) ]
+      !  eos_params= [ DBLE(this% eos2_loreneid) ]
 
       ELSE
 
         PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
-                 " The EOS on star 2 is unknown! LORENE EOS ID=", &
-                 this% eos2_loreneid
+                 " The EOS on star 2 is unknown! SPHINCS_ID EOS ID=", &
+                 this% eos2_id
         STOP
 
       ENDIF
