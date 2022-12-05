@@ -3069,7 +3069,6 @@ SUBMODULE (sph_particles) apm
         dz        = dx
         ghost_dist= dx
         nu_ghost  = dx*dy*dz*nstar_id_av
-        ghost_dist= dx
         nx= NINT( ABS( xmax - xmin )/dx )
         ny= NINT( ABS( ymax - ymin )/dy )
         nz= NINT( ABS( zmax - zmin )/dz )

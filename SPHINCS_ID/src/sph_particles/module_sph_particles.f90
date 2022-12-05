@@ -103,9 +103,9 @@ MODULE sph_particles
   !# Fourteenth component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
 
-  TYPE eos
-
+  TYPE:: eos
   !! Data structure representing an |eos|
+
     CHARACTER(LEN=:), ALLOCATABLE:: eos_name
     !! The |eos| name
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: eos_parameters
@@ -125,7 +125,7 @@ MODULE sph_particles
     ! \(\left(M_\odot L_\odot^{-3}\right)^{1-\gamma}\). Pressure and baryon
     ! mass density have the same units \(M_\odot L_\odot^{-3}\) since \(c^2=1\).
 
-  END TYPE
+  END TYPE eos
 
 
   !***********************************************************
@@ -152,6 +152,8 @@ MODULE sph_particles
     !! Number of matter objects in the physical system
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_i
     !! Array storing the particle numbers for the matter objects
+    INTEGER, DIMENSION(:), ALLOCATABLE:: npart_fin
+    !! Array storing the index of the last particle for each matter objects
     INTEGER:: distribution_id
     !! Identification number for the particle distribution
     INTEGER:: call_flag= 0
@@ -455,6 +457,12 @@ MODULE sph_particles
     PROCEDURE, NOPASS:: impose_equatorial_plane_symmetry
     !# Reflects the positions of the particles on a matter object with respect
     !  to the \(xy\) plane
+
+    PROCEDURE:: get_object_of_particle
+    !# Returns the number of the matter object asociated with the particle
+    !  number given as input. Example: give number \(n\) as input; this
+    !  particle number corresponds to a particle on matter object \(m\).
+    !  This functions returns \(m\).
 
     PROCEDURE:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
@@ -1036,6 +1044,21 @@ MODULE sph_particles
     END SUBROUTINE reflect_particles_xy_plane
 
 
+    MODULE PURE FUNCTION get_object_of_particle( this, a )
+    !# Returns the number of the matter object asociated with the particle
+    !  number given as input. Example: give number \(n\) as input; this
+    !  particle number corresponds to a particle on matter object \(m\).
+    !  This functions returns \(m\).
+
+      CLASS(particles), INTENT(IN):: this
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER,          INTENT(IN):: a
+      !! Particle number
+      INTEGER:: get_object_of_particle
+
+    END FUNCTION get_object_of_particle
+
+
 !    MODULE SUBROUTINE reshape_sph_field_1d( this, field, new_size1, new_size2, &
 !                                            index_array )
 !    !! Reallocates a 1d array
@@ -1118,14 +1141,14 @@ MODULE sph_particles
     !  [[particles:print_formatted_id_particles]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles),    INTENT(INOUT):: this
+      CLASS(particles), INTENT(INOUT):: this
       !> Name of the formatted file where the SPH ID is printed to
       CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_print_sph_variables
 
     MODULE SUBROUTINE compute_sph_hydro( this, npart_in, npart_fin, &
-      nlrf, u, pr, enthalpy, cs )
+      eqos, nlrf, u, pr, enthalpy, cs )
     !# Computes the hydro fields on a section of the particles specified as
     !  input.
     !  First, computes the |sph| pressure starting from the |sph| baryon mass
@@ -1136,10 +1159,12 @@ MODULE sph_particles
 
       CLASS(particles), INTENT(INOUT):: this
       !! [[particles]] object which this PROCEDURE is a member of
-      INTEGER, INTENT(IN):: npart_in
+      INTEGER,          INTENT(IN):: npart_in
       !! First index of the desired section of the particles
-      INTEGER, INTENT(IN):: npart_fin
+      INTEGER,          INTENT(IN):: npart_fin
       !! Last index of the desired section of the particles
+      CLASS(eos),       INTENT(IN):: eqos
+      !! |eos| to be used
       DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(IN)   :: &
       nlrf
       !! Baryon mass density in the local rest frame

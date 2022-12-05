@@ -470,6 +470,14 @@ SUBMODULE (sph_particles) constructor_std
 
     parts% npart= SUM( parts% npart_i )
 
+    ALLOCATE(parts% npart_fin(0:parts% n_matter))
+    parts% npart_fin(0)= 0
+    DO i_matter= 1, parts% n_matter, 1
+
+      parts% npart_fin(i_matter)= SUM(parts% npart_i(1:i_matter))
+
+    ENDDO
+
     !
     !-- Assign particle properties to the TYPE-bound variables
     !
@@ -514,9 +522,8 @@ SUBMODULE (sph_particles) constructor_std
     parts% nbar_tot= zero
     DO i_matter= 1, parts% n_matter, 1
 
-      ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
-                 npart_fin  => parts% npart_i(i_matter-1) +    &
-                               parts% npart_i(i_matter) )
+      ASSOCIATE( npart_in  => parts% npart_fin(i_matter-1) + 1, &
+                 npart_fin => parts% npart_fin(i_matter) )
 
         parts% pos( :, npart_in : npart_fin )= parts_all(i_matter)% pos_i
 
@@ -590,9 +597,8 @@ SUBMODULE (sph_particles) constructor_std
     !
     DO i_matter= 1, parts% n_matter, 1
 
-      ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
-                 npart_fin  => parts% npart_i(i_matter-1) +    &
-                               parts% npart_i(i_matter) )
+      ASSOCIATE( npart_in  => parts% npart_fin(i_matter-1) + 1, &
+                 npart_fin => parts% npart_fin(i_matter) )
 
         parts% nuratio_i(i_matter)= &
           MAXVAL( parts% nu(npart_in:npart_fin), DIM= 1 ) &
@@ -634,9 +640,8 @@ SUBMODULE (sph_particles) constructor_std
       parts% nbar_tot= zero
       DO i_matter= 1, parts% n_matter, 1
 
-        ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
-                   npart_fin  => parts% npart_i(i_matter-1) +    &
-                                 parts% npart_i(i_matter) )
+        ASSOCIATE( npart_in  => parts% npart_fin(i_matter-1) + 1, &
+                   npart_fin => parts% npart_fin(i_matter) )
 
         parts% nu( npart_in:npart_fin )= parts% nu( npart_in:npart_fin ) &
                     /(parts% nbar_i(i_matter)*amu/Msun/parts% masses(i_matter))
@@ -722,9 +727,8 @@ SUBMODULE (sph_particles) constructor_std
 
     matter_objects_atmo_loop: DO i_matter= 1, parts% n_matter, 1
 
-    ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
-               npart_fin  => parts% npart_i(i_matter-1) +    &
-                             parts% npart_i(i_matter) )
+    ASSOCIATE( npart_in  => parts% npart_fin(i_matter-1) + 1, &
+               npart_fin => parts% npart_fin(i_matter) )
 
       IF( use_atmosphere(i_matter) .AND. .NOT.remove_atmosphere(i_matter) )THEN
 
@@ -814,9 +818,11 @@ SUBMODULE (sph_particles) constructor_std
     !
     DO i_matter= 1, parts% n_matter, 1
 
-      ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
-                 npart_fin  => parts% npart_i(i_matter-1) +    &
-                               parts% npart_i(i_matter) )
+      !ASSOCIATE( npart_in   => parts% npart_i(i_matter-1) + 1, &
+      !           npart_fin  => parts% npart_i(i_matter-1) +    &
+      !                         parts% npart_i(i_matter) )
+      ASSOCIATE( npart_in  => parts% npart_fin(i_matter-1) + 1, &
+                 npart_fin => parts% npart_fin(i_matter) )
 
         min_g00_abs= HUGE(one)
         DO itr= npart_in, npart_fin, 1
