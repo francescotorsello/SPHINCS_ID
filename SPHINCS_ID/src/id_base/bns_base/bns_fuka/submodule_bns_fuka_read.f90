@@ -1754,9 +1754,9 @@ SUBMODULE (bns_fuka) read
 
 #endif
 
-    nx= this% nx_grid
-    ny= this% ny_grid
-    nz= this% nz_grid
+    nx= this% nx_lattice
+    ny= this% ny_lattice
+    nz= this% nz_lattice
 
     IF( nz < mpi_ranks ) mpi_ranks= nz
 

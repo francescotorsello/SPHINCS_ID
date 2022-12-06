@@ -48,7 +48,7 @@ SUBMODULE (diffstar_lorene) read
   !-------------------!
 
 
-  MODULE PROCEDURE import_id_int
+  MODULE PROCEDURE read_id_int
 
     !**************************************************
     !
@@ -65,7 +65,7 @@ SUBMODULE (diffstar_lorene) read
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
             .OR. SIZE( y ) /= SIZE( z ) )THEN
         PRINT *, "** ERROR: The sizes of the arrays of positions" &
-                 // "passed to import_lorene_id are not the same."
+                 // "passed to read_lorene_id are not the same."
         PRINT *
         STOP
       ENDIF
@@ -91,7 +91,7 @@ SUBMODULE (diffstar_lorene) read
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( n, this, x, y, z ) &
         !$OMP             PRIVATE( itr )
-        import_id_loop: DO itr= 1, n, 1
+        read_id_loop: DO itr= 1, n, 1
 
           ! The coordinates need to be converted from |sphincs| units (Msun_geo)
           ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
@@ -121,7 +121,7 @@ SUBMODULE (diffstar_lorene) read
                                   this% v_euler_y( itr ), &
                                   this% v_euler_z( itr ) )
 
-        ENDDO import_id_loop
+        ENDDO read_id_loop
         !$OMP END PARALLEL DO
 
         DO itr= 1, n, 1
@@ -170,21 +170,21 @@ SUBMODULE (diffstar_lorene) read
       ELSE
 
         PRINT *, "** ERROR: Memory was not allocated before calling " &
-                 // "import_id in import_lorene_id (TYPE particles)."
+                 // "read_id in read_lorene_id (TYPE particles)."
         PRINT *
         STOP
 
       ENDIF
 
-      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *, "** Subroutine read_lorene_id executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_int
+  END PROCEDURE read_id_int
 
 
-  MODULE PROCEDURE import_id_full
+  MODULE PROCEDURE read_id_full
 
     !**************************************************
     !
@@ -202,7 +202,7 @@ SUBMODULE (diffstar_lorene) read
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
             .OR. SIZE( y ) /= SIZE( z ) )THEN
         PRINT *, "** ERROR: The sizes of the arrays of positions" &
-                 // "passed to import_lorene_id are not the same."
+                 // "passed to read_lorene_id are not the same."
         PRINT *
         STOP
       ENDIF
@@ -216,7 +216,7 @@ SUBMODULE (diffstar_lorene) read
       !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
       !$OMP             PRIVATE( itr )
-      import_id_loop: DO itr= 1, n, 1
+      read_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
@@ -246,7 +246,7 @@ SUBMODULE (diffstar_lorene) read
                                 u_euler_y( itr ), &
                                 u_euler_z( itr ) )
 
-      ENDDO import_id_loop
+      ENDDO read_id_loop
       !$OMP END PARALLEL DO
 
       DO itr= 1, n, 1
@@ -292,15 +292,15 @@ SUBMODULE (diffstar_lorene) read
       ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *, "** Subroutine read_lorene_id executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_full
+  END PROCEDURE read_id_full
 
 
-  MODULE PROCEDURE import_id_spacetime
+  MODULE PROCEDURE read_id_spacetime
 
     !*******************************************************
     !
@@ -335,7 +335,7 @@ SUBMODULE (diffstar_lorene) read
         ! SHAPE( pos(:,:,:,1) ) /= SHAPE( k(:,:,:,1) ) &
         )THEN
         PRINT *, "** ERROR: Mismatch in array dimensions" &
-                 // "in import_id_spacetime."
+                 // "in read_id_spacetime."
         PRINT *
         STOP
       ENDIF
@@ -415,7 +415,7 @@ SUBMODULE (diffstar_lorene) read
                   - g(i,j,k,jxx)*g(i,j,k,jyz)**2
 
             IF( ABS( detg ) < 1D-10 )THEN
-              PRINT *, "** ERROR! import_id_spacetime: ", &
+              PRINT *, "** ERROR! read_id_spacetime: ", &
                        "The determinant of the spatial metric " &
                        // "is effectively 0 at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",", k, "), " &
@@ -433,7 +433,7 @@ SUBMODULE (diffstar_lorene) read
               PRINT *, "g_zz=", g(i,j,k,jzz)
               STOP
             ELSEIF( detg < 0 )THEN
-              PRINT *, "** ERROR! import_id_spacetime: ", &
+              PRINT *, "** ERROR! read_id_spacetime: ", &
                        "The determinant of the spatial metric " &
                        // "is negative at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",", k, "), " &
@@ -458,7 +458,7 @@ SUBMODULE (diffstar_lorene) read
             CALL determinant_sym4x4( g4(i,j,k,:), detg4 )
 
             IF( ABS( detg4 ) < 1D-10 )THEN
-              PRINT *, "** ERROR! import_id_spacetime: ", &
+              PRINT *, "** ERROR! read_id_spacetime: ", &
                        "The determinant of the spacetime metric "&
                        // "is effectively 0 at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",", k, "), " &
@@ -470,7 +470,7 @@ SUBMODULE (diffstar_lorene) read
               PRINT *
               STOP
             ELSEIF( detg4 > 0 )THEN
-              PRINT *, "** ERROR! import_id_spacetime: ", &
+              PRINT *, "** ERROR! read_id_spacetime: ", &
                        "The determinant of the spacetime metric "&
                        // "is positive at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",", k, "), " &
@@ -500,15 +500,15 @@ SUBMODULE (diffstar_lorene) read
       ENDDO
       IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-      PRINT *, "** Subroutine import_lorene_id executed."
+      PRINT *, "** Subroutine read_lorene_id executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_spacetime
+  END PROCEDURE read_id_spacetime
 
 
-  MODULE PROCEDURE import_id_hydro
+  MODULE PROCEDURE read_id_hydro
 
     !*******************************************************
     !
@@ -569,15 +569,15 @@ SUBMODULE (diffstar_lorene) read
       !ENDDO coords_z
       !IF( show_progress ) WRITE( *, "(A1)", ADVANCE= "NO" ) creturn
 
-      PRINT *, "** Subroutine import_lorene_id_hydro executed."
+      PRINT *, "** Subroutine read_lorene_id_hydro executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_hydro
+  END PROCEDURE read_id_hydro
 
 
-  MODULE PROCEDURE import_id_particles
+  MODULE PROCEDURE read_id_particles
 
     !****************************************************
     !
@@ -600,7 +600,7 @@ SUBMODULE (diffstar_lorene) read
       IF( SIZE( x ) /= SIZE( y ) .OR. SIZE( x ) /= SIZE( z ) &
               .OR. SIZE( y ) /= SIZE( z ) )THEN
         PRINT *, "** ERROR: The sizes of the arrays of positions" &
-                 // "passed to import_lorene_id are not the same."
+                 // "passed to read_lorene_id are not the same."
         PRINT *
         STOP
       ENDIF
@@ -615,7 +615,7 @@ SUBMODULE (diffstar_lorene) read
       !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
       !$OMP             PRIVATE( itr )
-      import_id_loop: DO itr= 1, n, 1
+      read_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
@@ -639,7 +639,7 @@ SUBMODULE (diffstar_lorene) read
                                      u_euler_y( itr ), &
                                      u_euler_z( itr ) )
 
-      ENDDO import_id_loop
+      ENDDO read_id_loop
       !$OMP END PARALLEL DO
 
       DO itr= 1, n, 1
@@ -697,15 +697,15 @@ SUBMODULE (diffstar_lorene) read
       baryon_density= baryon_density*((Msun_geo*km2m)**3)/(amu*g2kg)
       pressure      = pressure*((Msun_geo*km2m)**3)/(amu*g2kg)
 
-      PRINT *, "** Subroutine import_id_particles executed."
+      PRINT *, "** Subroutine read_id_particles executed."
       PRINT *
 
     ENDIF
 
-  END PROCEDURE import_id_particles
+  END PROCEDURE read_id_particles
 
 
-  MODULE PROCEDURE import_id_mass_b
+  MODULE PROCEDURE read_id_mass_b
 
     !****************************************************
     !
@@ -746,10 +746,10 @@ SUBMODULE (diffstar_lorene) read
 
     ENDIF
 
-  END PROCEDURE import_id_mass_b
+  END PROCEDURE read_id_mass_b
 
 
-  MODULE PROCEDURE import_id_k
+  MODULE PROCEDURE read_id_k
 
     !****************************************************
     !
@@ -775,7 +775,7 @@ SUBMODULE (diffstar_lorene) read
     k_yz= zero
     k_zz= zero
 
-  END PROCEDURE import_id_k
+  END PROCEDURE read_id_k
 
 
   !-----------------!
@@ -783,7 +783,7 @@ SUBMODULE (diffstar_lorene) read
   !-----------------!
 
 
-  MODULE PROCEDURE import_mass_density
+  MODULE PROCEDURE read_drslorene_mass_density
 
     !***********************************************
     !
@@ -812,10 +812,41 @@ SUBMODULE (diffstar_lorene) read
 
     ENDIF
 
-  END PROCEDURE import_mass_density
+  END PROCEDURE read_drslorene_mass_density
 
 
-  MODULE PROCEDURE import_spatial_metric
+  MODULE PROCEDURE read_drslorene_pressure
+
+    !***********************************************
+    !
+    !# Returns the |lorene| pressure at the point
+    !  given as argument, in units of
+    !  \([\mathrm{kg}\,c^2\, \mathrm{m}^{-3}]\).
+    !
+    !  FT 11.02.2022
+    !
+    !***********************************************
+
+    USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
+
+    IMPLICIT NONE
+
+    IF ( C_ASSOCIATED( this% diffstar_ptr ) )THEN
+
+      ! The coordinates need to be converted from |sphincs| units (Msun_geo)
+      ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the
+      ! definition of Msun_geo
+      res= get_diffstar_pressure( this% diffstar_ptr, &
+                                  x*Msun_geo, &
+                                  y*Msun_geo, &
+                                  z*Msun_geo )
+
+    ENDIF
+
+  END PROCEDURE read_drslorene_pressure
+
+
+  MODULE PROCEDURE read_spatial_metric
 
     !***********************************************
     !
@@ -843,7 +874,7 @@ SUBMODULE (diffstar_lorene) read
 
     ENDIF
 
-  END PROCEDURE import_spatial_metric
+  END PROCEDURE read_spatial_metric
 
 
   MODULE PROCEDURE is_hydro_positive

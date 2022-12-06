@@ -101,7 +101,7 @@ filenames(1)=!"BNSLO_1.3-1.3_mpa1_45km.bin"
 ! N.B. The execution will stop after the           !
 !      computation of the lengths scales           !
 !--------------------------------------------------!
-estimate_length_scale=.FALSE.
+estimate_length_scale=.TRUE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !   If both are set to .FALSE., the code will only !

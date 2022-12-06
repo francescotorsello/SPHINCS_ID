@@ -43,7 +43,7 @@ MODULE standard_tpo_formulation
 
   !*******************************************************
   !                                                      *
-  !     Definition of abstract TYPE tpo                  *
+  !          Definition of abstract TYPE tpo             *
   !                                                      *
   ! Abstract TYPE for a \(3+1\) formulation of the       *
   ! Einstein equations. It imports the ID on the gravity *

@@ -76,7 +76,7 @@ SUBMODULE (diffstar_lorene) constructor
     ENDIF
 
     ! Import the parameters of the binary system
-    CALL import_diffstar_params( derived_type )
+    CALL read_diffstar_params( derived_type )
 
     ! Assign a unique identifier to the bns object
     derived_type% diffstar_identifier= diffstar_counter

@@ -106,10 +106,10 @@ MODULE id_base
     !
 
     PROCEDURE(read_double_at_pos),        DEFERRED:: read_mass_density
-    !# Returns the baryon mass density at the given point
+    !# Returns the baryon mass density from the |id| at the given point
 
-    !PROCEDURE(read_double_at_pos),        DEFERRED:: read_pressure
-    !# Returns the pressure at the given point
+    PROCEDURE(read_double_at_pos),        DEFERRED:: read_pressure
+    !# Returns the pressure from te |id| at the given point
 
     PROCEDURE(read_logical_at_pos),       DEFERRED:: test_position
     !# Returns `.TRUE.` if the position has physically acceptable properties,

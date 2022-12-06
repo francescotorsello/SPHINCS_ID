@@ -46,7 +46,7 @@ SUBMODULE (diffstar_lorene) params
   !-------------------!
 
 
-  MODULE PROCEDURE import_diffstar_params
+  MODULE PROCEDURE read_diffstar_params
 
     !***************************************************
     !
@@ -80,7 +80,7 @@ SUBMODULE (diffstar_lorene) params
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_tmp_c
 
     PRINT *
-    PRINT *, "** Executing the import_diffstar_params subroutine..."
+    PRINT *, "** Executing the read_diffstar_params subroutine..."
 
     CALL get_diffstar_params( this% diffstar_ptr,                   &
                               this% omega_c,                        &
@@ -189,7 +189,7 @@ SUBMODULE (diffstar_lorene) params
 
     ELSE
 
-      PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+      PRINT *, "** ERROR in SUBROUTINE read_lorene_id_params!", &
                " The equation of state is unknown! LORENE EOS IDs=", &
                this% eos_loreneid, ", ", this% eos_loreneid
       STOP
@@ -217,10 +217,10 @@ SUBMODULE (diffstar_lorene) params
 
     CALL print_diffstar_params( this )
 
-    PRINT *, "** Subroutine import_diffstar_params executed."
+    PRINT *, "** Subroutine read_diffstar_params executed."
     PRINT *
 
-  END PROCEDURE import_diffstar_params
+  END PROCEDURE read_diffstar_params
 
 
 END SUBMODULE params

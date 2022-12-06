@@ -163,11 +163,10 @@ MODULE bns_lorene
     !-----------------!
 
     !> Returns the |lorene|'s mass density at the desired point
-    PROCEDURE:: read_mass_density => read_mass_density
+    PROCEDURE:: read_mass_density => read_bnslorene_mass_density
 
     !> Returns the |lorene|'s pressure at the desired point
-    !PROCEDURE:: read_pressure => read_pressure
-    PROCEDURE:: read_pressure
+    PROCEDURE:: read_pressure => read_bnslorene_pressure
 
     !> Returns the |lorene|'s conformally flat spatial ADM metric
     PROCEDURE:: read_spatial_metric
@@ -596,7 +595,7 @@ MODULE bns_lorene
     !
     !-- FUNCTIONS
     !
-    MODULE FUNCTION read_mass_density( this, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_bnslorene_mass_density( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -610,10 +609,10 @@ MODULE bns_lorene
       !> Baryon mass density at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
-    END FUNCTION read_mass_density
+    END FUNCTION read_bnslorene_mass_density
 
 
-    MODULE FUNCTION read_pressure( this, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_bnslorene_pressure( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| pressure at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -627,7 +626,7 @@ MODULE bns_lorene
       !> Pressure at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
-    END FUNCTION read_pressure
+    END FUNCTION read_bnslorene_pressure
 
 
     MODULE FUNCTION read_spatial_metric( this, x, y, z ) RESULT( res )

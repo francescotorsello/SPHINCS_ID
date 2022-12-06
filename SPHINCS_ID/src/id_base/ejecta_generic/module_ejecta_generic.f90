@@ -247,6 +247,9 @@ MODULE ejecta_generic
     PROCEDURE:: read_mass_density => interpolate_mass_density
     !! Returns the |lorene|'s mass density at the given point
 
+    PROCEDURE:: read_pressure => interpolate_pressure
+    !! Returns the |lorene|'s mass density at the given point
+
     !PROCEDURE:: interpolate_spatial_metric
     !! Returns the |lorene|'s conformally flat spatial ADM metric
 
@@ -627,6 +630,23 @@ MODULE ejecta_generic
       DOUBLE PRECISION:: res
 
     END FUNCTION interpolate_mass_density
+
+
+    MODULE FUNCTION interpolate_pressure( this, x, y, z ) RESULT( res )
+    !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
+
+      !> [[ejecta]] object which this PROCEDURE is a member of
+      CLASS(ejecta),    INTENT(IN):: this
+      !> \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
+      !> \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
+      !> \(z\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
+      !> Pressure at \((x,y,z)\)
+      DOUBLE PRECISION:: res
+
+    END FUNCTION interpolate_pressure
 
 
     MODULE FUNCTION interpolate_spatial_metric( this, x, y, z ) RESULT( res )

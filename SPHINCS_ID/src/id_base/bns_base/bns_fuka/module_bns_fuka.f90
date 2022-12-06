@@ -97,6 +97,9 @@ MODULE bns_fuka
 
 
   INTEGER, PARAMETER:: max$tpo= 20
+  !# Maximum number of [[standard_tpo_formulation:tpo]] objects that can be
+  !  constructed using a [[bnsfuka]] object
+  !  @note This number is arbitrary; it can be modified as needed.
 
 
   TYPE id_lattice
@@ -159,18 +162,18 @@ MODULE bns_fuka
     !
     !-- ID fields on a lattice around each star
     !
-
-    ! TODO: change "grid" to "lattice" for consistency
-    INTEGER:: nx_grid= 100
-    INTEGER:: ny_grid= 100
-    INTEGER:: nz_grid= 100
+    INTEGER:: nx_lattice= 400
+    !! Number of points for each lattice around the stars, along the \(x\) axis
+    INTEGER:: ny_lattice= 400
+    !! Number of points for each lattice around the stars, along the \(y\) axis
+    INTEGER:: nz_lattice= 400
+    !! Number of points for each lattice around the stars, along the \(z\) axis
     TYPE(id_lattice), DIMENSION(2):: star_lattice
     !# Array storing two [[bns_fuka:id_lattice]] objects, one per star
 
     !
     !-- Hydro fields stored on a refined mesh
     !
-
     INTEGER, DIMENSION(max$tpo):: tpo$log= 0
     !!
     INTEGER, PUBLIC:: tpo_curr= 0
@@ -197,13 +200,13 @@ MODULE bns_fuka
     DOUBLE PRECISION:: komar_mass
     !! Komar mass of the binary system \([M_\odot]\)
 
-    !& C pointer to the |fuka|'s |binns| object
-    ! N.B. This variable is global. The pointer to the second |fuka| |binns|
-    !      object will overwrite the first one, and so on.
-    !      This variable stores the pointer to the last defined |fuka| |binns|
+    !& C pointer to the |fuka|'s object storing the |bns| \id|
+    !  N.B. This variable is global. The pointer to the second |fuka| |binns|
+    !       object will overwrite the first one, and so on.
+    !       This variable stores the pointer to the last defined |fuka| |binns|
     !      object. That's why it is not freed in the destructor of a bns object.
-    !      Presently, it has to be freed by the user at the end of the PROGRAM.
-    !      See the last part of the PROGRAM in sphincs_id.f90, for example.
+    !       Presently, it has to be freed by the user at the end of the PROGRAM.
+    !       See the last part of the PROGRAM in sphincs_id.f90, for example.
     TYPE(C_PTR):: bns_ptr
 
     CHARACTER(LEN=:), ALLOCATABLE:: eos_type_1
@@ -293,7 +296,7 @@ MODULE bns_fuka
 
     !> Returns the |fuka|'s pressure at the desired point
     PROCEDURE:: read_fuka_pressure
-    PROCEDURE:: interpolate_fuka_pressure
+    PROCEDURE:: read_pressure => interpolate_fuka_pressure
 
     !> Returns the |fuka|'s conformally flat spatial ADM metric
     PROCEDURE:: read_fuka_spatial_metric

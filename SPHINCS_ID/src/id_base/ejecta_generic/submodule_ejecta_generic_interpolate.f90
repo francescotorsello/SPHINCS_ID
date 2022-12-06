@@ -493,6 +493,30 @@ SUBMODULE (ejecta_generic) interpolate
   END PROCEDURE interpolate_mass_density
 
 
+  MODULE PROCEDURE interpolate_pressure
+
+    !***********************************************
+    !
+    !# Returns the pressure at the point
+    !  given as argument, in units of
+    !  \(M_\odot c^2/L_\odot^3\).
+    !
+    !  FT 19.11.2021
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+    ! TODO: There is no pressure in the ejecta ID. It should be computed using
+    !       the |eos|
+    PRINT *, "** The method interpolate_pressure of TYPE ejecta_generic"
+    PRINT *, " has not been implemented yet."
+    PRINT *
+    STOP
+
+  END PROCEDURE interpolate_pressure
+
+
   MODULE PROCEDURE interpolate_spatial_metric
 
     !***********************************************

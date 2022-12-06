@@ -795,7 +795,7 @@ SUBMODULE (bns_lorene) read
   !-----------------!
 
 
-  MODULE PROCEDURE read_mass_density
+  MODULE PROCEDURE read_bnslorene_mass_density
 
     !***********************************************
     !
@@ -824,10 +824,10 @@ SUBMODULE (bns_lorene) read
 
     ENDIF
 
-  END PROCEDURE read_mass_density
+  END PROCEDURE read_bnslorene_mass_density
 
 
-  MODULE PROCEDURE read_pressure
+  MODULE PROCEDURE read_bnslorene_pressure
 
     !***********************************************
     !
@@ -855,7 +855,7 @@ SUBMODULE (bns_lorene) read
 
     ENDIF
 
-  END PROCEDURE read_pressure
+  END PROCEDURE read_bnslorene_pressure
 
 
   MODULE PROCEDURE read_spatial_metric

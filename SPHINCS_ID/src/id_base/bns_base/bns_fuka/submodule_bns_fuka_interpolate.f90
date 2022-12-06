@@ -69,7 +69,7 @@ SUBMODULE (bns_fuka) interpolate
     INTEGER:: a, star
     DOUBLE PRECISION:: zp
     !DOUBLE PRECISION, &
-    !  DIMENSION(this% nx_grid, this% ny_grid, this% nz_grid, 3):: coords
+    !  DIMENSION(this% nx_lattice, this% ny_lattice, this% nz_lattice, 3):: coords
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( n, this, x, y, z, lapse, &
@@ -125,33 +125,33 @@ SUBMODULE (bns_fuka) interpolate
       zp= z(a)
 
       baryon_density(a) = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% mass_density, &
                                 debug= .FALSE. ) &
                                 *MSun/amu
 
       specific_energy(a)= trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% specific_energy )
 
       pressure(a)       = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% pressure ) &
                                 *MSun/amu
 
       u_euler_x(a)      = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% v_eul_x )
       u_euler_y(a)      = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% v_eul_y )
       u_euler_z(a)      = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% v_eul_z )
 
@@ -165,7 +165,7 @@ SUBMODULE (bns_fuka) interpolate
       energy_density(a) = baryon_density(a)*(one + specific_energy(a))
 
       g_xx(a)           = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% g_xx )
 
@@ -176,19 +176,19 @@ SUBMODULE (bns_fuka) interpolate
       g_yz(a)= zero
 
       lapse(a)          = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% lapse )
       shift_x(a)        = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% shift_x )
       shift_y(a)        = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% shift_y )
       shift_z(a)        = trilinear_interpolation( x(a), y(a), zp, &
-                                this% nx_grid, this% ny_grid, this% nz_grid, &
+                                this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                 this% star_lattice(star)% coords, &
                                 this% star_lattice(star)% shift_z )
 
@@ -220,7 +220,7 @@ SUBMODULE (bns_fuka) interpolate
     INTEGER:: star
     DOUBLE PRECISION:: zp, veuler_x, veuler_y, veuler_z
     !DOUBLE PRECISION, &
-    !  DIMENSION(this% nx_grid, this% ny_grid, this% nz_grid, 3):: coords
+    !  DIMENSION(this% nx_lattice, this% ny_lattice, this% nz_lattice, 3):: coords
 
     IF( (this% center(1,1) - this% radii(1,1) <= x) &
         .AND. &
@@ -257,12 +257,12 @@ SUBMODULE (bns_fuka) interpolate
     zp= z
 
     baryon_density= trilinear_interpolation( x, y, zp, &
-                          this% nx_grid, this% ny_grid, this% nz_grid, &
+                          this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                           this% star_lattice(star)% coords, &
                           this% star_lattice(star)% mass_density )*MSun/amu
 
     g(jxx)= trilinear_interpolation( x, y, zp, &
-                  this% nx_grid, this% ny_grid, this% nz_grid, &
+                  this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                   this% star_lattice(star)% coords, &
                   this% star_lattice(star)% g_xx )
     g(jyy)= g(jxx)
@@ -272,15 +272,15 @@ SUBMODULE (bns_fuka) interpolate
     g(jyz)= zero
 
     veuler_x= trilinear_interpolation( x, y, zp, &
-                     this% nx_grid, this% ny_grid, this% nz_grid, &
+                     this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                      this% star_lattice(star)% coords, &
                      this% star_lattice(star)% v_eul_x )
     veuler_y= trilinear_interpolation( x, y, zp, &
-                     this% nx_grid, this% ny_grid, this% nz_grid, &
+                     this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                      this% star_lattice(star)% coords, &
                      this% star_lattice(star)% v_eul_y )
     veuler_z= trilinear_interpolation( x, y, zp, &
-                     this% nx_grid, this% ny_grid, this% nz_grid, &
+                     this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                      this% star_lattice(star)% coords, &
                      this% star_lattice(star)% v_eul_z )
 
@@ -352,7 +352,7 @@ SUBMODULE (bns_fuka) interpolate
     zp= z
 
     res= trilinear_interpolation( x, y, zp, &
-                                  this% nx_grid, this% ny_grid, this% nz_grid, &
+                                  this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                   this% star_lattice(star)% coords, &
                                   this% star_lattice(star)% mass_density )
     !CALL dbg_timer% stop_timer()
@@ -405,7 +405,7 @@ SUBMODULE (bns_fuka) interpolate
 
     zp= z
     res= trilinear_interpolation( x, y, zp, &
-                                  this% nx_grid, this% ny_grid, this% nz_grid, &
+                                  this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                   this% star_lattice(star)% coords, &
                                   this% star_lattice(star)% g_xx )
 
@@ -456,7 +456,7 @@ SUBMODULE (bns_fuka) interpolate
 
     zp= z
     res= trilinear_interpolation( x, y, zp, &
-                                  this% nx_grid, this% ny_grid, this% nz_grid, &
+                                  this% nx_lattice, this% ny_lattice, this% nz_lattice, &
                                   this% star_lattice(star)% coords, &
                                   this% star_lattice(star)% pressure )
 
