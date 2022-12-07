@@ -35,10 +35,19 @@ MODULE lorentz_group
   !***********************************************************
 
 
-  USE tensor, ONLY: n_sym3x3, n_sym4x4
+  USE utility,  ONLY: zero, one
+  USE tensor,   ONLY: n_sym3x3, n_sym4x4
 
 
   IMPLICIT NONE
+
+
+  DOUBLE PRECISION, DIMENSION(n_sym4x4), PARAMETER:: &
+    eta= [-one, zero, zero, zero, &
+                one,  zero, zero, &
+                      one,  zero, &
+                            one]
+  !! Minkowski metric
 
 
   TYPE lorentz_boost
@@ -47,19 +56,25 @@ MODULE lorentz_group
     PRIVATE
 
     DOUBLE PRECISION, DIMENSION(3):: v
-    !! Velocity that determines the boost
+    !! Spatial velocity that determines the boost
 
-    DOUBLE PRECISION, DIMENSION(n_sym4x4):: g
+    !DOUBLE PRECISION, DIMENSION(n_sym4x4):: g
     !! Spacetime Lorentzian metric
 
     DOUBLE PRECISION:: lambda
     !! Lorentz factor
 
     DOUBLE PRECISION:: p
-    !! Spatial vector equal to (lambda v)
+    !! Spatial vector equal to \(\lambda \,v\)
 
     DOUBLE PRECISION, DIMENSION(n_sym3x3):: lambda_s
     !! Spatial part of the Lorentz boost
+
+
+    CONTAINS
+
+
+    !GENERIC, PUBLIC:: apply => apply_to_vector, apply_to_rank2_tensor
 
 
   END TYPE lorentz_boost
@@ -79,6 +94,20 @@ MODULE lorentz_group
     PRIVATE
 
   END TYPE lorentz_transformation
+
+
+  INTERFACE lorentz_boost
+
+    MODULE FUNCTION construct_boost( v ) RESULT( boost )
+
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: v
+      !! Spatial velocity that determines the boost
+      TYPE(lorentz_boost):: boost
+      !! [[lorentz_boost]] object to be constructed
+
+    END FUNCTION construct_boost
+
+  END INTERFACE lorentz_boost
 
 
 END MODULE lorentz_group

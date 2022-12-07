@@ -833,13 +833,14 @@ SUBMODULE (bns_lorene) read
     !
     !# Returns the |lorene| pressure at the point
     !  given as argument, in units of
-    !  \([\mathrm{kg}\,c^2\, \mathrm{m}^{-3}]\).
+    !  \(M_\odot c^2/L_\odot^3\).
     !
     !  FT 11.02.2022
     !
     !***********************************************
 
     USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
+    USE utility,                    ONLY: lorene2hydrobase
 
     IMPLICIT NONE
 
@@ -851,7 +852,7 @@ SUBMODULE (bns_lorene) read
       res= get_lorene_pressure( this% bns_ptr, &
                                 x*Msun_geo, &
                                 y*Msun_geo, &
-                                z*Msun_geo )
+                                z*Msun_geo )*lorene2hydrobase
 
     ENDIF
 

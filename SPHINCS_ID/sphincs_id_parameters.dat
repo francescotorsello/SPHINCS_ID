@@ -17,8 +17,9 @@ n_id=1                          ! Number of physical systems to use
 common_path="lorene-id-files/"
             !"fuka-id-files/"
             !"eccentric-ejecta-files/"
-filenames(1)=!"BNSLO_1.3-1.3_mpa1_45km.bin"
-             "BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
+filenames(1)="BNSLO_1.3-1.3_apr3_45km.bin"
+             !"BNSLO_1.3-1.3_mpa1_45km.bin"
+             !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"DRSLO_apr4.bin"
              !"EJECT_ejecta_apr4_2516.dat"
@@ -101,7 +102,7 @@ filenames(1)=!"BNSLO_1.3-1.3_mpa1_45km.bin"
 ! N.B. The execution will stop after the           !
 !      computation of the lengths scales           !
 !--------------------------------------------------!
-estimate_length_scale=.TRUE.
+estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
 !   If both are set to .FALSE., the code will only !

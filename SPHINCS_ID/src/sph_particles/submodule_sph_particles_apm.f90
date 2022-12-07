@@ -145,7 +145,7 @@ SUBMODULE (sph_particles) apm
     INTEGER:: a_numin, a_numin2, a_numax, a_numax2
     INTEGER:: nuratio_cnt
     INTEGER:: dim_seed, rel_sign
-    INTEGER:: n_problematic_h, ill, l, itot
+    INTEGER:: n_problematic_h, ill, l, itot, cnt_push_ghost, max_push_ghost
     INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
     DOUBLE PRECISION:: ghost_displacement, min_radius
@@ -170,7 +170,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION:: r, theta, phi
     DOUBLE PRECISION:: r_ell, theta_ell, phi_ell
     DOUBLE PRECISION:: dS_norm_av
-    DOUBLE PRECISION:: nstar_id_av, nstar_sph_av
+    DOUBLE PRECISION:: nstar_id_av, nstar_sph_av, nlrf_id_av, pressure_id_av
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
@@ -191,11 +191,13 @@ SUBMODULE (sph_particles) apm
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_id
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_id
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_id
     !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_eul_id
     !DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_eul
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_sph
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_sph
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pr_sph
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_sph
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: sqg
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: dS
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: dNstar
@@ -212,7 +214,7 @@ SUBMODULE (sph_particles) apm
 
     LOGICAL:: exist
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
     !LOGICAL:: few_ncand!, invertible_matrix
@@ -237,6 +239,22 @@ SUBMODULE (sph_particles) apm
 
     IF( debug ) PRINT *, "npart_real= ", npart_real
 
+    PRINT *, "** Steering parameters for the APM iteration:"
+    PRINT *
+    PRINT *, "   mass_it= ",           mass_it
+    PRINT *, "   use_pressure= ",      use_pressure
+    PRINT *, "   adapt_ghosts= ",      adapt_ghosts
+    PRINT *, "   move_away_ghosts= ",  move_away_ghosts
+    PRINT *, "   use_atmosphere= ",    use_atmosphere
+    PRINT *, "   remove_atmosphere= ", remove_atmosphere
+    PRINT *
+
+    IF(use_pressure)THEN
+      PRINT *, "** Using the physical pressure rather than the density to ", &
+               "compute the artificial pressure."
+      PRINT *
+    ENDIF
+
     !---------------------------------------------------------------!
     !-- Tune the displacement the ghosts depending on the desired --!
     !-- EXIT condition for the APM iteration                      --!
@@ -245,10 +263,12 @@ SUBMODULE (sph_particles) apm
     IF( nuratio_des > zero )THEN
 
       ghost_displacement= third/DBLE(nuratio_max_steps)/ten
+      max_push_ghost    = nuratio_max_steps
 
     ELSE
 
       ghost_displacement= third/DBLE(max_inc)/ten
+      max_push_ghost    = max_inc
 
     ENDIF
 
@@ -703,6 +723,7 @@ SUBMODULE (sph_particles) apm
     err_N_mean_min  = HUGE(one)
     nuratio_cnt     = 0
     nuratio_tmp_prev= 1.D-8
+    cnt_push_ghost  = 0
     apm_iteration: DO itr= 1, apm_max_it, 1
 
       PRINT *, "------------------------------------------"
@@ -926,20 +947,46 @@ SUBMODULE (sph_particles) apm
 !      ENDDO check_nstar_id2
 !      !$OMP END PARALLEL DO
 
+      IF(use_pressure)THEN
+
+        CALL read_pressure_id( npart_real, &
+                               all_pos(1,1:npart_real), &
+                               all_pos(2,1:npart_real), &
+                               all_pos(3,1:npart_real), &
+                               pressure_id(1:npart_real) )
+
+        CALL compute_pressure( npart_all, &
+                               all_pos(1,:), all_pos(2,:), all_pos(3,:), &
+                               nlrf_sph, eqos, pressure_sph, .FALSE. )
+
+      ENDIF
+
+      !PRINT *, pressure_sph(10)
+      !PRINT *, pressure_id(10)
+      !STOP
+
+      !
+      !-- Assign artificial pressure to the real particles
+      !
       art_pr_max= zero
       err_N_max=  zero
-      err_N_min=  HUGE(one)!1.D30
+      err_N_min=  HUGE(one)
       err_N_mean= zero
 
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( npart_real, nstar_sph, nstar_id, &
-      !$OMP                     dNstar, art_pr ) &
+      !$OMP                     pressure_sph, pressure_id, &
+      !$OMP                     dNstar, art_pr, use_pressure ) &
       !$OMP             PRIVATE( a )
       assign_artificial_pressure_on_real_particles: DO a= 1, npart_real, 1
 
         IF( nstar_id(a) <= zero )THEN
 
           dNstar(a)= zero
+
+        ELSEIF(use_pressure)THEN
+
+          dNstar(a)= ( pressure_sph(a) - pressure_id(a) )/pressure_id(a)
 
         ELSE
 
@@ -1040,21 +1087,32 @@ SUBMODULE (sph_particles) apm
       !
       !-- Assign artificial pressure to the ghost particles
       !
-      IF(debug) PRINT *, "adapt_ghosts=", adapt_ghosts
-      IF(debug) PRINT *
       IF(adapt_ghosts)THEN
+
+        IF(debug) PRINT *, "adapt_ghosts=", adapt_ghosts
+        IF(debug) PRINT *
 
         nstar_id( npart_real+1:npart_all )= nstar_id_av
         IF(debug) PRINT*, "nstar_id_av=", nstar_id_av
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( npart_real, npart_all, nstar_sph, nstar_id, &
-        !$OMP                     dNstar, art_pr, nstar_id_av ) &
+        !$OMP                     dNstar, art_pr, nstar_id_av, pressure_id_av, &
+        !$OMP                     pressure_sph, use_pressure ) &
         !$OMP             PRIVATE( a )
         assign_artificial_pressure_on_ghost_particles_adapt: &
         DO a= npart_real + 1, npart_all, 1
 
-          art_pr(a)= MAX(one + (nstar_sph(a) - nstar_id_av)/nstar_id_av, zero)
+          IF(use_pressure)THEN
+
+            art_pr(a)= MAX(one + (pressure_sph(a) - pressure_id_av) &
+                                  /pressure_id_av, zero)
+
+          ELSE
+
+            art_pr(a)= MAX(one + (nstar_sph(a) - nstar_id_av)/nstar_id_av, zero)
+
+          ENDIF
 
         ENDDO assign_artificial_pressure_on_ghost_particles_adapt
         !$OMP END PARALLEL DO
@@ -1082,9 +1140,6 @@ SUBMODULE (sph_particles) apm
             center(1), center(2), center(3), &
             r, theta, phi )
 
-          !x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
-          !y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
-          !z_ell= center(3) + rad_z*COS(theta)
           CALL cartesian_from_spherical( &
             rad_x, theta, phi, &
             center(1), center(2), center(3), &
@@ -1272,10 +1327,8 @@ SUBMODULE (sph_particles) apm
 
       !
       !-- Estimating the particle contribution to the SPH momentum equation
-      !-- TODO: this works only for single polytropes now. The pressure is
-      !--       computed for the single polytrope only.
-      !--       However, it is much easier to compute the momentum in
-      !--       SPHINCS_BSSN, so this feature will most likely be deleted
+      !-- Note that it is much easier to compute the momentum in
+      !-- SPHINCS_BSSN, so this feature will most likely be deleted
       !
 
       !IF( MOD( itr, 5 ) == 0 )THEN
@@ -1587,7 +1640,8 @@ SUBMODULE (sph_particles) apm
       IF(debug) PRINT *, move_away_ghosts
       IF(debug) PRINT *, push_away_ghosts .AND. move_away_ghosts
 
-      IF( push_away_ghosts .AND. move_away_ghosts )THEN
+      IF( push_away_ghosts .AND. move_away_ghosts &
+          .AND. cnt_push_ghost <= max_push_ghost )THEN
 
         !max_r_ghost= (one + third)*MAXVAL([radius_x, radius_y, radius_z])
 
@@ -1618,14 +1672,16 @@ SUBMODULE (sph_particles) apm
          ! This will break the ghost ellipsoid into eight disconnected pieces,
          ! one per quadrant in the 3D space
          ! all_pos(1,a)= all_pos(1,a) &
-         !       + SIGN(min_radius*ghost_displacement, all_pos(1,a) - center(1))
+         !    + SIGN(min_radius*ghost_displacement, all_pos(1,a) - center(1))
          ! all_pos(2,a)= all_pos(2,a) &
-         !       + SIGN(min_radius*ghost_displacement, all_pos(2,a) - center(2))
+         !    + SIGN(min_radius*ghost_displacement, all_pos(2,a) - center(2))
          ! all_pos(3,a)= all_pos(3,a) &
-         !       + SIGN(min_radius*ghost_displacement, all_pos(3,a) - center(3))
+         !    + SIGN(min_radius*ghost_displacement, all_pos(3,a) - center(3))
 
         ENDDO ghost_particle_loop
         !$OMP END PARALLEL DO
+
+        cnt_push_ghost= cnt_push_ghost + 1
 
       ENDIF
 
@@ -2539,7 +2595,7 @@ SUBMODULE (sph_particles) apm
       !  the real aprticles more freedom to move around and adjust;
       !  `.FALSE.` otherwise
 
-      CALL get_nstar_id( npart_real, x, y, z, nstar_sph, nstar_id, nlrf_sph, sqg )
+      CALL get_nstar_id(npart_real, x, y, z, nstar_sph, nstar_id, nlrf_sph, sqg)
 
       IF( use_atmosphere .EQV. .TRUE. )THEN
 
@@ -2612,6 +2668,41 @@ SUBMODULE (sph_particles) apm
     END SUBROUTINE get_nstar_id_atm
 
 
+    SUBROUTINE read_pressure_id( npart_real, x, y, z, pressure_id )
+
+      !*******************************************************
+      !
+      !#
+      !
+      !
+      !  FT 6.12.2022
+      !
+      !*******************************************************
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN):: npart_real
+      !! Number of real particles (i.e., no ghost particles included here)
+      DOUBLE PRECISION, INTENT(IN):: x(npart_real)
+      !! Array of \(x\) coordinates
+      DOUBLE PRECISION, INTENT(IN):: y(npart_real)
+      !! Array of \(y\) coordinates
+      DOUBLE PRECISION, INTENT(IN):: z(npart_real)
+      !! Array of \(z\) coordinates
+      DOUBLE PRECISION, INTENT(OUT):: pressure_id(npart)
+      !! Array to store the pressure read from the |id|
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, pressure_id, x, y, z ) &
+      !$OMP             PRIVATE( a )
+      DO a= 1, npart_real, 1
+        pressure_id(a)= get_pressure_id(x(a),y(a),z(a))
+      ENDDO
+      !$OMP END PARALLEL DO
+
+    END SUBROUTINE read_pressure_id
+
+
     SUBROUTINE allocate_apm_fields( npart_real, npart_ghost )
 
       !*******************************************************
@@ -2641,7 +2732,7 @@ SUBMODULE (sph_particles) apm
         ENDIF
       ENDIF
       IF(.NOT.ALLOCATED( nlrf_sph ))THEN
-        ALLOCATE( nlrf_sph( npart_real ), STAT= ios, ERRMSG= err_msg )
+        ALLOCATE( nlrf_sph( npart_all ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
            PRINT *, "...allocation error for array nlrf_real in SUBROUTINE ", &
                     "allocate_apm_fields. The error message is",&
@@ -2649,8 +2740,8 @@ SUBMODULE (sph_particles) apm
            STOP
         ENDIF
       ENDIF
-      IF(.NOT.ALLOCATED( pr_sph ))THEN
-        ALLOCATE( pr_sph( npart_real ), STAT= ios, ERRMSG= err_msg )
+      IF(.NOT.ALLOCATED( pressure_sph ))THEN
+        ALLOCATE( pressure_sph( npart_all ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
            PRINT *, "...allocation error for array pr_real in SUBROUTINE ", &
                     "allocate_apm_fields. The error message is",&
@@ -2680,6 +2771,24 @@ SUBMODULE (sph_particles) apm
         ALLOCATE( nstar_id( npart_all ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
            PRINT *, "...allocation error for array nstar_id in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( nlrf_id ))THEN
+        ALLOCATE( nlrf_id( npart_all ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array nlrf_id in SUBROUTINE ", &
+                    "allocate_apm_fields. The error message is",&
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
+      IF(.NOT.ALLOCATED( pressure_id ))THEN
+        ALLOCATE( pressure_id( npart_all ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array pressure_id in SUBROUTINE ", &
                     "allocate_apm_fields. The error message is",&
                     err_msg
            STOP
@@ -2922,7 +3031,7 @@ SUBMODULE (sph_particles) apm
 
       DOUBLE PRECISION:: nu_av, max_r_real, nstar_sph_ghost_av
       DOUBLE PRECISION, DIMENSION(npart_real):: tmp, tmp2, tmp3, &
-        nstar_id_arr, nstar_sph_arr
+        nstar_id_arr, nstar_sph_arr, nlrf_sph_arr, nlrf_id_arr, pressure_id_arr
       DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: ghost_pos_tmp
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nu_ghost_arr, &
         nstar_sph_ghost, h_ghost
@@ -2982,10 +3091,10 @@ SUBMODULE (sph_particles) apm
 
       IF(debug) PRINT *, "max_z_real =", max_z_real
 
-      CALL get_nstar_id( npart_real, pos_input(1,1:npart_real), &
-                                     pos_input(2,1:npart_real), &
-                                     pos_input(3,1:npart_real), tmp, &
-                                     nstar_id_arr, tmp2, tmp3 )
+   !   CALL get_nstar_id( npart_real, pos_input(1,1:npart_real), &
+   !                                  pos_input(2,1:npart_real), &
+   !                                  pos_input(3,1:npart_real), tmp, &
+   !                                  nstar_id_arr, tmp2, tmp3 )
 
       ! Determine smoothing length so that each particle has exactly
       ! 300 neighbours inside 2h
@@ -3022,34 +3131,76 @@ SUBMODULE (sph_particles) apm
                n_problematic_h, " particles."
       PRINT *
 
-      PRINT *, " * Measure SPH particle number density..."
+      PRINT *, " * Compute SPH density..."
       PRINT *
 
       CALL density_loop( npart_real, pos_input(:,1:npart_real), &
         nu_output(1:npart_real), h(1:npart_real), nstar_sph_arr(1:npart_real) )
 
-      itr      = 0
-      nu_av    = zero
-      nstar_id_av = zero
-      nstar_sph_av= zero
-      ! TODO: Parallelize this loop
+      PRINT *, " * Read ID density..."
+      PRINT *
+
+      CALL get_nstar_id( npart_real, pos_input(1,1:npart_real), &
+                                     pos_input(2,1:npart_real), &
+                                     pos_input(3,1:npart_real), &
+                                     nstar_sph_arr, &
+                                     nstar_id_arr, nlrf_sph_arr, tmp3 )
+
+      IF(use_pressure)THEN
+
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( npart_real, nlrf_id_arr, nstar_id_arr, &
+        !$OMP                     nstar_sph_arr, nlrf_sph_arr ) &
+        !$OMP             PRIVATE( a )
+        DO a= 1, npart_real, 1
+          nlrf_id_arr(a)= nstar_id_arr(a)*nlrf_sph_arr(a)/nstar_sph_arr(a)
+        ENDDO
+        !$OMP END PARALLEL DO
+
+        CALL compute_pressure( npart_real, &
+                               pos_input(1,1:npart_real), &
+                               pos_input(2,1:npart_real), &
+                               pos_input(3,1:npart_real), &
+                               nlrf_id_arr, eqos, pressure_id_arr )
+
+      ENDIF
+
+      itr           = 0
+      nu_av         = zero
+      nstar_id_av   = zero
+      nlrf_id_av    = zero
+      nstar_sph_av  = zero
+      pressure_id_av= zero
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, nlrf_id_arr, nstar_id_arr, &
+      !$OMP                     nstar_sph_arr, pos_input, pressure_id_arr, &
+      !$OMP                     max_z_real, center, nu_output ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION(+: itr, nu_av, nstar_id_av, nlrf_id_av, &
+      !$OMP                          nstar_sph_av, pressure_id_av )
       DO a= 1, npart_real, 1
 
         IF( SQRT( ( pos_input(1,a) - center(1) )**two &
                 + ( pos_input(2,a) - center(2) )**two &
                 + ( pos_input(3,a) - center(3) )**two ) &
-                  > 0.99D0*max_z_real )THEN
+                  > (one - one/(ten*ten))*max_z_real )THEN
 
-          itr      = itr + 1
-          nu_av    = nu_av + nu_output(a)
-          nstar_id_av = nstar_id_av + nstar_id_arr(a)
-          nstar_sph_av= nstar_sph_av + nstar_sph_arr(a)
+          itr           = itr + 1
+          nu_av         = nu_av          + nu_output(a)
+          nstar_id_av   = nstar_id_av    + nstar_id_arr(a)
+          nlrf_id_av    = nlrf_id_av     + nlrf_id_arr(a)
+          nstar_sph_av  = nstar_sph_av   + nstar_sph_arr(a)
+          pressure_id_av= pressure_id_av + pressure_id_arr(a)
 
         ENDIF
 
       ENDDO
-      nu_av      = nu_av/itr
-      nstar_id_av= nstar_id_av/itr
+      !$OMP END PARALLEL DO
+      nu_av         = nu_av/itr
+      nstar_id_av   = nstar_id_av/itr
+      nlrf_id_av    = nlrf_id_av/itr
+      nstar_sph_av  = nstar_sph_av/itr
+      pressure_id_av= pressure_id_av/itr
 
       xmin= center(1) - sizes(1)*( one + eps )
       xmax= center(1) + sizes(2)*( one + eps )
@@ -3159,18 +3310,32 @@ SUBMODULE (sph_particles) apm
 
             xtemp= xmin + dx/two + DBLE(i - 1)*dx
 
+            ! Compute te spherical polar coordinates of the point, to get
+            ! its angular coordinates
             CALL spherical_from_cartesian( xtemp, ytemp, ztemp, &
                                            center(1), center(2), center(3), &
                                            r, theta, phi )
 
-            x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
-            y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
-            z_ell= center(3) + rad_z*COS(theta)
+            !x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
+            !y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
+            !z_ell= center(3) + rad_z*COS(theta)
 
+            ! Use the angular coordinates of the point and the ellipse semiaxes,
+            ! to obtain the Cartesian coordinates of the point on the ellipsoid
+            ! having the same angular cordinates of the input point
+            CALL cartesian_from_spherical( rad_x, theta, phi, &
+              center(1), center(2), center(3), &
+              x_ell, y_ell, z_ell, rad_y/rad_x, rad_z/rad_x )
+
+            ! Compute the spherical polar coordinates of the point on the
+            ! ellipsoid
             CALL spherical_from_cartesian( x_ell, y_ell, z_ell, &
                                            center(1), center(2), center(3), &
                                            r_ell, theta_ell, phi_ell )
 
+            ! Place a ghost particle if: (i) its radial coordinate is larger
+            ! than the radial coordinate the ellipsoid and lower than
+            ! ellipse_thickness times it; (ii) the density is <=0
             IF( ( r <= ellipse_thickness*r_ell .AND. r >= r_ell &
                   .AND. &
                   get_density(xtemp, ytemp, ztemp) <= zero ) &
@@ -3494,17 +3659,25 @@ SUBMODULE (sph_particles) apm
                          Wa, grW, grWa, grWb, vb, prgNa, prgNb
 
 
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( this, nlrf_sph, pr_sph, npart_real, m0c2_cu ) &
-      !$OMP             PRIVATE( a )
-      compute_pressure: DO a= 1, npart_real, 1
+  !    !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !    !$OMP             SHARED( this, nlrf_sph, pressure_sph, npart_real, &
+  !    !$OMP                     m0c2_cu ) &
+  !    !$OMP             PRIVATE( a )
+  !    compute_pressure: DO a= 1, npart_real, 1
+  !
+  !      pressure_sph(a)= this% all_eos(1)% eos_parameters(poly$kappa)/m0c2_cu &
+  !                 *(nlrf_sph(a)*m0c2_cu) &
+  !                 **this% all_eos(1)% eos_parameters(poly$gamma)
+  !
+  !    ENDDO compute_pressure
+  !    !$OMP END PARALLEL DO
 
-        pr_sph(a)= this% all_eos(1)% eos_parameters(poly$kappa)/m0c2_cu &
-                   *(nlrf_sph(a)*m0c2_cu) &
-                   **this% all_eos(1)% eos_parameters(poly$gamma)
-
-      ENDDO compute_pressure
-      !$OMP END PARALLEL DO
+      CALL compute_pressure( npart_real, &
+                             all_pos(1,1:npart_real), &
+                             all_pos(2,1:npart_real), &
+                             all_pos(3,1:npart_real), &
+                             nlrf_sph(1:npart_real), eqos, &
+                             pressure_sph(1:npart_real) )
 
       !PRINT *, "Before calling ll_cell_loop..."
       !PRINT *
@@ -3514,7 +3687,8 @@ SUBMODULE (sph_particles) apm
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nfinal, nprev, iorig, lpart, rpart, nic, &
       !$OMP                     ncand, h, all_pos, all_clists, nlrf_sph, &
-      !$OMP                     pr_sph, dS, sqg, nstar_sph, nu_tmp, m0c2_cu ) &
+      !$OMP                     pressure_sph, dS, sqg, nstar_sph, nu_tmp, &
+      !$OMP                     m0c2_cu ) &
       !$OMP             PRIVATE( ill, itot, a, b, l, &
       !$OMP                      ha, ha_1, ha_3, ha_4, ha2, ha2_4, &
       !$OMP                      hb, hb_1, hb_3, hb_4, hb2_4, &
@@ -3544,7 +3718,7 @@ SUBMODULE (sph_particles) apm
           ya=        all_pos(2,a)
           za=        all_pos(3,a)
 
-          prgNa= (pr_sph(a)*sqg(a)/(nstar_sph(a)/m0c2_cu)**2)
+          prgNa= (pressure_sph(a)*sqg(a)/(nstar_sph(a)/m0c2_cu)**2)
 
           cand_loop2: DO k= 1, ncand(ill)
 
@@ -3626,7 +3800,7 @@ SUBMODULE (sph_particles) apm
                   grW_hb_y*eab(2) + &
                   grW_hb_z*eab(3)
 
-            prgNb= pr_sph(b)*sqg(b)/((nstar_sph(b)/m0c2_cu)**2)
+            prgNb= pressure_sph(b)*sqg(b)/((nstar_sph(b)/m0c2_cu)**2)
 
             dS(1,a)= dS(1,a) - nu_tmp(b)*( prgNa*grW_ha_x + prgNb*grW_hb_x )
             dS(2,a)= dS(2,a) - nu_tmp(b)*( prgNa*grW_ha_y + prgNb*grW_hb_y )
@@ -3686,7 +3860,7 @@ SUBMODULE (sph_particles) apm
           dS(1,a), &
           dS(2,a), &
           dS(3,a), &
-          pr_sph(a)!, &
+          pressure_sph(a)!, &
           !nu_tmp(a), &
           !nstar_sph(a)/m0c2_cu
       ENDDO

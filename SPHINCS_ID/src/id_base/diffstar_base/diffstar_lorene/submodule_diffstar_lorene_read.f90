@@ -828,6 +828,7 @@ SUBMODULE (diffstar_lorene) read
     !***********************************************
 
     USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
+    USE utility,                    ONLY: lorene2hydrobase
 
     IMPLICIT NONE
 
@@ -839,7 +840,7 @@ SUBMODULE (diffstar_lorene) read
       res= get_diffstar_pressure( this% diffstar_ptr, &
                                   x*Msun_geo, &
                                   y*Msun_geo, &
-                                  z*Msun_geo )
+                                  z*Msun_geo )*lorene2hydrobase
 
     ENDIF
 

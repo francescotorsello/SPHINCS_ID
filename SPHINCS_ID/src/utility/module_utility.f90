@@ -100,13 +100,13 @@ MODULE utility
   !# `.TRUE.` if loop progress is to be printed to standard output;
   !  `.FALSE.` otherwise
 
-  CHARACTER( LEN= : ), ALLOCATABLE:: err_msg
+  CHARACTER(LEN=:), ALLOCATABLE:: err_msg
   !! String storing error messages
 
-  CHARACTER( LEN= 500 ):: hostname
+  CHARACTER(LEN=500):: hostname
   !# String storing the name of the host machine
 
-  CHARACTER( LEN= 10 ):: version
+  CHARACTER(LEN=10):: version
   !# String storing the version of |sphincsid|
 
   !
@@ -131,9 +131,9 @@ MODULE utility
   !   6. The minutes of the hour as an integer from 1 to 59
   !   7. The second of the minute as an integer from 0 to 60
   !   8. The millisecond of the second as an integer from 0 to 999
-  CHARACTER( LEN= 19 ):: run_id
+  CHARACTER(LEN=19):: run_id
   !! Identification string for the run
-  CHARACTER( LEN= 19 ):: end_time
+  CHARACTER(LEN=19):: end_time
   !! Time when the run ends
 
 
@@ -152,7 +152,7 @@ MODULE utility
   !! Export the constraints every constraints_step-th step
 
   INTEGER, PARAMETER:: test_int= - 112
-  INTEGER, DIMENSION( max_n_id, max_n_parts ):: placer= test_int
+  INTEGER, DIMENSION(max_n_id, max_n_parts):: placer= test_int
   !# Matrix storing the information on how to place particles for each bns
   !  object. Row i contains information about the i^th bns object.
 
@@ -175,15 +175,15 @@ MODULE utility
             export_constraints_details, compute_parts_constraints, &
             one_lapse, zero_shift, run_sph, run_spacetime, estimate_length_scale
 
-  CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
+  CHARACTER(LEN=max_length), DIMENSION(max_length):: filenames= "0"
   !! Array of strings storing the names of the |id| files
-  CHARACTER( LEN= max_length ):: common_path
+  CHARACTER(LEN=max_length):: common_path
   !# String storing the local path to the directory where the |id| files
   !  are stored
-  CHARACTER( LEN= max_length ):: sph_path
+  CHARACTER(LEN=max_length):: sph_path
   !# String storing the local path to the directory where the
   !  SPH output is to be saved
-  CHARACTER( LEN= max_length ):: spacetime_path
+  CHARACTER(LEN=max_length):: spacetime_path
   !# String storing the local path to the directory where the
   !  spacetime output is to be saved
 
@@ -206,8 +206,8 @@ MODULE utility
     INTEGER:: stat
     INTEGER, PARAMETER:: unit_parameters= 17
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: sphincs_id_parameters_namefile
-    CHARACTER( LEN= 100 ):: msg
+    CHARACTER(LEN=:), ALLOCATABLE:: sphincs_id_parameters_namefile
+    CHARACTER(LEN=100):: msg
 
     ! Namelist containing parameters read from sphincs_id_parameters.par
     ! by the SUBROUTINE read_sphincs_id_parameters of this PROGRAM
@@ -292,11 +292,11 @@ MODULE utility
 
     IMPLICIT NONE
 
-    INTEGER,               INTENT(IN)           :: io_stat
+    INTEGER,            INTENT(IN)           :: io_stat
     !! Status variable
-    CHARACTER( LEN= 100 ), INTENT(IN)           :: io_msg
+    CHARACTER(LEN=100), INTENT(IN)           :: io_msg
     !! Status message
-    CHARACTER( LEN= * ),   INTENT(IN), OPTIONAL :: opt_msg
+    CHARACTER(LEN=*),   INTENT(IN), OPTIONAL :: opt_msg
     !! Optional status message
 
     IF( io_stat > 0 )THEN
@@ -1043,8 +1043,7 @@ MODULE utility
     ! polytropes. This factor writes it in SPHINCS units
 
     k_lorene2hydrobase_piecewisepolytrope= &
-                        ( MSun/((MSun_geo*km2m*m2cm)**3) ) &
-                        **( gamma0 - one )
+                        ( MSun/((MSun_geo*km2m*m2cm)**3) )**( gamma0 - one )
 
 
   END FUNCTION

@@ -84,7 +84,7 @@ nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-last_r= 0.99D0     ! The radius of the last spherical surface is
+last_r= 0.999D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -147,16 +147,16 @@ print_step= 25          ! Every print_step steps, print the particle positions
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
                         ! Set to 0 to not print positions at all
-apm_max_it= 1500        ! Maximum number of iterations, irrespective of the
+apm_max_it= 2500        ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
-max_inc= 700            ! Sets the EXIT condition: If the average over all the
+max_inc= 500            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
                         ! grows max_inc times, exit the iteration.
 nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.35D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 0!1.35D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
@@ -165,13 +165,17 @@ mass_it=.FALSE.         ! If .TRUE. performs a second iteration without moving
                         ! the star density better. The mass ratio grows very
                         ! fast in all the tried experiments, hence the
                         ! suggested value is .FALSE.
+use_pressure=.TRUE.     ! If .TRUE., uses the physical pressure computed with
+                        ! the EOS using the SPH estimate of the density, to
+                        ! compute the artificial pressure. Otherwise, the
+                        ! density variable N* is used
 adapt_ghosts=.FALSE.    ! If .TRUE., the ghost particles will be placed and have
                         ! a baryon number such to reproduce the density of the
                         ! outermost layers (r > 99% of the minimum radius) of
                         ! the object. If .TRUE., the parameters nx_gh, ny_gh,
                         ! nz_gh, ghost_dist below are ignored; if .FALSE., they
                         ! are instead used to place the ghost particles       
-move_away_ghosts=.TRUE.! If .TRUE., the ghost particles will slowly move away
+move_away_ghosts=.FALSE.! If .TRUE., the ghost particles will slowly move away
                         ! from the surface of the star during the iteration
                         ! (depending on the EXIT condition chosen, this happens
                         ! in slightly different ways), to allow for the real
@@ -179,7 +183,7 @@ move_away_ghosts=.TRUE.! If .TRUE., the ghost particles will slowly move away
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
-ghost_dist=0.5D0       ! Distance between the ghost particles and the surface
+ghost_dist=0.35D0       ! Distance between the ghost particles and the surface
                         ! of the matter object considered (star, ejecta, etc...)
 use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term

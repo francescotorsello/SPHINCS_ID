@@ -464,7 +464,7 @@ MODULE sph_particles
     !  particle number corresponds to a particle on matter object \(m\).
     !  This functions returns \(m\).
 
-    PROCEDURE:: perform_apm
+    PROCEDURE, NOPASS:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
   !  GENERIC:: reshape_sph_field => reshape_sph_field_1d_ptr, &
@@ -1148,7 +1148,7 @@ MODULE sph_particles
     END SUBROUTINE compute_and_print_sph_variables
 
     MODULE SUBROUTINE compute_sph_hydro( this, npart_in, npart_fin, &
-      eqos, nlrf, u, pr, enthalpy, cs )
+      eqos, nlrf, u, pr, enthalpy, cs, verbose )
     !# Computes the hydro fields on a section of the particles specified as
     !  input.
     !  First, computes the |sph| pressure starting from the |sph| baryon mass
@@ -1177,10 +1177,13 @@ MODULE sph_particles
       !! Enthalpy
       DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: cs
       !! Speed of sound
+      LOGICAL, INTENT(IN), OPTIONAL:: verbose
 
     END SUBROUTINE compute_sph_hydro
 
-    MODULE SUBROUTINE perform_apm( this, get_density, get_nstar_id, &
+    MODULE SUBROUTINE perform_apm( get_density, get_nstar_id, &
+                                   get_pressure_id, &
+                                   compute_pressure, &
                                    npart_output, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
@@ -1188,9 +1191,10 @@ MODULE sph_particles
                                    com_star, &
                                    mass, &
                                    sizes, &
+                                   eqos, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
-                                   nuratio_des, adapt_ghosts, &
+                                   nuratio_des, use_pressure, adapt_ghosts, &
                                    move_away_ghosts, &
                                    nx_gh, ny_gh, nz_gh, ghost_dist, &
                                    use_atmosphere, &
@@ -1201,7 +1205,7 @@ MODULE sph_particles
                                    validate_position )
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
-      CLASS(particles),     INTENT(INOUT):: this
+      !CLASS(particles),     INTENT(INOUT):: this
       !! [[particles]] object which this PROCEDURE is a member of
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
@@ -1240,6 +1244,42 @@ MODULE sph_particles
         END SUBROUTINE get_nstar_id
       END INTERFACE
       INTERFACE
+        SUBROUTINE compute_pressure &
+          ( npart, x, y, z, nlrf, eqos, pressure, verbose )
+          IMPORT:: eos
+          INTEGER,          INTENT(IN):: npart
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x(npart)
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y(npart)
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z(npart)
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN)   :: nlrf(npart)
+          !! Baryon mass density in the local rest frame
+          TYPE(eos),        INTENT(IN)   :: eqos
+          !! |eos| to use
+          DOUBLE PRECISION, INTENT(INOUT):: pressure(npart)
+          !! Baryon mass density at \((x,y,z)\)
+          LOGICAL, INTENT(IN), OPTIONAL:: verbose
+          !# If .TRUE., print informative standard output about how the
+          !  pressure is computed. Default is .TRUE.
+        END SUBROUTINE compute_pressure
+      END INTERFACE
+      INTERFACE
+        FUNCTION get_pressure_id( x, y, z ) RESULT( pressure )
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION:: pressure
+          !! Baryon mass density at \((x,y,z)\)
+        END FUNCTION get_pressure_id
+      END INTERFACE
+      INTERFACE
         FUNCTION validate_position_int( x, y, z ) RESULT( answer )
         !! Returns 1 if the position is not valid, 0 otherwise
           DOUBLE PRECISION, INTENT(IN):: x
@@ -1269,14 +1309,16 @@ MODULE sph_particles
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
       DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: nu_output
-      !> Center of the star (point of highest density), from the |id|
+      !> Center of the matter object, from the |id|
       DOUBLE PRECISION, DIMENSION(3),   INTENT(IN)   :: center
-      !> Center of mass of the star, from the |id|
+      !> Center of mass of the matter object, from the |id|
       DOUBLE PRECISION, DIMENSION(3),   INTENT(INOUT):: com_star
-      !> Mass of the star
+      !> Mass of the matter object
       DOUBLE PRECISION,                 INTENT(IN)   :: mass
-      !> Radius of the star in the x direction, towards the companion
+      !> Sizes of the matter object
       DOUBLE PRECISION, DIMENSION(6),   INTENT(IN)   :: sizes
+      !> |eos| to use when computing the pressure
+      TYPE(eos),                        INTENT(IN)   :: eqos
       !> Maximum number of APM iterations, irrespective of the EXIT condition
       INTEGER,                          INTENT(IN)   :: apm_max_it
       !& Sets the EXIT condition: If the average over all the
@@ -1302,6 +1344,11 @@ MODULE sph_particles
       !  Set nuratio_des to 0 to deactivate and exit the APM
       !  iteration using max_inc
       DOUBLE PRECISION,                 INTENT(IN)   :: nuratio_des
+      !& If .TRUE., uses the physical pressure computed with
+      !  the |eos| using the SPH estimate of the density [[nlrf_sph]], to
+      !  compute the artificial pressure. Otherwise, the
+      !  density variable [[nstar_sph]] is used
+      LOGICAL,                          INTENT(IN)   :: use_pressure
       !& If .TRUE., the ghost particles will be placed and have
       !  a baryon number such to reproduce the density of the
       !  outermost layers (r > 99% of the minimum radius) of

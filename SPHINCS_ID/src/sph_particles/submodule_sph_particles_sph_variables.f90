@@ -81,6 +81,13 @@ SUBMODULE (sph_particles) sph_variables
 
     INTEGER:: a
     DOUBLE PRECISION:: tmp, tmp2
+    LOGICAL:: verb
+
+    IF(PRESENT(verbose))THEN
+      verb= verbose
+    ELSE
+      verb=.TRUE.
+    ENDIF
 
     ASSOCIATE( eos_id     => eqos% eos_parameters(1), &
                kappa_poly => eqos% eos_parameters(poly$kappa), &
@@ -90,17 +97,19 @@ SUBMODULE (sph_particles) sph_variables
     detect_eos: IF( eos_id == eos$poly )THEN
     ! If the |eos| is polytropic
 
+      IF(verb) PRINT *, " * Computing pressure and specific internal energy", &
+               " from the baryon mass density, using the exact formulas for", &
+               " single polytropic EOS..."
+      IF(verb) PRINT *
       ! Formulas from Read et al. (2009), https://arxiv.org/abs/0812.2163
 
       detect_cold_system: IF( this% cold_system )THEN
       ! If the system is cold, compute pressure and specific energy
       ! exactly using the polytropic EOS
 
-        PRINT *, " * Assuming a cold system: no thermal component considered."
-        PRINT *
-
-        PRINT *, "0"
-        PRINT *
+        IF(verb) PRINT *, " * Assuming a cold system: no thermal component", &
+                          " considered."
+        IF(verb) PRINT *
 
         !
         !-- Leaving the following code here, commented, because it allows
@@ -153,8 +162,9 @@ SUBMODULE (sph_particles) sph_variables
       ! cold and thermal part) should be supplied within the ID.
       ! The pressure is computed using them (see pwp_EOS MODULE).
 
-        PRINT *, " * Assuming a hot system: thermal component considered."
-        PRINT *
+        IF(verb) PRINT *, " * Assuming a hot system: thermal component", &
+                          " considered."
+        IF(verb) PRINT *
 
         u= this% specific_energy
 
@@ -191,17 +201,18 @@ SUBMODULE (sph_particles) sph_variables
     ELSEIF( eos_id == eos$pwpoly )THEN
     ! If the |eos| is piecewise polytropic
 
-      PRINT *, " * Computing pressure and specific internal energy from", &
-               " the baryon mass density, using the exact formulas for", &
+      IF(verb) PRINT *, " * Computing pressure and specific internal energy", &
+               " from the baryon mass density, using the exact formulas for", &
                " piecewise polytropic EOS..."
-      PRINT *
+      IF(verb) PRINT *
 
       detect_hot_system: IF( this% cold_system )THEN
       ! If the system is cold, compute pressure and specific energy
       ! exactly using the piecewise polytropic EOS
 
-        PRINT *, " * Assuming a cold system: no thermal component considered."
-        PRINT *
+        IF(verb) PRINT *, " * Assuming a cold system: no thermal component", &
+                          " considered."
+        IF(verb) PRINT *
 
         CALL select_EOS_parameters( eqos% eos_name )
 
@@ -225,8 +236,9 @@ SUBMODULE (sph_particles) sph_variables
       ! cold and thermal part) should be supplied in the ID.
       ! The pressure is computed using them (see pwp_EOS MODULE).
 
-        PRINT *, " * Assuming a hot system: thermal component considered."
-        PRINT *
+        IF(verb) PRINT *, " * Assuming a hot system: thermal component", &
+                          " considered."
+        IF(verb) PRINT *
 
         u= this% specific_energy
 
@@ -272,7 +284,7 @@ SUBMODULE (sph_particles) sph_variables
                                    compute_g4, determinant_sym4x4, &
                                    spacetime_vector_norm_sym4x4, km2m, m2cm, &
                                    sph_path
-    USE units,               ONLY: m0c2_cu, set_units
+    USE units,               ONLY: set_units
     USE matrix,              ONLY: determinant_4x4_matrix
     USE sph_variables,       ONLY: npart, &  ! particle number
                                    n1,    &  ! particle number for star 1
@@ -330,7 +342,7 @@ SUBMODULE (sph_particles) sph_variables
     INTEGER:: n_problematic_h
 
     DOUBLE PRECISION:: g4(n_sym4x4)
-    DOUBLE PRECISION:: det, tmp
+    DOUBLE PRECISION:: det
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 

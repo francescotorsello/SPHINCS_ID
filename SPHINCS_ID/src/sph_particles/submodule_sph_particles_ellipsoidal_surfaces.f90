@@ -71,8 +71,8 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     USE matrix,     ONLY: determinant_4x4_matrix
     USE NR,         ONLY: indexx
     USE APM,        ONLY: assign_h
-    USE options,    ONLY: ndes
-    USE units,      ONLY: umass
+    !USE options,    ONLY: ndes
+    !USE units,      ONLY: umass
 
     IMPLICIT NONE
 
@@ -91,8 +91,8 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
                        proper_volume, mass_test, mass_test2,&
                        proper_volume_test, npart_shell_kept, &
                        rand_num, rand_num2, delta_r, shell_thickness, &
-                       upper_bound_tmp, lower_bound_tmp, col_tmp, &
-                       rho_to_be_resolved
+                       upper_bound_tmp, lower_bound_tmp, col_tmp!, &
+                       !rho_to_be_resolved
 
     DOUBLE PRECISION, PARAMETER:: huge_real= 1.0D30!ABS( HUGE(0.0D0) )
 

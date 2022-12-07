@@ -37,7 +37,59 @@ SUBMODULE (sph_particles) constructor_std
   IMPLICIT NONE
 
 
+  TYPE parts_i
+
+    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_i
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol_i
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_i
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_i
+!    TYPE(eos):: eos_i
+
+
+!    CONTAINS
+!
+!
+!    PROCEDURE:: compute_pressure
+
+  END TYPE parts_i
+
+!  INTERFACE
+!    MODULE SUBROUTINE compute_pressure( this, parts, npart, x, y, z, nlrf, &
+!      pressure )
+!      CLASS(parts_i),   INTENT(IN)   :: this
+!      CLASS(particles), INTENT(INOUT):: parts
+!      INTEGER,          INTENT(IN)   :: npart
+!      !! Returns the baryon mass density at the desired point
+!      DOUBLE PRECISION, INTENT(IN)   :: x(npart)
+!      !! \(x\) coordinate of the desired point
+!      DOUBLE PRECISION, INTENT(IN)   :: y(npart)
+!      !! \(y\) coordinate of the desired point
+!      DOUBLE PRECISION, INTENT(IN)   :: z(npart)
+!      !! \(z\) coordinate of the desired point
+!      DOUBLE PRECISION, INTENT(IN)   :: nlrf(npart)
+!      DOUBLE PRECISION, INTENT(INOUT):: pressure(npart)
+!      !! Pressure at \((x,y,z)\)
+!    END SUBROUTINE compute_pressure
+!  END INTERFACE
+!
+!
+!  PROCEDURE(), POINTER:: get_pressure_i
+
+
   CONTAINS
+
+
+ ! MODULE PROCEDURE compute_pressure
+ ! !! Compute the pressure from the given input
+ !
+ !   IMPLICIT NONE
+ !
+ !   DOUBLE PRECISION, DIMENSION(npart):: tmp, tmp2, tmp3
+ !
+ !   CALL parts% compute_sph_hydro(1, npart, &
+ !     this% eos_i, nlrf, tmp, pressure, tmp2, tmp3 )
+ !
+ ! END PROCEDURE compute_pressure
 
 
   !MODULE PROCEDURE construct_particles_idase_empty
@@ -58,7 +110,7 @@ SUBMODULE (sph_particles) constructor_std
   !
   !    parts% npart_temp= 0
   !
-  !END PROCEDURE construct_particles_idase_empty
+  !END PROCEDURE construct_particles_idase_empt
 
 
   MODULE PROCEDURE construct_particles_std
@@ -146,13 +198,6 @@ SUBMODULE (sph_particles) constructor_std
     DOUBLE PRECISION:: min_lapse, min_g00_abs, shift_norm
     !DOUBLE PRECISION:: com_x, com_y, com_z, com_d
 
-    TYPE parts_i
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_i
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol_i
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_i
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu_i
-    END TYPE
-
     TYPE(parts_i), DIMENSION(id% get_n_matter()):: parts_all
 
     ! String storing the name of the directory storing the files containing
@@ -181,12 +226,18 @@ SUBMODULE (sph_particles) constructor_std
     LOGICAL:: file_exists, use_thres, redistribute_nu, correct_nu, &
               compose_eos, exist, randomize_phi, randomize_theta, &
               randomize_r, mass_it, adapt_ghosts, move_away_ghosts, &
-              read_nu, reflect_particles_x
+              read_nu, reflect_particles_x, use_pressure
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     LOGICAL, DIMENSION(id% get_n_matter()):: apm_iterate, use_atmosphere, &
                                              remove_atmosphere
+
+    !TYPE procedure_pointer
+    !  PROCEDURE, POINTER:: proc
+    !END TYPE procedure_pointer
+
+    !TYPE(procedure_pointer), DIMENSION(:), ALLOCATABLE:: compute_pressure_i
 
     ! Get the number of matter objects in the physical system
     parts% n_matter= id% get_n_matter()
@@ -236,6 +287,7 @@ SUBMODULE (sph_particles) constructor_std
     ALLOCATE( parts% mass_ratios(parts% n_matter) )
     ALLOCATE( parts% mass_fractions(parts% n_matter) )
     ALLOCATE( parts% barycenter(parts% n_matter,3) )
+    !ALLOCATE( compute_pressure_i(parts% n_matter) )
 
     parts% npart_i(0)= 0
     npart_i_tmp(0)   = 0
@@ -256,7 +308,7 @@ SUBMODULE (sph_particles) constructor_std
 
       parts% all_eos(i_matter)% eos_name= id% return_eos_name(i_matter)
       CALL id% return_eos_parameters( i_matter, &
-                                      parts% all_eos(i_matter)% eos_parameters )
+                                      parts% all_eos(i_matter)% eos_parameters )                          
 
     ENDDO
 
@@ -274,6 +326,7 @@ SUBMODULE (sph_particles) constructor_std
       ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
       ALLOCATE( parts_all(i_matter)% h_i    ( tmp ) )
       ALLOCATE( parts_all(i_matter)% nu_i   ( tmp ) )
+      !parts_all(i_matter)% eos_i= parts% all_eos(i_matter)
 
     ENDDO
     !   IF( parts% redistribute_nu )THEN
@@ -309,7 +362,6 @@ SUBMODULE (sph_particles) constructor_std
     choose_particle_placer: SELECT CASE( dist )
 
     CASE( id_particles_from_formatted_file )
-    ! Read particles from formatted file, and time the process
 
 
       CALL read_particles_from_formatted_file()                                        
@@ -386,10 +438,13 @@ SUBMODULE (sph_particles) constructor_std
         filename_apm_pos    = TRIM(sph_path)//"apm_pos"//TRIM(str_i)//".dat"
         filename_apm_results= TRIM(sph_path)//"apm_results"//TRIM(str_i)//".dat"
 
+        !get_pressure_i => parts_all(i_matter)% compute_pressure
+
         CALL parts% apm_timers(i_matter)% start_timer()
-        CALL parts% perform_apm( &
-                    ! PROCEDURES to get the density at a point
+        CALL perform_apm( &
+                    ! PROCEDURES to get the density and pressure at a point
                     import_density, get_nstar_id, &
+                    import_pressure_id, compute_pressure, &
                     ! Arguments pertaining to the matter object
                     parts% npart_i(i_matter), &
                     parts_all(i_matter)% pos_i, &
@@ -399,9 +454,10 @@ SUBMODULE (sph_particles) constructor_std
                     center(i_matter,:), barycenter(i_matter,:), &
                     parts% masses(i_matter), &
                     sizes(i_matter, :), &
+                    parts% all_eos(i_matter), &
                     ! Steering parameters for the APM iteration
                     apm_max_it, max_inc, mass_it, parts% correct_nu, &
-                    nuratio_thres, nuratio_des, &
+                    nuratio_thres, nuratio_des, use_pressure, &
                     ! Arguments pertaining to the ghost particles
                     adapt_ghosts, move_away_ghosts, &
                     nx_gh, ny_gh, nz_gh, ghost_dist, &
@@ -878,35 +934,6 @@ SUBMODULE (sph_particles) constructor_std
     ! Increase the counter that identifies the particle distribution
     counter= counter + 1
 
-  !  DEPRECATED? This is a relic from when nu was re-assigned to the particles
-  !
-  !  IF( parts% redistribute_nu )THEN
-  !
-  !    ! Index particles on star 1 in increasing order of nu
-  !
-  !    CALL indexx( parts% npart1, &
-  !                 parts% baryon_density( 1 : parts% npart1 ), &
-  !                 parts% baryon_density_index( 1 : parts% npart1 ) )
-  !
-  !    ! Index particles on star 2 in increasing order of nu
-  !
-  !    CALL indexx( parts% npart2, &
-  !                 parts% baryon_density( parts% npart1 + 1 : &
-  !                                                  parts% npart ), &
-  !                 parts% baryon_density_index( parts% npart1 + 1 : &
-  !                                                  parts% npart ) )
-  !
-  !    ! Shift indices on star 2 by npart1 since all the arrays store
-  !    ! the quantities on star 1 first, and then on star 2
-  !
-  !    parts% baryon_density_index( parts% npart1 + 1 : &
-  !                                     parts% npart )= &
-  !                   parts% npart1 + &
-  !                   parts% baryon_density_index( parts% npart1 + 1 : &
-  !                                                    parts% npart )
-  !
-  !  ENDIF
-
 
 
     CONTAINS
@@ -914,7 +941,7 @@ SUBMODULE (sph_particles) constructor_std
 
 
     FUNCTION import_density( x, y, z ) RESULT( density )
-    !! Wrapper function to read the baryon mass density from the ID
+    !! Wrapper function to read the baryon mass density from the |id|
 
       IMPLICIT NONE
 
@@ -926,6 +953,23 @@ SUBMODULE (sph_particles) constructor_std
       density= id% read_mass_density( x, y, z )
 
     END FUNCTION import_density
+
+
+    FUNCTION import_pressure_id( x, y, z ) RESULT( pressure )
+    !! Wrapper function to read the pressure from the |id|
+
+      USE constants,  ONLY: Msun, amu
+
+      IMPLICIT NONE
+
+      DOUBLE PRECISION, INTENT(IN):: x
+      DOUBLE PRECISION, INTENT(IN):: y
+      DOUBLE PRECISION, INTENT(IN):: z
+      DOUBLE PRECISION:: pressure
+
+      pressure= id% read_pressure( x, y, z )*Msun/amu
+
+    END FUNCTION import_pressure_id
 
 
     SUBROUTINE import_id( x, y, z, &
@@ -1055,7 +1099,7 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE correct_center_of_mass_of_system
 
 
-    SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, nlrf_sph,sqg )
+    SUBROUTINE get_nstar_id(npart, x, y, z, nstar_sph, nstar_id, nlrf_sph, sqg)
     !! Wrapper function to compute the relativistic baryon mass density
 
       IMPLICIT NONE
@@ -1088,6 +1132,16 @@ SUBMODULE (sph_particles) constructor_std
                                   specific_energy, &
                                   pressure, &
                                   v_euler_x, v_euler_y, v_euler_z )
+
+ !     !$OMP PARALLEL DO DEFAULT( NONE ) &
+ !     !$OMP             SHARED( npart, nlrf_id, baryon_density ) &
+ !     !$OMP             PRIVATE( a )
+ !     DO a= 1, npart, 1
+ !
+ !       nlrf_id(a)= baryon_density(a)
+ !
+ !     ENDDO
+ !     !$OMP END PARALLEL DO
 
       CALL compute_nstar_id( npart, lapse, shift_x, shift_y, &
                              shift_z, v_euler_x, v_euler_y, v_euler_z, &
@@ -1226,14 +1280,7 @@ SUBMODULE (sph_particles) constructor_std
 
     SUBROUTINE read_particles_options
 
-      !**************************************************************
-      !
-      !# Read the options and parameters needed to set up the
-      !  |sph| |id|
-      !
-      !  FT xx.09.2022
-      !
-      !**************************************************************
+
 
       IMPLICIT NONE
 
@@ -1250,7 +1297,7 @@ SUBMODULE (sph_particles) constructor_std
                 apm_iterate, apm_max_it, max_inc, mass_it, &
                 nuratio_thres, reflect_particles_x, nx_gh, ny_gh, nz_gh, &
                 use_atmosphere, remove_atmosphere, nuratio_des, print_step, &
-                ghost_dist, adapt_ghosts, move_away_ghosts
+                ghost_dist, adapt_ghosts, move_away_ghosts, use_pressure
 
       parts% sphincs_id_particles= 'sphincs_id_particles.dat'
 
@@ -1367,6 +1414,17 @@ SUBMODULE (sph_particles) constructor_std
 
     SUBROUTINE check_eos
 
+      !**************************************************************
+      !
+      !# Check that the supplied |eos| parameters are consistent
+      !  with the |eos| used to compute the |id|
+      !
+      !  FT xx.09.2022
+      !
+      !**************************************************************
+
+      USE utility,  ONLY: eos$poly, eos$pwpoly
+
       IMPLICIT NONE
 
       IF( (eos_type /= 'Poly') .AND. (eos_type /= 'pwp') )THEN
@@ -1384,7 +1442,7 @@ SUBMODULE (sph_particles) constructor_std
 
       DO i_matter= 1, parts% n_matter, 1
 
-        IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(1) )THEN
+        IF( parts% all_eos(i_matter)% eos_parameters(1) == eos$poly )THEN
 
           IF( eos_type == 'pwp' )THEN
             PRINT *, "** ERROR! On matter object ", i_matter, &
@@ -1402,7 +1460,7 @@ SUBMODULE (sph_particles) constructor_std
 
         ENDIF
 
-        IF( parts% all_eos(i_matter)% eos_parameters(1) == DBLE(110) )THEN
+        IF( parts% all_eos(i_matter)% eos_parameters(1) == eos$pwpoly )THEN
 
           IF( eos_type == 'Poly' )THEN
             PRINT *, "** ERROR! On matter object ", i_matter, &
@@ -1991,6 +2049,42 @@ SUBMODULE (sph_particles) constructor_std
     END SUBROUTINE compute_nstar_eul_id
 
 
+    SUBROUTINE compute_pressure( npart, x, y, z, nlrf, eqos, pressure, verbose )
+    !! Wrapper function to compute the pressure from the given input
+
+      IMPLICIT NONE
+
+      INTEGER,          INTENT(IN)   :: npart
+      !! Returns the baryon mass density at the desired point
+      DOUBLE PRECISION, INTENT(IN)   :: x(npart)
+      !! \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN)   :: y(npart)
+      !! \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN)   :: z(npart)
+      !! \(z\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN)   :: nlrf(npart)
+      !! Baryon mass density in the local rest frame
+      TYPE(eos),        INTENT(IN)   :: eqos
+      !! |eos| to use
+      DOUBLE PRECISION, INTENT(INOUT):: pressure(npart)
+      !! Pressure at \((x,y,z)\)
+      LOGICAL, INTENT(IN), OPTIONAL:: verbose
+
+      DOUBLE PRECISION, DIMENSION(npart):: tmp, tmp2, tmp3
+      LOGICAL:: verb
+
+      IF(PRESENT(verbose))THEN
+        verb= verbose
+      ELSE
+        verb=.TRUE.
+      ENDIF
+
+      CALL parts% compute_sph_hydro( 1, npart, &
+        eqos, nlrf, tmp, pressure, tmp2, tmp3, verb )
+
+    END SUBROUTINE compute_pressure
+
+
     SUBROUTINE reflect_particles_yz_plane( pos_star1, pvol_star1, &
                                            nu_star1, h_star1, npart_star1, &
                                            pos_star2, pvol_star2, &
@@ -2355,3 +2449,32 @@ END SUBMODULE constructor_std
 !      PRINT *, " * Number of particles on NS 2=", this% npart2
 !      PRINT *
 
+!  DEPRECATED? This is a relic from when nu was re-assigned to the particles
+!              It was executed at the end of the constructor
+!
+!  IF( parts% redistribute_nu )THEN
+!
+!    ! Index particles on star 1 in increasing order of nu
+!
+!    CALL indexx( parts% npart1, &
+!                 parts% baryon_density( 1 : parts% npart1 ), &
+!                 parts% baryon_density_index( 1 : parts% npart1 ) )
+!
+!    ! Index particles on star 2 in increasing order of nu
+!
+!    CALL indexx( parts% npart2, &
+!                 parts% baryon_density( parts% npart1 + 1 : &
+!                                                  parts% npart ), &
+!                 parts% baryon_density_index( parts% npart1 + 1 : &
+!                                                  parts% npart ) )
+!
+!    ! Shift indices on star 2 by npart1 since all the arrays store
+!    ! the quantities on star 1 first, and then on star 2
+!
+!    parts% baryon_density_index( parts% npart1 + 1 : &
+!                                     parts% npart )= &
+!                   parts% npart1 + &
+!                   parts% baryon_density_index( parts% npart1 + 1 : &
+!                                                    parts% npart )
+!
+!  ENDIF
