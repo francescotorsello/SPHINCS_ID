@@ -152,12 +152,12 @@ PROGRAM sphincs_id
   eta(:,2)= [0.D0,0.D0,1.D0,0.D0]
   eta(:,3)= [0.D0,0.D0,0.D0,1.D0]
 
-  v= [0.5D0,0.5D0,0.5D0]
+  v= [0.56D0,0.56D0,0.56D0]
   boost= lorentz_boost(v)
 
   u= [1.D0,1.D0,0.D0,0.D0]
   boosted_u= boost% apply(u)
-  boosted_eta= boost% apply(eta)
+  boosted_eta= boost% apply_boost_congruence(eta)
   PRINT *, boosted_u
   PRINT *, minkowski_sqnorm(u)
   PRINT *, minkowski_sqnorm(boosted_u)

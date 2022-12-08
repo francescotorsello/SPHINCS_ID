@@ -89,16 +89,58 @@ SUBMODULE(lorentz_group) actions
   END PROCEDURE apply_boost_to_vector
 
 
-  MODULE PROCEDURE apply_boost_to_rank2_tensor
+  MODULE PROCEDURE apply_boost_similarity
 
     !***********************************************************
     !
-    !# Implements the action of a boost on a \(4-\)vector
+    !# Implements the action of a boost as a similarity
+    !  on a linear operator
     !
     !  FT 08.12.2022
     !
-    !  @todo implement matrix multiplications to make all this
-    !        computations simpler and safer?
+    !***********************************************************
+
+
+    IMPLICIT NONE
+
+    INTEGER:: i, j
+    DOUBLE PRECISION, DIMENSION(4):: row
+    DOUBLE PRECISION, DIMENSION(4):: column
+    DOUBLE PRECISION, DIMENSION(4,4):: tmp(0:3,0:3)
+
+    DO i= 0, 3, 1
+      DO j= 0, 3, 1
+
+        row   = this% inv_matrix(i,:)
+        column= t(:,j)
+
+        tmp(i,j)= row_by_column(row,column)
+
+      ENDDO
+    ENDDO
+
+    DO i= 0, 3, 1
+      DO j= 0, 3, 1
+
+        row   = tmp(i,:)
+        column= this% matrix(:,j)
+
+        boosted_t(i,j)= row_by_column(row,column)
+
+      ENDDO
+    ENDDO
+
+  END PROCEDURE apply_boost_similarity
+
+
+  MODULE PROCEDURE apply_boost_congruence
+
+    !***********************************************************
+    !
+    !# Implements the action of a boost as a congruence
+    !  on a metric
+    !
+    !  FT 08.12.2022
     !
     !***********************************************************
 
@@ -132,7 +174,7 @@ SUBMODULE(lorentz_group) actions
       ENDDO
     ENDDO
 
-  END PROCEDURE apply_boost_to_rank2_tensor
+  END PROCEDURE apply_boost_congruence
 
 
 END SUBMODULE actions

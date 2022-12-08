@@ -55,19 +55,27 @@ SUBMODULE(lorentz_group) constructors
     !***********************************************************
 
     USE utility,  ONLY: one
+    USE matrix,   ONLY: invert_4x4_matrix
 
     IMPLICIT NONE
 
+    INTEGER:: i, j
+
     DOUBLE PRECISION:: v_sqnorm, lambda_plus_one
+    DOUBLE PRECISION, DIMENSION(4):: row
+    DOUBLE PRECISION, DIMENSION(4):: column
+    DOUBLE PRECISION, DIMENSION(4,4):: identity(0:3,0:3)
 
     v_sqnorm= euclidean_inner_product(v,v)
+    boost% v_speed= SQRT(v_sqnorm)
 
-    IF( v_sqnorm >= one )THEN
+    IF( boost% v_speed >= one )THEN
       PRINT *, "** ERROR! The speed given to construct_boost is larger", &
                " than, or equal to, 1!"
-      PRINT *, "|v|^2=", v_sqnorm
+      PRINT *, "|v|^2=", boost% v_speed
       PRINT *, "* Stopping..."
       PRINT *
+      STOP
     ENDIF
 
     boost% v= v
@@ -92,6 +100,23 @@ SUBMODULE(lorentz_group) constructors
       [boost% lambda_s(2),boost% lambda_s(4),boost% lambda_s(5)]
     boost% matrix(3,1:3)= &
       [boost% lambda_s(3),boost% lambda_s(5),boost% lambda_s(6)]
+
+    CALL invert_4x4_matrix(boost% matrix, boost% inv_matrix)
+
+    DO i= 0, 3, 1
+      DO j= 0, 3, 1
+
+        row   = boost% matrix(i,:)
+        column= boost% inv_matrix(:,j)
+
+        identity(i,j)= row_by_column(row,column)
+
+      ENDDO
+    ENDDO
+    PRINT *, "id(0,:)=", identity(0,:)
+    PRINT *, "id(1,:)=", identity(1,:)
+    PRINT *, "id(2,:)=", identity(2,:)
+    PRINT *, "id(3,:)=", identity(3,:)
 
   END PROCEDURE construct_boost
 

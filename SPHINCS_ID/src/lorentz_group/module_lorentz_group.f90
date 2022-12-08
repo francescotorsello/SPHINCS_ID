@@ -58,6 +58,9 @@ MODULE lorentz_group
     DOUBLE PRECISION, DIMENSION(3):: v
     !! Spatial velocity that determines the boost
 
+    DOUBLE PRECISION:: v_speed
+    !! Euclidean norm of [[v]] (its speed)
+
     !DOUBLE PRECISION, DIMENSION(n_sym4x4):: g
     !! Spacetime Lorentzian metric
 
@@ -71,13 +74,14 @@ MODULE lorentz_group
     !! Spatial part of the Lorentz boost
 
     DOUBLE PRECISION, DIMENSION(4,4):: matrix(0:3,0:3)
+    DOUBLE PRECISION, DIMENSION(4,4):: inv_matrix(0:3,0:3)
 
 
     CONTAINS
 
 
     GENERIC, PUBLIC:: apply => apply_boost_to_vector, &
-                               apply_boost_to_rank2_tensor!, &
+                               apply_boost_similarity!, &
                                !apply_boost_to_symrank2_tensor
     !# Generic procedure to apply the Lorentz boost to different geometric
     !  objects
@@ -85,7 +89,10 @@ MODULE lorentz_group
     PROCEDURE:: apply_boost_to_vector
     !! Action of the [[lorentz_boost]] on a \(4\)-vector
 
-    PROCEDURE:: apply_boost_to_rank2_tensor
+    PROCEDURE:: apply_boost_similarity
+    !! Action of the [[lorentz_boost]] on a linear operator
+
+    PROCEDURE, PUBLIC:: apply_boost_congruence
     !! Action of the [[lorentz_boost]] on a \(4\)-vector
 
     !PROCEDURE:: apply_boost_to_symrank2_tensor
@@ -139,7 +146,7 @@ MODULE lorentz_group
 
     END FUNCTION apply_boost_to_vector
 
-    MODULE FUNCTION apply_boost_to_rank2_tensor(this, t) RESULT(boosted_t)
+    MODULE FUNCTION apply_boost_similarity(this, t) RESULT(boosted_t)
     !! Action of the [[lorentz_boost]] on a \(4\)-vector
 
       CLASS(lorentz_boost), INTENT(IN):: this
@@ -149,7 +156,20 @@ MODULE lorentz_group
       DOUBLE PRECISION, DIMENSION(4,4):: boosted_t(0:3,0:3)
       !! Boosted \(4\)-vector
 
-    END FUNCTION apply_boost_to_rank2_tensor
+    END FUNCTION apply_boost_similarity
+
+
+    MODULE FUNCTION apply_boost_congruence(this, t) RESULT(boosted_t)
+    !! Action of the [[lorentz_boost]] on a \(4\)-vector
+
+      CLASS(lorentz_boost), INTENT(IN):: this
+      !! [[lorentz_boost]] object to apply
+      DOUBLE PRECISION, DIMENSION(4,4), INTENT(IN):: t(0:3,0:3)
+      !! \(4\)-vector to be boosted
+      DOUBLE PRECISION, DIMENSION(4,4):: boosted_t(0:3,0:3)
+      !! Boosted \(4\)-vector
+
+    END FUNCTION apply_boost_congruence
 
   !  MODULE FUNCTION apply_boost_to_symrank2_tensor(this, t) RESULT(boosted_t)
   !  !! Action of the [[lorentz_boost]] on a \(4\)-vector
@@ -228,6 +248,36 @@ MODULE lorentz_group
     ENDDO
 
   END FUNCTION row_by_column
+
+
+!  PURE FUNCTION square_matrix_multiplication( a, b ) RESULT( c )
+!
+!    IMPLICIT NONE
+!
+!    DOUBLE PRECISION, DIMENSION(:,:), INTENT(IN):: a
+!    !! First matrix
+!    DOUBLE PRECISION, DIMENSION(:,:), INTENT(IN):: b
+!    !! Second matrix
+!
+!    DOUBLE PRECISION, DIMENSION(SIZE(a(0,:)),SIZE(a(0,:)))):: c
+!
+!    INTEGER:: i, n
+!
+!    n= SIZE(a(0,:))
+!
+!    DO i= 0, n, 1
+!      DO j= 0, n, 1
+!
+!        row   = a(i,:)
+!        column= b(:,j)
+!
+!        c(i,j)= row_by_column(row,column)
+!
+!      ENDDO
+!    ENDDO
+!
+!
+!  END FUNCTION row_by_column
 
 
 END MODULE lorentz_group
