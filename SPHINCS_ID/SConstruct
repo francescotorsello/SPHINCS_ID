@@ -360,7 +360,9 @@ module_cauchy_convergence_test = [
 
 module_lorentz_group_dir = ['src/lorentz_group/']
 module_lorentz_group = [
-  'module_lorentz_group.f90'
+  'module_lorentz_group.f90',
+  'submodule_lorentz_group_constructors.f90',
+  'submodule_lorentz_group_actions.f90'
 ]
 
 module_utility_dir = ['src/utility/']

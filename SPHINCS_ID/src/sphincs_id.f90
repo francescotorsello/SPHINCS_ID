@@ -81,6 +81,7 @@ PROGRAM sphincs_id
                               spacetime_path, estimate_length_scale, &
                               test_int, max_n_parts
   USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
+  USE lorentz_group,    ONLY: lorentz_boost, minkowski_sqnorm
 
   IMPLICIT NONE
 
@@ -92,25 +93,25 @@ PROGRAM sphincs_id
   !# ADM linear momentum of the fluid computed using the metric mapped
   !  with the mesh-to-particle mapping
 
-  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
+  CHARACTER(LEN=:), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
-  CHARACTER( LEN= 500 ):: namefile_parts
+  CHARACTER(LEN=500):: namefile_parts
   !# String storing the name for the formatted file containing the |sph|
   !  particle |id|
-  CHARACTER( LEN= 500 ):: namefile_parts_bin
+  CHARACTER(LEN=500):: namefile_parts_bin
   !# String storing the name for the binary file containing the |sph|
   !  particle |id|
-  CHARACTER( LEN= 500 ):: namefile_sph
+  CHARACTER(LEN=500):: namefile_sph
   !# String storing the name for ??
   !
-  CHARACTER( LEN= 500 ):: namefile_recovery
+  CHARACTER(LEN=500):: namefile_recovery
   !# String storing the name for the formatted file containing the data
   !  from the recovery test
-  CHARACTER( LEN= 500 ):: namefile_bssn
+  CHARACTER(LEN=500):: namefile_bssn
   !# String storing the name for the formatted file containing the |bssn| |id|
-  CHARACTER( LEN= 500 ):: namefile_bssn_bin
+  CHARACTER(LEN=500):: namefile_bssn_bin
   !# String storing the name for the binary file containing the |bssn| |id|
-  CHARACTER( LEN= 500 ):: name_logfile
+  CHARACTER(LEN=500):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
 
@@ -134,11 +135,39 @@ PROGRAM sphincs_id
   !# Array storing the bssn objects,
   !  containing the BSSN variables on the gravity grid for each idbase object
 
-  TYPE( timer ):: execution_timer
+  TYPE(timer):: execution_timer
+
+  TYPE(lorentz_boost) boost
+  DOUBLE PRECISION, DIMENSION(3):: v
+  DOUBLE PRECISION, DIMENSION(4):: u, boosted_u
+  DOUBLE PRECISION, DIMENSION(4,4):: eta(0:3,0:3)
+  DOUBLE PRECISION, DIMENSION(4,4):: boosted_eta(0:3,0:3)
 
   !---------------------------!
   !--  End of declarations  --!
   !---------------------------!
+
+  eta(:,0)= [-1.D0,0.D0,0.D0,0.D0]
+  eta(:,1)= [0.D0,1.D0,0.D0,0.D0]
+  eta(:,2)= [0.D0,0.D0,1.D0,0.D0]
+  eta(:,3)= [0.D0,0.D0,0.D0,1.D0]
+
+  v= [0.5D0,0.5D0,0.5D0]
+  boost= lorentz_boost(v)
+
+  u= [1.D0,1.D0,0.D0,0.D0]
+  boosted_u= boost% apply(u)
+  boosted_eta= boost% apply(eta)
+  PRINT *, boosted_u
+  PRINT *, minkowski_sqnorm(u)
+  PRINT *, minkowski_sqnorm(boosted_u)
+  PRINT *, boosted_eta(0,:)
+  PRINT *, boosted_eta(1,:)
+  PRINT *, boosted_eta(2,:)
+  PRINT *, boosted_eta(3,:)
+  PRINT *
+
+  STOP
 
   !PRINT *, lorene2hydrobase
   !PRINT *, 2.45191D-4/lorene2hydrobase/1000

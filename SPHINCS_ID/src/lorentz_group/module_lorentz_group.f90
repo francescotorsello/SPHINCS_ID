@@ -64,17 +64,32 @@ MODULE lorentz_group
     DOUBLE PRECISION:: lambda
     !! Lorentz factor
 
-    DOUBLE PRECISION:: p
+    DOUBLE PRECISION, DIMENSION(3):: p
     !! Spatial vector equal to \(\lambda \,v\)
 
     DOUBLE PRECISION, DIMENSION(n_sym3x3):: lambda_s
     !! Spatial part of the Lorentz boost
 
+    DOUBLE PRECISION, DIMENSION(4,4):: matrix(0:3,0:3)
+
 
     CONTAINS
 
 
-    !GENERIC, PUBLIC:: apply => apply_to_vector, apply_to_rank2_tensor
+    GENERIC, PUBLIC:: apply => apply_boost_to_vector, &
+                               apply_boost_to_rank2_tensor!, &
+                               !apply_boost_to_symrank2_tensor
+    !# Generic procedure to apply the Lorentz boost to different geometric
+    !  objects
+
+    PROCEDURE:: apply_boost_to_vector
+    !! Action of the [[lorentz_boost]] on a \(4\)-vector
+
+    PROCEDURE:: apply_boost_to_rank2_tensor
+    !! Action of the [[lorentz_boost]] on a \(4\)-vector
+
+    !PROCEDURE:: apply_boost_to_symrank2_tensor
+    !! Action of the [[lorentz_boost]] on a \(4\)-vector
 
 
   END TYPE lorentz_boost
@@ -98,7 +113,7 @@ MODULE lorentz_group
 
   INTERFACE lorentz_boost
 
-    MODULE FUNCTION construct_boost( v ) RESULT( boost )
+    MODULE FUNCTION construct_boost(v) RESULT(boost)
 
       DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: v
       !! Spatial velocity that determines the boost
@@ -108,6 +123,111 @@ MODULE lorentz_group
     END FUNCTION construct_boost
 
   END INTERFACE lorentz_boost
+
+
+  INTERFACE
+
+    MODULE FUNCTION apply_boost_to_vector(this, u) RESULT(boosted_u)
+    !! Action of the [[lorentz_boost]] on a \(4\)-vector
+
+      CLASS(lorentz_boost), INTENT(IN):: this
+      !! [[lorentz_boost]] object to apply
+      DOUBLE PRECISION, DIMENSION(4), INTENT(IN):: u(0:3)
+      !! \(4\)-vector to be boosted
+      DOUBLE PRECISION, DIMENSION(4):: boosted_u(0:3)
+      !! Boosted \(4\)-vector
+
+    END FUNCTION apply_boost_to_vector
+
+    MODULE FUNCTION apply_boost_to_rank2_tensor(this, t) RESULT(boosted_t)
+    !! Action of the [[lorentz_boost]] on a \(4\)-vector
+
+      CLASS(lorentz_boost), INTENT(IN):: this
+      !! [[lorentz_boost]] object to apply
+      DOUBLE PRECISION, DIMENSION(4,4), INTENT(IN):: t(0:3,0:3)
+      !! \(4\)-vector to be boosted
+      DOUBLE PRECISION, DIMENSION(4,4):: boosted_t(0:3,0:3)
+      !! Boosted \(4\)-vector
+
+    END FUNCTION apply_boost_to_rank2_tensor
+
+  !  MODULE FUNCTION apply_boost_to_symrank2_tensor(this, t) RESULT(boosted_t)
+  !  !! Action of the [[lorentz_boost]] on a \(4\)-vector
+  !
+  !    CLASS(lorentz_boost), INTENT(IN):: this
+  !    !! [[lorentz_boost]] object to apply
+  !    DOUBLE PRECISION, DIMENSION(10), INTENT(IN):: t
+  !    !! \(4\)-vector to be boosted
+  !    DOUBLE PRECISION, DIMENSION(4,4):: boosted_t(0:3,0:3)
+  !    !! Boosted \(4\)-vector
+  !
+  !  END FUNCTION apply_boost_to_symrank2_tensor
+
+  END INTERFACE
+
+
+
+  CONTAINS
+
+
+  PURE FUNCTION euclidean_inner_product( u, v ) RESULT( inner_product )
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: u
+    DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: v
+    DOUBLE PRECISION:: inner_product
+
+    inner_product= u(1)*v(1) + u(2)*v(2) + u(3)*v(3)
+
+  END FUNCTION euclidean_inner_product
+
+
+  PURE FUNCTION minkowski_inner_product( u, v ) RESULT( inner_product )
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, DIMENSION(4), INTENT(IN):: u(0:3)
+    DOUBLE PRECISION, DIMENSION(4), INTENT(IN):: v(0:3)
+    DOUBLE PRECISION:: inner_product
+
+    inner_product= - u(0)*v(0) + u(1)*v(1) + u(2)*v(2) + u(3)*v(3)
+
+  END FUNCTION minkowski_inner_product
+
+
+  PURE FUNCTION minkowski_sqnorm( u ) RESULT( sqnorm )
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, DIMENSION(4), INTENT(IN):: u(0:3)
+    DOUBLE PRECISION:: sqnorm
+
+    sqnorm= minkowski_inner_product(u,u)
+
+  END FUNCTION minkowski_sqnorm
+
+
+  PURE FUNCTION row_by_column( u, v ) RESULT( res )
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, DIMENSION(:), INTENT(IN):: u
+    !! Row
+    DOUBLE PRECISION, DIMENSION(:), INTENT(IN):: v
+    !! Column
+    DOUBLE PRECISION:: res
+
+    INTEGER:: i, n
+
+    n= SIZE(u)
+
+    res= 0.D0
+    DO i= 1, n, 1
+      res= res + u(i)*v(i)
+    ENDDO
+
+  END FUNCTION row_by_column
 
 
 END MODULE lorentz_group
