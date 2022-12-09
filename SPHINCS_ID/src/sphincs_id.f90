@@ -84,6 +84,8 @@ PROGRAM sphincs_id
   USE lorentz_group,    ONLY: lorentz_boost, spatial_rotation, &
                               minkowski_sqnorm, eta
 
+  USE constants,  ONLY: pi
+
   IMPLICIT NONE
 
 
@@ -175,25 +177,25 @@ PROGRAM sphincs_id
   PRINT *, "boosted eta_vec=", boosted_eta_vec
   PRINT *
 
-!  v= [0.56D0,0.56D0,0.56D0]
-!  rotation= spatial_rotation(v)
-!
-!  u= [1.D0,1.D0,0.D0,0.D0]
-!  boosted_u= rotation% rotate_vector(u)
-!  boosted_eta_mat= rotation% rotation_congruence(eta_mat)
-!  boosted_eta_vec= rotation% rotation_congruence(eta)
-!  PRINT *, "rotated u=", boosted_u
-!  PRINT *
-!  PRINT *, "norm of u=", minkowski_sqnorm(u)
-!  PRINT *, "norm of rotated u=", minkowski_sqnorm(boosted_u)
-!  PRINT *
-!  PRINT *, "rotated eta_mat(0,:)=", boosted_eta_mat(0,:)
-!  PRINT *, "rotated eta_mat(1,:)=", boosted_eta_mat(1,:)
-!  PRINT *, "rotated eta_mat(2,:)=", boosted_eta_mat(2,:)
-!  PRINT *, "rotated eta_mat(3,:)=", boosted_eta_mat(3,:)
-!  PRINT *
-!  PRINT *, "rotated eta_vec=", boosted_eta_vec
-!  PRINT *
+  v= [pi/4.D0, pi/3.D0, pi/2.D0]
+  rotation= spatial_rotation(v)
+
+  u= [1.D0,1.D0,0.D0,0.D0]
+  boosted_u= rotation% apply_to_vector(u)
+  boosted_eta_mat= rotation% apply_as_congruence(eta_mat)
+  boosted_eta_vec= rotation% apply_as_congruence(eta)
+  PRINT *, "rotated u=", boosted_u
+  PRINT *
+  PRINT *, "norm of u=", minkowski_sqnorm(u)
+  PRINT *, "norm of rotated u=", minkowski_sqnorm(boosted_u)
+  PRINT *
+  PRINT *, "rotated eta_mat(0,:)=", boosted_eta_mat(0,:)
+  PRINT *, "rotated eta_mat(1,:)=", boosted_eta_mat(1,:)
+  PRINT *, "rotated eta_mat(2,:)=", boosted_eta_mat(2,:)
+  PRINT *, "rotated eta_mat(3,:)=", boosted_eta_mat(3,:)
+  PRINT *
+  PRINT *, "rotated eta_vec=", boosted_eta_vec
+  PRINT *
 
 
   STOP

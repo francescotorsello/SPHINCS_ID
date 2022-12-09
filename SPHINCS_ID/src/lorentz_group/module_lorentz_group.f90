@@ -88,11 +88,12 @@ MODULE lorentz_group
 
     PROCEDURE, NON_OVERRIDABLE:: apply_as_congruence_to_tensor
     !# Action of the [[lorentz_transformation]] as a congruence on a generic
-    !  tensor
+    !  purely covariant tensor
 
     PROCEDURE, NON_OVERRIDABLE:: apply_as_congruence_to_symrank2_tensor
     !# Action of the [[lorentz_transformation]] as a congruence on a
-    !  \(10\)-vector storing the components of a symmetric \(4\times 4\) tensor
+    !  \(10\)-vector storing the components of a symmetric, purely covariant,
+    !  \(4\times 4\) tensor
 
   END TYPE lorentz_transformation
 
@@ -187,7 +188,7 @@ MODULE lorentz_group
     !! Spatial velocity that determines the boost
 
     DOUBLE PRECISION:: v_speed
-    !! Euclidean norm of [[v]] (its speed)
+    !! Euclidean norm of [[lorentz_boost:v]] (its speed)
 
     DOUBLE PRECISION:: lambda
     !! Lorentz factor
@@ -234,7 +235,7 @@ MODULE lorentz_group
 
       CLASS(lorentz_boost),                  INTENT(INOUT):: this
       DOUBLE PRECISION, DIMENSION(3),        INTENT(IN)   :: p
-      !! [[lambda]]\(\times\)[[v]]
+      !! [[lorentz_boost:lambda]]\(\times\)[[lorentz_boost:v]]
       DOUBLE PRECISION, DIMENSION(n_sym3x3), INTENT(OUT)  :: lambda_s
       !! Spatial part of the Lorentz boost
       DOUBLE PRECISION, DIMENSION(4,4),      INTENT(OUT)  :: matrix(0:3,0:3)
@@ -264,6 +265,20 @@ MODULE lorentz_group
     !! Rotation operator around the \(y\) axis
     DOUBLE PRECISION, DIMENSION(3,3):: r_z
     !! Rotation operator around the \(z\) axis
+    DOUBLE PRECISION, DIMENSION(3,3):: r
+    !! Full rotation operator
+
+    DOUBLE PRECISION, DIMENSION(3,3):: tr_r
+    !! Transpose of the full inverse rotation operator
+
+    DOUBLE PRECISION, DIMENSION(3,3):: inv_r_x
+    !! Inverse rotation operator around the \(x\) axis
+    DOUBLE PRECISION, DIMENSION(3,3):: inv_r_y
+    !! Inverse rotation operator around the \(y\) axis
+    DOUBLE PRECISION, DIMENSION(3,3):: inv_r_z
+    !! Inverse rotation operator around the \(z\) axis
+    DOUBLE PRECISION, DIMENSION(3,3):: inv_r
+    !! Full inverse rotation operator
 
 
     CONTAINS
@@ -295,20 +310,22 @@ MODULE lorentz_group
 
   INTERFACE
 
-    MODULE PURE SUBROUTINE compute_rotation_matrices &
-      (this, euler_angles, r_x, r_y, r_z, matrix)
+    MODULE SUBROUTINE compute_rotation_matrices &
+      (this, euler_angles, r_x, r_y, r_z, r, matrix)
     !! Compute the matrices for the [[spatial_rotation]]
 
       CLASS(spatial_rotation),               INTENT(INOUT):: this
       !! [[spatial_rotation]] object to compuet the matrices for
       DOUBLE PRECISION, DIMENSION(3),        INTENT(IN)   :: euler_angles
-      !! [[lambda]]\(\times\)[[v]]
+      !! [[lorentz_boost:lambda]]\(\times\)[[lorentz_boost:v]]
       DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: r_x
       !! Rotation operator around the \(x\) axis
       DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: r_y
       !! Rotation operator around the \(y\) axis
       DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: r_z
       !! Rotation operator around the \(z\) axis
+      DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: r
+      !! Full rotation operator
       DOUBLE PRECISION, DIMENSION(4,4),      INTENT(OUT)  :: matrix(0:3,0:3)
       !! \(4\times 4\) matrix representing the Lorentz boost
 
@@ -391,8 +408,8 @@ MODULE lorentz_group
     DOUBLE PRECISION, DIMENSION(:,:), INTENT(IN):: b
     !! Second matrix
 
-    DOUBLE PRECISION, DIMENSION(4):: row
-    DOUBLE PRECISION, DIMENSION(4):: column
+    DOUBLE PRECISION, DIMENSION(SIZE(a(1,:))):: row
+    DOUBLE PRECISION, DIMENSION(SIZE(a(1,:))):: column
     DOUBLE PRECISION, DIMENSION(SIZE(a(1,:)),SIZE(a(1,:))):: c
 
     INTEGER:: i, j, n
