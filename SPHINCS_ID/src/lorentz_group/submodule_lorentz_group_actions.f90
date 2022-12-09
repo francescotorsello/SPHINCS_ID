@@ -1,4 +1,4 @@
-! File:         submodule_lorentz_group_actions.f90
+! File:         submodule_lorentz_group_boost_actions.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
@@ -45,7 +45,7 @@ SUBMODULE(lorentz_group) actions
 
 
 
-  MODULE PROCEDURE apply_boost_to_vector
+  MODULE PROCEDURE apply_to_vector
 
     !***********************************************************
     !
@@ -53,43 +53,46 @@ SUBMODULE(lorentz_group) actions
     !
     !  FT 08.12.2022
     !
-    !  @todo implement matrix multiplications to make all this
-    !        computations simpler and safer?
-    !
     !***********************************************************
 
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, DIMENSION(3):: u_spatial
+    INTEGER:: i
+    DOUBLE PRECISION, DIMENSION(4):: row(0:3)
+    DOUBLE PRECISION, DIMENSION(4):: column(0:3)
 
-    u_spatial= [u(1), u(2), u(3)]
+    !u_spatial= [u(1), u(2), u(3)]
+    !
+    !transformed_u(0)= this% lambda*u(0) &
+    !            + euclidean_inner_product( this% p, u_spatial )
+    !
+    !transformed_u(1)= this% p(1)*u(0) &
+    !            + euclidean_inner_product( &
+    !                [this% lambda_s(1), this% lambda_s(2), this% lambda_s(3)], &
+    !                u_spatial )
+    !
+    !transformed_u(2)= this% p(2)*u(0) &
+    !            + euclidean_inner_product( &
+    !                [this% lambda_s(2), this% lambda_s(4), this% lambda_s(5)], &
+    !                u_spatial )
+    !
+    !transformed_u(3)= this% p(3)*u(0) &
+    !            + euclidean_inner_product( &
+    !                [this% lambda_s(3), this% lambda_s(5), this% lambda_s(6)], &
+    !                u_spatial )
 
-    !PRINT *, u
-    !PRINT *, u_spatial
+    column= u
 
-    boosted_u(0)= this% lambda*u(0) &
-                + euclidean_inner_product( this% p, u_spatial )
+    DO i= 0, 3, 1
+      row         = this% matrix(i,:)
+      transformed_u(i)= row_by_column(row,column)
+    ENDDO
 
-    boosted_u(1)= this% p(1)*u(0) &
-                + euclidean_inner_product( &
-                    [this% lambda_s(1), this% lambda_s(2), this% lambda_s(3)], &
-                    u_spatial )
-
-    boosted_u(2)= this% p(2)*u(0) &
-                + euclidean_inner_product( &
-                    [this% lambda_s(2), this% lambda_s(4), this% lambda_s(5)], &
-                    u_spatial )
-
-    boosted_u(3)= this% p(3)*u(0) &
-                + euclidean_inner_product( &
-                    [this% lambda_s(3), this% lambda_s(5), this% lambda_s(6)], &
-                    u_spatial )
-
-  END PROCEDURE apply_boost_to_vector
+  END PROCEDURE apply_to_vector
 
 
-  MODULE PROCEDURE apply_boost_similarity
+  MODULE PROCEDURE apply_as_similarity_to_tensor
 
     !***********************************************************
     !
@@ -100,40 +103,40 @@ SUBMODULE(lorentz_group) actions
     !
     !***********************************************************
 
+    IMPLICIT NONE
+
+    transformed_t= square_matrix_multiplication( &
+                square_matrix_multiplication(this% inv_matrix,t), this% matrix)
+
+  END PROCEDURE apply_as_similarity_to_tensor
+
+
+  MODULE PROCEDURE apply_as_similarity_to_symrank2_tensor
+
+    !***********************************************************
+    !
+    !# Implements the action of a boost as a similarity
+    !  on a \(10\)-vector storing the components of a symmetric
+    !  \(4\times 4\) tensor
+    !
+    !  FT 09.12.2022
+    !
+    !***********************************************************
+
+    USE metric_on_particles,  ONLY: gvec2mat, mat2gvec
 
     IMPLICIT NONE
 
-    INTEGER:: i, j
-    DOUBLE PRECISION, DIMENSION(4):: row
-    DOUBLE PRECISION, DIMENSION(4):: column
-    DOUBLE PRECISION, DIMENSION(4,4):: tmp(0:3,0:3)
+    DOUBLE PRECISION, DIMENSION(4,4):: t_mat(0:3,0:3)
 
-    DO i= 0, 3, 1
-      DO j= 0, 3, 1
+    CALL gvec2mat(t,t_mat)
 
-        row   = this% inv_matrix(i,:)
-        column= t(:,j)
+    CALL mat2gvec(transformed_t, this% apply_as_similarity_to_tensor(t_mat))
 
-        tmp(i,j)= row_by_column(row,column)
-
-      ENDDO
-    ENDDO
-
-    DO i= 0, 3, 1
-      DO j= 0, 3, 1
-
-        row   = tmp(i,:)
-        column= this% matrix(:,j)
-
-        boosted_t(i,j)= row_by_column(row,column)
-
-      ENDDO
-    ENDDO
-
-  END PROCEDURE apply_boost_similarity
+  END PROCEDURE apply_as_similarity_to_symrank2_tensor
 
 
-  MODULE PROCEDURE apply_boost_congruence
+  MODULE PROCEDURE apply_as_congruence_to_tensor
 
     !***********************************************************
     !
@@ -144,37 +147,37 @@ SUBMODULE(lorentz_group) actions
     !
     !***********************************************************
 
+    IMPLICIT NONE
+
+    transformed_t= square_matrix_multiplication( &
+                square_matrix_multiplication(this% tr_matrix,t), this% matrix)
+
+  END PROCEDURE apply_as_congruence_to_tensor
+
+
+  MODULE PROCEDURE apply_as_congruence_to_symrank2_tensor
+
+    !***********************************************************
+    !
+    !# Implements the action of a boost as a similarity
+    !  on a \(10\)-vector storing the components of a symmetric
+    !  \(4\times 4\) tensor
+    !
+    !  FT 09.12.2022
+    !
+    !***********************************************************
+
+    USE metric_on_particles,  ONLY: gvec2mat, mat2gvec
 
     IMPLICIT NONE
 
-    INTEGER:: i, j
-    DOUBLE PRECISION, DIMENSION(4):: row
-    DOUBLE PRECISION, DIMENSION(4):: column
-    DOUBLE PRECISION, DIMENSION(4,4):: tmp(0:3,0:3)
+    DOUBLE PRECISION, DIMENSION(4,4):: t_mat(0:3,0:3)
 
-    DO i= 0, 3, 1
-      DO j= 0, 3, 1
+    CALL gvec2mat(t, t_mat)
 
-        row   = this% matrix(:,i) ! Transpose
-        column= t(:,j)
+    CALL mat2gvec(transformed_t, this% apply_as_congruence_to_tensor(t_mat))
 
-        tmp(i,j)= row_by_column(row,column)
-
-      ENDDO
-    ENDDO
-
-    DO i= 0, 3, 1
-      DO j= 0, 3, 1
-
-        row   = tmp(i,:)
-        column= this% matrix(:,j)
-
-        boosted_t(i,j)= row_by_column(row,column)
-
-      ENDDO
-    ENDDO
-
-  END PROCEDURE apply_boost_congruence
+  END PROCEDURE apply_as_congruence_to_symrank2_tensor
 
 
 END SUBMODULE actions

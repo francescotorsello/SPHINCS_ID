@@ -362,7 +362,8 @@ module_lorentz_group_dir = ['src/lorentz_group/']
 module_lorentz_group = [
   'module_lorentz_group.f90',
   'submodule_lorentz_group_constructors.f90',
-  'submodule_lorentz_group_actions.f90'
+  'submodule_lorentz_group_actions.f90'#,
+  #'submodule_lorentz_group_rotation_actions.f90'
 ]
 
 module_utility_dir = ['src/utility/']
@@ -731,7 +732,7 @@ if debug == 'FALSE': #
     ############################################################################
     if fortran_compiler == 'ifort':
 
-      env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
+      env['F90FLAGS'] = [ '-O0', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \

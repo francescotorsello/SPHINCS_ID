@@ -81,7 +81,8 @@ PROGRAM sphincs_id
                               spacetime_path, estimate_length_scale, &
                               test_int, max_n_parts
   USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
-  USE lorentz_group,    ONLY: lorentz_boost, minkowski_sqnorm
+  USE lorentz_group,    ONLY: lorentz_boost, spatial_rotation, &
+                              minkowski_sqnorm, eta
 
   IMPLICIT NONE
 
@@ -137,35 +138,63 @@ PROGRAM sphincs_id
 
   TYPE(timer):: execution_timer
 
-  TYPE(lorentz_boost) boost
+  TYPE(lorentz_boost)   :: boost
+  TYPE(spatial_rotation):: rotation
   DOUBLE PRECISION, DIMENSION(3):: v
   DOUBLE PRECISION, DIMENSION(4):: u, boosted_u
-  DOUBLE PRECISION, DIMENSION(4,4):: eta(0:3,0:3)
-  DOUBLE PRECISION, DIMENSION(4,4):: boosted_eta(0:3,0:3)
+  DOUBLE PRECISION, DIMENSION(4,4):: eta_mat(0:3,0:3)
+  DOUBLE PRECISION, DIMENSION(4,4):: boosted_eta_mat(0:3,0:3)
+  DOUBLE PRECISION, DIMENSION(10):: boosted_eta_vec
 
   !---------------------------!
   !--  End of declarations  --!
   !---------------------------!
 
-  eta(:,0)= [-1.D0,0.D0,0.D0,0.D0]
-  eta(:,1)= [0.D0,1.D0,0.D0,0.D0]
-  eta(:,2)= [0.D0,0.D0,1.D0,0.D0]
-  eta(:,3)= [0.D0,0.D0,0.D0,1.D0]
+  eta_mat(:,0)= [-1.D0,0.D0,0.D0,0.D0]
+  eta_mat(:,1)= [0.D0,1.D0,0.D0,0.D0]
+  eta_mat(:,2)= [0.D0,0.D0,1.D0,0.D0]
+  eta_mat(:,3)= [0.D0,0.D0,0.D0,1.D0]
 
   v= [0.56D0,0.56D0,0.56D0]
   boost= lorentz_boost(v)
 
   u= [1.D0,1.D0,0.D0,0.D0]
-  boosted_u= boost% apply(u)
-  boosted_eta= boost% apply_boost_congruence(eta)
-  PRINT *, boosted_u
-  PRINT *, minkowski_sqnorm(u)
-  PRINT *, minkowski_sqnorm(boosted_u)
-  PRINT *, boosted_eta(0,:)
-  PRINT *, boosted_eta(1,:)
-  PRINT *, boosted_eta(2,:)
-  PRINT *, boosted_eta(3,:)
+  boosted_u= boost% apply_to_vector(u)
+  boosted_eta_mat= boost% apply_as_congruence(eta_mat)
+  boosted_eta_vec= boost% apply_as_congruence(eta)
+  PRINT *, "boosted u=", boosted_u
   PRINT *
+  PRINT *, "norm of u=", minkowski_sqnorm(u)
+  PRINT *, "norm of boosted u=", minkowski_sqnorm(boosted_u)
+  PRINT *
+  PRINT *, "boosted eta_mat(0,:)=", boosted_eta_mat(0,:)
+  PRINT *, "boosted eta_mat(1,:)=", boosted_eta_mat(1,:)
+  PRINT *, "boosted eta_mat(2,:)=", boosted_eta_mat(2,:)
+  PRINT *, "boosted eta_mat(3,:)=", boosted_eta_mat(3,:)
+  PRINT *
+  PRINT *, "boosted eta_vec=", boosted_eta_vec
+  PRINT *
+
+!  v= [0.56D0,0.56D0,0.56D0]
+!  rotation= spatial_rotation(v)
+!
+!  u= [1.D0,1.D0,0.D0,0.D0]
+!  boosted_u= rotation% rotate_vector(u)
+!  boosted_eta_mat= rotation% rotation_congruence(eta_mat)
+!  boosted_eta_vec= rotation% rotation_congruence(eta)
+!  PRINT *, "rotated u=", boosted_u
+!  PRINT *
+!  PRINT *, "norm of u=", minkowski_sqnorm(u)
+!  PRINT *, "norm of rotated u=", minkowski_sqnorm(boosted_u)
+!  PRINT *
+!  PRINT *, "rotated eta_mat(0,:)=", boosted_eta_mat(0,:)
+!  PRINT *, "rotated eta_mat(1,:)=", boosted_eta_mat(1,:)
+!  PRINT *, "rotated eta_mat(2,:)=", boosted_eta_mat(2,:)
+!  PRINT *, "rotated eta_mat(3,:)=", boosted_eta_mat(3,:)
+!  PRINT *
+!  PRINT *, "rotated eta_vec=", boosted_eta_vec
+!  PRINT *
+
 
   STOP
 

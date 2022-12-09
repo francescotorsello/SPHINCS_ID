@@ -36,12 +36,20 @@ SUBMODULE(lorentz_group) constructors
   !***********************************************************
 
 
+  USE utility,  ONLY: zero, one
+
+
   IMPLICIT NONE
 
 
 
   CONTAINS
 
+
+
+  !------------!
+  !-- BOOSTS --!
+  !------------!
 
 
   MODULE PROCEDURE construct_boost
@@ -54,17 +62,13 @@ SUBMODULE(lorentz_group) constructors
     !
     !***********************************************************
 
-    USE utility,  ONLY: one
-    USE matrix,   ONLY: invert_4x4_matrix
-
     IMPLICIT NONE
 
     INTEGER:: i, j
 
-    DOUBLE PRECISION:: v_sqnorm, lambda_plus_one
-    DOUBLE PRECISION, DIMENSION(4):: row
-    DOUBLE PRECISION, DIMENSION(4):: column
+    DOUBLE PRECISION:: v_sqnorm, delta
     DOUBLE PRECISION, DIMENSION(4,4):: identity(0:3,0:3)
+    LOGICAL:: is_identity
 
     v_sqnorm= euclidean_inner_product(v,v)
     boost% v_speed= SQRT(v_sqnorm)
@@ -81,44 +85,167 @@ SUBMODULE(lorentz_group) constructors
     boost% v= v
 
     boost% lambda= one/SQRT( one - v_sqnorm )
-    lambda_plus_one= boost% lambda + one
 
     boost% p= boost% lambda*boost% v
 
-    boost% lambda_s(1)= one + (boost% p(1)**2)         /lambda_plus_one
-    boost% lambda_s(2)=       (boost% p(1)*boost% p(2))/lambda_plus_one
-    boost% lambda_s(3)=       (boost% p(1)*boost% p(3))/lambda_plus_one
-    boost% lambda_s(4)= one + (boost% p(2)**2)         /lambda_plus_one
-    boost% lambda_s(5)=       (boost% p(2)*boost% p(3))/lambda_plus_one
-    boost% lambda_s(6)= one + (boost% p(3)**2)         /lambda_plus_one
+    CALL boost% compute_boost_matrices(boost% p, boost% lambda_s, boost% matrix)
+    CALL boost% compute_boost_matrices(- boost% p, boost% inv_lambda_s, &
+                                         boost% inv_matrix)
 
-    boost% matrix(0,0)  = boost% lambda
-    boost% matrix(0,1:3)= boost% p
-    boost% matrix(1:3,0)= boost% p
-    boost% matrix(1,1:3)= boost% lambda_s(1:3)
-    boost% matrix(2,1:3)= &
-      [boost% lambda_s(2),boost% lambda_s(4),boost% lambda_s(5)]
-    boost% matrix(3,1:3)= &
-      [boost% lambda_s(3),boost% lambda_s(5),boost% lambda_s(6)]
+    boost% tr_matrix= TRANSPOSE(boost% matrix)
 
-    CALL invert_4x4_matrix(boost% matrix, boost% inv_matrix)
-
+    identity= square_matrix_multiplication(boost% inv_matrix, boost% matrix)
     DO i= 0, 3, 1
       DO j= 0, 3, 1
-
-        row   = boost% matrix(i,:)
-        column= boost% inv_matrix(:,j)
-
-        identity(i,j)= row_by_column(row,column)
-
+        IF( i == j )THEN
+          delta= one
+        ELSE
+          delta= zero
+        ENDIF
+        is_identity= (identity(i,j) - delta) < 1.D-12
       ENDDO
     ENDDO
-    PRINT *, "id(0,:)=", identity(0,:)
-    PRINT *, "id(1,:)=", identity(1,:)
-    PRINT *, "id(2,:)=", identity(2,:)
-    PRINT *, "id(3,:)=", identity(3,:)
+    IF( .NOT.is_identity )THEN
+
+      PRINT *, "** ERROR! boost% inv_matrix is not the inverse of ", &
+               "boost% matrix! Their product is:"
+      PRINT *, "   id(0,:)=", identity(0,:)
+      PRINT *, "   id(1,:)=", identity(1,:)
+      PRINT *, "   id(2,:)=", identity(2,:)
+      PRINT *, "   id(3,:)=", identity(3,:)
+      PRINT *
+      STOP
+
+    ENDIF
 
   END PROCEDURE construct_boost
+
+
+  MODULE PROCEDURE compute_boost_matrices
+
+    !***********************************************************
+    !
+    !# Computes the spatial part of the matrix of the Lorentz
+    !  boost, and its whole matrix, starting from the vector
+    !  \(p\)
+    !
+    !  FT 09.12.2022
+    !
+    !***********************************************************
+
+    USE utility,  ONLY: one
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION:: lambda, lambda_plus_one
+
+    lambda= SQRT(one + euclidean_inner_product(p,p))
+    lambda_plus_one= lambda + one
+
+    lambda_s(1)= one + (p(1)**2)  /lambda_plus_one
+    lambda_s(2)=       (p(1)*p(2))/lambda_plus_one
+    lambda_s(3)=       (p(1)*p(3))/lambda_plus_one
+    lambda_s(4)= one + (p(2)**2)  /lambda_plus_one
+    lambda_s(5)=       (p(2)*p(3))/lambda_plus_one
+    lambda_s(6)= one + (p(3)**2)  /lambda_plus_one
+
+    matrix(0,0)  = lambda
+    matrix(0,1:3)= p
+    matrix(1:3,0)= p
+    matrix(1,1:3)= lambda_s(1:3)
+    matrix(2,1:3)= [lambda_s(2), lambda_s(4), lambda_s(5)]
+    matrix(3,1:3)= [lambda_s(3), lambda_s(5), lambda_s(6)]
+
+  END PROCEDURE compute_boost_matrices
+
+
+  !------------------------!
+  !--  SPATIAL ROTATIONS --!
+  !------------------------!
+
+
+  MODULE PROCEDURE construct_rotation
+
+    !***********************************************************
+    !
+    !# Construct a boost transformation
+    !
+    !  FT 08.12.2022
+    !
+    !***********************************************************
+
+    IMPLICIT NONE
+
+    INTEGER:: i, j
+
+    DOUBLE PRECISION:: v_sqnorm, delta
+    DOUBLE PRECISION, DIMENSION(4,4):: identity(0:3,0:3)
+    LOGICAL:: is_identity
+
+
+
+  !  IF( rotation% v_speed >= one )THEN
+  !    PRINT *, "** ERROR! The speed given to construct_rotation is larger", &
+  !             " than, or equal to, 1!"
+  !    PRINT *, "|v|^2=", rotation% v_speed
+  !    PRINT *, "* Stopping..."
+  !    PRINT *
+  !    STOP
+  !  ENDIF
+
+
+  !  CALL rotation% compute_rotation_matrices(rotation% p, rotation% lambda_s, rotation% matrix)
+  !  CALL rotation% compute_rotation_matrices(- rotation% p, rotation% inv_lambda_s, &
+  !                                       rotation% inv_matrix)
+  !
+  !  rotation% tr_matrix= TRANSPOSE(rotation% matrix)
+
+    identity= square_matrix_multiplication(rotation% inv_matrix, rotation% matrix)
+    DO i= 0, 3, 1
+      DO j= 0, 3, 1
+        IF( i == j )THEN
+          delta= one
+        ELSE
+          delta= zero
+        ENDIF
+        is_identity= (identity(i,j) - delta) < 1.D-12
+      ENDDO
+    ENDDO
+    IF( .NOT.is_identity )THEN
+
+      PRINT *, "** ERROR! rotation% inv_matrix is not the inverse of ", &
+               "rotation% matrix! Their product is:"
+      PRINT *, "   id(0,:)=", identity(0,:)
+      PRINT *, "   id(1,:)=", identity(1,:)
+      PRINT *, "   id(2,:)=", identity(2,:)
+      PRINT *, "   id(3,:)=", identity(3,:)
+      PRINT *
+      STOP
+
+    ENDIF
+
+  END PROCEDURE construct_rotation
+
+
+  MODULE PROCEDURE compute_rotation_matrices
+
+    !***********************************************************
+    !
+    !# Computes the spatial part of the matrix of the Lorentz
+    !  rotation, and its whole matrix, starting from the vector
+    !  \(p\)
+    !
+    !  FT 09.12.2022
+    !
+    !***********************************************************
+
+    USE utility,  ONLY: one
+
+    IMPLICIT NONE
+
+
+
+  END PROCEDURE compute_rotation_matrices
 
 
 END SUBMODULE constructors
