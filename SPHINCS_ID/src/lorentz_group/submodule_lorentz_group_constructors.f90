@@ -56,7 +56,7 @@ SUBMODULE(lorentz_group) constructors
 
     !***********************************************************
     !
-    !# Construct a boost transformation
+    !# Construct a boost transformation from the spatial velocity
     !
     !  FT 08.12.2022
     !
@@ -122,6 +122,24 @@ SUBMODULE(lorentz_group) constructors
   END PROCEDURE construct_boost
 
 
+  MODULE PROCEDURE construct_boost_components
+
+    !***********************************************************
+    !
+    !# Construct a boost transformation from the components
+    !  of the spatial velocity
+    !
+    !  FT 10.12.2022
+    !
+    !***********************************************************
+
+    IMPLICIT NONE
+
+    boost= lorentz_boost([vx,vy,vz])
+
+  END PROCEDURE construct_boost_components
+
+
   MODULE PROCEDURE compute_boost_matrices
 
     !***********************************************************
@@ -169,9 +187,10 @@ SUBMODULE(lorentz_group) constructors
 
     !***********************************************************
     !
-    !# Construct a boost transformation
+    !# Construct a spatial rotation from a vector containing
+    !  the Euler angles
     !
-    !  FT 08.12.2022
+    !  FT 09.12.2022
     !
     !***********************************************************
 
@@ -238,6 +257,23 @@ SUBMODULE(lorentz_group) constructors
     ENDIF
 
   END PROCEDURE construct_rotation
+
+
+  MODULE PROCEDURE construct_rotation_angles
+
+    !***********************************************************
+    !
+    !# Construct a spatial rotation from the Euler angles
+    !
+    !  FT 10.12.2022
+    !
+    !***********************************************************
+
+    IMPLICIT NONE
+
+    rotation= spatial_rotation([alpha,beta,gamma])
+
+  END PROCEDURE construct_rotation_angles
 
 
   MODULE PROCEDURE compute_rotation_matrices

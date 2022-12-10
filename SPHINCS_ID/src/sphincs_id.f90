@@ -158,7 +158,7 @@ PROGRAM sphincs_id
   eta_mat(:,3)= [0.D0,0.D0,0.D0,1.D0]
 
   v= [0.56D0,0.56D0,0.56D0]
-  boost= lorentz_boost(v)
+  boost= lorentz_boost(0.56D0,0.56D0,0.56D0)
 
   u= [1.D0,1.D0,0.D0,0.D0]
   boosted_u= boost% apply_to_vector(u)
@@ -178,7 +178,7 @@ PROGRAM sphincs_id
   PRINT *
 
   v= [pi/4.D0, pi/3.D0, pi/2.D0]
-  rotation= spatial_rotation(v)
+  rotation= spatial_rotation(pi/4.D0, pi/3.D0, pi/2.D0)
 
   u= [1.D0,1.D0,0.D0,0.D0]
   boosted_u= rotation% apply_to_vector(u)

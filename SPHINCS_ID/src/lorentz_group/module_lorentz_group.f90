@@ -225,6 +225,19 @@ MODULE lorentz_group
 
     END FUNCTION construct_boost
 
+    MODULE FUNCTION construct_boost_components(vx, vy, vz) RESULT(boost)
+
+      DOUBLE PRECISION, INTENT(IN):: vx
+      !! \(x\) component of the spatial velocity that determines the boost
+      DOUBLE PRECISION, INTENT(IN):: vy
+      !! \(y\) component of the spatial velocity that determines the boost
+      DOUBLE PRECISION, INTENT(IN):: vz
+      !! \(z\) component of the spatial velocity that determines the boost
+      TYPE(lorentz_boost):: boost
+      !! [[lorentz_boost]] object to be constructed
+
+    END FUNCTION construct_boost_components
+
   END INTERFACE lorentz_boost
 
 
@@ -304,6 +317,20 @@ MODULE lorentz_group
       !! [[spatial_rotation]] object to be constructed
 
     END FUNCTION construct_rotation
+
+    MODULE FUNCTION construct_rotation_angles(alpha, beta, gamma) &
+      RESULT(rotation)
+
+      DOUBLE PRECISION, INTENT(IN):: alpha
+      !# Euler angle that defines the rotation around the \(x\) axis
+      DOUBLE PRECISION, INTENT(IN):: beta
+      !# Euler angle that defines the rotation around the \(y\) axis
+      DOUBLE PRECISION, INTENT(IN):: gamma
+      !# Euler angle that defines the rotation around the \(z\) axis
+      TYPE(spatial_rotation):: rotation
+      !! [[spatial_rotation]] object to be constructed
+
+    END FUNCTION construct_rotation_angles
 
   END INTERFACE spatial_rotation
 
