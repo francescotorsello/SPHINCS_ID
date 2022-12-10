@@ -311,7 +311,8 @@ MODULE lorentz_group
   INTERFACE
 
     MODULE SUBROUTINE compute_rotation_matrices &
-      (this, euler_angles, r_x, r_y, r_z, r, matrix)
+      (this, euler_angles, r_x, r_y, r_z, r, matrix, &
+       inv_r_x, inv_r_y, inv_r_z, inv_r, inv_matrix)
     !! Compute the matrices for the [[spatial_rotation]]
 
       CLASS(spatial_rotation),               INTENT(INOUT):: this
@@ -325,9 +326,19 @@ MODULE lorentz_group
       DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: r_z
       !! Rotation operator around the \(z\) axis
       DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: r
-      !! Full rotation operator
+      !! Full \(3\times 3\) rotation operator
       DOUBLE PRECISION, DIMENSION(4,4),      INTENT(OUT)  :: matrix(0:3,0:3)
       !! \(4\times 4\) matrix representing the Lorentz boost
+      DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: inv_r_x
+      !! Inverse rotation operator around the \(x\) axis
+      DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: inv_r_y
+      !! Inverse rotation operator around the \(y\) axis
+      DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: inv_r_z
+      !! Inverse rotation operator around the \(z\) axis
+      DOUBLE PRECISION, DIMENSION(3,3),      INTENT(OUT)  :: inv_r
+      !! Inverse of the full \(3\times 3\) rotation operator
+      DOUBLE PRECISION, DIMENSION(4,4),      INTENT(OUT)  :: inv_matrix(0:3,0:3)
+      !! Inverse of the \(4\times 4\) matrix representing the Lorentz boost
 
     END SUBROUTINE compute_rotation_matrices
 

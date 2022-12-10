@@ -95,6 +95,7 @@ SUBMODULE(lorentz_group) constructors
     boost% tr_matrix= TRANSPOSE(boost% matrix)
 
     identity= square_matrix_multiplication(boost% inv_matrix, boost% matrix)
+    is_identity= .TRUE.
     DO i= 0, 3, 1
       DO j= 0, 3, 1
         IF( i == j )THEN
@@ -102,7 +103,7 @@ SUBMODULE(lorentz_group) constructors
         ELSE
           delta= zero
         ENDIF
-        is_identity= (identity(i,j) - delta) < 1.D-12
+        is_identity= is_identity .AND. (identity(i,j) - delta) < 1.D-12
       ENDDO
     ENDDO
     IF( .NOT.is_identity )THEN
@@ -184,20 +185,19 @@ SUBMODULE(lorentz_group) constructors
 
     rotation% euler_angles= euler_angles
 
-    CALL rotation% compute_rotation_matrices &
-      (- [rotation% euler_angles(3), rotation% euler_angles(2), &
-          rotation% euler_angles(1)], &
-      rotation% inv_r_z, rotation% inv_r_y, rotation% inv_r_x, rotation% inv_r,&
-      rotation% inv_matrix)
-
     CALL rotation% compute_rotation_matrices(rotation% euler_angles, &
-   rotation% r_x, rotation% r_y, rotation% r_z, rotation% r, rotation% matrix)
+                    rotation% r_x, rotation% r_y, rotation% r_z, &
+                    rotation% r, rotation% matrix, &
+                    rotation% inv_r_x, rotation% inv_r_y, rotation% inv_r_z, &
+                    rotation% inv_r, rotation% inv_matrix)
 
     rotation% tr_r= TRANSPOSE(rotation% r)
     rotation% tr_matrix= TRANSPOSE(rotation% matrix)
 
     identity= square_matrix_multiplication(rotation% inv_matrix, &
                                            rotation% matrix)
+
+    is_identity= .TRUE.
     DO i= 0, 3, 1
       DO j= 0, 3, 1
         IF( i == j )THEN
@@ -205,7 +205,7 @@ SUBMODULE(lorentz_group) constructors
         ELSE
           delta= zero
         ENDIF
-        is_identity= (identity(i,j) - delta) < 1.D-12
+        is_identity= is_identity .AND. (identity(i,j) - delta) < 1.D-12
       ENDDO
     ENDDO
     IF( .NOT.is_identity )THEN
@@ -221,33 +221,21 @@ SUBMODULE(lorentz_group) constructors
 
     ENDIF
 
+    is_identity= .TRUE.
     DO i= 1, 3, 1
       DO j= 1, 3, 1
-        is_identity= (rotation% inv_r(i,j) - rotation% tr_r(i,j)) < 1.D-12
+        is_identity= is_identity .AND. &
+                     (rotation% inv_r(i,j) - rotation% tr_r(i,j)) < 1.D-12
       ENDDO
     ENDDO
     IF( .NOT.is_identity )THEN
 
       PRINT *, "** ERROR! rotation% inv_r is not the same as ", &
-               "rotation% tr_r! Their difference is:"
-      PRINT *, "   rotation% inv_r(0,:) - rotation% tr_r(0,:)=", identity(0,:)
-      PRINT *, "   rotation% inv_r(1,:) - rotation% tr_r(1,:)=", identity(1,:)
-      PRINT *, "   rotation% inv_r(2,:) - rotation% tr_r(2,:)=", identity(2,:)
-      PRINT *, "   rotation% inv_r(3,:) - rotation% tr_r(3,:)=", identity(3,:)
+               "rotation% tr_r! "
       PRINT *
       STOP
 
     ENDIF
-    PRINT *, "   rotation% inv_r(0,:)=", rotation% inv_r(0,:)
-    PRINT *, "   rotation% inv_r(1,:)=", rotation% inv_r(1,:)
-    PRINT *, "   rotation% inv_r(2,:)=", rotation% inv_r(2,:)
-    PRINT *, "   rotation% inv_r(3,:)=", rotation% inv_r(3,:)
-    PRINT *
-    PRINT *, "   rotation% tr_r(0,:)=", rotation% tr_r(0,:)
-    PRINT *, "   rotation% tr_r(1,:)=", rotation% tr_r(1,:)
-    PRINT *, "   rotation% tr_r(2,:)=", rotation% tr_r(2,:)
-    PRINT *, "   rotation% tr_r(3,:)=", rotation% tr_r(3,:)
-    PRINT *
 
   END PROCEDURE construct_rotation
 
@@ -286,6 +274,31 @@ SUBMODULE(lorentz_group) constructors
     matrix(1,1:3)= r(1,1:3)
     matrix(2,1:3)= r(2,1:3)
     matrix(3,1:3)= r(3,1:3)
+
+    !
+    !-- Computation of the inverse matrices
+    !
+    inv_r_x(1,:)= [one, zero, zero]
+    inv_r_x(2,:)= [zero, COS(-euler_angles(1)), - SIN(-euler_angles(1))]
+    inv_r_x(3,:)= [zero, SIN(-euler_angles(1)),   COS(-euler_angles(1))]
+
+    inv_r_y(1,:)= [  COS(-euler_angles(2)), zero, SIN(-euler_angles(2))]
+    inv_r_y(2,:)= [  zero, one, zero]
+    inv_r_y(3,:)= [- SIN(-euler_angles(2)), zero, COS(-euler_angles(2))]
+
+    inv_r_z(1,:)= [COS(-euler_angles(3)), - SIN(-euler_angles(3)), zero]
+    inv_r_z(2,:)= [SIN(-euler_angles(3)),   COS(-euler_angles(3)), zero]
+    inv_r_z(3,:)= [zero, zero, one]
+
+    inv_r= square_matrix_multiplication(inv_r_x, &
+                                square_matrix_multiplication(inv_r_y,inv_r_z))
+
+    inv_matrix(0,0)= one
+    inv_matrix(0,1:3)= [zero,zero,zero]
+    inv_matrix(1:3,0)= [zero,zero,zero]
+    inv_matrix(1,1:3)= inv_r(1,1:3)
+    inv_matrix(2,1:3)= inv_r(2,1:3)
+    inv_matrix(3,1:3)= inv_r(3,1:3)
 
   END PROCEDURE compute_rotation_matrices
 
