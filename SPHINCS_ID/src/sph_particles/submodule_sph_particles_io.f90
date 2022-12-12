@@ -240,13 +240,13 @@ SUBMODULE (sph_particles) io
 
     IMPLICIT NONE
 
-    INTEGER, PARAMETER:: max_npart= 2.D+7
+    INTEGER, PARAMETER:: max_npart= 5.D+7
 
     INTEGER:: itr
 
     LOGICAL:: exist, final_save_data
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
 
     IF( PRESENT(save_data) )THEN
       final_save_data= save_data
