@@ -60,13 +60,18 @@ PROGRAM construct_eccentric_binary
                            n1, n2
   USE input_output,  ONLY: set_units, read_sphincs_dump, write_sphincs_dump
   USE units,         ONLY: m0c2_cu
+  USE tensor,        ONLY: n_sym3x3
 
   !
   !-- BSSN MODULES
   !
-  USE mesh_refinement,  ONLY: nlevels, levels, initialize_grid
-  USE ADM_refine,       ONLY: allocate_ADM
-  USE BSSN_refine,      ONLY: allocate_BSSN, read_BSSN_dump
+  USE mesh_refinement,  ONLY: nlevels, levels, initialize_grid, &
+                              grid_function_scalar, grid_function, &
+                              allocate_grid_function, deallocate_grid_function
+  USE ADM_refine,       ONLY: allocate_ADM, deallocate_ADM, lapse, shift_u
+  USE BSSN_refine,      ONLY: allocate_BSSN, deallocate_BSSN, read_BSSN_dump, &
+                              phi, trK, Theta_Z4, lapse_A_BSSN, shift_B_BSSN_u,&
+                              Gamma_u, g_BSSN3_ll, A_BSSN3_ll
 
   !
   !-- SPHINCS_ID MODULES
@@ -86,16 +91,17 @@ PROGRAM construct_eccentric_binary
   DOUBLE PRECISION:: periastron, mass1, mass2, speed
   CHARACTER(LEN=:), ALLOCATABLE:: filename1, filename2
 
-  INTEGER :: io_error, allocation_status
-  INTEGER, DIMENSION(3) :: array_shape
-  INTEGER :: l
+
+  ! Convert periastron to code units
+  periastron= periastron_km/Msun_geo
+
 
   !--------------!
   !--  SPH ID  --!
   !--------------!
 
   !
-  !-- Allocate SPH memory (reallocated inside read_tov_id)
+  !-- Allocate SPH memory (reallocated inside read_tov_sph_id)
   !
   npart= max_npart
   CALL set_units('NSM')
@@ -108,8 +114,7 @@ PROGRAM construct_eccentric_binary
   !
   filename1 = 'tov-id-files/NSxx.00000'
   filename2 = 'tov-id-files/NSx2.00000'
-  periastron= periastron_km/Msun_geo
-  CALL read_tov_id(filename1, filename2, periastron)
+  CALL read_tov_sph_id(filename1, filename2, periastron)
 
   !
   !-- Assign Newtonian velocity and generalized Lorentz factor to the particles
@@ -177,43 +182,18 @@ PROGRAM construct_eccentric_binary
   !---------------!
 
   filename1 = 'tov-id-files/BSSN_vars.00000'
-  OPEN(UNIT=my_unit, FILE=filename1, FORM='unformatted', ACTION='read', &
-       STATUS='old', IOSTAT=io_error)
-  IF (io_error/=0) THEN
-    PRINT*,'Error opening ', filename1, ' for reading'
-    STOP
-  ENDIF
-
-  READ(my_unit) nlevels
-
-  ALLOCATE (levels(nlevels),STAT=allocation_status)
-  IF(allocation_status > 0)THEN
-     PRINT*,'...allocation error for levels'
-     STOP
-  ENDIF
-
-  DO l= 1, nlevels
-
-    READ(my_unit) array_shape
-    levels(l)% ngrid_x= array_shape(1)
-    levels(l)% ngrid_y= array_shape(2)
-    levels(l)% ngrid_z= array_shape(3)
-
-  ENDDO
-
-  CLOSE(my_unit)
-
- ! CALL initialize_grid()
-
-  CALL allocate_ADM()
-  CALL allocate_BSSN()
-
-  filename1 = 'tov-id-files/BSSN_vars.00000'
-  CALL read_BSSN_dump( 00000, filename1 )
+  filename2 = 'tov-id-files/BSSN_var2.00000'
+  CALL read_tov_bssn_id(filename1, filename2, periastron)
 
   !
   !-- Print the BSSN ID
   !
+
+  !
+  !-- Deallocate ADM and BSSN memory
+  !
+  !CALL deallocate_BSSN()
+  !CALL deallocate_ADM()
 
 
 
@@ -221,12 +201,12 @@ PROGRAM construct_eccentric_binary
 
 
 
-  SUBROUTINE read_tov_id(filename1, filename2, periastron)
+  SUBROUTINE read_tov_sph_id(filename1, filename2, periastron)
 
     !***********************************************************
     !
-    !# Read the two TOV ID produced with setup_TOV.x, and
-    !  place them symmetrically on the \(x\) axis so that
+    !# Read the two SPH TOV ID files produced with setup_TOV.x,
+    !  and place them symmetrically on the \(x\) axis so that
     !  their distance is equal to the periastron given as input
     !
     !  FT 13.12.2022
@@ -343,7 +323,188 @@ PROGRAM construct_eccentric_binary
     DEALLOCATE(Ye2)
     DEALLOCATE(Theta2)
 
-  END SUBROUTINE read_tov_id
+  END SUBROUTINE read_tov_sph_id
+
+
+  SUBROUTINE read_tov_bssn_id(filename1, filename2, periastron)
+
+    !***********************************************************
+    !
+    !# Read the two BSSN TOV ID files produced with setup_TOV.x,
+    !  and place them symmetrically on the \(x\) axis so that
+    !  their distance is equal to the periastron given as input
+    !
+    !  FT 13.12.2022
+    !
+    !***********************************************************
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION,              INTENT(IN)   :: periastron
+    CHARACTER(LEN=:), ALLOCATABLE, INTENT(INOUT):: filename1, filename2
+
+    INTEGER :: io_error, allocation_status
+    INTEGER, DIMENSION(3) :: array_shape
+    INTEGER :: l
+
+    TYPE(grid_function_scalar):: lapse1, phi1, trK1, Theta_Z41, lapse_A_BSSN1, &
+                                 lapse2, phi2, trK2, Theta_Z42, lapse_A_BSSN2
+    TYPE(grid_function):: shift_u1, shift_B_BSSN_u1, Gamma_u1, &
+                          g_BSSN3_ll1, A_BSSN3_ll1, &
+                          shift_u2, shift_B_BSSN_u2, Gamma_u2, &
+                          g_BSSN3_ll2, A_BSSN3_ll2
+
+    OPEN(UNIT=my_unit, FILE=filename1, FORM='unformatted', ACTION='read', &
+         STATUS='old', IOSTAT=io_error)
+    IF (io_error/=0) THEN
+      PRINT*,'Error opening ', filename1, ' for reading'
+      STOP
+    ENDIF
+
+    READ(my_unit) nlevels
+
+    ALLOCATE (levels(nlevels),STAT=allocation_status)
+    IF(allocation_status > 0)THEN
+       PRINT*,'...allocation error for levels'
+       STOP
+    ENDIF
+
+    DO l= 1, nlevels, 1
+
+      READ(my_unit) array_shape
+      levels(l)% ngrid_x= array_shape(1)
+      levels(l)% ngrid_y= array_shape(2)
+      levels(l)% ngrid_z= array_shape(3)
+
+    ENDDO
+
+    CLOSE(my_unit)
+
+    ! CALL initialize_grid()
+
+    CALL allocate_ADM()
+    CALL allocate_BSSN()
+
+    !filename1 = 'tov-id-files/BSSN_vars.00000'
+    CALL read_BSSN_dump( 00000, filename1 )
+
+    CALL allocate_grid_function(lapse1,          'lapse1')
+    CALL allocate_grid_function(shift_u1,        'shift_u1', 3)
+    CALL allocate_grid_function(Gamma_u1,        'Gamma_u1', 3)
+    CALL allocate_grid_function(phi1,            'phi1')
+    CALL allocate_grid_function(trK1,            'trK1')
+    CALL allocate_grid_function(A_BSSN3_ll1,     'A_BSSN3_ll1', n_sym3x3)
+    CALL allocate_grid_function(g_BSSN3_ll1,     'g_BSSN3_ll1', n_sym3x3)
+    CALL allocate_grid_function(lapse_A_BSSN1,   'lapse_A_BSSN1')
+    CALL allocate_grid_function(shift_B_BSSN_u1, 'shift_B_BSSN_u1', 3)
+    CALL allocate_grid_function(Theta_Z41,       'Theta_Z41')
+
+    DO l= 1, nlevels, 1
+
+      lapse1% levels(l)% var         = lapse% levels(l)% var
+      shift_u1% levels(l)% var       = shift_u% levels(l)% var
+      Gamma_u1% levels(l)% var       = Gamma_u% levels(l)% var
+      phi1% levels(l)% var           = phi% levels(l)% var
+      trK1% levels(l)% var           = trK% levels(l)% var
+      A_BSSN3_ll1% levels(l)% var    = A_BSSN3_ll% levels(l)% var
+      g_BSSN3_ll1% levels(l)% var    = g_BSSN3_ll% levels(l)% var
+      lapse_A_BSSN1% levels(l)% var  = lapse_A_BSSN% levels(l)% var
+      shift_B_BSSN_u1% levels(l)% var= shift_B_BSSN_u% levels(l)% var
+      Theta_Z41% levels(l)% var      = Theta_Z4% levels(l)% var
+
+    ENDDO
+
+    CALL deallocate_BSSN()
+    CALL deallocate_ADM()
+    DEALLOCATE(levels)
+
+    OPEN(UNIT=my_unit, FILE=filename2, FORM='unformatted', ACTION='read', &
+         STATUS='old', IOSTAT=io_error)
+    IF (io_error/=0) THEN
+      PRINT*,'Error opening ', filename2, ' for reading'
+      STOP
+    ENDIF
+
+    READ(my_unit) nlevels
+
+    ALLOCATE (levels(nlevels),STAT=allocation_status)
+    IF(allocation_status > 0)THEN
+       PRINT*,'...allocation error for levels'
+       STOP
+    ENDIF
+
+    DO l= 1, nlevels, 1
+
+      READ(my_unit) array_shape
+      levels(l)% ngrid_x= array_shape(1)
+      levels(l)% ngrid_y= array_shape(2)
+      levels(l)% ngrid_z= array_shape(3)
+
+    ENDDO
+
+    CLOSE(my_unit)
+
+    ! CALL initialize_grid()
+
+    CALL allocate_ADM()
+    CALL allocate_BSSN()
+
+    !filename2 = 'tov-id-files/BSSN_var2.00000'
+    CALL read_BSSN_dump( 00000, filename2 )
+
+    CALL allocate_grid_function(lapse2,          'lapse2')
+    CALL allocate_grid_function(shift_u2,        'shift_u2', 3)
+    CALL allocate_grid_function(Gamma_u2,        'Gamma_u2', 3)
+    CALL allocate_grid_function(phi2,            'phi2')
+    CALL allocate_grid_function(trK2,            'trK2')
+    CALL allocate_grid_function(A_BSSN3_ll2,     'A_BSSN3_ll2', n_sym3x3)
+    CALL allocate_grid_function(g_BSSN3_ll2,     'g_BSSN3_ll2', n_sym3x3)
+    CALL allocate_grid_function(lapse_A_BSSN2,   'lapse_A_BSSN2')
+    CALL allocate_grid_function(shift_B_BSSN_u2, 'shift_B_BSSN_u2', 3)
+    CALL allocate_grid_function(Theta_Z42,       'Theta_Z42')
+
+    DO l= 1, nlevels, 1
+
+      lapse2% levels(l)% var         = lapse% levels(l)% var
+      shift_u2% levels(l)% var       = shift_u% levels(l)% var
+      Gamma_u2% levels(l)% var       = Gamma_u% levels(l)% var
+      phi2% levels(l)% var           = phi% levels(l)% var
+      trK2% levels(l)% var           = trK% levels(l)% var
+      A_BSSN3_ll2% levels(l)% var    = A_BSSN3_ll% levels(l)% var
+      g_BSSN3_ll2% levels(l)% var    = g_BSSN3_ll% levels(l)% var
+      lapse_A_BSSN2% levels(l)% var  = lapse_A_BSSN% levels(l)% var
+      shift_B_BSSN_u2% levels(l)% var= shift_B_BSSN_u% levels(l)% var
+      Theta_Z42% levels(l)% var      = Theta_Z4% levels(l)% var
+
+    ENDDO
+
+    CALL deallocate_BSSN()
+    CALL deallocate_ADM()
+    DEALLOCATE(levels)
+
+    CALL deallocate_grid_function(lapse1,          'lapse1')
+    CALL deallocate_grid_function(shift_u1,        'shift_u1')
+    CALL deallocate_grid_function(Gamma_u1,        'Gamma_u1')
+    CALL deallocate_grid_function(phi1,            'phi1')
+    CALL deallocate_grid_function(trK1,            'trK1')
+    CALL deallocate_grid_function(A_BSSN3_ll1,     'A_BSSN3_ll1')
+    CALL deallocate_grid_function(g_BSSN3_ll1,     'g_BSSN3_ll1')
+    CALL deallocate_grid_function(lapse_A_BSSN1,   'lapse_A_BSSN1')
+    CALL deallocate_grid_function(shift_B_BSSN_u1, 'shift_B_BSSN_u1')
+    CALL deallocate_grid_function(Theta_Z41,       'Theta_Z41')
+
+    CALL deallocate_grid_function(lapse2,          'lapse2')
+    CALL deallocate_grid_function(shift_u2,        'shift_u2')
+    CALL deallocate_grid_function(Gamma_u2,        'Gamma_u2')
+    CALL deallocate_grid_function(phi2,            'phi2')
+    CALL deallocate_grid_function(trK2,            'trK2')
+    CALL deallocate_grid_function(A_BSSN3_ll2,     'A_BSSN3_ll2')
+    CALL deallocate_grid_function(g_BSSN3_ll2,     'g_BSSN3_ll2')
+    CALL deallocate_grid_function(lapse_A_BSSN2,   'lapse_A_BSSN2')
+    CALL deallocate_grid_function(shift_B_BSSN_u2, 'shift_B_BSSN_u2')
+    CALL deallocate_grid_function(Theta_Z42,       'Theta_Z42')
+
+  END SUBROUTINE read_tov_bssn_id
 
 
   FUNCTION newtonian_speed(mass1, mass2, periastron) RESULT(v)
