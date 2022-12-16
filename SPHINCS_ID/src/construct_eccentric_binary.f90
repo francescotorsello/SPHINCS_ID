@@ -98,6 +98,11 @@ PROGRAM construct_eccentric_binary
   periastron= periastron_km/Msun_geo
   distance= distance_km/Msun_geo
 
+  PRINT *, " * Chosen periastron=", periastron_km, "km=", periastron, "Msun_geo"
+  PRINT *, " * Chosen distance between the stars=", distance_km, "km=", &
+           distance, "Msun_geo"
+  PRINT *
+
 
   !--------------!
   !--  SPH ID  --!
@@ -213,7 +218,7 @@ PROGRAM construct_eccentric_binary
 
   filename1 = 'tov-id-files/TOV.00000'
   filename2 = 'tov-id-files/TO2.00000'
-  CALL read_tov_adm_id(filename1, filename2, x1, x2)
+  CALL read_boost_superimpose_tov_adm_id(filename1, filename2, x1, x2)
 
   !
   !-- Compute BSSN ID
@@ -396,7 +401,7 @@ PROGRAM construct_eccentric_binary
   END SUBROUTINE read_tov_sph_id
 
 
-  SUBROUTINE read_tov_adm_id(filename1, filename2, x1, x2)
+  SUBROUTINE read_boost_superimpose_tov_adm_id(filename1, filename2, x1, x2)
 
     !***********************************************************
     !
@@ -447,38 +452,7 @@ PROGRAM construct_eccentric_binary
                           K_phys3_ll1, K_phys3_ll2, &
                           Tmunu_ll1, Tmunu_ll2
 
-  TYPE(lorentz_boost):: boost1, boost2
-
-  !  OPEN(UNIT=my_unit, FILE=filename1, FORM='unformatted', ACTION='read', &
-  !       STATUS='old', IOSTAT=io_error)
-  !  IF (io_error/=0) THEN
-  !    PRINT*,'Error opening ', filename1, ' for reading'
-  !    STOP
-  !  ENDIF
-  !
-  !  READ(my_unit) nlevels
-  !
-  !  ALLOCATE (levels(nlevels),STAT=allocation_status)
-  !  IF(allocation_status > 0)THEN
-  !     PRINT*,'...allocation error for levels'
-  !     STOP
-  !  ENDIF
-  !
-  !  DO l= 1, nlevels, 1
-  !
-  !    READ(my_unit) array_shape
-  !    levels(l)% ngrid_x= array_shape(1)
-  !    levels(l)% ngrid_y= array_shape(2)
-  !    levels(l)% ngrid_z= array_shape(3)
-  !
-  !  ENDDO
-  !
-  !  CLOSE(my_unit)
-  !
-  !  ! CALL initialize_grid()
-  !
-  !  CALL allocate_ADM()
-  !  CALL allocate_BSSN()
+    TYPE(lorentz_boost):: boost1, boost2
 
     CALL read_grid_params()
     CALL initialize_grid()
@@ -545,59 +519,6 @@ PROGRAM construct_eccentric_binary
     ENDDO read_tov1_id_on_the_mesh
     PRINT *, "...done"
 
-  !  DO l= 1, nlevels, 1
-  !
-  !    lapse1% levels(l)% var         = lapse% levels(l)% var
-  !    shift_u1% levels(l)% var       = shift_u% levels(l)% var
-  !    Gamma_u1% levels(l)% var       = Gamma_u% levels(l)% var
-  !    phi1% levels(l)% var           = phi% levels(l)% var
-  !    trK1% levels(l)% var           = trK% levels(l)% var
-  !    A_BSSN3_ll1% levels(l)% var    = A_BSSN3_ll% levels(l)% var
-  !    g_BSSN3_ll1% levels(l)% var    = g_BSSN3_ll% levels(l)% var
-  !    lapse_A_BSSN1% levels(l)% var  = lapse_A_BSSN% levels(l)% var
-  !    shift_B_BSSN_u1% levels(l)% var= shift_B_BSSN_u% levels(l)% var
-  !    Theta_Z41% levels(l)% var      = Theta_Z4% levels(l)% var
-  !
-  !  ENDDO
-  !
-  !  CALL deallocate_BSSN()
-  !  CALL deallocate_ADM()
-  !  DEALLOCATE(levels)
-
-  !  OPEN(UNIT=my_unit, FILE=filename2, FORM='unformatted', ACTION='read', &
-  !       STATUS='old', IOSTAT=io_error)
-  !  IF (io_error/=0) THEN
-  !    PRINT*,'Error opening ', filename2, ' for reading'
-  !    STOP
-  !  ENDIF
-  !
-  !  READ(my_unit) nlevels
-  !
-  !  ALLOCATE (levels(nlevels),STAT=allocation_status)
-  !  IF(allocation_status > 0)THEN
-  !     PRINT*,'...allocation error for levels'
-  !     STOP
-  !  ENDIF
-  !
-  !  DO l= 1, nlevels, 1
-  !
-  !    READ(my_unit) array_shape
-  !    levels(l)% ngrid_x= array_shape(1)
-  !    levels(l)% ngrid_y= array_shape(2)
-  !    levels(l)% ngrid_z= array_shape(3)
-  !
-  !  ENDDO
-  !
-  !  CLOSE(my_unit)
-  !
-  !  ! CALL initialize_grid()
-  !
-  !  CALL allocate_ADM()
-  !  CALL allocate_BSSN()
-
-    !filename2 = 'tov-id-files/BSSN_var2.00000'
-    !CALL read_BSSN_dump( 00000, filename2 )
-
     PRINT *
     PRINT *, " * Reading ID for second TOV star..."
     CALL read_tov_dump(filename2)
@@ -657,25 +578,6 @@ PROGRAM construct_eccentric_binary
       !$OMP END PARALLEL DO
     ENDDO read_tov2_id_on_the_mesh
     PRINT *, "...done"
-
- !   DO l= 1, nlevels, 1
- !
- !     lapse2% levels(l)% var         = lapse% levels(l)% var
- !     shift_u2% levels(l)% var       = shift_u% levels(l)% var
- !     Gamma_u2% levels(l)% var       = Gamma_u% levels(l)% var
- !     phi2% levels(l)% var           = phi% levels(l)% var
- !     trK2% levels(l)% var           = trK% levels(l)% var
- !     A_BSSN3_ll2% levels(l)% var    = A_BSSN3_ll% levels(l)% var
- !     g_BSSN3_ll2% levels(l)% var    = g_BSSN3_ll% levels(l)% var
- !     lapse_A_BSSN2% levels(l)% var  = lapse_A_BSSN% levels(l)% var
- !     shift_B_BSSN_u2% levels(l)% var= shift_B_BSSN_u% levels(l)% var
- !     Theta_Z42% levels(l)% var      = Theta_Z4% levels(l)% var
- !
- !   ENDDO
- !
- !   CALL deallocate_BSSN()
- !   CALL deallocate_ADM()
- !   DEALLOCATE(levels)
 
     CALL allocate_ADM()
     CALL allocate_Tmunu()
@@ -783,7 +685,7 @@ PROGRAM construct_eccentric_binary
     CALL deallocate_grid_function(shift_B_BSSN_u2, 'shift_B_BSSN_u2')
     CALL deallocate_grid_function(Theta_Z42,       'Theta_Z42')
 
-  END SUBROUTINE read_tov_adm_id
+  END SUBROUTINE read_boost_superimpose_tov_adm_id
 
 
   PURE SUBROUTINE newtonian_parabolic_speeds &
@@ -799,6 +701,7 @@ PROGRAM construct_eccentric_binary
     !
     !  See Goldstein, Poole, Safko, "Classical mechanics",
     !  Sec.3.2, eq. (3.16); Sec.3.3, eq.(3.21); Sec.3.7
+    !  See Landau, Lifshitz, "Mechanics", Chapter III
     !
     !  FT 13.12.2022
     !
@@ -858,6 +761,8 @@ PROGRAM construct_eccentric_binary
     !
     !  See Goldstein, Poole, Safko, "Classical mechanics",
     !  Sec.3.2, eq.(3.16) with \(\dot(r)=0\)
+    !  See Landau, Lifshitz, "Mechanics", Chapter III,
+    !  eq.(14.5) with \(\dot(r)=0\)
     !
     !  FT 16.12.2022
     !
