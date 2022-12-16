@@ -64,13 +64,21 @@ PROGRAM construct_eccentric_binary
   !
   !-- BSSN MODULES
   !
-
+  USE ADM_refine,                 ONLY: deallocate_ADM
+  USE BSSN_refine,                ONLY: allocate_BSSN, deallocate_BSSN, &
+                                        write_BSSN_dump
+  USE Tmunu_refine,               ONLY: deallocate_Tmunu
+  USE GravityAcceleration_refine, ONLY: allocate_GravityAcceleration, &
+                                        deallocate_GravityAcceleration
+  USE McLachlan_refine,           ONLY: allocate_Ztmp, deallocate_Ztmp, &
+                                        ADM_to_BSSN
 
   !
   !-- SPHINCS_ID MODULES
   !
-  USE utility,       ONLY: zero, one, Msun_geo, spacetime_vector_norm_sym4x4
-  USE lorentz_group, ONLY: eta
+  USE utility,       ONLY: zero, one, two, Msun_geo, &
+                           spacetime_vector_norm_sym4x4
+  USE lorentz_group, ONLY: eta, lorentz_boost
 
 
   IMPLICIT NONE
@@ -78,7 +86,6 @@ PROGRAM construct_eccentric_binary
 
   DOUBLE PRECISION, PARAMETER:: periastron_km= 45.D0
   DOUBLE PRECISION, PARAMETER:: distance_km  = 100.D0
-  !INTEGER, PARAMETER :: my_unit = 42
 
   INTEGER:: a
   DOUBLE PRECISION:: periastron, mass1, mass2, x1, x2, &
@@ -87,7 +94,7 @@ PROGRAM construct_eccentric_binary
   CHARACTER(LEN=:), ALLOCATABLE:: filename1, filename2
 
 
-  ! Convert periastron and initial dist to code units
+  ! Convert periastron and initial distance to code units
   periastron= periastron_km/Msun_geo
   distance= distance_km/Msun_geo
 
@@ -119,11 +126,11 @@ PROGRAM construct_eccentric_binary
   PRINT *, " * x coordinate of the center of mass of star 1=", x1, "Msun"
   PRINT *, " * x coordinate of the center of mass of star 2=", x2, "Msun"
   PRINT *, " * x coordinate of the center of mass of the system=", &
-           (mass1*x1 + mass1*x2)/(mass1 + mass2), "Msun"
+           (mass1*x1 + mass2*x2)/(mass1 + mass2), "Msun"
   PRINT *
 
-  pos_u(1,1:n1)         = pos_u(1,1:n1) - x1
-  pos_u(1,n1 + 1: npart)= pos_u(1,n1 + 1: npart) - x2
+  pos_u(1,1:n1)         = pos_u(1,1:n1) + x1
+  pos_u(1,n1 + 1: npart)= pos_u(1,n1 + 1: npart) + x2
 
   angular_momentum= parabolic_newtonian_angular_momentum(periastron)
   PRINT *, " * Angular_momentum of the system=", angular_momentum, "Msun**2"
@@ -131,8 +138,6 @@ PROGRAM construct_eccentric_binary
 
   CALL newtonian_parabolic_speeds &
     (mass1, mass2, angular_momentum, distance, v1, v2)
-  !v1= zero
-  !v2= zero
   IF(NORM2(v1) > one)THEN
     PRINT *, "** ERROR! The Newtonian speed for star 1 is larger than the ", &
              "speed of light!"
@@ -149,8 +154,11 @@ PROGRAM construct_eccentric_binary
     PRINT *, " * Stopping..."
     STOP
   ENDIF
-  PRINT *, " * Newtonian speed for star 1=", v1, "c"
-  PRINT *, " * Newtonian speed for star 2=", v2, "c"
+  PRINT *, " * Newtonian velocity for star 1=", v1, "c"
+  PRINT *, " * Newtonian velocity for star 2=", v2, "c"
+  PRINT *
+  PRINT *, " * Newtonian speed for star 1=", NORM2(v1), "c"
+  PRINT *, " * Newtonian speed for star 2=", NORM2(v2), "c"
   PRINT *
 
   !$OMP PARALLEL DO DEFAULT( NONE ) &
@@ -187,8 +195,11 @@ PROGRAM construct_eccentric_binary
   !
   !-- Print the SPH ID
   !
+  PRINT *, " * Printing SPH ID to file..."
   filename1= 'eccentric-binary-id-files/NSNS.00000'
   CALL write_sphincs_dump(filename1)
+  PRINT *, "...done."
+  PRINT *
 
   !
   !-- Deallocate SPH memory
@@ -202,17 +213,35 @@ PROGRAM construct_eccentric_binary
 
   filename1 = 'tov-id-files/TOV.00000'
   filename2 = 'tov-id-files/TO2.00000'
-  CALL read_tov_bssn_id(filename1, filename2, x1, x2)
+  CALL read_tov_adm_id(filename1, filename2, x1, x2)
+
+  !
+  !-- Compute BSSN ID
+  !
+  CALL allocate_BSSN()
+  CALL allocate_Ztmp()
+  CALL allocate_GravityAcceleration()
+
+  CALL ADM_to_BSSN()
+
+  CALL deallocate_Ztmp()
+  CALL deallocate_Tmunu()
+  CALL deallocate_GravityAcceleration()
 
   !
   !-- Print the BSSN ID
   !
+  PRINT *, " * Printing BSSN ID to file..."
+  filename1= 'eccentric-binary-id-files/BSSN_vars.00000'
+  CALL write_BSSN_dump(filename1)
+  PRINT *, "...done."
+  PRINT *
 
   !
   !-- Deallocate ADM and BSSN memory
   !
-  !CALL deallocate_BSSN()
-  !CALL deallocate_ADM()
+  CALL deallocate_ADM()
+  CALL deallocate_BSSN()
 
 
 
@@ -367,7 +396,7 @@ PROGRAM construct_eccentric_binary
   END SUBROUTINE read_tov_sph_id
 
 
-  SUBROUTINE read_tov_bssn_id(filename1, filename2, x1, x2)
+  SUBROUTINE read_tov_adm_id(filename1, filename2, x1, x2)
 
     !***********************************************************
     !
@@ -379,19 +408,18 @@ PROGRAM construct_eccentric_binary
     !
     !***********************************************************
 
+    USE tensor,          ONLY: n_sym4x4
     USE mesh_refinement, ONLY: nlevels, levels, initialize_grid, &
                                grid_function_scalar, grid_function, &
                                read_grid_params, coords, &
                                allocate_grid_function, deallocate_grid_function
-    USE ADM_refine,      ONLY: allocate_ADM, deallocate_ADM, lapse, shift_u, &
+    USE ADM_refine,      ONLY: allocate_ADM, lapse, shift_u, &
                                g_phys3_ll, K_phys3_ll, dt_lapse, dt_shift_u
-    USE Tmunu_refine,    ONLY: Tmunu_ll, allocate_Tmunu
-    USE BSSN_refine,     ONLY: allocate_BSSN, deallocate_BSSN, write_BSSN_dump, &
-                               phi, trK, Theta_Z4, lapse_A_BSSN, shift_B_BSSN_u,&
+    USE Tmunu_refine,    ONLY: Tmunu_ll, allocate_Tmunu, deallocate_Tmunu
+    USE BSSN_refine,     ONLY: phi, trK, Theta_Z4, lapse_A_BSSN, shift_B_BSSN_u,&
                                Gamma_u, g_BSSN3_ll, A_BSSN3_ll
     USE TOV_refine,      ONLY: read_TOV_dump, allocate_tov, deallocate_tov, &
                                get_tov_metric
-
     USE utility,         ONLY: compute_tpo_metric
 
     IMPLICIT NONE
@@ -406,6 +434,8 @@ PROGRAM construct_eccentric_binary
     DOUBLE PRECISION:: tmp, tmp2, tmp3, tmp4, &
                        g00, g01, g02, g03, g11, g12, g13, g22, g23, g33
 
+    DOUBLE PRECISION, DIMENSION(4,4):: g(n_sym4x4)
+
     TYPE(grid_function_scalar):: lapse1, phi1, trK1, Theta_Z41, lapse_A_BSSN1, &
                                  lapse2, phi2, trK2, Theta_Z42, lapse_A_BSSN2, &
                                  dt_lapse1, dt_lapse2
@@ -416,6 +446,8 @@ PROGRAM construct_eccentric_binary
                           dt_shift_u1, dt_shift_u2, &
                           K_phys3_ll1, K_phys3_ll2, &
                           Tmunu_ll1, Tmunu_ll2
+
+  TYPE(lorentz_boost):: boost1, boost2
 
   !  OPEN(UNIT=my_unit, FILE=filename1, FORM='unformatted', ACTION='read', &
   !       STATUS='old', IOSTAT=io_error)
@@ -474,13 +506,15 @@ PROGRAM construct_eccentric_binary
     CALL allocate_grid_function(shift_B_BSSN_u1, 'shift_B_BSSN_u1', 3)
     CALL allocate_grid_function(Theta_Z41,       'Theta_Z41')
 
+    boost1= lorentz_boost(v1)
+
     read_tov1_id_on_the_mesh: DO l= 1, nlevels, 1
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( levels, l, coords, lapse1, shift_u1, &
       !$OMP                     g_phys3_ll1, dt_lapse1, dt_shift_u1, &
-      !$OMP                     K_phys3_ll1, Tmunu_ll1, x1 ) &
+      !$OMP                     K_phys3_ll1, Tmunu_ll1, x1, boost1 ) &
       !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, &
-      !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
+      !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33,g )
       DO k= 1, levels(l)% ngrid_z, 1
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
@@ -491,11 +525,13 @@ PROGRAM construct_eccentric_binary
                                 tmp, tmp2, tmp3, &
                                 g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
 
-            CALL compute_tpo_metric &
-              ( [g00, g01, g02, g03, g11, g12, g13, g22, g23, g33], &
-                lapse1% levels(l)% var(i,j,k), &
-                shift_u1% levels(l)% var(i,j,k,:), &
-                g_phys3_ll1% levels(l)% var(i,j,k,:) )
+            g= boost1% &
+               apply_as_congruence([g00,g01,g02,g03,g11,g12,g13,g22,g23,g33])
+
+            CALL compute_tpo_metric( g, &
+                                     lapse1% levels(l)% var(i,j,k), &
+                                     shift_u1% levels(l)% var(i,j,k,:), &
+                                     g_phys3_ll1% levels(l)% var(i,j,k,:) )
 
             dt_lapse1%   levels(l)% var(i,j,k)  = zero
             dt_shift_u1% levels(l)% var(i,j,k,:)= zero
@@ -583,13 +619,15 @@ PROGRAM construct_eccentric_binary
     CALL allocate_grid_function(shift_B_BSSN_u2, 'shift_B_BSSN_u2', 3)
     CALL allocate_grid_function(Theta_Z42,       'Theta_Z42')
 
+    boost2= lorentz_boost(v2)
+
     read_tov2_id_on_the_mesh: DO l= 1, nlevels, 1
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( levels, l, coords, lapse2, shift_u2, &
       !$OMP                     g_phys3_ll2, dt_lapse2, dt_shift_u2, &
-      !$OMP                     K_phys3_ll2, Tmunu_ll2, x2 ) &
+      !$OMP                     K_phys3_ll2, Tmunu_ll2, x2, boost2 ) &
       !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, &
-      !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
+      !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33,g )
       DO k= 1, levels(l)% ngrid_z, 1
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
@@ -600,11 +638,13 @@ PROGRAM construct_eccentric_binary
                                 tmp, tmp2, tmp3, &
                                 g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
 
-            CALL compute_tpo_metric &
-              ( [g00, g01, g02, g03, g11, g12, g13, g22, g23, g33] , &
-                lapse2% levels(l)% var(i,j,k), &
-                shift_u2% levels(l)% var(i,j,k,:), &
-                g_phys3_ll2% levels(l)% var(i,j,k,:) )
+            g= boost2% &
+               apply_as_congruence([g00,g01,g02,g03,g11,g12,g13,g22,g23,g33])
+
+            CALL compute_tpo_metric( g, &
+                                     lapse2% levels(l)% var(i,j,k), &
+                                     shift_u2% levels(l)% var(i,j,k,:), &
+                                     g_phys3_ll2% levels(l)% var(i,j,k,:) )
 
             dt_lapse2%   levels(l)% var(i,j,k)  = zero
             dt_shift_u2% levels(l)% var(i,j,k,:)= zero
@@ -660,14 +700,37 @@ PROGRAM construct_eccentric_binary
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            g_phys3_ll% levels(l)% var(i,j,k,:)= &
-    g_phys3_ll1% levels(l)% var(i,j,k,:) + g_phys3_ll2% levels(l)% var(i,j,k,:)
+            g_phys3_ll% levels(l)% var(i,j,k,1)= one + &
+              (g_phys3_ll1% levels(l)% var(i,j,k,1) - one) + &
+              (g_phys3_ll2% levels(l)% var(i,j,k,1) - one)
 
-            lapse%      levels(l)% var(i,j,k)  = &
-              lapse1% levels(l)% var(i,j,k) + lapse2% levels(l)% var(i,j,k)
+            g_phys3_ll% levels(l)% var(i,j,k,2)= &
+              g_phys3_ll1% levels(l)% var(i,j,k,2) + &
+              g_phys3_ll2% levels(l)% var(i,j,k,2)
+
+            g_phys3_ll% levels(l)% var(i,j,k,3)= &
+              g_phys3_ll1% levels(l)% var(i,j,k,3) + &
+              g_phys3_ll2% levels(l)% var(i,j,k,3)
+
+            g_phys3_ll% levels(l)% var(i,j,k,4)= one + &
+              (g_phys3_ll1% levels(l)% var(i,j,k,4) - one) + &
+              (g_phys3_ll2% levels(l)% var(i,j,k,4) - one)
+
+            g_phys3_ll% levels(l)% var(i,j,k,5)= &
+              g_phys3_ll1% levels(l)% var(i,j,k,5) + &
+              g_phys3_ll2% levels(l)% var(i,j,k,5)
+
+            g_phys3_ll% levels(l)% var(i,j,k,6)= one + &
+              (g_phys3_ll1% levels(l)% var(i,j,k,6) - one) + &
+              (g_phys3_ll2% levels(l)% var(i,j,k,6) - one)
+
+            lapse%      levels(l)% var(i,j,k)  = - one + &
+              (lapse1% levels(l)% var(i,j,k) + one) + &
+              (lapse2% levels(l)% var(i,j,k) + one)
 
             shift_u%    levels(l)% var(i,j,k,:)= &
-          shift_u1% levels(l)% var(i,j,k,:) + shift_u2% levels(l)% var(i,j,k,:)
+              shift_u1% levels(l)% var(i,j,k,:) + &
+              shift_u2% levels(l)% var(i,j,k,:)
 
             dt_lapse%   levels(l)% var(i,j,k)  = zero
             dt_shift_u% levels(l)% var(i,j,k,:)= zero
@@ -680,6 +743,7 @@ PROGRAM construct_eccentric_binary
       !$OMP END PARALLEL DO
     ENDDO sum_tov_id
     PRINT *, "...done"
+    PRINT *
 
 
     !
@@ -719,7 +783,7 @@ PROGRAM construct_eccentric_binary
     CALL deallocate_grid_function(shift_B_BSSN_u2, 'shift_B_BSSN_u2')
     CALL deallocate_grid_function(Theta_Z42,       'Theta_Z42')
 
-  END SUBROUTINE read_tov_bssn_id
+  END SUBROUTINE read_tov_adm_id
 
 
   PURE SUBROUTINE newtonian_parabolic_speeds &
@@ -742,7 +806,7 @@ PROGRAM construct_eccentric_binary
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN) :: mass1, mass2, distance, angular_momentum
+    DOUBLE PRECISION, INTENT(IN):: mass1, mass2, distance, angular_momentum
     DOUBLE PRECISION, DIMENSION(3), INTENT(OUT):: v1, v2
 
     DOUBLE PRECISION, PARAMETER:: energy= zero
@@ -754,28 +818,28 @@ PROGRAM construct_eccentric_binary
 
     mu= mass1*mass2/(mass1 + mass2)
 
-    radial_speed_fictitious = SQRT(2.D0/mu*(energy + mass1*mass2/distance) &
-                                   - angular_momentum**2/(2.D0*mu*distance**2))
+    radial_speed_fictitious = SQRT(two/mu*(energy + mass1*mass2/distance) &
+                                   - angular_momentum**2/(two*mu*distance**2))
 
-    total_speed_fictitious  = SQRT(2.D0/mu*(energy + mass1*mass2/distance))
+    total_speed_fictitious  = SQRT(two/mu*(energy + mass1*mass2/distance))
 
     angular_speed_fictitious= SQRT((total_speed_fictitious**2 &
                                     - radial_speed_fictitious**2)/distance**2)
 
     v_fictitious(1)= radial_speed_fictitious
     v_fictitious(2)= distance*angular_speed_fictitious
-    v_fictitious(3)= 0.D0
+    v_fictitious(3)= zero
 
     v1(1)= mass2*v_fictitious(1)/(mass1 + mass2)
     v1(2)= mass2*v_fictitious(2)/(mass1 + mass2)
-    v1(3)= 0.D0
+    v1(3)= zero
 
-    v2(1)= mass1*v_fictitious(1)/(mass1 + mass2)
-    v2(2)= mass1*v_fictitious(2)/(mass1 + mass2)
-    v2(3)= 0.D0
+    v2(1)= - mass1*v_fictitious(1)/(mass1 + mass2)
+    v2(2)= - mass1*v_fictitious(2)/(mass1 + mass2)
+    v2(3)= zero
 
- !   v1= SQRT( 2.D0*mass2*(energy + mass1*mass2/distance)/(mass1*(mass1 + mass2)) )
- !   !v1= SQRT(2.D0*mass2/r)
+ !   v1= SQRT( two*mass2*(energy + mass1*mass2/distance)/(mass1*(mass1 + mass2)) )
+ !   !v1= SQRT(two*mass2/r)
  !
  !   v2= mass1/mass2*v1
 
@@ -801,7 +865,7 @@ PROGRAM construct_eccentric_binary
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN) :: periastron
+    DOUBLE PRECISION, INTENT(IN):: periastron
 
     DOUBLE PRECISION:: angular_momentum
 
@@ -812,7 +876,7 @@ PROGRAM construct_eccentric_binary
     mu= mass1*mass2/(mass1 + mass2)
 
     angular_momentum= &
-      SQRT(2.D0*mu*periastron**2*(energy + mass1*mass2/periastron))
+      SQRT(two*mu*periastron**2*(energy + mass1*mass2/periastron))
 
   END FUNCTION parabolic_newtonian_angular_momentum
 
