@@ -55,8 +55,7 @@ PROGRAM construct_eccentric_binary
                            !av,    &  ! Dissipation
                            ye,    &  ! Electron fraction
                            !divv,  &  ! Divergence of velocity vel_u
-                           allocate_SPH_memory, &
-                           deallocate_SPH_memory, &
+                           deallocate_sph_memory, &
                            n1, n2
   USE input_output,  ONLY: set_units, read_sphincs_dump, write_sphincs_dump
   USE units,         ONLY: m0c2_cu
@@ -77,29 +76,25 @@ PROGRAM construct_eccentric_binary
   IMPLICIT NONE
 
 
-  INTEGER,          PARAMETER:: max_npart    = 5D+7
   DOUBLE PRECISION, PARAMETER:: periastron_km= 45.D0
-  INTEGER, PARAMETER :: my_unit = 42
+  DOUBLE PRECISION, PARAMETER:: distance_km  = 100.D0
+  !INTEGER, PARAMETER :: my_unit = 42
 
   INTEGER:: a
-  DOUBLE PRECISION:: periastron, mass1, mass2, v1, v2
+  DOUBLE PRECISION:: periastron, mass1, mass2, x1, x2, &
+                     angular_momentum, distance
+  DOUBLE PRECISION, DIMENSION(3):: v1, v2
   CHARACTER(LEN=:), ALLOCATABLE:: filename1, filename2
 
 
-  ! Convert periastron to code units
+  ! Convert periastron and initial dist to code units
   periastron= periastron_km/Msun_geo
+  distance= distance_km/Msun_geo
 
 
   !--------------!
   !--  SPH ID  --!
   !--------------!
-
-  !
-  !-- Allocate SPH memory (reallocated inside read_tov_sph_id)
-  !
-  npart= max_npart
-  CALL set_units('NSM')
-  CALL allocate_SPH_memory()
 
   !
   !-- Read the two TOV SPH ID
@@ -108,45 +103,63 @@ PROGRAM construct_eccentric_binary
   !
   filename1 = 'tov-id-files/NSxx.00000'
   filename2 = 'tov-id-files/NSx2.00000'
-  CALL read_tov_sph_id(filename1, filename2, periastron)
+  CALL read_tov_sph_id(filename1, filename2)
 
   !
   !-- Assign Newtonian velocity and generalized Lorentz factor to the particles
   !
   mass1= SUM(nu(1:n1), DIM=1)*m0c2_cu
   mass2= SUM(nu(n1+1:npart), DIM=1)*m0c2_cu
-  !CALL newtonian_speeds(mass1, mass2, periastron, v1, v2)
-  v1= zero
-  v2= zero
-  IF(v1 > one)THEN
-    PRINT *, "** ERROR! The Newtonian speed for star 1 is larger than the ", &
-             "speed of light!"
-    PRINT *, " * Newtonian speed=", v1
-    PRINT *, " * Stopping..."
-    STOP
-  ENDIF
-  IF(v2 > one)THEN
-    PRINT *, "** ERROR! The Newtonian speed for star 2 is larger than the ", &
-             "speed of light!"
-    PRINT *, " * Newtonian speed=", v2
-    PRINT *, " * Stopping..."
-    STOP
-  ENDIF
-  PRINT *, " * Newtonian speed for star 1=", v1
-  PRINT *, " * Newtonian speed for star 2=", v2
+  PRINT *, " * Mass of star 1=", mass1, "Msun"
+  PRINT *, " * Mass of star 2=", mass2, "Msun"
   PRINT *
 
-  ! At periastron, only the \(y\) component of the velocity is nonzero,
-  ! assuming that the motion happens in the \(xy\) plane
+  x1= - mass2*distance/(mass1 + mass2)
+  x2=   mass1*distance/(mass1 + mass2)
+  PRINT *, " * x coordinate of the center of mass of star 1=", x1, "Msun"
+  PRINT *, " * x coordinate of the center of mass of star 2=", x2, "Msun"
+  PRINT *, " * x coordinate of the center of mass of the system=", &
+           (mass1*x1 + mass1*x2)/(mass1 + mass2), "Msun"
+  PRINT *
+
+  pos_u(1,1:n1)         = pos_u(1,1:n1) - x1
+  pos_u(1,n1 + 1: npart)= pos_u(1,n1 + 1: npart) - x2
+
+  angular_momentum= parabolic_newtonian_angular_momentum(periastron)
+  PRINT *, " * Angular_momentum of the system=", angular_momentum, "Msun**2"
+  PRINT *
+
+  CALL newtonian_parabolic_speeds &
+    (mass1, mass2, angular_momentum, distance, v1, v2)
+  !v1= zero
+  !v2= zero
+  IF(NORM2(v1) > one)THEN
+    PRINT *, "** ERROR! The Newtonian speed for star 1 is larger than the ", &
+             "speed of light!"
+    PRINT *, " * Newtonian speed=", NORM2(v1), "c"
+    PRINT *, " * Newtonian velocity=", v1, "c"
+    PRINT *, " * Stopping..."
+    STOP
+  ENDIF
+  IF(NORM2(v2) > one)THEN
+    PRINT *, "** ERROR! The Newtonian speed for star 2 is larger than the ", &
+             "speed of light!"
+    PRINT *, " * Newtonian speed=", NORM2(v2), "c"
+    PRINT *, " * Newtonian velocity=", v2, "c"
+    PRINT *, " * Stopping..."
+    STOP
+  ENDIF
+  PRINT *, " * Newtonian speed for star 1=", v1, "c"
+  PRINT *, " * Newtonian speed for star 2=", v2, "c"
+  PRINT *
+
   !$OMP PARALLEL DO DEFAULT( NONE ) &
   !$OMP             SHARED( npart, n1, vel_u, Theta, v1, v2 ) &
   !$OMP             PRIVATE( a )
   compute_vel_and_theta_on_particles: DO a= 1, npart, 1
 
-    vel_u(1,a)= zero
-    IF(a <= n1) vel_u(2,a)=   v1
-    IF(a >  n1) vel_u(2,a)= - v2
-    vel_u(3,a)= zero
+    IF(a <= n1) vel_u(:,a)= v1
+    IF(a >  n1) vel_u(:,a)= v2
 
     CALL spacetime_vector_norm_sym4x4( eta, &
                                        [one,vel_u(1,a),vel_u(2,a),vel_u(3,a)], &
@@ -180,7 +193,7 @@ PROGRAM construct_eccentric_binary
   !
   !-- Deallocate SPH memory
   !
-  CALL deallocate_SPH_memory()
+  CALL deallocate_sph_memory()
 
 
   !---------------!
@@ -189,7 +202,7 @@ PROGRAM construct_eccentric_binary
 
   filename1 = 'tov-id-files/TOV.00000'
   filename2 = 'tov-id-files/TO2.00000'
-  CALL read_tov_bssn_id(filename1, filename2, periastron)
+  CALL read_tov_bssn_id(filename1, filename2, x1, x2)
 
   !
   !-- Print the BSSN ID
@@ -207,7 +220,7 @@ PROGRAM construct_eccentric_binary
 
 
 
-  SUBROUTINE read_tov_sph_id(filename1, filename2, periastron)
+  SUBROUTINE read_tov_sph_id(filename1, filename2)
 
     !***********************************************************
     !
@@ -219,9 +232,10 @@ PROGRAM construct_eccentric_binary
     !
     !***********************************************************
 
+    USE sph_variables,  ONLY: allocate_sph_memory
+
     IMPLICIT NONE
 
-    DOUBLE PRECISION,              INTENT(IN)   :: periastron
     CHARACTER(LEN=:), ALLOCATABLE, INTENT(INOUT):: filename1, filename2
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_u1, vel_u1, &
@@ -230,6 +244,17 @@ PROGRAM construct_eccentric_binary
                                                     Pr1, Ye1, Theta1, &
                                                     u2, nu2, h2, nlrf2, &
                                                     Pr2, Ye2, Theta2
+
+    CALL set_units('NSM')
+
+    !
+    !-- Read just the particle number, to be able to allocate needed memory
+    !
+    OPEN(10, file= filename1, form='UNFORMATTED')
+    READ(10) npart
+    CLOSE(10)
+
+    CALL allocate_sph_memory()
 
     CALL read_sphincs_dump(filename1)
 
@@ -258,6 +283,16 @@ PROGRAM construct_eccentric_binary
 
     !PRINT *, "SIZE(nlrf)=", SIZE(nlrf1)
 
+    CALL deallocate_sph_memory()
+
+    !
+    !-- Read just the particle number, to be able to allocate needed memory
+    !
+    OPEN(10, file= filename2, form='UNFORMATTED')
+    READ(10) npart
+    CLOSE(10)
+
+    CALL allocate_sph_memory()
 
     CALL read_sphincs_dump(filename2)
 
@@ -282,13 +317,13 @@ PROGRAM construct_eccentric_binary
     Ye2   = Ye   (1:npart)
     Theta2= Theta(1:npart)
 
-    CALL deallocate_SPH_memory()
+    CALL deallocate_sph_memory()
 
     npart= n1 + n2
 
-    CALL allocate_SPH_memory()
+    CALL allocate_sph_memory()
 
-    pos_u(1,1:n1)  = pos_u1(1,:) - periastron/2.D0
+    pos_u(1,1:n1)  = pos_u1(1,:)
     pos_u(2:3,1:n1)= pos_u1(2:3,:)
     vel_u(:,1:n1)  = vel_u1
     u    (1:n1)    = u1
@@ -299,7 +334,7 @@ PROGRAM construct_eccentric_binary
     Ye   (1:n1)    = Ye1
     Theta(1:n1)    = Theta1
 
-    pos_u(1,n1 + 1: npart)  = pos_u2(1,:) + periastron/2.D0
+    pos_u(1,n1 + 1: npart)  = pos_u2(1,:)
     pos_u(2:3,n1 + 1: npart)= pos_u2(2:3,:)
     vel_u(:,n1 + 1: npart)  = vel_u2
     u    (n1 + 1: npart)    = u2
@@ -332,7 +367,7 @@ PROGRAM construct_eccentric_binary
   END SUBROUTINE read_tov_sph_id
 
 
-  SUBROUTINE read_tov_bssn_id(filename1, filename2, periastron)
+  SUBROUTINE read_tov_bssn_id(filename1, filename2, x1, x2)
 
     !***********************************************************
     !
@@ -348,7 +383,9 @@ PROGRAM construct_eccentric_binary
                                grid_function_scalar, grid_function, &
                                read_grid_params, coords, &
                                allocate_grid_function, deallocate_grid_function
-    USE ADM_refine,      ONLY: allocate_ADM, deallocate_ADM, lapse, shift_u
+    USE ADM_refine,      ONLY: allocate_ADM, deallocate_ADM, lapse, shift_u, &
+                               g_phys3_ll, K_phys3_ll, dt_lapse, dt_shift_u
+    USE Tmunu_refine,    ONLY: Tmunu_ll, allocate_Tmunu
     USE BSSN_refine,     ONLY: allocate_BSSN, deallocate_BSSN, write_BSSN_dump, &
                                phi, trK, Theta_Z4, lapse_A_BSSN, shift_B_BSSN_u,&
                                Gamma_u, g_BSSN3_ll, A_BSSN3_ll
@@ -359,7 +396,7 @@ PROGRAM construct_eccentric_binary
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION,              INTENT(IN)   :: periastron
+    DOUBLE PRECISION,              INTENT(IN)   :: x1, x2
     CHARACTER(LEN=:), ALLOCATABLE, INTENT(INOUT):: filename1, filename2
 
     INTEGER, PARAMETER:: tov_np= 100001
@@ -416,6 +453,7 @@ PROGRAM construct_eccentric_binary
 
     CALL allocate_tov(tov_np)
 
+    PRINT *
     PRINT *, " * Reading ID for first TOV star..."
     CALL read_tov_dump(filename1)
 
@@ -440,21 +478,21 @@ PROGRAM construct_eccentric_binary
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( levels, l, coords, lapse1, shift_u1, &
       !$OMP                     g_phys3_ll1, dt_lapse1, dt_shift_u1, &
-      !$OMP                     K_phys3_ll1, Tmunu_ll1 ) &
+      !$OMP                     K_phys3_ll1, Tmunu_ll1, x1 ) &
       !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, &
       !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
       DO k= 1, levels(l)% ngrid_z, 1
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            CALL get_tov_metric(coords% levels(l)% var(i,j,k,1), &
+            CALL get_tov_metric(coords% levels(l)% var(i,j,k,1) - x1, &
                                 coords% levels(l)% var(i,j,k,2), &
                                 coords% levels(l)% var(i,j,k,3), &
                                 tmp, tmp2, tmp3, &
                                 g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
 
             CALL compute_tpo_metric &
-              ( [g00, g01, g02, g03, g11, g12, g13, g22, g23, g33] , &
+              ( [g00, g01, g02, g03, g11, g12, g13, g22, g23, g33], &
                 lapse1% levels(l)% var(i,j,k), &
                 shift_u1% levels(l)% var(i,j,k,:), &
                 g_phys3_ll1% levels(l)% var(i,j,k,:) )
@@ -470,7 +508,6 @@ PROGRAM construct_eccentric_binary
       !$OMP END PARALLEL DO
     ENDDO read_tov1_id_on_the_mesh
     PRINT *, "...done"
-    PRINT *
 
   !  DO l= 1, nlevels, 1
   !
@@ -525,6 +562,7 @@ PROGRAM construct_eccentric_binary
     !filename2 = 'tov-id-files/BSSN_var2.00000'
     !CALL read_BSSN_dump( 00000, filename2 )
 
+    PRINT *
     PRINT *, " * Reading ID for second TOV star..."
     CALL read_tov_dump(filename2)
 
@@ -549,14 +587,14 @@ PROGRAM construct_eccentric_binary
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( levels, l, coords, lapse2, shift_u2, &
       !$OMP                     g_phys3_ll2, dt_lapse2, dt_shift_u2, &
-      !$OMP                     K_phys3_ll2, Tmunu_ll2 ) &
+      !$OMP                     K_phys3_ll2, Tmunu_ll2, x2 ) &
       !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, &
       !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
       DO k= 1, levels(l)% ngrid_z, 1
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            CALL get_tov_metric(coords% levels(l)% var(i,j,k,1), &
+            CALL get_tov_metric(coords% levels(l)% var(i,j,k,1) - x2, &
                                 coords% levels(l)% var(i,j,k,2), &
                                 coords% levels(l)% var(i,j,k,3), &
                                 tmp, tmp2, tmp3, &
@@ -579,7 +617,6 @@ PROGRAM construct_eccentric_binary
       !$OMP END PARALLEL DO
     ENDDO read_tov2_id_on_the_mesh
     PRINT *, "...done"
-    PRINT *
 
  !   DO l= 1, nlevels, 1
  !
@@ -600,10 +637,49 @@ PROGRAM construct_eccentric_binary
  !   CALL deallocate_ADM()
  !   DEALLOCATE(levels)
 
-    !
-    !-- Place the ID according to the periastron
-    !
+    CALL allocate_ADM()
+    CALL allocate_Tmunu()
 
+    !
+    !-- Sum the translated TOV ID
+    !
+    PRINT *
+    PRINT *, " * Summing the two TOV ID..."
+    sum_tov_id: DO l= 1, nlevels, 1
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( levels, l, coords, lapse1, shift_u1, &
+      !$OMP                     g_phys3_ll1, dt_lapse1, dt_shift_u1, &
+      !$OMP                     K_phys3_ll1, Tmunu_ll1, lapse2, shift_u2, &
+      !$OMP                     g_phys3_ll2, dt_lapse2, dt_shift_u2, &
+      !$OMP                     K_phys3_ll2, Tmunu_ll2, g_phys3_ll, &
+      !$OMP                     K_phys3_ll, dt_lapse, dt_shift_u, Tmunu_ll, &
+      !$OMP                     lapse, shift_u ) &
+      !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, &
+      !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
+      DO k= 1, levels(l)% ngrid_z, 1
+        DO j= 1, levels(l)% ngrid_y, 1
+          DO i= 1, levels(l)% ngrid_x, 1
+
+            g_phys3_ll% levels(l)% var(i,j,k,:)= &
+    g_phys3_ll1% levels(l)% var(i,j,k,:) + g_phys3_ll2% levels(l)% var(i,j,k,:)
+
+            lapse%      levels(l)% var(i,j,k)  = &
+              lapse1% levels(l)% var(i,j,k) + lapse2% levels(l)% var(i,j,k)
+
+            shift_u%    levels(l)% var(i,j,k,:)= &
+          shift_u1% levels(l)% var(i,j,k,:) + shift_u2% levels(l)% var(i,j,k,:)
+
+            dt_lapse%   levels(l)% var(i,j,k)  = zero
+            dt_shift_u% levels(l)% var(i,j,k,:)= zero
+            K_phys3_ll% levels(l)% var(i,j,k,:)= zero
+            Tmunu_ll%   levels(l)% var(i,j,k,:)= zero
+
+          ENDDO
+        ENDDO
+      ENDDO
+      !$OMP END PARALLEL DO
+    ENDDO sum_tov_id
+    PRINT *, "...done"
 
 
     !
@@ -646,12 +722,19 @@ PROGRAM construct_eccentric_binary
   END SUBROUTINE read_tov_bssn_id
 
 
-  PURE SUBROUTINE newtonian_speeds(energy, mass1, mass2, r, v1, v2)
+  PURE SUBROUTINE newtonian_parabolic_speeds &
+    (mass1, mass2, angular_momentum, distance, v1, v2)
 
     !***********************************************************
     !
-    !# Compute Newtonian speeds for two stars at a given distance,
-    !  applying conservation of energy and momentum
+    !# Compute Newtonian speeds for two stars on parabolic orbits
+    !  at a given distance, applying conservation of energy
+    !  and momentum.
+    !  For a 2-body problem with parabolic orbit, the total
+    !  energy is zero.
+    !
+    !  See Goldstein, Poole, Safko, "Classical mechanics",
+    !  Sec.3.2, eq. (3.16); Sec.3.3, eq.(3.21); Sec.3.7
     !
     !  FT 13.12.2022
     !
@@ -659,33 +742,79 @@ PROGRAM construct_eccentric_binary
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN) :: energy, mass1, mass2, r
-    DOUBLE PRECISION, INTENT(OUT):: v1, v2
+    DOUBLE PRECISION, INTENT(IN) :: mass1, mass2, distance, angular_momentum
+    DOUBLE PRECISION, DIMENSION(3), INTENT(OUT):: v1, v2
 
-    v1= SQRT( 2.D0*mass2*(energy + mass1*mass2/(r**2))/(mass1*(mass1 + mass2)) )
+    DOUBLE PRECISION, PARAMETER:: energy= zero
 
-    v2= mass1/mass2*v1
+    DOUBLE PRECISION:: mu, radial_speed_fictitious, total_speed_fictitious, &
+                       angular_speed_fictitious
 
-  END SUBROUTINE newtonian_speeds
+    DOUBLE PRECISION, DIMENSION(3):: v_fictitious
+
+    mu= mass1*mass2/(mass1 + mass2)
+
+    radial_speed_fictitious = SQRT(2.D0/mu*(energy + mass1*mass2/distance) &
+                                   - angular_momentum**2/(2.D0*mu*distance**2))
+
+    total_speed_fictitious  = SQRT(2.D0/mu*(energy + mass1*mass2/distance))
+
+    angular_speed_fictitious= SQRT((total_speed_fictitious**2 &
+                                    - radial_speed_fictitious**2)/distance**2)
+
+    v_fictitious(1)= radial_speed_fictitious
+    v_fictitious(2)= distance*angular_speed_fictitious
+    v_fictitious(3)= 0.D0
+
+    v1(1)= mass2*v_fictitious(1)/(mass1 + mass2)
+    v1(2)= mass2*v_fictitious(2)/(mass1 + mass2)
+    v1(3)= 0.D0
+
+    v2(1)= mass1*v_fictitious(1)/(mass1 + mass2)
+    v2(2)= mass1*v_fictitious(2)/(mass1 + mass2)
+    v2(3)= 0.D0
+
+ !   v1= SQRT( 2.D0*mass2*(energy + mass1*mass2/distance)/(mass1*(mass1 + mass2)) )
+ !   !v1= SQRT(2.D0*mass2/r)
+ !
+ !   v2= mass1/mass2*v1
+
+  END SUBROUTINE newtonian_parabolic_speeds
 
 
-  PURE FUNCTION total_energy(mass1, mass2, r) RESULT(energy)
+  PURE FUNCTION parabolic_newtonian_angular_momentum(periastron) &
+    RESULT(angular_momentum)
 
     !***********************************************************
     !
-    !# Compute Newtonian speeds for two stars at a given distance,
-    !  applying conservation of energy and momentum
+    !# Compute the classical angular momentum of the system,
+    !  imposing that the radial velocity of the fictitious
+    !  body moving along a parabolic orbit, is 0 at the desired
+    !  periastron.
     !
-    !  FT 13.12.2022
+    !  See Goldstein, Poole, Safko, "Classical mechanics",
+    !  Sec.3.2, eq.(3.16) with \(\dot(r)=0\)
+    !
+    !  FT 16.12.2022
     !
     !***********************************************************
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN) :: mass1, mass2, r
-    DOUBLE PRECISION:: energy
+    DOUBLE PRECISION, INTENT(IN) :: periastron
 
-  END FUNCTION total_energy
+    DOUBLE PRECISION:: angular_momentum
+
+    DOUBLE PRECISION, PARAMETER:: energy= zero
+
+    DOUBLE PRECISION:: mu
+
+    mu= mass1*mass2/(mass1 + mass2)
+
+    angular_momentum= &
+      SQRT(2.D0*mu*periastron**2*(energy + mass1*mass2/periastron))
+
+  END FUNCTION parabolic_newtonian_angular_momentum
 
 
 END PROGRAM construct_eccentric_binary
