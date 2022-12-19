@@ -537,7 +537,7 @@ MODULE utility
     !****************************************************************
 
     USE tensor,               ONLY: n_sym4x4
-    USE metric_on_particles,  ONLY: gvec2mat, mat2gvec
+    !USE metric_on_particles,  ONLY: gvec2mat, mat2gvec
     USE matrix,               ONLY: invert_4x4_matrix
 
     IMPLICIT NONE
@@ -562,11 +562,35 @@ MODULE utility
       STOP
     ENDIF
 
-    CALL gvec2mat(A,Amat)
+    !CALL gvec2mat(A,Amat)
+    !Amat= [[A(1),A(2),A(3),A(4)], &
+    !       [A(2),A(5),A(6),A(7)], &
+    !       [A(3),A(6),A(8),A(9)], &
+    !       [A(4),A(7),A(9),A(10)]]
+    Amat(1,1)= A(1)
+    Amat(1,2)= A(2)
+    Amat(1,3)= A(3)
+    Amat(1,4)= A(4)
+    Amat(2,1)= A(2)
+    Amat(2,2)= A(5)
+    Amat(2,3)= A(6)
+    Amat(2,4)= A(7)
+    Amat(3,1)= A(3)
+    Amat(3,2)= A(6)
+    Amat(3,3)= A(8)
+    Amat(3,4)= A(9)
+    Amat(4,1)= A(4)
+    Amat(4,2)= A(7)
+    Amat(4,3)= A(9)
+    Amat(4,4)= A(10)
 
     CALL invert_4x4_matrix(Amat,iAmat)
 
-    CALL mat2gvec(iA,iAmat)
+    !CALL mat2gvec(iA,iAmat)
+    iA= [iAmat(1,1),iAmat(1,2),iAmat(1,3),iAmat(1,4), &
+         iAmat(2,2),iAmat(2,3),iAmat(2,4), &
+         iAmat(3,3),iAmat(3,4), &
+         iAmat(4,4)]
 
   END SUBROUTINE invert_sym4x4
 

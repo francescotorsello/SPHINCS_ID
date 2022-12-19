@@ -1,4 +1,4 @@
-! File:         construct_eccentric_binary.f90
+! File:         construct_newtonian_binary.f90
 ! Author:       Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
@@ -21,14 +21,17 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-PROGRAM construct_eccentric_binary
+PROGRAM construct_newtonian_binary
 
   !*****************************************************
   !
-  !# Read two |tov| star BSSN and SPH ID, and construct
-  !  an approximate eccentric binary system with a
-  !  velocity determined with Newtonian mechanics and
-  !  Newtonian gravitational law
+  !# Read two |tov| star TOV and SPH ID, and construct
+  !  an Newtonian binary system based on the
+  !  Newtonian 2-body problem.
+  !
+  !  See Goldstein, Poole, Safko, "Classical mechanics",
+  !  Chapter 3, and Landau, Lifshitz, "Mechanics",
+  !  Chapter III
   !
   !  FT 12.12.2022
   !
@@ -86,6 +89,7 @@ PROGRAM construct_eccentric_binary
 
   DOUBLE PRECISION, PARAMETER:: periastron_km= 45.D0
   DOUBLE PRECISION, PARAMETER:: distance_km  = 100.D0
+  DOUBLE PRECISION, PARAMETER:: energy       = zero
 
   INTEGER:: a
   DOUBLE PRECISION:: periastron, mass1, mass2, x1, x2, &
@@ -96,7 +100,7 @@ PROGRAM construct_eccentric_binary
 
   ! Convert periastron and initial distance to code units
   periastron= periastron_km/Msun_geo
-  distance= distance_km/Msun_geo
+  distance  = distance_km/Msun_geo
 
   PRINT *, " * Chosen periastron=", periastron_km, "km=", periastron, "Msun_geo"
   PRINT *, " * Chosen distance between the stars=", distance_km, "km=", &
@@ -137,12 +141,12 @@ PROGRAM construct_eccentric_binary
   pos_u(1,1:n1)         = pos_u(1,1:n1) + x1
   pos_u(1,n1 + 1: npart)= pos_u(1,n1 + 1: npart) + x2
 
-  angular_momentum= parabolic_newtonian_angular_momentum(periastron)
+  angular_momentum= newtonian_angular_momentum(energy,periastron)
   PRINT *, " * Angular_momentum of the system=", angular_momentum, "Msun**2"
   PRINT *
 
-  CALL newtonian_parabolic_speeds &
-    (mass1, mass2, angular_momentum, distance, v1, v2)
+  CALL newtonian_speeds &
+    (mass1, mass2, energy, angular_momentum, distance, v1, v2)
   IF(NORM2(v1) > one)THEN
     PRINT *, "** ERROR! The Newtonian speed for star 1 is larger than the ", &
              "speed of light!"
@@ -688,8 +692,8 @@ PROGRAM construct_eccentric_binary
   END SUBROUTINE read_boost_superimpose_tov_adm_id
 
 
-  PURE SUBROUTINE newtonian_parabolic_speeds &
-    (mass1, mass2, angular_momentum, distance, v1, v2)
+  PURE SUBROUTINE newtonian_speeds &
+    (mass1, mass2, energy, angular_momentum, distance, v1, v2)
 
     !***********************************************************
     !
@@ -709,10 +713,9 @@ PROGRAM construct_eccentric_binary
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN):: mass1, mass2, distance, angular_momentum
+    DOUBLE PRECISION, INTENT(IN):: mass1, mass2, energy, angular_momentum, &
+                                   distance
     DOUBLE PRECISION, DIMENSION(3), INTENT(OUT):: v1, v2
-
-    DOUBLE PRECISION, PARAMETER:: energy= zero
 
     DOUBLE PRECISION:: mu, radial_speed_fictitious, total_speed_fictitious, &
                        angular_speed_fictitious
@@ -721,8 +724,8 @@ PROGRAM construct_eccentric_binary
 
     mu= mass1*mass2/(mass1 + mass2)
 
-    radial_speed_fictitious = SQRT(two/mu*(energy + mass1*mass2/distance) &
-                                   - angular_momentum**2/(two*mu*distance**2))
+    radial_speed_fictitious = SQRT(two/mu*(energy + mass1*mass2/distance &
+                                   - angular_momentum**2/(two*mu*distance**2)))
 
     total_speed_fictitious  = SQRT(two/mu*(energy + mass1*mass2/distance))
 
@@ -746,18 +749,17 @@ PROGRAM construct_eccentric_binary
  !
  !   v2= mass1/mass2*v1
 
-  END SUBROUTINE newtonian_parabolic_speeds
+  END SUBROUTINE newtonian_speeds
 
 
-  PURE FUNCTION parabolic_newtonian_angular_momentum(periastron) &
+  PURE FUNCTION newtonian_angular_momentum(energy, periastron) &
     RESULT(angular_momentum)
 
     !***********************************************************
     !
     !# Compute the classical angular momentum of the system,
     !  imposing that the radial velocity of the fictitious
-    !  body moving along a parabolic orbit, is 0 at the desired
-    !  periastron.
+    !  body is 0 at the desired periastron.
     !
     !  See Goldstein, Poole, Safko, "Classical mechanics",
     !  Sec.3.2, eq.(3.16) with \(\dot(r)=0\)
@@ -770,11 +772,9 @@ PROGRAM construct_eccentric_binary
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN):: periastron
+    DOUBLE PRECISION, INTENT(IN):: energy, periastron
 
     DOUBLE PRECISION:: angular_momentum
-
-    DOUBLE PRECISION, PARAMETER:: energy= zero
 
     DOUBLE PRECISION:: mu
 
@@ -783,7 +783,7 @@ PROGRAM construct_eccentric_binary
     angular_momentum= &
       SQRT(two*mu*periastron**2*(energy + mass1*mass2/periastron))
 
-  END FUNCTION parabolic_newtonian_angular_momentum
+  END FUNCTION newtonian_angular_momentum
 
 
-END PROGRAM construct_eccentric_binary
+END PROGRAM construct_newtonian_binary

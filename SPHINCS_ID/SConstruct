@@ -509,7 +509,8 @@ sources_sphincs_bssn = [
   'module_dyn_metric_on_particles.f90',
   'module_alive_flag.f90',
   'module_quadrup_GW_extraction.f90',
-  'module_LRE.f90'
+  'module_LRE.f90',
+  'module_wd_eos.f90'
 ]
 
 sources_sphincs_fm = [
@@ -994,12 +995,12 @@ if debug == 'TRUE': #
 sphincs_id                = 'sphincs_id_'       + version + '.x'
 convergence_test          = 'convergence_test_' + version + '.x'
 write_par_eos             = 'write_par_eos_'    + version + '.x'
-construct_eccentric_binary= 'construct_eccentric_binary.x'
+construct_newtonian_binary= 'construct_newtonian_binary.x'
 
 program_sphincs_id                = ['src/sphincs_id.f90']
 program_convergence_test          = ['src/convergence_test.f90']
 program_write_par_eos             = ['src/write_par_eos.f90']
-program_construct_eccentric_binary= ['src/construct_eccentric_binary.f90']
+program_construct_newtonian_binary= ['src/construct_newtonian_binary.f90']
 
 ################################################################################
 
@@ -1021,9 +1022,9 @@ Program( write_par_eos, \
          sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
          + sources_sphincs_bssn + program_write_par_eos )
 
-Program( construct_eccentric_binary, \
+Program( construct_newtonian_binary, \
          sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_construct_eccentric_binary )
+         + sources_sphincs_bssn + program_construct_newtonian_binary )
 
 ################################################################################
 #
