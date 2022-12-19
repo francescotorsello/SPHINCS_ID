@@ -105,7 +105,7 @@ SUBMODULE(bns_base) find_radii
         CALL return_density(point_mean(1), point_mean(2), point_mean(3), &
                             rho_mean)
         IF(rho_mean > min_dens)THEN
-          x_left= x_mean
+          x_left = x_mean
         ELSE
           x_right= x_mean
         ENDIF

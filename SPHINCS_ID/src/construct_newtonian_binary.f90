@@ -40,29 +40,18 @@ PROGRAM construct_newtonian_binary
   !
   !-- SPHINCS_fix_metric MODULES
   !
-  USE sph_variables, ONLY: npart, &  ! particle number
-                           pos_u, &  ! particle positions
-                           vel_u, &  ! particle velocities in
-                                     ! coordinate frame
-                           nlrf,  &  ! baryon number density in
-                                     ! local rest frame
-                           !ehat,  &  ! canonical energy per baryon
-                           nu,    &  ! canonical baryon number per
-                                     ! particle
-                           Theta, &  ! Generalized Lorentz factor
-                           h,     &  ! Smoothing length
-                           Pr,    &  ! Pressure
-                           u,     &  ! Internal energy in local rest
-                                     ! frame (no kinetic energy)
-                           !temp,  &  ! Temperature
-                           !av,    &  ! Dissipation
-                           ye,    &  ! Electron fraction
-                           !divv,  &  ! Divergence of velocity vel_u
-                           deallocate_sph_memory, &
-                           n1, n2
-  USE input_output,  ONLY: set_units, read_sphincs_dump, write_sphincs_dump
-  USE units,         ONLY: m0c2_cu
-  USE tensor,        ONLY: n_sym3x3
+  USE sph_variables,  ONLY: npart,  &  ! particle number
+                            n1, n2, &  ! particle numbers for each star
+                            pos_u,  &  ! particle positions
+                            vel_u,  &  ! particle velocities in
+                                       ! coordinate frame
+                            nu,     &  ! canonical baryon number per
+                                       ! particle
+                            Theta,  &  ! Generalized Lorentz factor
+                            deallocate_sph_memory
+  USE input_output,   ONLY: write_sphincs_dump
+  USE units,          ONLY: m0c2_cu
+  USE tensor,         ONLY: n_sym3x3
 
   !
   !-- BSSN MODULES
@@ -79,15 +68,15 @@ PROGRAM construct_newtonian_binary
   !
   !-- SPHINCS_ID MODULES
   !
-  USE utility,       ONLY: zero, one, two, Msun_geo, &
-                           spacetime_vector_norm_sym4x4
-  USE lorentz_group, ONLY: eta, lorentz_boost
+  USE utility,        ONLY: zero, one, two, Msun_geo, &
+                            spacetime_vector_norm_sym4x4
+  USE lorentz_group,  ONLY: eta, lorentz_boost
 
 
   IMPLICIT NONE
 
 
-  DOUBLE PRECISION, PARAMETER:: periastron_km= 45.D0
+  DOUBLE PRECISION, PARAMETER:: periastron_km= 10.D0
   DOUBLE PRECISION, PARAMETER:: distance_km  = 100.D0
   DOUBLE PRECISION, PARAMETER:: energy       = zero
 
@@ -270,7 +259,23 @@ PROGRAM construct_newtonian_binary
     !
     !***********************************************************
 
-    USE sph_variables,  ONLY: allocate_sph_memory
+    USE sph_variables,  ONLY: npart,  &  ! particle number
+                              n1, n2, &  ! particle numbers for each star
+                              pos_u,  &  ! particle positions
+                              vel_u,  &  ! particle velocities in
+                                         ! coordinate frame
+                              nlrf,   &  ! baryon number density in
+                                         ! local rest frame
+                              nu,     &  ! canonical baryon number per
+                                         ! particle
+                              Theta,  &  ! Generalized Lorentz factor
+                              h,      &  ! Smoothing length
+                              Pr,     &  ! Pressure
+                              u,      &  ! Internal energy in local rest
+                                         ! frame (no kinetic energy)
+                              Ye,     &  ! Electron fraction
+                              allocate_sph_memory, deallocate_sph_memory
+    USE input_output,   ONLY: set_units, read_sphincs_dump
 
     IMPLICIT NONE
 
@@ -425,8 +430,8 @@ PROGRAM construct_newtonian_binary
     USE ADM_refine,      ONLY: allocate_ADM, lapse, shift_u, &
                                g_phys3_ll, K_phys3_ll, dt_lapse, dt_shift_u
     USE Tmunu_refine,    ONLY: Tmunu_ll, allocate_Tmunu, deallocate_Tmunu
-    USE BSSN_refine,     ONLY: phi, trK, Theta_Z4, lapse_A_BSSN, shift_B_BSSN_u,&
-                               Gamma_u, g_BSSN3_ll, A_BSSN3_ll
+    USE BSSN_refine,     ONLY: phi, trK, Theta_Z4, lapse_A_BSSN, &
+                               shift_B_BSSN_u, Gamma_u, g_BSSN3_ll, A_BSSN3_ll
     USE TOV_refine,      ONLY: read_TOV_dump, allocate_tov, deallocate_tov, &
                                get_tov_metric
     USE utility,         ONLY: compute_tpo_metric
@@ -587,7 +592,7 @@ PROGRAM construct_newtonian_binary
     CALL allocate_Tmunu()
 
     !
-    !-- Sum the translated TOV ID
+    !-- Sum the translated and boosted TOV ID
     !
     PRINT *
     PRINT *, " * Summing the two TOV ID..."
@@ -742,12 +747,7 @@ PROGRAM construct_newtonian_binary
 
     v2(1)= - mass1*v_fictitious(1)/(mass1 + mass2)
     v2(2)= - mass1*v_fictitious(2)/(mass1 + mass2)
-    v2(3)= zero
-
- !   v1= SQRT( two*mass2*(energy + mass1*mass2/distance)/(mass1*(mass1 + mass2)) )
- !   !v1= SQRT(two*mass2/r)
- !
- !   v2= mass1/mass2*v1
+    v2(3)=   zero
 
   END SUBROUTINE newtonian_speeds
 
