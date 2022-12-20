@@ -60,6 +60,8 @@ MODULE utility
   DOUBLE PRECISION, PARAMETER:: m2cm        = ten*ten
   DOUBLE PRECISION, PARAMETER:: g2kg        = one/(ten*ten*ten)
   DOUBLE PRECISION, PARAMETER:: kg2g        = ten*ten*ten
+  DOUBLE PRECISION, PARAMETER:: c_light_SI  = 2.99792458E+8
+  DOUBLE PRECISION, PARAMETER:: c_light2_SI = c_light_SI**2
   DOUBLE PRECISION, PARAMETER:: MSun_geo    = G_Msun/c_light2/ &
                                                (ten*ten*ten*ten*ten)
   !# Msun_geo = 1.47662503825040 km

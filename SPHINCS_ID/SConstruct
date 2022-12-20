@@ -365,6 +365,11 @@ module_lorentz_group = [
   'submodule_lorentz_group_actions.f90'
 ]
 
+module_wd_eos_dir = ['src/wd_eos/']
+module_wd_eos = [
+  'module_wd_eos.f90'
+]
+
 module_utility_dir = ['src/utility/']
 module_utility = [
   'module_utility.f90'
@@ -430,13 +435,16 @@ for i in range(len(module_lorentz_group)):
   module_lorentz_group[i] = module_lorentz_group_dir[0] \
                           + module_lorentz_group[i]
 
+for i in range(len(module_wd_eos)):
+  module_wd_eos[i] = module_wd_eos_dir[0] + module_wd_eos[i]
+
 for i in range(len(module_utility)):
   module_utility[i] = module_utility_dir[0] + module_utility[i]
 
 sources_base = module_id_base + module_bns_base + module_diffstar_base \
              + module_sph_particles + module_standard_tpo_formulation \
              + module_bssn_formulation + module_cauchy_convergence_test \
-             + module_utility + module_lorentz_group
+             + module_lorentz_group + module_wd_eos + module_utility
 
 #all_modules = [ module_id_base, module_utility, module_sphincs_id_interpolate ]
 
@@ -509,8 +517,7 @@ sources_sphincs_bssn = [
   'module_dyn_metric_on_particles.f90',
   'module_alive_flag.f90',
   'module_quadrup_GW_extraction.f90',
-  'module_LRE.f90',
-  'module_wd_eos.f90'
+  'module_LRE.f90'
 ]
 
 sources_sphincs_fm = [

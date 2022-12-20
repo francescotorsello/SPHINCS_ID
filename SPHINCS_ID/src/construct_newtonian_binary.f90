@@ -72,6 +72,8 @@ PROGRAM construct_newtonian_binary
                             spacetime_vector_norm_sym4x4
   USE lorentz_group,  ONLY: eta, lorentz_boost
 
+!USE wd_eos,  ONLY: test_wd_eos_cgs
+
 
   IMPLICIT NONE
 
@@ -82,10 +84,14 @@ PROGRAM construct_newtonian_binary
 
   INTEGER:: a
   DOUBLE PRECISION:: periastron, mass1, mass2, x1, x2, &
-                     angular_momentum, distance
+                     angular_momentum, distance, rho_input, rho, pr, u
   DOUBLE PRECISION, DIMENSION(3):: v1, v2
   CHARACTER(LEN=:), ALLOCATABLE:: filename1, filename2
 
+  !rho_input= 1.D-11
+  !CALL test_wd_eos_cgs(rho_input, rho, pr, u)
+  !
+  !STOP
 
   ! Convert periastron and initial distance to code units
   periastron= periastron_km/Msun_geo
