@@ -72,32 +72,26 @@ PROGRAM construct_newtonian_binary
                             spacetime_vector_norm_sym4x4
   USE lorentz_group,  ONLY: eta, lorentz_boost
 
-!USE wd_eos,  ONLY: test_wd_eos_cgs
-
 
   IMPLICIT NONE
 
 
-  DOUBLE PRECISION, PARAMETER:: periastron_km= 10.D0
-  DOUBLE PRECISION, PARAMETER:: distance_km  = 100.D0
+  DOUBLE PRECISION, PARAMETER:: periastron_parameter= 1.D0
+  !DOUBLE PRECISION, PARAMETER:: periastron_km= 10.D0
+  DOUBLE PRECISION, PARAMETER:: distance_km  = 50000.D0
   DOUBLE PRECISION, PARAMETER:: energy       = zero
 
   INTEGER:: a
-  DOUBLE PRECISION:: periastron, mass1, mass2, x1, x2, &
-                     angular_momentum, distance, rho_input, rho, pr, u
+  DOUBLE PRECISION:: periastron, mass1, mass2, radius1, radius2, x1, x2, &
+                     angular_momentum, distance
   DOUBLE PRECISION, DIMENSION(3):: v1, v2
   CHARACTER(LEN=:), ALLOCATABLE:: filename1, filename2
 
-  !rho_input= 1.D-11
-  !CALL test_wd_eos_cgs(rho_input, rho, pr, u)
-  !
-  !STOP
-
   ! Convert periastron and initial distance to code units
-  periastron= periastron_km/Msun_geo
+  !periastron= periastron_km/Msun_geo
   distance  = distance_km/Msun_geo
 
-  PRINT *, " * Chosen periastron=", periastron_km, "km=", periastron, "Msun_geo"
+  !PRINT *, " * Chosen periastron=", periastron_km, "km=", periastron, "Msun_geo"
   PRINT *, " * Chosen distance between the stars=", distance_km, "km=", &
            distance, "Msun_geo"
   PRINT *
@@ -117,7 +111,45 @@ PROGRAM construct_newtonian_binary
   CALL read_tov_sph_id(filename1, filename2)
 
   !
-  !-- Assign Newtonian velocity and generalized Lorentz factor to the particles
+  !-- Find the radii of the stars, as the maximum radial coordinate
+  !-- of a particle
+  !
+  radius1= zero
+  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !$OMP             SHARED( n1, pos_u ) &
+  !$OMP             PRIVATE( a ) &
+  !$OMP             REDUCTION( MAX: radius1 )
+  find_radius_star1: DO a= 1, n1, 1
+
+    radius1= MAX( radius1, SQRT(pos_u(1,a)**2 + pos_u(2,a)**2 + pos_u(3,a)**2) )
+
+  ENDDO find_radius_star1
+  !$OMP END PARALLEL DO
+  radius2= zero
+  !$OMP PARALLEL DO DEFAULT( NONE ) &
+  !$OMP             SHARED( npart, n1, pos_u ) &
+  !$OMP             PRIVATE( a ) &
+  !$OMP             REDUCTION( MAX: radius2 )
+  find_radius_star2: DO a= n1 + 1, npart, 1
+
+    radius2= MAX( radius2, SQRT(pos_u(1,a)**2 + pos_u(2,a)**2 + pos_u(3,a)**2) )
+
+  ENDDO find_radius_star2
+  !$OMP END PARALLEL DO
+  PRINT *, " * Radius of star 1=", radius1, "Msun=", radius1*Msun_geo, "km"
+  PRINT *, " * Radius of star 2=", radius2, "Msun=", radius2*Msun_geo, "km"
+  PRINT *
+
+  !
+  !-- Set periastron between the stars
+  !
+  periastron= periastron_parameter*(radius1 + radius2)
+  PRINT *, " * Chosen periastron_parameter=", periastron_parameter
+  PRINT *, " * Periastron = periastron_parameter*(radius1 + radius2) =", &
+           periastron, "Msun_geo", periastron*Msun_geo, "km="
+
+  !
+  !-- Compute masses of the stars
   !
   mass1= SUM(nu(1:n1), DIM=1)*m0c2_cu
   mass2= SUM(nu(n1+1:npart), DIM=1)*m0c2_cu
@@ -125,6 +157,10 @@ PROGRAM construct_newtonian_binary
   PRINT *, " * Mass of star 2=", mass2, "Msun"
   PRINT *
 
+  !
+  !-- Translate the stars from the origin, along the x axis, so that the
+  !-- center of mass of the system is at the origin
+  !
   x1= - mass2*distance/(mass1 + mass2)
   x2=   mass1*distance/(mass1 + mass2)
   PRINT *, " * x coordinate of the center of mass of star 1=", x1, "Msun"
@@ -136,10 +172,16 @@ PROGRAM construct_newtonian_binary
   pos_u(1,1:n1)         = pos_u(1,1:n1) + x1
   pos_u(1,n1 + 1: npart)= pos_u(1,n1 + 1: npart) + x2
 
+  !
+  !-- Compute total, Newtonian angular momentum of the system
+  !
   angular_momentum= newtonian_angular_momentum(energy,periastron)
   PRINT *, " * Angular_momentum of the system=", angular_momentum, "Msun**2"
   PRINT *
 
+  !
+  !-- Assign Newtonian velocity and generalized Lorentz factor to the particles
+  !
   CALL newtonian_speeds &
     (mass1, mass2, energy, angular_momentum, distance, v1, v2)
   IF(NORM2(v1) > one)THEN
