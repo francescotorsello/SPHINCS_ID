@@ -1,0 +1,24 @@
+&newtonian_binary_parameters
+!------------------------------------!
+! Parameters for the Newtonian orbit !
+!------------------------------------!
+periastron_parameter= 3.D0
+distance_km= 50000.D0
+eccentricity= 1.D0
+!-------------!
+! Input files !
+!-------------!
+common_path="tov-id-files/"
+! Star 1
+filename_sph1="WD-1.00000"    !"NSxx.00000"
+filename_tov1="TOV-WD1.00000" !"TOV.00000"
+! Star 2
+filename_sph2="WD-2.00000"    !"NSx2.00000"
+filename_tov2="TOV-WD2.00000" !"TO2.00000"
+!--------------!
+! Output files !
+!--------------!
+output_directory="newtonian-binary-id-files/"
+sph_output_file="WDWD.00000"
+bssn_output_file="BSSN_vars.00000"
+/

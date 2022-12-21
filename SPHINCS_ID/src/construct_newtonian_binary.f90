@@ -41,7 +41,7 @@ PROGRAM construct_newtonian_binary
   !-- SPHINCS_fix_metric MODULES
   !
   USE sph_variables,  ONLY: npart,  &  ! particle number
-                            n1, n2, &  ! particle numbers for each star
+                            n1,     &  ! particle number for star 1
                             pos_u,  &  ! particle positions
                             vel_u,  &  ! particle velocities in
                                        ! coordinate frame
@@ -76,23 +76,97 @@ PROGRAM construct_newtonian_binary
   IMPLICIT NONE
 
 
-  DOUBLE PRECISION, PARAMETER:: periastron_parameter= 1.D0
-  !DOUBLE PRECISION, PARAMETER:: periastron_km= 10.D0
-  DOUBLE PRECISION, PARAMETER:: distance_km  = 50000.D0
-  DOUBLE PRECISION, PARAMETER:: energy       = zero
-
   INTEGER:: a
   DOUBLE PRECISION:: periastron, mass1, mass2, radius1, radius2, x1, x2, &
-                     angular_momentum, distance
+                     energy, angular_momentum, distance
   DOUBLE PRECISION, DIMENSION(3):: v1, v2
   CHARACTER(LEN=:), ALLOCATABLE:: filename1, filename2
 
-  ! Convert periastron and initial distance to code units
-  !periastron= periastron_km/Msun_geo
-  distance  = distance_km/Msun_geo
+  INTEGER, PARAMETER:: parameters_unit= 17
+  INTEGER, PARAMETER:: max_length= 100
+  INTEGER:: stat
+  DOUBLE PRECISION:: periastron_parameter, distance_km, eccentricity
+  CHARACTER(LEN=:), ALLOCATABLE:: parameters_namefile
+  CHARACTER(LEN=max_length):: &
+    common_path, filename_sph1, filename_sph2, filename_tov1, filename_tov2, &
+    output_directory, sph_output_file, bssn_output_file
+  CHARACTER(LEN=100):: msg
+  LOGICAL:: file_exists
 
-  !PRINT *, " * Chosen periastron=", periastron_km, "km=", periastron, "Msun_geo"
-  PRINT *, " * Chosen distance between the stars=", distance_km, "km=", &
+  NAMELIST /newtonian_binary_parameters/ &
+            periastron_parameter, distance_km, eccentricity, &
+            common_path, filename_sph1, filename_sph2, &
+            filename_tov1, filename_tov2, output_directory, &
+            sph_output_file, bssn_output_file
+
+  !
+  !-- Read parameters
+  !
+  parameters_namefile= 'newtonian_binary_parameters.dat'
+
+  INQUIRE( FILE= parameters_namefile, EXIST= file_exists )
+  IF( file_exists )THEN
+
+    OPEN( parameters_unit, FILE= parameters_namefile, STATUS= 'OLD' )
+
+  ELSE
+
+    PRINT*
+    PRINT*,'** ERROR: ', parameters_namefile, " file not found!"
+    PRINT*
+    STOP
+
+  ENDIF
+
+  READ( UNIT= parameters_unit, NML= newtonian_binary_parameters, IOSTAT= stat, &
+        IOMSG= msg )
+
+  IF( stat /= 0 )THEN
+    PRINT *, "** ERROR: Error in reading ", parameters_namefile, &
+             ". The IOSTAT variable is ", stat, &
+             "The error message is", msg
+    STOP
+  ENDIF
+
+  CLOSE( UNIT= parameters_unit )
+
+  !
+  !-- Check that the parameters are reasonable
+  !
+  IF(eccentricity < zero)THEN
+
+    PRINT *, "** ERROR! The value for the eccentricity in the parameter", &
+             " file newtonian_binary_parameters.dat is negative!"
+    PRINT *, "   eccentricity= ", eccentricity
+    PRINT *, " * Stopping..."
+    PRINT *
+    STOP
+
+  ENDIF
+  IF(periastron_parameter <= zero)THEN
+
+    PRINT *, "** ERROR! The value for the periastron_parameter in the", &
+             " parameter file newtonian_binary_parameters.dat is nonpositive!"
+    PRINT *, "   periastron_parameter= ", periastron_parameter
+    PRINT *, " * Stopping..."
+    PRINT *
+    STOP
+
+  ENDIF
+  IF(distance_km <= zero)THEN
+
+    PRINT *, "** ERROR! The value for the initial distance in the", &
+             " parameter file newtonian_binary_parameters.dat is nonpositive!"
+    PRINT *, "   distance_km= ", distance_km
+    PRINT *, " * Stopping..."
+    PRINT *
+    STOP
+
+  ENDIF
+
+  ! Convert periastron and initial distance to code units
+  distance  = distance_km/Msun_geo
+  PRINT *, " * Initial distance between the stars=", distance_km, "km=", &
            distance, "Msun_geo"
   PRINT *
 
@@ -106,9 +180,9 @@ PROGRAM construct_newtonian_binary
   !-- The first star will be displaced to negative x,
   !-- the second star to positive x, depending on the value of the periastron
   !
-  filename1 = 'tov-id-files/NSxx.00000'
-  filename2 = 'tov-id-files/NSx2.00000'
-  CALL read_tov_sph_id(filename1, filename2)
+  filename1= TRIM(common_path)//TRIM(filename_sph1)
+  filename2= TRIM(common_path)//TRIM(filename_sph2)
+  CALL read_tov_sph_id(filename1,filename2)
 
   !
   !-- Find the radii of the stars, as the maximum radial coordinate
@@ -173,14 +247,18 @@ PROGRAM construct_newtonian_binary
   pos_u(1,n1 + 1: npart)= pos_u(1,n1 + 1: npart) + x2
 
   !
-  !-- Compute total, Newtonian angular momentum of the system
+  !-- Compute total, Newtonian, energy and angular momentum of the system
   !
-  angular_momentum= newtonian_angular_momentum(energy,periastron)
+  CALL newtonian_energy_angular_momentum &
+    (eccentricity, periastron, mass1, mass2, energy, angular_momentum)
+
+  PRINT *, " * Energy of the system=", energy, "Msun"
   PRINT *, " * Angular_momentum of the system=", angular_momentum, "Msun**2"
   PRINT *
 
   !
-  !-- Assign Newtonian velocity and generalized Lorentz factor to the particles
+  !-- Compute Newtonian velocities and generalized Lorentz factors,
+  !-- and assign them to the particles
   !
   CALL newtonian_speeds &
     (mass1, mass2, energy, angular_momentum, distance, v1, v2)
@@ -242,7 +320,7 @@ PROGRAM construct_newtonian_binary
   !-- Print the SPH ID
   !
   PRINT *, " * Printing SPH ID to file..."
-  filename1= 'eccentric-binary-id-files/NSNS.00000'
+  filename1= TRIM(output_directory)//TRIM(sph_output_file)
   CALL write_sphincs_dump(filename1)
   PRINT *, "...done."
   PRINT *
@@ -257,9 +335,9 @@ PROGRAM construct_newtonian_binary
   !--  BSSN ID  --!
   !---------------!
 
-  filename1 = 'tov-id-files/TOV.00000'
-  filename2 = 'tov-id-files/TO2.00000'
-  CALL read_boost_superimpose_tov_adm_id(filename1, filename2, x1, x2)
+  filename1= TRIM(common_path)//TRIM(filename_tov1)
+  filename2= TRIM(common_path)//TRIM(filename_tov2)
+  CALL read_boost_superimpose_tov_adm_id(filename1,filename2, x1, x2)
 
   !
   !-- Compute BSSN ID
@@ -278,7 +356,7 @@ PROGRAM construct_newtonian_binary
   !-- Print the BSSN ID
   !
   PRINT *, " * Printing BSSN ID to file..."
-  filename1= 'eccentric-binary-id-files/BSSN_vars.00000'
+  filename1= TRIM(output_directory)//TRIM(bssn_output_file)
   CALL write_BSSN_dump(filename1)
   PRINT *, "...done."
   PRINT *
@@ -327,7 +405,7 @@ PROGRAM construct_newtonian_binary
 
     IMPLICIT NONE
 
-    CHARACTER(LEN=:), ALLOCATABLE, INTENT(INOUT):: filename1, filename2
+    CHARACTER(LEN=*), INTENT(INOUT):: filename1, filename2
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_u1, vel_u1, &
                                                     pos_u2, vel_u2
@@ -478,22 +556,19 @@ PROGRAM construct_newtonian_binary
     USE ADM_refine,      ONLY: allocate_ADM, lapse, shift_u, &
                                g_phys3_ll, K_phys3_ll, dt_lapse, dt_shift_u
     USE Tmunu_refine,    ONLY: Tmunu_ll, allocate_Tmunu, deallocate_Tmunu
-    USE BSSN_refine,     ONLY: phi, trK, Theta_Z4, lapse_A_BSSN, &
-                               shift_B_BSSN_u, Gamma_u, g_BSSN3_ll, A_BSSN3_ll
     USE TOV_refine,      ONLY: read_TOV_dump, allocate_tov, deallocate_tov, &
                                get_tov_metric
     USE utility,         ONLY: compute_tpo_metric
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION,              INTENT(IN)   :: x1, x2
-    CHARACTER(LEN=:), ALLOCATABLE, INTENT(INOUT):: filename1, filename2
+    DOUBLE PRECISION, INTENT(IN):: x1, x2
+    CHARACTER(LEN=*), INTENT(INOUT):: filename1, filename2
 
     INTEGER, PARAMETER:: tov_np= 100001
-    INTEGER :: io_error, allocation_status, i, j, k, l
-    INTEGER, DIMENSION(3) :: array_shape
+    INTEGER :: i, j, k, l
 
-    DOUBLE PRECISION:: tmp, tmp2, tmp3, tmp4, &
+    DOUBLE PRECISION:: tmp, tmp2, tmp3, &
                        g00, g01, g02, g03, g11, g12, g13, g22, g23, g33
 
     DOUBLE PRECISION, DIMENSION(4,4):: g(n_sym4x4)
@@ -800,19 +875,24 @@ PROGRAM construct_newtonian_binary
   END SUBROUTINE newtonian_speeds
 
 
-  PURE FUNCTION newtonian_angular_momentum(energy, periastron) &
-    RESULT(angular_momentum)
+  SUBROUTINE newtonian_energy_angular_momentum &
+    (eccentricity, periastron, mass1, mass2, energy, angular_momentum)
 
     !***********************************************************
     !
-    !# Compute the classical angular momentum of the system,
+    !# Compute the Newtonianenergy and angular momentum of the system,
     !  imposing that the radial velocity of the fictitious
-    !  body is 0 at the desired periastron.
+    !  body is 0 at the desired periastron, with the desired eccentricity.
     !
-    !  See Goldstein, Poole, Safko, "Classical mechanics",
-    !  Sec.3.2, eq.(3.16) with \(\dot(r)=0\)
+    !  The formulas used here are found by solving the equations
+    !  that can be found in:
+    !
+    !  Goldstein, Poole, Safko, "Classical mechanics",
+    !  Sec.3.2, eq.(3.16) with \(\dot(r)=0\), and Sec.3.7, eq.(3.57)
     !  See Landau, Lifshitz, "Mechanics", Chapter III,
     !  eq.(14.5) with \(\dot(r)=0\)
+    !
+    !  for the energy and the angular momentum.
     !
     !  FT 16.12.2022
     !
@@ -820,18 +900,51 @@ PROGRAM construct_newtonian_binary
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN):: energy, periastron
+    DOUBLE PRECISION, INTENT(IN) :: eccentricity, periastron, mass1, mass2
 
-    DOUBLE PRECISION:: angular_momentum
+    DOUBLE PRECISION, INTENT(OUT):: energy, angular_momentum
 
     DOUBLE PRECISION:: mu
 
     mu= mass1*mass2/(mass1 + mass2)
 
-    angular_momentum= &
-      SQRT(two*mu*periastron**2*(energy + mass1*mass2/periastron))
+    IF(eccentricity == zero)THEN
+    ! Circle
 
-  END FUNCTION newtonian_angular_momentum
+      angular_momentum= SQRT(mu*mass1*mass2*periastron)
+
+    ELSEIF(eccentricity == one)THEN
+    ! Parabola (straight line is not considered here; it would have zero
+    ! angular momentum)
+
+      angular_momentum= SQRT(two*mu*mass1*mass2*periastron)
+
+    ELSEIF(eccentricity > one)THEN
+    ! Hyperbola
+
+      angular_momentum= SQRT((one + eccentricity)*mu*mass1*mass2*periastron)
+
+    ELSEIF(zero < eccentricity .AND. eccentricity < one)THEN
+    ! Ellipse [SQRT((one - eccentricity)*mu*mass1*mass2*periastron) would be
+    ! for an ellispe having apoastron equal to our value of the periastron]
+
+      angular_momentum= SQRT((one + eccentricity)*mu*mass1*mass2*periastron)
+
+    ELSE
+
+      PRINT *, "** ERROR in SUBROUTINE newtonian_energy_angular_momentum!"
+      PRINT *, " * The value for the eccentricity is negative!"
+      PRINT *, "   eccentricity= ", eccentricity
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+    energy= &
+      mu*(mass1*mass2)**2*(eccentricity**2 - one)/(two*angular_momentum**2)
+
+  END SUBROUTINE newtonian_energy_angular_momentum
 
 
 END PROGRAM construct_newtonian_binary

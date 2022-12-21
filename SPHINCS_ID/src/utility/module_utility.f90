@@ -230,26 +230,27 @@ MODULE utility
     INQUIRE( FILE= sphincs_id_parameters_namefile, EXIST= file_exists )
     IF( file_exists )THEN
 
-     OPEN( 17, FILE= sphincs_id_parameters_namefile, STATUS= 'OLD' )
+      OPEN( unit_parameters, FILE= sphincs_id_parameters_namefile, &
+            STATUS= 'OLD' )
 
     ELSE
 
-     PRINT*
-     PRINT*,'** ERROR: ', sphincs_id_parameters_namefile, " file not found!"
-     PRINT*
-     STOP
+      PRINT*
+      PRINT*,'** ERROR: ', sphincs_id_parameters_namefile, " file not found!"
+      PRINT*
+      STOP
 
     ENDIF
 
     READ( UNIT= unit_parameters, NML= sphincs_id_parameters, IOSTAT= stat, &
           IOMSG= msg )
 
-      IF( stat /= 0 )THEN
-        PRINT *, "** ERROR: Error in reading ", sphincs_id_parameters_namefile,&
-                 ". The IOSTAT variable is ", stat, &
-                 "The error message is", msg
-        STOP
-      ENDIF
+    IF( stat /= 0 )THEN
+      PRINT *, "** ERROR: Error in reading ", sphincs_id_parameters_namefile, &
+               ". The IOSTAT variable is ", stat, &
+               "The error message is", msg
+      STOP
+    ENDIF
 
     CLOSE( UNIT= unit_parameters )
 
