@@ -78,7 +78,8 @@ PROGRAM construct_newtonian_binary
 
   INTEGER:: a
   DOUBLE PRECISION:: periastron, mass1, mass2, radius1, radius2, x1, x2, &
-                     energy, angular_momentum, distance
+                     energy, angular_momentum, distance, &
+                     semimajor_axis, semiminor_axis, apoastron
   DOUBLE PRECISION, DIMENSION(3):: v1, v2
   CHARACTER(LEN=:), ALLOCATABLE:: filename1, filename2
 
@@ -164,35 +165,8 @@ PROGRAM construct_newtonian_binary
 
   ENDIF
 
-  PRINT *, " * Chosen eccentricity=", eccentricity
-  IF(eccentricity == zero)THEN
-  ! Circle
-
-     PRINT *, " * The orbit is a circle."
-
-  ELSEIF(eccentricity < one)THEN
-  ! Ellipse
-
-    PRINT *, " * The orbit is an ellipse."
-
-  ELSEIF(eccentricity == one)THEN
-  ! Parabola (straight line is not considered here; it would have zero
-  ! angular momentum)
-
-    PRINT *, " * The orbit is a parabola."
-
-  ELSEIF(eccentricity > one)THEN
-  ! Hyperbola
-
-    PRINT *, " * The orbit is a hyperbola."
-
-  ENDIF
-  PRINT *
   ! Convert initial distance to code units
   distance= distance_km/Msun_geo
-  PRINT *, " * Initial distance between the stars=", distance_km, "km=", &
-           distance, "Msun_geo"
-  PRINT *
 
 
   !--------------!
@@ -245,21 +219,73 @@ PROGRAM construct_newtonian_binary
   PRINT *, " * Chosen periastron_parameter=", periastron_parameter
   PRINT *, " * Periastron = periastron_parameter*(radius1 + radius2) =", &
            periastron, "Msun_geo=", periastron*Msun_geo, "km"
+  PRINT *
 
   ! Check that the requested initial distance is equal to, or larger than,
   ! the periastron
   IF(distance < periastron)THEN
 
-    PRINT *, "** ERROR! The chosen initial distance is strictly lower than", &
+    PRINT *, "** ERROR! The chosen initial distance is strictly smaller than", &
              " the chosen periastron!"
     PRINT *, "   Initial distance= ", distance, "Msun_geo=", distance_km, "km"
     PRINT *, " * Periastron = periastron_parameter*(radius1 + radius2) =", &
-             periastron, "Msun_geo", periastron*Msun_geo, "km="
+             periastron, "Msun_geo=", periastron*Msun_geo, "km"
     PRINT *, " * Stopping..."
     PRINT *
     STOP
 
   ENDIF
+
+  PRINT *, " * Chosen initial distance between the stars=", distance, &
+           "Msun_geo=", distance_km, "km"
+  PRINT *
+
+  PRINT *, " * Chosen eccentricity=", eccentricity
+  IF(eccentricity == zero)THEN
+  ! Circle
+
+     PRINT *, " * The orbit is a circle."
+
+  ELSEIF(eccentricity < one)THEN
+  ! Ellipse
+
+    ! Compute ellipse parameters
+    semimajor_axis= periastron/(one - eccentricity)
+    apoastron     = (one + eccentricity)*semimajor_axis
+    semiminor_axis= SQRT(periastron*apoastron)
+
+    PRINT *, " * The orbit is an ellipse."
+    PRINT *, " * Apoastron= ", apoastron, "Msun_geo=", apoastron*Msun_geo, "km"
+    PRINT *, " * Semi-major axis= ", semimajor_axis, "Msun_geo=", &
+             semimajor_axis*Msun_geo, "km"
+    PRINT *, " * Semi-minor axis= ", semiminor_axis, "Msun_geo=", &
+             semiminor_axis*Msun_geo, "km"
+
+    IF(distance > apoastron)THEN
+
+      PRINT *, "** ERROR! The chosen initial distance is strictly larger than",&
+               " the apoastron!"
+      PRINT *, "   Initial distance= ", distance, "Msun_geo=", distance_km, "km"
+      PRINT *, " * Apoastron= ", apoastron, "Msun_geo=", apoastron*Msun_geo,"km"
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+  ELSEIF(eccentricity == one)THEN
+  ! Parabola (straight line is not considered here; it would have zero
+  ! angular momentum)
+
+    PRINT *, " * The orbit is a parabola."
+
+  ELSEIF(eccentricity > one)THEN
+  ! Hyperbola
+
+    PRINT *, " * The orbit is a hyperbola."
+
+  ENDIF
+  PRINT *
 
   !
   !-- Compute masses of the stars

@@ -10,8 +10,8 @@ periastron_parameter= 3.D0  ! The periastron is given by
                             !     that the stars colllide at periastron
                             !   periastron_parameter > 1.D0 means
                             !     that the stars do not touch at periastron
-distance_km= 50000.D0       ! Initial distance between the stars, in km
-eccentricity= 0.85D0         ! Reminder:
+distance_km= 60000.D0       ! Initial distance between the stars, in km
+eccentricity= 0.15D0         ! Reminder:
                             !           eccentricity = 0.D0 for a circle;
                             !    0.D0 < eccentricity < 1.D0 for an ellipse;
                             !           eccentricity = 1.D0 for a parabola when
