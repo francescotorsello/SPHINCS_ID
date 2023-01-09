@@ -1,24 +1,41 @@
 &newtonian_binary_parameters
-!------------------------------------!
-! Parameters for the Newtonian orbit !
-!------------------------------------!
-periastron_parameter= 3.D0
-distance_km= 50000.D0
-eccentricity= 1.D0
+!-------------------------------------------------------------------!
+! Parameters to specify the physics of the Newtonian 2-body problem !
+!-------------------------------------------------------------------!
+periastron_parameter= 3.D0  ! The periastron is given by
+                            ! periastron_parameter*(radius1 + radius2), so that:
+                            !   periastron_parameter = 1.D0 means
+                            !     that the stars touch at periastron
+                            !   periastron_parameter < 1.D0 means
+                            !     that the stars colllide at periastron
+                            !   periastron_parameter > 1.D0 means
+                            !     that the stars do not touch at periastron
+distance_km= 50000.D0       ! Initial distance between the stars, in km
+eccentricity= 0.85D0         ! Reminder:
+                            !           eccentricity = 0.D0 for a circle;
+                            !    0.D0 < eccentricity < 1.D0 for an ellipse;
+                            !           eccentricity = 1.D0 for a parabola when
+                            !             angular momentum is nonzero, and
+                            !             for a straight line when angular
+                            !             momentum is zero (straight line not
+                            !             supported presently);
+                            !           eccentricity > 1.D0 for a hyperbola.
 !-------------!
 ! Input files !
 !-------------!
-common_path="tov-id-files/"
-! Star 1
+common_path="tov-id-files/" ! Relative path to the directory where the input
+                            ! files are stored
+!---Star 1
 filename_sph1="WD-1.00000"    !"NSxx.00000"
 filename_tov1="TOV-WD1.00000" !"TOV.00000"
-! Star 2
+!---Star 2
 filename_sph2="WD-2.00000"    !"NSx2.00000"
 filename_tov2="TOV-WD2.00000" !"TO2.00000"
 !--------------!
 ! Output files !
 !--------------!
-output_directory="newtonian-binary-id-files/"
+output_directory="newtonian-binary-id-files/" ! Relative path to the directory
+                                              ! where the store he output files
 sph_output_file="WDWD.00000"
 bssn_output_file="BSSN_vars.00000"
 /

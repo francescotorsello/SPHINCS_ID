@@ -69,7 +69,7 @@ PROGRAM construct_newtonian_binary
   !-- SPHINCS_ID MODULES
   !
   USE utility,        ONLY: zero, one, two, Msun_geo, &
-                            spacetime_vector_norm_sym4x4
+                            spacetime_vector_norm_sym4x4, is_finite_number
   USE lorentz_group,  ONLY: eta, lorentz_boost
 
 
@@ -164,8 +164,32 @@ PROGRAM construct_newtonian_binary
 
   ENDIF
 
-  ! Convert periastron and initial distance to code units
-  distance  = distance_km/Msun_geo
+  PRINT *, " * Chosen eccentricity=", eccentricity
+  IF(eccentricity == zero)THEN
+  ! Circle
+
+     PRINT *, " * The orbit is a circle."
+
+  ELSEIF(eccentricity < one)THEN
+  ! Ellipse
+
+    PRINT *, " * The orbit is an ellipse."
+
+  ELSEIF(eccentricity == one)THEN
+  ! Parabola (straight line is not considered here; it would have zero
+  ! angular momentum)
+
+    PRINT *, " * The orbit is a parabola."
+
+  ELSEIF(eccentricity > one)THEN
+  ! Hyperbola
+
+    PRINT *, " * The orbit is a hyperbola."
+
+  ENDIF
+  PRINT *
+  ! Convert initial distance to code units
+  distance= distance_km/Msun_geo
   PRINT *, " * Initial distance between the stars=", distance_km, "km=", &
            distance, "Msun_geo"
   PRINT *
@@ -195,7 +219,7 @@ PROGRAM construct_newtonian_binary
   !$OMP             REDUCTION( MAX: radius1 )
   find_radius_star1: DO a= 1, n1, 1
 
-    radius1= MAX( radius1, SQRT(pos_u(1,a)**2 + pos_u(2,a)**2 + pos_u(3,a)**2) )
+    radius1= MAX(radius1, SQRT(pos_u(1,a)**2 + pos_u(2,a)**2 + pos_u(3,a)**2))
 
   ENDDO find_radius_star1
   !$OMP END PARALLEL DO
@@ -206,7 +230,7 @@ PROGRAM construct_newtonian_binary
   !$OMP             REDUCTION( MAX: radius2 )
   find_radius_star2: DO a= n1 + 1, npart, 1
 
-    radius2= MAX( radius2, SQRT(pos_u(1,a)**2 + pos_u(2,a)**2 + pos_u(3,a)**2) )
+    radius2= MAX(radius2, SQRT(pos_u(1,a)**2 + pos_u(2,a)**2 + pos_u(3,a)**2))
 
   ENDDO find_radius_star2
   !$OMP END PARALLEL DO
@@ -220,7 +244,22 @@ PROGRAM construct_newtonian_binary
   periastron= periastron_parameter*(radius1 + radius2)
   PRINT *, " * Chosen periastron_parameter=", periastron_parameter
   PRINT *, " * Periastron = periastron_parameter*(radius1 + radius2) =", &
-           periastron, "Msun_geo", periastron*Msun_geo, "km="
+           periastron, "Msun_geo=", periastron*Msun_geo, "km"
+
+  ! Check that the requested initial distance is equal to, or larger than,
+  ! the periastron
+  IF(distance < periastron)THEN
+
+    PRINT *, "** ERROR! The chosen initial distance is strictly lower than", &
+             " the chosen periastron!"
+    PRINT *, "   Initial distance= ", distance, "Msun_geo=", distance_km, "km"
+    PRINT *, " * Periastron = periastron_parameter*(radius1 + radius2) =", &
+             periastron, "Msun_geo", periastron*Msun_geo, "km="
+    PRINT *, " * Stopping..."
+    PRINT *
+    STOP
+
+  ENDIF
 
   !
   !-- Compute masses of the stars
@@ -262,6 +301,23 @@ PROGRAM construct_newtonian_binary
   !
   CALL newtonian_speeds &
     (mass1, mass2, energy, angular_momentum, distance, v1, v2)
+  ! Check that the velocities are acceptable
+  IF(.NOT.is_finite_number(NORM2(v1)))THEN
+    PRINT *, "** ERROR! The Newtonian speed for star 1 has some NaN ", &
+             "components!"
+    PRINT *, " * Newtonian speed=", NORM2(v1), "c"
+    PRINT *, " * Newtonian velocity=", v1, "c"
+    PRINT *, " * Stopping..."
+    STOP
+  ENDIF
+  IF(.NOT.is_finite_number(NORM2(v2)))THEN
+    PRINT *, "** ERROR! The Newtonian speed for star 2 has some NaN ", &
+             "components!"
+    PRINT *, " * Newtonian speed=", NORM2(v2), "c"
+    PRINT *, " * Newtonian velocity=", v2, "c"
+    PRINT *, " * Stopping..."
+    STOP
+  ENDIF
   IF(NORM2(v1) > one)THEN
     PRINT *, "** ERROR! The Newtonian speed for star 1 is larger than the ", &
              "speed of light!"
@@ -855,10 +911,16 @@ PROGRAM construct_newtonian_binary
     radial_speed_fictitious = SQRT(two/mu*(energy + mass1*mass2/distance &
                                    - angular_momentum**2/(two*mu*distance**2)))
 
+    !PRINT *, "radial_speed_fictitious=", radial_speed_fictitious
+
     total_speed_fictitious  = SQRT(two/mu*(energy + mass1*mass2/distance))
+
+    !PRINT *, "total_speed_fictitious=", total_speed_fictitious
 
     angular_speed_fictitious= SQRT((total_speed_fictitious**2 &
                                     - radial_speed_fictitious**2)/distance**2)
+
+    !PRINT *, "angular_speed_fictitious=", angular_speed_fictitious
 
     v_fictitious(1)= radial_speed_fictitious
     v_fictitious(2)= distance*angular_speed_fictitious
@@ -880,7 +942,7 @@ PROGRAM construct_newtonian_binary
 
     !***********************************************************
     !
-    !# Compute the Newtonianenergy and angular momentum of the system,
+    !# Compute the Newtonian energy and angular momentum of the system,
     !  imposing that the radial velocity of the fictitious
     !  body is 0 at the desired periastron, with the desired eccentricity.
     !
