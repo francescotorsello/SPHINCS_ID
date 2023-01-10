@@ -2,7 +2,7 @@
 !-------------------------------------------------------------------!
 ! Parameters to specify the physics of the Newtonian 2-body problem !
 !-------------------------------------------------------------------!
-periastron_parameter= 3.D0  ! The periastron is given by
+periastron_parameter= 1.15D0  ! The periastron is given by
                             ! (radius1 + radius2)/periastron_parameter, so that:
                             !   periastron_parameter = 1.D0 means
                             !     that the stars touch at periastron
@@ -12,8 +12,8 @@ periastron_parameter= 3.D0  ! The periastron is given by
                             !     that the stars do not touch at periastron
                             !   The higher periastron_parameter, the smaller
                             !   the periastron and the more violent the impact
-distance_km= 6000.D0       ! Initial distance between the stars, in km
-eccentricity= 0.15D0        ! Reminder:
+distance_km= 40000.D0       ! Initial distance between the stars, in km
+eccentricity= 0.65D0        ! Reminder:
                             !           eccentricity = 0.D0 for a circle;
                             !    0.D0 < eccentricity < 1.D0 for an ellipse;
                             !           eccentricity = 1.D0 for a parabola when

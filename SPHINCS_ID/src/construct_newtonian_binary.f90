@@ -228,9 +228,24 @@ PROGRAM construct_newtonian_binary
     PRINT *
     PRINT *, "** ERROR! The chosen initial distance is strictly smaller than", &
              " the chosen periastron!"
-    PRINT *, "   Initial distance= ", distance, "Msun_geo=", distance_km, "km"
+    PRINT *, " * Initial distance= ", distance, "Msun_geo=", distance_km, "km"
     PRINT *, " * Periastron= (radius1 + radius2)/periastron_parameter =", &
              periastron, "Msun_geo=", periastron*Msun_geo, "km"
+    PRINT *, " * Stopping..."
+    PRINT *
+    STOP
+
+  ENDIF
+  ! Check that the requested initial distance is equal to, or larger than,
+  ! the sum of the two radii
+  IF(distance < radius1 + radius2)THEN
+
+    PRINT *
+    PRINT *, "** ERROR! The chosen initial distance is strictly smaller than", &
+             " the sum of the radii of the stars!"
+    PRINT *, " * Initial distance= ", distance, "Msun_geo=", distance_km, "km"
+    PRINT *, " * radius1 + radius2 =", &
+             radius1 + radius2, "Msun_geo=", (radius1 + radius2)*Msun_geo, "km"
     PRINT *, " * Stopping..."
     PRINT *
     STOP
@@ -261,6 +276,20 @@ PROGRAM construct_newtonian_binary
              semimajor_axis*Msun_geo, "km"
     PRINT *, " * Semi-minor axis= ", semiminor_axis, "Msun_geo=", &
              semiminor_axis*Msun_geo, "km"
+
+    IF(apoastron < radius1 + radius2)THEN
+
+      PRINT *
+      PRINT *, "** ERROR! The apoastron is strictly smaller than", &
+               " the sum of the radii of the stars!"
+      PRINT *, " * Apoastron= ", apoastron, "Msun_geo=", apoastron*Msun_geo,"km"
+      PRINT *, " * radius1 + radius2 =", &
+               radius1 + radius2, "Msun_geo=", (radius1 + radius2)*Msun_geo,"km"
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
 
     IF(distance > apoastron)THEN
 
