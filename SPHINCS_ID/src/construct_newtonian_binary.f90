@@ -215,9 +215,9 @@ PROGRAM construct_newtonian_binary
   !
   !-- Set periastron between the stars
   !
-  periastron= periastron_parameter*(radius1 + radius2)
+  periastron= (radius1 + radius2)/periastron_parameter
   PRINT *, " * Chosen periastron_parameter=", periastron_parameter
-  PRINT *, " * Periastron = periastron_parameter*(radius1 + radius2) =", &
+  PRINT *, " * Periastron= (radius1 + radius2)/periastron_parameter =", &
            periastron, "Msun_geo=", periastron*Msun_geo, "km"
   PRINT *
 
@@ -225,10 +225,11 @@ PROGRAM construct_newtonian_binary
   ! the periastron
   IF(distance < periastron)THEN
 
+    PRINT *
     PRINT *, "** ERROR! The chosen initial distance is strictly smaller than", &
              " the chosen periastron!"
     PRINT *, "   Initial distance= ", distance, "Msun_geo=", distance_km, "km"
-    PRINT *, " * Periastron = periastron_parameter*(radius1 + radius2) =", &
+    PRINT *, " * Periastron= (radius1 + radius2)/periastron_parameter =", &
              periastron, "Msun_geo=", periastron*Msun_geo, "km"
     PRINT *, " * Stopping..."
     PRINT *
@@ -263,6 +264,7 @@ PROGRAM construct_newtonian_binary
 
     IF(distance > apoastron)THEN
 
+      PRINT *
       PRINT *, "** ERROR! The chosen initial distance is strictly larger than",&
                " the apoastron!"
       PRINT *, "   Initial distance= ", distance, "Msun_geo=", distance_km, "km"
