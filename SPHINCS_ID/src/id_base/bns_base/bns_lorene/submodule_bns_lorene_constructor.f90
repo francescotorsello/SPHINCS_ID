@@ -43,25 +43,6 @@ SUBMODULE (bns_lorene) constructor
   CONTAINS
 
 
- ! MODULE PROCEDURE construct_bnslorene2
- !
- !   !****************************************************
- !   !
- !   !# Constructs an object of TYPE [[bnslorene]]
- !   !
- !   !  FT
- !   !
- !   !****************************************************
- !
- !   IMPLICIT NONE
- !
- !   CHARACTER(LEN=10) :: resu_file
- !
- !   derived_type => construct_bnslorene( resu_file )
- !
- ! END PROCEDURE construct_bnslorene2
-
-
   !
   !-- Implementation of the constructor of the bnslorene object
   !
@@ -81,29 +62,34 @@ SUBMODULE (bns_lorene) constructor
 
     INTEGER, SAVE:: bns_counter= 1
 
+    INTEGER, PARAMETER:: n_matter= 2
+
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: length_scale_pressure
 
-    CALL derived_type% set_n_matter(2)
+    CALL derived_type% set_n_matter(n_matter)
     CALL derived_type% set_cold_system(.TRUE.)
 
-    derived_type% construction_timer= timer( "binary_construction_timer" )
+    derived_type% construction_timer= timer("binary_construction_timer")
 
     ! Construct |lorene| |binns| object
-    IF( PRESENT( filename ) )THEN
-        CALL derived_type% construct_binary( filename )
+    IF( PRESENT(filename) )THEN
+        CALL derived_type% construct_binary(filename)
     ELSE
         CALL derived_type% construct_binary()
     ENDIF
-    ! Import the parameters of the binary system
-    CALL read_id_params( derived_type )
+    ! Import the parameters of the binary system from LORENE
+    CALL read_id_params(derived_type)
 
     ! Assign a unique identifier to the bnslorene object
     derived_type% bns_identifier= bns_counter
     bns_counter= bns_counter + 1
 
     ! Do not use the geodesic gauge by default
-    CALL derived_type% set_one_lapse ( .FALSE. )
-    CALL derived_type% set_zero_shift( .FALSE. )
+    CALL derived_type% set_one_lapse (.FALSE.)
+    CALL derived_type% set_zero_shift(.FALSE.)
+
+    ! Find the surfaces of the stars and print them to a formatted file
+    CALL derived_type% find_print_surfaces()
 
     ! Compute typical length scales of the system using the pressure
     IF( derived_type% get_estimate_length_scale() )THEN
@@ -152,7 +138,7 @@ SUBMODULE (bns_lorene) constructor
     !***********************************************
     !
     !# Procedure that does nothing. It is used to instantiate a deferred
-    !  idbase procedure which s not needed in TYPE [[ejecta_generic]].
+    !  idbase procedure which is not needed in TYPE [[bnslorene]].
     !  It also serves as a placeholder in case the idbase procedure
     !  will be needed in the future.
     !

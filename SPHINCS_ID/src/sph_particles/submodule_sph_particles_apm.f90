@@ -1351,7 +1351,7 @@ SUBMODULE (sph_particles) apm
                h_av/max_radius*ten*ten, "% of the larger radius of the star"
 
       !IF( ABS(radius_part - max_radius)/max_radius > four*ten*tol )THEN
-      IF( ABS(radius_part - max_radius) > h_av )THEN
+      IF( ABS(radius_part - max_radius) > h_av/four )THEN
         push_away_ghosts= .TRUE.
         IF( radius_part > max_radius )THEN
           ghost_displacement= - ghost_displacement

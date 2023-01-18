@@ -276,7 +276,7 @@ module_bns_base = [
   'module_bns_base.f90',
   'submodule_bns_base_access.f90',
   'submodule_bns_base_io.f90',
-  'submodule_bns_base_find_radii.f90'
+  'submodule_bns_base_geometry.f90'
 ]
 
 module_bns_lorene_dir = ['src/id_base/bns_base/bns_lorene/']

@@ -48,6 +48,14 @@ MODULE bns_base
   IMPLICIT NONE
 
 
+  TYPE surface
+    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
+    !# Array containing the coordinates of the stars' surfaces
+    !  The first index runs over the stars; the second and third run over
+    !  the surface points (number of points for \(\theta\) and \(\varphi\));
+    !  the fourth index runs overthe Cartesian coordinates of the points
+  END TYPE surface
+
   !*******************************************************
   !                                                      *
   !   Definition of TYPE bnsbase (binary neutron star)   *
@@ -139,6 +147,8 @@ MODULE bns_base
     ! which is different than that of an isolated star. The latter is used
     ! in the mass-radius diagrams, together with the gravitatonal mass
     DOUBLE PRECISION:: area_radius1
+
+    TYPE(surface), DIMENSION(2):: surfaces
 
     DOUBLE PRECISION, DIMENSION(2,6):: radii
     !# Array containing the **signed** radii of the stars
@@ -447,6 +457,13 @@ MODULE bns_base
     !# Finds the radius of a star, relative to a center and along
     !  a direction. The radius is determined as the first point where the
     !  density is zero.
+
+    PROCEDURE, NON_OVERRIDABLE:: find_surface
+    !# Finds the surface of a star, using [[bnsbase::find_radius]] along many
+    !  directions.
+
+    PROCEDURE, NON_OVERRIDABLE:: find_print_surfaces
+    !# Finds the surfaces of the stars, and prints them to a formatted file.
 
     !
     !-- FUNCTIONS that access PRIVATE member variables
@@ -762,7 +779,6 @@ MODULE bns_base
     !  a direction. The radius is determined as the first point where the
     !  density is zero.
 
-
       CLASS(bnsbase), INTENT(IN):: this
       !! [[bnsbase]] object owning this PROCEDURE
       DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: center
@@ -784,6 +800,33 @@ MODULE bns_base
       !  specified by `vector`
 
     END FUNCTION find_radius
+
+
+    MODULE SUBROUTINE find_surface( this, center, n_theta, n_phi, surface )
+    !# Finds the surface of a star, using [[bnsbase::find_radius]] along many
+    !  directions.
+
+      CLASS(bnsbase), INTENT(IN):: this
+      !! [[bnsbase]] object owning this PROCEDURE
+      DOUBLE PRECISION, DIMENSION(3),                  INTENT(IN) :: center
+      !! Center point relative to which the radius is measured
+      INTEGER,                                         INTENT(IN) :: n_theta
+      !! Number of points in \([0,\pi]\) for the colatitude \(\theta\)
+      INTEGER,                                         INTENT(IN) :: n_phi
+      !! Number of points in \([0,2\pi]\) for the azimuth \(\varphi\)
+      DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE, INTENT(OUT):: surface
+      !# Array storing the coordinates of the points on the surface
+
+    END SUBROUTINE find_surface
+
+
+    MODULE SUBROUTINE find_print_surfaces( this )
+    !# Finds the surfaces of the stars, and prints them to a formatted file.
+
+      CLASS(bnsbase), INTENT(INOUT):: this
+      !! [[bnsbase]] object owning this PROCEDURE
+
+    END SUBROUTINE find_print_surfaces
 
 
     MODULE FUNCTION get_eos_id( this, i_matter )

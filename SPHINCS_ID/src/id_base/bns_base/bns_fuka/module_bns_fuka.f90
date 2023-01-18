@@ -175,8 +175,11 @@ MODULE bns_fuka
     !-- Hydro fields stored on a refined mesh
     !
     INTEGER, DIMENSION(max$tpo):: tpo$log= 0
-    !!
+    !# Variable that stores the identifiers for the [[tpo]] objects constructed
+    !  using this [[bnsfuka]] object
     INTEGER, PUBLIC:: tpo_curr= 0
+    !# Variable set to the current [[tpo]] object to consider, when reading
+    !  the hydro |id| on the refined mesh in computing the constraints
     INTEGER, PUBLIC:: l_curr
     !# Variable set to the current refinement level to consider, when reading
     !  the hydro |id| on the refined mesh in computing the constraints

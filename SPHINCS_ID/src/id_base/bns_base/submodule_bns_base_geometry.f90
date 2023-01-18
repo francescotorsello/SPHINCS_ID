@@ -1,4 +1,4 @@
-! File:         submodule_bns_base_find_radii.f90
+! File:         submodule_bns_base_geometry.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
@@ -21,7 +21,7 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-SUBMODULE(bns_base) find_radii
+SUBMODULE(bns_base) geometry
 
   !********************************************************
   !
@@ -48,15 +48,145 @@ SUBMODULE(bns_base) find_radii
 
 
 
+  MODULE PROCEDURE find_print_surfaces
+
+    !********************************************************
+    !
+    !# Finds the surfaces of the stars, and prints them to
+    !  a formatted file.
+    !
+    !  FT 18.02.2022
+    !
+    !********************************************************
+
+    IMPLICIT NONE
+
+    INTEGER, PARAMETER:: n_theta  = 180
+    INTEGER, PARAMETER:: n_phi    = 360
+    INTEGER, PARAMETER:: unit_dump= 2764
+
+    INTEGER:: i_matter, n_matter, i, j, ios
+
+    LOGICAL:: exist
+    CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
+
+    n_matter= this% get_n_matter()
+
+    DO i_matter= 1, n_matter, 1
+      PRINT *, " * Finding surface for star ", i_matter, "..."
+      CALL this% find_surface(this% return_center(i_matter), &
+                              n_theta, n_phi, &
+                              this% surfaces(i_matter)% points)
+      PRINT *, "   ...done."
+    ENDDO
+    PRINT *, ""
+
+    finalnamefile= "bns_stars_surfaces.dat"
+
+    INQUIRE(FILE= TRIM(finalnamefile), EXIST= exist)
+
+    IF(exist)THEN
+      OPEN( UNIT= unit_dump, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+            FORM= "FORMATTED", POSITION= "REWIND", ACTION= "WRITE", &
+            IOSTAT= ios, IOMSG= err_msg )
+    ELSE
+      OPEN( UNIT= unit_dump, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+            FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF(ios > 0)THEN
+      PRINT *, "...error when opening " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO i_matter= 1, n_matter, 1
+      DO i= 1, n_theta, 1
+        DO j= 1, n_phi, 1
+          WRITE( UNIT = unit_dump, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+            i_matter, &
+            this% surfaces(i_matter)% points(i,j,1), &
+            this% surfaces(i_matter)% points(i,j,2), &
+            this% surfaces(i_matter)% points(i,j,3), &
+            this% surfaces(i_matter)% points(i,j,4), &
+            this% surfaces(i_matter)% points(i,j,5), &
+            this% surfaces(i_matter)% points(i,j,6)
+        ENDDO
+      ENDDO
+    ENDDO
+
+    CLOSE(UNIT= unit_dump)
+
+  END PROCEDURE find_print_surfaces
+
+
+  MODULE PROCEDURE find_surface
+
+    !********************************************************
+    !
+    !# Finds the surface of a star, using [[bnsbase::find_radius]]
+    !  along many directions.
+    !
+    !  FT 18.02.2022
+    !
+    !********************************************************
+
+    USE constants,  ONLY: pi
+    USE utility,    ONLY: zero, one, two, cartesian_from_spherical
+
+    IMPLICIT NONE
+
+    INTEGER:: i, j
+    DOUBLE PRECISION:: theta, phi
+    DOUBLE PRECISION, DIMENSION(3):: direction_vector
+    DOUBLE PRECISION:: radius
+
+    ALLOCATE(surface(n_theta, n_phi,6))
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( n_theta, n_phi, surface, center, this ) &
+    !$OMP             PRIVATE( i, j, theta, phi, direction_vector, radius )
+    colatitude_loop: DO i= 1, n_theta, 1
+
+      theta= DBLE(i)/DBLE(n_theta)*pi
+
+      azimuth_loop: DO j= 1, n_phi, 1
+
+        phi= DBLE(j)/DBLE(n_phi)*two*pi
+
+        CALL cartesian_from_spherical(one, theta, phi, zero, zero, zero, &
+          direction_vector(1), direction_vector(2), direction_vector(3) )
+
+        radius= this% find_radius(center, direction_vector)
+
+        CALL cartesian_from_spherical(radius, theta, phi, &
+                                center(1), center(2), center(3), &
+                                surface(i,j,1), surface(i,j,2), surface(i,j,3))
+        surface(i,j,4)= radius
+        surface(i,j,5)= theta
+        surface(i,j,6)= phi
+
+      ENDDO azimuth_loop
+
+    ENDDO colatitude_loop
+    !$OMP END PARALLEL DO
+
+  END PROCEDURE find_surface
+
+
   MODULE PROCEDURE find_radius
 
     !********************************************************
     !
-    !# 
+    !# Finds the radius of a matter object, relative to a center and along
+    !  a direction. The radius is determined as the first point where the
+    !  density is zero.
     !
     !  FT 27.09.2022
     !
     !********************************************************
+
+    IMPLICIT NONE
 
     !INTEGER,          PARAMETER:: n_pts   = 5D+4
     DOUBLE PRECISION, PARAMETER:: min_dist= 1.D-6
@@ -118,7 +248,7 @@ SUBMODULE(bns_base) find_radii
 
         PRINT *
         PRINT *, "** ERROR in SUBROUTINE find_radius in SUBMODULE ", &
-                  "bns_base@find_radii!"
+                  "bns_base@geometry!"
         PRINT *, "x_left=", x_left
         PRINT *, "x_right=", x_right
         PRINT *, "point_left=", point_left
@@ -207,11 +337,14 @@ SUBMODULE(bns_base) find_radii
 
     !********************************************************
     !
-    !# 
+    !# Finds the center of a star, as the point where the
+    !  density is maximal.
     !
     !  FT 27.09.2022
     !
     !********************************************************
+
+    IMPLICIT NONE
 
     INTEGER, PARAMETER:: n_pts= 5000
     LOGICAL, PARAMETER:: debug= .FALSE.
@@ -289,5 +422,5 @@ SUBMODULE(bns_base) find_radii
   END PROCEDURE find_center
 
 
-END SUBMODULE find_radii
+END SUBMODULE geometry
 

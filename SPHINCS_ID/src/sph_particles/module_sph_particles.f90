@@ -167,6 +167,8 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(4):: barycenter_system
     !# Array storing the center of mass of the **entire particle distribution**
 
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: surfaces
+    !# Array storing the surfaces of the matter objects
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
     !# Array storing the indices to use with [[particles:baryon_density]]

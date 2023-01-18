@@ -350,6 +350,10 @@ SUBMODULE (sph_particles) constructor_std
 
     ENDDO
 
+    !
+    !-- TODO: Copy the surfaces of the matter objects
+    !
+
     parts% post_process_sph_id => id% finalize_sph_id_ptr
 
 
