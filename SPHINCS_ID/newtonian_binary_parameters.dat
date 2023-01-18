@@ -12,7 +12,7 @@ periastron_parameter= 1.15D0  ! The periastron is given by
                             !     that the stars do not touch at periastron
                             !   The higher periastron_parameter, the smaller
                             !   the periastron and the more violent the impact
-distance_km= 40000.D0       ! Initial distance between the stars, in km
+distance_km= 64000.D0       ! Initial distance between the stars, in km
 eccentricity= 0.65D0        ! Reminder:
                             !           eccentricity = 0.D0 for a circle;
                             !    0.D0 < eccentricity < 1.D0 for an ellipse;

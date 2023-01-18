@@ -1345,9 +1345,10 @@ MODULE sph_particles
       !  iteration using max_inc
       DOUBLE PRECISION,                 INTENT(IN)   :: nuratio_des
       !& If .TRUE., uses the physical pressure computed with
-      !  the |eos| using the SPH estimate of the density [[nlrf_sph]], to
-      !  compute the artificial pressure. Otherwise, the
-      !  density variable [[nstar_sph]] is used
+      !  the |eos| using the SPH estimate of the density [[particles:nlrf_sph]],
+      !  to compute the artificial pressure. Otherwise, the
+      !  density variable [[particles:nstar_sph]] is used to
+      !  compute the artificial pressure
       LOGICAL,                          INTENT(IN)   :: use_pressure
       !& If .TRUE., the ghost particles will be placed and have
       !  a baryon number such to reproduce the density of the

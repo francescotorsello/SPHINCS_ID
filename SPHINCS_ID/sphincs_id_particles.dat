@@ -61,7 +61,7 @@ reflect_particles_x= .TRUE.
 !----------------------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers;
 ! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 500000
+npart_des= 5000000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
@@ -112,12 +112,12 @@ upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
 lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
 randomize_phi=  .TRUE.  ! Randomize particle positions in phi
 randomize_theta=.TRUE.  ! Randomize particle positions in theta
-randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
+randomize_r=    .FALSE.  ! Randomize particle positions in r and push inside
                         ! the outer layers by a little random displacement
                         ! Setting randomize_phi and randomize_theta to .TRUE.
                         ! yields better results in the APM iteration.
-                        ! Setting randomize_r to .TRUE. usually yields better
-                        ! results as well.
+                        ! Setting randomize_r to .TRUE. is not as crucial as
+                        ! for the other two.
 !----------------------------------------------------------!
 ! Parameters for the Artificial Pressure Method (APM)      !
 !                                                          !
@@ -156,7 +156,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 0!1.35D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.35D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
@@ -175,7 +175,7 @@ adapt_ghosts=.FALSE.    ! If .TRUE., the ghost particles will be placed and have
                         ! the object. If .TRUE., the parameters nx_gh, ny_gh,
                         ! nz_gh, ghost_dist below are ignored; if .FALSE., they
                         ! are instead used to place the ghost particles       
-move_away_ghosts=.FALSE.! If .TRUE., the ghost particles will slowly move away
+move_away_ghosts=.TRUE. ! If .TRUE., the ghost particles will slowly move away
                         ! from the surface of the star during the iteration
                         ! (depending on the EXIT condition chosen, this happens
                         ! in slightly different ways), to allow for the real

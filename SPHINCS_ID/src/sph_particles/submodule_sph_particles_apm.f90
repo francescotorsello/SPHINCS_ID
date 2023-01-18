@@ -35,7 +35,8 @@ SUBMODULE (sph_particles) apm
   !***********************************
 
   USE constants,  ONLY: quarter
-  USE utility,    ONLY: zero, one, two, three, five, ten, sph_path
+  USE utility,    ONLY: zero, one, two, three, four, five, ten, sph_path, &
+                        Msun_geo
 
 
   IMPLICIT NONE
@@ -148,7 +149,7 @@ SUBMODULE (sph_particles) apm
     INTEGER:: n_problematic_h, ill, l, itot, cnt_push_ghost, max_push_ghost
     INTEGER, DIMENSION(:), ALLOCATABLE:: cnt_move
 
-    DOUBLE PRECISION:: ghost_displacement, min_radius
+    DOUBLE PRECISION:: ghost_displacement, min_radius, max_radius, radius_part
     DOUBLE PRECISION:: ellipse_thickness
     DOUBLE PRECISION:: radius_x, radius_y, radius_z
     DOUBLE PRECISION:: h_max, h_av, tmp, dens_min, atmosphere_density!, delta
@@ -188,6 +189,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: h_guess_tmp
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: cnt_array
 
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: rho_tmp
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_id
@@ -263,7 +265,7 @@ SUBMODULE (sph_particles) apm
     IF( nuratio_des > zero )THEN
 
       ghost_displacement= third/DBLE(nuratio_max_steps)/ten
-      max_push_ghost    = nuratio_max_steps
+      max_push_ghost    = two*nuratio_max_steps
 
     ELSE
 
@@ -390,28 +392,39 @@ SUBMODULE (sph_particles) apm
     radius_y= MAX( sizes(3), sizes(4) )
     radius_z= MAX( sizes(5), sizes(6) )
     min_radius = MINVAL([radius_x, radius_y, radius_z])
+    max_radius = MAXVAL([radius_x, radius_y, radius_z])
 
     h_max= zero
     h_av = zero
     itr  = 0
     max_z_real= ABS( MAXVAL( ABS(pos_input(3,:) - center(3)), DIM= 1 ) )
+    ALLOCATE(cnt_array(npart_real))
+    cnt_array= zero
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( pos_input, npart_real, center, h_guess, &
+    !$OMP                     cnt_array, max_z_real ) &
+    !$OMP             PRIVATE( a ) &
+    !$OMP             REDUCTION( MAX: h_max ) &
+    !$OMP             REDUCTION( +: h_av )
     DO a= 1, npart_real, 1
 
       IF( SQRT( ( pos_input(1,a) - center(1) )**two &
               + ( pos_input(2,a) - center(2) )**two &
               + ( pos_input(3,a) - center(3) )**two ) &
-                > 0.99D0*max_z_real )THEN
+                > (one - one/(ten*ten))*max_z_real )THEN
 
-        itr= itr + 1
-        IF( h_guess(a) > h_max )THEN
-          h_max= h_guess(a)
-        ENDIF
-        h_av= h_av + h_guess(a)
+        cnt_array(a)= one
+        !IF( h_guess(a) > h_max )THEN
+        !  h_max= h_guess(a)
+        !ENDIF
+        h_max= MAX(h_max, h_guess(a))
+        h_av = h_av + h_guess(a)
 
       ENDIF
 
     ENDDO
-    h_av= h_av/itr
+    !$OMP END PARALLEL DO
+    h_av= h_av/SUM(cnt_array, DIM=1)
     IF( debug ) PRINT *, "h_av=", h_av
     IF( debug ) PRINT *
 
@@ -760,7 +773,10 @@ SUBMODULE (sph_particles) apm
      !
      ! END DEBUGGING
 
+        PRINT *, " * Printing temporary APM data to file..."
         CALL dump_apm_pos()
+        PRINT *, "   ...done."
+        PRINT *
 
       ENDIF
 
@@ -1285,17 +1301,61 @@ SUBMODULE (sph_particles) apm
       push_away_ghosts= .FALSE.
       IF( err_N_mean > err_mean_old )THEN
         n_inc= n_inc + 1
-        IF( n_inc >= max_inc*half )THEN
-          push_away_ghosts= .TRUE.
-        ENDIF
+        !IF( n_inc >= max_inc*half )THEN
+        !  push_away_ghosts= .TRUE.
+        !ENDIF
       ENDIF
       IF( itr > nuratio_min_it .AND. nuratio_tmp /= nuratio_thres .AND. &
           ABS(nuratio_tmp - nuratio_tmp_prev)/nuratio_tmp_prev &
           <= nuratio_tol )THEN
         nuratio_cnt= nuratio_cnt + 1
-        push_away_ghosts= .TRUE.
+        !push_away_ghosts= .TRUE.
       ELSE
         nuratio_cnt= 0
+      ENDIF
+
+      radius_part= zero
+      h_av       = zero
+      cnt_array  = zero
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( all_pos, npart_real, center, max_radius, h, &
+      !$OMP                     cnt_array ) &
+      !$OMP             PRIVATE( a, r ) &
+      !$OMP             REDUCTION( MAX: radius_part ) &
+      !$OMP             REDUCTION( +: h_av )
+      find_radius_part: DO a= 1, npart_real, 1
+
+        r= SQRT((all_pos(1,a) - center(1))**2 + (all_pos(2,a) - center(2))**2 &
+              + (all_pos(3,a) - center(3))**2)
+
+        radius_part= MAX(radius_part, r)
+
+        IF(r > (one - five/(ten*ten))*max_radius)THEN
+          h_av= h_av + h(a)
+          cnt_array(a)= one
+        ENDIF
+
+      ENDDO find_radius_part
+      !$OMP END PARALLEL DO
+      h_av= h_av/SUM(cnt_array, DIM=1)
+      PRINT *, " * Larger radius among the particles=", radius_part
+      PRINT *, " * Larger radius of the star=", max_radius
+      PRINT *, " * Their difference: radius_part - max_radius=", &
+               radius_part - max_radius
+      PRINT *, " * Their relative difference: ", &
+               "ABS(radius_part - max_radius)/max_radius=", &
+               ABS(radius_part - max_radius)/max_radius
+      PRINT *, " * Average smoothing length over the outer layers ", &
+               "(r>95% of the star radius)= ", h_av, "Msun_geo=", &
+               h_av*Msun_geo, "km=", &
+               h_av/max_radius*ten*ten, "% of the larger radius of the star"
+
+      !IF( ABS(radius_part - max_radius)/max_radius > four*ten*tol )THEN
+      IF( ABS(radius_part - max_radius) > h_av )THEN
+        push_away_ghosts= .TRUE.
+        IF( radius_part > max_radius )THEN
+          ghost_displacement= - ghost_displacement
+        ENDIF
       ENDIF
 
       ! POSSIBLE EXIT CONDITION. DEPRECATED?
@@ -1506,11 +1566,11 @@ SUBMODULE (sph_particles) apm
         IF( dNstar(a) >= ten*ten &
             .AND. &
             validate_position_final( &
-              all_pos(1,a) + ten*correction_pos(1,a), &
-              all_pos(2,a) + ten*correction_pos(2,a), &
-              all_pos(3,a) + ten*correction_pos(3,a) ) )THEN
+              all_pos(1,a) + three*correction_pos(1,a), &
+              all_pos(2,a) + three*correction_pos(2,a), &
+              all_pos(3,a) + three*correction_pos(3,a) ) )THEN
 
-          pos_corr_tmp= all_pos(:,a) + ten*correction_pos(:,a) ! 10
+          pos_corr_tmp= all_pos(:,a) + three*correction_pos(:,a) ! 3
 
 
         ELSEIF( dNstar(a) >= ten &
@@ -1636,12 +1696,19 @@ SUBMODULE (sph_particles) apm
                DBLE(SUM(cnt_move))/DBLE(npart_real)
       PRINT *
 
-      IF(debug) PRINT *, push_away_ghosts
-      IF(debug) PRINT *, move_away_ghosts
-      IF(debug) PRINT *, push_away_ghosts .AND. move_away_ghosts
+      IF(debug) PRINT *, "push_away_ghosts:", push_away_ghosts
+      IF(debug) PRINT *, "move_away_ghosts:", move_away_ghosts
+      IF(debug) PRINT *, "push_away_ghosts .AND. move_away_ghosts:", &
+                         push_away_ghosts .AND. move_away_ghosts
+      IF(debug) PRINT *, "cnt_push_ghost=", cnt_push_ghost
+      IF(debug) PRINT *, "max_push_ghost=", max_push_ghost
 
       IF( push_away_ghosts .AND. move_away_ghosts &
-          .AND. cnt_push_ghost <= max_push_ghost )THEN
+      !    .AND. cnt_push_ghost <= max_push_ghost &
+      )THEN
+
+        PRINT *, " * Displacing ghosts..."
+        PRINT *
 
         !max_r_ghost= (one + third)*MAXVAL([radius_x, radius_y, radius_z])
 
@@ -2876,6 +2943,15 @@ SUBMODULE (sph_particles) apm
            STOP
         ENDIF
       ENDIF
+      IF( .NOT.ALLOCATED( cnt_array ) )THEN
+        ALLOCATE( cnt_array( npart_real ), STAT= ios, ERRMSG= err_msg )
+        IF( ios > 0 )THEN
+           PRINT *, "...allocation error for array cnt_array in ", &
+                    "SUBROUTINE allocate_apm_fields. The error message is", &
+                    err_msg
+           STOP
+        ENDIF
+      ENDIF
 
     END SUBROUTINE allocate_apm_fields
 
@@ -3273,9 +3349,13 @@ SUBMODULE (sph_particles) apm
       rad_y= radius_y + ghost_dist !+ multiple_h_av*h_av
       rad_z= radius_z + ghost_dist !+ multiple_h_av*h_av
 
-      rad_x= ABS( MAXVAL( ABS(pos_input(1,:) - center(1)), DIM= 1 ) )
-      rad_y= ABS( MAXVAL( ABS(pos_input(2,:) - center(2)), DIM= 1 ) )
-      rad_z= ABS( MAXVAL( ABS(pos_input(3,:) - center(3)), DIM= 1 ) )
+      IF(adapt_ghosts)THEN
+
+        rad_x= ABS( MAXVAL( ABS(pos_input(1,:) - center(1)), DIM= 1 ) )
+        rad_y= ABS( MAXVAL( ABS(pos_input(2,:) - center(2)), DIM= 1 ) )
+        rad_z= ABS( MAXVAL( ABS(pos_input(3,:) - center(3)), DIM= 1 ) )
+
+      ENDIF
 
       PRINT *, "** Distance between the size of the object and the ghost ", &
                "particles: ghost_dist =", ghost_dist
