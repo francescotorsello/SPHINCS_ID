@@ -242,10 +242,11 @@ SUBMODULE (bns_fuka) params
 
     ALLOCATE( CHARACTER(nchars):: this% eos_type_1, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for string eos_type. ", &
-                "The error message is ", err_msg
-       PRINT *, "The STAT variable is ", ios
-       STOP
+      PRINT *, "...allocation error for string eos_type_1. ", &
+              "The error message is ", err_msg
+      PRINT *, "The STAT variable is ", ios
+      PRINT *, "nchars= ", nchars
+      STOP
     ENDIF
     this% eos_type_1= TRANSFER( eos_type_1_tmp_c(1:nchars), this% eos_type_1 )
 
@@ -258,10 +259,11 @@ SUBMODULE (bns_fuka) params
 
     ALLOCATE( CHARACTER(nchars):: this% eos_file_1, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for string eos_type. ", &
-                "The error message is ", err_msg
-       PRINT *, "The STAT variable is ", ios
-       STOP
+      PRINT *, "...allocation error for string eos_file_1. ", &
+              "The error message is ", err_msg
+      PRINT *, "The STAT variable is ", ios
+      PRINT *, "nchars= ", nchars
+      STOP
     ENDIF
     this% eos_file_1= TRANSFER( eos_file_1_tmp_c(1:nchars), this% eos_file_1 )
     IF(debug) PRINT *, "this% eos_file_1=", this% eos_file_1
@@ -277,10 +279,11 @@ SUBMODULE (bns_fuka) params
 
     ALLOCATE( CHARACTER(nchars):: this% eos_type_2, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for string eos_type. ", &
-                "The error message is ", err_msg
-       PRINT *, "The STAT variable is ", ios
-       STOP
+      PRINT *, "...allocation error for string eos_type_2. ", &
+              "The error message is ", err_msg
+      PRINT *, "The STAT variable is ", ios
+      PRINT *, "nchars= ", nchars
+      STOP
     ENDIF
     this% eos_type_2= TRANSFER( eos_type_2_tmp_c(1:nchars), this% eos_type_2 )
     this% eos_type_2= this% eos_type_1
@@ -296,10 +299,11 @@ SUBMODULE (bns_fuka) params
 
     ALLOCATE( CHARACTER(nchars):: this% eos_file_2, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for string eos_type. ", &
-                "The error message is ", err_msg
-       PRINT *, "The STAT variable is ", ios
-       STOP
+      PRINT *, "...allocation error for string eos_file_2. ", &
+               "The error message is ", err_msg
+      PRINT *, "The STAT variable is ", ios
+      PRINT *, "nchars= ", nchars
+      STOP
     ENDIF
     this% eos_file_2= TRANSFER( eos_file_2_tmp_c(1:nchars), this% eos_file_2 )
     this% eos_file_2= this% eos_file_1

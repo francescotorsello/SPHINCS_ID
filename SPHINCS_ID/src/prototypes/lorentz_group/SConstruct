@@ -276,7 +276,7 @@ module_bns_base = [
   'module_bns_base.f90',
   'submodule_bns_base_access.f90',
   'submodule_bns_base_io.f90',
-  'submodule_bns_base_geometry.f90'
+  'submodule_bns_base_find_radii.f90'
 ]
 
 module_bns_lorene_dir = ['src/id_base/bns_base/bns_lorene/']
@@ -358,19 +358,14 @@ module_cauchy_convergence_test = [
   'submodule_cauchy_convergence_test_perform_test.f90'
 ]
 
-module_lorentz_group_dir = ['src/lorentz_group/']
+module_lorentz_group_dir = ['../../lorentz_group/']
 module_lorentz_group = [
   'module_lorentz_group.f90',
   'submodule_lorentz_group_constructors.f90',
   'submodule_lorentz_group_actions.f90'
 ]
 
-module_wd_eos_dir = ['src/wd_eos/']
-module_wd_eos = [
-  'module_wd_eos.f90'
-]
-
-module_utility_dir = ['src/utility/']
+module_utility_dir = ['../../utility/']
 module_utility = [
   'module_utility.f90'
 ]
@@ -435,16 +430,13 @@ for i in range(len(module_lorentz_group)):
   module_lorentz_group[i] = module_lorentz_group_dir[0] \
                           + module_lorentz_group[i]
 
-for i in range(len(module_wd_eos)):
-  module_wd_eos[i] = module_wd_eos_dir[0] + module_wd_eos[i]
-
 for i in range(len(module_utility)):
   module_utility[i] = module_utility_dir[0] + module_utility[i]
 
 sources_base = module_id_base + module_bns_base + module_diffstar_base \
              + module_sph_particles + module_standard_tpo_formulation \
              + module_bssn_formulation + module_cauchy_convergence_test \
-             + module_lorentz_group + module_wd_eos + module_utility
+             + module_utility + module_lorentz_group
 
 #all_modules = [ module_id_base, module_utility, module_sphincs_id_interpolate ]
 
@@ -739,7 +731,7 @@ if debug == 'FALSE': #
     ############################################################################
     if fortran_compiler == 'ifort':
 
-      env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
+      env['F90FLAGS'] = [ '-O0', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \
@@ -999,15 +991,9 @@ if debug == 'TRUE': #
 # PROGRAMS
 ################################################################################
 
-sphincs_id                = 'sphincs_id_'       + version + '.x'
-convergence_test          = 'convergence_test_' + version + '.x'
-write_par_eos             = 'write_par_eos_'    + version + '.x'
-construct_newtonian_binary= 'construct_newtonian_binary.x'
+test_lorentz_group        = 'test_lorentz_group.x'
 
-program_sphincs_id                = ['src/sphincs_id.f90']
-program_convergence_test          = ['src/convergence_test.f90']
-program_write_par_eos             = ['src/write_par_eos.f90']
-program_construct_newtonian_binary= ['src/construct_newtonian_binary.f90']
+program_test_lorentz_group= ['test_lorentz_group.f90']
 
 ################################################################################
 
@@ -1017,21 +1003,41 @@ program_construct_newtonian_binary= ['src/construct_newtonian_binary.f90']
 
 Progress('Evaluating $TARGET\n')
 
-Program( sphincs_id, \
-         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_sphincs_id )
-
-Program( convergence_test, \
-         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_convergence_test )
-
-Program( write_par_eos, \
-         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_write_par_eos )
-
-Program( construct_newtonian_binary, \
-         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_construct_newtonian_binary )
+Program( test_lorentz_group, \
+         module_lorentz_group + module_utility + \
+         ['../../../../SPHINCS_fix_metric/module_matrix.f90'] + \
+         ['../../../../SPHINCS_fix_metric/module_constants.f90'] + \
+         ['../../../../SPHINCS_fix_metric/module_Numerical_Recipes.f90'] + \
+         ['../../../../SPHINCS_fix_metric/module_tensor.f90'] + \
+         ['../../../../SPHINCS_fix_metric/module_BH_params.f90'] + \
+         ['../../../../SPHINCS_fix_metric/module_SPH_variables.f90'] + \
+         ['../../../../SPHINCS_fix_metric/module_SPHINCS_options.f90'] + \
+         ['../../../../SPHINCS_fix_metric/module_units.f90'] + \
+         ['../../../../SPHINCS_fix_metric/module_piecewise_polytrope.f90'] + \
+         ['../../../../SPHINCS_BSSN/module_dyn_metric_on_particles.f90'] + \
+         ['../../../../SPHINCS_BSSN/module_timing.f90'] + \
+         ['../../../../../BSSN/module_map_metric_2_particles_refine.f90'] + \
+         ['../../../../../BSSN/module_mesh_refinement.f90'] + \
+         ['../../../../../BSSN/submodule_prolongation.f90'] + \
+         ['../../../../../BSSN/submodule_restriction.f90'] + \
+         ['../../../../../BSSN/submodule_utilities.f90'] + \
+         ['../../../../../BSSN/submodule_parameter.f90'] + \
+         ['../../../../../BSSN/submodule_allocation.f90'] + \
+         ['../../../../../BSSN/submodule_output.f90'] + \
+         ['../../../../../BSSN/module_Numerics.f90'] + \
+         ['../../../../../BSSN/module_Hermite_refine.f90'] + \
+         ['../../../../../BSSN/Hermite_3D_Weights.f'] + \
+         ['../../../../../BSSN/Hermite5_3D_Weights.f'] + \
+         ['../../../../../BSSN/module_WENO.f90'] + \
+         ['../../../../../BSSN/module_ADM_refine.f90'] + \
+         ['../../../../../BSSN/module_TOV_refine.f90'] + \
+         ['../../../../../BSSN/module_Tmunu_refine.f90'] + \
+         ['../../../../../BSSN/module_GravityAcceleration_refine.f90'] + \
+         ['../../../../../BSSN/module_evolution_parameters.f90'] + \
+         ['../../../../../BSSN/module_Extract_Mass.f90'] + \
+         ['../../../../../BSSN/submodule__Extract_Mass_impl.f90'] + \
+         ['../../../../../BSSN/fermi_step_f.f90'] + \
+         program_test_lorentz_group )
 
 ################################################################################
 #

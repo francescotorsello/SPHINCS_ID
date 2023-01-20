@@ -346,7 +346,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     PRINT *
 
     !
-    !-- Initialize the arrays containing the integrals of the constarints over
+    !-- Initialize the arrays containing the integrals of the constraints over
     !-- the refined mesh
     !
 

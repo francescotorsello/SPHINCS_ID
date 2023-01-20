@@ -167,6 +167,8 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(4):: barycenter_system
     !# Array storing the center of mass of the **entire particle distribution**
 
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: surfaces
+    !# Array storing the surfaces of the matter objects
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
     !# Array storing the indices to use with [[particles:baryon_density]]
@@ -1345,9 +1347,10 @@ MODULE sph_particles
       !  iteration using max_inc
       DOUBLE PRECISION,                 INTENT(IN)   :: nuratio_des
       !& If .TRUE., uses the physical pressure computed with
-      !  the |eos| using the SPH estimate of the density [[nlrf_sph]], to
-      !  compute the artificial pressure. Otherwise, the
-      !  density variable [[nstar_sph]] is used
+      !  the |eos| using the SPH estimate of the density [[particles:nlrf_sph]],
+      !  to compute the artificial pressure. Otherwise, the
+      !  density variable [[particles:nstar_sph]] is used to
+      !  compute the artificial pressure
       LOGICAL,                          INTENT(IN)   :: use_pressure
       !& If .TRUE., the ghost particles will be placed and have
       !  a baryon number such to reproduce the density of the

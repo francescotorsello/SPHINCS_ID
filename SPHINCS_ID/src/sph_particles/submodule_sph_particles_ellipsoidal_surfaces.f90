@@ -470,11 +470,18 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
             IF( rand_num2 < half )  rel_sign= -1
 
             IF( r/n_surfaces < (one - five/(ten*ten)) )THEN
+
               rad= rad + rel_sign*delta_r*(seven*five/(ten*ten))*dr_shells
+
             ELSE
+
               !rad= rad - ( one + delta_r )*0.35D0*dr_shells
-              rad= rad + ( - delta_r*(seven*five/(ten*ten)) &
-                           - five/ten )*dr_shells
+
+              !rad= rad + ( - delta_r*(seven*five/(ten*ten)) &
+              !             - five/ten )*dr_shells
+
+              rad= rad - delta_r*(seven*five/(ten*ten))*dr_shells
+
             ENDIF
 
           ENDIF

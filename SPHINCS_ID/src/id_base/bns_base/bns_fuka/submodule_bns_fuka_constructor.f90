@@ -237,6 +237,8 @@ SUBMODULE (bns_fuka) constructor
     IF( flag == flag$sph )THEN
 
       CALL this% set_up_lattices_around_stars()
+      ! Find the surfaces of the stars and print them to a formatted file
+      CALL this% find_print_surfaces()
 
     ELSEIF( flag >= flag$tpo .AND. flag <= -1 )THEN
 

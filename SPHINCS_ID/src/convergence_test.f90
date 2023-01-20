@@ -104,22 +104,22 @@ PROGRAM convergence_test
 
   DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: shared_grid
 
-  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
+  CHARACTER(LEN=:), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
-  CHARACTER( LEN= 500 ):: namefile_parts
+  CHARACTER(LEN=500):: namefile_parts
   !# String storing the name for the formatted file containing the |sph|
   !  particle |id|
-  CHARACTER( LEN= 500 ):: namefile_parts_bin
+  CHARACTER(LEN=500):: namefile_parts_bin
   !# String storing the name for the binary file containing the |sph|
   !  particle |id|
-  CHARACTER( LEN= 500 ):: namefile_sph
+  CHARACTER(LEN=500):: namefile_sph
   !# String storing the name for ??
   !
-  CHARACTER( LEN= 500 ):: namefile_bssn
+  CHARACTER(LEN=500):: namefile_bssn
   !# String storing the name for the formatted file containing the |bssn| |id|
-  CHARACTER( LEN= 500 ):: namefile_bssn_bin
+  CHARACTER(LEN=500):: namefile_bssn_bin
   !# String storing the name for the binary file containing the |bssn| |id|
-  CHARACTER( LEN= 500 ):: name_logfile
+  CHARACTER(LEN=500):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
 
@@ -144,17 +144,6 @@ PROGRAM convergence_test
   !---------------------------!
   !--  End of declarations  --!
   !---------------------------!
-
-  ! Conversions of some polytropic constants from formatted units to
-  ! SPHINCS units, and vice versa
-  !gamma= 2
-  !PRINT *, 0.0332278*k_lorene2hydrobase( gamma )
-  !PRINT *
-  !gamma= 2.75
-  !PRINT *, 30000.0D0/k_lorene2hydrobase( gamma )
-  !gamma= 2.75
-  !PRINT *, 0.0332278*k_lorene2hydrobase( gamma )
-  !STOP
 
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time

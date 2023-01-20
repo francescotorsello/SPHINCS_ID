@@ -629,7 +629,7 @@ MODULE id_base
     !  system.
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT(IN)   :: this
+      CLASS(idbase), INTENT(IN):: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose string is to return

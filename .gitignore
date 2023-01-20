@@ -16,6 +16,7 @@
 !sphincs_id_parameters.dat
 !sphincs_id_particles.dat
 !SPHINCS_fm_input.dat
+!newtonian_binary_parameters.dat
 !COPYING
 !README.md
 **/doc/**/*.f90
