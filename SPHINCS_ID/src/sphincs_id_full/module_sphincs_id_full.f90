@@ -329,6 +329,10 @@ MODULE sphincs_id_full
 
         eos_str= 'APR4'
 
+      CASE( 'apr4.polytrope' )
+
+        eos_str= 'APR4'
+
       CASE( 'haso.pwpoly' )
 
         eos_str= 'haso'

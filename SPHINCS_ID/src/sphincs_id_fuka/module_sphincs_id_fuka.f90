@@ -194,6 +194,10 @@ MODULE sphincs_id_fuka
 
         eos_str= 'APR4'
 
+     CASE( 'apr4.polytrope' )
+
+        eos_str= 'APR4'
+
       CASE( 'ap4.pwpoly' )
 
         eos_str= 'APR4'
