@@ -46,6 +46,7 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        drs = \(\mathrm{DRS}\)
 parallel: 80
 <!---graph_dir: doc-graphs--->
+<!---Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src--->
 <!---Project_url: https://francescotorsello.github.io/SPHINCS_ID-doc/--->
 
 ### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
