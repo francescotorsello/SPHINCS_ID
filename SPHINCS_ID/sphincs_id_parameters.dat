@@ -108,7 +108,7 @@ estimate_length_scale=.FALSE.
 !   If both are set to .FALSE., the code will only !
 !   read the ID and print info about it.           !
 !--------------------------------------------------!
-run_sph=.FALSE.
+run_sph=.TRUE.
 run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !

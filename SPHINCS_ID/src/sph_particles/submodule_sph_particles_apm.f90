@@ -172,6 +172,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION:: r_ell, theta_ell, phi_ell
     DOUBLE PRECISION:: dS_norm_av
     DOUBLE PRECISION:: nstar_id_av, nstar_sph_av, nlrf_id_av, pressure_id_av
+    DOUBLE PRECISION:: l2norm_displacement, average_displacement
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: neighbors_lists
     INTEGER, DIMENSION(:), ALLOCATABLE:: n_neighbors
@@ -1346,9 +1347,12 @@ SUBMODULE (sph_particles) apm
                "ABS(radius_part - max_radius)/max_radius=", &
                ABS(radius_part - max_radius)/max_radius
       PRINT *, " * Average smoothing length over the outer layers ", &
-               "(r>95% of the star radius)= ", h_av, "Msun_geo=", &
-               h_av*Msun_geo, "km=", &
+               "(r>95% of the star radius)= ", h_av, "Msun_geo="
+      PRINT *, "   ", h_av*Msun_geo, "km=", &
                h_av/max_radius*ten*ten, "% of the larger radius of the star"
+      PRINT *, " * Ghosts are moved if ", &
+               "ABS(radius_part - max_radius) > h_av/four=", h_av/four
+      PRINT *
 
       !IF( ABS(radius_part - max_radius)/max_radius > four*ten*tol )THEN
       IF( ABS(radius_part - max_radius) > h_av/four )THEN
@@ -1566,11 +1570,11 @@ SUBMODULE (sph_particles) apm
         IF( dNstar(a) >= ten*ten &
             .AND. &
             validate_position_final( &
-              all_pos(1,a) + three*correction_pos(1,a), &
-              all_pos(2,a) + three*correction_pos(2,a), &
-              all_pos(3,a) + three*correction_pos(3,a) ) )THEN
+              all_pos(1,a) + ten*correction_pos(1,a), &
+              all_pos(2,a) + ten*correction_pos(2,a), &
+              all_pos(3,a) + ten*correction_pos(3,a) ) )THEN
 
-          pos_corr_tmp= all_pos(:,a) + three*correction_pos(:,a) ! 3
+          pos_corr_tmp= all_pos(:,a) + ten*correction_pos(:,a) ! 10
 
 
         ELSEIF( dNstar(a) >= ten &
@@ -1696,6 +1700,40 @@ SUBMODULE (sph_particles) apm
                DBLE(SUM(cnt_move))/DBLE(npart_real)
       PRINT *
 
+      !
+      !-- Compute some measures of the displacement vector field over the
+      !-- particles
+      !
+      l2norm_displacement = zero
+      average_displacement= zero
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, all_pos, all_pos_prev ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION( +: l2norm_displacement, average_displacement)
+      l2norm_disp: DO a= 1, npart_real, 1
+
+        ! l2 norm
+        l2norm_displacement= l2norm_displacement &
+                           + NORM2(all_pos(:,a) - all_pos_prev(:,a))**2
+
+        ! Arithmetic average of the Euclidean norm of the displacement
+        average_displacement= average_displacement &
+                            + NORM2(all_pos(:,a) - all_pos_prev(:,a))
+
+      ENDDO l2norm_disp
+      !$OMP END PARALLEL DO
+      l2norm_displacement= SQRT(l2norm_displacement)
+      average_displacement= l2norm_displacement/npart_real
+      PRINT *, " * l_2 norm of the displacement of the particles= ", &
+               l2norm_displacement
+      PRINT *, "   (note that the l2 norm grows with the number of particles)"
+      PRINT *, " * Arithmetic average of the Euclidean norm of the ", &
+               "displacement of the particles= ", average_displacement
+      PRINT *
+
+      !
+      !-- Displace ghosts, if needed
+      !
       IF(debug) PRINT *, "push_away_ghosts:", push_away_ghosts
       IF(debug) PRINT *, "move_away_ghosts:", move_away_ghosts
       IF(debug) PRINT *, "push_away_ghosts .AND. move_away_ghosts:", &
@@ -1708,7 +1746,6 @@ SUBMODULE (sph_particles) apm
       )THEN
 
         PRINT *, " * Displacing ghosts..."
-        PRINT *
 
         !max_r_ghost= (one + third)*MAXVAL([radius_x, radius_y, radius_z])
 
@@ -1749,6 +1786,9 @@ SUBMODULE (sph_particles) apm
         !$OMP END PARALLEL DO
 
         cnt_push_ghost= cnt_push_ghost + 1
+
+        PRINT *, "   ...done."
+        PRINT *
 
       ENDIF
 

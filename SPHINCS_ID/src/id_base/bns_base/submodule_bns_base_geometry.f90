@@ -66,41 +66,45 @@ SUBMODULE(bns_base) geometry
     INTEGER, PARAMETER:: unit_dump= 2764
 
     INTEGER:: i_matter, n_matter, i, j, ios
-
     LOGICAL:: exist
+    CHARACTER(LEN=3):: str_i
     CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
 
     n_matter= this% get_n_matter()
 
     DO i_matter= 1, n_matter, 1
+
       PRINT *, " * Finding surface for star ", i_matter, "..."
       CALL this% find_surface(this% return_center(i_matter), &
                               n_theta, n_phi, &
                               this% surfaces(i_matter)% points)
       PRINT *, "   ...done."
-    ENDDO
-    PRINT *, ""
 
-    finalnamefile= "bns_stars_surfaces.dat"
+      IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ) i_matter
+      IF( i_matter >= 10 .AND. n_matter <= 99 ) &
+        WRITE( str_i, '(I2)' ) i_matter
+      IF( i_matter >= 100 .AND. n_matter <= 999 ) &
+        WRITE( str_i, '(I3)' ) i_matter
 
-    INQUIRE(FILE= TRIM(finalnamefile), EXIST= exist)
+      finalnamefile= "bns_star_surface-"//TRIM(str_i)//".dat"
 
-    IF(exist)THEN
-      OPEN( UNIT= unit_dump, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-            FORM= "FORMATTED", POSITION= "REWIND", ACTION= "WRITE", &
-            IOSTAT= ios, IOMSG= err_msg )
-    ELSE
-      OPEN( UNIT= unit_dump, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-            FORM= "FORMATTED", &
-            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
-    ENDIF
-    IF(ios > 0)THEN
-      PRINT *, "...error when opening " // TRIM(finalnamefile), &
-               ". The error message is", err_msg
-      STOP
-    ENDIF
+      INQUIRE(FILE= TRIM(finalnamefile), EXIST= exist)
 
-    DO i_matter= 1, n_matter, 1
+      IF(exist)THEN
+        OPEN( UNIT= unit_dump, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
+              FORM= "FORMATTED", POSITION= "REWIND", ACTION= "WRITE", &
+              IOSTAT= ios, IOMSG= err_msg )
+      ELSE
+        OPEN( UNIT= unit_dump, FILE= TRIM(finalnamefile), STATUS= "NEW", &
+              FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      ENDIF
+      IF(ios > 0)THEN
+        PRINT *, "...error when opening " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
       DO i= 1, n_theta, 1
         DO j= 1, n_phi, 1
           WRITE( UNIT = unit_dump, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
@@ -113,9 +117,11 @@ SUBMODULE(bns_base) geometry
             this% surfaces(i_matter)% points(i,j,6)
         ENDDO
       ENDDO
-    ENDDO
 
-    CLOSE(UNIT= unit_dump)
+      CLOSE(UNIT= unit_dump)
+
+    ENDDO
+    PRINT *
 
   END PROCEDURE find_print_surfaces
 
