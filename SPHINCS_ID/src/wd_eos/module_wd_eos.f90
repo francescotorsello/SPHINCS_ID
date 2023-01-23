@@ -238,6 +238,11 @@ MODULE wd_eos
     DOUBLE PRECISION:: rho_left, rho_right, rho_mean, &
                        pr_left, pr_right, pr_mean, pr_cgs
 
+    IF(pr == zero)THEN
+      rho_wd= zero
+      RETURN
+    ENDIF
+
     rho_left = FLOOR(LOG10(rho_left_bracket))
     rho_right= CEILING(LOG10(rho_right_bracket))
     ! Bisection in logarithmic scale, to find the approximate order of magnitude
