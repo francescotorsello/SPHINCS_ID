@@ -202,7 +202,14 @@ MODULE wd_eos
 
     DOUBLE PRECISION, INTENT(IN):: rho
 
+    DOUBLE PRECISION, PARAMETER:: rho_min= 1.D-35
+
     DOUBLE PRECISION:: x
+
+    IF(rho == 0)THEN
+      u_wd= zero
+      RETURN
+    ENDIF
 
     x= (rho/b_wd)**third
 
@@ -233,10 +240,16 @@ MODULE wd_eos
     INTEGER,          PARAMETER:: tolerance_magnitude= 3
     DOUBLE PRECISION, PARAMETER:: tolerance_pr       = 1.D-6
     DOUBLE PRECISION, PARAMETER:: tolerance_rho      = 1.D-10
+    DOUBLE PRECISION, PARAMETER:: pr_min             = 1.D-30
 
     INTEGER:: cnt
     DOUBLE PRECISION:: rho_left, rho_right, rho_mean, &
                        pr_left, pr_right, pr_mean, pr_cgs
+
+    IF(pr < pr_min)THEN
+      rho_wd= zero
+      RETURN
+    ENDIF
 
     rho_left = FLOOR(LOG10(rho_left_bracket))
     rho_right= CEILING(LOG10(rho_right_bracket))
