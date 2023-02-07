@@ -262,9 +262,9 @@ SUBMODULE (bns_fuka) constructor
         IF( this% tpo_curr >= 100 .AND. flag <= 999 ) WRITE( cnt_i, "(I3)" ) &
           this% tpo_curr
 
-        PRINT *
-        PRINT *, "cnt_i=", TRIM(cnt_i)
-        PRINT *
+        !PRINT *
+        !PRINT *, "cnt_i=", TRIM(cnt_i)
+        !PRINT *
 
         name_mass_density   = "mass_density_fuka-"//TRIM(cnt_i)
         name_specific_energy= "specific_energy_fuka-"//TRIM(cnt_i)
@@ -273,9 +273,9 @@ SUBMODULE (bns_fuka) constructor
         name_v_euler_y      = "v_euler_y_fuka-"//TRIM(cnt_i)
         name_v_euler_z      = "v_euler_z_fuka-"//TRIM(cnt_i)
 
-        PRINT *
-        PRINT *, "name_mass_density=", name_mass_density
-        PRINT *
+        !PRINT *
+        !PRINT *, "name_mass_density=", name_mass_density
+        !PRINT *
 
         CALL allocate_grid_function( this% mass_density(this% tpo_curr), &
                                      TRIM(name_mass_density), 1 )

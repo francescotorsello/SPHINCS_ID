@@ -273,6 +273,10 @@ MODULE sphincs_id_full
 
         eos_str= 'SLy '
 
+      CASE( 'sly4.pwpolytrope' )
+
+        eos_str= 'SLy '
+
       CASE( 'alf2.pwpoly' )
 
         eos_str= 'ALF2'
@@ -293,6 +297,10 @@ MODULE sphincs_id_full
 
         eos_str= 'MPA1'
 
+      CASE( 'mpa1.pwpolytrope' )
+
+        eos_str= 'MPA1'
+
       CASE( 'ms1.pwpoly' )
 
         eos_str= 'MS1 '
@@ -301,11 +309,23 @@ MODULE sphincs_id_full
 
         eos_str= 'MS1b'
 
+      CASE( 'ms1b.pwpolytrope' )
+
+        eos_str= 'MS1b'
+
       CASE( 'apr3.pwpoly' )
 
         eos_str= 'AP3 '
 
+      CASE( 'apr3.pwpolytrope' )
+
+        eos_str= 'AP3 '
+
       CASE( 'ap3.pwpoly' )
+
+        eos_str= 'AP3 '
+
+      CASE( 'ap3.pwpolytrope' )
 
         eos_str= 'AP3 '
 

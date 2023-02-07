@@ -191,6 +191,7 @@ SUBMODULE (sph_particles) constructor_std
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),3):: center
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),3):: barycenter
     DOUBLE PRECISION, DIMENSION(id% get_n_matter(),6):: sizes
+    DOUBLE PRECISION, DIMENSION(id% get_n_matter())  :: ghost_dists
     DOUBLE PRECISION, DIMENSION(id% get_n_matter())  :: lapse_lengthscales
     DOUBLE PRECISION, DIMENSION(id% get_n_matter())  :: g00_lengthscales
 
@@ -313,14 +314,16 @@ SUBMODULE (sph_particles) constructor_std
     ENDDO
 
     ! Compute desired particle numbers based on mass ratios
-    max_mass  = MAXVAL( parts% masses )
-    total_mass= SUM( parts% masses )
+    max_mass  = MAXVAL(parts% masses)
+    total_mass= SUM(parts% masses)
     DO i_matter= 1, parts% n_matter, 1
 
       parts% mass_ratios(i_matter)   = parts% masses(i_matter)/max_mass
       parts% mass_fractions(i_matter)= parts% masses(i_matter)/total_mass
       npart_des_i(i_matter)          = &
                           NINT(parts% mass_fractions(i_matter)*DBLE(npart_des))
+      ghost_dists(i_matter)          = &
+                          ghost_dist/parts% mass_fractions(i_matter)
       tmp= 2*npart_des_i(i_matter)
       ALLOCATE( parts_all(i_matter)% pos_i  ( 3, tmp ) )
       ALLOCATE( parts_all(i_matter)% pvol_i ( tmp ) )
@@ -329,6 +332,7 @@ SUBMODULE (sph_particles) constructor_std
       !parts_all(i_matter)% eos_i= parts% all_eos(i_matter)
 
     ENDDO
+    ghost_dists(1)= ghost_dist
     !   IF( parts% redistribute_nu )THEN
     !     thres= 100.0D0*parts% nu_ratio
     !   ENDIF
@@ -464,7 +468,7 @@ SUBMODULE (sph_particles) constructor_std
                     nuratio_thres, nuratio_des, use_pressure, &
                     ! Arguments pertaining to the ghost particles
                     adapt_ghosts, move_away_ghosts, &
-                    nx_gh, ny_gh, nz_gh, ghost_dist, &
+                    nx_gh, ny_gh, nz_gh, ghost_dists(i_matter), &
                     ! Arguments pertaining to the atmosphere
                     use_atmosphere(i_matter), &
                     remove_atmosphere(i_matter), &

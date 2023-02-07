@@ -130,7 +130,7 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: m_max_it         = 50
     INTEGER,          PARAMETER:: search_pos       = 10
     !INTEGER,          PARAMETER:: print_step       = 15
-    INTEGER,          PARAMETER:: nuratio_max_steps= 200
+    INTEGER,          PARAMETER:: nuratio_max_steps= 300
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
     DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
@@ -1351,11 +1351,11 @@ SUBMODULE (sph_particles) apm
       PRINT *, "   ", h_av*Msun_geo, "km=", &
                h_av/max_radius*ten*ten, "% of the larger radius of the star"
       PRINT *, " * Ghosts are moved if ", &
-               "ABS(radius_part - max_radius) > h_av/four=", h_av/four
+               "ABS(radius_part - max_radius) > h_av/three=", h_av/three
       PRINT *
 
       !IF( ABS(radius_part - max_radius)/max_radius > four*ten*tol )THEN
-      IF( ABS(radius_part - max_radius) > h_av/four )THEN
+      IF( ABS(radius_part - max_radius) > h_av/three )THEN
         push_away_ghosts= .TRUE.
         IF( radius_part > max_radius )THEN
           ghost_displacement= - ghost_displacement
