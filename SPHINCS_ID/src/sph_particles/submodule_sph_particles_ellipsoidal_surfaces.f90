@@ -495,9 +495,6 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
           !
           !-- Compute Cartesian coordinates of the candidate particle positions
           !
-          !xtemp= center(1) + a_x*rad*SIN(col)*COS(long)
-          !ytemp= center(2) + a_y*rad*SIN(col)*SIN(long)
-          !ztemp= center(3) + a_z*rad*COS(col)
           CALL cartesian_from_spherical( &
             a_x*rad, col, long, &
             center(1), center(2), center(3), &

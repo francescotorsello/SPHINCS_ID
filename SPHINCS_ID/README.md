@@ -10,8 +10,9 @@ Currently, it produces initial data for:
   - binary systems of neutron stars and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([3][3]{:target="_blank"},[4][4]{:target="_blank"})
   - binary systems of neutron stars, using the data computed by the FUKA solvers within the C++ library Kadath ([5][5]{:target="_blank"},[6][6]{:target="_blank"})
   - data on a Cartesian, uniform grid, representing a generic physical system
+  - Newtonian binary systems of neutron stars and white dwarfs, using the data computed by the TOV solver within SPHINCS_BSSN; in other words, two TOV stars are placed on an orbit given by the Newtonian 2-body problem
 
-The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations. The code is currently under heavy development.
+The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations.
 
 SPHINCS_ID needs SPHINCS_BSSN to be compiled.
 

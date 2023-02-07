@@ -133,12 +133,12 @@ SUBMODULE (sph_particles) apm
     INTEGER,          PARAMETER:: nuratio_max_steps= 200
     INTEGER,          PARAMETER:: nuratio_min_it   = 100
 
-    DOUBLE PRECISION, PARAMETER:: tol               = 1.0D-3
-    !DOUBLE PRECISION, PARAMETER:: iter_tol          = 2.0D-2
-    !DOUBLE PRECISION, PARAMETER:: backup_h          = 0.25D0
-    DOUBLE PRECISION, PARAMETER:: max_art_pr_ghost  = 1.0D+10
-    DOUBLE PRECISION, PARAMETER:: tiny_real         = 1.0D-10
-    DOUBLE PRECISION, PARAMETER:: nuratio_tol       = 2.5D-3
+    DOUBLE PRECISION, PARAMETER:: tol              = 1.0D-3
+    !DOUBLE PRECISION, PARAMETER:: iter_tol         = 2.0D-2
+    !DOUBLE PRECISION, PARAMETER:: backup_h        = 0.25D0
+    DOUBLE PRECISION, PARAMETER:: max_art_pr_ghost = 1.0D+10
+    DOUBLE PRECISION, PARAMETER:: tiny_real        = 1.0D-10
+    DOUBLE PRECISION, PARAMETER:: nuratio_tol      = 2.5D-3
 
     INTEGER:: a, itr, itr2, i_shell, n_inc, cnt1, b, inde, index1   ! iterators
     INTEGER:: npart_real, npart_real_half, npart_ghost, npart_all
