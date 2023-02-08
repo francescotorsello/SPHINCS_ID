@@ -77,7 +77,7 @@ It is a pleasure to thank Peter Diener and Stephan Rosswog for all the help and 
 
 ---
 
-Copyright (C) 2020, 2021, 2022 Francesco Torsello.
+Copyright (C) 2020-2023 Francesco Torsello.
 
 SPHINCS_ID is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ You should have received a copy of the GNU General Public License
 along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.
 ___
 
-Copyright (C) 2020, 2021, 2022 Francesco Torsello.
+Copyright (C) 2020-2023 Francesco Torsello.
 
 Permission is granted to copy, distribute and/or modify this documentation
 under the terms of the GNU Free Documentation License, Version 1.3
