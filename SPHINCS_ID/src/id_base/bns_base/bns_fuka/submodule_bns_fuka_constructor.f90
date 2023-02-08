@@ -30,7 +30,7 @@ SUBMODULE (bns_fuka) constructor
   !  [[bnsfuka]]-member
   !  PROCEDURES that call the C-bound PROCEDURES
   !  constructig and destructing the |fuka|
-  !  |binns| object
+  !  |bnsexp| object
   !
   !  FT 23.10.2020
   !
@@ -43,25 +43,6 @@ SUBMODULE (bns_fuka) constructor
   CONTAINS
 
 
- ! MODULE PROCEDURE construct_bnsfuka2
- !
- !   !****************************************************
- !   !
- !   !# Constructs an object of TYPE [[bnsfuka]]
- !   !
- !   !  FT
- !   !
- !   !****************************************************
- !
- !   IMPLICIT NONE
- !
- !   CHARACTER(LEN=10) :: resu_file
- !
- !   derived_type => construct_bnsfuka( resu_file )
- !
- ! END PROCEDURE construct_bnsfuka2
-
-
   !
   !-- Implementation of the constructor of the bns object
   !
@@ -71,38 +52,265 @@ SUBMODULE (bns_fuka) constructor
     !
     !# Constructs an object of TYPE [[bnsfuka]]
     !
-    !  FT 09.02.2022
+    !  Created:     FT 09.02.2022
+    !  Last update: FT 27.05.2022
     !
     !****************************************************
 
+    USE utility,  ONLY: ten, Msun_geo, flag$tpo
+
     IMPLICIT NONE
 
-!    INTEGER, SAVE:: bns_counter= 1
-!
-!    CALL derived_type% set_n_matter(2)
-!    CALL derived_type% set_cold_system(.TRUE.)
-!
-!    derived_type% construction_timer= timer( "binary_construction_timer" )
-!
-!    ! Construct |fuka| |binns| object
-!    IF( PRESENT( filename ) )THEN
-!        CALL derived_type% construct_binary( filename )
-!    ELSE
-!        CALL derived_type% construct_binary()
-!    ENDIF
-!
-!    ! Import the parameters of the binary system
-!    CALL import_id_params( derived_type )
-!
-!    ! Assign a unique identifier to the bns object
-!    derived_type% bns_identifier= bns_counter
-!    bns_counter= bns_counter + 1
-!
-!    ! Do not use the geodesic gauge by default
-!    CALL derived_type% set_one_lapse ( .FALSE. )
-!    CALL derived_type% set_zero_shift( .FALSE. )
+    INTEGER, SAVE:: bns_counter= 1
+
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: length_scale_pressure
+
+
+    IF(max$tpo < flag$tpo)THEN
+      PRINT *, "** ERROR in MODULE bns_fuka! It must hold max$tpo > flag$tpo,",&
+               "where both variables are negative integers. Instead:"
+      PRINT *, " * max$tpo=", max$tpo
+      PRINT *, " * flag$tpo=", flag$tpo
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+    ENDIF
+
+    CALL derived_type% set_n_matter(2)
+    CALL derived_type% set_cold_system(.TRUE.)
+
+    derived_type% construction_timer= timer( "binary_construction_timer" )
+
+    ! Construct |fuka| |bnsexp| object
+    CALL derived_type% construct_binary( filename )
+    derived_type% filename= filename
+
+    ! Read the parameters of the binary system
+    CALL read_fuka_id_params( derived_type )
+
+    ! Assign a unique identifier to the bns_fuka object
+    derived_type% bns_identifier= bns_counter
+    bns_counter= bns_counter + 1
+
+    ! Do not use the geodesic gauge by default
+    CALL derived_type% set_one_lapse ( .FALSE. )
+    CALL derived_type% set_zero_shift( .FALSE. )
+
+    ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
+    ! within SPHINCS_ID. Hence, we chose to make a system call to a program
+    ! within Kadath that reads the ID from the FUKA output file and prints it
+    ! on a lattice. The ID on the particles will be interplated from this fine
+    ! lattice.
+    !CALL set_up_lattices_around_stars( filename )
+
+    ! Compute typical length scales of the system using the pressure
+    IF( derived_type% get_estimate_length_scale() )THEN
+
+      ALLOCATE( length_scale_pressure(derived_type% get_n_matter()) )
+      length_scale_pressure= derived_type% estimate_lengthscale_field( &
+                                                get_pressure, &
+                                                derived_type% get_n_matter() )
+
+      PRINT *, " * Minimum length scale to resolve on star 1, based on ", &
+               "pressure= ", length_scale_pressure(1)*Msun_geo*ten*ten*ten, "m"
+      PRINT *, " * Minimum length scale to resolve on star 2, based on ", &
+               "pressure= ", length_scale_pressure(1)*Msun_geo*ten*ten*ten, "m"
+      PRINT *
+
+    ENDIF
+
+    ! Assign PROCEDURE POINTER to the desired PROCEDURE
+    derived_type% finalize_sph_id_ptr => finalize
+
+    CONTAINS
+
+    FUNCTION get_pressure( x, y, z ) RESULT( val )
+    !! Returns the value of the pressure at the desired point
+
+      DOUBLE PRECISION, INTENT(IN):: x
+      !! \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN):: y
+      !! \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN):: z
+      !! \(z\) coordinate of the desired point
+      DOUBLE PRECISION:: val
+      !! Pressure at \((x,y,z)\)
+
+      val= derived_type% read_pressure( x, y, z )
+
+    END FUNCTION get_pressure
+
 
   END PROCEDURE construct_bnsfuka
+
+
+  MODULE PROCEDURE finalize
+
+    !***********************************************
+    !
+    !#
+    !
+    !  FT 14.04.2022
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+    ! Temporary implementation, to avoid warnings about unused variables
+
+    pos  = pos
+    nlrf = nlrf
+    nu   = nu
+    pr   = pr
+    vel_u= vel_u
+    theta= theta
+    nstar= nstar
+    u    = u
+
+  END PROCEDURE finalize
+
+
+  MODULE PROCEDURE initialize_id_bnsfuka
+
+    !***********************************************
+    !
+    !# Initialize the |fuka| |bns| |id|.
+    !
+    !  - If `flag`= [[utility:flag$sph]], set up the
+    !    lattices around the stars for the |bns|
+    !    produced with |fuka|.
+    !  - If `flag`= [[utility:flag$tpo]], allocate
+    !    memory for the hydro grid functions.
+    !  - If `flag` > 0, assign its value to [[bnsfuka:l_curr]].
+    !  - If [[utility:flag$tpo]] < `flag` < 0,
+    !    assign its value to [[bnsfuka:tpo_curr]].
+    !
+    !  FT 16.09.2022
+    !
+    !***********************************************
+
+    USE utility,          ONLY: flag$sph, flag$tpo
+    USE mesh_refinement,  ONLY: allocate_grid_function
+
+    IMPLICIT NONE
+
+    INTEGER, SAVE:: tpo_counter= 1
+    !! Counts how many times the PROCEDURE construct_particles_idase is called
+
+    INTEGER:: i
+
+    CHARACTER(LEN= 3):: cnt_i
+    CHARACTER(LEN= :), ALLOCATABLE:: name_mass_density
+    CHARACTER(LEN= :), ALLOCATABLE:: name_specific_energy
+    CHARACTER(LEN= :), ALLOCATABLE:: name_pressure
+    CHARACTER(LEN= :), ALLOCATABLE:: name_v_euler_x
+    CHARACTER(LEN= :), ALLOCATABLE:: name_v_euler_y
+    CHARACTER(LEN= :), ALLOCATABLE:: name_v_euler_z
+
+    LOGICAL:: wanted_tpo
+
+    IF( PRESENT(switch) )THEN
+      IF( switch .EQV. .TRUE. )THEN
+
+        this% tpo$log(tpo_counter)= flag
+        this% tpo_curr= tpo_counter
+
+        tpo_counter= tpo_counter + 1
+
+        CALL initialize_id_bnsfuka(this, flag$tpo)
+
+      ENDIF
+    ENDIF
+
+    IF( flag /= flag$sph .AND. flag /= flag$tpo .AND. flag < -max$tpo )THEN
+
+      PRINT *, "** ERROR in SUBROUTINE initialize_id_bnsfuka! The INTEGER ", &
+               "argument 'flag' should be in the set [1,nlevels], or ", &
+               "it should be equal to either flag$sph or flag$tpo, defined ", &
+               "in MODULE utility."
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+    IF( flag == flag$sph )THEN
+
+      CALL this% set_up_lattices_around_stars()
+      ! Find the surfaces of the stars and print them to a formatted file
+      CALL this% find_print_surfaces()
+
+    ELSEIF( flag >= flag$tpo .AND. flag <= -1 )THEN
+
+      wanted_tpo= .FALSE.
+      DO i= 1, max$tpo, 1
+
+        IF(this% tpo$log(i) == flag)THEN
+
+          wanted_tpo= .TRUE.
+          this% tpo_curr= i
+
+        ENDIF
+
+      ENDDO
+
+      IF(flag == flag$tpo)THEN
+
+        IF( this% tpo_curr <= 9 ) WRITE( cnt_i, "(I1)" ) this% tpo_curr
+        IF( this% tpo_curr >= 10 .AND. flag <= 99 ) WRITE( cnt_i, "(I2)" ) &
+          this% tpo_curr
+        IF( this% tpo_curr >= 100 .AND. flag <= 999 ) WRITE( cnt_i, "(I3)" ) &
+          this% tpo_curr
+
+        !PRINT *
+        !PRINT *, "cnt_i=", TRIM(cnt_i)
+        !PRINT *
+
+        name_mass_density   = "mass_density_fuka-"//TRIM(cnt_i)
+        name_specific_energy= "specific_energy_fuka-"//TRIM(cnt_i)
+        name_pressure       = "pressure_fuka-"//TRIM(cnt_i)
+        name_v_euler_x      = "v_euler_x_fuka-"//TRIM(cnt_i)
+        name_v_euler_y      = "v_euler_y_fuka-"//TRIM(cnt_i)
+        name_v_euler_z      = "v_euler_z_fuka-"//TRIM(cnt_i)
+
+        !PRINT *
+        !PRINT *, "name_mass_density=", name_mass_density
+        !PRINT *
+
+        CALL allocate_grid_function( this% mass_density(this% tpo_curr), &
+                                     TRIM(name_mass_density), 1 )
+        CALL allocate_grid_function( this% specific_energy(this% tpo_curr), &
+                                     TRIM(name_specific_energy), 1 )
+        CALL allocate_grid_function( this% pressure(this% tpo_curr), &
+                                     TRIM(name_pressure), 1 )
+        CALL allocate_grid_function( this% v_euler_x(this% tpo_curr), &
+                                     TRIM(name_v_euler_x), 1 )
+        CALL allocate_grid_function( this% v_euler_y(this% tpo_curr), &
+                                     TRIM(name_v_euler_y), 1 )
+        CALL allocate_grid_function( this% v_euler_z(this% tpo_curr), &
+                                     TRIM(name_v_euler_z), 1 )
+
+      ELSE
+
+        IF(.NOT.wanted_tpo)THEN
+          PRINT *, "** ERROR! Mismatch between bns_fuka and bssn objects!"
+          PRINT *, " * This should never happen: there is most likely a bug ", &
+                   "in SUBROUTINE initialize_id_bnsfuka, or a bug in the ", &
+                   "places where it is called."
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+        ENDIF
+
+      ENDIF
+
+    ELSE
+
+      this% l_curr= flag
+
+    ENDIF
+
+  END PROCEDURE initialize_id_bnsfuka
 
 
   !
@@ -114,14 +322,20 @@ SUBMODULE (bns_fuka) constructor
     !
     !# Destructs an object of TYPE [[bnsfuka]]
     !
-    !  FT 09.02.2022
+    !  Created:     FT 09.02.2022
+    !  Last update: FT 30.06.2022
     !
     !***********************************************
 
     IMPLICIT NONE
 
+    INTEGER:: i_star
+
     ! Deallocate memory
-  !  CALL THIS% deallocate_bnsfuka_memory()
+    CALL this% deallocate_bnsfuka_memory()
+    DO i_star=1, 2, 1
+      CALL this% star_lattice(i_star)% deallocate_lattice_memory()
+    ENDDO
 
   END PROCEDURE destruct_bnsfuka
 
@@ -130,63 +344,44 @@ SUBMODULE (bns_fuka) constructor
 
     !***********************************************
     !
-    !# Construct the |fuka| ?? object
+    !# Construct the |fuka| |bnsexp| object
     !
-    !  FT 09.02.2022
+    !  Created:     FT 09.02.2022
+    !  Last update: FT 27.05.2022
     !
     !***********************************************
 
     IMPLICIT NONE
 
-!    CHARACTER(KIND= C_CHAR, LEN= 7):: default_case
-!    LOGICAL:: exist
-!
-!    !PRINT *, "** Executing the construct_binary subroutine..."
-!
-!#ifdef __INTEL_COMPILER
-!
-!    IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
-!
-!      CALL destruct_bin_ns( THIS% bns_ptr )
-!
-!    ENDIF
-!
-!#endif
-!
-!    !
-!    !-- If the name of the |fuka| binary file resu_file is given as argument to
-!    !-- construct_binary, use it. Otherwise, give the string "read_it"
-!    !-- to construct_bin_ns as argument, which makes |fuka| read the name of
-!    !-- the file from the parameter file read_bin_ns.par
-!    !
-!    IF( PRESENT( resu_file ) )THEN
-!
-!      INQUIRE( FILE= resu_file, EXIST= exist )
-!
-!      IF( exist )THEN
-!
-!        CALL THIS% construction_timer% start_timer()
-!        THIS% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
-!        CALL THIS% construction_timer% stop_timer()
-!
-!      ELSE
-!
-!        PRINT *, "** ERROR in SUBROUTINE construct_binary: file ", &
-!                 resu_file, " cannot be found!"
-!        PRINT *
-!        STOP
-!
-!      ENDIF
-!
-!    ELSE
-!
-!      default_case= "read_it"
-!      CALL THIS% construction_timer% start_timer()
-!      THIS% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
-!      CALL THIS% construction_timer% stop_timer()
-!
-!    ENDIF
-!
+    LOGICAL:: exist
+
+#ifdef __INTEL_COMPILER
+
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
+
+      CALL destruct_bns_fuka( this% bns_ptr )
+
+    ENDIF
+
+#endif
+
+    INQUIRE( FILE= fukafile, EXIST= exist )
+
+    IF( exist )THEN
+
+      CALL this% construction_timer% start_timer()
+      this% bns_ptr = construct_bns_fuka( fukafile//C_NULL_CHAR )
+      CALL this% construction_timer% stop_timer()
+
+    ELSE
+
+      PRINT *, "** ERROR in SUBROUTINE construct_binary: file ", &
+               fukafile, " cannot be found!"
+      PRINT *
+      STOP
+
+    ENDIF
+
 
   END PROCEDURE construct_binary
 
@@ -195,22 +390,23 @@ SUBMODULE (bns_fuka) constructor
 
     !************************************************
     !
-    !# Destructs the |fuka| ?? object and frees
+    !# Destructs the |fuka| |bnsexp| object and frees
     !  the pointer [[bns:bns_ptr]] pointing to it
     !
-    !  FT 09.02.2022
+    !  Created:     FT 09.02.2022
+    !  Last update: FT 27.05.2022
     !
     !************************************************
 
     IMPLICIT NONE
 
 
- !   IF ( C_ASSOCIATED( THIS% bns_ptr ) ) THEN
- !
- !     CALL destruct_bin_ns( THIS% bns_ptr )
- !     THIS% bns_ptr = C_NULL_PTR
- !
- !   ENDIF
+    IF ( C_ASSOCIATED( this% bns_ptr ) ) THEN
+
+      CALL destruct_bns_fuka( this% bns_ptr )
+      this% bns_ptr = C_NULL_PTR
+
+    ENDIF
 
   END PROCEDURE destruct_binary
 

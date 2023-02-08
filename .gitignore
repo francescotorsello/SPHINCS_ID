@@ -2,12 +2,13 @@
 **/doc/
 **/prototypes/
 !.gitattributes
-!.gitignore
+!./.gitignore
 !.gitkeep
 !*/
 !*.f90
 !SConstruct
 !**/doc-pages/**/*.md
+!**/doc-pages/SPHINCS_ID-User_Manual.pdf
 !**/doc-media/*
 !documentation_*.md
 !gravity_grid_parameters.dat
@@ -15,6 +16,7 @@
 !sphincs_id_parameters.dat
 !sphincs_id_particles.dat
 !SPHINCS_fm_input.dat
+!newtonian_binary_parameters.dat
 !COPYING
 !README.md
 **/doc/**/*.f90

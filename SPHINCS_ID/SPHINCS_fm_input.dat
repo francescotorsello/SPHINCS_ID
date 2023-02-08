@@ -37,10 +37,10 @@ NSM
 pwp
 
 #Gamma (only used if EOS= "Poly"):
-2.0
+2.00
 
 #which pwp-EOS (only used if eos_type= pwp)
-MPA1
+AP3
 
 # metric ("metric_type"): CKS: "Cartesian KS", MIN: Minkowski, NUM: numerical
 NUM

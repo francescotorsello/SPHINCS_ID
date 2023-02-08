@@ -34,5 +34,6 @@ bssn_cou_fac= 0.35
 !--------------------------------------------------------------------!
 gauge_id= 0               ! 0: Use the gauge ID provided by SPHINCS_ID
                           ! 1: Use zero initial shift and lapse equal to
-                          !    the inverse squared BSSN conformal factor
+                          !    the inverse squared Brill-Lindquist
+			  !    conformal factor
 /

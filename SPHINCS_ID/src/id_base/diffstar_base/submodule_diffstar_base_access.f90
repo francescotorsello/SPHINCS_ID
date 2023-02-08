@@ -57,11 +57,31 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_mass= THIS% mass
+    get_mass= this% mass
 
   END PROCEDURE get_mass
+
+
+  MODULE PROCEDURE get_adm_mass
+
+    !************************************************
+    !
+    !# Returns 0 (the ADM mass is not necessarily
+    !  known for this TYPE)
+    !
+    !  FT 03.11.2022
+    !
+    !************************************************
+
+    USE utility, ONLY: zero
+
+    IMPLICIT NONE
+
+    get_adm_mass= zero
+
+  END PROCEDURE get_adm_mass
 
 
   MODULE PROCEDURE get_radii
@@ -76,9 +96,9 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_radii= THIS% radii(:)
+    get_radii= this% radii(:)
 
   END PROCEDURE get_radii
 
@@ -95,9 +115,9 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_center= THIS% center(:)
+    get_center= this% center(:)
 
   END PROCEDURE get_center
 
@@ -114,9 +134,9 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_barycenter= THIS% barycenter(:)
+    get_barycenter= this% barycenter(:)
 
   END PROCEDURE get_barycenter
 
@@ -133,9 +153,9 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_eos= THIS% eos
+    get_eos= this% eos
 
   END PROCEDURE get_eos
 
@@ -143,6 +163,26 @@ SUBMODULE (diffstar_base) access
   !-----------------!
   !--  FUNCTIONS  --!
   !-----------------!
+
+
+  MODULE PROCEDURE get_eos_id
+
+    !************************************************
+    !
+    !# Returns the |eos| identifier of the
+    !  `i_matter`-th star
+    !
+    !  FT 2.12.2022
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    CALL this% check_i_matter(i_matter)
+
+    get_eos_id= this% eos_id
+
+  END PROCEDURE get_eos_id
 
 
   MODULE PROCEDURE get_gamma
@@ -159,7 +199,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_gamma= THIS% gamma
+    get_gamma= this% gamma
 
   END PROCEDURE get_gamma
 
@@ -178,7 +218,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_kappa= THIS% kappa
+    get_kappa= this% kappa
 
   END PROCEDURE get_kappa
 
@@ -196,7 +236,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_omega_c= THIS% omega_c
+    get_omega_c= this% omega_c
 
   END PROCEDURE get_omega_c
 
@@ -213,7 +253,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_mass_grav= THIS% mass_grav
+    get_mass_grav= this% mass_grav
 
   END PROCEDURE get_mass_grav
 
@@ -230,7 +270,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_angular_momentum= THIS% angular_momentum
+    get_angular_momentum= this% angular_momentum
 
   END PROCEDURE get_angular_momentum
 
@@ -248,7 +288,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_tsw= THIS% tsw
+    get_tsw= this% tsw
 
   END PROCEDURE get_tsw
 
@@ -266,7 +306,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_grv2= THIS% grv2
+    get_grv2= this% grv2
 
   END PROCEDURE get_grv2
 
@@ -284,7 +324,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_grv3= THIS% grv3
+    get_grv3= this% grv3
 
   END PROCEDURE get_grv3
 
@@ -302,7 +342,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_circ= THIS% r_circ
+    get_r_circ= this% r_circ
 
   END PROCEDURE get_r_circ
 
@@ -320,7 +360,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_mean= THIS% r_mean
+    get_r_mean= this% r_mean
 
   END PROCEDURE get_r_mean
 
@@ -338,7 +378,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_eq= THIS% r_eq
+    get_r_eq= this% r_eq
 
   END PROCEDURE get_r_eq
 
@@ -356,7 +396,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_eq_pi2= THIS% r_eq_pi2
+    get_r_eq_pi2= this% r_eq_pi2
 
   END PROCEDURE get_r_eq_pi2
 
@@ -374,7 +414,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_eq_pi= THIS% r_eq_pi
+    get_r_eq_pi= this% r_eq_pi
 
   END PROCEDURE get_r_eq_pi
 
@@ -392,7 +432,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_eq_3pi2= THIS% r_eq_3pi2
+    get_r_eq_3pi2= this% r_eq_3pi2
 
   END PROCEDURE get_r_eq_3pi2
 
@@ -410,7 +450,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_pole= THIS% r_pole
+    get_r_pole= this% r_pole
 
   END PROCEDURE get_r_pole
 
@@ -428,7 +468,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_ratio= THIS% r_ratio
+    get_r_ratio= this% r_ratio
 
   END PROCEDURE get_r_ratio
 
@@ -446,7 +486,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_r_isco= THIS% r_isco
+    get_r_isco= this% r_isco
 
   END PROCEDURE get_r_isco
 
@@ -465,7 +505,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_f_isco= THIS% f_isco
+    get_f_isco= this% f_isco
 
   END PROCEDURE get_f_isco
 
@@ -484,7 +524,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_specific_energy_isco= THIS% specific_energy_isco
+    get_specific_energy_isco= this% specific_energy_isco
 
   END PROCEDURE get_specific_energy_isco
 
@@ -503,7 +543,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_specific_angular_momentum_isco= THIS% specific_angular_momentum_isco
+    get_specific_angular_momentum_isco= this% specific_angular_momentum_isco
 
   END PROCEDURE get_specific_angular_momentum_isco
 
@@ -521,7 +561,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_surface_area= THIS% surface_area
+    get_surface_area= this% surface_area
 
   END PROCEDURE get_surface_area
 
@@ -539,7 +579,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_area_radius= THIS% area_radius
+    get_area_radius= this% area_radius
 
   END PROCEDURE get_area_radius
 
@@ -556,7 +596,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_ent_center= THIS% ent_center
+    get_ent_center= this% ent_center
 
   END PROCEDURE get_ent_center
 
@@ -574,7 +614,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_nbar_center= THIS% nbar_center
+    get_nbar_center= this% nbar_center
 
   END PROCEDURE get_nbar_center
 
@@ -592,7 +632,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_rho_center= THIS% rho_center
+    get_rho_center= this% rho_center
 
   END PROCEDURE get_rho_center
 
@@ -609,7 +649,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_energy_density_center= THIS% energy_density_center
+    get_energy_density_center= this% energy_density_center
 
   END PROCEDURE get_energy_density_center
 
@@ -626,7 +666,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_specific_energy_center= THIS% specific_energy_center
+    get_specific_energy_center= this% specific_energy_center
 
   END PROCEDURE get_specific_energy_center
 
@@ -643,7 +683,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_pressure_center= THIS% pressure_center
+    get_pressure_center= this% pressure_center
 
   END PROCEDURE get_pressure_center
 
@@ -660,7 +700,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_npeos= THIS% npeos
+    get_npeos= this% npeos
 
   END PROCEDURE get_npeos
 
@@ -679,7 +719,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_gamma0= THIS% gamma0
+    get_gamma0= this% gamma0
 
   END PROCEDURE get_gamma0
 
@@ -698,7 +738,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_gamma1= THIS% gamma1
+    get_gamma1= this% gamma1
 
   END PROCEDURE get_gamma1
 
@@ -717,7 +757,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_gamma2= THIS% gamma2
+    get_gamma2= this% gamma2
 
   END PROCEDURE get_gamma2
 
@@ -736,7 +776,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_gamma3= THIS% gamma3
+    get_gamma3= this% gamma3
 
   END PROCEDURE get_gamma3
 
@@ -755,7 +795,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_kappa0= THIS% kappa0
+    get_kappa0= this% kappa0
 
   END PROCEDURE get_kappa0
 
@@ -774,7 +814,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_kappa1= THIS% kappa1
+    get_kappa1= this% kappa1
 
   END PROCEDURE get_kappa1
 
@@ -793,7 +833,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_kappa2= THIS% kappa2
+    get_kappa2= this% kappa2
 
   END PROCEDURE get_kappa2
 
@@ -812,7 +852,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_kappa3= THIS% kappa3
+    get_kappa3= this% kappa3
 
   END PROCEDURE get_kappa3
 
@@ -832,7 +872,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_logp1= THIS% logp1
+    get_logp1= this% logp1
 
   END PROCEDURE get_logp1
 
@@ -853,7 +893,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_logRho0= THIS% logRho0
+    get_logRho0= this% logRho0
 
   END PROCEDURE get_logRho0
 
@@ -873,7 +913,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_logRho1= THIS% logRho1
+    get_logRho1= this% logRho1
 
   END PROCEDURE get_logRho1
 
@@ -893,7 +933,7 @@ SUBMODULE (diffstar_base) access
 
     IMPLICIT NONE
 
-    get_logRho2= THIS% logRho2
+    get_logRho2= this% logRho2
 
   END PROCEDURE get_logRho2
 

@@ -25,10 +25,10 @@ MODULE bns_lorene
 
   !***********************************************************
   !
-  !#  This module contains the definition of TYPE bnslorene,
+  !#  This module contains the definition of TYPE [[bnslorene]],
   !   and the SUBROUTINES that bind to the methods
   !   of |lorene|'s class |binns|, defined in
-  !   Lorene/Export/BinNS
+  !   \(\mathrm{\$HOME\_LORENE/Export/BinNS}\)
   !
   !   [|lorene| official repository](https://lorene.obspm.fr/index.html){:target="_blank"}
   !
@@ -52,7 +52,7 @@ MODULE bns_lorene
   !                                                      *
   !            Definition of TYPE bnslorene              *
   !                                                      *
-  !   This class imports and stores the |lorene| BNS ID  *
+  !   This class reads and stores the |lorene| BNS ID    *
   !                                                      *
   !*******************************************************
 
@@ -64,53 +64,12 @@ MODULE bns_lorene
     PRIVATE
 
 
-    !> Identifier of the bnslorene object
     INTEGER:: bns_identifier= 0
-    !> |lorene| identifiers for the EoS
-    INTEGER:: eos1_loreneid, eos2_loreneid
-
-    !
-    !-- Spacetime fields
-    !
-
-    !> 1-D array storing the lapse function
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse
-    !> 1-D array storing the x component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_x
-    !> 1-D array storing the y component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_y
-    !> 1-D array storing the z component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_z
-    !> 1-D array storing the xx component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xx
-    !> 1-D array storing the xy component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xy
-    !> 1-D array storing the xz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xz
-    !> 1-D array storing the yy component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yy
-    !> 1-D array storing the yz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yz
-    !> 1-D array storing the zz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_zz
-    !& 1-D array storing the xx component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xx
-    !& 1-D array storing the xy component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xy
-    !& 1-D array storing the xz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xz
-    !& 1-D array storing the yy component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yy
-    !& 1-D array storing the yz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yz
-    !& 1-D array storing the zz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_zz
+    !! Identifier of the bnslorene object
+    INTEGER:: eos1_loreneid
+    !! |lorene| identifier for the |eos| of star 1
+    INTEGER:: eos2_loreneid
+    !! |lorene| identifier for the |eos| of star 2
 
     !
     !-- Hydro fields
@@ -122,6 +81,8 @@ MODULE bns_lorene
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
     !> 1-D array storing the specific internal energy [c^2]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: specific_energy
+    !> 1-D array storing the pressure
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
     !> 1-D array storing the x component of the fluid 3-velocity with respect to
     !  the Eulerian observer [c]
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_x
@@ -163,7 +124,7 @@ MODULE bns_lorene
     PROCEDURE:: deallocate_bnslorene_memory
     !! Deallocates memory for the [[bnslorene]] member arrays
 
-    PROCEDURE:: import_id_params
+    PROCEDURE:: read_id_params
     !! Imports the parameters of the BNS from |lorene|
 
     !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
@@ -173,17 +134,25 @@ MODULE bns_lorene
     PROCEDURE, PUBLIC:: print_id_params
     !! Prints the parameters of the BNS to the standard output
 
-    PROCEDURE:: import_id_int
+    PROCEDURE:: read_id_int
     !! Stores the ID in the [[bnslorene]] member arrays
 
-    PROCEDURE:: read_id_full      => import_id_full
-    PROCEDURE:: read_id_spacetime => import_id_spacetime
-    PROCEDURE:: read_id_particles => import_id_particles
-    PROCEDURE:: read_id_hydro     => import_id_hydro
-    PROCEDURE:: read_id_mass_b    => import_id_mass_b
-    PROCEDURE:: read_id_k         => import_id_k
+    PROCEDURE:: read_id_full      => read_id_full
+    PROCEDURE:: read_id_spacetime => read_id_spacetime
+    PROCEDURE:: read_id_particles => read_id_particles
+    PROCEDURE:: read_id_hydro     => read_id_hydro
+    PROCEDURE:: read_id_mass_b    => read_id_mass_b
+    PROCEDURE:: read_id_k         => read_id_k
 
     PROCEDURE:: print_summary_derived => print_summary_bnslorene
+
+    PROCEDURE:: nothing
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which is not needed in TYPE [[bnslorene]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+    PROCEDURE:: initialize_id => nothing
 
     PROCEDURE, NOPASS:: correct_adm_linear_momentum
     !# Corrects the |sph| |id| so that the linear \(\mathrm{ADM}\) momentum
@@ -194,14 +163,13 @@ MODULE bns_lorene
     !-----------------!
 
     !> Returns the |lorene|'s mass density at the desired point
-    PROCEDURE:: read_mass_density => import_mass_density
+    PROCEDURE:: read_mass_density => read_bnslorene_mass_density
 
     !> Returns the |lorene|'s pressure at the desired point
-    !PROCEDURE:: read_pressure => import_pressure
-    PROCEDURE:: import_pressure
+    PROCEDURE:: read_pressure => read_bnslorene_pressure
 
     !> Returns the |lorene|'s conformally flat spatial ADM metric
-    PROCEDURE:: import_spatial_metric
+    PROCEDURE:: read_spatial_metric
 
     !& Returns 1 if the energy density or the specific energy or the pressure
     !  are negative
@@ -371,13 +339,13 @@ MODULE bns_lorene
     END SUBROUTINE deallocate_bnslorene_memory
 
 
-    MODULE SUBROUTINE import_id_params( this )
+    MODULE SUBROUTINE read_id_params( this )
     !! Imports the BNS parameters from |lorene|
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT( IN OUT ):: this
 
-    END SUBROUTINE import_id_params
+    END SUBROUTINE read_id_params
 
 
     MODULE SUBROUTINE print_id_params( this )
@@ -419,7 +387,7 @@ MODULE bns_lorene
   !  END SUBROUTINE integrate_baryon_mass_density
 
 
-    MODULE SUBROUTINE import_id_int( this, n, x, y, z )
+    MODULE SUBROUTINE read_id_int( this, n, x, y, z )
     !! Stores the ID in the [[bnslorene]] member arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -429,7 +397,7 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
 
-    END SUBROUTINE import_id_int
+    END SUBROUTINE read_id_int
 
     ! BE CAREFUL! Look at the following page:
     !
@@ -450,7 +418,7 @@ MODULE bns_lorene
     ! not OUT. The array arguments are not allocatable anymore
 
 
-    MODULE SUBROUTINE import_id_full( this, n, x, y, z,&
+    MODULE SUBROUTINE read_id_full( this, n, x, y, z, &
                                       lapse, &
                                       shift_x, shift_y, shift_z, &
                                       g_xx, g_xy, g_xz, &
@@ -460,6 +428,7 @@ MODULE bns_lorene
                                       baryon_density, &
                                       energy_density, &
                                       specific_energy, &
+                                      pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
     !# Stores the ID in non [[bnslorene]]-member arrays with the same shape as the
     !  [[bnslorene]] member arrays
@@ -489,14 +458,15 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
 
-    END SUBROUTINE import_id_full
+    END SUBROUTINE read_id_full
 
 
-    MODULE SUBROUTINE import_id_spacetime( this, nx, ny, nz, &
+    MODULE SUBROUTINE read_id_spacetime( this, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
@@ -516,10 +486,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
 
-    END SUBROUTINE import_id_spacetime
+    END SUBROUTINE read_id_spacetime
 
 
-    MODULE SUBROUTINE import_id_hydro( this, nx, ny, nz, &
+    MODULE SUBROUTINE read_id_hydro( this, nx, ny, nz, &
                                              pos, &
                                              baryon_density, &
                                              energy_density, &
@@ -541,10 +511,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: pressure
       DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: u_euler
 
-    END SUBROUTINE import_id_hydro
+    END SUBROUTINE read_id_hydro
 
 
-    MODULE SUBROUTINE import_id_particles( this, n, x, y, z, &
+    MODULE SUBROUTINE read_id_particles( this, n, x, y, z, &
                                            lapse, &
                                            shift_x, shift_y, shift_z, &
                                            g_xx, g_xy, g_xz, &
@@ -580,10 +550,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
 
-    END SUBROUTINE import_id_particles
+    END SUBROUTINE read_id_particles
 
 
-    MODULE SUBROUTINE import_id_mass_b( this, x, y, z, &
+    MODULE SUBROUTINE read_id_mass_b( this, x, y, z, &
                                         g, &
                                         baryon_density, &
                                         gamma_euler )
@@ -598,10 +568,10 @@ MODULE bns_lorene
       DOUBLE PRECISION, INTENT( OUT ):: baryon_density
       DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
 
-    END SUBROUTINE import_id_mass_b
+    END SUBROUTINE read_id_mass_b
 
 
-    MODULE SUBROUTINE import_id_k( this, n, x, y, z,&
+    MODULE SUBROUTINE read_id_k( this, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
    !! Stores the components of the extrinsic curvature in arrays
@@ -619,13 +589,13 @@ MODULE bns_lorene
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
       DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
 
-    END SUBROUTINE import_id_k
+    END SUBROUTINE read_id_k
 
 
     !
     !-- FUNCTIONS
     !
-    MODULE FUNCTION import_mass_density( this, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_bnslorene_mass_density( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -639,14 +609,14 @@ MODULE bns_lorene
       !> Baryon mass density at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
-    END FUNCTION import_mass_density
+    END FUNCTION read_bnslorene_mass_density
 
 
-    MODULE FUNCTION import_pressure( this, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_bnslorene_pressure( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| pressure at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )         :: this
+      CLASS(bnslorene), INTENT( IN )       :: this
       !> \(x\) coordinate of the desired point
       DOUBLE PRECISION, INTENT( IN ), VALUE:: x
       !> \(y\) coordinate of the desired point
@@ -656,10 +626,10 @@ MODULE bns_lorene
       !> Pressure at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
-    END FUNCTION import_pressure
+    END FUNCTION read_bnslorene_pressure
 
 
-    MODULE FUNCTION import_spatial_metric( this, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_spatial_metric( this, x, y, z ) RESULT( res )
     !# Returns the |lorene| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
@@ -674,7 +644,7 @@ MODULE bns_lorene
       !> \(g_{xx}=g_{yy}=g_{zz}\) at \((x,y,z)\)
       REAL(C_DOUBLE):: res
 
-    END FUNCTION import_spatial_metric
+    END FUNCTION read_spatial_metric
 
 
     MODULE FUNCTION is_hydro_positive( this, x, y, z ) RESULT( res )
@@ -809,6 +779,21 @@ MODULE bns_lorene
     END SUBROUTINE correct_adm_linear_momentum
 
 
+    MODULE SUBROUTINE nothing( this, flag, switch )
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which is not needed in TYPE [[bnslorene]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+      CLASS(bnslorene), INTENT(INOUT)      :: this
+      INTEGER,          INTENT(IN)         :: flag
+      !! Identifies what kind of initialization has to be done
+      LOGICAL,          INTENT(IN), OPTIONAL:: switch
+      !! If `.TRUE.`, switch to a different initialization
+
+    END SUBROUTINE nothing
+
+
     !MODULE FUNCTION get_bns_ptr( this )
     !
     !  ! Argument
@@ -874,6 +859,7 @@ MODULE bns_lorene
                               baryon_density, &
                               energy_density, &
                               specific_energy, &
+                              pressure, &
                               v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_lorene_id")
 
@@ -882,7 +868,7 @@ MODULE bns_lorene
       !# Interface to the |lorene| method of class
       !  |binns| with the same name, that reads the full
       !  |lorene| ID at the specified point.
-      !  That is, imports the metric fields, the
+      !  That is, reads the metric fields, the
       !  components of the extrinsic curvature [c/km],
       !  and the hydro fields.
       !
@@ -924,6 +910,7 @@ MODULE bns_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
       REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_z

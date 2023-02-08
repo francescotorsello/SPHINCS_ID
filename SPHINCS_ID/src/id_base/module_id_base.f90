@@ -69,9 +69,6 @@ MODULE id_base
     !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
 
-    DOUBLE PRECISION, PUBLIC:: adm_mass
-    !! ADM mass of the BNS \([M_\odot]\)
-
     LOGICAL:: one_lapse
     !# Logical variable that determines if the lapse function \(\alpha=1\),
     !  i.e., if the geodesic gauge is to be used
@@ -92,7 +89,6 @@ MODULE id_base
     !! Timer that times the construction of the appropriate object
 
 
-    !PROCEDURE(finalize_sph_id_int), NOPASS, POINTER, PUBLIC::finalize_sph_id_ptr
     PROCEDURE(), POINTER, NOPASS, PUBLIC:: finalize_sph_id_ptr
     !# Pointer to a procedure that finalize the |sph| |id|; for example,
     !  correct for the residual ADM linear momentum.
@@ -110,10 +106,10 @@ MODULE id_base
     !
 
     PROCEDURE(read_double_at_pos),        DEFERRED:: read_mass_density
-    !# Returns the baryon mass density at the given point
+    !# Returns the baryon mass density from the |id| at the given point
 
-    !PROCEDURE(read_double_at_pos),        DEFERRED:: read_pressure
-    !# Returns the pressure at the given point
+    PROCEDURE(read_double_at_pos),        DEFERRED:: read_pressure
+    !# Returns the pressure from te |id| at the given point
 
     PROCEDURE(read_logical_at_pos),       DEFERRED:: test_position
     !# Returns `.TRUE.` if the position has physically acceptable properties,
@@ -152,8 +148,11 @@ MODULE id_base
     !  returning the array of 6 numbers
     !\(x_{\rm min},x_{\rm max},y_{\rm min},y_{\rm max},z_{\rm min},z_{\rm max}\)
 
-    PROCEDURE(return_double_parameter),   DEFERRED:: return_mass
+    PROCEDURE(return_double_at_object),   DEFERRED:: return_mass
     !! Returns the masses of the matter objects.
+
+    PROCEDURE(return_double),             DEFERRED:: return_adm_mass
+    !! Returns the ADM mass of the system
 
     PROCEDURE(return_position),           DEFERRED:: return_center
     !! Returns the centers of the matter objects.
@@ -167,6 +166,11 @@ MODULE id_base
 
     PROCEDURE(return_string_parameter),   DEFERRED:: return_eos_name
     !! Returns the name of the |eos| of the matter objects.
+
+
+    PROCEDURE(initialize_id_int), DEFERRED:: initialize_id
+    !# Initialize the |id|; for example, set up the lattices around the
+    !  stars for the |bns| produced with |fuka|.
 
     !
     !-- PROCEDURE that prints a summary of the physical properties the system
@@ -193,7 +197,7 @@ MODULE id_base
 
     PROCEDURE, NON_OVERRIDABLE:: sanity_check
     !# Checks that [[idbase:n_matter]] and the sizes returned by
-    ![[idbase:return_spatial_extent]] and [[idbase:get_total_spatial_extent]]
+    !  [[idbase:return_spatial_extent]] and [[idbase:get_total_spatial_extent]]
     !  are acceptable. It is called by initialize, after the constructor of the
     !  derived type.
 
@@ -287,27 +291,15 @@ MODULE id_base
   ABSTRACT INTERFACE
 
 
-   ! FUNCTION derived_type_constructor_int( &!derived_type,
-   ! filename ) RESULT( foo )
-   ! !#
-   !
-   !   IMPORT:: idbase
-   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-   !   !CLASS(idbase):: derived_type
-   !   CLASS(idbase), ALLOCATABLE:: foo
-   !
-   ! END FUNCTION derived_type_constructor_int
-
-
     SUBROUTINE derived_type_constructor_int( derived_type, filename )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
       IMPORT:: idbase
-      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
       !! |lorene| binary file containing the spectral DRS |id|
-      CLASS(idbase), INTENT( OUT ):: derived_type
+      CLASS(idbase),    INTENT(OUT)          :: derived_type
       !! Constructed [[diffstarlorene]] object
 
     END SUBROUTINE derived_type_constructor_int
@@ -318,13 +310,13 @@ MODULE id_base
     !  position
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN )          :: this
+      CLASS(idbase),    INTENT(IN)       :: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !! \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !! \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !! \(z\) coordinate of the desired point
       DOUBLE PRECISION:: res
       !! Real number at \((x,y,z)\)
@@ -336,13 +328,13 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns an INTEGER at a given position
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN )          :: this
+      CLASS(idbase),    INTENT(IN)       :: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !! \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !! \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !! \(z\) coordinate of the desired point
       INTEGER:: res
       !! Integer at \((x,y,z)\)
@@ -354,13 +346,13 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns a LOGICAL at a given position
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN )          :: this
+      CLASS(idbase),    INTENT(IN)       :: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !! \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !! \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !! \(z\) coordinate of the desired point
       LOGICAL:: res
       !! Logical at \((x,y,z)\)
@@ -368,25 +360,36 @@ MODULE id_base
     END FUNCTION read_logical_at_pos
 
 
-    FUNCTION return_double_parameter( this, i_matter ) RESULT( res )
+    FUNCTION return_double_at_object( this, i_matter ) RESULT( res )
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(idbase), INTENT(IN):: this
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION:: res
       !! Real number. Parameter of the `i_matter`-th matter object
 
-    END FUNCTION return_double_parameter
+    END FUNCTION return_double_at_object
+
+
+    FUNCTION return_double( this ) RESULT( res )
+    !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT(IN):: this
+      DOUBLE PRECISION:: res
+      !! Real number
+
+    END FUNCTION return_double
 
 
     FUNCTION return_position( this, i_matter ) RESULT( res )
     !# INTERFACE for a PROCEDURE that returns a DOUBLE PRECISION
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(idbase), INTENT(IN):: this
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(3):: res
       !# Centers of the matter objects. The first index runs over the matter
@@ -399,8 +402,8 @@ MODULE id_base
     !# INTERFACE for a PROCEDURE that returns an INTEGER
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(idbase), INTENT(IN):: this
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       INTEGER:: res
       !! Real number. Parameter of the `i_matter`-th matter object
@@ -413,8 +416,8 @@ MODULE id_base
     !  parametersf the |eos| for the matter objects
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(idbase), INTENT(IN):: this
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
       !# Array containing the parameters of the |eos| for the `i_matter`-th
@@ -424,14 +427,14 @@ MODULE id_base
 
 
     FUNCTION return_string_parameter( this, i_matter ) RESULT( string )
-    !# INTERFACE for a PROCEDURE that returns a CHARACTER( LEN= : )
+    !# INTERFACE for a PROCEDURE that returns a CHARACTER(LEN=:)
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: this
+      CLASS(idbase), INTENT(IN):: this
       !! [[idbase]] object which this PROCEDURE is a member of
-      INTEGER, INTENT( IN ):: i_matter
+      INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object whose string is to return
-      CHARACTER( LEN= : ), ALLOCATABLE:: string
+      CHARACTER(LEN=:), ALLOCATABLE:: string
 
     END FUNCTION return_string_parameter
 
@@ -444,60 +447,62 @@ MODULE id_base
       !  the baryon mass
 
       IMPORT:: idbase
-      CLASS(idbase),    INTENT( IN OUT ):: this
+      CLASS(idbase),    INTENT(INOUT):: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
-      DOUBLE PRECISION, INTENT( IN )    :: x
-      DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
-      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+      DOUBLE PRECISION, INTENT(IN)    :: x
+      DOUBLE PRECISION, INTENT(IN)    :: y
+      DOUBLE PRECISION, INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(6), INTENT(OUT):: g
+      DOUBLE PRECISION, INTENT(OUT):: baryon_density
+      DOUBLE PRECISION, INTENT(OUT):: gamma_euler
 
     END SUBROUTINE read_id_mass_b_int
 
 
     SUBROUTINE read_id_full_int( this, n, x, y, z, &
-                                      lapse, &
-                                      shift_x, shift_y, shift_z, &
-                                      g_xx, g_xy, g_xz, &
-                                      g_yy, g_yz, g_zz, &
-                                      k_xx, k_xy, k_xz, &
-                                      k_yy, k_yz, k_zz, &
-                                      baryon_density, &
-                                      energy_density, &
-                                      specific_energy, &
-                                      u_euler_x, u_euler_y, u_euler_z )
+                                 lapse, &
+                                 shift_x, shift_y, shift_z, &
+                                 g_xx, g_xy, g_xz, &
+                                 g_yy, g_yz, g_zz, &
+                                 k_xx, k_xy, k_xz, &
+                                 k_yy, k_yz, k_zz, &
+                                 baryon_density, &
+                                 energy_density, &
+                                 specific_energy, &
+                                 pressure, &
+                                 u_euler_x, u_euler_y, u_euler_z )
      !# INTERFACE or the SUBROUTINE reading the full |id|
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
-      CLASS(idbase),                  INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+      CLASS(idbase),                  INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_z
 
     END SUBROUTINE read_id_full_int
 
@@ -512,15 +517,15 @@ MODULE id_base
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
-      CLASS(idbase),                        INTENT( IN OUT ):: this
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: shift
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
+      CLASS(idbase),                        INTENT(INOUT):: this
+      INTEGER,                              INTENT(IN)    :: nx
+      INTEGER,                              INTENT(IN)    :: ny
+      INTEGER,                              INTENT(IN)    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN)    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: shift
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: g
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: ek
 
     END SUBROUTINE read_id_spacetime_int
 
@@ -537,16 +542,16 @@ MODULE id_base
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
-      CLASS(idbase),                        INTENT( IN OUT ):: this
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: u_euler
+      CLASS(idbase),                        INTENT(INOUT):: this
+      INTEGER,                              INTENT(IN)    :: nx
+      INTEGER,                              INTENT(IN)    :: ny
+      INTEGER,                              INTENT(IN)    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN)    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: u_euler
 
     END SUBROUTINE read_id_hydro_int
 
@@ -566,28 +571,28 @@ MODULE id_base
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
-      CLASS(idbase),                     INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+      CLASS(idbase),                  INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_z
 
     END SUBROUTINE read_id_particles_int
 
@@ -600,53 +605,19 @@ MODULE id_base
 
       IMPORT:: idbase
       !> [[idbase]] object which this PROCEDURE is a member of
-      CLASS(idbase),                     INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
+      CLASS(idbase),                  INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_zz
 
     END SUBROUTINE read_id_k_int
-
-
-  !  SUBROUTINE integrate_field_int( this, center, radius, &
-  !                                  central_density, &
-  !                                  dr, dth, dphi, &
-  !                                  mass, mass_profile, &
-  !                                  mass_profile_idx )
-  !  !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
-  !  !  compute the radial mass profile of a single star.
-  !
-  !    IMPORT:: idbase
-  !    !> Object of class [[idbase]] which this PROCEDURE is a member of
-  !    CLASS(idbase), INTENT( IN OUT )   :: this
-  !    !> Center of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: center
-  !    !> Central density of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: central_density
-  !    !> Radius of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: radius
-  !    !> Integration steps
-  !    DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
-  !    !> Integrated mass of the star
-  !    DOUBLE PRECISION, INTENT( IN OUT ):: mass
-  !    !> Array storing the radial mass profile of the star
-  !    !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
-  !    !                                 mass_profile
-  !    DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT( OUT ):: &
-  !                                         mass_profile
-  !    !& Array to store the indices for array mass_profile, sorted so that
-  !    !  mass_profile[mass_profile_idx] is in increasing order
-  !    !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
-  !    INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT( OUT ):: mass_profile_idx
-  !
-  !  END SUBROUTINE integrate_field_int
 
 
     FUNCTION return_spatial_extent_int( this, i_matter ) RESULT( box )
@@ -658,9 +629,9 @@ MODULE id_base
     !  system.
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN )   :: this
+      CLASS(idbase), INTENT(IN):: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
-      INTEGER, INTENT( IN ):: i_matter
+      INTEGER,       INTENT(IN):: i_matter
       !! Index of the matter object whose string is to return
       DOUBLE PRECISION, DIMENSION(6):: box
       !# 6-dimensional array containing the coordinates
@@ -677,11 +648,25 @@ MODULE id_base
     !  is given as the optional argument `filename`
 
       IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: this
-      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      CLASS(idbase),    INTENT(IN):: this
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
     END SUBROUTINE print_summary_int
+
+
+    SUBROUTINE initialize_id_int( this, flag, switch )
+    !# Initialize the |id|; for example, set up the lattices around the
+    !  stars for the |bns| produced with |fuka|.
+
+      IMPORT:: idbase
+      CLASS(idbase), INTENT(INOUT)       :: this
+      INTEGER,       INTENT(IN)          :: flag
+      !! Identifies what kind of initialization has to be done
+      LOGICAL,       INTENT(IN), OPTIONAL:: switch
+      !! If `.TRUE.`, switch to a different initialization
+
+    END SUBROUTINE initialize_id_int
 
 
     SUBROUTINE finalize_sph_id_int &
@@ -719,41 +704,13 @@ MODULE id_base
   INTERFACE
 
 
-!MODULE SUBROUTINE post_process_sph_id &
-!  ( this, npart, pos, nlrf, u, pr, vel_u, theta, nstar, nu )
-!!# Post-process the |sph| |id|; for example, correct for the residual
-!!  ADM linear momentum.
-!
-!  CLASS(idbase),                        INTENT(IN)   :: this
-!  INTEGER,                              INTENT(IN)   :: npart
-!  !! Particle number
-!  DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
-!  !! Particle positions
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nlrf
-!  !! Baryon density in the local rest frame on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: u
-!  !! Specific internal energy on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: pr
-!  !! Pressure on the particles
-!  DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: vel_u
-!  !! Spatial velocity in the computing frame on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: theta
-!  !! Generalized Lorentz factor on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nstar
-!  !! Proper baryon density in the local rest frame on the particles
-!  DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
-!  !! Baryon number per particle
-!
-!END SUBROUTINE post_process_sph_id
-
-
     MODULE SUBROUTINE sanity_check( derived_type )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
       !IMPORT:: idbase
-      CLASS(idbase), INTENT( IN ):: derived_type
+      CLASS(idbase), INTENT(IN):: derived_type
 
     END SUBROUTINE sanity_check
 
@@ -763,43 +720,42 @@ MODULE id_base
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
       !! |lorene| binary file containing the spectral DRS ID
-      CLASS(idbase), INTENT( OUT ):: derived_type
+      CLASS(idbase),    INTENT(OUT)          :: derived_type
       !! Constructed [[diffstarlorene]] object
 
     END SUBROUTINE initialize
 
 
-    MODULE SUBROUTINE integrate_baryon_mass_density( this, center, radius, &
-                                                     central_density, &
-                                                     dr, dth, dphi, &
-                                                     mass, mass_profile, &
-                                                     mass_profile_idx )
+    MODULE SUBROUTINE integrate_baryon_mass_density &
+      ( this, center, radius, central_density, dr, dth, dphi, &
+        mass, mass_profile, mass_profile_idx, radii )
     !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
     !  compute the radial mass profile of a single star.
 
       !> Object of class [[idbase]] which this PROCEDURE is a member of
-      CLASS(idbase), INTENT( IN OUT )   :: this
+      CLASS(idbase),                  INTENT(INOUT):: this
       !> Center of the star
-      DOUBLE PRECISION, INTENT( IN )    :: center
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN)   :: center
       !> Central density of the star
-      DOUBLE PRECISION, INTENT( IN )    :: central_density
+      DOUBLE PRECISION,               INTENT(IN)   :: central_density
       !> Radius of the star
-      DOUBLE PRECISION, INTENT( IN )    :: radius
+      DOUBLE PRECISION,               INTENT(IN)   :: radius
       !> Integration steps
-      DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+      DOUBLE PRECISION,               INTENT(IN)   :: dr, dth, dphi
       !> Integrated mass of the star
-      DOUBLE PRECISION, INTENT( IN OUT ):: mass
+      DOUBLE PRECISION,               INTENT(INOUT):: mass
       !> Array storing the radial mass profile of the star
-      !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: &
+      !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: &
       !                                 mass_profile
-      DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT( OUT ):: &
+      DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT(OUT):: &
                                            mass_profile
       !& Array to store the indices for array mass_profile, sorted so that
       !  mass_profile[mass_profile_idx] is in increasing order
-      !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( INOUT ):: mass_profile_idx
-      INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT( OUT ):: mass_profile_idx
+      !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
+      INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
+      DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
 
     END SUBROUTINE integrate_baryon_mass_density
 
@@ -808,7 +764,7 @@ MODULE id_base
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
-      CLASS(idbase), INTENT( IN ):: this
+      CLASS(idbase), INTENT(IN):: this
       INTEGER:: get_n_matter
       !! [[idbase:n_matter]], the number of matter objects in the
       !  physical system
@@ -820,8 +776,8 @@ MODULE id_base
     !# Sets [[idbase:n_matter]], the number of matter objects in the
     !  physical system, to the given value
 
-      CLASS(idbase), INTENT( IN OUT ):: this
-      INTEGER, INTENT( IN ):: value
+      CLASS(idbase), INTENT(INOUT):: this
+      INTEGER, INTENT(IN):: value
       !! Value to set [[idbase:n_matter]] to
 
     END SUBROUTINE set_n_matter
@@ -831,7 +787,7 @@ MODULE id_base
     !# Returns [[idbase:cold_system]], the `LOGICAL` variable at specifies if
     !  the system is cold (no thermal component)
 
-      CLASS(idbase), INTENT( IN ):: this
+      CLASS(idbase), INTENT(IN):: this
       LOGICAL:: get_cold_system
       !! [[idbase:cold_system]]
 
@@ -842,8 +798,8 @@ MODULE id_base
     !# Sets [[idbase:cold_system]], the `LOGICAL` variable at specifies if
     !  the system is cold (no thermal component)
 
-      CLASS(idbase), INTENT( IN OUT ):: this
-      LOGICAL, INTENT( IN ):: value
+      CLASS(idbase), INTENT(INOUT):: this
+      LOGICAL, INTENT(IN):: value
       !! Value to set [[idbase:cold_system]] to
 
     END SUBROUTINE set_cold_system
@@ -854,7 +810,7 @@ MODULE id_base
     !  that specifies if a typical length scale, equal to the ratio
     !  of a field over its gradient, should be computed
 
-      CLASS(idbase), INTENT( IN ):: this
+      CLASS(idbase), INTENT(IN):: this
       LOGICAL:: get_estimate_length_scale
       !! [[idbase:estimate_length_scale]]
 
@@ -866,8 +822,8 @@ MODULE id_base
     !  that specifies if a typical length scale, equal to the ratio
     !  of a field over its gradient, should be computed
 
-      CLASS(idbase), INTENT( IN OUT ):: this
-      LOGICAL, INTENT( IN ):: value
+      CLASS(idbase), INTENT(INOUT):: this
+      LOGICAL, INTENT(IN):: value
       !! Value to set [[idbase:cold_system]] to
 
     END SUBROUTINE set_estimate_length_scale
@@ -878,8 +834,8 @@ MODULE id_base
     !  [[idbase:n_matter]], included. If not, it stops the execution of the
     !  program.
 
-      CLASS(idbase), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(idbase), INTENT(IN):: this
+      INTEGER, INTENT(IN):: i_matter
       !! Value to be checked
 
     END SUBROUTINE check_i_matter
@@ -893,7 +849,7 @@ MODULE id_base
     !  of a box **centered at the center of the object** and containing the
     !  system.
 
-      CLASS(idbase), INTENT( IN )   :: this
+      CLASS(idbase), INTENT(IN)   :: this
       !! Object of class [[idbase]] which this PROCEDURE is a member of
       DOUBLE PRECISION, DIMENSION(6):: box
       !# 6-dimensional array containing the coordinates
@@ -908,7 +864,7 @@ MODULE id_base
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
-      CLASS(idbase), INTENT( IN ):: this
+      CLASS(idbase), INTENT(IN):: this
       LOGICAL:: get_one_lapse
       !! [[idbase:n_matter]], the number of matter objects in the
       !  physical system
@@ -920,8 +876,8 @@ MODULE id_base
     !# Sets [[idbase:n_matter]], the number of matter objects in the
     !  physical system, to the given value
 
-      CLASS(idbase), INTENT( IN OUT ):: this
-      LOGICAL, INTENT( IN ):: logic
+      CLASS(idbase), INTENT(INOUT):: this
+      LOGICAL, INTENT(IN):: logic
       !! Value to set [[idbase:n_matter]] to
 
     END SUBROUTINE set_one_lapse
@@ -931,7 +887,7 @@ MODULE id_base
     !# Returns [[idbase:n_matter]], the number of matter objects in the
     !  physical system
 
-      CLASS(idbase), INTENT( IN ):: this
+      CLASS(idbase), INTENT(IN):: this
       LOGICAL:: get_zero_shift
       !! [[idbase:n_matter]], the number of matter objects in the
       !  physical system
@@ -943,8 +899,8 @@ MODULE id_base
     !# Sets [[idbase:n_matter]], the number of matter objects in the
     !  physical system, to the given value
 
-      CLASS(idbase), INTENT( IN OUT ):: this
-      LOGICAL, INTENT( IN ):: logic
+      CLASS(idbase), INTENT(INOUT):: this
+      LOGICAL, INTENT(IN):: logic
       !! Value to set [[idbase:n_matter]] to
 
     END SUBROUTINE set_zero_shift
@@ -958,7 +914,7 @@ MODULE id_base
     !  Presently, the derivatives are computed separately along each spatial
     !  dimension, as 1D derivatives.
 
-      CLASS(idbase), INTENT( IN OUT ):: this
+      CLASS(idbase), INTENT(INOUT):: this
       INTERFACE
         FUNCTION get_field( x, y, z ) RESULT( val )
           !! Returns the value of a field at the desired point
@@ -973,7 +929,7 @@ MODULE id_base
         END FUNCTION get_field
       END INTERFACE
 
-      INTEGER, INTENT( IN ):: n_mat
+      INTEGER, INTENT(IN):: n_mat
       ! Number of matter objects in the physical ystem
       DOUBLE PRECISION, DIMENSION(n_mat):: scales
       !# Array of the minimum \(\dfrac{f}{\partial f}\) over the lattices that

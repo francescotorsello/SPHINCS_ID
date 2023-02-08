@@ -61,7 +61,8 @@ SUBMODULE (sph_particles) recovery
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
                                     deallocate_metric_on_particles, &
                                     g4_ll
-    USE utility,              ONLY: compute_g4, determinant_sym4x4, zero, one
+    USE utility,              ONLY: compute_g4, determinant_sym4x4, zero, &
+                                    one, sph_path
 
     IMPLICIT NONE
 
@@ -200,7 +201,7 @@ SUBMODULE (sph_particles) recovery
       ELSE
         WRITE( i_mat, "(I1)" ) i_matter
       ENDIF
-      finalnamefile= "recovery_test-"//TRIM(i_mat)//".dat"
+      finalnamefile= TRIM(sph_path)//"recovery_test-"//TRIM(i_mat)//".dat"
 
       ASSOCIATE( npart_in   => this% npart_i(i_matter-1) + 1, &
                  npart_fin  => this% npart_i(i_matter-1) +    &
@@ -282,13 +283,13 @@ SUBMODULE (sph_particles) recovery
 
       print_data_loop: DO a = npart_in, npart_fin, 1
 
-        IF( THIS% export_form_xy .AND. &
+        IF( this% export_form_xy .AND. &
             ( pos( 3, a ) >=  0.5D0 .OR. &
               pos( 3, a ) <= -0.5D0 ) &
         )THEN
           CYCLE
         ENDIF
-        IF( THIS% export_form_x .AND. &
+        IF( this% export_form_x .AND. &
             ( pos( 3, a ) >=  0.5D0 .OR. &
               pos( 3, a ) <= -0.5D0 .OR. &
               pos( 2, a ) >=  0.5D0 .OR. &

@@ -706,8 +706,8 @@ SUBMODULE (sph_particles) handle_positions
 
     IMPLICIT NONE
 
-    INTEGER a
-    DOUBLE PRECISION diff(dimensions),d2,r_int2
+    INTEGER:: a
+    DOUBLE PRECISION:: diff(dimensions), d2, r_int2
 
     ! square of interaction radius
     r_int2= (2.D0*h(ipart))**2
@@ -735,6 +735,38 @@ SUBMODULE (sph_particles) handle_positions
     !$OMP END PARALLEL DO
 
   END PROCEDURE get_neighbours_bf
+
+
+  MODULE PROCEDURE get_object_of_particle
+
+    !**************************************************************
+    !
+    !# Returns the number of the matter object asociated with the particle
+    !  number given as input. Example: give number \(n\) as input; this
+    !  particle number corresponds to a particle on matter object \(m\).
+    !  This functions returns \(m\).
+    !
+    !  FT 05.12.2022
+    !
+    !**************************************************************
+
+    IMPLICIT NONE
+
+    INTEGER:: i_matter
+
+    DO i_matter= 1, this% n_matter, 1
+
+      IF(a > this% npart_fin(i_matter - 1) &
+         .AND. a <= this% npart_fin(i_matter))THEN
+
+        get_object_of_particle= i_matter
+        RETURN
+
+      ENDIF
+
+    ENDDO
+
+  END PROCEDURE get_object_of_particle
 
 
 END SUBMODULE handle_positions

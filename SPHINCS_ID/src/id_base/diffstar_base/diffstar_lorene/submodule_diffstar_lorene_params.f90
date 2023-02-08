@@ -46,7 +46,7 @@ SUBMODULE (diffstar_lorene) params
   !-------------------!
 
 
-  MODULE PROCEDURE import_diffstar_params
+  MODULE PROCEDURE read_diffstar_params
 
     !***************************************************
     !
@@ -59,7 +59,8 @@ SUBMODULE (diffstar_lorene) params
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR, C_NULL_CHAR
     USE utility, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                       k_lorene2hydrobase_piecewisepolytrope, zero, two
+                       k_lorene2hydrobase_piecewisepolytrope, zero, two, &
+                       eos$poly, eos$pwpoly
 
 #if flavour == 1
 
@@ -79,7 +80,7 @@ SUBMODULE (diffstar_lorene) params
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_tmp_c
 
     PRINT *
-    PRINT *, "** Executing the import_diffstar_params subroutine..."
+    PRINT *, "** Executing the read_diffstar_params subroutine..."
 
     CALL get_diffstar_params( this% diffstar_ptr,                   &
                               this% omega_c,                        &
@@ -164,12 +165,16 @@ SUBMODULE (diffstar_lorene) params
     this% pressure_center       = this% pressure_center*lorene2hydrobase
 
     ! Convert polytropic constants from |lorene| units to SPHINCS units
-    IF( this% eos_loreneid == 1 )THEN ! If the EOS is polytropic
+    IF( this% eos_loreneid == 1 )THEN
+    ! If the EOS is polytropic
 
+      this% eos_id= eos$poly
       this% kappa= this% kappa*k_lorene2hydrobase( this% gamma )
 
-    ELSEIF( this% gamma0 /= 0 )THEN ! If the EOS is piecewise polytropic
+    ELSEIF( this% gamma0 /= 0 )THEN
+    ! If the EOS is piecewise polytropic
 
+      this% eos_id = eos$pwpoly
       this% kappa0= this% kappa0 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma0 )
       this% kappa1= this% kappa1 &
@@ -179,12 +184,12 @@ SUBMODULE (diffstar_lorene) params
       this% kappa3= this% kappa3 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma3 )
 
-    ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
+    !ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
     ! If the EOS is tabulated
 
     ELSE
 
-      PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+      PRINT *, "** ERROR in SUBROUTINE read_lorene_id_params!", &
                " The equation of state is unknown! LORENE EOS IDs=", &
                this% eos_loreneid, ", ", this% eos_loreneid
       STOP
@@ -212,10 +217,10 @@ SUBMODULE (diffstar_lorene) params
 
     CALL print_diffstar_params( this )
 
-    PRINT *, "** Subroutine import_diffstar_params executed."
+    PRINT *, "** Subroutine read_diffstar_params executed."
     PRINT *
 
-  END PROCEDURE import_diffstar_params
+  END PROCEDURE read_diffstar_params
 
 
 END SUBMODULE params

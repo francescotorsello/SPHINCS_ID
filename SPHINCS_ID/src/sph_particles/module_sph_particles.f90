@@ -42,12 +42,12 @@ MODULE sph_particles
   IMPLICIT NONE
 
 
-  INTEGER, PARAMETER:: id_particles_from_file            = 0
+  INTEGER, PARAMETER:: id_particles_from_formatted_file  = 0
   !! Identifier for a particle distribution read from formatted file
   INTEGER, PARAMETER:: id_particles_on_lattice           = 1
   !! Identifier for a particle distribution on a lattice
-  INTEGER, PARAMETER:: id_particles_on_spherical_surfaces= 2
-  !! Identifier for particle distribution on spherical surfaces
+  INTEGER, PARAMETER:: id_particles_on_ellipsoidal_surfaces= 2
+  !! Identifier for particle distribution on ellipsoidal surfaces
 
   INTEGER, PARAMETER:: max_it_tree= 1
   !# When computing the neighbours' tree with the SUBROUTINE
@@ -63,6 +63,9 @@ MODULE sph_particles
   !  the smoothing lengths are computed brute-force using the SUBROUTINE
   !  [[sph_particles:find_h_backup]], so that such particles have exactly
   !  300 neighbours.
+  !
+  !  @warning This is DEPRECATED because the problem in the neighbor's tree
+  !           was solved.
 
 
   !
@@ -100,9 +103,10 @@ MODULE sph_particles
   !# Fourteenth component of array [[eos:eos_parameters]] for a piecewise
   !  polytropic |eos|
 
-  TYPE eos
+  TYPE:: eos
   !! Data structure representing an |eos|
-    CHARACTER( LEN= : ), ALLOCATABLE:: eos_name
+
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_name
     !! The |eos| name
     DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: eos_parameters
     !# Array containing the |eos| parameters, in the following order:
@@ -120,7 +124,8 @@ MODULE sph_particles
     ! polytropic constant in units of
     ! \(\left(M_\odot L_\odot^{-3}\right)^{1-\gamma}\). Pressure and baryon
     ! mass density have the same units \(M_\odot L_\odot^{-3}\) since \(c^2=1\).
-  END TYPE
+
+  END TYPE eos
 
 
   !***********************************************************
@@ -147,6 +152,8 @@ MODULE sph_particles
     !! Number of matter objects in the physical system
     INTEGER, DIMENSION(:), ALLOCATABLE:: npart_i
     !! Array storing the particle numbers for the matter objects
+    INTEGER, DIMENSION(:), ALLOCATABLE:: npart_fin
+    !! Array storing the index of the last particle for each matter objects
     INTEGER:: distribution_id
     !! Identification number for the particle distribution
     INTEGER:: call_flag= 0
@@ -160,6 +167,8 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(4):: barycenter_system
     !# Array storing the center of mass of the **entire particle distribution**
 
+    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: surfaces
+    !# Array storing the surfaces of the matter objects
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
     !# Array storing the indices to use with [[particles:baryon_density]]
@@ -183,12 +192,12 @@ MODULE sph_particles
     !& 1-D array storing the specific internal energy \([c^2]\) computed using
     !  formula (9) in Read et al., Phys.Rev.D79:124032,2009,
     !  [arXiv:0812.2163][https://arxiv.org/abs/0812.2163]{:target="_blank"}
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: u_pwp
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: u_sph
     !> 1-D array storing the pressure \([\mathrm{kg}\,c^2\,\mathrm{m}^{-3}]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure
     !& 1-D array storing the pressure in code units
     !  \([\mathrm{amu}\,c^2\,\mathrm{L_\odot}^{-3}]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_cu
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pressure_sph
     !& 1-D array storing the x component of the fluid 3-velocity wrt
     !  the Eulerian observer \([c]\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: v_euler_x
@@ -255,8 +264,8 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf
     !& 1-D array storing baryon density in the local rest frame
     !  \([\mathrm{baryon}\, (L_\odot)^{-3}]\), computed from the kernel
-    !  interpolated proper baryon number density [[particles:nstar_int]]
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_int
+    !  interpolated proper baryon number density [[particles:nstar_sph]]
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nlrf_sph
     !> 1-D array storing the baryon number per particle
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nu
     !& 1-D array storing the SPH estimate of the proper baryon number density
@@ -267,10 +276,10 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density
     !& 1-D array storing the SPH estimate of the proper baryon number density,
     !  from kernel interpolation \([\mathrm{baryon}\, (L_\odot)^{-3}]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_int
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: nstar_sph
     !& 1-D array storing the SPH estimate of the particle number density, from
     !  kernel interpolation \([\mathrm{particle}\, (L_\odot)^{-3}]\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density_int
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: particle_density_sph
     !> 1-D array storing the enthalpy \([??]\) @todo add units
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: enthalpy
     !> 2-D array storing the coordinate fluid 4-velocity \([c]\)
@@ -284,8 +293,6 @@ MODULE sph_particles
     !> 1-D array storing the particle volumes \(L_\odot^3\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
     !> 1-D array storing the particle masses \(M_\odot\)
-    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pmass
-    !> Baryonic masses of the matter objects \(M_\odot\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
     !& Ratio between baryonic masses of the matter objects and the maximum
     !  baryonic mass among them @warning always \(< 1\)
@@ -322,10 +329,10 @@ MODULE sph_particles
     CHARACTER( LEN= 50 ):: sphincs_id_particles
     !! String containing the name of the particles parameter file
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: compose_path
+    CHARACTER(LEN=:), ALLOCATABLE:: compose_path
     !# String storing the local path to the directory containing the
     !  CompOSE |eos|
-    CHARACTER( LEN= : ), ALLOCATABLE:: compose_filename
+    CHARACTER(LEN=:), ALLOCATABLE:: compose_filename
     !# String storing the subpath of compose_path to the CompOSE file with
     !  .beta extension
 
@@ -376,13 +383,13 @@ MODULE sph_particles
     !  @todo Chamge name of this variable to assign_Ye_compose. Check that
     !        the used EOS is indeed the one used to read \(Y_e\)
     LOGICAL:: compose_eos
-    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !& `.TRUE.` if the particle positions on ellipsoidal surfaces are randomized
     !  in the \(\phi\) direction, `.FALSE.` otherwise
     LOGICAL:: randomize_phi
-    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !& `.TRUE.` if the particle positions on ellipsoidal surfaces are randomized
     !  in the \(\theta\) direction, `.FALSE.` otherwise
     LOGICAL:: randomize_theta
-    !& `.TRUE.` if the particle positions on spherical surfaces are randomized
+    !& `.TRUE.` if the particle positions on ellipsoidal surfaces are randomized
     !  in the \(r\) direction, `.FALSE.` otherwise
     LOGICAL:: randomize_r
     !& `.TRUE.` if the Artificial Pressure Method (APM) has to be applied to the
@@ -428,15 +435,36 @@ MODULE sph_particles
     !--  SUBROUTINES  --!
     !-------------------!
 
+    PROCEDURE:: read_particles_formatted_file
+    !# Read particle positions and nu from a formatted file with the following
+    !  format:
+    !
+    !   1. The first line must contain the integer number of objects for the
+    !      system, and the particle numbers on each object;
+    !      each column separated by one tab.
+    !   2. The other lines must contain at least 3 columns with the x, y, z
+    !      coordinates of the particle positions. An optional 4th column can
+    !      contain the values of nu on the particles. If the 4th column is
+    !      not present, nu will be roughly estimated using the density read
+    !      from the ID and the average volume per particle; the latter is
+    !      computed by computing the average particle separation along the
+    !      z direction.
+
     PROCEDURE:: place_particles_lattice
     !! Places particles on a single lattice that surrounds both stars
 
-    PROCEDURE:: place_particles_spherical_surfaces
-    !! Places particles on spherical surfaces on one star
+    PROCEDURE:: place_particles_ellipsoidal_surfaces
+    !! Places particles on ellipsoidal surfaces on one star
 
     PROCEDURE, NOPASS:: impose_equatorial_plane_symmetry
     !# Reflects the positions of the particles on a matter object with respect
     !  to the \(xy\) plane
+
+    PROCEDURE:: get_object_of_particle
+    !# Returns the number of the matter object asociated with the particle
+    !  number given as input. Example: give number \(n\) as input; this
+    !  particle number corresponds to a particle on matter object \(m\).
+    !  This functions returns \(m\).
 
     PROCEDURE, NOPASS:: perform_apm
     !! Performs the Artificial Pressure Method (APM) on one star's particles
@@ -455,6 +483,15 @@ MODULE sph_particles
     PROCEDURE:: deallocate_particles_memory
     !! Deallocates memory for the [[particles]] member arrays
 
+    PROCEDURE:: compute_sph_hydro
+    !# Computes the hydro fields on a section of the particles specified as
+    !  input.
+    !  First, computes the |sph| pressure starting from the |sph| baryon mass
+    !  density, and the specific internal
+    !  energy. The pressure is computed differently for different |eos|, and
+    !  for cold and hot systems.
+    !  Then computes the enthalpy and the sound speed accordingly.
+
     PROCEDURE:: read_compose_composition
     !! Reads the \(Y_e(n_b)\) table in the CompOSE file with extension .beta
 
@@ -470,6 +507,7 @@ MODULE sph_particles
     !PROCEDURE:: compute_adm_momentum
     !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum using
     !  the canonical momentum per baryon on the particles
+
 
     !
     !-- PUBLIC SUBROUTINES
@@ -524,21 +562,21 @@ MODULE sph_particles
     PROCEDURE, PUBLIC:: get_nstar
     !! Returns [[particles:nstar]]
     PROCEDURE, PUBLIC:: get_nstar_sph
-    !! Returns [[particles:nstar_int]]
+    !! Returns [[particles:nstar_sph]]
     PROCEDURE, PUBLIC:: get_nlrf
     !! Returns [[particles:nlrf]]
     PROCEDURE, PUBLIC:: get_nlrf_sph
-    !! Returns [[particles:nlrf_int]]
+    !! Returns [[particles:nlrf_sph]]
     PROCEDURE, PUBLIC:: get_nu
     !! Returns [[particles:nu]]
     PROCEDURE, PUBLIC:: get_u
     !! Returns [[particles:specific_energy]]
     PROCEDURE, PUBLIC:: get_u_sph
-    !! Returns [[particles:u_pwp]]
+    !! Returns [[particles:u_sph]]
     PROCEDURE, PUBLIC:: get_pressure
     !! Returns [[particles:pressure]]
-    PROCEDURE, PUBLIC:: get_pressure_cu
-    !! Returns [[particles:pressure_cu]]
+    PROCEDURE, PUBLIC:: get_pressure_sph
+    !! Returns [[particles:pressure_sph]]
     PROCEDURE, PUBLIC:: get_theta
     !! Returns [[particles:theta]]
     PROCEDURE, PUBLIC:: get_h
@@ -627,7 +665,7 @@ MODULE sph_particles
         !  - 1: Place particles on several lattices, each one surrounding a
         !       matter object
         !
-        !  - 3: Place particles on spherical surfaces inside each matter object
+        !  - 3: Place particles on ellipsoidal surfaces inside each matter object
         !
         TYPE(particles):: parts
         !! Constructed [[particles]] object
@@ -641,7 +679,7 @@ MODULE sph_particles
         CLASS(idbase), INTENT(INOUT):: id
         !# [[idbase]] object representing the BNS for which we want to place
         !  particles
-        CHARACTER( LEN= * ), INTENT(INOUT) :: namefile
+        CHARACTER(LEN=*), INTENT(INOUT) :: namefile
         !! Name of the |id| binary file
         TYPE(particles):: parts
         !! Constructed [[particles]] object
@@ -671,141 +709,103 @@ MODULE sph_particles
     !-------------------!
 
 
+    MODULE SUBROUTINE read_particles_formatted_file &
+      ( this, parts_pos_unit, nline_in, nline_fin, &
+        xmin, xmax, ymin, ymax, zmin, zmax, &
+        pos, pvol, nu, h )
+    !# Read particle positions and nu from a formatted file with the following
+    !  format:
+    !
+    !   1. The first line must contain the integer number of objects for the
+    !      system, and the particle numbers on each object;
+    !      each column separated by one tab.
+    !   2. The other lines must contain at least 3 columns with the x, y, z
+    !      coordinates of the particle positions. An optional 4th column can
+    !      contain the values of nu on the particles. If the 4th column is
+    !      not present, nu will be roughly estimated using the density read
+    !      from the ID and the average volume per particle; the latter is
+    !      computed by computing the average particle separation along the
+    !      z direction.
+
+
+      CLASS(particles), INTENT(INOUT):: this
+      !! [[particles]] object which this PROCEDURE is a member of
+      !CHARACTER(LEN=*), INTENT(IN)   :: parts_pos_namefile
+      !# String containing the name of the formatted file containing the
+      !  particle positions and, optionally, nu
+      INTEGER:: parts_pos_unit
+      !# Unit number of the formatted file containing the particle positions
+      !  and, optionally, nu
+      INTEGER:: nline_in
+      !! First line containing the relevant data
+      INTEGER:: nline_fin
+      !! Last line containing the relevant data
+      DOUBLE PRECISION, INTENT(IN)    :: xmin
+      !! Left \(x\) boundary of the lattice
+      DOUBLE PRECISION, INTENT(IN)    :: xmax
+      !! Right \(x\) boundary of the lattice
+      DOUBLE PRECISION, INTENT(IN)    :: ymin
+      !! Left \(y\) boundary of the lattice
+      DOUBLE PRECISION, INTENT(IN)    :: ymax
+      !! Right \(y\) boundary of the lattice
+      DOUBLE PRECISION, INTENT(IN)    :: zmin
+      !! Left \(z\) boundary of the lattice
+      DOUBLE PRECISION, INTENT(IN)    :: zmax
+      !! Right \(z\) boundary of the lattice
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
+      !> Array storing the particle positions
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: pvol
+      !! Array storing the particle volumes
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: nu
+      !! Array storing the particle baryon masses
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: h
+      !! Array storing the initial guess for the particle smoothing lengths
+
+    END SUBROUTINE read_particles_formatted_file
+
+
     MODULE SUBROUTINE place_particles_lattice( this, &
                                   central_density, &
                                   xmin, xmax, ymin, ymax, zmin, zmax, &
                                   npart_des, npart_out, stretch, &
-                                  thres, pos, pvol, &
-                                  get_density, validate_position )
+                                  thres, pos, pvol, nu, h, &
+                                  get_density, get_id, validate_position )
     !! Places particles on a lattice containing a physical object
 
-      CLASS(particles), INTENT( IN OUT ):: this
+      CLASS(particles), INTENT(INOUT):: this
       !! [[particles]] object which this PROCEDURE is a member of
-      DOUBLE PRECISION, INTENT( IN )    :: central_density
+      DOUBLE PRECISION, INTENT(IN)    :: central_density
       !! Maximum baryon mass density of the system
-      DOUBLE PRECISION, INTENT( IN )    :: xmin
+      DOUBLE PRECISION, INTENT(IN)    :: xmin
       !! Left \(x\) boundary of the lattice
-      DOUBLE PRECISION, INTENT( IN )    :: xmax
+      DOUBLE PRECISION, INTENT(IN)    :: xmax
       !! Right \(x\) boundary of the lattice
-      DOUBLE PRECISION, INTENT( IN )    :: ymin
+      DOUBLE PRECISION, INTENT(IN)    :: ymin
       !! Left \(y\) boundary of the lattice
-      DOUBLE PRECISION, INTENT( IN )    :: ymax
+      DOUBLE PRECISION, INTENT(IN)    :: ymax
       !! Right \(y\) boundary of the lattice
-      DOUBLE PRECISION, INTENT( IN )    :: zmin
+      DOUBLE PRECISION, INTENT(IN)    :: zmin
       !! Left \(z\) boundary of the lattice
-      DOUBLE PRECISION, INTENT( IN )    :: zmax
+      DOUBLE PRECISION, INTENT(IN)    :: zmax
       !! Right \(z\) boundary of the lattice
-      INTEGER,          INTENT( IN )    :: npart_des
+      INTEGER,          INTENT(IN)    :: npart_des
       !! Desired particle number
-      INTEGER,          INTENT( OUT )   :: npart_out
+      INTEGER,          INTENT(OUT)   :: npart_out
       !! Real, output particle number
-      DOUBLE PRECISION, INTENT( IN )    :: stretch
+      DOUBLE PRECISION, INTENT(IN)    :: stretch
       !! Stretching factor fo the lattice. `xmin` to `zmax` are multiplied by it
-      DOUBLE PRECISION, INTENT( IN )    :: thres
+      DOUBLE PRECISION, INTENT(IN)    :: thres
       !# (~rho_max)/thres is the minimum mass density considered
       ! when placing particles. Used only when redistribute_nu is
       ! .FALSE. . When redistribute_nu is .TRUE. thres= 100*nu_ratio
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos
-      !> Array soring the inal particle volumes
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pvol
-      !! Array storing the final particle volumes
-      INTERFACE
-        FUNCTION get_density( x, y, z ) RESULT( density )
-          !! Returns the baryon mass density at the desired point
-          DOUBLE PRECISION, INTENT(IN):: x
-          !! \(x\) coordinate of the desired point
-          DOUBLE PRECISION, INTENT(IN):: y
-          !! \(y\) coordinate of the desired point
-          DOUBLE PRECISION, INTENT(IN):: z
-          !! \(z\) coordinate of the desired point
-          DOUBLE PRECISION:: density
-          !! Baryon mass density at \((x,y,z)\)
-        END FUNCTION get_density
-      END INTERFACE
-      INTERFACE
-        FUNCTION validate_position_int( x, y, z ) RESULT( answer )
-        !! Returns 1 if the position is not valid, 0 otherwise
-          DOUBLE PRECISION, INTENT(IN):: x
-          !! \(x\) coordinate of the desired point
-          DOUBLE PRECISION, INTENT(IN):: y
-          !! \(y\) coordinate of the desired point
-          DOUBLE PRECISION, INTENT(IN):: z
-          !! \(z\) coordinate of the desired point
-          LOGICAL:: answer
-          !! `.TRUE.` if the position is valid, `.FALSE.` otherwise
-        END FUNCTION validate_position_int
-      END INTERFACE
-      !> Returns 1 if the position is not valid, 0 otherwise
-      PROCEDURE(validate_position_int), OPTIONAL:: validate_position
-
-    END SUBROUTINE place_particles_lattice
-
-
-    MODULE SUBROUTINE place_particles_spherical_surfaces( this, &
-                                  mass_star, radius, center, &
-                                  central_density, npart_des, &
-                                  npart_out, pos, pvol, pmass, &
-                                  last_r, upper_bound, lower_bound, &
-                                  upper_factor, lower_factor, max_steps, &
-                                  filename_mass_profile, &
-                                  filename_shells_radii, &
-                                  filename_shells_pos, &
-                                  get_density, integrate_density, &
-                                  get_id, validate_position, pmass_des )
-    !! Places particles on spherical surfaces on one star
-
-      !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: this
-      !& [[idbase]] object needed to access the BNS data
-      !  @TODO Remove the [[idbase]] argument as done in SUBROUTINE perform_apm
-      !CLASS(idbase),       INTENT( IN OUT ):: id
-      !> Approximate particle number on the star
-      INTEGER,          INTENT( IN )    :: npart_des
-      !> Final number of particles on the star
-      INTEGER,          INTENT( OUT )   :: npart_out
-      !& If, after max_steps, the iteration did not converge,
-      !  multiply upper_bound by upper_factor, and lower_bound
-      !  by lower_factor. max_steps >= 10. 100 is a nice value
-      INTEGER,          INTENT( IN )    :: max_steps
-      !> Baryonic mass of the star
-      DOUBLE PRECISION, INTENT( IN )    :: mass_star
-      !> Radius of the star in the x direction towards the companion
-      DOUBLE PRECISION, INTENT( IN )    :: radius
-      !& \(x|) coordinate of the center of the star, i.e.,
-      !  of the point with highest density
-      DOUBLE PRECISION, INTENT( IN )    :: center
-      !> Central density of the star, i.e., highest density
-      DOUBLE PRECISION, INTENT( IN )    :: central_density
-      !> Radius of the last spherical surface
-      DOUBLE PRECISION, INTENT( IN )    :: last_r
-      !& If, after max_steps, the iteration did not converge,
-      !  multiply upper_bound by upper_factor, and lower_bound
-      !  by lower_factor. upper_factor >= 1, usually an increase of 1% works
-      DOUBLE PRECISION, INTENT( IN )    :: upper_factor
-      !& If, after max_steps, the iteration did not converge,
-      !  multiply upper_bound by upper_factor, and lower_bound
-      !  by lower_factor. lower_factor <= 1, usually a decrease of 1% works
-      DOUBLE PRECISION, INTENT( IN )    :: lower_factor
-      !& Desired upper bound for the differences between particle
-      !  masses on neighbouring spherical surfaces
-      DOUBLE PRECISION, INTENT( INOUT ) :: upper_bound
-      !& Desired lower bound for the differences between particle
-      !  masses on neighbouring spherical surfaces
-      DOUBLE PRECISION, INTENT( INOUT ) :: lower_bound
-      !> Array string the final positions
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos
-      !> Array soring the inal particle volumes
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pvol
-      !> Array storing the final particle masses
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pmass
-      !> Name of the file to store the radial mass profile
-      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_mass_profile
-      !& Name of the file to store the surface radii
-      !  @TODO change name of variable to filename_surfaces_radii
-      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_radii
-      !& Name of the file to store the final particle positions
-      !  @TODO change name of variable to filename_surfaces_pos
-      CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL :: filename_shells_pos
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
+      !> Array storing the particle positions
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: pvol
+      !! Array storing the particle volumes
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: nu
+      !! Array storing the particle baryon masses
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: h
+      !! Array storing the initial guess for the particle smoothing lengths
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
           !! Returns the baryon mass density at the desired point
@@ -828,37 +828,151 @@ MODULE sph_particles
           !! \(y\) coordinate of the desired point
           DOUBLE PRECISION, INTENT(IN):: z
           !! \(z\) coordinate of the desired point
-          DOUBLE PRECISION, INTENT( OUT ):: sqdetg
-          DOUBLE PRECISION, INTENT( OUT ):: baryon_density
-          DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+          DOUBLE PRECISION, INTENT(OUT):: sqdetg
+          DOUBLE PRECISION, INTENT(OUT):: baryon_density
+          DOUBLE PRECISION, INTENT(OUT):: gamma_euler
         END SUBROUTINE get_id
       END INTERFACE
       INTERFACE
-        SUBROUTINE integrate_density( center, radius, &
-                                      central_density, &
-                                      dr, dth, dphi, &
-                                      mass, mass_profile, &
-                                      mass_profile_idx )
+        FUNCTION validate_position_int( x, y, z ) RESULT( answer )
+        !! Returns 1 if the position is not valid, 0 otherwise
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          LOGICAL:: answer
+          !! `.TRUE.` if the position is valid, `.FALSE.` otherwise
+        END FUNCTION validate_position_int
+      END INTERFACE
+      !> Returns 1 if the position is not valid, 0 otherwise
+      PROCEDURE(validate_position_int), OPTIONAL:: validate_position
+
+    END SUBROUTINE place_particles_lattice
+
+
+    MODULE SUBROUTINE place_particles_ellipsoidal_surfaces( this, &
+                                  mass_star, radius, center, &
+                                  central_density, npart_des, &
+                                  npart_out, pos, pvol, nu, h, &
+                                  last_r, upper_bound, lower_bound, &
+                                  upper_factor, lower_factor, max_steps, &
+                                  filename_mass_profile, &
+                                  filename_shells_radii, &
+                                  filename_shells_pos, &
+                                  get_density, integrate_density, &
+                                  get_id, validate_position, &
+                                  radii )
+    !! Places particles on ellipsoidal surfaces on one star
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT(INOUT):: this
+      !& [[idbase]] object needed to access the BNS data
+      !  @TODO Remove the [[idbase]] argument as done in SUBROUTINE perform_apm
+      !CLASS(idbase),       INTENT(INOUT):: id
+      !> Approximate particle number on the star
+      INTEGER,          INTENT(IN)    :: npart_des
+      !> Final number of particles on the star
+      INTEGER,          INTENT(OUT)   :: npart_out
+      !& If, after max_steps, the iteration did not converge,
+      !  multiply upper_bound by upper_factor, and lower_bound
+      !  by lower_factor. max_steps >= 10. 100 is a nice value
+      INTEGER,          INTENT(IN)    :: max_steps
+      !> Baryonic mass of the star
+      DOUBLE PRECISION, INTENT(IN)    :: mass_star
+      !> Radius of the star in the x direction towards the companion
+      DOUBLE PRECISION, INTENT(IN)    :: radius
+      !& \(x|) coordinate of the center of the star, i.e.,
+      !  of the point with highest density
+      DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: center
+      !> Central density of the star, i.e., highest density
+      DOUBLE PRECISION, INTENT(IN)    :: central_density
+      !> Radius of the last ellipsoidal surface
+      DOUBLE PRECISION, INTENT(IN)    :: last_r
+      !& If, after max_steps, the iteration did not converge,
+      !  multiply upper_bound by upper_factor, and lower_bound
+      !  by lower_factor. upper_factor >= 1, usually an increase of 1% works
+      DOUBLE PRECISION, INTENT(IN)    :: upper_factor
+      !& If, after max_steps, the iteration did not converge,
+      !  multiply upper_bound by upper_factor, and lower_bound
+      !  by lower_factor. lower_factor <= 1, usually a decrease of 1% works
+      DOUBLE PRECISION, INTENT(IN)    :: lower_factor
+      !& Desired upper bound for the differences between particle
+      !  masses on neighbouring ellipsoidal surfaces
+      DOUBLE PRECISION, INTENT(INOUT) :: upper_bound
+      !& Desired lower bound for the differences between particle
+      !  masses on neighbouring ellipsoidal surfaces
+      DOUBLE PRECISION, INTENT(INOUT) :: lower_bound
+      !> Array string the final positions
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos
+      !> Array soring the inal particle volumes
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: pvol
+      !> Array storing the final particle masses
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: nu
+      !! Array storing the particle baryon masses
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: h
+      !! Array storing the initial guess for the particle smoothing lengths
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: filename_mass_profile
+      !& Name of the file to store the surface radii
+      !  @TODO change name of variable to filename_surfaces_radii
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: filename_shells_radii
+      !& Name of the file to store the final particle positions
+      !  @TODO change name of variable to filename_surfaces_pos
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: filename_shells_pos
+      INTERFACE
+        FUNCTION get_density( x, y, z ) RESULT( density )
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION:: density
+          !! Baryon mass density at \((x,y,z)\)
+        END FUNCTION get_density
+      END INTERFACE
+      INTERFACE
+        SUBROUTINE get_id( x, y, z , sqdetg, baryon_density, gamma_euler )
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(OUT):: sqdetg
+          DOUBLE PRECISION, INTENT(OUT):: baryon_density
+          DOUBLE PRECISION, INTENT(OUT):: gamma_euler
+        END SUBROUTINE get_id
+      END INTERFACE
+      INTERFACE
+        SUBROUTINE integrate_density &
+          ( center, radius, central_density, dr, dth, dphi, &
+            mass, mass_profile, mass_profile_idx, radii )
           !> Center of the star
-          DOUBLE PRECISION, INTENT( IN )    :: center
+          DOUBLE PRECISION, DIMENSION(3), INTENT(IN)    :: center
           !> Central density of the star
-          DOUBLE PRECISION, INTENT( IN )    :: central_density
+          DOUBLE PRECISION, INTENT(IN)    :: central_density
           !> Radius of the star
-          DOUBLE PRECISION, INTENT( IN )    :: radius
+          DOUBLE PRECISION, INTENT(IN)    :: radius
           !> Integration steps
-          DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+          DOUBLE PRECISION, INTENT(IN)    :: dr, dth, dphi
           !> Integrated mass of the star
-          DOUBLE PRECISION, INTENT( IN OUT ):: mass
+          DOUBLE PRECISION, INTENT(INOUT):: mass
           !> Array storing the radial mass profile of the star
-          !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+          !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: &
           !                                 mass_profile
-          DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT( OUT ):: &
+          DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT(OUT):: &
                                                mass_profile
           !& Array to store the indices for array mass_profile, sorted so that
           !  mass_profile[mass_profile_idx] is in increasing order
-          !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT )::mass_profile_idx
-          INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT( OUT ):: &
+          !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT)::mass_profile_idx
+          INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: &
                                                mass_profile_idx
+
+          DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
         END SUBROUTINE integrate_density
       END INTERFACE
       INTERFACE
@@ -876,9 +990,10 @@ MODULE sph_particles
       END INTERFACE
       !> Returns 1 if the position is not valid, 0 otherwise
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
-      DOUBLE PRECISION, INTENT( IN ),   OPTIONAL:: pmass_des
+      !DOUBLE PRECISION, INTENT(IN),   OPTIONAL:: pmass_des
+      DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
 
-    END SUBROUTINE place_particles_spherical_surfaces
+    END SUBROUTINE place_particles_ellipsoidal_surfaces
 
 
     MODULE SUBROUTINE impose_equatorial_plane_symmetry( npart, pos, &
@@ -886,7 +1001,7 @@ MODULE sph_particles
     !# Mirror the particle with z>0 with respect to the xy plane,
     !  to impose the equatorial-plane symmetry
 
-      !CLASS(particles), INTENT( IN OUT ):: this
+      !CLASS(particles), INTENT(INOUT):: this
       INTEGER, INTENT(INOUT):: npart
       DOUBLE PRECISION, INTENT(IN), OPTIONAL:: com_star
       LOGICAL, INTENT(IN), OPTIONAL:: verbose
@@ -931,20 +1046,35 @@ MODULE sph_particles
     END SUBROUTINE reflect_particles_xy_plane
 
 
+    MODULE PURE FUNCTION get_object_of_particle( this, a )
+    !# Returns the number of the matter object asociated with the particle
+    !  number given as input. Example: give number \(n\) as input; this
+    !  particle number corresponds to a particle on matter object \(m\).
+    !  This functions returns \(m\).
+
+      CLASS(particles), INTENT(IN):: this
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER,          INTENT(IN):: a
+      !! Particle number
+      INTEGER:: get_object_of_particle
+
+    END FUNCTION get_object_of_particle
+
+
 !    MODULE SUBROUTINE reshape_sph_field_1d( this, field, new_size1, new_size2, &
 !                                            index_array )
 !    !! Reallocates a 1d array
 !
 !      !> [[particles]] object which this PROCEDURE is a member of
-!      CLASS(particles), INTENT( IN OUT ):: this
+!      CLASS(particles), INTENT(INOUT):: this
 !      !> New particle number on star 1
-!      INTEGER,                        INTENT( IN ):: new_size1
+!      INTEGER,                        INTENT(IN):: new_size1
 !      !> New particle number on star 2
-!      INTEGER,                        INTENT( IN ):: new_size2
+!      INTEGER,                        INTENT(IN):: new_size2
 !      !> Array to select elements to keep in the reshaped array
-!      INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
+!      INTEGER,          DIMENSION(:), INTENT(IN):: index_array
 !      !> 1D array to reshape
-!      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: field
+!      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: field
 !
 !    END SUBROUTINE reshape_sph_field_1d
 !
@@ -954,15 +1084,15 @@ MODULE sph_particles
 !    !! Reallocates a 2d array
 !
 !      !> [[particles]] object which this PROCEDURE is a member of
-!      CLASS(particles), INTENT( IN OUT ):: this
+!      CLASS(particles), INTENT(INOUT):: this
 !      !> New particle number on star 1
-!      INTEGER,                        INTENT( IN ):: new_size1
+!      INTEGER,                        INTENT(IN):: new_size1
 !      !> New particle number on star 2
-!      INTEGER,                        INTENT( IN ):: new_size2
+!      INTEGER,                        INTENT(IN):: new_size2
 !      !> Array to select elements to keep in the reshaped array
-!      INTEGER,          DIMENSION(:), INTENT( IN ):: index_array
+!      INTEGER,          DIMENSION(:), INTENT(IN):: index_array
 !      !> 2D array to reshape
-!      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: field
+!      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: field
 !
 !    END SUBROUTINE reshape_sph_field_2d
 
@@ -971,7 +1101,7 @@ MODULE sph_particles
     !! Allocates allocatable arrays member of a [[particles]] object
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: this
+      CLASS(particles), INTENT(INOUT):: this
 
     END SUBROUTINE allocate_particles_memory
 
@@ -980,7 +1110,7 @@ MODULE sph_particles
     !! Deallocates allocatable arrays member of a [[particles]] object
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN OUT ):: this
+      CLASS(particles), INTENT(INOUT):: this
 
     END SUBROUTINE deallocate_particles_memory
 
@@ -998,10 +1128,10 @@ MODULE sph_particles
     !  for negative or zero values
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles),    INTENT( IN OUT ):: this
+      CLASS(particles),    INTENT(INOUT):: this
       !& Name of the formatted file where the particle positions at which
       !  some of the hydro fields are negative or zero are printed to
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE analyze_hydro
 
@@ -1013,13 +1143,49 @@ MODULE sph_particles
     !  [[particles:print_formatted_id_particles]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles),    INTENT( IN OUT ):: this
+      CLASS(particles), INTENT(INOUT):: this
       !> Name of the formatted file where the SPH ID is printed to
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE compute_and_print_sph_variables
 
+    MODULE SUBROUTINE compute_sph_hydro( this, npart_in, npart_fin, &
+      eqos, nlrf, u, pr, enthalpy, cs, verbose )
+    !# Computes the hydro fields on a section of the particles specified as
+    !  input.
+    !  First, computes the |sph| pressure starting from the |sph| baryon mass
+    !  density, and the specific internal
+    !  energy. The pressure is computed differently for different |eos|, and
+    !  for cold and hot systems.
+    !  Then computes the enthalpy and the sound speed accordingly.
+
+      CLASS(particles), INTENT(INOUT):: this
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER,          INTENT(IN):: npart_in
+      !! First index of the desired section of the particles
+      INTEGER,          INTENT(IN):: npart_fin
+      !! Last index of the desired section of the particles
+      CLASS(eos),       INTENT(IN):: eqos
+      !! |eos| to be used
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(IN)   :: &
+      nlrf
+      !! Baryon mass density in the local rest frame
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: u
+      !! Specific internal energy
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: Pr
+      !! Pressure
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: &
+      enthalpy
+      !! Enthalpy
+      DOUBLE PRECISION, DIMENSION(npart_fin - npart_in + 1), INTENT(INOUT):: cs
+      !! Speed of sound
+      LOGICAL, INTENT(IN), OPTIONAL:: verbose
+
+    END SUBROUTINE compute_sph_hydro
+
     MODULE SUBROUTINE perform_apm( get_density, get_nstar_id, &
+                                   get_pressure_id, &
+                                   compute_pressure, &
                                    npart_output, &
                                    pos_input, &
                                    pvol, h_output, nu_output, &
@@ -1027,9 +1193,11 @@ MODULE sph_particles
                                    com_star, &
                                    mass, &
                                    sizes, &
+                                   eqos, &
                                    apm_max_it, max_inc, &
                                    mass_it, correct_nu, nuratio_thres, &
-                                   nuratio_des, &
+                                   nuratio_des, use_pressure, adapt_ghosts, &
+                                   move_away_ghosts, &
                                    nx_gh, ny_gh, nz_gh, ghost_dist, &
                                    use_atmosphere, &
                                    remove_atmosphere, &
@@ -1039,8 +1207,8 @@ MODULE sph_particles
                                    validate_position )
     !! Performs the Artificial Pressure Method (APM) on one star's particles
 
-      !> [[particles]] object which this PROCEDURE is a member of
-      !CLASS(particles),                 INTENT( INOUT ):: this
+      !CLASS(particles),     INTENT(INOUT):: this
+      !! [[particles]] object which this PROCEDURE is a member of
       INTERFACE
         FUNCTION get_density( x, y, z ) RESULT( density )
           !! Returns the baryon mass density at the desired point
@@ -1055,7 +1223,8 @@ MODULE sph_particles
         END FUNCTION get_density
       END INTERFACE
       INTERFACE
-        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_id )!, nstar_eul_id )
+        SUBROUTINE get_nstar_id( npart, x, y, z, nstar_sph, nstar_id, &
+                                 nlrf_sph, sqg )
         !! Computes the proper baryon number density at the particle positions
           INTEGER, INTENT(IN):: npart
           !! Number of real particles (i.e., no ghost particles included here)
@@ -1065,12 +1234,52 @@ MODULE sph_particles
           !! Array of \(y\) coordinates
           DOUBLE PRECISION, INTENT(IN):: z(npart)
           !! Array of \(z\) coordinates
+          DOUBLE PRECISION, INTENT(IN):: nstar_sph(npart)
+          !! |sph| proper baryon density
           DOUBLE PRECISION, INTENT(OUT):: nstar_id(npart)
           !! Array to store the computed proper baryon number density
-          !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart)
-          !# Array to store the computed proper baryon number density seen
-          !  by the Eulerian observer
+          DOUBLE PRECISION, INTENT(OUT):: nlrf_sph(npart)
+          !# Array to store the local rest frame baryon density computed from
+          !  the |sph| proper baryon density
+          DOUBLE PRECISION, INTENT(OUT):: sqg(npart)
+          !# Square root of minus the determinant of the spacetime metric
         END SUBROUTINE get_nstar_id
+      END INTERFACE
+      INTERFACE
+        SUBROUTINE compute_pressure &
+          ( npart, x, y, z, nlrf, eqos, pressure, verbose )
+          IMPORT:: eos
+          INTEGER,          INTENT(IN):: npart
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x(npart)
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y(npart)
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z(npart)
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN)   :: nlrf(npart)
+          !! Baryon mass density in the local rest frame
+          TYPE(eos),        INTENT(IN)   :: eqos
+          !! |eos| to use
+          DOUBLE PRECISION, INTENT(INOUT):: pressure(npart)
+          !! Baryon mass density at \((x,y,z)\)
+          LOGICAL, INTENT(IN), OPTIONAL:: verbose
+          !# If .TRUE., print informative standard output about how the
+          !  pressure is computed. Default is .TRUE.
+        END SUBROUTINE compute_pressure
+      END INTERFACE
+      INTERFACE
+        FUNCTION get_pressure_id( x, y, z ) RESULT( pressure )
+          !! Returns the baryon mass density at the desired point
+          DOUBLE PRECISION, INTENT(IN):: x
+          !! \(x\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: y
+          !! \(y\) coordinate of the desired point
+          DOUBLE PRECISION, INTENT(IN):: z
+          !! \(z\) coordinate of the desired point
+          DOUBLE PRECISION:: pressure
+          !! Baryon mass density at \((x,y,z)\)
+        END FUNCTION get_pressure_id
       END INTERFACE
       INTERFACE
         FUNCTION validate_position_int( x, y, z ) RESULT( answer )
@@ -1088,83 +1297,104 @@ MODULE sph_particles
       !> Returns 1 if the position is not valid, 0 otherwise
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
       !> Initial particle number
-      INTEGER,                          INTENT( INOUT ):: npart_output
+      INTEGER,                          INTENT(INOUT):: npart_output
       !& Prints the particle positions to a formatted file every
       !  print_step steps
-      INTEGER,                          INTENT( INOUT ):: print_step
+      INTEGER,                          INTENT(INOUT):: print_step
       !> Initial particle positions
-      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( INOUT ):: pos_input
+      DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: pos_input
       !> Initial particle volume
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( INOUT ):: pvol
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: pvol
       !& Array to store the smoothing lengths computed at the end of the
       !  APM iteration
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT )  :: h_output
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: h_output
       !& Array to store the baryon number per particle computed at the end of
       !  the APM iteration
-      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT( OUT )  :: nu_output
-      !> Center of the star (point of highest density), computed by |lorene|
-      DOUBLE PRECISION, DIMENSION(3),   INTENT( IN )   :: center
-      !> Center of mass of the star, computed by |lorene|
-      DOUBLE PRECISION, DIMENSION(3),   INTENT( INOUT ):: com_star
-      !> Mass of the star
-      DOUBLE PRECISION,                 INTENT( IN )   :: mass
-      !> Radius of the star in the x direction, towards the companion
-      DOUBLE PRECISION, DIMENSION(6),   INTENT( IN )   :: sizes
+      DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE, INTENT(INOUT):: nu_output
+      !> Center of the matter object, from the |id|
+      DOUBLE PRECISION, DIMENSION(3),   INTENT(IN)   :: center
+      !> Center of mass of the matter object, from the |id|
+      DOUBLE PRECISION, DIMENSION(3),   INTENT(INOUT):: com_star
+      !> Mass of the matter object
+      DOUBLE PRECISION,                 INTENT(IN)   :: mass
+      !> Sizes of the matter object
+      DOUBLE PRECISION, DIMENSION(6),   INTENT(IN)   :: sizes
+      !> |eos| to use when computing the pressure
+      TYPE(eos),                        INTENT(IN)   :: eqos
       !> Maximum number of APM iterations, irrespective of the EXIT condition
-      INTEGER,                          INTENT( IN )   :: apm_max_it
+      INTEGER,                          INTENT(IN)   :: apm_max_it
       !& Sets the EXIT condition: If the average over all the
       !  particles of the relative error in the density estimate
       !  grows max_inc times, exit the iteration.
-      INTEGER,                          INTENT( IN )   :: max_inc
+      INTEGER,                          INTENT(IN)   :: max_inc
       !& If .TRUE. performs a second iteration after the APM one, without moving
       !  the particles, changing their mass in order to better match
       !  the star density. The mass ratio grows very fast in all the tried
       !  experiments, hence the suggested value is .FALSE.
-      LOGICAL,                          INTENT( IN )   :: mass_it
+      LOGICAL,                          INTENT(IN)   :: mass_it
       !& If .TRUE., the baryon number per particle nu is corrected
       !  to include the total baryonic masses of the
       !  stars.
-      LOGICAL,                          INTENT( IN )   :: correct_nu
+      LOGICAL,                          INTENT(IN)   :: correct_nu
       !& Maximum mass ratio (equivalently baryon number ratio)
       !  to be used in the one-time-only final correction
       !  of the particle masses to match the star density even
       !  better (without moving the particles)
-      DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_thres
+      DOUBLE PRECISION,                 INTENT(IN)   :: nuratio_thres
       !& Sets the EXIT condition: If the baryon number ratio
       !  is within 2.5% of nuratio_des, exit the iteration
       !  Set nuratio_des to 0 to deactivate and exit the APM
       !  iteration using max_inc
-      DOUBLE PRECISION,                 INTENT( IN )   :: nuratio_des
+      DOUBLE PRECISION,                 INTENT(IN)   :: nuratio_des
+      !& If .TRUE., uses the physical pressure computed with
+      !  the |eos| using the SPH estimate of the density [[particles:nlrf_sph]],
+      !  to compute the artificial pressure. Otherwise, the
+      !  density variable [[particles:nstar_sph]] is used to
+      !  compute the artificial pressure
+      LOGICAL,                          INTENT(IN)   :: use_pressure
+      !& If .TRUE., the ghost particles will be placed and have
+      !  a baryon number such to reproduce the density of the
+      !  outermost layers (r > 99% of the minimum radius) of
+      !  the object. If .TRUE., the arguments nx_gh, ny_gh,
+      !  nz_gh, ghost_dist are ignored; if .FALSE., they are
+      !  instead used to place the ghost particles
+      LOGICAL,                          INTENT(IN)   :: adapt_ghosts
+      !& If .TRUE., the ghost particles will slowly move away
+      !  from the surface of the star during the iteration
+      !  (depending on the EXIT condition chosen, this happens
+      !  in slightly different ways), to allow for the real
+      !  particles to get closer to the surface
+      LOGICAL,                          INTENT(IN)   :: move_away_ghosts
       !> Number of lattice points in the x direction for ghosts
-      INTEGER,                          INTENT( IN )   :: nx_gh
+      INTEGER,                          INTENT(IN)   :: nx_gh
       !> Number of lattice points in the y direction for ghosts
-      INTEGER,                          INTENT( IN )   :: ny_gh
+      INTEGER,                          INTENT(IN)   :: ny_gh
       !> Number of lattice points in the z direction for ghosts
-      INTEGER,                          INTENT( IN )   :: nz_gh
+      INTEGER,                          INTENT(IN)   :: nz_gh
       !& Distance between the ghost particles and the surface
       !  of the matter object considered (star, ejecta, etc...)
-      DOUBLE PRECISION,                 INTENT( IN )   :: ghost_dist
+      DOUBLE PRECISION,                 INTENT(INOUT):: ghost_dist
       !& If .TRUE., allows particles to move where the density
       !  is 0, and displace them using only the smoothing term.
       !  This can be useful when the system has an irregular
       !  geometry, as, for example, an ejecta; `.FALSE.` otherwise
-      LOGICAL,                          INTENT( INOUT ):: use_atmosphere
+      LOGICAL,                          INTENT(INOUT):: use_atmosphere
       !& If .TRUE., removes the particles placed where the density is 0,
       !  at the end of the APM iteration; `.FALSE.` otherwise
-      LOGICAL,                          INTENT( INOUT ):: remove_atmosphere
+      LOGICAL,                          INTENT(INOUT):: remove_atmosphere
       !& Name for the formatted file where the initial particle positions
       !  and the ghost positions will be printed
-      CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
+      CHARACTER(LEN=*),              INTENT(INOUT), OPTIONAL :: &
                                                             namefile_pos_id
       !& Name for the formatted file where the particle positions
       !  and the ghost positions will be printed every 15 iterations
-      CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
+      CHARACTER(LEN=*),              INTENT(INOUT), OPTIONAL :: &
                                                             namefile_pos
       !& Name for the formatted file where various quantities related
       !  to the particle distribution, the baryon number particle and the
       !  kernel estimate of the density will be printed at the end of
       !  the APM iteration
-      CHARACTER( LEN= * ),              INTENT( INOUT ), OPTIONAL :: &
+      CHARACTER(LEN=*),              INTENT(INOUT), OPTIONAL :: &
                                                             namefile_results
 
 
@@ -1200,7 +1430,7 @@ MODULE sph_particles
       !! Canonical momentum on the particles
       !DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN)   :: e_hat
       !! Canonical energy on the particles
-      !CHARACTER( LEN= * ),                  INTENT(INOUT), OPTIONAL :: namefile
+      !CHARACTER(LEN=*),                  INTENT(INOUT), OPTIONAL :: namefile
       !! Name of the formatted file where the data is printed
 
     END SUBROUTINE test_recovery
@@ -1214,9 +1444,9 @@ MODULE sph_particles
 
       CLASS(particles),    INTENT(INOUT)           :: this
       !! [[particles]] object which this PROCEDURE is a member of
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile_bin
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile_bin
       !! Name of the binary file to be read
-      CHARACTER( LEN= * ), INTENT(INOUT), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
       !! Name of the formatted file to be printed
       LOGICAL,             INTENT(IN),    OPTIONAL :: save_data
       !! If `.TRUE.`, saves the read data into the TYPE member variables
@@ -1228,9 +1458,9 @@ MODULE sph_particles
     !! Prints the SPH ID to a formatted file
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles),    INTENT( IN OUT )           :: this
+      CLASS(particles),    INTENT(INOUT)           :: this
       !> Name of the formatted output file
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE print_formatted_id_particles
 
@@ -1239,10 +1469,10 @@ MODULE sph_particles
     !! Reads the \(Y_e(n_b)\) table in the CompOSE file with extension .beta
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles),    INTENT( IN OUT )           :: this
+      CLASS(particles),    INTENT(INOUT)           :: this
       !& To read the file great_eos.beta in directory compose_path/GREAT_EoS,
       !  namefile="GREAT_EoS/great_eos"
-      CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+      CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
 
     END SUBROUTINE read_compose_composition
 
@@ -1252,9 +1482,9 @@ MODULE sph_particles
     !  densities; that is, assigns \(Y_e\) at the particle positions
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles),    INTENT( IN OUT )           :: this
-      !DOUBLE PRECISION, DIMENSION( : ), INTENT( IN ):: nlrf
-      !DOUBLE PRECISION, DIMENSION( : ), INTENT( OUT ):: Ye
+      CLASS(particles),    INTENT(INOUT)           :: this
+      !DOUBLE PRECISION, DIMENSION( : ), INTENT(IN):: nlrf
+      !DOUBLE PRECISION, DIMENSION( : ), INTENT(OUT):: Ye
 
     END SUBROUTINE compute_Ye
 
@@ -1265,8 +1495,8 @@ MODULE sph_particles
     !  is given as the optional argument `filename`
 
 
-      CLASS(particles), INTENT( IN OUT ):: this
-      !CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
+      CLASS(particles), INTENT(INOUT):: this
+      !CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
     END SUBROUTINE print_summary
@@ -1276,7 +1506,7 @@ MODULE sph_particles
     !> Finalizer (Destructor) of [[particles]] object
 
       !> [[particles]] object which this PROCEDURE is a member of
-      TYPE(particles), INTENT( IN OUT ):: this
+      TYPE(particles), INTENT(INOUT):: this
 
     END SUBROUTINE destruct_particles
 
@@ -1291,7 +1521,7 @@ MODULE sph_particles
     !  @warning experimental, not actively used in the code yet
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> `.TRUE` if the [[particles]] object is empty, `.FALSE` otherwise
       LOGICAL:: answer
 
@@ -1300,8 +1530,8 @@ MODULE sph_particles
 
    !MODULE SUBROUTINE write_lorene_bns_id_dump( this, namefile )
    !
-   !    CLASS(particles),    INTENT( IN )               :: this
-   !    CHARACTER( LEN= * ), INTENT( IN OUT ), OPTIONAL :: namefile
+   !    CLASS(particles),    INTENT(IN)               :: this
+   !    CHARACTER(LEN=*), INTENT(INOUT), OPTIONAL :: namefile
    !
    !END SUBROUTINE write_lorene_bns_id_dump
 
@@ -1310,7 +1540,7 @@ MODULE sph_particles
     !! Returns [[particles:n_matter]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:n_matter]]
       INTEGER:: n_matter
 
@@ -1321,7 +1551,7 @@ MODULE sph_particles
     !! Returns [[particles:npart]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:npart]]
       INTEGER:: n_part
 
@@ -1331,9 +1561,9 @@ MODULE sph_particles
     MODULE PURE FUNCTION get_npart_i( this, i_matter ) RESULT( n_part )
     !! Returns the number of particles on the object `i_matter`
 
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !! [[particles]] object which this PROCEDURE is a member of
-      INTEGER, INTENT( IN ):: i_matter
+      INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object
       INTEGER:: n_part
       !! Number of particles on the object `i_matter`
@@ -1345,7 +1575,7 @@ MODULE sph_particles
     !! Returns [[particles:nuratio]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:nuratio]]
       DOUBLE PRECISION:: nuratio
 
@@ -1355,9 +1585,9 @@ MODULE sph_particles
     MODULE PURE FUNCTION get_nuratio_i( this, i_matter ) RESULT( nuratio )
     !! Returns the baryon number ratio on the object `i_matter`
 
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !! [[particles]] object which this PROCEDURE is a member of
-      INTEGER, INTENT( IN ):: i_matter
+      INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object
       DOUBLE PRECISION:: nuratio
       !! Baryon number ratio on the object `i_matter`
@@ -1369,7 +1599,7 @@ MODULE sph_particles
     !! Returns [[particles:pos]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:pos]]
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: pos_u
 
@@ -1380,7 +1610,7 @@ MODULE sph_particles
     !! Returns [[particles:v]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:v]]
       DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: vel
 
@@ -1391,7 +1621,7 @@ MODULE sph_particles
     !! Returns [[particles:nstar]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:nstar]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nstar
 
@@ -1399,11 +1629,11 @@ MODULE sph_particles
 
 
     MODULE PURE FUNCTION get_nstar_sph( this ) RESULT( nstar_sph )
-    !! Returns [[particles:nstar_int]]
+    !! Returns [[particles:nstar_sph]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
-      !> [[particles:nstar_int]]
+      CLASS(particles), INTENT(IN):: this
+      !> [[particles:nstar_sph]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nstar_sph
 
     END FUNCTION get_nstar_sph
@@ -1413,7 +1643,7 @@ MODULE sph_particles
     !! Returns [[particles:nlrf]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:nlrf]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nlrf
 
@@ -1421,11 +1651,11 @@ MODULE sph_particles
 
 
     MODULE PURE FUNCTION get_nlrf_sph( this ) RESULT( nlrf_sph )
-    !! Returns [[particles:nlrf_int]]
+    !! Returns [[particles:nlrf_sph]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
-      !> [[particles:nlrf_int]]
+      CLASS(particles), INTENT(IN):: this
+      !> [[particles:nlrf_sph]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nlrf_sph
 
     END FUNCTION get_nlrf_sph
@@ -1435,7 +1665,7 @@ MODULE sph_particles
     !! Returns [[particles:nu]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:nu]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: nu
 
@@ -1446,7 +1676,7 @@ MODULE sph_particles
     !! Returns [[particles:specific_energy]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:specific_energy]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u
 
@@ -1454,11 +1684,11 @@ MODULE sph_particles
 
 
     MODULE PURE FUNCTION get_u_sph( this ) RESULT( u_sph )
-    !! Returns [[particles:u_pwp]]
+    !! Returns [[particles:u_sph]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
-      !> [[particles:u_pwp]]
+      CLASS(particles), INTENT(IN):: this
+      !> [[particles:u_sph]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: u_sph
 
     END FUNCTION get_u_sph
@@ -1468,29 +1698,29 @@ MODULE sph_particles
     !! Returns [[particles:pressure]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:pressure]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure
 
     END FUNCTION get_pressure
 
 
-    MODULE PURE FUNCTION get_pressure_cu( this ) RESULT( pressure_cu )
-    !! Returns [[particles:pressure_cu]]
+    MODULE PURE FUNCTION get_pressure_sph( this ) RESULT( pressure_sph )
+    !! Returns [[particles:pressure_sph]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
-      !> [[particles:pressure_cu]]
-      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure_cu
+      CLASS(particles), INTENT(IN):: this
+      !> [[particles:pressure_sph]]
+      DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: pressure_sph
 
-    END FUNCTION get_pressure_cu
+    END FUNCTION get_pressure_sph
 
 
     MODULE PURE FUNCTION get_theta( this ) RESULT( theta )
     !! Returns [[particles:theta]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:theta]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: theta
 
@@ -1501,7 +1731,7 @@ MODULE sph_particles
     !! Returns [[particles:h]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:h]]
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: h
 
@@ -1512,7 +1742,7 @@ MODULE sph_particles
     !! Returns [[particles:lapse]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> [[particles:lapse]]
       DOUBLE PRECISION, DIMENSION(this% npart):: lapse
 
@@ -1523,7 +1753,7 @@ MODULE sph_particles
     !! Returns \([[particles:shift_x]],[[particles:shift_y]],[[particles:shift_z]]\)
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> ([[particles:shift_x]],[[particles:shift_y]],[[particles:shift_z]])
       DOUBLE PRECISION, DIMENSION(3,this% npart):: shift
 
@@ -1534,7 +1764,7 @@ MODULE sph_particles
     !! Returns [[particles:h]]
 
       !> [[particles]] object which this PROCEDURE is a member of
-      CLASS(particles), INTENT( IN ):: this
+      CLASS(particles), INTENT(IN):: this
       !> ([[particles:g_xx]],[[particles:g_xy]],[[particles:g_xz]],[[particles:g_yy]],[[particles:g_yz]],[[particles:g_zz]])
       DOUBLE PRECISION, DIMENSION(6,this% npart):: g3
 
@@ -1542,6 +1772,11 @@ MODULE sph_particles
 
 
   END INTERFACE
+
+
+  !---------------------------------!
+  !--  NON-TYPE-BOUND PROCEDURES  --!
+  !---------------------------------!
 
 
   INTERFACE
@@ -1619,6 +1854,37 @@ MODULE sph_particles
       INTEGER,          INTENT(OUT):: nnei, neilist(npart)
 
     END SUBROUTINE get_neighbours_bf
+
+
+    MODULE SUBROUTINE compute_and_print_quality_indicators &
+    (npart, pos, h, nu, nstar, path)
+    !# Compute the quality indicators, referring to
+    !
+    !  Daniel J. Price, Smoothed Particle Hydrodynamics and
+    !  Magnetohydrodynamics.
+    !  Journal of Computational Physics, 231, 3, 759-794 (2012)
+    !  DOI: 10.1016/j.jcp.2010.12.011
+    !  http://arxiv.org/abs/1012.1885
+    !  eqs.(64), (67) and (74-75)
+    !
+    !  Rosswog, S. SPH Methods in the Modelling of Compact Objects.
+    !  Living Rev Comput Astrophys 1, 1 (2015).
+    !  https://doi.org/10.1007/lrca-2015-1.
+    !  https://arxiv.org/abs/1406.4224.
+    !  eqs.(6) and (9)
+
+      IMPLICIT NONE
+
+      INTEGER,                                INTENT(IN):: npart
+      DOUBLE PRECISION, DIMENSION(3,npart),   INTENT(IN):: pos
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: h
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: nu
+      DOUBLE PRECISION, DIMENSION(npart),     INTENT(IN):: nstar
+      CHARACTER(LEN=*), OPTIONAL,             INTENT(IN):: path
+      !# Path to which saving the output file containing the quality
+      !  indicators.
+
+    END SUBROUTINE compute_and_print_quality_indicators
 
 
   END INTERFACE
@@ -1821,7 +2087,7 @@ MODULE sph_particles
 !
 !    INTEGER         :: a
 !    ! Index running over the particles
-!    DOUBLE PRECISION, INTENT( OUT ):: mass
+!    DOUBLE PRECISION, INTENT(OUT):: mass
 !    ! Total mass of the particles
 !    DOUBLE PRECISION:: v_sqnorm
 !    ! Squared norm of the particles' 3-velocities in the SPH computing frame

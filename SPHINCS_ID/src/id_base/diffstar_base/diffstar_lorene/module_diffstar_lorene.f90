@@ -67,73 +67,10 @@ MODULE diffstar_lorene
     INTEGER:: eos_loreneid
     !! |lorene| identifier for the EoS
 
-    !
-    !-- Spacetime fields
-    !
-
-    !> 1-D array storing the lapse function
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: lapse
-    !> 1-D array storing the x component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_x
-    !> 1-D array storing the y component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_y
-    !> 1-D array storing the z component of the shift vector [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: shift_z
-    !> 1-D array storing the xx component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xx
-    !> 1-D array storing the xy component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xy
-    !> 1-D array storing the xz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_xz
-    !> 1-D array storing the yy component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yy
-    !> 1-D array storing the yz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_yz
-    !> 1-D array storing the zz component of the spatial metric [pure number]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: g_zz
-    !& 1-D array storing the xx component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xx
-    !& 1-D array storing the xy component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xy
-    !& 1-D array storing the xz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_xz
-    !& 1-D array storing the yy component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yy
-    !& 1-D array storing the yz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_yz
-    !& 1-D array storing the zz component of the extrinsic curvature
-    !  [c/MSun_geo]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: k_zz
-
-    !
-    !-- Hydro fields
-    !
-
-    !> 1-D array storing the baryon mass density in the fluid frame [kg m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: baryon_density
-    !> 1-D array storing the energy density [kg c^2 m^{-3}]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: energy_density
-    !> 1-D array storing the specific internal energy [c^2]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: specific_energy
-    !> 1-D array storing the x component of the fluid 3-velocity with respect to
-    !  the Eulerian observer [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_x
-    !> 1-D array storing the y component of the fluid 3-velocity with respect to
-    !  the Eulerian observer [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_y
-    !> 1-D array storing the z component of the fluid 3-velocity with respect to
-    !  the Eulerian observer [c]
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: v_euler_z
-
     !& C pointer to the |lorene|'s Etdiffrot object
     ! N.B. This variable is global. The pointer to the second |lorene| Etdiffrot
     !      object will overwrite the first one, and so on.
-    !      This variable stores the pointer to the last defined |lorene| Etdiffrot
+    !    This variable stores the pointer to the last defined |lorene| Etdiffrot
     !      object. That's why it is not freed in the destructor of a bns object.
     !      Presently, it has to be freed by the user at the end of the PROGRAM.
     !      See the last part of the PROGRAM in setup_diffstar.f90, for example.
@@ -161,30 +98,41 @@ MODULE diffstar_lorene
     PROCEDURE:: deallocate_diffstar_memory
     !! Deallocates memory for the [[diffstarlorene]] member arrays
 
-    PROCEDURE:: import_diffstar_params
+    PROCEDURE:: read_diffstar_params
     !! Imports the parameters of the DRS from |lorene|
 
     PROCEDURE, PUBLIC:: print_diffstar_params
     !! Prints the parameters of the DRS to the standard output
 
-    PROCEDURE:: import_id_int
+    PROCEDURE:: read_id_int
     !! Stores the ID in the [[diffstarlorene]] member arrays
 
-    PROCEDURE:: read_id_full      => import_id_full
-    PROCEDURE:: read_id_spacetime => import_id_spacetime
-    PROCEDURE:: read_id_particles => import_id_particles
-    PROCEDURE:: read_id_hydro     => import_id_hydro
-    PROCEDURE:: read_id_mass_b    => import_id_mass_b
-    PROCEDURE:: read_id_k         => import_id_k
+    PROCEDURE:: read_id_full      => read_id_full
+    PROCEDURE:: read_id_spacetime => read_id_spacetime
+    PROCEDURE:: read_id_particles => read_id_particles
+    PROCEDURE:: read_id_hydro     => read_id_hydro
+    PROCEDURE:: read_id_mass_b    => read_id_mass_b
+    PROCEDURE:: read_id_k         => read_id_k
+
+    PROCEDURE:: nothing
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which is not needed in TYPE [[diffstarlorene]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+    PROCEDURE:: initialize_id => nothing
 
     !-----------------!
     !--  FUNCTIONS  --!
     !-----------------!
 
-    PROCEDURE:: read_mass_density => import_mass_density
+    PROCEDURE:: read_mass_density => read_drslorene_mass_density
     !! Returns the |lorene|'s mass density at the given point
 
-    PROCEDURE:: import_spatial_metric
+    PROCEDURE:: read_pressure => read_drslorene_pressure
+    !! Returns the |lorene|'s pressure at the desired point
+
+    PROCEDURE:: read_spatial_metric
     !! Returns the |lorene|'s conformally flat spatial ADM metric
 
     PROCEDURE:: test_position => is_hydro_positive
@@ -260,10 +208,10 @@ MODULE diffstar_lorene
    !
    ! END FUNCTION construct_diffstarlorene
 
-    MODULE SUBROUTINE destruct_diffstarlorene( THIS )
+    MODULE SUBROUTINE destruct_diffstarlorene( this )
     !! Destruct a [[diffstarlorene]] object
 
-      TYPE(diffstarlorene), INTENT( IN OUT ):: THIS
+      TYPE(diffstarlorene), INTENT(INOUT):: this
       !! [[diffstarlorene]] object to be destructed
 
     END SUBROUTINE destruct_diffstarlorene
@@ -287,86 +235,86 @@ MODULE diffstar_lorene
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
       !! |lorene| binary file containing the spectral DRS ID
-      CLASS(diffstarlorene), INTENT( OUT ):: derived_type
+      CLASS(diffstarlorene), INTENT(OUT):: derived_type
       !! Constructed [[diffstarlorene]] object
 
     END SUBROUTINE construct_diffstarlorene
 
 
-    MODULE SUBROUTINE construct_drs( THIS, resu_file )
+    MODULE SUBROUTINE construct_drs( this, resu_file )
     !! Interface of the subroutine that constructs the |lorene| Etdiffrot object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT )      :: THIS
+      CLASS(diffstarlorene),                     INTENT(INOUT)      :: this
       !> |lorene| binary file containing the spectral DRS ID
-      CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
+      CHARACTER(KIND= C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: resu_file
 
     END SUBROUTINE construct_drs
 
 
-    MODULE SUBROUTINE destruct_drs( THIS )
+    MODULE SUBROUTINE destruct_drs( this )
     !! Destructs a |lorene| Etdiffrot object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT(INOUT):: this
 
     END SUBROUTINE destruct_drs
 
 
-    MODULE SUBROUTINE allocate_diffstar_memory( THIS, d )
+    MODULE SUBROUTINE allocate_diffstar_memory( this, d )
     !! Allocates allocatable arrays member of a [[diffstarlorene]] object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT(INOUT):: this
       !> Dimension of the arrays
-      INTEGER,    INTENT( IN )    :: d
+      INTEGER,    INTENT(IN)    :: d
 
     END SUBROUTINE allocate_diffstar_memory
 
 
-    MODULE SUBROUTINE deallocate_diffstar_memory( THIS )
+    MODULE SUBROUTINE deallocate_diffstar_memory( this )
     !! Deallocates allocatable arrays member of a [[diffstarlorene]] object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT(INOUT):: this
 
     END SUBROUTINE deallocate_diffstar_memory
 
 
-    MODULE SUBROUTINE import_diffstar_params( THIS )
+    MODULE SUBROUTINE read_diffstar_params( this )
     !! Imports the DRS parameters from |lorene|
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT(INOUT):: this
 
-    END SUBROUTINE import_diffstar_params
+    END SUBROUTINE read_diffstar_params
 
 
-    MODULE SUBROUTINE print_diffstar_params( THIS )
+    MODULE SUBROUTINE print_diffstar_params( this )
     !! Prints the DRS parameters to the standard output
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN OUT ):: THIS
+      CLASS(diffstarlorene), INTENT(INOUT):: this
 
     END SUBROUTINE print_diffstar_params
 
 
-    MODULE SUBROUTINE import_id_int( THIS, n, x, y, z )
+    MODULE SUBROUTINE read_id_int( this, n, x, y, z )
     !! Stores the ID in the [[diffstarlorene]] member arrays
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT ):: THIS
-      INTEGER, INTENT( IN ):: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
+      CLASS(diffstarlorene),          INTENT(INOUT):: this
+      INTEGER, INTENT(IN):: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
 
-    END SUBROUTINE import_id_int
+    END SUBROUTINE read_id_int
 
 
-    MODULE SUBROUTINE import_id_full( THIS, n, x, y, z,&
+    MODULE SUBROUTINE read_id_full( this, n, x, y, z,&
                                       lapse, &
                                       shift_x, shift_y, shift_z, &
                                       g_xx, g_xy, g_xz, &
@@ -376,43 +324,45 @@ MODULE diffstar_lorene
                                       baryon_density, &
                                       energy_density, &
                                       specific_energy, &
+                                      pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
     !# Stores the ID in non [[diffstarlorene]]-member arrays with the same
     !  shape as the [[diffstarlorene]] member arrays
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT ):: THIS
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+      CLASS(diffstarlorene),          INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_z
 
-    END SUBROUTINE import_id_full
+    END SUBROUTINE read_id_full
 
 
-    MODULE SUBROUTINE import_id_spacetime( THIS, nx, ny, nz, &
+    MODULE SUBROUTINE read_id_spacetime( this, nx, ny, nz, &
                                               pos, &
                                               lapse, &
                                               shift, &
@@ -422,20 +372,20 @@ MODULE diffstar_lorene
     !  the BSSN variables and constraints
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                           INTENT( IN OUT ):: THIS
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: shift
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
+      CLASS(diffstarlorene),                INTENT(INOUT):: this
+      INTEGER,                              INTENT(IN)    :: nx
+      INTEGER,                              INTENT(IN)    :: ny
+      INTEGER,                              INTENT(IN)    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN)    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: shift
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: g
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: ek
 
-    END SUBROUTINE import_id_spacetime
+    END SUBROUTINE read_id_spacetime
 
 
-    MODULE SUBROUTINE import_id_hydro( THIS, nx, ny, nz, &
+    MODULE SUBROUTINE read_id_hydro( this, nx, ny, nz, &
                                              pos, &
                                              baryon_density, &
                                              energy_density, &
@@ -446,21 +396,21 @@ MODULE diffstar_lorene
     !  on the refined mesh
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                           INTENT( IN OUT ):: THIS
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: u_euler
+      CLASS(diffstarlorene),                INTENT(INOUT):: this
+      INTEGER,                              INTENT(IN)    :: nx
+      INTEGER,                              INTENT(IN)    :: ny
+      INTEGER,                              INTENT(IN)    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN)    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: u_euler
 
-    END SUBROUTINE import_id_hydro
+    END SUBROUTINE read_id_hydro
 
 
-    MODULE SUBROUTINE import_id_particles( THIS, n, x, y, z, &
+    MODULE SUBROUTINE read_id_particles( this, n, x, y, z, &
                                            lapse, &
                                            shift_x, shift_y, shift_z, &
                                            g_xx, g_xy, g_xz, &
@@ -473,121 +423,138 @@ MODULE diffstar_lorene
     !! Stores the hydro ID in the arrays needed to compute the SPH ID
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT ):: THIS
-      INTEGER,                        INTENT( IN )    :: n
-      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: x
-      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: y
-      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+      CLASS(diffstarlorene),          INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT(IN)    :: x
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT(IN)    :: y
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_z
 
-    END SUBROUTINE import_id_particles
+    END SUBROUTINE read_id_particles
 
 
-    MODULE SUBROUTINE import_id_mass_b( THIS, x, y, z, &
+    MODULE SUBROUTINE read_id_mass_b( this, x, y, z, &
                                         g, &
                                         baryon_density, &
                                         gamma_euler )
     !! Stores the hydro ID in the arrays needed to compute the baryon mass
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),       INTENT( IN OUT ):: THIS
-      DOUBLE PRECISION, INTENT( IN )    :: x
-      DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN)     :: z
-      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
-      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+      CLASS(diffstarlorene),          INTENT(INOUT):: this
+      DOUBLE PRECISION,               INTENT(IN)    :: x
+      DOUBLE PRECISION,               INTENT(IN)    :: y
+      DOUBLE PRECISION,               INTENT( IN)     :: z
+      DOUBLE PRECISION, DIMENSION(6), INTENT(OUT)   :: g
+      DOUBLE PRECISION,               INTENT(OUT)   :: baryon_density
+      DOUBLE PRECISION,               INTENT(OUT)   :: gamma_euler
 
-    END SUBROUTINE import_id_mass_b
+    END SUBROUTINE read_id_mass_b
 
 
-    MODULE SUBROUTINE import_id_k( THIS, n, x, y, z,&
+    MODULE SUBROUTINE read_id_k( this, n, x, y, z,&
                                          k_xx, k_xy, k_xz, &
                                          k_yy, k_yz, k_zz )
    !! Stores the components of the extrinsic curvature in arrays
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT( IN OUT ):: THIS
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
+      CLASS(diffstarlorene),          INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_zz
 
-    END SUBROUTINE import_id_k
+    END SUBROUTINE read_id_k
 
 
     !
     !-- FUNCTIONS
     !
-    MODULE FUNCTION import_mass_density( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_drslorene_mass_density( this, x, y, z ) RESULT( res )
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),     INTENT( IN )         :: THIS
+      CLASS(diffstarlorene), INTENT(IN):: this
       !> \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !> Baryon mass density at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
-    END FUNCTION import_mass_density
+    END FUNCTION read_drslorene_mass_density
 
 
-    MODULE FUNCTION import_spatial_metric( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION read_drslorene_pressure( this, x, y, z ) RESULT( res )
+    !! Returns the |lorene| pressure at a point \((x,y,z)\)
+
+      !> [[bnslorene]] object which this PROCEDURE is a member of
+      CLASS(diffstarlorene), INTENT(IN)       :: this
+      !> \(x\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
+      !> \(y\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
+      !> \(z\) coordinate of the desired point
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
+      !> Pressure at \((x,y,z)\)
+      DOUBLE PRECISION:: res
+
+    END FUNCTION read_drslorene_pressure
+
+
+    MODULE FUNCTION read_spatial_metric( this, x, y, z ) RESULT( res )
     !# Returns the |lorene| conformally flat spatial metric component
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),     INTENT( IN )       :: THIS
+      CLASS(diffstarlorene),     INTENT(IN)       :: this
       !> \(x\) coordinate of the desired point
-      REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
+      REAL(C_DOUBLE), INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
+      REAL(C_DOUBLE), INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      REAL(C_DOUBLE), INTENT( IN ), VALUE:: z
+      REAL(C_DOUBLE), INTENT(IN), VALUE:: z
       !> \(g_{xx}=g_{yy}=g_{zz}\) at \((x,y,z)\)
       REAL(C_DOUBLE):: res
 
-    END FUNCTION import_spatial_metric
+    END FUNCTION read_spatial_metric
 
 
-    MODULE FUNCTION is_hydro_positive( THIS, x, y, z ) RESULT( res )
+    MODULE FUNCTION is_hydro_positive( this, x, y, z ) RESULT( res )
     !# Returns .TRUE. if the energy density or the specific energy or the
     !  pressure are positive, .FALSE. otherwise
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),     INTENT( IN )       :: THIS
+      CLASS(diffstarlorene),     INTENT(IN)       :: this
       !> \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !& 1 if the energy density or the specific energy or the pressure
       !  are negative, 0 otherwise
       LOGICAL:: res
@@ -595,59 +562,59 @@ MODULE diffstar_lorene
     END FUNCTION is_hydro_positive
 
 
-    MODULE FUNCTION get_field_array( THIS, field ) RESULT( field_array )
+    MODULE FUNCTION get_field_array( this, field ) RESULT( field_array )
     !! Returns the [[diffstarlorene]] member arrays named field
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),          INTENT( IN )             :: THIS
+      CLASS(diffstarlorene),          INTENT(IN)             :: this
       !> Name of the desired [[diffstarlorene]] member array
-      CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
+      CHARACTER(LEN=:), INTENT(IN), ALLOCATABLE:: field
       !> Desired [[diffstarlorene]] member array
       DOUBLE PRECISION, DIMENSION(:),    ALLOCATABLE:: field_array
 
     END FUNCTION get_field_array
 
 
-    MODULE FUNCTION get_field_value( THIS, field, n ) RESULT( field_value )
+    MODULE FUNCTION get_field_value( this, field, n ) RESULT( field_value )
     !! Returns the component n of the [[diffstarlorene]] member arrays named field
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),          INTENT( IN )             :: THIS
+      CLASS(diffstarlorene),          INTENT(IN)             :: this
       !> Name of the desired [[diffstarlorene]] member array
-      CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
+      CHARACTER(LEN=:), INTENT(IN), ALLOCATABLE:: field
       !> Component of the desired [[diffstarlorene]] member array
-      INTEGER,             INTENT( IN )             :: n
+      INTEGER,             INTENT(IN)             :: n
       !> Component n of the desired [[diffstarlorene]] member array
       DOUBLE PRECISION                              :: field_value
 
     END FUNCTION get_field_value
 
 
-    MODULE FUNCTION get_diffstar_identifier( THIS )
+    MODULE FUNCTION get_diffstar_identifier( this )
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN ):: THIS
+      CLASS(diffstarlorene), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_diffstar_identifier
 
     END FUNCTION get_diffstar_identifier
 
 
-    MODULE FUNCTION get_eos_loreneid( THIS )
+    MODULE FUNCTION get_eos_loreneid( this )
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN ):: THIS
+      CLASS(diffstarlorene), INTENT(IN):: this
       ! Result
       INTEGER:: get_eos_loreneid
 
     END FUNCTION get_eos_loreneid
 
 
-    MODULE SUBROUTINE get_eos_parameters( THIS, i_matter, eos_params )
+    MODULE SUBROUTINE get_eos_parameters( this, i_matter, eos_params )
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene), INTENT( IN ):: THIS
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(diffstarlorene), INTENT(IN):: this
+      INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
       !# Array containing the parameters of the |eos| for the DRS
@@ -684,10 +651,25 @@ MODULE diffstar_lorene
     END SUBROUTINE finalize
 
 
-    !MODULE FUNCTION get_diffstar_ptr( THIS )
+    MODULE SUBROUTINE nothing( this, flag, switch )
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which is not needed in TYPE [[diffstarlorene]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+
+      CLASS(diffstarlorene), INTENT(INOUT)       :: this
+      INTEGER,               INTENT(IN)          :: flag
+      !! Identifies what kind of initialization has to be done
+      LOGICAL,               INTENT(IN), OPTIONAL:: switch
+      !! If `.TRUE.`, switch to a different initialization
+
+    END SUBROUTINE nothing
+
+
+    !MODULE FUNCTION get_diffstar_ptr( this )
     !
     !  ! Argument
-    !  CLASS(diffstarlorene), INTENT( IN ):: THIS
+    !  CLASS(diffstarlorene), INTENT(IN):: this
     !  ! Result
     !  TYPE(C_PTR):: get_diffstar_ptr
     !
@@ -700,6 +682,7 @@ MODULE diffstar_lorene
   PRIVATE:: construct_etdiffrot, get_diffstar_full, get_diffstar_spacetime, &
             get_diffstar_particles, get_diffstar_mass_b, &
             get_diffstar_hydro, get_diffstar_mass_density, &
+            get_diffstar_pressure, &
             get_diffstar_spatial_metric, positive_hydro, get_diffstar_params, &
             destruct_etdiffrot
 
@@ -749,6 +732,7 @@ MODULE diffstar_lorene
                                   baryon_density, &
                                   energy_density, &
                                   specific_energy, &
+                                  pressure, &
                                   v_euler_x, v_euler_y, v_euler_z ) &
       BIND(C, NAME= "get_rotdiff_id")
 
@@ -799,6 +783,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: baryon_density
       REAL(C_DOUBLE), INTENT(OUT)       :: energy_density
       REAL(C_DOUBLE), INTENT(OUT)       :: specific_energy
+      REAL(C_DOUBLE), INTENT(OUT)       :: pressure
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_x
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_y
       REAL(C_DOUBLE), INTENT(OUT)       :: v_euler_z
@@ -1043,6 +1028,40 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE) :: res
 
     END FUNCTION get_diffstar_mass_density
+
+
+    FUNCTION get_diffstar_pressure( optr, x, y, z ) RESULT( res ) &
+      BIND(C, NAME= "get_rotdiff_pressure")
+
+      !********************************************
+      !
+      !# Interface to the |lorene| method of class
+      !  |etdiffrot| with the same name, that returns
+      !  the baryon mass density \([\mathrm{kg}\,
+      !  c^2 \mathrm{m}^{-3}]\) from |lorene|,
+      !  at the specified point
+      !
+      !  FT 06.12.2022
+      !
+      !********************************************
+
+      IMPORT :: C_DOUBLE, C_PTR
+
+      IMPLICIT NONE
+
+      !> C pointer pointing to a |lorene| |etdiffrot| object
+      TYPE(C_PTR),    INTENT(IN),  VALUE :: optr
+      !> \(x\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: x
+      !> \(y\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: y
+      !> \(z\) coordinate of the desired point
+      REAL(C_DOUBLE), INTENT(IN),  VALUE :: z
+      !& Pressure \([\mathrm{kg}\,c^2\, \mathrm{m}^{-3}]\) at the desired
+      !  point \((x,y,z)\)
+      REAL(C_DOUBLE) :: res
+
+    END FUNCTION get_diffstar_pressure
 
 
     FUNCTION get_diffstar_spatial_metric( optr, x, y, z ) RESULT( res ) &

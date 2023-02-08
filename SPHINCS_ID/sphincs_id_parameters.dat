@@ -4,19 +4,31 @@
 !-------------------------------------------------------------------------!
 
 !----------------------------------------------------------------!
-! Parameters to specify the number of binary systems of neutron  !
-! stars, the paths to the LORENE binary files containing the     !
-! spectral initial data (ID) to be read by SPHINCS_LORENE, how   !
-! to place particles, if and how to export the SPHINCS ID, if    !
-! and how to compute/export the constraint violations, and other !
-! features of the code.                                          !
+! Parameters to specify the number of physical systems, the      !
+! paths to the files containing the initial data (ID) to be read !
+! by SPHINCS_ID, how to place particles, if and how to print     !
+! the SPH and spacetime ID, if and how to compute/print the      !
+! constraint violations, and other features of the code.         !
 !----------------------------------------------------------------!
-! n_bns and the number of specified components of filenames must be the same
+! n_id and the number of specified components of filenames must be the same
 n_id=1                          ! Number of physical systems to use
-common_path="lorene-id-files/"   ! Path to the directory containing the LORENE
-                                 ! BNS binary files
+! Path to the directory containing the ID files, RELATIVE to the path where the
+! code is executed
+common_path="lorene-id-files/"
+            !"fuka-id-files/"
             !"eccentric-ejecta-files/"
-filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
+filenames(1)="BNSLO_1.3-1.3_apr3_45km.bin"
+             !"BNSLO_1.3-1.3_mpa1_45km.bin"
+             !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
+             !"BNSLO_mpa1_1.2-1.5_45km.bin"
+             !"DRSLO_apr4.bin"
+             !"EJECT_ejecta_apr4_2516.dat"
+             !"BNSFU_poly2.00_1.4-1.4_50km.info"
+             !"BNSFU_1.4-1.4_poly2.00_45km.info"
+             !"BNSFU_1.2-1.5_MPA1_45km_ECC_RED.info"
+             !"BNSFU_1.4-1.4_MS1b_45km.info"
+             !"BNSFU_1.3-1.3_MPA1_45km_ECC_RED.info"
+             !"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
              !"BNSLO_mpa1_1.6-2_45km_1e-9.bin"
              !"BNSLO_apr3_1.4-2_35km.bin"
@@ -24,7 +36,7 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !!!"BNSLO_apr4_1.2-1.5_60km.bin"
              !!!"BNSLO_apr4_1.4-1.4_43.75km.bin"
              !"BNSLO_apr4_1.35-1.35_42km.bin"
-             !"BNSLO_sly_1.3-1.3_45km.bin"
+             !"BNSLO_mpa1_1.3-1.3_45km.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-73inside.bin"
              !"BNSLO_apr4_1.35-1.35_42km-hr-109outlay.bin"
@@ -48,13 +60,13 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_poly2-75_1.4-1.4_45km.bin"
              !"BNSLO_poly2-75_1.6-1.8_40km.bin"
              !!"BNSLO_poly275_1.2-1.6_45km.bin"
-             !!!"BNSLO_mpa1_1.2-2_45km.bin"
-             !!!"BNSLO_mpa1_1.2-1.5_45km.bin"
+             !"BNSLO_mpa1_1.2-2_45km.bin"
+             !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"BNSLO_mpa1_1.2-1.5_45km-0com.bin"
-             "BNSLO_mpa1_1.2-1.5_45km_0com0admmom.bin"
+             !"BNSLO_mpa1_1.2-1.5_45km_0com0admmom.bin"
              !"BNSLO_mpa1_1.2-1.5_45km_u_corr.bin"
              !"BNSLO_ms1b_1.3-1.3_45km.bin"
-             !!"BNSLO_poly2-75_1.2-1.8_45km.bin"
+             !"BNSLO_poly2-75_1.2-1.8_45km.bin"
              !"BNSLO_poly2-75_1.2-1.8_48km.bin"
              !"BNSLO_poly2-75_1.2-1.8_50km.bin"
              !"BNSLO_G2_I12vs12_D4R33T21_45km.resu"
@@ -82,8 +94,8 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-1.8_42km-hr-new.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-1.2_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
-             !"DRSLO_apr4.bin"
-             !"EJECT_ejecta_apr4_2516.dat"
+             !"BNSFU_poly2.00_1.4-1.4_50km.info"
+             !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
 !--------------------------------------------------!
 ! Estimate typical length scales to be resolved    !
 ! for the spacetime and/or the hydro               !
@@ -93,9 +105,11 @@ filenames(1)=!"BNSLO_apr4_1.35-1.35_42km-hr-129outlay.bin"
 estimate_length_scale=.FALSE.
 !--------------------------------------------------!
 ! Produce only the SPH ID or only the spacetime ID !
+!   If both are set to .FALSE., the code will only !
+!   read the ID and print info about it.           !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.TRUE.
+run_spacetime=.FALSE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -103,9 +117,9 @@ run_spacetime=.TRUE.
 sph_path="sph-output/"
 spacetime_path="spacetime-output/"
 !------------------------------------------------------------------!
-! Choose how to place particles for each BNS                       !
+! Choose how to place particles for each system                    !
 !   Please specify the details of the particle distribution in the !
-!   sphincs_lorene_bns_particles.par parameter file                !
+!   sphincs_id_particles.par parameter file                        !
 !------------------------------------------------------------------!
 placer(1,:)=2                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
@@ -115,7 +129,7 @@ placer(1,:)=2                     ! 0: Read particle positions from formatted
 ! Choose to export data to binary and formatted files !
 !-----------------------------------------------------!
 export_bin=.TRUE.                ! Export ID to binary files
-export_form=.FALSE.               ! Export ID to formatted files
+export_form=.TRUE.               ! Export ID to formatted files
 export_form_xy=.TRUE.  ! Export only the ID on the xy plane to formatted files
 export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
                         ! irrespectively on the value of export_form_xy
@@ -125,7 +139,7 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping
@@ -161,7 +175,7 @@ ref_lev=1                     ! Refinement level over which performing the
 !----------------!
 ! Geodesic gauge
 one_lapse=.FALSE.             ! If .TRUE., it sets the lapse equal to 1
-zero_shift=.TRUE.             ! If .TRUE., it sets the shift equal to 0
+zero_shift=.FALSE.             ! If .TRUE., it sets the shift equal to 0
 ! Show loops progress on screen
 show_progress= .FALSE.
 

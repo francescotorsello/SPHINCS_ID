@@ -57,8 +57,8 @@ SUBMODULE (ejecta_generic) memory
 
     IMPLICIT NONE
 
-    IF(.NOT.ALLOCATED( THIS% grid ))THEN
-      ALLOCATE( THIS% grid( THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, 3 ) )
+    IF(.NOT.ALLOCATED( this% grid ))THEN
+      ALLOCATE( this% grid( this% nx_grid, this% ny_grid, this% nz_grid, 3 ) )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array grid in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -66,9 +66,9 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% baryon_mass_density ))THEN
-      ALLOCATE( THIS% baryon_mass_density( THIS% nx_grid, THIS% ny_grid, &
-                                           THIS% nz_grid ) )
+    IF(.NOT.ALLOCATED( this% baryon_mass_density ))THEN
+      ALLOCATE( this% baryon_mass_density( this% nx_grid, this% ny_grid, &
+                                           this% nz_grid ) )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array baryon_mass_density in ", &
                   "SUBROUTINE allocate_gridid_memory.", &
@@ -76,9 +76,9 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% specific_energy ))THEN
-      ALLOCATE( THIS% specific_energy( THIS% nx_grid, THIS% ny_grid, &
-                                       THIS% nz_grid ) )
+    IF(.NOT.ALLOCATED( this% specific_energy ))THEN
+      ALLOCATE( this% specific_energy( this% nx_grid, this% ny_grid, &
+                                       this% nz_grid ) )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array specific_energy in ", &
                   "SUBROUTINE allocate_gridid_memory.", &
@@ -86,8 +86,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% vel ))THEN
-      ALLOCATE( THIS% vel( THIS% nx_grid, THIS% ny_grid, THIS% nz_grid, 3 ) )
+    IF(.NOT.ALLOCATED( this% vel ))THEN
+      ALLOCATE( this% vel( this% nx_grid, this% ny_grid, this% nz_grid, 3 ) )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array vel in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -95,8 +95,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% masses ))THEN
-      ALLOCATE( THIS% masses( n_matter ) )
+    IF(.NOT.ALLOCATED( this% masses ))THEN
+      ALLOCATE( this% masses( n_matter ) )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array masses in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -104,8 +104,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% sizes ))THEN
-      ALLOCATE( THIS% sizes( n_matter, 6 ) )
+    IF(.NOT.ALLOCATED( this% sizes ))THEN
+      ALLOCATE( this% sizes( n_matter, 6 ) )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array sizes in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -113,8 +113,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% centers ))THEN
-      ALLOCATE( THIS% centers( n_matter, 3 ) )
+    IF(.NOT.ALLOCATED( this% centers ))THEN
+      ALLOCATE( this% centers( n_matter, 3 ) )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array centers in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -122,8 +122,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% barycenters ))THEN
-      ALLOCATE( THIS% barycenters( n_matter, 3 ) )
+    IF(.NOT.ALLOCATED( this% barycenters ))THEN
+      ALLOCATE( this% barycenters( n_matter, 3 ) )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array barycenters in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -148,8 +148,8 @@ SUBMODULE (ejecta_generic) memory
 
     IMPLICIT NONE
 
-    IF(ALLOCATED( THIS% grid ))THEN
-      DEALLOCATE( THIS% grid )
+    IF(ALLOCATED( this% grid ))THEN
+      DEALLOCATE( this% grid )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array grid in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -157,8 +157,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(ALLOCATED( THIS% baryon_mass_density ))THEN
-      DEALLOCATE( THIS% baryon_mass_density )
+    IF(ALLOCATED( this% baryon_mass_density ))THEN
+      DEALLOCATE( this% baryon_mass_density )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array baryon_mass_density in ", &
                   "SUBROUTINE allocate_gridid_memory.", &
@@ -166,8 +166,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(ALLOCATED( THIS% specific_energy ))THEN
-      DEALLOCATE( THIS% specific_energy )
+    IF(ALLOCATED( this% specific_energy ))THEN
+      DEALLOCATE( this% specific_energy )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array specific_energy in ", &
                   "SUBROUTINE allocate_gridid_memory.", &
@@ -175,8 +175,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(ALLOCATED( THIS% vel ))THEN
-      DEALLOCATE( THIS% vel )
+    IF(ALLOCATED( this% vel ))THEN
+      DEALLOCATE( this% vel )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array vel in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -184,8 +184,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(ALLOCATED( THIS% masses ))THEN
-      DEALLOCATE( THIS% masses )
+    IF(ALLOCATED( this% masses ))THEN
+      DEALLOCATE( this% masses )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array masses in SUBROUTINE ", &
                   "allocate_gridid_memory.", &
@@ -193,8 +193,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(ALLOCATED( THIS% sizes ))THEN
-      DEALLOCATE( THIS% sizes )
+    IF(ALLOCATED( this% sizes ))THEN
+      DEALLOCATE( this% sizes )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array sizes in ", &
                   "SUBROUTINE allocate_gridid_memory.", &
@@ -202,8 +202,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(ALLOCATED( THIS% centers ))THEN
-      DEALLOCATE( THIS% centers )
+    IF(ALLOCATED( this% centers ))THEN
+      DEALLOCATE( this% centers )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array centers in ", &
                   "SUBROUTINE allocate_gridid_memory.", &
@@ -211,8 +211,8 @@ SUBMODULE (ejecta_generic) memory
          STOP
       ENDIF
     ENDIF
-    IF(ALLOCATED( THIS% barycenters ))THEN
-      DEALLOCATE( THIS% barycenters )
+    IF(ALLOCATED( this% barycenters ))THEN
+      DEALLOCATE( this% barycenters )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array barycenters in SUBROUTINE ", &
                   "allocate_gridid_memory.", &

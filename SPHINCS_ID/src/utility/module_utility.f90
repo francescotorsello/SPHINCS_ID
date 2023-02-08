@@ -36,28 +36,43 @@ MODULE utility
 
   IMPLICIT NONE
 
-  ! This should go in MODULE constants
-  DOUBLE PRECISION, PARAMETER :: zero            = 0.D0
-  DOUBLE PRECISION, PARAMETER :: one             = 1.D0
-  DOUBLE PRECISION, PARAMETER :: two             = 2.D0
-  DOUBLE PRECISION, PARAMETER :: three           = 3.D0
-  DOUBLE PRECISION, PARAMETER :: four            = 4.D0
-  DOUBLE PRECISION, PARAMETER :: five            = 5.D0
-  DOUBLE PRECISION, PARAMETER :: ten             = 10.D0
-  DOUBLE PRECISION, PARAMETER :: golden_ratio    = 1.618033988749894D0
-  DOUBLE PRECISION, PARAMETER :: km2m            = 1.D+3
-  DOUBLE PRECISION, PARAMETER :: m2cm            = 1D+2
-  DOUBLE PRECISION, PARAMETER :: g2kg            = 1D-3
-  DOUBLE PRECISION, PARAMETER :: kg2g            = 1D+3
-  DOUBLE PRECISION, PARAMETER :: MSun_geo        = G_Msun/c_light2/1.0D5! in km;
+
+  INTEGER, PARAMETER:: flag$sph= -37457
+  INTEGER, PARAMETER:: flag$tpo= -6543
+
+  !
+  !-- Identifiers for the supported equations of state
+  !
+  INTEGER, PARAMETER:: eos$poly  = 1
+  INTEGER, PARAMETER:: eos$pwpoly= 2
+
+
+  DOUBLE PRECISION, PARAMETER:: zero        = 0.D0
+  DOUBLE PRECISION, PARAMETER:: one         = 1.D0
+  DOUBLE PRECISION, PARAMETER:: two         = 2.D0
+  DOUBLE PRECISION, PARAMETER:: three       = 3.D0
+  DOUBLE PRECISION, PARAMETER:: four        = 4.D0
+  DOUBLE PRECISION, PARAMETER:: five        = 5.D0
+  DOUBLE PRECISION, PARAMETER:: seven       = 7.D0
+  DOUBLE PRECISION, PARAMETER:: ten         = 10.D0
+  DOUBLE PRECISION, PARAMETER:: golden_ratio= 1.618033988749894D0
+  DOUBLE PRECISION, PARAMETER:: km2m        = ten*ten*ten
+  DOUBLE PRECISION, PARAMETER:: m2cm        = ten*ten
+  DOUBLE PRECISION, PARAMETER:: g2kg        = one/(ten*ten*ten)
+  DOUBLE PRECISION, PARAMETER:: kg2g        = ten*ten*ten
+  DOUBLE PRECISION, PARAMETER:: c_light_SI  = 2.99792458E+8
+  DOUBLE PRECISION, PARAMETER:: c_light2_SI = c_light_SI**2
+  DOUBLE PRECISION, PARAMETER:: MSun_geo    = G_Msun/c_light2/ &
+                                               (ten*ten*ten*ten*ten)
   !# Msun_geo = 1.47662503825040 km
   !  see https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
-  DOUBLE PRECISION, PARAMETER :: km2Msun_geo     = 1.0D0/MSun_geo
-  DOUBLE PRECISION, PARAMETER :: lorene2hydrobase= &
-                                              (MSun_geo*km2m)**3/(MSun*g2kg)
-  !# lorene2hydrobase= (1477m)^3 / (2*10^30kg) ! 1.6110591665D-21
-  !  new value 1.6186541582311746851140226630074e-21, different by 0.5%
-  !  lorene2hydrobase is the conversion factor for the baryon mass density
+  DOUBLE PRECISION, PARAMETER:: km2Msun_geo     = one/MSun_geo
+  DOUBLE PRECISION, PARAMETER:: lorene2hydrobase= (MSun_geo*km2m)**3/(MSun*g2kg)
+  !# Conversion factor for the baryon mass density, from the units used in
+  !  |lorene| to the units used in |sphincs|, but NOT measured in units of
+  !  \(m_0c^2\)
+  !
+  !  `lorene2hydrobase`\(\simeq\dfrac{(1477\mathrm{m})^3}{2*10^30\mathrm{kg}}=1.6186541582311746851140226630074e-21\dfrac{\mathrm{m}^3}{\mathrm{kg}}\)
 
   INTEGER:: itr
   !! Iterator for loops
@@ -87,8 +102,14 @@ MODULE utility
   !# `.TRUE.` if loop progress is to be printed to standard output;
   !  `.FALSE.` otherwise
 
-  CHARACTER( LEN= : ), ALLOCATABLE:: err_msg
+  CHARACTER(LEN=:), ALLOCATABLE:: err_msg
   !! String storing error messages
+
+  CHARACTER(LEN=500):: hostname
+  !# String storing the name of the host machine
+
+  CHARACTER(LEN=10):: version
+  !# String storing the version of |sphincsid|
 
   !
   !-- Variables used to set the run_id
@@ -112,13 +133,13 @@ MODULE utility
   !   6. The minutes of the hour as an integer from 1 to 59
   !   7. The second of the minute as an integer from 0 to 60
   !   8. The millisecond of the second as an integer from 0 to 999
-  CHARACTER( LEN= 19 ):: run_id
+  CHARACTER(LEN=19):: run_id
   !! Identification string for the run
-  CHARACTER( LEN= 19 ):: end_time
+  CHARACTER(LEN=19):: end_time
   !! Time when the run ends
 
 
-  INTEGER, PARAMETER:: max_length= 50
+  INTEGER, PARAMETER:: max_length= 100
   !! Maximum length for strings
   INTEGER, PARAMETER:: max_n_id= 50
   ! Maximum number of physical systems
@@ -133,7 +154,7 @@ MODULE utility
   !! Export the constraints every constraints_step-th step
 
   INTEGER, PARAMETER:: test_int= - 112
-  INTEGER, DIMENSION( max_n_id, max_n_parts ):: placer= test_int
+  INTEGER, DIMENSION(max_n_id, max_n_parts):: placer= test_int
   !# Matrix storing the information on how to place particles for each bns
   !  object. Row i contains information about the i^th bns object.
 
@@ -156,15 +177,15 @@ MODULE utility
             export_constraints_details, compute_parts_constraints, &
             one_lapse, zero_shift, run_sph, run_spacetime, estimate_length_scale
 
-  CHARACTER( LEN= max_length ), DIMENSION( max_length ):: filenames= "0"
+  CHARACTER(LEN=max_length), DIMENSION(max_length):: filenames= "0"
   !! Array of strings storing the names of the |id| files
-  CHARACTER( LEN= max_length ):: common_path
+  CHARACTER(LEN=max_length):: common_path
   !# String storing the local path to the directory where the |id| files
   !  are stored
-  CHARACTER( LEN= max_length ):: sph_path
+  CHARACTER(LEN=max_length):: sph_path
   !# String storing the local path to the directory where the
   !  SPH output is to be saved
-  CHARACTER( LEN= max_length ):: spacetime_path
+  CHARACTER(LEN=max_length):: spacetime_path
   !# String storing the local path to the directory where the
   !  spacetime output is to be saved
 
@@ -187,8 +208,8 @@ MODULE utility
     INTEGER:: stat
     INTEGER, PARAMETER:: unit_parameters= 17
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: sphincs_id_parameters_namefile
-    CHARACTER( LEN= 100 ):: msg
+    CHARACTER(LEN=:), ALLOCATABLE:: sphincs_id_parameters_namefile
+    CHARACTER(LEN=100):: msg
 
     ! Namelist containing parameters read from sphincs_id_parameters.par
     ! by the SUBROUTINE read_sphincs_id_parameters of this PROGRAM
@@ -209,26 +230,27 @@ MODULE utility
     INQUIRE( FILE= sphincs_id_parameters_namefile, EXIST= file_exists )
     IF( file_exists )THEN
 
-     OPEN( 17, FILE= sphincs_id_parameters_namefile, STATUS= 'OLD' )
+      OPEN( unit_parameters, FILE= sphincs_id_parameters_namefile, &
+            STATUS= 'OLD' )
 
     ELSE
 
-     PRINT*
-     PRINT*,'** ERROR: ', sphincs_id_parameters_namefile, " file not found!"
-     PRINT*
-     STOP
+      PRINT*
+      PRINT*,'** ERROR: ', sphincs_id_parameters_namefile, " file not found!"
+      PRINT*
+      STOP
 
     ENDIF
 
     READ( UNIT= unit_parameters, NML= sphincs_id_parameters, IOSTAT= stat, &
           IOMSG= msg )
 
-      IF( stat /= 0 )THEN
-        PRINT *, "** ERROR: Error in reading ", sphincs_id_parameters_namefile,&
-                 ". The IOSTAT variable is ", stat, &
-                 "The error message is", msg
-        STOP
-      ENDIF
+    IF( stat /= 0 )THEN
+      PRINT *, "** ERROR: Error in reading ", sphincs_id_parameters_namefile, &
+               ". The IOSTAT variable is ", stat, &
+               "The error message is", msg
+      STOP
+    ENDIF
 
     CLOSE( UNIT= unit_parameters )
 
@@ -273,11 +295,11 @@ MODULE utility
 
     IMPLICIT NONE
 
-    INTEGER,               INTENT(IN)           :: io_stat
+    INTEGER,            INTENT(IN)           :: io_stat
     !! Status variable
-    CHARACTER( LEN= 100 ), INTENT(IN)           :: io_msg
+    CHARACTER(LEN=100), INTENT(IN)           :: io_msg
     !! Status message
-    CHARACTER( LEN= * ),   INTENT(IN), OPTIONAL :: opt_msg
+    CHARACTER(LEN=*),   INTENT(IN), OPTIONAL :: opt_msg
     !! Optional status message
 
     IF( io_stat > 0 )THEN
@@ -314,6 +336,82 @@ MODULE utility
     res= (.NOT.ISNAN(x)) .AND. IEEE_IS_FINITE(x)
 
   END FUNCTION is_finite_number
+
+
+  SUBROUTINE scan_1d_array_for_nans( array_size, array, name )
+
+    !***********************************************
+    !
+    !# Test if a double precision is a finite number
+    !
+    !  FT 11.02.2022
+    !
+    !***********************************************
+
+    INTEGER,                        INTENT(IN):: array_size
+    DOUBLE PRECISION, DIMENSION(:), INTENT(IN):: array
+    CHARACTER(LEN=*),               INTENT(IN):: name
+
+    INTEGER:: i
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( array, array_size, name ) &
+    !$OMP             PRIVATE( i )
+    DO i= 1, array_size, 1
+
+      IF(.NOT.is_finite_number(array(i)))THEN
+        PRINT *, "** ERROR! The array ", name, "does not contain a finite", &
+                 " number at position ", i
+        PRINT *, " * ", name, "(", i, ")=", array(i)
+        PRINT *
+        STOP
+      ENDIF
+
+    ENDDO
+    !$OMP END PARALLEL DO
+
+  END SUBROUTINE scan_1d_array_for_nans
+
+
+  SUBROUTINE scan_3d_array_for_nans( size_1, size_2, size_3, array, name )
+
+    !***********************************************
+    !
+    !# Test if a double precision is a finite number
+    !
+    !  FT 11.02.2022
+    !
+    !***********************************************
+
+    INTEGER,                            INTENT(IN):: size_1
+    INTEGER,                            INTENT(IN):: size_2
+    INTEGER,                            INTENT(IN):: size_3
+    DOUBLE PRECISION, DIMENSION(:,:,:), INTENT(IN):: array
+    CHARACTER(LEN=*),                   INTENT(IN):: name
+
+    INTEGER:: i, j, k
+
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( array, size_1, size_2, size_3, name ) &
+    !$OMP             PRIVATE( i, j, k )
+    DO k= 1, size_3, 1
+      DO j= 1, size_2, 1
+        DO i= 1, size_1, 1
+
+          IF(.NOT.is_finite_number(array(i,j,k)))THEN
+            PRINT *, "** ERROR! The array ", name, "does not contain a ", &
+                     "finite number at position ", "(", i, ",", j, ",", k, ")"
+            PRINT *, " * ", name, "(", i, ",", j, ",", k, ")=", array(i,j,k)
+            PRINT *
+            STOP
+          ENDIF
+
+        ENDDO
+      ENDDO
+    ENDDO
+    !$OMP END PARALLEL DO
+
+  END SUBROUTINE scan_3d_array_for_nans
 
 
   PURE SUBROUTINE compute_g4( lapse, shift, g3, g4 )
@@ -442,7 +540,7 @@ MODULE utility
     !****************************************************************
 
     USE tensor,               ONLY: n_sym4x4
-    USE metric_on_particles,  ONLY: gvec2mat, mat2gvec
+    !USE metric_on_particles,  ONLY: gvec2mat, mat2gvec
     USE matrix,               ONLY: invert_4x4_matrix
 
     IMPLICIT NONE
@@ -467,11 +565,35 @@ MODULE utility
       STOP
     ENDIF
 
-    CALL gvec2mat(A,Amat)
+    !CALL gvec2mat(A,Amat)
+    !Amat= [[A(1),A(2),A(3),A(4)], &
+    !       [A(2),A(5),A(6),A(7)], &
+    !       [A(3),A(6),A(8),A(9)], &
+    !       [A(4),A(7),A(9),A(10)]]
+    Amat(1,1)= A(1)
+    Amat(1,2)= A(2)
+    Amat(1,3)= A(3)
+    Amat(1,4)= A(4)
+    Amat(2,1)= A(2)
+    Amat(2,2)= A(5)
+    Amat(2,3)= A(6)
+    Amat(2,4)= A(7)
+    Amat(3,1)= A(3)
+    Amat(3,2)= A(6)
+    Amat(3,3)= A(8)
+    Amat(3,4)= A(9)
+    Amat(4,1)= A(4)
+    Amat(4,2)= A(7)
+    Amat(4,3)= A(9)
+    Amat(4,4)= A(10)
 
     CALL invert_4x4_matrix(Amat,iAmat)
 
-    CALL mat2gvec(iA,iAmat)
+    !CALL mat2gvec(iA,iAmat)
+    iA= [iAmat(1,1),iAmat(1,2),iAmat(1,3),iAmat(1,4), &
+         iAmat(2,2),iAmat(2,3),iAmat(2,4), &
+         iAmat(3,3),iAmat(3,4), &
+         iAmat(4,4)]
 
   END SUBROUTINE invert_sym4x4
 
@@ -800,11 +922,11 @@ MODULE utility
     yd= y - yo
     zd= z - zo
 
-    IF( x > zero )THEN
+    IF( xd > zero )THEN
 
       phi= ATAN( yd/xd )
 
-    ELSEIF( x < zero )THEN
+    ELSEIF( xd < zero )THEN
 
       phi= ATAN( yd/xd ) + pi
 
@@ -821,9 +943,83 @@ MODULE utility
   END SUBROUTINE spherical_from_cartesian
 
 
-  FUNCTION k_lorene2hydrobase( gamma )
+  PURE SUBROUTINE cartesian_from_spherical &
+    ( r, theta, phi, xo, yo, zo, x, y, z, a_y, a_z )
 
-    DOUBLE PRECISION :: gamma
+    !****************************************************************
+    !
+    !# Compute the Cartesian coordinates of a points \(p\),
+    !  starting from the spherical, or optionally elliptical, polar
+    !  coordinates of the point \(p\) relative to a point \(O\)
+    !
+    !  FT 28.11.2022
+    !
+    !****************************************************************
+
+    USE constants, ONLY: pi
+
+    IMPLICIT NONE
+
+    DOUBLE PRECISION, INTENT(IN):: r
+    !! \(r\) coordinate of the point \(p\), relative to \(O\)
+    DOUBLE PRECISION, INTENT(IN):: theta
+    !! \(\theta\) coordinate (colatitude) of the point \(p\), relative to \(O\)
+    DOUBLE PRECISION, INTENT(IN):: phi
+    !! \(\phi\) coordinate (azimuth) of the point \(p\), relative to \(O\)
+
+    DOUBLE PRECISION, INTENT(IN):: xo
+    !! \(x\) coordinate of the point \(O\)
+    DOUBLE PRECISION, INTENT(IN):: yo
+    !! \(y\) coordinate of the point \(O\)
+    DOUBLE PRECISION, INTENT(IN):: zo
+    !! \(z\) coordinate of the point \(O\)
+
+    DOUBLE PRECISION, INTENT(OUT):: x
+    !! \(x\) coordinate of the point \(p\)
+    DOUBLE PRECISION, INTENT(OUT):: y
+    !! \(y\) coordinate of the point \(p\)
+    DOUBLE PRECISION, INTENT(OUT):: z
+    !! \(z\) coordinate of the point \(p\)
+
+    DOUBLE PRECISION, INTENT(IN), OPTIONAL:: a_y
+    !! Ratio between the y and x semiaxes of the ellipse
+    DOUBLE PRECISION, INTENT(IN), OPTIONAL:: a_z
+    !! Ratio between the z and x semiaxes of the ellipse
+
+    DOUBLE PRECISION:: ay, az
+
+    IF(PRESENT(a_y))THEN
+      ay= a_y
+    ELSE
+      ay= one
+    ENDIF
+    IF(PRESENT(a_z))THEN
+      az= a_z
+    ELSE
+      az= one
+    ENDIF
+
+    x= xo +    r*SIN(theta)*COS(phi)
+    y= yo + ay*r*SIN(theta)*SIN(phi)
+    z= zo + az*r*COS(theta)
+
+  END SUBROUTINE cartesian_from_spherical
+
+
+  PURE FUNCTION k_lorene2hydrobase( gam )
+
+    !****************************************************************
+    !
+    !# Compute the constant to convert the polytropic constant \(K\)
+    !  from the units used in |lorene| for the single polytropic |eos|,
+    !  to the units used in |sphincs|
+    !
+    !  FT xx.xx.2020
+    !
+    !****************************************************************
+
+    DOUBLE PRECISION, INTENT(IN) :: gam
+    !! Polytropic exponent \(\gamma\)
     DOUBLE PRECISION :: k_lorene2hydrobase
 
     ! LORENE's EOS is in terms on number density n = rho/m_nucleon:
@@ -848,23 +1044,33 @@ MODULE utility
 
     k_lorene2hydrobase= &
                         ( (MSun*g2kg)/((MSun_geo*km2m)**3*(1.66D+17)) ) &
-                        **( gamma - 1.0D0 )
+                        **( gam - one )
 
 
   END FUNCTION
 
 
-  FUNCTION k_lorene2hydrobase_piecewisepolytrope( gamma0 )
+  PURE FUNCTION k_lorene2hydrobase_piecewisepolytrope( gamma0 )
 
-    DOUBLE PRECISION :: gamma0
+    !****************************************************************
+    !
+    !# Compute the constant to convert the polytropic constant \(K\)
+    !  from the units used in |lorene| for the piecewise polytropic
+    !  |eos|, to the units used in |sphincs|
+    !
+    !  FT xx.xx.2020
+    !
+    !****************************************************************
+
+    DOUBLE PRECISION, INTENT(IN) :: gamma0
+    !! Polytropic exponent \(\gamma_0\)
     DOUBLE PRECISION :: k_lorene2hydrobase_piecewisepolytrope
 
     ! LORENE has K0 in units of (g cm^{-3})^{1-gamma0} for the piecewise
     ! polytropes. This factor writes it in SPHINCS units
 
     k_lorene2hydrobase_piecewisepolytrope= &
-                        ( MSun/((MSun_geo*km2m*m2cm)**3) ) &
-                        **( gamma0 - 1.0D0 )
+                        ( MSun/((MSun_geo*km2m*m2cm)**3) )**( gamma0 - one )
 
 
   END FUNCTION

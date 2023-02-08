@@ -57,11 +57,31 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_mass= THIS% masses(i_matter)
+    get_mass= this% masses(i_matter)
 
   END PROCEDURE get_mass
+
+
+  MODULE PROCEDURE get_adm_mass
+
+    !************************************************
+    !
+    !# Returns 0 (the ADM mass is not necessarily
+    !  known for this TYPE)
+    !
+    !  FT 03.11.2022
+    !
+    !************************************************
+
+    USE utility, ONLY: zero
+
+    IMPLICIT NONE
+
+    get_adm_mass= zero
+
+  END PROCEDURE get_adm_mass
 
 
   MODULE PROCEDURE get_radii
@@ -76,9 +96,9 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_radii= THIS% sizes(i_matter,:)
+    get_radii= this% sizes(i_matter,:)
 
   END PROCEDURE get_radii
 
@@ -95,9 +115,9 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_center= THIS% centers(i_matter,:)
+    get_center= this% centers(i_matter,:)
 
   END PROCEDURE get_center
 
@@ -114,9 +134,9 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_barycenter= THIS% barycenters(i_matter,:)
+    get_barycenter= this% barycenters(i_matter,:)
 
   END PROCEDURE get_barycenter
 
@@ -133,9 +153,9 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    CALL THIS% check_i_matter(i_matter)
+    CALL this% check_i_matter(i_matter)
 
-    get_eos= "Multipolytropic APR4 EOS"
+    get_eos= "APR4"
 
   END PROCEDURE get_eos
 
@@ -159,7 +179,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_gamma= THIS% gamma
+    get_gamma= this% gamma
 
   END PROCEDURE get_gamma
 
@@ -178,7 +198,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_kappa= THIS% kappa
+    get_kappa= this% kappa
 
   END PROCEDURE get_kappa
 
@@ -195,7 +215,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_npeos= THIS% npeos
+    get_npeos= this% npeos
 
   END PROCEDURE get_npeos
 
@@ -214,7 +234,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_gamma0= THIS% gamma0
+    get_gamma0= this% gamma0
 
   END PROCEDURE get_gamma0
 
@@ -233,7 +253,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_gamma1= THIS% gamma1
+    get_gamma1= this% gamma1
 
   END PROCEDURE get_gamma1
 
@@ -252,7 +272,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_gamma2= THIS% gamma2
+    get_gamma2= this% gamma2
 
   END PROCEDURE get_gamma2
 
@@ -271,7 +291,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_gamma3= THIS% gamma3
+    get_gamma3= this% gamma3
 
   END PROCEDURE get_gamma3
 
@@ -290,7 +310,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_kappa0= THIS% kappa0
+    get_kappa0= this% kappa0
 
   END PROCEDURE get_kappa0
 
@@ -309,7 +329,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_kappa1= THIS% kappa1
+    get_kappa1= this% kappa1
 
   END PROCEDURE get_kappa1
 
@@ -328,7 +348,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_kappa2= THIS% kappa2
+    get_kappa2= this% kappa2
 
   END PROCEDURE get_kappa2
 
@@ -347,7 +367,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_kappa3= THIS% kappa3
+    get_kappa3= this% kappa3
 
   END PROCEDURE get_kappa3
 
@@ -367,7 +387,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_logp1= THIS% logp1
+    get_logp1= this% logp1
 
   END PROCEDURE get_logp1
 
@@ -388,7 +408,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_logRho0= THIS% logRho0
+    get_logRho0= this% logRho0
 
   END PROCEDURE get_logRho0
 
@@ -408,7 +428,7 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_logRho1= THIS% logRho1
+    get_logRho1= this% logRho1
 
   END PROCEDURE get_logRho1
 
@@ -428,16 +448,17 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_logRho2= THIS% logRho2
+    get_logRho2= this% logRho2
 
   END PROCEDURE get_logRho2
 
 
-  MODULE PROCEDURE get_eos_ejectaid
+  MODULE PROCEDURE get_eos_id
 
     !**************************************************
     !
-    !# Returns the |lorene| ID-number of the EOS of the system
+    !# Returns the |sphincsid| identifier of the |eos|
+    !  of the system
     !
     !  FT 19.11.2021
     !
@@ -445,9 +466,9 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    get_eos_ejectaid= THIS% eos_ejectaid
+    get_eos_id= this% eos_id
 
-  END PROCEDURE get_eos_ejectaid
+  END PROCEDURE get_eos_id
 
 
   MODULE PROCEDURE get_eos_parameters
@@ -463,11 +484,13 @@ SUBMODULE (ejecta_generic) access
 
     IMPLICIT NONE
 
-    eos_params= [ DBLE(THIS% eos_ejectaid), DBLE(THIS% npeos), &
-          THIS% gamma0, THIS% gamma1, THIS% gamma2, THIS% gamma3, &
-          THIS% kappa0, THIS% kappa1, THIS% kappa2, THIS% kappa3, &
-          THIS% logP1, &
-          THIS% logRho0, THIS% logRho1, THIS% logRho2 ]
+    ! TODO: Implement single polytropes. Only piecewise polytropes are
+    !       supported so far.
+    eos_params= [ DBLE(this% eos_id), DBLE(this% npeos), &
+          this% gamma0, this% gamma1, this% gamma2, this% gamma3, &
+          this% kappa0, this% kappa1, this% kappa2, this% kappa3, &
+          this% logP1, &
+          this% logRho0, this% logRho1, this% logRho2 ]
 
   END PROCEDURE get_eos_parameters
 

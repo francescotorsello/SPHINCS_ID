@@ -195,7 +195,7 @@ SUBMODULE (sph_particles) constructor_bin
 
     ENDDO
 
-    parts% nstar_int= parts% nlrf_int*sq_detg4*parts% theta
+    parts% nstar_sph= parts% nlrf_sph*sq_detg4*parts% theta
 
     CALL allocate_sph_memory
 
@@ -205,12 +205,12 @@ SUBMODULE (sph_particles) constructor_bin
 
     CALL parts% test_recovery( parts% npart,       &
                                parts% pos,         &
-                               parts% nlrf_int,    &
-                               parts% u_pwp,       &
-                               parts% pressure_cu, &
+                               parts% nlrf_sph,    &
+                               parts% u_sph,       &
+                               parts% pressure_sph, &
                                parts% v(1:3,:),    &
                                parts% theta,       &
-                               parts% nstar_int )
+                               parts% nstar_sph )
 
     DEALLOCATE( sq_detg4 )
     CALL deallocate_sph_memory

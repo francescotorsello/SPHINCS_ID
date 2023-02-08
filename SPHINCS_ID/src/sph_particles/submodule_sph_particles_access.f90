@@ -40,104 +40,6 @@ SUBMODULE (sph_particles) access
   CONTAINS
 
 
-!  MODULE PROCEDURE impose_equatorial_plane_symmetry
-!
-!    !*************************************************************
-!    !
-!    !# Mirror the particle with z>0 with respect to the xy plane,
-!    !  to impose the equatorial-plane symmetry
-!    !
-!    !  FT 1.09.2021
-!    !
-!    !*************************************************************
-!
-!    USE analyze, ONLY: COM
-!
-!    IMPLICIT NONE
-!
-!   ! INTEGER, INTENT(IN):: npart
-!   ! DOUBLE PRECISION, INTENT(IN), OPTIONAL:: com_star
-!   ! LOGICAL, INTENT(IN), OPTIONAL:: verbose
-!   !
-!   ! DOUBLE PRECISION, DIMENSION(3,npart), INTENT(INOUT):: pos
-!   ! DOUBLE PRECISION, DIMENSION(npart),   INTENT(INOUT):: nu
-!
-!    INTEGER:: a, itr, npart_half
-!    DOUBLE PRECISION:: com_x, com_y, com_z, com_d
-!
-!    DOUBLE PRECISION, DIMENSION(3,npart):: pos_tmp
-!    DOUBLE PRECISION, DIMENSION(npart)  :: nu_tmp
-!
-!    pos_tmp= pos
-!    nu_tmp= nu
-!    itr= 0
-!    DO a= 1, npart, 1
-!      IF( pos_tmp( 3, a ) > 0.0D0 &
-!          .AND. &
-!          itr < npart/2 )THEN
-!        itr= itr + 1
-!        pos( 1, itr )= pos_tmp( 1, a )
-!        pos( 2, itr )= pos_tmp( 2, a )
-!        pos( 3, itr )= pos_tmp( 3, a )
-!        IF( PRESENT(nu) ) nu( itr )= nu_tmp( a )
-!      ENDIF
-!    ENDDO
-!    npart_half= itr
-!
-!    ! If some of the particles crossed the xy plane top-down in the
-!    ! last step, replace them with their previous position
-!    ! above the xy plane
-!  !   IF( npart_half < npart/2 )THEN
-!  !
-!  !     npart_missing= npart/2 - npart_half
-!  !
-!  !     DO a= npart_half + 1, npart/2, 1
-!  !
-!  !       pos( :, a )= all_pos_tmp2( :, a )
-!  !
-!  !     ENDDO
-!  !
-!  !   ENDIF
-!
-!    !$OMP PARALLEL DO DEFAULT( NONE ) &
-!    !$OMP             SHARED( pos, npart_half, nu ) &
-!    !$OMP             PRIVATE( a )
-!    DO a= 1, npart_half, 1
-!      pos( 1, npart_half + a )=   pos( 1, a )
-!      pos( 2, npart_half + a )=   pos( 2, a )
-!      pos( 3, npart_half + a )= - pos( 3, a )
-!      IF( PRESENT(nu) ) nu( npart_half + a )=   nu( a )
-!    ENDDO
-!    !$OMP END PARALLEL DO
-!
-!    npart= 2*npart_half
-!
-!    IF( PRESENT(verbose) .AND. verbose .EQV. .TRUE. )THEN
-!
-!      CALL COM( npart, pos, nu, & ! input
-!                com_x, com_y, com_z, com_d ) ! output
-!
-!      PRINT *, "** After mirroring particles:"
-!      IF( PRESENT(com_star) ) PRINT *, &
-!               " * x coordinate of the center of mass of the star, ", &
-!               "from LORENE: com_star= ", com_star, "Msun_geo"
-!      PRINT *, " * x coordinate of the center of mass of the particle ", &
-!               "distribution: com_x= ", com_x, "Msun_geo"
-!      PRINT *, " * y coordinate of the center of mass of the particle ", &
-!               "distribution: com_y= ", com_y, "Msun_geo"
-!      PRINT *, " * z coordinate of the center of mass of the particle ", &
-!               "distribution: com_z= ", com_z, "Msun_geo"
-!      PRINT *, " * Distance of the center of mass of the particle ", &
-!               "distribution from the  origin: com_d= ", com_d
-!      IF( PRESENT(com_star) ) PRINT *, " * |com_x-com_star/com_star|=", &
-!               ABS( com_x-com_star )/ABS( com_star + 1 )
-!      PRINT *
-!
-!    ENDIF
-!
-!  END PROCEDURE impose_equatorial_plane_symmetry
-
-
   !-----------------!
   !--  FUNCTIONS  --!
   !-----------------!
@@ -269,8 +171,8 @@ SUBMODULE (sph_particles) access
 
     !************************************************
     !
-    !# Returns the array of proper baryon density
-    !  in the local rest frame
+    !# Returns the array of the relativistic density
+    !  variable from the ID
     !
     !  FT 25.02.2022
     !
@@ -288,7 +190,7 @@ SUBMODULE (sph_particles) access
     !************************************************
     !
     !# Returns the array of SPH density estimate of
-    !  proper baryon density in the local rest frame
+    !  the relativistic density variable
     !
     !  FT 25.02.2022
     !
@@ -296,7 +198,7 @@ SUBMODULE (sph_particles) access
 
     IMPLICIT NONE
 
-    nstar_sph= this% nstar_int
+    nstar_sph= this% nstar_sph
 
 END PROCEDURE get_nstar_sph
 
@@ -306,7 +208,7 @@ END PROCEDURE get_nstar_sph
     !************************************************
     !
     !# Returns the array of baryon density in the
-    !  local rest frame
+    !  local rest frame from the ID
     !
     !  FT
     !
@@ -332,7 +234,7 @@ END PROCEDURE get_nstar_sph
 
     IMPLICIT NONE
 
-    nlrf_sph= this% nlrf_int
+    nlrf_sph= this% nlrf_sph
 
   END PROCEDURE get_nlrf_sph
 
@@ -342,7 +244,7 @@ END PROCEDURE get_nstar_sph
     !************************************************
     !
     !# Returns the array of baryon per particle
-    ! [baryon (Msun_geo)^{-3}]
+    !  [baryon (Msun_geo)^{-3}]
     !
     !  FT
     !
@@ -388,7 +290,7 @@ END PROCEDURE get_nstar_sph
 
     IMPLICIT NONE
 
-    u_sph= this% u_pwp
+    u_sph= this% u_sph
 
   END PROCEDURE get_u_sph
 
@@ -397,8 +299,7 @@ END PROCEDURE get_nstar_sph
 
     !************************************************
     !
-    !# Returns the array of pressure
-    !  \([kg c^2 m^{-3}]\)
+    !# Returns the array of pressure from the ID
     !
     !  FT
     !
@@ -411,12 +312,13 @@ END PROCEDURE get_nstar_sph
   END PROCEDURE get_pressure
 
 
-  MODULE PROCEDURE get_pressure_cu
+  MODULE PROCEDURE get_pressure_sph
 
     !************************************************
     !
-    !# Returns the array of pressure in code units
-    ! [amu*c**2/(Msun_geo**3)]
+    !# Returns the array of pressure computed using
+    !  the SPH stimate of the density
+    !  [amu*c**2/(Msun_geo**3)]
     !
     !  FT
     !
@@ -424,9 +326,9 @@ END PROCEDURE get_nstar_sph
 
     IMPLICIT NONE
 
-    pressure_cu= this% pressure_cu
+    pressure_sph= this% pressure_sph
 
-  END PROCEDURE get_pressure_cu
+  END PROCEDURE get_pressure_sph
 
 
   MODULE PROCEDURE get_theta
@@ -434,7 +336,7 @@ END PROCEDURE get_nstar_sph
     !************************************************
     !
     !# Returns the array of generalized Lorentz
-    ! factor
+    !  factor
     !
     !  FT
     !
@@ -452,7 +354,7 @@ END PROCEDURE get_nstar_sph
     !************************************************
     !
     !# Returns the array of initial guess for the
-    ! smoothing length [Msun_geo]
+    !  smoothing length [Msun_geo]
     !
     !  FT
     !

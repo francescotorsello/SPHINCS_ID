@@ -25,8 +25,8 @@ SUBMODULE (bns_lorene) params
 
   !********************************************
   !
-  !# Implementation of the methods of TYPE bns
-  !  that import from |lorene| the
+  !# Implementation of the methods of TYPE [[bnslorene]
+  !  that read from |lorene| the
   !  parameters of the binary system,
   !  and print them to the standard output.
   !
@@ -46,7 +46,7 @@ SUBMODULE (bns_lorene) params
   !-------------------!
 
 
-  MODULE PROCEDURE import_id_params
+  MODULE PROCEDURE read_id_params
 
     !***************************************************
     !
@@ -62,7 +62,8 @@ SUBMODULE (bns_lorene) params
     USE constants, ONLY: c_light, cm2km
 
     USE utility,   ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                         k_lorene2hydrobase_piecewisepolytrope
+                         k_lorene2hydrobase_piecewisepolytrope, &
+                         zero, two, four, five, eos$poly, eos$pwpoly
 
 #if flavour == 1
 
@@ -84,7 +85,7 @@ SUBMODULE (bns_lorene) params
     !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos1_tmp
     !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos2_tmp
 
-    PRINT *, "** Executing the import_lorene_id_params subroutine..."
+    PRINT *, "** Executing the read_id_params subroutine..."
 
     CALL get_lorene_id_params( this% bns_ptr, &
                                this% angular_vel, &
@@ -184,6 +185,9 @@ SUBMODULE (bns_lorene) params
     this% mass(1)= this% mass1
     this% mass(2)= this% mass2
 
+    this% mass_grav(1)= this% mass_grav1
+    this% mass_grav(2)= this% mass_grav2
+
     this% radii(1,:)= [this% radius1_x_opp, this% radius1_x_comp, &
                        this% radius1_y, this% radius1_y, &
                        this% radius1_z, this% radius1_z]
@@ -191,11 +195,11 @@ SUBMODULE (bns_lorene) params
                        this% radius2_y, this% radius2_y, &
                        this% radius2_z, this% radius2_z]
 
-    this% center(1,:)= [this% center1_x, 0.0D0, 0.0D0]
-    this% center(2,:)= [this% center2_x, 0.0D0, 0.0D0]
+    this% center(1,:)= [this% center1_x, zero, zero]
+    this% center(2,:)= [this% center2_x, zero, zero]
 
-    this% barycenter(1,:)= [this% barycenter1_x, 0.0D0, 0.0D0]
-    this% barycenter(2,:)= [this% barycenter2_x, 0.0D0, 0.0D0]
+    this% barycenter(1,:)= [this% barycenter1_x, zero, zero]
+    this% barycenter(2,:)= [this% barycenter2_x, zero, zero]
 
     ! Convert hydro quantities from |lorene| units to SPHINCS units
     this% nbar_center1           = this% nbar_center1*(MSun_geo*km2m)**3
@@ -207,14 +211,22 @@ SUBMODULE (bns_lorene) params
     this% energy_density_center2 = this% energy_density_center2*lorene2hydrobase
     this% pressure_center2       = this% pressure_center2*lorene2hydrobase
 
-    ! Convert polytropic constants from |lorene| units to SPHINCS units
-    IF( this% eos1_loreneid == 1 )THEN ! If the EOS is polytropic
+    !
+    !-- Convert polytropic constants from |lorene| units to SPHINCS units,
+    !-- and assign |sphincsid| identifiers to the |eos|
+    !
 
+    ! Star 1
+    IF( this% eos1_loreneid == 1 )THEN
+    ! If the EOS is polytropic
+
+      this% eos1_id= eos$poly
       this% kappa_1= this% kappa_1*k_lorene2hydrobase( this% gamma_1 )
-      this% kappa_2= this% kappa_2*k_lorene2hydrobase( this% gamma_2 )
 
-    ELSEIF( this% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
+    ELSEIF( this% eos1_loreneid == 110 )THEN
+    ! If the EOS is piecewise polytropic
 
+      this% eos1_id = eos$pwpoly
       this% kappa0_1= this% kappa0_1 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma0_1 )
       this% kappa1_1= this% kappa1_1 &
@@ -223,6 +235,32 @@ SUBMODULE (bns_lorene) params
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma2_1 )
       this% kappa3_1= this% kappa3_1 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_1 )
+
+    !ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
+    ! If the EOS is tabulated
+
+      ! Not supported yet
+
+    ELSE
+
+      PRINT *, "** ERROR in SUBROUTINE read_id_params!", &
+               " The equation of state on star 1 is unknown! LORENE EOS ID=", &
+               this% eos1_loreneid
+      STOP
+
+    ENDIF
+
+    ! Star 2
+    IF( this% eos2_loreneid == 1 )THEN
+    ! If the EOS is polytropic
+
+      this% eos2_id= eos$poly
+      this% kappa_2= this% kappa_2*k_lorene2hydrobase( this% gamma_2 )
+
+    ELSEIF( this% eos2_loreneid == 110 )THEN
+    ! If the EOS is piecewise polytropic
+
+      this% eos2_id = eos$pwpoly
       this% kappa0_2= this% kappa0_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma0_2 )
       this% kappa1_2= this% kappa1_2 &
@@ -232,26 +270,26 @@ SUBMODULE (bns_lorene) params
       this% kappa3_2= this% kappa3_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_2 )
 
-    ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
+    !ELSEIF( this% eos2_loreneid == 17 .OR. this% eos2_loreneid == 20 )THEN
     ! If the EOS is tabulated
+
+      ! Not supported yet
 
     ELSE
 
-      PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
-               " The equation of state is unknown! LORENE EOS IDs=", &
-               this% eos1_loreneid, ", ", this% eos2_loreneid
+      PRINT *, "** ERROR in SUBROUTINE read_id_params!", &
+               " The equation of state on star 2 is unknown! LORENE EOS ID=", &
+               this% eos2_loreneid
       STOP
 
     ENDIF
 
-    ! Compute mOmega
-
+    ! Compute mOmega (see documentation for details)
     this% mOmega= this% angular_vel/(c_light*cm2km) &
                   *(this% mass_grav1 + this% mass_grav2)*Msun_geo
 
-    ! Compute t_merger
-
-    this% t_merger= 5.0D0/256.0D0*(this% distance**4.0D0) &
+    ! Compute t_merger (see documentation for details)
+    this% t_merger= five/(two**8)*( this% distance**four ) &
                     /( this% mass_grav1*this% mass_grav2* &
                        ( this% mass_grav1 + this% mass_grav2 ) )
 
@@ -317,10 +355,10 @@ SUBMODULE (bns_lorene) params
 
     CALL print_id_params( this )
 
-    PRINT *, "** Subroutine import_lorene_id_params executed."
+    PRINT *, "** Subroutine read_id_params executed."
     PRINT *
 
-  END PROCEDURE import_id_params
+  END PROCEDURE read_id_params
 
 
 END SUBMODULE params

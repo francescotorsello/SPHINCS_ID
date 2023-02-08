@@ -27,10 +27,10 @@ SUBMODULE (sph_particles) compose
   !
   !# This SUBMODULE contains the implementation of
   !  the methods of TYPE sph_particles
-  !  that compute Ye on the particles, using the
+  !  that compute \(Y_e\) on the particles, using the
   !  data from the |compose| database
   !
-  !  https://compose.obspm.fr/
+  !  <https://compose.obspm.fr/>
   !
   !  FT 12.07.2021
   !
@@ -52,12 +52,13 @@ SUBMODULE (sph_particles) compose
 
     !************************************************
     !
-    !# Reads the electron fraction Y_e = n_e/n_b,
-    !  with n_e electron number density and n_b
+    !# Reads the electron fraction \(Y_e\) = \(n_e/n_b\),
+    !  with \(n_e\) electron number density and \(n_b\)
     !  baryon number density, from the .compo file
     !  taken from the |compose| database of EoS.
-    !  Y_e is given as a function of T, n_b, Y_q on
-    !  a grid; the computation of Ye on the stars is
+    !  \(Y_e\) is given as a function of \(T\),
+    !  \(n_b\), \(Y_q\) on
+    !  a grid; the computation of \(Y_e\) on the stars is
     !  done by the SUBROUTINE compute_Ye_on_stars.
     !
     !  FT 1.03.2021
@@ -173,7 +174,7 @@ SUBMODULE (sph_particles) compose
     !************************************************
     !
     !# Interpolates the electron fraction
-    !  Y_e = n_e/n_b
+    !  \(Y_e\) = \(n_e/n_b\)
     !  at the particle positions, using the data
     !  read by read_compose_composition.
     !

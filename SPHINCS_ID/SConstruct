@@ -80,19 +80,34 @@ default_verbose = 'FALSE'
 #             file, so that the necessary modules are loaded to the user's local
 #             environment on Sunrise:
 #   module load -openmpi3 +openmpi4 +gsl +fftw +scalapack +libgfortran +pgplot
+#             Regarding compilation of FUKA on Sunrise, follow the
+#             instructions at (on Sunrise):
+#               /cfs/home/pg/CHAP/compile-kadath-scripts/
 current_host= socket.gethostname()
 
 if current_host == 'r30' or current_host == 'r31' or current_host == 'r32':
   default_host = 'r3x'
+  MPI_ranks    = '40'
 
 elif current_host == 'sol-login.fysik.su.se':
   default_host = 'Sunrise'
+  MPI_ranks    = '128'
 
 else:
   default_host = 'r3x'
+  MPI_ranks    = '40'
 
 # Version of SPHINCS_ID
-version = '_v1.5'
+version = 'v1.7'
+
+################################################################################
+
+################################################################################
+# USEFUL VARIABLES
+################################################################################
+
+# Home directory for SPHINCS_ID
+working_dir = os.getcwd()
 
 ################################################################################
 
@@ -100,7 +115,9 @@ version = '_v1.5'
 # EXTERNAL LIBRARIES
 ################################################################################
 
-liblorene_dir = ['../../../Lorene/Lib']
+liblorene_dir = [os.environ['HOME_LORENE'] + '/Lib']
+libkadath_dir = [os.environ['HOME_KADATH'] + '/lib']
+home_sphincs  = os.environ['HOME_SPHINCS']
 
 ################################################################################
 
@@ -217,7 +234,7 @@ module_sph_particles = [
   'submodule_sph_particles_constructor_bin.f90',
   'submodule_sph_particles_memory.f90',
   'submodule_sph_particles_lattices.f90',
-  'submodule_sph_particles_spherical_surfaces.f90',
+  'submodule_sph_particles_ellipsoidal_surfaces.f90',
   'submodule_sph_particles_sph_variables.f90',
   'submodule_sph_particles_access.f90',
   'submodule_sph_particles_io.f90',
@@ -226,7 +243,8 @@ module_sph_particles = [
   'submodule_sph_particles_apm.f90',
   'submodule_sph_particles_recovery.f90',
   'submodule_sph_particles_handle_positions.f90',
-  'submodule_sph_particles_adm_variables.f90'
+  'submodule_sph_particles_adm_variables.f90',
+  'submodule_sph_particles_quality_indicators.f90'
 ]
 
 module_standard_tpo_formulation_dir = ['src/standard_tpo_formulation/']
@@ -246,6 +264,7 @@ module_bssn_formulation = [
   'module_bssn_formulation.f90',
   'submodule_bssn_formulation_constructor.f90',
   'submodule_bssn_formulation_memory.f90',
+  'submodule_bssn_formulation_io.f90',
   'submodule_bssn_formulation_bssn_variables.f90',
   'submodule_bssn_formulation_constraints.f90',
   'submodule_bssn_formulation_ricci.f90',
@@ -256,14 +275,15 @@ module_bns_base_dir = ['src/id_base/bns_base/']
 module_bns_base = [
   'module_bns_base.f90',
   'submodule_bns_base_access.f90',
-  'submodule_bns_base_io.f90'
+  'submodule_bns_base_io.f90',
+  'submodule_bns_base_geometry.f90'
 ]
 
 module_bns_lorene_dir = ['src/id_base/bns_base/bns_lorene/']
 module_bns_lorene = [
   'module_bns_lorene.f90',
   'submodule_bns_lorene_constructor.f90',
-  'submodule_bns_lorene_import.f90',
+  'submodule_bns_lorene_read.f90',
   'submodule_bns_lorene_memory.f90',
   'submodule_bns_lorene_access.f90',
   'submodule_bns_lorene_params.f90',
@@ -282,7 +302,7 @@ module_diffstar_lorene_dir = ['src/id_base/diffstar_base/diffstar_lorene/']
 module_diffstar_lorene = [
   'module_diffstar_lorene.f90',
   'submodule_diffstar_lorene_constructor.f90',
-  'submodule_diffstar_lorene_import.f90',
+  'submodule_diffstar_lorene_read.f90',
   'submodule_diffstar_lorene_memory.f90',
   'submodule_diffstar_lorene_access.f90',
   'submodule_diffstar_lorene_params.f90',
@@ -294,6 +314,7 @@ module_bns_fuka = [
   'module_bns_fuka.f90',
   'submodule_bns_fuka_constructor.f90',
   'submodule_bns_fuka_read.f90',
+  'submodule_bns_fuka_interpolate.f90',
   'submodule_bns_fuka_memory.f90',
   'submodule_bns_fuka_access.f90',
   'submodule_bns_fuka_params.f90',
@@ -328,6 +349,25 @@ module_sphincs_id_fuka = [
 module_sphincs_id_interpolate_dir = ['src/sphincs_id_interpolate/']
 module_sphincs_id_interpolate = [
   'module_sphincs_id_interpolate.f90'
+]
+
+module_cauchy_convergence_test_dir = ['src/cauchy_convergence_test/']
+module_cauchy_convergence_test = [
+  'module_cauchy_convergence_test.f90',
+  'submodule_cauchy_convergence_test_shared_grid.f90',
+  'submodule_cauchy_convergence_test_perform_test.f90'
+]
+
+module_lorentz_group_dir = ['src/lorentz_group/']
+module_lorentz_group = [
+  'module_lorentz_group.f90',
+  'submodule_lorentz_group_constructors.f90',
+  'submodule_lorentz_group_actions.f90'
+]
+
+module_wd_eos_dir = ['src/wd_eos/']
+module_wd_eos = [
+  'module_wd_eos.f90'
 ]
 
 module_utility_dir = ['src/utility/']
@@ -387,12 +427,24 @@ for i in range(len(module_sphincs_id_interpolate)):
   module_sphincs_id_interpolate[i] = module_sphincs_id_interpolate_dir[0] \
                                    + module_sphincs_id_interpolate[i]
 
+for i in range(len(module_cauchy_convergence_test)):
+  module_cauchy_convergence_test[i] = module_cauchy_convergence_test_dir[0] \
+                                    + module_cauchy_convergence_test[i]
+
+for i in range(len(module_lorentz_group)):
+  module_lorentz_group[i] = module_lorentz_group_dir[0] \
+                          + module_lorentz_group[i]
+
+for i in range(len(module_wd_eos)):
+  module_wd_eos[i] = module_wd_eos_dir[0] + module_wd_eos[i]
+
 for i in range(len(module_utility)):
   module_utility[i] = module_utility_dir[0] + module_utility[i]
 
 sources_base = module_id_base + module_bns_base + module_diffstar_base \
              + module_sph_particles + module_standard_tpo_formulation \
-             + module_bssn_formulation + module_utility
+             + module_bssn_formulation + module_cauchy_convergence_test \
+             + module_lorentz_group + module_wd_eos + module_utility
 
 #all_modules = [ module_id_base, module_utility, module_sphincs_id_interpolate ]
 
@@ -401,19 +453,17 @@ sources_base = module_id_base + module_bns_base + module_diffstar_base \
 ################################################################################
 # SOURCE FILES FROM SPHINCS_BSSN
 ################################################################################
-
+#'../../../SPHINCS_SP'
 env['F90PATH'] = [
-  '.', '../../BSSN', '../SPHINCS_fix_metric', "../SPHINCS_BSSN"
+  '.',
+  home_sphincs + '/BSSN',
+  home_sphincs + '/sphincs_repository/SPHINCS_fix_metric',
+  home_sphincs + '/sphincs_repository/SPHINCS_BSSN'
 ]
 
-mesh_dir         = ['../../BSSN/']
-sphincs_bssn_dir = ['../SPHINCS_BSSN/']
-sphincs_fm_dir   = ['../SPHINCS_fix_metric/']
-
-#mesh_dir         = ['../../../SPHINCS_SP/BSSN/']
-#sphincs_bssn_dir = ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_BSSN/']
-#sphincs_fm_dir   = \
-#  ['../../../SPHINCS_SP/sphincs_repository/SPHINCS_fix_metric/']
+mesh_dir         = [home_sphincs + '/BSSN/']
+sphincs_bssn_dir = [home_sphincs + '/sphincs_repository/SPHINCS_BSSN/']
+sphincs_fm_dir   = [home_sphincs + '/sphincs_repository/SPHINCS_fix_metric/']
 
 sources_mesh = [
   'module_mesh_refinement.f90',
@@ -466,7 +516,8 @@ sources_sphincs_bssn = [
   'module_debug_output.f90',
   'module_dyn_metric_on_particles.f90',
   'module_alive_flag.f90',
-  'module_quadrup_GW_extraction.f90'
+  'module_quadrup_GW_extraction.f90',
+  'module_LRE.f90'
 ]
 
 sources_sphincs_fm = [
@@ -514,32 +565,32 @@ for i in range(len(sources_sphincs_fm)):
 ################################################################################
 
 ################################################################################
-# FLAVOUR= 1. Link to LORENE and FUKA libraries, and interpolate from
+# FLAVOUR= 1. Link to LORENE and Kadath libraries, and interpolate from
 #             Cartesian uniform grid
 
 if flavour == full_flavour: #
 
-  build_flavour= '-Dflavour=1'
+  build_flavour = '-Dflavour=1'
 
   if host == 'r3x': #
 
-    env['LIBPATH'] = liblorene_dir
+    env['LIBPATH'] = liblorene_dir + libkadath_dir
 
     if debug == 'FALSE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
-                     'lorenef77', 'gsl', 'lapack', 'fftw3', 'blas', \
+                     'lorenef77', 'kadath', 'gsl', 'lapack', 'fftw3', 'blas', \
                      'gslcblas', 'gfortran']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran']
+                     'lorenef77_g', 'kadath-debug', 'gsl', 'lapack', 'fftw3', \
+                     'blas', 'gslcblas', 'gfortran']
 
   if host == 'Sunrise': #
 
-    env['LIBPATH'] = liblorene_dir + \
+    env['LIBPATH'] = liblorene_dir + libkadath_dir + \
                      ['/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/scalapack/2.1.0/lib', \
                       '/opt/ohpc/pub/libs/gnu8/openmpi4/fftw/3.3.8/lib', \
@@ -548,14 +599,14 @@ if flavour == full_flavour: #
     if debug == 'FALSE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
-                     'lorenef77', 'gsl', 'scalapack', 'openblas', \
+                     'lorenef77', 'kadath', 'gsl', 'scalapack', 'openblas', \
                      'gslcblas', 'gfortran', 'fftw3']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
-                     'lorenef77_g', 'gsl', 'scalapack', 'openblas', \
-                     'gslcblas', 'gfortran', 'fftw3']
+                     'lorenef77_g', 'kadath-debug', 'gsl', 'scalapack', \
+                     'openblas', 'gslcblas', 'gfortran', 'fftw3']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
                   + module_bns_fuka \
@@ -567,7 +618,7 @@ if flavour == full_flavour: #
 
 if flavour == lorene_flavour: #
 
-  build_flavour= '-Dflavour=2'
+  build_flavour = '-Dflavour=2'
 
   if host == 'r3x': #
 
@@ -609,22 +660,42 @@ if flavour == lorene_flavour: #
                   + module_ejecta_generic + module_sphincs_id_lorene
 
 ################################################################################
-# FLAVOUR= 3. Link to FUKA library, and interpolate from Cartesian uniform
+# FLAVOUR= 3. Link to Kadath library, and interpolate from Cartesian uniform
 #             grid
 
 if flavour == fuka_flavour: #
 
-  build_flavour= '-Dflavour=3'
+  build_flavour = '-Dflavour=3'
 
-  #env['LIBPATH'] = ['']
+  if host == 'r3x': #
 
-  if debug == 'FALSE': #
+    env['LIBPATH'] = libkadath_dir
 
-    env['LIBS'] = ['stdc++', 'm']
+    if debug == 'FALSE': #
 
-  if debug == 'TRUE': #
+      env['LIBS'] = ['stdc++', 'm', 'kadath', 'gsl', 'fftw3', 'lapack']
 
-    env['LIBS'] = ['stdc++', 'm']
+    if debug == 'TRUE': #
+
+      env['LIBS'] = ['stdc++', 'm', 'kadath-debug', 'gsl', 'fftw3', 'lapack']
+
+  if host == 'Sunrise': #
+
+    env['LIBPATH'] = libkadath_dir + \
+                     ['/opt/ohpc/pub/libs/gnu8/gsl/2.6/lib', \
+                      '/opt/ohpc/pub/libs/gnu8/openmpi4/scalapack/2.1.0/lib', \
+                      '/opt/ohpc/pub/libs/gnu8/openmpi4/fftw/3.3.8/lib', \
+                      '/opt/ohpc/pub/libs/gnu8/openblas/0.3.12/lib']
+
+    if debug == 'FALSE': #
+
+      env['LIBS'] = ['stdc++', 'm', 'kadath', 'gsl', 'scalapack', 'openblas', \
+                     'fftw3']
+
+    if debug == 'TRUE': #
+
+      env['LIBS'] = ['stdc++', 'm', 'kadath', 'gsl', 'scalapack', 'openblas', \
+                     'fftw3']
 
   sources_flavour = module_bns_fuka \
                     + module_ejecta_generic + module_sphincs_id_fuka
@@ -648,6 +719,11 @@ if flavour == interpolate_flavour: #
 
 env['F90FILESUFFIXES']=['.f90','.f']
 
+build_version = '-Dvers='        + version
+build_mpi     = '-DMPI_ranks='   + MPI_ranks
+build_dir     = '-Dworking_dir=' + working_dir
+build_host    = '-Dhost='        + host
+
 # Fortran compiler
 env['F90'] = fortran_compiler
 
@@ -666,9 +742,10 @@ if debug == 'FALSE': #
       env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                          '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \
-                          build_flavour ]
-
+                          '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \
+                          build_flavour, build_mpi, build_dir, build_host, \
+                          build_version ]
+#, '-CB', '-CS', '-g', '-traceback'
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
@@ -676,7 +753,9 @@ if debug == 'FALSE': #
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
-                          '-Wall', '-Wextra', build_flavour ]
+                          '-Wall', '-Wextra', '-Wimplicit-interface', \
+                          '-Wimplicit-procedure', build_flavour, build_mpi, \
+                          build_dir, build_host, build_version ]
 
     ############################################################################
     # C++ PRODUCTION BUILD OPTIONS
@@ -713,12 +792,13 @@ if debug == 'FALSE': #
       env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                          '-warn', '-g', '-CB', '-CS', '-traceback', '-fpp', \
+                          '-warn', '-CB', '-CS', '-fpp', \
                           '-diag-disable=10346', '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
                           '-align array64byte', \
-                          build_flavour ]
-
+                          build_flavour, build_mpi, build_dir, build_host, \
+                          build_version ]
+#, '-g', '-CB', '-CS', '-traceback'
     if fortran_compiler == 'gfortran':
 
       env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
@@ -726,7 +806,9 @@ if debug == 'FALSE': #
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
-                          '-Wall', '-Wextra', build_flavour ]
+                          '-Wall', '-Wextra', '-Wimplicit-interface', \
+                          '-Wimplicit-procedure', build_flavour, build_mpi, \
+                          build_dir, build_host, build_version ]
 
     ############################################################################
     # C++ PRODUCTION BUILD OPTIONS
@@ -767,7 +849,8 @@ if debug == 'TRUE': #
                           '-xHOST', '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-CB', '-CS', '-traceback', '-fpe0', '-warn', \
-                          '-debug extended', '-fpp', build_flavour ]
+                          '-debug extended', '-fpp', build_flavour, build_mpi, \
+                          build_dir, build_host, build_version ]
 
       # More F90 flags for debugging
       #env['F90FLAGS'] = [ '-r8','-g','-qopenmp','-O0', '-ftz', \
@@ -795,7 +878,8 @@ if debug == 'TRUE': #
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', '-fdollar-ok', \
-                          build_flavour ]
+                          build_flavour, build_mpi, build_dir, build_host, \
+                          build_version ]
 
     ############################################################################
     # C++ DEBUG BUILD OPTIONS
@@ -843,7 +927,8 @@ if debug == 'TRUE': #
                           '-debug extended', '-fpp', '-diag-disable=10346', \
                           '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
-                          '-align array64byte', build_flavour ]
+                          '-align array64byte', build_flavour, build_mpi, \
+                          build_dir, build_host, build_version ]
 
       # More F90 flags for debugging
       #env['F90FLAGS'] = [ '-r8','-g','-qopenmp','-O0', '-ftz', \
@@ -871,7 +956,8 @@ if debug == 'TRUE': #
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', '-fdollar-ok', \
-                          build_flavour ]
+                          build_flavour, build_mpi, build_dir, build_host, \
+                          build_version ]
 
     ############################################################################
     # C++ DEBUG BUILD OPTIONS
@@ -913,20 +999,21 @@ if debug == 'TRUE': #
 # PROGRAMS
 ################################################################################
 
-sphincs_id       = 'sphincs_id'       + version + '.x'
-convergence_test = 'convergence_test' + version + '.x'
-write_par_eos    = 'write_par_eos'    + version + '.x'
+sphincs_id                = 'sphincs_id_'       + version + '.x'
+convergence_test          = 'convergence_test_' + version + '.x'
+write_par_eos             = 'write_par_eos_'    + version + '.x'
+construct_newtonian_binary= 'construct_newtonian_binary.x'
 
-program_sphincs_id       = ['src/sphincs_id.f90']
-program_convergence_test = ['src/convergence_test.f90']
-program_write_par_eos    = ['src/write_par_eos.f90']
+program_sphincs_id                = ['src/sphincs_id.f90']
+program_convergence_test          = ['src/convergence_test.f90']
+program_write_par_eos             = ['src/write_par_eos.f90']
+program_construct_newtonian_binary= ['src/construct_newtonian_binary.f90']
 
 ################################################################################
 
 ################################################################################
 # BUILD COMMANDS
 ################################################################################
-#lorene_sources + lorene_sources_bin_ns
 
 Progress('Evaluating $TARGET\n')
 
@@ -941,6 +1028,10 @@ Program( convergence_test, \
 Program( write_par_eos, \
          sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
          + sources_sphincs_bssn + program_write_par_eos )
+
+Program( construct_newtonian_binary, \
+         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
+         + sources_sphincs_bssn + program_construct_newtonian_binary )
 
 ################################################################################
 #

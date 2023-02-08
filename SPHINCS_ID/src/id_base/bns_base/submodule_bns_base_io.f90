@@ -26,7 +26,7 @@ SUBMODULE (bns_base) io
   !***************************************************
   !
   !# This submodule contains the implementation of the
-  !  methods of TYPE bnsbase that handle I/O (input/output)
+  !  methods of TYPE [[bnsbase]] that handle I/O (input/output)
   !
   !  FT 5.11.2021
   !

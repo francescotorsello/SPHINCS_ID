@@ -59,8 +59,8 @@ SUBMODULE (diffstar_lorene) memory
 
     !PRINT *, "** Executing the allocate_diffstar_memory subroutine..."
 
-    IF(.NOT.ALLOCATED( THIS% lapse ))THEN
-      ALLOCATE( THIS% lapse( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% lapse ))THEN
+      ALLOCATE( this% lapse( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array lapse. ", &
@@ -70,8 +70,8 @@ SUBMODULE (diffstar_lorene) memory
     !  CALL test_status( ios, err_msg, &
     !              "...allocation error for array lapse" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_x ))THEN
-      ALLOCATE( THIS% shift_x( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% shift_x ))THEN
+      ALLOCATE( this% shift_x( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array shift_x. ", &
@@ -81,8 +81,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array shift_x" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_y ))THEN
-      ALLOCATE( THIS% shift_y( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% shift_y ))THEN
+      ALLOCATE( this% shift_y( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array shift_y. ", &
@@ -92,8 +92,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array shift_y" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% shift_z ))THEN
-      ALLOCATE( THIS% shift_z( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% shift_z ))THEN
+      ALLOCATE( this% shift_z( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array shift_z. ", &
@@ -103,8 +103,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array shift_z" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xx ))THEN
-      ALLOCATE( THIS% g_xx( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_xx ))THEN
+      ALLOCATE( this% g_xx( d ), STAT= ios, &
           ERRMSG = err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array g_xx. ", &
@@ -114,8 +114,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array g_xx" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xy ))THEN
-      ALLOCATE( THIS% g_xy( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_xy ))THEN
+      ALLOCATE( this% g_xy( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array g_xy. ", &
@@ -125,8 +125,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array g_xy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_xz ))THEN
-      ALLOCATE( THIS% g_xz( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_xz ))THEN
+      ALLOCATE( this% g_xz( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array g_xz. ", &
@@ -136,8 +136,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array g_xz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_yy ))THEN
-      ALLOCATE( THIS% g_yy( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_yy ))THEN
+      ALLOCATE( this% g_yy( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array g_yy. ", &
@@ -147,8 +147,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array g_yy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_yz ))THEN
-      ALLOCATE( THIS% g_yz( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_yz ))THEN
+      ALLOCATE( this% g_yz( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array g_yz. ", &
@@ -158,8 +158,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array g_yz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% g_zz ))THEN
-      ALLOCATE( THIS% g_zz( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% g_zz ))THEN
+      ALLOCATE( this% g_zz( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array g_zz. ", &
@@ -169,8 +169,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array g_zz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% k_xx ))THEN
-      ALLOCATE( THIS% k_xx( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% k_xx ))THEN
+      ALLOCATE( this% k_xx( d ), STAT= ios, &
 
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
@@ -181,8 +181,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array k_xx" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% k_xy ))THEN
-      ALLOCATE( THIS% k_xy( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% k_xy ))THEN
+      ALLOCATE( this% k_xy( d ), STAT= ios, &
 
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
@@ -193,8 +193,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array k_xy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% k_xz ))THEN
-      ALLOCATE( THIS% k_xz( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% k_xz ))THEN
+      ALLOCATE( this% k_xz( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array k_xz. ", &
@@ -204,8 +204,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array k_xz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% k_yy ))THEN
-      ALLOCATE( THIS%  k_yy( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% k_yy ))THEN
+      ALLOCATE( this%  k_yy( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array k_yy ", &
@@ -215,8 +215,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array k_yy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% k_yz ))THEN
-      ALLOCATE( THIS% k_yz( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% k_yz ))THEN
+      ALLOCATE( this% k_yz( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array k_yz ", &
@@ -226,8 +226,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array k_yz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% k_zz ))THEN
-      ALLOCATE( THIS% k_zz( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% k_zz ))THEN
+      ALLOCATE( this% k_zz( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array k_zz ", &
@@ -237,8 +237,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array k_zz" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% baryon_density ))THEN
-      ALLOCATE( THIS% baryon_density( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% baryon_density ))THEN
+      ALLOCATE( this% baryon_density( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array baryon_density ", &
@@ -248,8 +248,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array baryon_density" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% energy_density ))THEN
-      ALLOCATE( THIS% energy_density( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% energy_density ))THEN
+      ALLOCATE( this% energy_density( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array energy_density ", &
@@ -259,8 +259,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array energy_density" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% specific_energy ))THEN
-      ALLOCATE( THIS% specific_energy( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% specific_energy ))THEN
+      ALLOCATE( this% specific_energy( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array specific_energy ", &
@@ -270,8 +270,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array specific_energy" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_x ))THEN
-      ALLOCATE( THIS% v_euler_x( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% v_euler_x ))THEN
+      ALLOCATE( this% v_euler_x( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array v_euler_x ", &
@@ -281,8 +281,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array v_euler_x" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_y ))THEN
-      ALLOCATE( THIS% v_euler_y( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% v_euler_y ))THEN
+      ALLOCATE( this% v_euler_y( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array v_euler_y ", &
@@ -292,8 +292,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !            "...allocation error for array v_euler_y" )
     ENDIF
-    IF(.NOT.ALLOCATED( THIS% v_euler_z ))THEN
-      ALLOCATE( THIS% v_euler_z( d ), STAT= ios, &
+    IF(.NOT.ALLOCATED( this% v_euler_z ))THEN
+      ALLOCATE( this% v_euler_z( d ), STAT= ios, &
           ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...allocation error for array v_euler_z ", &
@@ -304,7 +304,7 @@ SUBMODULE (diffstar_lorene) memory
       !            "...allocation error for array v_euler_z" )
     ENDIF
 
-    IF( SIZE( THIS% lapse ) /= d )THEN
+    IF( SIZE( this% lapse ) /= d )THEN
       PRINT *, "** ERROR in memory allocation in allocate_diffstar_memory"
     ENDIF
 
@@ -328,8 +328,8 @@ SUBMODULE (diffstar_lorene) memory
 
     !PRINT *, "** Executing the deallocate_diffstar_memory subroutine..."
 
-    IF(ALLOCATED( THIS% lapse ))THEN
-      DEALLOCATE( THIS% lapse, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% lapse ))THEN
+      DEALLOCATE( this% lapse, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array lapse ", &
                   "The error message is", err_msg
@@ -338,8 +338,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                  "...deallocation error for array lapse" )
     ENDIF
-    IF(ALLOCATED( THIS% shift_x ))THEN
-      DEALLOCATE( THIS% shift_x, STAT= ios, &
+    IF(ALLOCATED( this% shift_x ))THEN
+      DEALLOCATE( this% shift_x, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array shift_x ", &
@@ -349,8 +349,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array shift_x" )
     ENDIF
-    IF(ALLOCATED( THIS% shift_y ))THEN
-      DEALLOCATE( THIS% shift_y, STAT= ios, &
+    IF(ALLOCATED( this% shift_y ))THEN
+      DEALLOCATE( this% shift_y, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array shift_y ", &
@@ -360,8 +360,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array shift_y" )
     ENDIF
-    IF(ALLOCATED( THIS% shift_z ))THEN
-      DEALLOCATE( THIS% shift_z, STAT= ios, &
+    IF(ALLOCATED( this% shift_z ))THEN
+      DEALLOCATE( this% shift_z, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array shift_z ", &
@@ -371,8 +371,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array shift_z" )
     ENDIF
-    IF(ALLOCATED( THIS% g_xx ))THEN
-      DEALLOCATE( THIS% g_xx, STAT= ios, ERRMSG = err_msg )
+    IF(ALLOCATED( this% g_xx ))THEN
+      DEALLOCATE( this% g_xx, STAT= ios, ERRMSG = err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_xx ", &
                   "The error message is", err_msg
@@ -381,8 +381,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array g_xx" )
     ENDIF
-    IF(ALLOCATED( THIS% g_xy ))THEN
-      DEALLOCATE( THIS% g_xy, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% g_xy ))THEN
+      DEALLOCATE( this% g_xy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_xy ", &
                   "The error message is", err_msg
@@ -391,8 +391,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !               "...deallocation error for array g_xy" )
     ENDIF
-    IF(ALLOCATED( THIS% g_xz ))THEN
-      DEALLOCATE( THIS% g_xz, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% g_xz ))THEN
+      DEALLOCATE( this% g_xz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_xz ", &
                   "The error message is", err_msg
@@ -401,8 +401,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array g_xz" )
     ENDIF
-    IF(ALLOCATED( THIS% g_yy ))THEN
-      DEALLOCATE( THIS% g_yy, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% g_yy ))THEN
+      DEALLOCATE( this% g_yy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_yy ", &
                   "The error message is", err_msg
@@ -411,8 +411,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array g_yy" )
     ENDIF
-    IF(ALLOCATED( THIS% g_yz ))THEN
-      DEALLOCATE( THIS% g_yz, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% g_yz ))THEN
+      DEALLOCATE( this% g_yz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_yz ", &
                   "The error message is", err_msg
@@ -421,8 +421,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array g_yz" )
     ENDIF
-    IF(ALLOCATED( THIS% g_zz ))THEN
-      DEALLOCATE( THIS% g_zz, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% g_zz ))THEN
+      DEALLOCATE( this% g_zz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array g_zz ", &
                   "The error message is", err_msg
@@ -431,8 +431,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array g_zz" )
     ENDIF
-    IF(ALLOCATED( THIS% k_xx ))THEN
-      DEALLOCATE( THIS% k_xx, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% k_xx ))THEN
+      DEALLOCATE( this% k_xx, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array k_xx ", &
                   "The error message is", err_msg
@@ -441,8 +441,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array k_xx" )
     ENDIF
-    IF(ALLOCATED( THIS% k_xy ))THEN
-      DEALLOCATE( THIS% k_xy, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% k_xy ))THEN
+      DEALLOCATE( this% k_xy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array k_xy ", &
                   "The error message is", err_msg
@@ -451,8 +451,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array k_xy" )
     ENDIF
-    IF(ALLOCATED( THIS% k_xz ))THEN
-      DEALLOCATE( THIS% k_xz, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% k_xz ))THEN
+      DEALLOCATE( this% k_xz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array k_xz ", &
                   "The error message is", err_msg
@@ -461,8 +461,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array k_xz" )
     ENDIF
-    IF(ALLOCATED( THIS% k_yy ))THEN
-      DEALLOCATE( THIS% k_yy, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% k_yy ))THEN
+      DEALLOCATE( this% k_yy, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array k_yy ", &
                   "The error message is", err_msg
@@ -471,8 +471,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array k_yy" )
     ENDIF
-    IF(ALLOCATED( THIS% k_yz ))THEN
-      DEALLOCATE( THIS% k_yz, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% k_yz ))THEN
+      DEALLOCATE( this% k_yz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array k_yz ", &
                   "The error message is", err_msg
@@ -481,8 +481,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array k_yz" )
     ENDIF
-    IF(ALLOCATED( THIS% k_zz ))THEN
-      DEALLOCATE( THIS% k_zz, STAT= ios, ERRMSG= err_msg )
+    IF(ALLOCATED( this% k_zz ))THEN
+      DEALLOCATE( this% k_zz, STAT= ios, ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array k_zz ", &
                   "The error message is", err_msg
@@ -491,8 +491,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array k_zz" )
     ENDIF
-    IF(ALLOCATED( THIS% baryon_density ))THEN
-      DEALLOCATE( THIS% baryon_density, STAT= ios, &
+    IF(ALLOCATED( this% baryon_density ))THEN
+      DEALLOCATE( this% baryon_density, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array baryon_density ", &
@@ -502,8 +502,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !        "...deallocation error for array baryon_density" )
     ENDIF
-    IF(ALLOCATED( THIS% energy_density ))THEN
-      DEALLOCATE( THIS% energy_density, STAT= ios, &
+    IF(ALLOCATED( this% energy_density ))THEN
+      DEALLOCATE( this% energy_density, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array energy_density ", &
@@ -513,8 +513,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !        "...deallocation error for array energy_density" )
     ENDIF
-    IF(ALLOCATED( THIS% specific_energy ))THEN
-      DEALLOCATE( THIS% specific_energy, STAT= ios, &
+    IF(ALLOCATED( this% specific_energy ))THEN
+      DEALLOCATE( this% specific_energy, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array specific_energy ", &
@@ -524,8 +524,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !        "...deallocation error for array specific_energy" )
     ENDIF
-    IF(ALLOCATED( THIS% v_euler_x ))THEN
-      DEALLOCATE( THIS% v_euler_x, STAT= ios, &
+    IF(ALLOCATED( this% v_euler_x ))THEN
+      DEALLOCATE( this% v_euler_x, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array v_euler_x ", &
@@ -535,8 +535,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !        "...deallocation error for array v_euler_x" )
     ENDIF
-    IF(ALLOCATED( THIS% v_euler_y ))THEN
-      DEALLOCATE( THIS% v_euler_y, STAT= ios, &
+    IF(ALLOCATED( this% v_euler_y ))THEN
+      DEALLOCATE( this% v_euler_y, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array v_euler_y ", &
@@ -546,8 +546,8 @@ SUBMODULE (diffstar_lorene) memory
       !CALL test_status( ios, err_msg, &
       !                "...deallocation error for array v_euler_y" )
     ENDIF
-    IF(ALLOCATED( THIS% v_euler_z ))THEN
-      DEALLOCATE( THIS% v_euler_z, STAT= ios, &
+    IF(ALLOCATED( this% v_euler_z ))THEN
+      DEALLOCATE( this% v_euler_z, STAT= ios, &
               ERRMSG= err_msg )
       IF( ios > 0 )THEN
          PRINT *, "...deallocation error for array v_euler_z ", &

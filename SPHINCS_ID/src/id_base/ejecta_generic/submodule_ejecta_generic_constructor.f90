@@ -54,7 +54,8 @@ SUBMODULE (ejecta_generic) constructor
     !****************************************************
 
     USE constants, ONLY: pi
-    USE utility,   ONLY: zero, one, two, four, ten
+    USE utility,   ONLY: zero, one, two, four, ten, eos$poly, eos$pwpoly, &
+                         sph_path
     USE NR,        ONLY: indexx
     USE pwp_EOS,   ONLY: get_Gamma0, get_Gamma1, get_Gamma2, get_Gamma3, &
                          get_K0, get_K1, get_K2, get_K3, get_p1, &
@@ -381,7 +382,7 @@ SUBMODULE (ejecta_generic) constructor
 
     ENDDO
 
-    finalnamefile= "pos_ejecta.dat"
+    finalnamefile= TRIM(sph_path)//"pos_ejecta.dat"
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -444,7 +445,7 @@ SUBMODULE (ejecta_generic) constructor
                             mass_profile_idx )
 
     ! Set the EOS parameters
-    derived_type% eos_ejectaid= 110
+    derived_type% eos_id= eos$pwpoly
 
     CALL select_EOS_parameters("APR4")
 
@@ -495,6 +496,24 @@ SUBMODULE (ejecta_generic) constructor
   END PROCEDURE finalize
 
 
+  MODULE PROCEDURE nothing
+
+    !***********************************************
+    !
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[ejecta_generic]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+    !
+    !  FT 15.09.2022
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+  END PROCEDURE nothing
+
+
   !
   !-- Implementation of the destructor of the bns object
   !
@@ -510,7 +529,7 @@ SUBMODULE (ejecta_generic) constructor
 
     IMPLICIT NONE
 
-    CALL THIS% deallocate_gridid_memory()
+    CALL this% deallocate_gridid_memory()
 
 
   END PROCEDURE destruct_ejecta

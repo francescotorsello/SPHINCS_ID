@@ -70,7 +70,7 @@ SUBMODULE (id_base) initialization
                derived_type% n_matter
       PRINT *, "   Please assign the appropriate strictly positive value", &
                " in the constructor of the TYPE that extends idbase."
-      PRINT *, "   Stopping..."
+      PRINT *, " * Stopping..."
       PRINT *
       STOP
 
@@ -83,22 +83,46 @@ SUBMODULE (id_base) initialization
       sizes(i_matter,:)  = derived_type% return_spatial_extent(i_matter)
       centers(i_matter,:)= derived_type% return_center(i_matter)
 
-      DO itr= 1, 6, 1
+      check_for_negative_size: DO itr= 1, 6, 1
 
         IF( sizes(i_matter,itr) <= 0 )THEN
 
-          PRINT *, "** ERROR! The size n., ", itr, " of matter objects ", &
+          PRINT *, "** ERROR! The size n., ", itr, " of matter object ", &
                    i_matter, " is nonpositive: sizes(", itr, ")=", &
                    sizes(i_matter,itr)
           PRINT *, "   Please assign the appropriate strictly positive value", &
                    " in the constructor of the TYPE that extends idbase."
-          PRINT *, "   Stopping..."
+          PRINT *, " * Stopping..."
           PRINT *
           STOP
 
         ENDIF
 
-      ENDDO
+      ENDDO check_for_negative_size
+
+    !  check_for_consistent_centers: DO itr= 1, 3, 1
+    !
+    !    IF( ABS(centers(i_matter,itr)) <= sizes(i_matter,itr) &
+    !        .OR. &
+    !        ABS(centers(i_matter,itr)) >= sizes(i_matter,itr+1) )THEN
+    !
+    !      PRINT *, "** ERROR! The coordinate n., ", itr, " of the center", &
+    !               " of matter object ", i_matter, &
+    !               " is not bracketed by the sizes of the object! "
+    !      PRINT *, " * Absolute value of the ", itr, &
+    !               "coordinate of the center: ", ABS(centers(i_matter,itr))
+    !      PRINT *, " * Sizes of the object in the direction ", itr, ": ", &
+    !               sizes(i_matter,itr), sizes(i_matter,itr+1)
+    !      PRINT *, "   Please assign the appropriate coordinate to the", &
+    !               " center and the sizes", &
+    !               " in the constructor of the TYPE that extends idbase."
+    !      PRINT *, " * Stopping..."
+    !      PRINT *
+    !      STOP
+    !
+    !    ENDIF
+    !
+    !  ENDDO check_for_consistent_centers
 
     ENDDO
 
@@ -115,7 +139,7 @@ SUBMODULE (id_base) initialization
         PRINT *, " * total_sizes(", itr+1, ")=", total_sizes(itr+1)
         PRINT *, "   Please assign the appropriate strictly positive value", &
                  " in the constructor of the TYPE that extends idbase."
-        PRINT *, "   Stopping..."
+        PRINT *, " * Stopping..."
         PRINT *
         STOP
 
@@ -148,7 +172,7 @@ SUBMODULE (id_base) initialization
         PRINT *
         PRINT *, "   Please assign the appropriate sizes", &
                  " in the constructor of the TYPE that extends idbase."
-        PRINT *, "   Stopping..."
+        PRINT *, " * Stopping..."
         PRINT *
         STOP
 

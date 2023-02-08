@@ -25,7 +25,7 @@ SUBMODULE (bssn_formulation) memory
 
   !************************************************
   !
-  !# Implementation of the methods of TYPE bssn
+  !# Implementation of the methods of TYPE [[bssn]]
   !  that (de)allocate memory
   !
   !  FT 9.07.2021
@@ -62,24 +62,24 @@ SUBMODULE (bssn_formulation) memory
 
     IMPLICIT NONE
 
-    IF( .NOT.ALLOCATED( THIS% Gamma_u% levels ) )THEN
-      CALL allocate_grid_function( THIS% Gamma_u, "Gamma_u_id", 3 )
+    IF( .NOT.ALLOCATED( this% Gamma_u% levels ) )THEN
+      CALL allocate_grid_function( this% Gamma_u, "Gamma_u_id", 3 )
     ENDIF
 
-    IF( .NOT.ALLOCATED( THIS% phi% levels ) )THEN
-      CALL allocate_grid_function( THIS% phi, "phi_id", 1 )
+    IF( .NOT.ALLOCATED( this% phi% levels ) )THEN
+      CALL allocate_grid_function( this% phi, "phi_id", 1 )
     ENDIF
 
-    IF( .NOT.ALLOCATED( THIS% trK% levels ) )THEN
-      CALL allocate_grid_function( THIS% trK, "trK_id", 1 )
+    IF( .NOT.ALLOCATED( this% trK% levels ) )THEN
+      CALL allocate_grid_function( this% trK, "trK_id", 1 )
     ENDIF
 
-    IF( .NOT.ALLOCATED( THIS% A_BSSN3_ll% levels ) )THEN
-      CALL allocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll_id", 6 )
+    IF( .NOT.ALLOCATED( this% A_BSSN3_ll% levels ) )THEN
+      CALL allocate_grid_function( this% A_BSSN3_ll, "A_BSSN3_ll_id", 6 )
     ENDIF
 
-    IF( .NOT.ALLOCATED( THIS% g_BSSN3_ll% levels ) )THEN
-      CALL allocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll_id", 6 )
+    IF( .NOT.ALLOCATED( this% g_BSSN3_ll% levels ) )THEN
+      CALL allocate_grid_function( this% g_BSSN3_ll, "g_BSSN3_ll_id", 6 )
     ENDIF
 
   END PROCEDURE allocate_bssn_fields
@@ -99,36 +99,36 @@ SUBMODULE (bssn_formulation) memory
 
     IMPLICIT NONE
 
-    IF( ALLOCATED( THIS% Gamma_u% levels ) )THEN
-      CALL deallocate_grid_function( THIS% Gamma_u, "Gamma_u_id" )
+    IF( ALLOCATED( this% Gamma_u% levels ) )THEN
+      CALL deallocate_grid_function( this% Gamma_u, "Gamma_u_id" )
     ENDIF
 
-    IF( ALLOCATED( THIS% phi% levels ) )THEN
-      CALL deallocate_grid_function( THIS% phi, "phi_id" )
+    IF( ALLOCATED( this% phi% levels ) )THEN
+      CALL deallocate_grid_function( this% phi, "phi_id" )
     ENDIF
 
-    IF( ALLOCATED( THIS% trK% levels ) )THEN
-      CALL deallocate_grid_function( THIS% trK, "trK_id" )
+    IF( ALLOCATED( this% trK% levels ) )THEN
+      CALL deallocate_grid_function( this% trK, "trK_id" )
     ENDIF
 
-    IF( ALLOCATED( THIS% A_BSSN3_ll% levels ) )THEN
-      CALL deallocate_grid_function( THIS% A_BSSN3_ll, "A_BSSN3_ll_id" )
+    IF( ALLOCATED( this% A_BSSN3_ll% levels ) )THEN
+      CALL deallocate_grid_function( this% A_BSSN3_ll, "A_BSSN3_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( THIS% g_BSSN3_ll% levels ) )THEN
-      CALL deallocate_grid_function( THIS% g_BSSN3_ll, "g_BSSN3_ll_id" )
+    IF( ALLOCATED( this% g_BSSN3_ll% levels ) )THEN
+      CALL deallocate_grid_function( this% g_BSSN3_ll, "g_BSSN3_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( THIS% GC% levels ) )THEN
-      CALL deallocate_grid_function( THIS% GC, "GC_id" )
+    IF( ALLOCATED( this% GC% levels ) )THEN
+      CALL deallocate_grid_function( this% GC, "GC_id" )
     ENDIF
 
-    IF( ALLOCATED( THIS% Ricci_ll% levels ) )THEN
-      CALL deallocate_grid_function( THIS% Ricci_ll, "Ricci_ll_id" )
+    IF( ALLOCATED( this% Ricci_ll% levels ) )THEN
+      CALL deallocate_grid_function( this% Ricci_ll, "Ricci_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( THIS% Ricci_scalar% levels ) )THEN
-      CALL deallocate_grid_function( THIS% Ricci_scalar, &
+    IF( ALLOCATED( this% Ricci_scalar% levels ) )THEN
+      CALL deallocate_grid_function( this% Ricci_scalar, &
                                      "Ricci_scalar_id" )
     ENDIF
 

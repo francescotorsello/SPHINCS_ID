@@ -25,7 +25,7 @@ PROGRAM sphincs_id
 
   !*****************************************************
   !
-  !# Set up the |sph| and spacetime |id| t be read
+  !# Set up the |sph| and |bssn| |id| to be read
   !  by |sphincsbssn|.
   !
   !  FT 28.10.2020
@@ -59,13 +59,10 @@ PROGRAM sphincs_id
   USE id_base,          ONLY: idbase, initialize
   USE sph_particles,    ONLY: particles
   USE bssn_formulation, ONLY: bssn
-  !USE constants,        ONLY: lorene2hydrobase, c_light2, k_lorene2hydrobase, &
-  !                            k_lorene2hydrobase_piecewisepolytrope, &
-  !                            MSun_geo, kg2g, m2cm, m0c2
-  !USE constants,        ONLY: amu, Msun_geo, km2m, m2cm
+  USE utility,          ONLY: lorene2hydrobase, k_lorene2hydrobase
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
-                              itr4, &
+                              itr4, hostname, version, &
                               test_status, show_progress, end_time, &
                               read_sphincs_id_parameters, &
                               !----------
@@ -81,6 +78,10 @@ PROGRAM sphincs_id
                               spacetime_path, estimate_length_scale, &
                               test_int, max_n_parts
   USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
+  USE lorentz_group,    ONLY: lorentz_boost, spatial_rotation, &
+                              minkowski_sqnorm, eta
+
+  USE constants,  ONLY: pi
 
   IMPLICIT NONE
 
@@ -92,25 +93,25 @@ PROGRAM sphincs_id
   !# ADM linear momentum of the fluid computed using the metric mapped
   !  with the mesh-to-particle mapping
 
-  CHARACTER( LEN= : ), DIMENSION(:), ALLOCATABLE:: systems, systems_name
+  CHARACTER(LEN=:), DIMENSION(:), ALLOCATABLE:: systems, systems_name
   !! String storing the name of the phyical systems
-  CHARACTER( LEN= 500 ):: namefile_parts
+  CHARACTER(LEN=500):: namefile_parts
   !# String storing the name for the formatted file containing the |sph|
   !  particle |id|
-  CHARACTER( LEN= 500 ):: namefile_parts_bin
+  CHARACTER(LEN=500):: namefile_parts_bin
   !# String storing the name for the binary file containing the |sph|
   !  particle |id|
-  CHARACTER( LEN= 500 ):: namefile_sph
+  CHARACTER(LEN=500):: namefile_sph
   !# String storing the name for ??
   !
-  CHARACTER( LEN= 500 ):: namefile_recovery
+  CHARACTER(LEN=500):: namefile_recovery
   !# String storing the name for the formatted file containing the data
   !  from the recovery test
-  CHARACTER( LEN= 500 ):: namefile_bssn
+  CHARACTER(LEN=500):: namefile_bssn
   !# String storing the name for the formatted file containing the |bssn| |id|
-  CHARACTER( LEN= 500 ):: namefile_bssn_bin
+  CHARACTER(LEN=500):: namefile_bssn_bin
   !# String storing the name for the binary file containing the |bssn| |id|
-  CHARACTER( LEN= 500 ):: name_logfile
+  CHARACTER(LEN=500):: name_logfile
   !# String storing the name for the formatted file containing a summary about
   !  the |bssn| constraints violations
 
@@ -134,54 +135,65 @@ PROGRAM sphincs_id
   !# Array storing the bssn objects,
   !  containing the BSSN variables on the gravity grid for each idbase object
 
-  TYPE( timer ):: execution_timer
+  TYPE(timer):: execution_timer
 
   !---------------------------!
   !--  End of declarations  --!
   !---------------------------!
 
-  !PRINT *, lorene2hydrobase
-  !PRINT *, 2.45191D-4/lorene2hydrobase/1000
-  !PRINT *, LOG10(2.45191D-4/lorene2hydrobase/1000)
-  !PRINT *
-  !PRINT *, LOG10(10**(34.616)/c_light2)
-  !STOP
-
-  !PRINT *, "** Polytropic constant used for gamma= 2.75 single polytrope:"
-  !PRINT *, "   k used in LORENE= ", 0.01691726009823966
-  !PRINT *, "   k converted in SPHINCS units= ", &
-  !                               0.01691726009823966*k_lorene2hydrobase(2.75D0)
-  !PRINT *
-  !PRINT *, "** Polytropic constant used for gamma= 2 single polytrope:"
-  !PRINT *, "   k used in LORENE= ", 0.02686965902663748
-  !PRINT *, "   k converted in SPHINCS units= ", &
-  !                               0.02686965902663748*k_lorene2hydrobase(2.0D0)
-  !PRINT *
-  !PRINT *, "** Polytropic constant used for the crust in PWP:"
-  !PRINT *, "   k used in LORENE= ", 3.99874D-8
-  !PRINT *, "   k converted in SPHINCS units= ", &
-  !                3.99874D-8*k_lorene2hydrobase_piecewisepolytrope(1.35692395D0)
-  !PRINT *
-  !PRINT *, "** Polytropic constant used for the crust in PWP:"
-  !PRINT *, "   k used in LORENE= ", 8.948185D-2
-  !PRINT *, "   k converted in SPHINCS units= ", &
-  !                               8.948185D-2*k_lorene2hydrobase(1.35692395D0)
-  !PRINT *
-  !PRINT *, "   k used in LORENE, corresponding to k-100 in SPHINCS units= ", &
-  !         100/k_lorene2hydrobase(2.0D0)
-  ! Our testbed cases are gamma= 2.75, k= 30000; and gamma=2, k= 100
-  ! in SPHINCS units
-  ! 7.901e+14 density for 1.4 GRAVITATIONAL mass, poly 2
-  ! 1.4-1.4 systems for both ; 1.6-1.6 ; 1.2-1.8 GRAVIATIONAL masses
-  !STOP
-
-  !PRINT *, 1.283004487272563D54*amu/(MSun_geo*km2m*m2cm)**3
-  !PRINT *, ( 661708760715581.D0 - 661747751578110.D0 )/661747751578110.D0
-  !PRINT *, ( 664672071917413.D0 - 661747751578110.D0 )/661747751578110.D0
-  !STOP
-
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date // "-" // time
+
+  !CALL HOSTNM( hostname )
+#ifdef host
+
+#ifdef __GFORTRAN__
+
+# define stringize_start(x) "&
+# define stringize_end(x) &x"
+
+  hostname= stringize_start(host)
+stringize_end(host)
+
+#else
+
+#define stringize(x) tostring(x)
+#define tostring(x) #x
+
+  hostname= stringize(host)
+
+#endif
+
+#else
+
+  hostname= "unspecified host."
+
+#endif
+
+#ifdef vers
+
+#ifdef __GFORTRAN__
+
+# define stringize_start(x) "&
+# define stringize_end(x) &x"
+
+  version= stringize_start(vers)
+stringize_end(vers)
+
+#else
+
+#define stringize(x) tostring(x)
+#define tostring(x) #x
+
+  version= stringize(vers)
+
+#endif
+
+#else
+
+  hostname= "unspecified version."
+
+#endif
 
   PRINT *, "  ________________________________________________________________ "
   PRINT *, "             ____________  ________  __________    __ ___          "
@@ -190,7 +202,7 @@ PROGRAM sphincs_id
   PRINT *, "          /____/_/  /_/ /_/_/_/ /_/____/____/___/_/_____/          "
   PRINT *
   PRINT *, "  Smoothed Particle Hydrodynamics IN Curved Spacetime              "
-  PRINT *, "  Initial Data builder, v1.0                                       "
+  PRINT *, "  Initial Data builder, ", TRIM(version)
   PRINT *
   PRINT *, "  SPHINCS_ID  Copyright (C) 2020, 2021, 2022  Francesco Torsello   "
   PRINT *
@@ -215,6 +227,8 @@ PROGRAM sphincs_id
   PRINT *
   PRINT *, "  using the options: "
   PRINT *, COMPILER_OPTIONS()
+  PRINT *
+  PRINT *, "  SPHINCS_ID was run on: ", TRIM(hostname)
   PRINT *, "  ________________________________________________________________ "
   PRINT *
   PRINT *, "  Run id: ", run_id
@@ -361,7 +375,7 @@ PROGRAM sphincs_id
       bssn_forms( itr3 )% export_bin    = export_bin
 
       CALL bssn_forms( itr3 )% &
-                          compute_and_export_tpo_variables( namefile_bssn_bin )
+                          compute_and_print_tpo_variables( namefile_bssn_bin )
       !IF( bssn_forms( itr3 )% export_bin )THEN
       !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
       !  CALL bssn_forms( itr3 )% &
@@ -374,13 +388,13 @@ PROGRAM sphincs_id
     !
     IF( export_form )THEN
       export_bssn_loop: DO itr3 = 1, n_id, 1
-        WRITE( namefile_bssn, "(A24,I1,A4)" ) &
-                              "lorene-bns-id-bssn-form_", itr3, ".dat"
+        WRITE( namefile_bssn, "(A8,I1,A4)" ) &
+                              "bssn-id_", itr3, ".dat"
 
         namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
 
         CALL bssn_forms( itr3 )% &
-                    print_formatted_id_tpo_variables( namefile_bssn )
+                    print_formatted_id_tpo_variables( namefile= namefile_bssn )
       ENDDO export_bssn_loop
     ENDIF
 
@@ -502,8 +516,8 @@ PROGRAM sphincs_id
               ! Experimental: empty particles object
               !particles_dist( itr, itr2 )= particles()
             ELSE
-              WRITE( namefile_parts, "(A29,I1,A1,I1,A4)" ) &
-                                     "lorene-bns-id-particles-form_", &
+              WRITE( namefile_parts, "(A7,I1,A1,I1,A4)" ) &
+                                     "sph-id_", &
                                      itr3, "-", itr4, ".dat"
               namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
               CALL particles_dist( itr3, itr4 )% &
@@ -548,7 +562,7 @@ PROGRAM sphincs_id
           name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
           CALL bssn_forms( itr3 )% &
-                      compute_and_export_tpo_constraints( ids(itr3)% idata, &
+                      compute_and_print_tpo_constraints( ids(itr3)% idata, &
                                                           namefile_bssn, &
                                                           name_logfile )
 
@@ -586,7 +600,7 @@ PROGRAM sphincs_id
               name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
 
               CALL bssn_forms( itr3 )% &
-                          compute_and_export_tpo_constraints( &
+                          compute_and_print_tpo_constraints( &
                                                 particles_dist( itr3, itr4 ), &
                                                 namefile_bssn, &
                                                 name_logfile )

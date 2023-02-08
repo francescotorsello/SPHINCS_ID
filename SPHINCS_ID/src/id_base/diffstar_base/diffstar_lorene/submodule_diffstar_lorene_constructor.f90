@@ -76,7 +76,7 @@ SUBMODULE (diffstar_lorene) constructor
     ENDIF
 
     ! Import the parameters of the binary system
-    CALL import_diffstar_params( derived_type )
+    CALL read_diffstar_params( derived_type )
 
     ! Assign a unique identifier to the bns object
     derived_type% diffstar_identifier= diffstar_counter
@@ -118,6 +118,24 @@ SUBMODULE (diffstar_lorene) constructor
   END PROCEDURE finalize
 
 
+  MODULE PROCEDURE nothing
+
+    !***********************************************
+    !
+    !# Procedure that does nothing. It is used to instantiate a deferred
+    !  idbase procedure which s not needed in TYPE [[ejecta_generic]].
+    !  It also serves as a placeholder in case the idbase procedure
+    !  will be needed in the future.
+    !
+    !  FT 15.09.2022
+    !
+    !***********************************************
+
+    IMPLICIT NONE
+
+  END PROCEDURE nothing
+
+
   !
   !-- Implementation of the destructor of the bns object
   !
@@ -134,7 +152,7 @@ SUBMODULE (diffstar_lorene) constructor
     IMPLICIT NONE
 
     ! Deallocate memory
-    CALL THIS% deallocate_diffstar_memory()
+    CALL this% deallocate_diffstar_memory()
 
   END PROCEDURE destruct_diffstarlorene
 
@@ -158,9 +176,9 @@ SUBMODULE (diffstar_lorene) constructor
 
 #ifdef __INTEL_COMPILER
 
-    IF ( C_ASSOCIATED( THIS% diffstar_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% diffstar_ptr ) ) THEN
 
-      CALL destruct_etdiffrot( THIS% diffstar_ptr )
+      CALL destruct_etdiffrot( this% diffstar_ptr )
 
     ENDIF
 
@@ -178,9 +196,9 @@ SUBMODULE (diffstar_lorene) constructor
 
       IF( exist )THEN
 
-        CALL THIS% construction_timer% start_timer()
-        THIS% diffstar_ptr = construct_etdiffrot( resu_file//C_NULL_CHAR )
-        CALL THIS% construction_timer% stop_timer()
+        CALL this% construction_timer% start_timer()
+        this% diffstar_ptr = construct_etdiffrot( resu_file//C_NULL_CHAR )
+        CALL this% construction_timer% stop_timer()
 
       ELSE
 
@@ -194,9 +212,9 @@ SUBMODULE (diffstar_lorene) constructor
     ELSE
 
       default_case= "read_it"
-      CALL THIS% construction_timer% start_timer()
-      THIS% diffstar_ptr = construct_etdiffrot( default_case//C_NULL_CHAR )
-      CALL THIS% construction_timer% stop_timer()
+      CALL this% construction_timer% start_timer()
+      this% diffstar_ptr = construct_etdiffrot( default_case//C_NULL_CHAR )
+      CALL this% construction_timer% stop_timer()
 
     ENDIF
 
@@ -216,10 +234,10 @@ SUBMODULE (diffstar_lorene) constructor
 
     IMPLICIT NONE
 
-    IF ( C_ASSOCIATED( THIS% diffstar_ptr ) ) THEN
+    IF ( C_ASSOCIATED( this% diffstar_ptr ) ) THEN
 
-      CALL destruct_etdiffrot( THIS% diffstar_ptr )
-      THIS% diffstar_ptr = C_NULL_PTR
+      CALL destruct_etdiffrot( this% diffstar_ptr )
+      this% diffstar_ptr = C_NULL_PTR
 
     ENDIF
 

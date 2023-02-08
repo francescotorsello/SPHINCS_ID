@@ -26,7 +26,7 @@ SUBMODULE (bns_lorene) io
   !********************************************
   !
   !# This submodule contains the implementation of the
-  !  methods of TYPE bnslorene that handle I/O (input/output)
+  !  methods of TYPE [[bnslorene]] that handle I/O (input/output)
   !
   !  FT 05.11.2021
   !
@@ -136,8 +136,10 @@ SUBMODULE (bns_lorene) io
       PRINT *
       PRINT *, " Baryonic mass of NS 1 = ", this% mass1, " M_sun"
       PRINT *, " Baryonic mass of NS 2 = ", this% mass2, " M_sun"
-      PRINT *, " Gravitational mass of NS 1 = ", this% mass_grav1, " M_sun"
-      PRINT *, " Gravitational mass of NS 2 = ", this% mass_grav2, " M_sun"
+      PRINT *, " Gravitational mass of NS 1 in the binary system = ", &
+               this% mass_grav1, " M_sun"
+      PRINT *, " Gravitational mass of NS 2 in the binary system = ", &
+               this% mass_grav2, " M_sun"
       PRINT *, " ADM mass = ", this% adm_mass, " M_sun"
       PRINT *
       PRINT *, " Stellar center of NS 1 = ", this% center1_x, " M_sun^geo"
