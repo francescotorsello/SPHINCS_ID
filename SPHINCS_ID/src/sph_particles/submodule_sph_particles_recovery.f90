@@ -1,7 +1,7 @@
 ! File:         submodule_sph_particles_recovery.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
-! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+! Copyright (C) 2020-2023 Francesco Torsello                            *
 !                                                                       *
 ! This file is part of SPHINCS_ID                                       *
 !                                                                       *

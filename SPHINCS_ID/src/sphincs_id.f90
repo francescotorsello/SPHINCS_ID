@@ -1,7 +1,7 @@
 ! File:         sphincs_id.f90
 ! Author:       Francesco Torsello (FT)
 !************************************************************************
-! Copyright (C) 2020, 2021, 2022 Francesco Torsello                     *
+! Copyright (C) 2020-2023 Francesco Torsello                            *
 !                                                                       *
 ! This file is part of SPHINCS_ID                                       *
 !                                                                       *
