@@ -35,7 +35,7 @@ MODULE sph_particles
   USE utility,                  ONLY: itr, ios, err_msg, test_status, &
                                       is_finite_number, perc, creturn, &
                                       run_id, show_progress
-  USE id_base,                  ONLY: idbase
+  USE id_base,                  ONLY: idbase, surface
   USE timing,                   ONLY: timer
 
 
@@ -294,6 +294,8 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
     !> 1-D array storing the particle masses \(M_\odot\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
+    !> 1-D array storing the surfacesof the matter objects
+    TYPE(surface), DIMENSION(:), ALLOCATABLE:: surfaces
     !& Ratio between baryonic masses of the matter objects and the maximum
     !  baryonic mass among them @warning always \(< 1\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: mass_ratios
@@ -863,7 +865,7 @@ MODULE sph_particles
                                   filename_shells_pos, &
                                   get_density, integrate_density, &
                                   get_id, validate_position, &
-                                  radii )
+                                  radii, surf )
     !! Places particles on ellipsoidal surfaces on one star
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -992,6 +994,8 @@ MODULE sph_particles
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
       !DOUBLE PRECISION, INTENT(IN),   OPTIONAL:: pmass_des
       DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
+      !> Surface of the matter object
+      TYPE(surface),                  INTENT(IN), OPTIONAL :: surf
 
     END SUBROUTINE place_particles_ellipsoidal_surfaces
 
@@ -1183,29 +1187,26 @@ MODULE sph_particles
 
     END SUBROUTINE compute_sph_hydro
 
-    MODULE SUBROUTINE perform_apm( get_density, get_nstar_id, &
-                                   get_pressure_id, &
-                                   compute_pressure, &
-                                   npart_output, &
-                                   pos_input, &
-                                   pvol, h_output, nu_output, &
-                                   center, &
-                                   com_star, &
-                                   mass, &
-                                   sizes, &
-                                   eqos, &
-                                   apm_max_it, max_inc, &
-                                   mass_it, correct_nu, nuratio_thres, &
-                                   nuratio_des, use_pressure, adapt_ghosts, &
-                                   move_away_ghosts, &
-                                   nx_gh, ny_gh, nz_gh, ghost_dist, &
-                                   use_atmosphere, &
-                                   remove_atmosphere, &
-                                   print_step, &
-                                   namefile_pos_id, namefile_pos, &
-                                   namefile_results, &
-                                   validate_position )
-    !! Performs the Artificial Pressure Method (APM) on one star's particles
+    MODULE SUBROUTINE perform_apm( &
+      ! PROCEDURES to get the density and pressure at a point
+      get_density, get_nstar_id, &
+      get_pressure_id, compute_pressure, &
+      ! Arguments pertaining to the matter object
+      npart_output, pos_input, pvol, h_output, nu_output, &
+      center, com_star, mass, sizes, eqos, &
+      ! Steering parameters for the APM iteration
+      apm_max_it, max_inc, mass_it, correct_nu, &
+      nuratio_thres, nuratio_des, use_pressure, &
+      ! Arguments pertaining to the ghost particles
+      adapt_ghosts, move_away_ghosts, &
+      nx_gh, ny_gh, nz_gh, ghost_dist, &
+      ! Arguments pertaining to the atmosphere
+      use_atmosphere, remove_atmosphere, &
+      ! Arguments pertaining to input/output
+      print_step, namefile_pos_id, namefile_pos, namefile_results, &
+      ! Optional argument
+      validate_position, surf )
+    !! Performs the Artificial Pressure Method (APM)
 
       !CLASS(particles),     INTENT(INOUT):: this
       !! [[particles]] object which this PROCEDURE is a member of
@@ -1396,7 +1397,8 @@ MODULE sph_particles
       !  the APM iteration
       CHARACTER(LEN=*),              INTENT(INOUT), OPTIONAL :: &
                                                             namefile_results
-
+      !> Surface of the matter object
+      TYPE(surface),                 INTENT(IN)   , OPTIONAL :: surf
 
     END SUBROUTINE perform_apm
 

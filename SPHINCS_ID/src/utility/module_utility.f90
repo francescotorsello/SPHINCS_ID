@@ -932,11 +932,17 @@ MODULE utility
 
     ELSE
 
-      phi= pi/2.D0
+      phi= pi/two
 
     ENDIF
 
-    r= SQRT( xd**2.D0 + yd**2.D0 + zd**2.D0 )
+    DO WHILE(phi < zero)
+
+      phi= phi + two*pi
+
+    ENDDO
+
+    r= SQRT( xd**2 + yd**2 + zd**2 )
 
     theta= ACOS( zd/r )
 

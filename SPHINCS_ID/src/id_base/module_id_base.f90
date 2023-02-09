@@ -47,6 +47,16 @@ MODULE id_base
   IMPLICIT NONE
 
 
+  TYPE surface
+    LOGICAL:: is_known= .FALSE.
+    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
+    !# Array containing the coordinates of the stars' surfaces
+    !  The first index runs over the stars; the second and third run over
+    !  the surface points (number of points for \(\theta\) and \(\varphi\));
+    !  the fourth index runs overthe Cartesian coordinates of the points
+  END TYPE surface
+
+
   !*************************************************************
   !                                                            *
   !              Definition of TYPE idbase                     *
@@ -68,6 +78,8 @@ MODULE id_base
     !# Number of matter objects belonging the physical system.
     !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
+
+    TYPE(surface), PUBLIC, DIMENSION(:), ALLOCATABLE:: surfaces
 
     LOGICAL:: one_lapse
     !# Logical variable that determines if the lapse function \(\alpha=1\),

@@ -3136,7 +3136,8 @@ SUBMODULE (sph_particles) apm
       !
       !*******************************************************
 
-      USE utility, ONLY: g2kg, m2cm, lorene2hydrobase
+      USE utility,  ONLY: g2kg, m2cm, lorene2hydrobase
+      USE numerics, ONLY: bilinear_interpolation
 
       IMPLICIT NONE
 
@@ -3277,7 +3278,7 @@ SUBMODULE (sph_particles) apm
                                pos_input(1,1:npart_real), &
                                pos_input(2,1:npart_real), &
                                pos_input(3,1:npart_real), &
-                               nlrf_id_arr, eqos, pressure_id_arr )
+                               nlrf_id_arr, eqos, pressure_id_arr, .TRUE. )
 
       ENDIF
 
@@ -3411,10 +3412,13 @@ SUBMODULE (sph_particles) apm
 
       ghost_pos_tmp= HUGE(zero)
 
+      !PRINT *, "SIZE(surf% points(:,1,5))=", SIZE(surf% points(:,1,5))
+      !PRINT *, "SIZE(surf% points(1,:,6))=", SIZE(surf% points(1,:,6))
+
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( nx, ny, nz, xmin, ymin, zmin, dx, dy, dz, &
       !$OMP                     ghost_pos_tmp, ellipse_thickness, &
-      !$OMP                     center, rad_x, rad_y, rad_z ) &
+      !$OMP                     center, rad_x, rad_y, rad_z, surf, ghost_dist )&
       !$OMP             PRIVATE( i, j, k, xtemp, ytemp, ztemp, &
       !$OMP                      x_ell, y_ell, z_ell, r, theta, phi, &
       !$OMP                      r_ell, theta_ell, phi_ell )
@@ -3436,22 +3440,44 @@ SUBMODULE (sph_particles) apm
                                            center(1), center(2), center(3), &
                                            r, theta, phi )
 
-            !x_ell= center(1) + rad_x*SIN(theta)*COS(phi)
-            !y_ell= center(2) + rad_y*SIN(theta)*SIN(phi)
-            !z_ell= center(3) + rad_z*COS(theta)
+            IF(.NOT.PRESENT(surf) &
+               .OR. &
+               (PRESENT(surf) .AND. surf% is_known .NEQV. .TRUE.) &
+            )THEN
 
-            ! Use the angular coordinates of the point and the ellipse semiaxes,
-            ! to obtain the Cartesian coordinates of the point on the ellipsoid
-            ! having the same angular cordinates of the input point
-            CALL cartesian_from_spherical( rad_x, theta, phi, &
-              center(1), center(2), center(3), &
-              x_ell, y_ell, z_ell, rad_y/rad_x, rad_z/rad_x )
+              ! Use the angular coordinates of the point and the ellipse
+              ! semiaxes, to obtain the Cartesian coordinates of the point on
+              ! the ellipsoid having the same angular cordinates of the
+              ! input point
+              CALL cartesian_from_spherical( rad_x, theta, phi, &
+                center(1), center(2), center(3), &
+                x_ell, y_ell, z_ell, rad_y/rad_x, rad_z/rad_x )
 
-            ! Compute the spherical polar coordinates of the point on the
-            ! ellipsoid
-            CALL spherical_from_cartesian( x_ell, y_ell, z_ell, &
-                                           center(1), center(2), center(3), &
-                                           r_ell, theta_ell, phi_ell )
+              ! Compute the spherical polar coordinates of the point on the
+              ! ellipsoid
+              CALL spherical_from_cartesian( x_ell, y_ell, z_ell, &
+                                             center(1), center(2), center(3), &
+                                             r_ell, theta_ell, phi_ell )
+
+            ELSE
+
+              IF(surf% is_known .EQV. .TRUE.)THEN
+
+                r_ell= bilinear_interpolation( theta, phi, &
+                         SIZE(surf% points(:,1,5)), &
+                         SIZE(surf% points(1,:,6)), &
+                         surf% points(:,:,5:6), surf% points(:,:,4) )
+
+                r_ell= r_ell + ghost_dist
+
+              ENDIF
+
+            ENDIF
+
+            !PRINT *, "r=", r
+            !PRINT *, "r_ell=", r_ell
+            !PRINT *, "ellipse_thickness*r_ell=", ellipse_thickness*r_ell
+            !STOP
 
             ! Place a ghost particle if: (i) its radial coordinate is larger
             ! than the radial coordinate the ellipsoid and lower than
@@ -3587,8 +3613,10 @@ SUBMODULE (sph_particles) apm
           IF( .NOT.is_finite_number( h(a) ) .OR. h_ghost(a) <= zero )THEN
 
             n_problematic_h= n_problematic_h + 1
-            h_ghost(a)= find_h_backup( a, npart_ghost, ghost_pos(:,1:npart_ghost), nn_des)
-            IF( .NOT.is_finite_number( h_ghost(a) ) .OR. h_ghost(a) <= zero )THEN
+            h_ghost(a)= &
+              find_h_backup( a, npart_ghost, ghost_pos(:,1:npart_ghost), nn_des)
+            IF( .NOT.is_finite_number( h_ghost(a) ) .OR. h_ghost(a) <= zero &
+            )THEN
               PRINT *, "** ERROR! h=0 on particle ", a, "even with the brute", &
                        " force method."
               PRINT *, "   Particle position: ", ghost_pos(:,a)

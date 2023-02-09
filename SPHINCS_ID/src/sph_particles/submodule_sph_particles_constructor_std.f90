@@ -148,6 +148,7 @@ SUBMODULE (sph_particles) constructor_std
                                   spatial_vector_norm_sym3x3, sph_path, &
                                   scan_1d_array_for_nans
 
+
     IMPLICIT NONE
 
 
@@ -288,6 +289,7 @@ SUBMODULE (sph_particles) constructor_std
     ALLOCATE( parts% mass_ratios(parts% n_matter) )
     ALLOCATE( parts% mass_fractions(parts% n_matter) )
     ALLOCATE( parts% barycenter(parts% n_matter,3) )
+    ALLOCATE( parts% surfaces (parts% n_matter) )
     !ALLOCATE( compute_pressure_i(parts% n_matter) )
 
     parts% npart_i(0)= 0
@@ -355,8 +357,17 @@ SUBMODULE (sph_particles) constructor_std
     ENDDO
 
     !
-    !-- TODO: Copy the surfaces of the matter objects
+    !-- Copy the surfaces of the matter objects
     !
+    DO i_matter= 1, parts% n_matter, 1
+
+      IF(ALLOCATED(id% surfaces(i_matter)% points))THEN
+        parts% surfaces(i_matter)= id% surfaces(i_matter)
+      ELSE
+        parts% surfaces(i_matter)% is_known= .FALSE.
+      ENDIF
+
+    ENDDO
 
     parts% post_process_sph_id => id% finalize_sph_id_ptr
 
@@ -476,7 +487,8 @@ SUBMODULE (sph_particles) constructor_std
                     print_step, filename_apm_pos_id, &
                     filename_apm_pos, filename_apm_results, &
                     ! Optional argument
-                    validate_position )
+                    validate_position, &
+                    parts% surfaces(i_matter) )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
         IF( debug ) PRINT *, "average nu= ", &
@@ -1886,7 +1898,8 @@ SUBMODULE (sph_particles) constructor_std
                                               integrate_mass_density, &
                                               import_id, &
                                         validate_position= validate_position, &
-            radii= [MAXVAL(sizes(i_matter,3:4)),MAXVAL(sizes(i_matter,5:6))] )
+            radii= [MAXVAL(sizes(i_matter,3:4)),MAXVAL(sizes(i_matter,5:6))], &
+            surf= parts% surfaces(i_matter) )
 
         ! Now that the real particle numbers are known, reallocate the arrays
         ! to the appropriate sizes. Note that, if the APM is performed,

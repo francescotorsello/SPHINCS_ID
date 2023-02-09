@@ -147,7 +147,7 @@ print_step= 25          ! Every print_step steps, print the particle positions
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
                         ! Set to 0 to not print positions at all
-apm_max_it= 2500        ! Maximum number of iterations, irrespective of the
+apm_max_it= 3500        ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 500            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate

@@ -48,13 +48,13 @@ MODULE bns_base
   IMPLICIT NONE
 
 
-  TYPE surface
-    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
-    !# Array containing the coordinates of the stars' surfaces
-    !  The first index runs over the stars; the second and third run over
-    !  the surface points (number of points for \(\theta\) and \(\varphi\));
-    !  the fourth index runs overthe Cartesian coordinates of the points
-  END TYPE surface
+  !TYPE surface
+  !  DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
+  !  !# Array containing the coordinates of the stars' surfaces
+  !  !  The first index runs over the stars; the second and third run over
+  !  !  the surface points (number of points for \(\theta\) and \(\varphi\));
+  !  !  the fourth index runs overthe Cartesian coordinates of the points
+  !END TYPE surface
 
   !*******************************************************
   !                                                      *
@@ -148,7 +148,7 @@ MODULE bns_base
     ! in the mass-radius diagrams, together with the gravitatonal mass
     DOUBLE PRECISION:: area_radius1
 
-    TYPE(surface), DIMENSION(2):: surfaces
+    !TYPE(surface), DIMENSION(2):: surfaces
 
     DOUBLE PRECISION, DIMENSION(2,6):: radii
     !# Array containing the **signed** radii of the stars

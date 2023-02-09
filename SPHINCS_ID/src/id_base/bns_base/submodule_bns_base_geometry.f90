@@ -72,12 +72,16 @@ SUBMODULE(bns_base) geometry
 
     n_matter= this% get_n_matter()
 
+    IF(ALLOCATED(this% surfaces)) DEALLOCATE(this% surfaces)
+    ALLOCATE(this% surfaces(n_matter))
+
     DO i_matter= 1, n_matter, 1
 
       PRINT *, " * Finding surface for star ", i_matter, "..."
       CALL this% find_surface(this% return_center(i_matter), &
                               n_theta, n_phi, &
-                              this% surfaces(i_matter)% points)
+                              this% surfaces(i_matter)% points)                      
+      this% surfaces(i_matter)% is_known= .TRUE.
       PRINT *, "   ...done."
 
       IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ) i_matter
@@ -105,8 +109,8 @@ SUBMODULE(bns_base) geometry
         STOP
       ENDIF
 
-      DO i= 1, n_theta, 1
-        DO j= 1, n_phi, 1
+      DO i= 1, n_theta + 1, 1
+        DO j= 1, n_phi + 1, 1
           WRITE( UNIT = unit_dump, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
             i_matter, &
             this% surfaces(i_matter)% points(i,j,1), &
@@ -147,16 +151,16 @@ SUBMODULE(bns_base) geometry
     DOUBLE PRECISION, DIMENSION(3):: direction_vector
     DOUBLE PRECISION:: radius
 
-    ALLOCATE(surface(n_theta, n_phi,6))
+    ALLOCATE(surface(n_theta + 1, n_phi + 1,6))
 
     !$OMP PARALLEL DO DEFAULT( NONE ) &
     !$OMP             SHARED( n_theta, n_phi, surface, center, this ) &
     !$OMP             PRIVATE( i, j, theta, phi, direction_vector, radius )
-    colatitude_loop: DO i= 1, n_theta, 1
+    colatitude_loop: DO i= 0, n_theta, 1
 
       theta= DBLE(i)/DBLE(n_theta)*pi
 
-      azimuth_loop: DO j= 1, n_phi, 1
+      azimuth_loop: DO j= 0, n_phi, 1
 
         phi= DBLE(j)/DBLE(n_phi)*two*pi
 
@@ -166,11 +170,11 @@ SUBMODULE(bns_base) geometry
         radius= this% find_radius(center, direction_vector)
 
         CALL cartesian_from_spherical(radius, theta, phi, &
-                                center(1), center(2), center(3), &
-                                surface(i,j,1), surface(i,j,2), surface(i,j,3))
-        surface(i,j,4)= radius
-        surface(i,j,5)= theta
-        surface(i,j,6)= phi
+                    center(1), center(2), center(3), &
+                    surface(i+1,j+1,1), surface(i+1,j+1,2), surface(i+1,j+1,3))
+        surface(i+1,j+1,4)= radius
+        surface(i+1,j+1,5)= theta
+        surface(i+1,j+1,6)= phi
 
       ENDDO azimuth_loop
 
