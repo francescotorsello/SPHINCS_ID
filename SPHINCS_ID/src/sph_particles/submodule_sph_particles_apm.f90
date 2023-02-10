@@ -168,7 +168,7 @@ SUBMODULE (sph_particles) apm
     DOUBLE PRECISION:: variance_nu, stddev_nu, mean_nu
     DOUBLE PRECISION:: variance_dN, stddev_dN
     DOUBLE PRECISION:: rand_num, rand_num2
-    DOUBLE PRECISION:: r, theta, phi
+    DOUBLE PRECISION:: r, theta, phi, frac
     DOUBLE PRECISION:: r_ell, theta_ell, phi_ell
     DOUBLE PRECISION:: dS_norm_av
     DOUBLE PRECISION:: nstar_id_av, nstar_sph_av, nlrf_id_av, pressure_id_av
@@ -219,7 +219,7 @@ SUBMODULE (sph_particles) apm
 
     CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
 
-    LOGICAL, PARAMETER:: debug= .FALSE.
+    LOGICAL, PARAMETER:: debug= .TRUE.
     !LOGICAL:: few_ncand!, invertible_matrix
     LOGICAL:: push_away_ghosts
 
@@ -1318,27 +1318,42 @@ SUBMODULE (sph_particles) apm
       radius_part= zero
       h_av       = zero
       cnt_array  = zero
-      !$OMP PARALLEL DO DEFAULT( NONE ) &
-      !$OMP             SHARED( all_pos, npart_real, center, max_radius, h, &
-      !$OMP                     cnt_array ) &
-      !$OMP             PRIVATE( a, r ) &
-      !$OMP             REDUCTION( MAX: radius_part ) &
-      !$OMP             REDUCTION( +: h_av )
-      find_radius_part: DO a= 1, npart_real, 1
+      frac       = two
+      DO WHILE(SUM(cnt_array, DIM=1) <= ten)
 
-        r= SQRT((all_pos(1,a) - center(1))**2 + (all_pos(2,a) - center(2))**2 &
-              + (all_pos(3,a) - center(3))**2)
+        frac= frac + one
 
-        radius_part= MAX(radius_part, r)
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( all_pos, npart_real, center, max_radius, h, &
+        !$OMP                     cnt_array, frac ) &
+        !$OMP             PRIVATE( a, r ) &
+        !!$OMP             REDUCTION( MAX: radius_part ) &
+        !$OMP             REDUCTION( +: h_av, radius_part )
+        find_radius_part: DO a= 1, npart_real, 1
 
-        IF(r > (one - five/(ten*ten))*max_radius)THEN
-          h_av= h_av + h(a)
-          cnt_array(a)= one
-        ENDIF
+          r= SQRT((all_pos(1,a) - center(1))**2 &
+                + (all_pos(2,a) - center(2))**2 &
+                + (all_pos(3,a) - center(3))**2)
 
-      ENDDO find_radius_part
-      !$OMP END PARALLEL DO
-      h_av= h_av/SUM(cnt_array, DIM=1)
+          !radius_part= MAX(radius_part, r)
+
+          IF(.NOT.is_finite_number(h(a))) CYCLE
+
+          IF(r > (one - frac/(ten*ten))*max_radius)THEN
+            h_av        = h_av + h(a)
+            radius_part = radius_part + r
+            cnt_array(a)= one
+          ENDIF
+
+        ENDDO find_radius_part
+        !$OMP END PARALLEL DO
+
+      ENDDO
+      IF(debug) PRINT *, "h_av=", h_av
+      IF(debug) PRINT *, "radius_part=", radius_part
+      IF(debug) Print *, "SUM(cnt_array, DIM=1)=", SUM(cnt_array, DIM=1)
+      h_av       = h_av/SUM(cnt_array, DIM=1)
+      radius_part= radius_part/SUM(cnt_array, DIM=1)
       PRINT *, " * Larger radius among the particles=", radius_part
       PRINT *, " * Larger radius of the star=", max_radius
       PRINT *, " * Their difference: radius_part - max_radius=", &
@@ -3670,13 +3685,11 @@ SUBMODULE (sph_particles) apm
 
       IF( exist )THEN
         OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "REPLACE", &
-              FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
+              FORM= "FORMATTED", POSITION= "REWIND", ACTION= "WRITE", &
+              IOSTAT= ios, IOMSG= err_msg )
       ELSE
         OPEN( UNIT= 2, FILE= TRIM(finalnamefile), STATUS= "NEW", &
-              FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+              FORM= "FORMATTED", ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
       ENDIF
       IF( ios > 0 )THEN
         PRINT *, "...error when opening " // TRIM(finalnamefile), &

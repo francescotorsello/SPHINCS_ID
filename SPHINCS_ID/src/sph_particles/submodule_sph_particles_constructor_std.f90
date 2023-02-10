@@ -1025,7 +1025,7 @@ SUBMODULE (sph_particles) constructor_std
 
     SUBROUTINE integrate_mass_density &
       ( center, radius, central_density, dr, dth, dphi, mass, mass_profile, &
-        mass_profile_idx, radii )
+        mass_profile_idx, radii, surf )
     !# Wrapper function to integrate the relativistic baryonic mass density
 
       IMPLICIT NONE
@@ -1050,10 +1050,12 @@ SUBMODULE (sph_particles) constructor_std
       !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
       INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
       DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
+      !> Surface of the matter object
+      TYPE(surface),                  INTENT(IN), OPTIONAL:: surf
 
       CALL id% integrate_baryon_mass_density &
         ( center, radius, central_density, dr, dth, dphi, &
-          mass, mass_profile, mass_profile_idx, radii )
+          mass, mass_profile, mass_profile_idx, radii, surf )
 
     END SUBROUTINE integrate_mass_density
 

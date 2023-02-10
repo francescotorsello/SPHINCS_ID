@@ -65,19 +65,30 @@ SUBMODULE (id_base) mass_profile
     USE utility,   ONLY: zero, one, two, three, four
     USE NR,        ONLY: indexx
     USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
-    USe utility,   ONLY: determinant_sym3x3
+    USe utility,   ONLY: determinant_sym3x3, cartesian_from_spherical
+    USE numerics,  ONLY: bilinear_interpolation
 
     IMPLICIT NONE
 
     INTEGER:: r, th, phi
-    DOUBLE PRECISION:: rad_coord, colat, long, mass_element, max_radius
+    DOUBLE PRECISION:: rad, rad_coord, colat, long, mass_element, max_radius
     DOUBLE PRECISION:: sq_g, baryon_density, gamma_euler
-    DOUBLE PRECISION:: a_x, a_y, a_z
+    DOUBLE PRECISION:: a_x, a_y, a_z, xtemp, ytemp, ztemp
     DOUBLE PRECISION, DIMENSION(6):: g
 
     !LOGICAL, PARAMETER:: debug= .TRUE.
 
-    IF(PRESENT(radii))THEN
+    IF(PRESENT(surf) .AND. surf% is_known)THEN
+
+      max_radius= radius
+      IF(PRESENT(radii))THEN
+        max_radius= MAXVAL([radius,radii(1),radii(2)])
+      ENDIF
+      a_x= one
+      a_y= one
+      a_z= one
+
+    ELSEIF(PRESENT(radii))THEN
 
       max_radius= MAXVAL([radius,radii(1),radii(2)])
 
@@ -103,10 +114,7 @@ SUBMODULE (id_base) mass_profile
 
     ELSE
 
-      max_radius= radius
-      a_x= one
-      a_y= one
-      a_z= one
+
 
     ENDIF
 
@@ -116,9 +124,10 @@ SUBMODULE (id_base) mass_profile
 
     !$OMP PARALLEL DO DEFAULT(NONE) &
     !$OMP             SHARED(dr, dphi, dth, center, max_radius, &
-    !$OMP                    mass_profile, this, a_x, a_y, a_z) &
-    !$OMP             PRIVATE(r, th, phi, rad_coord, long, colat, sq_g, &
-    !$OMP                   gamma_euler, g, baryon_density, mass_element, mass)
+    !$OMP                    mass_profile, this, a_x, a_y, a_z, surf) &
+    !$OMP             PRIVATE(r, th, phi, rad, rad_coord, long, colat, sq_g, &
+    !$OMP                     gamma_euler, g, baryon_density, mass_element, &
+    !$OMP                     mass, xtemp, ytemp, ztemp)
     radius_loop: DO r= 1, NINT(max_radius/dr), 1
 
       mass= zero
@@ -135,22 +144,47 @@ SUBMODULE (id_base) mass_profile
           ! The definition of the baryon mass for the LORENE ID is in eq.(69)
           ! of Gourgoulhon et al., PRD 63 064029 (2001)
 
-          CALL this% read_id_mass_b( &
-                       center(1) + a_x*(rad_coord + dr)*SIN(colat)*COS(long), &
-                       center(2) + a_y*(rad_coord + dr)*SIN(colat)*SIN(long), &
-                       center(3) + a_z*(rad_coord + dr)*COS(colat),           &
-                       g, baryon_density, gamma_euler )
+          IF(PRESENT(surf) .AND. surf% is_known)THEN
+
+            rad= bilinear_interpolation( colat, long, &
+                  SIZE(surf% points(:,1,5)), &
+                  SIZE(surf% points(1,:,6)), &
+                  surf% points(:,:,5:6), surf% points(:,:,4) )
+            rad= rad*rad_coord/max_radius
+
+          ELSE
+
+            rad= rad_coord
+
+          ENDIF
+
+          CALL cartesian_from_spherical( &
+            a_x*(rad + dr), colat, long, &
+            center(1), center(2), center(3), &
+            xtemp, ytemp, ztemp, a_y/a_x, a_z/a_x )
+
+          !CALL this% read_id_mass_b( &
+          !             center(1) + a_x*(rad_coord + dr)*SIN(colat)*COS(long), &
+          !             center(2) + a_y*(rad_coord + dr)*SIN(colat)*SIN(long), &
+          !             center(3) + a_z*(rad_coord + dr)*COS(colat),           &
+          !             g, baryon_density, gamma_euler )
+
+          CALL this% read_id_mass_b( xtemp, ytemp, ztemp, &
+                                     g, baryon_density, gamma_euler )
 
           IF(      ISNAN( g(jxx) ) .OR. ISNAN( g(jxy) ) .OR. ISNAN( g(jxz) ) &
               .OR. ISNAN( g(jyy) ) .OR. ISNAN( g(jyz) ) .OR. ISNAN( g(jzz) ) &
               .OR. ISNAN( baryon_density ) .OR. ISNAN( gamma_euler ) ) &
-              CYCLE
+            CYCLE
 
           ! Compute square root of the determinant of the spatial metric
-          CALL determinant_sym3x3( g, sq_g )
+          CALL determinant_sym3x3(g, sq_g)
           sq_g= SQRT(sq_g)
 
-          mass_element= a_x*a_y*a_z*(rad_coord**two)*SIN(colat)*dr*dth*dphi &
+          !mass_element= a_x*a_y*a_z*(rad_coord**two)*SIN(colat)*dr*dth*dphi &
+          !              *sq_g*gamma_euler*baryon_density
+
+          mass_element= a_x*a_y*a_z*(rad**two)*SIN(colat)*dr*dth*dphi &
                         *sq_g*gamma_euler*baryon_density
 
           mass= mass + two*mass_element
@@ -159,17 +193,17 @@ SUBMODULE (id_base) mass_profile
 
       ENDDO longitude_loop
 
-      mass_profile( 1, r )= rad_coord
-      mass_profile( 2, r )= mass
+      mass_profile(1, r)= rad_coord
+      mass_profile(2, r)= mass
 
     ENDDO radius_loop
     !$OMP END PARALLEL DO
 
     DO r= 1, NINT(radius/dr), 1
-      mass_profile( 3, r )= mass_profile( 3, r - 1 ) + mass_profile( 2, r )
+      mass_profile(3, r)= mass_profile(3, r - 1) + mass_profile(2, r)
     ENDDO
 
-    mass= mass_profile( 3, NINT(radius/dr) )
+    mass= mass_profile(3, NINT(radius/dr))
 
     IF( ISNAN(mass) )THEN
       PRINT *, "** ERROR! The integrated mass is a NaN!"
@@ -193,6 +227,7 @@ SUBMODULE (id_base) mass_profile
 
 
 END SUBMODULE mass_profile
+
 
 ! TODO:  deprecated? It computes the relative Lorentz factor between the fluid
 !        and the Eulerian observer from the velocity

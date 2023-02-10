@@ -84,7 +84,7 @@ nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-last_r= 0.999D0     ! The radius of the last spherical surface is
+last_r= 0.98D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -142,7 +142,7 @@ apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
-print_step= 25          ! Every print_step steps, print the particle positions
+print_step= 50          ! Every print_step steps, print the particle positions
                         ! at the current step, and the particle positions at
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
@@ -183,7 +183,7 @@ move_away_ghosts=.TRUE. ! If .TRUE., the ghost particles will slowly move away
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
-ghost_dist=0.25D0       ! Distance between the ghost particles and the surface
+ghost_dist=0.35D0       ! Distance between the ghost particles and the surface
                         ! of the matter object considered (star, ejecta, etc...)
 use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term

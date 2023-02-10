@@ -153,9 +153,35 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     IF(debug) PRINT *, dim_seed
     IF(debug) PRINT *, seed
 
+    IF(PRESENT(surf) .AND. surf% is_known)THEN
+
+      surface_type="geoidal"
+
+      max_radius= radius
+      a_x= one
+      a_y= one
+      a_z= one
+      max_center= center(1)
+
+    ELSE
+
+      surface_type="spherical"
+
+      max_radius= radius
+      a_x= one
+      a_y= one
+      a_z= one
+      max_center= center(1)
+
+    ENDIF
+
     IF(PRESENT(radii))THEN
 
-      surface_type="ellipsoidal"
+      IF(.NOT.(PRESENT(surf) .AND. surf% is_known))THEN
+
+        surface_type="ellipsoidal"
+
+      ENDIF
 
       max_radius= MAXVAL([radius,radii(1),radii(2)])
 
@@ -181,16 +207,6 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
         max_center= center(3)
 
       ENDIF
-
-    ELSE
-
-      surface_type="spherical"
-
-      max_radius= radius
-      a_x= one
-      a_y= one
-      a_z= one
-      max_center= center(1)
 
     ENDIF
 
@@ -263,7 +279,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
                             central_density, &
                             dr, dth, dphi, &
                             mass, mass_profile, &
-                            mass_profile_idx, radii )
+                            mass_profile_idx, radii, surf )
 
     mass_profile( 2:3, : )= mass_profile( 2:3, : )*mass_star/mass
 
@@ -354,12 +370,12 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
       IF( surface_radii(r) < (one - five/(ten*ten))*last_r*max_radius )THEN
 
         CALL compute_colatitudes_uniformly_in( pi/two, (ten - five/ten)/ten*pi,&
-                                      colatitude_pos(r)% colatitudes( : ) )
+                                      colatitude_pos(r)% colatitudes(:) )
 
       ELSE
 
         CALL compute_colatitudes_uniformly_in( pi/two, (ten - five/ten)/ten*pi,&
-                                      colatitude_pos(r)% colatitudes( : ) )
+                                      colatitude_pos(r)% colatitudes(:) )
         !CALL compute_colatitudes_uniformly_in( pi/two, two/3.0D0*pi, &
         !                              colatitude_pos(r)% colatitudes( : ) )
 
@@ -381,8 +397,10 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
             colatitude_pos(r)% colatitudes( itr2 ) >= pi &
         )THEN
           PRINT *, "** ERROR! ", &
-                   "The colatitudes are not in the OPEN interval (pi/2,pi). ", &
-                   "Stopping..."
+                   " * The colatitudes are not in the OPEN interval ", &
+                   "(pi/2,pi). "
+          PRINT *, " * Stopping..."
+          PRINT *
           STOP
         ENDIF
 
@@ -441,7 +459,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
         !    long= phase + phi*alpha(r)/3.0D0 - pi/3.0D0
         !
         !  ENDIF
-          long= phase + phi*alpha(r)
+          long= MOD(phase + phi*alpha(r), two*pi)
 
 
           col= colatitude_pos(r)% colatitudes(th)
@@ -463,15 +481,19 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
           ENDIF
 
 
-          !IF(surf% is_known == .TRUE.)THEN
-          !  rad= bilinear_interpolation( col, long, &
-          !        SIZE(surf% points(:,1,5)), &
-          !        SIZE(surf% points(1,:,6)), &
-          !        surf% points(:,:,5:6), surf% points(:,:,4) )
-          !  rad= rad*surface_radii(r)/max_radius
-          !ELSE
+          IF(PRESENT(surf) .AND. surf% is_known)THEN
+
+            rad= bilinear_interpolation( col, long, &
+                  SIZE(surf% points(:,1,5)), &
+                  SIZE(surf% points(1,:,6)), &
+                  surf% points(:,:,5:6), surf% points(:,:,4) )
+            rad= rad*surface_radii(r)/max_radius
+
+          ELSE
+
             rad= surface_radii(r)
-          !ENDIF
+
+          ENDIF
           IF( this% randomize_r )THEN
 
             CALL RANDOM_NUMBER( delta_r )
@@ -507,19 +529,21 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
           !
           !-- Compute Cartesian coordinates of the candidate particle positions
           !
-          !IF(surf% is_known == .TRUE.)THEN
-          !
-          !  CALL cartesian_from_spherical( &
-          !    rad, col, long, &
-          !    center(1), center(2), center(3), &
-          !    xtemp, ytemp, ztemp )
-          !
-          !ELSE
+          IF(PRESENT(surf) .AND. surf% is_known)THEN
+
+            CALL cartesian_from_spherical( &
+              rad, col, long, &
+              center(1), center(2), center(3), &
+              xtemp, ytemp, ztemp )
+
+          ELSE
+
             CALL cartesian_from_spherical( &
               a_x*rad, col, long, &
               center(1), center(2), center(3), &
               xtemp, ytemp, ztemp, a_y/a_x, a_z/a_x )
-          !ENDIF
+
+          ENDIF
 
           IF( .NOT.is_finite_number( xtemp ) )THEN
             PRINT *, "** ERROR when placing first half of the particles! ", &

@@ -952,15 +952,16 @@ MODULE sph_particles
       INTERFACE
         SUBROUTINE integrate_density &
           ( center, radius, central_density, dr, dth, dphi, &
-            mass, mass_profile, mass_profile_idx, radii )
+            mass, mass_profile, mass_profile_idx, radii, surf )
+          IMPORT:: surface
           !> Center of the star
-          DOUBLE PRECISION, DIMENSION(3), INTENT(IN)    :: center
+          DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: center
           !> Central density of the star
-          DOUBLE PRECISION, INTENT(IN)    :: central_density
+          DOUBLE PRECISION, INTENT(IN)   :: central_density
           !> Radius of the star
-          DOUBLE PRECISION, INTENT(IN)    :: radius
+          DOUBLE PRECISION, INTENT(IN)   :: radius
           !> Integration steps
-          DOUBLE PRECISION, INTENT(IN)    :: dr, dth, dphi
+          DOUBLE PRECISION, INTENT(IN)   :: dr, dth, dphi
           !> Integrated mass of the star
           DOUBLE PRECISION, INTENT(INOUT):: mass
           !> Array storing the radial mass profile of the star
@@ -975,6 +976,8 @@ MODULE sph_particles
                                                mass_profile_idx
 
           DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
+          !> Surface of the matter object
+          TYPE(surface),                  INTENT(IN), OPTIONAL:: surf
         END SUBROUTINE integrate_density
       END INTERFACE
       INTERFACE

@@ -742,7 +742,7 @@ MODULE id_base
 
     MODULE SUBROUTINE integrate_baryon_mass_density &
       ( this, center, radius, central_density, dr, dth, dphi, &
-        mass, mass_profile, mass_profile_idx, radii )
+        mass, mass_profile, mass_profile_idx, radii, surf )
     !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
     !  compute the radial mass profile of a single star.
 
@@ -759,15 +759,14 @@ MODULE id_base
       !> Integrated mass of the star
       DOUBLE PRECISION,               INTENT(INOUT):: mass
       !> Array storing the radial mass profile of the star
-      !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: &
-      !                                 mass_profile
       DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT(OUT):: &
                                            mass_profile
       !& Array to store the indices for array mass_profile, sorted so that
-      !  mass_profile[mass_profile_idx] is in increasing order
-      !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
+      !  `mass_profile[mass_profile_idx]` is in increasing order
       INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
       DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
+      !> Surface of the matter object
+      TYPE(surface),                  INTENT(IN), OPTIONAL:: surf
 
     END SUBROUTINE integrate_baryon_mass_density
 
