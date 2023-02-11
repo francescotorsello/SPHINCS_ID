@@ -219,7 +219,7 @@ SUBMODULE (sph_particles) apm
 
     CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
 
-    LOGICAL, PARAMETER:: debug= .TRUE.
+    LOGICAL, PARAMETER:: debug= .FALSE.
     !LOGICAL:: few_ncand!, invertible_matrix
     LOGICAL:: push_away_ghosts
 
