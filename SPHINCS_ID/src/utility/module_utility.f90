@@ -55,7 +55,7 @@ MODULE utility
   DOUBLE PRECISION, PARAMETER:: five        = 5.D0
   DOUBLE PRECISION, PARAMETER:: seven       = 7.D0
   DOUBLE PRECISION, PARAMETER:: ten         = 10.D0
-  DOUBLE PRECISION, PARAMETER:: golden_ratio= 1.618033988749894D0
+  !DOUBLE PRECISION, PARAMETER:: golden_ratio= 1.618033988749894D0
   DOUBLE PRECISION, PARAMETER:: km2m        = ten*ten*ten
   DOUBLE PRECISION, PARAMETER:: m2cm        = ten*ten
   DOUBLE PRECISION, PARAMETER:: g2kg        = one/(ten*ten*ten)
@@ -66,6 +66,9 @@ MODULE utility
                                                (ten*ten*ten*ten*ten)
   !# Msun_geo = 1.47662503825040 km
   !  see https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
+
+  DOUBLE PRECISION, PARAMETER:: pa2barye        = ten
+  !! Conversion factor from Pascal to Barye
   DOUBLE PRECISION, PARAMETER:: km2Msun_geo     = one/MSun_geo
   DOUBLE PRECISION, PARAMETER:: lorene2hydrobase= (MSun_geo*km2m)**3/(MSun*g2kg)
   !# Conversion factor for the baryon mass density, from the units used in
@@ -273,7 +276,7 @@ MODULE utility
    !      PRINT *, "** ERROR! The array placer does not have ", &
    !               "enough components to specify all the desired ", &
    !               "particle distributions. Specify the ", &
-   !               "components in file lorene_bns_id_particles.par"
+   !               "components in file sphincs_id_particles.par"
    !      PRINT *
    !      STOP
    !    ENDIF

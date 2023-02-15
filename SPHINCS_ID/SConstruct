@@ -453,7 +453,7 @@ sources_base = module_id_base + module_bns_base + module_diffstar_base \
 ################################################################################
 # SOURCE FILES FROM SPHINCS_BSSN
 ################################################################################
-#'../../../SPHINCS_SP'
+#home_sphincs='../../../SPHINCS_SP'
 env['F90PATH'] = [
   '.',
   home_sphincs + '/BSSN',

@@ -38,10 +38,10 @@ MODULE wd_eos
   !********************************************
 
 
-  USE constants,  ONLY: third, pa2barye, c_light2
+  USE constants,  ONLY: third, c_light2
   USE units,      ONLY: m0c2_cu
   USE utility,    ONLY: zero, one, two, three, four, ten, lorene2hydrobase, &
-                        kg2g, m2cm, c_light2_SI
+                        kg2g, m2cm, c_light2_SI, pa2barye
 
   IMPLICIT NONE
 
@@ -53,7 +53,9 @@ MODULE wd_eos
   !! Mean molecular weight per electron
 
   DOUBLE PRECISION, PARAMETER:: a_wd_cgs= 6.02D+21*pa2barye
+  !! Constant with dimensions of a pressure in CGS units
   DOUBLE PRECISION, PARAMETER:: b_wd_cgs= mu_e*9.82D+8*kg2g/(m2cm**3)
+  !! Constant with dimensions of a density in CGS units
 
   DOUBLE PRECISION, PARAMETER:: a_wd= 6.02D+21/c_light2_SI*lorene2hydrobase
   !! Constant with dimensions of a pressure in code units
@@ -246,6 +248,8 @@ MODULE wd_eos
     DOUBLE PRECISION:: rho_left, rho_right, rho_mean, &
                        pr_left, pr_right, pr_mean, pr_cgs
 
+    LOGICAL, PARAMETER:: debug= .FALSE.
+
     IF(pr < pr_min)THEN
       rho_wd= zero
       RETURN
@@ -262,9 +266,11 @@ MODULE wd_eos
 
         rho_mean= FLOOR((rho_left + rho_right)/two)
         pr_mean = pr_wd(ten**rho_mean)
-        !PRINT *, FLOOR(ABS(LOG10(pr_right) - LOG10(pr_left)))
-        !PRINT *, LOG10(pr_right)
-        !PRINT *, LOG10(pr_left)
+
+        IF(debug) PRINT *, FLOOR(ABS(LOG10(pr_right) - LOG10(pr_left)))
+        IF(debug) PRINT *, LOG10(pr_right)
+        IF(debug) PRINT *, LOG10(pr_left)
+
         IF( FLOOR(ABS(LOG10(pr_right) - LOG10(pr_left))) &
             <= tolerance_magnitude )THEN
           EXIT
@@ -299,41 +305,38 @@ MODULE wd_eos
       ENDIF
 
     ENDDO
+
     ! Bisection in linear scale, to find the precise value
-    !rho_left = (ten**rho_left )/lorene2hydrobase*kg2g/(m2cm**3)
-    !rho_right= (ten**rho_right)/lorene2hydrobase*kg2g/(m2cm**3)
-    pr_cgs   = pr!/lorene2hydrobase*kg2g/(m2cm**3)*c_light2
+    pr_cgs   = pr
     rho_left = (ten**rho_left )
     rho_right= (ten**rho_right)
-    !PRINT *, "rho_left =", rho_left
-    !PRINT *, "rho_right=", rho_right
-    !PRINT *, "pr_cgs   =", pr_cgs
+    IF(debug) PRINT *, "rho_left =", rho_left
+    IF(debug) PRINT *, "rho_right=", rho_right
+    IF(debug) PRINT *, "pr_cgs   =", pr_cgs
     cnt= 0
     DO
 
-      !pr_left = pr_wd_cgs(rho_left)
-      !pr_right= pr_wd_cgs(rho_right)
       pr_left = pr_wd(rho_left)
       pr_right= pr_wd(rho_right)
       IF( pr_left <= pr_cgs .AND. pr_right > pr_cgs )THEN
 
         rho_mean= (rho_left + rho_right)/two
-        !pr_mean = pr_wd_cgs(rho_mean)
         pr_mean = pr_wd(rho_mean)
-        !PRINT *, "pr_left  =", pr_left
-        !PRINT *, "pr_right =", pr_right
-        !PRINT *, "rho_mean =", rho_mean
-        !PRINT *, "pr_mean  =", pr_mean
-        !STOP
-        !IF(cnt > 100) PRINT *, "ABS((pr_left - pr_right)/pr_right)=", &
-        !                       ABS((pr_left - pr_right)/pr_right)
-        !IF(cnt > 100) PRINT *, "pr_left  =", pr_left
-        !IF(cnt > 100) PRINT *, "pr_right =", pr_right
-        !IF(cnt > 100) PRINT *, "pr_mean  =", pr_mean
-        !IF(cnt > 100) PRINT *, "rho_left =", rho_left
-        !IF(cnt > 100) PRINT *, "rho_right=", rho_right
-        !IF(cnt > 100) PRINT *, "rho_mean =", rho_mean
-        !IF(cnt > 100) PRINT *, "pr_cgs   =", pr_cgs
+        IF(debug) PRINT *, "pr_left  =", pr_left
+        IF(debug) PRINT *, "pr_right =", pr_right
+        IF(debug) PRINT *, "rho_mean =", rho_mean
+        IF(debug) PRINT *, "pr_mean  =", pr_mean
+        IF(debug .AND. cnt > 100) &
+          PRINT *,"ABS((pr_left - pr_right)/pr_right)=", &
+          ABS((pr_left - pr_right)/pr_right)
+        IF(debug .AND. cnt > 100) PRINT *, "pr_left  =", pr_left
+        IF(debug .AND. cnt > 100) PRINT *, "pr_right =", pr_right
+        IF(debug .AND. cnt > 100) PRINT *, "pr_mean  =", pr_mean
+        IF(debug .AND. cnt > 100) PRINT *, "rho_left =", rho_left
+        IF(debug .AND. cnt > 100) PRINT *, "rho_right=", rho_right
+        IF(debug .AND. cnt > 100) PRINT *, "rho_mean =", rho_mean
+        IF(debug .AND. cnt > 100) PRINT *, "pr_cgs   =", pr_cgs
+        IF(debug) STOP
         IF( ABS((pr_left - pr_right)/pr_right) < tolerance_pr &
             .OR. &
             ABS((rho_left - rho_right)/rho_right) < tolerance_rho )THEN
@@ -375,10 +378,24 @@ MODULE wd_eos
 
     ENDDO
 
-    !rho_wd= rho_mean*lorene2hydrobase/kg2g*(m2cm**3)
+    IF( ABS(pr - pr_wd(rho_mean))/pr > tolerance_pr )THEN
+
+      PRINT *, "** ERROR! The value of rho_mean found by FUNCTION rho_wd ", &
+               "in MODULE wd_eos, does not give a value of pr_wd(rho_mean) ", &
+               "compatible with the input pressure pr, within the required ", &
+               "tolerance."
+      PRINT *
+      PRINT *, "rho_mean=", rho_mean
+      PRINT *, "pr=", pr
+      PRINT *, "pr_wd(rho_mean)=", pr_wd(rho_mean)
+      PRINT *, "ABS(pr - pr_wd(rho_mean))/pr", ABS(pr - pr_wd(rho_mean))/pr
+      PRINT *, "tolerance_pr=", tolerance_pr
+      PRINT *
+      STOP
+
+    ENDIF
+
     rho_wd= rho_mean
-    !PRINT *, "completed"
-    !PRINT *
 
   END FUNCTION rho_wd
 
