@@ -242,7 +242,6 @@ stringize_end(vers)
 
   !
   !-- Check that the specified subdirectories exist. If not, create them
-  !-- TODO: this compils with ifort, but not with gfortran
   !
 
 #ifdef __INTEL_COMPILER
@@ -356,18 +355,19 @@ stringize_end(vers)
     ENDDO construct_spacetime_id_loop
 
     !
-    !-- Compute the BSSN initial data, optionally export it to a binary file
+    !-- Compute the BSSN initial data, optionally print it to a binary file
     !-- readable by SPHINCS_BSSN, and optionally read the content of such binary
     !-- file and print it to a formatted file (the latter for debugging)
     !
-    compute_export_bssn_loop: DO itr3 = 1, n_id, 1
+    compute_print_bssn_loop: DO itr3 = 1, n_id, 1
       PRINT *, "===================================================" &
                // "==============="
       PRINT *, " Computing BSSN variables for "//systems(itr3), itr3
       PRINT *, "===================================================" &
                // "==============="
       PRINT *
-      WRITE( namefile_bssn_bin, "(A15)" ) "BSSN_vars.00000"!"BSSN_l", itr3, ".bin""(A6,I1,A4)"
+      WRITE( namefile_bssn_bin, "(A15)" ) "BSSN_vars.00000"
+      !"BSSN_l", itr3, ".bin""(A6,I1,A4)"
       namefile_bssn_bin= TRIM( spacetime_path ) // TRIM( namefile_bssn_bin )
 
       bssn_forms( itr3 )% export_form_xy= export_form_xy
@@ -381,7 +381,7 @@ stringize_end(vers)
       !  CALL bssn_forms( itr3 )% &
       !        read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
       !ENDIF
-    ENDDO compute_export_bssn_loop
+    ENDDO compute_print_bssn_loop
 
     !
     !-- Print the BSSN initial data to a formatted file
@@ -466,7 +466,7 @@ stringize_end(vers)
 
     IF( run_sph )THEN
 
-      compute_export_sph_loops: DO itr3= 1, n_id, 1
+      compute_print_sph_loops: DO itr3= 1, n_id, 1
         part_distribution_loop2: DO itr4= 1, max_n_parts, 1
           IF( placer( itr3, itr4 ) == test_int )THEN
             EXIT part_distribution_loop2
@@ -503,13 +503,13 @@ stringize_end(vers)
 
           ENDIF
         ENDDO part_distribution_loop2
-      ENDDO compute_export_sph_loops
+      ENDDO compute_print_sph_loops
 
       !
       !-- Print the particle initial data to a formatted file
       !
       IF( export_form )THEN
-        export_sph_loops: DO itr3= 1, n_id, 1
+        print_sph_loops: DO itr3= 1, n_id, 1
           DO itr4= 1, max_n_parts, 1
             IF( placer( itr3, itr4 ) == test_int )THEN
               EXIT
@@ -524,7 +524,7 @@ stringize_end(vers)
                    print_formatted_id_particles( namefile_parts )
             ENDIF
           ENDDO
-        ENDDO export_sph_loops
+        ENDDO print_sph_loops
       ENDIF
 
     ENDIF
@@ -535,7 +535,7 @@ stringize_end(vers)
       !
       !-- Compute the BSSN constraints
       !
-      compute_export_bssn_constraints_loop: DO itr3 = 1, n_id, 1
+      compute_print_bssn_constraints_loop: DO itr3 = 1, n_id, 1
 
         bssn_forms( itr3 )% cons_step= constraints_step
         bssn_forms( itr3 )% export_constraints= export_constraints
@@ -610,7 +610,7 @@ stringize_end(vers)
 
         ENDDO part_distribution_loop3
 
-      ENDDO compute_export_bssn_constraints_loop
+      ENDDO compute_print_bssn_constraints_loop
 
       !
       !-- Test recovery using the mesh-2-particle mapping

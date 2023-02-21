@@ -481,6 +481,12 @@ PROGRAM construct_newtonian_binary
   CALL deallocate_BSSN()
 
 
+  PRINT *, "** End of execution. ID files are:"
+  PRINT *, "   SPH ID: ", TRIM(output_directory)//TRIM(sph_output_file)
+  PRINT *, "   BSSN ID: ", filename1
+  PRINT *
+
+
 
   CONTAINS
 
@@ -679,16 +685,20 @@ PROGRAM construct_newtonian_binary
     CHARACTER(LEN=*), INTENT(INOUT):: filename1, filename2
 
     INTEGER, PARAMETER:: tov_np= 100001
+    DOUBLE PRECISION:: sigma!= ABS(x1) + ABS(x2)
+
     INTEGER :: i, j, k, l
 
-    DOUBLE PRECISION:: tmp, tmp2, tmp3, &
-                       g00, g01, g02, g03, g11, g12, g13, g22, g23, g33
+    DOUBLE PRECISION:: tmp, tmp2, tmp3, xtmp, ytmp, ztmp, &
+                       g00, g01, g02, g03, g11, g12, g13, g22, g23, g33, &
+                       gamma1, gamma2
 
     DOUBLE PRECISION, DIMENSION(4,4):: g(n_sym4x4)
 
     TYPE(grid_function_scalar):: lapse1, phi1, trK1, Theta_Z41, lapse_A_BSSN1, &
                                  lapse2, phi2, trK2, Theta_Z42, lapse_A_BSSN2, &
                                  dt_lapse1, dt_lapse2
+    TYPE(grid_function_scalar):: attenuating_function1, attenuating_function2
     TYPE(grid_function):: shift_u1, shift_B_BSSN_u1, Gamma_u1, &
                           g_phys3_ll1, g_BSSN3_ll1, A_BSSN3_ll1, &
                           shift_u2, shift_B_BSSN_u2, Gamma_u2, &
@@ -699,6 +709,8 @@ PROGRAM construct_newtonian_binary
 
     TYPE(lorentz_boost):: boost1, boost2
 
+    sigma= ABS(x1) + ABS(x2)
+
     CALL read_grid_params()
     CALL initialize_grid()
 
@@ -707,6 +719,14 @@ PROGRAM construct_newtonian_binary
     PRINT *
     PRINT *, " * Reading ID for first TOV star..."
     CALL read_tov_dump(filename1)
+
+    !
+    !-- Construct boosts and get their Lorentz factors
+    !
+    boost1= lorentz_boost(v1)
+    boost2= lorentz_boost(v2)
+    gamma1= boost1% get_lambda()
+    gamma2= boost2% get_lambda()
 
     CALL allocate_grid_function(lapse1,          'lapse1')
     CALL allocate_grid_function(shift_u1,        'shift_u1', 3)
@@ -725,37 +745,44 @@ PROGRAM construct_newtonian_binary
     CALL allocate_grid_function(shift_B_BSSN_u1, 'shift_B_BSSN_u1', 3)
     CALL allocate_grid_function(Theta_Z41,       'Theta_Z41')
 
-    boost1= lorentz_boost(v1)
+    CALL allocate_grid_function(attenuating_function1, 'att_func1')
 
     read_tov1_id_on_the_mesh: DO l= 1, nlevels, 1
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( levels, l, coords, lapse1, shift_u1, &
       !$OMP                     g_phys3_ll1, dt_lapse1, dt_shift_u1, &
-      !$OMP                     K_phys3_ll1, Tmunu_ll1, x1, boost1 ) &
-      !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, &
+      !$OMP                     K_phys3_ll1, Tmunu_ll1, x1, x2, boost1, &
+      !$OMP                     gamma2, sigma, attenuating_function1 ) &
+      !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, xtmp, ytmp, ztmp, &
       !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33,g )
       DO k= 1, levels(l)% ngrid_z, 1
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            CALL get_tov_metric(coords% levels(l)% var(i,j,k,1) - x1, &
-                                coords% levels(l)% var(i,j,k,2), &
-                                coords% levels(l)% var(i,j,k,3), &
+            xtmp= coords% levels(l)% var(i,j,k,1) - x1
+            ytmp= coords% levels(l)% var(i,j,k,2)
+            ztmp= coords% levels(l)% var(i,j,k,3)
+
+            CALL get_tov_metric(xtmp, ytmp, ztmp, &
                                 tmp, tmp2, tmp3, &
-                                g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
+                                g00,g01,g02,g03,g11,g12,g13,g22,g23,g33)
 
             g= boost1% &
                apply_as_congruence([g00,g01,g02,g03,g11,g12,g13,g22,g23,g33])
 
-            CALL compute_tpo_metric( g, &
-                                     lapse1% levels(l)% var(i,j,k), &
-                                     shift_u1% levels(l)% var(i,j,k,:), &
-                                     g_phys3_ll1% levels(l)% var(i,j,k,:) )
+            CALL compute_tpo_metric(g, &
+                                    lapse1% levels(l)% var(i,j,k), &
+                                    shift_u1% levels(l)% var(i,j,k,:), &
+                                    g_phys3_ll1% levels(l)% var(i,j,k,:))
 
             dt_lapse1%   levels(l)% var(i,j,k)  = zero
             dt_shift_u1% levels(l)% var(i,j,k,:)= zero
             K_phys3_ll1% levels(l)% var(i,j,k,:)= zero
             Tmunu_ll1%   levels(l)% var(i,j,k,:)= zero
+
+            attenuating_function1% levels(l)% var(i,j,k)= &
+              1.D0 - EXP(-(((gamma2*(xtmp - x2))**2 + ytmp**2 + ztmp**2)**2 &
+                          /sigma**4))
 
           ENDDO
         ENDDO
@@ -785,37 +812,44 @@ PROGRAM construct_newtonian_binary
     CALL allocate_grid_function(shift_B_BSSN_u2, 'shift_B_BSSN_u2', 3)
     CALL allocate_grid_function(Theta_Z42,       'Theta_Z42')
 
-    boost2= lorentz_boost(v2)
+    CALL allocate_grid_function(attenuating_function2, 'att_func2')
 
     read_tov2_id_on_the_mesh: DO l= 1, nlevels, 1
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( levels, l, coords, lapse2, shift_u2, &
       !$OMP                     g_phys3_ll2, dt_lapse2, dt_shift_u2, &
-      !$OMP                     K_phys3_ll2, Tmunu_ll2, x2, boost2 ) &
-      !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, &
+      !$OMP                     K_phys3_ll2, Tmunu_ll2, x1, x2, boost2, &
+      !$OMP                     gamma1, sigma, attenuating_function2 ) &
+      !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, xtmp, ytmp, ztmp, &
       !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33,g )
       DO k= 1, levels(l)% ngrid_z, 1
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            CALL get_tov_metric(coords% levels(l)% var(i,j,k,1) - x2, &
-                                coords% levels(l)% var(i,j,k,2), &
-                                coords% levels(l)% var(i,j,k,3), &
+            xtmp= coords% levels(l)% var(i,j,k,1) - x2
+            ytmp= coords% levels(l)% var(i,j,k,2)
+            ztmp= coords% levels(l)% var(i,j,k,3)
+
+            CALL get_tov_metric(xtmp, ytmp, ztmp, &
                                 tmp, tmp2, tmp3, &
-                                g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
+                                g00,g01,g02,g03,g11,g12,g13,g22,g23,g33)
 
             g= boost2% &
                apply_as_congruence([g00,g01,g02,g03,g11,g12,g13,g22,g23,g33])
 
-            CALL compute_tpo_metric( g, &
-                                     lapse2% levels(l)% var(i,j,k), &
-                                     shift_u2% levels(l)% var(i,j,k,:), &
-                                     g_phys3_ll2% levels(l)% var(i,j,k,:) )
+            CALL compute_tpo_metric(g, &
+                                    lapse2% levels(l)% var(i,j,k), &
+                                    shift_u2% levels(l)% var(i,j,k,:), &
+                                    g_phys3_ll2% levels(l)% var(i,j,k,:))
 
             dt_lapse2%   levels(l)% var(i,j,k)  = zero
             dt_shift_u2% levels(l)% var(i,j,k,:)= zero
             K_phys3_ll2% levels(l)% var(i,j,k,:)= zero
             Tmunu_ll2%   levels(l)% var(i,j,k,:)= zero
+
+            attenuating_function2% levels(l)% var(i,j,k)= &
+              1.D0 - EXP(-(((gamma1*(xtmp - x1))**2 + ytmp**2 + ztmp**2)**2 &
+                          /sigma**4))
 
           ENDDO
         ENDDO
@@ -840,7 +874,8 @@ PROGRAM construct_newtonian_binary
       !$OMP                     g_phys3_ll2, dt_lapse2, dt_shift_u2, &
       !$OMP                     K_phys3_ll2, Tmunu_ll2, g_phys3_ll, &
       !$OMP                     K_phys3_ll, dt_lapse, dt_shift_u, Tmunu_ll, &
-      !$OMP                     lapse, shift_u ) &
+      !$OMP                     lapse, shift_u, attenuating_function1, &
+      !$OMP                     attenuating_function2 ) &
       !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, &
       !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33 )
       DO k= 1, levels(l)% ngrid_z, 1
@@ -848,30 +883,42 @@ PROGRAM construct_newtonian_binary
           DO i= 1, levels(l)% ngrid_x, 1
 
             g_phys3_ll% levels(l)% var(i,j,k,1)= one + &
-              (g_phys3_ll1% levels(l)% var(i,j,k,1) - one) + &
-              (g_phys3_ll2% levels(l)% var(i,j,k,1) - one)
+              attenuating_function1% levels(l)% var(i,j,k) &
+              *(g_phys3_ll1% levels(l)% var(i,j,k,1) - one) + &
+              attenuating_function2% levels(l)% var(i,j,k) &
+              *(g_phys3_ll2% levels(l)% var(i,j,k,1) - one)
 
             g_phys3_ll% levels(l)% var(i,j,k,2)= &
-              g_phys3_ll1% levels(l)% var(i,j,k,2) + &
-              g_phys3_ll2% levels(l)% var(i,j,k,2)
+             attenuating_function1% levels(l)% var(i,j,k) &
+             *g_phys3_ll1% levels(l)% var(i,j,k,2) + &
+             attenuating_function2% levels(l)% var(i,j,k) &
+             *g_phys3_ll2% levels(l)% var(i,j,k,2)
 
             g_phys3_ll% levels(l)% var(i,j,k,3)= &
-              g_phys3_ll1% levels(l)% var(i,j,k,3) + &
-              g_phys3_ll2% levels(l)% var(i,j,k,3)
+             attenuating_function1% levels(l)% var(i,j,k) &
+             *g_phys3_ll1% levels(l)% var(i,j,k,3) + &
+             attenuating_function2% levels(l)% var(i,j,k) &
+             *g_phys3_ll2% levels(l)% var(i,j,k,3)
 
             g_phys3_ll% levels(l)% var(i,j,k,4)= one + &
-              (g_phys3_ll1% levels(l)% var(i,j,k,4) - one) + &
-              (g_phys3_ll2% levels(l)% var(i,j,k,4) - one)
+             attenuating_function1% levels(l)% var(i,j,k) &
+             *(g_phys3_ll1% levels(l)% var(i,j,k,4) - one) + &
+             attenuating_function2% levels(l)% var(i,j,k) &
+             *(g_phys3_ll2% levels(l)% var(i,j,k,4) - one)
 
             g_phys3_ll% levels(l)% var(i,j,k,5)= &
-              g_phys3_ll1% levels(l)% var(i,j,k,5) + &
-              g_phys3_ll2% levels(l)% var(i,j,k,5)
+             attenuating_function1% levels(l)% var(i,j,k) &
+             *g_phys3_ll1% levels(l)% var(i,j,k,5) + &
+             attenuating_function2% levels(l)% var(i,j,k) &
+             *g_phys3_ll2% levels(l)% var(i,j,k,5)
 
             g_phys3_ll% levels(l)% var(i,j,k,6)= one + &
-              (g_phys3_ll1% levels(l)% var(i,j,k,6) - one) + &
-              (g_phys3_ll2% levels(l)% var(i,j,k,6) - one)
+             attenuating_function1% levels(l)% var(i,j,k) &
+             *(g_phys3_ll1% levels(l)% var(i,j,k,6) - one) + &
+             attenuating_function2% levels(l)% var(i,j,k) &
+             *(g_phys3_ll2% levels(l)% var(i,j,k,6) - one)
 
-            lapse%      levels(l)% var(i,j,k)  = - one + &
+            lapse%     levels(l)% var(i,j,k)= - one + &
               (lapse1% levels(l)% var(i,j,k) + one) + &
               (lapse2% levels(l)% var(i,j,k) + one)
 
@@ -929,6 +976,12 @@ PROGRAM construct_newtonian_binary
     CALL deallocate_grid_function(lapse_A_BSSN2,   'lapse_A_BSSN2')
     CALL deallocate_grid_function(shift_B_BSSN_u2, 'shift_B_BSSN_u2')
     CALL deallocate_grid_function(Theta_Z42,       'Theta_Z42')
+
+    !
+    !-- Deallocate attenuating functions
+    !
+    CALL deallocate_grid_function(attenuating_function1, 'att_func1')
+    CALL deallocate_grid_function(attenuating_function2, 'att_func2')
 
   END SUBROUTINE read_boost_superimpose_tov_adm_id
 
