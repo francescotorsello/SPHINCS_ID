@@ -450,7 +450,7 @@ PROGRAM construct_newtonian_binary
 
   filename1= TRIM(common_path)//TRIM(filename_tov1)
   filename2= TRIM(common_path)//TRIM(filename_tov2)
-  CALL read_boost_superimpose_tov_adm_id(filename1,filename2, x1, x2)
+  CALL read_boost_superimpose_tov_adm_id(filename1,filename2, x1, x2, v1, v2)
 
   !
   !-- Compute BSSN ID
@@ -521,6 +521,7 @@ PROGRAM construct_newtonian_binary
                               Ye,     &  ! Electron fraction
                               allocate_sph_memory, deallocate_sph_memory
     USE input_output,   ONLY: set_units, read_sphincs_dump
+    USE utility,        ONLY: scan_1d_array_for_nans
 
     IMPLICIT NONE
 
@@ -652,10 +653,36 @@ PROGRAM construct_newtonian_binary
     DEALLOCATE(Ye2)
     DEALLOCATE(Theta2)
 
+    !
+    !-- Ensure that the ID does not contain NaNs or infinities
+    !
+    PRINT *, "** Ensuring that the SPH ID does not have any NaNs or", &
+             "infinities..."
+
+    CALL scan_1d_array_for_nans( npart, pos_u(1,:), "pos_u(:,1)" )
+    CALL scan_1d_array_for_nans( npart, pos_u(2,:), "pos_u(:,2)" )
+    CALL scan_1d_array_for_nans( npart, pos_u(3,:), "pos_u(:,3)" )
+
+    CALL scan_1d_array_for_nans( npart, nlrf, "nlrf" )
+    CALL scan_1d_array_for_nans( npart, nu, "nu" )
+    CALL scan_1d_array_for_nans( npart, u, "u" )
+    CALL scan_1d_array_for_nans( npart, h, "h" )
+    CALL scan_1d_array_for_nans( npart, Pr, "Pr" )
+    CALL scan_1d_array_for_nans( npart, Ye, "Ye" )
+    CALL scan_1d_array_for_nans( npart, Theta, "Theta" )
+
+    CALL scan_1d_array_for_nans( npart, vel_u(1,:), "vel_u(:,1)" )
+    CALL scan_1d_array_for_nans( npart, vel_u(2,:), "vel_u(:,2)" )
+    CALL scan_1d_array_for_nans( npart, vel_u(3,:), "vel_u(:,3)" )
+
+    PRINT *, " * the SPH ID does not have NaNs or infinities."
+    PRINT *
+
   END SUBROUTINE read_tov_sph_id
 
 
-  SUBROUTINE read_boost_superimpose_tov_adm_id(filename1, filename2, x1, x2)
+  SUBROUTINE read_boost_superimpose_tov_adm_id &
+    (filename1, filename2, x1, x2, v1, v2)
 
     !***********************************************************
     !
@@ -667,7 +694,8 @@ PROGRAM construct_newtonian_binary
     !
     !***********************************************************
 
-    USE tensor,          ONLY: n_sym4x4
+    USE tensor,          ONLY: jx, jy, jz, jxx, jxy, jxz, &
+                               jyy, jyz, jzz, n_sym3x3, n_sym4x4
     USE mesh_refinement, ONLY: nlevels, levels, initialize_grid, &
                                grid_function_scalar, grid_function, &
                                read_grid_params, coords, &
@@ -677,11 +705,13 @@ PROGRAM construct_newtonian_binary
     USE Tmunu_refine,    ONLY: Tmunu_ll, allocate_Tmunu, deallocate_Tmunu
     USE TOV_refine,      ONLY: read_TOV_dump, allocate_tov, deallocate_tov, &
                                get_tov_metric
-    USE utility,         ONLY: compute_tpo_metric
+    USE utility,         ONLY: zero, compute_tpo_metric, determinant_sym3x3, &
+                               scan_3d_array_for_nans
 
     IMPLICIT NONE
 
     DOUBLE PRECISION, INTENT(IN):: x1, x2
+    DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: v1, v2
     CHARACTER(LEN=*), INTENT(INOUT):: filename1, filename2
 
     INTEGER, PARAMETER:: tov_np= 100001
@@ -691,7 +721,7 @@ PROGRAM construct_newtonian_binary
 
     DOUBLE PRECISION:: tmp, tmp2, tmp3, xtmp, ytmp, ztmp, &
                        g00, g01, g02, g03, g11, g12, g13, g22, g23, g33, &
-                       gamma1, gamma2
+                       gamma1, gamma2, detg
 
     DOUBLE PRECISION, DIMENSION(4,4):: g(n_sym4x4)
 
@@ -982,6 +1012,134 @@ PROGRAM construct_newtonian_binary
     !
     CALL deallocate_grid_function(attenuating_function1, 'att_func1')
     CALL deallocate_grid_function(attenuating_function2, 'att_func2')
+
+    !
+    !-- Ensure that the standard 3+1 ID does not contain NaNs,
+    !-- and that the determinant of the spatial metric is
+    !-- strictly positive
+    !
+    PRINT *, "** Ensuring that the ID does not have any NaNs or infinities, ", &
+             "and that the determinant of the spatial metric is strictly ", &
+             "positive..."
+
+    DO l= 1, nlevels, 1
+
+      ASSOCIATE( nx     => levels(l)% ngrid_x, &
+                 ny     => levels(l)% ngrid_y, &
+                 nz     => levels(l)% ngrid_z, &
+                 lapse  => lapse%      levels(l)% var, &
+                 shift  => shift_u%    levels(l)% var, &
+                 g      => g_phys3_ll% levels(l)% var, &
+                 eK     => K_phys3_ll% levels(l)% var )
+
+      CALL scan_3d_array_for_nans( nx, ny, nz, lapse, "lapse" )
+
+      CALL scan_3d_array_for_nans( nx, ny, nz, shift(:,:,:,jx), &
+                                   "shift(:,:,:,jx)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, shift(:,:,:,jy), &
+                                   "shift(:,:,:,jy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, shift(:,:,:,jz), &
+                                   "shift(:,:,:,jz)" )
+
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jxx), &
+                                   "g_phys3_ll(:,:,:,jxx)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jxy), &
+                                   "g_phys3_ll(:,:,:,jxy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jxz), &
+                                   "g_phys3_ll(:,:,:,jxz)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jyy), &
+                                   "g_phys3_ll(:,:,:,jyy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jyz), &
+                                   "g_phys3_ll(:,:,:,jyz)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, g(:,:,:,jzz), &
+                                   "g_phys3_ll(:,:,:,jzz)" )
+
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jxx), &
+                                   "K_phys3_ll(:,:,:,jxx)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jxy), &
+                                   "K_phys3_ll(:,:,:,jxy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jxz), &
+                                   "K_phys3_ll(:,:,:,jxz)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jyy), &
+                                   "K_phys3_ll(:,:,:,jyy)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jyz), &
+                                   "K_phys3_ll(:,:,:,jyz)" )
+      CALL scan_3d_array_for_nans( nx, ny, nz, eK(:,:,:,jzz), &
+                                   "K_phys3_ll(:,:,:,jzz)" )
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( l, levels, g_phys3_ll, coords ) &
+      !$OMP             PRIVATE( i, j, k, detg )
+      DO k= 1, levels(l)% ngrid_z, 1
+        DO j= 1, levels(l)% ngrid_y, 1
+          DO i= 1, levels(l)% ngrid_x, 1
+
+            CALL determinant_sym3x3(g_phys3_ll% levels(l)% var(i,j,k,:), detg)
+
+            IF( detg < 1.D-10 )THEN
+
+              PRINT *, "** ERROR! The " &
+                       // "determinant of the spatial metric is " &
+                       // "effectively 0 at the grid point " &
+                       // "(i,j,k)= (", i, ",", j,",",k, "), " &
+                       // "(x,y,z)= ", "(", &
+                       coords% levels(l)% var(i, j, k, 1), ",", &
+                       coords% levels(l)% var(i, j, k, 2), ",", &
+                       coords% levels(l)% var(i, j, k, 3), ")."
+              PRINT *
+              PRINT *, "   nx, ny, nz =", &
+                levels(l)% ngrid_x, levels(l)% ngrid_y, levels(l)% ngrid_z
+              PRINT *
+              PRINT *, "   detg=", detg
+              PRINT *
+              PRINT *, "   g_xx=", g_phys3_ll% levels(l)% var(i,j,k,jxx)
+              PRINT *, "   g_xy=", g_phys3_ll% levels(l)% var(i,j,k,jxy)
+              PRINT *, "   g_xz=", g_phys3_ll% levels(l)% var(i,j,k,jxz)
+              PRINT *, "   g_yy=", g_phys3_ll% levels(l)% var(i,j,k,jyy)
+              PRINT *, "   g_yz=", g_phys3_ll% levels(l)% var(i,j,k,jyz)
+              PRINT *, "   g_zz=", g_phys3_ll% levels(l)% var(i,j,k,jzz)
+              PRINT *
+              STOP
+
+            ELSEIF( detg < zero )THEN
+
+              PRINT *, "** ERROR! The " &
+                       // "determinant of the spatial metric is " &
+                       // "negative at the grid point " &
+                       // "(i,j,k)= (", i, ",", j,",",k, "), " &
+                       // "(x,y,z)= ", "(", &
+                       coords% levels(l)% var(i, j, k, 1), ",", &
+                       coords% levels(l)% var(i, j, k, 2), ",", &
+                       coords% levels(l)% var(i, j, k, 3), ")."
+              PRINT *
+              PRINT *, "   nx, ny, nz =", &
+                levels(l)% ngrid_x, levels(l)% ngrid_y, levels(l)% ngrid_z
+              PRINT *
+              PRINT *, "   detg=", detg
+              PRINT *
+              PRINT *, "   g_xx=", g_phys3_ll% levels(l)% var(i,j,k,jxx)
+              PRINT *, "   g_xy=", g_phys3_ll% levels(l)% var(i,j,k,jxy)
+              PRINT *, "   g_xz=", g_phys3_ll% levels(l)% var(i,j,k,jxz)
+              PRINT *, "   g_yy=", g_phys3_ll% levels(l)% var(i,j,k,jyy)
+              PRINT *, "   g_yz=", g_phys3_ll% levels(l)% var(i,j,k,jyz)
+              PRINT *, "   g_zz=", g_phys3_ll% levels(l)% var(i,j,k,jzz)
+              PRINT *
+              STOP
+
+            ENDIF
+
+          ENDDO
+        ENDDO
+      ENDDO
+      !$OMP END PARALLEL DO
+
+      END ASSOCIATE
+
+    ENDDO
+
+    PRINT *, " * the standard 3+1 ID does not contain NaNs or infinites, ", &
+             "and the determinant of the spatial metric is strictly positive."
+    PRINT *
 
   END SUBROUTINE read_boost_superimpose_tov_adm_id
 

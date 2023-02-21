@@ -70,7 +70,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
                                 coords, rad_coord
     USE tensor,           ONLY: jx, jy, jz, jxx, jxy, jxz, &
                                 jyy, jyz, jzz, n_sym3x3
-    USE utility,          ONLY: determinant_sym3x3, one, flag$tpo, &
+    USE utility,          ONLY: zero, determinant_sym3x3, one, flag$tpo, &
                                 scan_3d_array_for_nans
 
 
@@ -277,18 +277,18 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
         DO j= 1, ny, 1
           DO i= 1, nx, 1
 
-            CALL determinant_sym3x3( g(i,j,k,:), detg )
+            CALL determinant_sym3x3(g(i,j,k,:), detg)
 
-            IF( detg < 1D-10 )THEN
+            IF( detg < 1.D-10 )THEN
 
-              PRINT *, "** ERROR! construct_formul_tpo_bns: The " &
+              PRINT *, "** ERROR in setup_standard_tpo_variables: The " &
                        // "determinant of the spatial metric is " &
                        // "effectively 0 at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
-                       coords( i, j, k, 1 ), ",", &
-                       coords( i, j, k, 2 ), ",", &
-                       coords( i, j, k, 3 ), ")."
+                       coords(i, j, k, 1), ",", &
+                       coords(i, j, k, 2), ",", &
+                       coords(i, j, k, 3), ")."
               PRINT *
               PRINT *, "   nx, ny, nz =", nx, ny, nz
               PRINT *
@@ -303,19 +303,16 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
               PRINT *
               STOP
 
-            ELSEIF( detg < 0 )THEN
+            ELSEIF( detg < zero )THEN
 
-              PRINT *, "** ERROR! construct_formul_tpo_bns: The " &
+              PRINT *, "** ERROR in setup_standard_tpo_variables: The " &
                        // "determinant of the spatial metric is " &
                        // "negative at the grid point " &
                        // "(i,j,k)= (", i, ",", j,",",k, "), " &
                        // "(x,y,z)= ", "(", &
-                       coords( i, j, k, 1 ), ",", &
-                       coords( i, j, k, 2 ), ",", &
-                       coords( i, j, k, 3 ), ")."
-              PRINT *
-              PRINT *, tpof% get_ngrid_x(l), tpof% get_ngrid_y(l), &
-                       tpof% get_ngrid_z(l)
+                       coords(i, j, k, 1), ",", &
+                       coords(i, j, k, 2), ",", &
+                       coords(i, j, k, 3), ")."
               PRINT *
               PRINT *, "   nx, ny, nz =", nx, ny, nz
               PRINT *
