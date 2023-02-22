@@ -49,9 +49,11 @@ PROGRAM construct_newtonian_binary
                                        ! particle
                             Theta,  &  ! Generalized Lorentz factor
                             deallocate_sph_memory
-  USE input_output,   ONLY: write_sphincs_dump
+  USE input_output,   ONLY: write_sphincs_dump, dcount
   USE units,          ONLY: m0c2_cu
-  USE tensor,         ONLY: n_sym3x3
+  USE tensor,         ONLY: n_sym3x3, jx, jy, jz, &
+                            jxx, jxy, jxz, jyy, jyz, jzz, &
+                            itt, itx, ity, itz, ixx, ixy, ixz, iyy, iyz, izz
 
   !
   !-- BSSN MODULES
@@ -62,8 +64,14 @@ PROGRAM construct_newtonian_binary
   USE Tmunu_refine,               ONLY: deallocate_Tmunu
   USE GravityAcceleration_refine, ONLY: allocate_GravityAcceleration, &
                                         deallocate_GravityAcceleration
+  USE mesh_refinement,            ONLY: output_1d, output_2d
   USE McLachlan_refine,           ONLY: allocate_Ztmp, deallocate_Ztmp, &
-                                        ADM_to_BSSN
+                                        ADM_to_BSSN, BSSN_Constraints
+
+  USE ADM_refine,   ONLY: lapse, shift_u
+  USE BSSN_refine,  ONLY: Gamma_u, phi, trK, A_BSSN3_ll, &
+                          g_BSSN3_ll, write_BSSN_constraints, Ham, M_l
+  USE Tmunu_refine, ONLY: Tmunu_ll
 
   !
   !-- SPHINCS_ID MODULES
@@ -450,7 +458,8 @@ PROGRAM construct_newtonian_binary
 
   filename1= TRIM(common_path)//TRIM(filename_tov1)
   filename2= TRIM(common_path)//TRIM(filename_tov2)
-  CALL read_boost_superimpose_tov_adm_id(filename1,filename2, x1, x2, v1, v2)
+  CALL read_boost_superimpose_tov_adm_id &
+    (filename1,filename2, x1, x2, v1, v2, radius1, radius2)
 
   !
   !-- Compute BSSN ID
@@ -473,6 +482,29 @@ PROGRAM construct_newtonian_binary
   CALL write_BSSN_dump(filename1)
   PRINT *, "...done."
   PRINT *
+
+  !
+  !-- Print the BSSN constraints
+  !
+  CALL BSSN_Constraints
+  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=itt, output_ghosts=.TRUE. )
+  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=itx, output_ghosts=.TRUE. )
+  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=ixx, output_ghosts=.TRUE. )
+  CALL output_2d ( lapse, 3, dcount, output_ghosts=.TRUE. )
+  CALL output_2d ( shift_u, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
+  CALL output_2d ( Gamma_u, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
+  CALL output_2d ( phi, 3, dcount, output_ghosts=.TRUE. )
+  CALL output_2d ( trK, 3, dcount, output_ghosts=.TRUE. )
+  CALL output_2d ( A_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
+  CALL output_2d ( g_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
+  CALL output_2d ( Ham, 3, dcount, output_ghosts=.TRUE. )
+  CALL output_2d ( M_l, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
+  CALL output_2d ( M_l, 3, dcount, ivar=jy, output_ghosts=.TRUE. )
+  CALL output_2d ( M_l, 3, dcount, ivar=jz, output_ghosts=.TRUE. )
+  CALL output_1d ( Ham, 1, dcount, output_ghosts=.TRUE. )
+  CALL output_1d ( M_l, 1, dcount, ivar=jx, output_ghosts=.TRUE. )
+  CALL output_1d ( M_l, 1, dcount, ivar=jy, output_ghosts=.TRUE. )
+  CALL output_1d ( M_l, 1, dcount, ivar=jz, output_ghosts=.TRUE. )
 
   !
   !-- Deallocate ADM and BSSN memory
@@ -682,7 +714,7 @@ PROGRAM construct_newtonian_binary
 
 
   SUBROUTINE read_boost_superimpose_tov_adm_id &
-    (filename1, filename2, x1, x2, v1, v2)
+    (filename1, filename2, x1, x2, v1, v2, radius1, radius2)
 
     !***********************************************************
     !
@@ -710,12 +742,12 @@ PROGRAM construct_newtonian_binary
 
     IMPLICIT NONE
 
-    DOUBLE PRECISION, INTENT(IN):: x1, x2
+    DOUBLE PRECISION, INTENT(IN):: x1, x2, radius1, radius2
     DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: v1, v2
     CHARACTER(LEN=*), INTENT(INOUT):: filename1, filename2
 
     INTEGER, PARAMETER:: tov_np= 100001
-    DOUBLE PRECISION:: sigma!= ABS(x1) + ABS(x2)
+    DOUBLE PRECISION:: distance, sigma1, sigma2!= ABS(x1) + ABS(x2)
 
     INTEGER :: i, j, k, l
 
@@ -739,7 +771,8 @@ PROGRAM construct_newtonian_binary
 
     TYPE(lorentz_boost):: boost1, boost2
 
-    sigma= ABS(x1) + ABS(x2)
+    distance= ABS(x1) + ABS(x2)
+    !sigma= ABS(x1) + ABS(x2)! - radius1 - radius2
 
     CALL read_grid_params()
     CALL initialize_grid()
@@ -757,6 +790,9 @@ PROGRAM construct_newtonian_binary
     boost2= lorentz_boost(v2)
     gamma1= boost1% get_lambda()
     gamma2= boost2% get_lambda()
+
+    sigma1= ( gamma2*radius2 + gamma2*(distance-radius1) )/2.D0
+    sigma2= ( gamma1*radius1 + gamma1*(distance-radius2) )/2.D0
 
     CALL allocate_grid_function(lapse1,          'lapse1')
     CALL allocate_grid_function(shift_u1,        'shift_u1', 3)
@@ -782,7 +818,7 @@ PROGRAM construct_newtonian_binary
       !$OMP             SHARED( levels, l, coords, lapse1, shift_u1, &
       !$OMP                     g_phys3_ll1, dt_lapse1, dt_shift_u1, &
       !$OMP                     K_phys3_ll1, Tmunu_ll1, x1, x2, boost1, &
-      !$OMP                     gamma2, sigma, attenuating_function1 ) &
+      !$OMP                     gamma2, sigma1, attenuating_function1 ) &
       !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, xtmp, ytmp, ztmp, &
       !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33,g )
       DO k= 1, levels(l)% ngrid_z, 1
@@ -812,7 +848,7 @@ PROGRAM construct_newtonian_binary
 
             attenuating_function1% levels(l)% var(i,j,k)= &
               1.D0 - EXP(-(((gamma2*(xtmp - x2))**2 + ytmp**2 + ztmp**2)**2 &
-                          /sigma**4))
+                          /sigma1**4))
 
           ENDDO
         ENDDO
@@ -849,7 +885,7 @@ PROGRAM construct_newtonian_binary
       !$OMP             SHARED( levels, l, coords, lapse2, shift_u2, &
       !$OMP                     g_phys3_ll2, dt_lapse2, dt_shift_u2, &
       !$OMP                     K_phys3_ll2, Tmunu_ll2, x1, x2, boost2, &
-      !$OMP                     gamma1, sigma, attenuating_function2 ) &
+      !$OMP                     gamma1, sigma2, attenuating_function2 ) &
       !$OMP             PRIVATE( i, j, k, tmp, tmp2, tmp3, xtmp, ytmp, ztmp, &
       !$OMP                      g00,g01,g02,g03,g11,g12,g13,g22,g23,g33,g )
       DO k= 1, levels(l)% ngrid_z, 1
@@ -879,7 +915,7 @@ PROGRAM construct_newtonian_binary
 
             attenuating_function2% levels(l)% var(i,j,k)= &
               1.D0 - EXP(-(((gamma1*(xtmp - x1))**2 + ytmp**2 + ztmp**2)**2 &
-                          /sigma**4))
+                          /sigma2**4))
 
           ENDDO
         ENDDO
