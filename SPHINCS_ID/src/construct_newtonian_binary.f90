@@ -486,25 +486,25 @@ PROGRAM construct_newtonian_binary
   !
   !-- Print the BSSN constraints
   !
-  CALL BSSN_Constraints
-  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=itt, output_ghosts=.TRUE. )
-  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=itx, output_ghosts=.TRUE. )
-  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=ixx, output_ghosts=.TRUE. )
-  CALL output_2d ( lapse, 3, dcount, output_ghosts=.TRUE. )
-  CALL output_2d ( shift_u, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
-  CALL output_2d ( Gamma_u, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
-  CALL output_2d ( phi, 3, dcount, output_ghosts=.TRUE. )
-  CALL output_2d ( trK, 3, dcount, output_ghosts=.TRUE. )
-  CALL output_2d ( A_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
-  CALL output_2d ( g_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
-  CALL output_2d ( Ham, 3, dcount, output_ghosts=.TRUE. )
-  CALL output_2d ( M_l, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
-  CALL output_2d ( M_l, 3, dcount, ivar=jy, output_ghosts=.TRUE. )
-  CALL output_2d ( M_l, 3, dcount, ivar=jz, output_ghosts=.TRUE. )
-  CALL output_1d ( Ham, 1, dcount, output_ghosts=.TRUE. )
-  CALL output_1d ( M_l, 1, dcount, ivar=jx, output_ghosts=.TRUE. )
-  CALL output_1d ( M_l, 1, dcount, ivar=jy, output_ghosts=.TRUE. )
-  CALL output_1d ( M_l, 1, dcount, ivar=jz, output_ghosts=.TRUE. )
+!  CALL BSSN_Constraints
+!  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=itt, output_ghosts=.TRUE. )
+!  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=itx, output_ghosts=.TRUE. )
+!  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=ixx, output_ghosts=.TRUE. )
+!  CALL output_2d ( lapse, 3, dcount, output_ghosts=.TRUE. )
+!  CALL output_2d ( shift_u, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
+!  CALL output_2d ( Gamma_u, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
+!  CALL output_2d ( phi, 3, dcount, output_ghosts=.TRUE. )
+!  CALL output_2d ( trK, 3, dcount, output_ghosts=.TRUE. )
+!  CALL output_2d ( A_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
+!  CALL output_2d ( g_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
+!  CALL output_2d ( Ham, 3, dcount, output_ghosts=.TRUE. )
+!  CALL output_2d ( M_l, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
+!  CALL output_2d ( M_l, 3, dcount, ivar=jy, output_ghosts=.TRUE. )
+!  CALL output_2d ( M_l, 3, dcount, ivar=jz, output_ghosts=.TRUE. )
+!  CALL output_1d ( Ham, 1, dcount, output_ghosts=.TRUE. )
+!  CALL output_1d ( M_l, 1, dcount, ivar=jx, output_ghosts=.TRUE. )
+!  CALL output_1d ( M_l, 1, dcount, ivar=jy, output_ghosts=.TRUE. )
+!  CALL output_1d ( M_l, 1, dcount, ivar=jz, output_ghosts=.TRUE. )
 
   !
   !-- Deallocate ADM and BSSN memory
@@ -738,7 +738,7 @@ PROGRAM construct_newtonian_binary
     USE TOV_refine,      ONLY: read_TOV_dump, allocate_tov, deallocate_tov, &
                                get_tov_metric
     USE utility,         ONLY: zero, compute_tpo_metric, determinant_sym3x3, &
-                               scan_3d_array_for_nans
+                               scan_3d_array_for_nans, one, two, four
 
     IMPLICIT NONE
 
@@ -746,7 +746,9 @@ PROGRAM construct_newtonian_binary
     DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: v1, v2
     CHARACTER(LEN=*), INTENT(INOUT):: filename1, filename2
 
-    INTEGER, PARAMETER:: tov_np= 100001
+    INTEGER,          PARAMETER:: tov_np= 100001
+    DOUBLE PRECISION, PARAMETER:: eps   = 1.75D-1
+
     DOUBLE PRECISION:: distance, sigma1, sigma2!= ABS(x1) + ABS(x2)
 
     INTEGER :: i, j, k, l
@@ -791,8 +793,21 @@ PROGRAM construct_newtonian_binary
     gamma1= boost1% get_lambda()
     gamma2= boost2% get_lambda()
 
-    sigma1= ( gamma2*radius2 + gamma2*(distance-radius1) )/2.D0
-    sigma2= ( gamma1*radius1 + gamma1*(distance-radius2) )/2.D0
+    !sigma1= radius2
+    !sigma2= radius1
+    sigma1= gamma2*radius2
+    sigma2= gamma1*radius1
+    !sigma1= ( gamma2*radius2 + gamma2*(distance-radius1) )/two
+    !sigma2= ( gamma1*radius1 + gamma1*(distance-radius2) )/two
+    !sigma1= gamma2*radius2/((LOG(one/(one - eps)))**(one/four))
+    !sigma2= gamma1*radius1/((LOG(one/(one - eps)))**(one/four))
+
+    PRINT *
+    PRINT *, "gamma1=", gamma1
+    PRINT *, "gamma2=", gamma2
+    PRINT *, "sigma1=", sigma1
+    PRINT *, "sigma2=", sigma2
+    PRINT *
 
     CALL allocate_grid_function(lapse1,          'lapse1')
     CALL allocate_grid_function(shift_u1,        'shift_u1', 3)
@@ -825,11 +840,11 @@ PROGRAM construct_newtonian_binary
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            xtmp= coords% levels(l)% var(i,j,k,1) - x1
+            xtmp= coords% levels(l)% var(i,j,k,1)! - x1
             ytmp= coords% levels(l)% var(i,j,k,2)
             ztmp= coords% levels(l)% var(i,j,k,3)
 
-            CALL get_tov_metric(xtmp, ytmp, ztmp, &
+            CALL get_tov_metric(xtmp - x1, ytmp, ztmp, &
                                 tmp, tmp2, tmp3, &
                                 g00,g01,g02,g03,g11,g12,g13,g22,g23,g33)
 
@@ -846,9 +861,10 @@ PROGRAM construct_newtonian_binary
             K_phys3_ll1% levels(l)% var(i,j,k,:)= zero
             Tmunu_ll1%   levels(l)% var(i,j,k,:)= zero
 
+            tmp= (gamma2*(xtmp - x2))**2 + ytmp**2 + ztmp**2
+
             attenuating_function1% levels(l)% var(i,j,k)= &
-              1.D0 - EXP(-(((gamma2*(xtmp - x2))**2 + ytmp**2 + ztmp**2)**2 &
-                          /sigma1**4))
+              one - EXP( -(tmp**2)/(sigma1**4) )
 
           ENDDO
         ENDDO
@@ -892,11 +908,11 @@ PROGRAM construct_newtonian_binary
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            xtmp= coords% levels(l)% var(i,j,k,1) - x2
+            xtmp= coords% levels(l)% var(i,j,k,1)! - x2
             ytmp= coords% levels(l)% var(i,j,k,2)
             ztmp= coords% levels(l)% var(i,j,k,3)
 
-            CALL get_tov_metric(xtmp, ytmp, ztmp, &
+            CALL get_tov_metric(xtmp -x2, ytmp, ztmp, &
                                 tmp, tmp2, tmp3, &
                                 g00,g01,g02,g03,g11,g12,g13,g22,g23,g33)
 
@@ -913,9 +929,10 @@ PROGRAM construct_newtonian_binary
             K_phys3_ll2% levels(l)% var(i,j,k,:)= zero
             Tmunu_ll2%   levels(l)% var(i,j,k,:)= zero
 
+            tmp= (gamma1*(xtmp - x1))**2 + ytmp**2 + ztmp**2
+
             attenuating_function2% levels(l)% var(i,j,k)= &
-              1.D0 - EXP(-(((gamma1*(xtmp - x1))**2 + ytmp**2 + ztmp**2)**2 &
-                          /sigma2**4))
+              one - EXP( -(tmp**2)/(sigma2**4) )
 
           ENDDO
         ENDDO
