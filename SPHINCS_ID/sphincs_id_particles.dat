@@ -61,7 +61,7 @@ reflect_particles_x= .TRUE.
 !----------------------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers;
 ! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 2000000
+npart_des= 500000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
@@ -136,7 +136,7 @@ randomize_r=    .FALSE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
@@ -200,9 +200,9 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
 !--------------------------------------------------------------------------!
 ! Parameters needed to read the electron fraction when using a CompOSE EoS !
 ! CHECK THAT THE EOS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
-! FILE lorene_bns_id_parameters.par MATCH!                                 !
+! FILE sphincs_id_parameters.par MATCH!                                    !
 !--------------------------------------------------------------------------!
-compose_eos=.FALSE. ! If .TRUE., reads in the table of Ye (electron fraction)
+compose_eos=.TRUE. ! If .TRUE., reads in the table of Ye (electron fraction)
                    ! as a function of nb (baryon number density) from the .beta
                    ! file computed with the CompOSE software, and linearly
                    ! interpolates Ye on the particles.

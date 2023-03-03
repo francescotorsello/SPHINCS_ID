@@ -45,6 +45,7 @@ MODULE utility
   !
   INTEGER, PARAMETER:: eos$poly  = 1
   INTEGER, PARAMETER:: eos$pwpoly= 2
+  INTEGER, PARAMETER:: eos$tabu  = 3
 
 
   DOUBLE PRECISION, PARAMETER:: zero        = 0.D0

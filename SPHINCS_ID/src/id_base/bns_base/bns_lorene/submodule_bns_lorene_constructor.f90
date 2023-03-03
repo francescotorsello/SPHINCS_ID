@@ -215,7 +215,8 @@ SUBMODULE (bns_lorene) constructor
       IF( exist )THEN
 
         CALL this% construction_timer% start_timer()
-        this% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
+        this% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR, &
+                                  "use_id"//C_NULL_CHAR, "use_id"//C_NULL_CHAR )
         CALL this% construction_timer% stop_timer()
 
       ELSE

@@ -626,6 +626,11 @@ stringize_end(vers)
               !particles_dist( itr, itr2 )= particles()
             ELSE
 
+              IF(particles_dist( itr3, itr4 )% get_compose_eos()) CYCLE
+              ! TODO: as of 03.03.2023, SPHINCS_BSSN does not support tabulated
+              !       EOS, hence the recovery should not be called when using
+              !       tabulated EOS
+
               PRINT *, "===================================================" &
                        // "================================================"
               PRINT *, " Testing recovery using mesh-to-particle mapping, for",&

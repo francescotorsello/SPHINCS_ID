@@ -589,6 +589,8 @@ MODULE sph_particles
     !! Returns ([[particles:shift_x]],[[particles:shift_y]],[[particles:shift_z]])
     PROCEDURE, PUBLIC:: get_g3
     !! Returns ([[particles:g_xx]],[[particles:g_xy]],[[particles:g_xz]],[[particles:g_yy]],[[particles:g_yz]],[[particles:g_zz]])
+    PROCEDURE, PUBLIC:: get_compose_eos
+    !! Returns ([[particles:compose_eos]])
 
     FINAL:: destruct_particles
     !! Finalizer (Destructor) of [[particles]] object
@@ -1766,7 +1768,7 @@ MODULE sph_particles
 
 
     MODULE PURE FUNCTION get_g3( this ) RESULT( g3 )
-    !! Returns [[particles:h]]
+    !! Returns the spatial metric on the particles
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT(IN):: this
@@ -1774,6 +1776,17 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(6,this% npart):: g3
 
     END FUNCTION get_g3
+
+
+    MODULE PURE FUNCTION get_compose_eos( this ) RESULT( compose_eos )
+    !! Returns [[particles:compose_eos]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT(IN):: this
+      !> ([[particles:compose_eos]])
+      LOGICAL:: compose_eos
+
+    END FUNCTION get_compose_eos
 
 
   END INTERFACE

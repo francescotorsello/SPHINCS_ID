@@ -66,7 +66,7 @@ SUBMODULE (sph_particles) compose
     !************************************************
 
     USE constants,  ONLY: fm2cm, cm2km
-    USE utility,    ONLY: km2Msun_geo
+    USE utility,    ONLY: km2Msun_geo, zero
 
     IMPLICIT NONE
 
@@ -92,8 +92,8 @@ SUBMODULE (sph_particles) compose
 
     ALLOCATE( this% nb_table( max_length_eos ) )
     ALLOCATE( this% Ye_table( max_length_eos ) )
-    this% nb_table= 0.0D0
-    this% Ye_table= 0.0D0
+    this% nb_table= zero
+    this% Ye_table= zero
 
 
     IF( PRESENT(namefile) )THEN

@@ -63,7 +63,7 @@ SUBMODULE (bns_lorene) params
 
     USE utility,   ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
                          k_lorene2hydrobase_piecewisepolytrope, &
-                         zero, two, four, five, eos$poly, eos$pwpoly
+                         zero, two, four, five, eos$poly, eos$pwpoly, eos$tabu
 
 #if flavour == 1
 
@@ -236,10 +236,10 @@ SUBMODULE (bns_lorene) params
       this% kappa3_1= this% kappa3_1 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_1 )
 
-    !ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
+    ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
     ! If the EOS is tabulated
 
-      ! Not supported yet
+      this% eos1_id= eos$tabu
 
     ELSE
 
@@ -270,10 +270,10 @@ SUBMODULE (bns_lorene) params
       this% kappa3_2= this% kappa3_2 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_2 )
 
-    !ELSEIF( this% eos2_loreneid == 17 .OR. this% eos2_loreneid == 20 )THEN
+    ELSEIF( this% eos2_loreneid == 17 .OR. this% eos2_loreneid == 20 )THEN
     ! If the EOS is tabulated
 
-      ! Not supported yet
+      this% eos2_id= eos$tabu
 
     ELSE
 

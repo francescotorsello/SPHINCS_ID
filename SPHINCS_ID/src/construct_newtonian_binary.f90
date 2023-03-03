@@ -485,26 +485,27 @@ PROGRAM construct_newtonian_binary
 
   !
   !-- Print the BSSN constraints
+  !-- TODO: To do this, the stress-energy tensor is needed
   !
-  CALL BSSN_Constraints
-  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=itt, output_ghosts=.TRUE. )
-  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=itx, output_ghosts=.TRUE. )
-  CALL output_2d ( Tmunu_ll, 3, dcount, ivar=ixx, output_ghosts=.TRUE. )
-  CALL output_2d ( lapse, 3, dcount, output_ghosts=.TRUE. )
-  CALL output_2d ( shift_u, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
-  CALL output_2d ( Gamma_u, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
-  CALL output_2d ( phi, 3, dcount, output_ghosts=.TRUE. )
-  CALL output_2d ( trK, 3, dcount, output_ghosts=.TRUE. )
-  CALL output_2d ( A_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
-  CALL output_2d ( g_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
-  CALL output_2d ( Ham, 3, dcount, output_ghosts=.TRUE. )
-  CALL output_2d ( M_l, 3, dcount, ivar=jx, output_ghosts=.TRUE. )
-  CALL output_2d ( M_l, 3, dcount, ivar=jy, output_ghosts=.TRUE. )
-  CALL output_2d ( M_l, 3, dcount, ivar=jz, output_ghosts=.TRUE. )
-  CALL output_1d ( Ham, 1, dcount, output_ghosts=.TRUE. )
-  CALL output_1d ( M_l, 1, dcount, ivar=jx, output_ghosts=.TRUE. )
-  CALL output_1d ( M_l, 1, dcount, ivar=jy, output_ghosts=.TRUE. )
-  CALL output_1d ( M_l, 1, dcount, ivar=jz, output_ghosts=.TRUE. )
+!  CALL BSSN_Constraints
+!  CALL output_2d( Tmunu_ll, 3,   dcount, ivar=itt, output_ghosts=.TRUE. )
+!  CALL output_2d( Tmunu_ll, 3,   dcount, ivar=itx, output_ghosts=.TRUE. )
+!  CALL output_2d( Tmunu_ll, 3,   dcount, ivar=ixx, output_ghosts=.TRUE. )
+!  CALL output_2d( lapse, 3,      dcount, output_ghosts=.TRUE. )
+!  CALL output_2d( shift_u, 3,    dcount, ivar=jx, output_ghosts=.TRUE. )
+!  CALL output_2d( Gamma_u, 3,    dcount, ivar=jx, output_ghosts=.TRUE. )
+!  CALL output_2d( phi, 3,        dcount, output_ghosts=.TRUE. )
+!  CALL output_2d( trK, 3,        dcount, output_ghosts=.TRUE. )
+!  CALL output_2d( A_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
+!  CALL output_2d( g_BSSN3_ll, 3, dcount, ivar=jxx, output_ghosts=.TRUE. )
+!  CALL output_2d( Ham, 3,        dcount, output_ghosts=.TRUE. )
+!  CALL output_2d( M_l, 3,        dcount, ivar=jx, output_ghosts=.TRUE. )
+!  CALL output_2d( M_l, 3,        dcount, ivar=jy, output_ghosts=.TRUE. )
+!  CALL output_2d( M_l, 3,        dcount, ivar=jz, output_ghosts=.TRUE. )
+!  CALL output_1d( Ham, 1,        dcount, output_ghosts=.TRUE. )
+!  CALL output_1d( M_l, 1,        dcount, ivar=jx, output_ghosts=.TRUE. )
+!  CALL output_1d( M_l, 1,        dcount, ivar=jy, output_ghosts=.TRUE. )
+!  CALL output_1d( M_l, 1,        dcount, ivar=jz, output_ghosts=.TRUE. )
 
   !
   !-- Deallocate ADM and BSSN memory

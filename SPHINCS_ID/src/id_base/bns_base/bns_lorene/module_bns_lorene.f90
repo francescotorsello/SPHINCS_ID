@@ -822,8 +822,8 @@ MODULE bns_lorene
   INTERFACE
 
 
-    FUNCTION construct_bin_ns( c_resu_file ) RESULT( optr ) &
-      BIND(C, NAME= "construct_bin_ns")
+    FUNCTION construct_bin_ns( c_resu_file, c_eos_file1, c_eos_file2 ) &
+      RESULT( optr ) BIND(C, NAME= "construct_bin_ns")
 
       !***********************************************
       !
@@ -842,7 +842,11 @@ MODULE bns_lorene
       !& C string of the name of the |lorene| binary file storing the spectral
       !  BNS ID
       CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
-                                                              c_resu_file
+                                                              c_resu_file                                   
+      CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_eos_file1
+      CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_eos_file2
       !> C pointer pointing to the constructed |lorene| |binns| object
       TYPE(C_PTR) :: optr
 
