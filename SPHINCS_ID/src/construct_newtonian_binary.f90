@@ -25,7 +25,7 @@ PROGRAM construct_newtonian_binary
 
   !*****************************************************
   !
-  !# Read two |tov| star TOV and SPH ID, and construct
+  !# Read two |tov| and |sph| |id|, and construct
   !  an Newtonian binary system based on the
   !  Newtonian 2-body problem.
   !
@@ -49,7 +49,7 @@ PROGRAM construct_newtonian_binary
                                        ! particle
                             Theta,  &  ! Generalized Lorentz factor
                             deallocate_sph_memory
-  USE input_output,   ONLY: write_sphincs_dump, dcount
+  USE input_output,   ONLY: write_sphincs_dump
   USE units,          ONLY: m0c2_cu
   USE tensor,         ONLY: n_sym3x3, jx, jy, jz, &
                             jxx, jxy, jxz, jyy, jyz, jzz, &
@@ -67,11 +67,7 @@ PROGRAM construct_newtonian_binary
   USE mesh_refinement,            ONLY: output_1d, output_2d
   USE McLachlan_refine,           ONLY: allocate_Ztmp, deallocate_Ztmp, &
                                         ADM_to_BSSN, BSSN_Constraints
-
-  USE ADM_refine,   ONLY: lapse, shift_u
-  USE BSSN_refine,  ONLY: Gamma_u, phi, trK, A_BSSN3_ll, &
-                          g_BSSN3_ll, write_BSSN_constraints, Ham, M_l
-  USE Tmunu_refine, ONLY: Tmunu_ll
+  USE BSSN_refine,                ONLY: write_BSSN_constraints
 
   !
   !-- SPHINCS_ID MODULES
@@ -739,7 +735,7 @@ PROGRAM construct_newtonian_binary
     USE TOV_refine,      ONLY: read_TOV_dump, allocate_tov, deallocate_tov, &
                                get_tov_metric
     USE utility,         ONLY: zero, compute_tpo_metric, determinant_sym3x3, &
-                               scan_3d_array_for_nans
+                               scan_3d_array_for_nans, one, two, four
 
     IMPLICIT NONE
 
@@ -747,16 +743,22 @@ PROGRAM construct_newtonian_binary
     DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: v1, v2
     CHARACTER(LEN=*), INTENT(INOUT):: filename1, filename2
 
-    INTEGER, PARAMETER:: tov_np= 100001
-    DOUBLE PRECISION:: distance, sigma1, sigma2!= ABS(x1) + ABS(x2)
+    INTEGER,          PARAMETER:: tov_np= 100001
+    DOUBLE PRECISION, PARAMETER:: eps   = 1.75D-1
 
-    INTEGER :: i, j, k, l
+    DOUBLE PRECISION:: min_abs_z, distance, sigma1, sigma2!= ABS(x1) + ABS(x2)
+
+    INTEGER :: i, j, k, l, unit_att_out, ios
 
     DOUBLE PRECISION:: tmp, tmp2, tmp3, xtmp, ytmp, ztmp, &
                        g00, g01, g02, g03, g11, g12, g13, g22, g23, g33, &
                        gamma1, gamma2, detg
 
     DOUBLE PRECISION, DIMENSION(4,4):: g(n_sym4x4)
+
+    CHARACTER(LEN=:), ALLOCATABLE:: attfunc_namefile, err_msg
+
+    LOGICAL:: exist
 
     TYPE(grid_function_scalar):: lapse1, phi1, trK1, Theta_Z41, lapse_A_BSSN1, &
                                  lapse2, phi2, trK2, Theta_Z42, lapse_A_BSSN2, &
@@ -792,8 +794,21 @@ PROGRAM construct_newtonian_binary
     gamma1= boost1% get_lambda()
     gamma2= boost2% get_lambda()
 
-    sigma1= ( gamma2*radius2 + gamma2*(distance-radius1) )/2.D0
-    sigma2= ( gamma1*radius1 + gamma1*(distance-radius2) )/2.D0
+    !sigma1= radius2
+    !sigma2= radius1
+    sigma1= gamma2*radius2
+    sigma2= gamma1*radius1
+    !sigma1= ( gamma2*radius2 + gamma2*(distance-radius1) )/two
+    !sigma2= ( gamma1*radius1 + gamma1*(distance-radius2) )/two
+    !sigma1= gamma2*radius2/((LOG(one/(one - eps)))**(one/four))
+    !sigma2= gamma1*radius1/((LOG(one/(one - eps)))**(one/four))
+
+    PRINT *
+    PRINT *, "gamma1=", gamma1
+    PRINT *, "gamma2=", gamma2
+    PRINT *, "sigma1=", sigma1
+    PRINT *, "sigma2=", sigma2
+    PRINT *
 
     CALL allocate_grid_function(lapse1,          'lapse1')
     CALL allocate_grid_function(shift_u1,        'shift_u1', 3)
@@ -826,11 +841,11 @@ PROGRAM construct_newtonian_binary
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            xtmp= coords% levels(l)% var(i,j,k,1) - x1
+            xtmp= coords% levels(l)% var(i,j,k,1)! - x1
             ytmp= coords% levels(l)% var(i,j,k,2)
             ztmp= coords% levels(l)% var(i,j,k,3)
 
-            CALL get_tov_metric(xtmp, ytmp, ztmp, &
+            CALL get_tov_metric(xtmp - x1, ytmp, ztmp, &
                                 tmp, tmp2, tmp3, &
                                 g00,g01,g02,g03,g11,g12,g13,g22,g23,g33)
 
@@ -847,9 +862,10 @@ PROGRAM construct_newtonian_binary
             K_phys3_ll1% levels(l)% var(i,j,k,:)= zero
             Tmunu_ll1%   levels(l)% var(i,j,k,:)= zero
 
+            tmp= (gamma2*(xtmp - x2))**2 + ytmp**2 + ztmp**2
+
             attenuating_function1% levels(l)% var(i,j,k)= &
-              1.D0 - EXP(-(((gamma2*(xtmp - x2))**2 + ytmp**2 + ztmp**2)**2 &
-                          /sigma1**4))
+              one !- EXP( -(tmp**2)/(sigma1**4) )
 
           ENDDO
         ENDDO
@@ -893,11 +909,11 @@ PROGRAM construct_newtonian_binary
         DO j= 1, levels(l)% ngrid_y, 1
           DO i= 1, levels(l)% ngrid_x, 1
 
-            xtmp= coords% levels(l)% var(i,j,k,1) - x2
+            xtmp= coords% levels(l)% var(i,j,k,1)! - x2
             ytmp= coords% levels(l)% var(i,j,k,2)
             ztmp= coords% levels(l)% var(i,j,k,3)
 
-            CALL get_tov_metric(xtmp, ytmp, ztmp, &
+            CALL get_tov_metric(xtmp -x2, ytmp, ztmp, &
                                 tmp, tmp2, tmp3, &
                                 g00,g01,g02,g03,g11,g12,g13,g22,g23,g33)
 
@@ -914,9 +930,10 @@ PROGRAM construct_newtonian_binary
             K_phys3_ll2% levels(l)% var(i,j,k,:)= zero
             Tmunu_ll2%   levels(l)% var(i,j,k,:)= zero
 
+            tmp= (gamma1*(xtmp - x1))**2 + ytmp**2 + ztmp**2
+
             attenuating_function2% levels(l)% var(i,j,k)= &
-              1.D0 - EXP(-(((gamma1*(xtmp - x1))**2 + ytmp**2 + ztmp**2)**2 &
-                          /sigma2**4))
+              one !- EXP( -(tmp**2)/(sigma2**4) )
 
           ENDDO
         ENDDO
@@ -1004,6 +1021,73 @@ PROGRAM construct_newtonian_binary
       !$OMP END PARALLEL DO
     ENDDO sum_tov_id
     PRINT *, "...done"
+    PRINT *
+
+    attfunc_namefile= "attenutating_functions.dat"
+
+    PRINT *, "** Printing attenuating functions to file ", &
+             TRIM(attfunc_namefile), "..."
+
+    INQUIRE( FILE= TRIM(attfunc_namefile), EXIST= exist )
+
+    IF( exist )THEN
+        OPEN( UNIT= unit_att_out, &
+              FILE= TRIM(attfunc_namefile), &
+              STATUS= "REPLACE", FORM= "FORMATTED", &
+              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+              IOMSG= err_msg )
+    ELSE
+        OPEN( UNIT= unit_att_out, &
+              FILE= TRIM(attfunc_namefile), &
+              STATUS= "NEW", FORM= "FORMATTED", &
+              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+    ENDIF
+    IF( ios > 0 )THEN
+      PRINT *, "...error when opening " // &
+               TRIM(attfunc_namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    DO l= 1, nlevels, 1
+
+      min_abs_z= HUGE(one)
+      DO k= 1, levels(l)% ngrid_z, 1
+        IF( ABS( coords% levels(l)% var(1,1,k,3) ) < ABS( min_abs_z ) )THEN
+          min_abs_z= coords% levels(l)% var(1,1,k,3)
+        ENDIF
+      ENDDO
+
+      DO k= 1, levels(l)% ngrid_z, 1
+        DO j= 1, levels(l)% ngrid_y, 1
+          DO i= 1, levels(l)% ngrid_x, 1
+
+             IF( ABS(coords% levels(l)% var(i,j,k,3) - min_abs_z) &
+                 /ABS(min_abs_z) > 1.D-5 &
+             )THEN
+
+               CYCLE
+
+             ENDIF
+
+             WRITE( UNIT = unit_att_out, IOSTAT = ios, IOMSG = err_msg, &
+                    FMT = * ) &
+               l, &
+               coords% levels(l)% var(i,j,k,1), &
+               coords% levels(l)% var(i,j,k,2), &
+               coords% levels(l)% var(i,j,k,3), &
+               attenuating_function1% levels(l)% var(i,j,k), &
+               attenuating_function2% levels(l)% var(i,j,k)
+          ENDDO
+        ENDDO
+      ENDDO
+
+    ENDDO
+
+    CLOSE( UNIT= unit_att_out )
+
+    PRINT *, " * attenuating functions printed to file ", &
+             TRIM(attfunc_namefile)
     PRINT *
 
 
