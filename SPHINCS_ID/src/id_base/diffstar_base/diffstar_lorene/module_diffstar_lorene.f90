@@ -248,13 +248,17 @@ MODULE diffstar_lorene
     END SUBROUTINE construct_diffstarlorene
 
 
-    MODULE SUBROUTINE construct_drs( this, resu_file )
+    MODULE SUBROUTINE construct_drs( this, id_file, eos_filename )
     !! Interface of the subroutine that constructs the |lorene| Etdiffrot object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT(INOUT)      :: this
-      !> |lorene| binary file containing the spectral DRS ID
-      CHARACTER(KIND= C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: resu_file
+      CLASS(diffstarlorene),          INTENT(INOUT)       :: this
+      !> |lorene| binary file containing the spectral |drs| |id|
+      CHARACTER(KIND=C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: id_file
+      CHARACTER(KIND=C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: eos_filename
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE construct_drs
 
@@ -274,7 +278,7 @@ MODULE diffstar_lorene
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
       CLASS(diffstarlorene), INTENT(INOUT):: this
       !> Dimension of the arrays
-      INTEGER,    INTENT(IN)    :: d
+      INTEGER,               INTENT(IN)    :: d
 
     END SUBROUTINE allocate_diffstar_memory
 
@@ -700,7 +704,7 @@ MODULE diffstar_lorene
   INTERFACE
 
 
-    FUNCTION construct_etdiffrot( c_resu_file ) RESULT( optr ) &
+    FUNCTION construct_etdiffrot( c_id_file, c_eos_file ) RESULT( optr ) &
       BIND(C, NAME= "construct_et_diffrot")
 
       !***********************************************
@@ -719,9 +723,13 @@ MODULE diffstar_lorene
 
       !& C string of the name of the |lorene| binary file storing the spectral
       !  DRS ID
-      CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
-                                                              c_resu_file
+      CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_id_file
+
+      CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_eos_file
       !> C pointer pointing to the constructed |lorene| |etdiffrot| object
+
       TYPE(C_PTR) :: optr
 
     END FUNCTION construct_etdiffrot

@@ -76,10 +76,11 @@ SUBMODULE (bns_lorene) constructor
 
     ! Construct |lorene| |binns| object
     IF( PRESENT(filename) )THEN
-        CALL derived_type% construct_binary(filename, &
-                                            derived_type% eos_filenames)
+      CALL derived_type% construct_binary(filename, &
+                                          derived_type% eos_filenames)
     ELSE
-        CALL derived_type% construct_binary()
+      !CALL derived_type% construct_binary()
+      STOP
     ENDIF
     ! Import the parameters of the binary system from LORENE
     CALL read_id_params(derived_type)
@@ -191,10 +192,14 @@ SUBMODULE (bns_lorene) constructor
 
     IMPLICIT NONE
 
-    CHARACTER(KIND= C_CHAR, LEN= 7):: default_case
+    CHARACTER(KIND=C_CHAR, LEN= 7):: default_case
+    CHARACTER(KIND=C_CHAR, LEN= :), ALLOCATABLE:: eos1, eos2
     LOGICAL:: exist
 
     !PRINT *, "** Executing the construct_binary subroutine..."
+
+    eos1= TRIM(eos_filenames(1))//C_NULL_CHAR
+    eos2= TRIM(eos_filenames(2))//C_NULL_CHAR
 
 #ifdef __INTEL_COMPILER
 
@@ -219,8 +224,7 @@ SUBMODULE (bns_lorene) constructor
       IF( exist )THEN
 
         CALL this% construction_timer% start_timer()
-        this% bns_ptr = construct_bin_ns( id_file//C_NULL_CHAR, &
-                                  "use_id"//C_NULL_CHAR, "use_id"//C_NULL_CHAR )
+        this% bns_ptr = construct_bin_ns(id_file//C_NULL_CHAR, eos1, eos2)
         CALL this% construction_timer% stop_timer()
 
       ELSE
@@ -234,10 +238,11 @@ SUBMODULE (bns_lorene) constructor
 
     ELSE
 
-      default_case= "read_it"
-      CALL this% construction_timer% start_timer()
-      this% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
-      CALL this% construction_timer% stop_timer()
+      !default_case= "read_it"
+      !CALL this% construction_timer% start_timer()
+      !this% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
+      !CALL this% construction_timer% stop_timer()
+      STOP
 
     ENDIF
 

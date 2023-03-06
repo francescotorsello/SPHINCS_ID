@@ -42,7 +42,7 @@ MODULE diffstar_base
 
 
   USE id_base, ONLY: idbase
-  USE utility, ONLY: ios, err_msg
+  USE utility, ONLY: ios, err_msg, max_length
 
 
   IMPLICIT NONE
@@ -260,6 +260,10 @@ MODULE diffstar_base
     DOUBLE PRECISION:: logRho2
     !# Piecewise polytrope: Base 10 exponent of the third fiducial density
     !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\)
+
+    CHARACTER(LEN=max_length), DIMENSION(1):: eos_filename
+    !# Array of string containing the names of the files containing the |eos|
+    !  to be used for each matter object.
 
 
     !
