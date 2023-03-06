@@ -42,7 +42,7 @@ MODULE bns_base
 
 
   USE id_base, ONLY: idbase
-  USE utility, ONLY: ios, err_msg
+  USE utility, ONLY: ios, err_msg, max_length
 
 
   IMPLICIT NONE
@@ -377,6 +377,10 @@ MODULE bns_base
     !& Piecewise polytrope: Base 10 exponent of the third fiducial density
     !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\) for star 2
     DOUBLE PRECISION:: logRho2_2
+
+    CHARACTER(LEN=max_length), DIMENSION(2):: eos_filenames
+    !# Array of strings containing the names of the files containing the |eos|
+    !  to be used for each matter object.
 
 
     !

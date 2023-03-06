@@ -69,11 +69,15 @@ SUBMODULE (bns_lorene) constructor
     CALL derived_type% set_n_matter(n_matter)
     CALL derived_type% set_cold_system(.TRUE.)
 
+    derived_type% eos_filenames(1)= eos_filenames(1)
+    derived_type% eos_filenames(2)= eos_filenames(2)
+
     derived_type% construction_timer= timer("binary_construction_timer")
 
     ! Construct |lorene| |binns| object
     IF( PRESENT(filename) )THEN
-        CALL derived_type% construct_binary(filename)
+        CALL derived_type% construct_binary(filename, &
+                                            derived_type% eos_filenames)
     ELSE
         CALL derived_type% construct_binary()
     ENDIF
@@ -203,26 +207,26 @@ SUBMODULE (bns_lorene) constructor
 #endif
 
     !
-    !-- If the name of the |lorene| binary file resu_file is given as argument to
+    !-- If the name of the |lorene| binary file id_file is given as argument to
     !-- construct_binary, use it. Otherwise, give the string "read_it"
     !-- to construct_bin_ns as argument, which makes |lorene| read the name of
     !-- the file from the parameter file read_bin_ns.par
     !
-    IF( PRESENT( resu_file ) )THEN
+    IF( PRESENT( id_file ) )THEN
 
-      INQUIRE( FILE= resu_file, EXIST= exist )
+      INQUIRE( FILE= id_file, EXIST= exist )
 
       IF( exist )THEN
 
         CALL this% construction_timer% start_timer()
-        this% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR, &
+        this% bns_ptr = construct_bin_ns( id_file//C_NULL_CHAR, &
                                   "use_id"//C_NULL_CHAR, "use_id"//C_NULL_CHAR )
         CALL this% construction_timer% stop_timer()
 
       ELSE
 
         PRINT *, "** ERROR in SUBROUTINE construct_binary: file ", &
-                 resu_file, " cannot be found!"
+                 id_file, " cannot be found!"
         PRINT *
         STOP
 

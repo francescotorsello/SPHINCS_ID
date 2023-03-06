@@ -183,6 +183,8 @@ MODULE utility
 
   CHARACTER(LEN=max_length), DIMENSION(max_length):: filenames= "0"
   !! Array of strings storing the names of the |id| files
+  CHARACTER(LEN=max_length), DIMENSION(50):: eos_filenames= "use_id"
+  !! Array of strings storing the names of the files containing the |eos|
   CHARACTER(LEN=max_length):: common_path
   !# String storing the local path to the directory where the |id| files
   !  are stored
@@ -218,7 +220,7 @@ MODULE utility
     ! Namelist containing parameters read from sphincs_id_parameters.par
     ! by the SUBROUTINE read_sphincs_id_parameters of this PROGRAM
     NAMELIST /sphincs_id_parameters/ &
-              n_id, common_path, filenames, placer, &
+              n_id, common_path, filenames, eos_filenames, placer, &
               export_bin, export_form, export_form_xy, &
               export_form_x, export_constraints_xy, &
               export_constraints_x, compute_constraints, &

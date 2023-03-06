@@ -229,16 +229,21 @@ MODULE diffstar_lorene
     !-- SUBROUTINES
     !
 
-    MODULE SUBROUTINE construct_diffstarlorene( derived_type, filename )
+    MODULE SUBROUTINE construct_diffstarlorene &
+      ( derived_type, filename, eos_filenames )
     !! Constructs a [[diffstarlorene]] object
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral DRS ID
       CLASS(diffstarlorene), INTENT(OUT):: derived_type
       !! Constructed [[diffstarlorene]] object
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral |drs| |id|
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE construct_diffstarlorene
 

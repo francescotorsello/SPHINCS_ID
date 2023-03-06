@@ -119,8 +119,8 @@ SUBMODULE (bns_lorene) io
     IF( this% angular_momentum_z == zero )THEN
 
       PRINT *
-      PRINT *, " ** The parameters have not ben read yet. ", &
-          "Call the SUBROUTINE import_lorene_id_params to read them."
+      PRINT *, " ** The parameters have not been read yet. ", &
+          "Call the SUBROUTINE read_id_params to read them."
       PRINT *
 
     ELSE
@@ -330,9 +330,19 @@ SUBMODULE (bns_lorene) io
       ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
       ! If the EOS is tabulated
 
+        PRINT *
+        PRINT *, " ** Using tabulated EOS"
+        PRINT *
+        PRINT *, " Equations of state for star 1 (EOS1) = ", &
+                 TRIM(this% eos_filenames(1))
+        PRINT *, " Equations of state for star 1 (EOS1) = ", &
+                 TRIM(this% eos_filenames(2))
+        PRINT *
+
       ELSE
 
-        PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+        PRINT *, "** ERROR in SUBROUTINE read_id_params in SUBMODULE ", &
+                 "bns_lorene@params!", &
                  " The equation of state is unknown!"
         STOP
 

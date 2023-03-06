@@ -203,9 +203,7 @@ SUBMODULE (id_base) initialization
     IMPLICIT NONE
 
 
-    CALL derived_type% derived_type_constructor( filename )
-
-    !derived_type% finalize_sph_id_ptr => derived_type% finalize_sph_id
+    CALL derived_type% derived_type_constructor( filename, eos_filenames )
 
     CALL derived_type% sanity_check()
 

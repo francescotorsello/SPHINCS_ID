@@ -303,16 +303,19 @@ MODULE id_base
   ABSTRACT INTERFACE
 
 
-    SUBROUTINE derived_type_constructor_int( derived_type, filename )
-    !# Prints a summary of the physical properties the system
-    !  to the standard output and, optionally, to a formatted file whose name
-    !  is given as the optional argument `filename`
+    SUBROUTINE derived_type_constructor_int( derived_type, filename, &
+                                             eos_filenames )
+    !# Construct the DERIVED TYPE that extends [[idbase]]
 
       IMPORT:: idbase
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral DRS |id|
       CLASS(idbase),    INTENT(OUT)          :: derived_type
-      !! Constructed [[diffstarlorene]] object
+      !! Object of DERIVED TYPE that extends [[idbase], to be constructed
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+      !! Name of the file containing the |id|
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE derived_type_constructor_int
 
@@ -717,25 +720,26 @@ MODULE id_base
 
 
     MODULE SUBROUTINE sanity_check( derived_type )
-    !# Prints a summary of the physical properties the system
-    !  to the standard output and, optionally, to a formatted file whose name
-    !  is given as the optional argument `filename`
+    !# Check that the DERIVED TYPE that extends [[idbase]] is constructed
+    !  consistently
 
-      !IMPORT:: idbase
       CLASS(idbase), INTENT(IN):: derived_type
+      !! Object of DERIVED TYPE that extends [[idbase]]
 
     END SUBROUTINE sanity_check
 
 
-    MODULE SUBROUTINE initialize( derived_type, filename )
-    !# Prints a summary of the physical properties the system
-    !  to the standard output and, optionally, to a formatted file whose name
-    !  is given as the optional argument `filename`
+    MODULE SUBROUTINE initialize( derived_type, filename, eos_filenames )
+    !# Initialize the DERIVED TYPE that extends [[idbase]]
 
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral DRS ID
       CLASS(idbase),    INTENT(OUT)          :: derived_type
-      !! Constructed [[diffstarlorene]] object
+      !! Object of DERIVED TYPE that extends [[idbase], to be constructed
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+      !! Name of the file containing the |id|
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE initialize
 
