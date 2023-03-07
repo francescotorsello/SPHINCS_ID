@@ -508,7 +508,7 @@ SUBMODULE (ejecta_generic) interpolate
     IMPLICIT NONE
 
     ! TODO: There is no pressure in the ejecta ID. It should be computed using
-    !       the |eos|
+    !       the |eos| and the specific energy (it's a hot system)
     PRINT *, "** The method interpolate_pressure of TYPE ejecta_generic"
     PRINT *, " has not been implemented yet."
     PRINT *

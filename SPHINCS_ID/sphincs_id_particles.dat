@@ -185,11 +185,11 @@ ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
 ghost_dist=0.45D0       ! Distance between the ghost particles and the surface
                         ! of the matter object considered (star, ejecta, etc...)
-use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
+use_atmosphere=.TRUE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term
                         ! This can be useful when the system has an irregular
                         ! geometry, as, for example, an ejecta
-remove_atmosphere=.FALSE. ! If .TRUE., removes the particles placed where the
+remove_atmosphere=.TRUE. ! If .TRUE., removes the particles placed where the
                           ! density is 0, at the end of the APM iteration
 !---------------------------------------!
 ! Flag to correct the number of baryons !

@@ -1145,9 +1145,37 @@ SUBMODULE (sph_particles) constructor_std
                                            g_yy, g_yz, g_zz, &
                                            baryon_density, &
                                            energy_density, &
-                                           specific_energy, &
+                                           !specific_energy, &
                                            pressure, &
                                            v_euler_x, v_euler_y, v_euler_z
+
+      ! compute_sph_hydro in SUBMODULE sph_particles@sph_variables requires the
+      ! knowledge of parts% specific_energy, to compute the SPH pressure for a
+      ! hot system in the APM, when using the real pressure to compute the
+      ! artifical pressure.
+      ! That is why we allocate (if necessary) and assign values to
+      ! parts% specific_energy
+      ! TODO: Another strategy would be adding the specific energy as an
+      !       optional argument to compute_sph_hydro.
+      ! TODO: Note that, since the pressure from the ID is not known for the
+      !       ejecta, the SPH pressure computed in the APM cannot be compared
+      !       with the pressure from the ID. One need to compute the pressure
+      !       also using the same internalenergy, but the density from the ID
+      !       (not the SPH density)
+      IF(ALLOCATED(parts% specific_energy))THEN
+
+        IF(SIZE(parts% specific_energy) /= npart)THEN
+
+          DEALLOCATE(parts% specific_energy)
+          ALLOCATE(parts% specific_energy(npart))
+
+        ENDIF
+
+      ELSE
+
+        ALLOCATE(parts% specific_energy(npart))
+
+      ENDIF
 
       CALL id% read_id_particles( npart, x, y, z, &
                                   lapse, shift_x, shift_y, shift_z, &
@@ -1155,7 +1183,7 @@ SUBMODULE (sph_particles) constructor_std
                                   g_yy, g_yz, g_zz, &
                                   baryon_density, &
                                   energy_density, &
-                                  specific_energy, &
+                                  parts% specific_energy, &
                                   pressure, &
                                   v_euler_x, v_euler_y, v_euler_z )
 
@@ -2051,7 +2079,7 @@ SUBMODULE (sph_particles) constructor_std
           STOP
         ENDIF
 
-        gamma_eul_a= one/SQRT(one-v_euler_norm2)
+        gamma_eul_a= one/SQRT(one - v_euler_norm2)
         IF( .NOT.is_finite_number(gamma_eul_a) )THEN
           PRINT *, "** ERROR! The Lorentz factor is ", gamma_eul_a, &
                    "at particle ", a, &
