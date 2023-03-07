@@ -59,6 +59,8 @@ SUBMODULE (diffstar_lorene) constructor
     !
     !****************************************************
 
+    USE utility,  ONLY: use_eos_from_id, common_eos_path
+
     IMPLICIT NONE
 
     INTEGER, SAVE:: diffstar_counter= 1
@@ -66,17 +68,25 @@ SUBMODULE (diffstar_lorene) constructor
     CALL derived_type% set_n_matter(1)
     CALL derived_type% set_cold_system(.TRUE.)
 
-    derived_type% eos_filename(1)= eos_filenames(1)
+    derived_type% eos_filename(1)= &
+      TRIM(common_eos_path)//TRIM(eos_filenames(1))
 
     derived_type% construction_timer= timer( "drs_construction_timer" )
 
     ! Construct |lorene| |etdiffrot| object
-    IF( PRESENT( filename ) )THEN
-      CALL derived_type% construct_drs(filename, &
-                                       derived_type% eos_filename(1))
+    IF( PRESENT(filename) .AND. use_eos_from_id )THEN
+
+      CALL derived_type% construct_drs(filename, "use_id")
+
+    ELSEIF( PRESENT(filename) .AND. .NOT.use_eos_from_id )THEN
+
+      CALL derived_type% construct_drs(filename, derived_type% eos_filename(1))
+
     ELSE
+
       !CALL derived_type% construct_drs()
       STOP
+
     ENDIF
 
     ! Import the parameters of the binary system
@@ -87,8 +97,8 @@ SUBMODULE (diffstar_lorene) constructor
     diffstar_counter= diffstar_counter + 1
 
     ! Do not use the geodesic gauge by default
-    CALL derived_type% set_one_lapse ( .FALSE. )
-    CALL derived_type% set_zero_shift( .FALSE. )
+    CALL derived_type% set_one_lapse (.FALSE.)
+    CALL derived_type% set_zero_shift(.FALSE.)
 
     derived_type% finalize_sph_id_ptr => finalize
 
@@ -174,9 +184,12 @@ SUBMODULE (diffstar_lorene) constructor
     IMPLICIT NONE
 
     CHARACTER(KIND= C_CHAR, LEN= 7):: default_case
+    CHARACTER(KIND=C_CHAR, LEN= :), ALLOCATABLE:: eos
     LOGICAL:: exist
 
     !PRINT *, "** Executing the construct_binary subroutine..."
+
+    eos= TRIM(eos_filename)//C_NULL_CHAR
 
 #ifdef __INTEL_COMPILER
 
@@ -201,8 +214,7 @@ SUBMODULE (diffstar_lorene) constructor
       IF( exist )THEN
 
         CALL this% construction_timer% start_timer()
-        this% diffstar_ptr = construct_etdiffrot( id_file//C_NULL_CHAR, &
-                                       TRIM(eos_filename)//C_NULL_CHAR )
+        this% diffstar_ptr = construct_etdiffrot( id_file//C_NULL_CHAR, eos )
         CALL this% construction_timer% stop_timer()
 
       ELSE

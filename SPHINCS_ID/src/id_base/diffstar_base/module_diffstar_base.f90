@@ -265,6 +265,9 @@ MODULE diffstar_base
     !# Array of string containing the names of the files containing the |eos|
     !  to be used for each matter object.
 
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_table
+    !# String containing the path to the files containing the table of the |eos|
+
 
     !
     !-- Spacetime fields

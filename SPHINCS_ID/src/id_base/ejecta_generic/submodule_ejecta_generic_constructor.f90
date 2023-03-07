@@ -434,8 +434,10 @@ SUBMODULE (ejecta_generic) constructor
               STAT= ios, ERRMSG= err_msg )
 
     CALL derived_type% integrate_baryon_mass_density( &
-                            derived_type% centers(1,1), &
-                            ABS(MAXVAL(grid_tmp( :, 1 ))), &
+                            derived_type% centers(1,:), &
+                            MAXVAL( [ABS(MAXVAL(grid_tmp( :, 1 ))), &
+                                     ABS(MAXVAL(grid_tmp( :, 2 ))), &
+                                     ABS(MAXVAL(grid_tmp( :, 3 )))] ), &
                             derived_type% read_mass_density( &
                               derived_type% centers(1,1), &
                               derived_type% centers(1,2), &

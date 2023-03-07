@@ -755,10 +755,10 @@ MODULE id_base
       !> Center of the star
       DOUBLE PRECISION, DIMENSION(3), INTENT(IN)   :: center
       !> Central density of the star
-      DOUBLE PRECISION,               INTENT(IN)   :: central_density
-      !> Radius of the star
       DOUBLE PRECISION,               INTENT(IN)   :: radius
       !> Integration steps
+      DOUBLE PRECISION,               INTENT(IN)   :: central_density
+      !> Radius of the star
       DOUBLE PRECISION,               INTENT(IN)   :: dr, dth, dphi
       !> Integrated mass of the star
       DOUBLE PRECISION,               INTENT(INOUT):: mass

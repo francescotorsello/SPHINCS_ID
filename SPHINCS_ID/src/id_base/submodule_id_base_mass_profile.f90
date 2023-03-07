@@ -78,15 +78,16 @@ SUBMODULE (id_base) mass_profile
 
     !LOGICAL, PARAMETER:: debug= .TRUE.
 
+    a_x= one
+    a_y= one
+    a_z= one
+    max_radius= radius
     IF(PRESENT(surf) .AND. surf% is_known)THEN
 
-      max_radius= radius
       IF(PRESENT(radii))THEN
         max_radius= MAXVAL([radius,radii(1),radii(2)])
       ENDIF
-      a_x= one
-      a_y= one
-      a_z= one
+
 
     ELSEIF(PRESENT(radii))THEN
 
@@ -111,10 +112,6 @@ SUBMODULE (id_base) mass_profile
         a_z= one
 
       ENDIF
-
-    ELSE
-
-
 
     ENDIF
 

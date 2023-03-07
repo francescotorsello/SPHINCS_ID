@@ -56,7 +56,7 @@ SUBMODULE (bns_lorene) constructor
     !
     !****************************************************
 
-    USE utility,  ONLY: ten, Msun_geo
+    USE utility,  ONLY: ten, Msun_geo, use_eos_from_id, common_eos_path
 
     IMPLICIT NONE
 
@@ -69,18 +69,28 @@ SUBMODULE (bns_lorene) constructor
     CALL derived_type% set_n_matter(n_matter)
     CALL derived_type% set_cold_system(.TRUE.)
 
-    derived_type% eos_filenames(1)= eos_filenames(1)
-    derived_type% eos_filenames(2)= eos_filenames(2)
+    derived_type% eos_filenames(1)= &
+      TRIM(common_eos_path)//TRIM(eos_filenames(1))
+    derived_type% eos_filenames(2)= &
+      TRIM(common_eos_path)//TRIM(eos_filenames(2))
 
     derived_type% construction_timer= timer("binary_construction_timer")
 
     ! Construct |lorene| |binns| object
-    IF( PRESENT(filename) )THEN
+    IF( PRESENT(filename) .AND. use_eos_from_id )THEN
+
+      CALL derived_type% construct_binary(filename, ["use_id","use_id"])
+
+    ELSEIF( PRESENT(filename) .AND. .NOT.use_eos_from_id )THEN
+
       CALL derived_type% construct_binary(filename, &
                                           derived_type% eos_filenames)
+
     ELSE
+
       !CALL derived_type% construct_binary()
       STOP
+
     ENDIF
     ! Import the parameters of the binary system from LORENE
     CALL read_id_params(derived_type)

@@ -578,8 +578,9 @@ if flavour == full_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
-                     'lorenef77', 'kadath', 'gsl', 'lapack', 'fftw3', 'blas', \
+      env['LIBS'] = ['stdc++', 'm', \
+                     'lorene_export', 'lorene', 'lorenef77',  \
+                     'kadath', 'gsl', 'lapack', 'fftw3', 'blas', \
                      'gslcblas', 'gfortran']
 
     if debug == 'TRUE': #
@@ -626,8 +627,9 @@ if flavour == lorene_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
-                     'lorenef77', 'gsl', 'lapack', 'fftw3', 'blas', \
+      env['LIBS'] = ['stdc++', 'm', \
+                     'lorene_export', 'lorene', 'lorenef77', \
+                     'gsl', 'lapack', 'fftw3', 'blas', \
                      'gslcblas', 'gfortran']
 
     if debug == 'TRUE': #

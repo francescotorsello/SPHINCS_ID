@@ -381,7 +381,12 @@ MODULE bns_base
     CHARACTER(LEN=max_length), DIMENSION(2):: eos_filenames
     !# Array of strings containing the names of the files containing the |eos|
     !  to be used for each matter object.
-
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_table1
+    !# String containing the path to the files containing the table
+    !  of the |eos| for star 1.
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_table2
+    !# String containing the path to the files containing the table
+    !  of the |eos| for star 2.
 
     !
     !-- Spacetime fields

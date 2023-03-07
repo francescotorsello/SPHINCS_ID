@@ -796,7 +796,7 @@ MODULE bns_lorene
             get_lorene_id_particles, get_lorene_id_mass_b, &
             get_lorene_id_hydro, get_lorene_id_k, get_lorene_mass_density, &
             get_lorene_pressure, get_lorene_spatial_metric, &
-            positive_hydro, get_lorene_id_params, destruct_bin_ns
+            positive_hydro, get_lorene_bns_params, destruct_bin_ns
 
 
   INTERFACE
@@ -1284,7 +1284,7 @@ MODULE bns_lorene
     END FUNCTION positive_hydro
 
 
-    SUBROUTINE get_lorene_id_params( optr, &
+    SUBROUTINE get_lorene_bns_params( optr, &
                                      angular_vel, &
                                      distance, &
                                      distance_com, &
@@ -1358,8 +1358,10 @@ MODULE bns_lorene
                                      logP1_2,  &
                                      logRho0_2, &
                                      logRho1_2, &
-                                     logRho2_2 ) &
-      BIND(C, NAME= "get_lorene_id_params")
+                                     logRho2_2, &
+                                     eos_table1, &
+                                     eos_table2 ) &
+      BIND(C, NAME= "get_lorene_bns_params")
 
       !**********************************************
       !
@@ -1452,8 +1454,10 @@ MODULE bns_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho0_2
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho1_2
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho2_2
+      CHARACTER(KIND=C_CHAR), DIMENSION(500), INTENT(OUT):: eos_table1
+      CHARACTER(KIND=C_CHAR), DIMENSION(500), INTENT(OUT):: eos_table2
 
-    END SUBROUTINE get_lorene_id_params
+    END SUBROUTINE get_lorene_bns_params
 
 
     SUBROUTINE destruct_bin_ns( optr ) &

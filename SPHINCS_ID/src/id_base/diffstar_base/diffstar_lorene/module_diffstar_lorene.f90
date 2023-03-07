@@ -1193,7 +1193,8 @@ MODULE diffstar_lorene
                                     logP1,                          &
                                     logRho0,                        &
                                     logRho1,                        &
-                                    logRho2 )                      &
+                                    logRho2,                        &
+                                    eos_table )                     &
       BIND(C, NAME= "get_rotdiff_params")
 
       !**********************************************
@@ -1260,6 +1261,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho0
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho1
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho2
+      CHARACTER(KIND=C_CHAR), DIMENSION(500), INTENT(OUT):: eos_table
 
     END SUBROUTINE get_diffstar_params
 

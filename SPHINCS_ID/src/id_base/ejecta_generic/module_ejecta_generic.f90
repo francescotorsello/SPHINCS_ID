@@ -135,7 +135,7 @@ MODULE ejecta_generic
     !--  Parameters of the ejecta  --!
     !--------------------------------!
 
-    CHARACTER( LEN=: ), ALLOCATABLE:: eos
+    CHARACTER(LEN=:), ALLOCATABLE:: eos
     !! Name of the equation of state (EoS) of star 1
 
 

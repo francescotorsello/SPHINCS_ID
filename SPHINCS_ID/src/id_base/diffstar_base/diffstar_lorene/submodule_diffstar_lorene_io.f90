@@ -56,7 +56,7 @@ SUBMODULE (diffstar_lorene) io
     !****************************************************
 
     USE utility,  ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                        lorene2hydrobase, zero
+                        lorene2hydrobase, zero, use_eos_from_id
 
     IMPLICIT NONE
 
@@ -64,7 +64,7 @@ SUBMODULE (diffstar_lorene) io
 
       PRINT *
       PRINT *, " ** The parameters have not ben read yet. ", &
-          "Call the SUBROUTINE import_diffstar_params to read them."
+          "Call the SUBROUTINE read_diffstar_params to read them."
       PRINT *
 
     ELSE
@@ -144,7 +144,8 @@ SUBMODULE (diffstar_lorene) io
 
       PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(this% eos)
 
-      IF( this% eos_loreneid == 1 )THEN ! If the EOS is polytropic
+      IF( this% eos_loreneid == 1 )THEN
+      ! If the EOS is polytropic
 
         PRINT *, " Parameters for EOS: "
         PRINT *, "  Polytopic index gamma = ", this% gamma
@@ -154,7 +155,8 @@ SUBMODULE (diffstar_lorene) io
                  "[pure number]"
         PRINT *
 
-      ELSEIF( this% gamma0 /= 0 )THEN ! If the EOS is piecewise polytropic
+      ELSEIF( this% eos_loreneid == 110 )THEN
+      ! If the EOS is piecewise polytropic
 
         PRINT *, " Parameters for EOS1: "
         PRINT *, "  Number of polytropic indexes = ", this% npeos
@@ -192,9 +194,20 @@ SUBMODULE (diffstar_lorene) io
       ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
       ! If the EOS is tabulated
 
+        PRINT *
+        PRINT *, " ** Using tabulated EOS"
+        PRINT *
+        IF(.NOT.use_eos_from_id)THEN
+          PRINT *, " Equations of state = ", TRIM(this% eos_filename(1))
+          PRINT *, " Table located at: ", TRIM(this% eos_table)
+          PRINT *
+          PRINT *
+        ENDIF
+
       ELSE
 
-        PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+        PRINT *, "** ERROR in SUBROUTINE read_diffstar_params in SUBMODULE ", &
+                 "diffstar_lorene@params!", &
                  " The equation of state is unknown!"
         STOP
 

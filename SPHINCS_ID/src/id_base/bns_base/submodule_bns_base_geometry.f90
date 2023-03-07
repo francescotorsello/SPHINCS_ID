@@ -72,8 +72,7 @@ SUBMODULE(bns_base) geometry
 
     n_matter= this% get_n_matter()
 
-    IF(ALLOCATED(this% surfaces)) DEALLOCATE(this% surfaces)
-    ALLOCATE(this% surfaces(n_matter))
+    IF(.NOT.ALLOCATED(this% surfaces)) ALLOCATE(this% surfaces(n_matter))
 
     DO i_matter= 1, n_matter, 1
 

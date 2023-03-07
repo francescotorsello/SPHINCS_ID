@@ -112,7 +112,8 @@ SUBMODULE (bns_lorene) io
 
     USE constants, ONLY: c_light, cm2km
     USE utility,   ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                         lorene2hydrobase, zero, one, two, four, five, ten
+                         lorene2hydrobase, zero, one, two, four, five, ten, &
+                         use_eos_from_id
 
     IMPLICIT NONE
 
@@ -244,7 +245,8 @@ SUBMODULE (bns_lorene) io
         PRINT *, " Equations of state for star 2 (EOS2) = ", TRIM(this% eos2)
       !IF( show_progress ) PRINT *
 
-      IF( this% eos1_loreneid == 1 )THEN ! If the EOS is polytropic
+      IF( this% eos1_loreneid == 1 )THEN
+      ! If the EOS is polytropic
 
         PRINT *, " Parameters for EOS1: "
         PRINT *, "  Polytopic index gamma_1 = ", this% gamma_1
@@ -260,7 +262,8 @@ SUBMODULE (bns_lorene) io
                  "[pure number]"
         PRINT *
 
-      ELSEIF( this% gamma0_1 /= 0 )THEN ! If the EOS is piecewise polytropic
+      ELSEIF( this% eos1_loreneid == 110 )THEN
+      ! If the EOS is piecewise polytropic
 
         PRINT *, " Parameters for EOS1: "
         PRINT *, "  Number of polytropic indexes = ", this% npeos_1
@@ -333,11 +336,16 @@ SUBMODULE (bns_lorene) io
         PRINT *
         PRINT *, " ** Using tabulated EOS"
         PRINT *
-        PRINT *, " Equations of state for star 1 (EOS1) = ", &
-                 TRIM(this% eos_filenames(1))
-        PRINT *, " Equations of state for star 1 (EOS1) = ", &
-                 TRIM(this% eos_filenames(2))
-        PRINT *
+        IF(.NOT.use_eos_from_id)THEN
+          PRINT *, " Equations of state for star 1 (EOS1) = ", &
+                   TRIM(this% eos_filenames(1))
+          PRINT *, " Table located at: ", TRIM(this% eos_table1)
+          PRINT *
+          PRINT *, " Equations of state for star 2 (EOS2) = ", &
+                   TRIM(this% eos_filenames(2))
+          PRINT *, " Table located at: ", TRIM(this% eos_table2)
+          PRINT *
+        ENDIF
 
       ELSE
 

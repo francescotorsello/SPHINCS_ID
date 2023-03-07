@@ -78,93 +78,96 @@ SUBMODULE (bns_lorene) params
     IMPLICIT NONE
 
     INTEGER:: i, nchars
-    INTEGER, PARAMETER:: str_length= 100
+    INTEGER, PARAMETER:: str_length = 100
+    INTEGER, PARAMETER:: str_length2= 500
 
-    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos1_tmp_c
-    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos2_tmp_c
-    !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos1_tmp
-    !CHARACTER, DIMENSION(:), ALLOCATABLE:: eos2_tmp
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length) :: eos1_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length) :: eos2_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length2):: eostable1_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length2):: eostable2_tmp_c
 
     PRINT *, "** Executing the read_id_params subroutine..."
 
-    CALL get_lorene_id_params( this% bns_ptr, &
-                               this% angular_vel, &
-                               this% distance, &
-                               this% distance_com, &
-                               this% mass1, &
-                               this% mass2, &
-                               this% mass_grav1, &
-                               this% mass_grav2, &
-                               this% adm_mass, &
-                               this% linear_momentum_x, &
-                               this% linear_momentum_y, &
-                               this% linear_momentum_z, &
-                               this% angular_momentum_x, &
-                               this% angular_momentum_y, &
-                               this% angular_momentum_z, &
-                               this% area_radius1, &
-                               this% radius1_x_comp, &
-                               this% radius1_y, &
-                               this% radius1_z, &
-                               this% radius1_x_opp, &
-                               this% center1_x, &
-                               this% barycenter1_x, &
-                               this% area_radius2, &
-                               this% radius2_x_comp, &
-                               this% radius2_y, &
-                               this% radius2_z, &
-                               this% radius2_x_opp, &
-                               this% center2_x, &
-                               this% barycenter2_x, &
-                               this% ent_center1, &
-                               this% nbar_center1, &
-                               this% rho_center1, &
-                               this% energy_density_center1, &
-                               this% specific_energy_center1, &
-                               this% pressure_center1, &
-                               this% ent_center2, &
-                               this% nbar_center2, &
-                               this% rho_center2, &
-                               this% energy_density_center2, &
-                               this% specific_energy_center2, &
-                               this% pressure_center2, &
-                               eos1_tmp_c, &
-                               eos2_tmp_c, &
-                               this% eos1_loreneid, &
-                               this% eos2_loreneid, &
-                               this% gamma_1, &
-                               this% kappa_1, &
-                               this% gamma_2, &
-                               this% kappa_2, &
-                               this% npeos_1, &
-                               this% gamma0_1, &
-                               this% gamma1_1, &
-                               this% gamma2_1, &
-                               this% gamma3_1, &
-                               this% kappa0_1, &
-                               this% kappa1_1, &
-                               this% kappa2_1, &
-                               this% kappa3_1, &
-                               this% logP1_1,  &
-                               this% logRho0_1,&
-                               this% logRho1_1,&
-                               this% logRho2_1,&
-                               this% npeos_2,  &
-                               this% gamma0_2, &
-                               this% gamma1_2, &
-                               this% gamma2_2, &
-                               this% gamma3_2, &
-                               this% kappa0_2, &
-                               this% kappa1_2, &
-                               this% kappa2_2, &
-                               this% kappa3_2, &
-                               this% logP1_2,  &
-                               this% logRho0_2,&
-                               this% logRho1_2,&
-                               this% logRho2_2 )
+    CALL get_lorene_bns_params( this% bns_ptr,                 &
+                                this% angular_vel,             &
+                                this% distance,                &
+                                this% distance_com,            &
+                                this% mass1,                   &
+                                this% mass2,                   &
+                                this% mass_grav1,              &
+                                this% mass_grav2,              &
+                                this% adm_mass,                &
+                                this% linear_momentum_x,       &
+                                this% linear_momentum_y,       &
+                                this% linear_momentum_z,       &
+                                this% angular_momentum_x,      &
+                                this% angular_momentum_y,      &
+                                this% angular_momentum_z,      &
+                                this% area_radius1,            &
+                                this% radius1_x_comp,          &
+                                this% radius1_y,               &
+                                this% radius1_z,               &
+                                this% radius1_x_opp,           &
+                                this% center1_x,               &
+                                this% barycenter1_x,           &
+                                this% area_radius2,            &
+                                this% radius2_x_comp,          &
+                                this% radius2_y,               &
+                                this% radius2_z,               &
+                                this% radius2_x_opp,           &
+                                this% center2_x,               &
+                                this% barycenter2_x,           &
+                                this% ent_center1,             &
+                                this% nbar_center1,            &
+                                this% rho_center1,             &
+                                this% energy_density_center1,  &
+                                this% specific_energy_center1, &
+                                this% pressure_center1,        &
+                                this% ent_center2,             &
+                                this% nbar_center2,            &
+                                this% rho_center2,             &
+                                this% energy_density_center2,  &
+                                this% specific_energy_center2, &
+                                this% pressure_center2,        &
+                                eos1_tmp_c,                    &
+                                eos2_tmp_c,                    &
+                                this% eos1_loreneid,           &
+                                this% eos2_loreneid,           &
+                                this% gamma_1,                 &
+                                this% kappa_1,                 &
+                                this% gamma_2,                 &
+                                this% kappa_2,                 &
+                                this% npeos_1,                 &
+                                this% gamma0_1,                &
+                                this% gamma1_1,                &
+                                this% gamma2_1,                &
+                                this% gamma3_1,                &
+                                this% kappa0_1,                &
+                                this% kappa1_1,                &
+                                this% kappa2_1,                &
+                                this% kappa3_1,                &
+                                this% logP1_1,                 &
+                                this% logRho0_1,               &
+                                this% logRho1_1,               &
+                                this% logRho2_1,               &
+                                this% npeos_2,                 &
+                                this% gamma0_2,                &
+                                this% gamma1_2,                &
+                                this% gamma2_2,                &
+                                this% gamma3_2,                &
+                                this% kappa0_2,                &
+                                this% kappa1_2,                &
+                                this% kappa2_2,                &
+                                this% kappa3_2,                &
+                                this% logP1_2,                 &
+                                this% logRho0_2,               &
+                                this% logRho1_2,               &
+                                this% logRho2_2,               &
+                                eostable1_tmp_c,               &
+                                eostable2_tmp_c )
+
 
     ! Convert distances from |lorene| units (km) to SPHINCS units (Msun_geo)
-    ! See MODULE constants for the definition of Msun_geo
     this% distance      = this% distance/Msun_geo
     this% distance_com  = this% distance_com/Msun_geo
     this% area_radius1  = this% area_radius1/Msun_geo
@@ -293,7 +296,11 @@ SUBMODULE (bns_lorene) params
                     /( this% mass_grav1*this% mass_grav2* &
                        ( this% mass_grav1 + this% mass_grav2 ) )
 
-    ! Convert C++ strings to FORTRAN strings
+    !
+    !-- Convert C++ strings to FORTRAN strings
+    !
+
+    ! Name of EOS for star 1
     i= 1
     DO
       IF( eos1_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
@@ -312,9 +319,11 @@ SUBMODULE (bns_lorene) params
 
     ALLOCATE( CHARACTER(nchars):: this% eos1, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for string eos1. ", &
+       PRINT *, "...allocation error for string eos1 in SUBROUTINE", &
+                " read_id_params in SUBMODULE bns_lorene@params.",&
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
+       PRINT *
        STOP
     ENDIF
     this% eos1= TRANSFER( eos1_tmp_c(1:nchars), this% eos1 )
@@ -322,6 +331,7 @@ SUBMODULE (bns_lorene) params
     !  this% eos1(i:i)= eos1_tmp(i)
     !ENDDO
 
+    ! Name of EOS for star 2
     i= 1
     DO
       IF( eos2_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
@@ -340,9 +350,11 @@ SUBMODULE (bns_lorene) params
 
     ALLOCATE( CHARACTER(nchars):: this% eos2, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for string eos2. ", &
+       PRINT *, "...allocation error for string eos2 in SUBROUTINE", &
+                " read_id_params in SUBMODULE bns_lorene@params.", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
+       PRINT *
        STOP
     ENDIF
     this% eos2= TRANSFER( eos2_tmp_c(1:nchars), this% eos2 )
@@ -353,7 +365,49 @@ SUBMODULE (bns_lorene) params
     this% eos1= shorten_eos_name(this% eos1)
     this% eos2= shorten_eos_name(this% eos2)
 
-    CALL print_id_params( this )
+    ! Name of file containing the EOS table for star 1
+    i= 1
+    DO
+      IF( eostable1_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
+
+    ALLOCATE( CHARACTER(nchars):: this% eos_table1, &
+              STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos_tables1 in SUBROUTINE", &
+                " read_id_params in SUBMODULE bns_lorene@params.", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       PRINT *
+       STOP
+    ENDIF
+    this% eos_table1= &
+      TRANSFER( eostable1_tmp_c(1:nchars), this% eos_table1 )
+
+    ! Name of file containing the EOS table for star 2
+    i= 1
+    DO
+      IF( eostable2_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
+
+    ALLOCATE( CHARACTER(nchars):: this% eos_table2, &
+              STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos_tables2 in SUBROUTINE", &
+                " read_id_params in SUBMODULE bns_lorene@params.", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       PRINT *
+       STOP
+    ENDIF
+    this% eos_table2= &
+      TRANSFER( eostable2_tmp_c(1:nchars), this% eos_table2 )
+
+    CALL print_id_params(this)
 
     PRINT *, "** Subroutine read_id_params executed."
     PRINT *

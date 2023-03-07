@@ -60,7 +60,7 @@ SUBMODULE (diffstar_lorene) params
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR, C_NULL_CHAR
     USE utility, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
                        k_lorene2hydrobase_piecewisepolytrope, zero, two, &
-                       eos$poly, eos$pwpoly
+                       eos$poly, eos$pwpoly, eos$tabu
 
 #if flavour == 1
 
@@ -76,8 +76,10 @@ SUBMODULE (diffstar_lorene) params
 
     INTEGER:: i, nchars
     INTEGER, PARAMETER:: str_length= 100
+    INTEGER, PARAMETER:: str_length2= 500
 
-    CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length) :: eos_tmp_c
+    CHARACTER(KIND= C_CHAR), DIMENSION(str_length2):: eostable_tmp_c
 
     PRINT *
     PRINT *, "** Executing the read_diffstar_params subroutine..."
@@ -129,7 +131,8 @@ SUBMODULE (diffstar_lorene) params
                               this% logP1,                          &
                               this% logRho0,                        &
                               this% logRho1,                        &
-                              this% logRho2 )
+                              this% logRho2,                        &
+                              eostable_tmp_c )
 
     ! Convert distances from |lorene| units (km) to SPHINCS units (Msun_geo)
     ! See MODULE constants for the definition of Msun_geo
@@ -174,7 +177,7 @@ SUBMODULE (diffstar_lorene) params
     ELSEIF( this% gamma0 /= 0 )THEN
     ! If the EOS is piecewise polytropic
 
-      this% eos_id = eos$pwpoly
+      this% eos_id= eos$pwpoly
       this% kappa0= this% kappa0 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma0 )
       this% kappa1= this% kappa1 &
@@ -184,8 +187,10 @@ SUBMODULE (diffstar_lorene) params
       this% kappa3= this% kappa3 &
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma3 )
 
-    !ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
+    ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
     ! If the EOS is tabulated
+
+      this% eos_id= eos$tabu
 
     ELSE
 
@@ -196,7 +201,11 @@ SUBMODULE (diffstar_lorene) params
 
     ENDIF
 
-    ! Convert C++ strings to FORTRAN strings
+    !
+    !-- Convert C++ strings to FORTRAN strings
+    !
+
+    ! Name of the EOS for star 1
     i= 1
     DO
       IF( eos_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
@@ -206,16 +215,39 @@ SUBMODULE (diffstar_lorene) params
 
     ALLOCATE( CHARACTER(nchars):: this% eos, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
-       PRINT *, "...allocation error for string eos. ", &
+       PRINT *, "...allocation error for string eos in SUBROUTINE", &
+                " read_id_params in SUBMODULE bns_lorene@params.", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
+       PRINT *
        STOP
     ENDIF
     this% eos= TRANSFER( eos_tmp_c(1:nchars), this% eos )
 
     this% eos= shorten_eos_name(this% eos)
 
-    CALL print_diffstar_params( this )
+    ! Name of file containing the EOS table for star 1
+    i= 1
+    DO
+      IF( eostable_tmp_c(i) == C_NULL_CHAR .OR. i == str_length ) EXIT
+      i= i + 1
+    ENDDO
+    nchars = i - 1
+
+    ALLOCATE( CHARACTER(nchars):: this% eos_table, &
+              STAT= ios, ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+       PRINT *, "...allocation error for string eos_tables in SUBROUTINE", &
+                " read_id_params in SUBMODULE bns_lorene@params.", &
+                "The error message is ", err_msg
+       PRINT *, "The STAT variable is ", ios
+       PRINT *
+       STOP
+    ENDIF
+    this% eos_table= &
+      TRANSFER( eostable_tmp_c(1:nchars), this% eos_table )
+
+    CALL print_diffstar_params(this)
 
     PRINT *, "** Subroutine read_diffstar_params executed."
     PRINT *

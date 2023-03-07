@@ -176,6 +176,7 @@ MODULE utility
 
   ! Logical variables to steer the execution
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
+            use_eos_from_id, &
             compute_constraints, export_constraints_xy, &
             export_constraints_x, export_constraints, &
             export_constraints_details, compute_parts_constraints, &
@@ -186,8 +187,11 @@ MODULE utility
   CHARACTER(LEN=max_length), DIMENSION(50):: eos_filenames= "use_id"
   !! Array of strings storing the names of the files containing the |eos|
   CHARACTER(LEN=max_length):: common_path
-  !# String storing the local path to the directory where the |id| files
-  !  are stored
+  !# String storing the path to the directory where the |id| files
+  !  are stored. Local and global paths can be used
+  CHARACTER(LEN=max_length):: common_eos_path
+  !# String storing the path to the directory where the |eos| files
+  !  are stored. Local and global paths can be used
   CHARACTER(LEN=max_length):: sph_path
   !# String storing the local path to the directory where the
   !  SPH output is to be saved
@@ -220,8 +224,9 @@ MODULE utility
     ! Namelist containing parameters read from sphincs_id_parameters.par
     ! by the SUBROUTINE read_sphincs_id_parameters of this PROGRAM
     NAMELIST /sphincs_id_parameters/ &
-              n_id, common_path, filenames, eos_filenames, placer, &
-              export_bin, export_form, export_form_xy, &
+              n_id, common_path, filenames, &
+              common_eos_path, use_eos_from_id, eos_filenames, &
+              placer, export_bin, export_form, export_form_xy, &
               export_form_x, export_constraints_xy, &
               export_constraints_x, compute_constraints, &
               export_constraints, export_constraints_details, &
@@ -230,6 +235,8 @@ MODULE utility
               one_lapse, zero_shift, show_progress, &
               run_sph, run_spacetime, sph_path, spacetime_path, &
               estimate_length_scale
+
+    use_eos_from_id= .TRUE.
 
     sphincs_id_parameters_namefile= 'sphincs_id_parameters.dat'
 

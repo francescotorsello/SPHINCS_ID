@@ -66,8 +66,8 @@ PROGRAM sphincs_id
                               test_status, show_progress, end_time, &
                               read_sphincs_id_parameters, &
                               !----------
-                              n_id, common_path, filenames, eos_filenames, &
-                              placer, &
+                              n_id, common_path, filenames, &
+                              eos_filenames, placer, &
                               export_bin, export_form, export_form_xy, &
                               export_form_x, export_constraints_xy, &
                               export_constraints_x, compute_constraints, &
@@ -318,7 +318,6 @@ stringize_end(vers)
   !
   !-- Construct the idbase objects
   !
-
   build_idbase_loop: DO itr= 1, n_id, 1
 
     CALL allocate_idbase( ids(itr)% idata, TRIM(filenames(itr)), &
