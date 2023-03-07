@@ -153,9 +153,11 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     IF(debug) PRINT *, dim_seed
     IF(debug) PRINT *, seed
 
+    IF(debug) PRINT *, surf% is_known
+
     IF(PRESENT(surf) .AND. surf% is_known)THEN
 
-      surface_type="geoidal"
+      surface_type= "geoidal"
 
       max_radius= radius
       a_x= one
@@ -165,7 +167,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
     ELSE
 
-      surface_type="spherical"
+      surface_type= "spherical"
 
       max_radius= radius
       a_x= one
@@ -177,11 +179,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
     IF(PRESENT(radii))THEN
 
-      IF(.NOT.(PRESENT(surf) .AND. surf% is_known))THEN
-
-        surface_type="ellipsoidal"
-
-      ENDIF
+      IF(.NOT.(PRESENT(surf) .AND. surf% is_known)) surface_type= "ellipsoidal"
 
       max_radius= MAXVAL([radius,radii(1),radii(2)])
 
@@ -209,6 +207,10 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
       ENDIF
 
     ENDIF
+
+    IF(debug) PRINT *, "inside place_particles_ellipsoidal_surfaces, ", &
+                       "surface_type is:", surface_type
+    !STOP
 
     !-----------------------------------!
     !-- Compute desired particle mass --!

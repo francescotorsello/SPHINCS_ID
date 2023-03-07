@@ -14,16 +14,16 @@
 n_id=1                          ! Number of physical systems to use
 ! Path to the directory containing the ID files, RELATIVE to the path where the
 ! code is executed
-common_path="lorene-id-files/"
+common_path=!"lorene-id-files/"
             !"fuka-id-files/"
-            !"eccentric-ejecta-files/"
+            "eccentric-ejecta-files/"
 filenames(1)=!"BNSLO_1.3-1.3_apr3_45km.bin"
              !"BNSLO_1.3-1.3_mpa1_45km.bin"
-             !!"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
+             !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"DRSLO_APR4.bin"
              !"DRSLO_poly2.00.bin"
-             !"EJECT_ejecta_apr4_2516.dat"
+             "EJECT_ejecta_apr4_2516.dat"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSFU_1.4-1.4_poly2.00_45km.info"
              !"BNSFU_1.2-1.5_MPA1_45km_ECC_RED.info"
@@ -84,7 +84,7 @@ filenames(1)=!"BNSLO_1.3-1.3_apr3_45km.bin"
              !"BNSLO_SRO-SLy4_1.2-2_45km.bin"
              !"BNSLO_RG-SLy4_1.2-1.2_45km.bin"
              !"BNSLO_RG-SLy4_1.2-2_45km.bin"
-             "BNSLO_DD2-SF-RDF1.8-wl_1.2-1.2_45km.bin"
+             !!"BNSLO_DD2-SF-RDF1.8-wl_1.2-1.2_45km.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-2_45km.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-2_45km_2.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-2_45km_5e-9.bin"
@@ -97,7 +97,7 @@ filenames(1)=!"BNSLO_1.3-1.3_apr3_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
-use_eos_from_id=.FALSE.
+use_eos_from_id=.TRUE.
 common_eos_path="/disk/stero-1/ftors/Lorene_Library/par_eos_files/"
 eos_filenames(1)="par_eos_DD2-SF_RDF1.8_with_leptons.d",
                  "par_eos_DD2-SF_RDF1.8_with_leptons.d"
@@ -126,7 +126,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_id_particles.par parameter file                        !
 !------------------------------------------------------------------!
-placer(1,:)=2                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object

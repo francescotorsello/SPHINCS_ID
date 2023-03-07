@@ -168,11 +168,9 @@ SUBMODULE (sph_particles) sph_variables
                           " considered."
         IF(verb) PRINT *
 
-        u= this% specific_energy
-
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( Pr, m0c2_cu, u, npart_in, npart_fin, &
-        !$OMP                     nlrf, enthalpy, cs &
+        !$OMP                     nlrf, enthalpy, cs, this &
 #ifdef __INTEL_COMPILER
         !$OMP                     , gamma_poly, kappa_poly ) &
 #elif  __GFORTRAN__
@@ -180,6 +178,8 @@ SUBMODULE (sph_particles) sph_variables
 #endif
         !$OMP             PRIVATE( a )
         DO a= 1, npart_fin - npart_in + 1, 1
+
+          u(a)= this% specific_energy(a)
 
           Pr(a)= &
           ! cold pressure
@@ -244,15 +244,18 @@ SUBMODULE (sph_particles) sph_variables
                           " considered."
         IF(verb) PRINT *
 
-        u= this% specific_energy
-
         CALL select_EOS_parameters( eqos% eos_name )
 
+        PRINT *, ALLOCATED(this% specific_energy)
+        STOP
+
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( nlrf, Pr, m0c2_cu, u, cs, &
+        !$OMP             SHARED( nlrf, Pr, m0c2_cu, u, cs, this, &
         !$OMP                     npart_in, npart_fin ) &
         !$OMP             PRIVATE( a, tmp, tmp2 )
         DO a= 1, npart_fin - npart_in + 1, 1
+
+          u(a)= this% specific_energy(a)
 
           CALL gen_pwp_eos( nlrf(a)*m0c2_cu, tmp, &
                             tmp2, u(a), Pr(a), cs(a) )

@@ -76,20 +76,26 @@ SUBMODULE (id_base) mass_profile
     DOUBLE PRECISION:: a_x, a_y, a_z, xtemp, ytemp, ztemp
     DOUBLE PRECISION, DIMENSION(6):: g
 
-    !LOGICAL, PARAMETER:: debug= .TRUE.
+    CHARACTER(LEN=:), ALLOCATABLE:: surface_type
+
+    LOGICAL, PARAMETER:: debug= .FALSE.
 
     a_x= one
     a_y= one
     a_z= one
     max_radius= radius
+    surface_type= "spherical"
     IF(PRESENT(surf) .AND. surf% is_known)THEN
+
+      surface_type= "geoidal"
 
       IF(PRESENT(radii))THEN
         max_radius= MAXVAL([radius,radii(1),radii(2)])
       ENDIF
 
-
     ELSEIF(PRESENT(radii))THEN
+
+      IF(.NOT.(PRESENT(surf) .AND. surf% is_known)) surface_type= "ellipsoidal"
 
       max_radius= MAXVAL([radius,radii(1),radii(2)])
 
@@ -114,6 +120,11 @@ SUBMODULE (id_base) mass_profile
       ENDIF
 
     ENDIF
+
+
+    IF(debug) PRINT *, "inside integrate_baryon_mass_density, ", &
+                       "surface_type is:", surface_type
+   ! STOP
 
     mass_profile( 1, 0 )= zero
     mass_profile( 2, 0 )= four/three*pi*dr**three*central_density

@@ -77,10 +77,13 @@ SUBMODULE(bns_base) geometry
     DO i_matter= 1, n_matter, 1
 
       PRINT *, " * Finding surface for star ", i_matter, "..."
+
       CALL this% find_surface(this% return_center(i_matter), &
                               n_theta, n_phi, &
-                              this% surfaces(i_matter)% points)                      
+                              this% surfaces(i_matter)% points)
+
       this% surfaces(i_matter)% is_known= .TRUE.
+
       PRINT *, "   ...done."
 
       IF( i_matter <= 9 ) WRITE( str_i, '(I1)' ) i_matter

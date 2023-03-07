@@ -141,7 +141,7 @@ SUBMODULE (sph_particles) constructor_std
     USE kernel_table,       ONLY: ktable
     USE input_output,       ONLY: read_options
     USE units,              ONLY: set_units
-    USE options,            ONLY: ikernel, ndes, eos_str, eos_type
+    USE options,            ONLY: ikernel, ndes
     USE alive_flag,         ONLY: alive
     USE analyze,            ONLY: COM
     USE utility,            ONLY: spherical_from_cartesian, &
@@ -362,9 +362,13 @@ SUBMODULE (sph_particles) constructor_std
     DO i_matter= 1, parts% n_matter, 1
 
       IF(ALLOCATED(id% surfaces(i_matter)% points))THEN
+
         parts% surfaces(i_matter)= id% surfaces(i_matter)
+
       ELSE
+
         parts% surfaces(i_matter)% is_known= .FALSE.
+
       ENDIF
 
     ENDDO
@@ -812,9 +816,9 @@ SUBMODULE (sph_particles) constructor_std
                          DIM= 1, &
                 MASK= parts% baryon_density(npart_in:npart_fin) > zero )
         min_vel= MINVAL( SQRT( &
-                       (parts% v_euler_x(npart_in:npart_fin))**2.0D0 &
-                     + (parts% v_euler_y(npart_in:npart_fin))**2.0D0 &
-                     + (parts% v_euler_z(npart_in:npart_fin))**2.0D0 ), &
+                       (parts% v_euler_x(npart_in:npart_fin))**2 &
+                     + (parts% v_euler_y(npart_in:npart_fin))**2 &
+                     + (parts% v_euler_z(npart_in:npart_fin))**2 ), &
                          DIM= 1, &
                 MASK= parts% baryon_density(npart_in:npart_fin) > zero )
 
@@ -1445,7 +1449,8 @@ SUBMODULE (sph_particles) constructor_std
       !
       !**************************************************************
 
-      USE utility,  ONLY: eos$poly, eos$pwpoly
+      USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu
+      USE options,  ONLY: eos_str, eos_type
 
       IMPLICIT NONE
 

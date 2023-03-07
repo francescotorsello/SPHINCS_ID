@@ -93,15 +93,8 @@ SUBMODULE (bns_fuka) constructor
     bns_counter= bns_counter + 1
 
     ! Do not use the geodesic gauge by default
-    CALL derived_type% set_one_lapse ( .FALSE. )
-    CALL derived_type% set_zero_shift( .FALSE. )
-
-    ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
-    ! within SPHINCS_ID. Hence, we chose to make a system call to a program
-    ! within Kadath that reads the ID from the FUKA output file and prints it
-    ! on a lattice. The ID on the particles will be interplated from this fine
-    ! lattice.
-    !CALL set_up_lattices_around_stars( filename )
+    CALL derived_type% set_one_lapse (.FALSE.)
+    CALL derived_type% set_zero_shift(.FALSE.)
 
     ! Compute typical length scales of the system using the pressure
     IF( derived_type% get_estimate_length_scale() )THEN
@@ -236,7 +229,18 @@ SUBMODULE (bns_fuka) constructor
 
     IF( flag == flag$sph )THEN
 
+      ! Since Kadath is not thread-safe, we cannot parallelize it using OMP
+      ! within SPHINCS_ID. Hence, we chose to make a system call to a program
+      ! within Kadath that reads the ID from the FUKA output file and prints it
+      ! on a lattice. The ID on the particles will be interplated from this fine
+      ! lattice.
       CALL this% set_up_lattices_around_stars()
+
+      IF(ALLOCATED(this% surfaces)) DEALLOCATE(this% surfaces)
+
+      !PRINT *, ALLOCATED(this% surfaces(1)% points)
+      !PRINT *, ALLOCATED(this% surfaces(2)% points)
+
       ! Find the surfaces of the stars and print them to a formatted file
       CALL this% find_print_surfaces()
 

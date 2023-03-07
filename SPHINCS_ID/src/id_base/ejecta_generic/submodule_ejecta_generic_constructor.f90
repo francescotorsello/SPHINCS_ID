@@ -435,16 +435,16 @@ SUBMODULE (ejecta_generic) constructor
 
     CALL derived_type% integrate_baryon_mass_density( &
                             derived_type% centers(1,:), &
-                            MAXVAL( [ABS(MAXVAL(grid_tmp( :, 1 ))), &
-                                     ABS(MAXVAL(grid_tmp( :, 2 ))), &
-                                     ABS(MAXVAL(grid_tmp( :, 3 )))] ), &
+                            MAXVAL(grid_tmp( :, 1 )), &
                             derived_type% read_mass_density( &
                               derived_type% centers(1,1), &
                               derived_type% centers(1,2), &
                               derived_type% centers(1,3) ), &
                             dr, dth, dphi, &
                             derived_type% masses(1), mass_profile, &
-                            mass_profile_idx )
+                            mass_profile_idx )!, &
+                            !radii= [MAXVAL(derived_type% sizes(1,3:4)), &
+                            !        MAXVAL(derived_type% sizes(1,5:6))] )
 
     ! Set the EOS parameters
     derived_type% eos_id= eos$pwpoly
