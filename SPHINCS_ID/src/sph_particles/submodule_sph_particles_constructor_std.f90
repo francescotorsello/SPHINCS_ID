@@ -644,6 +644,12 @@ SUBMODULE (sph_particles) constructor_std
     ENDDO
     PRINT *
 
+    CALL COM( parts% npart, parts% pos, parts% nu, &
+              parts% barycenter_system(1), &
+              parts% barycenter_system(2), &
+              parts% barycenter_system(3), &
+              parts% barycenter_system(4) )
+
     parts_out_namefile= "final_pos_nu.dat"
 
     PRINT *, "** Printing final particle positions and nu to file ", &
