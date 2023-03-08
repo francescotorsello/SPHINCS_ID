@@ -246,9 +246,6 @@ SUBMODULE (sph_particles) sph_variables
 
         CALL select_EOS_parameters( eqos% eos_name )
 
-        PRINT *, ALLOCATED(this% specific_energy)
-        STOP
-
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( nlrf, Pr, m0c2_cu, u, cs, this, &
         !$OMP                     npart_in, npart_fin ) &

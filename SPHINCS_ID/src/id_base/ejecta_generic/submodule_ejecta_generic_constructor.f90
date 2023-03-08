@@ -66,11 +66,12 @@ SUBMODULE (ejecta_generic) constructor
 
 
     INTEGER, PARAMETER:: unit_pos= 2589
+    INTEGER, PARAMETER:: n_matter= 1
     DOUBLE PRECISION, PARAMETER:: atmosphere_density= 1.0439859633622731D-17
 
     INTEGER:: header_lines= 2 ! TODO: give this as input
     INTEGER:: nlines, ntmp
-    INTEGER:: i_matter, n_matter_loc, itr, i, j, k
+    INTEGER:: i_matter, itr, i, j, k
    ! INTEGER, DIMENSION(:), ALLOCATABLE:: x_sorted, y_sorted, z_sorted
     INTEGER, DIMENSION(:), ALLOCATABLE:: mass_profile_idx
 
@@ -88,8 +89,7 @@ SUBMODULE (ejecta_generic) constructor
     PRINT *, " * Reading ID on Cartesian, uniform grid from formatted file " &
              // TRIM(filename), "..."
 
-    CALL derived_type% set_n_matter(1) ! TODO: give this as argument
-    n_matter_loc= derived_type% get_n_matter()
+    CALL derived_type% set_n_matter(n_matter)
 
     CALL derived_type% set_cold_system(.FALSE.)
 
@@ -277,7 +277,7 @@ SUBMODULE (ejecta_generic) constructor
     PRINT *
 
     ! Allocate and initialize member arrays
-    CALL derived_type% allocate_gridid_memory( n_matter_loc )
+    CALL derived_type% allocate_gridid_memory( n_matter )
 
     derived_type% grid= zero
     derived_type% baryon_mass_density= zero
@@ -355,7 +355,7 @@ SUBMODULE (ejecta_generic) constructor
 
 
     ! Assign ID properties to member arrays
-    DO i_matter= 1, n_matter_loc, 1
+    DO i_matter= 1, n_matter, 1
 
       !derived_type% masses(i_matter)= zero
       derived_type% centers(i_matter,:)= zero

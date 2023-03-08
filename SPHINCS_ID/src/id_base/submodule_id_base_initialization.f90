@@ -203,9 +203,9 @@ SUBMODULE (id_base) initialization
 
     INTEGER:: n_matter
 
-    n_matter= derived_type% get_n_matter()
-
     CALL derived_type% derived_type_constructor( filename, eos_filenames )
+
+    n_matter= derived_type% get_n_matter()
 
     IF(.NOT.ALLOCATED(derived_type% surfaces)) &
       ALLOCATE(derived_type% surfaces(n_matter))

@@ -693,12 +693,12 @@ SUBMODULE (bns_lorene) read
       ! to |lorene| units (\(\mathrm{km}\)).
       ! See MODULE constants for the definition of Msun_geo
       CALL get_lorene_id_mass_b( this% bns_ptr, &
-                                    x*Msun_geo, &
-                                    y*Msun_geo, &
-                                    z*Msun_geo, &
-                                    g(jxx), &
-                                    baryon_density, &
-                                    gamma_euler )
+                                 x*Msun_geo, &
+                                 y*Msun_geo, &
+                                 z*Msun_geo, &
+                                 g(jxx), &
+                                 baryon_density, &
+                                 gamma_euler )
 
       g(jxy)= zero
       g(jxz)= zero

@@ -357,21 +357,33 @@ SUBMODULE (sph_particles) constructor_std
     ENDDO
 
     !
-    !-- Copy the surfaces of the matter objects
+    !-- Copy the surfaces of the matter objects, if they are known
     !
-    DO i_matter= 1, parts% n_matter, 1
+    IF(ALLOCATED(id% surfaces))THEN
 
-      IF(ALLOCATED(id% surfaces(i_matter)% points))THEN
+      DO i_matter= 1, parts% n_matter, 1
 
-        parts% surfaces(i_matter)= id% surfaces(i_matter)
+        IF(ALLOCATED(id% surfaces(i_matter)% points))THEN
 
-      ELSE
+          parts% surfaces(i_matter)= id% surfaces(i_matter)
+
+        ELSE
+
+          parts% surfaces(i_matter)% is_known= .FALSE.
+
+        ENDIF
+
+      ENDDO
+
+    ELSE
+
+      DO i_matter= 1, parts% n_matter, 1
 
         parts% surfaces(i_matter)% is_known= .FALSE.
 
-      ENDIF
+      ENDDO
 
-    ENDDO
+    ENDIF
 
     parts% post_process_sph_id => id% finalize_sph_id_ptr
 

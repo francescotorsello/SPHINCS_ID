@@ -14,16 +14,16 @@
 n_id=1                          ! Number of physical systems to use
 ! Path to the directory containing the ID files, RELATIVE to the path where the
 ! code is executed
-common_path=!"lorene-id-files/"
+common_path="lorene-id-files/"
             !"fuka-id-files/"
-            "eccentric-ejecta-files/"
-filenames(1)=!"BNSLO_1.3-1.3_apr3_45km.bin"
+            !"eccentric-ejecta-files/"
+filenames(1)="BNSLO_poly2_1.4-1.4_45km_1e-6.bin"!"BNSLO_1.3-1.3_apr3_45km.bin"
              !"BNSLO_1.3-1.3_mpa1_45km.bin"
              !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"DRSLO_APR4.bin"
              !"DRSLO_poly2.00.bin"
-             "EJECT_ejecta_apr4_2516.dat"
+             !"EJECT_ejecta_apr4_2516.dat"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSFU_1.4-1.4_poly2.00_45km.info"
              !"BNSFU_1.2-1.5_MPA1_45km_ECC_RED.info"

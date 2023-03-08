@@ -387,7 +387,7 @@ SUBMODULE (sph_particles) lattices
       ENDIF
     ENDIF
 
-    vol  = (xmax - xmin)*(ymax - ymin)*2*ABS(zlim)
+    vol  = (xmax - xmin)*(ymax - ymin)*two*ABS(zlim)
     vol_a= vol/npart_tmp
 
     pvol= vol_a
@@ -402,7 +402,7 @@ SUBMODULE (sph_particles) lattices
       STOP
     ENDIF
 
-    PRINT *, " * Total volume of the lattices=", vol, "Msun_geo^3"
+    PRINT *, " * Total volume of the lattice=", vol, "Msun_geo^3"
     PRINT *, " * Particle volume=", vol_a, "Msun_geo^3"
     PRINT *
 

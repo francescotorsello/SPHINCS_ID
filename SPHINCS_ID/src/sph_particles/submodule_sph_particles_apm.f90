@@ -1003,11 +1003,11 @@ SUBMODULE (sph_particles) apm
 
         ELSEIF(use_pressure)THEN
 
-          dNstar(a)= ( pressure_sph(a) - pressure_id(a) )/pressure_id(a)
+          dNstar(a)= (pressure_sph(a) - pressure_id(a))/pressure_id(a)
 
         ELSE
 
-          dNstar(a)= ( nstar_sph(a) - nstar_id(a) )/nstar_id(a)
+          dNstar(a)= (nstar_sph(a) - nstar_id(a))/nstar_id(a)
 
         ENDIF
         art_pr(a) = MAX( one + dNstar(a), one/ten )
@@ -2091,16 +2091,32 @@ SUBMODULE (sph_particles) apm
 
     max_nu= zero
     min_nu= HUGE(one)
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, a_numax, a_numin ) &
+    !$OMP             PRIVATE( a ) &
+    !$OMP             REDUCTION( MIN: min_nu ) &
+    !$OMP             REDUCTION( MAX: max_nu )
     DO a= 1, npart_real, 1
-      IF( nu(a) > max_nu )THEN
-        max_nu= nu(a)
-        a_numax= a
-      ENDIF
-      IF( nu(a) < min_nu )THEN
-        min_nu= nu(a)
-        a_numin= a
-      ENDIF
+
+      max_nu= MAX(nu(a), max_nu)
+      IF( nu(a) == max_nu ) a_numax= a
+
+      min_nu= MAX(nu(a), min_nu)
+      IF( nu(a) == min_nu ) a_numin= a
+
     ENDDO
+    !$OMP END PARALLEL DO
+
+    !DO a= 1, npart_real, 1
+    !  IF( nu(a) > max_nu )THEN
+    !    max_nu= nu(a)
+    !    a_numax= a
+    !  ENDIF
+    !  IF( nu(a) < min_nu )THEN
+    !    min_nu= nu(a)
+    !    a_numin= a
+    !  ENDIF
+    !ENDDO
 
     PRINT *, " * Baryon number assigned."
     PRINT *
@@ -2108,48 +2124,76 @@ SUBMODULE (sph_particles) apm
     !
     !-- Optionally change baryon number without moving the particles
     !
-    IF( mass_it )THEN
+    if_mass_it: IF(mass_it)THEN
+
+      PRINT *, "** Performs a second iteration without moving", &
+               " the particles, changing their mass in order to match", &
+               " the star density better."
 
       ! just a few iterations to NOT get the nu-ratio too large
       mass_iteration: DO itr= 1, m_max_it, 1
 
-         ! measure density
-         CALL density_loop( npart_real, pos, &    ! input
-                            nu, h, nstar_sph )      ! output
+        CALL density_loop( npart_real, pos, &    ! input
+                           nu, h, nstar_sph )    ! output
 
+        CALL get_nstar_id_atm( npart_real, pos(1,:), &
+                               pos(2,:), &
+                               pos(3,:), nstar_sph, nstar_id, nlrf_sph, sqg, &
+                               use_atmosphere )
 
-         CALL get_nstar_id_atm( npart_real, pos(1,:), &
-                                pos(2,:), &
-                                pos(3,:), nstar_sph, nstar_id, nlrf_sph, sqg, &
-                                use_atmosphere )
+        !nstar_id( npart_real+1:npart_all )= zero
 
-         !nstar_id( npart_real+1:npart_all )= zero
+        dN_av= zero
+        !max_nu= zero
+        !min_nu= HUGE(one)
+        !$OMP PARALLEL DO DEFAULT( NONE ) &
+        !$OMP             SHARED( npart_real, dNstar, nstar_sph, &
+        !$OMP                     nstar_id, nu ) &
+        !$OMP             PRIVATE( a ) &
+        !$OMP             REDUCTION( +: dN_av )
+        DO a= 1, npart_real, 1
 
-         ! get RELATIVE nu's right
-         dN_av= zero
-         max_nu= zero
-         min_nu= HUGE(one)
-         DO a= 1, npart_real, 1
-            dN=    (nstar_sph(a)-nstar_id(a))/nstar_id(a)
-            nu(a)= nu(a)*(one - dN)
-            dN_av= dN_av + dN
-            IF( nu(a) > max_nu )THEN
-              max_nu= nu(a)
-              a_numax= a
-            ENDIF
-            IF( nu(a) < min_nu )THEN
-              min_nu= nu(a)
-              a_numin= a
-            ENDIF
-         ENDDO
-         dN_av= dN_av/DBLE(npart_real)
+          dNstar(a)= (nstar_sph(a) - nstar_id(a))/nstar_id(a)
+          nu(a)    = nu(a)*(one - dNstar(a))
+          dN_av    = dN_av + dNstar(a)
 
-         ! exit condition
-         IF( dN_av < tol ) EXIT
+        ENDDO
+        !$OMP END PARALLEL DO
+        dN_av= dN_av/DBLE(npart_real)
+
+        ! Exit condition
+        IF( dN_av < tol )THEN
+
+          max_nu= zero
+          min_nu= HUGE(one)
+          !$OMP PARALLEL DO DEFAULT( NONE ) &
+          !$OMP             SHARED( npart_real, nu, a_numax, a_numin ) &
+          !$OMP             PRIVATE( a ) &
+          !$OMP             REDUCTION( MIN: min_nu ) &
+          !$OMP             REDUCTION( MAX: max_nu )
+          DO a= 1, npart_real, 1
+
+            max_nu= MAX(nu(a), max_nu)
+            IF( nu(a) == max_nu ) a_numax= a
+
+            min_nu= MAX(nu(a), min_nu)
+            IF( nu(a) == min_nu ) a_numin= a
+
+          ENDDO
+          !$OMP END PARALLEL DO
+
+          CALL density_loop( npart_real, pos, &    ! input
+                             nu, h, nstar_sph )    ! output
+
+          PRINT *, "** Second iteration, without moving", &
+                   " the particles, completed."
+          EXIT
+
+        ENDIF
 
       ENDDO mass_iteration
 
-    ENDIF
+    ENDIF if_mass_it
 
     PRINT *, " * CORRECTED maximum baryon number at this step=", &
              max_nu
@@ -2161,16 +2205,37 @@ SUBMODULE (sph_particles) apm
 
     max_nu2= zero
     min_nu2= HUGE(one)
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, a_numax, a_numin, &
+    !$OMP                     a_numax2, a_numin2 ) &
+    !$OMP             PRIVATE( a ) &
+    !$OMP             REDUCTION( MIN: min_nu2 ) &
+    !$OMP             REDUCTION( MAX: max_nu2 )
     DO a= 1, npart_real, 1
-       IF( nu(a) > max_nu2 .AND. a /= a_numax )THEN
-         max_nu2= nu(a)
-         a_numax2= a
-       ENDIF
-       IF( nu(a) < min_nu2 .AND. a /= a_numin )THEN
-         min_nu2= nu(a)
-         a_numin2= a
-       ENDIF
+
+      IF( a /= a_numax )THEN
+        max_nu2= MAX(nu(a), max_nu2)
+        IF( nu(a) == max_nu2 ) a_numax2= a
+      ENDIF
+
+      IF( a /= a_numin )THEN
+        min_nu2= MIN(nu(a), min_nu2)
+        IF( nu(a) == min_nu2 ) a_numin2= a
+      ENDIF
+
     ENDDO
+    !$OMP END PARALLEL DO
+
+    !DO a= 1, npart_real, 1
+    !  IF( nu(a) > max_nu2 .AND. a /= a_numax )THEN
+    !    max_nu2= nu(a)
+    !    a_numax2= a
+    !  ENDIF
+    !  IF( nu(a) < min_nu2 .AND. a /= a_numin )THEN
+    !    min_nu2= nu(a)
+    !    a_numin2= a
+    !  ENDIF
+    !ENDDO
 
     PRINT *, " * Excluding the absolute max and min of nu:"
     PRINT *
@@ -2184,15 +2249,25 @@ SUBMODULE (sph_particles) apm
     PRINT *
 
     nu_tot= zero
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu ) &
+    !$OMP             PRIVATE( a ) &
+    !$OMP             REDUCTION( +: nu_tot )
     DO a= 1, npart_real, 1
       nu_tot= nu_tot + nu(a)
     ENDDO
+    !$OMP END PARALLEL DO
     mean_nu= nu_tot/npart_real
 
-    variance_nu = zero                       ! compute variance
-    DO a = 1, npart_real, 1
+    variance_nu = zero
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, mean_nu ) &
+    !$OMP             PRIVATE( a ) &
+    !$OMP             REDUCTION( +: variance_nu )
+    DO a= 1, npart_real, 1
       variance_nu = variance_nu + (nu(a) - mean_nu)**two
-    END DO
+    ENDDO
+    !$OMP END PARALLEL DO
     variance_nu = variance_nu / DBLE(npart_real - 1)
     stddev_nu   = SQRT(variance_nu)            ! compute standard deviation
 
@@ -2213,9 +2288,14 @@ SUBMODULE (sph_particles) apm
 
       nu= nu/(nu_tot*amu/Msun/mass)
       nu_tot= zero
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( npart_real, nu ) &
+      !$OMP             PRIVATE( a ) &
+      !$OMP             REDUCTION( +: nu_tot )
       DO a= 1, npart_real, 1
         nu_tot= nu_tot + nu(a)
       ENDDO
+      !$OMP END PARALLEL DO
 
       PRINT *, "After correcting nu to match the mass of the star..."
       PRINT *
@@ -2310,7 +2390,6 @@ SUBMODULE (sph_particles) apm
     !-- monitoring... --!
     !-------------------!
 
-    ! measure density
     CALL density_loop( npart_real, pos, &    ! input
                        nu, h, nstar_sph )      ! output
 
@@ -2322,25 +2401,36 @@ SUBMODULE (sph_particles) apm
     dN_av = zero
     dN_max= zero
     cnt1= 0
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, pos, nstar_sph, nstar_id ) &
+    !$OMP             PRIVATE( a, dN ) &
+    !$OMP             REDUCTION( +: dN_av, cnt1 ) &
+    !$OMP             REDUCTION( MAX: dN_max )
     DO a= 1, npart_real, 1
       IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > zero )THEN
-        dN= ABS(nstar_sph(a)-nstar_id(a))/nstar_id(a)
+        dN= ABS(nstar_sph(a) - nstar_id(a))/nstar_id(a)
         dN_av=  dN_av + dN
         dN_max= MAX(dN_max,dN)
         cnt1= cnt1 + 1
       ENDIF
     ENDDO
+    !$OMP END PARALLEL DO
     dN_av= dN_av/DBLE(cnt1)
 
-    variance_dN = zero                       ! compute variance
-    DO a = 1, npart_real, 1
+    variance_dN = zero
+    !$OMP PARALLEL DO DEFAULT( NONE ) &
+    !$OMP             SHARED( npart_real, nu, pos, nstar_sph, nstar_id, dN_av )&
+    !$OMP             PRIVATE( a, dN ) &
+    !$OMP             REDUCTION( +: variance_dN, cnt1 )
+    DO a= 1, npart_real, 1
       IF( get_density( pos(1,a), pos(2,a), pos(3,a) ) > zero )THEN
-        dN= ABS(nstar_sph(a)-nstar_id(a))/nstar_id(a)
+        dN= ABS(nstar_sph(a) - nstar_id(a))/nstar_id(a)
         variance_dN = variance_dN + (dN - dN_av)**two
         cnt1= cnt1 + 1
       ENDIF
-    END DO
-    variance_dN = variance_dN / DBLE(cnt1)
+    ENDDO
+    !$OMP END PARALLEL DO
+    variance_dN = variance_dN/DBLE(cnt1)
     stddev_dN   = SQRT(variance_dN)            ! compute standard deviation
 
     PRINT *, " * Final maximum relative error between the density from the ", &
@@ -2413,7 +2503,7 @@ SUBMODULE (sph_particles) apm
 
     PRINT *, "** Building neighbors tree..."
     PRINT *
-    cnt1= 0
+ !   cnt1= 0
  !   DO
  !
  !     few_ncand= .FALSE.
@@ -3364,6 +3454,8 @@ SUBMODULE (sph_particles) apm
         IF(debug) PRINT*, "nu_all           =",(mass/DBLE(npart_real))*umass/amu
         IF(debug) PRINT*, "nu_av            =", nu_av
         IF(debug) PRINT*, "nu_av/nstar_id_av=", nu_av/nstar_id_av
+        IF(debug) PRINT *, "nu_output(300)=", nu_output(300)
+        IF(debug) PRINT *, "ghost_dist=", ghost_dist
         !STOP
 
       ELSE
