@@ -2133,6 +2133,10 @@ SUBMODULE (sph_particles) apm
       ! just a few iterations to NOT get the nu-ratio too large
       mass_iteration: DO itr= 1, m_max_it, 1
 
+        PRINT *, "------------------------------------------"
+        PRINT *, " * Starting with mass iteration' step #: ", itr
+        PRINT *
+
         CALL density_loop( npart_real, pos, &    ! input
                            nu, h, nstar_sph )    ! output
 
@@ -2144,8 +2148,6 @@ SUBMODULE (sph_particles) apm
         !nstar_id( npart_real+1:npart_all )= zero
 
         dN_av= zero
-        !max_nu= zero
-        !min_nu= HUGE(one)
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( npart_real, dNstar, nstar_sph, &
         !$OMP                     nstar_id, nu ) &
@@ -2154,15 +2156,42 @@ SUBMODULE (sph_particles) apm
         DO a= 1, npart_real, 1
 
           dNstar(a)= (nstar_sph(a) - nstar_id(a))/nstar_id(a)
-          nu(a)    = nu(a)*(one - dNstar(a))
-          dN_av    = dN_av + dNstar(a)
+          IF(dNstar(a) > zero) dNstar(a)= MIN(dNstar(a),   five/ten/ten)
+          IF(dNstar(a) < zero) dNstar(a)= MAX(dNstar(a), - five/ten/ten)
+          nu(a)= nu(a)*(one - dNstar(a))
+          dN_av= dN_av + dNstar(a)
 
         ENDDO
         !$OMP END PARALLEL DO
         dN_av= dN_av/DBLE(npart_real)
 
+        PRINT *, " * dN_av= ", dN_av
+        PRINT *, " * The mass iteration will stop when dN_av <", tol, ",", &
+                 " or after", m_max_it, " steps."
+        PRINT *
+
         ! Exit condition
         IF( dN_av < tol )THEN
+
+          !
+          !-- Cap nu by the desired nuratio_thres
+          !
+          !$OMP PARALLEL DO DEFAULT( NONE ) &
+          !$OMP             SHARED( nu_tmp, nu, nstar_id, nstar_sph, &
+          !$OMP                     nuratio_thres, npart_real ) &
+          !$OMP             PRIVATE( nu_tmp2, a )
+          DO a= 1, npart_real, 1
+
+            nu_tmp2= nu(a)
+            nu(a)= nstar_id(a)/nstar_sph(a)
+
+              IF( nu(a) > nu_tmp2*SQRT(nuratio_thres) ) nu(a)= &
+                                                nu_tmp2*SQRT(nuratio_thres)
+              IF( nu(a) < nu_tmp2/SQRT(nuratio_thres) ) nu(a)= &
+                                                nu_tmp2/SQRT(nuratio_thres)
+
+          ENDDO
+          !$OMP END PARALLEL DO
 
           max_nu= zero
           min_nu= HUGE(one)
@@ -2182,11 +2211,12 @@ SUBMODULE (sph_particles) apm
           ENDDO
           !$OMP END PARALLEL DO
 
-          CALL density_loop( npart_real, pos, &    ! input
-                             nu, h, nstar_sph )    ! output
+          !CALL density_loop( npart_real, pos, &    ! input
+          !                   nu, h, nstar_sph )    ! output
 
           PRINT *, "** Second iteration, without moving", &
                    " the particles, completed."
+          PRINT *
           EXIT
 
         ENDIF
