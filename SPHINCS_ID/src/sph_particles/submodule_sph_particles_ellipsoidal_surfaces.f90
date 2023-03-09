@@ -155,31 +155,35 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
     IF(debug) PRINT *, surf% is_known
 
-    IF(PRESENT(surf) .AND. surf% is_known)THEN
+    surface_type= "spherical"
+    max_radius= radius
+    a_x= one
+    a_y= one
+    a_z= one
+    max_center= center(1)
+    IF(PRESENT(surf))THEN
 
-      surface_type= "geoidal"
+      IF(surf% is_known)THEN
 
-      max_radius= radius
-      a_x= one
-      a_y= one
-      a_z= one
-      max_center= center(1)
+        surface_type= "geoidal"
 
-    ELSE
-
-      surface_type= "spherical"
-
-      max_radius= radius
-      a_x= one
-      a_y= one
-      a_z= one
-      max_center= center(1)
+      ENDIF
 
     ENDIF
 
     IF(PRESENT(radii))THEN
 
-      IF(.NOT.(PRESENT(surf) .AND. surf% is_known)) surface_type= "ellipsoidal"
+      IF(.NOT.PRESENT(surf)) surface_type= "ellipsoidal"
+
+      IF(PRESENT(surf))THEN
+
+        IF(.NOT.(surf% is_known))THEN
+
+          surface_type= "ellipsoidal"
+
+        ENDIF
+
+      ENDIF
 
       max_radius= MAXVAL([radius,radii(1),radii(2)])
 

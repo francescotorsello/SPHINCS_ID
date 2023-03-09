@@ -750,9 +750,9 @@ if debug == 'FALSE': #
 #, '-CB', '-CS', '-g', '-traceback'
     if fortran_compiler == 'gfortran':
 
-      env['F90FLAGS'] = [ '-O0', '-fopenmp', '-ftree-vectorize', \
+      env['F90FLAGS'] = [ '-O3', '-fopenmp', '-ftree-vectorize', \
                           '-fopt-info-vec', '-fdollar-ok', '-fbounds-check', \
-                          '-fopt-info-loop', '-g3', '-fbacktrace', '-cpp', \
+                          '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
                           '-Wall', '-Wextra', '-Wimplicit-interface', \

@@ -67,7 +67,8 @@ PROGRAM convergence_test
                                       test_status, show_progress, end_time, &
                                       read_sphincs_id_parameters, one, &
                                       !----------
-                                      n_id, common_path, filenames, placer, &
+                                      n_id, common_path, filenames, &
+                                      eos_filenames, placer, &
                                       export_bin, export_form, export_form_xy, &
                                       export_form_x, export_constraints_xy, &
                                       export_constraints_x, &
@@ -318,7 +319,7 @@ stringize_end(vers)
   PRINT *, "===================================================" &
            // "==============="
   PRINT *
-  CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)) )
+  CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)), eos_filenames )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)
   CALL idata% set_one_lapse ( one_lapse )

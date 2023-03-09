@@ -85,17 +85,29 @@ SUBMODULE (id_base) mass_profile
     a_z= one
     max_radius= radius
     surface_type= "spherical"
-    IF(PRESENT(surf) .AND. surf% is_known)THEN
+    IF(PRESENT(surf))THEN
 
-      surface_type= "geoidal"
+      IF(surf% is_known)THEN
 
-      IF(PRESENT(radii))THEN
-        max_radius= MAXVAL([radius,radii(1),radii(2)])
+        surface_type= "geoidal"
+
       ENDIF
 
-    ELSEIF(PRESENT(radii))THEN
+    ENDIF
 
-      IF(.NOT.(PRESENT(surf) .AND. surf% is_known)) surface_type= "ellipsoidal"
+    IF(PRESENT(radii))THEN
+
+      IF(.NOT.PRESENT(surf)) surface_type= "ellipsoidal"
+
+      IF(PRESENT(surf))THEN
+
+        IF(.NOT.(surf% is_known))THEN
+
+          surface_type= "ellipsoidal"
+
+        ENDIF
+
+      ENDIF
 
       max_radius= MAXVAL([radius,radii(1),radii(2)])
 
@@ -151,18 +163,18 @@ SUBMODULE (id_base) mass_profile
 
           ! The definition of the baryon mass for the LORENE ID is in eq.(69)
           ! of Gourgoulhon et al., PRD 63 064029 (2001)
+          rad= rad_coord
+          IF(PRESENT(surf))THEN
 
-          IF(PRESENT(surf) .AND. surf% is_known)THEN
+            IF(surf% is_known)THEN
 
-            rad= bilinear_interpolation( colat, long, &
-                  SIZE(surf% points(:,1,5)), &
-                  SIZE(surf% points(1,:,6)), &
-                  surf% points(:,:,5:6), surf% points(:,:,4) )
-            rad= rad*rad_coord/max_radius
+              rad= bilinear_interpolation( colat, long, &
+                    SIZE(surf% points(:,1,5)), &
+                    SIZE(surf% points(1,:,6)), &
+                    surf% points(:,:,5:6), surf% points(:,:,4) )
+              rad= rad*rad_coord/max_radius
 
-          ELSE
-
-            rad= rad_coord
+            ENDIF
 
           ENDIF
 
