@@ -14,15 +14,15 @@
 n_id=1                          ! Number of physical systems to use
 ! Path to the directory containing the ID files, RELATIVE to the path where the
 ! code is executed
-common_path="fuka-id-files/"!"lorene-id-files/"
+common_path="lorene-id-files/"
             !"fuka-id-files/"
             !"eccentric-ejecta-files/"
-filenames(1)="BNSFU_poly2.00_1.4-1.4_50km.info"!"BNSLO_1.3-1.3_apr3_45km.bin"
+filenames(1)=!"BNSLO_1.3-1.3_apr3_45km.bin"
              !"BNSLO_1.3-1.3_mpa1_45km.bin"
              !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !"BNSLO_mpa1_1.2-1.5_45km.bin"
              !"DRSLO_APR4.bin"
-             !"DRSLO_poly2.00.bin"
+             "DRSLO_poly2.00.bin"
              !"EJECT_ejecta_apr4_2516.dat"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSFU_1.4-1.4_poly2.00_45km.info"
@@ -114,7 +114,7 @@ estimate_length_scale=.FALSE.
 !   read the ID and print info about it.           !
 !--------------------------------------------------!
 run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -126,7 +126,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_id_particles.par parameter file                        !
 !------------------------------------------------------------------!
-placer(1,:)=2                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object

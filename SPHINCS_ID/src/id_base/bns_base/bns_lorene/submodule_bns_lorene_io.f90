@@ -240,9 +240,9 @@ SUBMODULE (bns_lorene) io
                "g c^2 cm^{-3}"
       PRINT *
       !IF( show_progress ) &
-        PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(this% eos1)
+        PRINT *, " Equations of state for star 1 (EOS1) = ", this% eos1
       !IF( show_progress ) &
-        PRINT *, " Equations of state for star 2 (EOS2) = ", TRIM(this% eos2)
+        PRINT *, " Equations of state for star 2 (EOS2) = ", this% eos2
       !IF( show_progress ) PRINT *
 
       IF( this% eos1_loreneid == 1 )THEN

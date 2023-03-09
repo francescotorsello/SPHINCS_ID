@@ -32,9 +32,12 @@ PROGRAM sphincs_id
   !
   !*****************************************************
 
+
+  USE, INTRINSIC:: ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
+
 #ifdef __INTEL_COMPILER
 
-  USE IFPORT,          ONLY: MAKEDIRQQ
+  USE IFPORT,                  ONLY: MAKEDIRQQ
 
 #endif
 
@@ -59,7 +62,6 @@ PROGRAM sphincs_id
   USE id_base,          ONLY: idbase, initialize
   USE sph_particles,    ONLY: particles
   USE bssn_formulation, ONLY: bssn
-  USE utility,          ONLY: lorene2hydrobase, k_lorene2hydrobase
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
                               itr4, hostname, version, &
@@ -78,11 +80,7 @@ PROGRAM sphincs_id
                               run_sph, run_spacetime, sph_path, &
                               spacetime_path, estimate_length_scale, &
                               test_int, max_n_parts
-  USE ISO_FORTRAN_ENV,  ONLY: COMPILER_VERSION, COMPILER_OPTIONS
-  USE lorentz_group,    ONLY: lorentz_boost, spatial_rotation, &
-                              minkowski_sqnorm, eta
 
-  USE constants,  ONLY: pi
 
   IMPLICIT NONE
 
@@ -143,7 +141,7 @@ PROGRAM sphincs_id
   !---------------------------!
 
   CALL DATE_AND_TIME( date, time, zone, values )
-  run_id= date // "-" // time
+  run_id= date//"-"//time
 
   !CALL HOSTNM( hostname )
 #ifdef host
@@ -299,8 +297,6 @@ stringize_end(vers)
     PRINT *
     PRINT *, "** WARNING: The variable `compute_parts_constraints` is ", &
              ".TRUE., but `run_sph` is .FALSE. . "
-    !PRINT *, "   Hence, the constraints are NOT computed using the ", &
-    !         "particle data mapped to the mesh."
     PRINT *, "   Please set both variables to .TRUE. to compute the ", &
              "constraints using the particle data mapped to the mesh."
     PRINT *
@@ -320,18 +316,18 @@ stringize_end(vers)
   !
   build_idbase_loop: DO itr= 1, n_id, 1
 
-    CALL allocate_idbase( ids(itr)% idata, TRIM(filenames(itr)), &
-                          systems(itr), systems_name(itr) )
+    CALL allocate_idbase &
+      ( ids(itr)% idata, TRIM(filenames(itr)), systems(itr), systems_name(itr) )
 
     PRINT *, "===================================================" &
-             // "==============="
+             //"==============="
     PRINT *, " Constructing idbase object for "//systems(itr), itr
     PRINT *, "===================================================" &
-             // "==============="
+             //"==============="
     PRINT *
 
-    CALL ids(itr)% idata% initialize( TRIM(common_path)//TRIM(filenames(itr)), &
-                                      eos_filenames )
+    CALL ids(itr)% idata% &
+      initialize( TRIM(common_path)//TRIM(filenames(itr)), eos_filenames )
 
     CALL ids(itr)% idata% set_one_lapse( one_lapse )
     CALL ids(itr)% idata% set_zero_shift( zero_shift )
@@ -347,12 +343,12 @@ stringize_end(vers)
     !
     construct_spacetime_id_loop: DO itr3 = 1, n_id, 1
       PRINT *, "===================================================" &
-               // "==============="
+               //"==============="
       PRINT *, " Setting up BSSN object for "//systems(itr3), itr3
       PRINT *, "===================================================" &
-               // "==============="
+               //"==============="
       PRINT *
-      bssn_forms( itr3 )= bssn( ids(itr3)% idata )
+      bssn_forms(itr3)= bssn( ids(itr3)% idata )
     ENDDO construct_spacetime_id_loop
 
     !
@@ -362,25 +358,25 @@ stringize_end(vers)
     !
     compute_print_bssn_loop: DO itr3 = 1, n_id, 1
       PRINT *, "===================================================" &
-               // "==============="
+               //"==============="
       PRINT *, " Computing BSSN variables for "//systems(itr3), itr3
       PRINT *, "===================================================" &
-               // "==============="
+               //"==============="
       PRINT *
       WRITE( namefile_bssn_bin, "(A15)" ) "BSSN_vars.00000"
       !"BSSN_l", itr3, ".bin""(A6,I1,A4)"
-      namefile_bssn_bin= TRIM( spacetime_path ) // TRIM( namefile_bssn_bin )
+      namefile_bssn_bin= TRIM( spacetime_path )//TRIM( namefile_bssn_bin )
 
-      bssn_forms( itr3 )% export_form_xy= export_form_xy
-      bssn_forms( itr3 )% export_form_x = export_form_x
-      bssn_forms( itr3 )% export_bin    = export_bin
+      bssn_forms(itr3)% export_form_xy= export_form_xy
+      bssn_forms(itr3)% export_form_x = export_form_x
+      bssn_forms(itr3)% export_bin    = export_bin
 
-      CALL bssn_forms( itr3 )% &
-                          compute_and_print_tpo_variables( namefile_bssn_bin )
-      !IF( bssn_forms( itr3 )% export_bin )THEN
+      CALL bssn_forms(itr3)% &
+        compute_and_print_tpo_variables( namefile_bssn_bin )
+      !IF( bssn_forms(itr3)% export_bin )THEN
       !  WRITE( namefile_bssn, "(A10,I1,A4)" ) "bssn_vars-", itr3, ".dat"
-      !  CALL bssn_forms( itr3 )% &
-      !        read_bssn_dump_print_formatted( namefile_bssn_bin, namefile_bssn )
+      !  CALL bssn_forms(itr3)% read_bssn_dump_print_formatted &
+      !    ( namefile_bssn_bin, namefile_bssn )
       !ENDIF
     ENDDO compute_print_bssn_loop
 
@@ -392,33 +388,12 @@ stringize_end(vers)
         WRITE( namefile_bssn, "(A8,I1,A4)" ) &
                               "bssn-id_", itr3, ".dat"
 
-        namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
+        namefile_bssn= TRIM( spacetime_path )//TRIM( namefile_bssn )
 
-        CALL bssn_forms( itr3 )% &
-                    print_formatted_id_tpo_variables( namefile= namefile_bssn )
+        CALL bssn_forms(itr3)% &
+          print_formatted_id_tpo_variables( namefile= namefile_bssn )
+
       ENDDO export_bssn_loop
-    ENDIF
-
-    !
-    !-- Compute the Ricci scalar on the mesh, to estimate typical length scale
-    !-- to be resolved
-    !
-    IF( estimate_length_scale )THEN
-
-      compute_ricci_loop: DO itr3 = 1, n_id, 1
-        PRINT *, "===================================================" &
-                 // "==============="
-        PRINT *, " Computing Ricci tensor and scalar for "//systems(itr3), itr3
-        PRINT *, "===================================================" &
-                 // "==============="
-        PRINT *
-
-        CALL bssn_forms( itr3 )% compute_ricci()
-
-      ENDDO compute_ricci_loop
-
-      STOP
-
     ENDIF
 
   ENDIF
@@ -431,37 +406,63 @@ stringize_end(vers)
     !
     place_hydro_id_loops: DO itr3= 1, n_id, 1
       part_distribution_loop: DO itr4= 1, max_n_parts, 1
+
         IF( placer( itr3, itr4 ) == test_int )THEN
+
           EXIT part_distribution_loop
+
         ELSE
 
           PRINT *, "===================================================" &
-                   // "==============="
+                   //"==============="
           PRINT *, " Placing particles for "//systems(itr3), itr3, &
                    ", distribution", itr4
           PRINT *, "===================================================" &
-                   // "==============="
+                   //"==============="
           PRINT *
 
-          particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-                                                   placer( itr3, itr4 ) )
+          particles_dist( itr3, itr4 )= &
+            particles( ids(itr3)% idata, placer( itr3, itr4 ) )
 
           !namefile_parts_bin= "sph-output/NSNS-2M-closeghost.00000"
-          !particles_dist( itr3, itr4 )= particles( ids(itr3)% idata, &
-          !                                         namefile_parts_bin )
+          !particles_dist( itr3, itr4 )= &
+          !  particles( ids(itr3)% idata, namefile_parts_bin )
 
         ENDIF
+
       ENDDO part_distribution_loop
     ENDDO place_hydro_id_loops
 
     !namefile_parts_bin= "sph-output/NSNS-2M-closeghost.00000"
     !namefile_parts= "try.dat"
-    !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted( namefile_parts_bin, namefile_parts )
-    !
+    !CALL particles_dist(1,1)% read_sphincs_dump_print_formatted &
+    !  ( namefile_parts_bin, namefile_parts )
     !STOP
 
   ENDIF
 
+  IF( run_spacetime .AND. estimate_length_scale )THEN
+
+    !
+    !-- Compute the Ricci scalar on the mesh, to estimate typical length scale
+    !-- of the system
+    !
+    compute_ricci_loop: DO itr3 = 1, n_id, 1
+
+      PRINT *, "===================================================" &
+               //"==============="
+      PRINT *, " Computing Ricci tensor and scalar for "//systems(itr3), itr3
+      PRINT *, "===================================================" &
+               //"==============="
+      PRINT *
+
+      CALL bssn_forms(itr3)% compute_ricci()
+
+    ENDDO compute_ricci_loop
+
+    STOP
+
+  ENDIF
 
   IF( .NOT.estimate_length_scale )THEN
 
@@ -476,30 +477,30 @@ stringize_end(vers)
           ELSE
 
             PRINT *, "===================================================" &
-                     // "====================="
+                     //"====================="
             PRINT *, " Computing SPH variables for "//systems(itr3), itr3, &
                      ", distribution", itr4
             PRINT *, "===================================================" &
-                     // "====================="
+                     //"====================="
             PRINT *
             !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
             !                            "l", &
             !                            itr3, "-", itr4, "."
             WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
-            namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
+            namefile_parts_bin= TRIM( sph_path )//TRIM( namefile_parts_bin )
 
             particles_dist( itr3, itr4 )% export_bin    = export_bin
             particles_dist( itr3, itr4 )% export_form_xy= export_form_xy
             particles_dist( itr3, itr4 )% export_form_x = export_form_x
 
             CALL particles_dist( itr3, itr4 )% &
-                 compute_and_print_sph_variables( namefile_parts_bin )
+              compute_and_print_sph_variables( namefile_parts_bin )
             !IF( particles_dist( itr3, itr4 )% export_bin )THEN
             !  WRITE( namefile_parts, "(A10,I1,A1,I1,A4)" ) &
             !                  "sph_vars-", itr3, "-", itr4, ".dat"
             !  CALL particles_dist( itr3, itr4 )% &
-            !                  read_sphincs_dump_print_formatted( &
-            !                                namefile_parts_bin, namefile_parts )
+            !    read_sphincs_dump_print_formatted &
+            !      ( namefile_parts_bin, namefile_parts )
             !ENDIF
 
           ENDIF
@@ -520,9 +521,9 @@ stringize_end(vers)
               WRITE( namefile_parts, "(A7,I1,A1,I1,A4)" ) &
                                      "sph-id_", &
                                      itr3, "-", itr4, ".dat"
-              namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
+              namefile_parts= TRIM( sph_path )//TRIM( namefile_parts )
               CALL particles_dist( itr3, itr4 )% &
-                   print_formatted_id_particles( namefile_parts )
+                print_formatted_id_particles( namefile_parts )
             ENDIF
           ENDDO
         ENDDO print_sph_loops
@@ -538,20 +539,20 @@ stringize_end(vers)
       !
       compute_print_bssn_constraints_loop: DO itr3 = 1, n_id, 1
 
-        bssn_forms( itr3 )% cons_step= constraints_step
-        bssn_forms( itr3 )% export_constraints= export_constraints
-        bssn_forms( itr3 )% export_constraints_details= &
-                            export_constraints_details
-        bssn_forms( itr3 )% export_constraints_xy= export_constraints_xy
-        bssn_forms( itr3 )% export_constraints_x = export_constraints_x
+        bssn_forms(itr3)% cons_step         = constraints_step
+        bssn_forms(itr3)% export_constraints= export_constraints
+        bssn_forms(itr3)% export_constraints_details= &
+                          export_constraints_details
+        bssn_forms(itr3)% export_constraints_xy= export_constraints_xy
+        bssn_forms(itr3)% export_constraints_x = export_constraints_x
 
         IF( compute_constraints )THEN
 
           PRINT *, "===================================================" &
-                   // "==============="
+                   //"==============="
           PRINT *, " Computing BSSN constraints for BSSN formulation", itr3
           PRINT *, "===================================================" &
-                   // "==============="
+                   //"==============="
           PRINT *
 
           WRITE( namefile_bssn, "(A17,I1,A4)" ) "bssn-constraints-", itr3, &
@@ -559,13 +560,11 @@ stringize_end(vers)
           WRITE( name_logfile, "(A28,I1)" ) &
                               "bssn-constraints-statistics-", itr3
 
-          namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
-          name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
+          namefile_bssn= TRIM(spacetime_path)//TRIM(namefile_bssn)
+          name_logfile = TRIM(spacetime_path)//TRIM(name_logfile)
 
-          CALL bssn_forms( itr3 )% &
-                      compute_and_print_tpo_constraints( ids(itr3)% idata, &
-                                                          namefile_bssn, &
-                                                          name_logfile )
+          CALL bssn_forms(itr3)% compute_and_print_tpo_constraints &
+            ( ids(itr3)% idata, namefile_bssn, name_logfile )
 
         ENDIF
 
@@ -580,11 +579,11 @@ stringize_end(vers)
             IF( compute_parts_constraints .AND. run_sph )THEN
 
               PRINT *, "===================================================" &
-                       // "================================================"
+                       //"================================================"
               PRINT *, " Computing BSSN constraints for BSSN", &
                        " formulation", itr3, "with particle distribution", itr4
               PRINT *, "===================================================" &
-                       // "================================================"
+                       //"================================================"
               PRINT *
 
               WRITE( namefile_bssn, "(A23,I1,A1,I1,A4)" ) &
@@ -596,15 +595,12 @@ stringize_end(vers)
                                    "bssn-constraints-parts-statistics-", itr3, &
                                    "-", itr4
 
-              namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
-              namefile_sph = TRIM( sph_path ) // TRIM( namefile_sph )
-              name_logfile = TRIM( spacetime_path ) // TRIM( name_logfile )
+              namefile_bssn= TRIM( spacetime_path )//TRIM( namefile_bssn )
+              namefile_sph = TRIM( sph_path )//TRIM( namefile_sph )
+              name_logfile = TRIM( spacetime_path )//TRIM( name_logfile )
 
-              CALL bssn_forms( itr3 )% &
-                          compute_and_print_tpo_constraints( &
-                                                particles_dist( itr3, itr4 ), &
-                                                namefile_bssn, &
-                                                name_logfile )
+              CALL bssn_forms(itr3)% compute_and_print_tpo_constraints &
+                ( particles_dist( itr3, itr4 ), namefile_bssn, name_logfile )
 
             ENDIF
           ENDIF
@@ -633,35 +629,33 @@ stringize_end(vers)
               !       tabulated EOS
 
               PRINT *, "===================================================" &
-                       // "================================================"
+                       //"================================================"
               PRINT *, " Testing recovery using mesh-to-particle mapping, for",&
                        " BSSN formulation", itr3, &
                        "with particle distribution", itr4
               PRINT *, "===================================================" &
-                       // "================================================"
+                       //"================================================"
               PRINT *
 
               WRITE( namefile_recovery, "(A18,I1,A4)" ) &
                               "recovery-test-m2p_", itr3
               namefile_recovery= TRIM( spacetime_path ) &
                                //TRIM( namefile_recovery )
-              CALL bssn_forms( itr3 )% &
-                   test_recovery_m2p( particles_dist( itr3, itr4 ), &
-                                      namefile_recovery )
+              CALL bssn_forms(itr3)% test_recovery_m2p &
+                ( particles_dist( itr3, itr4 ), namefile_recovery )
 
               PRINT *, "===================================================" &
-                       // "================================================"
+                       //"================================================"
               PRINT *, " Estimating the ADM momentum of the fluid using ", &
                        " the metric mapped with mesh-to-particle mapping, for",&
                        " BSSN formulation", itr3, &
                        "with particle distribution", itr4
               PRINT *, "===================================================" &
-                       // "================================================"
+                       //"================================================"
               PRINT *
 
-              CALL bssn_forms( itr3 )% &
-                compute_adm_momentum_fluid_m2p( particles_dist( itr3, itr4 ), &
-                                                adm_mom_m2p )
+              CALL bssn_forms(itr3)% compute_adm_momentum_fluid_m2p &
+                ( particles_dist( itr3, itr4 ), adm_mom_m2p )
 
             ENDIF
 
@@ -678,7 +672,7 @@ stringize_end(vers)
   CALL execution_timer% stop_timer()
 
   CALL DATE_AND_TIME( date, time, zone, values )
-  end_time= date // "-" // time
+  end_time= date//"-"//time
 
   !
   !-- Print the timers
@@ -687,10 +681,10 @@ stringize_end(vers)
   DO itr= 1, n_id, 1
 
     PRINT *, "===================================================" &
-             // "================================================"
+             //"================================================"
     PRINT *, " Timing for physical system ", itr
     PRINT *, "===================================================" &
-             // "================================================"
+             //"================================================"
     PRINT *
     PRINT *, " * ID:"
     CALL ids(itr)% idata% construction_timer% print_timer( 2 )
@@ -725,13 +719,13 @@ stringize_end(vers)
   DO itr= 1, n_id, 1
 
     PRINT *, "===================================================" &
-             // "================================================"
+             //"================================================"
     PRINT *, " Summary for physical system ", itr
     PRINT *, "===================================================" &
-             // "================================================"
+             //"================================================"
     PRINT *
     PRINT *, "   Used ID data file: " &
-             // TRIM(common_path)//TRIM(filenames(itr))
+             //TRIM(common_path)//TRIM(filenames(itr))
     PRINT *
 
     CALL ids(itr)% idata% print_summary()
@@ -772,7 +766,7 @@ stringize_end(vers)
     !-- to problems...
     !-- TODO: fix this
     !
-    !CALL binaries( itr )% destruct_binary()
+    !CALL binaries(itr)% destruct_binary()
   ENDDO
   IF( ALLOCATED( ids ) )THEN
     DEALLOCATE( ids )
