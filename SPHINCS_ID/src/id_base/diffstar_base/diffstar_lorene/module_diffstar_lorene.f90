@@ -98,10 +98,10 @@ MODULE diffstar_lorene
     PROCEDURE:: deallocate_diffstar_memory
     !! Deallocates memory for the [[diffstarlorene]] member arrays
 
-    PROCEDURE:: read_diffstar_params
+    PROCEDURE:: read_diffstar_properties
     !! Imports the parameters of the DRS from |lorene|
 
-    PROCEDURE, PUBLIC:: print_diffstar_params
+    PROCEDURE, PUBLIC:: print_diffstar_properties
     !! Prints the parameters of the DRS to the standard output
 
     PROCEDURE:: read_id_int
@@ -292,22 +292,22 @@ MODULE diffstar_lorene
     END SUBROUTINE deallocate_diffstar_memory
 
 
-    MODULE SUBROUTINE read_diffstar_params( this )
+    MODULE SUBROUTINE read_diffstar_properties( this )
     !! Imports the DRS parameters from |lorene|
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
       CLASS(diffstarlorene), INTENT(INOUT):: this
 
-    END SUBROUTINE read_diffstar_params
+    END SUBROUTINE read_diffstar_properties
 
 
-    MODULE SUBROUTINE print_diffstar_params( this )
+    MODULE SUBROUTINE print_diffstar_properties( this )
     !! Prints the DRS parameters to the standard output
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
       CLASS(diffstarlorene), INTENT(INOUT):: this
 
-    END SUBROUTINE print_diffstar_params
+    END SUBROUTINE print_diffstar_properties
 
 
     MODULE SUBROUTINE read_id_int( this, n, x, y, z )

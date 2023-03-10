@@ -52,7 +52,7 @@ MODULE bns_lorene
   !                                                      *
   !            Definition of TYPE bnslorene              *
   !                                                      *
-  !   This class reads and stores the |lorene| BNS ID    *
+  !   This class reads and stores the LORENE BNS ID      *
   !                                                      *
   !*******************************************************
 
@@ -124,18 +124,18 @@ MODULE bns_lorene
     PROCEDURE:: deallocate_bnslorene_memory
     !! Deallocates memory for the [[bnslorene]] member arrays
 
-    PROCEDURE:: read_id_params
-    !! Imports the parameters of the BNS from |lorene|
+    PROCEDURE:: read_bns_properties
+    !! Imports the parameters of the |bns| from |lorene|
 
     !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
     !# Integrates the |lorene| baryon mass density and computes the
     !  radial mass profile
 
-    PROCEDURE, PUBLIC:: print_id_params
-    !! Prints the parameters of the BNS to the standard output
+    PROCEDURE, PUBLIC:: print_bns_properties
+    !! Prints the parameters of the |bns| to the standard output
 
     PROCEDURE:: read_id_int
-    !! Stores the ID in the [[bnslorene]] member arrays
+    !! Stores the |id| in the [[bnslorene]] member arrays
 
     PROCEDURE:: read_id_full      => read_id_full
     PROCEDURE:: read_id_spacetime => read_id_spacetime
@@ -279,7 +279,7 @@ MODULE bns_lorene
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene),              INTENT(INOUT)       :: this
-      !> |lorene| binary file containing the spectral BNS ID
+      !> |lorene| binary file containing the spectral |bns| |id|
       CHARACTER(KIND=C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: id_file
       CHARACTER(KIND=C_CHAR, LEN=*), DIMENSION(2), INTENT(IN), OPTIONAL:: &
         eos_filenames
@@ -319,22 +319,22 @@ MODULE bns_lorene
     END SUBROUTINE deallocate_bnslorene_memory
 
 
-    MODULE SUBROUTINE read_id_params( this )
-    !! Imports the BNS parameters from |lorene|
+    MODULE SUBROUTINE read_bns_properties( this )
+    !! Imports the |bns| properties from |lorene|
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT(INOUT):: this
 
-    END SUBROUTINE read_id_params
+    END SUBROUTINE read_bns_properties
 
 
-    MODULE SUBROUTINE print_id_params( this )
-    !! Prints the BNS parameters to the standard output
+    MODULE SUBROUTINE print_bns_properties( this )
+    !! Prints the |bns| parameters to the standard output
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene), INTENT(INOUT):: this
 
-    END SUBROUTINE print_id_params
+    END SUBROUTINE print_bns_properties
 
 
   !  MODULE SUBROUTINE integrate_baryon_mass_density( this, center, radius, &
@@ -368,7 +368,7 @@ MODULE bns_lorene
 
 
     MODULE SUBROUTINE read_id_int( this, n, x, y, z )
-    !! Stores the ID in the [[bnslorene]] member arrays
+    !! Stores the |id| in the [[bnslorene]] member arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene),                     INTENT(INOUT):: this
@@ -410,7 +410,7 @@ MODULE bns_lorene
                                       specific_energy, &
                                       pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
-    !# Stores the ID in non [[bnslorene]]-member arrays with the same shape as the
+    !# Stores the |id| in non [[bnslorene]]-member arrays with the same shape as the
     !  [[bnslorene]] member arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -452,7 +452,7 @@ MODULE bns_lorene
                                               shift, &
                                               g, &
                                               ek )
-    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
+    !# Stores the spacetime |id| in multi-dimensional arrays needed to compute
     !  the BSSN variables and constraints
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -476,7 +476,7 @@ MODULE bns_lorene
                                              specific_energy, &
                                              pressure, &
                                              u_euler )
-    !# Stores the hydro ID in the arrays needed to compute the constraints
+    !# Stores the hydro |id| in the arrays needed to compute the constraints
     !  on the refined mesh
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
@@ -504,7 +504,7 @@ MODULE bns_lorene
                                            specific_energy, &
                                            pressure, &
                                            u_euler_x, u_euler_y, u_euler_z )
-    !! Stores the hydro ID in the arrays needed to compute the SPH ID
+    !! Stores the hydro |id| in the arrays needed to compute the |sph| |id|
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene),                     INTENT(INOUT):: this
@@ -537,7 +537,7 @@ MODULE bns_lorene
                                         g, &
                                         baryon_density, &
                                         gamma_euler )
-    !! Stores the hydro ID in the arrays needed to compute the baryon mass
+    !! Stores the hydro |id| in the arrays needed to compute the baryon mass
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
       CLASS(bnslorene),       INTENT(INOUT):: this
@@ -820,7 +820,7 @@ MODULE bns_lorene
       IMPLICIT NONE
 
       !& C string of the name of the |lorene| binary file storing the spectral
-      !  BNS ID
+      !  |bns| |id|
       CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
                                                               c_id_file
       CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
@@ -851,7 +851,7 @@ MODULE bns_lorene
       !
       !# Interface to the |lorene| method of class
       !  |binns| with the same name, that reads the full
-      !  |lorene| ID at the specified point.
+      !  |lorene| |id| at the specified point.
       !  That is, reads the metric fields, the
       !  components of the extrinsic curvature [c/km],
       !  and the hydro fields.

@@ -79,14 +79,14 @@ SUBMODULE (bns_fuka) constructor
     CALL derived_type% set_n_matter(2)
     CALL derived_type% set_cold_system(.TRUE.)
 
-    derived_type% construction_timer= timer( "binary_construction_timer" )
+    derived_type% construction_timer= timer("binary_construction_timer")
 
     ! Construct |fuka| |bnsexp| object
-    CALL derived_type% construct_binary( filename )
+    CALL derived_type% construct_binary(filename)
     derived_type% filename= filename
 
-    ! Read the parameters of the binary system
-    CALL read_fuka_id_params( derived_type )
+    ! Read the properties of the binary system
+    CALL read_bns_properties(derived_type)
 
     ! Assign a unique identifier to the bns_fuka object
     derived_type% bns_identifier= bns_counter

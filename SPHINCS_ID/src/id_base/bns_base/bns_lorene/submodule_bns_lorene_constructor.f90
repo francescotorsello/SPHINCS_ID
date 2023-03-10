@@ -92,8 +92,8 @@ SUBMODULE (bns_lorene) constructor
       STOP
 
     ENDIF
-    ! Import the parameters of the binary system from LORENE
-    CALL read_id_params(derived_type)
+    ! Import the properties of the BNS
+    CALL read_bns_properties(derived_type)
 
     ! Assign a unique identifier to the bnslorene object
     derived_type% bns_identifier= bns_counter

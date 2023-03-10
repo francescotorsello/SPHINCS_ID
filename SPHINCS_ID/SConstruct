@@ -286,7 +286,7 @@ module_bns_lorene = [
   'submodule_bns_lorene_read.f90',
   'submodule_bns_lorene_memory.f90',
   'submodule_bns_lorene_access.f90',
-  'submodule_bns_lorene_params.f90',
+  'submodule_bns_lorene_properties.f90',
   'submodule_bns_lorene_io.f90',
   'submodule_bns_lorene_finalize_id.f90'
 ]
@@ -305,7 +305,7 @@ module_diffstar_lorene = [
   'submodule_diffstar_lorene_read.f90',
   'submodule_diffstar_lorene_memory.f90',
   'submodule_diffstar_lorene_access.f90',
-  'submodule_diffstar_lorene_params.f90',
+  'submodule_diffstar_lorene_properties.f90',
   'submodule_diffstar_lorene_io.f90'
 ]
 
@@ -317,7 +317,7 @@ module_bns_fuka = [
   'submodule_bns_fuka_interpolate.f90',
   'submodule_bns_fuka_memory.f90',
   'submodule_bns_fuka_access.f90',
-  'submodule_bns_fuka_params.f90',
+  'submodule_bns_fuka_properties.f90',
   'submodule_bns_fuka_io.f90'
 ]
 
@@ -741,7 +741,7 @@ if debug == 'FALSE': #
     ############################################################################
     if fortran_compiler == 'ifort':
 
-      env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
+      env['F90FLAGS'] = [ '-O0', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \

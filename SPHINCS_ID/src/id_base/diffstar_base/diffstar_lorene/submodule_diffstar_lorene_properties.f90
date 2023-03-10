@@ -1,4 +1,4 @@
-! File:         submodule_diffstar_lorene_params.f90
+! File:         submodule_diffstar_lorene_properties.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020-2023 Francesco Torsello                            *
@@ -21,7 +21,7 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-SUBMODULE (diffstar_lorene) params
+SUBMODULE (diffstar_lorene) properties
 
   !********************************************
   !
@@ -46,7 +46,7 @@ SUBMODULE (diffstar_lorene) params
   !-------------------!
 
 
-  MODULE PROCEDURE read_diffstar_params
+  MODULE PROCEDURE read_diffstar_properties
 
     !***************************************************
     !
@@ -85,54 +85,54 @@ SUBMODULE (diffstar_lorene) params
     PRINT *, "** Executing the read_diffstar_params subroutine..."
 
     CALL get_diffstar_params( this% diffstar_ptr,                   &
-                              this% omega_c,                        &
-                              this% mass,                           &
-                              this% mass_grav,                      &
-                              this% angular_momentum,               &
-                              this% tsw,                            &
-                              this% grv2,                           &
-                              this% grv3,                           &
-                              this% r_circ,                         &
-                              this% surface_area,                   &
-                              this% r_mean,                         &
-                              this% r_eq,                           &
-                              this% r_eq_pi2,                       &
-                              this% r_eq_pi,                        &
-                              this% r_eq_3pi2,                      &
-                              this% r_pole,                         &
-                              this% r_ratio,                        &
-                              this% r_isco,                         &
-                              this% f_isco,                         &
-                              this% specific_energy_isco,           &
-                              this% specific_angular_momentum_isco, &
-                              this% area_radius,                    &
-                              this% ent_center,                     &
-                              this% nbar_center,                    &
-                              this% rho_center,                     &
-                              this% energy_density_center,          &
-                              this% specific_energy_center,         &
-                              this% pressure_center,                &
-                              this% redshift_eqf,                   &
-                              this% redshift_eqb,                   &
-                              this% redshift_pole,                  &
-                              eos_tmp_c,                            &
-                              this% eos_loreneid,                   &
-                              this% gamma,                          &
-                              this% kappa,                          &
-                              this% npeos,                          &
-                              this% gamma0,                         &
-                              this% gamma1,                         &
-                              this% gamma2,                         &
-                              this% gamma3,                         &
-                              this% kappa0,                         &
-                              this% kappa1,                         &
-                              this% kappa2,                         &
-                              this% kappa3,                         &
-                              this% logP1,                          &
-                              this% logRho0,                        &
-                              this% logRho1,                        &
-                              this% logRho2,                        &
-                              eostable_tmp_c )
+                                  this% omega_c,                        &
+                                  this% mass,                           &
+                                  this% mass_grav,                      &
+                                  this% angular_momentum,               &
+                                  this% tsw,                            &
+                                  this% grv2,                           &
+                                  this% grv3,                           &
+                                  this% r_circ,                         &
+                                  this% surface_area,                   &
+                                  this% r_mean,                         &
+                                  this% r_eq,                           &
+                                  this% r_eq_pi2,                       &
+                                  this% r_eq_pi,                        &
+                                  this% r_eq_3pi2,                      &
+                                  this% r_pole,                         &
+                                  this% r_ratio,                        &
+                                  this% r_isco,                         &
+                                  this% f_isco,                         &
+                                  this% specific_energy_isco,           &
+                                  this% specific_angular_momentum_isco, &
+                                  this% area_radius,                    &
+                                  this% ent_center,                     &
+                                  this% nbar_center,                    &
+                                  this% rho_center,                     &
+                                  this% energy_density_center,          &
+                                  this% specific_energy_center,         &
+                                  this% pressure_center,                &
+                                  this% redshift_eqf,                   &
+                                  this% redshift_eqb,                   &
+                                  this% redshift_pole,                  &
+                                  eos_tmp_c,                            &
+                                  this% eos_loreneid,                   &
+                                  this% gamma,                          &
+                                  this% kappa,                          &
+                                  this% npeos,                          &
+                                  this% gamma0,                         &
+                                  this% gamma1,                         &
+                                  this% gamma2,                         &
+                                  this% gamma3,                         &
+                                  this% kappa0,                         &
+                                  this% kappa1,                         &
+                                  this% kappa2,                         &
+                                  this% kappa3,                         &
+                                  this% logP1,                          &
+                                  this% logRho0,                        &
+                                  this% logRho1,                        &
+                                  this% logRho2,                        &
+                                  eostable_tmp_c )
 
     ! Convert distances from |lorene| units (km) to SPHINCS units (Msun_geo)
     ! See MODULE constants for the definition of Msun_geo
@@ -216,7 +216,7 @@ SUBMODULE (diffstar_lorene) params
     ALLOCATE( CHARACTER(nchars):: this% eos, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos in SUBROUTINE", &
-                " read_id_params in SUBMODULE bns_lorene@params.", &
+        " read_diffstar_properties in SUBMODULE diffstar_lorene@properties.", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        PRINT *
@@ -238,7 +238,7 @@ SUBMODULE (diffstar_lorene) params
               STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos_tables in SUBROUTINE", &
-                " read_id_params in SUBMODULE bns_lorene@params.", &
+        " read_diffstar_properties in SUBMODULE diffstar_lorene@properties.", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        PRINT *
@@ -247,12 +247,11 @@ SUBMODULE (diffstar_lorene) params
     this% eos_table= &
       TRANSFER( eostable_tmp_c(1:nchars), this% eos_table )
 
-    CALL print_diffstar_params(this)
 
-    PRINT *, "** Subroutine read_diffstar_params executed."
-    PRINT *
-
-  END PROCEDURE read_diffstar_params
+    CALL print_diffstar_properties(this)
 
 
-END SUBMODULE params
+  END PROCEDURE read_diffstar_properties
+
+
+END SUBMODULE properties

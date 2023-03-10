@@ -375,7 +375,7 @@ SUBMODULE (sph_particles) apm
       pos_input(1, npart_real_half + a)=   pos_input(1,a)
       pos_input(2, npart_real_half + a)=   pos_input(2,a)
       pos_input(3, npart_real_half + a)= - pos_input(3,a)
-      h_guess( npart_real_half + a )     =   h_guess( a )
+      h_guess( npart_real_half + a )   =   h_guess( a )
     ENDDO
     npart_real= 2*npart_real_half
 

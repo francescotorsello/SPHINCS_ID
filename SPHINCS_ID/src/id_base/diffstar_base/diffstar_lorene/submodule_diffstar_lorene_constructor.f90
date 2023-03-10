@@ -71,7 +71,7 @@ SUBMODULE (diffstar_lorene) constructor
     derived_type% eos_filename(1)= &
       TRIM(common_eos_path)//TRIM(eos_filenames(1))
 
-    derived_type% construction_timer= timer( "drs_construction_timer" )
+    derived_type% construction_timer= timer("drs_construction_timer")
 
     ! Construct |lorene| |etdiffrot| object
     IF( PRESENT(filename) .AND. use_eos_from_id )THEN
@@ -89,8 +89,8 @@ SUBMODULE (diffstar_lorene) constructor
 
     ENDIF
 
-    ! Import the parameters of the binary system
-    CALL read_diffstar_params( derived_type )
+    ! Import the properties of the differentially rotating star
+    CALL read_diffstar_properties(derived_type)
 
     ! Assign a unique identifier to the bns object
     derived_type% diffstar_identifier= diffstar_counter

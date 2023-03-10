@@ -99,7 +99,7 @@ SUBMODULE (bns_lorene) io
   END PROCEDURE print_summary_bnslorene
 
 
-  MODULE PROCEDURE print_id_params
+  MODULE PROCEDURE print_bns_properties
 
     !****************************************************
     !
@@ -349,8 +349,8 @@ SUBMODULE (bns_lorene) io
 
       ELSE
 
-        PRINT *, "** ERROR in SUBROUTINE read_id_params in SUBMODULE ", &
-                 "bns_lorene@params!", &
+        PRINT *, "** ERROR in SUBROUTINE read_bns_properties in SUBMODULE ", &
+                 "bns_lorene@properties!", &
                  " The equation of state is unknown!"
         STOP
 
@@ -358,7 +358,7 @@ SUBMODULE (bns_lorene) io
 
     ENDIF
 
-  END PROCEDURE print_id_params
+  END PROCEDURE print_bns_properties
 
 
 END SUBMODULE io

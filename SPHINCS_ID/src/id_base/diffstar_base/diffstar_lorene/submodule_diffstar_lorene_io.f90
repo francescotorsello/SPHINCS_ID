@@ -44,7 +44,7 @@ SUBMODULE (diffstar_lorene) io
   !-------------------!
 
 
-  MODULE PROCEDURE print_diffstar_params
+  MODULE PROCEDURE print_diffstar_properties
 
     !****************************************************
     !
@@ -64,7 +64,7 @@ SUBMODULE (diffstar_lorene) io
 
       PRINT *
       PRINT *, " ** The parameters have not ben read yet. ", &
-          "Call the SUBROUTINE read_diffstar_params to read them."
+          "Call the SUBROUTINE read_diffstar_properties to read them."
       PRINT *
 
     ELSE
@@ -206,8 +206,8 @@ SUBMODULE (diffstar_lorene) io
 
       ELSE
 
-        PRINT *, "** ERROR in SUBROUTINE read_diffstar_params in SUBMODULE ", &
-                 "diffstar_lorene@params!", &
+        PRINT *, "** ERROR in SUBROUTINE read_diffstar_properties in ", &
+                 "SUBMODULE diffstar_lorene@properties!", &
                  " The equation of state is unknown!"
         STOP
 
@@ -215,7 +215,7 @@ SUBMODULE (diffstar_lorene) io
 
     ENDIF
 
-  END PROCEDURE print_diffstar_params
+  END PROCEDURE print_diffstar_properties
 
 
 END SUBMODULE io

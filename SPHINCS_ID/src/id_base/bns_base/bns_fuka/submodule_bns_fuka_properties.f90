@@ -1,4 +1,4 @@
-! File:         submodule_bns_fuka_params.f90
+! File:         submodule_bns_fuka_properties.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020-2023 Francesco Torsello                            *
@@ -21,7 +21,7 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-SUBMODULE (bns_fuka) params
+SUBMODULE (bns_fuka) properties
 
   !********************************************
   !
@@ -46,7 +46,7 @@ SUBMODULE (bns_fuka) params
   !-------------------!
 
 
-  MODULE PROCEDURE read_fuka_id_params
+  MODULE PROCEDURE read_bns_properties
 
     !***************************************************
     !
@@ -87,8 +87,6 @@ SUBMODULE (bns_fuka) params
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_type_2_tmp_c
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length):: eos_file_2_tmp_c
 
-
-  !  PRINT *, "** Executing the read_fuka_id_params subroutine..."
 
     CALL get_fuka_id_params( this% bns_ptr               , &
                              this% angular_vel           , &
@@ -331,7 +329,7 @@ SUBMODULE (bns_fuka) params
 
     ELSE
 
-      PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+      PRINT *, "** ERROR in SUBROUTINE read_bns_properties!", &
                " The EOS on star 1 is unknown! FUKA EOS type=", &
                this% eos_type_1
       STOP
@@ -353,17 +351,15 @@ SUBMODULE (bns_fuka) params
 
     ELSE
 
-      PRINT *, "** ERROR in SUBROUTINE get_eos_parameters!", &
+      PRINT *, "** ERROR in SUBROUTINE read_bns_properties!", &
                " The EOS on star 2 is unknown! FUKA EOS type=", &
                this% eos_type_2
       STOP
 
     ENDIF
 
-    !  CALL print_id_params( this )
 
-      !PRINT *, "** Subroutine read_fuka_id_params executed."
-      !PRINT *
+    CALL print_bns_properties(this)
 
 
     CONTAINS
@@ -381,7 +377,7 @@ SUBMODULE (bns_fuka) params
     END FUNCTION read_density
 
 
-  END PROCEDURE read_fuka_id_params
+  END PROCEDURE read_bns_properties
 
 
-END SUBMODULE params
+END SUBMODULE properties

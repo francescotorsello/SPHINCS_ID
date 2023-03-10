@@ -1,4 +1,4 @@
-! File:         submodule_bns_lorene_params.f90
+! File:         submodule_bns_lorene_properties.f90
 ! Authors:      Francesco Torsello (FT)
 !************************************************************************
 ! Copyright (C) 2020-2023 Francesco Torsello                            *
@@ -21,7 +21,7 @@
 ! 'COPYING'.                                                            *
 !************************************************************************
 
-SUBMODULE (bns_lorene) params
+SUBMODULE (bns_lorene) properties
 
   !********************************************
   !
@@ -46,7 +46,7 @@ SUBMODULE (bns_lorene) params
   !-------------------!
 
 
-  MODULE PROCEDURE read_id_params
+  MODULE PROCEDURE read_bns_properties
 
     !***************************************************
     !
@@ -86,7 +86,7 @@ SUBMODULE (bns_lorene) params
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length2):: eostable1_tmp_c
     CHARACTER(KIND= C_CHAR), DIMENSION(str_length2):: eostable2_tmp_c
 
-    PRINT *, "** Executing the read_id_params subroutine..."
+    PRINT *, "** Executing the read_bns_properties subroutine..."
 
     CALL get_lorene_bns_params( this% bns_ptr,                 &
                                 this% angular_vel,             &
@@ -246,7 +246,7 @@ SUBMODULE (bns_lorene) params
 
     ELSE
 
-      PRINT *, "** ERROR in SUBROUTINE read_id_params!", &
+      PRINT *, "** ERROR in SUBROUTINE read_bns_properties!", &
                " The equation of state on star 1 is unknown! LORENE EOS ID=", &
                this% eos1_loreneid
       STOP
@@ -280,7 +280,7 @@ SUBMODULE (bns_lorene) params
 
     ELSE
 
-      PRINT *, "** ERROR in SUBROUTINE read_id_params!", &
+      PRINT *, "** ERROR in SUBROUTINE read_bns_properties!", &
                " The equation of state on star 2 is unknown! LORENE EOS ID=", &
                this% eos2_loreneid
       STOP
@@ -320,7 +320,7 @@ SUBMODULE (bns_lorene) params
     ALLOCATE( CHARACTER(nchars):: this% eos1, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos1 in SUBROUTINE", &
-                " read_id_params in SUBMODULE bns_lorene@params.",&
+                " read_bns_properties in SUBMODULE bns_lorene@properties.",&
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        PRINT *
@@ -351,7 +351,7 @@ SUBMODULE (bns_lorene) params
     ALLOCATE( CHARACTER(nchars):: this% eos2, STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos2 in SUBROUTINE", &
-                " read_id_params in SUBMODULE bns_lorene@params.", &
+                " read_bns_properties in SUBMODULE bns_lorene@properties.", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        PRINT *
@@ -377,7 +377,7 @@ SUBMODULE (bns_lorene) params
               STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos_tables1 in SUBROUTINE", &
-                " read_id_params in SUBMODULE bns_lorene@params.", &
+                " read_bns_properties in SUBMODULE bns_lorene@properties.", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        PRINT *
@@ -398,7 +398,7 @@ SUBMODULE (bns_lorene) params
               STAT= ios, ERRMSG= err_msg )
     IF( ios > 0 )THEN
        PRINT *, "...allocation error for string eos_tables2 in SUBROUTINE", &
-                " read_id_params in SUBMODULE bns_lorene@params.", &
+                " read_bns_properties in SUBMODULE bns_lorene@properties.", &
                 "The error message is ", err_msg
        PRINT *, "The STAT variable is ", ios
        PRINT *
@@ -407,12 +407,11 @@ SUBMODULE (bns_lorene) params
     this% eos_table2= &
       TRANSFER( eostable2_tmp_c(1:nchars), this% eos_table2 )
 
-    CALL print_id_params(this)
 
-    PRINT *, "** Subroutine read_id_params executed."
-    PRINT *
-
-  END PROCEDURE read_id_params
+    CALL print_bns_properties(this)
 
 
-END SUBMODULE params
+  END PROCEDURE read_bns_properties
+
+
+END SUBMODULE properties
