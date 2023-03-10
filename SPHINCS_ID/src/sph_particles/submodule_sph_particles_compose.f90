@@ -86,7 +86,7 @@ SUBMODULE (sph_particles) compose
 
     LOGICAL:: exist
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
 
     PRINT *, "** Executing the read_compose_composition subroutine..."
 
@@ -99,7 +99,7 @@ SUBMODULE (sph_particles) compose
     IF( PRESENT(namefile) )THEN
       finalnamefile= TRIM(namefile)//".beta"
     ELSE
-      finalnamefile= "../../|compose|_EOS/SFHO_with_electrons/eos.beta"
+      finalnamefile= "../../CompOSE_EOS/SFHO_with_electrons/eos.beta"
     ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
@@ -124,7 +124,7 @@ SUBMODULE (sph_particles) compose
     !                                                    m_n, m_p, i_leptons
 
     PRINT *, " * Reading file " // TRIM(finalnamefile) // "..."
-    cntr= 0
+    cntr= 1
     read_compose_beta: DO itr= 1, max_length_eos, 1
       READ( UNIT= unit_compose, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
                         ! Variables for .thermo.ns file

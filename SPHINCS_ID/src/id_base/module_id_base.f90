@@ -79,6 +79,9 @@ MODULE id_base
     !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
 
+    DOUBLE PRECISION, PUBLIC, DIMENSION(:,:), ALLOCATABLE:: table_eos
+    !#
+
     TYPE(surface), PUBLIC, DIMENSION(:), ALLOCATABLE:: surfaces
 
     LOGICAL:: one_lapse

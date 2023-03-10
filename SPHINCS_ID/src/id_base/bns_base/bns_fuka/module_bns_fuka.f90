@@ -162,11 +162,11 @@ MODULE bns_fuka
     !
     !-- ID fields on a lattice around each star
     !
-    INTEGER:: nx_lattice= 50
+    INTEGER:: nx_lattice= 400
     !! Number of points for each lattice around the stars, along the \(x\) axis
-    INTEGER:: ny_lattice= 50
+    INTEGER:: ny_lattice= 400
     !! Number of points for each lattice around the stars, along the \(y\) axis
-    INTEGER:: nz_lattice= 50
+    INTEGER:: nz_lattice= 400
     !! Number of points for each lattice around the stars, along the \(z\) axis
     TYPE(id_lattice), DIMENSION(2):: star_lattice
     !# Array storing two [[bns_fuka:id_lattice]] objects, one per star

@@ -67,6 +67,8 @@ MODULE utility
                                                (ten*ten*ten*ten*ten)
   !# Msun_geo = 1.47662503825040 km
   !  see https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
+  DOUBLE PRECISION, PARAMETER:: MeV2amuc2   = one/931.49432
+  !! Conversion factor from \(\mathrm{MeV}\) to \(\mathrm{amu}*c^2\)
 
   DOUBLE PRECISION, PARAMETER:: pa2barye        = ten
   !! Conversion factor from Pascal to Barye
