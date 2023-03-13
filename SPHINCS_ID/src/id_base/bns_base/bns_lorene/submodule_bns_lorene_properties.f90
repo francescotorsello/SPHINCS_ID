@@ -356,13 +356,12 @@ SUBMODULE (bns_lorene) properties
     ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
     ! If the EOS is tabulated, in CompOSE format
 
+      IF(.NOT.ALLOCATED(this% tab_eos)) ALLOCATE(this% tab_eos(2))
+
       this% eos1_id= eos$tabu
 
-      PRINT *, this% eos_table1
-
-      CALL read_compose_beta_equilibrated_eos(this% eos_table1, this% table_eos)
-
-      STOP
+      CALL read_compose_beta_equilibrated_eos &
+        (this% eos_table1, this% tab_eos(1)% table_eos)
 
     ELSE
 
@@ -394,9 +393,14 @@ SUBMODULE (bns_lorene) properties
                       *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_2 )
 
     ELSEIF( this% eos2_loreneid == 17 .OR. this% eos2_loreneid == 20 )THEN
-    ! If the EOS is tabulated
+    ! If the EOS is tabulated, in CompOSE format
+
+      IF(.NOT.ALLOCATED(this% tab_eos)) ALLOCATE(this% tab_eos(2))
 
       this% eos2_id= eos$tabu
+
+      CALL read_compose_beta_equilibrated_eos &
+        (this% eos_table2, this% tab_eos(2)% table_eos)
 
     ELSE
 

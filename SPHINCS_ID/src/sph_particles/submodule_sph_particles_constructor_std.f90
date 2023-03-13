@@ -146,7 +146,7 @@ SUBMODULE (sph_particles) constructor_std
     USE analyze,            ONLY: COM
     USE utility,            ONLY: spherical_from_cartesian, &
                                   spatial_vector_norm_sym3x3, sph_path, &
-                                  scan_1d_array_for_nans
+                                  scan_1d_array_for_nans, eos$tabu
 
 
     IMPLICIT NONE
@@ -290,14 +290,13 @@ SUBMODULE (sph_particles) constructor_std
     ALLOCATE( parts% mass_fractions(parts% n_matter) )
     ALLOCATE( parts% barycenter(parts% n_matter,3) )
     ALLOCATE( parts% surfaces (parts% n_matter) )
-    !ALLOCATE( compute_pressure_i(parts% n_matter) )
 
     parts% npart_i(0)= 0
     npart_i_tmp(0)   = 0
     parts% nbar_i    = zero
     parts% nuratio_i = zero
 
-    DO i_matter= 1, parts% n_matter, 1
+    loop_over_matter_objects: DO i_matter= 1, parts% n_matter, 1
 
       parts% adm_mass          = id% return_adm_mass()
       parts% masses(i_matter)  = id% return_mass(i_matter)
@@ -313,7 +312,48 @@ SUBMODULE (sph_particles) constructor_std
       CALL id% return_eos_parameters( i_matter, &
                                       parts% all_eos(i_matter)% eos_parameters )                          
 
-    ENDDO
+      IF(parts% all_eos(i_matter)% eos_parameters(1) == eos$tabu)THEN
+
+        IF(ALLOCATED(id% tab_eos))THEN
+
+          IF(ALLOCATED(id% tab_eos(i_matter)% table_eos))THEN
+
+            parts% all_eos(i_matter)% table_eos= &
+              id% tab_eos(i_matter)% table_eos
+
+          ELSE
+
+            PRINT *, "** ERROR! The EOS for matter object ", i_matter, &
+                     " is supposed to be tabulated, since its EOS ", &
+                     "identification number is ", &
+                     parts% all_eos(i_matter)% eos_parameters(1), ", ", &
+                     "but the table has not been read."
+            PRINT *, " * Please read the EOS table within the constructor ", &
+                     " of the appropriate TYPE that EXTENDS idbase."
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
+
+          ENDIF
+
+        ELSE
+
+          PRINT *, "** ERROR! The EOS for matter object ", i_matter, &
+                   " is supposed to be tabulated, since its EOS ", &
+                   "identification number is ", &
+                   parts% all_eos(i_matter)% eos_parameters(1), ", ", &
+                   "but the table has not been allocated."
+          PRINT *, " * Please allocate the EOS table within the constructor ", &
+                   " of the appropriate TYPE that EXTENDS idbase."
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+
+        ENDIF
+
+      ENDIF
+
+    ENDDO loop_over_matter_objects
 
     ! Compute desired particle numbers based on mass ratios
     max_mass  = MAXVAL(parts% masses)
@@ -384,6 +424,7 @@ SUBMODULE (sph_particles) constructor_std
       ENDDO
 
     ENDIF
+
 
     parts% post_process_sph_id => id% finalize_sph_id_ptr
 

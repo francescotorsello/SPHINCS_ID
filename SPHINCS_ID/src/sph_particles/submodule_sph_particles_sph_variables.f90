@@ -76,12 +76,13 @@ SUBMODULE (sph_particles) sph_variables
 
     USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu
     USE units,    ONLY: m0c2_cu
+    USE numerics, ONLY: linear_interpolation
     USE pwp_EOS,  ONLY: select_EOS_parameters, gen_pwp_cold_eos, &
                         gen_pwp_eos, Gamma_th_1
 
     IMPLICIT NONE
 
-    INTEGER:: a
+    INTEGER:: a, dim_table
     DOUBLE PRECISION:: tmp, tmp2
     LOGICAL:: verb
 
@@ -91,7 +92,7 @@ SUBMODULE (sph_particles) sph_variables
       verb=.TRUE.
     ENDIF
 
-    ASSOCIATE( eos_id => eqos% eos_parameters(1) )
+    ASSOCIATE( eos_id => NINT(eqos% eos_parameters(1)) )
 
     detect_eos: IF( eos_id == eos$poly )THEN
     ! If the |eos| is polytropic
@@ -265,24 +266,25 @@ SUBMODULE (sph_particles) sph_variables
       ENDIF detect_hot_system
 
     ELSEIF( eos_id == eos$tabu )THEN
-    ! If the |eos| is tabulated
+    ! If the |eos| is tabulated in the CompOSE format
 
       IF(verb) PRINT *, " * Computing pressure and specific internal energy", &
                " from the baryon mass density, using the provided table..."
       IF(verb) PRINT *
 
+      dim_table= SIZE(eqos% table_eos(1,:))
+
       !$OMP PARALLEL DO DEFAULT( NONE ) &
       !$OMP             SHARED( Pr, m0c2_cu, u, npart_in, npart_fin, &
-      !$OMP                     nlrf, enthalpy, cs ) &
+      !$OMP                     nlrf, enthalpy, cs, eqos, dim_table ) &
       !$OMP             PRIVATE( a )
       DO a= 1, npart_fin - npart_in + 1, 1
 
-        Pr(a)= zero
+        Pr(a)= linear_interpolation &
+      (nlrf(a)*m0c2_cu, dim_table, eqos% table_eos(14,:), eqos% table_eos(4,:))
 
-        ! Using this internal energy gives machine-precision relative errors
-        ! after the recovery, since it is computed from nlrf_sph
-        ! Using the internal energy from the ID gives larger errors
-        u(a)= zero!( Pr(a)/(nlrf(a)*m0c2_cu*(gamma_poly - one)) )
+        u(a)= linear_interpolation &
+      (nlrf(a)*m0c2_cu, dim_table, eqos% table_eos(10,:), eqos% table_eos(4,:))
 
         enthalpy(a)= one + u(a) + Pr(a)/(nlrf(a)*m0c2_cu)
 
@@ -681,10 +683,6 @@ SUBMODULE (sph_particles) sph_variables
       ASSOCIATE( npart_in  => this% npart_fin(i_matter-1) + 1, &
                  npart_fin => this% npart_fin(i_matter) )
 
-      PRINT *, " * Computing pressure and specific internal energy from", &
-               " the baryon mass density, using the exact formulas for", &
-               " single polytropic EOS, on matter object", i_matter,"..."
-
       CALL this% compute_sph_hydro(npart_in, npart_fin, &
         this% all_eos(i_matter), &
         this% nlrf_sph(npart_in:npart_fin), u(npart_in:npart_fin), &
@@ -705,14 +703,15 @@ SUBMODULE (sph_particles) sph_variables
 
     assign_ye_on_particles: IF( this% compose_eos )THEN
 
-      PRINT *, "Assigning electron fraction using the CompOSE file ", &
-               TRIM(this% compose_path)//TRIM(this% compose_filename)
+      PRINT *, "** Assigning electron fraction using the CompOSE data..."!, &
+               !TRIM(this% compose_path)//TRIM(this% compose_filename)
 
-      compose_namefile= TRIM(this% compose_path)//TRIM(this% compose_filename)
-      CALL this% read_compose_composition( compose_namefile )
+      !compose_namefile= TRIM(this% compose_path)//TRIM(this% compose_filename)
+      !CALL this% read_compose_composition( compose_namefile )
+
       CALL this% compute_Ye()
 
-      PRINT *, "Electron fraction assigned."
+      PRINT *, " * electron fraction assigned."
       PRINT *
 
     ELSE

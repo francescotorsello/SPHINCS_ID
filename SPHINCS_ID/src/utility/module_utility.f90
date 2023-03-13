@@ -202,6 +202,24 @@ MODULE utility
   !  spacetime output is to be saved
 
 
+  TYPE surface
+    LOGICAL:: is_known= .FALSE.
+    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
+    !# Array containing the coordinates of the matter objects' surfaces
+    !  The first index runs over the stars; the second and third run over
+    !  the surface points (number of points for \(\theta\) and \(\varphi\));
+    !  the fourth index runs over the Cartesian coordinates of the points
+  END TYPE surface
+
+
+  TYPE tabu_eos
+    DOUBLE PRECISION, PUBLIC, DIMENSION(:,:), ALLOCATABLE:: table_eos
+    !# Array containing the tabulated |eos|.
+    !  Its size is determined when reading the tabulated |eos| from file
+    !  The first index runs over the field, the second over its values.
+  END TYPE tabu_eos
+
+
   CONTAINS
 
 

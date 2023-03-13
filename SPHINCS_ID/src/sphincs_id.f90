@@ -387,7 +387,6 @@ stringize_end(vers)
       export_bssn_loop: DO itr3 = 1, n_id, 1
         WRITE( namefile_bssn, "(A8,I1,A4)" ) &
                               "bssn-id_", itr3, ".dat"
-
         namefile_bssn= TRIM( spacetime_path )//TRIM( namefile_bssn )
 
         CALL bssn_forms(itr3)% &

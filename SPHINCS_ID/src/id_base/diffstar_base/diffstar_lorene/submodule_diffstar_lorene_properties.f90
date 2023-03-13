@@ -58,9 +58,13 @@ SUBMODULE (diffstar_lorene) properties
     !***************************************************
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR, C_NULL_CHAR
-    USE utility, ONLY: Msun_geo, km2m, lorene2hydrobase, k_lorene2hydrobase, &
-                       k_lorene2hydrobase_piecewisepolytrope, zero, two, &
-                       eos$poly, eos$pwpoly, eos$tabu
+
+    USE tabulated_eos,  ONLY: read_compose_beta_equilibrated_eos
+    USE utility,        ONLY: Msun_geo, km2m, &
+                              lorene2hydrobase, k_lorene2hydrobase, &
+                              k_lorene2hydrobase_piecewisepolytrope, &
+                              zero, two, &
+                              eos$poly, eos$pwpoly, eos$tabu
 
 #if flavour == 1
 
@@ -167,39 +171,6 @@ SUBMODULE (diffstar_lorene) properties
     this% energy_density_center = this% energy_density_center*lorene2hydrobase
     this% pressure_center       = this% pressure_center*lorene2hydrobase
 
-    ! Convert polytropic constants from |lorene| units to SPHINCS units
-    IF( this% eos_loreneid == 1 )THEN
-    ! If the EOS is polytropic
-
-      this% eos_id= eos$poly
-      this% kappa= this% kappa*k_lorene2hydrobase( this% gamma )
-
-    ELSEIF( this% gamma0 /= 0 )THEN
-    ! If the EOS is piecewise polytropic
-
-      this% eos_id= eos$pwpoly
-      this% kappa0= this% kappa0 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma0 )
-      this% kappa1= this% kappa1 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma1 )
-      this% kappa2= this% kappa2 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma2 )
-      this% kappa3= this% kappa3 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma3 )
-
-    ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
-    ! If the EOS is tabulated
-
-      this% eos_id= eos$tabu
-
-    ELSE
-
-      PRINT *, "** ERROR in SUBROUTINE read_lorene_id_params!", &
-               " The equation of state is unknown! LORENE EOS IDs=", &
-               this% eos_loreneid, ", ", this% eos_loreneid
-      STOP
-
-    ENDIF
 
     !
     !-- Convert C++ strings to FORTRAN strings
@@ -246,6 +217,46 @@ SUBMODULE (diffstar_lorene) properties
     ENDIF
     this% eos_table= &
       TRANSFER( eostable_tmp_c(1:nchars), this% eos_table )
+
+
+    ! Convert polytropic constants from |lorene| units to SPHINCS units
+    IF( this% eos_loreneid == 1 )THEN
+    ! If the EOS is polytropic
+
+      this% eos_id= eos$poly
+      this% kappa= this% kappa*k_lorene2hydrobase( this% gamma )
+
+    ELSEIF( this% gamma0 /= 0 )THEN
+    ! If the EOS is piecewise polytropic
+
+      this% eos_id= eos$pwpoly
+      this% kappa0= this% kappa0 &
+                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma0 )
+      this% kappa1= this% kappa1 &
+                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma1 )
+      this% kappa2= this% kappa2 &
+                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma2 )
+      this% kappa3= this% kappa3 &
+                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma3 )
+
+    ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
+    ! If the EOS is tabulated, in CompOSE format
+
+      IF(.NOT.ALLOCATED(this% tab_eos)) ALLOCATE(this% tab_eos(1))
+
+      this% eos_id= eos$tabu
+
+      CALL read_compose_beta_equilibrated_eos &
+        (this% eos_table, this% tab_eos(1)% table_eos)
+
+    ELSE
+
+      PRINT *, "** ERROR in SUBROUTINE read_lorene_id_params!", &
+               " The equation of state is unknown! LORENE EOS IDs=", &
+               this% eos_loreneid, ", ", this% eos_loreneid
+      STOP
+
+    ENDIF
 
 
     CALL print_diffstar_properties(this)

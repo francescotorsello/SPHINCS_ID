@@ -41,20 +41,11 @@ MODULE id_base
   !***********************************************************
 
 
-  USE timing, ONLY: timer
+  USE utility,  ONLY: surface, tabu_eos
+  USE timing,   ONLY: timer
 
 
   IMPLICIT NONE
-
-
-  TYPE surface
-    LOGICAL:: is_known= .FALSE.
-    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
-    !# Array containing the coordinates of the stars' surfaces
-    !  The first index runs over the stars; the second and third run over
-    !  the surface points (number of points for \(\theta\) and \(\varphi\));
-    !  the fourth index runs overthe Cartesian coordinates of the points
-  END TYPE surface
 
 
   !*************************************************************
@@ -79,10 +70,14 @@ MODULE id_base
     !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
 
-    DOUBLE PRECISION, PUBLIC, DIMENSION(:,:), ALLOCATABLE:: table_eos
-    !#
-
     TYPE(surface), PUBLIC, DIMENSION(:), ALLOCATABLE:: surfaces
+    !# Array containing, for each matter object, a set of coordinates of some
+    !  points modelling the surfaces.
+    !  @todo TODO: make PRIVATE
+
+    TYPE(tabu_eos), PUBLIC, DIMENSION(:), ALLOCATABLE:: tab_eos
+    !# Array containing a tabulated |eos| for each matter object, when used.
+    !  @todo TODO: make PRIVATE
 
     LOGICAL:: one_lapse
     !# Logical variable that determines if the lapse function \(\alpha=1\),

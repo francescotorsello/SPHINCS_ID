@@ -32,11 +32,10 @@ MODULE sph_particles
   !***********************************************************
 
 
-  USE utility,                  ONLY: itr, ios, err_msg, test_status, &
-                                      is_finite_number, perc, creturn, &
-                                      run_id, show_progress
-  USE id_base,                  ONLY: idbase, surface
-  USE timing,                   ONLY: timer
+  USE utility,  ONLY: itr, ios, err_msg, test_status, is_finite_number, &
+                      perc, creturn, run_id, show_progress, surface
+  USE id_base,  ONLY: idbase
+  USE timing,   ONLY: timer
 
 
   IMPLICIT NONE
@@ -124,6 +123,10 @@ MODULE sph_particles
     ! polytropic constant in units of
     ! \(\left(M_\odot L_\odot^{-3}\right)^{1-\gamma}\). Pressure and baryon
     ! mass density have the same units \(M_\odot L_\odot^{-3}\) since \(c^2=1\).
+    DOUBLE PRECISION, PUBLIC, DIMENSION(:,:), ALLOCATABLE:: table_eos
+    !# Array containing the tabulated |eos|.
+    !  Its size is determined when reading the tabulated |eos| from file.
+    !  The first index runs over the field, the second over its values.
 
   END TYPE eos
 
@@ -166,9 +169,6 @@ MODULE sph_particles
     !# Array storing the centers of mass of the matter objects
     DOUBLE PRECISION, DIMENSION(4):: barycenter_system
     !# Array storing the center of mass of the **entire particle distribution**
-
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: surfaces
-    !# Array storing the surfaces of the matter objects
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
     !# Array storing the indices to use with [[particles:baryon_density]]
@@ -294,8 +294,8 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
     !> 1-D array storing the particle masses \(M_\odot\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
-    !> 1-D array storing the surfacesof the matter objects
-    TYPE(surface), DIMENSION(:), ALLOCATABLE:: surfaces
+    !> 1-D array storing the surfaces of the matter objects
+    TYPE(surface),  DIMENSION(:), ALLOCATABLE:: surfaces
     !& Ratio between baryonic masses of the matter objects and the maximum
     !  baryonic mass among them @warning always \(< 1\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: mass_ratios
@@ -343,8 +343,8 @@ MODULE sph_particles
     !
 
     TYPE(eos), DIMENSION(:), ALLOCATABLE:: all_eos
-    !# Array of TYPE [[eos]] containing the |eos| information for all the matter
-    !  objects
+    !# Array of TYPE [[eos]] containing the |eos| information for all the
+    !  matter objects
 
     !
     !-- Procedure pointers
@@ -1158,8 +1158,8 @@ MODULE sph_particles
 
     END SUBROUTINE compute_and_print_sph_variables
 
-    MODULE SUBROUTINE compute_sph_hydro( this, npart_in, npart_fin, &
-      eqos, nlrf, u, pr, enthalpy, cs, verbose )
+    MODULE SUBROUTINE compute_sph_hydro &
+      ( this, npart_in, npart_fin, eqos, nlrf, u, pr, enthalpy, cs, verbose )
     !# Computes the hydro fields on a section of the particles specified as
     !  input.
     !  First, computes the |sph| pressure starting from the |sph| baryon mass

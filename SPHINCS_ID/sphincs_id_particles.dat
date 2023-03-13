@@ -136,7 +136,7 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
@@ -204,10 +204,11 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
 ! CHECK THAT THE EOS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
 ! FILE sphincs_id_parameters.par MATCH!                                    !
 !--------------------------------------------------------------------------!
-compose_eos=.FALSE. ! If .TRUE., reads in the table of Ye (electron fraction)
+compose_eos=.TRUE. ! If .TRUE., reads in the table of Ye (electron fraction)
                    ! as a function of nb (baryon number density) from the .beta
                    ! file computed with the CompOSE software, and linearly
                    ! interpolates Ye on the particles.
+! The following is DEPRECATED
 ! compose_path is the path to the directory containing the CompOSE EoS.
 ! compose_filename is the subpath of compose_path to the file
 ! with .beta extension. NOTE: the .beta extension is omitted here, so that

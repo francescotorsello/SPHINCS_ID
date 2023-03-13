@@ -34,9 +34,9 @@ MODULE tabulated_eos
   !***********************************************************
 
 
-  USE utility,    ONLY: ios, err_msg, km2Msun_geo, MeV2amuc2, c_light2_SI
+  USE utility,    ONLY: ios, err_msg, km2Msun_geo, MeV2amuc2, c_light2_SI!,  lorene2hydrobase
   USE constants,  ONLY: fm2cm, cm2km, MeV2erg, amu, Msun
-  USE units, ONLY: m0c2_cu, set_units ! temporary
+  !USE units, ONLY: m0c2_cu, set_units ! temporary
 
 
   IMPLICIT NONE
@@ -78,17 +78,9 @@ MODULE tabulated_eos
     !
     ! - Third table index; charge fraction of strongly interacting particles
     !
-    ! - Temperature \(\mathrm{(MeV)}\)
-    !
-    ! - Baryon number density \((\mathrm{fm}^{-3})\). After reading it,
-    !   it is converted in baryon mass density
-    !
-    ! - Charge fraction of strongly interacting particles
-    !   \mathrm{(dimensionless)}
-    !
     ! - Pressure divided by the baryon number density:
     !   \(\dfrac{p}{|nb|}\mathrm{(MeV)}\). After reading it,
-    !   it is converted into pressure \(L_\odot c^2 L_\odot^{-3}\)
+    !   it is converted into pressure \(M_\odot c^2 L_\odot^{-3}\)
     !
     ! - Entropy density divided by the baryon number density
     !   (entropy per baryon): \(\dfrac{s}{|nb|} \mathrm{(dimensionless)}\)
@@ -108,12 +100,16 @@ MODULE tabulated_eos
     ! - Scaled internal energy per baryon:
     !   \(\dfrac{e}{|nb|m_\mathrm{n}} \mathrm{(dimensionless)}\)
     !
-    ! - Number of additional quantities
+    ! - Number of additional quantities (this should be 2, as per CompOSE
+    !   Manual v3.00, 13.03.2023)
     !
     ! - Electron fraction in beta equilibrium
     !
     ! - Enthalpy density without the temperature term \(Ts\):
     !   \(h= e + p \mathrm{MeV}\,\mathrm{fm}^{-3}\)
+    !
+    ! - Baryon number density \((\mathrm{fm}^{-3})\). After reading it,
+    !   it is converted in baryon mass density \(M_\odot L_\odot^{-3}\)
     !
 
     INTEGER, PARAMETER:: unit_compose= 876
@@ -173,8 +169,8 @@ MODULE tabulated_eos
     CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
 
 
-    PRINT *
-    PRINT *, "** Executing the read_compose_eos subroutine..."
+    !PRINT *
+    !PRINT *, "** Executing the read_compose_eos subroutine..."
     PRINT *
 
     ALLOCATE( table_eos(14,max_length_table) )
@@ -290,27 +286,27 @@ MODULE tabulated_eos
 
     ! Baryon mass density: MeV fm^{-3} to Msun_geo Msun_geo^{-3}
     ! (remember that c=1, so we do not have to divide by it)
-    table_eos(14,:)= table_eos(14,:) &
+    table_eos(14,:)= m_n*table_eos(14,:) &
                      *(MeV2amuc2*amu/Msun)/(fm2Msun_geo**3)
 
-    CALL set_units('NSM')
+    !CALL set_units('NSM')
+    !
+    !PRINT *, "n_lines:", n_lines
+    !PRINT *, "SIZE(pressure):", SIZE(table_eos(4,:))
+    !PRINT *, "SIZE(baryon mass density):", SIZE(table_eos(14,:))
+    !PRINT *, "SIZE(specific internal energy):", SIZE(table_eos(10,:))
+    !PRINT *, "pressure:", table_eos(4,210)/lorene2hydrobase
+    !PRINT *, "baryon mass density:", table_eos(14,210)/lorene2hydrobase
+    !PRINT *, "specific internal energy:", table_eos(10,210)
+    !PRINT *, "m0c2_cu:", m0c2_cu
+    !PRINT *, "pressure*m0c2_cu:", table_eos(4,210)/m0c2_cu
+    !PRINT *, "baryon mass density*m0c2_cu:", table_eos(14,210)/m0c2_cu
+    !PRINT *
+    !STOP
 
-    PRINT *, "n_lines:", n_lines
-    PRINT *, "SIZE(pressure):", SIZE(table_eos(4,:))
-    PRINT *, "SIZE(baryon mass density):", SIZE(table_eos(14,:))
-    PRINT *, "SIZE(specific internal energy):", SIZE(table_eos(10,:))
-    PRINT *, "pressure:", table_eos(4,210)
-    PRINT *, "baryon mass density:", table_eos(14,210)
-    PRINT *, "specific internal energy:", table_eos(10,210)
-    PRINT *, "m0c2_cu:", m0c2_cu
-    PRINT *, "pressure*m0c2_cu:", table_eos(4,210)/m0c2_cu
-    PRINT *, "baryon mass density*m0c2_cu:", table_eos(14,210)/m0c2_cu
-    PRINT *
-    STOP
 
-
-    PRINT *, "** Subroutine read_compose_eos executed."
-    PRINT *
+    !PRINT *, "** Subroutine read_compose_eos executed."
+    !PRINT *
 
 
   END SUBROUTINE read_compose_beta_equilibrated_eos
