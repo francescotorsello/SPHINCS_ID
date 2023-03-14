@@ -31,7 +31,7 @@ MODULE utility
 
 
   USE matrix,     ONLY: determinant_4x4_matrix
-  USE constants,  ONLY: G_Msun, c_light2, MSun
+  USE constants,  ONLY: MSun, G_Msun, c_light2
 
 
   IMPLICIT NONE
@@ -43,9 +43,9 @@ MODULE utility
   !
   !-- Identifiers for the supported equations of state
   !
-  INTEGER, PARAMETER:: eos$poly  = 1
-  INTEGER, PARAMETER:: eos$pwpoly= 2
-  INTEGER, PARAMETER:: eos$tabu  = 3
+  INTEGER, PARAMETER:: eos$poly        = 1
+  INTEGER, PARAMETER:: eos$pwpoly      = 2
+  INTEGER, PARAMETER:: eos$tabu$compose= 3
 
 
   DOUBLE PRECISION, PARAMETER:: zero        = 0.D0
@@ -56,29 +56,20 @@ MODULE utility
   DOUBLE PRECISION, PARAMETER:: five        = 5.D0
   DOUBLE PRECISION, PARAMETER:: seven       = 7.D0
   DOUBLE PRECISION, PARAMETER:: ten         = 10.D0
-  !DOUBLE PRECISION, PARAMETER:: golden_ratio= 1.618033988749894D0
   DOUBLE PRECISION, PARAMETER:: km2m        = ten*ten*ten
-  DOUBLE PRECISION, PARAMETER:: m2cm        = ten*ten
   DOUBLE PRECISION, PARAMETER:: g2kg        = one/(ten*ten*ten)
-  DOUBLE PRECISION, PARAMETER:: kg2g        = ten*ten*ten
-  DOUBLE PRECISION, PARAMETER:: c_light_SI  = 2.99792458E+8
-  DOUBLE PRECISION, PARAMETER:: c_light2_SI = c_light_SI**2
   DOUBLE PRECISION, PARAMETER:: MSun_geo    = G_Msun/c_light2/ &
                                                (ten*ten*ten*ten*ten)
   !# Msun_geo = 1.47662503825040 km
   !  see https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
-  DOUBLE PRECISION, PARAMETER:: MeV2amuc2   = one/931.49432
+  DOUBLE PRECISION, PARAMETER:: MeV2amuc2    = one/931.49432
   !! Conversion factor from \(\mathrm{MeV}\) to \(\mathrm{amu}*c^2\)
-
-  DOUBLE PRECISION, PARAMETER:: pa2barye        = ten
-  !! Conversion factor from Pascal to Barye
-  DOUBLE PRECISION, PARAMETER:: km2Msun_geo     = one/MSun_geo
-  DOUBLE PRECISION, PARAMETER:: lorene2hydrobase= (MSun_geo*km2m)**3/(MSun*g2kg)
-  !# Conversion factor for the baryon mass density, from the units used in
-  !  |lorene| to the units used in |sphincs|, but NOT measured in units of
-  !  \(m_0c^2\)
+  DOUBLE PRECISION, PARAMETER:: km2Msun_geo  = one/MSun_geo
+  DOUBLE PRECISION, PARAMETER:: density_si2cu= (MSun_geo*km2m)**3/(MSun*g2kg)
+  !# Conversion factor for the baryon mass density, from SI units to code
+  !  units, but NOT measured in units of \(m_0c^2\)
   !
-  !  `lorene2hydrobase`\(\simeq\dfrac{(1477\mathrm{m})^3}{2*10^30\mathrm{kg}}=1.6186541582311746851140226630074e-21\dfrac{\mathrm{m}^3}{\mathrm{kg}}\)
+  !  `dens_si2cu`\(=\simeq\dfrac{(1477\mathrm{m})^3}{2*10^30\mathrm{kg}}=1.6186541582311746851140226630074\times 10^{-21}\dfrac{\mathrm{m}^3}{\mathrm{kg}}\)
 
   INTEGER:: itr
   !! Iterator for loops
@@ -1045,7 +1036,7 @@ MODULE utility
   END SUBROUTINE cartesian_from_spherical
 
 
-  PURE FUNCTION k_lorene2hydrobase( gam )
+  PURE FUNCTION k_lorene2cu( gam )
 
     !****************************************************************
     !
@@ -1057,9 +1048,11 @@ MODULE utility
     !
     !****************************************************************
 
+    IMPLICIT NONE
+
     DOUBLE PRECISION, INTENT(IN) :: gam
     !! Polytropic exponent \(\gamma\)
-    DOUBLE PRECISION :: k_lorene2hydrobase
+    DOUBLE PRECISION :: k_lorene2cu
 
     ! LORENE's EOS is in terms on number density n = rho/m_nucleon:
     ! P = K n^Gamma
@@ -1081,15 +1074,13 @@ MODULE utility
     ! Our testbed cases are gamma= 2.75, k= 30000; and gamma=2, k=100
     ! in SPHINCS units
 
-    k_lorene2hydrobase= &
-                        ( (MSun*g2kg)/((MSun_geo*km2m)**3*(1.66D+17)) ) &
-                        **( gam - one )
+    k_lorene2cu= ( (MSun*g2kg)/((MSun_geo*km2m)**3*(1.66D+17)) )**(gam - one)
 
 
-  END FUNCTION
+  END FUNCTION k_lorene2cu
 
 
-  PURE FUNCTION k_lorene2hydrobase_piecewisepolytrope( gamma0 )
+  PURE FUNCTION k_lorene2cu_pwp( gamma0 )
 
     !****************************************************************
     !
@@ -1101,18 +1092,21 @@ MODULE utility
     !
     !****************************************************************
 
+    USE constants,  ONLY: m2cm
+
+    IMPLICIT NONE
+
     DOUBLE PRECISION, INTENT(IN) :: gamma0
     !! Polytropic exponent \(\gamma_0\)
-    DOUBLE PRECISION :: k_lorene2hydrobase_piecewisepolytrope
+    DOUBLE PRECISION :: k_lorene2cu_pwp
 
     ! LORENE has K0 in units of (g cm^{-3})^{1-gamma0} for the piecewise
     ! polytropes. This factor writes it in SPHINCS units
 
-    k_lorene2hydrobase_piecewisepolytrope= &
-                        ( MSun/((MSun_geo*km2m*m2cm)**3) )**( gamma0 - one )
+    k_lorene2cu_pwp= ( MSun/((MSun_geo*km2m*m2cm)**3) )**(gamma0 - one)
 
 
-  END FUNCTION
+  END FUNCTION k_lorene2cu_pwp
 
 
 END MODULE utility

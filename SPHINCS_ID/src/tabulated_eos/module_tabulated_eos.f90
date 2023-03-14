@@ -34,9 +34,9 @@ MODULE tabulated_eos
   !***********************************************************
 
 
-  USE utility,    ONLY: ios, err_msg, km2Msun_geo, MeV2amuc2, c_light2_SI!,  lorene2hydrobase
-  USE constants,  ONLY: fm2cm, cm2km, MeV2erg, amu, Msun
-  !USE units, ONLY: m0c2_cu, set_units ! temporary
+  USE utility,    ONLY: ios, err_msg, km2Msun_geo, MeV2amuc2
+  USE constants,  ONLY: fm2cm, cm2km, MeV2erg, amu, Msun, c_light2_si
+  !USE units, ONLY: m0c2_cu, set_units ! needed for debugging
 
 
   IMPLICIT NONE

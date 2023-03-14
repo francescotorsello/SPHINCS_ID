@@ -74,7 +74,7 @@ SUBMODULE (sph_particles) sph_variables
     !
     !************************************************
 
-    USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu
+    USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu$compose
     USE units,    ONLY: m0c2_cu
     USE numerics, ONLY: linear_interpolation
     USE pwp_EOS,  ONLY: select_EOS_parameters, gen_pwp_cold_eos, &
@@ -265,7 +265,7 @@ SUBMODULE (sph_particles) sph_variables
 
       ENDIF detect_hot_system
 
-    ELSEIF( eos_id == eos$tabu )THEN
+    ELSEIF( eos_id == eos$tabu$compose )THEN
     ! If the |eos| is tabulated in the CompOSE format
 
       IF(verb) PRINT *, " * Computing pressure and specific internal energy", &
@@ -314,10 +314,10 @@ SUBMODULE (sph_particles) sph_variables
     !
     !************************************************
 
-    USE constants,           ONLY: amu, third, Msun
-    USE utility,             ONLY: MSun_geo, k_lorene2hydrobase, zero, one, &
+    USE constants,           ONLY: amu, third, Msun, m2cm
+    USE utility,             ONLY: MSun_geo, zero, one, &
                                    compute_g4, determinant_sym4x4, &
-                                   spacetime_vector_norm_sym4x4, km2m, m2cm, &
+                                   spacetime_vector_norm_sym4x4, km2m, &
                                    sph_path
     USE units,               ONLY: set_units
     USE matrix,              ONLY: determinant_4x4_matrix
@@ -672,10 +672,11 @@ SUBMODULE (sph_particles) sph_variables
 
     !-----------------------------------------------------------------------!
     ! Computation of the hydrodynamical fields.                             !
-    ! For single and piecewise polytropes, do not use the pressure          !
-    ! and specific internal energy from the ID.                             !
-    ! Compute them using the exact formulas for piecewise                   !
-    ! polytropic instead, starting from the kernel interpolated density     !
+    ! They are computed using the EOS, starting from the SPH estimate of    !
+    ! the baryon mass density.                                              !
+    ! If the system is hot (that is, a thermal part is needed), the thermal !
+    ! part is added, if a single or polytropic EOS is used. It is not       !
+    ! added if a tabulated EOS is used.                                     !
     !-----------------------------------------------------------------------!
 
     matter_objects_loop: DO i_matter= 1, this% n_matter, 1

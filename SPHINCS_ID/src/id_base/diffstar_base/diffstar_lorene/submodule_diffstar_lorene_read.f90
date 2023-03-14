@@ -717,8 +717,8 @@ SUBMODULE (diffstar_lorene) read
     !
     !****************************************************
 
-    USE utility, ONLY: lorene2hydrobase
-    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
+    USE utility,  ONLY: density_si2cu
+    USE tensor,   ONLY: jxx, jxy, jxz, jyy, jyz, jzz
 
     IMPLICIT NONE
 
@@ -741,7 +741,7 @@ SUBMODULE (diffstar_lorene) read
       g(jxz)= zero
       g(jyz)= zero
 
-      baryon_density= baryon_density*lorene2hydrobase
+      baryon_density= baryon_density*density_si2cu
 
     ENDIF
 
@@ -795,7 +795,7 @@ SUBMODULE (diffstar_lorene) read
     !***********************************************
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_ASSOCIATED
-    USE utility,                      ONLY: lorene2hydrobase
+    USE utility,                      ONLY: density_si2cu
 
     IMPLICIT NONE
 
@@ -807,7 +807,7 @@ SUBMODULE (diffstar_lorene) read
       res= get_diffstar_mass_density( this% diffstar_ptr, &
                                       x*Msun_geo, &
                                       y*Msun_geo, &
-                                      z*Msun_geo )*lorene2hydrobase
+                                      z*Msun_geo )*density_si2cu
 
     ENDIF
 
@@ -827,7 +827,7 @@ SUBMODULE (diffstar_lorene) read
     !***********************************************
 
     USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE utility,                    ONLY: lorene2hydrobase
+    USE utility,                    ONLY: density_si2cu
 
     IMPLICIT NONE
 
@@ -839,7 +839,7 @@ SUBMODULE (diffstar_lorene) read
       res= get_diffstar_pressure( this% diffstar_ptr, &
                                   x*Msun_geo, &
                                   y*Msun_geo, &
-                                  z*Msun_geo )*lorene2hydrobase
+                                  z*Msun_geo )*density_si2cu
 
     ENDIF
 

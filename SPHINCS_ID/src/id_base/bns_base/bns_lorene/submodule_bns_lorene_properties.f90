@@ -25,7 +25,7 @@ SUBMODULE (bns_lorene) properties
 
   !********************************************
   !
-  !# Implementation of the methods of TYPE [[bnslorene]
+  !# Implementation of the methods of TYPE [[bnslorene]]
   !  that read from |lorene| the
   !  parameters of the binary system,
   !  and print them to the standard output.
@@ -62,10 +62,10 @@ SUBMODULE (bns_lorene) properties
     USE tabulated_eos,  ONLY: read_compose_beta_equilibrated_eos
     USE constants,      ONLY: c_light, cm2km
     USE utility,        ONLY: Msun_geo, km2m, &
-                              lorene2hydrobase, k_lorene2hydrobase, &
-                              k_lorene2hydrobase_piecewisepolytrope, &
+                              density_si2cu, k_lorene2cu, &
+                              k_lorene2cu_pwp, &
                               zero, two, four, five, &
-                              eos$poly, eos$pwpoly, eos$tabu
+                              eos$poly, eos$pwpoly, eos$tabu$compose
 
 #if flavour == 1
 
@@ -208,13 +208,13 @@ SUBMODULE (bns_lorene) properties
 
     ! Convert hydro quantities from |lorene| units to SPHINCS units
     this% nbar_center1           = this% nbar_center1*(MSun_geo*km2m)**3
-    this% rho_center1            = this% rho_center1*lorene2hydrobase
-    this% energy_density_center1 = this% energy_density_center1*lorene2hydrobase
-    this% pressure_center1       = this% pressure_center1*lorene2hydrobase
+    this% rho_center1            = this% rho_center1*density_si2cu
+    this% energy_density_center1 = this% energy_density_center1*density_si2cu
+    this% pressure_center1       = this% pressure_center1*density_si2cu
     this% nbar_center2           = this% nbar_center2*(MSun_geo*km2m)**3
-    this% rho_center2            = this% rho_center2*lorene2hydrobase
-    this% energy_density_center2 = this% energy_density_center2*lorene2hydrobase
-    this% pressure_center2       = this% pressure_center2*lorene2hydrobase
+    this% rho_center2            = this% rho_center2*density_si2cu
+    this% energy_density_center2 = this% energy_density_center2*density_si2cu
+    this% pressure_center2       = this% pressure_center2*density_si2cu
 
     !
     !-- Convert C++ strings to Fortran strings
@@ -338,27 +338,27 @@ SUBMODULE (bns_lorene) properties
     ! If the EOS is polytropic
 
       this% eos1_id= eos$poly
-      this% kappa_1= this% kappa_1*k_lorene2hydrobase( this% gamma_1 )
+      this% kappa_1= this% kappa_1*k_lorene2cu( this% gamma_1 )
 
     ELSEIF( this% eos1_loreneid == 110 )THEN
     ! If the EOS is piecewise polytropic
 
       this% eos1_id = eos$pwpoly
       this% kappa0_1= this% kappa0_1 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma0_1 )
+                      *k_lorene2cu_pwp( this% gamma0_1 )
       this% kappa1_1= this% kappa1_1 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma1_1 )
+                      *k_lorene2cu_pwp( this% gamma1_1 )
       this% kappa2_1= this% kappa2_1 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma2_1 )
+                      *k_lorene2cu_pwp( this% gamma2_1 )
       this% kappa3_1= this% kappa3_1 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_1 )
+                      *k_lorene2cu_pwp( this% gamma3_1 )
 
     ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
     ! If the EOS is tabulated, in CompOSE format
 
       IF(.NOT.ALLOCATED(this% tab_eos)) ALLOCATE(this% tab_eos(2))
 
-      this% eos1_id= eos$tabu
+      this% eos1_id= eos$tabu$compose
 
       CALL read_compose_beta_equilibrated_eos &
         (this% eos_table1, this% tab_eos(1)% table_eos)
@@ -368,6 +368,7 @@ SUBMODULE (bns_lorene) properties
       PRINT *, "** ERROR in SUBROUTINE read_bns_properties!", &
                " The equation of state on star 1 is unknown! LORENE EOS ID=", &
                this% eos1_loreneid
+      PRINT *
       STOP
 
     ENDIF
@@ -377,27 +378,27 @@ SUBMODULE (bns_lorene) properties
     ! If the EOS is polytropic
 
       this% eos2_id= eos$poly
-      this% kappa_2= this% kappa_2*k_lorene2hydrobase( this% gamma_2 )
+      this% kappa_2= this% kappa_2*k_lorene2cu( this% gamma_2 )
 
     ELSEIF( this% eos2_loreneid == 110 )THEN
     ! If the EOS is piecewise polytropic
 
       this% eos2_id = eos$pwpoly
       this% kappa0_2= this% kappa0_2 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma0_2 )
+                      *k_lorene2cu_pwp( this% gamma0_2 )
       this% kappa1_2= this% kappa1_2 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma1_2 )
+                      *k_lorene2cu_pwp( this% gamma1_2 )
       this% kappa2_2= this% kappa2_2 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma2_2 )
+                      *k_lorene2cu_pwp( this% gamma2_2 )
       this% kappa3_2= this% kappa3_2 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma3_2 )
+                      *k_lorene2cu_pwp( this% gamma3_2 )
 
     ELSEIF( this% eos2_loreneid == 17 .OR. this% eos2_loreneid == 20 )THEN
     ! If the EOS is tabulated, in CompOSE format
 
       IF(.NOT.ALLOCATED(this% tab_eos)) ALLOCATE(this% tab_eos(2))
 
-      this% eos2_id= eos$tabu
+      this% eos2_id= eos$tabu$compose
 
       CALL read_compose_beta_equilibrated_eos &
         (this% eos_table2, this% tab_eos(2)% table_eos)
@@ -407,6 +408,7 @@ SUBMODULE (bns_lorene) properties
       PRINT *, "** ERROR in SUBROUTINE read_bns_properties!", &
                " The equation of state on star 2 is unknown! LORENE EOS ID=", &
                this% eos2_loreneid
+      PRINT *
       STOP
 
     ENDIF

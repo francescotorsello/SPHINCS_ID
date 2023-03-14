@@ -64,10 +64,10 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     !
     !**********************************************
 
-    USE constants,  ONLY: pi, half, amu, Msun
+    USE constants,  ONLY: pi, half, amu, Msun, m2cm
     USE utility,    ONLY: zero, one, two, three, five, seven, ten, &
                           cartesian_from_spherical, is_finite_number, &
-                          g2kg, m2cm, lorene2hydrobase
+                          g2kg!, density_si2cu
     USE matrix,     ONLY: determinant_4x4_matrix
     USE NR,         ONLY: indexx
     USE APM,        ONLY: assign_h
@@ -228,7 +228,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
     !PRINT *, "std m_p             =", m_p
     !PRINT *, "std npart           =", npart_des
-    !rho_to_be_resolved= 1.D+13*(g2kg*m2cm**3)*lorene2hydrobase!1.0D-5
+    !rho_to_be_resolved= 1.D+13*(g2kg*m2cm**3)*dens_si2cu!1.0D-5
     !!rho_to_be_resolved= 1.138065390333111E-004
     !m_p= rho_to_be_resolved/(ndes/two)
     !!PRINT *, "average rho_id on the outer layers for 1.3 MPA1=", &

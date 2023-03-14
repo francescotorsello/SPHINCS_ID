@@ -146,7 +146,7 @@ SUBMODULE (sph_particles) constructor_std
     USE analyze,            ONLY: COM
     USE utility,            ONLY: spherical_from_cartesian, &
                                   spatial_vector_norm_sym3x3, sph_path, &
-                                  scan_1d_array_for_nans, eos$tabu
+                                  scan_1d_array_for_nans, eos$tabu$compose
 
 
     IMPLICIT NONE
@@ -312,7 +312,7 @@ SUBMODULE (sph_particles) constructor_std
       CALL id% return_eos_parameters( i_matter, &
                                       parts% all_eos(i_matter)% eos_parameters )                          
 
-      IF(parts% all_eos(i_matter)% eos_parameters(1) == eos$tabu)THEN
+      IF(parts% all_eos(i_matter)% eos_parameters(1) == eos$tabu$compose)THEN
 
         IF(ALLOCATED(id% tab_eos))THEN
 
@@ -1536,7 +1536,7 @@ SUBMODULE (sph_particles) constructor_std
       !
       !**************************************************************
 
-      USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu
+      USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu$compose
       USE options,  ONLY: eos_str, eos_type
 
       IMPLICIT NONE

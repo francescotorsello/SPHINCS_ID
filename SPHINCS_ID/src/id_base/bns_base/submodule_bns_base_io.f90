@@ -56,7 +56,8 @@ SUBMODULE (bns_base) io
     !
     !************************************************
 
-    USE utility,    ONLY: m2cm, lorene2hydrobase, kg2g
+    USE utility,    ONLY: density_si2cu
+    USE constants,  ONLY: kg2g, m2cm
 
     IMPLICIT NONE
 
@@ -96,11 +97,11 @@ SUBMODULE (bns_base) io
     PRINT *, "   Central baryon mass density for star 1= ", &
                  this% get_rho_center1(), "Msun/Msun_geo**3= ", &
                  this% get_rho_center1() &
-                 /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+                 /density_si2cu*kg2g/(m2cm**3), "g cm^{-3}"
     PRINT *, "   Central baryon mass density for star 2= ", &
                  this% get_rho_center2(), "Msun/Msun_geo**3= ", &
                  this% get_rho_center2() &
-                 /lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+                 /density_si2cu*kg2g/(m2cm**3), "g cm^{-3}"
     PRINT *
 
     CALL this% print_summary_derived( filename )

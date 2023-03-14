@@ -60,10 +60,8 @@ SUBMODULE (bns_fuka) properties
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_CHAR
 
     USE constants,  ONLY: c_light, cm2km
-    USE utility,    ONLY: Msun_geo, km2m, lorene2hydrobase, &
-                          k_lorene2hydrobase, &
-                          k_lorene2hydrobase_piecewisepolytrope, &
-                          zero, one, two, four, five, eos$poly, eos$pwpoly
+    USE utility,    ONLY: Msun_geo, zero, one, two, four, five, &
+                          eos$poly, eos$pwpoly
 
 #if flavour == 1
 

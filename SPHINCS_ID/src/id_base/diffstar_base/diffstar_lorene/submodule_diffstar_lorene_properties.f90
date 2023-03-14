@@ -61,10 +61,10 @@ SUBMODULE (diffstar_lorene) properties
 
     USE tabulated_eos,  ONLY: read_compose_beta_equilibrated_eos
     USE utility,        ONLY: Msun_geo, km2m, &
-                              lorene2hydrobase, k_lorene2hydrobase, &
-                              k_lorene2hydrobase_piecewisepolytrope, &
+                              density_si2cu, k_lorene2cu, &
+                              k_lorene2cu_pwp, &
                               zero, two, &
-                              eos$poly, eos$pwpoly, eos$tabu
+                              eos$poly, eos$pwpoly, eos$tabu$compose
 
 #if flavour == 1
 
@@ -167,9 +167,9 @@ SUBMODULE (diffstar_lorene) properties
 
     ! Convert hydro quantities from |lorene| units to SPHINCS units
     this% nbar_center           = this% nbar_center*(MSun_geo*km2m)**3
-    this% rho_center            = this% rho_center*lorene2hydrobase
-    this% energy_density_center = this% energy_density_center*lorene2hydrobase
-    this% pressure_center       = this% pressure_center*lorene2hydrobase
+    this% rho_center            = this% rho_center*density_si2cu
+    this% energy_density_center = this% energy_density_center*density_si2cu
+    this% pressure_center       = this% pressure_center*density_si2cu
 
 
     !
@@ -224,27 +224,23 @@ SUBMODULE (diffstar_lorene) properties
     ! If the EOS is polytropic
 
       this% eos_id= eos$poly
-      this% kappa= this% kappa*k_lorene2hydrobase( this% gamma )
+      this% kappa= this% kappa*k_lorene2cu( this% gamma )
 
     ELSEIF( this% gamma0 /= 0 )THEN
     ! If the EOS is piecewise polytropic
 
       this% eos_id= eos$pwpoly
-      this% kappa0= this% kappa0 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma0 )
-      this% kappa1= this% kappa1 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma1 )
-      this% kappa2= this% kappa2 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma2 )
-      this% kappa3= this% kappa3 &
-                      *k_lorene2hydrobase_piecewisepolytrope( this% gamma3 )
+      this% kappa0= this% kappa0*k_lorene2cu_pwp( this% gamma0 )
+      this% kappa1= this% kappa1*k_lorene2cu_pwp( this% gamma1 )
+      this% kappa2= this% kappa2*k_lorene2cu_pwp( this% gamma2 )
+      this% kappa3= this% kappa3*k_lorene2cu_pwp( this% gamma3 )
 
     ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
     ! If the EOS is tabulated, in CompOSE format
 
       IF(.NOT.ALLOCATED(this% tab_eos)) ALLOCATE(this% tab_eos(1))
 
-      this% eos_id= eos$tabu
+      this% eos_id= eos$tabu$compose
 
       CALL read_compose_beta_equilibrated_eos &
         (this% eos_table, this% tab_eos(1)% table_eos)

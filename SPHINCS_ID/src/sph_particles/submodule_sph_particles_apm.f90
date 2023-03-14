@@ -3271,8 +3271,9 @@ SUBMODULE (sph_particles) apm
       !
       !*******************************************************
 
-      USE utility,  ONLY: g2kg, m2cm, lorene2hydrobase
-      USE numerics, ONLY: bilinear_interpolation
+      USE constants,  ONLY: m2cm
+      USE utility,    ONLY: g2kg, density_si2cu
+      USE numerics,   ONLY: bilinear_interpolation
 
       IMPLICIT NONE
 
@@ -3480,7 +3481,7 @@ SUBMODULE (sph_particles) apm
         IF(debug) PRINT*, "nstar_id_av      =", nstar_id_av
         IF(debug) PRINT*, "nstar_sph_av     =", nstar_sph_av
         IF(debug) PRINT*, "(1.D+12g/cm**3)  =", &
-          1.D+12*(g2kg*m2cm**3)*lorene2hydrobase*umass/amu
+          1.D+12*(g2kg*m2cm**3)*density_si2cu*umass/amu
         IF(debug) PRINT*, "nu_all           =",(mass/DBLE(npart_real))*umass/amu
         IF(debug) PRINT*, "nu_av            =", nu_av
         IF(debug) PRINT*, "nu_av/nstar_id_av=", nu_av/nstar_id_av

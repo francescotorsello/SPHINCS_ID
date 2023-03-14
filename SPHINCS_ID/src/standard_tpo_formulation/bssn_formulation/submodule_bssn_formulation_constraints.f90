@@ -61,7 +61,7 @@ SUBMODULE (bssn_formulation) constraints
     !***************************************************
 
     USE constants,         ONLY: pi
-    USE utility,           ONLY: lorene2hydrobase
+    USE utility,           ONLY: density_si2cu
     USE matrix,            ONLY: invert_4x4_matrix
     USE tensor,            ONLY: itt, itx, ity, itz, ixx, ixy, &
                                  ixz, iyy, iyz, izz, jxx, jxy, jxz, &
@@ -280,7 +280,7 @@ SUBMODULE (bssn_formulation) constraints
 !                )
 
                 HC_rho( i, j, k )= two*pi*EXP(five*phi( i, j, k )) &
-                                    *lorene2hydrobase*energy_density( i, j, k )
+                                    *density_si2cu*energy_density( i, j, k )
 
                 HC_trK( i, j, k )= - EXP(five*phi( i, j, k ))/(three*four) &
                                         *trK( i, j, k )**2
@@ -1266,61 +1266,61 @@ SUBMODULE (bssn_formulation) constraints
 
 #endif
 
-                    Tmunu_ll(i,j,k,itt)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,itt)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,it) &
                             + pressure(i,j,k)*g4(i,j,k,itt) &
                              )
 
-                    Tmunu_ll(i,j,k,itx)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,itx)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,ix) &
                             + pressure(i,j,k)*g4(i,j,k,itx) &
                              )
 
-                    Tmunu_ll(i,j,k,ity)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,ity)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iy) &
                             + pressure(i,j,k)*g4(i,j,k,ity) &
                              )
 
-                    Tmunu_ll(i,j,k,itz)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,itz)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,it)*u_euler_l(i,j,k,iz) &
                             + pressure(i,j,k)*g4(i,j,k,itz) &
                              )
 
-                    Tmunu_ll(i,j,k,ixx)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,ixx)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,ix) &
                             + pressure(i,j,k)*g4(i,j,k,ixx) &
                              )
 
-                    Tmunu_ll(i,j,k,ixy)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,ixy)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iy) &
                             + pressure(i,j,k)*g4(i,j,k,ixy) &
                              )
 
-                    Tmunu_ll(i,j,k,ixz)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,ixz)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,ix)*u_euler_l(i,j,k,iz) &
                             + pressure(i,j,k)*g4(i,j,k,ixz) &
                              )
 
-                    Tmunu_ll(i,j,k,iyy)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,iyy)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iy) &
                             + pressure(i,j,k)*g4(i,j,k,iyy)  &
                              )
 
-                    Tmunu_ll(i,j,k,iyz)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,iyz)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,iy)*u_euler_l(i,j,k,iz) &
                             + pressure(i,j,k)*g4(i,j,k,iyz) &
                              )
 
-                    Tmunu_ll(i,j,k,izz)= lorene2hydrobase*( &
+                    Tmunu_ll(i,j,k,izz)= density_si2cu*( &
                             ( energy_density(i,j,k) + pressure(i,j,k) ) &
                             *u_euler_l(i,j,k,iz)*u_euler_l(i,j,k,iz) &
                             + pressure(i,j,k)*g4(i,j,k,izz) &

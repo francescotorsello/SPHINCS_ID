@@ -110,10 +110,10 @@ SUBMODULE (bns_lorene) io
     !
     !****************************************************
 
-    USE constants, ONLY: c_light, cm2km
-    USE utility,   ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                         lorene2hydrobase, zero, one, two, four, five, ten, &
-                         use_eos_from_id
+    USE constants, ONLY: c_light, cm2km, m2cm, kg2g
+    USE utility,   ONLY: k_lorene2cu, k_lorene2cu_pwp, Msun_geo, km2m, &
+                         density_si2cu, zero, one, two, four, five, ten, &
+                         use_eos_from_id, eos$poly, eos$pwpoly, eos$tabu$compose
 
     IMPLICIT NONE
 
@@ -121,8 +121,9 @@ SUBMODULE (bns_lorene) io
 
       PRINT *
       PRINT *, " ** The parameters have not been read yet. ", &
-          "Call the SUBROUTINE read_id_params to read them."
+               "Call the SUBROUTINE read_id_params to read them."
       PRINT *
+      STOP
 
     ELSE
 
@@ -209,16 +210,16 @@ SUBMODULE (bns_lorene) io
                this% nbar_center1/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
       PRINT *, "  Central baryon mass density = ", this% rho_center1, &
                " M_sun^geo (M_sun^geo)^{-3} =", &
-               this% rho_center1/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+               this% rho_center1/density_si2cu*kg2g/(m2cm**3), "g cm^{-3}"
       PRINT *, "  Central energy density = ", this% energy_density_center1, &
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
-               this% energy_density_center1/lorene2hydrobase*kg2g/(m2cm**3), &
+               this% energy_density_center1/density_si2cu*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *, "  Central specific energy = ", this% specific_energy_center1, &
                " c^2"
       PRINT *, "  Central pressure = ", this% pressure_center1, &
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
-               this% pressure_center1/lorene2hydrobase*kg2g/(m2cm**3), &
+               this% pressure_center1/density_si2cu*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *, " Hydro quantities at the center of star 2: "
       PRINT *, "  Central enthalpy = ", this% ent_center2, " c^2"
@@ -227,16 +228,16 @@ SUBMODULE (bns_lorene) io
                this% nbar_center2/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
       PRINT *, "  Central baryon mass density = ", this% rho_center2, &
                " M_sun^geo (M_sun^geo)^{-3} =", &
-               this% rho_center2/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+               this% rho_center2/density_si2cu*kg2g/(m2cm**3), "g cm^{-3}"
       PRINT *, "  Central energy density = ", this% energy_density_center2, &
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
-               this% energy_density_center2/lorene2hydrobase*kg2g/(m2cm**3), &
+               this% energy_density_center2/density_si2cu*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *, "  Central specific energy = ", this% specific_energy_center2, &
                " c^2"
       PRINT *, "  Central pressure = ", this% pressure_center2, &
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
-               this% pressure_center2/lorene2hydrobase*kg2g/(m2cm**3), &
+               this% pressure_center2/density_si2cu*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *
       !IF( show_progress ) &
@@ -245,24 +246,24 @@ SUBMODULE (bns_lorene) io
         PRINT *, " Equations of state for star 2 (EOS2) = ", this% eos2
       !IF( show_progress ) PRINT *
 
-      IF( this% eos1_loreneid == 1 )THEN
+      IF( this% eos1_id == eos$poly )THEN
       ! If the EOS is polytropic
 
         PRINT *, " Parameters for EOS1: "
         PRINT *, "  Polytopic index gamma_1 = ", this% gamma_1
         PRINT *, "  Pressure coefficient = ",&
-                 this% kappa_1/k_lorene2hydrobase( this% gamma_1 ), &
+                 this% kappa_1/k_lorene2cu( this% gamma_1 ), &
                  "rho_nuc c^2 / n_nuc^gamma_1 = ", this% kappa_1, &
                  "[pure number]"
         PRINT *, " Parameters for EOS2: "
         PRINT *, "  Polytopic index gamma_2 = ", this% gamma_2
         PRINT *, "  Pressure coefficient = ",&
-                 this% kappa_2/k_lorene2hydrobase( this% gamma_2 ), &
+                 this% kappa_2/k_lorene2cu( this% gamma_2 ), &
                  "rho_nuc c^2 / n_nuc^gamma_2 = ", this% kappa_2, &
                  "[pure number]"
         PRINT *
 
-      ELSEIF( this% eos1_loreneid == 110 )THEN
+      ELSEIF( this% eos1_id == eos$pwpoly )THEN
       ! If the EOS is piecewise polytropic
 
         PRINT *, " Parameters for EOS1: "
@@ -272,19 +273,19 @@ SUBMODULE (bns_lorene) io
         PRINT *, "  Polytopic index gamma2_1 = ", this% gamma2_1
         PRINT *, "  Polytopic index gamma3_1 = ", this% gamma3_1
         PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
-                 this% kappa0_1/k_lorene2hydrobase( this% gamma0_1 ), &
+                 this% kappa0_1/k_lorene2cu_pwp( this% gamma0_1 ), &
                  "rho_nuc c^2 / n_nuc^gamma0_1 = ", this% kappa0_1, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the first polytrope = ",&
-                 this% kappa1_1/k_lorene2hydrobase( this% gamma1_1 ), &
+                 this% kappa1_1/k_lorene2cu_pwp( this% gamma1_1 ), &
                  "rho_nuc c^2 / n_nuc^gamma1_1", this% kappa1_1, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the second polytrope = ",&
-                 this% kappa2_1/k_lorene2hydrobase( this% gamma2_1 ), &
+                 this% kappa2_1/k_lorene2cu_pwp( this% gamma2_1 ), &
                  "rho_nuc c^2 / n_nuc^gamma2_1", this% kappa2_1, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the third polytrope = ",&
-                 this% kappa3_1/k_lorene2hydrobase( this% gamma3_1 ), &
+                 this% kappa3_1/k_lorene2cu_pwp( this% gamma3_1 ), &
                  "rho_nuc c^2 / n_nuc^gamma3_1", this% kappa3_1, &
                  "[pure number]"
         PRINT *, "  Base 10 exponent of the pressure at the first fiducial " &
@@ -304,19 +305,19 @@ SUBMODULE (bns_lorene) io
         PRINT *, "  Polytopic index gamma2_2 = ", this% gamma2_2
         PRINT *, "  Polytopic index gamma3_2 = ", this% gamma3_2
         PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
-                 this% kappa0_2/k_lorene2hydrobase( this% gamma0_2 ), &
+                 this% kappa0_2/k_lorene2cu_pwp( this% gamma0_2 ), &
                  "rho_nuc c^2 / n_nuc^gamma0_2 = ", this% kappa0_2, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the first polytrope = ",&
-                 this% kappa1_2/k_lorene2hydrobase( this% gamma1_2 ), &
+                 this% kappa1_2/k_lorene2cu_pwp( this% gamma1_2 ), &
                  "rho_nuc c^2 / n_nuc^gamma1_2", this% kappa1_2, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the second polytrope = ",&
-                 this% kappa2_2/k_lorene2hydrobase( this% gamma2_2 ), &
+                 this% kappa2_2/k_lorene2cu_pwp( this% gamma2_2 ), &
                  "rho_nuc c^2 / n_nuc^gamma2_2", this% kappa2_2, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the third polytrope = ",&
-                 this% kappa3_2/k_lorene2hydrobase( this% gamma3_2 ), &
+                 this% kappa3_2/k_lorene2cu_pwp( this% gamma3_2 ), &
                  "rho_nuc c^2 / n_nuc^gamma3_2", this% kappa3_2, &
                  "[pure number]"
         PRINT *, "  Base 10 exponent of the pressure at the first fiducial " &
@@ -330,11 +331,11 @@ SUBMODULE (bns_lorene) io
                  this% logRho2_2
         PRINT *
 
-      ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
+      ELSEIF( this% eos1_id == eos$tabu$compose )THEN
       ! If the EOS is tabulated
 
         PRINT *
-        PRINT *, " ** Using tabulated EOS"
+        PRINT *, " ** Using tabulated CompOSE EOS"
         PRINT *
         IF(.NOT.use_eos_from_id)THEN
           PRINT *, " Equations of state for star 1 (EOS1) = ", &

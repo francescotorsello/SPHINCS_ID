@@ -364,7 +364,7 @@ SUBMODULE (bns_lorene) access
     !
     !**************************************************
 
-    USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu
+    USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu$compose
 
     IMPLICIT NONE
 
@@ -384,7 +384,7 @@ SUBMODULE (bns_lorene) access
               this% logP1_1, &
               this% logRho0_1, this% logRho1_1, this% logRho2_1 ]
 
-      ELSEIF( this% eos1_id == eos$tabu )THEN
+      ELSEIF( this% eos1_id == eos$tabu$compose )THEN
 
         eos_params= [ DBLE(this% eos1_id) ]
 
@@ -411,7 +411,7 @@ SUBMODULE (bns_lorene) access
               this% logP1_2, &
               this% logRho0_2, this% logRho1_2, this% logRho2_2 ]
 
-      ELSEIF( this% eos2_id == eos$tabu )THEN
+      ELSEIF( this% eos2_id == eos$tabu$compose )THEN
 
         eos_params= [ DBLE(this% eos2_id) ]
 

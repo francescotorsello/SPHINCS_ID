@@ -682,7 +682,7 @@ SUBMODULE (bns_lorene) read
     !
     !****************************************************
 
-    USE utility,  ONLY: lorene2hydrobase
+    USE utility,  ONLY: density_si2cu
     USE tensor,   ONLY: jxx, jxy, jxz, jyy, jyz, jzz
 
     IMPLICIT NONE
@@ -706,7 +706,7 @@ SUBMODULE (bns_lorene) read
       g(jyz)= zero
       g(jzz)= g(jxx)
 
-      baryon_density= baryon_density*lorene2hydrobase
+      baryon_density= baryon_density*density_si2cu
 
     ENDIF
 
@@ -808,7 +808,7 @@ SUBMODULE (bns_lorene) read
     !***********************************************
 
     USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE utility,                    ONLY: lorene2hydrobase
+    USE utility,                    ONLY: density_si2cu
 
     IMPLICIT NONE
 
@@ -820,7 +820,7 @@ SUBMODULE (bns_lorene) read
       res= get_lorene_mass_density( this% bns_ptr, &
                                     x*Msun_geo, &
                                     y*Msun_geo, &
-                                    z*Msun_geo )*lorene2hydrobase
+                                    z*Msun_geo )*density_si2cu
 
     ENDIF
 
@@ -840,7 +840,7 @@ SUBMODULE (bns_lorene) read
     !***********************************************
 
     USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE utility,                    ONLY: lorene2hydrobase
+    USE utility,                    ONLY: density_si2cu
 
     IMPLICIT NONE
 
@@ -852,7 +852,7 @@ SUBMODULE (bns_lorene) read
       res= get_lorene_pressure( this% bns_ptr, &
                                 x*Msun_geo, &
                                 y*Msun_geo, &
-                                z*Msun_geo )*lorene2hydrobase
+                                z*Msun_geo )*density_si2cu
 
     ENDIF
 

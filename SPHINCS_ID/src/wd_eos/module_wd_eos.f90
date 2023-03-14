@@ -38,10 +38,9 @@ MODULE wd_eos
   !********************************************
 
 
-  USE constants,  ONLY: third, c_light2
+  USE constants,  ONLY: third, c_light2, c_light2_si, kg2g, m2cm, press_si2cgs
   USE units,      ONLY: m0c2_cu
-  USE utility,    ONLY: zero, one, two, three, four, ten, lorene2hydrobase, &
-                        kg2g, m2cm, c_light2_SI, pa2barye
+
 
   IMPLICIT NONE
 
@@ -49,24 +48,23 @@ MODULE wd_eos
   PRIVATE
 
 
-  DOUBLE PRECISION, PARAMETER:: mu_e= two
+  DOUBLE PRECISION, PARAMETER:: dens_si2cu= 1.618654158231174D-21
+  !! Conversion factor for the baryon mass density, from SI units to code units
+
+  DOUBLE PRECISION, PARAMETER:: mu_e= 2.D0
   !! Mean molecular weight per electron
 
-  DOUBLE PRECISION, PARAMETER:: a_wd_cgs= 6.02D+21*pa2barye
+  DOUBLE PRECISION, PARAMETER:: a_wd_cgs= 6.02D+21*press_si2cgs
   !! Constant with dimensions of a pressure in CGS units
+  !  (only used in [[test_wd_eos_cgs]])
   DOUBLE PRECISION, PARAMETER:: b_wd_cgs= mu_e*9.82D+8*kg2g/(m2cm**3)
   !! Constant with dimensions of a density in CGS units
+  !  (only used in [[test_wd_eos_cgs]])
 
-  DOUBLE PRECISION, PARAMETER:: a_wd= 6.02D+21/c_light2_SI*lorene2hydrobase
-  !! Constant with dimensions of a pressure in code units
-  DOUBLE PRECISION, PARAMETER:: b_wd= mu_e*9.82D+8*lorene2hydrobase
-  !! Constant with dimensions of a density in code units
-
- ! DOUBLE PRECISION:: a_wd_m0c2= &
- !                               6.02D+21/c_light2_SI*lorene2hydrobase/m0c2_cu
- ! !! Constant with dimensions of a pressure in units of \(m_0 c^2\)
- ! DOUBLE PRECISION:: b_wd_m0c2= mu_e*9.82D+8*lorene2hydrobase/m0c2_cu
- ! !! Constant with dimensions of a density in units of \(m_0 c^2\)
+  DOUBLE PRECISION, PARAMETER:: a_wd= 6.02D+21/c_light2_SI*dens_si2cu
+  !# Constant with dimensions of a pressure in code units
+  DOUBLE PRECISION, PARAMETER:: b_wd= mu_e*9.82D+8*dens_si2cu
+  !# Constant with dimensions of a density in code units
 
 
   PUBLIC:: pr_wd, u_wd, rho_wd, test_wd_eos_cgs
@@ -95,7 +93,7 @@ MODULE wd_eos
 
     DOUBLE PRECISION, INTENT(IN):: x
 
-    f_wd= x*(two*x**2 - three)*SQRT(x**2 + one) + three*ASINH(x)
+    f_wd= x*(2.D0*x**2 - 3.D0)*SQRT(x**2 + 1.D0) + 3.D0*ASINH(x)
 
   END FUNCTION f_wd
 
@@ -115,7 +113,7 @@ MODULE wd_eos
 
     DOUBLE PRECISION, INTENT(IN):: x
 
-    g_wd= two*four*x**3*(SQRT(x**2 + one) - one) - f_wd(x)
+    g_wd= 2.D0*4.D0*x**3*(SQRT(x**2 + 1.D0) - 1.D0) - f_wd(x)
 
   END FUNCTION g_wd
 
@@ -209,7 +207,7 @@ MODULE wd_eos
     DOUBLE PRECISION:: x
 
     IF(rho == 0)THEN
-      u_wd= zero
+      u_wd= 0.D0
       RETURN
     ENDIF
 
@@ -251,7 +249,7 @@ MODULE wd_eos
     LOGICAL, PARAMETER:: debug= .FALSE.
 
     IF(pr < pr_min)THEN
-      rho_wd= zero
+      rho_wd= 0.D0
       RETURN
     ENDIF
 
@@ -260,12 +258,12 @@ MODULE wd_eos
     ! Bisection in logarithmic scale, to find the approximate order of magnitude
     DO
 
-      pr_left = pr_wd(ten**rho_left)
-      pr_right= pr_wd(ten**rho_right)
+      pr_left = pr_wd(1.D1**rho_left)
+      pr_right= pr_wd(1.D1**rho_right)
       IF( pr_left <= pr .AND. pr_right > pr )THEN
 
-        rho_mean= FLOOR((rho_left + rho_right)/two)
-        pr_mean = pr_wd(ten**rho_mean)
+        rho_mean= FLOOR((rho_left + rho_right)/2.D0)
+        pr_mean = pr_wd(1.D1**rho_mean)
 
         IF(debug) PRINT *, FLOOR(ABS(LOG10(pr_right) - LOG10(pr_left)))
         IF(debug) PRINT *, LOG10(pr_right)
@@ -284,11 +282,11 @@ MODULE wd_eos
 
       ELSEIF( pr_left < pr .AND. pr_right < pr )THEN
 
-        rho_right= rho_right + two
+        rho_right= rho_right + 2.D0
 
       ELSEIF( pr_left > pr .AND. pr_right > pr )THEN
 
-        rho_left= rho_left - two
+        rho_left= rho_left - 2.D0
 
       ELSE
 
@@ -308,8 +306,8 @@ MODULE wd_eos
 
     ! Bisection in linear scale, to find the precise value
     pr_cgs   = pr
-    rho_left = (ten**rho_left )
-    rho_right= (ten**rho_right)
+    rho_left = (1.D1**rho_left )
+    rho_right= (1.D1**rho_right)
     IF(debug) PRINT *, "rho_left =", rho_left
     IF(debug) PRINT *, "rho_right=", rho_right
     IF(debug) PRINT *, "pr_cgs   =", pr_cgs
@@ -320,7 +318,7 @@ MODULE wd_eos
       pr_right= pr_wd(rho_right)
       IF( pr_left <= pr_cgs .AND. pr_right > pr_cgs )THEN
 
-        rho_mean= (rho_left + rho_right)/two
+        rho_mean= (rho_left + rho_right)/2.D0
         pr_mean = pr_wd(rho_mean)
         IF(debug) PRINT *, "pr_left  =", pr_left
         IF(debug) PRINT *, "pr_right =", pr_right
@@ -351,11 +349,11 @@ MODULE wd_eos
 
       ELSEIF( pr_left < pr_cgs .AND. pr_right < pr_cgs )THEN
 
-        rho_right= two*rho_right
+        rho_right= 2.D0*rho_right
 
       ELSEIF( pr_left > pr_cgs .AND. pr_right > pr_cgs )THEN
 
-        rho_left= rho_left/two
+        rho_left= rho_left/2.D0
 
       ELSE
 
@@ -415,8 +413,6 @@ MODULE wd_eos
     !
     !********************************************
 
-    USE utility,   ONLY: lorene2hydrobase, kg2g, m2cm
-
     IMPLICIT NONE
 
     DOUBLE PRECISION, INTENT(IN) :: rho_input
@@ -428,20 +424,20 @@ MODULE wd_eos
 
     PRINT *, "   a_wd in code units=", a_wd
     PRINT *, "   b_wd in code units=", b_wd
-    PRINT *, "   a_wd in CGS units=", a_wd_cgs
-    PRINT *, "   b_wd in CGS units=", b_wd_cgs
+    PRINT *, "   a_wd in CGS units=",  a_wd_cgs
+    PRINT *, "   b_wd in CGS units=",  b_wd_cgs
     PRINT *
     PRINT *, "   rho_input in code units=", rho_input
     PRINT *, "   rho_input in CGS units=", &
-             rho_input/lorene2hydrobase*kg2g/(m2cm**3)
+             rho_input/dens_si2cu*kg2g/(m2cm**3)
     PRINT *
 
     pr = pr_wd(rho_input)
     u  = u_wd(rho_input)
-    rho= rho_wd(pr,zero,one)
+    rho= rho_wd(pr,0.D0,1.D0)
 
     PRINT *, "   pr in code units=", pr
-    pr= pr/lorene2hydrobase*kg2g/(m2cm**3)*c_light2
+    pr= pr/dens_si2cu*kg2g/(m2cm**3)*c_light2
     PRINT *, "   pr in CGS units=", pr
     PRINT *
 
@@ -449,7 +445,7 @@ MODULE wd_eos
     PRINT *
 
     PRINT *, "   Recomputed rho in code units=", rho
-    rho= rho/lorene2hydrobase*kg2g/(m2cm**3)
+    rho= rho/dens_si2cu*kg2g/(m2cm**3)
     PRINT *, "   Recomputed rho in CGS units=", rho
     PRINT *
 
