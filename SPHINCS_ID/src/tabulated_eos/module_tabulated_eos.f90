@@ -176,7 +176,7 @@ MODULE tabulated_eos
     ALLOCATE( table_eos(14,max_length_table) )
     table_eos= 0.D0
 
-    finalnamefile= TRIM(namefile)//".thermo"
+    finalnamefile= TRIM(namefile)//"eos.thermo.ns"
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
@@ -231,7 +231,7 @@ MODULE tabulated_eos
     CLOSE( unit_compose )
 
     ! Read baryon number density from *.nb.ns file
-    finalnamefile= TRIM(namefile)//".nb"
+    finalnamefile= TRIM(namefile)//"eos.nb.ns"
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
 
