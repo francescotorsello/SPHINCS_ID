@@ -204,27 +204,28 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
 ! CHECK THAT THE EOS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
 ! FILE sphincs_id_parameters.par MATCH!                                    !
 !--------------------------------------------------------------------------!
-compose_eos=.TRUE. ! If .TRUE., reads in the table of Ye (electron fraction)
-                   ! as a function of nb (baryon number density) from the .beta
-                   ! file computed with the CompOSE software, and linearly
-                   ! interpolates Ye on the particles.
+compose_eos=.TRUE. ! If .TRUE., assigns values to Ye (electron fraction)
+                   ! as a function of rho (baryon mass density).
+                   ! The values are computed via linear interpolation
+                   ! using the CompOSE tabulated EOS.
+!------------------------------------------------------------------------------
 ! The following is DEPRECATED
 ! compose_path is the path to the directory containing the CompOSE EoS.
 ! compose_filename is the subpath of compose_path to the file
 ! with .beta extension. NOTE: the .beta extension is omitted here, so that
 ! to read the file great_eos.beta in the directory compose_path/GREAT_EoS,
 ! one writes compose_filename="GREAT_EoS/great_eos"
-compose_path="../../CompOSE_EOS/"
+!compose_path="../../CompOSE_EOS/"
 ! gfortran requires the following string to be on the first line, ifort does not
-compose_filename="DD2-SF_RDF1.8/eos"
-                 !"SFHO_with_electrons/eos"
-                 !"SFHX_with_electrons/eos"
-                 !"TNTYST_with_electrons/eos"
-                 !"FT_with_electrons/eos"
-                 !"SRO_APR_SNA/eos"
-                 !"SRO_SLy4_SNA/eos"
-                 !"RG_SLY4/eos"
-                 !"DD2-SF_RDF1.8/eos"
-                 !"DD2-SF_RDF1.9/eos"
+!compose_filename="DD2-SF_RDF1.8/eos"
+!                 !"SFHO_with_electrons/eos"
+!                 !"SFHX_with_electrons/eos"
+!                 !"TNTYST_with_electrons/eos"
+!                 !"FT_with_electrons/eos"
+!                 !"SRO_APR_SNA/eos"
+!                 !"SRO_SLy4_SNA/eos"
+!                 !"RG_SLY4/eos"
+!                 !"DD2-SF_RDF1.8/eos"
+!                 !"DD2-SF_RDF1.9/eos"
 
 /

@@ -98,7 +98,7 @@ filenames(1)=!"BNSLO_1.3-1.3_apr3_45km.bin"
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
-use_eos_from_id=.TRUE.
+use_eos_from_id=.FALSE.
 common_eos_path="/disk/stero-1/ftors/Lorene_Library/par_eos_files/"
 eos_filenames(1)="par_eos_DD2-SF_RDF1.8_with_leptons.d",
                  "par_eos_DD2-SF_RDF1.8_with_leptons.d"

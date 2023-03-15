@@ -238,7 +238,7 @@ MODULE wd_eos
     DOUBLE PRECISION, INTENT(IN):: rho_right_bracket
 
     INTEGER,          PARAMETER:: tolerance_magnitude= 3
-    DOUBLE PRECISION, PARAMETER:: tolerance_pr       = 1.D-6
+    DOUBLE PRECISION, PARAMETER:: tolerance_pr       = 1.D-5
     DOUBLE PRECISION, PARAMETER:: tolerance_rho      = 1.D-10
     DOUBLE PRECISION, PARAMETER:: pr_min             = 1.D-30
 

@@ -1393,7 +1393,13 @@ SUBMODULE (sph_particles) constructor_std
 
     SUBROUTINE read_particles_options
 
-
+      !**************************************************************
+      !
+      !# Read the parameters in the file sphincs_id_particles.dat
+      !
+      !  FT 2022
+      !
+      !**************************************************************
 
       IMPLICIT NONE
 
@@ -1424,8 +1430,11 @@ SUBMODULE (sph_particles) constructor_std
         STOP
       ENDIF
 
-      READ( unit_particles, NML= sphincs_id_particles )
-      CLOSE( unit_particles )
+      compose_path    = "compose_path is a deprecated variable"
+      compose_filename= "compose_filename is a deprecated variable"
+
+      READ(unit_particles, NML= sphincs_id_particles)
+      CLOSE(unit_particles)
 
       parts% use_thres          = use_thres
       parts% correct_nu         = correct_nu
