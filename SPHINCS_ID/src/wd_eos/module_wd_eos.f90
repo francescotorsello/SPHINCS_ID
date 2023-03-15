@@ -28,10 +28,9 @@ MODULE wd_eos
   !# This MODULE implements the Chandrasekhar's
   !  degenerate |eos| for white dwarfs.
   !
-  !  See Benz W., Bowers R.L., Cameron A.G.W.,
-  !  Press W.H., 1990, APJ, 348, 647.
-  !  doi:10.1086/168273
-  !  eqs.(2.4)-(2.5)
+  !  See [Benz W., Bowers R.L., Cameron A.G.W., Press W.H., 1990, APJ, 348, 647.](https://ui.adsabs.harvard.edu/abs/1990ApJ...348..647B/abstract){:target="_blank"}, eqs.(2.4)-(2.5)
+  !
+  !  See also [S. Chandrasekhar, The Highly Collapsed Configurations of a Stellar Mass. (Second Paper.), Monthly Notices of the Royal Astronomical Society, Volume 95, Issue 3, January 1935, Pages 207225](https://doi.org/10.1093/mnras/95.3.207){:target="_blank"}
   !
   !  FT 19.12.2022
   !
@@ -129,10 +128,7 @@ MODULE wd_eos
     !
     !# Degenerate pressure as a function of density
     !
-    !  See Benz W., Bowers R.L., Cameron A.G.W.,
-    !  Press W.H., 1990, APJ, 348, 647.
-    !  doi:10.1086/168273
-    !  eqs.(2.4)
+    !  See [Benz W., Bowers R.L., Cameron A.G.W., Press W.H., 1990, APJ, 348, 647.](https://ui.adsabs.harvard.edu/abs/1990ApJ...348..647B/abstract){:target="_blank"}, eqs.(2.4)
     !
     !
     !  FT 19.12.2022
@@ -159,10 +155,7 @@ MODULE wd_eos
     !# Degenerate pressure as a function of density,
     !  all in CGS units
     !
-    !  See Benz W., Bowers R.L., Cameron A.G.W.,
-    !  Press W.H., 1990, APJ, 348, 647.
-    !  doi:10.1086/168273
-    !  eqs.(2.4)
+    !  See [Benz W., Bowers R.L., Cameron A.G.W., Press W.H., 1990, APJ, 348, 647.](https://ui.adsabs.harvard.edu/abs/1990ApJ...348..647B/abstract){:target="_blank"}, eqs.(2.4)
     !
     !
     !  FT 19.12.2022
@@ -189,10 +182,7 @@ MODULE wd_eos
     !# Degenerate specific internal energy as a
     !  function of density
     !
-    !  See Benz W., Bowers R.L., Cameron A.G.W.,
-    !  Press W.H., 1990, APJ, 348, 647.
-    !  doi:10.1086/168273
-    !  eqs.(2.5)
+    !  See [Benz W., Bowers R.L., Cameron A.G.W., Press W.H., 1990, APJ, 348, 647.](https://ui.adsabs.harvard.edu/abs/1990ApJ...348..647B/abstract){:target="_blank"}, eqs.(2.5)
     !
     !  FT 19.12.2022
     !
