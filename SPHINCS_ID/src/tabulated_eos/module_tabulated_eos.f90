@@ -52,12 +52,12 @@ MODULE tabulated_eos
 
     !**********************************************
     !
-    !# Read the |compose| files *.thermo.ns,
-    !  *.t, *.nb, *.yq,
-    !  containing the \(\beta\)-equilibrated |eos|
-    !  computed by the |compose| software.
+    !# Read the |compose| files \*.thermo.ns,
+    !  \*.nb.ns, containing the \(\beta\)-equilibrated
+    !  |eos| computed by the |compose| software.
     !
-    !  See [the |compose| Manual](https://compose.obspm.fr/manual){:target="_blank"} for more details.
+    !  See [the |compose| Manual](https://compose.obspm.fr/manual){:target="_blank"}, specifically Section 4.2.2 of
+    !  v3.00 of the CompOSE Manual, for more details.
     !
     !  FT 10.03.2023
     !
@@ -70,17 +70,22 @@ MODULE tabulated_eos
     CHARACTER(LEN=*), INTENT(IN):: namefile
     !! Path of the |eos| file without '.thermo.ns' extension
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(OUT):: table_eos
-    !#  The |eos| table in \compose| format contains:
+    !#  This |eos| table contains the following quantities
+    !   (except for the pressure and the baryon mass density, which are
+    !   converted into code units, the other quantities are in units
+    !   such that \(\hbar=c=k_\mathrm{B}=1\)):
     !
     ! - First table index; temperature
+    !   (not used for \(\beta\)-equilibrated |eos|)
     !
     ! - Second table index; baryon number density
     !
     ! - Third table index; charge fraction of strongly interacting particles
+    !   (not used for \(\beta\)-equilibrated |eos|)
     !
     ! - Pressure divided by the baryon number density:
     !   \(\dfrac{p}{|nb|}\mathrm{(MeV)}\). After reading it,
-    !   it is converted into pressure \(M_\odot c^2 L_\odot^{-3}\)
+    !   it is converted into code units \(M_\odot c^2 L_\odot^{-3}\)
     !
     ! - Entropy density divided by the baryon number density
     !   (entropy per baryon): \(\dfrac{s}{|nb|} \mathrm{(dimensionless)}\)
@@ -97,19 +102,21 @@ MODULE tabulated_eos
     ! - Scaled free energy per baryon:
     !   \(\dfrac{f}{|nb|m_\mathrm{n}} - 1 \mathrm{(dimensionless)}\)
     !
-    ! - Scaled internal energy per baryon:
-    !   \(\dfrac{e}{|nb|m_\mathrm{n}} \mathrm{(dimensionless)}\)
+    ! - Scaled internal energy per baryon (this is equal to the specific
+    !   internal energy \(u\) used in |sphincsid| and |sphincsbssn|):
+    !   \(\dfrac{e}{|nb|m_\mathrm{n}} - 1 \mathrm{(dimensionless)}\)
     !
     ! - Number of additional quantities (this should be 2, as per CompOSE
     !   Manual v3.00, 13.03.2023)
     !
-    ! - Electron fraction in beta equilibrium
+    ! - Electron fraction \(Y_e\) in \(\beta\)-equilibrium
     !
     ! - Enthalpy density without the temperature term \(Ts\):
-    !   \(h= e + p \mathrm{MeV}\,\mathrm{fm}^{-3}\)
+    !   \(h= e + p \,(\mathrm{MeV}\,\mathrm{fm}^{-3})\)
     !
     ! - Baryon number density \((\mathrm{fm}^{-3})\). After reading it,
-    !   it is converted in baryon mass density \(M_\odot L_\odot^{-3}\)
+    !   it is converted in baryon mass density in code units
+    !   \(M_\odot L_\odot^{-3}\)
     !
 
     INTEGER, PARAMETER:: unit_compose= 876
@@ -129,40 +136,6 @@ MODULE tabulated_eos
     !
     !  - `i_leptons`= 1 if leptons are considered
     !  - `i_leptons`= anything else if leptons are not considered
-!    INTEGER:: i_t
-!    !! First table index; temperature
-!    INTEGER:: i_nb
-!    !! Second table index; baryon number density
-!    INTEGER:: i_q
-!    !! Third table index; charge fraction of strongly interacting particles
-!    DOUBLE PRECISION:: p_nb
-!    !# Pressure divided by the baryon number density:
-!    !  \(\dfrac{p}{|nb|}\mathrm{(MeV)}\)
-!    DOUBLE PRECISION:: s_nb
-!    !# Entropy density divided by the baryon number density
-!    !  (entropy per baryon): \(\dfrac{s}{|nb|} \mathrm{(dimensionless)}\)
-!    DOUBLE PRECISION:: mub_mn
-!    !# Scaled and shifted baryon chemical potential:
-!    !  \(\dfrac{\mu_\mathrm{b}}{m_\mathrm{n}} - 1 \mathrm{(dimensionless)}\)
-!    DOUBLE PRECISION:: muq_mn
-!    !# Scaled charge chemical potential:
-!    !  \(\dfrac{\mu_\mathrm{q}}{m_\mathrm{n}} \mathrm{(dimensionless)}\)
-!    DOUBLE PRECISION:: mul_mn
-!    !# Scaled effective lepton chemical potential:
-!    !  \(\dfrac{\mu_\mathrm{l}}{m_\mathrm{n}} \mathrm{(dimensionless)}\)
-!    DOUBLE PRECISION:: f_nbmn
-!    !# Scaled free energy per baryon:
-!    !  \(\dfrac{f}{|nb|m_\mathrm{n}} - 1 \mathrm{(dimensionless)}\)
-!    DOUBLE PRECISION:: e_nbmn
-!    !# Scaled internal energy per baryon:
-!    !  \(\dfrac{e}{|nb|m_\mathrm{n}} \mathrm{(dimensionless)}\)
-!    INTEGER:: n_add
-!    !# Number of additional quantities
-!    DOUBLE PRECISION:: Y_e
-!    !# Electron fraction in beta equilibrium
-!    DOUBLE PRECISION:: h
-!    !# Enthalpy density without the temperature term \(Ts\):
-!    !  \(h= e + p \mathrm{MeV}\,\mathrm{fm}^{-3}\)
 
     LOGICAL:: exist
 
@@ -315,6 +288,9 @@ MODULE tabulated_eos
 END MODULE tabulated_eos
 
 
+! These code may be useful in the future, if the non-beta-equilibrated EOS
+! from CompOSE should be read from the *.thermo, *.nb, *.y, *.yq files
+!
 !    ! Read charge fraction of strongly interacting particles from *.t file
 !    ! (we don't have charge fraction of strongly interacting particles for the
 !    ! beta equilibrated data)
