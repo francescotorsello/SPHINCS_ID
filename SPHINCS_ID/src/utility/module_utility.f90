@@ -31,7 +31,7 @@ MODULE utility
 
 
   USE matrix,     ONLY: determinant_4x4_matrix
-  USE constants,  ONLY: G_Msun, c_light2, MSun
+  USE constants,  ONLY: MSun, G_Msun, c_light2
 
 
   IMPLICIT NONE
@@ -43,8 +43,9 @@ MODULE utility
   !
   !-- Identifiers for the supported equations of state
   !
-  INTEGER, PARAMETER:: eos$poly  = 1
-  INTEGER, PARAMETER:: eos$pwpoly= 2
+  INTEGER, PARAMETER:: eos$poly        = 1
+  INTEGER, PARAMETER:: eos$pwpoly      = 2
+  INTEGER, PARAMETER:: eos$tabu$compose= 3
 
 
   DOUBLE PRECISION, PARAMETER:: zero        = 0.D0
@@ -55,24 +56,20 @@ MODULE utility
   DOUBLE PRECISION, PARAMETER:: five        = 5.D0
   DOUBLE PRECISION, PARAMETER:: seven       = 7.D0
   DOUBLE PRECISION, PARAMETER:: ten         = 10.D0
-  DOUBLE PRECISION, PARAMETER:: golden_ratio= 1.618033988749894D0
   DOUBLE PRECISION, PARAMETER:: km2m        = ten*ten*ten
-  DOUBLE PRECISION, PARAMETER:: m2cm        = ten*ten
   DOUBLE PRECISION, PARAMETER:: g2kg        = one/(ten*ten*ten)
-  DOUBLE PRECISION, PARAMETER:: kg2g        = ten*ten*ten
-  DOUBLE PRECISION, PARAMETER:: c_light_SI  = 2.99792458E+8
-  DOUBLE PRECISION, PARAMETER:: c_light2_SI = c_light_SI**2
   DOUBLE PRECISION, PARAMETER:: MSun_geo    = G_Msun/c_light2/ &
                                                (ten*ten*ten*ten*ten)
   !# Msun_geo = 1.47662503825040 km
   !  see https://einsteintoolkit.org/thornguide/EinsteinBase/HydroBase/documentation.html
-  DOUBLE PRECISION, PARAMETER:: km2Msun_geo     = one/MSun_geo
-  DOUBLE PRECISION, PARAMETER:: lorene2hydrobase= (MSun_geo*km2m)**3/(MSun*g2kg)
-  !# Conversion factor for the baryon mass density, from the units used in
-  !  |lorene| to the units used in |sphincs|, but NOT measured in units of
-  !  \(m_0c^2\)
+  DOUBLE PRECISION, PARAMETER:: MeV2amuc2    = one/931.49432
+  !! Conversion factor from \(\mathrm{MeV}\) to \(\mathrm{amu}*c^2\)
+  DOUBLE PRECISION, PARAMETER:: km2Msun_geo  = one/MSun_geo
+  DOUBLE PRECISION, PARAMETER:: density_si2cu= (MSun_geo*km2m)**3/(MSun*g2kg)
+  !# Conversion factor for the baryon mass density, from SI units to code
+  !  units, but NOT measured in units of \(m_0c^2\)
   !
-  !  `lorene2hydrobase`\(\simeq\dfrac{(1477\mathrm{m})^3}{2*10^30\mathrm{kg}}=1.6186541582311746851140226630074e-21\dfrac{\mathrm{m}^3}{\mathrm{kg}}\)
+  !  `dens_si2cu`\(=\simeq\dfrac{(1477\mathrm{m})^3}{2*10^30\mathrm{kg}}=1.6186541582311746851140226630074\times 10^{-21}\dfrac{\mathrm{m}^3}{\mathrm{kg}}\)
 
   INTEGER:: itr
   !! Iterator for loops
@@ -172,6 +169,7 @@ MODULE utility
 
   ! Logical variables to steer the execution
   LOGICAL:: export_bin, export_form, export_form_xy, export_form_x, &
+            use_eos_from_id, &
             compute_constraints, export_constraints_xy, &
             export_constraints_x, export_constraints, &
             export_constraints_details, compute_parts_constraints, &
@@ -179,15 +177,38 @@ MODULE utility
 
   CHARACTER(LEN=max_length), DIMENSION(max_length):: filenames= "0"
   !! Array of strings storing the names of the |id| files
+  CHARACTER(LEN=max_length), DIMENSION(50):: eos_filenames= "use_id"
+  !! Array of strings storing the names of the files containing the |eos|
   CHARACTER(LEN=max_length):: common_path
-  !# String storing the local path to the directory where the |id| files
-  !  are stored
+  !# String storing the path to the directory where the |id| files
+  !  are stored. Local and global paths can be used
+  CHARACTER(LEN=max_length):: common_eos_path
+  !# String storing the path to the directory where the |eos| files
+  !  are stored. Local and global paths can be used
   CHARACTER(LEN=max_length):: sph_path
   !# String storing the local path to the directory where the
   !  SPH output is to be saved
   CHARACTER(LEN=max_length):: spacetime_path
   !# String storing the local path to the directory where the
   !  spacetime output is to be saved
+
+
+  TYPE surface
+    LOGICAL:: is_known= .FALSE.
+    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
+    !# Array containing the coordinates of the matter objects' surfaces
+    !  The first index runs over the stars; the second and third run over
+    !  the surface points (number of points for \(\theta\) and \(\varphi\));
+    !  the fourth index runs over the Cartesian coordinates of the points
+  END TYPE surface
+
+
+  TYPE tabu_eos
+    DOUBLE PRECISION, PUBLIC, DIMENSION(:,:), ALLOCATABLE:: table_eos
+    !# Array containing the tabulated |eos|.
+    !  Its size is determined when reading the tabulated |eos| from file
+    !  The first index runs over the field, the second over its values.
+  END TYPE tabu_eos
 
 
   CONTAINS
@@ -214,8 +235,9 @@ MODULE utility
     ! Namelist containing parameters read from sphincs_id_parameters.par
     ! by the SUBROUTINE read_sphincs_id_parameters of this PROGRAM
     NAMELIST /sphincs_id_parameters/ &
-              n_id, common_path, filenames, placer, &
-              export_bin, export_form, export_form_xy, &
+              n_id, common_path, filenames, &
+              common_eos_path, use_eos_from_id, eos_filenames, &
+              placer, export_bin, export_form, export_form_xy, &
               export_form_x, export_constraints_xy, &
               export_constraints_x, compute_constraints, &
               export_constraints, export_constraints_details, &
@@ -224,6 +246,8 @@ MODULE utility
               one_lapse, zero_shift, show_progress, &
               run_sph, run_spacetime, sph_path, spacetime_path, &
               estimate_length_scale
+
+    use_eos_from_id= .TRUE.
 
     sphincs_id_parameters_namefile= 'sphincs_id_parameters.dat'
 
@@ -273,7 +297,7 @@ MODULE utility
    !      PRINT *, "** ERROR! The array placer does not have ", &
    !               "enough components to specify all the desired ", &
    !               "particle distributions. Specify the ", &
-   !               "components in file lorene_bns_id_particles.par"
+   !               "components in file sphincs_id_particles.par"
    !      PRINT *
    !      STOP
    !    ENDIF
@@ -932,11 +956,17 @@ MODULE utility
 
     ELSE
 
-      phi= pi/2.D0
+      phi= pi/two
 
     ENDIF
 
-    r= SQRT( xd**2.D0 + yd**2.D0 + zd**2.D0 )
+    DO WHILE(phi < zero)
+
+      phi= phi + two*pi
+
+    ENDDO
+
+    r= SQRT( xd**2 + yd**2 + zd**2 )
 
     theta= ACOS( zd/r )
 
@@ -1006,7 +1036,7 @@ MODULE utility
   END SUBROUTINE cartesian_from_spherical
 
 
-  PURE FUNCTION k_lorene2hydrobase( gam )
+  PURE FUNCTION k_lorene2cu( gam )
 
     !****************************************************************
     !
@@ -1018,9 +1048,11 @@ MODULE utility
     !
     !****************************************************************
 
+    IMPLICIT NONE
+
     DOUBLE PRECISION, INTENT(IN) :: gam
     !! Polytropic exponent \(\gamma\)
-    DOUBLE PRECISION :: k_lorene2hydrobase
+    DOUBLE PRECISION :: k_lorene2cu
 
     ! LORENE's EOS is in terms on number density n = rho/m_nucleon:
     ! P = K n^Gamma
@@ -1042,15 +1074,13 @@ MODULE utility
     ! Our testbed cases are gamma= 2.75, k= 30000; and gamma=2, k=100
     ! in SPHINCS units
 
-    k_lorene2hydrobase= &
-                        ( (MSun*g2kg)/((MSun_geo*km2m)**3*(1.66D+17)) ) &
-                        **( gam - one )
+    k_lorene2cu= ( (MSun*g2kg)/((MSun_geo*km2m)**3*(1.66D+17)) )**(gam - one)
 
 
-  END FUNCTION
+  END FUNCTION k_lorene2cu
 
 
-  PURE FUNCTION k_lorene2hydrobase_piecewisepolytrope( gamma0 )
+  PURE FUNCTION k_lorene2cu_pwp( gamma0 )
 
     !****************************************************************
     !
@@ -1062,18 +1092,21 @@ MODULE utility
     !
     !****************************************************************
 
+    USE constants,  ONLY: m2cm
+
+    IMPLICIT NONE
+
     DOUBLE PRECISION, INTENT(IN) :: gamma0
     !! Polytropic exponent \(\gamma_0\)
-    DOUBLE PRECISION :: k_lorene2hydrobase_piecewisepolytrope
+    DOUBLE PRECISION :: k_lorene2cu_pwp
 
     ! LORENE has K0 in units of (g cm^{-3})^{1-gamma0} for the piecewise
     ! polytropes. This factor writes it in SPHINCS units
 
-    k_lorene2hydrobase_piecewisepolytrope= &
-                        ( MSun/((MSun_geo*km2m*m2cm)**3) )**( gamma0 - one )
+    k_lorene2cu_pwp= ( MSun/((MSun_geo*km2m*m2cm)**3) )**(gamma0 - one)
 
 
-  END FUNCTION
+  END FUNCTION k_lorene2cu_pwp
 
 
 END MODULE utility

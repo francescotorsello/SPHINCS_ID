@@ -206,9 +206,12 @@ MODULE lorentz_group
 
 
     PROCEDURE:: compute_boost_matrices
-    !! Computes the spatial part of the matrix of the Lorentz
+    !# Computes the spatial part of the matrix of the Lorentz
     !  boost, and its whole matrix, starting from the vector
     !  \(p\)
+
+    PROCEDURE, PUBLIC:: get_lambda
+    !! Returns the Lorentz factor [[lorentz_boost:lambda]]
 
 
   END TYPE lorentz_boost
@@ -255,6 +258,16 @@ MODULE lorentz_group
       !! \(4\times 4\) matrix representing the Lorentz boost
 
     END SUBROUTINE compute_boost_matrices
+
+    PURE MODULE FUNCTION get_lambda(this) RESULT(lambda)
+    !! Returns the Lorentz factor [[lorentz_boost:lambda]]
+
+      CLASS(lorentz_boost), INTENT(IN):: this
+      !! [[lorentz_boost]] object owning this FUNCTION
+      DOUBLE PRECISION:: lambda
+      !! Lorentz factor [[lorentz_boost:lambda]]
+
+    END FUNCTION get_lambda
 
   END INTERFACE
 

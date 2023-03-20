@@ -56,7 +56,7 @@ SUBMODULE (bns_lorene) constructor
     !
     !****************************************************
 
-    USE utility,  ONLY: ten, Msun_geo
+    USE utility,  ONLY: ten, Msun_geo, use_eos_from_id, common_eos_path
 
     IMPLICIT NONE
 
@@ -69,16 +69,31 @@ SUBMODULE (bns_lorene) constructor
     CALL derived_type% set_n_matter(n_matter)
     CALL derived_type% set_cold_system(.TRUE.)
 
+    derived_type% eos_filenames(1)= &
+      TRIM(common_eos_path)//TRIM(eos_filenames(1))
+    derived_type% eos_filenames(2)= &
+      TRIM(common_eos_path)//TRIM(eos_filenames(2))
+
     derived_type% construction_timer= timer("binary_construction_timer")
 
     ! Construct |lorene| |binns| object
-    IF( PRESENT(filename) )THEN
-        CALL derived_type% construct_binary(filename)
+    IF( PRESENT(filename) .AND. use_eos_from_id )THEN
+
+      CALL derived_type% construct_binary(filename, ["use_id","use_id"])
+
+    ELSEIF( PRESENT(filename) .AND. .NOT.use_eos_from_id )THEN
+
+      CALL derived_type% construct_binary(filename, &
+                                          derived_type% eos_filenames)
+
     ELSE
-        CALL derived_type% construct_binary()
+
+      !CALL derived_type% construct_binary()
+      STOP
+
     ENDIF
-    ! Import the parameters of the binary system from LORENE
-    CALL read_id_params(derived_type)
+    ! Import the properties of the BNS
+    CALL read_bns_properties(derived_type)
 
     ! Assign a unique identifier to the bnslorene object
     derived_type% bns_identifier= bns_counter
@@ -187,10 +202,14 @@ SUBMODULE (bns_lorene) constructor
 
     IMPLICIT NONE
 
-    CHARACTER(KIND= C_CHAR, LEN= 7):: default_case
+    CHARACTER(KIND=C_CHAR, LEN= 7):: default_case
+    CHARACTER(KIND=C_CHAR, LEN= :), ALLOCATABLE:: eos1, eos2
     LOGICAL:: exist
 
     !PRINT *, "** Executing the construct_binary subroutine..."
+
+    eos1= TRIM(eos_filenames(1))//C_NULL_CHAR
+    eos2= TRIM(eos_filenames(2))//C_NULL_CHAR
 
 #ifdef __INTEL_COMPILER
 
@@ -203,25 +222,25 @@ SUBMODULE (bns_lorene) constructor
 #endif
 
     !
-    !-- If the name of the |lorene| binary file resu_file is given as argument to
+    !-- If the name of the |lorene| binary file id_file is given as argument to
     !-- construct_binary, use it. Otherwise, give the string "read_it"
     !-- to construct_bin_ns as argument, which makes |lorene| read the name of
     !-- the file from the parameter file read_bin_ns.par
     !
-    IF( PRESENT( resu_file ) )THEN
+    IF( PRESENT( id_file ) )THEN
 
-      INQUIRE( FILE= resu_file, EXIST= exist )
+      INQUIRE( FILE= id_file, EXIST= exist )
 
       IF( exist )THEN
 
         CALL this% construction_timer% start_timer()
-        this% bns_ptr = construct_bin_ns( resu_file//C_NULL_CHAR )
+        this% bns_ptr = construct_bin_ns(id_file//C_NULL_CHAR, eos1, eos2)
         CALL this% construction_timer% stop_timer()
 
       ELSE
 
         PRINT *, "** ERROR in SUBROUTINE construct_binary: file ", &
-                 resu_file, " cannot be found!"
+                 id_file, " cannot be found!"
         PRINT *
         STOP
 
@@ -229,10 +248,11 @@ SUBMODULE (bns_lorene) constructor
 
     ELSE
 
-      default_case= "read_it"
-      CALL this% construction_timer% start_timer()
-      this% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
-      CALL this% construction_timer% stop_timer()
+      !default_case= "read_it"
+      !CALL this% construction_timer% start_timer()
+      !this% bns_ptr = construct_bin_ns( default_case//C_NULL_CHAR )
+      !CALL this% construction_timer% stop_timer()
+      STOP
 
     ENDIF
 

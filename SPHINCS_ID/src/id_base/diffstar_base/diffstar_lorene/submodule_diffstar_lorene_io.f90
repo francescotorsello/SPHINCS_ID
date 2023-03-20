@@ -44,7 +44,7 @@ SUBMODULE (diffstar_lorene) io
   !-------------------!
 
 
-  MODULE PROCEDURE print_diffstar_params
+  MODULE PROCEDURE print_diffstar_properties
 
     !****************************************************
     !
@@ -55,8 +55,11 @@ SUBMODULE (diffstar_lorene) io
     !
     !****************************************************
 
-    USE utility,  ONLY: k_lorene2hydrobase, Msun_geo, km2m, m2cm, kg2g, &
-                        lorene2hydrobase, zero
+    USE constants,  ONLY: m2cm, kg2g
+    USE utility,    ONLY: k_lorene2cu, k_lorene2cu_pwp, &
+                          Msun_geo, km2m, &
+                          density_si2cu, zero, use_eos_from_id, &
+                          eos$poly, eos$pwpoly, eos$tabu$compose
 
     IMPLICIT NONE
 
@@ -64,8 +67,9 @@ SUBMODULE (diffstar_lorene) io
 
       PRINT *
       PRINT *, " ** The parameters have not ben read yet. ", &
-          "Call the SUBROUTINE import_diffstar_params to read them."
+               "Call the SUBROUTINE read_diffstar_properties to read them."
       PRINT *
+      STOP
 
     ELSE
 
@@ -76,7 +80,7 @@ SUBMODULE (diffstar_lorene) io
       PRINT *, " Gravitational mass = ", this% mass_grav, " M_sun"
       PRINT *, " Angular momentum = ", this% angular_momentum, " G M_sun^2 /c"
       PRINT *, " Surface area = ", this% surface_area, " M_sun^2", &
-                                   this% surface_area*Msun_geo**2.0D0, " km^2"
+                                   this% surface_area*Msun_geo**2, " km^2"
       PRINT *
       PRINT *, " Radii: "
       PRINT *, "  Areal (or circumferential) radius for the star in the", &
@@ -115,16 +119,16 @@ SUBMODULE (diffstar_lorene) io
                this% nbar_center/(MSun_geo*km2m*m2cm)**3, "cm^{-3}"
       PRINT *, "  Central baryon mass density = ", this% rho_center, &
                " M_sun^geo (M_sun^geo)^{-3} =", &
-               this% rho_center/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+               this% rho_center/density_si2cu*kg2g/(m2cm**3), "g cm^{-3}"
       PRINT *, "  Central energy density = ", this% energy_density_center, &
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
-               this% energy_density_center/lorene2hydrobase*kg2g/(m2cm**3), &
+               this% energy_density_center/density_si2cu*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *, "  Central specific energy = ", this% specific_energy_center, &
                " c^2"
       PRINT *, "  Central pressure = ", this% pressure_center, &
                " M_sun^geo c^2 (M_sun^geo)^{-3}", &
-               this% pressure_center/lorene2hydrobase*kg2g/(m2cm**3), &
+               this% pressure_center/density_si2cu*kg2g/(m2cm**3), &
                "g c^2 cm^{-3}"
       PRINT *
       PRINT *, " Ratio T/|W| between the rotational kinetic energy and ", &
@@ -144,17 +148,19 @@ SUBMODULE (diffstar_lorene) io
 
       PRINT *, " Equations of state for star 1 (EOS1) = ", TRIM(this% eos)
 
-      IF( this% eos_loreneid == 1 )THEN ! If the EOS is polytropic
+      IF( this% eos_id == eos$poly )THEN
+      ! If the EOS is polytropic
 
         PRINT *, " Parameters for EOS: "
         PRINT *, "  Polytopic index gamma = ", this% gamma
         PRINT *, "  Pressure coefficient = ",&
-                 this% kappa/k_lorene2hydrobase( this% gamma ), &
+                 this% kappa/k_lorene2cu( this% gamma ), &
                  "rho_nuc c^2 / n_nuc^gamma = ", this% kappa, &
                  "[pure number]"
         PRINT *
 
-      ELSEIF( this% gamma0 /= 0 )THEN ! If the EOS is piecewise polytropic
+      ELSEIF( this% eos_id == eos$pwpoly )THEN
+      ! If the EOS is piecewise polytropic
 
         PRINT *, " Parameters for EOS1: "
         PRINT *, "  Number of polytropic indexes = ", this% npeos
@@ -163,19 +169,19 @@ SUBMODULE (diffstar_lorene) io
         PRINT *, "  Polytopic index gamma2 = ", this% gamma2
         PRINT *, "  Polytopic index gamma3 = ", this% gamma3
         PRINT *, "  Pressure coefficient for the crust (here from SLy) = ",&
-                 this% kappa0/k_lorene2hydrobase( this% gamma0 ), &
+                 this% kappa0/k_lorene2cu_pwp( this% gamma0 ), &
                  "rho_nuc c^2 / n_nuc^gamma0 = ", this% kappa0, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the first polytrope = ",&
-                 this% kappa1/k_lorene2hydrobase( this% gamma1 ), &
+                 this% kappa1/k_lorene2cu_pwp( this% gamma1 ), &
                  "rho_nuc c^2 / n_nuc^gamma1", this% kappa1, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the second polytrope = ",&
-                 this% kappa2/k_lorene2hydrobase( this% gamma2 ), &
+                 this% kappa2/k_lorene2cu_pwp( this% gamma2 ), &
                  "rho_nuc c^2 / n_nuc^gamma2", this% kappa2, &
                  "[pure number]"
         PRINT *, "  Pressure coefficient for the third polytrope = ",&
-                 this% kappa3/k_lorene2hydrobase( this% gamma3 ), &
+                 this% kappa3/k_lorene2cu_pwp( this% gamma3 ), &
                  "rho_nuc c^2 / n_nuc^gamma3", this% kappa3, &
                  "[pure number]"
         PRINT *, "  Base 10 exponent of the pressure at the first fiducial " &
@@ -189,12 +195,23 @@ SUBMODULE (diffstar_lorene) io
                  this% logRho2
         PRINT *
 
-      ELSEIF( this% eos_loreneid == 17 .OR. this% eos_loreneid == 20 )THEN
+      ELSEIF( this% eos_id == eos$tabu$compose )THEN
       ! If the EOS is tabulated
+
+        PRINT *
+        PRINT *, " ** Using tabulated CompOSE EOS"
+        PRINT *
+        IF(.NOT.use_eos_from_id)THEN
+          PRINT *, " Equations of state = ", TRIM(this% eos_filename(1))
+          PRINT *, " Table located at: ", TRIM(this% eos_table)
+          PRINT *
+          PRINT *
+        ENDIF
 
       ELSE
 
-        PRINT *, "** ERROR in SUBROUTINE import_lorene_id_params!", &
+        PRINT *, "** ERROR in SUBROUTINE read_diffstar_properties in ", &
+                 "SUBMODULE diffstar_lorene@properties!", &
                  " The equation of state is unknown!"
         STOP
 
@@ -202,7 +219,7 @@ SUBMODULE (diffstar_lorene) io
 
     ENDIF
 
-  END PROCEDURE print_diffstar_params
+  END PROCEDURE print_diffstar_properties
 
 
 END SUBMODULE io

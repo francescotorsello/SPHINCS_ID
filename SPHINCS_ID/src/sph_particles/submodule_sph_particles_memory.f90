@@ -204,17 +204,19 @@ SUBMODULE (sph_particles) memory
       !CALL test_status( ios, err_msg, &
       !             "...allocation error for array energy_density" )
     ENDIF
-    IF(.NOT.ALLOCATED( this% specific_energy ))THEN
-      ALLOCATE( this% specific_energy( this% npart ), STAT= ios, &
-              ERRMSG= err_msg )
-      IF( ios > 0 )THEN
-        PRINT *, "...allocation error for array specific_energy ", &
-                 ". The error message is", err_msg
-        STOP
-      ENDIF
-      !CALL test_status( ios, err_msg, &
-      !    "...allocation error for array specific_energy" )
+    ! The array this% specific_energy may be already allocated, if the APM
+    ! has been performed. Its size would be the number of particle on
+    ! the last matter object. Here, we need to reallocate it
+    IF(ALLOCATED( this% specific_energy )) DEALLOCATE( this% specific_energy )
+    ALLOCATE( this% specific_energy( this% npart ), STAT= ios, &
+            ERRMSG= err_msg )
+    IF( ios > 0 )THEN
+      PRINT *, "...allocation error for array specific_energy ", &
+               ". The error message is", err_msg
+      STOP
     ENDIF
+    !CALL test_status( ios, err_msg, &
+    !    "...allocation error for array specific_energy" )
     IF(.NOT.ALLOCATED( this% pressure ))THEN
       ALLOCATE( this% pressure( this% npart ), STAT= ios, &
               ERRMSG= err_msg )

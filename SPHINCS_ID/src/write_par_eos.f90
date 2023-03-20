@@ -33,13 +33,12 @@ PROGRAM write_par_eos
   !
   !*****************************************************
 
-  USE utility,  ONLY: lorene2hydrobase, kg2g, m2cm, &
-                      k_lorene2hydrobase_piecewisepolytrope, one, &
-                      k_lorene2hydrobase
-  USE pwp_EOS,  ONLY: Gamma0, K0, select_EOS_parameters, gen_pwp_eos, &
-                      get_rho_0, get_rho_1, get_rho_2, &
-                      get_Gamma1, get_Gamma2, get_Gamma3, &
-                      get_K1, get_K2, get_K3
+  USE utility,    ONLY: density_si2cu, k_lorene2cu, k_lorene2cu_pwp, one
+  USE constants,  ONLY: kg2g, m2cm
+  USE pwp_EOS,    ONLY: Gamma0, K0, select_EOS_parameters, gen_pwp_eos, &
+                        get_rho_0, get_rho_1, get_rho_2, &
+                        get_Gamma1, get_Gamma2, get_Gamma3, &
+                        get_K1, get_K2, get_K3
 
   IMPLICIT NONE
 
@@ -53,10 +52,10 @@ PROGRAM write_par_eos
   DOUBLE PRECISION:: kappa_poly, gamma_poly
 
   LOGICAL:: exist
-  CHARACTER( LEN= : ), ALLOCATABLE:: namefile
-  CHARACTER( LEN= : ), ALLOCATABLE:: err_msg
-  CHARACTER( LEN= 4 ):: eos_type
-  CHARACTER( LEN= 4 ):: eos
+  CHARACTER(LEN= :), ALLOCATABLE:: namefile
+  CHARACTER(LEN= :), ALLOCATABLE:: err_msg
+  CHARACTER(LEN= 4):: eos_type
+  CHARACTER(LEN= 4):: eos
 
   namefile= "par_eos.d"
 
@@ -90,7 +89,7 @@ PROGRAM write_par_eos
   READ(*,'(F6.2)') kappa_poly
 #endif
 
-    kappa_poly= kappa_poly/k_lorene2hydrobase(gamma_poly)
+    kappa_poly= kappa_poly/k_lorene2cu(gamma_poly)
 
     INQUIRE( FILE= TRIM(namefile), EXIST= exist )
 
@@ -138,16 +137,16 @@ PROGRAM write_par_eos
 
     CALL select_EOS_parameters(eos)
 
-    kappa0_lorene= K0/k_lorene2hydrobase_piecewisepolytrope(Gamma0)
+    kappa0_lorene= K0/k_lorene2cu_pwp(Gamma0)
 
-    log10_p0_lorene= LOG10( K0/k_lorene2hydrobase_piecewisepolytrope(Gamma0) &
-                *( get_rho_0()/lorene2hydrobase*kg2g/(m2cm**3.0D0) )**(Gamma0) )
+    log10_p0_lorene= LOG10( K0/k_lorene2cu_pwp(Gamma0) &
+                *( get_rho_0()/density_si2cu*kg2g/(m2cm**3.0D0) )**(Gamma0) )
 
-    log10_rho0_lorene= LOG10( get_rho_0()/lorene2hydrobase*kg2g/(m2cm**3.0D0) )
+    log10_rho0_lorene= LOG10( get_rho_0()/density_si2cu*kg2g/(m2cm**3.0D0) )
 
-    log10_rho1_lorene= LOG10( get_rho_1()/lorene2hydrobase*kg2g/(m2cm**3.0D0) )
+    log10_rho1_lorene= LOG10( get_rho_1()/density_si2cu*kg2g/(m2cm**3.0D0) )
 
-    log10_rho2_lorene= LOG10( get_rho_2()/lorene2hydrobase*kg2g/(m2cm**3.0D0) )
+    log10_rho2_lorene= LOG10( get_rho_2()/density_si2cu*kg2g/(m2cm**3.0D0) )
 
     INQUIRE( FILE= TRIM(namefile), EXIST= exist )
 

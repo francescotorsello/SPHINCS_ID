@@ -59,6 +59,8 @@ SUBMODULE (diffstar_lorene) constructor
     !
     !****************************************************
 
+    USE utility,  ONLY: use_eos_from_id, common_eos_path
+
     IMPLICIT NONE
 
     INTEGER, SAVE:: diffstar_counter= 1
@@ -66,25 +68,37 @@ SUBMODULE (diffstar_lorene) constructor
     CALL derived_type% set_n_matter(1)
     CALL derived_type% set_cold_system(.TRUE.)
 
-    derived_type% construction_timer= timer( "drs_construction_timer" )
+    derived_type% eos_filename(1)= &
+      TRIM(common_eos_path)//TRIM(eos_filenames(1))
+
+    derived_type% construction_timer= timer("drs_construction_timer")
 
     ! Construct |lorene| |etdiffrot| object
-    IF( PRESENT( filename ) )THEN
-        CALL derived_type% construct_drs( filename )
+    IF( PRESENT(filename) .AND. use_eos_from_id )THEN
+
+      CALL derived_type% construct_drs(filename, "use_id")
+
+    ELSEIF( PRESENT(filename) .AND. .NOT.use_eos_from_id )THEN
+
+      CALL derived_type% construct_drs(filename, derived_type% eos_filename(1))
+
     ELSE
-        CALL derived_type% construct_drs()
+
+      !CALL derived_type% construct_drs()
+      STOP
+
     ENDIF
 
-    ! Import the parameters of the binary system
-    CALL read_diffstar_params( derived_type )
+    ! Import the properties of the differentially rotating star
+    CALL read_diffstar_properties(derived_type)
 
     ! Assign a unique identifier to the bns object
     derived_type% diffstar_identifier= diffstar_counter
     diffstar_counter= diffstar_counter + 1
 
     ! Do not use the geodesic gauge by default
-    CALL derived_type% set_one_lapse ( .FALSE. )
-    CALL derived_type% set_zero_shift( .FALSE. )
+    CALL derived_type% set_one_lapse (.FALSE.)
+    CALL derived_type% set_zero_shift(.FALSE.)
 
     derived_type% finalize_sph_id_ptr => finalize
 
@@ -170,9 +184,12 @@ SUBMODULE (diffstar_lorene) constructor
     IMPLICIT NONE
 
     CHARACTER(KIND= C_CHAR, LEN= 7):: default_case
+    CHARACTER(KIND=C_CHAR, LEN= :), ALLOCATABLE:: eos
     LOGICAL:: exist
 
     !PRINT *, "** Executing the construct_binary subroutine..."
+
+    eos= TRIM(eos_filename)//C_NULL_CHAR
 
 #ifdef __INTEL_COMPILER
 
@@ -185,25 +202,25 @@ SUBMODULE (diffstar_lorene) constructor
 #endif
 
     !
-    !-- If the name of the |lorene| binary file resu_file is given as argument to
+    !-- If the name of the |lorene| binary file id_file is given as argument to
     !-- construct_binary, use it. Otherwise, give the string "read_it"
     !-- to construct_drs as argument, which makes |lorene| read the name of
     !-- the file from the parameter file read_bin_ns.par
     !
-    IF( PRESENT( resu_file ) )THEN
+    IF( PRESENT( id_file ) )THEN
 
-      INQUIRE( FILE= resu_file, EXIST= exist )
+      INQUIRE( FILE= id_file, EXIST= exist )
 
       IF( exist )THEN
 
         CALL this% construction_timer% start_timer()
-        this% diffstar_ptr = construct_etdiffrot( resu_file//C_NULL_CHAR )
+        this% diffstar_ptr = construct_etdiffrot( id_file//C_NULL_CHAR, eos )
         CALL this% construction_timer% stop_timer()
 
       ELSE
 
         PRINT *, "** ERROR in SUBROUTINE construct_binary: file ", &
-                 resu_file, " cannot be found!"
+                 id_file, " cannot be found!"
         PRINT *
         STOP
 
@@ -211,10 +228,12 @@ SUBMODULE (diffstar_lorene) constructor
 
     ELSE
 
-      default_case= "read_it"
-      CALL this% construction_timer% start_timer()
-      this% diffstar_ptr = construct_etdiffrot( default_case//C_NULL_CHAR )
-      CALL this% construction_timer% stop_timer()
+      !default_case= "read_it"
+      !CALL this% construction_timer% start_timer()
+      !this% diffstar_ptr = construct_etdiffrot( default_case//C_NULL_CHAR, &
+      !                                TRIM(eos_filename)//C_NULL_CHAR ) )
+      !CALL this% construction_timer% stop_timer()
+      STOP
 
     ENDIF
 

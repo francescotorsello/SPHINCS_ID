@@ -52,7 +52,7 @@ MODULE bns_lorene
   !                                                      *
   !            Definition of TYPE bnslorene              *
   !                                                      *
-  !   This class reads and stores the |lorene| BNS ID    *
+  !   This class reads and stores the LORENE BNS ID      *
   !                                                      *
   !*******************************************************
 
@@ -124,18 +124,18 @@ MODULE bns_lorene
     PROCEDURE:: deallocate_bnslorene_memory
     !! Deallocates memory for the [[bnslorene]] member arrays
 
-    PROCEDURE:: read_id_params
-    !! Imports the parameters of the BNS from |lorene|
+    PROCEDURE:: read_bns_properties
+    !! Imports the parameters of the |bns| from |lorene|
 
     !PROCEDURE:: integrate_field_on_star => integrate_baryon_mass_density
     !# Integrates the |lorene| baryon mass density and computes the
     !  radial mass profile
 
-    PROCEDURE, PUBLIC:: print_id_params
-    !! Prints the parameters of the BNS to the standard output
+    PROCEDURE, PUBLIC:: print_bns_properties
+    !! Prints the parameters of the |bns| to the standard output
 
     PROCEDURE:: read_id_int
-    !! Stores the ID in the [[bnslorene]] member arrays
+    !! Stores the |id| in the [[bnslorene]] member arrays
 
     PROCEDURE:: read_id_full      => read_id_full
     PROCEDURE:: read_id_spacetime => read_id_spacetime
@@ -175,8 +175,6 @@ MODULE bns_lorene
     !  are negative
     PROCEDURE:: test_position => is_hydro_positive
 
-    !PROCEDURE, NOPASS:: derived_type_constructor => construct_bnslorene2
-
     !
     !-- Overloaded FUNCTION to access the fields as arrays and as values
     !
@@ -209,26 +207,11 @@ MODULE bns_lorene
 
     !PROCEDURE, PUBLIC:: get_bns_ptr
 
-    !PROCEDURE:: derived_type_destructor => destruct_bnslorene
-
-    !PROCEDURE:: derived_type_destructor => destruct_bnslorene
     FINAL:: destruct_bnslorene
     !! Finalizer (Destructor) of a [[bnslorene]] object
 
   END TYPE bnslorene
 
-  !
-  !-- Interface of the TYPE bnslorene (i.e., declaration of the constructor)
-  !-- (see https://dannyvanpoucke.be/oop-fortran-tut4-en/)
-  !
-  !INTERFACE bnslorene
-  !!! Interface of TYPE [[bnslorene]]
-  !
-  !  !MODULE PROCEDURE:: construct_bnslorene
-  !  MODULE PROCEDURE:: construct_bnslorene
-  !  !! Constructs a [[bnslorene]] object
-  !
-  !END INTERFACE bnslorene
 
   !
   !-- Interfaces of the constructor and destructor of the TYPE bnslorene
@@ -236,28 +219,20 @@ MODULE bns_lorene
   INTERFACE
 
 
-   ! MODULE FUNCTION construct_bnslorene( &!derived_type,
-   ! filename ) RESULT( foo )
-   ! !! Constructs a [[bnslorene]] object
-   !
-   !   CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-   !   !! |lorene| binary file containing the spectral BNS ID
-   !   !CLASS(bnslorene):: derived_type
-   !   !! Constructed [[bnslorene]] object
-   !   CLASS(idbase), ALLOCATABLE:: foo
-   !
-   ! END FUNCTION construct_bnslorene
-
-
-    MODULE SUBROUTINE construct_bnslorene( derived_type, filename )
+    MODULE SUBROUTINE construct_bnslorene &
+      ( derived_type, filename, eos_filenames )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT( IN ), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral BNS ID
-      CLASS(bnslorene), INTENT( OUT ):: derived_type
+      CLASS(bnslorene), INTENT(OUT):: derived_type
       !! Constructed [[bnslorene]] object
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral |bns| |id|
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE construct_bnslorene
 
@@ -265,7 +240,7 @@ MODULE bns_lorene
     MODULE SUBROUTINE destruct_bnslorene( this )
     !! Destruct a [[bnslorene]] object
 
-      TYPE(bnslorene), INTENT( IN OUT ):: this
+      TYPE(bnslorene), INTENT(INOUT):: this
       !! [[bnslorene]] object to be destructed
 
     END SUBROUTINE destruct_bnslorene
@@ -290,7 +265,7 @@ MODULE bns_lorene
     !  whose name is given as the optional argument `filename`
 
 
-      CLASS(bnslorene), INTENT( IN ):: this
+      CLASS(bnslorene), INTENT(IN):: this
       CHARACTER( LEN= * ), INTENT( INOUT ), OPTIONAL:: filename
       !! Name of the formatted file to print the summary to
 
@@ -299,13 +274,18 @@ MODULE bns_lorene
     !
     !-- SUBROUTINES
     !
-    MODULE SUBROUTINE construct_binary( this, resu_file )
+    MODULE SUBROUTINE construct_binary( this, id_file, eos_filenames )
     !! Interface of the subroutine that constructs the |lorene| |binns| object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT )      :: this
-      !> |lorene| binary file containing the spectral BNS ID
-      CHARACTER(KIND= C_CHAR, LEN=*), INTENT( IN ), OPTIONAL:: resu_file
+      CLASS(bnslorene),              INTENT(INOUT)       :: this
+      !> |lorene| binary file containing the spectral |bns| |id|
+      CHARACTER(KIND=C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: id_file
+      CHARACTER(KIND=C_CHAR, LEN=*), DIMENSION(2), INTENT(IN), OPTIONAL:: &
+        eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE construct_binary
 
@@ -314,7 +294,7 @@ MODULE bns_lorene
     !! Destructs a |lorene| |binns| object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: this
+      CLASS(bnslorene), INTENT(INOUT):: this
 
     END SUBROUTINE destruct_binary
 
@@ -323,9 +303,9 @@ MODULE bns_lorene
     !! Allocates allocatable arrays member of a [[bnslorene]] object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: this
+      CLASS(bnslorene), INTENT(INOUT):: this
       !> Dimension of the arrays
-      INTEGER,    INTENT( IN )    :: d
+      INTEGER,    INTENT(IN)    :: d
 
     END SUBROUTINE allocate_bnslorene_memory
 
@@ -334,27 +314,27 @@ MODULE bns_lorene
     !! Deallocates allocatable arrays member of a [[bnslorene]] object
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: this
+      CLASS(bnslorene), INTENT(INOUT):: this
 
     END SUBROUTINE deallocate_bnslorene_memory
 
 
-    MODULE SUBROUTINE read_id_params( this )
-    !! Imports the BNS parameters from |lorene|
+    MODULE SUBROUTINE read_bns_properties( this )
+    !! Imports the |bns| properties from |lorene|
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: this
+      CLASS(bnslorene), INTENT(INOUT):: this
 
-    END SUBROUTINE read_id_params
+    END SUBROUTINE read_bns_properties
 
 
-    MODULE SUBROUTINE print_id_params( this )
-    !! Prints the BNS parameters to the standard output
+    MODULE SUBROUTINE print_bns_properties( this )
+    !! Prints the |bns| parameters to the standard output
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN OUT ):: this
+      CLASS(bnslorene), INTENT(INOUT):: this
 
-    END SUBROUTINE print_id_params
+    END SUBROUTINE print_bns_properties
 
 
   !  MODULE SUBROUTINE integrate_baryon_mass_density( this, center, radius, &
@@ -366,36 +346,36 @@ MODULE bns_lorene
   !  !  profile. TODO: Improve integration algorithm.
   !
   !    !> [[bnslorene]] object which this PROCEDURE is a member of
-  !    CLASS(bnslorene), INTENT( IN OUT )      :: this
+  !    CLASS(bnslorene), INTENT(INOUT)      :: this
   !    !& Array to store the indices for array mass_profile, sorted so that
   !    !  mass_profile[mass_profile_idx] is in increasing order
-  !    INTEGER, DIMENSION(:), ALLOCATABLE, INTENT( IN OUT ):: mass_profile_idx
+  !    INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
   !    !> Center of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: center
+  !    DOUBLE PRECISION, INTENT(IN)    :: center
   !    !> Central density of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: central_density
+  !    DOUBLE PRECISION, INTENT(IN)    :: central_density
   !    !> Radius of the star
-  !    DOUBLE PRECISION, INTENT( IN )    :: radius
+  !    DOUBLE PRECISION, INTENT(IN)    :: radius
   !    !> Integration steps
-  !    DOUBLE PRECISION, INTENT( IN )    :: dr, dth, dphi
+  !    DOUBLE PRECISION, INTENT(IN)    :: dr, dth, dphi
   !    !> Integrated mass of the star
-  !    DOUBLE PRECISION, INTENT( IN OUT ):: mass
+  !    DOUBLE PRECISION, INTENT(INOUT):: mass
   !    !> Array storing the radial mass profile of the star
-  !    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT( IN OUT ):: &
+  !    DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: &
   !                                     mass_profile
   !
   !  END SUBROUTINE integrate_baryon_mass_density
 
 
     MODULE SUBROUTINE read_id_int( this, n, x, y, z )
-    !! Stores the ID in the [[bnslorene]] member arrays
+    !! Stores the |id| in the [[bnslorene]] member arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT ):: this
-      INTEGER, INTENT( IN ):: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
+      CLASS(bnslorene),                     INTENT(INOUT):: this
+      INTEGER, INTENT(IN):: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
 
     END SUBROUTINE read_id_int
 
@@ -430,38 +410,38 @@ MODULE bns_lorene
                                       specific_energy, &
                                       pressure, &
                                       u_euler_x, u_euler_y, u_euler_z )
-    !# Stores the ID in non [[bnslorene]]-member arrays with the same shape as the
+    !# Stores the |id| in non [[bnslorene]]-member arrays with the same shape as the
     !  [[bnslorene]] member arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+      CLASS(bnslorene),                     INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_z
 
     END SUBROUTINE read_id_full
 
@@ -472,19 +452,19 @@ MODULE bns_lorene
                                               shift, &
                                               g, &
                                               ek )
-    !# Stores the spacetime ID in multi-dimensional arrays needed to compute
+    !# Stores the spacetime |id| in multi-dimensional arrays needed to compute
     !  the BSSN variables and constraints
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                           INTENT( IN OUT ):: this
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: shift
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: g
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: ek
+      CLASS(bnslorene),                           INTENT(INOUT):: this
+      INTEGER,                              INTENT(IN)    :: nx
+      INTEGER,                              INTENT(IN)    :: ny
+      INTEGER,                              INTENT(IN)    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN)    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: shift
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: g
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: ek
 
     END SUBROUTINE read_id_spacetime
 
@@ -496,20 +476,20 @@ MODULE bns_lorene
                                              specific_energy, &
                                              pressure, &
                                              u_euler )
-    !# Stores the hydro ID in the arrays needed to compute the constraints
+    !# Stores the hydro |id| in the arrays needed to compute the constraints
     !  on the refined mesh
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                           INTENT( IN OUT ):: this
-      INTEGER,                              INTENT( IN )    :: nx
-      INTEGER,                              INTENT( IN )    :: ny
-      INTEGER,                              INTENT( IN )    :: nz
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN )    :: pos
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT( IN OUT ):: u_euler
+      CLASS(bnslorene),                           INTENT(INOUT):: this
+      INTEGER,                              INTENT(IN)    :: nx
+      INTEGER,                              INTENT(IN)    :: ny
+      INTEGER,                              INTENT(IN)    :: nz
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(IN)    :: pos
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:,:,:),   INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:,:,:,:), INTENT(INOUT):: u_euler
 
     END SUBROUTINE read_id_hydro
 
@@ -524,31 +504,31 @@ MODULE bns_lorene
                                            specific_energy, &
                                            pressure, &
                                            u_euler_x, u_euler_y, u_euler_z )
-    !! Stores the hydro ID in the arrays needed to compute the SPH ID
+    !! Stores the hydro |id| in the arrays needed to compute the |sph| |id|
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: x
-      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: y
-      REAL(C_DOUBLE),   DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: lapse
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: shift_z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: g_zz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: baryon_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: energy_density
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: specific_energy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: pressure
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: u_euler_z
+      CLASS(bnslorene),                     INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT(IN)    :: x
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT(IN)    :: y
+      REAL(C_DOUBLE),   DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: lapse
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: shift_z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: g_zz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: baryon_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: energy_density
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: specific_energy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: pressure
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: u_euler_z
 
     END SUBROUTINE read_id_particles
 
@@ -557,16 +537,16 @@ MODULE bns_lorene
                                         g, &
                                         baryon_density, &
                                         gamma_euler )
-    !! Stores the hydro ID in the arrays needed to compute the baryon mass
+    !! Stores the hydro |id| in the arrays needed to compute the baryon mass
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),       INTENT( IN OUT ):: this
-      DOUBLE PRECISION, INTENT( IN )    :: x
-      DOUBLE PRECISION, INTENT( IN )    :: y
-      DOUBLE PRECISION, INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(6), INTENT( OUT ):: g
-      DOUBLE PRECISION, INTENT( OUT ):: baryon_density
-      DOUBLE PRECISION, INTENT( OUT ):: gamma_euler
+      CLASS(bnslorene),       INTENT(INOUT):: this
+      DOUBLE PRECISION, INTENT(IN)    :: x
+      DOUBLE PRECISION, INTENT(IN)    :: y
+      DOUBLE PRECISION, INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(6), INTENT(OUT):: g
+      DOUBLE PRECISION, INTENT(OUT):: baryon_density
+      DOUBLE PRECISION, INTENT(OUT):: gamma_euler
 
     END SUBROUTINE read_id_mass_b
 
@@ -577,17 +557,17 @@ MODULE bns_lorene
    !! Stores the components of the extrinsic curvature in arrays
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),                     INTENT( IN OUT ):: this
-      INTEGER,                        INTENT( IN )    :: n
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: x
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: y
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN )    :: z
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xx
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_xz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yy
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_yz
-      DOUBLE PRECISION, DIMENSION(:), INTENT( IN OUT ):: k_zz
+      CLASS(bnslorene),                     INTENT(INOUT):: this
+      INTEGER,                        INTENT(IN)    :: n
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: x
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: y
+      DOUBLE PRECISION, DIMENSION(:), INTENT(IN)    :: z
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xx
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_xz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yy
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_yz
+      DOUBLE PRECISION, DIMENSION(:), INTENT(INOUT):: k_zz
 
     END SUBROUTINE read_id_k
 
@@ -599,13 +579,13 @@ MODULE bns_lorene
     !! Returns the |lorene| baryon mass density at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )         :: this
+      CLASS(bnslorene),     INTENT(IN)         :: this
       !> \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !> Baryon mass density at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
@@ -616,13 +596,13 @@ MODULE bns_lorene
     !! Returns the |lorene| pressure at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN )       :: this
+      CLASS(bnslorene), INTENT(IN)       :: this
       !> \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !> Pressure at \((x,y,z)\)
       DOUBLE PRECISION:: res
 
@@ -634,13 +614,13 @@ MODULE bns_lorene
     !  \(g_{xx}=g_{yy}=g_{zz}\) at a point \((x,y,z)\)
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )       :: this
+      CLASS(bnslorene),     INTENT(IN)       :: this
       !> \(x\) coordinate of the desired point
-      REAL(C_DOUBLE), INTENT( IN ), VALUE:: x
+      REAL(C_DOUBLE), INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      REAL(C_DOUBLE), INTENT( IN ), VALUE:: y
+      REAL(C_DOUBLE), INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      REAL(C_DOUBLE), INTENT( IN ), VALUE:: z
+      REAL(C_DOUBLE), INTENT(IN), VALUE:: z
       !> \(g_{xx}=g_{yy}=g_{zz}\) at \((x,y,z)\)
       REAL(C_DOUBLE):: res
 
@@ -652,13 +632,13 @@ MODULE bns_lorene
     !  are negative, 0 otherwise
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),     INTENT( IN )       :: this
+      CLASS(bnslorene),     INTENT(IN)       :: this
       !> \(x\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: x
+      DOUBLE PRECISION, INTENT(IN), VALUE:: x
       !> \(y\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: y
+      DOUBLE PRECISION, INTENT(IN), VALUE:: y
       !> \(z\) coordinate of the desired point
-      DOUBLE PRECISION, INTENT( IN ), VALUE:: z
+      DOUBLE PRECISION, INTENT(IN), VALUE:: z
       !& `.TRUE.` if the energy density or the specific energy or the pressure
       !  are negative, `.FALSE.` otherwise
       LOGICAL:: res
@@ -670,9 +650,9 @@ MODULE bns_lorene
     !! Returns the [[bnslorene]] member arrays named field
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),          INTENT( IN )             :: this
+      CLASS(bnslorene),          INTENT(IN)             :: this
       !> Name of the desired [[bnslorene]] member array
-      CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
+      CHARACTER( LEN= : ), INTENT(IN), ALLOCATABLE:: field
       !> Desired [[bnslorene]] member array
       DOUBLE PRECISION, DIMENSION(:),    ALLOCATABLE:: field_array
 
@@ -683,11 +663,11 @@ MODULE bns_lorene
     !! Returns the component n of the [[bnslorene]] member arrays named field
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene),    INTENT( IN )             :: this
+      CLASS(bnslorene),    INTENT(IN)             :: this
       !> Name of the desired [[bnslorene]] member array
-      CHARACTER( LEN= : ), INTENT( IN ), ALLOCATABLE:: field
+      CHARACTER( LEN= : ), INTENT(IN), ALLOCATABLE:: field
       !> Component of the desired [[bnslorene]] member array
-      INTEGER,             INTENT( IN )             :: n
+      INTEGER,             INTENT(IN)             :: n
       !> Component n of the desired [[bnslorene]] member array
       DOUBLE PRECISION                              :: field_value
 
@@ -697,7 +677,7 @@ MODULE bns_lorene
     MODULE FUNCTION get_bns_identifier( this )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN ):: this
+      CLASS(bnslorene), INTENT(IN):: this
       ! Result
       DOUBLE PRECISION:: get_bns_identifier
 
@@ -707,7 +687,7 @@ MODULE bns_lorene
     MODULE FUNCTION get_eos1_loreneid( this )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN ):: this
+      CLASS(bnslorene), INTENT(IN):: this
       ! Result
       INTEGER:: get_eos1_loreneid
 
@@ -717,7 +697,7 @@ MODULE bns_lorene
     MODULE FUNCTION get_eos2_loreneid( this )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN ):: this
+      CLASS(bnslorene), INTENT(IN):: this
       ! Result
       INTEGER:: get_eos2_loreneid
 
@@ -727,8 +707,8 @@ MODULE bns_lorene
     MODULE SUBROUTINE get_eos_parameters( this, i_matter, eos_params )
 
       !> [[bnslorene]] object which this PROCEDURE is a member of
-      CLASS(bnslorene), INTENT( IN ):: this
-      INTEGER, INTENT( IN ):: i_matter
+      CLASS(bnslorene), INTENT(IN):: this
+      INTEGER, INTENT(IN):: i_matter
       !! Index of the matter object whose parameter is to return
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, INTENT(OUT):: eos_params
       !# Array containing the parameters of the |eos| for the `i_matter`-th
@@ -797,7 +777,7 @@ MODULE bns_lorene
     !MODULE FUNCTION get_bns_ptr( this )
     !
     !  ! Argument
-    !  CLASS(bnslorene), INTENT( IN ):: this
+    !  CLASS(bnslorene), INTENT(IN):: this
     !  ! Result
     !  TYPE(C_PTR):: get_bns_ptr
     !
@@ -816,14 +796,14 @@ MODULE bns_lorene
             get_lorene_id_particles, get_lorene_id_mass_b, &
             get_lorene_id_hydro, get_lorene_id_k, get_lorene_mass_density, &
             get_lorene_pressure, get_lorene_spatial_metric, &
-            positive_hydro, get_lorene_id_params, destruct_bin_ns
+            positive_hydro, get_lorene_bns_params, destruct_bin_ns
 
 
   INTERFACE
 
 
-    FUNCTION construct_bin_ns( c_resu_file ) RESULT( optr ) &
-      BIND(C, NAME= "construct_bin_ns")
+    FUNCTION construct_bin_ns( c_id_file, c_eos_file1, c_eos_file2 ) &
+      RESULT( optr ) BIND(C, NAME= "construct_bin_ns")
 
       !***********************************************
       !
@@ -840,9 +820,13 @@ MODULE bns_lorene
       IMPLICIT NONE
 
       !& C string of the name of the |lorene| binary file storing the spectral
-      !  BNS ID
-      CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
-                                                              c_resu_file
+      !  |bns| |id|
+      CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_id_file
+      CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_eos_file1
+      CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_eos_file2
       !> C pointer pointing to the constructed |lorene| |binns| object
       TYPE(C_PTR) :: optr
 
@@ -867,7 +851,7 @@ MODULE bns_lorene
       !
       !# Interface to the |lorene| method of class
       !  |binns| with the same name, that reads the full
-      !  |lorene| ID at the specified point.
+      !  |lorene| |id| at the specified point.
       !  That is, reads the metric fields, the
       !  components of the extrinsic curvature [c/km],
       !  and the hydro fields.
@@ -1300,7 +1284,7 @@ MODULE bns_lorene
     END FUNCTION positive_hydro
 
 
-    SUBROUTINE get_lorene_id_params( optr, &
+    SUBROUTINE get_lorene_bns_params( optr, &
                                      angular_vel, &
                                      distance, &
                                      distance_com, &
@@ -1374,8 +1358,10 @@ MODULE bns_lorene
                                      logP1_2,  &
                                      logRho0_2, &
                                      logRho1_2, &
-                                     logRho2_2 ) &
-      BIND(C, NAME= "get_lorene_id_params")
+                                     logRho2_2, &
+                                     eos_table1, &
+                                     eos_table2 ) &
+      BIND(C, NAME= "get_lorene_bns_params")
 
       !**********************************************
       !
@@ -1468,8 +1454,10 @@ MODULE bns_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho0_2
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho1_2
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho2_2
+      CHARACTER(KIND=C_CHAR), DIMENSION(500), INTENT(OUT):: eos_table1
+      CHARACTER(KIND=C_CHAR), DIMENSION(500), INTENT(OUT):: eos_table2
 
-    END SUBROUTINE get_lorene_id_params
+    END SUBROUTINE get_lorene_bns_params
 
 
     SUBROUTINE destruct_bin_ns( optr ) &

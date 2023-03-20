@@ -41,7 +41,8 @@ MODULE id_base
   !***********************************************************
 
 
-  USE timing, ONLY: timer
+  USE utility,  ONLY: surface, tabu_eos
+  USE timing,   ONLY: timer
 
 
   IMPLICIT NONE
@@ -68,6 +69,15 @@ MODULE id_base
     !# Number of matter objects belonging the physical system.
     !  For example, n_matter= 2 for a binary system of stars, and n_matter= 1
     !  for a single star or for a binary system of a black hole and a star.
+
+    TYPE(surface), PUBLIC, DIMENSION(:), ALLOCATABLE:: surfaces
+    !# Array containing, for each matter object, a set of coordinates of some
+    !  points modelling the surfaces.
+    !  @todo TODO: make PRIVATE
+
+    TYPE(tabu_eos), PUBLIC, DIMENSION(:), ALLOCATABLE:: tab_eos
+    !# Array containing a tabulated |eos| for each matter object, when used.
+    !  @todo TODO: make PRIVATE
 
     LOGICAL:: one_lapse
     !# Logical variable that determines if the lapse function \(\alpha=1\),
@@ -291,16 +301,19 @@ MODULE id_base
   ABSTRACT INTERFACE
 
 
-    SUBROUTINE derived_type_constructor_int( derived_type, filename )
-    !# Prints a summary of the physical properties the system
-    !  to the standard output and, optionally, to a formatted file whose name
-    !  is given as the optional argument `filename`
+    SUBROUTINE derived_type_constructor_int( derived_type, filename, &
+                                             eos_filenames )
+    !# Construct the DERIVED TYPE that extends [[idbase]]
 
       IMPORT:: idbase
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral DRS |id|
       CLASS(idbase),    INTENT(OUT)          :: derived_type
-      !! Constructed [[diffstarlorene]] object
+      !! Object of DERIVED TYPE that extends [[idbase], to be constructed
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+      !! Name of the file containing the |id|
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE derived_type_constructor_int
 
@@ -705,32 +718,33 @@ MODULE id_base
 
 
     MODULE SUBROUTINE sanity_check( derived_type )
-    !# Prints a summary of the physical properties the system
-    !  to the standard output and, optionally, to a formatted file whose name
-    !  is given as the optional argument `filename`
+    !# Check that the DERIVED TYPE that extends [[idbase]] is constructed
+    !  consistently
 
-      !IMPORT:: idbase
       CLASS(idbase), INTENT(IN):: derived_type
+      !! Object of DERIVED TYPE that extends [[idbase]]
 
     END SUBROUTINE sanity_check
 
 
-    MODULE SUBROUTINE initialize( derived_type, filename )
-    !# Prints a summary of the physical properties the system
-    !  to the standard output and, optionally, to a formatted file whose name
-    !  is given as the optional argument `filename`
+    MODULE SUBROUTINE initialize( derived_type, filename, eos_filenames )
+    !# Initialize the DERIVED TYPE that extends [[idbase]]
 
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral DRS ID
       CLASS(idbase),    INTENT(OUT)          :: derived_type
-      !! Constructed [[diffstarlorene]] object
+      !! Object of DERIVED TYPE that extends [[idbase], to be constructed
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+      !! Name of the file containing the |id|
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE initialize
 
 
     MODULE SUBROUTINE integrate_baryon_mass_density &
       ( this, center, radius, central_density, dr, dth, dphi, &
-        mass, mass_profile, mass_profile_idx, radii )
+        mass, mass_profile, mass_profile_idx, radii, surf )
     !# INTERFACE to the SUBROUTINE integrating the baryon mass density to
     !  compute the radial mass profile of a single star.
 
@@ -739,23 +753,22 @@ MODULE id_base
       !> Center of the star
       DOUBLE PRECISION, DIMENSION(3), INTENT(IN)   :: center
       !> Central density of the star
-      DOUBLE PRECISION,               INTENT(IN)   :: central_density
-      !> Radius of the star
       DOUBLE PRECISION,               INTENT(IN)   :: radius
       !> Integration steps
+      DOUBLE PRECISION,               INTENT(IN)   :: central_density
+      !> Radius of the star
       DOUBLE PRECISION,               INTENT(IN)   :: dr, dth, dphi
       !> Integrated mass of the star
       DOUBLE PRECISION,               INTENT(INOUT):: mass
       !> Array storing the radial mass profile of the star
-      !DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT):: &
-      !                                 mass_profile
       DOUBLE PRECISION, DIMENSION(3,0:NINT(radius/dr)), INTENT(OUT):: &
                                            mass_profile
       !& Array to store the indices for array mass_profile, sorted so that
-      !  mass_profile[mass_profile_idx] is in increasing order
-      !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
+      !  `mass_profile[mass_profile_idx]` is in increasing order
       INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
       DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
+      !> Surface of the matter object
+      TYPE(surface),                  INTENT(IN), OPTIONAL:: surf
 
     END SUBROUTINE integrate_baryon_mass_density
 

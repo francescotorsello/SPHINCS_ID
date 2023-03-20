@@ -64,13 +64,14 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     !
     !**********************************************
 
-    USE constants,  ONLY: pi, half, amu, Msun
+    USE constants,  ONLY: pi, half, amu, Msun, m2cm
     USE utility,    ONLY: zero, one, two, three, five, seven, ten, &
                           cartesian_from_spherical, is_finite_number, &
-                          g2kg, m2cm, lorene2hydrobase
+                          g2kg!, density_si2cu
     USE matrix,     ONLY: determinant_4x4_matrix
     USE NR,         ONLY: indexx
     USE APM,        ONLY: assign_h
+    USE numerics,   ONLY: bilinear_interpolation
     !USE options,    ONLY: ndes
     !USE units,      ONLY: umass
 
@@ -152,9 +153,37 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     IF(debug) PRINT *, dim_seed
     IF(debug) PRINT *, seed
 
+    IF(debug) PRINT *, surf% is_known
+
+    surface_type= "spherical"
+    max_radius= radius
+    a_x= one
+    a_y= one
+    a_z= one
+    max_center= center(1)
+    IF(PRESENT(surf))THEN
+
+      IF(surf% is_known)THEN
+
+        surface_type= "geoidal"
+
+      ENDIF
+
+    ENDIF
+
     IF(PRESENT(radii))THEN
 
-      surface_type="ellipsoidal"
+      IF(.NOT.PRESENT(surf)) surface_type= "ellipsoidal"
+
+      IF(PRESENT(surf))THEN
+
+        IF(.NOT.(surf% is_known))THEN
+
+          surface_type= "ellipsoidal"
+
+        ENDIF
+
+      ENDIF
 
       max_radius= MAXVAL([radius,radii(1),radii(2)])
 
@@ -181,17 +210,11 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
       ENDIF
 
-    ELSE
-
-      surface_type="spherical"
-
-      max_radius= radius
-      a_x= one
-      a_y= one
-      a_z= one
-      max_center= center(1)
-
     ENDIF
+
+    IF(debug) PRINT *, "inside place_particles_ellipsoidal_surfaces, ", &
+                       "surface_type is:", surface_type
+    !STOP
 
     !-----------------------------------!
     !-- Compute desired particle mass --!
@@ -205,7 +228,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
     !PRINT *, "std m_p             =", m_p
     !PRINT *, "std npart           =", npart_des
-    !rho_to_be_resolved= 1.D+13*(g2kg*m2cm**3)*lorene2hydrobase!1.0D-5
+    !rho_to_be_resolved= 1.D+13*(g2kg*m2cm**3)*dens_si2cu!1.0D-5
     !!rho_to_be_resolved= 1.138065390333111E-004
     !m_p= rho_to_be_resolved/(ndes/two)
     !!PRINT *, "average rho_id on the outer layers for 1.3 MPA1=", &
@@ -262,7 +285,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
                             central_density, &
                             dr, dth, dphi, &
                             mass, mass_profile, &
-                            mass_profile_idx, radii )
+                            mass_profile_idx, radii, surf )
 
     mass_profile( 2:3, : )= mass_profile( 2:3, : )*mass_star/mass
 
@@ -353,12 +376,12 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
       IF( surface_radii(r) < (one - five/(ten*ten))*last_r*max_radius )THEN
 
         CALL compute_colatitudes_uniformly_in( pi/two, (ten - five/ten)/ten*pi,&
-                                      colatitude_pos(r)% colatitudes( : ) )
+                                      colatitude_pos(r)% colatitudes(:) )
 
       ELSE
 
         CALL compute_colatitudes_uniformly_in( pi/two, (ten - five/ten)/ten*pi,&
-                                      colatitude_pos(r)% colatitudes( : ) )
+                                      colatitude_pos(r)% colatitudes(:) )
         !CALL compute_colatitudes_uniformly_in( pi/two, two/3.0D0*pi, &
         !                              colatitude_pos(r)% colatitudes( : ) )
 
@@ -380,8 +403,10 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
             colatitude_pos(r)% colatitudes( itr2 ) >= pi &
         )THEN
           PRINT *, "** ERROR! ", &
-                   "The colatitudes are not in the OPEN interval (pi/2,pi). ", &
-                   "Stopping..."
+                   " * The colatitudes are not in the OPEN interval ", &
+                   "(pi/2,pi). "
+          PRINT *, " * Stopping..."
+          PRINT *
           STOP
         ENDIF
 
@@ -405,12 +430,12 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
       !$OMP PARALLEL DO DEFAULT(NONE), &
       !$OMP             PRIVATE( phase, col, col_tmp, xtemp, ytemp, ztemp, &
-      !$OMP                      dth_shells, delta_r, long, &
+      !$OMP                      dth_shells, delta_r, long, rad, &
       !$OMP                      th, phi, rand_num2, phase_th, rel_sign ), &
-      !$OMP             SHARED( r, npart_shelleq, center, rad, alpha, &
+      !$OMP             SHARED( r, npart_shelleq, center, alpha, &
       !$OMP                     pos_surfaces, colatitude_pos, n_surfaces, &
       !$OMP                     dr_shells, surface_radii, shell_thickness, &
-      !$OMP                     a_x, a_y, a_z, this, &
+      !$OMP                     a_x, a_y, a_z, this, surf, &
       !$OMP                     sqdetg_tmp, bar_density_tmp, gam_euler_tmp, &
       !$OMP                  pos_shell_tmp, pvol_tmp, dphi_shells, max_radius, &
       !$OMP                     npart_discarded, npart_surface_tmp, last_r )
@@ -440,7 +465,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
         !    long= phase + phi*alpha(r)/3.0D0 - pi/3.0D0
         !
         !  ENDIF
-          long= phase + phi*alpha(r)
+          long= MOD(phase + phi*alpha(r), two*pi)
 
 
           col= colatitude_pos(r)% colatitudes(th)
@@ -461,7 +486,20 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
           ENDIF
 
-          rad= surface_radii(r)
+
+          IF(PRESENT(surf) .AND. surf% is_known)THEN
+
+            rad= bilinear_interpolation( col, long, &
+                  SIZE(surf% points(:,1,5)), &
+                  SIZE(surf% points(1,:,6)), &
+                  surf% points(:,:,5:6), surf% points(:,:,4) )
+            rad= rad*surface_radii(r)/max_radius
+
+          ELSE
+
+            rad= surface_radii(r)
+
+          ENDIF
           IF( this% randomize_r )THEN
 
             CALL RANDOM_NUMBER( delta_r )
@@ -485,19 +523,33 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
           ENDIF
 
-          IF( rad < 0 )THEN
-            PRINT *, " * ERROR! rad < 0. Check the computation of the radial", &
-                     " coordinates of the particles. Stopping.."
+          IF( rad <= zero )THEN
+            PRINT *, "** ERROR! rad <= 0. Check the computation of the ", &
+                     "radial coordinates of the particles."
+            PRINT *, " * rad=", rad
+            PRINT *, " * Stopping..."
+            PRINT *
             STOP
           ENDIF
 
           !
           !-- Compute Cartesian coordinates of the candidate particle positions
           !
-          CALL cartesian_from_spherical( &
-            a_x*rad, col, long, &
-            center(1), center(2), center(3), &
-            xtemp, ytemp, ztemp, a_y/a_x, a_z/a_x )
+          IF(PRESENT(surf) .AND. surf% is_known)THEN
+
+            CALL cartesian_from_spherical( &
+              rad, col, long, &
+              center(1), center(2), center(3), &
+              xtemp, ytemp, ztemp )
+
+          ELSE
+
+            CALL cartesian_from_spherical( &
+              a_x*rad, col, long, &
+              center(1), center(2), center(3), &
+              xtemp, ytemp, ztemp, a_y/a_x, a_z/a_x )
+
+          ENDIF
 
           IF( .NOT.is_finite_number( xtemp ) )THEN
             PRINT *, "** ERROR when placing first half of the particles! ", &
@@ -537,14 +589,18 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
                                                npart_shelleq(r) )
 
             ! Safety check
-            IF( pvol_tmp( th, phi ) <= 0 )THEN
+            IF( pvol_tmp( th, phi ) <= zero )THEN
                 ! pos_surfaces(r)% psurface_vol2( itr + 1 ) <= 0 )THEN
-              PRINT *, "When placing first half of particles"
-              PRINT *, "pvol_tmp( ", r, ",", th, ",", phi, " ) =", &
+              PRINT *, "** When placing first half of particles"
+              PRINT *, " * pvol_tmp( ", r, ",", th, ",", phi, " ) =", &
                        pvol_tmp( th, phi )
-              PRINT *, "dr_shells=", dr_shells, &
-                       "dth_shells=", dth_shells, &
-                       "dphi_shells=", dphi_shells
+              PRINT *, " * dr_shells=", dr_shells
+              PRINT *, " * dth_shells=", dth_shells
+              PRINT *, " * dphi_shells=", dphi_shells
+              PRINT *, " * rad=", rad
+              PRINT *, " * col=", col
+              PRINT *, " * Stopping..."
+              PRINT *
               STOP
             ENDIF
 

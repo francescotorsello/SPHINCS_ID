@@ -98,10 +98,10 @@ MODULE diffstar_lorene
     PROCEDURE:: deallocate_diffstar_memory
     !! Deallocates memory for the [[diffstarlorene]] member arrays
 
-    PROCEDURE:: read_diffstar_params
+    PROCEDURE:: read_diffstar_properties
     !! Imports the parameters of the DRS from |lorene|
 
-    PROCEDURE, PUBLIC:: print_diffstar_params
+    PROCEDURE, PUBLIC:: print_diffstar_properties
     !! Prints the parameters of the DRS to the standard output
 
     PROCEDURE:: read_id_int
@@ -229,27 +229,36 @@ MODULE diffstar_lorene
     !-- SUBROUTINES
     !
 
-    MODULE SUBROUTINE construct_diffstarlorene( derived_type, filename )
+    MODULE SUBROUTINE construct_diffstarlorene &
+      ( derived_type, filename, eos_filenames )
     !! Constructs a [[diffstarlorene]] object
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral DRS ID
       CLASS(diffstarlorene), INTENT(OUT):: derived_type
       !! Constructed [[diffstarlorene]] object
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral |drs| |id|
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE construct_diffstarlorene
 
 
-    MODULE SUBROUTINE construct_drs( this, resu_file )
+    MODULE SUBROUTINE construct_drs( this, id_file, eos_filename )
     !! Interface of the subroutine that constructs the |lorene| Etdiffrot object
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
-      CLASS(diffstarlorene),                     INTENT(INOUT)      :: this
-      !> |lorene| binary file containing the spectral DRS ID
-      CHARACTER(KIND= C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: resu_file
+      CLASS(diffstarlorene),          INTENT(INOUT)       :: this
+      !> |lorene| binary file containing the spectral |drs| |id|
+      CHARACTER(KIND=C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: id_file
+      CHARACTER(KIND=C_CHAR, LEN=*), INTENT(IN), OPTIONAL:: eos_filename
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE construct_drs
 
@@ -269,7 +278,7 @@ MODULE diffstar_lorene
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
       CLASS(diffstarlorene), INTENT(INOUT):: this
       !> Dimension of the arrays
-      INTEGER,    INTENT(IN)    :: d
+      INTEGER,               INTENT(IN)    :: d
 
     END SUBROUTINE allocate_diffstar_memory
 
@@ -283,22 +292,22 @@ MODULE diffstar_lorene
     END SUBROUTINE deallocate_diffstar_memory
 
 
-    MODULE SUBROUTINE read_diffstar_params( this )
+    MODULE SUBROUTINE read_diffstar_properties( this )
     !! Imports the DRS parameters from |lorene|
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
       CLASS(diffstarlorene), INTENT(INOUT):: this
 
-    END SUBROUTINE read_diffstar_params
+    END SUBROUTINE read_diffstar_properties
 
 
-    MODULE SUBROUTINE print_diffstar_params( this )
+    MODULE SUBROUTINE print_diffstar_properties( this )
     !! Prints the DRS parameters to the standard output
 
       !> [[diffstarlorene]] object which this PROCEDURE is a member of
       CLASS(diffstarlorene), INTENT(INOUT):: this
 
-    END SUBROUTINE print_diffstar_params
+    END SUBROUTINE print_diffstar_properties
 
 
     MODULE SUBROUTINE read_id_int( this, n, x, y, z )
@@ -695,7 +704,7 @@ MODULE diffstar_lorene
   INTERFACE
 
 
-    FUNCTION construct_etdiffrot( c_resu_file ) RESULT( optr ) &
+    FUNCTION construct_etdiffrot( c_id_file, c_eos_file ) RESULT( optr ) &
       BIND(C, NAME= "construct_et_diffrot")
 
       !***********************************************
@@ -714,9 +723,13 @@ MODULE diffstar_lorene
 
       !& C string of the name of the |lorene| binary file storing the spectral
       !  DRS ID
-      CHARACTER(KIND= C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
-                                                              c_resu_file
+      CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_id_file
+
+      CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN), OPTIONAL :: &
+                                                              c_eos_file
       !> C pointer pointing to the constructed |lorene| |etdiffrot| object
+
       TYPE(C_PTR) :: optr
 
     END FUNCTION construct_etdiffrot
@@ -1180,7 +1193,8 @@ MODULE diffstar_lorene
                                     logP1,                          &
                                     logRho0,                        &
                                     logRho1,                        &
-                                    logRho2 )                      &
+                                    logRho2,                        &
+                                    eos_table )                     &
       BIND(C, NAME= "get_rotdiff_params")
 
       !**********************************************
@@ -1247,6 +1261,7 @@ MODULE diffstar_lorene
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho0
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho1
       REAL(C_DOUBLE), INTENT(OUT)       :: logRho2
+      CHARACTER(KIND=C_CHAR), DIMENSION(500), INTENT(OUT):: eos_table
 
     END SUBROUTINE get_diffstar_params
 

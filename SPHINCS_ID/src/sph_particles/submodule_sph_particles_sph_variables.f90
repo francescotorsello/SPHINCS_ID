@@ -60,26 +60,29 @@ SUBMODULE (sph_particles) sph_variables
 
     !************************************************
     !
-    !# Computes the hydro fields on a section of the particles specified as
-    !  input.
-    !  First, computes the |sph| pressure starting from the |sph| baryon mass
-    !  density, and the specific internal
-    !  energy. The pressure is computed differently for different |eos|, and
+    !# Computes the hydro fields on a section of the
+    !  particles specified as input.
+    !  First, computes the |sph| pressure starting
+    !  from the |sph| baryon mass density, and the
+    !  specific internal energy. The pressure is
+    !  computed differently for different |eos|, and
     !  for cold and hot systems.
-    !  Then computes the enthalpy and the sound speed accordingly.
+    !  Then computes the enthalpy and the sound speed
+    !  accordingly.
     !
     !  FT 02.12.2022
     !
     !************************************************
 
-    USE utility,  ONLY: eos$poly, eos$pwpoly
+    USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu$compose
     USE units,    ONLY: m0c2_cu
+    USE numerics, ONLY: linear_interpolation
     USE pwp_EOS,  ONLY: select_EOS_parameters, gen_pwp_cold_eos, &
                         gen_pwp_eos, Gamma_th_1
 
     IMPLICIT NONE
 
-    INTEGER:: a
+    INTEGER:: a, dim_table
     DOUBLE PRECISION:: tmp, tmp2
     LOGICAL:: verb
 
@@ -89,10 +92,7 @@ SUBMODULE (sph_particles) sph_variables
       verb=.TRUE.
     ENDIF
 
-    ASSOCIATE( eos_id     => eqos% eos_parameters(1), &
-               kappa_poly => eqos% eos_parameters(poly$kappa), &
-               gamma_poly => eqos% eos_parameters(poly$gamma) &
-    )
+    ASSOCIATE( eos_id => NINT(eqos% eos_parameters(1)) )
 
     detect_eos: IF( eos_id == eos$poly )THEN
     ! If the |eos| is polytropic
@@ -102,6 +102,9 @@ SUBMODULE (sph_particles) sph_variables
                " single polytropic EOS..."
       IF(verb) PRINT *
       ! Formulas from Read et al. (2009), https://arxiv.org/abs/0812.2163
+
+      ASSOCIATE( kappa_poly => eqos% eos_parameters(poly$kappa), &
+                 gamma_poly => eqos% eos_parameters(poly$gamma) )
 
       detect_cold_system: IF( this% cold_system )THEN
       ! If the system is cold, compute pressure and specific energy
@@ -166,11 +169,9 @@ SUBMODULE (sph_particles) sph_variables
                           " considered."
         IF(verb) PRINT *
 
-        u= this% specific_energy
-
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( Pr, m0c2_cu, u, npart_in, npart_fin, &
-        !$OMP                     nlrf, enthalpy, cs &
+        !$OMP                     nlrf, enthalpy, cs, this &
 #ifdef __INTEL_COMPILER
         !$OMP                     , gamma_poly, kappa_poly ) &
 #elif  __GFORTRAN__
@@ -178,6 +179,8 @@ SUBMODULE (sph_particles) sph_variables
 #endif
         !$OMP             PRIVATE( a )
         DO a= 1, npart_fin - npart_in + 1, 1
+
+          u(a)= this% specific_energy(a)
 
           Pr(a)= &
           ! cold pressure
@@ -197,6 +200,8 @@ SUBMODULE (sph_particles) sph_variables
         !$OMP END PARALLEL DO
 
       ENDIF detect_cold_system
+
+      END ASSOCIATE
 
     ELSEIF( eos_id == eos$pwpoly )THEN
     ! If the |eos| is piecewise polytropic
@@ -240,15 +245,15 @@ SUBMODULE (sph_particles) sph_variables
                           " considered."
         IF(verb) PRINT *
 
-        u= this% specific_energy
-
         CALL select_EOS_parameters( eqos% eos_name )
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
-        !$OMP             SHARED( nlrf, Pr, m0c2_cu, u, cs, &
+        !$OMP             SHARED( nlrf, Pr, m0c2_cu, u, cs, this, &
         !$OMP                     npart_in, npart_fin ) &
         !$OMP             PRIVATE( a, tmp, tmp2 )
         DO a= 1, npart_fin - npart_in + 1, 1
+
+          u(a)= this% specific_energy(a)
 
           CALL gen_pwp_eos( nlrf(a)*m0c2_cu, tmp, &
                             tmp2, u(a), Pr(a), cs(a) )
@@ -259,6 +264,36 @@ SUBMODULE (sph_particles) sph_variables
         !$OMP END PARALLEL DO
 
       ENDIF detect_hot_system
+
+    ELSEIF( eos_id == eos$tabu$compose )THEN
+    ! If the |eos| is tabulated in the CompOSE format
+
+      IF(verb) PRINT *, " * Computing pressure and specific internal energy", &
+               " from the baryon mass density, using the provided table..."
+      IF(verb) PRINT *
+
+      dim_table= SIZE(eqos% table_eos(1,:))
+
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( Pr, m0c2_cu, u, npart_in, npart_fin, &
+      !$OMP                     nlrf, enthalpy, cs, eqos, dim_table ) &
+      !$OMP             PRIVATE( a )
+      DO a= 1, npart_fin - npart_in + 1, 1
+
+        Pr(a)= linear_interpolation &
+      (nlrf(a)*m0c2_cu, dim_table, eqos% table_eos(14,:), eqos% table_eos(4,:))
+
+        u(a)= linear_interpolation &
+      (nlrf(a)*m0c2_cu, dim_table, eqos% table_eos(10,:), eqos% table_eos(4,:))
+
+        enthalpy(a)= one + u(a) + Pr(a)/(nlrf(a)*m0c2_cu)
+
+        cs(a)= zero!SQRT( gamma_poly*Pr(a)/(nlrf(a)*m0c2_cu*enthalpy(a)) )
+
+        Pr(a)= Pr(a)/m0c2_cu
+
+      ENDDO
+      !$OMP END PARALLEL DO
 
     ENDIF detect_eos
 
@@ -279,10 +314,10 @@ SUBMODULE (sph_particles) sph_variables
     !
     !************************************************
 
-    USE constants,           ONLY: amu, third, Msun
-    USE utility,             ONLY: MSun_geo, k_lorene2hydrobase, zero, one, &
+    USE constants,           ONLY: amu, third, Msun, m2cm
+    USE utility,             ONLY: MSun_geo, zero, one, &
                                    compute_g4, determinant_sym4x4, &
-                                   spacetime_vector_norm_sym4x4, km2m, m2cm, &
+                                   spacetime_vector_norm_sym4x4, km2m, &
                                    sph_path
     USE units,               ONLY: set_units
     USE matrix,              ONLY: determinant_4x4_matrix
@@ -637,20 +672,17 @@ SUBMODULE (sph_particles) sph_variables
 
     !-----------------------------------------------------------------------!
     ! Computation of the hydrodynamical fields.                             !
-    ! For single and piecewise polytropes, do not use the pressure          !
-    ! and specific internal energy from the ID.                             !
-    ! Compute them using the exact formulas for piecewise                   !
-    ! polytropic instead, starting from the kernel interpolated density     !
+    ! They are computed using the EOS, starting from the SPH estimate of    !
+    ! the baryon mass density.                                              !
+    ! If the system is hot (that is, a thermal part is needed), the thermal !
+    ! part is added, if a single or polytropic EOS is used. It is not       !
+    ! added if a tabulated EOS is used.                                     !
     !-----------------------------------------------------------------------!
 
     matter_objects_loop: DO i_matter= 1, this% n_matter, 1
 
       ASSOCIATE( npart_in  => this% npart_fin(i_matter-1) + 1, &
                  npart_fin => this% npart_fin(i_matter) )
-
-      PRINT *, " * Computing pressure and specific internal energy from", &
-               " the baryon mass density, using the exact formulas for", &
-               " single polytropic EOS, on matter object", i_matter,"..."
 
       CALL this% compute_sph_hydro(npart_in, npart_fin, &
         this% all_eos(i_matter), &
@@ -659,166 +691,9 @@ SUBMODULE (sph_particles) sph_variables
         cs(npart_in:npart_fin) &
       )
 
-    !  IF( eos_id == eos$poly )THEN
-    !  ! If the |eos| is polytropic
-    !
-    !    PRINT *, " * Computing pressure and specific internal energy from", &
-    !             " the baryon mass density, using the exact formulas for", &
-    !             " single polytropic EOS, on matter object", i_matter,"..."
-    !
-    !    ! Formulas from Read et al. (2009), https://arxiv.org/abs/0812.2163
-    !
-    !    IF( this% cold_system )THEN
-    !    ! If the system is cold, compute pressure and specific energy
-    !    ! exactly using the polytropic EOS
-    !
-    !      PRINT *, " * Assuming a cold system: no thermal component considered."
-    !      PRINT *
-    !
-    !      Pr(npart_in:npart_fin)= &
-    !        kappa_poly*( this% nlrf_sph(npart_in:npart_fin)*m0c2_cu ) &
-    !        **gamma_poly
-    !
-    !      ! Using this internal energy gives machine-precision relative errors
-    !      ! after the recovery, since it is computed from nlrf_sph
-    !      ! Using the internal energy from the ID gives larger errors
-    !      u(npart_in:npart_fin)= ( Pr(npart_in:npart_fin) &
-    !        /(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu*(gamma_poly - one) ) )
-    !
-    !      this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
-    !       + Pr(npart_in:npart_fin)/(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu)
-    !
-    !      cs(npart_in:npart_fin)= SQRT( gamma_poly*Pr(npart_in:npart_fin)/ &
-    !                               (this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
-    !                               *this% enthalpy(npart_in:npart_fin)) )
-    !
-    !      !
-    !      !-- Leaving the following code here, commented, because it allows
-    !      !-- to test the pwp_eos MODULE using single polytropes
-    !      !-- All tests were passed on 23.02.2022
-    !      !
-    !!      CALL select_EOS_parameters( 'soft' )
-    !!
-    !!      DO a= npart_in, npart_fin, 1
-    !!
-    !!        CALL gen_pwp_cold_eos( this% nlrf_sph(a)*m0c2_cu, &
-    !!                               Pr(a), u(a), cs(a) )
-    !!
-    !!        !CALL gen_pwp_eos( this% nlrf_sph(a)*m0c2_cu, &
-    !!        !                  this% u_sph(a), tmp, &
-    !!        !                  u(a), &
-    !!        !                  Pr(a), cs(a) )
-    !!      ENDDO
-    !
-    !      Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-    !
-    !    ELSE
-    !    ! If the system is hot, that is, has a thermal component, then
-    !    ! the density and the specific energy (the latter including both
-    !    ! cold and thermal part) should be supplied in the ID.
-    !    ! The pressure is computed using them (see pwp_EOS MODULE).
-    !
-    !      PRINT *, " * Assuming a hot system: thermal component considered."
-    !      PRINT *
-    !
-    !      u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
-    !
-    !      !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !      !$OMP             SHARED( this, Pr, m0c2_cu, u ) &
-    !      !$OMP             PRIVATE( a )
-    !      DO a= npart_in, npart_fin, 1
-    !
-    !        Pr(a)= &
-    !        ! cold pressure
-    !        kappa_poly*( this% nlrf_sph(a)*m0c2_cu )**gamma_poly &
-    !        + &
-    !        ! thermal pressure
-    !        Gamma_th_1*( this% nlrf_sph(a)*m0c2_cu )* &
-    !        MAX( u(a) - ( Pr(a)/(this% nlrf_sph(a)*m0c2_cu &
-    !                      *(gamma_poly - one) ) ), zero )
-    !
-    !      ENDDO
-    !      !$OMP END PARALLEL DO
-    !      this% enthalpy(npart_in:npart_fin)= one + u(npart_in:npart_fin) &
-    !       + Pr(npart_in:npart_fin)/(this% nlrf_sph(npart_in:npart_fin)*m0c2_cu)
-    !
-    !      cs(npart_in:npart_fin)= SQRT( gamma_poly*Pr(npart_in:npart_fin)/ &
-    !        (this% nlrf_sph(npart_in:npart_fin)*m0c2_cu &
-    !        *this% enthalpy(npart_in:npart_fin)) )
-    !
-    !      Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-    !
-    !    ENDIF
-    !
-    !  ELSEIF( eos_id == eos$pwpoly )THEN
-    !  ! If the |eos| is piecewise polytropic
-    !
-    !    PRINT *, " * Computing pressure and specific internal energy from", &
-    !             " the baryon mass density, using the exact formulas for", &
-    !             " piecewise polytropic EOS..."
-    !    PRINT *
-    !
-    !    IF( this% cold_system )THEN
-    !    ! If the system is cold, compute pressure and specific energy
-    !    ! exactly using the piecewise polytropic EOS
-    !
-    !      PRINT *, " * Assuming a cold system: no thermal component considered."
-    !      PRINT *
-    !
-    !      CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
-    !
-    !      !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !      !$OMP             SHARED( this, Pr, m0c2_cu, u, cs ) &
-    !      !$OMP             PRIVATE( a )
-    !      DO a= npart_in, npart_fin, 1
-    !
-    !        CALL gen_pwp_cold_eos( this% nlrf_sph(a)*m0c2_cu, &
-    !                               Pr(a), u(a), cs(a) )
-    !
-    !      ENDDO
-    !      !$OMP END PARALLEL DO
-    !      Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-    !
-    !    ELSE
-    !    ! If the system is hot, that is, has a thermal component, then
-    !    ! the density and the specific energy (the latter including both
-    !    ! cold and thermal part) should be supplied in the ID.
-    !    ! The pressure is computed using them (see pwp_EOS MODULE).
-    !
-    !      PRINT *, " * Assuming a hot system: thermal component considered."
-    !      PRINT *
-    !
-    !      u(npart_in:npart_fin)= this% specific_energy(npart_in:npart_fin)
-    !
-    !      CALL select_EOS_parameters( this% all_eos(i_matter)% eos_name )
-    !
-    !      !$OMP PARALLEL DO DEFAULT( NONE ) &
-    !      !$OMP             SHARED( this, Pr, m0c2_cu, u, cs ) &
-    !      !$OMP             PRIVATE( a, tmp )
-    !      DO a= npart_in, npart_fin, 1
-    !
-    !        CALL gen_pwp_eos( this% nlrf_sph(a)*m0c2_cu, &
-    !                          this% u_sph(a), tmp, &
-    !                          u(a), &
-    !                          Pr(a), cs(a) )
-    !
-    !      ENDDO
-    !      !$OMP END PARALLEL DO
-    !      Pr(npart_in:npart_fin)= Pr(npart_in:npart_fin)/m0c2_cu
-    !
-    !    ENDIF
-    !
-    !  ENDIF
-
-    !  this% pressure_sph(npart_in:npart_fin)= Pr(npart_in:npart_fin)
-    !  this% u_sph(npart_in:npart_fin)       = u(npart_in:npart_fin)
-
       END ASSOCIATE
 
     ENDDO matter_objects_loop
-
-    PRINT *, "234"
-    PRINT *
 
     this% pressure_sph= Pr
     this% u_sph       = u
@@ -829,14 +704,15 @@ SUBMODULE (sph_particles) sph_variables
 
     assign_ye_on_particles: IF( this% compose_eos )THEN
 
-      PRINT *, "Assigning electron fraction using the CompOSE file ", &
-               TRIM(this% compose_path)//TRIM(this% compose_filename)
+      PRINT *, "** Assigning electron fraction using the CompOSE data..."!, &
+               !TRIM(this% compose_path)//TRIM(this% compose_filename)
 
-      compose_namefile= TRIM(this% compose_path)//TRIM(this% compose_filename)
-      CALL this% read_compose_composition( compose_namefile )
+      !compose_namefile= TRIM(this% compose_path)//TRIM(this% compose_filename)
+      !CALL this% read_compose_composition( compose_namefile )
+
       CALL this% compute_Ye()
 
-      PRINT *, "Electron fraction assigned."
+      PRINT *, " * electron fraction assigned."
       PRINT *
 
     ELSE
@@ -947,14 +823,20 @@ SUBMODULE (sph_particles) sph_variables
     !
     !-- Test the recovery
     !
-    CALL this% test_recovery( this% npart,       &
-                              this% pos,         &
-                              this% nlrf_sph,    &
-                              this% u_sph,       &
-                              this% pressure_sph, &
-                              this% v(1:3,:),    &
-                              this% theta,       &
-                              this% nstar_sph )
+    IF( .NOT.this% compose_eos )THEN
+    ! TODO: as of 03.03.2023, SPHINCS_BSSN does not support tabulated EOS,
+    !       hence the recovery should not be called when using tabulated EOS
+
+      CALL this% test_recovery( this% npart,       &
+                                this% pos,         &
+                                this% nlrf_sph,    &
+                                this% u_sph,       &
+                                this% pressure_sph, &
+                                this% v(1:3,:),    &
+                                this% theta,       &
+                                this% nstar_sph )
+
+    ENDIF
 
     !CALL this% test_recovery( npart,       &
     !                          pos_u,         &

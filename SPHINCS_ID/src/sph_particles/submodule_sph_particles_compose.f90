@@ -63,10 +63,15 @@ SUBMODULE (sph_particles) compose
     !
     !  FT 1.03.2021
     !
+    !
+    !  @warning DEPRECATED
+    !
+    !  FT 13.03.2023
+    !
     !************************************************
 
     USE constants,  ONLY: fm2cm, cm2km
-    USE utility,    ONLY: km2Msun_geo
+    USE utility,    ONLY: km2Msun_geo, zero
 
     IMPLICIT NONE
 
@@ -86,20 +91,20 @@ SUBMODULE (sph_particles) compose
 
     LOGICAL:: exist
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER(LEN=:), ALLOCATABLE:: finalnamefile
 
     PRINT *, "** Executing the read_compose_composition subroutine..."
 
     ALLOCATE( this% nb_table( max_length_eos ) )
     ALLOCATE( this% Ye_table( max_length_eos ) )
-    this% nb_table= 0.0D0
-    this% Ye_table= 0.0D0
+    this% nb_table= zero
+    this% Ye_table= zero
 
 
     IF( PRESENT(namefile) )THEN
       finalnamefile= TRIM(namefile)//".beta"
     ELSE
-      finalnamefile= "../../|compose|_EOS/SFHO_with_electrons/eos.beta"
+      finalnamefile= "../../CompOSE_EOS/SFHO_with_electrons/eos.beta"
     ENDIF
 
     INQUIRE( FILE= TRIM(finalnamefile), EXIST= exist )
@@ -124,7 +129,7 @@ SUBMODULE (sph_particles) compose
     !                                                    m_n, m_p, i_leptons
 
     PRINT *, " * Reading file " // TRIM(finalnamefile) // "..."
-    cntr= 0
+    cntr= 1
     read_compose_beta: DO itr= 1, max_length_eos, 1
       READ( UNIT= unit_compose, FMT= *, IOSTAT = ios, IOMSG= err_msg ) &
                         ! Variables for .thermo.ns file
@@ -180,70 +185,80 @@ SUBMODULE (sph_particles) compose
     !
     !  FT 3.03.2021
     !
+    !
+    !  Uses new infrastructure
+    !
+    !  FT 13.03.2023
+    !
     !************************************************
+
+    USE numerics, ONLY: linear_interpolation
+    USE units,    ONLY: m0c2_cu
 
     IMPLICIT NONE
 
-    INTEGER:: d, itr2
+    INTEGER:: dim_table, a, i_matter
 
     DOUBLE PRECISION:: min_nb_table, max_nb_table
 
-    d= SIZE(this% nb_table)
-    min_nb_table= MINVAL( this% nb_table, 1 )
-    max_nb_table= MAXVAL( this% nb_table, 1 )
+    DO i_matter= 1, this% n_matter, 1
 
-    particle_loop: DO itr= 1, this% npart, 1
+      !dim_table= SIZE(this% nb_table)
+      !min_nb_table= MINVAL(this% nb_table, DIM= 1)
+      !max_nb_table= MAXVAL(this% nb_table, DIM= 1)
 
-      ! There may be particles with initially negative hydro fields,
-      ! close to the surface of the stars. The present
-      ! version of the code sets their hydro fields to 0.
-      ! In turn, this is a problem if we read Ye from the .beta file
-      ! from the CompOSe database since the value of 0
-      ! for the baryon number density (used in the interpolation
-      ! of Ye) is not included in the .beta file.
-      ! In other words, Ye cannot be interpolated on those particles,
-      ! and the present version of the code sets Ye to 0 as well.
+      dim_table= SIZE(this% all_eos(i_matter)% table_eos(1,:))
+      min_nb_table= MINVAL(this% all_eos(i_matter)% table_eos(14,:), DIM= 1)
+      max_nb_table= MAXVAL(this% all_eos(i_matter)% table_eos(14,:), DIM= 1)
 
-      ! The problem above is solved: particles are not placed if the hydro
-      ! is negative or zero.
+      !$OMP PARALLEL DO DEFAULT( NONE ) &
+      !$OMP             SHARED( this, min_nb_table, max_nb_table, dim_table, &
+      !$OMP                     i_matter, m0c2_cu ) &
+      !$OMP             PRIVATE( a )
+      particle_loop: DO a= 1, this% npart, 1
 
-      !IF( this% nlrf(itr) == 0.0D0 )THEN
-        !this% Ye(itr)= 0.0D0
-        !CYCLE
-      !ELSE
-      IF( this% nlrf(itr) < min_nb_table )THEN
-        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", this% nlrf(itr), &
-                 "is lower than the minimum value in the table =", min_nb_table
-        PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
-                 "If yes, please select a table with a wider range."
-        STOP
-      ELSEIF( this% nlrf(itr) > max_nb_table )THEN
-        PRINT *, "** ERROR! The value of nlrf(", itr, ")=", this% nlrf(itr), &
+        IF( this% nlrf(a)*m0c2_cu < min_nb_table )THEN
+          PRINT *, "** ERROR! The value of nlrf(", a, ")=", &
+                   this% nlrf(a)*m0c2_cu, &
+                  "is lower than the minimum value in the table =", min_nb_table
+          PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
+                   "If yes, please select a table with a wider range."
+          PRINT *
+          STOP
+        ELSEIF( this% nlrf(a)*m0c2_cu > max_nb_table )THEN
+          PRINT *, "** ERROR! The value of nlrf(", a, ")=", &
+                   this% nlrf(a)*m0c2_cu, &
                  "is larger than the maximum value in the table =", max_nb_table
-        PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
-                 "If yes, please select a table with a wider range."
-        STOP
-      ENDIF
-
-      Ye_linear_interpolation_loop: DO itr2= 1, d - 1, 1
-
-        IF( this% nb_table(itr2) < this% nlrf(itr) .AND. &
-            this% nlrf(itr) < this% nb_table(itr2 + 1) )THEN
-
-          this% Ye(itr)= this% Ye_table(itr2) &
-                         + (this% Ye_table(itr2 + 1) - this% Ye_table(itr2))/ &
-                         (this% nb_table(itr2 + 1) - this% nb_table(itr2)) &
-                         *(this% nlrf(itr) - this% nb_table(itr2))
-          EXIT
-
+          PRINT *, " * Is nlrf computed when you call this SUBROUTINE? " // &
+                   "If yes, please select a table with a wider range."
+          PRINT *
+          STOP
         ENDIF
 
-      ENDDO Ye_linear_interpolation_loop
+        !Ye_linear_interpolation_loop: DO i_table= 1, dim_table - 1, 1
+        !
+        !  IF( this% nb_table(i_table) < this% nlrf(a) .AND. &
+        !      this% nlrf(a) < this% nb_table(i_table + 1) )THEN
+        !
+        !    this% Ye(a)= this% Ye_table(i_table) &
+        !      + (this% Ye_table(i_table + 1) - this% Ye_table(i_table)) &
+        !       /(this% nb_table(i_table + 1) - this% nb_table(i_table)) &
+        !       *(this% nlrf(a) - this% nb_table(i_table))
+        !    EXIT
+        !
+        !  ENDIF
+        !
+        !ENDDO Ye_linear_interpolation_loop
 
-      !PRINT *, "Ye(", itr, ")=", this% Ye(itr)
-      !PRINT *
+        this% Ye(a)= linear_interpolation &
+          (this% nlrf(a)*m0c2_cu, dim_table, &
+           this% all_eos(i_matter)% table_eos(14,:), &
+           this% all_eos(i_matter)% table_eos(12,:))
 
-    ENDDO particle_loop
+      ENDDO particle_loop
+      !$OMP END PARALLEL DO
+
+    ENDDO
 
   END PROCEDURE compute_Ye
 

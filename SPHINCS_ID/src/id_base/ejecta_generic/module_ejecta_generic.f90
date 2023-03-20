@@ -135,7 +135,7 @@ MODULE ejecta_generic
     !--  Parameters of the ejecta  --!
     !--------------------------------!
 
-    CHARACTER( LEN=: ), ALLOCATABLE:: eos
+    CHARACTER(LEN=:), ALLOCATABLE:: eos
     !! Name of the equation of state (EoS) of star 1
 
 
@@ -405,16 +405,20 @@ MODULE ejecta_generic
     !--  SUBROUTINES  --!
     !-------------------!
 
-    MODULE SUBROUTINE construct_ejecta( derived_type, filename )
+    MODULE SUBROUTINE construct_ejecta( derived_type, filename, eos_filenames )
     !! Constructs a [[ejecta]] object
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
-      !! |lorene| binary file containing the spectral DRS ID
       CLASS(ejecta),    INTENT(OUT):: derived_type
       !! Constructed [[ejecta]] object
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: filename
+      !! |lorene| binary file containing the spectral DRS ID
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE construct_ejecta
 

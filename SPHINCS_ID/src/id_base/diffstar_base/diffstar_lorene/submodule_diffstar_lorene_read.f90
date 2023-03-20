@@ -34,7 +34,7 @@ SUBMODULE (diffstar_lorene) read
 
 
   USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
-  USE utility,                    ONLY: Msun_geo
+  USE utility,                    ONLY: Msun_geo, zero, one
 
 
   IMPLICIT NONE
@@ -90,36 +90,36 @@ SUBMODULE (diffstar_lorene) read
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( n, this, x, y, z ) &
-        !$OMP             PRIVATE( itr )
+        !$OMP             PRIVATE(itr)
         read_id_loop: DO itr= 1, n, 1
 
           ! The coordinates need to be converted from |sphincs| units (Msun_geo)
           ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
           ! Msun_geo
           CALL get_diffstar_full( this% diffstar_ptr, &
-                                  x( itr )*Msun_geo, &
-                                  y( itr )*Msun_geo, &
-                                  z( itr )*Msun_geo, &
-                                  this% lapse( itr ), &
-                                  this% shift_x( itr ), &
-                                  this% shift_y( itr ), &
-                                  this% shift_z( itr ), &
-                                  this% g_xx( itr ), &
-                                  this% g_yy( itr ), &
-                                  this% g_zz( itr ), &
-                                  this% k_xx( itr ), &
-                                  this% k_xy( itr ), &
-                                  this% k_xz( itr ), &
-                                  this% k_yy( itr ), &
-                                  this% k_yz( itr ), &
-                                  this% k_zz( itr ), &
-                                  this% baryon_density( itr ), &
-                                  this% energy_density( itr ), &
-                                  this% specific_energy( itr ), &
-                                  this% pressure( itr ), &
-                                  this% v_euler_x( itr ), &
-                                  this% v_euler_y( itr ), &
-                                  this% v_euler_z( itr ) )
+                                  x(itr)*Msun_geo, &
+                                  y(itr)*Msun_geo, &
+                                  z(itr)*Msun_geo, &
+                                  this% lapse(itr), &
+                                  this% shift_x(itr), &
+                                  this% shift_y(itr), &
+                                  this% shift_z(itr), &
+                                  this% g_xx(itr), &
+                                  this% g_yy(itr), &
+                                  this% g_zz(itr), &
+                                  this% k_xx(itr), &
+                                  this% k_xy(itr), &
+                                  this% k_xz(itr), &
+                                  this% k_yy(itr), &
+                                  this% k_yz(itr), &
+                                  this% k_zz(itr), &
+                                  this% baryon_density(itr), &
+                                  this% energy_density(itr), &
+                                  this% specific_energy(itr), &
+                                  this% pressure(itr), &
+                                  this% v_euler_x(itr), &
+                                  this% v_euler_y(itr), &
+                                  this% v_euler_z(itr) )
 
         ENDDO read_id_loop
         !$OMP END PARALLEL DO
@@ -130,32 +130,32 @@ SUBMODULE (diffstar_lorene) read
           !-- The following follows from the assumption of conformal
           !-- flatness in |lorene|
           !
-          this% g_xy( itr )= 0.0D0
-          this% g_xz( itr )= 0.0D0
-          this% g_yz( itr )= 0.0D0
+          this% g_xy(itr)= zero
+          this% g_xz(itr)= zero
+          this% g_yz(itr)= zero
 
           !
           !- Set/unset the geodesic gauge
           !
           IF( this% get_one_lapse() )THEN
-            this% lapse( itr )= 1.0D0
+            this% lapse(itr)= one
           ENDIF
           IF( this% get_zero_shift() )THEN
-            this% shift_x( itr )= 0.0D0
-            this% shift_y( itr )= 0.0D0
-            this% shift_z( itr )= 0.0D0
+            this% shift_x(itr)= zero
+            this% shift_y(itr)= zero
+            this% shift_z(itr)= zero
           ENDIF
 
           !
           !-- Convert the extrinsic curvature from |lorene| units to
           !-- |sphincs| units
           !
-          this% k_xx( itr )= this% k_xx( itr )*Msun_geo
-          this% k_xy( itr )= this% k_xy( itr )*Msun_geo
-          this% k_xz( itr )= this% k_xz( itr )*Msun_geo
-          this% k_yy( itr )= this% k_yy( itr )*Msun_geo
-          this% k_yz( itr )= this% k_yz( itr )*Msun_geo
-          this% k_zz( itr )= this% k_zz( itr )*Msun_geo
+          this% k_xx(itr)= this% k_xx(itr)*Msun_geo
+          this% k_xy(itr)= this% k_xy(itr)*Msun_geo
+          this% k_xz(itr)= this% k_xz(itr)*Msun_geo
+          this% k_yy(itr)= this% k_yy(itr)*Msun_geo
+          this% k_yz(itr)= this% k_yz(itr)*Msun_geo
+          this% k_zz(itr)= this% k_zz(itr)*Msun_geo
 
           ! Print progress on screen
           perc= 100*itr/n
@@ -215,36 +215,36 @@ SUBMODULE (diffstar_lorene) read
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
-      !$OMP             PRIVATE( itr )
+      !$OMP             PRIVATE(itr)
       read_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
         ! Msun_geo
         CALL get_diffstar_full( this% diffstar_ptr, &
-                                x( itr )*Msun_geo, &
-                                y( itr )*Msun_geo, &
-                                z( itr )*Msun_geo, &
-                                lapse( itr ), &
-                                shift_x( itr ), &
-                                shift_y( itr ), &
-                                shift_z( itr ), &
-                                g_xx( itr ), &
-                                g_yy( itr ), &
-                                g_zz( itr ), &
-                                k_xx( itr ), &
-                                k_xy( itr ), &
-                                k_xz( itr ), &
-                                k_yy( itr ), &
-                                k_yz( itr ), &
-                                k_zz( itr ), &
-                                baryon_density( itr ), &
-                                energy_density( itr ), &
-                                specific_energy( itr ), &
-                                pressure( itr ), &
-                                u_euler_x( itr ), &
-                                u_euler_y( itr ), &
-                                u_euler_z( itr ) )
+                                x(itr)*Msun_geo, &
+                                y(itr)*Msun_geo, &
+                                z(itr)*Msun_geo, &
+                                lapse(itr), &
+                                shift_x(itr), &
+                                shift_y(itr), &
+                                shift_z(itr), &
+                                g_xx(itr), &
+                                g_yy(itr), &
+                                g_zz(itr), &
+                                k_xx(itr), &
+                                k_xy(itr), &
+                                k_xz(itr), &
+                                k_yy(itr), &
+                                k_yz(itr), &
+                                k_zz(itr), &
+                                baryon_density(itr), &
+                                energy_density(itr), &
+                                specific_energy(itr), &
+                                pressure(itr), &
+                                u_euler_x(itr), &
+                                u_euler_y(itr), &
+                                u_euler_z(itr) )
 
       ENDDO read_id_loop
       !$OMP END PARALLEL DO
@@ -255,32 +255,32 @@ SUBMODULE (diffstar_lorene) read
         !-- The following follows from the maximal-slicing-quasi-isotropic
         !-- coordinates used in |lorene|
         !
-        g_xy( itr )= 0.0D0
-        g_xz( itr )= 0.0D0
-        g_yz( itr )= 0.0D0
+        g_xy(itr)= zero
+        g_xz(itr)= zero
+        g_yz(itr)= zero
 
         !
         !- Set/unset the geodesic gauge
         !
         IF( this% get_one_lapse() )THEN
-          lapse( itr )= 1.0D0
+          lapse(itr)= one
         ENDIF
         IF( this% get_zero_shift() )THEN
-          shift_x( itr )= 0.0D0
-          shift_y( itr )= 0.0D0
-          shift_z( itr )= 0.0D0
+          shift_x(itr)= zero
+          shift_y(itr)= zero
+          shift_z(itr)= zero
         ENDIF
 
         !
         !-- Convert the extrinsic curvature from |lorene| units to
         !-- |sphincs| units
         !
-        k_xx( itr )= k_xx( itr )*Msun_geo
-        k_xy( itr )= k_xy( itr )*Msun_geo
-        k_xz( itr )= k_xz( itr )*Msun_geo
-        k_yy( itr )= k_yy( itr )*Msun_geo
-        k_yz( itr )= k_yz( itr )*Msun_geo
-        k_zz( itr )= k_zz( itr )*Msun_geo
+        k_xx(itr)= k_xx(itr)*Msun_geo
+        k_xy(itr)= k_xy(itr)*Msun_geo
+        k_xz(itr)= k_xz(itr)*Msun_geo
+        k_yy(itr)= k_yy(itr)*Msun_geo
+        k_yz(itr)= k_yz(itr)*Msun_geo
+        k_zz(itr)= k_zz(itr)*Msun_geo
 
         ! Print progress on screen
         perc= 100*itr/n
@@ -348,9 +348,8 @@ SUBMODULE (diffstar_lorene) read
         coords_y: DO j= 1, ny, 1
           coords_x: DO i= 1, nx, 1
 
-            ! The coordinates need to be converted from |sphincs| units (Msun_geo)
-            ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
-            ! Msun_geo
+            ! The coordinates need to be converted from |sphincs| units
+            ! (Msun_geo) to |lorene| units (\(\mathrm{km}\)).
             CALL get_diffstar_spacetime( this% diffstar_ptr, &
                                          pos( i, j, k, jx )*Msun_geo, &
                                          pos( i, j, k, jy )*Msun_geo, &
@@ -382,20 +381,20 @@ SUBMODULE (diffstar_lorene) read
             !-- The following follows from the assumption of
             !-- conformal flatness in |lorene|
             !
-            g( i, j, k, jxy )= 0.0D0
-            g( i, j, k, jxz )= 0.0D0
-            g( i, j, k, jyz )= 0.0D0
+            g( i, j, k, jxy )= zero
+            g( i, j, k, jxz )= zero
+            g( i, j, k, jyz )= zero
 
             !
             !- Set/unset the geodesic gauge
             !
             IF( this% get_one_lapse() )THEN
-              lapse( i, j, k )= 1.0D0
+              lapse( i, j, k )= one
             ENDIF
             IF( this% get_zero_shift() )THEN
-              shift( i, j, k, jx )= 0.0D0
-              shift( i, j, k, jy )= 0.0D0
-              shift( i, j, k, jz )= 0.0D0
+              shift( i, j, k, jx )= zero
+              shift( i, j, k, jy )= zero
+              shift( i, j, k, jz )= zero
             ENDIF
 
             !
@@ -614,30 +613,30 @@ SUBMODULE (diffstar_lorene) read
       !$OMP                     baryon_density, energy_density, &
       !$OMP                     specific_energy, pressure, &
       !$OMP                     u_euler_x, u_euler_y, u_euler_z ) &
-      !$OMP             PRIVATE( itr )
+      !$OMP             PRIVATE(itr)
       read_id_loop: DO itr= 1, n, 1
 
         ! The coordinates need to be converted from |sphincs| units (Msun_geo)
         ! to |lorene| units (\(\mathrm{km}\)). See MODULE constants for the definition of
         ! Msun_geo
         CALL get_diffstar_particles( this% diffstar_ptr, &
-                                     x( itr )*Msun_geo, &
-                                     y( itr )*Msun_geo, &
-                                     z( itr )*Msun_geo, &
-                                     lapse( itr ), &
-                                     shift_x( itr ), &
-                                     shift_y( itr ), &
-                                     shift_z( itr ), &
-                                     g_xx( itr ), &
-                                     g_yy( itr ), &
-                                     g_zz( itr ), &
-                                     baryon_density( itr ), &
-                                     energy_density( itr ), &
-                                     specific_energy( itr ), &
-                                     pressure( itr ), &
-                                     u_euler_x( itr ), &
-                                     u_euler_y( itr ), &
-                                     u_euler_z( itr ) )
+                                     x(itr)*Msun_geo, &
+                                     y(itr)*Msun_geo, &
+                                     z(itr)*Msun_geo, &
+                                     lapse(itr), &
+                                     shift_x(itr), &
+                                     shift_y(itr), &
+                                     shift_z(itr), &
+                                     g_xx(itr), &
+                                     g_yy(itr), &
+                                     g_zz(itr), &
+                                     baryon_density(itr), &
+                                     energy_density(itr), &
+                                     specific_energy(itr), &
+                                     pressure(itr), &
+                                     u_euler_x(itr), &
+                                     u_euler_y(itr), &
+                                     u_euler_z(itr) )
 
       ENDDO read_id_loop
       !$OMP END PARALLEL DO
@@ -648,20 +647,20 @@ SUBMODULE (diffstar_lorene) read
         !-- The following follows from the assumption of conformal
         !-- flatness in |lorene|
         !
-        g_xy( itr )= 0.0D0
-        g_xz( itr )= 0.0D0
-        g_yz( itr )= 0.0D0
+        g_xy(itr)= zero
+        g_xz(itr)= zero
+        g_yz(itr)= zero
 
         !
         !- Set/unset the geodesic gauge
         !
         IF( this% get_one_lapse() )THEN
-          lapse( itr )= 1.0D0
+          lapse(itr)= one
         ENDIF
         IF( this% get_zero_shift() )THEN
-          shift_x( itr )= 0.0D0
-          shift_y( itr )= 0.0D0
-          shift_z( itr )= 0.0D0
+          shift_x(itr)= zero
+          shift_y(itr)= zero
+          shift_z(itr)= zero
         ENDIF
 
         detg= 2*g_xy(itr)*g_xz(itr)*g_yz(itr) &
@@ -718,8 +717,8 @@ SUBMODULE (diffstar_lorene) read
     !
     !****************************************************
 
-    USE utility, ONLY: lorene2hydrobase
-    USE tensor,    ONLY: jxx, jxy, jxz, jyy, jyz, jzz
+    USE utility,  ONLY: density_si2cu
+    USE tensor,   ONLY: jxx, jxy, jxz, jyy, jyz, jzz
 
     IMPLICIT NONE
 
@@ -738,11 +737,11 @@ SUBMODULE (diffstar_lorene) read
                                 baryon_density, &
                                 gamma_euler )
 
-      g(jxy)= 0.0D0
-      g(jxz)= 0.0D0
-      g(jyz)= 0.0D0
+      g(jxy)= zero
+      g(jxz)= zero
+      g(jyz)= zero
 
-      baryon_density= baryon_density*lorene2hydrobase
+      baryon_density= baryon_density*density_si2cu
 
     ENDIF
 
@@ -796,7 +795,7 @@ SUBMODULE (diffstar_lorene) read
     !***********************************************
 
     USE, INTRINSIC :: ISO_C_BINDING,  ONLY: C_ASSOCIATED
-    USE utility,                      ONLY: lorene2hydrobase
+    USE utility,                      ONLY: density_si2cu
 
     IMPLICIT NONE
 
@@ -808,7 +807,7 @@ SUBMODULE (diffstar_lorene) read
       res= get_diffstar_mass_density( this% diffstar_ptr, &
                                       x*Msun_geo, &
                                       y*Msun_geo, &
-                                      z*Msun_geo )*lorene2hydrobase
+                                      z*Msun_geo )*density_si2cu
 
     ENDIF
 
@@ -828,7 +827,7 @@ SUBMODULE (diffstar_lorene) read
     !***********************************************
 
     USE, INTRINSIC:: ISO_C_BINDING, ONLY: C_ASSOCIATED
-    USE utility,                    ONLY: lorene2hydrobase
+    USE utility,                    ONLY: density_si2cu
 
     IMPLICIT NONE
 
@@ -840,7 +839,7 @@ SUBMODULE (diffstar_lorene) read
       res= get_diffstar_pressure( this% diffstar_ptr, &
                                   x*Msun_geo, &
                                   y*Msun_geo, &
-                                  z*Msun_geo )*lorene2hydrobase
+                                  z*Msun_geo )*density_si2cu
 
     ENDIF
 

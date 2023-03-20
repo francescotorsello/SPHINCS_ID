@@ -56,7 +56,8 @@ SUBMODULE (diffstar_base) io
     !
     !************************************************
 
-    USE utility,  ONLY: lorene2hydrobase, kg2g, m2cm
+    USE utility,    ONLY: density_si2cu
+    USE constants,  ONLY: kg2g, m2cm
 
     IMPLICIT NONE
 
@@ -81,7 +82,7 @@ SUBMODULE (diffstar_base) io
     PRINT *
     PRINT *, "   Central baryon mass density for the DRS= ", &
                  this% rho_center, "Msun/Msun_geo**3= ", &
-                 this% rho_center/lorene2hydrobase*kg2g/(m2cm**3), "g cm^{-3}"
+                 this% rho_center/density_si2cu*kg2g/(m2cm**3), "g cm^{-3}"
     PRINT *
     PRINT *, "   Ratio T/|W| between the rotaional kinetic energy and ", &
              "the gravitational binding energy: ", this% tsw

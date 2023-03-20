@@ -199,43 +199,21 @@ SUBMODULE (id_base) initialization
     !
     !************************************************
 
-
     IMPLICIT NONE
 
+    INTEGER:: n_matter
 
-    CALL derived_type% derived_type_constructor( filename )
+    CALL derived_type% derived_type_constructor( filename, eos_filenames )
 
-    !derived_type% finalize_sph_id_ptr => derived_type% finalize_sph_id
+    n_matter= derived_type% get_n_matter()
+
+    IF(.NOT.ALLOCATED(derived_type% surfaces)) &
+      ALLOCATE(derived_type% surfaces(n_matter))
 
     CALL derived_type% sanity_check()
 
 
   END PROCEDURE initialize
-
-
-  !MODULE PROCEDURE finalize_sph
-  !
-  !  !************************************************
-  !  !
-  !  !# This PROCEDURE calls the constructor of the
-  !  !  [[idbase]]-extended type and the SUBROUTINE
-  !  !  [[idbase:sanity_check]] afterwards. It is recommended
-  !  !  to use this SUBROUTINE to construct objects of
-  !  !  [[idbase]]-extended type since the sanity check is
-  !  !  performed automatically.
-  !  !
-  !  !  FT 8.11.2021
-  !  !
-  !  !************************************************
-  !
-  !
-  !  IMPLICIT NONE
-  !
-  !
-  !  CALL derived_type% finalize_sph_id()
-  !
-  !
-  !END PROCEDURE finalize_sph
 
 
 END SUBMODULE initialization

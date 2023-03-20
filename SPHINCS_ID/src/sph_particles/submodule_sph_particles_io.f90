@@ -34,8 +34,8 @@ SUBMODULE (sph_particles) io
   !***************************************************
 
 
-  USE constants,  ONLY: amu, c_light2
-  USE utility,    ONLY: km2m, m2cm, Msun_geo, one
+  USE constants,  ONLY: amu, c_light2, m2cm
+  USE utility,    ONLY: km2m, Msun_geo, one
 
 
   IMPLICIT NONE

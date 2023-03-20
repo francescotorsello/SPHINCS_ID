@@ -250,7 +250,7 @@ MODULE bns_fuka
     PROCEDURE:: deallocate_bnsfuka_memory
     !! Deallocates memory for the [[bnsfuka]] member arrays
 
-    PROCEDURE:: read_fuka_id_params
+    PROCEDURE:: read_bns_properties
     !! Imports the parameters of the |bns| from |fuka|
 
     PROCEDURE:: run_kadath_reader
@@ -265,7 +265,7 @@ MODULE bns_fuka
     !# Integrates the |fuka| baryon mass density and computes the
     !  radial mass profile
 
-    PROCEDURE, PUBLIC:: print_id_params
+    PROCEDURE, PUBLIC:: print_bns_properties
     !! Prints the parameters of the |bns| to the standard output
 
     PROCEDURE:: read_fuka_id_member
@@ -356,15 +356,19 @@ MODULE bns_fuka
   !
   INTERFACE
 
-    MODULE SUBROUTINE construct_bnsfuka( derived_type, filename )
+    MODULE SUBROUTINE construct_bnsfuka( derived_type, filename, eos_filenames )
     !# Prints a summary of the physical properties the system
     !  to the standard output and, optionally, to a formatted file whose name
     !  is given as the optional argument `filename`
 
-      CHARACTER(LEN=*), INTENT(IN), OPTIONAL:: filename
-      !! |fuka| binary file containing the spectral |bns| |id|
       CLASS(bnsfuka), INTENT(OUT):: derived_type
       !! Constructed [[bnsfuka]] object
+      CHARACTER(LEN=*), INTENT(IN), OPTIONAL:: filename
+      !! |fuka| binary file containing the spectral |bns| |id|
+      CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: eos_filenames
+      !# Array of strings containing the names of the files containing the |eos|
+      !  to be used for each matter object. If not PRESENT, information from
+      !  the file `filename` is used
 
     END SUBROUTINE construct_bnsfuka
 
@@ -460,22 +464,22 @@ MODULE bns_fuka
     END SUBROUTINE deallocate_bnsfuka_memory
 
 
-    MODULE SUBROUTINE read_fuka_id_params( this )
+    MODULE SUBROUTINE read_bns_properties( this )
     !! Imports the |bns| parameters from |fuka|
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
       CLASS(bnsfuka), INTENT(INOUT):: this
 
-    END SUBROUTINE read_fuka_id_params
+    END SUBROUTINE read_bns_properties
 
 
-    MODULE SUBROUTINE print_id_params( this )
+    MODULE SUBROUTINE print_bns_properties( this )
     !! Prints the |bns| parameters to the standard output
 
       !> [[bnsfuka]] object which this PROCEDURE is a member of
       CLASS(bnsfuka), INTENT(INOUT):: this
 
-    END SUBROUTINE print_id_params
+    END SUBROUTINE print_bns_properties
 
 
     MODULE SUBROUTINE run_kadath_reader( &

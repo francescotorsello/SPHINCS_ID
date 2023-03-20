@@ -32,11 +32,10 @@ MODULE sph_particles
   !***********************************************************
 
 
-  USE utility,                  ONLY: itr, ios, err_msg, test_status, &
-                                      is_finite_number, perc, creturn, &
-                                      run_id, show_progress
-  USE id_base,                  ONLY: idbase
-  USE timing,                   ONLY: timer
+  USE utility,  ONLY: itr, ios, err_msg, test_status, is_finite_number, &
+                      perc, creturn, run_id, show_progress, surface
+  USE id_base,  ONLY: idbase
+  USE timing,   ONLY: timer
 
 
   IMPLICIT NONE
@@ -124,6 +123,10 @@ MODULE sph_particles
     ! polytropic constant in units of
     ! \(\left(M_\odot L_\odot^{-3}\right)^{1-\gamma}\). Pressure and baryon
     ! mass density have the same units \(M_\odot L_\odot^{-3}\) since \(c^2=1\).
+    DOUBLE PRECISION, PUBLIC, DIMENSION(:,:), ALLOCATABLE:: table_eos
+    !# Array containing the tabulated |eos|.
+    !  Its size is determined when reading the tabulated |eos| from file.
+    !  The first index runs over the field, the second over its values.
 
   END TYPE eos
 
@@ -166,9 +169,6 @@ MODULE sph_particles
     !# Array storing the centers of mass of the matter objects
     DOUBLE PRECISION, DIMENSION(4):: barycenter_system
     !# Array storing the center of mass of the **entire particle distribution**
-
-    !DOUBLE PRECISION, DIMENSION(:,:,:,:), ALLOCATABLE:: surfaces
-    !# Array storing the surfaces of the matter objects
 
     INTEGER, DIMENSION(:), ALLOCATABLE:: baryon_density_index
     !# Array storing the indices to use with [[particles:baryon_density]]
@@ -294,6 +294,8 @@ MODULE sph_particles
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: pvol
     !> 1-D array storing the particle masses \(M_\odot\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: masses
+    !> 1-D array storing the surfaces of the matter objects
+    TYPE(surface),  DIMENSION(:), ALLOCATABLE:: surfaces
     !& Ratio between baryonic masses of the matter objects and the maximum
     !  baryonic mass among them @warning always \(< 1\)
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: mass_ratios
@@ -341,8 +343,8 @@ MODULE sph_particles
     !
 
     TYPE(eos), DIMENSION(:), ALLOCATABLE:: all_eos
-    !# Array of TYPE [[eos]] containing the |eos| information for all the matter
-    !  objects
+    !# Array of TYPE [[eos]] containing the |eos| information for all the
+    !  matter objects
 
     !
     !-- Procedure pointers
@@ -587,6 +589,8 @@ MODULE sph_particles
     !! Returns ([[particles:shift_x]],[[particles:shift_y]],[[particles:shift_z]])
     PROCEDURE, PUBLIC:: get_g3
     !! Returns ([[particles:g_xx]],[[particles:g_xy]],[[particles:g_xz]],[[particles:g_yy]],[[particles:g_yz]],[[particles:g_zz]])
+    PROCEDURE, PUBLIC:: get_compose_eos
+    !! Returns ([[particles:compose_eos]])
 
     FINAL:: destruct_particles
     !! Finalizer (Destructor) of [[particles]] object
@@ -863,7 +867,7 @@ MODULE sph_particles
                                   filename_shells_pos, &
                                   get_density, integrate_density, &
                                   get_id, validate_position, &
-                                  radii )
+                                  radii, surf )
     !! Places particles on ellipsoidal surfaces on one star
 
       !> [[particles]] object which this PROCEDURE is a member of
@@ -950,15 +954,16 @@ MODULE sph_particles
       INTERFACE
         SUBROUTINE integrate_density &
           ( center, radius, central_density, dr, dth, dphi, &
-            mass, mass_profile, mass_profile_idx, radii )
+            mass, mass_profile, mass_profile_idx, radii, surf )
+          IMPORT:: surface
           !> Center of the star
-          DOUBLE PRECISION, DIMENSION(3), INTENT(IN)    :: center
+          DOUBLE PRECISION, DIMENSION(3), INTENT(IN):: center
           !> Central density of the star
-          DOUBLE PRECISION, INTENT(IN)    :: central_density
+          DOUBLE PRECISION, INTENT(IN)   :: central_density
           !> Radius of the star
-          DOUBLE PRECISION, INTENT(IN)    :: radius
+          DOUBLE PRECISION, INTENT(IN)   :: radius
           !> Integration steps
-          DOUBLE PRECISION, INTENT(IN)    :: dr, dth, dphi
+          DOUBLE PRECISION, INTENT(IN)   :: dr, dth, dphi
           !> Integrated mass of the star
           DOUBLE PRECISION, INTENT(INOUT):: mass
           !> Array storing the radial mass profile of the star
@@ -973,6 +978,8 @@ MODULE sph_particles
                                                mass_profile_idx
 
           DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
+          !> Surface of the matter object
+          TYPE(surface),                  INTENT(IN), OPTIONAL:: surf
         END SUBROUTINE integrate_density
       END INTERFACE
       INTERFACE
@@ -992,6 +999,8 @@ MODULE sph_particles
       PROCEDURE(validate_position_int), OPTIONAL:: validate_position
       !DOUBLE PRECISION, INTENT(IN),   OPTIONAL:: pmass_des
       DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
+      !> Surface of the matter object
+      TYPE(surface),                  INTENT(IN), OPTIONAL :: surf
 
     END SUBROUTINE place_particles_ellipsoidal_surfaces
 
@@ -1149,8 +1158,8 @@ MODULE sph_particles
 
     END SUBROUTINE compute_and_print_sph_variables
 
-    MODULE SUBROUTINE compute_sph_hydro( this, npart_in, npart_fin, &
-      eqos, nlrf, u, pr, enthalpy, cs, verbose )
+    MODULE SUBROUTINE compute_sph_hydro &
+      ( this, npart_in, npart_fin, eqos, nlrf, u, pr, enthalpy, cs, verbose )
     !# Computes the hydro fields on a section of the particles specified as
     !  input.
     !  First, computes the |sph| pressure starting from the |sph| baryon mass
@@ -1183,29 +1192,26 @@ MODULE sph_particles
 
     END SUBROUTINE compute_sph_hydro
 
-    MODULE SUBROUTINE perform_apm( get_density, get_nstar_id, &
-                                   get_pressure_id, &
-                                   compute_pressure, &
-                                   npart_output, &
-                                   pos_input, &
-                                   pvol, h_output, nu_output, &
-                                   center, &
-                                   com_star, &
-                                   mass, &
-                                   sizes, &
-                                   eqos, &
-                                   apm_max_it, max_inc, &
-                                   mass_it, correct_nu, nuratio_thres, &
-                                   nuratio_des, use_pressure, adapt_ghosts, &
-                                   move_away_ghosts, &
-                                   nx_gh, ny_gh, nz_gh, ghost_dist, &
-                                   use_atmosphere, &
-                                   remove_atmosphere, &
-                                   print_step, &
-                                   namefile_pos_id, namefile_pos, &
-                                   namefile_results, &
-                                   validate_position )
-    !! Performs the Artificial Pressure Method (APM) on one star's particles
+    MODULE SUBROUTINE perform_apm( &
+      ! PROCEDURES to get the density and pressure at a point
+      get_density, get_nstar_id, &
+      get_pressure_id, compute_pressure, &
+      ! Arguments pertaining to the matter object
+      npart_output, pos_input, pvol, h_output, nu_output, &
+      center, com_star, mass, sizes, eqos, &
+      ! Steering parameters for the APM iteration
+      apm_max_it, max_inc, mass_it, correct_nu, &
+      nuratio_thres, nuratio_des, use_pressure, &
+      ! Arguments pertaining to the ghost particles
+      adapt_ghosts, move_away_ghosts, &
+      nx_gh, ny_gh, nz_gh, ghost_dist, &
+      ! Arguments pertaining to the atmosphere
+      use_atmosphere, remove_atmosphere, &
+      ! Arguments pertaining to input/output
+      print_step, namefile_pos_id, namefile_pos, namefile_results, &
+      ! Optional argument
+      validate_position, surf )
+    !! Performs the Artificial Pressure Method (APM)
 
       !CLASS(particles),     INTENT(INOUT):: this
       !! [[particles]] object which this PROCEDURE is a member of
@@ -1396,7 +1402,8 @@ MODULE sph_particles
       !  the APM iteration
       CHARACTER(LEN=*),              INTENT(INOUT), OPTIONAL :: &
                                                             namefile_results
-
+      !> Surface of the matter object
+      TYPE(surface),                 INTENT(IN)   , OPTIONAL :: surf
 
     END SUBROUTINE perform_apm
 
@@ -1761,7 +1768,7 @@ MODULE sph_particles
 
 
     MODULE PURE FUNCTION get_g3( this ) RESULT( g3 )
-    !! Returns [[particles:h]]
+    !! Returns the spatial metric on the particles
 
       !> [[particles]] object which this PROCEDURE is a member of
       CLASS(particles), INTENT(IN):: this
@@ -1769,6 +1776,17 @@ MODULE sph_particles
       DOUBLE PRECISION, DIMENSION(6,this% npart):: g3
 
     END FUNCTION get_g3
+
+
+    MODULE PURE FUNCTION get_compose_eos( this ) RESULT( compose_eos )
+    !! Returns [[particles:compose_eos]]
+
+      !> [[particles]] object which this PROCEDURE is a member of
+      CLASS(particles), INTENT(IN):: this
+      !> ([[particles:compose_eos]])
+      LOGICAL:: compose_eos
+
+    END FUNCTION get_compose_eos
 
 
   END INTERFACE

@@ -339,4 +339,21 @@ SUBMODULE(lorentz_group) constructors
   END PROCEDURE compute_rotation_matrices
 
 
+  MODULE PROCEDURE get_lambda
+
+    !***********************************************************
+    !
+    !# Returns the Lorentz factor [[lorentz_boost:lambda]]
+    !
+    !  FT 21.02.2023
+    !
+    !***********************************************************
+
+    IMPLICIT NONE
+
+    lambda= this% lambda
+
+  END PROCEDURE get_lambda
+
+
 END SUBMODULE constructors

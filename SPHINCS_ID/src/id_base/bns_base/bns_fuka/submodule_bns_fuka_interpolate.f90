@@ -257,9 +257,9 @@ SUBMODULE (bns_fuka) interpolate
     zp= z
 
     baryon_density= trilinear_interpolation( x, y, zp, &
-                          this% nx_lattice, this% ny_lattice, this% nz_lattice, &
+                          this% nx_lattice, this% ny_lattice, this% nz_lattice,&
                           this% star_lattice(star)% coords, &
-                          this% star_lattice(star)% mass_density )*MSun/amu
+                          this% star_lattice(star)% mass_density )!*MSun/amu
 
     g(jxx)= trilinear_interpolation( x, y, zp, &
                   this% nx_lattice, this% ny_lattice, this% nz_lattice, &

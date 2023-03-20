@@ -84,7 +84,7 @@ nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-last_r= 0.999D0     ! The radius of the last spherical surface is
+last_r= 0.985D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -112,7 +112,7 @@ upper_factor= 1.01D0  ! >= 1, usually an increase of 1% works
 lower_factor= 0.99D0  ! <= 1, usually a decrease of 1% works
 randomize_phi=  .TRUE.  ! Randomize particle positions in phi
 randomize_theta=.TRUE.  ! Randomize particle positions in theta
-randomize_r=    .FALSE.  ! Randomize particle positions in r and push inside
+randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
                         ! the outer layers by a little random displacement
                         ! Setting randomize_phi and randomize_theta to .TRUE.
                         ! yields better results in the APM iteration.
@@ -136,18 +136,20 @@ randomize_r=    .FALSE.  ! Randomize particle positions in r and push inside
 ! or some smoothing lengths being 0, or a matrix not being !
 ! invertible.                                              !
 !----------------------------------------------------------!
-apm_iterate=.TRUE.,.TRUE.  ! If .TRUE., applies the APM to the i-th object
+apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
                     ! star mass ratio is in [0.995,1.005], the particles
                     ! on the second star will be the reflection about the yz
                     ! plane of the particles on the first star, irrespectively
                     ! of the value of apm_iterate
-print_step= 25          ! Every print_step steps, print the particle positions
+                    ! It has to have a value for each matter object in the
+                    ! system (e.g.: apm_iterate=.TRUE.,.TRUE. for a BNS)
+print_step= 50          ! Every print_step steps, print the particle positions
                         ! at the current step, and the particle positions at
                         ! the (current - print_step) step, to a formatted file.
                         ! This allows the user to monitor the APM evolution
                         ! Set to 0 to not print positions at all
-apm_max_it= 2500        ! Maximum number of iterations, irrespective of the
+apm_max_it= 1        ! Maximum number of iterations, irrespective of the
                         ! EXIT condition
 max_inc= 500            ! Sets the EXIT condition: If the average over all the
                         ! particles of the relative error in the density estimate
@@ -156,7 +158,7 @@ nuratio_thres= 2.0D0    ! Maximum mass ratio (equivalently baryon number ratio)
                         ! to be used in the one-time-only final correction
                         ! of the particle masses to match the star density even
                         ! better (without moving the particles)
-nuratio_des= 1.35D0      ! Sets the EXIT condition: If the baryon number ratio
+nuratio_des= 1.45D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! is within 2.5% of nuratio_des, exit the iteration
                         ! Set nuratio_des to 0 to deactivate and exit the APM
                         ! iteration using max_inc
@@ -169,7 +171,7 @@ use_pressure=.TRUE.     ! If .TRUE., uses the physical pressure computed with
                         ! the EOS using the SPH estimate of the density, to
                         ! compute the artificial pressure. Otherwise, the
                         ! density variable N* is used
-adapt_ghosts=.FALSE.    ! If .TRUE., the ghost particles will be placed and have
+adapt_ghosts=.TRUE.    ! If .TRUE., the ghost particles will be placed and have
                         ! a baryon number such to reproduce the density of the
                         ! outermost layers (r > 99% of the minimum radius) of
                         ! the object. If .TRUE., the parameters nx_gh, ny_gh,
@@ -183,13 +185,13 @@ move_away_ghosts=.TRUE. ! If .TRUE., the ghost particles will slowly move away
 nx_gh=250               ! Number of lattice points in the x direction for ghosts
 ny_gh=250               ! Number of lattice points in the y direction for ghosts
 nz_gh=250               ! Number of lattice points in the z direction for ghosts
-ghost_dist=0.25D0       ! Distance between the ghost particles and the surface
+ghost_dist=0.45       ! Distance between the ghost particles and the surface
                         ! of the matter object considered (star, ejecta, etc...)
-use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
+use_atmosphere=.TRUE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term
                         ! This can be useful when the system has an irregular
                         ! geometry, as, for example, an ejecta
-remove_atmosphere=.FALSE. ! If .TRUE., removes the particles placed where the
+remove_atmosphere=.TRUE. ! If .TRUE., removes the particles placed where the
                           ! density is 0, at the end of the APM iteration
 !---------------------------------------!
 ! Flag to correct the number of baryons !
@@ -200,28 +202,30 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
 !--------------------------------------------------------------------------!
 ! Parameters needed to read the electron fraction when using a CompOSE EoS !
 ! CHECK THAT THE EOS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
-! FILE lorene_bns_id_parameters.par MATCH!                                 !
+! FILE sphincs_id_parameters.par MATCH!                                    !
 !--------------------------------------------------------------------------!
-compose_eos=.FALSE. ! If .TRUE., reads in the table of Ye (electron fraction)
-                   ! as a function of nb (baryon number density) from the .beta
-                   ! file computed with the CompOSE software, and linearly
-                   ! interpolates Ye on the particles.
+compose_eos=.TRUE. ! If .TRUE., assigns values to Ye (electron fraction)
+                   ! as a function of rho (baryon mass density).
+                   ! The values are computed via linear interpolation
+                   ! using the CompOSE tabulated EOS.
+!------------------------------------------------------------------------------
+! The following is DEPRECATED
 ! compose_path is the path to the directory containing the CompOSE EoS.
 ! compose_filename is the subpath of compose_path to the file
 ! with .beta extension. NOTE: the .beta extension is omitted here, so that
 ! to read the file great_eos.beta in the directory compose_path/GREAT_EoS,
 ! one writes compose_filename="GREAT_EoS/great_eos"
-compose_path="../../CompOSE_EOS/"
+!compose_path="../../CompOSE_EOS/"
 ! gfortran requires the following string to be on the first line, ifort does not
-compose_filename="DD2-SF_RDF1.8/eos"
-                 !"SFHO_with_electrons/eos"
-                 !"SFHX_with_electrons/eos"
-                 !"TNTYST_with_electrons/eos"
-                 !"FT_with_electrons/eos"
-                 !"SRO_APR_SNA/eos"
-                 !"SRO_SLy4_SNA/eos"
-                 !"RG_SLY4/eos"
-                 !"DD2-SF_RDF1.8/eos"
-                 !"DD2-SF_RDF1.9/eos"
+!compose_filename="DD2-SF_RDF1.8/eos"
+!                 !"SFHO_with_electrons/eos"
+!                 !"SFHX_with_electrons/eos"
+!                 !"TNTYST_with_electrons/eos"
+!                 !"FT_with_electrons/eos"
+!                 !"SRO_APR_SNA/eos"
+!                 !"SRO_SLy4_SNA/eos"
+!                 !"RG_SLY4/eos"
+!                 !"DD2-SF_RDF1.8/eos"
+!                 !"DD2-SF_RDF1.9/eos"
 
 /

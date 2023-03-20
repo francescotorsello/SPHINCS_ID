@@ -67,7 +67,8 @@ PROGRAM convergence_test
                                       test_status, show_progress, end_time, &
                                       read_sphincs_id_parameters, one, &
                                       !----------
-                                      n_id, common_path, filenames, placer, &
+                                      n_id, common_path, filenames, &
+                                      eos_filenames, placer, &
                                       export_bin, export_form, export_form_xy, &
                                       export_form_x, export_constraints_xy, &
                                       export_constraints_x, &
@@ -318,7 +319,7 @@ stringize_end(vers)
   PRINT *, "===================================================" &
            // "==============="
   PRINT *
-  CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)) )
+  CALL idata% initialize( TRIM(common_path)//TRIM(filenames(1)), eos_filenames )
   ! Set the variables to decide on using the geodesic gauge or not
   ! (lapse=1, shift=0)
   CALL idata% set_one_lapse ( one_lapse )
@@ -422,8 +423,8 @@ stringize_end(vers)
   !
   IF( export_form )THEN
     export_bssn_loop: DO itr3 = min_bssn, max_bssn, 1
-      WRITE( namefile_bssn, "(A10,I1,A4)" ) &
-                            "bssn-form_", itr3, ".dat"
+      WRITE( namefile_bssn, "(A8,I1,A4)" ) &
+                            "bssn-id_", itr3, ".dat"
       namefile_bssn= TRIM( spacetime_path ) // TRIM( namefile_bssn )
 
       CALL bssn_forms( itr3 )% &
@@ -468,8 +469,8 @@ stringize_end(vers)
     !-- Print the particle initial data to a formatted file
     !
     IF( export_form )THEN
-      WRITE( namefile_parts, "(A34)" ) &
-                             "sph-form_1.dat"
+      WRITE( namefile_parts, "(A7,I1,A4)" ) &
+                             "sph-id_", itr3, ".dat"
       namefile_parts= TRIM( sph_path ) // TRIM( namefile_parts )
       CALL particles_dist% print_formatted_id_particles( namefile_parts )
     ENDIF

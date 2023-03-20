@@ -141,12 +141,13 @@ SUBMODULE (sph_particles) constructor_std
     USE kernel_table,       ONLY: ktable
     USE input_output,       ONLY: read_options
     USE units,              ONLY: set_units
-    USE options,            ONLY: ikernel, ndes, eos_str, eos_type
+    USE options,            ONLY: ikernel, ndes
     USE alive_flag,         ONLY: alive
     USE analyze,            ONLY: COM
     USE utility,            ONLY: spherical_from_cartesian, &
                                   spatial_vector_norm_sym3x3, sph_path, &
-                                  scan_1d_array_for_nans
+                                  scan_1d_array_for_nans, eos$tabu$compose
+
 
     IMPLICIT NONE
 
@@ -288,14 +289,14 @@ SUBMODULE (sph_particles) constructor_std
     ALLOCATE( parts% mass_ratios(parts% n_matter) )
     ALLOCATE( parts% mass_fractions(parts% n_matter) )
     ALLOCATE( parts% barycenter(parts% n_matter,3) )
-    !ALLOCATE( compute_pressure_i(parts% n_matter) )
+    ALLOCATE( parts% surfaces (parts% n_matter) )
 
     parts% npart_i(0)= 0
     npart_i_tmp(0)   = 0
     parts% nbar_i    = zero
     parts% nuratio_i = zero
 
-    DO i_matter= 1, parts% n_matter, 1
+    loop_over_matter_objects: DO i_matter= 1, parts% n_matter, 1
 
       parts% adm_mass          = id% return_adm_mass()
       parts% masses(i_matter)  = id% return_mass(i_matter)
@@ -311,7 +312,48 @@ SUBMODULE (sph_particles) constructor_std
       CALL id% return_eos_parameters( i_matter, &
                                       parts% all_eos(i_matter)% eos_parameters )                          
 
-    ENDDO
+      IF(parts% all_eos(i_matter)% eos_parameters(1) == eos$tabu$compose)THEN
+
+        IF(ALLOCATED(id% tab_eos))THEN
+
+          IF(ALLOCATED(id% tab_eos(i_matter)% table_eos))THEN
+
+            parts% all_eos(i_matter)% table_eos= &
+              id% tab_eos(i_matter)% table_eos
+
+          ELSE
+
+            PRINT *, "** ERROR! The EOS for matter object ", i_matter, &
+                     " is supposed to be tabulated, since its EOS ", &
+                     "identification number is ", &
+                     parts% all_eos(i_matter)% eos_parameters(1), ", ", &
+                     "but the table has not been read."
+            PRINT *, " * Please read the EOS table within the constructor ", &
+                     " of the appropriate TYPE that EXTENDS idbase."
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
+
+          ENDIF
+
+        ELSE
+
+          PRINT *, "** ERROR! The EOS for matter object ", i_matter, &
+                   " is supposed to be tabulated, since its EOS ", &
+                   "identification number is ", &
+                   parts% all_eos(i_matter)% eos_parameters(1), ", ", &
+                   "but the table has not been allocated."
+          PRINT *, " * Please allocate the EOS table within the constructor ", &
+                   " of the appropriate TYPE that EXTENDS idbase."
+          PRINT *, " * Stopping..."
+          PRINT *
+          STOP
+
+        ENDIF
+
+      ENDIF
+
+    ENDDO loop_over_matter_objects
 
     ! Compute desired particle numbers based on mass ratios
     max_mass  = MAXVAL(parts% masses)
@@ -355,8 +397,34 @@ SUBMODULE (sph_particles) constructor_std
     ENDDO
 
     !
-    !-- TODO: Copy the surfaces of the matter objects
+    !-- Copy the surfaces of the matter objects, if they are known
     !
+    IF(ALLOCATED(id% surfaces))THEN
+
+      DO i_matter= 1, parts% n_matter, 1
+
+        IF(ALLOCATED(id% surfaces(i_matter)% points))THEN
+
+          parts% surfaces(i_matter)= id% surfaces(i_matter)
+
+        ELSE
+
+          parts% surfaces(i_matter)% is_known= .FALSE.
+
+        ENDIF
+
+      ENDDO
+
+    ELSE
+
+      DO i_matter= 1, parts% n_matter, 1
+
+        parts% surfaces(i_matter)% is_known= .FALSE.
+
+      ENDDO
+
+    ENDIF
+
 
     parts% post_process_sph_id => id% finalize_sph_id_ptr
 
@@ -476,7 +544,8 @@ SUBMODULE (sph_particles) constructor_std
                     print_step, filename_apm_pos_id, &
                     filename_apm_pos, filename_apm_results, &
                     ! Optional argument
-                    validate_position )
+                    validate_position, &
+                    parts% surfaces(i_matter) )
         CALL parts% apm_timers(i_matter)% stop_timer()
 
         IF( debug ) PRINT *, "average nu= ", &
@@ -615,6 +684,12 @@ SUBMODULE (sph_particles) constructor_std
       PRINT *
     ENDDO
     PRINT *
+
+    CALL COM( parts% npart, parts% pos, parts% nu, &
+              parts% barycenter_system(1), &
+              parts% barycenter_system(2), &
+              parts% barycenter_system(3), &
+              parts% barycenter_system(4) )
 
     parts_out_namefile= "final_pos_nu.dat"
 
@@ -800,9 +875,9 @@ SUBMODULE (sph_particles) constructor_std
                          DIM= 1, &
                 MASK= parts% baryon_density(npart_in:npart_fin) > zero )
         min_vel= MINVAL( SQRT( &
-                       (parts% v_euler_x(npart_in:npart_fin))**2.0D0 &
-                     + (parts% v_euler_y(npart_in:npart_fin))**2.0D0 &
-                     + (parts% v_euler_z(npart_in:npart_fin))**2.0D0 ), &
+                       (parts% v_euler_x(npart_in:npart_fin))**2 &
+                     + (parts% v_euler_y(npart_in:npart_fin))**2 &
+                     + (parts% v_euler_z(npart_in:npart_fin))**2 ), &
                          DIM= 1, &
                 MASK= parts% baryon_density(npart_in:npart_fin) > zero )
 
@@ -1013,7 +1088,7 @@ SUBMODULE (sph_particles) constructor_std
 
     SUBROUTINE integrate_mass_density &
       ( center, radius, central_density, dr, dth, dphi, mass, mass_profile, &
-        mass_profile_idx, radii )
+        mass_profile_idx, radii, surf )
     !# Wrapper function to integrate the relativistic baryonic mass density
 
       IMPLICIT NONE
@@ -1038,10 +1113,12 @@ SUBMODULE (sph_particles) constructor_std
       !INTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT):: mass_profile_idx
       INTEGER, DIMENSION(0:NINT(radius/dr)), INTENT(OUT):: mass_profile_idx
       DOUBLE PRECISION, DIMENSION(2), INTENT(IN), OPTIONAL:: radii
+      !> Surface of the matter object
+      TYPE(surface),                  INTENT(IN), OPTIONAL:: surf
 
       CALL id% integrate_baryon_mass_density &
         ( center, radius, central_density, dr, dth, dphi, &
-          mass, mass_profile, mass_profile_idx, radii )
+          mass, mass_profile, mass_profile_idx, radii, surf )
 
     END SUBROUTINE integrate_mass_density
 
@@ -1127,9 +1204,37 @@ SUBMODULE (sph_particles) constructor_std
                                            g_yy, g_yz, g_zz, &
                                            baryon_density, &
                                            energy_density, &
-                                           specific_energy, &
+                                           !specific_energy, &
                                            pressure, &
                                            v_euler_x, v_euler_y, v_euler_z
+
+      ! compute_sph_hydro in SUBMODULE sph_particles@sph_variables requires the
+      ! knowledge of parts% specific_energy, to compute the SPH pressure for a
+      ! hot system in the APM, when using the real pressure to compute the
+      ! artifical pressure.
+      ! That is why we allocate (if necessary) and assign values to
+      ! parts% specific_energy
+      ! TODO: Another strategy would be adding the specific energy as an
+      !       optional argument to compute_sph_hydro.
+      ! TODO: Note that, since the pressure from the ID is not known for the
+      !       ejecta, the SPH pressure computed in the APM cannot be compared
+      !       with the pressure from the ID. One need to compute the pressure
+      !       also using the same internalenergy, but the density from the ID
+      !       (not the SPH density)
+      IF(ALLOCATED(parts% specific_energy))THEN
+
+        IF(SIZE(parts% specific_energy) /= npart)THEN
+
+          DEALLOCATE(parts% specific_energy)
+          ALLOCATE(parts% specific_energy(npart))
+
+        ENDIF
+
+      ELSE
+
+        ALLOCATE(parts% specific_energy(npart))
+
+      ENDIF
 
       CALL id% read_id_particles( npart, x, y, z, &
                                   lapse, shift_x, shift_y, shift_z, &
@@ -1137,7 +1242,7 @@ SUBMODULE (sph_particles) constructor_std
                                   g_yy, g_yz, g_zz, &
                                   baryon_density, &
                                   energy_density, &
-                                  specific_energy, &
+                                  parts% specific_energy, &
                                   pressure, &
                                   v_euler_x, v_euler_y, v_euler_z )
 
@@ -1288,7 +1393,13 @@ SUBMODULE (sph_particles) constructor_std
 
     SUBROUTINE read_particles_options
 
-
+      !**************************************************************
+      !
+      !# Read the parameters in the file sphincs_id_particles.dat
+      !
+      !  FT 2022
+      !
+      !**************************************************************
 
       IMPLICIT NONE
 
@@ -1319,8 +1430,11 @@ SUBMODULE (sph_particles) constructor_std
         STOP
       ENDIF
 
-      READ( unit_particles, NML= sphincs_id_particles )
-      CLOSE( unit_particles )
+      compose_path    = "compose_path is a deprecated variable"
+      compose_filename= "compose_filename is a deprecated variable"
+
+      READ(unit_particles, NML= sphincs_id_particles)
+      CLOSE(unit_particles)
 
       parts% use_thres          = use_thres
       parts% correct_nu         = correct_nu
@@ -1431,7 +1545,8 @@ SUBMODULE (sph_particles) constructor_std
       !
       !**************************************************************
 
-      USE utility,  ONLY: eos$poly, eos$pwpoly
+      USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu$compose
+      USE options,  ONLY: eos_str, eos_type
 
       IMPLICIT NONE
 
@@ -1886,7 +2001,8 @@ SUBMODULE (sph_particles) constructor_std
                                               integrate_mass_density, &
                                               import_id, &
                                         validate_position= validate_position, &
-            radii= [MAXVAL(sizes(i_matter,3:4)),MAXVAL(sizes(i_matter,5:6))] )
+            radii= [MAXVAL(sizes(i_matter,3:4)),MAXVAL(sizes(i_matter,5:6))], &
+            surf= parts% surfaces(i_matter) )
 
         ! Now that the real particle numbers are known, reallocate the arrays
         ! to the appropriate sizes. Note that, if the APM is performed,
@@ -2031,7 +2147,7 @@ SUBMODULE (sph_particles) constructor_std
           STOP
         ENDIF
 
-        gamma_eul_a= one/SQRT(one-v_euler_norm2)
+        gamma_eul_a= one/SQRT(one - v_euler_norm2)
         IF( .NOT.is_finite_number(gamma_eul_a) )THEN
           PRINT *, "** ERROR! The Lorentz factor is ", gamma_eul_a, &
                    "at particle ", a, &

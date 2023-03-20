@@ -42,19 +42,19 @@ MODULE bns_base
 
 
   USE id_base, ONLY: idbase
-  USE utility, ONLY: ios, err_msg
+  USE utility, ONLY: ios, err_msg, max_length
 
 
   IMPLICIT NONE
 
 
-  TYPE surface
-    DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
-    !# Array containing the coordinates of the stars' surfaces
-    !  The first index runs over the stars; the second and third run over
-    !  the surface points (number of points for \(\theta\) and \(\varphi\));
-    !  the fourth index runs overthe Cartesian coordinates of the points
-  END TYPE surface
+  !TYPE surface
+  !  DOUBLE PRECISION, DIMENSION(:,:,:), ALLOCATABLE:: points
+  !  !# Array containing the coordinates of the stars' surfaces
+  !  !  The first index runs over the stars; the second and third run over
+  !  !  the surface points (number of points for \(\theta\) and \(\varphi\));
+  !  !  the fourth index runs overthe Cartesian coordinates of the points
+  !END TYPE surface
 
   !*******************************************************
   !                                                      *
@@ -148,7 +148,7 @@ MODULE bns_base
     ! in the mass-radius diagrams, together with the gravitatonal mass
     DOUBLE PRECISION:: area_radius1
 
-    TYPE(surface), DIMENSION(2):: surfaces
+    !TYPE(surface), DIMENSION(2):: surfaces
 
     DOUBLE PRECISION, DIMENSION(2,6):: radii
     !# Array containing the **signed** radii of the stars
@@ -378,6 +378,15 @@ MODULE bns_base
     !  (between \(\gamma_2\) and \(\gamma_3\)) \([{\rm g/cm^3}]\) for star 2
     DOUBLE PRECISION:: logRho2_2
 
+    CHARACTER(LEN=max_length), DIMENSION(2):: eos_filenames
+    !# Array of strings containing the names of the files containing the |eos|
+    !  to be used for each matter object.
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_table1
+    !# String containing the path to the files containing the table
+    !  of the |eos| for star 1.
+    CHARACTER(LEN=:), ALLOCATABLE:: eos_table2
+    !# String containing the path to the files containing the table
+    !  of the |eos| for star 2.
 
     !
     !-- Spacetime fields

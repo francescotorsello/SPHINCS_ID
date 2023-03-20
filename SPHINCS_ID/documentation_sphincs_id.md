@@ -44,6 +44,7 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        ee = Einstein equations
        bns = \(\mathrm{BNS}\)
        drs = \(\mathrm{DRS}\)
+       nb = n_\mathrm{b}
 parallel: 80
 <!---graph_dir: doc-graphs--->
 <!---Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src--->

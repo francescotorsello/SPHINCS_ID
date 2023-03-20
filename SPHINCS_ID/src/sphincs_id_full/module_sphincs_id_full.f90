@@ -236,11 +236,14 @@ MODULE sphincs_id_full
 
         eos_str= '   '
 
+      CASE( 'CompOSE Eos' )
+
+        eos_str= '   '
+
       CASE DEFAULT
 
         PRINT *, "** ERROR! Unknown EOS name: ", eos_long
-        PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. ", &
-                 "   This SUBROUTINE exists mostly for backward compatibility."
+        PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. "
         PRINT *, " * Stopping..."
         PRINT *
         STOP

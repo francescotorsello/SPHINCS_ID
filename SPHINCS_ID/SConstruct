@@ -286,7 +286,7 @@ module_bns_lorene = [
   'submodule_bns_lorene_read.f90',
   'submodule_bns_lorene_memory.f90',
   'submodule_bns_lorene_access.f90',
-  'submodule_bns_lorene_params.f90',
+  'submodule_bns_lorene_properties.f90',
   'submodule_bns_lorene_io.f90',
   'submodule_bns_lorene_finalize_id.f90'
 ]
@@ -305,7 +305,7 @@ module_diffstar_lorene = [
   'submodule_diffstar_lorene_read.f90',
   'submodule_diffstar_lorene_memory.f90',
   'submodule_diffstar_lorene_access.f90',
-  'submodule_diffstar_lorene_params.f90',
+  'submodule_diffstar_lorene_properties.f90',
   'submodule_diffstar_lorene_io.f90'
 ]
 
@@ -317,7 +317,7 @@ module_bns_fuka = [
   'submodule_bns_fuka_interpolate.f90',
   'submodule_bns_fuka_memory.f90',
   'submodule_bns_fuka_access.f90',
-  'submodule_bns_fuka_params.f90',
+  'submodule_bns_fuka_properties.f90',
   'submodule_bns_fuka_io.f90'
 ]
 
@@ -368,6 +368,11 @@ module_lorentz_group = [
 module_wd_eos_dir = ['src/wd_eos/']
 module_wd_eos = [
   'module_wd_eos.f90'
+]
+
+module_tabulated_eos_dir = ['src/tabulated_eos/']
+module_tabulated_eos = [
+  'module_tabulated_eos.f90'
 ]
 
 module_utility_dir = ['src/utility/']
@@ -438,13 +443,18 @@ for i in range(len(module_lorentz_group)):
 for i in range(len(module_wd_eos)):
   module_wd_eos[i] = module_wd_eos_dir[0] + module_wd_eos[i]
 
+for i in range(len(module_tabulated_eos)):
+  module_tabulated_eos[i] = module_tabulated_eos_dir[0] \
+                          + module_tabulated_eos[i]
+
 for i in range(len(module_utility)):
   module_utility[i] = module_utility_dir[0] + module_utility[i]
 
 sources_base = module_id_base + module_bns_base + module_diffstar_base \
              + module_sph_particles + module_standard_tpo_formulation \
              + module_bssn_formulation + module_cauchy_convergence_test \
-             + module_lorentz_group + module_wd_eos + module_utility
+             + module_lorentz_group + module_wd_eos + module_tabulated_eos \
+             + module_utility
 
 #all_modules = [ module_id_base, module_utility, module_sphincs_id_interpolate ]
 
@@ -453,7 +463,7 @@ sources_base = module_id_base + module_bns_base + module_diffstar_base \
 ################################################################################
 # SOURCE FILES FROM SPHINCS_BSSN
 ################################################################################
-#'../../../SPHINCS_SP'
+#home_sphincs='../../../SPHINCS_SP'
 env['F90PATH'] = [
   '.',
   home_sphincs + '/BSSN',
@@ -578,8 +588,9 @@ if flavour == full_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
-                     'lorenef77', 'kadath', 'gsl', 'lapack', 'fftw3', 'blas', \
+      env['LIBS'] = ['stdc++', 'm', \
+                     'lorene_export', 'lorene', 'lorenef77',  \
+                     'kadath', 'gsl', 'lapack', 'fftw3', 'blas', \
                      'gslcblas', 'gfortran']
 
     if debug == 'TRUE': #
@@ -626,8 +637,9 @@ if flavour == lorene_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
-                     'lorenef77', 'gsl', 'lapack', 'fftw3', 'blas', \
+      env['LIBS'] = ['stdc++', 'm', \
+                     'lorene_export', 'lorene', 'lorenef77', \
+                     'gsl', 'lapack', 'fftw3', 'blas', \
                      'gslcblas', 'gfortran']
 
     if debug == 'TRUE': #
@@ -748,7 +760,7 @@ if debug == 'FALSE': #
 #, '-CB', '-CS', '-g', '-traceback'
     if fortran_compiler == 'gfortran':
 
-      env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
+      env['F90FLAGS'] = [ '-O3', '-fopenmp', '-ftree-vectorize', \
                           '-fopt-info-vec', '-fdollar-ok', '-fbounds-check', \
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \

@@ -425,6 +425,23 @@ END PROCEDURE get_nstar_sph
   END PROCEDURE get_g3
 
 
+  MODULE PROCEDURE get_compose_eos
+
+    !************************************************
+    !
+    !# Returns the variable [[particles:compose_eos]]
+    !
+    !  FT 03.03.2023
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    compose_eos= this% compose_eos
+
+  END PROCEDURE get_compose_eos
+
+
   MODULE PROCEDURE is_empty
 
     !************************************************
