@@ -381,8 +381,8 @@ SUBMODULE (sph_particles) sph_variables
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: compose_namefile
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    !CHARACTER(LEN= :), ALLOCATABLE:: compose_namefile
+    CHARACTER(LEN= :), ALLOCATABLE:: finalnamefile
 
     TYPE(timer):: find_h_bruteforce_timer
 
