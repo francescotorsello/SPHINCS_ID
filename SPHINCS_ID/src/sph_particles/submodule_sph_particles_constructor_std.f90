@@ -1950,7 +1950,9 @@ SUBMODULE (sph_particles) constructor_std
 
       IMPLICIT NONE
 
-      PRINT *, "** Placing equal-mass particles on ellipsoidal surfaces, " &
+      CHARACTER(LEN=:), ALLOCATABLE:: surface_geometry
+
+      PRINT *, "** Placing equal-mass particles on surfaces, " &
                // "taking into account the mass profile of the stars."
       PRINT *
 
@@ -1972,12 +1974,22 @@ SUBMODULE (sph_particles) constructor_std
         IF( i_matter >= 100 .AND. parts% n_matter <= 999 ) &
                                               WRITE( str_i, '(I3)' ) i_matter
 
-        filename_mass_profile= &
-        TRIM(sph_path)//"ellipsoidal_surfaces_mass_profile"//TRIM(str_i)//".dat"
-        filename_shells_radii= &
-          TRIM(sph_path)//"ellipsoidal_surfaces_radii"//TRIM(str_i)//".dat"
-        filename_shells_pos  = &
-          TRIM(sph_path)//"ellipsoidal_surfaces_pos"//TRIM(str_i)//".dat"
+        IF( parts% surfaces(i_matter)% is_known )THEN
+
+          surface_geometry="geoidal_surfaces"
+
+        ELSE
+
+          surface_geometry="ellipsoidal_surfaces"
+
+        ENDIF
+
+        filename_mass_profile= TRIM(sph_path)//TRIM(surface_geometry) &
+          //"_mass_profile"//TRIM(str_i)//".dat"
+        filename_shells_radii= TRIM(sph_path)//TRIM(surface_geometry) &
+          //"_radii"//TRIM(str_i)//".dat"
+        filename_shells_pos  = TRIM(sph_path)//TRIM(surface_geometry) &
+          //"_pos"//TRIM(str_i)//".dat"
 
         CALL parts% place_particles_ellipsoidal_surfaces( &
                                               parts% masses(i_matter), &
