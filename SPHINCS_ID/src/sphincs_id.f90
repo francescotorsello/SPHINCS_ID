@@ -115,9 +115,7 @@ PROGRAM sphincs_id
   !  the |bssn| constraints violations
 
   LOGICAL:: exist
-#ifdef __INTEL_COMPILER
   LOGICAL(4):: dir_out
-#endif
 
   TYPE id
     CLASS(idbase), ALLOCATABLE:: idata
@@ -142,6 +140,10 @@ PROGRAM sphincs_id
 
   CALL DATE_AND_TIME( date, time, zone, values )
   run_id= date//"-"//time
+
+  !
+  !-- Convert preprocessor strings to Fortran strings
+  !
 
   !CALL HOSTNM( hostname )
 #ifdef host
@@ -194,6 +196,7 @@ stringize_end(vers)
 
 #endif
 
+
   PRINT *, "  ________________________________________________________________ "
   PRINT *, "             ____________  ________  __________    __ ___          "
   PRINT *, "            / ___/ _  / /_/ / / __ \/ ___/ ___/   / / __ \         "
@@ -240,7 +243,10 @@ stringize_end(vers)
   CALL read_sphincs_id_parameters()
 
   !
-  !-- Check that the specified subdirectories exist. If not, create them
+  !-- Check that the specified subdirectories exist. If not, create them.
+  !-- The reason for having different versions for different compilers
+  !-- is that different compilers require different versions of the
+  !-- INQUIRE command. please see below.
   !
 
 #ifdef __INTEL_COMPILER
@@ -277,20 +283,36 @@ stringize_end(vers)
 
   INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
   IF( .NOT.exist )THEN
-    PRINT *, "** ERROR! Directory ", TRIM(sph_path), " does not exist!"
-    PRINT *, "   Please create it and re-run the executable. Stopping..."
+    CALL EXECUTE_COMMAND_LINE("mkdir "//TRIM(sph_path))
+  ENDIF
+  INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
+  IF( .NOT.exist )THEN
+    PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(sph_path)
+    PRINT *, " * Please create it and re-run the executable."
+    PRINT *, " * Stopping..."
+    PRINT *
     STOP
   ENDIF
 
   INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
   IF( .NOT.exist )THEN
-    PRINT *, "** ERROR! Directory ", TRIM(spacetime_path), " does not exist!"
-    PRINT *, "   Please create it and re-run the executable. Stopping..."
+    CALL EXECUTE_COMMAND_LINE("mkdir "//TRIM(spacetime_path))
+  ENDIF
+  INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
+  IF( .NOT.exist )THEN
+    PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(spacetime_path)
+    PRINT *, " * Please create it and re-run the executable."
+    PRINT *, " * Stopping..."
+    PRINT *
     STOP
   ENDIF
 
 #endif
 
+
+  !
+  !-- Check that some parameters are consistent
+  !
   IF( ( (compute_parts_constraints .EQV. .TRUE.) .AND. (run_sph .EQV. .FALSE.) &
         .AND. (run_spacetime .EQV. .TRUE.) ) )THEN
 
@@ -304,12 +326,17 @@ stringize_end(vers)
 
   ENDIF
 
+
+  !
+  !-- Allocate needed arrays
+  !
   ALLOCATE( CHARACTER(5):: systems(n_id) )
   ALLOCATE( CHARACTER(5):: systems_name(n_id) )
 
   ALLOCATE( ids( n_id ) )
   ALLOCATE( particles_dist( n_id, max_n_parts ) )
   ALLOCATE( bssn_forms    ( n_id ) )
+
 
   !
   !-- Construct the idbase objects

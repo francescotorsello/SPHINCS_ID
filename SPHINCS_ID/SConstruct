@@ -112,16 +112,6 @@ working_dir = os.getcwd()
 ################################################################################
 
 ################################################################################
-# EXTERNAL LIBRARIES
-################################################################################
-
-liblorene_dir = [os.environ['HOME_LORENE'] + '/Lib']
-libkadath_dir = [os.environ['HOME_KADATH'] + '/lib']
-home_sphincs  = os.environ['HOME_SPHINCS']
-
-################################################################################
-
-################################################################################
 # CUSTOM OPTIONS
 ################################################################################
 
@@ -150,6 +140,20 @@ if verbose is None: verbose = default_verbose
 
 host = ARGUMENTS.get('host')
 if host is None: host = default_host
+
+################################################################################
+
+################################################################################
+# EXTERNAL LIBRARIES
+################################################################################
+
+home_sphincs  = os.environ['HOME_SPHINCS']
+
+if flavour == full_flavour or flavour == lorene_flavour:
+  liblorene_dir = [os.environ['HOME_LORENE'] + '/Lib']
+
+if flavour == full_flavour or flavour == fuka_flavour:
+  libkadath_dir = [os.environ['HOME_KADATH'] + '/lib']
 
 ################################################################################
 

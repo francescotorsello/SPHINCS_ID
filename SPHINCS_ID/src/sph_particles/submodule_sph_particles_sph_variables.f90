@@ -83,7 +83,7 @@ SUBMODULE (sph_particles) sph_variables
     IMPLICIT NONE
 
     INTEGER:: a, dim_table
-    DOUBLE PRECISION:: tmp, tmp2
+    DOUBLE PRECISION:: tmp, tmp2, kappa_poly, gamma_poly
     LOGICAL:: verb
 
     IF(PRESENT(verbose))THEN
@@ -97,14 +97,14 @@ SUBMODULE (sph_particles) sph_variables
     detect_eos: IF( eos_id == eos$poly )THEN
     ! If the |eos| is polytropic
 
+      kappa_poly= eqos% eos_parameters(poly$kappa)
+      gamma_poly= eqos% eos_parameters(poly$gamma)
+
       IF(verb) PRINT *, " * Computing pressure and specific internal energy", &
                " from the baryon mass density, using the exact formulas for", &
                " single polytropic EOS..."
       IF(verb) PRINT *
       ! Formulas from Read et al. (2009), https://arxiv.org/abs/0812.2163
-
-      ASSOCIATE( kappa_poly => eqos% eos_parameters(poly$kappa), &
-                 gamma_poly => eqos% eos_parameters(poly$gamma) )
 
       detect_cold_system: IF( this% cold_system )THEN
       ! If the system is cold, compute pressure and specific energy
@@ -134,12 +134,8 @@ SUBMODULE (sph_particles) sph_variables
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( Pr, m0c2_cu, u, npart_in, npart_fin, &
-        !$OMP                     nlrf, enthalpy, cs &
-#ifdef __INTEL_COMPILER
-        !$OMP                     , gamma_poly, kappa_poly ) &
-#elif  __GFORTRAN__
-        !$OMP                    ) &
-#endif
+        !$OMP                     nlrf, enthalpy, cs, &
+        !$OMP                     gamma_poly, kappa_poly ) &
         !$OMP             PRIVATE( a )
         DO a= 1, npart_fin - npart_in + 1, 1
 
@@ -171,12 +167,8 @@ SUBMODULE (sph_particles) sph_variables
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( Pr, m0c2_cu, u, npart_in, npart_fin, &
-        !$OMP                     nlrf, enthalpy, cs, this &
-#ifdef __INTEL_COMPILER
-        !$OMP                     , gamma_poly, kappa_poly ) &
-#elif  __GFORTRAN__
-        !$OMP                    ) &
-#endif
+        !$OMP                     nlrf, enthalpy, cs, this, &
+        !$OMP                     gamma_poly, kappa_poly ) &
         !$OMP             PRIVATE( a )
         DO a= 1, npart_fin - npart_in + 1, 1
 
@@ -200,8 +192,6 @@ SUBMODULE (sph_particles) sph_variables
         !$OMP END PARALLEL DO
 
       ENDIF detect_cold_system
-
-      END ASSOCIATE
 
     ELSEIF( eos_id == eos$pwpoly )THEN
     ! If the |eos| is piecewise polytropic

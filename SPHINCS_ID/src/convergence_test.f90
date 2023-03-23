@@ -249,7 +249,7 @@ stringize_end(vers)
   ratio_dx= numerator_ratio_dx/denominator_ratio_dx
 
   ! Check that ratio_dx > 1
-  IF( ratio_dx <= 1.0D0 )THEN
+  IF( ratio_dx <= one )THEN
     PRINT *, "** ERROR! numerator_ratio_dx has to be larger than ", &
              "denominator_ratio_dx. The current values are ", &
              numerator_ratio_dx, " and ", denominator_ratio_dx, &
@@ -292,15 +292,27 @@ stringize_end(vers)
 
   INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
   IF( .NOT.exist )THEN
-    PRINT *, "** ERROR! Directory ", TRIM(sph_path), " does not exist!"
-    PRINT *, "   Please create it and re-run the executable. Stopping..."
+    CALL EXECUTE_COMMAND_LINE("mkdir "//TRIM(sph_path))
+  ENDIF
+  INQUIRE( FILE= TRIM(sph_path)//"/.", EXIST= exist )
+  IF( .NOT.exist )THEN
+    PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(sph_path)
+    PRINT *, " * Please create it and re-run the executable."
+    PRINT *, " * Stopping..."
+    PRINT *
     STOP
   ENDIF
 
   INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
   IF( .NOT.exist )THEN
-    PRINT *, "** ERROR! Directory ", TRIM(spacetime_path), " does not exist!"
-    PRINT *, "   Please create it and re-run the executable. Stopping..."
+    CALL EXECUTE_COMMAND_LINE("mkdir "//TRIM(spacetime_path))
+  ENDIF
+  INQUIRE( FILE= TRIM(spacetime_path)//"/.", EXIST= exist )
+  IF( .NOT.exist )THEN
+    PRINT *, "** ERROR! Failed to create subdirectory ", TRIM(spacetime_path)
+    PRINT *, " * Please create it and re-run the executable."
+    PRINT *, " * Stopping..."
+    PRINT *
     STOP
   ENDIF
 

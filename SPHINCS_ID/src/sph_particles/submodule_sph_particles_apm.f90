@@ -1354,7 +1354,7 @@ SUBMODULE (sph_particles) apm
       IF(debug) Print *, "SUM(cnt_array, DIM=1)=", SUM(cnt_array, DIM=1)
       h_av       = h_av/SUM(cnt_array, DIM=1)
       radius_part= radius_part/SUM(cnt_array, DIM=1)
-      PRINT *, " * Larger radius among the particles=", radius_part
+      PRINT *, " * Average larger radius among the particles=", radius_part
       PRINT *, " * Larger radius of the star=", max_radius
       PRINT *, " * Their difference: radius_part - max_radius=", &
                radius_part - max_radius
