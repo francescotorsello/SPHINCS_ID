@@ -17,7 +17,8 @@ n_id=1                          ! Number of physical systems to use
 common_path="lorene-id-files/"
             !"fuka-id-files/"
             !"eccentric-ejecta-files/"
-filenames(1)="BNSLO_DD2-SF-RDF1.8-wl_1.2-1.2_45km.bin"!"BNSLO_1.3-1.3_apr3_45km.bin"
+filenames(1)="BNSLO_1.9-1.9_MS1b_47.5km.bin"
+             !"BNSLO_1.3-1.3_apr3_45km.bin"
              !"BNSLO_1.3-1.3_mpa1_45km.bin"
              !"BNSLO_poly2_1.4-1.4_45km_1e-6.bin"
              !"BNSLO_DD2-SF-RDF1.8-wl_1.2-1.2_45km.bin"
@@ -98,7 +99,7 @@ filenames(1)="BNSLO_DD2-SF-RDF1.8-wl_1.2-1.2_45km.bin"!"BNSLO_1.3-1.3_apr3_45km.
              !"BNSLO_DD2-SF-RDF1.9-wl_1.2-2_45km.bin"
              !"BNSFU_poly2.00_1.4-1.4_50km.info"
              !"BNSLO_poly2_1.4-1.4_45km_lorene2.bin"
-use_eos_from_id=.FALSE.
+use_eos_from_id=.TRUE.
 common_eos_path="/disk/stero-1/ftors/Lorene_Library/par_eos_files/"
 eos_filenames(1)="par_eos_DD2-SF_RDF1.8_with_leptons.d",
                  "par_eos_DD2-SF_RDF1.8_with_leptons.d"
@@ -127,7 +128,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_id_particles.par parameter file                        !
 !------------------------------------------------------------------!
-placer(1,:)=1                     ! 0: Read particle positions from formatted
+placer(1,:)=2                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object

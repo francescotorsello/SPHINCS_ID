@@ -98,10 +98,9 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     DOUBLE PRECISION, PARAMETER:: huge_real= 1.0D30!ABS( HUGE(0.0D0) )
 
     DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE:: mass_profile
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: surface_radii, surface_masses, &
-                                                  alpha, m_parts, surface_vol, &
-                                                  surface_vol2, mass_surface, &
-                                                  mass_surface2, shell_scales
+    DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: &
+      surface_radii, surface_masses, alpha, m_parts, surface_vol, &
+      surface_vol2, mass_surface, mass_surface2, shell_scales
 
     LOGICAL:: exist, high_mass, low_mass, kept_all
 
@@ -138,17 +137,18 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    PRINT *, "** Executing the place_particles_ellipsoidal_surfaces SUBROUTINE..."
+    PRINT *, &
+      "** Executing the place_particles_ellipsoidal_surfaces SUBROUTINE..."
     PRINT *
 
-    CALL RANDOM_SEED( SIZE= dim_seed )
-    ALLOCATE( seed( dim_seed ) )
-    seed( 1 )= 0
-    seed( 2 )= 1
-    DO itr= 3, dim_seed
-      seed( itr )= seed( itr - 1 ) + seed( itr - 2 )
+    CALL RANDOM_SEED(SIZE= dim_seed)
+    ALLOCATE( seed(dim_seed) )
+    seed(1)= 0
+    seed(2)= 1
+    DO itr= 3, dim_seed, 1
+      seed(itr)= seed(itr - 1) + seed(itr - 2)
     ENDDO
-    CALL RANDOM_SEED( PUT= seed )
+    CALL RANDOM_SEED(PUT= seed)
 
     IF(debug) PRINT *, dim_seed
     IF(debug) PRINT *, seed

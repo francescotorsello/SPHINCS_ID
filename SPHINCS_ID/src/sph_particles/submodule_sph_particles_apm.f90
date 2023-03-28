@@ -1318,10 +1318,10 @@ SUBMODULE (sph_particles) apm
       radius_part= zero
       h_av       = zero
       cnt_array  = zero
-      frac       = two
+      frac       = zero
       DO WHILE(SUM(cnt_array, DIM=1) <= ten)
 
-        frac= frac + one
+        frac= frac + half
 
         !$OMP PARALLEL DO DEFAULT( NONE ) &
         !$OMP             SHARED( all_pos, npart_real, center, max_radius, h, &

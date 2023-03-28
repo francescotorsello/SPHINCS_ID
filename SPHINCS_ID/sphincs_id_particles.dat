@@ -84,7 +84,7 @@ nu_ratio_des=3.0       ! Desired baryon number ratio. Used only when
 !---------------------------------------------------------------!
 ! gfortran cannot read scientific notation for integers; i.e., 3.0D+5 for
 ! npart_approx does not work
-last_r= 0.985D0     ! The radius of the last spherical surface is
+last_r= 0.99D0     ! The radius of the last spherical surface is
                    ! last_r*(star radius)
                    ! The last surface always contains the mass of the last
                    ! layers up to the edge of the star
@@ -164,7 +164,7 @@ nuratio_des= 1.45D0      ! Sets the EXIT condition: If the baryon number ratio
                         ! iteration using max_inc
 mass_it=.FALSE.         ! If .TRUE. performs a second iteration without moving
                         ! the particles, changing their mass in order to match
-                        ! the star density better. The mass ratio grows very
+                        ! the star density better. The baryon number ratio grows
                         ! fast in all the tried experiments, hence the
                         ! suggested value is .FALSE.
 use_pressure=.TRUE.     ! If .TRUE., uses the physical pressure computed with
@@ -204,7 +204,7 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
 ! CHECK THAT THE EOS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
 ! FILE sphincs_id_parameters.par MATCH!                                    !
 !--------------------------------------------------------------------------!
-compose_eos=.TRUE. ! If .TRUE., assigns values to Ye (electron fraction)
+compose_eos=.FALSE. ! If .TRUE., assigns values to Ye (electron fraction)
                    ! as a function of rho (baryon mass density).
                    ! The values are computed via linear interpolation
                    ! using the CompOSE tabulated EOS.

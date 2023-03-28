@@ -52,18 +52,19 @@ SUBMODULE (sph_particles) adm_variables
     !
     !************************************************
 
-    USE tensor,               ONLY: jx, jy, jz
+    USE tensor,               ONLY: jx, jy, jz, jxx, jxy, jxz, jyy, jyz, jzz
     USE constants,            ONLY: amu, MSun
     USE utility,              ONLY: spatial_vector_norm_sym3x3, &
                                     zero, one, two
 
     IMPLICIT NONE
 
-    INTEGER, PARAMETER:: unit_recovery= 34956
+    INTEGER, PARAMETER:: unit_adm_mom= 37356
 
     INTEGER:: a, j
 
-    DOUBLE PRECISION:: det, shift_norm2
+    DOUBLE PRECISION:: det!, shift_norm2
+    !DOUBLE PRECISION, DIMENSION(1:3,npart):: shift_l
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -73,17 +74,26 @@ SUBMODULE (sph_particles) adm_variables
 
     adm_mom= zero
     !$OMP PARALLEL DO DEFAULT(NONE) &
-    !$OMP             SHARED( npart, nu, lapse, shift, g3, s_l ) &
-    !$OMP             PRIVATE( a, det, shift_norm2, j ) &
+    !$OMP             SHARED( npart, nu, s_l ) &
+    !$OMP             PRIVATE( a, det, j ) &
     !$OMP             REDUCTION( +: adm_mom )
     DO a= 1, npart, 1
 
-      CALL spatial_vector_norm_sym3x3( g3(:,a), shift(:,a), shift_norm2 )
+      !CALL spatial_vector_norm_sym3x3( g3(:,a), shift(:,a), shift_norm2 )
+
+      !shift_l(1,a)= &
+      !  g3(jxx,a)*shift(1,a) + g3(jxy,a)*shift(2,a) + g3(jxz,a)*shift(3,a)
+      !shift_l(2,a)= &
+      !  g3(jxy,a)*shift(1,a) + g3(jyy,a)*shift(2,a) + g3(jyz,a)*shift(3,a)
+      !shift_l(3,a)= &
+      !  g3(jxz,a)*shift(1,a) + g3(jyz,a)*shift(2,a) + g3(jzz,a)*shift(3,a)
 
       DO j= jx, jz, 1
 
-        adm_mom(j)= adm_mom(j) &
-            - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one )*s_l(j,a)
+        !adm_mom(j)= adm_mom(j) &
+        !    - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one )*s_l(j,a)
+
+        adm_mom(j)= adm_mom(j) + (nu(a)*amu/Msun)*s_l(j,a)
 
       ENDDO
 
@@ -115,15 +125,16 @@ SUBMODULE (sph_particles) adm_variables
 
     IMPLICIT NONE
 
-    INTEGER, PARAMETER:: unit_recovery= 34956
+    INTEGER, PARAMETER:: unit_adm_mom= 71656
 
     INTEGER:: a, j
 
-    DOUBLE PRECISION:: det, shift_norm2
+    DOUBLE PRECISION:: det!, shift_norm2
 
     DOUBLE PRECISION, DIMENSION(n_sym4x4,npart)  :: g4
     DOUBLE PRECISION, DIMENSION(0:3)             :: v_u
     DOUBLE PRECISION, DIMENSION(0:3,npart)       :: v_l
+    DOUBLE PRECISION, DIMENSION(1:3)             :: shift
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
@@ -132,11 +143,13 @@ SUBMODULE (sph_particles) adm_variables
     !$OMP             SHARED( npart, nu, lapse, shift_x, shift_y, shift_z, &
     !$OMP                     theta, u, pr, nlrf, vel_u, &
     !$OMP                     v_l, g_xx, g_xy, g_xz, g_yy, g_yz, g_zz, g4 ) &
-    !$OMP             PRIVATE( a, det, v_u, shift_norm2, j ) &
+    !$OMP             PRIVATE( a, det, v_u, j, shift ) &
     !$OMP             REDUCTION( +: adm_mom )
     DO a= 1, npart, 1
 
-      CALL compute_g4( lapse(a), [shift_x(a),shift_y(a),shift_z(a)], &
+      shift= [shift_x(a),shift_y(a),shift_z(a)]
+
+      CALL compute_g4( lapse(a), shift, &
                        [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
                        g4(:,a) )
 
@@ -157,16 +170,22 @@ SUBMODULE (sph_particles) adm_variables
 
       v_u= [one, vel_u(:,a)]
       CALL lower_index_4vector( v_u, g4(:,a), v_l(:,a) )
+      !vel_l(1,a)= g_xx(a)*vel_u(1,a) + g_xy(a)*vel_u(2,a) + g_xz(a)*vel_u(3,a)
+      !vel_l(2,a)= g_xy(a)*vel_u(1,a) + g_yy(a)*vel_u(2,a) + g_yz(a)*vel_u(3,a)
+      !vel_l(3,a)= g_xz(a)*vel_u(1,a) + g_yz(a)*vel_u(2,a) + g_zz(a)*vel_u(3,a)
 
-      CALL spatial_vector_norm_sym3x3( &
-                    [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
-                    [shift_x(a),shift_y(a),shift_z(a)], shift_norm2 )
+      !CALL spatial_vector_norm_sym3x3( &
+      !              [g_xx(a),g_xy(a),g_xz(a),g_yy(a),g_yz(a),g_zz(a)], &
+      !              shift, shift_norm2 )
 
       DO j= jx, jz, 1
 
+        !adm_mom(j)= adm_mom(j) &
+        !    - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one ) &
+        !      *theta(a)*( one + u(a) + pr(a)/nlrf(a) )*v_l(j,a)
+
         adm_mom(j)= adm_mom(j) &
-            - ( nu(a)*amu/Msun )*( shift_norm2/(lapse(a)**two) - one ) &
-              *theta(a)*( one + u(a) + pr(a)/nlrf(a) )*v_l(j,a)
+            + (nu(a)*amu/Msun)*theta(a)*(one + u(a) + pr(a)/nlrf(a))*v_l(j,a)
 
       ENDDO
 

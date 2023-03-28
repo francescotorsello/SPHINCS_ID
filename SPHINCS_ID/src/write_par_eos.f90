@@ -59,12 +59,7 @@ PROGRAM write_par_eos
 
   namefile= "par_eos.d"
 
-#ifdef __INTEL_COMPILER
   WRITE(*,'(A,/,A)') "** Do you want to produce a parameter file for a polytropic EOS or piecewise polytropic EOS?", "   Please type `poly` for the first, `pwp` for the second: "
-#endif
-#ifdef __GFORTRAN__
-  WRITE(*,'(A,/,A)') "** Do you want to produce a parameter file for a polytropic EOS or piecewise polytropic EOS?", "   Please type `poly` for the first, `pwp` for the second: "
-#endif
   READ(*,'(A)') eos_type
 
   select_eos_type: SELECT CASE( eos_type )
@@ -109,19 +104,19 @@ PROGRAM write_par_eos
       STOP
     ENDIF
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A68)" ) &
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A67)" ) &
       "1          Polytropic EOS (cf. documentation of Eos::eos_from_file)"
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A14)" ) &
       "Polytropic EOS"
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A38)" ) &
-      gamma_poly, "gamma, polytropic exponent"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A18)" ) &
+      gamma_poly, "gamma"!, polytropic exponent"
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F19.17,A58)" ) &
-      kappa_poly, "kappa [rho_nuc c^2 / n_nuc^gamma], polytropic constant"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F19.17,A38)" ) &
+      kappa_poly, "kappa [rho_nuc c^2 / n_nuc^gamma]"!, polytropic constant"
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A37)" ) &
-      one,        "mean particle mass [m_b]2"
+      one,        "mean particle mass [m_b]"
 
     CLOSE( UNIT= 2 )
 
@@ -167,43 +162,44 @@ PROGRAM write_par_eos
     ENDIF
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A69)" ) &
-      "110        Multipolytropic EOS (cf. documentation of Eos::eos_multi_poly)"
+      "110        Multipolytropic EOS (cf. document. of Eos::eos_multi_poly)"
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A16,A4,A4)" ) eos
+    !WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A16,A4,A4)" ) eos
     !  "Multipolytropic ", eos, " EOS"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A4)" ) eos
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(I1,A52)" ) &
       npoly, "npoly,         number of polytropes"
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A43)" ) &
-      Gamma0, "gamma_0,       crust (here from SLy)"
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A69)" ) &
-      get_Gamma1(), "gamma_1,       array of adiabatic indexes (from crust to core)"
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A14)" ) &
-      get_Gamma2(), "gamma_2"
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A14)" ) &
-      get_Gamma3(), "gamma_3"
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(ES16.9E3,A73)" ) &
+      Gamma0, "gamma0,        crust (here from SLy)"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A55)" ) &
+      get_Gamma1(), "gamma1,        adiabatic indexes (crust to core)"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A13)" ) &
+      get_Gamma2(), "gamma2"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F11.9,A13)" ) &
+      get_Gamma3(), "gamma3"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(ES16.9E3,A55)" ) &
       kappa0_lorene, &
-      "kappa0,        pressure coefficient for gam_0 polytrope (here from SLy)"
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F12.9,A80)" ) &
+      "kappa0,        K for gamma0 polytrope (here from SLy)"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F12.9,A73)" ) &
       log10_p0_lorene, &
-      "log10(P0/c^2), log of pressure between gam_0 and gam_1 (dyne/cm^2/c_cgs^2)"
+      "log10(P0/c^2), log(p) between gamma0 and gamma1 (dyne/cm^2/c_cgs^2)"
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F12.9,A71)" ) &
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F12.9,A58)" ) &
       log10_rho0_lorene, &
-      "log10(rho_0),  array of logs of the transition densities (g/cm^3)"
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F12.9,A18)" ) &
-      log10_rho1_lorene, "log10(rho_1)"
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F12.9,A18)" ) &
-      log10_rho2_lorene, "log10(rho_2)"
+      "log10(rho0),   logs of transition densities (g/cm^3)"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F12.9,A17)" ) &
+      log10_rho1_lorene, "log10(rho1)"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F12.9,A17)" ) &
+      log10_rho2_lorene, "log10(rho2)"
 
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F3.1,A79)" ) &
-      0.0, "decInc,        array (size npoly-1) of percentages which change "
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F3.1,A71)" ) &
-      0.0, " the transition densities by changing the "
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F3.1,A75)" ) &
-      0.0, " transition enthalpies (set to 0. to disable)"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F3.1,A77)" ) &
+      0.0, "decInc,       array (size npoly-1) of percentages which change"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F3.1,A69)" ) &
+      0.0, "the transition densities by changing the"
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(F3.1,A73)" ) &
+      0.0, "transition enthalpies (set to 0. to disable)"
 
     CLOSE( UNIT= 2 )
 

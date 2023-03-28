@@ -1965,19 +1965,13 @@ MODULE sph_particles
 
 
     MODULE SUBROUTINE compute_adm_momentum_fluid_canmom &
-    ( npart, g3, lapse, shift, nu, s_l, adm_mom )
+      ( npart, nu, s_l, adm_mom )
     !# Computes an estimate of the \(\mathrm{ADM}\) linear momentum of the
     !  fluid using the canonical momentum per baryon on the particles
     !  @todo add reference
 
       INTEGER,                              INTENT(IN) :: npart
       !! Particle number
-      DOUBLE PRECISION, DIMENSION(6,npart), INTENT(IN) :: g3
-      !! Spatial metric on the particles
-      DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: lapse
-      !! Lapse function on the particles
-      DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN) :: shift
-      !! Shift vector on the particles
       DOUBLE PRECISION, DIMENSION(npart),   INTENT(IN) :: nu
       !! Baryon number per particle
       DOUBLE PRECISION, DIMENSION(3,npart), INTENT(IN) :: s_l
