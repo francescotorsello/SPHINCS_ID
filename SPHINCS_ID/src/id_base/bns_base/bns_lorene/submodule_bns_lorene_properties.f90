@@ -65,17 +65,18 @@ SUBMODULE (bns_lorene) properties
                               density_si2cu, k_lorene2cu, &
                               k_lorene2cu_pwp, &
                               zero, two, four, five, &
-                              eos$poly, eos$pwpoly, eos$tabu$compose
+                              eos$poly, eos$pwpoly, eos$tabu$compose, &
+                              shorten_eos_name
 
-#if flavour == 1
-
-  USE sphincs_id_full,    ONLY: shorten_eos_name
-
-#elif flavour == 2
-
-  USE sphincs_id_lorene,  ONLY: shorten_eos_name
-
-#endif
+!#if flavour == 1
+!
+!  USE sphincs_id_full,    ONLY: shorten_eos_name
+!
+!#elif flavour == 2
+!
+!  USE sphincs_id_lorene,  ONLY: shorten_eos_name
+!
+!#endif
 
     IMPLICIT NONE
 

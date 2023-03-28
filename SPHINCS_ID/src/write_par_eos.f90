@@ -123,10 +123,12 @@ PROGRAM write_par_eos
   CASE( "pwp " )
 
 #ifdef __INTEL_COMPILER
-  WRITE(*,'("** Please write a 4 character string containing the name of the piecewise polytropic EOS: ",\)')
+  WRITE(*,'("** Please write an up-to-4-character string containing the name " &
+            "of the piecewise polytropic EOS: ",\)')
 #endif
 #ifdef __GFORTRAN__
-  WRITE(*,'("** Please write a 4 character string containing the name of the piecewise polytropic EOS: ")')
+  WRITE(*,'("** Please write an up-to-4-character string containing the name " &
+            "of the piecewise polytropic EOS: ")')
 #endif
   READ(*,'(A)') eos
 
@@ -166,7 +168,8 @@ PROGRAM write_par_eos
 
     !WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A16,A4,A4)" ) eos
     !  "Multipolytropic ", eos, " EOS"
-    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A4)" ) eos
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(A4)" ) &
+      ADJUSTL(TRIM(eos))
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = "(I1,A52)" ) &
       npoly, "npoly,         number of polytropes"

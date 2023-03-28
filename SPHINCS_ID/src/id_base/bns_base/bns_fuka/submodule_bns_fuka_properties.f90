@@ -61,17 +61,18 @@ SUBMODULE (bns_fuka) properties
 
     USE constants,  ONLY: c_light, cm2km
     USE utility,    ONLY: Msun_geo, zero, one, two, four, five, &
-                          eos$poly, eos$pwpoly
+                          eos$poly, eos$pwpoly, &
+                          shorten_eos_name
 
-#if flavour == 1
-
-  USE sphincs_id_full,  ONLY: shorten_eos_name_fuka
-
-#elif flavour == 3
-
-  USE sphincs_id_fuka,  ONLY: shorten_eos_name_fuka
-
-#endif
+!#if flavour == 1
+!
+!  USE sphincs_id_full,  ONLY: shorten_eos_name_fuka
+!
+!#elif flavour == 3
+!
+!  USE sphincs_id_fuka,  ONLY: shorten_eos_name_fuka
+!
+!#endif
 
     IMPLICIT NONE
 
@@ -263,7 +264,7 @@ SUBMODULE (bns_fuka) properties
     ENDIF
     this% eos_file_1= TRANSFER( eos_file_1_tmp_c(1:nchars), this% eos_file_1 )
     IF(debug) PRINT *, "this% eos_file_1=", this% eos_file_1
-    this% eos1= shorten_eos_name_fuka(this% eos_file_1)
+    this% eos1= shorten_eos_name(this% eos_file_1)
 
     ! Star 2
     i= 1
@@ -306,7 +307,7 @@ SUBMODULE (bns_fuka) properties
     ! this% eos_file_1 is used because eos_file_2_tmp_c is empty...check if
     ! FUKA actually prints it
     IF(debug) PRINT *, "this% eos_file_2=", this% eos_file_2
-    this% eos2= shorten_eos_name_fuka(this% eos_file_2)
+    this% eos2= shorten_eos_name(this% eos_file_2)
 
     !
     !-- Assign |sphincsid| identifiers to the |eos|

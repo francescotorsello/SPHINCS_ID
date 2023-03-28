@@ -1067,13 +1067,6 @@ MODULE utility
     ! Conversion between K_SI and K_Cactus thus amounts to dividing out the
     ! units of the SI quantity.
 
-    !k_lorene2hydrobase= ((c_light*cm2m)**6/ &
-    !              ( (G_grav*(cm2m**3)/(g2kg))**3*(MSun*g2kg)**2*(1.66E+17) )) &
-    !              **( gamma - 1.0D0 )
-
-    ! Our testbed cases are gamma= 2.75, k= 30000; and gamma=2, k=100
-    ! in SPHINCS units
-
     k_lorene2cu= ( (MSun*g2kg)/((MSun_geo*km2m)**3*(1.66D+17)) )**(gam - one)
 
 
@@ -1109,4 +1102,197 @@ MODULE utility
   END FUNCTION k_lorene2cu_pwp
 
 
+  FUNCTION shorten_eos_name( eos_long ) RESULT( eos_str )
+
+    !*********************************************
+    !                                            *
+    ! Converts the longer names from LORENE      *
+    ! to the 4-character strings needed by       *
+    ! select_EOS_parameters                      *
+    !                                            *
+    ! FT 11.08.2021                              *
+    !                                            *
+    ! Last update FT 28.03.2023                  *
+    !                                            *
+    !*********************************************
+
+    IMPLICIT NONE
+
+    CHARACTER(4):: eos_str
+    CHARACTER(LEN=*), INTENT(IN):: eos_long
+
+    IF( INDEX(eos_long, 'SLy ') /= 0 .OR. INDEX(eos_long, 'sly ') /= 0 )THEN
+
+      eos_str= 'SLy '
+
+    ELSEIF( INDEX(eos_long, 'ALF2') /= 0 .OR. INDEX(eos_long, 'alf2') /= 0 )THEN
+
+      eos_str= 'ALF2'
+
+    ELSEIF( INDEX(eos_long, 'ALF4') /= 0 .OR. INDEX(eos_long, 'alf4') /= 0 )THEN
+
+      eos_str= 'ALF4'
+
+    ELSEIF( INDEX(eos_long, 'ENG ') /= 0 .OR. INDEX(eos_long, 'eng ') /= 0 )THEN
+
+      eos_str= 'ENG '
+
+    ELSEIF( INDEX(eos_long, 'H4  ') /= 0 .OR. INDEX(eos_long, 'h4  ') /= 0 )THEN
+
+      eos_str= 'H4  '
+
+    ELSEIF( INDEX(eos_long, 'MPA1') /= 0 .OR. INDEX(eos_long, 'mpa1') /= 0 )THEN
+
+      eos_str= 'MPA1'
+
+    ELSEIF( INDEX(eos_long, 'MS1 ') /= 0 .OR. INDEX(eos_long, 'ms1 ') /= 0 )THEN
+
+      eos_str= 'MS1 '
+
+    ELSEIF( INDEX(eos_long, 'MS1b') /= 0 .OR. INDEX(eos_long, 'ms1b') /= 0 )THEN
+
+      eos_str= 'MS1b'
+
+    ELSEIF( INDEX(eos_long, 'APR3') /= 0 .OR. INDEX(eos_long, 'apr3') /= 0 )THEN
+
+      eos_str= 'AP3'
+
+    ELSEIF( INDEX(eos_long, 'AP3 ') /= 0 .OR. INDEX(eos_long, 'ap3 ') /= 0 )THEN
+
+      eos_str= 'AP3 '
+
+    ELSEIF( INDEX(eos_long, 'APR4') /= 0 .OR. INDEX(eos_long, 'apr4') /= 0 )THEN
+
+      eos_str= 'APR4'
+
+    ELSEIF( INDEX(eos_long, 'AP4 ') /= 0 .OR. INDEX(eos_long, 'ap4 ') /= 0 )THEN
+
+      eos_str= 'APR4'
+
+    ELSEIF( INDEX(eos_long, 'WFF1') /= 0 .OR. INDEX(eos_long, 'wff1') /= 0 )THEN
+
+      eos_str= 'WFF1'
+
+    ELSEIF( INDEX(eos_long, 'WFF2') /= 0 .OR. INDEX(eos_long, 'wff2') /= 0 )THEN
+
+      eos_str= 'WFF2'
+
+    ELSEIF( INDEX(eos_long, 'HASO') /= 0 .OR. INDEX(eos_long, 'haso') /= 0 )THEN
+
+      eos_str= 'haso'
+
+    ELSEIF( eos_long == 'Polytropic EOS' )THEN
+
+      eos_str= '   '
+
+    ELSE
+
+      PRINT *, "** ERROR! Unknown EOS name: ", TRIM(eos_long)
+      PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. ", &
+               "   This SUBROUTINE exists mostly for backward compatibility."
+      PRINT *, " * Stopping..."
+      PRINT *
+      STOP
+
+    ENDIF
+
+  END FUNCTION shorten_eos_name
+
+
 END MODULE utility
+
+
+!RETURN
+!
+!SELECT CASE( ADJUSTL(TRIM(eos_long)) )
+!
+!  CASE( 'Multipolytropic SLy  EOS' )
+!
+!    eos_str= 'SLy '
+!
+!  CASE( 'Multipolytropic ALF2 EOS' )
+!
+!    eos_str= 'ALF2'
+!
+!  CASE( 'Multipolytropic ALF4 EOS' )
+!
+!    eos_str= 'ALF4'
+!
+!  CASE( 'Multipolytropic ENG  EOS' )
+!
+!    eos_str= 'ENG '
+!
+!  CASE( 'Multipolytropic H4  EOS' )
+!
+!    eos_str= 'H4  '
+!
+!  CASE( 'Multipolytropic MPA1 EOS' )
+!
+!    eos_str= 'MPA1'
+!
+!  CASE( 'Star 1  Multipolytropic MPA1 EOS' )
+!
+!    eos_str= 'MPA1'
+!
+!  CASE( 'Multipolytropic MS1  EOS' )
+!
+!    eos_str= 'MS1 '
+!
+!  CASE( 'Multipolytropic MS1b EOS' )
+!
+!    eos_str= 'MS1b'
+!
+!  CASE( 'MS1b' )
+!
+!    eos_str= TRIM(eos_long)
+!
+!  CASE( 'Multipolytropic APR3 EOS' )
+!
+!    eos_str= 'AP3 '
+!
+!  CASE( 'Star 1  Multipolytropic APR3 EOS' )
+!
+!    eos_str= 'AP3 '
+!
+!  CASE( 'Multipolytropic AP3  EOS' )
+!
+!    eos_str= 'AP3 '
+!
+!  CASE( 'Multipolytropic WFF1 EOS' )
+!
+!    eos_str= 'WFF1'
+!
+!  CASE( 'Multipolytropic WFF2 EOS' )
+!
+!    eos_str= 'WFF2'
+!
+!  CASE( 'Multipolytropic GNH3 EOS' )
+!
+!    eos_str= 'GNH3'
+!
+!  CASE( 'Multipolytropic APR4 EOS' )
+!
+!    eos_str= 'APR4'
+!
+!  CASE( 'Multipolytropic AP4  EOS' )
+!
+!    eos_str= 'APR4'
+!
+!  CASE( 'Multipolytropic haso EOS' )
+!
+!    eos_str= 'haso'
+!
+!  CASE( 'Polytropic EOS' )
+!
+!    eos_str= '   '
+!
+!  CASE DEFAULT
+!
+!    PRINT *, "** ERROR! Unknown EOS name: ", TRIM(eos_long)
+!    PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. ", &
+!             "   This SUBROUTINE exists mostly for backward compatibility."
+!    PRINT *, " * Stopping..."
+!    PRINT *
+!    STOP
+!
+!END SELECT

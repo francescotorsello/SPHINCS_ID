@@ -44,13 +44,13 @@ MODULE sphincs_id_lorene
   IMPLICIT NONE
 
 
-  CHARACTER( LEN= 5 ), PARAMETER:: bnslo= "BNSLO"
+  CHARACTER(LEN= 5), PARAMETER:: bnslo= "BNSLO"
   !# String that identifies a binary system of neutron stars computed
-  !  with LORENE
-  CHARACTER( LEN= 5 ), PARAMETER:: drslo= "DRSLO"
+  !  with |lorene|
+  CHARACTER(LEN= 5), PARAMETER:: drslo= "DRSLO"
   !# String that identifies a differentially rotating star computed
-  !  with LORENE
-  CHARACTER( LEN= 5 ), PARAMETER:: ejecta_grid= "EJECT"
+  !  with |lorene|
+  CHARACTER(LEN= 5), PARAMETER:: ejecta_grid= "EJECT"
   !# String that identifies an ejecta prepared on a uniform Cartesian grid
 
 
@@ -72,10 +72,10 @@ MODULE sphincs_id_lorene
 
     IMPLICIT NONE
 
-    CLASS( idbase ), ALLOCATABLE, INTENT( IN OUT ):: id
-    CHARACTER(LEN=*), INTENT( IN ) :: filename
-    CHARACTER(LEN=5), INTENT( IN OUT ):: system
-    CHARACTER(LEN=5), INTENT( IN OUT ):: system_name
+    CLASS(idbase),    ALLOCATABLE, INTENT(INOUT):: id
+    CHARACTER(LEN=*),              INTENT(IN)   :: filename
+    CHARACTER(LEN=5),              INTENT(INOUT):: system
+    CHARACTER(LEN=5),              INTENT(INOUT):: system_name
 
     IF( ALLOCATED(id) )THEN
 
@@ -128,115 +128,6 @@ MODULE sphincs_id_lorene
     ENDIF
 
   END SUBROUTINE allocate_idbase
-
-
-  FUNCTION shorten_eos_name( eos_long ) RESULT( eos_str )
-
-    !*********************************************
-    !                                            *
-    ! Converts the longer names from LORENE      *
-    ! to the 4-character strings needed by       *
-    ! select_EOS_parameters                      *
-    !                                            *
-    ! FT 11.08.2021                              *
-    !                                            *
-    !*********************************************
-
-    IMPLICIT NONE
-
-    CHARACTER(4):: eos_str
-    CHARACTER( LEN=* ), INTENT(IN):: eos_long
-
-    SELECT CASE( TRIM(eos_long) )
-
-      CASE( 'Multipolytropic SLy  EOS' )
-
-        eos_str= 'SLy '
-
-      CASE( 'Multipolytropic ALF2 EOS' )
-
-        eos_str= 'ALF2'
-
-      CASE( 'Multipolytropic ALF4 EOS' )
-
-        eos_str= 'ALF4'
-
-      CASE( 'Multipolytropic ENG  EOS' )
-
-        eos_str= 'ENG '
-
-      CASE( 'Multipolytropic H4  EOS' )
-
-        eos_str= 'H4  '
-
-      CASE( 'Multipolytropic MPA1 EOS' )
-
-        eos_str= 'MPA1'
-
-      CASE( 'Star 1  Multipolytropic MPA1 EOS' )
-
-        eos_str= 'MPA1'
-
-      CASE( 'Multipolytropic MS1  EOS' )
-
-        eos_str= 'MS1 '
-
-      CASE( 'Multipolytropic MS1b EOS' )
-
-        eos_str= 'MS1b'
-
-      CASE( 'Multipolytropic APR3 EOS' )
-
-        eos_str= 'AP3 '
-
-      CASE( 'Star 1  Multipolytropic APR3 EOS' )
-
-        eos_str= 'AP3 '
-
-      CASE( 'Multipolytropic AP3  EOS' )
-
-        eos_str= 'AP3 '
-
-      CASE( 'Multipolytropic WFF1 EOS' )
-
-        eos_str= 'WFF1'
-
-      CASE( 'Multipolytropic WFF2 EOS' )
-
-        eos_str= 'WFF2'
-
-      CASE( 'Multipolytropic GNH3 EOS' )
-
-        eos_str= 'GNH3'
-
-      CASE( 'Multipolytropic APR4 EOS' )
-
-        eos_str= 'APR4'
-
-      CASE( 'Multipolytropic AP4  EOS' )
-
-        eos_str= 'APR4'
-
-      CASE( 'Multipolytropic haso EOS' )
-
-        eos_str= 'haso'
-
-      CASE( 'Polytropic EOS' )
-
-        eos_str= '   '
-
-      CASE DEFAULT
-
-        PRINT *, "** ERROR! Unknown EOS name: ", TRIM(eos_long)
-        PRINT *, " * Please add the name to SUBROUTINE shorten_eos_name. ", &
-                 "   This SUBROUTINE exists mostly for backward compatibility."
-        PRINT *, " * Stopping..."
-        PRINT *
-        STOP
-
-    END SELECT
-
-  END FUNCTION shorten_eos_name
 
 
 END MODULE sphincs_id_lorene

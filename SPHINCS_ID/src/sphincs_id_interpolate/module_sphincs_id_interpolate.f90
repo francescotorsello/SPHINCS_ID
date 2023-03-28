@@ -42,7 +42,7 @@ MODULE sphincs_id_interpolate
   IMPLICIT NONE
 
 
-  CHARACTER( LEN= 5 ), PARAMETER:: ejecta_grid= "EJECT"
+  CHARACTER(LEN= 5), PARAMETER:: ejecta_grid= "EJECT"
   !# String that identifies an ejecta prepared on a uniform Cartesian grid
 
 
@@ -64,10 +64,10 @@ MODULE sphincs_id_interpolate
 
     IMPLICIT NONE
 
-    CLASS( idbase ), ALLOCATABLE, INTENT( IN OUT ):: id
-    CHARACTER(LEN=*), INTENT( IN ) :: filename
-    CHARACTER(LEN=5), INTENT( IN OUT ):: system
-    CHARACTER(LEN=5), INTENT( IN OUT ):: system_name
+    CLASS(idbase),    ALLOCATABLE, INTENT(INOUT):: id
+    CHARACTER(LEN=*),              INTENT(IN)   :: filename
+    CHARACTER(LEN=5),              INTENT(INOUT):: system
+    CHARACTER(LEN=5),              INTENT(INOUT):: system_name
 
     IF( ALLOCATED(id) )THEN
 
