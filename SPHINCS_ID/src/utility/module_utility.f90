@@ -1181,9 +1181,9 @@ MODULE utility
 
       eos_str= 'haso'
 
-    ELSEIF( eos_long == 'Polytropic EOS' )THEN
+    ELSEIF( eos_long == 'Polytropic EOS' .OR. INDEX(eos_long, 'gam') /= 0 )THEN
 
-      eos_str= '   '
+      eos_str= 'POLY'
 
     ELSE
 

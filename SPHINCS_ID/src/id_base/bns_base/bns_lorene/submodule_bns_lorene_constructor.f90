@@ -202,7 +202,7 @@ SUBMODULE (bns_lorene) constructor
 
     IMPLICIT NONE
 
-    CHARACTER(KIND=C_CHAR, LEN= 7):: default_case
+    !CHARACTER(KIND=C_CHAR, LEN= 7):: default_case
     CHARACTER(KIND=C_CHAR, LEN= :), ALLOCATABLE:: eos1, eos2
     LOGICAL:: exist
 
