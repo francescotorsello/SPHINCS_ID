@@ -30,7 +30,7 @@ MODULE sphincs_id_lorene
   !  needed to set up the |lorene| |id| in
   !  PROGRAM [[sphincs_id]]
   !
-  !  FT 23.10.2020
+  !  FT 09.02.2022
   !
   !*********************************************
 
@@ -66,7 +66,7 @@ MODULE sphincs_id_lorene
     !  The dynamic type is one among those that
     !  use the |lorene| |id|
     !
-    !  FT 9.11.2020
+    !  FT 09.02.2022
     !
     !*********************************************
 

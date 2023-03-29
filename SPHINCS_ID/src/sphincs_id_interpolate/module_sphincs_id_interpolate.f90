@@ -30,7 +30,7 @@ MODULE sphincs_id_interpolate
   !  needed to set up |id| prepared  on a grid in
   !  PROGRAM [[sphincs_id]]
   !
-  !  FT 19.11.2020
+  !  FT 09.02.2022
   !
   !*********************************************
 
@@ -58,7 +58,7 @@ MODULE sphincs_id_interpolate
     !  The dynamic type is one among those that
     !  interpolate the ID from a grid
     !
-    !  FT 19.11.2020
+    !  FT 09.02.2022
     !
     !*********************************************
 

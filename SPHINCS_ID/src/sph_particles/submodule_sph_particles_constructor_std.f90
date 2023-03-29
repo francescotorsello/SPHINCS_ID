@@ -232,8 +232,8 @@ SUBMODULE (sph_particles) constructor_std
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 
-    LOGICAL, DIMENSION(id% get_n_matter()):: apm_iterate, use_atmosphere, &
-                                             remove_atmosphere
+    LOGICAL, DIMENSION(max_length):: apm_iterate, use_atmosphere, &
+                                     remove_atmosphere
 
     !TYPE procedure_pointer
     !  PROCEDURE, POINTER:: proc
@@ -1430,6 +1430,10 @@ SUBMODULE (sph_particles) constructor_std
         STOP
       ENDIF
 
+      apm_iterate      = .FALSE.
+      use_atmosphere   = .FALSE.
+      remove_atmosphere= .FALSE.
+
       compose_path    = "compose_path is a deprecated variable"
       compose_filename= "compose_filename is a deprecated variable"
 
@@ -1448,8 +1452,8 @@ SUBMODULE (sph_particles) constructor_std
       parts% randomize_theta    = randomize_theta
       parts% randomize_r        = randomize_r
       ! APM parameters
-      ALLOCATE( parts% apm_iterate( parts% n_matter ) )
-      parts% apm_iterate   = apm_iterate
+      ALLOCATE( parts% apm_iterate(parts% n_matter) )
+      parts% apm_iterate   = apm_iterate(1:parts% n_matter)
       parts% use_atmosphere= use_atmosphere
       parts% read_nu       = read_nu
 
@@ -1567,6 +1571,19 @@ SUBMODULE (sph_particles) constructor_std
 
         IF( parts% all_eos(i_matter)% eos_parameters(1) == eos$poly )THEN
 
+          IF( compose_eos )THEN
+            PRINT *, "** ERROR! On matter object ", i_matter, &
+                     ", the EOS taken from the ID is a single polytrope, ", &
+                     "so the parameter compose_eos should be set to .FALSE. ", &
+                     "in sphincs_id_particles.dat."
+            PRINT *
+            PRINT *, " * EOS from the ID: ", &
+                     parts% all_eos(i_matter)% eos_name
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
+          ENDIF
+
           IF( eos_type == 'pwp' )THEN
             PRINT *, "** ERROR! On matter object ", i_matter, &
                      ", the EOS taken from the ID is not the same as the ",&
@@ -1576,7 +1593,7 @@ SUBMODULE (sph_particles) constructor_std
                      parts% all_eos(i_matter)% eos_name
             PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
                      eos_type
-            PRINT *, "Stopping..."
+            PRINT *, " * Stopping..."
             PRINT *
             STOP
           ENDIF
@@ -1584,6 +1601,19 @@ SUBMODULE (sph_particles) constructor_std
         ENDIF
 
         IF( parts% all_eos(i_matter)% eos_parameters(1) == eos$pwpoly )THEN
+
+          IF( compose_eos )THEN
+            PRINT *, "** ERROR! On matter object ", i_matter, &
+                     ", the EOS taken from the ID is a piecewise polytrope, ", &
+                     "so the parameter compose_eos should be set to .FALSE. ", &
+                     "in sphincs_id_particles.dat."
+            PRINT *
+            PRINT *, " * EOS from the ID: ", &
+                     parts% all_eos(i_matter)% eos_name
+            PRINT *, " * Stopping..."
+            PRINT *
+            STOP
+          ENDIF
 
           IF( eos_type == 'Poly' )THEN
             PRINT *, "** ERROR! On matter object ", i_matter, &
@@ -1594,7 +1624,7 @@ SUBMODULE (sph_particles) constructor_std
                      parts% all_eos(i_matter)% eos_name
             PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
                      eos_type
-            PRINT *, "Stopping..."
+            PRINT *, " * Stopping..."
             PRINT *
             STOP
           ENDIF
@@ -1611,7 +1641,7 @@ SUBMODULE (sph_particles) constructor_std
             PRINT *, " * EOS from the ID: ", parts% all_eos(i_matter)% eos_name
             PRINT *, " * EOS from the parameter file SPHINCS_fm_input.dat: ", &
                      eos_str
-            PRINT *, "Stopping..."
+            PRINT *, " * Stopping..."
             PRINT *
             STOP
 
