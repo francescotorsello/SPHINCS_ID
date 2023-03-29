@@ -2693,6 +2693,47 @@ SUBMODULE (sph_particles) apm
       STOP
     ENDIF
 
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Values of some fields at the end of the APM iteration "&
+    // "on the real particles"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+    !        // TRIM(finalnamefile) )
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# column:      1        2       3       4       5", &
+    "       6       7       8", &
+    "       9       10      11"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+    !            // TRIM(finalnamefile) )
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "#      particle index      x [km]       y [km]       z [km]", &
+    "       nstar from the ID", &
+    "       SPH nstar", &
+    "       SPH particle density", &
+    "       SPH particle density rescaled with a mass factor (deprecated?)", &
+    "       relative nstar error", &
+    "       nu", &
+    "       number of neighbors (deprecated)"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
     IF( debug ) PRINT *, "1"
 
   !  IF( .NOT.ALLOCATED( nu_one ) ) ALLOCATE( nu_one( npart_real ) )
@@ -2706,11 +2747,11 @@ SUBMODULE (sph_particles) apm
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         a, &
         pos(1,a), pos(2,a), pos(3,a), &
-        nstar_id( a ), &
-        nstar_int( a ), &
-        particle_density_final( a ), &
-        particle_density_final( a )*nstar_id( 1 )/particle_density_final( 1 ), &
-        ABS(nstar_sph(a)-nstar_id(a))/nstar_id(a), &
+        nstar_id(a), &
+        nstar_int(a), &
+        particle_density_final(a), &
+        particle_density_final(a)*nstar_id(1)/particle_density_final(1), &
+        ABS(nstar_sph(a) - nstar_id(a))/nstar_id(a), &
         nu(a), &
         nearest_neighbors(2,a)
     ENDDO
@@ -3820,6 +3861,36 @@ SUBMODULE (sph_particles) apm
         STOP
       ENDIF
 
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Values of some fields at the start of the APM iteration "&
+      // "on the real and ghost particles"
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# column:      1        2       3       4       5"
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# For the real particles: ", &
+      "       1       particle index     ", &
+      "       x [km]       y [km]       z [km]"
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# For the real particles: ", &
+      "       2       particle index     ", &
+      "       x [km]       y [km]       z [km]"
+
       DO a= 1, npart_real, 1
         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
           1, a, &
@@ -3887,6 +3958,41 @@ SUBMODULE (sph_particles) apm
                  ". The error message is", err_msg
         STOP
       ENDIF
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Values of some fields during the APM iteration " &
+      // "on the real and ghost particles"
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# column:      1        2       3       4       5", &
+      "       6       7       8       9"
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# For the real particles: ", &
+      "       1       particle index     ", &
+      "       x [km]       y [km]       z [km]       nu", &
+      "       temporary variable (now ID density, not SPH density)", &
+      "       cnt_move (1=the particle mved at this step, 0=it did not)"
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# For the real particles: ", &
+      "       2       particle index     ", &
+      "       x [km]       y [km]       z [km]       nu", &
+      "       temporary variable (now ID density, not SPH density)", &
+      "       SPH nstar    ID nstar"
 
       DO a= 1, npart_real, 1
         tmp= get_density( all_pos(1,a), all_pos(2,a), all_pos(3,a) )

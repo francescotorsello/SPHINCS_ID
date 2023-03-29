@@ -59,6 +59,8 @@ SUBMODULE(bns_base) geometry
     !
     !********************************************************
 
+    USE utility,  ONLY: run_id
+
     IMPLICIT NONE
 
     INTEGER, PARAMETER:: n_theta  = 180
@@ -107,6 +109,40 @@ SUBMODULE(bns_base) geometry
       ENDIF
       IF(ios > 0)THEN
         PRINT *, "...error when opening " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# Coordinates of the points on the surface of matter a object; ", &
+      "  the spherical coordinates are centered at the center of the object"
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
+      !        // TRIM(finalnamefile) )
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "# column:      1        2       3       4       5", &
+      "       6       7"
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
+                 ". The error message is", err_msg
+        STOP
+      ENDIF
+      !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
+      !            // TRIM(finalnamefile) )
+
+      WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+      "#      matter object index      x [km]       y [km]       z [km]", &
+      "       r       theta       phi"
+      IF( ios > 0 )THEN
+        PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
                  ". The error message is", err_msg
         STOP
       ENDIF

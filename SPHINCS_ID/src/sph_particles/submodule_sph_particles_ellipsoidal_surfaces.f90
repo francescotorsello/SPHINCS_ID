@@ -335,7 +335,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     PRINT *, " * Assigning first half of particle positions..."
     PRINT *
 
-    place_particles_on_northern_emispheres: DO
+    place_particles_on_northern_hemispheres: DO
 
       ! Correct npart_shelleq to be divisible by 4
       IF( MOD( npart_shelleq(r), 2 ) /= 0 )THEN
@@ -672,7 +672,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
         ENDIF
         m_parts(r)= m_parts( prev_shell )
         PRINT *, " * Placed", npart_shell(r)/2, &
-                 " particles on one emisphere of ", surface_type, " surface ", r, &
+                 " particles on one hemisphere of ", surface_type, " surface ", r, &
                  " out of ", n_surfaces
         IF( r == 1 )THEN
           EXIT
@@ -993,7 +993,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
       ! At this point, the particles are placed on this surface
       ! Print out the result
       PRINT *, " * Placed", npart_shell(r)/2, &
-               " particles on one emisphere of ", surface_type, " surface ", r, &
+               " particles on one hemisphere of ", surface_type, " surface ", r, &
                " out of ", n_surfaces
       PRINT *, "   Surface radius= ", surface_radii(r)/max_radius*ten*ten, &
               "% of the smaller radius of the matter object"
@@ -1089,15 +1089,15 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
       IF( debug ) PRINT *, "12"
 
-    ENDDO place_particles_on_northern_emispheres
+    ENDDO place_particles_on_northern_hemispheres
 
     !-----------------------------!
     !--  End of main iteration  --!
     !-----------------------------!
 
-    ! Print out the total number of particles on the northern emispheres,
+    ! Print out the total number of particles on the northern hemispheres,
     ! and the final mass ratio
-    PRINT *, " * Particles on the northern emispheres=", npart_out
+    PRINT *, " * Particles on the northern hemispheres=", npart_out
     PRINT *, " * Particle mass ratio= ", MAXVAL(m_parts)/MINVAL(m_parts)
     PRINT *
 
@@ -1182,9 +1182,9 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
     IF( debug ) PRINT *, "14"
 
     !
-    !-- Mirror particles from the northern emispheres to the southern ones
+    !-- Mirror particles from the northern hemispheres to the southern ones
     !
-    PRINT *, " * Mirroring particles from the northern emispheres to the", &
+    PRINT *, " * Mirroring particles from the northern hemispheres to the", &
              " southern ones..."
     PRINT *
 
