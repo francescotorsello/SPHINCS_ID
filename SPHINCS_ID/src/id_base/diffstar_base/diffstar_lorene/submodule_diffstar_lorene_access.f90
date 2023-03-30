@@ -276,8 +276,8 @@ SUBMODULE (diffstar_lorene) access
 
     !************************************************
     !
-    !# Returns the value of [[diffstar_identifier]], the
-    !  integer identifier of the diffstar object
+    !# Returns the value of [[diffstarlorene:diffstar_identifier]],
+    !  the integer identifier of the diffstar object
     !
     !  FT 25.10.2021
     !

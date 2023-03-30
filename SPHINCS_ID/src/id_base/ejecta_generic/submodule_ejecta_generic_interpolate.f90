@@ -373,7 +373,7 @@ SUBMODULE (ejecta_generic) interpolate
     !# Stores the hydro |id| in the arrays needed to
     !  compute the baryon mass, storing it to variables
     !  (not arrays as the others SUBROUTINES in
-    !  the [[interpolate]] SUBMODULE).
+    !  the [[ejecta_generic@interpolate]] SUBMODULE).
     !
     !  FT 19.11.2021
     !

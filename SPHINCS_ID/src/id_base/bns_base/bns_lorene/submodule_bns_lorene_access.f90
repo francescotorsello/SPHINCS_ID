@@ -276,7 +276,7 @@ SUBMODULE (bns_lorene) access
 
     !************************************************
     !
-    !# Returns the value of [[bns_identifier]], the
+    !# Returns the value of [[bnslorene:bns_identifier]], the
     !  integer identifier of the bns object
     !
     !  FT

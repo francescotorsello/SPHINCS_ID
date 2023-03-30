@@ -278,7 +278,7 @@ SUBMODULE (bns_fuka) access
 
     !************************************************
     !
-    !# Returns the value of [[bns_identifier]], the
+    !# Returns the value of [[bnsfuka:bns_identifier]], the
     !  integer identifier of the bns object
     !
     !  Created:     FT 09.02.2022

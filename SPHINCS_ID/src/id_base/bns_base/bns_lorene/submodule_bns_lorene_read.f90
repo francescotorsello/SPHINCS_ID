@@ -30,7 +30,7 @@ SUBMODULE (bns_lorene) read
   !
   !  FT 23.10.2020
   !
-  !  Renamed from bns_methods to bns_read upon
+  !  Renamed from methods to read upon
   !  improving modularity
   !
   !  OMP parallelized loops that call |lorene|
@@ -676,7 +676,7 @@ SUBMODULE (bns_lorene) read
     !# Stores the hydro ID in the arrays needed to
     !  compute the baryon mass, storing it to variables
     !  (not arrays as the others SUBROUTINES in
-    !  the [[bns_read]] SUBMODULE).
+    !  the [[bns_lorene@read]] SUBMODULE).
     !
     !  FT 15.04.2021
     !

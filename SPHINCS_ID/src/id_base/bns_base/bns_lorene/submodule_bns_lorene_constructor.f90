@@ -267,7 +267,7 @@ SUBMODULE (bns_lorene) constructor
     !************************************************
     !
     !# Destructs the |lorene| |binns| object and frees
-    !  the pointer [[bns:bns_ptr]] pointing to it
+    !  the pointer [[bnslorene:bns_ptr]] pointing to it
     !
     !  FT
     !

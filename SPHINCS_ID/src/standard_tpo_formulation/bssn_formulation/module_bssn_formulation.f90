@@ -188,8 +188,7 @@ MODULE bssn_formulation
 
     FINAL    :: destructor
     !# Destructor; finalizes members from both TYPES tpo and bssn,
-    !  by calling [[tpo:destruct_tpo]] and
-    !  [[bssn:destruct_bssn]]
+    !  by calling [[bssn:destruct_bssn]]
 
     PROCEDURE, PUBLIC:: read_bssn_dump_print_formatted
     !# Reads the binary |id| file printed by

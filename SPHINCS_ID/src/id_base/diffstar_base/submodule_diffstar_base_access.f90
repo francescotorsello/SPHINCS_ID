@@ -227,7 +227,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns [[omega_c]], the central  angular
+    !# Returns [[diffstarbase:omega_c]], the central  angular
     !  velocity of the system
     !
     !  FT 22.10.2021

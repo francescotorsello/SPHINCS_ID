@@ -395,7 +395,7 @@ SUBMODULE (bns_fuka) constructor
     !************************************************
     !
     !# Destructs the |fuka| |bnsexp| object and frees
-    !  the pointer [[bns:bns_ptr]] pointing to it
+    !  the pointer [[bnsfuka:bns_ptr]] pointing to it
     !
     !  Created:     FT 09.02.2022
     !  Last update: FT 27.05.2022

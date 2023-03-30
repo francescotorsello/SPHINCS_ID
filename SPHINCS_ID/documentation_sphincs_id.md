@@ -11,7 +11,7 @@ predocmark: >
 predocmark_alt: &
 source: true
 incl_src: false
-graph: false
+graph: true
 sort: alpha
 src_dir: ./src
 media_dir: ./doc-media

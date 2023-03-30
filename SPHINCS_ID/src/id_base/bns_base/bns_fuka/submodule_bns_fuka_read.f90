@@ -967,7 +967,7 @@ SUBMODULE (bns_fuka) read
     !# Stores the hydro |id| in the arrays needed to
     !  compute the baryon mass, storing it to variables
     !  (not arrays as the others SUBROUTINES in
-    !  the [[bns_read]] SUBMODULE).
+    !  the [[bns_fuka@read]] SUBMODULE).
     !
     !  Created:     FT 09.02.2022
     !  Last update: FT 27.05.2022

@@ -245,7 +245,7 @@ SUBMODULE (diffstar_lorene) constructor
     !************************************************
     !
     !# Destructs the |lorene| |etdiffrot| object and frees
-    !  the pointer [[diffstar:diffstar_ptr]] pointing to it
+    !  the pointer [[diffstarlorene:diffstar_ptr]] pointing to it
     !
     !  FT 25.10.2021
     !

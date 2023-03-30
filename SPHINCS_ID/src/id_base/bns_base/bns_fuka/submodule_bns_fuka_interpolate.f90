@@ -205,7 +205,7 @@ SUBMODULE (bns_fuka) interpolate
     !# Stores the hydro |id| in the arrays needed to
     !  compute the baryon mass, storing it to variables
     !  (not arrays as the others SUBROUTINES in
-    !  the [[ejecta_generic_interpolate]] SUBMODULE).
+    !  the [[bnsfuka@interpolate]] SUBMODULE).
     !
     !  FT 28.06.2022
     !
