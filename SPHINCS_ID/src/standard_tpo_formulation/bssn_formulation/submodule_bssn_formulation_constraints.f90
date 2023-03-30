@@ -2116,7 +2116,7 @@ SUBMODULE (bssn_formulation) constraints
       "# column:      1        2       3       4       5", &
       "       6       7       8       9       10", &
       "       11       12       13       14       15", &
-      "       16       17       18       19       20"
+      "       16       17       18       19       20      21"
       IF( ios > 0 )THEN
         PRINT *, "...error when writing line 2 in ", TRIM(namefile), &
                  ". The error message is", err_msg

@@ -86,7 +86,7 @@ SUBMODULE (bssn_formulation) io
 
     LOGICAL:: exist
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER(LEN= :), ALLOCATABLE:: finalnamefile
 
     PRINT *, "** Executing the read_bssn_dump_print_formatted subroutine..."
 
@@ -152,7 +152,7 @@ SUBMODULE (bssn_formulation) io
     "       12      13      14", &
     "       15      16      17      18      19", &
     "       20      21      22", &
-    "       23      24"
+    "       23      24      25"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 2 in ", TRIM(finalnamefile), &
                ". The error message is", err_msg
@@ -166,7 +166,7 @@ SUBMODULE (bssn_formulation) io
     "       conformal factor phi        trace of extr. curv. trK", &
     "       g_BSSN_xx       g_BSSN_xy      g_BSSN_xz", &
     "       g_BSSN_yy       g_BSSN_yz      g_BSSN_zz", &
-    "       A_BSSN_xx       A_BSSN_xy      A_BSSN_xz    ", &
+    "       A_BSSN_xx       A_BSSN_xy      A_BSSN_xz", &
     "       A_BSSN_yy       A_BSSN_yz      A_BSSN_zz", &
     "       Gamma_u_x       Gamma_u_y      Gamma_u_z"
     IF( ios > 0 )THEN
@@ -238,31 +238,31 @@ SUBMODULE (bssn_formulation) io
               ENDIF
 
               WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
-                  l, &
-                  this% coords% levels(l)% var( i, j, k, jx ), &
-                  this% coords% levels(l)% var( i, j, k, jy ), &
-                  this% coords% levels(l)% var( i, j, k, jz ), &
-                  lapse( i, j, k ), &
-                  shift_u( i, j, k, jx ), &
-                  shift_u( i, j, k, jy ), &
-                  shift_u( i, j, k, jz ), &
-                  phi( i, j, k ), &
-                  trK( i, j, k ), &
-                  g_BSSN3_ll( i, j, k, jxx ), &
-                  g_BSSN3_ll( i, j, k, jxy ), &
-                  g_BSSN3_ll( i, j, k, jxz ), &
-                  g_BSSN3_ll( i, j, k, jyy ), &
-                  g_BSSN3_ll( i, j, k, jyz ), &
-                  g_BSSN3_ll( i, j, k, jzz ), &
-                  A_BSSN3_ll( i, j, k, jxx ), &
-                  A_BSSN3_ll( i, j, k, jxy ), &
-                  A_BSSN3_ll( i, j, k, jxz ), &
-                  A_BSSN3_ll( i, j, k, jyy ), &
-                  A_BSSN3_ll( i, j, k, jyz ), &
-                  A_BSSN3_ll( i, j, k, jzz ), &
-                  Gamma_u( i, j, k, jx ), &
-                  Gamma_u( i, j, k, jy ), &
-                  Gamma_u( i, j, k, jz )
+                  l, &                                              ! 1
+                  this% coords% levels(l)% var( i, j, k, jx ), &    ! 2
+                  this% coords% levels(l)% var( i, j, k, jy ), &    ! 3
+                  this% coords% levels(l)% var( i, j, k, jz ), &    ! 4
+                  lapse( i, j, k ), &                               ! 5
+                  shift_u( i, j, k, jx ), &                         ! 6
+                  shift_u( i, j, k, jy ), &                         ! 7
+                  shift_u( i, j, k, jz ), &                         ! 8
+                  phi( i, j, k ), &                                 ! 9
+                  trK( i, j, k ), &                                 ! 10
+                  g_BSSN3_ll( i, j, k, jxx ), &                     ! 11
+                  g_BSSN3_ll( i, j, k, jxy ), &                     ! 12
+                  g_BSSN3_ll( i, j, k, jxz ), &                     ! 13
+                  g_BSSN3_ll( i, j, k, jyy ), &                     ! 14
+                  g_BSSN3_ll( i, j, k, jyz ), &                     ! 15
+                  g_BSSN3_ll( i, j, k, jzz ), &                     ! 16
+                  A_BSSN3_ll( i, j, k, jxx ), &                     ! 17
+                  A_BSSN3_ll( i, j, k, jxy ), &                     ! 18
+                  A_BSSN3_ll( i, j, k, jxz ), &                     ! 19
+                  A_BSSN3_ll( i, j, k, jyy ), &                     ! 20
+                  A_BSSN3_ll( i, j, k, jyz ), &                     ! 21
+                  A_BSSN3_ll( i, j, k, jzz ), &                     ! 22
+                  Gamma_u( i, j, k, jx ), &                         ! 23
+                  Gamma_u( i, j, k, jy ), &                         ! 24
+                  Gamma_u( i, j, k, jz )                            ! 25
 
               IF( ios > 0 )THEN
                 PRINT *, "...error when writing the arrays in ", &
@@ -318,7 +318,7 @@ SUBMODULE (bssn_formulation) io
 
     LOGICAL:: exist
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER(LEN= :), ALLOCATABLE:: finalnamefile
 
     ! Being abs_grid a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
@@ -382,7 +382,7 @@ SUBMODULE (bssn_formulation) io
     "       12      13      14", &
     "       15      16      17      18      19", &
     "       20      21      22", &
-    "       23      24    25"
+    "       23      24      25"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 2 in ", TRIM(finalnamefile), &
                ". The error message is", err_msg
@@ -479,31 +479,31 @@ SUBMODULE (bssn_formulation) io
               ENDIF
 
               WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * )&
-                l, &
-                this% coords% levels(l)% var( i, j, k, jx ), &
-                this% coords% levels(l)% var( i, j, k, jy ), &
-                this% coords% levels(l)% var( i, j, k, jz ), &
-                lapse( i, j, k ), &
-                shift_u( i, j, k, jx ), &
-                shift_u( i, j, k, jy ), &
-                shift_u( i, j, k, jz ), &
-                phi( i, j, k ), &
-                trK( i, j, k ), &
-                g_BSSN3_ll( i, j, k, jxx ), &
-                g_BSSN3_ll( i, j, k, jxy ), &
-                g_BSSN3_ll( i, j, k, jxz ), &
-                g_BSSN3_ll( i, j, k, jyy ), &
-                g_BSSN3_ll( i, j, k, jyz ), &
-                g_BSSN3_ll( i, j, k, jzz ), &
-                A_BSSN3_ll( i, j, k, jxx ), &
-                A_BSSN3_ll( i, j, k, jxy ), &
-                A_BSSN3_ll( i, j, k, jxz ), &
-                A_BSSN3_ll( i, j, k, jyy ), &
-                A_BSSN3_ll( i, j, k, jyz ), &
-                A_BSSN3_ll( i, j, k, jzz ), &
-                Gamma_u( i, j, k, jx ), &
-                Gamma_u( i, j, k, jy ), &
-                Gamma_u( i, j, k, jz )
+                l, &                                              ! 1 !
+                this% coords% levels(l)% var( i, j, k, jx ), &    ! 2 !
+                this% coords% levels(l)% var( i, j, k, jy ), &    ! 3
+                this% coords% levels(l)% var( i, j, k, jz ), &    ! 4
+                lapse( i, j, k ), &                               ! 5
+                shift_u( i, j, k, jx ), &                         ! 6
+                shift_u( i, j, k, jy ), &                         ! 7
+                shift_u( i, j, k, jz ), &                         ! 8
+                phi( i, j, k ), &                                 ! 9
+                trK( i, j, k ), &                                 ! 10
+                g_BSSN3_ll( i, j, k, jxx ), &                     ! 11
+                g_BSSN3_ll( i, j, k, jxy ), &                     ! 12
+                g_BSSN3_ll( i, j, k, jxz ), &                     ! 13
+                g_BSSN3_ll( i, j, k, jyy ), &                     ! 14
+                g_BSSN3_ll( i, j, k, jyz ), &                     ! 15
+                g_BSSN3_ll( i, j, k, jzz ), &                     ! 16
+                A_BSSN3_ll( i, j, k, jxx ), &                     ! 17
+                A_BSSN3_ll( i, j, k, jxy ), &                     ! 18
+                A_BSSN3_ll( i, j, k, jxz ), &                     ! 19
+                A_BSSN3_ll( i, j, k, jyy ), &                     ! 20
+                A_BSSN3_ll( i, j, k, jyz ), &                     ! 21
+                A_BSSN3_ll( i, j, k, jzz ), &                     ! 22
+                Gamma_u( i, j, k, jx ), &                         ! 23
+                Gamma_u( i, j, k, jy ), &                         ! 24
+                Gamma_u( i, j, k, jz )                            ! 25
 
               IF( ios > 0 )THEN
                 PRINT *, "...error when writing the arrays in ", &

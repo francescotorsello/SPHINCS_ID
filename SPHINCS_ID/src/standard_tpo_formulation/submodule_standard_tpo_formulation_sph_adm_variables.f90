@@ -256,8 +256,7 @@ SUBMODULE (standard_tpo_formulation) sph_adm_variables
 
         DO j= jx, jz, 1
 
-          adm_mom_element= &
-          - ( nu_loc(a)*amu/Msun )*( shift_norm2/(lapse_loc**two) - one ) &
+          adm_mom_element= ( nu_loc(a)*amu/Msun ) &
             *theta_loc(a)*( one + u_loc(a) + pr_loc(a)/nlrf_loc(a) )*v_l(j,a)
 
           IF( is_finite_number(adm_mom_element) )THEN

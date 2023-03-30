@@ -351,7 +351,7 @@ SUBMODULE(bns_base) geometry
 
 
     SUBROUTINE read_density(x, y, z, rho)
-    !# Reads the density using the method [[id_base:read_mass_density]].
+    !# Reads the density using the method [[idbase:read_mass_density]].
     !  This is a wrapper needed as the TARGET of a PROCEDURE POINTER
     !  (PROCEDURE POINTERS cannot point to TYPE-BOUND PROCEDURES unfortunately)
 
@@ -440,7 +440,7 @@ SUBMODULE(bns_base) geometry
 
 
     SUBROUTINE read_density(x, y, z, rho)
-    !# Reads the density using the method [[id_base:read_mass_density]].
+    !# Reads the density using the method [[idbase:read_mass_density]].
     !  This is a wrapper needed as the TARGET of a PROCEDURE POINTER
     !  (PROCEDURE POINTERS cannot point to TYPE-BOUND PROCEDURES unfortunately)
 

@@ -56,6 +56,7 @@ SUBMODULE (sph_particles) recovery
 
     USE recovery,             ONLY: phys_2_cons, cons_2_phys
     USE tensor,               ONLY: jx, jy, jz, n_sym4x4
+    USE constants,            ONLY: half
     USE deactivate_particles, ONLY: nlrf_fb, u_fb, pr_fb, vel_u_fb, theta_fb, &
                                     cs_fb
     USE metric_on_particles,  ONLY: allocate_metric_on_particles, &
@@ -260,12 +261,11 @@ SUBMODULE (sph_particles) recovery
       ENDIF
 
       WRITE( UNIT = unit_recovery, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "#      particle      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]", &
-      "       local rest frame proper baryon density     " &
-           //"recovered local rest frame proper baryon density", &
-      "       local rest frame baryon density     " &
-           //"recovered local rest frame baryon density", &
-      "       specific internal energy     recovered specific internal energy", &
+      "#      particle index      x [Msun_geo] - x_com       ", &
+      "       y [Msun_geo] - x_com       ", &
+      "       z [Msun_geo] - z_com       nstar     recovered nstar", &
+      "       nlrf      recovered nlrf", &
+      "       specific internal energy     recovered specific internal energy",&
       "       pressure     recovered pressure", &
       "       x component of the computing frame velocity " &
            //"x component of the recovered computing frame velocity", &
@@ -284,16 +284,16 @@ SUBMODULE (sph_particles) recovery
       print_data_loop: DO a = npart_in, npart_fin, 1
 
         IF( this% export_form_xy .AND. &
-            ( pos( 3, a ) >=  0.5D0 .OR. &
-              pos( 3, a ) <= -0.5D0 ) &
+            ( pos( 3, a ) >=  half .OR. &
+              pos( 3, a ) <= -half ) &
         )THEN
           CYCLE
         ENDIF
         IF( this% export_form_x .AND. &
-            ( pos( 3, a ) >=  0.5D0 .OR. &
-              pos( 3, a ) <= -0.5D0 .OR. &
-              pos( 2, a ) >=  0.5D0 .OR. &
-              pos( 2, a ) <= -0.5D0 ) &
+            ( pos( 3, a ) >=  half .OR. &
+              pos( 3, a ) <= -half .OR. &
+              pos( 2, a ) >=  half .OR. &
+              pos( 2, a ) <= -half ) &
         )THEN
           CYCLE
         ENDIF

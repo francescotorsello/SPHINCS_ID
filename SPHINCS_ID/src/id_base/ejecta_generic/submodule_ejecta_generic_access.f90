@@ -169,7 +169,7 @@ SUBMODULE (ejecta_generic) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma]], the
+    !# Returns the value of [[ejecta:gamma]], the
     !  polytropic index for polytropic EOS,
     !  not piecewise polytropic EOS
     !
@@ -188,7 +188,7 @@ SUBMODULE (ejecta_generic) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa]], the
+    !# Returns the value of [[ejecta:kappa]], the
     !  polytropic constant for polytropic
     !  EOS, not piecewise polytropic EOS
     !

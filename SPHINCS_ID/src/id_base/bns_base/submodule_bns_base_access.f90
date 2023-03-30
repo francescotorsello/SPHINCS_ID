@@ -176,9 +176,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma_1]], the
-    !  polytropic index for NS 1 with polytropic EOS,
-    !  not piecewise polytropic EOS
+    !# Returns the value of [[bnsbase:gamma_1]], the
+    !  polytropic index for NS 1 with polytropic |eos|,
+    !  not piecewise polytropic |eos|
     !
     !  FT
     !
@@ -195,9 +195,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma_2]], the
-    !  polytropic index for NS 2 with polytropic EOS,
-    !  not piecewise polytropic EOS
+    !# Returns the value of [[bnsbase:gamma_2]], the
+    !  polytropic index for NS 2 with polytropic |eos|,
+    !  not piecewise polytropic |eos|
     !
     !  FT
     !
@@ -214,9 +214,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa_1]], the
+    !# Returns the value of [[bnsbase:kappa_1]], the
     !  polytropic constant for NS 1 with polytropic
-    !  EOS, not piecewise polytropic EOS
+    !  |eos|, not piecewise polytropic |eos|
     !
     !  FT
     !
@@ -233,9 +233,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa_2]], the
+    !# Returns the value of [[bnsbase:kappa_2]], the
     !  polytropic constant for NS 2 with polytropic
-    !  EOS, not piecewise polytropic EOS
+    !  |eos|, not piecewise polytropic |eos|
     !
     !  FT
     !
@@ -845,7 +845,7 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the name of the EOS for NS 1
+    !# Returns the name of the |eos| for NS 1
     !
     !  FT
     !
@@ -862,7 +862,7 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the name of the EOS for NS 2
+    !# Returns the name of the |eos| for NS 2
     !
     !  FT
     !
@@ -879,7 +879,7 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the identifier of the EOS for NS 1
+    !# Returns the identifier of the |eos| for NS 1
     !
     !  FT
     !
@@ -896,7 +896,7 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the identifier of the EOS for NS 2
+    !# Returns the identifier of the |eos| for NS 2
     !
     !  FT
     !
@@ -913,9 +913,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma0_1]], the crust's
+    !# Returns the value of [[bnsbase:gamma0_1]], the crust's
     !  polytropic index for NS 1 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -932,9 +932,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma0_2]], the crust's
+    !# Returns the value of [[bnsbase:gamma0_2]], the crust's
     !  polytropic index for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -951,9 +951,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma1_1]], the first
+    !# Returns the value of [[bnsbase:gamma1_1]], the first
     !  polytropic index for NS 1 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -970,9 +970,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma1_2]], the first
+    !# Returns the value of [[bnsbase:gamma1_2]], the first
     !  polytropic index for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -989,9 +989,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma2_1]], the second
+    !# Returns the value of [[bnsbase:gamma2_1]], the second
     !  polytropic index for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1008,9 +1008,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma2_2]], the second
+    !# Returns the value of [[bnsbase:gamma2_2]], the second
     !  polytropic index for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1027,9 +1027,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma3_1]], the third
+    !# Returns the value of [[bnsbase:gamma3_1]], the third
     !  polytropic index for NS 1 with piecewise
-    !  polytropic EOS (innermost index)
+    !  polytropic |eos| (innermost index)
     !
     !  FT
     !
@@ -1046,9 +1046,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma3_2]], the third
+    !# Returns the value of [[bnsbase:gamma3_2]], the third
     !  polytropic index for NS 2 with piecewise
-    !  polytropic EOS (innermost index)
+    !  polytropic |eos| (innermost index)
     !
     !  FT
     !
@@ -1065,9 +1065,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa0_1]], the crust's
+    !# Returns the value of [[bnsbase:kappa0_1]], the crust's
     !  polytropic constant for NS 1 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1084,9 +1084,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa1_1]], the first
+    !# Returns the value of [[bnsbase:kappa1_1]], the first
     !  polytropic constant for NS 1 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1103,9 +1103,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa2_1]], the second
+    !# Returns the value of [[bnsbase:kappa2_1]], the second
     !  polytropic constant for NS 1 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1122,9 +1122,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa3_1]], the third
+    !# Returns the value of [[bnsbase:kappa3_1]], the third
     !  polytropic constant for NS 1 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1141,9 +1141,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa0_2]], the crust's
+    !# Returns the value of [[bnsbase:kappa0_2]], the crust's
     !  polytropic constant for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1160,9 +1160,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa1_2]], the first
+    !# Returns the value of [[bnsbase:kappa1_2]], the first
     !  polytropic constant for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1179,9 +1179,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa2_2]], the second
+    !# Returns the value of [[bnsbase:kappa2_2]], the second
     !  polytropic constant for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1198,9 +1198,9 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa3_2]], the third
+    !# Returns the value of [[bnsbase:kappa3_2]], the third
     !  polytropic constant for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1217,10 +1217,10 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logp1_1]], the base 10
+    !# Returns the value of [[bnsbase:logp1_1]], the base 10
     !  logarithm of the pressure where the gamma1_1
     !  polytrope starts, for NS 1 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1237,10 +1237,10 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logp1_2]], the base 10
+    !# Returns the value of [[bnsbase:logp1_2]], the base 10
     !  logarithm of the pressure where the gamma1_2
     !  polytrope starts, for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT
     !
@@ -1257,10 +1257,10 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho0_1]], the base 10
+    !# Returns the value of [[bnsbase:logRho0_1]], the base 10
     !  logarithm of the mass density where the
     !  gamma1_1 polytrope starts, for NS 1 with
-    !  piecewise polytropic EOS
+    !  piecewise polytropic |eos|
     !
     !  FT
     !
@@ -1277,10 +1277,10 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho0_2]], the base 10
+    !# Returns the value of [[bnsbase:logRho0_2]], the base 10
     !  logarithm of the mass density where the
     !  gamma1_2 polytrope starts, for NS 2 with
-    !  piecewise polytropic EOS
+    !  piecewise polytropic |eos|
     !
     !  FT
     !
@@ -1297,10 +1297,10 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho1_1]], the base 10
+    !# Returns the value of [[bnsbase:logRho1_1]], the base 10
     !  logarithm of the mass density where the
     !  gamma2_1 polytrope starts, for NS 1 with
-    !  piecewise polytropic EOS
+    !  piecewise polytropic |eos|
     !
     !  FT
     !
@@ -1317,10 +1317,10 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho1_2]], the base 10
+    !# Returns the value of [[bnsbase:logRho1_2]], the base 10
     !  logarithm of the mass density where the
     !  gamma2_2 polytrope starts, for NS 2 with
-    !  piecewise polytropic EOS
+    !  piecewise polytropic |eos|
     !
     !  FT
     !
@@ -1337,10 +1337,10 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho2_1]], the base 10
+    !# Returns the value of [[bnsbase:logRho2_1]], the base 10
     !  logarithm of the mass density where the
     !  gamma3_1 polytrope starts, for NS 1 with
-    !  piecewise polytropic EOS
+    !  piecewise polytropic |eos|
     !
     !  FT
     !
@@ -1357,10 +1357,10 @@ SUBMODULE (bns_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho2_2]]]], the base 10
+    !# Returns the value of [[bnsbase:logRho2_2]]]], the base 10
     !  logarithm of the mass density where the
     !  gamma3_2 polytrope starts, for NS 2 with
-    !  piecewise polytropic EOS
+    !  piecewise polytropic |eos|
     !
     !  FT
     !

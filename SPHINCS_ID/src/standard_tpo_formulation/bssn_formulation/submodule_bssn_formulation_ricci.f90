@@ -126,7 +126,7 @@ SUBMODULE (bssn_formulation) ricci
     ! From Wikipedia:
     ! The sectional curvature of an n-sphere of radius r is K = 1/r^2.
     ! Hence the scalar curvature is R = n(n − 1)/r^2.
-    ! Find real reference for this.
+    ! TODO: Find real reference for this.
     max_ricci= zero
     min_lapse= HUGE(one)
     ASSOCIATE( Ricci_scalar => this% Ricci_scalar% levels(this% nlevels)% var, &

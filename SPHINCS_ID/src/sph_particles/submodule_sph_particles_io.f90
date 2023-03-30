@@ -212,37 +212,36 @@ SUBMODULE (sph_particles) io
     !
     !************************************************
 
-    USE sph_variables,       ONLY: npart, &  ! particle number
-                                   pos_u, &  ! particle positions
-                                   vel_u, &  ! particle velocities in
-                                             ! coordinate frame
-                                   nlrf,  &  ! baryon number density in
-                                             ! local rest frame
-                                   !ehat,  &  ! canonical energy per baryon
-                                   nu,    &  ! canonical baryon number per
-                                             ! particle
-                                   Theta, &  ! Generalized Lorentz factor
-                                   h,     &  ! Smoothing length
-                                   Pr,    &  ! Pressure
-                                   u,     &  ! Internal energy in local rest
-                                             ! frame (no kinetic energy)
-                                   temp,  &  ! Temperature
-                                   av,    &  ! Dissipation
-                                   ye,    &  ! Electron fraction
-                                   divv,  &  ! Divergence of velocity vel_u
-                                   allocate_SPH_memory, &
-                                   deallocate_SPH_memory, &
-                                   n1, n2
-    !USE metric_on_particles, ONLY: allocate_metric_on_particles, &
-    !                               deallocate_metric_on_particles
-    USE input_output,        ONLY: set_units, read_SPHINCS_dump
-    USE alive_flag,          ONLY: alive
+    USE sph_variables,  ONLY: npart, &  ! particle number
+                              pos_u, &  ! particle positions
+                              vel_u, &  ! particle velocities in
+                                        ! coordinate frame
+                              nlrf,  &  ! baryon number density in
+                                        ! local rest frame
+                              !ehat,  &  ! canonical energy per baryon
+                              nu,    &  ! canonical baryon number per
+                                        ! particle
+                              Theta, &  ! Generalized Lorentz factor
+                              h,     &  ! Smoothing length
+                              Pr,    &  ! Pressure
+                              u,     &  ! Internal energy in local rest
+                                        ! frame (no kinetic energy)
+                              temp,  &  ! Temperature
+                              av,    &  ! Dissipation
+                              ye,    &  ! Electron fraction
+                              divv,  &  ! Divergence of velocity vel_u
+                              allocate_SPH_memory, &
+                              deallocate_SPH_memory, &
+                              n1, n2
+    USE input_output,   ONLY: set_units, read_SPHINCS_dump
+    USE alive_flag,     ONLY: alive
+    USE constants,      ONLY: half
 
     IMPLICIT NONE
 
     INTEGER, PARAMETER:: max_npart= 5.D+7
 
-    INTEGER:: itr
+    INTEGER:: a
 
     LOGICAL:: exist, final_save_data
 
@@ -260,13 +259,11 @@ SUBMODULE (sph_particles) io
     !-- Set up the MODULE variables in MODULE sph_variables
     !-- (used by write_SPHINCS_dump)
     !
-    !npart= 10*this% npart
     npart= max_npart
 
     CALL set_units('NSM')
 
     CALL allocate_SPH_memory
-    !CALL allocate_metric_on_particles( npart )
 
     finalnamefile= TRIM(namefile_bin)!//"00000"
     CALL read_SPHINCS_dump( finalnamefile )
@@ -359,8 +356,6 @@ SUBMODULE (sph_particles) io
               ". The error message is", err_msg
       STOP
     ENDIF
-    !CALL test_status( ios, err_msg, "...error when opening " &
-    !                  // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
@@ -372,8 +367,6 @@ SUBMODULE (sph_particles) io
                ". The error message is", err_msg
       STOP
     ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-    !        // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column:      1        2       3       4       5", &
@@ -386,84 +379,60 @@ SUBMODULE (sph_particles) io
                ". The error message is", err_msg
       STOP
     ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-    !        // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "#      particle      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]", &
-    "       lapse     shift_x [c]    shift_y [c]    shift_z [c]", &
-    "       baryon density in the local rest frame [kg m^{-3}$]", &
-    "       energy density [c^2]", &
-    "       specific energy [c^2]", &
-    "       pressure [Pa]", &
-    "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
     "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
+    "       smoothing length [Msun_geo]", &
+    "       specific energy [c^2]", &
     "       baryon number per particle nu", &
-    "       baryon density in the local rest frame nlrf [baryon/cm^3]", &
-    "       generalized Lorentz factor Theta"
+    "       SPH nlrf", &
+    "       temperature", &
+    "       av", &
+    "       electron fraction", &
+    "       divv", &
+    "       generalized Lorentz factor Theta", &
+    "       SPH pressure"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
       STOP
     ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-    !        // TRIM(finalnamefile) )
 
-    write_data_loop: DO itr = 1, npart, 1
+    write_data_loop: DO a = 1, npart, 1
 
       IF( this% export_form_xy .AND. &
-          !( pos_u(3,itr) /= min_abs_z1 .AND. &
-          !  pos_u(3,itr) /= min_abs_z2 ) &
-          ( pos_u(3,itr) >=  0.5D0 .OR. &
-            pos_u(3,itr) <= -0.5D0 ) &
+          ( pos_u(3,a) >=  half .OR. &
+            pos_u(3,a) <= -half ) &
       )THEN
         CYCLE
       ENDIF
       IF( this% export_form_x .AND. &
-          !( pos_u(3,itr) /= min_abs_z1 &
-          !.OR. pos_u(3,itr) /= min_abs_z2 &
-          !.OR. pos_u(2,itr) /= this% pos( 2, min_y_index ) ) )THEN
-          ( pos_u(3,itr) >=  0.5D0 .OR. &
-            pos_u(3,itr) <= -0.5D0 .OR. &
-            pos_u(2,itr) >=  0.5D0 .OR. &
-            pos_u(2,itr) <= -0.5D0 ) &
+          ( pos_u(3,a) >=  half .OR. &
+            pos_u(3,a) <= -half .OR. &
+            pos_u(2,a) >=  half .OR. &
+            pos_u(2,a) <= -half ) &
       )THEN
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        itr, &                                  ! 1     33
-        pos_u(1,itr), &                      ! 2     34
-        pos_u(2,itr), &                      ! 3     35
-        pos_u(3,itr), &                      ! 4     36
-        vel_u(1,itr), &                      ! 5     37
-        vel_u(2,itr), &                      ! 6     38
-        vel_u(3,itr), &                      ! 7     39
-        h(itr), &                             ! 8     40
-        u(itr), &                             ! 9     41
-        nu(itr), &                            ! 10    42
-        nlrf(itr), &                          ! 11    43
-        temp(itr), &                          ! 12    44
-        av(itr), &                            ! 13    45
-        ye(itr), &                            ! 14    46
-        divv(itr), &                          ! 15    47
-        Theta(itr), &                         ! 16    48
-        Pr(itr)                               ! 17    49
-        !this% pos(1,itr), &                  ! 2     34
-        !this% pos(2,itr), &                  ! 3     35
-        !this% pos(3,itr), &                  ! 4     36
-        !this% v(1,itr), &                    ! 5     37
-        !this% v(2,itr), &                    ! 6     38
-        !this% v(3,itr), &                    ! 7     39
-        !this% h(itr), &                       ! 8     40
-        !this% u_sph(itr), &                   ! 9     41
-        !this% nu(itr), &                      ! 10    42
-        !this% nlrf_sph(itr), &                ! 11    43
-        !temp(itr), &                          ! 12    44
-        !av(itr), &                            ! 13    45
-        !ye(itr), &                            ! 14    46
-        !divv(itr), &                          ! 15    47
-        !this% theta(itr), &                   ! 16    48
-        !this% pressure_sph(itr)                ! 17    49
+        a, &                                  ! 1     33
+        pos_u(1,a), &                      ! 2     34
+        pos_u(2,a), &                      ! 3     35
+        pos_u(3,a), &                      ! 4     36
+        vel_u(1,a), &                      ! 5     37
+        vel_u(2,a), &                      ! 6     38
+        vel_u(3,a), &                      ! 7     39
+        h(a), &                             ! 8     40
+        u(a), &                             ! 9     41
+        nu(a), &                            ! 10    42
+        nlrf(a), &                          ! 11    43
+        temp(a), &                          ! 12    44
+        av(a), &                            ! 13    45
+        ye(a), &                            ! 14    46
+        divv(a), &                          ! 15    47
+        Theta(a), &                         ! 16    48
+        Pr(a)                               ! 17    49
 
       IF( ios > 0 )THEN
         PRINT *, "...error when writing the arrays in " &
@@ -503,15 +472,17 @@ SUBMODULE (sph_particles) io
     !
     !************************************************
 
+    USE constants,  ONLY: half
+
     IMPLICIT NONE
 
-    INTEGER:: itr
+    INTEGER:: a
 
-    DOUBLE PRECISION, DIMENSION( :, : ), ALLOCATABLE:: abs_pos
+    DOUBLE PRECISION, DIMENSION(:, :), ALLOCATABLE:: abs_pos
 
     LOGICAL:: exist
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER(LEN= :), ALLOCATABLE:: finalnamefile
 
     ! Being abs_pos a local array, it is good practice to allocate it on the
     ! heap, otherwise it will be stored on the stack which has a very limited
@@ -554,137 +525,108 @@ SUBMODULE (sph_particles) io
                ". The error message is", err_msg
       STOP
     ENDIF
-    !CALL test_status( ios, err_msg, "...error when opening " &
-    !                  // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "# Values of the fields (including coordinates) "&
-    // "on each grid point"
+    "# Values of the fields (including coordinates) on each particle"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
       STOP
     ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 1 in "&
-    !        // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column:      1        2       3       4       5", &
     "       6       7       8", &
-    "       9       10      11", &
-    "       12      13      14", &
+    "       9       10      11      12     13     14", &
     "       15      16      17      18     19     20      21", &
-    "       22      23      24      25     26     27      28      29"
+    "       22      23      24      25     26     27      28      29", &
+    "       30      31"
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
       STOP
     ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
-    !            // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  "#      grid point      x [km]       y [km]       z [km]       lapse", &
+  "#      particle index      x [km]       y [km]       z [km]       lapse", &
   "       shift_x [c]    shift_y [c]    shift_z [c]", &
-  "       baryon density in the local rest frame [kg m^{-3}$]", &
-  "       energy density [c^2]", &
-  "       specific energy [c^2]", &
-  "       pressure [Pa]", &
+  "       baryon density in the local rest frame from the ID [kg m^{-3}$]", &
+  "       energy density from the ID [c^2]", &
+  "       specific energy from the ID [c^2]", &
+  "       pressure from the ID", &
+  "       SPH pressure", &
   "       fluid 3-velocity wrt the Eulerian observer (3 columns) [c]", &
   "       fluid coordinate 3-velocity vel_u (3 columns) [c]", &
   "       baryon number per particle nu", &
-  "       baryon density in the local rest frame nlrf [baryon/Msun_geo^3]", &
+  "       nlrf from the ID [baryon/Msun_geo^3]",&
   "       electron fraction", &
   "       generalized Lorentz factor Theta", &
-  "       computing frame baryon number density", &
-  "       computing frame baryon number density from kernel interpolation", &
+  "       density variable nstar from the ID", &
+  "       SPH density variable star", &
   "       smoothing length", &
-  "       particle density [particle/Msun_geo^3]", &
+  "       particle density from the ID [particle/Msun_geo^3]", &
+  "       SPH particle density [particle/Msun_geo^3]", &
   "       particle volume [1/Msun_geo^3]", &
-  "       particle mass [Msun]"
+  "       SPH specific energy [c^2]", &
+  "       SPH nlrf [baryon/Msun_geo^3]"
     IF( ios > 0 )THEN
       PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
       STOP
     ENDIF
-    !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
-    !          // TRIM(finalnamefile) )
 
-    !DO itr = 1, this% npart, 1
-    !  abs_pos(1,itr)= ABS( this% pos(1,itr) )
-    !  abs_pos(2,itr)= ABS( this% pos(2,itr) )
-    !  abs_pos(3,itr)= ABS( this% pos(3,itr) )
-    !ENDDO
-    !
-    !min_y_index= 0
-    !min_abs_y= 1D+20
-    !DO itr = 1, this% npart, 1
-    !  IF( ABS( this% pos(2,itr) ) < min_abs_y )THEN
-    !    min_abs_y= ABS( this% pos(2,itr) )
-    !    min_y_index= itr
-    !  ENDIF
-    !ENDDO
-    !
-    !min_abs_z1= MINVAL( abs_pos( 3, 1:this% npart1 ) )
-    !min_abs_z2= MINVAL( abs_pos( 3, this% npart1+1:this% npart ) )
-
-    write_data_loop: DO itr = 1, this% npart, 1
+    write_data_loop: DO a = 1, this% npart, 1
 
       IF( this% export_form_xy .AND. &
-          !( this% pos(3,itr) /= min_abs_z1 .AND. &
-          !  this% pos(3,itr) /= min_abs_z2 ) &
-          ( this% pos(3,itr) >=  0.5D0 .OR. &
-            this% pos(3,itr) <= -0.5D0 ) &
+          ( this% pos(3,a) >=  half .OR. &
+            this% pos(3,a) <= -half ) &
       )THEN
         CYCLE
       ENDIF
       IF( this% export_form_x .AND. &
-          !( this% pos(3,itr) /= min_abs_z1 &
-          !.OR. this% pos(3,itr) /= min_abs_z2 &
-          !.OR. this% pos(2,itr) /= this% pos( 2, min_y_index ) ) )THEN
-          ( this% pos(3,itr) >=  0.5D0 .OR. &
-            this% pos(3,itr) <= -0.5D0 .OR. &
-            this% pos(2,itr) >=  0.5D0 .OR. &
-            this% pos(2,itr) <= -0.5D0 ) &
+          ( this% pos(3,a) >=  half .OR. &
+            this% pos(3,a) <= -half .OR. &
+            this% pos(2,a) >=  half .OR. &
+            this% pos(2,a) <= -half ) &
       )THEN
         CYCLE
       ENDIF
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-        itr, &                                                       ! 1
-        this% pos(1,itr), &                                       ! 2
-        this% pos(2,itr), &                                       ! 3
-        this% pos(3,itr), &                                       ! 4
-        this% lapse(itr), &                                        ! 5
-        this% shift_x(itr), &                                      ! 6
-        this% shift_y(itr), &                                      ! 7
-        this% shift_z(itr), &                                      ! 8
-        this% baryon_density(itr), &                               ! 9
-        this% energy_density(itr), &                               ! 10
-        this% specific_energy(itr), &                              ! 11
-        this% pressure(itr), &                                     ! 12
-        this% pressure_sph(itr), &                                  ! 13
-        this% v_euler_x(itr), &                                    ! 14
-        this% v_euler_y(itr), &                                    ! 15
-        this% v_euler_z(itr), &                                    ! 16
-        this% v(1,itr), &                                         ! 17
-        this% v(2,itr), &                                         ! 18
-        this% v(3,itr), &                                         ! 19
-        this% nu(itr), &                                           ! 20
-        this% nlrf(itr), &                                         ! 21
-        this% Ye(itr), &                                           ! 22
-        this% Theta(itr), &                                        ! 23
-        this% nstar(itr), &                                        ! 24
-        this% nstar_sph(itr), &                                    ! 25
-        this% h(itr), &                                            ! 26
-        this% particle_density(itr), &                             ! 27
-        this% particle_density_sph(itr), &                         ! 28
-        this% pvol(itr), &                                         ! 29
-        this% u_sph(itr), &                                        ! 30
-        this% nlrf_sph(itr)                                        ! 31
+        a, &                                                       ! 1
+        this% pos(1,a), &                                       ! 2
+        this% pos(2,a), &                                       ! 3
+        this% pos(3,a), &                                       ! 4
+        this% lapse(a), &                                        ! 5
+        this% shift_x(a), &                                      ! 6
+        this% shift_y(a), &                                      ! 7
+        this% shift_z(a), &                                      ! 8
+        this% baryon_density(a), &                               ! 9
+        this% energy_density(a), &                               ! 10
+        this% specific_energy(a), &                              ! 11
+        this% pressure(a), &                                     ! 12
+        this% pressure_sph(a), &                                  ! 13
+        this% v_euler_x(a), &                                    ! 14
+        this% v_euler_y(a), &                                    ! 15
+        this% v_euler_z(a), &                                    ! 16
+        this% v(1,a), &                                         ! 17
+        this% v(2,a), &                                         ! 18
+        this% v(3,a), &                                         ! 19
+        this% nu(a), &                                           ! 20
+        this% nlrf(a), &                                         ! 21
+        this% Ye(a), &                                           ! 22
+        this% Theta(a), &                                        ! 23
+        this% nstar(a), &                                        ! 24
+        this% nstar_sph(a), &                                    ! 25
+        this% h(a), &                                            ! 26
+        this% particle_density(a), &                             ! 27
+        this% particle_density_sph(a), &                         ! 28
+        this% pvol(a), &                                         ! 29
+        this% u_sph(a), &                                        ! 30
+        this% nlrf_sph(a)                                        ! 31
 
     IF( ios > 0 )THEN
       PRINT *, "...error when writing the arrays in " // TRIM(finalnamefile), &
@@ -812,33 +754,33 @@ SUBMODULE (sph_particles) io
     ! Check that the positions are within the sizes of the matter objects.
     ! This checks that the positions read from the formatted
     ! file are compatible with the sizes given by the idbase object
-    IF( .NOT.this% use_atmosphere(itr) )THEN
+    IF( .NOT.this% use_atmosphere(a) )THEN
 
       !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-      !          ABS(center(itr,1)) + sizes(itr, 1)
+      !          ABS(center(a,1)) + sizes(a, 1)
       !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-      !          ABS(center(itr,1)) + sizes(itr, 2)
+      !          ABS(center(a,1)) + sizes(a, 2)
       !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-      !          ABS(center(itr,2)) + sizes(itr, 3)
+      !          ABS(center(a,2)) + sizes(a, 3)
       !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-      !          ABS(center(itr,2)) + sizes(itr, 4)
+      !          ABS(center(a,2)) + sizes(a, 4)
       !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-      !          ABS(center(itr,3)) + sizes(itr, 5)
+      !          ABS(center(a,3)) + sizes(a, 5)
       !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-      !          ABS(center(itr,3)) + sizes(itr, 6)
+      !          ABS(center(a,3)) + sizes(a, 6)
       !
       !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(itr,1)) + sizes(itr, 1)
+      !  PRINT *, ABS(center(a,1)) + sizes(a, 1)
       !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(itr,1)) + sizes(itr, 2)
+      !  PRINT *, ABS(center(a,1)) + sizes(a, 2)
       !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(itr,2)) + sizes(itr, 3)
+      !  PRINT *, ABS(center(a,2)) + sizes(a, 3)
       !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(itr,2)) + sizes(itr, 4)
+      !  PRINT *, ABS(center(a,2)) + sizes(a, 4)
       !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(itr,3)) + sizes(itr, 5)
+      !  PRINT *, ABS(center(a,3)) + sizes(a, 5)
       !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(itr,3)) + sizes(itr, 6)
+      !  PRINT *, ABS(center(a,3)) + sizes(a, 6)
 
       IF( ABS( MINVAL( tmp_pos(1,:) ) ) > xmin &
           .OR. &
@@ -855,7 +797,7 @@ SUBMODULE (sph_particles) io
       )THEN
 
         PRINT *, "** ERROR! The positions of the particles on object ", &
-                 itr, ", read from formatted file, ", &
+                 a, ", read from formatted file, ", &
                  " are not compatible with the ", &
                  "physical system read from file. Stopping..."
         PRINT *
@@ -880,13 +822,15 @@ SUBMODULE (sph_particles) io
     !
     !# Export the points where some of the hydro
     !  fields are negative to a formatted file
-    !  (deprecated?)
+    !  @warning deprecated?
     !
     !  FT 5.12.2020
     !
     !************************************************
 
     IMPLICIT NONE
+
+    INTEGER:: a
 
     LOGICAL:: exist, negative_hydro
 
@@ -911,7 +855,7 @@ SUBMODULE (sph_particles) io
     !         // TRIM(namefile) )
 
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "# Points where some of the hydro fields are negative. "
+    "# Points where some of the hydro fields are negative (x,y,z). "
     IF( ios > 0 )THEN
        PRINT *, "...error when writing line 1 in ",  TRIM(namefile), &
                 " The error message is", err_msg
@@ -938,21 +882,21 @@ SUBMODULE (sph_particles) io
     !CALL test_status( ios, err_msg, "...error when writing line 3 in "&
     !        // TRIM(namefile) )
 
-    DO itr= 1, this% npart, 1
+    DO a= 1, this% npart, 1
 
-      IF( this% baryon_density (itr) < 0 .OR. &
-          this% energy_density (itr) < 0 .OR. &
-          this% specific_energy(itr) < 0 .OR. &
-          this% pressure       (itr) < 0 )THEN
+      IF( this% baryon_density (a) < 0 .OR. &
+          this% energy_density (a) < 0 .OR. &
+          this% specific_energy(a) < 0 .OR. &
+          this% pressure       (a) < 0 )THEN
 
         negative_hydro= .TRUE.
 
         WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, &
                FMT = * )&
 
-            this% pos(1,itr), &
-            this% pos(2,itr), &
-            this% pos(3,itr)
+            this% pos(1,a), &
+            this% pos(2,a), &
+            this% pos(3,a)
 
         IF( ios > 0 )THEN
           PRINT *, "...error when writing the arrays in ", TRIM(namefile), &

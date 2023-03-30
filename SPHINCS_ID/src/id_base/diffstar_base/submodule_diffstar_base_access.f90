@@ -189,7 +189,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma]], the
+    !# Returns the value of [[diffstarbase:gamma]], the
     !  polytropic index for polytropic EOS,
     !  not piecewise polytropic EOS
     !
@@ -208,7 +208,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa]], the
+    !# Returns the value of [[diffstarbase:kappa]], the
     !  polytropic constant for polytropic
     !  EOS, not piecewise polytropic EOS
     !
@@ -709,7 +709,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma0]], the crust's
+    !# Returns the value of [[diffstarbase:gamma0]], the crust's
     !  polytropic index for the DRS with piecewise
     !  polytropic EOS
     !
@@ -728,7 +728,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma1]], the first
+    !# Returns the value of [[diffstarbase:gamma1]], the first
     !  polytropic index for the DRS with piecewise
     !  polytropic EOS
     !
@@ -747,7 +747,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma2]], the second
+    !# Returns the value of [[diffstarbase:gamma2]], the second
     !  polytropic index for NS 2 with piecewise
     !  polytropic EOS
     !
@@ -766,7 +766,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[gamma3]], the third
+    !# Returns the value of [[diffstarbase:gamma3]], the third
     !  polytropic index for the DRS with piecewise
     !  polytropic EOS (innermost index)
     !
@@ -785,7 +785,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa0]], the crust's
+    !# Returns the value of [[diffstarbase:kappa0]], the crust's
     !  polytropic constant for the DRS with piecewise
     !  polytropic EOS
     !
@@ -804,7 +804,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa1]], the first
+    !# Returns the value of [[diffstarbase:kappa1]], the first
     !  polytropic constant for the DRS with piecewise
     !  polytropic EOS
     !
@@ -823,7 +823,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa2]], the second
+    !# Returns the value of [[diffstarbase:kappa2]], the second
     !  polytropic constant for the DRS with piecewise
     !  polytropic EOS
     !
@@ -842,7 +842,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[kappa3]], the third
+    !# Returns the value of [[diffstarbase:kappa3]], the third
     !  polytropic constant for the DRS with piecewise
     !  polytropic EOS
     !
@@ -861,7 +861,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logp1]], the base 10
+    !# Returns the value of [[diffstarbase:logp1]], the base 10
     !  logarithm of the pressure where the gamma1
     !  polytrope starts, for the DRS with piecewise
     !  polytropic EOS
@@ -882,7 +882,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho0]], the base 10
+    !# Returns the value of [[diffstarbase:logRho0]], the base 10
     !  logarithm of the mass density where the
     !  gamma1 polytrope starts, for the DRS with
     !  piecewise polytropic EOS
@@ -902,7 +902,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho1]], the base 10
+    !# Returns the value of [[diffstarbase:logRho1]], the base 10
     !  logarithm of the mass density where the
     !  gamma2 polytrope starts, for the DRS with
     !  piecewise polytropic EOS
@@ -922,7 +922,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the value of [[logRho2]], the base 10
+    !# Returns the value of [[diffstarbase:logRho2]], the base 10
     !  logarithm of the mass density where the
     !  gamma3 polytrope starts, for the DRS with
     !  piecewise polytropic EOS

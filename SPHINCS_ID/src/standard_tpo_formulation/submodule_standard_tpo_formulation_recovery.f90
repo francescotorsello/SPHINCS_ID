@@ -359,12 +359,10 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
       ENDIF
 
       WRITE( UNIT = unit_recovery, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-      "#      particle      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]", &
-      "       local rest frame proper baryon density     " &
-           //"recovered local rest frame proper baryon density", &
-      "       local rest frame baryon density     " &
-           //"recovered local rest frame baryon density", &
-      "       specific internal energy     recovered specific internal energy", &
+      "#      particle index      x [Msun_geo]       y [Msun_geo]       ", &
+      "       z [Msun_geo]       nstar     recovered nstar", &
+      "       nlrf      recovered nlrf", &
+      "       specific internal energy     recovered specific internal energy",&
       "       pressure     recovered pressure", &
       "       x component of the computing frame velocity " &
            //"x component of the recovered computing frame velocity", &
@@ -382,7 +380,7 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
 
       print_data_loop: DO a = npart_in, npart_fin, 1
 
-       ! TODO: make the variables export_fomr-xy and export_form_x member
+       ! TODO: make the variables export_form-xy and export_form_x member
        !       of tpo, not bssn
        ! IF( this% export_form_xy .AND. &
        !     ( pos( 3, a ) >=  0.5D0 .OR. &

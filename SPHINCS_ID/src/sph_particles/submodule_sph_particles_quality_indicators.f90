@@ -309,6 +309,46 @@ SUBMODULE(sph_particles) quality_indicators
       STOP
     ENDIF
 
+    WRITE( UNIT = unit_qi, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+    WRITE( UNIT = unit_qi, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Quality indicators on the particles"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 1 in " // TRIM(namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    WRITE( UNIT = unit_qi, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# column:      1        2       3       4       5", &
+    "       6       7       8", &
+    "       9       10      11", &
+    "       12      13      14", &
+    "       15      16      17", &
+    "       18      19      20", &
+    "       21      22      23"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 2 in " // TRIM(namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    WRITE( UNIT = unit_qi, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "#      particle index     x [Msun_geo]       ", &
+    "       y [Msun_geo]       z [Msun_geo]       Q1", &
+    "       Q2_x       Q2_y       Q2_z", &
+    "       Q3_x       Q3_y       Q3_z", &
+    "       Q4_xx       Q4_xy       Q4_xz", &
+    "       Q4_yx       Q4_yy       Q4_yz", &
+    "       Q4_zx       Q4_zy       Q4_zz", &
+    "       Qhamilonian_x       Qhamilonian_y       Qhamilonian_z"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in " // TRIM(namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
     DO a= 1, npart, 1
       WRITE( UNIT = unit_qi, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
         a, &           ! 1
