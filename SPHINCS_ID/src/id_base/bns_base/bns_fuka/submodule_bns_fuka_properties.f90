@@ -64,16 +64,6 @@ SUBMODULE (bns_fuka) properties
                           eos$poly, eos$pwpoly, &
                           shorten_eos_name
 
-!#if flavour == 1
-!
-!  USE sphincs_id_full,  ONLY: shorten_eos_name_fuka
-!
-!#elif flavour == 3
-!
-!  USE sphincs_id_fuka,  ONLY: shorten_eos_name_fuka
-!
-!#endif
-
     IMPLICIT NONE
 
     INTEGER, PARAMETER:: str_length= 100
@@ -264,7 +254,6 @@ SUBMODULE (bns_fuka) properties
     ENDIF
     this% eos_file_1= TRANSFER( eos_file_1_tmp_c(1:nchars), this% eos_file_1 )
     IF(debug) PRINT *, "this% eos_file_1=", this% eos_file_1
-    this% eos1= shorten_eos_name(this% eos_file_1)
 
     ! Star 2
     i= 1
@@ -307,7 +296,6 @@ SUBMODULE (bns_fuka) properties
     ! this% eos_file_1 is used because eos_file_2_tmp_c is empty...check if
     ! FUKA actually prints it
     IF(debug) PRINT *, "this% eos_file_2=", this% eos_file_2
-    this% eos2= shorten_eos_name(this% eos_file_2)
 
     !
     !-- Assign |sphincsid| identifiers to the |eos|
@@ -320,9 +308,13 @@ SUBMODULE (bns_fuka) properties
 
         this% eos1_id= eos$poly
 
+        this% eos1= shorten_eos_name(this% eos_file_1)
+
       ELSEIF( this% npeos_1 > 1 )THEN
 
         this% eos1_id = eos$pwpoly
+
+        this% eos1= shorten_eos_name(this% eos_file_1)
 
       ENDIF
 
@@ -342,9 +334,13 @@ SUBMODULE (bns_fuka) properties
 
         this% eos2_id= eos$poly
 
+        this% eos2= shorten_eos_name(this% eos_file_2)
+
       ELSEIF( this% npeos_2 > 1 )THEN
 
         this% eos2_id = eos$pwpoly
+
+        this% eos2= shorten_eos_name(this% eos_file_2)
 
       ENDIF
 

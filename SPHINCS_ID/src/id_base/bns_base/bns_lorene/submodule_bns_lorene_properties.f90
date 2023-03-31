@@ -68,16 +68,6 @@ SUBMODULE (bns_lorene) properties
                               eos$poly, eos$pwpoly, eos$tabu$compose, &
                               shorten_eos_name
 
-!#if flavour == 1
-!
-!  USE sphincs_id_full,    ONLY: shorten_eos_name
-!
-!#elif flavour == 2
-!
-!  USE sphincs_id_lorene,  ONLY: shorten_eos_name
-!
-!#endif
-
     IMPLICIT NONE
 
     INTEGER:: i, nchars
@@ -283,9 +273,6 @@ SUBMODULE (bns_lorene) properties
     !  this% eos2(i:i)= eos2_tmp(i)
     !ENDDO
 
-    this% eos1= shorten_eos_name(this% eos1)
-    this% eos2= shorten_eos_name(this% eos2)
-
     ! Name of file containing the EOS table for star 1
     i= 1
     DO
@@ -341,6 +328,8 @@ SUBMODULE (bns_lorene) properties
       this% eos1_id= eos$poly
       this% kappa_1= this% kappa_1*k_lorene2cu( this% gamma_1 )
 
+      this% eos1= shorten_eos_name(this% eos1)
+
     ELSEIF( this% eos1_loreneid == 110 )THEN
     ! If the EOS is piecewise polytropic
 
@@ -353,6 +342,8 @@ SUBMODULE (bns_lorene) properties
                       *k_lorene2cu_pwp( this% gamma2_1 )
       this% kappa3_1= this% kappa3_1 &
                       *k_lorene2cu_pwp( this% gamma3_1 )
+
+      this% eos1= shorten_eos_name(this% eos1)
 
     ELSEIF( this% eos1_loreneid == 17 .OR. this% eos1_loreneid == 20 )THEN
     ! If the EOS is tabulated, in CompOSE format
@@ -381,6 +372,8 @@ SUBMODULE (bns_lorene) properties
       this% eos2_id= eos$poly
       this% kappa_2= this% kappa_2*k_lorene2cu( this% gamma_2 )
 
+      this% eos2= shorten_eos_name(this% eos2)
+
     ELSEIF( this% eos2_loreneid == 110 )THEN
     ! If the EOS is piecewise polytropic
 
@@ -393,6 +386,8 @@ SUBMODULE (bns_lorene) properties
                       *k_lorene2cu_pwp( this% gamma2_2 )
       this% kappa3_2= this% kappa3_2 &
                       *k_lorene2cu_pwp( this% gamma3_2 )
+
+      this% eos2= shorten_eos_name(this% eos2)
 
     ELSEIF( this% eos2_loreneid == 17 .OR. this% eos2_loreneid == 20 )THEN
     ! If the EOS is tabulated, in CompOSE format

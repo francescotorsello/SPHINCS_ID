@@ -246,8 +246,8 @@ MODULE standard_tpo_formulation
     !----------------------------!
 
 
-    PROCEDURE(define_allocate_fields_interface), DEFERRED:: &
-                      define_allocate_fields
+    PROCEDURE(define_allocate_fields_interface), &
+      DEFERRED:: define_allocate_fields
     !# Allocates memory for the fields specific to the formulation identified
     !  by an EXTENDED TYPE
 
@@ -263,23 +263,23 @@ MODULE standard_tpo_formulation
     !  the hydrodynamical |id| mapped from the particles to the refined mesh
 
     PROCEDURE(compute_and_print_tpo_constraints_grid_interface), &
-              DEFERRED:: compute_and_print_tpo_constraints_grid
+      DEFERRED:: compute_and_print_tpo_constraints_grid
     !# Computes the constraints specific to the formulation identified by an
     !  EXTENDED TYPE, using the full |id| on the refined mesh
 
     PROCEDURE(compute_and_print_tpo_constraints_particles_interface), &
-              DEFERRED:: compute_and_print_tpo_constraints_particles
+      DEFERRED:: compute_and_print_tpo_constraints_particles
     !# Computes the constraints specific to the formulation identified by an
     !  EXTENDED TYPE, using the |bssn| |id| on the refined
     !  mesh and the hydrodynamical |id| mapped from the particles to the mesh
 
     PROCEDURE(compute_and_print_tpo_variables_interface), PUBLIC, &
-                            DEFERRED:: compute_and_print_tpo_variables
+      DEFERRED:: compute_and_print_tpo_variables
     !# Compute the fields specific to the formulation identified by an
     !  EXTENDED TYPE, starting from the standard 3+1 fields
 
     PROCEDURE(print_formatted_id_tpo_variables_interface), PUBLIC, &
-                            DEFERRED:: print_formatted_id_tpo_variables
+      DEFERRED:: print_formatted_id_tpo_variables
     !! Prints the spacetime |id| to a formatted file
 
 

@@ -711,7 +711,7 @@ SUBMODULE (diffstar_lorene) read
     !# Stores the hydro ID in the arrays needed to
     !  compute the baryon mass, storing it to variables
     !  (not arrays as the others SUBROUTINES in
-    !  the [[diffstarlorene@read]] SUBMODULE).
+    !  this SUBMODULE).
     !
     !  FT 15.04.2021
     !

@@ -967,7 +967,7 @@ SUBMODULE (bns_fuka) read
     !# Stores the hydro |id| in the arrays needed to
     !  compute the baryon mass, storing it to variables
     !  (not arrays as the others SUBROUTINES in
-    !  the [[bns_fuka@read]] SUBMODULE).
+    !  this SUBMODULE).
     !
     !  Created:     FT 09.02.2022
     !  Last update: FT 27.05.2022
@@ -1121,7 +1121,7 @@ SUBMODULE (bns_fuka) read
     !
     !# Returns the |fuka| pressure at the point
     !  given as argument, in units of
-    !  \([\mathrm{kg}\,c^2\, \mathrm{m}^{-3}]\).
+    !  \(M_\odot c^2/\ell_\odot^3\).
     !
     !  Created:     FT 27.05.2022
     !  Last update: FT 27.05.2022

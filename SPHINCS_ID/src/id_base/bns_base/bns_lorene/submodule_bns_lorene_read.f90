@@ -676,7 +676,7 @@ SUBMODULE (bns_lorene) read
     !# Stores the hydro ID in the arrays needed to
     !  compute the baryon mass, storing it to variables
     !  (not arrays as the others SUBROUTINES in
-    !  the [[bns_lorene@read]] SUBMODULE).
+    !  this SUBMODULE).
     !
     !  FT 15.04.2021
     !
