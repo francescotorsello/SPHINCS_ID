@@ -2720,7 +2720,8 @@ SUBMODULE (sph_particles) apm
     !            // TRIM(finalnamefile) )
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "#      particle index      x [km]       y [km]       z [km]", &
+    "#      particle index      ", &
+    "       x [Msun_geo]       y [Msun_geo]       z [Msun_geo]", &
     "       nstar from the ID", &
     "       SPH nstar", &
     "       SPH particle density", &
@@ -3884,12 +3885,12 @@ SUBMODULE (sph_particles) apm
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# For the real particles: ", &
       "       1       particle index     ", &
-      "       x [km]       y [km]       z [km]"
+      "       x [Msun_geo]       y [Msun_geo]       z [Msun_geo]"
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# For the real particles: ", &
       "       2       particle index     ", &
-      "       x [km]       y [km]       z [km]"
+      "       x [Msun_geo]       y [Msun_geo]       z [Msun_geo]"
 
       DO a= 1, npart_real, 1
         WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
@@ -3983,14 +3984,14 @@ SUBMODULE (sph_particles) apm
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# For the real particles: ", &
       "       1       particle index     ", &
-      "       x [km]       y [km]       z [km]       nu", &
+      "       x [Msun_geo]       y [Msun_geo]       z [Msun_geo]       nu", &
       "       temporary variable (now ID density, not SPH density)", &
       "       cnt_move (1=the particle mved at this step, 0=it did not)"
 
       WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
       "# For the real particles: ", &
       "       2       particle index     ", &
-      "       x [km]       y [km]       z [km]       nu", &
+      "       x [Msun_geo]       y [Msun_geo]       z [Msun_geo]       nu", &
       "       temporary variable (now ID density, not SPH density)", &
       "       SPH nstar    ID nstar"
 

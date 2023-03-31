@@ -699,20 +699,51 @@ SUBMODULE (sph_particles) constructor_std
     INQUIRE( FILE= TRIM(sph_path)//TRIM(parts_out_namefile), EXIST= exist )
 
     IF( exist )THEN
-        OPEN( UNIT= unit_pos_out, &
-              FILE= TRIM(sph_path)//TRIM(parts_out_namefile), &
-              STATUS= "REPLACE", FORM= "FORMATTED", &
-              POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
-              IOMSG= err_msg )
+      OPEN( UNIT= unit_pos_out, &
+            FILE= TRIM(sph_path)//TRIM(parts_out_namefile), &
+            STATUS= "REPLACE", FORM= "FORMATTED", &
+            POSITION= "REWIND", ACTION= "WRITE", IOSTAT= ios, &
+            IOMSG= err_msg )
     ELSE
-        OPEN( UNIT= unit_pos_out, &
-              FILE= TRIM(sph_path)//TRIM(parts_out_namefile), &
-              STATUS= "NEW", FORM= "FORMATTED", &
-              ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
+      OPEN( UNIT= unit_pos_out, &
+            FILE= TRIM(sph_path)//TRIM(parts_out_namefile), &
+            STATUS= "NEW", FORM= "FORMATTED", &
+            ACTION= "WRITE", IOSTAT= ios, IOMSG= err_msg )
     ENDIF
     IF( ios > 0 )THEN
       PRINT *, "...error when opening " // &
                TRIM(sph_path)//TRIM(parts_out_namefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Run ID [ccyymmdd-hhmmss.sss]: " // run_id
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# Particle distribution. The first line contains the number of matter ", &
+    "objects (e.g. 2 for a binary neutron star, 1 for a single star or a ", &
+    "neutron star-black hole system), and the number of particles on each", &
+    "matter object. The next lines contain the positions and the ", &
+    "baryon numbers of the particles."
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "# column from the second row:      1        2       3       4"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
+               ". The error message is", err_msg
+      STOP
+    ENDIF
+
+    WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
+    "#      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]      nu"
+    IF( ios > 0 )THEN
+      PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
                ". The error message is", err_msg
       STOP
     ENDIF

@@ -83,7 +83,7 @@ SUBMODULE (bssn_formulation) bssn_variables
                                           deallocate_GravityAcceleration
     !
     !-- Use the arrays from the MODULE BSSN to store the BSSN variables
-    !-- for the LORENE ID on the grid, and the SUBROUTINE write_BSSN_dump
+    !-- for the ID on the grid, and the SUBROUTINE write_BSSN_dump
     !-- to export them to the binary file needed by the evolution code
     !-- in SPHINCS
     !

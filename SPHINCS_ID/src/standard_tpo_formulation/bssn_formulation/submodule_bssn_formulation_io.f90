@@ -161,7 +161,8 @@ SUBMODULE (bssn_formulation) io
     !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
     !        // TRIM(finalnamefile) )
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "#      refinement level    x [km]       y [km]       z [km]       lapse", &
+    "#      refinement level    ", &
+    "       x [Msun_geo]       y [Msun_geo]       z [Msun_geo]       lapse", &
     "       shift_x [c]    shift_y [c]    shift_z [c]", &
     "       conformal factor phi        trace of extr. curv. trK", &
     "       g_BSSN_xx       g_BSSN_xy      g_BSSN_xz", &
@@ -391,7 +392,8 @@ SUBMODULE (bssn_formulation) io
     !CALL test_status( ios, err_msg, "...error when writing line 2 in "&
     !        // TRIM(finalnamefile) )
     WRITE( UNIT = 20, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-    "#      refinement level    x [km]       y [km]       z [km]       lapse", &
+    "#      refinement level    ", &
+    "       x [Msun_geo]       y [Msun_geo]       z [Msun_geo]       lapse", &
     "       shift_x [c]    shift_y [c]    shift_z [c]", &
     "       conformal factor phi        trace of extr. curv. trK", &
     "       g_BSSN_xx       g_BSSN_xy      g_BSSN_xz", &

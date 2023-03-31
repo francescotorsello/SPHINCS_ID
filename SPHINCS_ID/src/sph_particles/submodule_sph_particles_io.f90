@@ -552,7 +552,8 @@ SUBMODULE (sph_particles) io
     ENDIF
 
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
-  "#      particle index      x [km]       y [km]       z [km]       lapse", &
+  "#      particle index      ", &
+  "       x [Msun_geo]       y [Msun_geo]       z [Msun_geo]       lapse", &
   "       shift_x [c]    shift_y [c]    shift_z [c]", &
   "       baryon density in the local rest frame from the ID [kg m^{-3}$]", &
   "       energy density from the ID [c^2]", &
