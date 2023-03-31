@@ -1,7 +1,7 @@
 Project: SPHINCS_ID
 Version: 1.8
 linkedin: https://www.linkedin.com/in/francescotorsello
-Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.PNG){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of the SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.2M_\odot\) (left) and \(1.8M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the \(\texttt{CompOSE}\) database. The solution was computed with \(\texttt{LORENE}\) and the \(\texttt{CompOSE}\) software, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with \(\texttt{SPLASH}\) [1][8]{:target="_blank"} and \(\texttt{GIMP}\). </font>
+Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.PNG){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of the SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.2M_\odot\) (left) and \(1.8M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the <a href="https://compose.obspm.fr/" target="_blank">\(\texttt{CompOSE}\) service</a>. The solution was computed with <a href="https://lorene.obspm.fr/" target="_blank">\(\texttt{LORENE}\)</a> and the <a href="https://compose.obspm.fr/software" target="_blank">\(\texttt{CompOSE}\) software</a>, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with <a href="https://doi.org/10.1071/AS07022" target="_blank">\(\texttt{SPLASH}\)</a> and <a href="https://www.gimp.org/" target="_blank">\(\texttt{GIMP}\)</a>. </font>
 Author: Francesco Torsello
 display: private
          protected
@@ -49,14 +49,14 @@ parallel: 80
 ### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___
 
-SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([2][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([3][2]{:target="_blank"}).
+SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([2][2]{:target="_blank"}).
 
 Presently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN or MAGMA2. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN or MAGMA2.
 
 Currently, it produces initial data for:
 
-  - binary systems of neutron stars and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([4][3]{:target="_blank"},[5][4]{:target="_blank"})
-  - binary systems of neutron stars, using the data computed by the FUKA solvers within the C++ library Kadath ([6][5]{:target="_blank"},[7][6]{:target="_blank"})
+  - binary systems of neutron stars and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([3][3]{:target="_blank"},[4][4]{:target="_blank"})
+  - binary systems of neutron stars, using the data computed by the FUKA solvers within the C++ library Kadath ([5][5]{:target="_blank"},[6][6]{:target="_blank"})
   - data on a Cartesian, uniform grid, representing a generic physical system
   - Newtonian binary systems of neutron stars and white dwarfs, using the data computed by the TOV solver within SPHINCS_BSSN; in other words, two TOV stars are placed on an orbit given by the Newtonian 2-body problem
 
@@ -87,7 +87,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.
+along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
 ___
 
 Copyright (C) 2020-2023 Francesco Torsello.
@@ -96,7 +96,7 @@ Permission is granted to copy, distribute and/or modify this documentation
 under the terms of the GNU Free Documentation License, Version 1.3
 or any later version published by the Free Software Foundation;
 with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
-A copy of the license is included in the section entitled "License", reachable by clicking "About" at the top of the webpage, or at <https://www.gnu.org/licenses/fdl-1.3.html/>.
+A copy of the license is included in the section entitled "License", reachable by clicking "About" at the top of the webpage, or at <https://www.gnu.org/licenses/fdl-1.3.html>.
 ---
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
