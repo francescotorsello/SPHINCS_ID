@@ -727,7 +727,7 @@ SUBMODULE (sph_particles) constructor_std
     "matter object. The next lines contain the positions and the ", &
     "baryon numbers of the particles."
     IF( ios > 0 )THEN
-      PRINT *, "...error when writing line 1 in " // TRIM(finalnamefile), &
+      PRINT *, "...error when writing line 1 in " // TRIM(parts_out_namefile), &
                ". The error message is", err_msg
       STOP
     ENDIF
@@ -735,7 +735,7 @@ SUBMODULE (sph_particles) constructor_std
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "# column from the second row:      1        2       3       4"
     IF( ios > 0 )THEN
-      PRINT *, "...error when writing line 2 in " // TRIM(finalnamefile), &
+      PRINT *, "...error when writing line 2 in " // TRIM(parts_out_namefile), &
                ". The error message is", err_msg
       STOP
     ENDIF
@@ -743,7 +743,7 @@ SUBMODULE (sph_particles) constructor_std
     WRITE( UNIT = 2, IOSTAT = ios, IOMSG = err_msg, FMT = * ) &
     "#      x [Msun_geo]       y [Msun_geo]       z [Msun_geo]      nu"
     IF( ios > 0 )THEN
-      PRINT *, "...error when writing line 3 in " // TRIM(finalnamefile), &
+      PRINT *, "...error when writing line 3 in " // TRIM(parts_out_namefile), &
                ". The error message is", err_msg
       STOP
     ENDIF
