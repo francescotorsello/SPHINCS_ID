@@ -1,7 +1,7 @@
 Project: SPHINCS_ID
 Version: 1.8
 linkedin: https://www.linkedin.com/in/francescotorsello
-Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.PNG){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of the SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.2M_\odot\) (left) and \(1.8M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the \(\texttt{CompOSE}\) database. The solution was computed with \(\texttt{LORENE}\) and the \(\texttt{CompOSE}\) software, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with \(\texttt{SPLASH}\) and \(\texttt{GIMP}\). </font>
+Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.PNG){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of the SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.2M_\odot\) (left) and \(1.8M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the \(\texttt{CompOSE}\) database. The solution was computed with \(\texttt{LORENE}\) and the \(\texttt{CompOSE}\) software, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with \(\texttt{SPLASH}\) [1][8]{:target="_blank"} and \(\texttt{GIMP}\). </font>
 Author: Francesco Torsello
 display: private
          protected
@@ -15,9 +15,7 @@ graph: true
 sort: alpha
 src_dir: ./src
 media_dir: ./doc-media
-exclude_dir: ./src/prototypes
 exclude: ./src/sph_particles/submodule_sph_particles_redistribute_nu.f90
-         ./src/sph_particles/submodule_bns_base_mass_profile.f90
 output_dir: ./doc
 page_dir: ./doc-pages
 creation_date: %Y-%m-%d %H:%M:%S
@@ -47,20 +45,18 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        nb = n_\mathrm{b}
 parallel: 80
 <!---graph_dir: doc-graphs--->
-<!---Project_Bitbucket: https://bitbucket.org/ftorsello/sphincs_repository_ft/src--->
-<!---Project_url: https://francescotorsello.github.io/SPHINCS_ID-doc/--->
 
 ### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___
 
-SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([2][2]{:target="_blank"}).
+SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([2][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([3][2]{:target="_blank"}).
 
 Presently, SPHINCS_ID does not solve any equations for the initial data, but acts as an interface between an initial data solver and SPHINCS_BSSN or MAGMA2. It reads the data computed by the solver and produces the SPH and BSSN ID to be read and evolved in time with SPHINCS_BSSN or MAGMA2.
 
 Currently, it produces initial data for:
 
-  - binary systems of neutron stars and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([3][3]{:target="_blank"},[4][4]{:target="_blank"})
-  - binary systems of neutron stars, using the data computed by the FUKA solvers within the C++ library Kadath ([5][5]{:target="_blank"},[6][6]{:target="_blank"})
+  - binary systems of neutron stars and differentially rotating stars, using the data computed by the solvers within the C++ library LORENE ([4][3]{:target="_blank"},[5][4]{:target="_blank"})
+  - binary systems of neutron stars, using the data computed by the FUKA solvers within the C++ library Kadath ([6][5]{:target="_blank"},[7][6]{:target="_blank"})
   - data on a Cartesian, uniform grid, representing a generic physical system
   - Newtonian binary systems of neutron stars and white dwarfs, using the data computed by the TOV solver within SPHINCS_BSSN; in other words, two TOV stars are placed on an orbit given by the Newtonian 2-body problem
 
@@ -110,3 +106,4 @@ A copy of the license is included in the section entitled "License", reachable b
 [5]: <https://kadath.obspm.fr/fuka/>
 [6]: <https://arxiv.org/abs/2103.09911>
 [7]: <https://www.gnu.org/licenses/gpl-3.0.en.html>
+[8]: <https://doi.org/10.1071/AS07022>
