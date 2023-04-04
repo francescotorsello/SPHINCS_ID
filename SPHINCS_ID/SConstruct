@@ -512,7 +512,7 @@ sources_mesh = [
   'module_Hermite_refine.f90',
   'Hermite_3D_Weights.f',
   'Hermite5_3D_Weights.f',
-  'module_WENO.f90',
+  'module_WENO_refine.f90',
   'ML_BSSN_NV_EvolutionInteriorSplitBy1.cc',
   'ML_BSSN_NV_EvolutionInteriorSplitBy2.cc',
   'ML_BSSN_NV_EvolutionInteriorSplitBy3.cc',
