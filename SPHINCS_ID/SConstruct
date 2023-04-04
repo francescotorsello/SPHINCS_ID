@@ -467,7 +467,7 @@ sources_base = module_id_base + module_bns_base + module_diffstar_base \
 ################################################################################
 # SOURCE FILES FROM SPHINCS_BSSN
 ################################################################################
-#home_sphincs='../../../SPHINCS_SP'
+home_sphincs='../../../SPHINCS_SP'
 env['F90PATH'] = [
   '.',
   home_sphincs + '/BSSN',
@@ -481,21 +481,33 @@ sphincs_fm_dir   = [home_sphincs + '/sphincs_repository/SPHINCS_fix_metric/']
 
 sources_mesh = [
   'module_mesh_refinement.f90',
-  'module_ADM_refine.f90',
-  'module_BSSN_refine.f90',
-  'module_BSSN_parameters.f90',
-  'module_GravityAcceleration_refine.f90',
-  'module_McLachlan_refine.f90',
-  'module_TOV_refine.f90',
-  'module_Tmunu_refine.f90',
-  'module_map_metric_2_particles_refine.f90',
-  'module_evolution_parameters.f90',
   'submodule_prolongation.f90',
   'submodule_restriction.f90',
   'submodule_utilities.f90',
   'submodule_parameter.f90',
   'submodule_allocation.f90',
   'submodule_output.f90',
+  'submodule_refine.f90',
+  'submodule_RK4.f90',
+  #
+  'module_ADM_refine.f90',
+  'module_BSSN_refine.f90',
+  'module_BSSN_parameters.f90',
+  'module_GravityAcceleration_refine.f90',
+  #
+  'module_McLachlan_refine.f90',
+  'submodule_ML_evolution.f90',
+  'submodule_ML_init.f90',
+  'submodule_ML_utilities.f90',
+  'submodule_ML_constraints.f90',
+  'submodule_ML_boundary.f90',
+  'submodule_ML_allocation.f90',
+  'submodule_ML_output.f90',
+  #
+  'module_TOV_refine.f90',
+  'module_Tmunu_refine.f90',
+  'module_map_metric_2_particles_refine.f90',
+  'module_evolution_parameters.f90',
   'module_Numerics.f90',
   'module_Hermite_refine.f90',
   'Hermite_3D_Weights.f',
@@ -512,8 +524,14 @@ sources_mesh = [
   'ML_BSSN_NV_ConstraintsInterior.cc',
   'ML_BSSN_NV_ConstraintsInterior_mod.cc',
   'ML_BSSN_NV_RicciInterior.cc',
+  #
   'module_Extract_Mass.f90',
   'submodule__Extract_Mass_impl.f90',
+  #
+  #
+  'module_Collapse.f90',
+  'submodule_Collapse.f90',
+  #
   'fermi_step_f.f90',
   'bssn_parameters.cc'
 ]
@@ -562,7 +580,10 @@ sources_sphincs_fm = [
   'module_sorting.f90',
   'module_Finite_Diff_1D.f90',
   'module_Artificial_Pressure_Method.f90',
-  'module_piecewise_polytrope.f90'
+  'module_piecewise_polytrope.f90',
+  'module_particle_identity.f90',
+  'submodule_particle_identity.f90',
+
 ]
 
 for i in range(len(sources_mesh)):
@@ -746,6 +767,8 @@ env['F90'] = fortran_compiler
 # C++ compiler
 env['CXX'] = cpp_compiler
 
+import foo
+
 if debug == 'FALSE': #
 
   if host == 'r3x': #
@@ -755,7 +778,7 @@ if debug == 'FALSE': #
     ############################################################################
     if fortran_compiler == 'ifort':
 
-      env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
+      env['F90FLAGS'] = [ '-O0', '-qopenmp', '-qoverride-limits', '-xHOST', \
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \

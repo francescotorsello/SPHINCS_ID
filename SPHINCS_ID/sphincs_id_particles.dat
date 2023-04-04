@@ -171,7 +171,7 @@ use_pressure=.TRUE.     ! If .TRUE., uses the physical pressure computed with
                         ! the EOS using the SPH estimate of the density, to
                         ! compute the artificial pressure. Otherwise, the
                         ! density variable N* is used
-adapt_ghosts=.TRUE.    ! If .TRUE., the ghost particles will be placed and have
+adapt_ghosts=.FALSE.    ! If .TRUE., the ghost particles will be placed and have
                         ! a baryon number such to reproduce the density of the
                         ! outermost layers (r > 99% of the minimum radius) of
                         ! the object. If .TRUE., the parameters nx_gh, ny_gh,
@@ -190,11 +190,11 @@ ghost_dist=0.45       ! Distance between the ghost particles and the surface
                         ! Typical values range from ~0.15 to ~0.45. Usually,
                         ! higher resolutions may require values closer to 0.45,
                         ! and lower resolutions values closer to 0.15
-use_atmosphere=.TRUE.   ! If .TRUE., allows particles to move where the density
+use_atmosphere=.FALSE.   ! If .TRUE., allows particles to move where the density
                         ! is 0, and displace them using only the smoothing term
                         ! This can be useful when the system has an irregular
                         ! geometry, as, for example, an ejecta
-remove_atmosphere=.TRUE. ! If .TRUE., removes the particles placed where the
+remove_atmosphere=.FALSE. ! If .TRUE., removes the particles placed where the
                           ! density is 0, at the end of the APM iteration
 !---------------------------------------!
 ! Flag to correct the number of baryons !
