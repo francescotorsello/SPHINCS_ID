@@ -77,8 +77,7 @@ SUBMODULE (sph_particles) sph_variables
     USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu$compose
     USE units,    ONLY: m0c2_cu
     USE numerics, ONLY: linear_interpolation
-    USE pwp_EOS,  ONLY: select_EOS_parameters, gen_pwp_cold_eos, &
-                        gen_pwp_eos, Gamma_th_1
+    USE pwp_EOS,  ONLY: select_EOS_parameters, gen_pwp_eos, Gamma_th_1
 
     IMPLICIT NONE
 
@@ -123,8 +122,8 @@ SUBMODULE (sph_particles) sph_variables
     !
     !      DO a= npart_in, npart_fin, 1
     !
-    !        CALL gen_pwp_cold_eos( this% nlrf_sph(a)*m0c2_cu, &
-    !                               Pr(a), u(a), cs(a) )
+    !        CALL gen_pwp_eos( rho_rest= this% nlrf_sph(a)*m0c2_cu, &
+    !                          u_cold= u(a), P_cold= Pr(a), cs= cs(a) )
     !
     !        !CALL gen_pwp_eos( this% nlrf_sph(a)*m0c2_cu, &
     !        !                  this% u_sph(a), tmp, &
@@ -217,8 +216,8 @@ SUBMODULE (sph_particles) sph_variables
         !$OMP             PRIVATE( a )
         DO a= 1, npart_fin - npart_in + 1, 1
 
-          CALL gen_pwp_cold_eos( nlrf(a)*m0c2_cu, &
-                                 Pr(a), u(a), cs(a) )
+          CALL gen_pwp_eos( rho_rest= nlrf(a)*m0c2_cu, &
+                            u_cold= u(a), P_cold= Pr(a), cs= cs(a) )
 
           Pr(a)= Pr(a)/m0c2_cu
 
@@ -339,20 +338,15 @@ SUBMODULE (sph_particles) sph_variables
                                    sq_det_g4, g4_ll
     USE options,             ONLY: basename
     USE input_output,        ONLY: dcount, write_SPHINCS_dump, read_options
-    USE NR,                  ONLY: indexx
     USE APM,                 ONLY: density_loop
-    USE kernel_table,        ONLY: ktable
     USE options,             ONLY: ndes
     USE set_h,               ONLY: exact_nei_tree_update
     USE gradient,            ONLY: allocate_gradient, deallocate_gradient
     USE alive_flag,          ONLY: alive
     USE APM,                 ONLY: assign_h
-    USE pwp_EOS,             ONLY: select_EOS_parameters, gen_pwp_cold_eos, &
-                                   gen_pwp_eos, Gamma_th_1
     USE RCB_tree_3D,         ONLY: iorig, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
-    USE matrix,              ONLY: invert_3x3_matrix
-    USE analyze,             ONLY: COM, lin_mom
+  !  USE analyze,             ONLY: COM, lin_mom
     USE tensor,              ONLY: n_sym4x4, &
                                    itt, itx, ity, itz, &
                                    ixx, ixy, ixz, iyy, iyz, izz

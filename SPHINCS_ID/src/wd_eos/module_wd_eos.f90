@@ -37,7 +37,7 @@ MODULE wd_eos
   !********************************************
 
 
-  USE constants,  ONLY: third, c_light2, c_light2_si, kg2g, m2cm, press_si2cgs
+  USE constants,  ONLY: third, c_light2, kg2g, cm2m, press_si2cgs, m2cm
   USE units,      ONLY: m0c2_cu
 
 
@@ -60,7 +60,7 @@ MODULE wd_eos
   !! Constant with dimensions of a density in CGS units
   !  (only used in [[test_wd_eos_cgs]])
 
-  DOUBLE PRECISION, PARAMETER:: a_wd= 6.02D+21/c_light2_SI*dens_si2cu
+  DOUBLE PRECISION, PARAMETER:: a_wd= 6.02D+21/(c_light2*cm2m)*dens_si2cu
   !# Constant with dimensions of a pressure in code units
   DOUBLE PRECISION, PARAMETER:: b_wd= mu_e*9.82D+8*dens_si2cu
   !# Constant with dimensions of a density in code units
