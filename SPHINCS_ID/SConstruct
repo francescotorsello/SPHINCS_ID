@@ -247,7 +247,7 @@ module_sph_particles = [
   'submodule_sph_particles_apm.f90',
   'submodule_sph_particles_recovery.f90',
   'submodule_sph_particles_handle_positions.f90',
-  'submodule_sph_particles_adm_variables.f90',
+  #'submodule_sph_particles_adm_variables.f90',
   'submodule_sph_particles_quality_indicators.f90'
 ]
 
@@ -565,6 +565,7 @@ sources_sphincs_fm = [
   'module_RCB_tree_neighbours.f90',
   'module_SPH_variables.f90',
   'module_analyze.f90',
+  'submodule_analyze_adm_variables.f90',
   'module_EOS.f90',
   'module_set_h.f90',
   'module_tensor.f90',

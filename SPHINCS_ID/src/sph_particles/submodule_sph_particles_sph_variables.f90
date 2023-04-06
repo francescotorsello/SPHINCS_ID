@@ -346,7 +346,7 @@ SUBMODULE (sph_particles) sph_variables
     USE APM,                 ONLY: assign_h
     USE RCB_tree_3D,         ONLY: iorig, allocate_RCB_tree_memory_3D, &
                                    deallocate_RCB_tree_memory_3D
-  !  USE analyze,             ONLY: COM, lin_mom
+    USE analyze,             ONLY: compute_adm_momentum_fluid_fields!, COM, lin_mom
     USE tensor,              ONLY: n_sym4x4, &
                                    itt, itx, ity, itz, &
                                    ixx, ixy, ixz, iyy, iyz, izz
@@ -889,16 +889,16 @@ SUBMODULE (sph_particles) sph_variables
 
       CALL compute_adm_momentum_fluid_fields(                             &
                                   npart_fin - npart_in + 1,               &
-                                  this% g_xx(npart_in:npart_fin),         &
+                                  [this% g_xx(npart_in:npart_fin),         &
                                   this% g_xy(npart_in:npart_fin),         &
                                   this% g_xz(npart_in:npart_fin),         &
                                   this% g_yy(npart_in:npart_fin),         &
                                   this% g_yz(npart_in:npart_fin),         &
-                                  this% g_zz(npart_in:npart_fin),         &
+                                  this% g_zz(npart_in:npart_fin)],         &
                                   this% lapse(npart_in:npart_fin),        &
-                                  this% shift_x(npart_in:npart_fin),      &
+                                  [this% shift_x(npart_in:npart_fin),      &
                                   this% shift_y(npart_in:npart_fin),      &
-                                  this% shift_z(npart_in:npart_fin),      &
+                                  this% shift_z(npart_in:npart_fin)],      &
                                   this% nu(npart_in:npart_fin),           &
                                   this% Theta(npart_in:npart_fin),        &
                                   this% nlrf_sph(npart_in:npart_fin),     &
@@ -974,16 +974,16 @@ SUBMODULE (sph_particles) sph_variables
 
       CALL compute_adm_momentum_fluid_fields(                             &
                                   npart_fin - npart_in + 1,               &
-                                  this% g_xx(npart_in:npart_fin),         &
+                                  [this% g_xx(npart_in:npart_fin),         &
                                   this% g_xy(npart_in:npart_fin),         &
                                   this% g_xz(npart_in:npart_fin),         &
                                   this% g_yy(npart_in:npart_fin),         &
                                   this% g_yz(npart_in:npart_fin),         &
-                                  this% g_zz(npart_in:npart_fin),         &
+                                  this% g_zz(npart_in:npart_fin)],         &
                                   this% lapse(npart_in:npart_fin),        &
-                                  this% shift_x(npart_in:npart_fin),      &
+                                  [this% shift_x(npart_in:npart_fin),      &
                                   this% shift_y(npart_in:npart_fin),      &
-                                  this% shift_z(npart_in:npart_fin),      &
+                                  this% shift_z(npart_in:npart_fin)],      &
                                   this% nu(npart_in:npart_fin),           &
                                   this% Theta(npart_in:npart_fin),        &
                                   this% nlrf_sph(npart_in:npart_fin),     &
