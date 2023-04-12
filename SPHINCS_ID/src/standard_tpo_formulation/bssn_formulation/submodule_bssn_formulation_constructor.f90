@@ -56,12 +56,25 @@ SUBMODULE (bssn_formulation) constructor
     !
     !****************************************************
 
-    USE McLachlan_refine, ONLY: initialize_bssn, deallocate_bssn
+    USE McLachlan_refine, ONLY: initialize_bssn
+    USE BSSN_refine,      ONLY: deallocate_bssn
     USE mesh_refinement,  ONLY: levels, allocate_grid_function
     USE Extract_Mass,     ONLY: radius2
     USE utility,          ONLY: zero, one
+    USE options,          ONLY: integ_meth
 
     IMPLICIT NONE
+
+    ! integ_meth is a parameter set in SPHINCS_fm_input.dat,
+    ! needed during the time integration. It is not needed at the level
+    ! of the ID, but it must be set, otherwise the allocation of Ztmp
+    ! does not work (see allocate_Ztmp). Ztmp s needed during the integration,
+    ! so it should not be needed at the level of the ID. Nevertheless,
+    ! some SUBROUTINES complain if it is not allocated (TODO: double check).
+    ! When SPHINCS_ID is called with the parameter run_sph=.FALSE., the
+    ! file SPHINCS_fm_input.dat is not read, hence integ_meth is not set.
+    ! That is why it is set here.
+    IF(integ_meth /= 1 .AND. integ_meth /= 2) integ_meth= 1
 
     ! Initialize the timer
     bssnid% bssn_computer_timer= timer( "bssn_computer_timer" )

@@ -149,6 +149,10 @@ if host is None: host = default_host
 
 home_sphincs  = os.environ['HOME_SPHINCS']
 
+#libsphincs_bssn_dir = [os.environ['HOME_SPHINCS'] \
+libsphincs_bssn_dir = ['/disk/stero-1/ftors/SPHINCS_20230411' \
+                       + '/sphincs_repository/SPHINCS_BSSN/lib' ]
+
 if flavour == full_flavour or flavour == lorene_flavour:
   liblorene_dir = [os.environ['HOME_LORENE'] + '/Lib']
 
@@ -467,13 +471,14 @@ sources_base = module_id_base + module_bns_base + module_diffstar_base \
 ################################################################################
 # SOURCE FILES FROM SPHINCS_BSSN
 ################################################################################
-home_sphincs='../../../SPHINCS_SP'
-env['F90PATH'] = [
-  '.',
-  home_sphincs + '/BSSN',
-  home_sphincs + '/sphincs_repository/SPHINCS_fix_metric',
-  home_sphincs + '/sphincs_repository/SPHINCS_BSSN'
-]
+home_sphincs='../../../SPHINCS_20230411'
+#env['F90PATH'] = [
+#  '.',
+#  home_sphincs + '/BSSN',
+#  home_sphincs + '/sphincs_repository/SPHINCS_fix_metric',
+#  home_sphincs + '/sphincs_repository/SPHINCS_BSSN'
+#]
+env['F90PATH'] = ['.']
 
 mesh_dir         = [home_sphincs + '/BSSN/']
 sphincs_bssn_dir = [home_sphincs + '/sphincs_repository/SPHINCS_BSSN/']
@@ -584,7 +589,6 @@ sources_sphincs_fm = [
   'module_piecewise_polytrope.f90',
   'module_particle_identity.f90',
   'submodule_particle_identity.f90',
-
 ]
 
 for i in range(len(sources_mesh)):
@@ -610,20 +614,20 @@ if flavour == full_flavour: #
 
   if host == 'r3x': #
 
-    env['LIBPATH'] = liblorene_dir + libkadath_dir
+    env['LIBPATH'] = liblorene_dir + libkadath_dir + libsphincs_bssn_dir
 
     if debug == 'FALSE': #
 
       env['LIBS'] = ['stdc++', 'm', \
                      'lorene_export', 'lorene', 'lorenef77',  \
                      'kadath', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran']
+                     'gslcblas', 'gfortran', 'sphincs_bssn']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
                      'lorenef77_g', 'kadath-debug', 'gsl', 'lapack', 'fftw3', \
-                     'blas', 'gslcblas', 'gfortran']
+                     'blas', 'gslcblas', 'gfortran', 'sphincs_bssn']
 
   if host == 'Sunrise': #
 
@@ -637,13 +641,14 @@ if flavour == full_flavour: #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
                      'lorenef77', 'kadath', 'gsl', 'scalapack', 'openblas', \
-                     'gslcblas', 'gfortran', 'fftw3']
+                     'gslcblas', 'gfortran', 'fftw3', 'sphincs_bssn']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
                      'lorenef77_g', 'kadath-debug', 'gsl', 'scalapack', \
-                     'openblas', 'gslcblas', 'gfortran', 'fftw3']
+                     'openblas', 'gslcblas', 'gfortran', 'fftw3', \
+                     'sphincs_bssn']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
                   + module_bns_fuka \
@@ -659,20 +664,20 @@ if flavour == lorene_flavour: #
 
   if host == 'r3x': #
 
-    env['LIBPATH'] = liblorene_dir
+    env['LIBPATH'] = liblorene_dir + libsphincs_bssn_dir
 
     if debug == 'FALSE': #
 
       env['LIBS'] = ['stdc++', 'm', \
                      'lorene_export', 'lorene', 'lorenef77', \
                      'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran']
+                     'gslcblas', 'gfortran', 'sphincs_bssn']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
                      'lorenef77_g', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran']
+                     'gslcblas', 'gfortran', 'sphincs_bssn']
 
   if host == 'Sunrise': #
 
@@ -686,13 +691,13 @@ if flavour == lorene_flavour: #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export', 'lorene', \
                      'lorenef77', 'gsl', 'scalapack', 'openblas', \
-                     'gslcblas', 'gfortran', 'fftw3']
+                     'gslcblas', 'gfortran', 'fftw3', 'sphincs_bssn']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'lorene_export_g', 'lorene_g', \
                      'lorenef77_g', 'gsl', 'scalapack', 'openblas', \
-                     'gslcblas', 'gfortran', 'fftw3']
+                     'gslcblas', 'gfortran', 'fftw3', 'sphincs_bssn']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
                   + module_ejecta_generic + module_sphincs_id_lorene
@@ -707,15 +712,17 @@ if flavour == fuka_flavour: #
 
   if host == 'r3x': #
 
-    env['LIBPATH'] = libkadath_dir
+    env['LIBPATH'] = libkadath_dir + libsphincs_bssn_dir
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'kadath', 'gsl', 'fftw3', 'lapack']
+      env['LIBS'] = ['stdc++', 'm', 'kadath', 'gsl', 'fftw3', 'lapack', \
+                     'sphincs_bssn']
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['stdc++', 'm', 'kadath-debug', 'gsl', 'fftw3', 'lapack']
+      env['LIBS'] = ['stdc++', 'm', 'kadath-debug', 'gsl', 'fftw3', 'lapack', \
+                     'sphincs_bssn']
 
   if host == 'Sunrise': #
 
@@ -728,12 +735,12 @@ if flavour == fuka_flavour: #
     if debug == 'FALSE': #
 
       env['LIBS'] = ['stdc++', 'm', 'kadath', 'gsl', 'scalapack', 'openblas', \
-                     'fftw3']
+                     'fftw3', 'sphincs_bssn']
 
     if debug == 'TRUE': #
 
       env['LIBS'] = ['stdc++', 'm', 'kadath', 'gsl', 'scalapack', 'openblas', \
-                     'fftw3']
+                     'fftw3', 'sphincs_bssn']
 
   sources_flavour = module_bns_fuka \
                     + module_ejecta_generic + module_sphincs_id_fuka
@@ -745,7 +752,9 @@ if flavour == interpolate_flavour: #
 
   build_flavour= '-Dflavour=4'
 
-  env['LIBS'] = ['stdc++', 'm']
+  env['LIBPATH'] = libsphincs_bssn_dir
+
+  env['LIBS'] = ['stdc++', 'm', 'sphincs_bssn']
 
   sources_flavour = module_ejecta_generic + module_sphincs_id_interpolate
 
@@ -761,6 +770,10 @@ build_version = '-Dvers='        + version
 build_mpi     = '-DMPI_ranks='   + MPI_ranks
 build_dir     = '-Dworking_dir=' + working_dir
 build_host    = '-Dhost='        + host
+
+# Include *.mod and *.smod files by SPHINCS_BSSN
+#incmod_sphincs_bssn = '-I' + home_sphincs + '/sphincs_repository/SPHINCS_BSSN'
+incmod_sphincs_bssn = '-I/disk/stero-1/ftors/SPHINCS_20230411/sphincs_repository/SPHINCS_BSSN'
 
 # Fortran compiler
 env['F90'] = fortran_compiler
@@ -783,18 +796,21 @@ if debug == 'FALSE': #
                           '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \
+                          incmod_sphincs_bssn, \
                           build_flavour, build_mpi, build_dir, build_host, \
                           build_version ]
 #, '-CB', '-CS', '-g', '-traceback'
     if fortran_compiler == 'gfortran':
 
-      env['F90FLAGS'] = [ '-O3', '-fopenmp', '-ftree-vectorize', \
+      env['F90FLAGS'] = [ '-O0', '-fopenmp', '-ftree-vectorize', \
                           '-fopt-info-vec', '-fdollar-ok', '-fbounds-check', \
                           '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
                           '-Wall', '-Wextra', '-Wimplicit-interface', \
-                          '-Wimplicit-procedure', build_flavour, build_mpi, \
+                          '-Wimplicit-procedure', \
+                          incmod_sphincs_bssn, \
+                          build_flavour, build_mpi, \
                           build_dir, build_host, build_version ]
 
     ############################################################################
@@ -802,7 +818,7 @@ if debug == 'FALSE': #
     ############################################################################
     if cpp_compiler == 'icpc':
 
-      env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
+      env['CXXFLAGS'] = [ '-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
                           '-qopt-report', '-qopt-report-phase=vec,openmp', \
                           '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
                           '-W', '-Wundef', '-Wshadow', '-Wcast-qual', \
@@ -813,7 +829,7 @@ if debug == 'FALSE': #
 
     if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
 
-      env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-fopenmp', '-Wall', \
+      env['CXXFLAGS'] = [ '-O0', '-g', '-std=c++11', '-fopenmp', '-Wall', \
                           '-ftree-vectorize','-fopt-info-vec', \
                           '-fopt-info-loop',\
                           '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
@@ -836,6 +852,7 @@ if debug == 'FALSE': #
                           '-diag-disable=10346', '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
                           '-align array64byte', \
+                          incmod_sphincs_bssn, \
                           build_flavour, build_mpi, build_dir, build_host, \
                           build_version ]
 #, '-g', '-CB', '-CS', '-traceback'
@@ -847,7 +864,8 @@ if debug == 'FALSE': #
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', \
                           '-Wall', '-Wextra', '-Wimplicit-interface', \
-                          '-Wimplicit-procedure', build_flavour, build_mpi, \
+                          '-Wimplicit-procedure', \
+                          incmod_sphincs_bssn, build_flavour, build_mpi, \
                           build_dir, build_host, build_version ]
 
     ############################################################################
@@ -889,7 +907,8 @@ if debug == 'TRUE': #
                           '-xHOST', '-heap-arrays', '-qopt-report', \
                           '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                           '-CB', '-CS', '-traceback', '-fpe0', '-warn', \
-                          '-debug extended', '-fpp', build_flavour, build_mpi, \
+                          '-debug extended', '-fpp', \
+                          incmod_sphincs_bssn, build_flavour, build_mpi, \
                           build_dir, build_host, build_version ]
 
       # More F90 flags for debugging
@@ -918,6 +937,7 @@ if debug == 'TRUE': #
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', '-fdollar-ok', \
+                          incmod_sphincs_bssn, \
                           build_flavour, build_mpi, build_dir, build_host, \
                           build_version ]
 
@@ -967,7 +987,8 @@ if debug == 'TRUE': #
                           '-debug extended', '-fpp', '-diag-disable=10346', \
                           '-static-intel', \
                           '-qopenmp-link=static', '-static', '-xHOST', \
-                          '-align array64byte', build_flavour, build_mpi, \
+                          '-align array64byte', \
+                          incmod_sphincs_bssn, build_flavour, build_mpi, \
                           build_dir, build_host, build_version ]
 
       # More F90 flags for debugging
@@ -996,6 +1017,7 @@ if debug == 'TRUE': #
                           '-Wuninitialized','-W','-Wall', '-Wextra', '-cpp', \
                           '-ffree-line-length-none', \
                           '-ffixed-line-length-none', '-fdollar-ok', \
+                          incmod_sphincs_bssn, \
                           build_flavour, build_mpi, build_dir, build_host, \
                           build_version ]
 
@@ -1058,20 +1080,20 @@ program_construct_newtonian_binary= ['src/construct_newtonian_binary.f90']
 Progress('Evaluating $TARGET\n')
 
 Program( sphincs_id, \
-         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_sphincs_id )
+         sources_base + sources_flavour + program_sphincs_id )
+         #+ sources_mesh + sources_sphincs_fm + sources_sphincs_bssn
 
 Program( convergence_test, \
-         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_convergence_test )
+         sources_base + sources_flavour + program_convergence_test )
+         #+ sources_mesh + sources_sphincs_fm + sources_sphincs_bssn
 
 Program( write_par_eos, \
-         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_write_par_eos )
+         sources_base + sources_flavour + program_write_par_eos )
+         #+ sources_mesh + sources_sphincs_fm + sources_sphincs_bssn
 
 Program( construct_newtonian_binary, \
-         sources_base + sources_flavour + sources_mesh + sources_sphincs_fm \
-         + sources_sphincs_bssn + program_construct_newtonian_binary )
+         sources_base + sources_flavour + program_construct_newtonian_binary )
+         #+ sources_mesh + sources_sphincs_fm + sources_sphincs_bssn
 
 ################################################################################
 #

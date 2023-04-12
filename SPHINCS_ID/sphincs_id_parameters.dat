@@ -115,8 +115,8 @@ estimate_length_scale=.FALSE.
 !   If both are set to .FALSE., the code will only !
 !   read the ID and print info about it.           !
 !--------------------------------------------------!
-run_sph=.TRUE.
-run_spacetime=.FALSE.
+run_sph=.FALSE.
+run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
 ! and spacetime output files                      !
@@ -128,7 +128,7 @@ spacetime_path="spacetime-output/"
 !   Please specify the details of the particle distribution in the !
 !   sphincs_id_particles.par parameter file                        !
 !------------------------------------------------------------------!
-placer(1,:)=2                     ! 0: Read particle positions from formatted
+placer(1,:)=1                     ! 0: Read particle positions from formatted
 !placer(2,:)=1, 2                 !    file
                                   ! 1: One lattice around each matter object
                                   ! 2: Spherical surfaces on each matter object
@@ -146,7 +146,7 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping

@@ -369,6 +369,7 @@ stringize_end(vers)
     !-- Construct the bssn objects from the bns objects
     !
     construct_spacetime_id_loop: DO itr3 = 1, n_id, 1
+
       PRINT *, "===================================================" &
                //"==============="
       PRINT *, " Setting up BSSN object for "//systems(itr3), itr3
@@ -376,6 +377,7 @@ stringize_end(vers)
                //"==============="
       PRINT *
       bssn_forms(itr3)= bssn( ids(itr3)% idata )
+
     ENDDO construct_spacetime_id_loop
 
     !
@@ -384,6 +386,7 @@ stringize_end(vers)
     !-- file and print it to a formatted file (the latter for debugging)
     !
     compute_print_bssn_loop: DO itr3 = 1, n_id, 1
+
       PRINT *, "===================================================" &
                //"==============="
       PRINT *, " Computing BSSN variables for "//systems(itr3), itr3
@@ -405,13 +408,16 @@ stringize_end(vers)
       !  CALL bssn_forms(itr3)% read_bssn_dump_print_formatted &
       !    ( namefile_bssn_bin, namefile_bssn )
       !ENDIF
+
     ENDDO compute_print_bssn_loop
 
     !
     !-- Print the BSSN initial data to a formatted file
     !
     IF( export_form )THEN
+
       export_bssn_loop: DO itr3 = 1, n_id, 1
+
         WRITE( namefile_bssn, "(A8,I1,A4)" ) &
                               "bssn-id_", itr3, ".dat"
         namefile_bssn= TRIM( spacetime_path )//TRIM( namefile_bssn )
@@ -420,6 +426,7 @@ stringize_end(vers)
           print_formatted_id_tpo_variables( namefile= namefile_bssn )
 
       ENDDO export_bssn_loop
+
     ENDIF
 
   ENDIF

@@ -150,8 +150,8 @@ SUBMODULE (bssn_formulation) constraints
     CALL allocate_grid_function( this% MC, "MC_id", 3 )
     CALL allocate_grid_function( this% GC, "GC_id", 3 )
 
-    CALL allocate_grid_function( this% rho, "HC_rho", 1 )
-    CALL allocate_grid_function( this% S, "MC_S", 3 )
+    CALL allocate_grid_function( this% rho, "rho", 1 )
+    CALL allocate_grid_function( this% S, "S", 3 )
 
     !
     !-- Import the hydro ID on the gravity grid

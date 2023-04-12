@@ -889,16 +889,16 @@ SUBMODULE (sph_particles) sph_variables
 
       CALL compute_adm_momentum_fluid_fields(                             &
                                   npart_fin - npart_in + 1,               &
-                                  [this% g_xx(npart_in:npart_fin),         &
+                                  this% lapse(npart_in:npart_fin),        &
+                                  this% shift_x(npart_in:npart_fin),      &
+                                  this% shift_y(npart_in:npart_fin),      &
+                                  this% shift_z(npart_in:npart_fin),      &
+                                  this% g_xx(npart_in:npart_fin),         &
                                   this% g_xy(npart_in:npart_fin),         &
                                   this% g_xz(npart_in:npart_fin),         &
                                   this% g_yy(npart_in:npart_fin),         &
                                   this% g_yz(npart_in:npart_fin),         &
-                                  this% g_zz(npart_in:npart_fin)],         &
-                                  this% lapse(npart_in:npart_fin),        &
-                                  [this% shift_x(npart_in:npart_fin),      &
-                                  this% shift_y(npart_in:npart_fin),      &
-                                  this% shift_z(npart_in:npart_fin)],      &
+                                  this% g_zz(npart_in:npart_fin),         &
                                   this% nu(npart_in:npart_fin),           &
                                   this% Theta(npart_in:npart_fin),        &
                                   this% nlrf_sph(npart_in:npart_fin),     &
@@ -974,16 +974,16 @@ SUBMODULE (sph_particles) sph_variables
 
       CALL compute_adm_momentum_fluid_fields(                             &
                                   npart_fin - npart_in + 1,               &
-                                  [this% g_xx(npart_in:npart_fin),         &
+                                  this% lapse(npart_in:npart_fin),        &
+                                  this% shift_x(npart_in:npart_fin),      &
+                                  this% shift_y(npart_in:npart_fin),      &
+                                  this% shift_z(npart_in:npart_fin),      &
+                                  this% g_xx(npart_in:npart_fin),         &
                                   this% g_xy(npart_in:npart_fin),         &
                                   this% g_xz(npart_in:npart_fin),         &
                                   this% g_yy(npart_in:npart_fin),         &
                                   this% g_yz(npart_in:npart_fin),         &
-                                  this% g_zz(npart_in:npart_fin)],         &
-                                  this% lapse(npart_in:npart_fin),        &
-                                  [this% shift_x(npart_in:npart_fin),      &
-                                  this% shift_y(npart_in:npart_fin),      &
-                                  this% shift_z(npart_in:npart_fin)],      &
+                                  this% g_zz(npart_in:npart_fin),         &
                                   this% nu(npart_in:npart_fin),           &
                                   this% Theta(npart_in:npart_fin),        &
                                   this% nlrf_sph(npart_in:npart_fin),     &

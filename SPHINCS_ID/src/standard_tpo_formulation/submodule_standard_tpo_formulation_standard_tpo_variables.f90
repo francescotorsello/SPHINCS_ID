@@ -214,6 +214,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     CALL tpof% importer_timer% stop_timer()
 
     PRINT *, " * Spacetime ID imported on the gravity grid."
+    PRINT *
 
     !
     !-- Ensure that the standard 3+1 ID does not contain NaNs,

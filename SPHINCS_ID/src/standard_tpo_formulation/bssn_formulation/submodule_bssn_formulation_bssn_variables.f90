@@ -117,8 +117,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     PRINT *, "** Computing and exporting BSSN ID..."
 
     ! Allocate memory for the ADM MODULE variables (this has to be done since
-    ! the MODULE SUBROUTINES need them; not allocating it results in a
-    ! segmentation fault)
+    ! the MODULE SUBROUTINES from SPHINCS_BSSN need them)
     PRINT *
     PRINT *, " * Allocating needed memory..."
     PRINT *
@@ -131,7 +130,7 @@ SUBMODULE (bssn_formulation) bssn_variables
     levels = this% levels
     nlevels= this% nlevels
 
-    !CALL allocate_ADM()
+    ! Allocate BSSN variables
     CALL allocate_BSSN()
 
     ! Allocate temporary memory for time integration
