@@ -12,11 +12,5 @@
 !**/config/*
 !**/mod/__mod__
 !SConscript
-!gravity_grid_parameters.dat
-!bssn_parameters.dat
-!sphincs_id_parameters.dat
-!sphincs_id_particles.dat
-!SPHINCS_fm_input.dat
-!newtonian_binary_parameters.dat
 !COPYING
 !README.md
