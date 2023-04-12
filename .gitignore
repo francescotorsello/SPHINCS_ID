@@ -7,9 +7,10 @@
 !*/
 !*.f90
 !SConstruct
-!res
-!res/SPHINCS_ID-User_Manual.pdf
-!tools
+!**/res/*
+!**/tools/*
+!**/config/*
+!**/mod/__mod__
 !SConscript
 !gravity_grid_parameters.dat
 !bssn_parameters.dat
