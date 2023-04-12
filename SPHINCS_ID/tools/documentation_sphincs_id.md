@@ -13,15 +13,15 @@ source: true
 incl_src: false
 graph: true
 sort: alpha
-src_dir: ./src
-media_dir: ./doc-media
+src_dir: ../src
+media_dir: ../res/doc-media
+page_dir: ../res/doc-pages
 exclude: ./src/sph_particles/submodule_sph_particles_redistribute_nu.f90
-output_dir: ./doc
-page_dir: ./doc-pages
+output_dir: ../doc
 creation_date: %Y-%m-%d %H:%M:%S
 print_creation_date: true
 proc_internals: true
-favicon: ./doc-media/favicon.png
+favicon: ../res/doc-media/favicon.png
 alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        lorene = \(\texttt{LORENE}\)
        compose = \(\mathrm{CompOSE}\)
@@ -44,7 +44,7 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        drs = \(\mathrm{DRS}\)
        nb = n_\mathrm{b}
 parallel: 80
-<!---graph_dir: doc-graphs--->
+<!---graph_dir: ../doc-graphs--->
 
 ### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___

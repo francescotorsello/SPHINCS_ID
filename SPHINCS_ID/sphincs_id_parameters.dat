@@ -115,7 +115,7 @@ estimate_length_scale=.FALSE.
 !   If both are set to .FALSE., the code will only !
 !   read the ID and print info about it.           !
 !--------------------------------------------------!
-run_sph=.FALSE.
+run_sph=.TRUE.
 run_spacetime=.TRUE.
 !-------------------------------------------------!
 ! Local paths to the directories to store the SPH !
@@ -146,7 +146,7 @@ export_form_x=.FALSE.   ! Export only the ID on the x axis to formatted files,
 compute_constraints=.TRUE.        ! Compute constraints on the gravity grid,
                                    ! without information from the particles
 
-compute_parts_constraints=.FALSE.  ! Compute constraints on the gravity grid,
+compute_parts_constraints=.TRUE.  ! Compute constraints on the gravity grid,
                                    ! mapping the physical metric to the
                                    ! particles, computing the stress-energy
                                    ! tensor on the particles, and then mapping

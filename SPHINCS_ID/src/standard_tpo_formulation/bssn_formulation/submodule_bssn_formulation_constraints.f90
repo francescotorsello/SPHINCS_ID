@@ -68,7 +68,7 @@ SUBMODULE (bssn_formulation) constraints
                                  jyy, jyz, jzz, jx, jy, jz, &
                                  it, ix, iy, iz, n_sym4x4
     USE mesh_refinement,   ONLY: allocate_grid_function, &
-                                 levels, nlevels
+                                 deallocate_grid_function, levels, nlevels
     USE McLachlan_refine,  ONLY: BSSN_CONSTRAINTS_INTERIOR
 
     IMPLICIT NONE
@@ -111,9 +111,9 @@ SUBMODULE (bssn_formulation) constraints
     TYPE(grid_function_scalar):: HC_A
     TYPE(grid_function_scalar):: HC_derphi
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: name_constraint
-    CHARACTER( LEN= : ), ALLOCATABLE:: name_analysis
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalname_logfile
+    CHARACTER(LEN= :), ALLOCATABLE:: name_constraint
+    CHARACTER(LEN= :), ALLOCATABLE:: name_analysis
+    CHARACTER(LEN= :), ALLOCATABLE:: finalname_logfile
     CHARACTER( LEN= 2 ):: n_reflev
 
     LOGICAL:: exist
@@ -1023,6 +1023,25 @@ SUBMODULE (bssn_formulation) constraints
     !DEALLOCATE( Tmunu_ll )
     DEALLOCATE( levels )
 
+    CALL deallocate_grid_function( baryon_density, "baryon_density" )
+    CALL deallocate_grid_function( energy_density, "energy_density" )
+    CALL deallocate_grid_function( specific_energy, "specific_energy" )
+    CALL deallocate_grid_function( pressure, "pressure" )
+
+    CALL deallocate_grid_function( v_euler, "v_euler" )
+    CALL deallocate_grid_function( v_euler_l, "v_euler_l" )
+    CALL deallocate_grid_function( u_euler_l, "u_euler_l" )
+    CALL deallocate_grid_function( lorentz_factor, "lorentz_factor" )
+
+    CALL deallocate_grid_function( g4, "g4" )
+    CALL deallocate_grid_function( Tmunu_ll, "Tmunu_ll" )
+
+    CALL deallocate_grid_function( HC_hand, "HC_hand" )
+    CALL deallocate_grid_function( HC_rho, "HC_rho" )
+    CALL deallocate_grid_function( HC_trK, "HC_trK" )
+    CALL deallocate_grid_function( HC_A, "HC_A" )
+    CALL deallocate_grid_function( HC_derphi, "HC_derphi" )
+
 
     CONTAINS
 
@@ -1370,7 +1389,8 @@ SUBMODULE (bssn_formulation) constraints
 
     USE mesh_refinement,             ONLY: allocate_grid_function, levels, &
                                            rad_coord, nlevels, &
-                                           deallocate_grid_function, coords
+                                           deallocate_grid_function, coords, &
+                                           list_grid_functions
     USE ADM_refine,                  ONLY: lapse, shift_u, &
                                            g_phys3_ll, &
                                            allocate_ADM, deallocate_ADM
@@ -1429,9 +1449,7 @@ SUBMODULE (bssn_formulation) constraints
     INTEGER:: unit_logfile
     INTEGER, SAVE:: counter= 1
 
-
     DOUBLE PRECISION:: min_abs_y, min_abs_z
-    !DOUBLE PRECISION, DIMENSION( :, :, :, : ), ALLOCATABLE:: abs_grid
     DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_x
     DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_y
     DOUBLE PRECISION, DIMENSION(:,:,:),   POINTER    :: pts_z
@@ -1445,9 +1463,9 @@ SUBMODULE (bssn_formulation) constraints
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: theta_loc
     DOUBLE PRECISION, DIMENSION(:),   ALLOCATABLE:: sph_density
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: name_constraint
-    CHARACTER( LEN= : ), ALLOCATABLE:: name_analysis
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalname_logfile
+    CHARACTER(LEN= :), ALLOCATABLE:: name_constraint
+    CHARACTER(LEN= :), ALLOCATABLE:: name_analysis
+    CHARACTER(LEN= :), ALLOCATABLE:: finalname_logfile
     CHARACTER( 2 ):: n_reflev
 
     LOGICAL:: exist
@@ -1473,9 +1491,9 @@ SUBMODULE (bssn_formulation) constraints
     IF( debug ) PRINT *, "ngrid_z=", this% levels(1)%ngrid_z
     IF( debug ) PRINT *
 
-    CALL allocate_grid_function( this% HC_parts, "HC_parts_ID", 1 )
-    CALL allocate_grid_function( this% MC_parts, "MC_parts_ID", 3 )
-    CALL allocate_grid_function( this% GC_parts, "GC_parts_ID", 3 )
+    CALL allocate_grid_function( this% HC_parts, "HC_parts_id", 1 )
+    CALL allocate_grid_function( this% MC_parts, "MC_parts_id", 3 )
+    CALL allocate_grid_function( this% GC_parts, "GC_parts_id", 3 )
 
     CALL allocate_grid_function( this% rho_parts, "rho_parts", 1 )
     CALL allocate_grid_function( this% S_parts, "S_parts", 3 )

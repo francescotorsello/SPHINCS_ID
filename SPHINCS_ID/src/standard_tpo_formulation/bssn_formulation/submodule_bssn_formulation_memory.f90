@@ -123,6 +123,10 @@ SUBMODULE (bssn_formulation) memory
       CALL deallocate_grid_function( this% GC, "GC_id" )
     ENDIF
 
+    IF( ALLOCATED( this% GC_parts% levels ) )THEN
+      CALL deallocate_grid_function( this% GC, "GC_parts_id" )
+    ENDIF
+
     IF( ALLOCATED( this% Ricci_ll% levels ) )THEN
       CALL deallocate_grid_function( this% Ricci_ll, "Ricci_ll_id" )
     ENDIF
@@ -130,6 +134,22 @@ SUBMODULE (bssn_formulation) memory
     IF( ALLOCATED( this% Ricci_scalar% levels ) )THEN
       CALL deallocate_grid_function( this% Ricci_scalar, &
                                      "Ricci_scalar_id" )
+    ENDIF
+
+    IF( ALLOCATED( this% rho% levels ) )THEN
+      CALL deallocate_grid_function( this% rho, "rho" )
+    ENDIF
+
+    IF( ALLOCATED( this% S% levels ) )THEN
+      CALL deallocate_grid_function( this% S, "S" )
+    ENDIF
+
+    IF( ALLOCATED( this% rho_parts% levels ) )THEN
+      CALL deallocate_grid_function( this% rho_parts, "rho_parts" )
+    ENDIF
+
+    IF( ALLOCATED( this% S_parts% levels ) )THEN
+      CALL deallocate_grid_function( this% S_parts, "S_parts" )
     ENDIF
 
   END PROCEDURE deallocate_bssn_fields
