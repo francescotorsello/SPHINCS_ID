@@ -63,7 +63,7 @@ Currently, it produces initial data for:
 
 The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations.
 
-SPHINCS_ID needs SPHINCS_BSSN to be compiled.
+SPHINCS_ID links to SPHINCS_BSSN.
 
 The User Manual for SPHINCS_ID is <a href="page/SPHINCS_ID-User_Manual.pdf" target="_blank">SPHINCS_ID-User_Manual.pdf</a>
 

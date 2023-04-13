@@ -11,7 +11,6 @@
 !**/tools/*
 !**/config/*
 !**/programs/*.f90
-!**/mod/__mod__
 !SConscript
 !COPYING
 !README.md

@@ -1,3 +1,30 @@
+################################################################################
+# File:       host_r3x.py
+# Author:     Francesco Torsello
+################################################################################
+# Copyright (C) 2020-2023 Francesco Torsello
+#
+# This file is part of SPHINCS_ID
+#
+# SPHINCS_ID is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# SPHINCS_ID is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.
+# The copy of the GNU General Public License should be in the file
+# 'COPYING'.
+################################################################################
+################################################################################
+# IN THIS FILE, HOST-SPECIFIC (r3x) PRODUCTION OPTIONS FOR THE COMPILATION OF
+# SPHINCS_ID ARE SET. THIS FILE IS SUPPOSED TO BE INCLUDED IN A SConscript FILE.
+################################################################################
 ############################################################################
 # FORTRAN PRODUCTION BUILD OPTIONS
 ############################################################################
