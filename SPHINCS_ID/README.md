@@ -26,7 +26,7 @@ SPHINCS_ID is compiled using SCons.
 
 Follow the instructions at [the SCons documentation](https://scons.org/doc/production/HTML/scons-user/index.html){:target="_blank"} (or any later version of it) to install SCons. Once SCons is installed, go to the root directory of SPHINCS_ID where the SConstruct file is placed; if you are compiling SPHINCS_ID on a new host, open SConstruct and set up your local environment. After that, run 'scons' and the compilation will start. See res/SPHINCS_ID-User_Manual.pdf for more details.
 
-The compilation of SPHINCS_ID will create a directory named build and place the object files *.o inside it, following the same directory structure as in src. The *.mod files will instead be placed inside the mod directory. The executable files *.x will be placed inside programs/bin. The configuration files (or parameter files) needed to run the executables are placed inside config. See res/SPHINCS_ID-User_Manual.pdf for more details.
+The compilation of SPHINCS_ID will create a directory named build and place the object files \*.o inside it, following the same directory structure as in src. The \*.mod files will instead be placed inside the mod directory. The executable files \*.x will be placed inside programs/bin. The configuration files (or parameter files) needed to run the executables are placed inside config. See res/SPHINCS_ID-User_Manual.pdf for more details.
 
 # Producing the documentation
 
