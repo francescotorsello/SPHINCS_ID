@@ -3,6 +3,13 @@
 ! gfortran requires the assignment to be on the same line, ifort does not !
 !-------------------------------------------------------------------------!
 
+!----------------------------------------------------------------------------!
+! Desired total particle number                                              !
+! The particle number on each matter object is determined by the mass ratios !
+!----------------------------------------------------------------------------!
+! gfortran cannot read scientific notation for integers;
+! e.g., npart_des= 3.0D+5 does not work with gfortran
+npart_des= 500000
 !------------------------------------------------------------------------!
 ! Parameters needed to read the particle positions from a formatted file !
 !   The code assumes that one star has negative x coordinates, and the   !
@@ -10,36 +17,9 @@
 !   particles with z > 0 to z < 0, to impose the equatorial-plane        !
 !   symmetry                                                             !
 !------------------------------------------------------------------------!
-parts_pos_path="sph-output/"!"pos-archive/"     ! Path to the directory containing the
-               !"sph-output/"     ! formatted files with the particle positions
+parts_pos_path=""     ! Path to the directory containing the
+                      ! formatted files with the particle positions
 parts_pos="final_pos_nu.dat"
-          !"apm-pos-nu_BNSLO_1.4-1.4_45km_poly2.00_500k.dat"
-          !"apm-pos-nu_1215_45km_mpa1_2M.dat"
-          !"apm-pos-nu_1215_45km_mpa1_500k.dat"
-          !"apm-pos-nu_1313_45km_ms1b_500k.dat"
-          !"apm-pos-nu_1313_45km_ms1b_2M.dat"
-          !"apm-pos-nu_1313_45km_ms1b_2M-tmp.dat"
-          !"apm-pos-nu_1313_45km_ms1b_2M-dist0.5.dat"
-          !"apm-pos-nu_135135_42km_apr4_500k.dat"
-          !"lorene-bns-id-particles-form_1-1.dat" ! File containing the particle
-          !"apm-pos-nu_1218_45km_pol275_500k.dat" ! positions and, optionally, nu
-          !"apm-pos-nu_1216_45km_pol275_500k.dat"
-          !"apm-pos-nu_1313_45km_pol2_500k.dat"
-          !"apm-pos-nu_1218_42km_dd2sfrdf18_5M.dat"
-          !"apm-pos-nu_1218_42km_dd2sfrdf18_2.6M.dat"
-          !!"apm-pos-nu_135135_42km_apr4_500k.dat"
-          !"apm-pos-nu_135135_42km_apr4_500k_hr.dat"
-          !"apm-pos-nu_BNSLO_1.3-1.3_45km_mpa1_500k.dat"
-          !"apm-pos_1218_45km_pol275_1M.dat"
-          !"apm-pos_1218_45km_pol275_2M.dat"
-          !"apm-pos-nu_DRSLO_4_pol2_1M_bt.dat"
-          !"apm-pos-nu_DRSLO_4_pol2_1M_hr.dat"
-          !"apm-pos-nu_EJECT_1e-3_apr4_800k.dat"
-          !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm50.dat"
-          !"apm-pos-nu_EJECT_1e-3_apr4_200k-atm.dat"
-          !"apm-pos-nu_EJECT_1e-3_apr4_200k-apm200-atm.dat"
-          !"apm-pos-nu_EJECT_1e-3_apr4_1.5M-apm200-atm.dat"
-          !"apm-pos-nu_BNSFU_1.4-1.4_50km_poly2.00_500k.dat"
 columns(:)=1,2,3 !2,3,4            ! Columns containing the particle positions;
            !1,2,3             ! x,y,z in this order
 read_nu=.TRUE.               ! If .TRUE., the values of nu at the particle
@@ -55,13 +35,6 @@ header_lines=0 !4              ! Number of header lines in the file
 ! if the stars have masses that differ less than 0.5%      !
 !----------------------------------------------------------!
 reflect_particles_x= .TRUE.
-!----------------------------------------------------------------------------!
-! Desired total particle number                                              !
-! The particle number on each matter object is determined by the mass ratios !
-!----------------------------------------------------------------------------!
-! gfortran cannot read scientific notation for integers;
-! e.g., npart_des= 3.0D+5 does not work with gfortran
-npart_des= 500000
 !---------------------------------------------------------------!
 ! Parameters needed to place and filter particles on lattice(s) !
 !---------------------------------------------------------------!
@@ -120,21 +93,6 @@ randomize_r=    .TRUE.  ! Randomize particle positions in r and push inside
                         ! for the other two.
 !----------------------------------------------------------!
 ! Parameters for the Artificial Pressure Method (APM)      !
-!                                                          !
-! If the outer layers of a star have a very low density    !
-! compared to the core, it can happen that, irrespective   !
-! of the initial particle distribution and the APM         !
-! parameters, the particle distribution output by the      !
-! APM does not have a smooth surface. In this case,        !
-! the only solution (that has been found as of 20.10.2021) !
-! is to increase the particle number.                      !
-! As of 20.10.2021, this has only happened with the        !
-! CompOSE tabulated EOS (all of them), but not with        !
-! any piecewise polytropic or polytropic EOS.              !
-! This problem can manifest itself with error messages     !
-! concerning particles occupying the same position,        !
-! or some smoothing lengths being 0, or a matrix not being !
-! invertible.                                              !
 !----------------------------------------------------------!
 apm_iterate=.FALSE.,.FALSE.  ! If .TRUE., applies the APM to the i-th object
                     ! Note that if reflect_particles_x= .TRUE. and the
@@ -204,31 +162,12 @@ correct_nu=.TRUE.  ! If .TRUE., the baryon number per particle nu is corrected
                    ! stars.
 !--------------------------------------------------------------------------!
 ! Parameters needed to read the electron fraction when using a CompOSE EoS !
-! CHECK THAT THE EOS CHOSEN HERE AND THE EoS CHOSEN IN THE OTHER PARAMETER !
-! FILE sphincs_id_parameters.par MATCH!                                    !
+! CHECK THAT THE EOS CHOSEN HERE IS THE CORRECT ONE FOR THE ID FILE CHOSEN !
+! IN THE OTHER PARAMETER FILE sphincs_id_parameters.dat                    !
 !--------------------------------------------------------------------------!
 compose_eos=.FALSE. ! If .TRUE., assigns values to Ye (electron fraction)
                    ! as a function of rho (baryon mass density).
                    ! The values are computed via linear interpolation
                    ! using the CompOSE tabulated EOS.
-!------------------------------------------------------------------------------
-! The following is DEPRECATED
-! compose_path is the path to the directory containing the CompOSE EoS.
-! compose_filename is the subpath of compose_path to the file
-! with .beta extension. NOTE: the .beta extension is omitted here, so that
-! to read the file great_eos.beta in the directory compose_path/GREAT_EoS,
-! one writes compose_filename="GREAT_EoS/great_eos"
-!compose_path="../../CompOSE_EOS/"
-! gfortran requires the following string to be on the first line, ifort does not
-!compose_filename="DD2-SF_RDF1.8/eos"
-!                 !"SFHO_with_electrons/eos"
-!                 !"SFHX_with_electrons/eos"
-!                 !"TNTYST_with_electrons/eos"
-!                 !"FT_with_electrons/eos"
-!                 !"SRO_APR_SNA/eos"
-!                 !"SRO_SLy4_SNA/eos"
-!                 !"RG_SLY4/eos"
-!                 !"DD2-SF_RDF1.8/eos"
-!                 !"DD2-SF_RDF1.9/eos"
 
 /

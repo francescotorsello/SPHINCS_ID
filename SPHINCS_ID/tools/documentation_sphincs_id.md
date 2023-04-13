@@ -14,6 +14,7 @@ incl_src: false
 graph: true
 sort: alpha
 src_dir: ../src
+         ../programs
 media_dir: ../res/doc-media
 page_dir: ../res/doc-pages
 exclude: ./src/sph_particles/submodule_sph_particles_redistribute_nu.f90
@@ -44,7 +45,7 @@ alias: sphincsid = \(\texttt{SPHINCS_ID}\)
        drs = \(\mathrm{DRS}\)
        nb = n_\mathrm{b}
 parallel: 80
-<!---graph_dir: ../doc-graphs--->
+<!---graph_dir: ../res/doc-graphs--->
 
 ### **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___

@@ -25,14 +25,14 @@ eccentricity= 0.65D0        ! Reminder:
 !-------------!
 ! Input files !
 !-------------!
-common_path="tov-id-files/" ! Relative path to the directory where the input
+common_path="" ! Relative path to the directory where the input
                             ! files are stored
 !---Star 1
-filename_sph1="WD-1.00000"    !"NSxx.00000"
-filename_tov1="TOV-WD1.00000" !"TOV.00000"
+filename_sph1=""
+filename_tov1=""
 !---Star 2
-filename_sph2="WD-2.00000"    !"NSx2.00000"
-filename_tov2="TOV-WD2.00000" !"TO2.00000"
+filename_sph2=""
+filename_tov2=""
 !--------------!
 ! Output files !
 !--------------!

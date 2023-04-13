@@ -146,7 +146,7 @@ if host is None: host = default_host
 ################################################################################
 
 ################################################################################
-# INITIALIZATION
+# ENVIRONMENT
 ################################################################################
 
 if fortran_compiler == 'ifort': #
@@ -206,7 +206,9 @@ if verbose == 'FALSE':
 
 ################################################################################
 
-Export('env flavour full_flavour lorene_flavour fuka_flavour interpolate_flavour version MPI_ranks working_dir host fortran_compiler cpp_compiler debug')
+Export('env flavour full_flavour lorene_flavour fuka_flavour ' \
+       + 'interpolate_flavour version MPI_ranks working_dir host ' \
+       + 'fortran_compiler cpp_compiler debug')
 ################################################################################
 
 SConscript('src/SConscript', variant_dir='build', duplicate=False)
