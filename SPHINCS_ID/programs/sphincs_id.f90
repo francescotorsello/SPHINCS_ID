@@ -64,7 +64,7 @@ PROGRAM sphincs_id
   USE bssn_formulation, ONLY: bssn
   USE timing,           ONLY: timer
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
-                              itr4, hostname, version, &
+                              itr4, hostname, version, eos$tabu$compose, &
                               test_status, show_progress, end_time, &
                               read_sphincs_id_parameters, &
                               !----------
@@ -87,6 +87,9 @@ PROGRAM sphincs_id
 
   INTEGER:: i_matter
   !! Index running over the number of physical systems
+
+  INTEGER:: n_matter
+  !! NUmber of matter objects in the physical systm
 
   DOUBLE PRECISION, DIMENSION(3):: adm_mom_m2p
   !# ADM linear momentum of the fluid computed using the metric mapped
@@ -115,6 +118,7 @@ PROGRAM sphincs_id
   !  the |bssn| constraints violations
 
   LOGICAL:: exist
+  LOGICAL:: tabu_eos
   LOGICAL(4):: dir_out
 
   TYPE id
@@ -643,23 +647,58 @@ stringize_end(vers)
       ENDDO compute_print_bssn_constraints_loop
 
       !
-      !-- Test recovery using the mesh-2-particle mapping
+      !-- Compute the ADM linear momentum of the fluid and
+      !-- test the recovery, using the mesh-2-particle mapping
       !
       IF( run_sph )THEN
 
         test_recovery_m2p: DO itr3 = 1, n_id, 1
 
           part_distribution_loop4: DO itr4= 1, max_n_parts, 1
+
             IF( placer( itr3, itr4 ) == test_int )THEN
               EXIT part_distribution_loop4
               ! Experimental: empty particles object
               !particles_dist( itr, itr2 )= particles()
             ELSE
 
-              IF(particles_dist( itr3, itr4 )% get_compose_eos()) CYCLE
-              ! TODO: as of 03.03.2023, SPHINCS_BSSN does not support tabulated
+              PRINT *, "===================================================" &
+                       //"================================================"
+              PRINT *, " Estimating the ADM momentum of the fluid using ", &
+                       " the metric mapped with mesh-to-particle mapping, for",&
+                       " BSSN formulation", itr3, &
+                       "with particle distribution", itr4
+              PRINT *, "===================================================" &
+                       //"================================================"
+              PRINT *
+
+              CALL bssn_forms(itr3)% compute_adm_momentum_fluid_m2p &
+                ( particles_dist( itr3, itr4 ), adm_mom_m2p )
+
+              n_matter= particles_dist( itr3, itr4 )% get_n_matter()
+              ! Set tabu_eos to .TRUE. if any of the matter objects use
+              ! a tabulated EOS
+              tabu_eos= .FALSE.
+              DO i_matter= 1, n_matter, 1
+
+                tabu_eos= tabu_eos &
+                          .OR. &
+                          (particles_dist(itr3, itr4)% get_eos_id(i_matter) &
+                          == eos$tabu$compose)
+
+              ENDDO
+              IF( tabu_eos )THEN
+              ! TODO: as of 14.04.2023, SPHINCS_BSSN does not support tabulated
               !       EOS, hence the recovery should not be called when using
               !       tabulated EOS
+
+                PRINT *, "** SPHINCS_BSSN does not support tabulated EOS ", &
+                         "currently. Hence, the recovery cannot be tested ", &
+                         "for the considered physical system."
+                PRINT *
+                CYCLE
+
+              ENDIF
 
               PRINT *, "===================================================" &
                        //"================================================"
@@ -676,19 +715,6 @@ stringize_end(vers)
                                //TRIM( namefile_recovery )
               CALL bssn_forms(itr3)% test_recovery_m2p &
                 ( particles_dist( itr3, itr4 ), namefile_recovery )
-
-              PRINT *, "===================================================" &
-                       //"================================================"
-              PRINT *, " Estimating the ADM momentum of the fluid using ", &
-                       " the metric mapped with mesh-to-particle mapping, for",&
-                       " BSSN formulation", itr3, &
-                       "with particle distribution", itr4
-              PRINT *, "===================================================" &
-                       //"================================================"
-              PRINT *
-
-              CALL bssn_forms(itr3)% compute_adm_momentum_fluid_m2p &
-                ( particles_dist( itr3, itr4 ), adm_mom_m2p )
 
             ENDIF
 

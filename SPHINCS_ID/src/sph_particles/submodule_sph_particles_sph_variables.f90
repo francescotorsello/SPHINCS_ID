@@ -42,7 +42,8 @@ SUBMODULE (sph_particles) sph_variables
 
 
   USE constants,  ONLY: half, c_light2
-  USE utility,    ONLY: zero, one, two, three, eos$poly, eos$pwpoly
+  USE utility,    ONLY: zero, one, two, three, eos$poly, eos$pwpoly, &
+                        eos$tabu$compose
 
 
   IMPLICIT NONE
@@ -74,7 +75,6 @@ SUBMODULE (sph_particles) sph_variables
     !
     !************************************************
 
-    USE utility,  ONLY: eos$poly, eos$pwpoly, eos$tabu$compose
     USE units,    ONLY: m0c2_cu
     USE numerics, ONLY: linear_interpolation
     USE pwp_EOS,  ONLY: select_EOS_parameters, gen_pwp_eos, Gamma_th_1
@@ -367,6 +367,8 @@ SUBMODULE (sph_particles) sph_variables
 
     !CHARACTER(LEN= :), ALLOCATABLE:: compose_namefile
     CHARACTER(LEN= :), ALLOCATABLE:: finalnamefile
+
+    LOGICAL:: tabu_eos
 
     TYPE(timer):: find_h_bruteforce_timer
 
@@ -807,8 +809,18 @@ SUBMODULE (sph_particles) sph_variables
     !
     !-- Test the recovery
     !
-    IF( .NOT.this% compose_eos )THEN
-    ! TODO: as of 03.03.2023, SPHINCS_BSSN does not support tabulated EOS,
+    ! Set tabu_eos to .TRUE. if any of the matter objects use a tabulated EOS
+    tabu_eos= .FALSE.
+    DO i_matter= 1, this% n_matter, 1
+
+      tabu_eos= tabu_eos &
+                .OR. &
+                (NINT(this% all_eos(i_matter)% eos_parameters(1)) &
+                 == eos$tabu$compose)
+
+    ENDDO
+    IF( .NOT.tabu_eos )THEN
+    ! TODO: as of 14.04.2023, SPHINCS_BSSN does not support tabulated EOS,
     !       hence the recovery should not be called when using tabulated EOS
 
       CALL this% test_recovery( this% npart,       &
@@ -822,6 +834,7 @@ SUBMODULE (sph_particles) sph_variables
 
     ENDIF
 
+    ! Use MODULE variables (DEBUGGING)
     !CALL this% test_recovery( npart,       &
     !                          pos_u,         &
     !                          nlrf,    &

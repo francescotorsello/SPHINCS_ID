@@ -442,6 +442,24 @@ END PROCEDURE get_nstar_sph
   END PROCEDURE get_compose_eos
 
 
+  MODULE PROCEDURE get_eos_id
+
+    !************************************************
+    !
+    !# Returns the |eos| identifier for matter object
+    !  `i_matter`
+    !
+    !  FT 14.04.2023
+    !
+    !************************************************
+
+    IMPLICIT NONE
+
+    eos_id= NINT(this% all_eos(i_matter)% eos_parameters(1))
+
+  END PROCEDURE get_eos_id
+
+
   MODULE PROCEDURE is_empty
 
     !************************************************

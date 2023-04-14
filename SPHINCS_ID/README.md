@@ -1,4 +1,4 @@
-# **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
+## **S**moothed **P**article **H**ydrodynamics **IN** **C**urved **S**pacetime &mdash; **I**nitial **D**ata builder
 ___
 
 SPHINCS_ID is a modular, object-oriented, OMP parallelized Fortran 2018 code to produce initial data to be evolved in time with the General Relativistic, Lagrangian Hydrodynamics, Fortran 2018 code SPHINCS_BSSN ([1][1]{:target="_blank"}), and the Newtonian, Lagrangian Hydrodynamics, Fortran code MAGMA2 ([2][2]{:target="_blank"}).
@@ -16,11 +16,11 @@ The modular and hierarchical structure of the code makes it easy to extend it to
 
 SPHINCS_ID links to SPHINCS_BSSN.
 
-The User Manual for SPHINCS_ID is res/SPHINCS_ID-User_Manual.pdf
+The User Manual for SPHINCS_ID is res/doc-pages/SPHINCS_ID-User_Manual.pdf
 
 Please read the README.md files in each directory for more details.
 
-# Compilation
+## Compilation
 
 SPHINCS_ID is compiled using SCons.
 
@@ -28,12 +28,13 @@ Follow the instructions at [the SCons documentation](https://scons.org/doc/produ
 
 The compilation of SPHINCS_ID will create a directory named build and place the object files \*.o inside it, following the same directory structure as in src. The \*.mod files will instead be placed inside the mod directory. The executable files \*.x will be placed inside programs/bin. The configuration files (or parameter files) needed to run the executables are placed inside config. See res/SPHINCS_ID-User_Manual.pdf for more details.
 
-# Producing the documentation
+## Documentation
 
 The documentation of SPHINCS_ID is produced with FORD.
 
 To install FORD, run 'pip install ford' or follow the instructions at [its GitHub repository](https://github.com/Fortran-FOSS-Programmers/ford){:target="_blank"}. One FORD is installed, go to the root directory of SPHINCS_ID and run 'ford tools/documentation_sphincs_id.md'. The documentation will be generated into the doc directory as an HTML document. After it is produced, open the file doc/index.html with any browser, to read it. See res/SPHINCS_ID-User_Manual.pdf for more details.
 
+The documentation of SPHINCS_ID is (temporarily?) hosted at [https://sphincsid.bitbucket.io/](https://sphincsid.bitbucket.io/){:target="_blank"}
 ---
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>

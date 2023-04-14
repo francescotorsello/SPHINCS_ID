@@ -80,13 +80,13 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
     USE sph_variables,        ONLY: allocate_SPH_memory, &
                                     deallocate_SPH_memory
     USE utility,              ONLY: compute_g4, determinant_sym4x4, &
-                                    zero, one, ten
+                                    zero, one, ten, eos$tabu$compose
 
     IMPLICIT NONE
 
     INTEGER, PARAMETER:: unit_recovery= 34156
 
-    INTEGER:: npart, i_matter, a, l
+    INTEGER:: npart, i_matter, a, l, eos_id
 
     !DOUBLE PRECISION:: det
 
@@ -107,8 +107,8 @@ SUBMODULE (standard_tpo_formulation) recovery_m2p
 
     LOGICAL:: exist
 
-    CHARACTER( LEN= 2 ):: i_mat
-    CHARACTER( LEN= : ), ALLOCATABLE:: finalnamefile
+    CHARACTER(LEN= 2):: i_mat
+    CHARACTER(LEN= :), ALLOCATABLE:: finalnamefile
 
     LOGICAL, PARAMETER:: debug= .FALSE.
 

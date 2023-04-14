@@ -1,4 +1,6 @@
-# README.md file for the src directory of SPHINCS_ID
+<!-- README.md file for the src directory of SPHINCS_ID -->
+
+## src
 
 The src directory contains the source code for all of the MODULES of SPHINCS_ID.
 

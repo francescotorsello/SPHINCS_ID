@@ -1,4 +1,6 @@
-# README.md file for tools directory of SPHINCS_ID
+<!-- README.md file for tools directory of SPHINCS_ID -->
+
+## tools
 
 Tools meant to be used during the compilation of SPHINCS_ID, or during the generation of the documentation, are supposed to be placed in the tools directory.
 

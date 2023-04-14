@@ -328,7 +328,7 @@ MODULE sph_particles
     !-- Strings
     !
 
-    CHARACTER( LEN= 50 ):: sphincs_id_particles
+    CHARACTER(LEN= 50):: sphincs_id_particles
     !! String containing the name of the particles parameter file
 
     CHARACTER(LEN=:), ALLOCATABLE:: compose_path
@@ -590,7 +590,9 @@ MODULE sph_particles
     PROCEDURE, PUBLIC:: get_g3
     !! Returns ([[particles:g_xx]],[[particles:g_xy]],[[particles:g_xz]],[[particles:g_yy]],[[particles:g_yz]],[[particles:g_zz]])
     PROCEDURE, PUBLIC:: get_compose_eos
-    !! Returns ([[particles:compose_eos]])
+    !! Returns [[particles:compose_eos]]
+    PROCEDURE, PUBLIC:: get_eos_id
+    !! Returns the |eos| identifier for matter object `i_matter`
 
     FINAL:: destruct_particles
     !! Finalizer (Destructor) of [[particles]] object
@@ -1787,6 +1789,19 @@ MODULE sph_particles
       LOGICAL:: compose_eos
 
     END FUNCTION get_compose_eos
+
+
+    MODULE PURE FUNCTION get_eos_id( this, i_matter ) RESULT( eos_id )
+    !! Returns [[particles:compose_eos]]
+
+      CLASS(particles), INTENT(IN):: this
+      !! [[particles]] object which this PROCEDURE is a member of
+      INTEGER, INTENT(IN):: i_matter
+      !! Index of the matter object
+      INTEGER:: eos_id
+      !! ([[particles:compose_eos]])
+
+    END FUNCTION get_eos_id
 
 
   END INTERFACE
