@@ -24,18 +24,21 @@ Please read the README.md files in each directory for more details.
 
 SPHINCS_ID is compiled using SCons.
 
-Follow the instructions at [the SCons documentation](https://scons.org/doc/production/HTML/scons-user/index.html){:target="_blank"} (or any later version of it) to install SCons. Once SCons is installed, go to the root directory of SPHINCS_ID where the SConstruct file is placed; if you are compiling SPHINCS_ID on a new host, open SConstruct and set up your local environment. After that, run 'scons' and the compilation will start. See res/SPHINCS_ID-User_Manual.pdf for more details.
+Follow the instructions at [the current SCons documentation](https://scons.org/doc/production/HTML/scons-user/index.html){:target="_blank"} (or any later version of it) to install SCons.
 
-The compilation of SPHINCS_ID will create a directory named build and place the object files \*.o inside it, following the same directory structure as in src. The \*.mod files will instead be placed inside the mod directory. The executable files \*.x will be placed inside programs/bin. The configuration files (or parameter files) needed to run the executables are placed inside config. See res/SPHINCS_ID-User_Manual.pdf for more details.
+Once SCons is installed, go to the root directory of SPHINCS_ID where the SConstruct file is placed; if you are compiling SPHINCS_ID on a new host, open SConstruct and set up your local environment. After that, run 'scons' and the compilation will start. See res/doc-pages/SPHINCS_ID-User_Manual.pdf for more details.
+
+The compilation of SPHINCS_ID will create a directory named build and place the object files \*.o inside it, following the same directory structure as in src. The \*.mod files will instead be placed inside the mod directory. The executable files \*.x will be placed inside programs/bin. The configuration files (or parameter files) needed to run the executables are placed inside config. See res/doc-pages/SPHINCS_ID-User_Manual.pdf for more details.
 
 ## Documentation
 
 The documentation of SPHINCS_ID is produced with FORD.
 
-To install FORD, run 'pip install ford' or follow the instructions at [its GitHub repository](https://github.com/Fortran-FOSS-Programmers/ford){:target="_blank"}. One FORD is installed, go to the root directory of SPHINCS_ID and run 'ford tools/documentation_sphincs_id.md'. The documentation will be generated into the doc directory as an HTML document. After it is produced, open the file doc/index.html with any browser, to read it. See res/SPHINCS_ID-User_Manual.pdf for more details.
+To install FORD, run 'pip install ford' or follow the instructions at [its GitHub repository](https://github.com/Fortran-FOSS-Programmers/ford){:target="_blank"}
+
+Once FORD is installed, go to the root directory of SPHINCS_ID and run 'ford tools/documentation_sphincs_id.md'. The documentation will be generated into the doc directory as an HTML document. After it is produced, open the file doc/index.html with any browser, to read it. See res/doc-pages/SPHINCS_ID-User_Manual.pdf for more details. 
 
 The documentation of SPHINCS_ID is (temporarily?) hosted at [https://sphincsid.bitbucket.io/](https://sphincsid.bitbucket.io/){:target="_blank"}
----
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://academic.oup.com/mnras/article/498/3/4230/5897370>
