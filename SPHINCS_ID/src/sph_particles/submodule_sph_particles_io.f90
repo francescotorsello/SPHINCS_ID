@@ -755,58 +755,60 @@ SUBMODULE (sph_particles) io
     ! Check that the positions are within the sizes of the matter objects.
     ! This checks that the positions read from the formatted
     ! file are compatible with the sizes given by the idbase object
-    IF( .NOT.this% use_atmosphere(a) )THEN
-
-      !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-      !          ABS(center(a,1)) + sizes(a, 1)
-      !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
-      !          ABS(center(a,1)) + sizes(a, 2)
-      !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-      !          ABS(center(a,2)) + sizes(a, 3)
-      !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
-      !          ABS(center(a,2)) + sizes(a, 4)
-      !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-      !          ABS(center(a,3)) + sizes(a, 5)
-      !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
-      !          ABS(center(a,3)) + sizes(a, 6)
-      !
-      !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(a,1)) + sizes(a, 1)
-      !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(a,1)) + sizes(a, 2)
-      !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(a,2)) + sizes(a, 3)
-      !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(a,2)) + sizes(a, 4)
-      !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(a,3)) + sizes(a, 5)
-      !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
-      !  PRINT *, ABS(center(a,3)) + sizes(a, 6)
-
-      IF( ABS( MINVAL( tmp_pos(1,:) ) ) > xmin &
-          .OR. &
-          ABS( MAXVAL( tmp_pos(1,:) ) ) > xmax &
-          .OR. &
-          ABS( MINVAL( tmp_pos(2,:) ) ) > ymin &
-          .OR. &
-          ABS( MAXVAL( tmp_pos(2,:) ) ) > ymax &
-          .OR. &
-          ABS( MINVAL( tmp_pos(3,:) ) ) > zmin &
-          .OR. &
-          ABS( MAXVAL( tmp_pos(3,:) ) ) > zmax &
-
-      )THEN
-
-        PRINT *, "** ERROR! The positions of the particles on object ", &
-                 a, ", read from formatted file, ", &
-                 " are not compatible with the ", &
-                 "physical system read from file. Stopping..."
-        PRINT *
-        STOP
-
-      ENDIF
-
-    ENDIF
+    !TODO: Removed check because it wasn't behaving as expected. To be
+    !      tested
+    !IF( .NOT.this% use_atmosphere(1) )THEN
+    !
+    !  !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+    !  !          ABS(center(a,1)) + sizes(a, 1)
+    !  !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) ) > &
+    !  !          ABS(center(a,1)) + sizes(a, 2)
+    !  !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+    !  !          ABS(center(a,2)) + sizes(a, 3)
+    !  !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) ) > &
+    !  !          ABS(center(a,2)) + sizes(a, 4)
+    !  !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+    !  !          ABS(center(a,3)) + sizes(a, 5)
+    !  !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) ) > &
+    !  !          ABS(center(a,3)) + sizes(a, 6)
+    !  !
+    !  !  PRINT *, ABS( MINVAL( tmp_pos(1,npart_in:npart_fin) ) )
+    !  !  PRINT *, ABS(center(a,1)) + sizes(a, 1)
+    !  !  PRINT *, ABS( MAXVAL( tmp_pos(1,npart_in:npart_fin) ) )
+    !  !  PRINT *, ABS(center(a,1)) + sizes(a, 2)
+    !  !  PRINT *, ABS( MINVAL( tmp_pos(2,npart_in:npart_fin) ) )
+    !  !  PRINT *, ABS(center(a,2)) + sizes(a, 3)
+    !  !  PRINT *, ABS( MAXVAL( tmp_pos(2,npart_in:npart_fin) ) )
+    !  !  PRINT *, ABS(center(a,2)) + sizes(a, 4)
+    !  !  PRINT *, ABS( MINVAL( tmp_pos(3,npart_in:npart_fin) ) )
+    !  !  PRINT *, ABS(center(a,3)) + sizes(a, 5)
+    !  !  PRINT *, ABS( MAXVAL( tmp_pos(3,npart_in:npart_fin) ) )
+    !  !  PRINT *, ABS(center(a,3)) + sizes(a, 6)
+    !
+    !  IF( ABS( MINVAL( tmp_pos(1,:) ) ) > xmin &
+    !      .OR. &
+    !      ABS( MAXVAL( tmp_pos(1,:) ) ) > xmax &
+    !      .OR. &
+    !      ABS( MINVAL( tmp_pos(2,:) ) ) > ymin &
+    !      .OR. &
+    !      ABS( MAXVAL( tmp_pos(2,:) ) ) > ymax &
+    !      .OR. &
+    !      ABS( MINVAL( tmp_pos(3,:) ) ) > zmin &
+    !      .OR. &
+    !      ABS( MAXVAL( tmp_pos(3,:) ) ) > zmax &
+    !
+    !  )THEN
+    !
+    !    PRINT *, "** ERROR! The positions of the particles on object ", &
+    !             a, ", read from formatted file, ", &
+    !             " are not compatible with the ", &
+    !             "physical system read from file. Stopping..."
+    !    PRINT *
+    !    !STOP
+    !
+    !  ENDIF
+    !
+    !ENDIF
 
     IF( debug ) PRINT *, "npart_tmp=", npart_tmp
 

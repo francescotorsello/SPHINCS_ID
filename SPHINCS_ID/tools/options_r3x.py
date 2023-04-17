@@ -1,5 +1,5 @@
 ################################################################################
-# File:       host_r3x.py
+# File:       options_r3x.py
 # Author:     Francesco Torsello
 ################################################################################
 # Copyright (C) 2020-2023 Francesco Torsello
@@ -30,7 +30,7 @@
 ############################################################################
 if fortran_compiler == 'ifort':
 
-  env['F90FLAGS'] = [ '-O0', '-qopenmp', '-qoverride-limits', '-xHOST', \
+  env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', '-xHOST', \
                       '-heap-arrays', '-qopt-report', \
                       '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
                       '-warn', '-CB', '-CS', '-g', '-traceback', '-fpp', \
@@ -40,7 +40,7 @@ if fortran_compiler == 'ifort':
 #, '-CB', '-CS', '-g', '-traceback'
 if fortran_compiler == 'gfortran':
 
-  env['F90FLAGS'] = [ '-O0', '-fopenmp', '-ftree-vectorize', \
+  env['F90FLAGS'] = mod_dir + [ '-O3', '-fopenmp', '-ftree-vectorize', \
                       '-fopt-info-vec', '-fdollar-ok', '-fbounds-check', \
                       '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                       '-ffree-line-length-none', \
@@ -49,29 +49,30 @@ if fortran_compiler == 'gfortran':
                       '-Wimplicit-procedure', \
                       incmod_sphincs_bssn, \
                       build_flavour, build_mpi, \
-                      build_dir, build_host, build_version ] + mod_dir
+                      build_dir, build_host, build_version ]
 
 ############################################################################
 # C++ PRODUCTION BUILD OPTIONS
+# (NOT USED ANYMORE AS THE C++ SOURCES ARE NOW COMPILED IN SPHINCS_BSSN ONLY)
 ############################################################################
-if cpp_compiler == 'icpc':
-
-  env['CXXFLAGS'] = [ '-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
-                      '-qopt-report', '-qopt-report-phase=vec,openmp', \
-                      '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
-                      '-W', '-Wundef', '-Wshadow', '-Wcast-qual', \
-                      '-Wconversion', '-Winline', '-Woverloaded-virtual' ]
-  #-ip, -ipo, -ipo=n
-  # icx compiler: best of icc and best of clang
-  # -o prog
-
-if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
-
-  env['CXXFLAGS'] = [ '-O0', '-g', '-std=c++11', '-fopenmp', '-Wall', \
-                      '-ftree-vectorize','-fopt-info-vec', \
-                      '-fopt-info-loop',\
-                      '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
-                      '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align',\
-                      '-Wconversion', '-Winline', '-Wabi=11', \
-                      '-Wold-style-cast', '-Woverloaded-virtual', \
-                      '-Wfatal-errors' ]
+#if cpp_compiler == 'icpc':
+#
+#  env['CXXFLAGS'] = [ '-O3', '-g', '-qopenmp', '-xHOST', \
+#                      '-qopt-report', '-qopt-report-phase=vec,openmp', \
+#                      '-Wall', '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
+#                      '-W', '-Wundef', '-Wshadow', '-Wcast-qual', \
+#                      '-Wconversion', '-Winline', '-Woverloaded-virtual' ]
+#  #-ip, -ipo, -ipo=n
+#  # icx compiler: best of icc and best of clang
+#  # -o prog
+#
+#if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
+#
+#  env['CXXFLAGS'] = [ '-O3', '-g', '-fopenmp', '-Wall', \
+#                      '-ftree-vectorize','-fopt-info-vec', \
+#                      '-fopt-info-loop',\
+#                      '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
+#                      '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align',\
+#                      '-Wconversion', '-Winline', '-Wabi=11', \
+#                      '-Wold-style-cast', '-Woverloaded-virtual', \
+#                      '-Wfatal-errors' ]

@@ -57,7 +57,8 @@ SUBMODULE (sph_particles) handle_positions
 
     INTEGER, DIMENSION(npart):: above_xy_plane, below_xy_plane
 
-    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: above_xy_plane_a_tmp, below_xy_plane_a_tmp
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE:: &
+      above_xy_plane_a_tmp, below_xy_plane_a_tmp
 
     above_xy_plane= zero
     below_xy_plane= zero

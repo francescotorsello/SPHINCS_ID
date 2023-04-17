@@ -32,7 +32,7 @@
 import os
 Import('env flavour full_flavour lorene_flavour fuka_flavour \
         interpolate_flavour version MPI_ranks working_dir host \
-        fortran_compiler cpp_compiler debug')
+        fortran_compiler debug') # cpp_compiler
 
 ################################################################################
 # EXTERNAL LIBRARIES
@@ -97,27 +97,27 @@ if fortran_compiler == 'gfortran':
 env['F90'] = fortran_compiler
 
 # C++ compiler
-env['CXX'] = cpp_compiler
+#env['CXX'] = cpp_compiler
 
 if debug == 'FALSE': #
 
   if host == 'r3x': #
 
-    exec(open('../tools/host_r3x.py').read())
+    exec(open('../tools/options_r3x.py').read())
 
   if host == 'Sunrise': #
 
-    exec(open('../tools/host_sunrise.py').read())
+    exec(open('../tools/options_sunrise.py').read())
 
 if debug == 'TRUE': #
 
   if host == 'r3x': #
 
-    exec(open('../tools/host_r3x_dbg.py').read())
+    exec(open('../tools/options_r3x_dbg.py').read())
 
   if host == 'Sunrise': #
 
-    exec(open('../tools/host_sunrise_dbg.py').read())
+    exec(open('../tools/options_sunrise_dbg.py').read())
 
 ################################################################################
 
@@ -125,16 +125,15 @@ if debug == 'TRUE': #
 # PROGRAMS
 ################################################################################
 
-sphincs_id                = '../programs/bin/sphincs_id_'       + version + '.x'
-convergence_test          = '../programs/bin/convergence_test_' + version + '.x'
-write_par_eos             = '../programs/bin/write_par_eos_'    + version + '.x'
-construct_newtonian_binary= '../programs/bin/construct_newtonian_binary.x'
+sphincs_id                = '../bin/sphincs_id_'       + version + '.x'
+convergence_test          = '../bin/convergence_test_' + version + '.x'
+write_par_eos             = '../bin/write_par_eos_'    + version + '.x'
+construct_newtonian_binary= '../bin/construct_newtonian_binary.x'
 
-program_sphincs_id                = ['../programs/sphincs_id.f90']
-program_convergence_test          = ['../programs/convergence_test.f90']
-program_write_par_eos             = ['../programs/write_par_eos.f90']
-program_construct_newtonian_binary= \
-  ['../programs/construct_newtonian_binary.f90']
+program_sphincs_id                = ['programs/sphincs_id.f90']
+program_convergence_test          = ['programs/convergence_test.f90']
+program_write_par_eos             = ['programs/write_par_eos.f90']
+program_construct_newtonian_binary= ['programs/construct_newtonian_binary.f90']
 
 ################################################################################
 

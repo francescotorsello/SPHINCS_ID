@@ -1,5 +1,5 @@
 ################################################################################
-# File:       host_sunrise_dbg.py
+# File:       options_sunrise_dbg.py
 # Author:     Francesco Torsello
 ################################################################################
 # Copyright (C) 2020-2023 Francesco Torsello
@@ -75,34 +75,35 @@ if fortran_compiler == 'gfortran':
 
 ############################################################################
 # C++ DEBUG BUILD OPTIONS
+# (NOT USED ANYMORE AS THE C++ SOURCES ARE NOW COMPILED IN SPHINCS_BSSN ONLY)
 ############################################################################
-if cpp_compiler == 'icpc':
-
-  # C++ flags for debugging
-  # See also https://www.nas.nasa.gov/hecc/support/kb/recommended-intel-compiler-debugging-options_92.html
-  env['CXXFLAGS'] = [ '-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
-                      '-qopt-report', '-qopt-report-phase=vec,openmp', \
-                      '-Wall', '-m64', '-pedantic', '-Wall', '-Wundef',\
-                      '-Wshadow', '-Wcast-qual', '-Wcast-align', \
-                      '-Wconversion', '-Winline', '-Wabi=11', \
-                      '-Wold-style-cast', '-Woverloaded-virtual', \
-                      '-traceback', '-check-uninit', '-ftrapuv', '-debug', \
-                      '-debug extended', '-fpe3', '-mp', \
-                      '-fp-model strict', \
-                      '-align all', '-check bounds', '-assume realloc_lhs',\
-                      '-assume protect_parens,minus0', \
-                      '-assume no old_maxminloc', '-warn unused', \
-                      '-align dcommons', '-diag-disable=10397', \
-                      '-qoverride-limits', '-static-intel', \
-                      '-qopenmp-link=static', '-static', '-fma' ]
-
-if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
-
-  env['CXXFLAGS'] = [ '-O0', '-g3', '-std=c++11', '-fopenmp', '-Wall', \
-                      '-ftree-vectorize','-fopt-info-vec', \
-                      '-fopt-info-loop',\
-                      '-m64', '-pedantic', '-Wall', \
-                      '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align',\
-                      '-Wconversion', '-Winline', '-Wabi=11', \
-                      '-Wold-style-cast', '-Woverloaded-virtual', \
-                      '-Wfatal-errors' ]
+#if cpp_compiler == 'icpc':
+#
+#  # C++ flags for debugging
+#  # See also https://www.nas.nasa.gov/hecc/support/kb/recommended-intel-compiler-debugging-options_92.html
+#  env['CXXFLAGS'] = [ '-O0', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
+#                      '-qopt-report', '-qopt-report-phase=vec,openmp', \
+#                      '-Wall', '-m64', '-pedantic', '-Wall', '-Wundef',\
+#                      '-Wshadow', '-Wcast-qual', '-Wcast-align', \
+#                      '-Wconversion', '-Winline', '-Wabi=11', \
+#                      '-Wold-style-cast', '-Woverloaded-virtual', \
+#                      '-traceback', '-check-uninit', '-ftrapuv', '-debug', \
+#                      '-debug extended', '-fpe3', '-mp', \
+#                      '-fp-model strict', \
+#                      '-align all', '-check bounds', '-assume realloc_lhs',\
+#                      '-assume protect_parens,minus0', \
+#                      '-assume no old_maxminloc', '-warn unused', \
+#                      '-align dcommons', '-diag-disable=10397', \
+#                      '-qoverride-limits', '-static-intel', \
+#                      '-qopenmp-link=static', '-static', '-fma' ]
+#
+#if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
+#
+#  env['CXXFLAGS'] = [ '-O0', '-g3', '-std=c++11', '-fopenmp', '-Wall', \
+#                      '-ftree-vectorize','-fopt-info-vec', \
+#                      '-fopt-info-loop',\
+#                      '-m64', '-pedantic', '-Wall', \
+#                      '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align',\
+#                      '-Wconversion', '-Winline', '-Wabi=11', \
+#                      '-Wold-style-cast', '-Woverloaded-virtual', \
+#                      '-Wfatal-errors' ]

@@ -66,7 +66,7 @@ default_debug = 'FALSE'
 #   Fortran : 'gfortran', 'ifort'
 #   C++     : 'g++', 'gcc' or 'icpc'
 default_fortran_compiler = 'ifort'
-default_cpp_compiler     = 'icpc'
+#default_cpp_compiler     = 'icpc'
 
 # 'TRUE'  : enables verbose output
 # 'FALSE' : disables verbose output
@@ -124,16 +124,16 @@ if debug is None: debug = default_debug
 fortran_compiler = ARGUMENTS.get('fortran_compiler')
 if fortran_compiler is None: fortran_compiler = default_fortran_compiler
 
-cpp_compiler = ARGUMENTS.get('cpp_compiler')
-if cpp_compiler is None: cpp_compiler = default_cpp_compiler
+#cpp_compiler = ARGUMENTS.get('cpp_compiler')
+#if cpp_compiler is None: cpp_compiler = default_cpp_compiler
 
 compilers = ARGUMENTS.get('compilers')
 if compilers == 'intel':
     fortran_compiler = 'ifort'
-    cpp_compiler     = 'icpc'
+    #cpp_compiler     = 'icpc'
 if compilers == 'gnu':
     fortran_compiler = 'gfortran'
-    cpp_compiler     = 'g++'
+    #cpp_compiler     = 'g++'
 
 verbose = ARGUMENTS.get('verbose')
 if verbose is None: verbose = default_verbose
@@ -181,7 +181,7 @@ if fortran_compiler == 'gfortran': #
 
   env = DefaultEnvironment(
 
-    ENV       = { 'PATH'            : os.environ['PATH'] },
+    ENV       = { 'PATH' : os.environ['PATH'] },
     LINK      = 'gfortran',
     LINKFLAGS = '-g -fopenmp',
     TOOLS     = ['default', 'gfortran']
@@ -208,7 +208,7 @@ if verbose == 'FALSE':
 
 Export('env flavour full_flavour lorene_flavour fuka_flavour ' \
        + 'interpolate_flavour version MPI_ranks working_dir host ' \
-       + 'fortran_compiler cpp_compiler debug')
+       + 'fortran_compiler debug') # cpp_compiler
 ################################################################################
 
 SConscript('src/SConscript', variant_dir='build', duplicate=False)

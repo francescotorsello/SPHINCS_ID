@@ -1,5 +1,5 @@
 ################################################################################
-# File:       host_sunrise.py
+# File:       options_sunrise.py
 # Author:     Francesco Torsello
 ################################################################################
 # Copyright (C) 2020-2023 Francesco Torsello
@@ -34,7 +34,7 @@ if fortran_compiler == 'ifort':
   env['F90FLAGS'] = [ '-O3', '-qopenmp', '-qoverride-limits', \
                       '-heap-arrays', '-qopt-report', \
                       '-qopt-report-phase=vec,openmp', '-no-wrap-margin', \
-                      '-warn', '-CB', '-CS', '-fpp', \
+                      '-warn', '-fpp', \
                       '-diag-disable=10346', '-static-intel', \
                       '-qopenmp-link=static', '-static', '-xHOST', \
                       '-align array64byte', \
@@ -44,7 +44,7 @@ if fortran_compiler == 'ifort':
 #, '-g', '-CB', '-CS', '-traceback'
 if fortran_compiler == 'gfortran':
 
-  env['F90FLAGS'] = [ '-O2', '-fopenmp', '-ftree-vectorize', \
+  env['F90FLAGS'] = [ '-O3', '-fopenmp', '-ftree-vectorize', \
                       '-fopt-info-vec', '-fdollar-ok', '-fbounds-check', \
                       '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                       '-ffree-line-length-none', \
@@ -57,26 +57,27 @@ if fortran_compiler == 'gfortran':
 
 ############################################################################
 # C++ PRODUCTION BUILD OPTIONS
+# (NOT USED ANYMORE AS THE C++ SOURCES ARE NOW COMPILED IN SPHINCS_BSSN ONLY)
 ############################################################################
-if cpp_compiler == 'icpc':
-
-  env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
-                      '-qopt-report', '-qopt-report-phase=vec,openmp', \
-                      '-Wall', '-m64', '-DNDEBUG', '-pedantic',
-                      '-traceback', '-diag-disable=10397', \
-                      '-qoverride-limits', '-static-intel', \
-                      '-qopenmp-link=static', '-static', '-fma']
-  #-ip, -ipo, -ipo=n
-  # icx compiler: best of icc and best of clang
-  # -o prog
-
-if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
-
-  env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-fopenmp', \
-                      '-ftree-vectorize','-fopt-info-vec', \
-                      '-fopt-info-loop',\
-                      '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
-                      '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align',\
-                      '-Wconversion', '-Winline', '-Wabi=11', \
-                      '-Wold-style-cast', '-Woverloaded-virtual', \
-                      '-Wfatal-errors' ]
+#if cpp_compiler == 'icpc':
+#
+#  env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-qopenmp', '-xHOST', \
+#                      '-qopt-report', '-qopt-report-phase=vec,openmp', \
+#                      '-Wall', '-m64', '-DNDEBUG', '-pedantic',
+#                      '-traceback', '-diag-disable=10397', \
+#                      '-qoverride-limits', '-static-intel', \
+#                      '-qopenmp-link=static', '-static', '-fma']
+#  #-ip, -ipo, -ipo=n
+#  # icx compiler: best of icc and best of clang
+#  # -o prog
+#
+#if cpp_compiler == 'gcc' or cpp_compiler == 'g++':
+#
+#  env['CXXFLAGS'] = [ '-O3', '-g', '-std=c++11', '-fopenmp', \
+#                      '-ftree-vectorize','-fopt-info-vec', \
+#                      '-fopt-info-loop',\
+#                      '-m64', '-DNDEBUG', '-pedantic', '-Wall', \
+#                      '-Wundef', '-Wshadow', '-Wcast-qual', '-Wcast-align',\
+#                      '-Wconversion', '-Winline', '-Wabi=11', \
+#                      '-Wold-style-cast', '-Woverloaded-virtual', \
+#                      '-Wfatal-errors' ]

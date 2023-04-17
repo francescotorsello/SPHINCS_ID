@@ -14,7 +14,6 @@ incl_src: false
 graph: true
 sort: alpha
 src_dir: ../src
-         ../programs
 media_dir: ../res/doc-media
 page_dir: ../res/doc-pages
 exclude: ./src/sph_particles/submodule_sph_particles_redistribute_nu.f90
