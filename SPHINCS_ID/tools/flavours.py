@@ -24,6 +24,7 @@
 ################################################################################
 # IN THIS FILE, FLAVOUR-SPECIFIC OPTIONS FOR THE COMPILATION OF SPHINCS_ID
 # ARE SET. THIS FILE IS SUPPOSED TO BE INCLUDED IN A SConscript FILE.
+# THE ORDER USED TO LINK TO THE LIBRARIES MATTERS!
 ################################################################################
 # FLAVOUR= 1. Link to LORENE and Kadath libraries, and interpolate from
 #             Cartesian grid
@@ -38,18 +39,18 @@ if flavour == full_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['lorene_export', 'lorene', 'lorenef77',  \
+      env['LIBS'] = ['sphincs_bssn', 'lorene_export', 'lorene', 'lorenef77', \
                      'kadath', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran', 'sphincs_bssn', 'stdc++', 'm']
+                     'gslcblas', 'gfortran', 'stdc++', 'm']
 
     if debug == 'TRUE': #
 
       # It may happen that the *_g libraries by LORENE stop the execution due to
       # arithmetic exceptions in LORENE. This may not allow to debug SPHINCS_ID.
       # If that happens, link to the production LORENE libraries, listed above.
-      env['LIBS'] = ['lorene_export_g', 'lorene_g', 'lorenef77_g', \
-                     'kadath-debug', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran', 'sphincs_bssn', 'stdc++', 'm']
+      env['LIBS'] = ['sphincs_bssn', 'lorene_export_g', 'lorene_g', \
+                     'lorenef77_g', 'kadath-debug', 'gsl', 'lapack', 'blas', \
+                     'fftw3', 'gslcblas', 'gfortran', 'stdc++', 'm']
 
   if host == 'Sunrise': #
 
@@ -61,19 +62,19 @@ if flavour == full_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['lorene_export', 'lorene', 'lorenef77', 'kadath', \
-                     'gsl', 'scalapack', 'openblas', 'gslcblas',  \
-                     'gfortran', 'fftw3', 'sphincs_bssn', 'stdc++', 'm']
+      env['LIBS'] = ['sphincs_bssn', 'lorene_export', 'lorene', 'lorenef77', \
+                     'kadath', 'gsl', 'scalapack', 'openblas', 'gslcblas',  \
+                     'gfortran', 'fftw3', 'stdc++', 'm']
 
     if debug == 'TRUE': #
 
       # It may happen that the *_g libraries by LORENE stop the execution due to
       # arithmetic exceptions in LORENE. This may not allow to debug SPHINCS_ID.
       # If that happens, link to the production LORENE libraries, listed above.
-      env['LIBS'] = ['lorene_export_g', 'lorene_g', \
+      env['LIBS'] = ['sphincs_bssn', 'lorene_export_g', 'lorene_g', \
                      'lorenef77_g', 'kadath-debug', 'gsl', 'scalapack', \
                      'openblas', 'gslcblas', 'gfortran', 'fftw3', \
-                     'sphincs_bssn', 'stdc++', 'm']
+                     'stdc++', 'm']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
                   + module_bns_fuka \
@@ -92,19 +93,18 @@ if flavour == lorene_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['lorene_export', 'lorene', 'lorenef77', \
+      env['LIBS'] = ['sphincs_bssn', 'lorene_export', 'lorene', 'lorenef77', \
                      'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'sphincs_bssn', \
-                     'stdc++', 'm']
+                     'gslcblas', 'stdc++', 'm']
 
     if debug == 'TRUE': #
 
       # It may happen that the *_g libraries by LORENE stop the execution due to
       # arithmetic exceptions in LORENE. This may not allow to debug SPHINCS_ID.
       # If that happens, link to the production LORENE libraries, listed above.
-      env['LIBS'] = ['lorene_export_g', 'lorene_g', \
+      env['LIBS'] = ['sphincs_bssn', 'lorene_export_g', 'lorene_g', \
                      'lorenef77_g', 'gsl', 'lapack', 'fftw3', 'blas', \
-                     'gslcblas', 'gfortran', 'sphincs_bssn', 'stdc++', 'm']
+                     'gslcblas', 'gfortran', 'stdc++', 'm']
 
   if host == 'Sunrise': #
 
@@ -116,18 +116,18 @@ if flavour == lorene_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['lorene_export', 'lorene', 'lorenef77', \
+      env['LIBS'] = ['sphincs_bssn', 'lorene_export', 'lorene', 'lorenef77', \
                      'gsl', 'scalapack', 'openblas', 'gslcblas', \
-                     'gfortran', 'fftw3', 'sphincs_bssn', 'stdc++', 'm']
+                     'gfortran', 'fftw3', 'stdc++', 'm']
 
     if debug == 'TRUE': #
 
       # It may happen that the *_g libraries by LORENE stop the execution due to
       # arithmetic exceptions in LORENE. This may not allow to debug SPHINCS_ID.
       # If that happens, link to the production LORENE libraries, listed above.
-      env['LIBS'] = ['lorene_export_g', 'lorene_g', 'lorenef77_g', \
-                     'gsl', 'scalapack', 'openblas', 'gslcblas', \
-                     'gfortran', 'fftw3', 'sphincs_bssn', 'stdc++', 'm']
+      env['LIBS'] = ['sphincs_bssn', 'lorene_export_g', 'lorene_g', \
+                     'lorenef77_g','gsl', 'scalapack', 'openblas', \
+                     'gslcblas', 'gfortran', 'fftw3', 'stdc++', 'm']
 
   sources_flavour = module_bns_lorene + module_diffstar_lorene \
                   + module_ejecta_generic + module_sphincs_id_lorene
@@ -145,13 +145,13 @@ if flavour == fuka_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['kadath', 'gsl', 'fftw3', 'lapack', \
-                     'sphincs_bssn', 'stdc++', 'm']
+      env['LIBS'] = ['sphincs_bssn', 'kadath', 'gsl', 'fftw3', 'lapack', \
+                     'stdc++', 'm']
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['kadath-debug', 'gsl', 'fftw3', 'lapack', \
-                     'sphincs_bssn', 'stdc++', 'm']
+      env['LIBS'] = ['sphincs_bssn', 'kadath-debug', 'gsl', 'fftw3', 'lapack', \
+                     'stdc++', 'm']
 
   if host == 'Sunrise': #
 
@@ -163,13 +163,13 @@ if flavour == fuka_flavour: #
 
     if debug == 'FALSE': #
 
-      env['LIBS'] = ['kadath', 'gsl', 'scalapack', 'openblas', \
-                     'fftw3', 'sphincs_bssn', 'stdc++', 'm']
+      env['LIBS'] = ['sphincs_bssn', 'kadath', 'gsl', 'scalapack', 'openblas', \
+                     'fftw3', 'stdc++', 'm']
 
     if debug == 'TRUE': #
 
-      env['LIBS'] = ['kadath', 'gsl', 'scalapack', 'openblas', \
-                     'fftw3', 'sphincs_bssn', 'stdc++', 'm']
+      env['LIBS'] = ['sphincs_bssn', 'kadath', 'gsl', 'scalapack', 'openblas', \
+                     'fftw3', 'stdc++', 'm']
 
   sources_flavour = module_bns_fuka \
                     + module_ejecta_generic + module_sphincs_id_fuka

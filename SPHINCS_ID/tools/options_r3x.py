@@ -40,7 +40,7 @@ if fortran_compiler == 'ifort':
 #, '-CB', '-CS', '-g', '-traceback'
 if fortran_compiler == 'gfortran':
 
-  env['F90FLAGS'] = mod_dir + [ '-O3', '-fopenmp', '-ftree-vectorize', \
+  env['F90FLAGS'] = [ '-O3', '-fopenmp', '-ftree-vectorize', \
                       '-fopt-info-vec', '-fdollar-ok', '-fbounds-check', \
                       '-fopt-info-loop', '-g', '-fbacktrace', '-cpp', \
                       '-ffree-line-length-none', \
@@ -49,7 +49,7 @@ if fortran_compiler == 'gfortran':
                       '-Wimplicit-procedure', \
                       incmod_sphincs_bssn, \
                       build_flavour, build_mpi, \
-                      build_dir, build_host, build_version ]
+                      build_dir, build_host, build_version ] + mod_dir
 
 ############################################################################
 # C++ PRODUCTION BUILD OPTIONS

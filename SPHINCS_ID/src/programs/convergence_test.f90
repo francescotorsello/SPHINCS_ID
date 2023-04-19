@@ -210,7 +210,7 @@ stringize_end(vers)
   PRINT *, "  Initial Data builder, ", TRIM(version), &
            " - Cauchy convergence test       "
   PRINT *
-  PRINT *, "  SPHINCS_ID  Copyright (C) 2020, 2021, 2022  Francesco Torsello   "
+  PRINT *, "  SPHINCS_ID  Copyright (C) 2020-2023  Francesco Torsello          "
   PRINT *
   PRINT *, "  SPHINCS_ID is free software: you can redistribute it and/or      "
   PRINT *, "  modify it under the terms of the GNU General Public License      "

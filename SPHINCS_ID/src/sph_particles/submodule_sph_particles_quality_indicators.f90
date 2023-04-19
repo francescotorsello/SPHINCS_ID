@@ -29,17 +29,10 @@ SUBMODULE(sph_particles) quality_indicators
   !  the methods of TYPE particles
   !  that computes the quality indicators, referring to
   !
-  !  Daniel J. Price, Smoothed Particle Hydrodynamics and
-  !  Magnetohydrodynamics.
-  !  Journal of Computational Physics, 231, 3, 759-794 (2012)
-  !  DOI: 10.1016/j.jcp.2010.12.011
-  !  http://arxiv.org/abs/1012.1885
+  !  [Daniel J. Price, Smoothed Particle Hydrodynamics and Magnetohydrodynamics. Journal of Computational Physics, 231, 3, 759-794 (2012). DOI: 10.1016/j.jcp.2010.12.011](http://arxiv.org/abs/1012.1885){:target="_blank"},
   !  eqs.(64), (67) and (74-75)
   !
-  !  Rosswog, S. SPH Methods in the Modelling of Compact Objects.
-  !  Living Rev Comput Astrophys 1, 1 (2015).
-  !  https://doi.org/10.1007/lrca-2015-1.
-  !  https://arxiv.org/abs/1406.4224.
+  !  [Rosswog, S. SPH Methods in the Modelling of Compact Objects. Living Rev Comput Astrophys 1, 1 (2015).](https://arxiv.org/abs/1406.4224){:target="_blank"},
   !  eqs.(6) and (9)
   !
   !  FT 05.10.2022
@@ -64,17 +57,10 @@ SUBMODULE(sph_particles) quality_indicators
     !
     !# Compute the quality indicators, referring to
     !
-    !  Daniel J. Price, Smoothed Particle Hydrodynamics and
-    !  Magnetohydrodynamics.
-    !  Journal of Computational Physics, 231, 3, 759-794 (2012)
-    !  DOI: 10.1016/j.jcp.2010.12.011
-    !  http://arxiv.org/abs/1012.1885
+    !  [Daniel J. Price, Smoothed Particle Hydrodynamics and Magnetohydrodynamics. Journal of Computational Physics, 231, 3, 759-794 (2012). DOI: 10.1016/j.jcp.2010.12.011](http://arxiv.org/abs/1012.1885){:target="_blank"},
     !  eqs.(64), (67) and (74-75)
     !
-    !  Rosswog, S. SPH Methods in the Modelling of Compact Objects.
-    !  Living Rev Comput Astrophys 1, 1 (2015).
-    !  https://doi.org/10.1007/lrca-2015-1.
-    !  https://arxiv.org/abs/1406.4224.
+    !  [Rosswog, S. SPH Methods in the Modelling of Compact Objects. Living Rev Comput Astrophys 1, 1 (2015).](https://arxiv.org/abs/1406.4224){:target="_blank"},
     !  eqs.(6) and (9)
     !
     !  FT 05.10.2022
@@ -102,7 +88,7 @@ SUBMODULE(sph_particles) quality_indicators
 
     DOUBLE PRECISION:: ha, ha_1, ha_3, ha_4, va, xa, ya, za, &
                        hb, hb_1, hb_3, hb_4, xb, yb, zb, rab, rab2, rab_1, &
-                       ha2, ha2_4, hb2_4, dx, dy, dz
+                       ha2_4, hb2_4, dx, dy, dz
 
     DOUBLE PRECISION:: Wab_ha, Wi, Wi1, dvv, &
                        grW_ha_x, grW_ha_y, grW_ha_z, &
@@ -117,8 +103,8 @@ SUBMODULE(sph_particles) quality_indicators
 
     PRINT *, " * Computing the quality indicators..."
 
-    CALL exact_nei_tree_update( ndes, npart, pos, nu )
     ! exact_nei_tree_update updates h
+    CALL exact_nei_tree_update( ndes, npart, pos, nu )
 
     qi_1  = zero
     qi_2  = zero
@@ -130,7 +116,7 @@ SUBMODULE(sph_particles) quality_indicators
     !$OMP                     ncand, all_clists, W_no_norm, pos, h, &
     !$OMP                     qi_1, qi_2, qi_3, qi_4, qi_ham ) &
     !$OMP             PRIVATE( ill, itot, a, b, l, &
-    !$OMP                      ha, ha_1, ha_3, ha_4, ha2, ha2_4, &
+    !$OMP                      ha, ha_1, ha_3, ha_4, ha2_4, &
     !$OMP                      hb, hb_1, hb_3, hb_4, hb2_4, &
     !$OMP                      xa, ya, za, xb, yb, zb, dx, dy, dz, rab2, &
     !$OMP                      inde, va, dv_table_1, index1, Wi, &
@@ -138,114 +124,104 @@ SUBMODULE(sph_particles) quality_indicators
     !$OMP                      grW_ha_x, grW_ha_y, grW_ha_z, grWa, grWb, &
     !$OMP                      grW_hb_x, grW_hb_y, grW_hb_z, eab, rab, vb, &
     !$OMP                      rab_1, vol_b )
-    ll_cell_loop: DO ill= 1, nfinal
+    lowest_level_cell_loop: DO ill= 1, nfinal
 
       itot= nprev + ill
       IF( nic(itot) == 0 ) CYCLE
 
       particle_loop: DO l= lpart(itot), rpart(itot)
 
+        ! Set index of the particle in the lowest level cell
         a    = iorig(l)
 
+        ! Compute smoothing lengths and its powers (used below)
         ha   = h(a)
         ha_1 = one/ha
         ha_3 = ha_1*ha_1*ha_1
         ha_4 = ha_3*ha_1
-        ha2  = ha*ha
-        ha2_4= two*two*ha2
+        ha2_4= two*two*ha*ha
 
         xa= pos(1,a)
         ya= pos(2,a)
         za= pos(3,a)
 
-        !prgNa= (pr_sph(a)*sqg(a)/(nstar_sph(a)/m0c2_cu)**2)
+        candidate_loop: DO k= 1, ncand(ill)
 
-        cand_loop: DO k= 1, ncand(ill)
-
+          ! Set index of candidate particle
           b= all_clists(ill)% list(k)
 
+          ! Compute smoothing lengths and its powers (used below)
           hb   = h(b)
           hb_1 = one/hb
           hb_3 = hb_1*hb_1*hb_1
           hb_4 = hb_3*hb_1
           hb2_4= two*two*hb*hb
 
-          xb= pos(1,b)  ! CONTRA-variant
+          xb= pos(1,b)
           yb= pos(2,b)
           zb= pos(3,b)
 
-          ! potentially bail out
+          ! Compute distance between particles a and b
           dx= xa - xb
           dy= ya - yb
           dz= za - zb
 
           rab2 = dx*dx + dy*dy + dz*dz
           rab  = SQRT(rab2) + 1.D-30
-          rab_1= 1.D0/rab
+          rab_1= one/rab
+
+          ! If the distance between the particles a and b is larger than twice
+          ! their smoothing lengths, move to next candidate particle
+          ! This one is not a neighbour
           IF( rab2 > ha2_4 .AND. rab2 > hb2_4 ) CYCLE
 
-          !--------!
-          !-- ha --!
-          !--------!
           va= rab*ha_1
 
-          ! get interpolation indices
+          ! Read kernel values
           inde  = MIN(INT(va*dv_table_1),n_tab_entry)
           index1= MIN(inde + 1,n_tab_entry)
 
-          ! get tabulated values
           Wi = W_no_norm(inde)
           Wi1= W_no_norm(index1)
 
-          ! interpolate
           dvv   = (va - DBLE(inde)*dv_table)*dv_table_1
           Wab_ha= Wi + (Wi1 - Wi)*dvv
 
-          ! unit vector ("a-b" --> from b to a)
+          ! Compute normalized distance between the particles a and b
           eab(1)= dx*rab_1
           eab(2)= dy*rab_1
           eab(3)= dz*rab_1
 
-          !--------!
-          !-- ha --!
-          !--------!
+          !
+          !-- Interpolate kernel value, and its gradient,
+          !-- at the distance between the particles
+          !
 
-          ! kernel and its gradient
           !DIR$ INLINE
           CALL interp_W_gradW_table( va, Wa, grW )
           Wa = Wa*ha_3
           grW= grW*ha_4
 
-          ! nabla_a Wab(ha)
           grW_ha_x= grW*eab(1)
           grW_ha_y= grW*eab(2)
           grW_ha_z= grW*eab(3)
 
-    !      grWa= grW_ha_x*eab(1) + &
-    !            grW_ha_y*eab(2) + &
-    !            grW_ha_z*eab(3)
-
-          !--------!
-          !-- hb --!
-          !--------!
           vb= rab*hb_1
 
-          ! kernel and its gradient
           !DIR$ INLINE
           CALL interp_gradW_table(vb,grW)
           grW= grW*hb_4
 
-          ! nabla_a Wab(hb)
           grW_hb_x= grW*eab(1)
           grW_hb_y= grW*eab(2)
           grW_hb_z= grW*eab(3)
 
+          ! Compute particle volume
           vol_b= nu(b)/nstar(b)
 
-    !      grWb= grW_hb_x*eab(1) + &
-    !            grW_hb_y*eab(2) + &
-    !            grW_hb_z*eab(3)
-
+          !
+          !-- Compute quality indicators
+          !
           qi_1(a)= qi_1(a) + Wab_ha*vol_b
 
           qi_2(1,a)= qi_2(1,a) + (-dx)*Wab_ha*vol_b
@@ -273,13 +249,13 @@ SUBMODULE(sph_particles) quality_indicators
           qi_ham(3,a)= qi_ham(3,a) &
                        + nu(b)*grW_ha_z*(one/nstar(a) + nstar(a)/nstar(b)**2)
 
-        ENDDO cand_loop
+        ENDDO candidate_loop
 
         !qi(a)= qi(a)/(nu(a)/nstar(a))
 
       ENDDO particle_loop
 
-    ENDDO ll_cell_loop
+    ENDDO lowest_level_cell_loop
     !$OMP END PARALLEL DO
 
     PRINT *, " * Printing the quality indicators to file..."

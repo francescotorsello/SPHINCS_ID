@@ -213,7 +213,7 @@ SUBMODULE (ejecta_generic) interpolate
         foo(i)= trilinear_interpolation( coords(i,1), coords(i,2), coords(i,3),&
                       this% nx_grid, this% ny_grid, this% nz_grid, &
                       grid_coords, foo_grid, &
-                      equator_symmetry= .FALSE., parity= -one, debug= .FALSE. )
+                      equator_symmetry= .FALSE., z_parity= -one, debug= .FALSE. )
         foo_exact(i)= (coords(i,3))**3.D0
 
       ENDDO
@@ -231,23 +231,23 @@ SUBMODULE (ejecta_generic) interpolate
       u_euler_x(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
                                 this% grid, this% vel(:,:,:,1), &
-                                equator_symmetry= .TRUE., parity= one, &
+                                equator_symmetry= .TRUE., z_parity= one, &
                                 debug= .FALSE. )
       u_euler_y(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
                                 this% grid, this% vel(:,:,:,2), &
-                                equator_symmetry= .TRUE., parity= one, &
+                                equator_symmetry= .TRUE., z_parity= one, &
                                 debug= .FALSE. )
       u_euler_z(i)      = trilinear_interpolation( x(i), y(i), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
                                 this% grid, this% vel(:,:,:,3), &
-                                equator_symmetry= .TRUE., parity= -one, &
+                                equator_symmetry= .TRUE., z_parity= -one, &
                                 debug= .FALSE. )
 
       specific_energy(i)= trilinear_interpolation( x(i), y(i), zp, &
                                 this% nx_grid, this% ny_grid, this% nz_grid, &
                                 this% grid, this% specific_energy, &
-                                equator_symmetry= .TRUE., parity= one, &
+                                equator_symmetry= .TRUE., z_parity= one, &
                                 debug= .FALSE. )
 
       IF( baryon_density(i) == zero )THEN
@@ -452,7 +452,7 @@ SUBMODULE (ejecta_generic) interpolate
     res= trilinear_interpolation( x, y, zp, &
                                   this% nx_grid, this% ny_grid, this% nz_grid, &
                                   this% grid, this% baryon_mass_density, &
-                                  equator_symmetry= .TRUE., parity= one, &
+                                  equator_symmetry= .TRUE., z_parity= one, &
                                   debug= .FALSE. )
 
     CALL spherical_from_cartesian( x, y, z, &
