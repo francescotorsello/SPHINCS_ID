@@ -1,10 +1,9 @@
 *
-doc/
-doc/**/*.f90
-!.gitignore
+*/doc
+!./.gitignore
 !*/
 !*.f90
-!SConstruct
+!./SConstruct
 !res/*.md
 !res/**/*.md
 !res/**/*.pdf
