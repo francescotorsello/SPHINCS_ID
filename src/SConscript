@@ -40,8 +40,7 @@ Import('env flavour full_flavour lorene_flavour fuka_flavour \
 
 home_sphincs  = os.environ['HOME_SPHINCS']
 
-#libsphincs_bssn_dir = [os.environ['HOME_SPHINCS'] \
-libsphincs_bssn_dir = ['/disk/stero-1/ftors/SPHINCS_20230420' \
+libsphincs_bssn_dir = [os.environ['HOME_SPHINCS'] \
                        + '/SPHINCS_DynMetric/SPHINCS_BSSN/lib' ]
 
 if flavour == full_flavour or flavour == lorene_flavour:
@@ -82,8 +81,7 @@ build_dir     = '-Dworking_dir=' + working_dir
 build_host    = '-Dhost='        + host
 
 # Include *.mod and *.smod files by SPHINCS_BSSN
-#incmod_sphincs_bssn = '-I' + home_sphincs + '/SPHINCS_DynMetric/SPHINCS_BSSN'
-incmod_sphincs_bssn = '-I/disk/stero-1/ftors/SPHINCS_20230420/SPHINCS_DynMetric/SPHINCS_BSSN'
+incmod_sphincs_bssn = '-I' + home_sphincs + '/SPHINCS_DynMetric/SPHINCS_BSSN'
 
 if fortran_compiler == 'ifort':
 
