@@ -409,44 +409,48 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
     IMPLICIT NONE
 
-    IF( ALLOCATED( tpof% coords% levels ) )THEN
-      CALL deallocate_grid_function( tpof% coords, "coords_id" )
+    CHARACTER(LEN= 2):: tpo_id
+
+    WRITE( tpo_id, "(I2)" ) this% tpo_id_number
+
+    IF( ALLOCATED( this% coords% levels ) )THEN
+      CALL deallocate_grid_function( this% coords, "coords_id" )
     ENDIF
 
-    IF( ALLOCATED( tpof% rad_coord% levels ) )THEN
-      CALL deallocate_grid_function( tpof% rad_coord, "rad_coord_id" )
+    IF( ALLOCATED( this% rad_coord% levels ) )THEN
+      CALL deallocate_grid_function( this% rad_coord, "rad_coord_id" )
     ENDIF
 
-    IF( ALLOCATED( tpof% lapse% levels ) )THEN
-      CALL deallocate_grid_function( tpof% lapse, "lapse_id" )
+    IF( ALLOCATED( this% lapse% levels ) )THEN
+      CALL deallocate_grid_function( this% lapse, "lapse_id" )
     ENDIF
 
-    IF( ALLOCATED( tpof% shift_u% levels ) )THEN
-      CALL deallocate_grid_function( tpof% shift_u, "shift_u_id" )
+    IF( ALLOCATED( this% shift_u% levels ) )THEN
+      CALL deallocate_grid_function( this% shift_u, "shift_u_id" )
     ENDIF
 
-    IF( ALLOCATED( tpof% g_phys3_ll% levels ) )THEN
-      CALL deallocate_grid_function( tpof% g_phys3_ll, "g_phys3_ll_id" )
+    IF( ALLOCATED( this% g_phys3_ll% levels ) )THEN
+      CALL deallocate_grid_function( this% g_phys3_ll, "g_phys3_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( tpof% K_phys3_ll% levels ) )THEN
-      CALL deallocate_grid_function( tpof% K_phys3_ll, "K_phys3_ll_id" )
+    IF( ALLOCATED( this% K_phys3_ll% levels ) )THEN
+      CALL deallocate_grid_function( this% K_phys3_ll, "K_phys3_ll_id" )
     ENDIF
 
-    IF( ALLOCATED( tpof% HC% levels ) )THEN
-      CALL deallocate_grid_function( tpof% HC, "HC_id" )
+    IF( ALLOCATED( this% HC% levels ) )THEN
+      CALL deallocate_grid_function( this% HC, "HC_id"//tpo_id )
     ENDIF
 
-    IF( ALLOCATED( tpof% HC_parts% levels ) )THEN
-      CALL deallocate_grid_function( tpof% HC_parts, "HC_parts_id" )
+    IF( ALLOCATED( this% HC_parts% levels ) )THEN
+      CALL deallocate_grid_function( this% HC_parts, "HC_parts_id"//tpo_id )
     ENDIF
 
-    IF( ALLOCATED( tpof% MC% levels ) )THEN
-      CALL deallocate_grid_function( tpof% MC, "MC_id" )
+    IF( ALLOCATED( this% MC% levels ) )THEN
+      CALL deallocate_grid_function( this% MC, "MC_id"//tpo_id )
     ENDIF
 
-    IF( ALLOCATED( tpof% MC_parts% levels ) )THEN
-      CALL deallocate_grid_function( tpof% MC_parts, "MC_parts_id" )
+    IF( ALLOCATED( this% MC_parts% levels ) )THEN
+      CALL deallocate_grid_function( this% MC_parts, "MC_parts_id"//tpo_id )
     ENDIF
 
   END PROCEDURE deallocate_standard_tpo_variables

@@ -520,9 +520,7 @@ stringize_end(vers)
             PRINT *, "===================================================" &
                      //"====================="
             PRINT *
-            !WRITE( namefile_parts_bin, "(A1,I1,A1,I1,A1)" ) &
-            !                            "l", &
-            !                            itr3, "-", itr4, "."
+
             WRITE( namefile_parts_bin, "(A5)" ) systems_name(itr3)
             namefile_parts_bin= TRIM( sph_path )//TRIM( namefile_parts_bin )
 

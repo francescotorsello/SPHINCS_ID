@@ -332,6 +332,7 @@ MODULE standard_tpo_formulation
   !
   INTERFACE
 
+
     MODULE SUBROUTINE setup_standard_tpo_variables( tpof, id, dx, dy, dz )
 
       CLASS(idbase),    INTENT(INOUT)       :: id
@@ -340,20 +341,13 @@ MODULE standard_tpo_formulation
 
     END SUBROUTINE setup_standard_tpo_variables
 
- !   MODULE SUBROUTINE construct_tpo_bns_spacings( tpof, id, &
- !                                                        dx, dy, dz )
- !
- !     CLASS(bns),        INTENT(INOUT):: id
- !     CLASS(tpo), INTENT(INOUT):: tpof
- !     DOUBLE PRECISION,  INTENT(IN)    :: dx, dy, dz
- !
- !   END SUBROUTINE construct_tpo_bns_spacings
 
-    MODULE SUBROUTINE deallocate_standard_tpo_variables( tpof )
+    MODULE SUBROUTINE deallocate_standard_tpo_variables( this )
 
-      CLASS(tpo), INTENT(INOUT):: tpof
+      CLASS(tpo), INTENT(INOUT):: this
 
     END SUBROUTINE deallocate_standard_tpo_variables
+
 
   END INTERFACE
 

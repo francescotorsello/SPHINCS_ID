@@ -466,16 +466,14 @@ stringize_end(vers)
     PRINT *, "===================================================" &
              // "====================="
     PRINT *
-    WRITE( namefile_parts, "(A1,I1,A1,I1,A1)" ) &
-                                "l", &
-                                1, "-", 1, "."
+
     WRITE( namefile_parts_bin, "(A5)" ) systems_name(1)
-    namefile_parts_bin= TRIM( sph_path ) // TRIM( namefile_parts_bin )
+    namefile_parts_bin= TRIM( sph_path )//TRIM( namefile_parts_bin )
 
     particles_dist% export_bin    = export_bin
     particles_dist% export_form_xy= export_form_xy
     particles_dist% export_form_x = export_form_x
-    CALL particles_dist% compute_and_print_sph_variables( namefile_parts )
+    CALL particles_dist% compute_and_print_sph_variables( namefile_parts_bin )
 
     !
     !-- Print the particle initial data to a formatted file
@@ -554,36 +552,6 @@ stringize_end(vers)
     ENDIF
 
   ENDDO compute_export_bssn_constraints_loop
-
-! Here the bug appears. Since I am only computing the constraints with particles
-! it must be in there
-!STOP
-
-  !
-  !-- The BSSN formulations on grids with different resolutions are ready
-  !-- to be used in a convergence test
-  !
-  IF( debug .AND. .FALSE. )THEN
-    PRINT *, bssn_forms( 1 )% get_grid_point( 1 + 1, 1 + 2, 1 + 1, ref_lev )
-    PRINT *, bssn_forms( 2 )% get_grid_point( 1 + 2, 1 + 4, 1 + 2, ref_lev )
-    PRINT *, bssn_forms( 3 )% get_grid_point( 1 + 4, 1 + 8, 1 + 4, ref_lev )
-    PRINT *
-
-    PRINT *, bssn_forms( 1 )% get_grid_point( 1 + 2, 1 + 1, 1 + 2, ref_lev )
-    PRINT *, bssn_forms( 2 )% get_grid_point( 1 + 4, 1 + 2, 1 + 4, ref_lev )
-    PRINT *, bssn_forms( 3 )% get_grid_point( 1 + 8, 1 + 4, 1 + 8, ref_lev )
-    PRINT *
-
-    PRINT *, ABS(bssn_forms( 1 )% get_HC( 1 + 30,   1 + 25,   1 + 17, ref_lev ))
-    PRINT *, ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev ))
-    PRINT *, ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17, ref_lev ))
-    PRINT *
-    PRINT *, ABS(bssn_forms( 1 )% get_HC( 1 + 30,   1 + 25,   1 + 17, ref_lev )) &
-           - ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev ))
-    PRINT *, ABS(bssn_forms( 2 )% get_HC( 1 + 2*30, 1 + 2*25, 1 + 2*17, ref_lev )) &
-           - ABS(bssn_forms( 3 )% get_HC( 1 + 4*30, 1 + 4*25, 1 + 4*17, ref_lev ))
-    STOP
-  ENDIF
 
   !
   !-- Perform the convergence test with the appropriate constraints

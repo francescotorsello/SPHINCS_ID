@@ -98,9 +98,9 @@ SUBMODULE (bssn_formulation) constraints
     ! Stress-energy tensor
     TYPE(grid_function):: Tmunu_ll
     ! Spacetime metric as a 4x4 matrix
-    DOUBLE PRECISION, DIMENSION( 4, 4 ):: g4temp
+    DOUBLE PRECISION, DIMENSION(4, 4):: g4temp
     ! Inverse spacetime metric as a 4x4 matrix
-    DOUBLE PRECISION, DIMENSION( 4, 4 ):: ig4
+    DOUBLE PRECISION, DIMENSION(4, 4):: ig4
 
     ! Declaration of debug variables needed to compute the Hamiltonian
     ! constraint directly, without calling the Cactus-bound SUBROUTINE
@@ -114,10 +114,13 @@ SUBMODULE (bssn_formulation) constraints
     CHARACTER(LEN= :), ALLOCATABLE:: name_constraint
     CHARACTER(LEN= :), ALLOCATABLE:: name_analysis
     CHARACTER(LEN= :), ALLOCATABLE:: finalname_logfile
-    CHARACTER( LEN= 2 ):: n_reflev
+    CHARACTER(LEN= 2):: n_reflev
+    CHARACTER(LEN= 2):: tpo_id
 
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
+
+    WRITE( tpo_id, "(I2)" ) this% tpo_id_number
 
     ALLOCATE ( levels( this% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -146,9 +149,9 @@ SUBMODULE (bssn_formulation) constraints
     CALL allocate_grid_function( HC_A, "HC_A", 1 )
     CALL allocate_grid_function( HC_derphi, "HC_derphi", 1 )
 
-    CALL allocate_grid_function( this% HC, "HC_id", 1 )
-    CALL allocate_grid_function( this% MC, "MC_id", 3 )
-    CALL allocate_grid_function( this% GC, "GC_id", 3 )
+    CALL allocate_grid_function( this% HC, "HC_id"//tpo_id, 1 )
+    CALL allocate_grid_function( this% MC, "MC_id"//tpo_id, 3 )
+    CALL allocate_grid_function( this% GC, "GC_id"//tpo_id, 3 )
 
     CALL allocate_grid_function( this% rho, "rho", 1 )
     CALL allocate_grid_function( this% S, "S", 3 )
@@ -1036,6 +1039,9 @@ SUBMODULE (bssn_formulation) constraints
     CALL deallocate_grid_function( g4, "g4" )
     CALL deallocate_grid_function( Tmunu_ll, "Tmunu_ll" )
 
+    CALL deallocate_grid_function( this% rho, "rho" )
+    CALL deallocate_grid_function( this% S, "S" )
+
     CALL deallocate_grid_function( HC_hand, "HC_hand" )
     CALL deallocate_grid_function( HC_rho, "HC_rho" )
     CALL deallocate_grid_function( HC_trK, "HC_trK" )
@@ -1466,10 +1472,13 @@ SUBMODULE (bssn_formulation) constraints
     CHARACTER(LEN= :), ALLOCATABLE:: name_constraint
     CHARACTER(LEN= :), ALLOCATABLE:: name_analysis
     CHARACTER(LEN= :), ALLOCATABLE:: finalname_logfile
-    CHARACTER( 2 ):: n_reflev
+    CHARACTER(2):: n_reflev
+    CHARACTER(LEN= 2):: tpo_id
 
     LOGICAL:: exist
     LOGICAL, PARAMETER:: debug= .FALSE.
+
+    WRITE( tpo_id, "(I2)" ) this% tpo_id_number
 
     ALLOCATE ( levels( this% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -1491,9 +1500,9 @@ SUBMODULE (bssn_formulation) constraints
     IF( debug ) PRINT *, "ngrid_z=", this% levels(1)%ngrid_z
     IF( debug ) PRINT *
 
-    CALL allocate_grid_function( this% HC_parts, "HC_parts_id", 1 )
-    CALL allocate_grid_function( this% MC_parts, "MC_parts_id", 3 )
-    CALL allocate_grid_function( this% GC_parts, "GC_parts_id", 3 )
+    CALL allocate_grid_function( this% HC_parts, "HC_parts_id"//tpo_id, 1 )
+    CALL allocate_grid_function( this% MC_parts, "MC_parts_id"//tpo_id, 3 )
+    CALL allocate_grid_function( this% GC_parts, "GC_parts_id"//tpo_id, 3 )
 
     CALL allocate_grid_function( this% rho_parts, "rho_parts", 1 )
     CALL allocate_grid_function( this% S_parts, "S_parts", 3 )
@@ -2381,6 +2390,9 @@ SUBMODULE (bssn_formulation) constraints
     CALL deallocate_BSSN()
     !CALL deallocate_gravity_grid()
     DEALLOCATE( levels )
+
+    CALL deallocate_grid_function( this% rho_parts, "rho_parts" )
+    CALL deallocate_grid_function( this% S_parts, "S_parts" )
 
     ! Count the number of times that this SUBROUTINE is called, since the
     ! kernel has to be tabulated only once in the present implementation

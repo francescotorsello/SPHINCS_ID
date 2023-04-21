@@ -62,9 +62,11 @@ SUBMODULE (bssn_formulation) ricci
     IMPLICIT NONE
 
     INTEGER:: l
-    INTEGER, DIMENSION(3) :: imin, imax
-
     DOUBLE PRECISION:: max_ricci, min_lapse
+    INTEGER, DIMENSION(3) :: imin, imax
+    CHARACTER(LEN= 2):: tpo_id
+
+    WRITE( tpo_id, "(I2)" ) this% tpo_id_number
 
     ALLOCATE ( levels( this% nlevels ), STAT=ios )
     IF( ios > 0 )THEN
@@ -74,8 +76,9 @@ SUBMODULE (bssn_formulation) ricci
     levels = this% levels
     nlevels= this% nlevels
 
-    CALL allocate_grid_function( this% Ricci_ll, "Ricci_ll_id", 6 )
-    CALL allocate_grid_function( this% Ricci_scalar, "Ricci_scalar_id", 1 )
+    CALL allocate_grid_function( this% Ricci_ll, "Ricci_ll_id"//tpo_id, 6 )
+    CALL allocate_grid_function &
+      ( this% Ricci_scalar, "Ricci_scalar_id"//tpo_id, 1 )
 
     DO l= 1, this% nlevels, 1
 

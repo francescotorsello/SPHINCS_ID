@@ -62,24 +62,30 @@ SUBMODULE (bssn_formulation) memory
 
     IMPLICIT NONE
 
+    CHARACTER(LEN= 2):: tpo_id
+
+    WRITE( tpo_id, "(I2)" ) this% tpo_id_number
+
     IF( .NOT.ALLOCATED( this% Gamma_u% levels ) )THEN
-      CALL allocate_grid_function( this% Gamma_u, "Gamma_u_id", 3 )
+      CALL allocate_grid_function( this% Gamma_u, "Gamma_u_id"//tpo_id, 3 )
     ENDIF
 
     IF( .NOT.ALLOCATED( this% phi% levels ) )THEN
-      CALL allocate_grid_function( this% phi, "phi_id", 1 )
+      CALL allocate_grid_function( this% phi, "phi_id"//tpo_id, 1 )
     ENDIF
 
     IF( .NOT.ALLOCATED( this% trK% levels ) )THEN
-      CALL allocate_grid_function( this% trK, "trK_id", 1 )
+      CALL allocate_grid_function( this% trK, "trK_id"//tpo_id, 1 )
     ENDIF
 
     IF( .NOT.ALLOCATED( this% A_BSSN3_ll% levels ) )THEN
-      CALL allocate_grid_function( this% A_BSSN3_ll, "A_BSSN3_ll_id", 6 )
+      CALL allocate_grid_function( this% A_BSSN3_ll, "A_BSSN3_ll_id" &
+        //tpo_id, 6 )
     ENDIF
 
     IF( .NOT.ALLOCATED( this% g_BSSN3_ll% levels ) )THEN
-      CALL allocate_grid_function( this% g_BSSN3_ll, "g_BSSN3_ll_id", 6 )
+      CALL allocate_grid_function( this% g_BSSN3_ll, "g_BSSN3_ll_id" &
+        //tpo_id, 6 )
     ENDIF
 
   END PROCEDURE allocate_bssn_fields
@@ -99,58 +105,62 @@ SUBMODULE (bssn_formulation) memory
 
     IMPLICIT NONE
 
+    CHARACTER(LEN= 2):: tpo_id
+
+    WRITE( tpo_id, "(I2)" ) this% tpo_id_number
+
     IF( ALLOCATED( this% Gamma_u% levels ) )THEN
-      CALL deallocate_grid_function( this% Gamma_u, "Gamma_u_id" )
+      CALL deallocate_grid_function( this% Gamma_u, "Gamma_u_id"//tpo_id )
     ENDIF
 
     IF( ALLOCATED( this% phi% levels ) )THEN
-      CALL deallocate_grid_function( this% phi, "phi_id" )
+      CALL deallocate_grid_function( this% phi, "phi_id"//tpo_id )
     ENDIF
 
     IF( ALLOCATED( this% trK% levels ) )THEN
-      CALL deallocate_grid_function( this% trK, "trK_id" )
+      CALL deallocate_grid_function( this% trK, "trK_id"//tpo_id )
     ENDIF
 
     IF( ALLOCATED( this% A_BSSN3_ll% levels ) )THEN
-      CALL deallocate_grid_function( this% A_BSSN3_ll, "A_BSSN3_ll_id" )
+      CALL deallocate_grid_function( this% A_BSSN3_ll, "A_BSSN3_ll_id"//tpo_id )
     ENDIF
 
     IF( ALLOCATED( this% g_BSSN3_ll% levels ) )THEN
-      CALL deallocate_grid_function( this% g_BSSN3_ll, "g_BSSN3_ll_id" )
+      CALL deallocate_grid_function( this% g_BSSN3_ll, "g_BSSN3_ll_id"//tpo_id )
     ENDIF
 
     IF( ALLOCATED( this% GC% levels ) )THEN
-      CALL deallocate_grid_function( this% GC, "GC_id" )
+      CALL deallocate_grid_function( this% GC, "GC_id"//tpo_id )
     ENDIF
 
     IF( ALLOCATED( this% GC_parts% levels ) )THEN
-      CALL deallocate_grid_function( this% GC, "GC_parts_id" )
+      CALL deallocate_grid_function( this% GC, "GC_parts_id"//tpo_id )
     ENDIF
 
     IF( ALLOCATED( this% Ricci_ll% levels ) )THEN
-      CALL deallocate_grid_function( this% Ricci_ll, "Ricci_ll_id" )
+      CALL deallocate_grid_function( this% Ricci_ll, "Ricci_ll_id"//tpo_id )
     ENDIF
 
     IF( ALLOCATED( this% Ricci_scalar% levels ) )THEN
       CALL deallocate_grid_function( this% Ricci_scalar, &
-                                     "Ricci_scalar_id" )
+                                     "Ricci_scalar_id"//tpo_id )
     ENDIF
 
-    IF( ALLOCATED( this% rho% levels ) )THEN
-      CALL deallocate_grid_function( this% rho, "rho" )
-    ENDIF
+    !IF( ALLOCATED( this% rho% levels ) )THEN
+    !  CALL deallocate_grid_function( this% rho, "rho" )
+    !ENDIF
+    !
+    !IF( ALLOCATED( this% S% levels ) )THEN
+    !  CALL deallocate_grid_function( this% S, "S" )
+    !ENDIF
 
-    IF( ALLOCATED( this% S% levels ) )THEN
-      CALL deallocate_grid_function( this% S, "S" )
-    ENDIF
-
-    IF( ALLOCATED( this% rho_parts% levels ) )THEN
-      CALL deallocate_grid_function( this% rho_parts, "rho_parts" )
-    ENDIF
-
-    IF( ALLOCATED( this% S_parts% levels ) )THEN
-      CALL deallocate_grid_function( this% S_parts, "S_parts" )
-    ENDIF
+    !IF( ALLOCATED( this% rho_parts% levels ) )THEN
+    !  CALL deallocate_grid_function( this% rho_parts, "rho_parts" )
+    !ENDIF
+    !
+    !IF( ALLOCATED( this% S_parts% levels ) )THEN
+    !  CALL deallocate_grid_function( this% S_parts, "S_parts" )
+    !ENDIF
 
   END PROCEDURE deallocate_bssn_fields
 
