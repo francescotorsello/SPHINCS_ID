@@ -1447,6 +1447,7 @@ SUBMODULE (bssn_formulation) constraints
                                     get_metric_on_particles
     !USE particle_mesh,        ONLY: all_lists, flag_nei_cell, pp_g
     USE particle_mesh_hash,   ONLY: deallocate_hash_memory
+    USE timing,               ONLY: timers_active
 
     IMPLICIT NONE
 
@@ -1693,6 +1694,7 @@ SUBMODULE (bssn_formulation) constraints
     PRINT *, " * Mapping stress-energy tensor from the particles to the grid..."
     PRINT *
 
+    timers_active= .FALSE.
     CALL map_2_grid_hash( npart        , &
                           nu_loc       , &
                           pos_loc      , &
@@ -1701,7 +1703,7 @@ SUBMODULE (bssn_formulation) constraints
                           nlrf_loc     , &
                           theta_loc    , &
                           pressure_loc )
-
+    timers_active= .TRUE.
     IF( debug ) PRINT *, "7"
 
     !

@@ -62,7 +62,7 @@ PROGRAM sphincs_id
   USE id_base,          ONLY: idbase, initialize
   USE sph_particles,    ONLY: particles
   USE bssn_formulation, ONLY: bssn
-  USE timing,           ONLY: timer
+  USE timing,           ONLY: timer, timers_active
   USE utility,          ONLY: date, time, zone, values, run_id, itr, itr3, &
                               itr4, hostname, version, eos$tabu$compose, &
                               test_status, show_progress, end_time, &
@@ -240,6 +240,8 @@ stringize_end(vers)
   PRINT *, "  Run id: ", run_id
   PRINT *, "  ________________________________________________________________ "
   PRINT *
+
+  timers_active= .TRUE.
 
   execution_timer= timer( "execution_timer" )
   CALL execution_timer% start_timer()

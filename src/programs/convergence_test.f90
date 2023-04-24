@@ -61,7 +61,7 @@ PROGRAM convergence_test
   USE bssn_formulation,         ONLY: bssn
   USE standard_tpo_formulation, ONLY: tpo
   USE tensor,                   ONLY: jy, jz
-  USE timing,                   ONLY: timer
+  USE timing,                   ONLY: timer, timers_active
   USE utility,                  ONLY: date, time, zone, values, run_id, &
                                       itr3, hostname, version, &
                                       test_status, show_progress, end_time, &
@@ -240,6 +240,8 @@ stringize_end(vers)
   PRINT *, "  Run id: ", run_id
   PRINT *, "  ________________________________________________________________ "
   PRINT *
+
+  timers_active= .TRUE.
 
   execution_timer= timer( "execution_timer" )
   CALL execution_timer% start_timer()
