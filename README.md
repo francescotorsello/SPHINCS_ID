@@ -40,6 +40,14 @@ Once FORD is installed, go to the root directory of SPHINCS_ID and run 'ford too
 
 The documentation of SPHINCS_ID is (temporarily?) hosted at [https://sphincsid.bitbucket.io/](https://sphincsid.bitbucket.io/)
 
+## Required citations
+
+The algorithms implemented in SPHINCS_ID were presented in the following references, so please cite them if you use SPHINCS_ID.
+
+- Diener, P., Rosswog, S. & Torsello, F. Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN. Eur. Phys. J. A 58, 74 (2022). [https://doi.org/10.1140/epja/s10050-022-00725-7](https://doi.org/10.1140/epja/s10050-022-00725-7)
+
+-
+
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://academic.oup.com/mnras/article/498/3/4230/5897370>
 [3]: <https://lorene.obspm.fr/>
