@@ -2037,7 +2037,7 @@ SUBMODULE (sph_particles) constructor_std
 
         IF( parts% surfaces(i_matter)% is_known )THEN
 
-          surface_geometry="geoidal_surfaces"
+          surface_geometry="oval_surfaces"
 
         ELSE
 

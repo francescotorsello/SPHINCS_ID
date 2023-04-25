@@ -68,6 +68,14 @@ The User Manual for SPHINCS_ID is <a href="page/SPHINCS_ID-User_Manual.pdf" targ
 
 ---
 
+#### Required citations
+
+The algorithms implemented in SPHINCS_ID were presented in the following references, so please cite them if you use SPHINCS_ID.
+
+- Diener, P., Rosswog, S. & Torsello, F. Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN. Eur. Phys. J. A 58, 74 (2022). [https://doi.org/10.1140/epja/s10050-022-00725-7](https://doi.org/10.1140/epja/s10050-022-00725-7)
+
+---
+
 #### Acknowledgements
 
 It is a pleasure to thank Peter Diener and Stephan Rosswog for all the help and support they gave me during the development of SPHINCS_ID.
@@ -88,7 +96,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
-___
+
+---
 
 Copyright (C) 2020-2023 Francesco Torsello.
 
@@ -97,6 +106,7 @@ under the terms of the GNU Free Documentation License, Version 1.3
 or any later version published by the Free Software Foundation;
 with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 A copy of the license is included in the section entitled "License", reachable by clicking "About" at the top of the webpage, or at <https://www.gnu.org/licenses/fdl-1.3.html>.
+
 ---
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>

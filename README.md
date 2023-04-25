@@ -46,7 +46,6 @@ The algorithms implemented in SPHINCS_ID were presented in the following referen
 
 - Diener, P., Rosswog, S. & Torsello, F. Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN. Eur. Phys. J. A 58, 74 (2022). [https://doi.org/10.1140/epja/s10050-022-00725-7](https://doi.org/10.1140/epja/s10050-022-00725-7)
 
--
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
 [2]: <https://academic.oup.com/mnras/article/498/3/4230/5897370>

@@ -89,7 +89,7 @@ SUBMODULE (id_base) mass_profile
 
       IF(surf% is_known)THEN
 
-        surface_type= "geoidal"
+        surface_type= "oval"
 
       ENDIF
 

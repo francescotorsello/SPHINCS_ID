@@ -165,7 +165,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
 
       IF(surf% is_known)THEN
 
-        surface_type= "geoidal"
+        surface_type= "oval"
 
       ENDIF
 
