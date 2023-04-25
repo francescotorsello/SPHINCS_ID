@@ -1,8 +1,10 @@
-Project: SPHINCS_ID
-Version: 1.8
+project: SPHINCS_ID
+version: 2.0
+license: gfdl
 linkedin: https://www.linkedin.com/in/francescotorsello
-Summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.png){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of \(5\times 10^6\) total SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.1M_\odot\) (left) and \(1.5M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the <a href="https://compose.obspm.fr/" target="_blank">\(\texttt{CompOSE}\) service</a>. The solution was computed with <a href="https://lorene.obspm.fr/" target="_blank">\(\texttt{LORENE}\)</a> and the <a href="https://compose.obspm.fr/software" target="_blank">\(\texttt{CompOSE}\) software</a>, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with <a href="https://doi.org/10.1071/AS07022" target="_blank">\(\texttt{SPLASH}\)</a> and <a href="https://www.gimp.org/" target="_blank">\(\texttt{GIMP}\)</a>. </font>
-Author: Francesco Torsello
+project_bitbucket: https://bitbucket.org/sphincsid/sphincs_id/src/main/
+summary: Documentation of \(\mathrm{SPHINCS\_ID}\) <br /><br /> ![SPHINCS_ID](|media|/binary.png){: style="text-align: center", width=100%} <br /> <font size="2"> **Figure caption:** Projection of \(5\times 10^6\) total SPH particles on the \(xy\) plane, for a binary neutron star system with gravitational masses of \(1.1M_\odot\) (left) and \(1.5M_\odot\) (right), with equation of state 'BBKF(DD2-SF) quark-hadron model RDF 1.8 (with electrons)' from the <a href="https://compose.obspm.fr/" target="_blank">\(\texttt{CompOSE}\) service</a>. The solution was computed with <a href="https://lorene.obspm.fr/" target="_blank">\(\texttt{LORENE}\)</a> and the <a href="https://compose.obspm.fr/software" target="_blank">\(\texttt{CompOSE}\) software</a>, and the particles were placed with \(\texttt{SPHINCS_ID}\) using the Artificial Pressure Method. The color bar shows the baryon mass density. The plot was made with <a href="https://doi.org/10.1071/AS07022" target="_blank">\(\texttt{SPLASH}\)</a> and <a href="https://www.gimp.org/" target="_blank">\(\texttt{GIMP}\)</a>. </font>
+author: Francesco Torsello
 display: private
          protected
          public
@@ -10,7 +12,7 @@ docmark_alt: #
 predocmark: >
 predocmark_alt: &
 source: true
-incl_src: false
+incl_src: true
 graph: true
 sort: alpha
 src_dir: ../src

@@ -1,5 +1,4 @@
 *
-*/doc
 !./.gitignore
 !*/
 !*.f90
@@ -15,3 +14,4 @@
 !src/SConscript
 !COPYING
 !README.md
+doc
