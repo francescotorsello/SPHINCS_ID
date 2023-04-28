@@ -31,7 +31,7 @@ ___
 
   - SPHINCS_BSSN
   - If the ID produced with LORENE is used, the following fork of LORENE and its dependencies: [https://bitbucket.org/sphincsid/lorene](https://bitbucket.org/sphincsid/lorene)
-  - If the ID produced with FUKA is used, the following fork of FUKA and its dependencies: [https://bitbucket.org/sphincsid/kadath/src/master/](https://bitbucket.org/sphincsid/kadath/src/master/)
+  - If the ID produced with FUKA is used, the following fork of FUKA and its dependencies: [https://bitbucket.org/sphincsid/kadath](https://bitbucket.org/sphincsid/kadath)
   
 See res/doc-pages/SPHINCS_ID-User_Manual.pdf and tools/flavours.py for more details.
 
