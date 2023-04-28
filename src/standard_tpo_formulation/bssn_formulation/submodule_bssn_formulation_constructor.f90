@@ -47,8 +47,8 @@ SUBMODULE (bssn_formulation) constructor
 
     !****************************************************
     !
-    !# This constructor of TYPE bssn calls the
-    !  SUBROUTINES that rely on an bns object, and
+    !# This constructor of TYPE [[bssn]] calls the
+    !  SUBROUTINES that rely on an [[idbase]] object, and
     !  allocates memory. It constructs the grid
     !  using the number of grid points along each axis.
     !
@@ -137,7 +137,8 @@ SUBMODULE (bssn_formulation) constructor
 
     !**************************************************
     !
-    !# Destructor of the EXTENDED TYPE bssn
+    !# Procedure used in the destructor of the
+    !  EXTENDED TYPE [[bssn]]
     !
     !  FT
     !
@@ -154,7 +155,7 @@ SUBMODULE (bssn_formulation) constructor
 
     !**************************************************
     !
-    !# Destructor of EXTENDED TYPE bssn
+    !# Destructor of EXTENDED TYPE [[bssn]]
     !
     !  FT
     !

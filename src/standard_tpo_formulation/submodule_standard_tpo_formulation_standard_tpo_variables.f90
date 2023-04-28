@@ -25,7 +25,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
 
   !****************************************************
   !
-  !# Implementation of the methods of TYPE formul_tpo
+  !# Implementation of the methods of TYPE [[tpo]]
   !  that are called from the constructors and
   !  destructors of its EXTENDED TYPES
   !
@@ -53,11 +53,6 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     !  gravity grid coordinates, imports the
     !  spacetime ID on the gravity grid, and
     !  performs some checks on it.
-    !  Its input includes the numbers of grid points
-    !  per axis, contrary to
-    !  construct_formul_tpo_bns_grid
-    !  where those numbers are replaced by the grid
-    !  spacings.
     !
     !  FT 22.10.2020
     !  Last updated: FT 05.07.2022
@@ -398,7 +393,7 @@ SUBMODULE (standard_tpo_formulation) standard_tpo_variables
     !***************************************************
     !
     !# Core of the destructors of TYPES derived from
-    !  formul_tpo. Their destructors should call this
+    !  [[tpo]]. Their destructors should call this
     !  SUBROUTINE. It deallocates memory.
     !
     !  FT

@@ -204,7 +204,7 @@ SUBMODULE (sph_particles) io
 
     !************************************************
     !
-    !# Read the SPH ID from the binary file output
+    !# Read the |sph| |id| from the binary file output
     !  by write_SPHINCS_dump, and print it to a
     !  formatted file
     !
@@ -465,7 +465,7 @@ SUBMODULE (sph_particles) io
 
     !************************************************
     !
-    !# Print the SPH ID on the particles in a
+    !# Print the |sph| |id| on the particles in a
     !  formatted file
     !
     !  FT 18.09.2020

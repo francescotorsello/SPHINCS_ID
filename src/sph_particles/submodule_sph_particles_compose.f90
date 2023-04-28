@@ -26,7 +26,7 @@ SUBMODULE (sph_particles) compose
   !***************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE sph_particles
+  !  the methods of TYPE [[particles]]
   !  that compute \(Y_e\) on the particles, using the
   !  data from the |compose| database
   !
@@ -184,7 +184,6 @@ SUBMODULE (sph_particles) compose
     !  read by read_compose_composition.
     !
     !  FT 3.03.2021
-    !
     !
     !  Uses new infrastructure
     !

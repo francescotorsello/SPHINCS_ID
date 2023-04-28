@@ -1,6 +1,5 @@
 !# File:         submodule_sph_particles_apm.f90
 !  Authors:      Francesco Torsello (FT)
-
 !************************************************************************
 ! Copyright (C) 2020-2023 Francesco Torsello                            *
 !                                                                       *
@@ -28,7 +27,7 @@ SUBMODULE (sph_particles) apm
   !
   !# This SUBMODULE contains the
   !  implementation of the method
-  !  perform_apm of TYPE particles.
+  !  perform_apm of TYPE [[particles]].
   !
   !  FT 04.06.2021
   !
@@ -70,27 +69,6 @@ SUBMODULE (sph_particles) apm
     !
     !  This procedure assigns positions, smoothing
     !  lengths \(h\), and \(\nu\).
-    !
-    !  @warning
-    !  If the outer layers of a star have a very low density
-    !  compared to the core, it can happen that, irrespective
-    !  of the initial particle distribution and the APM
-    !  parameters, the particle distribution output by the
-    !  APM does not have a smooth surface. In this case,
-    !  the only solution (that has been found as of 20.10.2021)
-    !  is to increase the particle number.
-    !
-    !  As of 20.10.2021, this has only happened with the
-    !  CompOSE tabulated EOS (all of them), but not with
-    !  any piecewise polytropic or polytropic EOS.
-    !
-    !  This problem can manifest itself with error messages
-    !  concerning particles occupying the sameposition,
-    !  or some smoothing lengths being 0, or a matrix not being
-    !  invertible.
-    !
-    !  FT 20.10.2021
-    !  @endwarning
     !
     !  FT 04.06.2021
     !
@@ -2845,8 +2823,8 @@ SUBMODULE (sph_particles) apm
 
       !*******************************************************
       !
-      !#
-      !
+      !# Return various densities and the determinant of
+      !  the metric, needed in the APM iteration
       !
       !  FT 5.12.2021
       !
@@ -2874,7 +2852,7 @@ SUBMODULE (sph_particles) apm
       !DOUBLE PRECISION, INTENT(OUT):: nstar_eul_id(npart_real)
       !# Array to store the computed proper baryon number density seen
       !  by the Eulerian observer
-      LOGICAL,  INTENT( IN ):: use_atmosphere
+      LOGICAL,  INTENT(IN):: use_atmosphere
       !# `.TRUE.` if an atmosphere should be used during the APM, to allow
       !  the real aprticles more freedom to move around and adjust;
       !  `.FALSE.` otherwise
@@ -2956,7 +2934,9 @@ SUBMODULE (sph_particles) apm
 
       !*******************************************************
       !
-      !#
+      !# Return the pressure providd by the |id| (not the one
+      !  computed from the |sph| density), needed in the APM
+      !  iteration
       !
       !
       !  FT 6.12.2022
@@ -3072,7 +3052,7 @@ SUBMODULE (sph_particles) apm
       IF(.NOT.ALLOCATED( pressure_id ))THEN
         ALLOCATE( pressure_id( npart_all ), STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array pressure_id in SUBROUTINE ", &
+           PRINT *, "...allocation error for array pressure_id in SUBROUTINE ",&
                     "allocate_apm_fields. The error message is",&
                     err_msg
            STOP
@@ -3154,7 +3134,7 @@ SUBMODULE (sph_particles) apm
         ALLOCATE( particle_density_final( npart_real ), &
                   STAT= ios, ERRMSG= err_msg )
         IF( ios > 0 )THEN
-           PRINT *, "...allocation error for array particle_density_final in ", &
+           PRINT *, "...allocation error for array particle_density_final in ",&
                     "SUBROUTINE allocate_apm_fields. The error message is", &
                     err_msg
            STOP
@@ -4027,9 +4007,11 @@ SUBMODULE (sph_particles) apm
 
       !*******************************************************
       !
-      !#
+      !# Compute the |sph| canonical momentum
       !
       !  FT 17.06.2022
+      !
+      !  @warning To be checked. Deprecated?
       !
       !*******************************************************
 

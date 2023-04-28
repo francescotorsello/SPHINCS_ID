@@ -37,10 +37,6 @@ SUBMODULE (sph_particles) redistribute_nu
   !
   !  They DON'T HAVE ANYTHING to do with the APM.
   !
-  !  TODO: Add other SUBROUTINES to improve
-  !        modularity in SUBMODULE
-  !        particles_sph_variables
-  !
   !  FT 12.07.2021
   !
   !***************************************************

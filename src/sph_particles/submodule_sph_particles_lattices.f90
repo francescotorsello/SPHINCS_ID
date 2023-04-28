@@ -26,7 +26,7 @@ SUBMODULE (sph_particles) lattices
   !***************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE sph_particles
+  !  the methods of TYPE [[particles]]
   !  that place particles on 1 or 2 lattices around
   !  the stars.
   !

@@ -1986,140 +1986,22 @@ MODULE sph_particles
   END FUNCTION find_h_backup
 
 
-!  SUBROUTINE COM_1PN( npart, pos, vel, nu, nlrf, u, nstar, &
-!                      sq_det_g4, g4, &
-!                      pn_com_x, pn_com_y, pn_com_z, pn_com_d, mass )
-!
-!    !************************************************************
-!    !                                                           *
-!    ! monitor PN baryonic center of mass; PD 30.09.2021         *
-!    !                                                           *
-!    ! See eqs. (7.4), (8.136), (8.146) and (8.4.7) in           *
-!    ! Eric Poisson, Clifford M. Will                            *
-!    ! "Gravity: Newtonian, Post-Newtonian, Relativistic",       *
-!    ! Cambridge University Press, 2014. FT 26.01.2022           *
-!    !                                                           *
-!    !************************************************************
-!
-!    USE tensor,    ONLY: n_sym4x4, ixx, ixy, ixz, iyy, iyz, izz, jx, jy, jz
-!    USE constants, ONLY: zero, third, half, one, two, three
-!
-!    IMPLICIT NONE
-!
-!    INTEGER,          INTENT(IN) :: npart
-!    ! Number of particles
-!    DOUBLE PRECISION, INTENT(IN) :: pos(3,npart)
-!    ! Particles' positions
-!    DOUBLE PRECISION, INTENT(IN) :: vel(3,npart)
-!    ! Particles' 3-velocities in the SPH computing frame
-!    DOUBLE PRECISION, INTENT(IN) :: nu(npart)
-!    ! Particles' baryon numbers
-!    DOUBLE PRECISION, INTENT(IN) :: nlrf(npart)
-!    ! Particles densities in the local rest frame
-!    DOUBLE PRECISION, INTENT(IN) :: u(npart)
-!    ! Particles' specific internal energy
-!    DOUBLE PRECISION, INTENT(IN) :: nstar(npart)
-!    ! Particles' baryon density
-!    DOUBLE PRECISION, INTENT(IN) :: sq_det_g4(npart)
-!    ! Square root of minus the determinant of the spacetime metric, at the
-!    ! particle positions
-!    DOUBLE PRECISION, INTENT(IN) :: g4(n_sym4x4,npart)
-!    ! Spacetime metric at the particle positions
-!    DOUBLE PRECISION, INTENT(OUT):: pn_com_x
-!    ! x component of the 1PN center of mass
-!    DOUBLE PRECISION, INTENT(OUT):: pn_com_y
-!    ! y component of the 1PN center of mass
-!    DOUBLE PRECISION, INTENT(OUT):: pn_com_z
-!    ! z component of the 1PN center of mass
-!    DOUBLE PRECISION, INTENT(OUT):: pn_com_d
-!    ! Distance of the 1PN center of mass from the origin
-!
-!    INTEGER         :: a
-!    ! Index running over the particles
-!    DOUBLE PRECISION, INTENT(OUT):: mass
-!    ! Total mass of the particles
-!    DOUBLE PRECISION:: v_sqnorm
-!    ! Squared norm of the particles' 3-velocities in the SPH computing frame
-!    DOUBLE PRECISION:: u_pot
-!    ! Potential U in the formulas. See Exercise 8.1 on p.410 in the reference
-!    ! cited in this SUBROUTINE's description
-!    DOUBLE PRECISION:: pi_pot
-!    ! Potential Pi in the formulas. See line right below eq.(8.7c) on p.373
-!    ! in the reference cited in this SUBROUTINE's description
-!    DOUBLE PRECISION:: nu_pot
-!    ! Potential nu in the formulas. See lines right above eq.(8.148) on p.409
-!    ! in the reference cited in this SUBROUTINE's description
-!
-!    mass    = zero
-!    pn_com_x= zero
-!    pn_com_y= zero
-!    pn_com_z= zero
-!
-!    DO a= 1, npart, 1
-!
-!      v_sqnorm= vel(jx,a)**2 + vel(jy,a)**2 + vel(jz,a)**2
-!      !v_sqnorm= g4(ixx,a)*vel(jx,a)**2 + two*g4(ixy,a)*vel(jx,a)*vel(jy,a) &
-!      !        + two*g4(ixz,a)*vel(jx,a)*vel(jz,a) + g4(iyy,a)*vel(jy,a)**2 &
-!      !        + two*g4(iyz,a)*vel(jy,a)*vel(jz,a) + g4(izz,a)*vel(jz,a)**2
-!
-!      u_pot   = half*( sq_det_g4(a) - one )
-!
-!      pi_pot  = u(a)*nlrf(a)/nstar(a)
-!      !pi_pot  = u(a)*( one - half*v_sqnorm - three*u_pot )
-!
-!      nu_pot  = one + half*v_sqnorm - half*u_pot + pi_pot
-!
-!      !mass    = mass + nu(a)*nu_pot
-!      mass    = mass + nlrf(a)*( nu(a)/nstar(a) ) &
-!                /( one - half*v_sqnorm - three*u_pot )*nu_pot
-!
-!!IF( one - half*v_sqnorm - three*u_pot < zero )THEN
-!!  PRINT *, one - half*v_sqnorm - three*u_pot
-!!  PRINT *, v_sqnorm
-!!  PRINT *, u_pot
-!!  STOP
-!!ENDIF
-!
-!      !pn_com_x= pn_com_x + nu(a)*pos(jx,a)*nu_pot
-!      !pn_com_y= pn_com_y + nu(a)*pos(jy,a)*nu_pot
-!      !pn_com_z= pn_com_z + nu(a)*pos(jz,a)*nu_pot
-!      pn_com_x= pn_com_x + nlrf(a)*( nu(a)/nstar(a) ) &
-!                /( one - half*v_sqnorm - three*u_pot )*pos(jx,a)*nu_pot
-!      pn_com_y= pn_com_y + nlrf(a)*( nu(a)/nstar(a) ) &
-!                /( one - half*v_sqnorm - three*u_pot )*pos(jy,a)*nu_pot
-!      pn_com_z= pn_com_z + nlrf(a)*( nu(a)/nstar(a) ) &
-!                /( one - half*v_sqnorm - three*u_pot )*pos(jz,a)*nu_pot
-!
-!    ENDDO
-!
-!    pn_com_x  = pn_com_x/mass
-!    pn_com_y  = pn_com_y/mass
-!    pn_com_z  = pn_com_z/mass
-!    pn_com_d  = SQRT(pn_com_x**2 + pn_com_y**2 + pn_com_z**2)
-!
-!  END SUBROUTINE COM_1PN
-!
-!
 !  SUBROUTINE momentum_1pn( npart, pos, vel, nu, rho, u, pressure, nstar, h, &
 !                           sq_det_g4, g4, &
 !                           p_x, p_y, p_z )
 !
 !    !************************************************************
-!    !                                                           *
-!    ! Compute the first-order Post-Newtonian three-momentum     *
-!    ! of the spacetime.                                         *
-!    !                                                           *
-!    ! See eqs. (8.145) in                                       *
-!    ! Eric Poisson, Clifford M. Will                            *
-!    ! "Gravity: Newtonian, Post-Newtonian, Relativistic",       *
-!    ! Cambridge University Press, 2014                          *
-!    !                                                           *
-!    ! @todo: adapt comments to be read by FORD                  *
-!    !        (FORtran Documenter)? This requires minimal        *
-!    !        modifications                                      *
-!    !                                                           *
-!    ! FT 26.01.2022                                             *
-!    !                                                           *
+!    !
+!    !# Compute the first-order Post-Newtonian three-momentum
+!    !  of the spacetime.
+!    !
+!    !  See eqs. (8.145) in
+!    !  Eric Poisson, Clifford M. Will
+!    !  "Gravity: Newtonian, Post-Newtonian, Relativistic",
+!    !  Cambridge University Press, 2014
+!    !
+!    !  FT 26.01.2022
+!    !
 !    !************************************************************
 !
 !    USE tensor,       ONLY: n_sym4x4, ixx, ixy, ixz, iyy, iyz, izz, jx, jy, jz
@@ -2349,13 +2231,13 @@ MODULE sph_particles
 !    FUNCTION phi_pot_integrand(i,a,b) RESULT(res)
 !
 !      !************************************************************
-!      !                                                           *
-!      ! Integrand of the nonlocal potential phi in the formulas.  *
-!      ! See eq.(8.8) on p.374 in the reference cited in this      *
-!      ! SUBROUTINE's description                                  *
-!      !                                                           *
-!      ! FT 26.01.2022                                             *
-!      !                                                           *
+!      !
+!      !# Integrand of the nonlocal potential phi in the formulas.
+!      !  See eq.(8.8) on p.374 in the reference cited in this
+!      !  SUBROUTINE's description
+!      !
+!      !  FT 26.01.2022
+!      !
 !      !************************************************************
 !
 !      USE tensor,    ONLY: lower_index_4vector

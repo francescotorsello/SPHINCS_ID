@@ -476,7 +476,13 @@ SUBMODULE (ejecta_generic) constructor
 
     !***********************************************
     !
-    !#
+    !# This SUBROUTINE is curretly just a placeholder.
+    !  It could be used, for exmaple, to correct
+    !  the ADM momentum at the end of the execution,
+    !  or correct for residual eccentricity, etc.
+    !
+    !  @note Temporary implementation, to avoid warnings
+    !        about unused variables.
     !
     !  FT 14.04.2022
     !

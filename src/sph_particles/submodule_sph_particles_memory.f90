@@ -26,7 +26,7 @@ SUBMODULE (sph_particles) memory
   !***************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE sph_particles
+  !  the methods of TYPE [[particles]]
   !  that place particles on 1 or 2 lattices around
   !  the stars.
   !
@@ -50,8 +50,7 @@ SUBMODULE (sph_particles) memory
 
     !************************************************
     !
-    !# Allocate memory for the LORENE ID on the
-    !  particles
+    !# Allocate memory for the |id| on the particles
     !
     !  FT 10.11.2020
     !
@@ -379,12 +378,9 @@ SUBMODULE (sph_particles) memory
 
     !*************************************************
     !
-    !# Deallocate memory for the LORENE ID on the
-    !  particles
+    !# Deallocate memory for the |id| on the particles
     !
-    !  FT 12.07.2021 (this was part of the destructor
-    !                 of TYPE [[particles]]
-    !                 before this date)
+    !  FT 12.07.2021
     !
     !*************************************************
 

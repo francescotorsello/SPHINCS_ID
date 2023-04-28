@@ -1249,15 +1249,15 @@ SUBMODULE (bns_fuka) read
     LOGICAL:: exist, dir_out
     LOGICAL(4):: status
 
-    CHARACTER( LEN= : ), ALLOCATABLE:: filename_par
-    CHARACTER( LEN= : ), ALLOCATABLE:: filename_id
-    CHARACTER( LEN= : ), ALLOCATABLE:: work_dir
-    CHARACTER( LEN= : ), ALLOCATABLE:: dir_id
+    CHARACTER(LEN= :), ALLOCATABLE:: filename_par
+    CHARACTER(LEN= :), ALLOCATABLE:: filename_id
+    CHARACTER(LEN= :), ALLOCATABLE:: work_dir
+    CHARACTER(LEN= :), ALLOCATABLE:: dir_id
     !CHARACTER( LEN= 3 ):: size_run_id_str
     CHARACTER( LEN= 3 ):: mpi_ranks_str
 
     TYPE namefile
-      CHARACTER( LEN= : ), ALLOCATABLE:: name
+      CHARACTER(LEN= :), ALLOCATABLE:: name
     END TYPE namefile
     TYPE(namefile), DIMENSION(mpi_ranks):: filenames_ranks
 
@@ -1714,7 +1714,9 @@ SUBMODULE (bns_fuka) read
 
     !***********************************************
     !
-    !#
+    !# Read the |fuka| |id| on two lattices, each
+    !  one enclosing a star. The lattices are needed
+    !  to interpolate the |id| on the particles.
     !
     !  FT 27.06.2022
     !

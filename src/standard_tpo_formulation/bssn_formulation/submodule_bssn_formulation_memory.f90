@@ -48,7 +48,7 @@ SUBMODULE (bssn_formulation) memory
 
     !***********************************************
     !
-    !# Allocate memory for the BSSN variables.
+    !# Allocate memory for the |bssn| variables.
     !
     !  FT 23.10.2020
     !
@@ -95,7 +95,7 @@ SUBMODULE (bssn_formulation) memory
 
     !**************************************************
     !
-    !# Deallocate BSSN memory
+    !# Deallocate |bssn| memory
     !
     !  FT
     !

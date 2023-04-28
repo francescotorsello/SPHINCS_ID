@@ -25,7 +25,7 @@ SUBMODULE (standard_tpo_formulation) access
 
   !****************************************************
   !                                                   *
-  ! Implementation of the methods of TYPE tpo_formulation  *
+  ! Implementation of the methods of TYPE [[tpo]]     *
   ! that allow to access PRIVATE members.             *
   !                                                   *
   ! FT 12.07.2021                                     *

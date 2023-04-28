@@ -49,7 +49,7 @@ SUBMODULE (bssn_formulation) io
 
     !************************************************
     !
-    !# Read the BSSN ID from the binary file output
+    !# Read the |bssn| |id| from the binary file output
     !  by write_BSSN_dump, and print it to a
     !  formatted file
     !
@@ -301,7 +301,7 @@ SUBMODULE (bssn_formulation) io
 
     !************************************************
     !
-    !# Print the BSSN ID, computed on the gravity
+    !# Print the |bssn| |id|, computed on the gravity
     !  grid, to a formatted file
     !
     !  FT 26.10.2020

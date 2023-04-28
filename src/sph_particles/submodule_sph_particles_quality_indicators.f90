@@ -26,7 +26,7 @@ SUBMODULE(sph_particles) quality_indicators
   !****************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE particles
+  !  the methods of TYPE [[particles]]
   !  that computes the quality indicators, referring to
   !
   !  [Daniel J. Price, Smoothed Particle Hydrodynamics and Magnetohydrodynamics. Journal of Computational Physics, 231, 3, 759-794 (2012). DOI: 10.1016/j.jcp.2010.12.011](http://arxiv.org/abs/1012.1885){:target="_blank"},

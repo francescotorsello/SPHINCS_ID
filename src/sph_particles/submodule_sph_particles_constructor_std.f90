@@ -27,7 +27,7 @@ SUBMODULE (sph_particles) constructor_std
   !
   !# This SUBMODULE contains the implementation
   !  of the constructor and the
-  !  destructor of TYPE sph_particles.
+  !  destructor of TYPE [[particles]].
   !
   !  FT 16.10.2020
   !
@@ -117,18 +117,18 @@ SUBMODULE (sph_particles) constructor_std
 
     !**************************************************
     !
-    !# The constructor of TYPE particles is supposed
-    !  to set up aparticle distribution by assigning
+    !# The constructor of TYPE [[particles]] is supposed
+    !  to set up a particle distribution by assigning
     !  the particle positions, their baryon numbers
     !  nu and first guesses for their smoothing lengths h.
     !  It also sets up the unit system and the kernel.
     !
     !  After the particle distribution is set up,
     !  it assigns the |id| to the particles.
-    !  It does NOT compute the |sph| variables and it
-    !  does NOT set up the neighbors' tree. The latter
-    !  two things are delegated to the specific methods
-    !  of TYPE particles that need them.
+    !  It does not compute the |sph| variables and it
+    !  does not set up the neighbors' tree. The latter
+    !  two things are delegated to the other methods
+    !  of TYPE [[particles]].
     !
     !  FT 17.10.2020
     !

@@ -27,7 +27,7 @@ SUBMODULE (sph_particles) ellipsoidal_surfaces
   !************************************************
   !
   !# This SUBMODULE contains the implementation
-  !  of the method of TYPE sph_particles that places
+  !  of the method of TYPE [[particles]] that places
   !  particles on ellipsoidal surfaces inside
   !  a star
   !

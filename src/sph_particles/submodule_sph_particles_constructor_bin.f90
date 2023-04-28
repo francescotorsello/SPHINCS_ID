@@ -26,7 +26,7 @@ SUBMODULE (sph_particles) constructor_bin
   !************************************************
   !
   !# This SUBMODULE contains the implementation
-  !  of the constructor of TYPE sph_particles
+  !  of the constructor of TYPE [[particles]]
   !  from an |id| binary file.
   !
   !  FT 01.03.2022

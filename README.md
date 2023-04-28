@@ -14,11 +14,26 @@ Currently, it produces initial data for:
 
 The modular and hierarchical structure of the code makes it easy to extend it to be able to set up initial data for other types of physical systems and other formulations of the Einstein equations.
 
-SPHINCS_ID links to SPHINCS_BSSN.
-
 The User Manual for SPHINCS_ID is res/doc-pages/SPHINCS_ID-User_Manual.pdf
 
 Please read the README.md files in each directory for more details.
+
+## Author
+
+Francesco Torsello
+
+### Acknowledgements
+
+It is a pleasure to thank Peter Diener and Stephan Rosswog for all the help and support they gave me during the development of SPHINCS_ID.
+___
+
+## Dependencies
+
+  - SPHINCS_BSSN
+  - If the ID produced with LORENE is used, the following fork of LORENE and its dependencies: [https://bitbucket.org/sphincsid/lorene](https://bitbucket.org/sphincsid/lorene)
+  - If the ID produced with FUKA is used, the following fork of FUKA and its dependencies: [https://bitbucket.org/sphincsid/kadath/src/master/](https://bitbucket.org/sphincsid/kadath/src/master/)
+  
+See res/doc-pages/SPHINCS_ID-User_Manual.pdf and tools/flavours.py for more details.
 
 ## Compilation
 
@@ -26,9 +41,9 @@ SPHINCS_ID is compiled using SCons.
 
 Follow the instructions at [the current SCons documentation](https://scons.org/doc/production/HTML/scons-user/index.html) (or any later version of it) to install SCons.
 
-Once SCons is installed, go to the root directory of SPHINCS_ID where the SConstruct file is placed; if you are compiling SPHINCS_ID on a new host, open SConstruct and set up your local environment. After that, run 'scons' and the compilation will start. See res/doc-pages/SPHINCS_ID-User_Manual.pdf for more details.
+Once SCons is installed, go to the root directory of SPHINCS_ID where the SConstruct file is placed. If you are compiling SPHINCS_ID on a new host, open SConstruct and set up your local environment; you may need to modify src/SConscript and some of the \*.py files in tools as well. After that, run 'scons' to start the compilation. See res/doc-pages/SPHINCS_ID-User_Manual.pdf for more details.
 
-The compilation of SPHINCS_ID will create a directory named build and place the object files \*.o inside it, following the same directory structure as in src. The \*.mod files will instead be placed inside the mod directory. The executable files \*.x will be placed inside programs/bin. The configuration files (or parameter files) needed to run the executables are placed inside config. See res/doc-pages/SPHINCS_ID-User_Manual.pdf for more details.
+The compilation of SPHINCS_ID will create a directory named build and place the object files \*.o inside it, following the same directory structure as in src. The \*.mod files will instead be placed inside the mod directory. The executable files \*.x will be placed inside bin. The configuration files (or parameter files) needed to run the executables are placed inside config. See res/doc-pages/SPHINCS_ID-User_Manual.pdf for more details.
 
 ## Documentation
 
@@ -44,7 +59,7 @@ The documentation of SPHINCS_ID is (temporarily?) hosted at [https://sphincsid.b
 
 The algorithms implemented in SPHINCS_ID were presented in the following references, so please cite them if you use SPHINCS_ID.
 
-- Diener, P., Rosswog, S. & Torsello, F. Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN. Eur. Phys. J. A 58, 74 (2022). [https://doi.org/10.1140/epja/s10050-022-00725-7](https://doi.org/10.1140/epja/s10050-022-00725-7)
+  - Diener, P., Rosswog, S. & Torsello, F. Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN. Eur. Phys. J. A 58, 74 (2022). [https://doi.org/10.1140/epja/s10050-022-00725-7](https://doi.org/10.1140/epja/s10050-022-00725-7)
 
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>

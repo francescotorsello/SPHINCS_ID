@@ -26,7 +26,7 @@ SUBMODULE (sph_particles) recovery
   !************************************************
   !
   !# This SUBMODULE contains the implementation
-  !  of the method test_recovery of TYPE particles.
+  !  of the method test_recovery of TYPE [[particles]].
   !
   !  FT 18.02.2022
   !

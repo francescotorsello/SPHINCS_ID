@@ -25,7 +25,7 @@ MODULE standard_tpo_formulation
 
   !***********************************************************************
   !
-  !# This module contains the definition of ABSTRACT TYPE tpo
+  !# This module contains the definition of ABSTRACT TYPE [[tpo]]
   !
   !***********************************************************************
 

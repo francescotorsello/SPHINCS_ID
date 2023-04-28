@@ -49,7 +49,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the baryon mass of the DRS [\(M_\odot\)]
+    !# Returns the baryon mass of the |drs| [\(M_\odot\)]
     !
     !  FT 2.11.2021
     !
@@ -88,7 +88,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the radii of the DRS [\(L_\odot\)]
+    !# Returns the radii of the |drs| [\(L_\odot\)]
     !
     !  FT 2.11.2021
     !
@@ -107,7 +107,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the center of the DRS [\(L_\odot\)]
+    !# Returns the center of the |drs| [\(L_\odot\)]
     !
     !  FT 2.11.2021
     !
@@ -126,7 +126,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the barycenter of the DRS [\(L_\odot\)]
+    !# Returns the barycenter of the |drs| [\(L_\odot\)]
     !
     !  FT 2.11.2021
     !
@@ -145,7 +145,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the |eos| name of the DRS
+    !# Returns the |eos| name of the |drs|
     !
     !  FT 2.11.2021
     !
@@ -190,8 +190,8 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the value of [[diffstarbase:gamma]], the
-    !  polytropic index for polytropic EOS,
-    !  not piecewise polytropic EOS
+    !  polytropic index for polytropic |eos|,
+    !  not piecewise polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -210,7 +210,7 @@ SUBMODULE (diffstar_base) access
     !
     !# Returns the value of [[diffstarbase:kappa]], the
     !  polytropic constant for polytropic
-    !  EOS, not piecewise polytropic EOS
+    !  |eos|, not piecewise polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -245,7 +245,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the gravitational mass of the DRS [\(M_\odot\)]
+    !# Returns the gravitational mass of the |drs| [\(M_\odot\)]
     !
     !  FT 22.10.2021
     !
@@ -262,7 +262,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the angular momentum of the DRS
+    !# Returns the angular momentum of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -281,7 +281,7 @@ SUBMODULE (diffstar_base) access
     !
     !# Returns [[diffstarbase:tsw]], the ratio \(T/W\)
     !  between the kinetic and gravitational potential
-    !  energy of the DRS
+    !  energy of the |drs|
     !  FT 22.10.2021
     !
     !************************************************
@@ -334,7 +334,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:r_circ]], the
-    !  circumferential radius of the DRS
+    !  circumferential radius of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -352,7 +352,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:r_mean]], the
-    !  circumferential radius of the DRS
+    !  circumferential radius of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -370,7 +370,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:r_eq]], the
-    !  equatorial radius of the DRS at \(\phi=0\)
+    !  equatorial radius of the |drs| at \(\phi=0\)
     !
     !  FT 22.10.2021
     !
@@ -388,7 +388,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:r_eq_pi2]], the
-    !  equatorial radius of the DRS at \(\phi=\dfrac{\pi}{2}\)
+    !  equatorial radius of the |drs| at \(\phi=\dfrac{\pi}{2}\)
     !
     !  FT 22.10.2021
     !
@@ -406,7 +406,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:r_eq_pi]], the
-    !  equatorial radius of the DRS at \(\phi=\pi\)
+    !  equatorial radius of the |drs| at \(\phi=\pi\)
     !
     !  FT 22.10.2021
     !
@@ -424,7 +424,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:r_eq_3pi2]], the
-    !  equatorial radius of the DRS at \(\phi=\dfrac{3\pi}{2}\)
+    !  equatorial radius of the |drs| at \(\phi=\dfrac{3\pi}{2}\)
     !
     !  FT 22.10.2021
     !
@@ -442,7 +442,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:r_pole]], the
-    !  polar radius of the DRS
+    !  polar radius of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -553,7 +553,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:surface_area]], the
-    !  surface area of the DRS
+    !  surface area of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -571,7 +571,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns [[diffstarbase:area_radius]], the
-    !  areal radius of the DRS
+    !  areal radius of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -588,7 +588,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the central enthalpy of the DRS
+    !# Returns the central enthalpy of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -606,7 +606,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the central baryon number density
-    !  of the DRS
+    !  of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -624,7 +624,7 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the central baryon mass density
-    !  of the DRS
+    !  of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -641,7 +641,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the central energy density of the DRS
+    !# Returns the central energy density of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -658,7 +658,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the central specific energy of the DRS
+    !# Returns the central specific energy of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -675,7 +675,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the central pressure of the DRS
+    !# Returns the central pressure of the |drs|
     !
     !  FT 22.10.2021
     !
@@ -692,7 +692,7 @@ SUBMODULE (diffstar_base) access
 
     !************************************************
     !
-    !# Returns the identifier of the EOS for the DRS
+    !# Returns the identifier of the |eos| for the |drs|
     !
     !  FT 22.10.2021
     !
@@ -710,8 +710,8 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the value of [[diffstarbase:gamma0]], the crust's
-    !  polytropic index for the DRS with piecewise
-    !  polytropic EOS
+    !  polytropic index for the |drs| with piecewise
+    !  polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -729,8 +729,8 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the value of [[diffstarbase:gamma1]], the first
-    !  polytropic index for the DRS with piecewise
-    !  polytropic EOS
+    !  polytropic index for the |drs| with piecewise
+    !  polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -749,7 +749,7 @@ SUBMODULE (diffstar_base) access
     !
     !# Returns the value of [[diffstarbase:gamma2]], the second
     !  polytropic index for NS 2 with piecewise
-    !  polytropic EOS
+    !  polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -767,8 +767,8 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the value of [[diffstarbase:gamma3]], the third
-    !  polytropic index for the DRS with piecewise
-    !  polytropic EOS (innermost index)
+    !  polytropic index for the |drs| with piecewise
+    !  polytropic |eos| (innermost index)
     !
     !  FT 22.10.2021
     !
@@ -786,8 +786,8 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the value of [[diffstarbase:kappa0]], the crust's
-    !  polytropic constant for the DRS with piecewise
-    !  polytropic EOS
+    !  polytropic constant for the |drs| with piecewise
+    !  polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -805,8 +805,8 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the value of [[diffstarbase:kappa1]], the first
-    !  polytropic constant for the DRS with piecewise
-    !  polytropic EOS
+    !  polytropic constant for the |drs| with piecewise
+    !  polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -824,8 +824,8 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the value of [[diffstarbase:kappa2]], the second
-    !  polytropic constant for the DRS with piecewise
-    !  polytropic EOS
+    !  polytropic constant for the |drs| with piecewise
+    !  polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -843,8 +843,8 @@ SUBMODULE (diffstar_base) access
     !************************************************
     !
     !# Returns the value of [[diffstarbase:kappa3]], the third
-    !  polytropic constant for the DRS with piecewise
-    !  polytropic EOS
+    !  polytropic constant for the |drs| with piecewise
+    !  polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -863,8 +863,8 @@ SUBMODULE (diffstar_base) access
     !
     !# Returns the value of [[diffstarbase:logp1]], the base 10
     !  logarithm of the pressure where the gamma1
-    !  polytrope starts, for the DRS with piecewise
-    !  polytropic EOS
+    !  polytrope starts, for the |drs| with piecewise
+    !  polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -884,8 +884,8 @@ SUBMODULE (diffstar_base) access
     !
     !# Returns the value of [[diffstarbase:logRho0]], the base 10
     !  logarithm of the mass density where the
-    !  gamma1 polytrope starts, for the DRS with
-    !  piecewise polytropic EOS
+    !  gamma1 polytrope starts, for the |drs| with
+    !  piecewise polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -904,8 +904,8 @@ SUBMODULE (diffstar_base) access
     !
     !# Returns the value of [[diffstarbase:logRho1]], the base 10
     !  logarithm of the mass density where the
-    !  gamma2 polytrope starts, for the DRS with
-    !  piecewise polytropic EOS
+    !  gamma2 polytrope starts, for the |drs| with
+    !  piecewise polytropic |eos|
     !
     !  FT 22.10.2021
     !
@@ -924,8 +924,8 @@ SUBMODULE (diffstar_base) access
     !
     !# Returns the value of [[diffstarbase:logRho2]], the base 10
     !  logarithm of the mass density where the
-    !  gamma3 polytrope starts, for the DRS with
-    !  piecewise polytropic EOS
+    !  gamma3 polytrope starts, for the |drs| with
+    !  piecewise polytropic |eos|
     !
     !  FT 22.10.2021
     !

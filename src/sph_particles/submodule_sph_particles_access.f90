@@ -3,20 +3,20 @@
 !************************************************************************
 ! Copyright (C) 2020-2023 Francesco Torsello                            *
 !                                                                       *
-! This file is part of SPHINCS_ID                                       *
+! This file is part of |sph|INCS_|id|                                       *
 !                                                                       *
-! SPHINCS_ID is free software: you can redistribute it and/or modify    *
+! |sph|INCS_|id| is free software: you can redistribute it and/or modify    *
 ! it under the terms of the GNU General Public License as published by  *
 ! the Free Software Foundation, either version 3 of the License, or     *
 ! (at your option) any later version.                                   *
 !                                                                       *
-! SPHINCS_ID is distributed in the hope that it will be useful,         *
+! |sph|INCS_|id| is distributed in the hope that it will be useful,         *
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of        *
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
 ! GNU General Public License for more details.                          *
 !                                                                       *
 ! You should have received a copy of the GNU General Public License     *
-! along with SPHINCS_ID. If not, see <https://www.gnu.org/licenses/>.   *
+! along with |sph|INCS_|id|. If not, see <https://www.gnu.org/licenses/>.   *
 ! The copy of the GNU General Public License should be in the file      *
 ! 'COPYING'.                                                            *
 !************************************************************************
@@ -26,7 +26,7 @@ SUBMODULE (sph_particles) access
   !**************************************************
   !
   !# This SUBMODULE contains the implementation of
-  !  the methods of TYPE sph_particles
+  !  the methods of TYPE [[particles]]
   !  that allow to access PRIVATE members.
   !
   !  FT 12.07.2021
@@ -172,7 +172,7 @@ SUBMODULE (sph_particles) access
     !************************************************
     !
     !# Returns the array of the relativistic density
-    !  variable from the ID
+    !  variable from the |id|
     !
     !  FT 25.02.2022
     !
@@ -189,7 +189,7 @@ SUBMODULE (sph_particles) access
 
     !************************************************
     !
-    !# Returns the array of SPH density estimate of
+    !# Returns the array of |sph| density estimate of
     !  the relativistic density variable
     !
     !  FT 25.02.2022
@@ -208,7 +208,7 @@ END PROCEDURE get_nstar_sph
     !************************************************
     !
     !# Returns the array of baryon density in the
-    !  local rest frame from the ID
+    !  local rest frame from the |id|
     !
     !  FT
     !
@@ -225,7 +225,7 @@ END PROCEDURE get_nstar_sph
 
     !************************************************
     !
-    !# Returns the array of SPH estimate of the
+    !# Returns the array of |sph| estimate of the
     !  baryon density in the local rest frame
     !
     !  FT 25.02.2022
@@ -280,7 +280,7 @@ END PROCEDURE get_nstar_sph
     !************************************************
     !
     !# Returns the array of specific internal
-    !  energy computed from the SPH estimate
+    !  energy computed from the |sph| estimate
     !  of the baryon number density in the local
     !  rest frame [c^2]
     !
@@ -299,7 +299,7 @@ END PROCEDURE get_nstar_sph
 
     !************************************************
     !
-    !# Returns the array of pressure from the ID
+    !# Returns the array of pressure from the |id|
     !
     !  FT
     !
@@ -317,7 +317,7 @@ END PROCEDURE get_nstar_sph
     !************************************************
     !
     !# Returns the array of pressure computed using
-    !  the SPH stimate of the density
+    !  the |sph| stimate of the density
     !  [amu*c**2/(Msun_geo**3)]
     !
     !  FT

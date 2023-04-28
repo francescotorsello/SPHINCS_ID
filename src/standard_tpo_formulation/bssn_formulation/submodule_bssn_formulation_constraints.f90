@@ -50,9 +50,9 @@ SUBMODULE (bssn_formulation) constraints
 
     !***************************************************
     !
-    !# Compute, store, analyze and print the BSSN
+    !# Compute, store, analyze and print the |bssn|
     !  constraints to a formatted file. The computation
-    !  is done by importing the hydro ID on the
+    !  is done by importing the hydro |id| on the
     !  gravity grid, without any information on the
     !  particles.
     !
@@ -1374,15 +1374,12 @@ SUBMODULE (bssn_formulation) constraints
 
     !**************************************************
     !
-    !# Compute, store and print the BSSN constraints
+    !# Compute, store and print the |bssn| constraints
     !  to a formatted file. The computaton is done
     !  mapping the physical metric from the gravity
     !  to the particles, computing e stress-energy
     !  tensor on the particles, and mapping it to the
     !  gravity grid.
-    !  @todo use the SPH density to compute the
-    !       stress-energy tensor, rather than the
-    !       density from the |id|
     !
     !  FT 1.02.2021
     !
