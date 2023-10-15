@@ -9,34 +9,36 @@ ordered_subpage: license.md
 The initial data produced with SPHINCS_ID was used in the following works:
 
  <br>
+ 
  <p><b>
-    <a href="https://inspirehep.net/literature/2051586">
-      Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN
+    <a href="https://inspirehep.net/literature/2668036">
+      The Lagrangian numerical relativity code SPHINCS_BSSN_v1.0
     </a>
   </b></p>
   
-  <p>
-	Peter Diener, Stephan Rosswog, Francesco Torsello
-  </p>
+ <p>
+    Stephan Rosswog, Francesco Torsello, Peter Diener
+ </p>
   
   <p>
       e-Print:
-          <a href="https://arxiv.org/abs/2203.06478">
-      2203.06478
-    </a>[astro-ph.HE]</p>
+          <a href="https://arxiv.org/abs/2306.06226">
+      2306.06226
+    </a>[gr-qc]</p>
   <p>
         DOI:
-        <a href="https://doi.org/10.1140/epja/s10050-022-00725-7">
-      10.1140/epja/s10050-022-00725-7
+        <a href="https://doi.org/10.3389/fams.2023.1236586">
+      10.3389/fams.2023.1236586
     </a>
       </p>
   <p>
     Published in:<span>
-      Eur.Phys.J.A 58 (2022) 4,
-      74</span></p>
+      Front. Appl. Math. Stat. (2023) 9 </span>
+  </p>
+  
   <br>
-
-<p><b>
+ 
+ <p><b>
     <a href="https://inspirehep.net/literature/2083225">
       Thinking Outside the Box: Numerical Relativity with Particles
     </a>
@@ -61,4 +63,34 @@ The initial data produced with SPHINCS_ID was used in the following works:
     Published in:<span>
       Symmetry 14 (2022) 6,
       1280</span></p>
+  <br>
+  
+ <p><b>
+    <a href="https://inspirehep.net/literature/2051586">
+      Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN
+    </a>
+  </b></p>
+  
+  <p>
+	Peter Diener, Stephan Rosswog, Francesco Torsello
+  </p>
+  
+  <p>
+      e-Print:
+          <a href="https://arxiv.org/abs/2203.06478">
+      2203.06478
+    </a>[astro-ph.HE]
+  </p>
+  <p>
+        DOI:
+        <a href="https://doi.org/10.1140/epja/s10050-022-00725-7">
+      10.1140/epja/s10050-022-00725-7
+    </a>
+  </p>
+  <p>
+    Published in:<span>
+      Eur.Phys.J.A 58 (2022) 4,
+      74</span>
+  </p>
+  
   <br>
