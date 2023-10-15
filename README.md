@@ -59,7 +59,9 @@ The documentation of SPHINCS_ID is (temporarily?) hosted at [https://sphincsid.b
 
 The algorithms implemented in SPHINCS_ID were presented in the following references, so please cite them if you use SPHINCS_ID.
 
-  - Diener, P., Rosswog, S. & Torsello, F. Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN. Eur. Phys. J. A 58, 74 (2022). [https://doi.org/10.1140/epja/s10050-022-00725-7](https://doi.org/10.1140/epja/s10050-022-00725-7)
+  - Diener, P., Rosswog, S. & Torsello, F., Simulating neutron star mergers with the Lagrangian Numerical Relativity code SPHINCS_BSSN. Eur. Phys. J. A 58, 74 (2022). [https://doi.org/10.1140/epja/s10050-022-00725-7](https://doi.org/10.1140/epja/s10050-022-00725-7)
+  
+  - Rosswog, S., Torsello, F. & Diener, P., The Lagrangian numerical relativity code SPHINCS_BSSN_v1.0. Front. Appl. Math. Stat. 9 (2023). [https://doi.org/10.3389/fams.2023.1236586](https://doi.org/10.3389/fams.2023.1236586)
 
 
 [1]: <https://iopscience.iop.org/article/10.1088/1361-6382/abee65>
